@@ -1,0 +1,4 @@
+IMPORT SOURCE meetup;
+
+Rsvp.venue.id_mult := venue_id * 2;
+Rsvp.sum_id := sum(venue.venue_id);

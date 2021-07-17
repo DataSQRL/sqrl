@@ -1,0 +1,8 @@
+IMPORT ecommerce-data.*;
+
+Orders.entries.total := quantity * unit_price - (discount ? 0.0);
+Orders.total := sum(entries.total);
+Orders.total_savings := sum(entries.discount ? 0.0);
+
+Customer.orders := JOIN Orders ON Orders.customerid = customerid;
+Customer.total_orders := sum(orders.total);

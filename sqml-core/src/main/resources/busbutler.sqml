@@ -1,0 +1,41 @@
+IMPORT busdata.*;
+
+IMPORT FUNCTION geo;
+
+Routestops.timeoffset := INTERVAL timeoffset_min MINUTE;
+
+Schedule.stops := SELECT r.stopno, r.stopid, r.stop, s.starttime + r.timeoffset as scheduledtime
+                  FROM @ as s JOIN Routestops as r ON s.routeid=r.routeid ORDER BY r.stopno ASC;
+
+Schedule.travel := SELECT g.timestamp, g.location
+                   FROM @ as s JOIN Bus as b ON s.busid=b.busid
+                      JOIN Gps_tracking as g ON b.sensorid=g.sensorid
+                   WHERE g.timestamp>=s.starttime ORDER BY g.timestamp DESC;
+
+Schedule.currentlocation := SELECT location FROM @.travel LIMIT 1;
+
+Schedule.stops.arrivaltime := SELECT t.timestamp FROM @.parent.travel as t
+                              WHERE geo.point_distance(@.stop.location, t.location) < geo.distance(50,"meter")
+                                AND @.scheduledtime <= t.timestamp + INTERVAL 5 MINUTE
+                              ORDER BY t.timestamp ASC LIMIT 1;
+
+Schedule.currentdelay := SELECT s.arrivaltime - s.scheduledtime FROM @.stops as s
+                          WHERE s.arrivaltime IS NOT NULL
+                          ORDER BY s.stopno DESC LIMIT 1;
+
+Busstop.upcoming := SELECT s.scheduledtime, s.parent as schedule
+                    FROM @ as b JOIN schedule.stops as s ON @.stopid=s.stopid
+                    WHERE s.scheduledtime < now() + INTERVAL 2 HOUR
+                      AND s.arrivaltime IS NULL
+                    ORDER BY s.scheduledtime ASC;
+
+User := SELECT DISTINCT userid FROM Schedulefollows;
+
+User.follows := JOIN Schedulefollows ON User.userid = Schedulefollows.userid;
+
+Schedulefollows.timing := SELECT s.scheduledtime, s.arrivaltime, s.parent.currentdelay as currentdelay
+                          FROM @.schedule.stops as s
+                          WHERE s.stopid=@.stopid LIMIT 1;
+
+Schedule.nofollowers := SELECT COUNT(*) FROM Schedulefollows
+                        WHERE scheduleid = @.scheduleid;
