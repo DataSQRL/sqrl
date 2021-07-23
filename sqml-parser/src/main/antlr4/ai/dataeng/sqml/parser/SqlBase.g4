@@ -28,17 +28,18 @@ singleStatement
 
 statement
     : query                                                            #statementDefault
-    | CREATE RELATIONSHIP qualifiedName relationshipJoin               #createRelationship
+    | CREATE RELATIONSHIP qualifiedName joinSubexpression              #createRelationship
     | CREATE SUBSCRIPTION qualifiedName ON subscriptionType AS query   #createSubscription
-    | IMPORT importType=(FUNCTION | SOURCE | PUBLIC)?
-        importIdentifier ('.' importIdentifier)* ('.*')?
-        (AS qualifiedName)?                                               #importStatement
+    | IMPORT importType=(FUNCTION | SOURCE | PUBLIC)? qualifiedName importAlias?     #importStatement
     | qualifiedName ':=' assignment                                    #assign
     ;
 
+importAlias
+    : AS qualifiedName
+    ;
+
 assignment
-    : relationshipJoin                                             # relationAssign
-    | query                                                        # queryAssign
+    : query                                                        # queryAssign
     | expression                                                   # expressionAssign
     ;
 
@@ -46,16 +47,12 @@ subscriptionType
     : ADD
     ;
 
-importIdentifier
-    : IDENTIFIER             #unquotedImportIdentifier
-    ;
-
-relationshipJoin
+joinSubexpression
     : JOIN table=qualifiedName (AS? identifier)?
       ON expression
       (INVERSE inv=qualifiedName)?
       (LIMIT limit=(INTEGER_VALUE | ALL))?
-      (relationshipJoin)?
+      (joinSubexpression)?
     ;
 
 query
@@ -168,7 +165,7 @@ predicate[ParserRuleContext value]
     | NOT? IN '(' expression (',' expression)* ')'                        #inList
     | NOT? IN '(' query ')'                                               #inSubquery
     | NOT? LIKE pattern=valueExpression                                   #like
-    | IS NOT? EMPTY                                                       #setSize
+    | IS NOT? EMPTY                                                       #isEmpty
     | IS NOT? NULL                                                        #nullPredicate
     | IS NOT? DISTINCT FROM right=valueExpression                         #distinctFrom
     ;
@@ -183,7 +180,7 @@ valueExpression
 
 primaryExpression
     : NULL                                                                                #nullLiteral
-    | relationshipJoin                                                                    #subRelationship
+    | joinSubexpression                                                                   #joinSubexpr
     | interval                                                                            #intervalLiteral
     | identifier string                                                                   #typeConstructor
     | number                                                                              #numericLiteral
@@ -197,8 +194,7 @@ primaryExpression
     | '(' query ')'                                                                       #subqueryExpression
     // This is an extension to ANSI SQL, which considers EXISTS to be a <boolean expression>
     | EXISTS '(' query ')'                                                                #exists
-    | CASE valueExpression whenClause+ (ELSE elseExpression=expression)? END              #simpleCase
-    | CASE whenClause+ (ELSE elseExpression=expression)? END                              #searchedCase
+    | CASE whenClause+ (ELSE elseExpression=expression)? END                              #simpleCase
     | CAST '(' expression AS type ')'                                                     #cast
     | qualifiedName                                                                       #columnReference
     | base=primaryExpression '.' fieldName=identifier                                     #dereference
@@ -253,7 +249,7 @@ whenClause
     ;
 
 qualifiedName
-    : identifier ('.' identifier)*
+    : identifier ('.' identifier)* ('.'ASTERISK)?
     ;
 
 identifier
@@ -261,7 +257,6 @@ identifier
     | QUOTED_IDENTIFIER      #quotedIdentifier
     | nonReserved            #unquotedIdentifier
     | BACKQUOTED_IDENTIFIER  #backQuotedIdentifier
-    | DIGIT_IDENTIFIER       #digitIdentifier
     ;
 
 number
@@ -548,11 +543,7 @@ DOUBLE_VALUE
     ;
 
 IDENTIFIER
-    : (LETTER | '_' | '@') (LETTER | DIGIT | '_' | '@' | '-')*
-    ;
-
-DIGIT_IDENTIFIER
-    : DIGIT (LETTER | DIGIT | '_' | '@' | ':')+
+    : (LETTER | '_' | '@' | '*') (LETTER | DIGIT | '_' | '@' | '-')*
     ;
 
 QUOTED_IDENTIFIER

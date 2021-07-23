@@ -3,14 +3,22 @@ package ai.dataeng.sqml.tree;
 import java.util.List;
 import java.util.Optional;
 
-public class RelationshipJoin extends Expression {
+public class JoinSubexpression extends Expression {
 
-  private final Join join;
+  private final TraversalJoin join;
 
-  public RelationshipJoin(Optional<NodeLocation> location,
-      Join join) {
+  public JoinSubexpression(Optional<NodeLocation> location,
+      TraversalJoin join) {
     super(location);
     this.join = join;
+  }
+
+  public TraversalJoin getJoin() {
+    return join;
+  }
+
+  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
+    return visitor.visitJoinSubexpression(this, context);
   }
 
   @Override

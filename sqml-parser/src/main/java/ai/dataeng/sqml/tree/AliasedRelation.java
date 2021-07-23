@@ -45,7 +45,7 @@ public class AliasedRelation
 
     this.relation = relation;
     this.alias = alias;
-    this.columnNames = columnNames;
+    this.columnNames = columnNames == null ? List.of() : columnNames;
   }
 
   public Relation getRelation() {

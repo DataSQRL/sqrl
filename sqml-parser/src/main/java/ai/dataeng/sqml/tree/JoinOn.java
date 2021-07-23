@@ -13,19 +13,20 @@
  */
 package ai.dataeng.sqml.tree;
 
-import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class JoinOn
     extends JoinCriteria {
 
   private final Expression expression;
 
-  public JoinOn(Expression expression) {
+  public JoinOn(NodeLocation location, Expression expression) {
+    super(Optional.ofNullable(location));
     this.expression = requireNonNull(expression, "expression is null");
   }
 
@@ -46,15 +47,13 @@ public class JoinOn
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hash(expression);
+  public List<? extends Node> getChildren() {
+    return ImmutableList.of(expression);
   }
 
   @Override
-  public String toString() {
-    return toStringHelper(this)
-        .addValue(expression)
-        .toString();
+  public int hashCode() {
+    return Objects.hash(expression);
   }
 
   @Override

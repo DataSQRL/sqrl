@@ -13,49 +13,33 @@
  */
 package ai.dataeng.sqml.tree;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class SubscriptExpression
+public class IsEmpty
     extends Expression {
 
-  private final Expression base;
-  private final Expression index;
+  private final boolean notEmpty;
 
-  public SubscriptExpression(Expression base, Expression index) {
-    this(Optional.empty(), base, index);
-  }
-
-  public SubscriptExpression(NodeLocation location, Expression base, Expression index) {
-    this(Optional.of(location), base, index);
-  }
-
-  private SubscriptExpression(Optional<NodeLocation> location, Expression base, Expression index) {
+  public IsEmpty(Optional<NodeLocation> location, boolean notEmpty) {
     super(location);
-    this.base = requireNonNull(base, "base is null");
-    this.index = requireNonNull(index, "index is null");
+    this.notEmpty = notEmpty;
+  }
+
+  public boolean isNotEmpty() {
+    return notEmpty;
   }
 
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
-    return visitor.visitSubscriptExpression(this, context);
+    return visitor.visitIsEmpty(this, context);
   }
 
   @Override
   public List<Node> getChildren() {
-    return ImmutableList.of(base, index);
-  }
-
-  public Expression getBase() {
-    return base;
-  }
-
-  public Expression getIndex() {
-    return index;
+    return ImmutableList.of();
   }
 
   @Override
@@ -66,14 +50,12 @@ public class SubscriptExpression
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    SubscriptExpression that = (SubscriptExpression) o;
-
-    return Objects.equals(this.base, that.base) && Objects.equals(this.index, that.index);
+    IsEmpty isEmpty = (IsEmpty) o;
+    return notEmpty == isEmpty.notEmpty;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(base, index);
+    return Objects.hash(notEmpty);
   }
 }

@@ -24,70 +24,19 @@ public class FunctionCall
     extends Expression {
 
   private final QualifiedName name;
-  private final Optional<Expression> filter;
-  private final Optional<OrderBy> orderBy;
-  private final boolean distinct;
-  private final boolean ignoreNulls;
   private final List<Expression> arguments;
 
   public FunctionCall(NodeLocation location, QualifiedName name, List<Expression> arguments) {
-    this(Optional.of(location), name, Optional.empty(), Optional.empty(), false,
-        false, arguments);
-  }
-
-  public FunctionCall(QualifiedName name, boolean distinct, List<Expression> arguments) {
-    this(Optional.empty(), name, Optional.empty(), Optional.empty(), distinct,
-        false, arguments);
-  }
-
-  public FunctionCall(QualifiedName name, boolean distinct, List<Expression> arguments,
-      Optional<Expression> filter) {
-    this(Optional.empty(), name, filter, Optional.empty(), distinct, false,
-        arguments);
-  }
-  public FunctionCall(QualifiedName name, boolean distinct,
-      boolean ignoreNulls, List<Expression> arguments) {
-    this(Optional.empty(), name, Optional.empty(), Optional.empty(), distinct, ignoreNulls,
-        arguments);
-  }
-
-  public FunctionCall(QualifiedName name, Optional<Expression> filter,
-      Optional<OrderBy> orderBy, boolean distinct, List<Expression> arguments) {
-    this(Optional.empty(), name, filter, orderBy, distinct, false, arguments);
-  }
-
-  public FunctionCall(QualifiedName name, Optional<Expression> filter,
-      Optional<OrderBy> orderBy, boolean distinct, boolean ignoreNulls,
-      List<Expression> arguments) {
-    this(Optional.empty(), name, filter, orderBy, distinct, ignoreNulls, arguments);
-  }
-
-  public FunctionCall(NodeLocation location, QualifiedName name,
-      Optional<Expression> filter, Optional<OrderBy> orderBy, boolean distinct,
-      List<Expression> arguments) {
-    this(Optional.of(location), name, filter, orderBy, distinct, false, arguments);
-  }
-
-  public FunctionCall(NodeLocation location, QualifiedName name,
-      Optional<Expression> filter, Optional<OrderBy> orderBy, boolean distinct, boolean ignoreNulls,
-      List<Expression> arguments) {
-    this(Optional.of(location), name, filter, orderBy, distinct, ignoreNulls, arguments);
+    this(Optional.of(location), name, arguments);
   }
 
   private FunctionCall(Optional<NodeLocation> location, QualifiedName name,
-      Optional<Expression> filter, Optional<OrderBy> orderBy, boolean distinct, boolean ignoreNulls,
       List<Expression> arguments) {
     super(location);
     requireNonNull(name, "name is null");
-    requireNonNull(filter, "filter is null");
-    requireNonNull(orderBy, "orderBy is null");
     requireNonNull(arguments, "arguments is null");
 
     this.name = name;
-    this.filter = filter;
-    this.orderBy = orderBy;
-    this.distinct = distinct;
-    this.ignoreNulls = ignoreNulls;
     this.arguments = arguments;
   }
 
@@ -95,24 +44,8 @@ public class FunctionCall
     return name;
   }
 
-  public Optional<OrderBy> getOrderBy() {
-    return orderBy;
-  }
-
-  public boolean isDistinct() {
-    return distinct;
-  }
-
-  public boolean isIgnoreNulls() {
-    return ignoreNulls;
-  }
-
   public List<Expression> getArguments() {
     return arguments;
-  }
-
-  public Optional<Expression> getFilter() {
-    return filter;
   }
 
   @Override
@@ -123,8 +56,6 @@ public class FunctionCall
   @Override
   public List<Node> getChildren() {
     ImmutableList.Builder<Node> nodes = ImmutableList.builder();
-    filter.ifPresent(nodes::add);
-    orderBy.map(OrderBy::getSortItems).map(nodes::addAll);
     nodes.addAll(arguments);
     return nodes.build();
   }
@@ -139,15 +70,11 @@ public class FunctionCall
     }
     FunctionCall o = (FunctionCall) obj;
     return Objects.equals(name, o.name) &&
-        Objects.equals(filter, o.filter) &&
-        Objects.equals(orderBy, o.orderBy) &&
-        Objects.equals(distinct, o.distinct) &&
-        Objects.equals(ignoreNulls, o.ignoreNulls) &&
         Objects.equals(arguments, o.arguments);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, distinct, ignoreNulls, filter, orderBy, arguments);
+    return Objects.hash(name, arguments);
   }
 }

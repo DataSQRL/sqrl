@@ -13,6 +13,7 @@
  */
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.parser.CreateRelationship;
 import javax.annotation.Nullable;
 
 public abstract class AstVisitor<R, C> {
@@ -43,14 +44,6 @@ public abstract class AstVisitor<R, C> {
 
   protected R visitExpression(Expression node, C context) {
     return visitNode(node, context);
-  }
-
-  protected R visitCurrentTime(CurrentTime node, C context) {
-    return visitExpression(node, context);
-  }
-
-  protected R visitExtract(Extract node, C context) {
-    return visitExpression(node, context);
   }
 
   protected R visitArithmeticBinary(ArithmeticBinaryExpression node, C context) {
@@ -209,10 +202,6 @@ public abstract class AstVisitor<R, C> {
     return visitSelectItem(node, context);
   }
 
-  protected R visitSearchedCaseExpression(SearchedCaseExpression node, C context) {
-    return visitExpression(node, context);
-  }
-
   protected R visitLikePredicate(LikePredicate node, C context) {
     return visitExpression(node, context);
   }
@@ -226,10 +215,6 @@ public abstract class AstVisitor<R, C> {
   }
 
   protected R visitArrayConstructor(ArrayConstructor node, C context) {
-    return visitExpression(node, context);
-  }
-
-  protected R visitSubscriptExpression(SubscriptExpression node, C context) {
     return visitExpression(node, context);
   }
 
@@ -281,14 +266,6 @@ public abstract class AstVisitor<R, C> {
     return visitExpression(node, context);
   }
 
-  protected R visitFieldReference(FieldReference node, C context) {
-    return visitExpression(node, context);
-  }
-
-  protected R visitFrameBound(FrameBound node, C context) {
-    return visitNode(node, context);
-  }
-
   protected R visitAtTimeZone(AtTimeZone node, C context) {
     return visitExpression(node, context);
   }
@@ -321,27 +298,31 @@ public abstract class AstVisitor<R, C> {
     return visitExpression(node, context);
   }
 
-  protected R visitCurrentUser(CurrentUser node, C context) {
-    return visitExpression(node, context);
-  }
-
   protected R visitScript(Script node, C context) {
     return visitNode(node, context);
   }
 
-  public R visitNestedSelect(NestedSelect nestedSelect, C context) {
-    return visitNode(nestedSelect, context);
+  public R visitExpressionAssignment(ExpressionAssignment node, C context) {
+    return visitNode(node, context);
   }
-  public R visitExpressionAssignment(ExpressionAssignment expressionAssignment, C context) {
-    return visitNode(expressionAssignment, context);
+  public R visitQueryAssignment(QueryAssignment node, C context) {
+    return visitNode(node, context);
   }
-  public R visitQueryAssignment(QueryAssignment queryAssignment, C context) {
-    return visitNode(queryAssignment, context);
+  public R visitRelationshipAssignment(RelationshipAssignment node, C context) {
+    return visitNode(node, context);
   }
-  public R visitRelationshipAssignment(RelationshipAssignment relationshipAssignment, C context) {
-    return visitNode(relationshipAssignment, context);
+  public R visitIsEmpty(IsEmpty node, C context) {
+    return visitNode(node, context);
   }
-  public R visitSetSize(SetSize setSize, C context) {
-    return visitNode(setSize, context);
+  public R visitJoinSubexpression(JoinSubexpression node, C context) {
+    return visitExpression(node, context);
   }
+  public R visitCreateRelationship(CreateRelationship node, C context) {
+    return visitNode(node, context);
+  }
+
+  public R visitTraversalJoin(TraversalJoin node, C context) {
+    return visitNode(node, context);
+  }
+
 }

@@ -12,6 +12,7 @@ import ai.dataeng.sqml.tree.Assign;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Import;
+import ai.dataeng.sqml.tree.Import.ImportType;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Script;
@@ -48,7 +49,7 @@ public class ResolveImportStatements extends ScriptRewrite {
   }
 
   protected void visitImport(Import node, List<Node> newStatements) {
-    switch (node.getType()) {
+    switch (node.getType().orElse(ImportType.SCRIPT)) {
       case FUNCTION:
         //no-op
         break;

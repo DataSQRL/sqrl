@@ -64,11 +64,6 @@ public class ExpressionRewriter<C> {
     return rewriteExpression(node, context, treeRewriter);
   }
 
-  public Expression rewriteSearchedCaseExpression(SearchedCaseExpression node, C context,
-      ExpressionTreeRewriter<C> treeRewriter) {
-    return rewriteExpression(node, context, treeRewriter);
-  }
-
   public Expression rewriteSimpleCaseExpression(SimpleCaseExpression node, C context,
       ExpressionTreeRewriter<C> treeRewriter) {
     return rewriteExpression(node, context, treeRewriter);
@@ -119,11 +114,6 @@ public class ExpressionRewriter<C> {
     return rewriteExpression(node, context, treeRewriter);
   }
 
-  public Expression rewriteSubscriptExpression(SubscriptExpression node, C context,
-      ExpressionTreeRewriter<C> treeRewriter) {
-    return rewriteExpression(node, context, treeRewriter);
-  }
-
   public Expression rewriteIdentifier(Identifier node, C context,
       ExpressionTreeRewriter<C> treeRewriter) {
     return rewriteExpression(node, context, treeRewriter);
@@ -134,31 +124,11 @@ public class ExpressionRewriter<C> {
     return rewriteExpression(node, context, treeRewriter);
   }
 
-  public Expression rewriteExtract(Extract node, C context,
-      ExpressionTreeRewriter<C> treeRewriter) {
-    return rewriteExpression(node, context, treeRewriter);
-  }
-
-  public Expression rewriteCurrentTime(CurrentTime node, C context,
-      ExpressionTreeRewriter<C> treeRewriter) {
-    return rewriteExpression(node, context, treeRewriter);
-  }
-
   public Expression rewriteCast(Cast node, C context, ExpressionTreeRewriter<C> treeRewriter) {
     return rewriteExpression(node, context, treeRewriter);
   }
 
   public Expression rewriteAtTimeZone(AtTimeZone node, C context,
-      ExpressionTreeRewriter<C> treeRewriter) {
-    return rewriteExpression(node, context, treeRewriter);
-  }
-
-  public Expression rewriteCurrentUser(CurrentUser node, C context,
-      ExpressionTreeRewriter<C> treeRewriter) {
-    return rewriteExpression(node, context, treeRewriter);
-  }
-
-  public Expression rewriteFieldReference(FieldReference node, C context,
       ExpressionTreeRewriter<C> treeRewriter) {
     return rewriteExpression(node, context, treeRewriter);
   }

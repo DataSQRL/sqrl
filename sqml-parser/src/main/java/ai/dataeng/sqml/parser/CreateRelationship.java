@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.parser;
 
+import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeLocation;
 import ai.dataeng.sqml.tree.QualifiedName;
@@ -27,6 +28,28 @@ public class CreateRelationship extends Node {
     this.limit = limit;
   }
 
+  public QualifiedName getName() {
+    return name;
+  }
+
+  public QualifiedName getRelation() {
+    return relation;
+  }
+
+  public Node getExpression() {
+    return expression;
+  }
+
+  public Optional<QualifiedName> getInverse() {
+    return inverse;
+  }
+
+  public Optional<String> getLimit() {
+    return limit;
+  }
+  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
+    return visitor.visitCreateRelationship(this, context);
+  }
   @Override
   public List<? extends Node> getChildren() {
     return null;

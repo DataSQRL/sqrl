@@ -58,7 +58,6 @@ import ai.dataeng.sqml.tree.LikePredicate;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.NaturalJoin;
-import ai.dataeng.sqml.tree.NestedSelect;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeLocation;
 import ai.dataeng.sqml.tree.NotExpression;
@@ -71,14 +70,12 @@ import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
-import ai.dataeng.sqml.tree.RelationshipAssignment;
-import ai.dataeng.sqml.tree.RelationshipJoin;
+import ai.dataeng.sqml.tree.JoinSubexpression;
 import ai.dataeng.sqml.tree.Row;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.tree.SearchedCaseExpression;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
-import ai.dataeng.sqml.tree.SetSize;
+import ai.dataeng.sqml.tree.IsEmpty;
 import ai.dataeng.sqml.tree.SimpleCaseExpression;
 import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
@@ -90,6 +87,7 @@ import ai.dataeng.sqml.tree.Table;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.TimeLiteral;
 import ai.dataeng.sqml.tree.TimestampLiteral;
+import ai.dataeng.sqml.tree.TraversalJoin;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.tree.WhenClause;
 import com.google.common.collect.ImmutableList;
@@ -531,12 +529,6 @@ class AstBuilder
   }
 
   @Override
-  public Node visitSubRelationship(SubRelationshipContext ctx) {
-    return visit(ctx.relationshipJoin());
-  }
-
-
-  @Override
   public Node visitJoinRelation(SqlBaseParser.JoinRelationContext context) {
     Relation left = (Relation) visit(context.left);
     Relation right;
@@ -549,11 +541,11 @@ class AstBuilder
     JoinCriteria criteria = null;
     if (context.NATURAL() != null) {
       right = (Relation) visit(context.right);
-      criteria = new NaturalJoin();
+      criteria = new NaturalJoin(getLocation(context));
     } else {
       right = (Relation) visit(context.rightRelation);
       if (context.joinCriteria() != null && context.joinCriteria().ON() != null) {
-        criteria = new JoinOn((Expression) visit(context.joinCriteria().booleanExpression()));
+        criteria = new JoinOn(getLocation(context), (Expression) visit(context.joinCriteria().booleanExpression()));
       }
     }
 
@@ -796,15 +788,6 @@ class AstBuilder
   public Node visitSimpleCase(SqlBaseParser.SimpleCaseContext context) {
     return new SimpleCaseExpression(
         getLocation(context),
-        (Expression) visit(context.valueExpression()),
-        visit(context.whenClause(), WhenClause.class),
-        visitIfPresent(context.elseExpression, Expression.class));
-  }
-
-  @Override
-  public Node visitSearchedCase(SqlBaseParser.SearchedCaseContext context) {
-    return new SearchedCaseExpression(
-        getLocation(context),
         visit(context.whenClause(), WhenClause.class),
         visitIfPresent(context.elseExpression, Expression.class));
   }
@@ -820,10 +803,6 @@ class AstBuilder
     return new FunctionCall(
         getLocation(context),
         getQualifiedName(context.qualifiedName()),
-        Optional.empty(),
-        Optional.empty(),
-        false,
-        false,
         visit(context.expression(), Expression.class));
   }
 
@@ -955,52 +934,47 @@ class AstBuilder
 
   @Override
   public Node visitImportStatement(ImportStatementContext ctx) {
-    ImportType type = (ctx.importType == null) ?
-        ImportType.SCRIPT : ImportType.valueOf(ctx.importType.getText().toUpperCase(Locale.ROOT));
+    Optional<ImportType> type = (ctx.importType == null) ?
+        Optional.empty() : Optional.of(ImportType.valueOf(ctx.importType.getText().toUpperCase(Locale.ROOT)));
 
-    return new Import(getLocation(ctx), type, getQualifiedName(ctx.importIdentifier()));
-  }
-
-  @Override
-  public Node visitUnquotedImportIdentifier(UnquotedImportIdentifierContext ctx) {
-    return new Identifier(getLocation(ctx), ctx.getText(), false);
+    return new Import(getLocation(ctx), type, getQualifiedName(ctx.qualifiedName()));
   }
 
   @Override
   public Node visitAssign(AssignContext context) {
     QualifiedName name = getQualifiedName(context.qualifiedName());
-
-    if (context.assignment() instanceof RelationAssignContext) {
-      RelationAssignContext ctx = (RelationAssignContext)context.assignment();
-      RelationshipJoinContext rctx = ctx.relationshipJoin();
-      return new CreateRelationship(
-          Optional.of(getLocation(ctx)),
-          name,
-          getQualifiedName(rctx.table),
-          visit(rctx.expression()),
-          getQualifiedNameIfPresent(rctx.inv),
-          getTextIfPresent(rctx.limit)
-      );
-    }
+//
+//    if (context.assignment() instanceof RelationAssignContext) {
+//      RelationAssignContext ctx = (RelationAssignContext)context.assignment();
+//      RelationshipJoinContext rctx = ctx.relationshipJoin();
+//      return new CreateRelationship(
+//          Optional.of(getLocation(ctx)),
+//          name,
+//          getQualifiedName(rctx.table),
+//          visit(rctx.expression()),
+//          getQualifiedNameIfPresent(rctx.inv),
+//          getTextIfPresent(rctx.limit)
+//      );
+//    }
 
     return new Assign(getLocation(context), name, (Assignment)visit(context.assignment()));
   }
 
   @Override
-  public Node visitRelationshipJoin(RelationshipJoinContext ctx) {
-    //JOIN table=qualifiedName ON expression (INVERSE inv=qualifiedName)? (LIMIT limit=(INTEGER_VALUE | ALL))?
-
-    return new RelationshipJoin(
+  public Node visitJoinSubexpression(JoinSubexpressionContext ctx) {
+    return new JoinSubexpression(
         Optional.of(getLocation(ctx)),
-        null
-    );
-  }
-
-  @Override
-  public Node visitRelationAssign(RelationAssignContext ctx) {
-    return new RelationshipAssignment(
-        Optional.of(getLocation(ctx)),
-        (RelationshipJoin)visitRelationshipJoin(ctx.relationshipJoin())
+        new TraversalJoin(
+            Optional.of(getLocation(ctx)),
+            getQualifiedName(ctx.table),
+            ctx.identifier() == null ? Optional.empty() :
+                Optional.of((Identifier)visit(ctx.identifier())),
+            (Expression)visit(ctx.expression()),
+            ctx.inv == null ? Optional.empty() :
+                Optional.of(getQualifiedName(ctx.inv)),
+            ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
+                Optional.of(Integer.parseInt(ctx.limit.getText()))
+        )
     );
   }
 
@@ -1018,7 +992,7 @@ class AstBuilder
 
   @Override
   public Node visitCreateRelationship(CreateRelationshipContext ctx) {
-    RelationshipJoinContext rctx = ctx.relationshipJoin();
+    JoinSubexpressionContext rctx = ctx.joinSubexpression();
     return new CreateRelationship(
         Optional.of(getLocation(ctx)),
         getQualifiedName(ctx.qualifiedName()),
@@ -1053,8 +1027,8 @@ class AstBuilder
   }
 
   @Override
-  public Node visitSetSize(SetSizeContext ctx) {
-    return new SetSize(Optional.of(getLocation(ctx)),ctx.NOT() == null);
+  public Node visitIsEmpty(IsEmptyContext ctx) {
+    return new IsEmpty(Optional.of(getLocation(ctx)),ctx.NOT() == null);
   }
 
   @Override
@@ -1082,6 +1056,11 @@ class AstBuilder
     return result;
   }
 
+  @Override
+  public Node visitJoinSubexpr(JoinSubexprContext ctx) {
+    return visit(ctx.joinSubexpression());
+  }
+
   private <T> Optional<T> visitIfPresent(ParserRuleContext context, Class<T> clazz) {
     return Optional.ofNullable(context)
         .map(this::visit)
@@ -1099,6 +1078,9 @@ class AstBuilder
     List<String> parts = visit(context.identifier(), Identifier.class).stream()
         .map(Identifier::getValue) // TODO: preserve quotedness
         .collect(Collectors.toList());
+    if (context.ASTERISK() != null) {
+      parts.add("*");
+    }
 
     return QualifiedName.of(parts);
   }
@@ -1107,15 +1089,6 @@ class AstBuilder
     return Optional.ofNullable(context)
         .map(this::getQualifiedName);
   }
-
-  private QualifiedName getQualifiedName(List<ImportIdentifierContext> context) {
-    List<String> parts = visit(context, Identifier.class).stream()
-        .map(Identifier::getValue)
-        .collect(Collectors.toList());
-
-    return QualifiedName.of(parts);
-  }
-
 
   private String getType(SqlBaseParser.TypeContext type) {
     if (type.baseType() != null) {

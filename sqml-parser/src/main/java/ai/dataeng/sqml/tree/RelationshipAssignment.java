@@ -5,9 +5,9 @@ import java.util.Optional;
 
 public class RelationshipAssignment extends Assignment {
 
-  private final RelationshipJoin join;
+  private final JoinSubexpression join;
 
-  public RelationshipAssignment(Optional<NodeLocation> location, RelationshipJoin join) {
+  public RelationshipAssignment(Optional<NodeLocation> location, JoinSubexpression join) {
     super(location);
     this.join = join;
   }
@@ -35,7 +35,7 @@ public class RelationshipAssignment extends Assignment {
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitRelationshipAssignment(this, context);
   }
-  public RelationshipJoin getJoin() {
+  public JoinSubexpression getJoin() {
     return join;
   }
 }

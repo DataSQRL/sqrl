@@ -14,8 +14,13 @@
 package ai.dataeng.sqml.tree;
 
 import java.util.List;
+import java.util.Optional;
 
-public abstract class JoinCriteria {
+public abstract class JoinCriteria extends Node {
+
+  protected JoinCriteria(Optional<NodeLocation> location) {
+    super(location);
+  }
 
   // Force subclasses to have a proper equals and hashcode implementation
   @Override
@@ -23,9 +28,6 @@ public abstract class JoinCriteria {
 
   @Override
   public abstract int hashCode();
-
-  @Override
-  public abstract String toString();
 
   public abstract List<Node> getNodes();
 }

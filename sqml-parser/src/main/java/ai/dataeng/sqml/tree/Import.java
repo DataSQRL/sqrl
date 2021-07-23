@@ -21,10 +21,10 @@ public final class Import
     extends Expression {
 
   private final NodeLocation location;
-  private final ImportType type;
+  private final Optional<ImportType> type;
   private final QualifiedName qualifiedName;
 
-  public Import(NodeLocation location, ImportType type,
+  public Import(NodeLocation location, Optional<ImportType> type,
       QualifiedName qualifiedName) {
     super(Optional.ofNullable(location));
     this.location = location;
@@ -32,7 +32,7 @@ public final class Import
     this.qualifiedName = qualifiedName;
   }
 
-  public ImportType getType() {
+  public Optional<ImportType> getType() {
     return type;
   }
 

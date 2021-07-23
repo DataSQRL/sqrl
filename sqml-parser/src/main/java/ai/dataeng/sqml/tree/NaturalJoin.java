@@ -17,9 +17,14 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import java.util.Optional;
 
 public class NaturalJoin
     extends JoinCriteria {
+
+  public NaturalJoin(NodeLocation location) {
+    super(Optional.ofNullable(location));
+  }
 
   @Override
   public boolean equals(Object obj) {
@@ -27,6 +32,11 @@ public class NaturalJoin
       return true;
     }
     return (obj != null) && (getClass() == obj.getClass());
+  }
+
+  @Override
+  public List<? extends Node> getChildren() {
+    return ImmutableList.of();
   }
 
   @Override

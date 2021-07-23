@@ -26,11 +26,6 @@ public abstract class DefaultTraversalVisitor<R, C>
   }
 
   @Override
-  protected R visitExtract(Extract node, C context) {
-    return process(node.getExpression(), context);
-  }
-
-  @Override
   protected R visitCast(Cast node, C context) {
     return process(node.getExpression(), context);
   }
@@ -71,14 +66,6 @@ public abstract class DefaultTraversalVisitor<R, C>
     for (Expression expression : node.getValues()) {
       process(expression, context);
     }
-
-    return null;
-  }
-
-  @Override
-  protected R visitSubscriptExpression(SubscriptExpression node, C context) {
-    process(node.getBase(), context);
-    process(node.getIndex(), context);
 
     return null;
   }
@@ -138,14 +125,14 @@ public abstract class DefaultTraversalVisitor<R, C>
     for (Expression argument : node.getArguments()) {
       process(argument, context);
     }
-
-    if (node.getOrderBy().isPresent()) {
-      process(node.getOrderBy().get(), context);
-    }
-
-    if (node.getFilter().isPresent()) {
-      process(node.getFilter().get(), context);
-    }
+//
+//    if (node.getOrderBy().isPresent()) {
+//      process(node.getOrderBy().get(), context);
+//    }
+//
+//    if (node.getFilter().isPresent()) {
+//      process(node.getFilter().get(), context);
+//    }
 
     return null;
   }
@@ -166,17 +153,8 @@ public abstract class DefaultTraversalVisitor<R, C>
   }
 
   @Override
-  public R visitFrameBound(FrameBound node, C context) {
-    if (node.getValue().isPresent()) {
-      process(node.getValue().get(), context);
-    }
-
-    return null;
-  }
-
-  @Override
   protected R visitSimpleCaseExpression(SimpleCaseExpression node, C context) {
-    process(node.getOperand(), context);
+//    process(node.getOperand(), context);
     for (WhenClause clause : node.getWhenClauses()) {
       process(clause, context);
     }
@@ -204,17 +182,6 @@ public abstract class DefaultTraversalVisitor<R, C>
   @Override
   protected R visitNotExpression(NotExpression node, C context) {
     return process(node.getValue(), context);
-  }
-
-  @Override
-  protected R visitSearchedCaseExpression(SearchedCaseExpression node, C context) {
-    for (WhenClause clause : node.getWhenClauses()) {
-      process(clause, context);
-    }
-    node.getDefaultValue()
-        .ifPresent(value -> process(value, context));
-
-    return null;
   }
 
   @Override

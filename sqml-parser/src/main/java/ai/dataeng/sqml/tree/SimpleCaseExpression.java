@@ -23,33 +23,26 @@ import java.util.Optional;
 public class SimpleCaseExpression
     extends Expression {
 
-  private final Expression operand;
   private final List<WhenClause> whenClauses;
   private final Optional<Expression> defaultValue;
 
-  public SimpleCaseExpression(Expression operand, List<WhenClause> whenClauses,
+  public SimpleCaseExpression(List<WhenClause> whenClauses,
       Optional<Expression> defaultValue) {
-    this(Optional.empty(), operand, whenClauses, defaultValue);
+    this(Optional.empty(), whenClauses, defaultValue);
   }
 
-  public SimpleCaseExpression(NodeLocation location, Expression operand,
+  public SimpleCaseExpression(NodeLocation location,
       List<WhenClause> whenClauses, Optional<Expression> defaultValue) {
-    this(Optional.of(location), operand, whenClauses, defaultValue);
+    this(Optional.of(location), whenClauses, defaultValue);
   }
 
-  private SimpleCaseExpression(Optional<NodeLocation> location, Expression operand,
+  private SimpleCaseExpression(Optional<NodeLocation> location,
       List<WhenClause> whenClauses, Optional<Expression> defaultValue) {
     super(location);
-    requireNonNull(operand, "operand is null");
     requireNonNull(whenClauses, "whenClauses is null");
 
-    this.operand = operand;
     this.whenClauses = ImmutableList.copyOf(whenClauses);
     this.defaultValue = defaultValue;
-  }
-
-  public Expression getOperand() {
-    return operand;
   }
 
   public List<WhenClause> getWhenClauses() {
@@ -68,7 +61,6 @@ public class SimpleCaseExpression
   @Override
   public List<Node> getChildren() {
     ImmutableList.Builder<Node> nodes = ImmutableList.builder();
-    nodes.add(operand);
     nodes.addAll(whenClauses);
     defaultValue.ifPresent(nodes::add);
     return nodes.build();
@@ -84,13 +76,13 @@ public class SimpleCaseExpression
     }
 
     SimpleCaseExpression that = (SimpleCaseExpression) o;
-    return Objects.equals(operand, that.operand) &&
+    return
         Objects.equals(whenClauses, that.whenClauses) &&
         Objects.equals(defaultValue, that.defaultValue);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(operand, whenClauses, defaultValue);
+    return Objects.hash(whenClauses, defaultValue);
   }
 }
