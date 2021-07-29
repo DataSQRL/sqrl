@@ -50,4 +50,8 @@ public abstract class Node {
   public String toString() {
     return NodeFormatter.accept(this);
   }
+
+  public List<Annotation> getAnnotations() {
+    return List.of();
+  }
 }

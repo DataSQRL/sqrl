@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.function;
 
+import ai.dataeng.sqml.tree.QualifiedName;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +14,11 @@ public class FunctionProvider {
 
   public static Builder newFunctionProvider() {
     return new Builder();
+  }
+
+  public SqmlFunction resolve(QualifiedName name) {
+
+    return null;
   }
 
   public static class Builder {

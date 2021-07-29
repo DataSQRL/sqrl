@@ -18,8 +18,7 @@ public class HttpIngress extends Source {
   private final int bufferSize;
   private BufferedReader in;
 
-  public HttpIngress(String url, Schema schema, int bufferSize) {
-    super(schema);
+  public HttpIngress(String url, int bufferSize) {
     this.url = url;
     this.bufferSize = bufferSize;
   }
@@ -114,7 +113,7 @@ public class HttpIngress extends Source {
     }
 
     public Source build() {
-      return new HttpIngress(url, schema, bufferSizeInBytes);
+      return new HttpIngress(url, bufferSizeInBytes);
     }
   }
 }

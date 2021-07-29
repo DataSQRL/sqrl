@@ -10,11 +10,6 @@ import java.util.List;
 
 public abstract class Source extends Vertex {
   protected List<Edge> listeners = new ArrayList<>();
-  private final Schema schema;
-
-  public Source(Schema schema) {
-    this.schema = schema;
-  }
 
   public List<Edge> getListeners() {
     return listeners;
@@ -23,10 +18,6 @@ public abstract class Source extends Vertex {
   @Override
   public void onReceive(Edge e, Message m, TTime time) {
     throw new RuntimeException("Source vertex should not receive data");
-  }
-
-  public Schema getSchema() {
-    return schema;
   }
 
   public static abstract class Builder {

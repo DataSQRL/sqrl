@@ -1,13 +1,11 @@
 package ai.dataeng.sqml.rewrite;
 
 import ai.dataeng.sqml.metadata.Metadata;
-import ai.dataeng.sqml.registry.ScriptRegistry;
 import ai.dataeng.sqml.schema.AbstractField;
 import ai.dataeng.sqml.schema.Schema;
 import ai.dataeng.sqml.schema.SchemaField;
 import ai.dataeng.sqml.schema.SchemaObject;
 import ai.dataeng.sqml.schema.SchemaVisitor;
-import ai.dataeng.sqml.source.Source;
 import ai.dataeng.sqml.tree.Assign;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.Identifier;
@@ -19,7 +17,6 @@ import ai.dataeng.sqml.tree.Script;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class ResolveImportStatements extends ScriptRewrite {
@@ -54,7 +51,10 @@ public class ResolveImportStatements extends ScriptRewrite {
         //no-op
         break;
       case SOURCE:
-        Schema source = metadata.getSchemaProvider().getSchema(node.getQualifiedName().toString());
+        Schema source = metadata.getSchemaProvider().get(node.getQualifiedName().toString());
+        if (source == null) {
+          return; //todo
+        }
         AddColumnFromSchema addColumnFromSchema = new AddColumnFromSchema(newStatements);
         source.accept(addColumnFromSchema, null);
         break;

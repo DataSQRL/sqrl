@@ -1,30 +1,13 @@
 package ai.dataeng.sqml.schema;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
-public class Schema {
-
-  private final String name;
-  private final Set<AbstractField> fields;
-  private final boolean allowAdditionalFields;
+public class Schema extends SchemaObject {
 
   public Schema(String name, Set<AbstractField> fields, boolean allowAdditionalFields) {
-    this.name = name;
-    this.fields = fields;
-    this.allowAdditionalFields = allowAdditionalFields;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public Set<AbstractField> getFields() {
-    return fields;
-  }
-
-  public boolean isAllowAdditionalFields() {
-    return allowAdditionalFields;
+    super(name, allowAdditionalFields, fields);
   }
 
   public static Builder newSchema(String name) {

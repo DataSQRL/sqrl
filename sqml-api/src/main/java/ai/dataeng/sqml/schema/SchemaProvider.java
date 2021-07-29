@@ -10,7 +10,7 @@ public class SchemaProvider {
     this.schemas = schemas;
   }
 
-  public Schema getSchema(String name) {
+  public Schema get(String name) {
     return schemas.get(name);
   }
 

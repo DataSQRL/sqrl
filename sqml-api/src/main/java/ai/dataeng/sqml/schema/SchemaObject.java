@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.schema;
 
+import java.util.Optional;
 import java.util.Set;
 
 public class SchemaObject extends AbstractField {
@@ -29,5 +30,15 @@ public class SchemaObject extends AbstractField {
 
   public Set<AbstractField> getFields() {
     return fields;
+  }
+
+  public Optional<AbstractField> getField(String name) {
+    for (AbstractField field : fields) {
+      if (field.getName().equalsIgnoreCase(name)) {
+        return Optional.of(field);
+      }
+    }
+
+    return Optional.empty();
   }
 }

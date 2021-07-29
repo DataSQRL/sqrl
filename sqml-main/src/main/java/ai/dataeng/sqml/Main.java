@@ -23,6 +23,7 @@ import ai.dataeng.sqml.statistics.StaticStatisticsProvider;
 import ai.dataeng.sqml.statistics.StatisticsProvider;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.SqmlType;
+import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
 import ai.dataeng.sqml.vertex.Edge;
 import ai.dataeng.sqml.vertex.PostgresViewVertexFactory;
 import graphql.schema.GraphQLSchema;
@@ -56,12 +57,12 @@ public class Main {
             .query("meetup", gqlParser.parse("queries")))
       .statisticsProvider(
           StaticStatisticsProvider.newStatisticsProvider()
-            .addColumn(QualifiedName.of("Rsvp", "venue", "name"), SqmlType.STRING)
+//            .addColumn(QualifiedName.of("Rsvp", "venue", "name"), new StringSqmlType())
       )
       .schemaProvider(
           SchemaProvider.newSchemaProvider()
-            .addSchema("meetup",
-              Schema.newSchema("Rsvp")
+            .addSchema("rsvp",
+              Schema.newSchema("rsvp")
                 .object("venue")
                 .field(SchemaField.newString("venue_name"))
                 .field(SchemaField.newString("lat"))
@@ -78,41 +79,41 @@ public class Main {
                 PostgresViewVertexFactory.newSqlVertexFactory().build())
       )
       .build("meetup");
+//
+//    PostgresSqmlMigration sqmlMigration = PostgresSqmlMigration.newSqmlMigration()
+//        .dag(dag)
+//        .session(connect())
+//        .build();
+//
+//    sqmlMigration.migrate();
+//
+//    SqmlRuntime runtime = SqmlRuntime.builder()
+//      .dag(dag)
+//      .executionStrategy(
+//        LocalExecutionStrategy.newExecutionStrategy())
+//      .build();
+//
+//    meetupIngres.getListeners().add(new Edge());
+//
+//    runtime.start();
 
-    PostgresSqmlMigration sqmlMigration = PostgresSqmlMigration.newSqmlMigration()
-        .dag(dag)
-        .session(connect())
-        .build();
-
-    sqmlMigration.migrate();
-
-    SqmlRuntime runtime = SqmlRuntime.builder()
-      .dag(dag)
-      .executionStrategy(
-        LocalExecutionStrategy.newExecutionStrategy())
-      .build();
-
-    meetupIngres.getListeners().add(new Edge());
-
-    runtime.start();
-
-    ExecutionResult result = runtime.execute("get");
+//    ExecutionResult result = runtime.execute("get");
 
     GraphQLSchema graphqlSchema = GraphqlSchemaBuilder
         .newGraphqlSchema()
         .dag(dag)
         .build();
-
-    GraphqlServlet gqlServlet = GraphqlServlet.newGraphqlServlet()
-      .port(8080)
-      .runtime(runtime)
-      .schema(graphqlSchema)
-      .dag(dag)
-      .build();
-
-    while(true) {
-      Thread.sleep(1000);
-    }
+//
+//    GraphqlServlet gqlServlet = GraphqlServlet.newGraphqlServlet()
+//      .port(8080)
+//      .runtime(runtime)
+//      .schema(graphqlSchema)
+//      .dag(dag)
+//      .build();
+//
+//    while(true) {
+//      Thread.sleep(1000);
+//    }
   }
 
   public static Connection connect() {

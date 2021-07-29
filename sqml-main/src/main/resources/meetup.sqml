@@ -1,4 +1,66 @@
-IMPORT SOURCE meetup;
+Exercise.userid := userid;
+Membership.userid := userid;
+User.userid := userid;
 
-Rsvp.venue.id_mult := venue_id * 2;
-Rsvp.sum_id := sum(venue.venue_id);
+Challenges.week := time.roundToWeek(time.parse(week_of))
+
+CREATE RELATIONSHIP Membership.team JOIN Team ON Membership.teamid = Team.teamid INVERSE members;
+
+
+User.exercises := JOIN Exercise ON Exercise.userid = User.userid;
+User.memberships := JOIN Membership ON Membership.userid = User.userid;
+User.team := SELECT team FROM @.memberships ORDER BY joinedAt DESC LIMIT 1;
+
+User.weeklyStats := SELECT time.roundToWeek(e.timestamp, @.timezone) AS week, e.type,
+                           SUM(e.distance ? 0) AS totaldistance,
+                           SUM(e.repetitions ? 0) AS totalrepetitions
+                    FROM @.exercises AS e
+                    GROUP BY week, type ORDER BY week DESC;
+
+User.monthlyStats := SELECT time.roundToMonth(w.week) AS month, w.type,
+                           SUM(w.totaldistance) AS totaldistance,
+                           SUM(w.totalrepetitions) AS totalrepetitions
+                    FROM @.exercises AS w
+                    GROUP BY month, type ORDER BY month DESC;
+
+Team.exercises := SELECT e.timestamp, e.userid, e.type, time.roundToWeek(e.timestamp, u.timezone) AS week,
+                    e.distance ? 0 AS distance, e.repetitions ? 0 AS repetitions
+                  FROM @.members AS m JOIN Exercise AS e ON m.userid=e.userid
+                    JOIN User u ON m.userid=u.userid
+                  WHERE e.timestamp>=m.joinedAt AND (m.leftAt IS NULL OR e.timestamp<m.leftAt)
+
+Team.exercises.user := JOIN User ON User.userid=Team.exercises.userid;
+
+Team.weeklyStats := SELECT week, type,
+                           SUM(distance) AS totaldistance,
+                           SUM(repetitions) AS totalrepetitions
+                    FROM @.exercises
+                    GROUP BY week, type ORDER BY week DESC;
+
+Team._goalProgress := SELECT w.week, w.type, w.totaldistance ? 0, w.totalrepetitions ? 0,
+                                g.distance AS goaldistance, g.repetitions AS goalrepetitions
+                          FROM @._weeklyStats w
+                          RIGHT JOIN Challenges.goals g ON w.type = g.type AND w.week=g.parent.week
+                          ORDER BY w.week DESC;
+
+Team._goalProgress.percentage:= (MAX(totaldistance/goaldistance ? 1.0, 1.0) + MAX(totalrepetitions/goalrepetitions ? 1.0, 1.0)) / 2.0;
+Team._goalProgress.completed := math.floor(percentage);
+
+Team.challenges := SELECT week, AVG(percentage) AS percentage, col.multiply(completed) AS completed
+                   FROM @._goalProgress
+                   GROUP BY week ORDER BY week DESC;
+Team.challenges.challenge := JOIN Challenges ON Team.challenges.week = Challenges.week LIMIT 1;
+Team.challenges.points := completed * challenge.points;
+
+Team.totalpoints := SELECT SUM(points) FROM @.challenges;
+
+Region := SELECT DISTINCT region AS name FROM Team;
+Region.teams := JOIN Team on Team.region=Region.name;
+Region.challenges := SELECT week, SUM(completed) AS totalcomplete, AVG(percentage) AS avgpercentage,
+                            COUNT(*) AS num, SUM(points) AS totalpoints
+                     FROM @.teams.challenges
+                     GROUP BY week ORDER BY week DESC;
+
+RegionLeaderboard := SELECT week, parent AS region, totalpoints
+                     FROM Region.challenges
+                     ORDER BY week DESC, totalpoints DESC;

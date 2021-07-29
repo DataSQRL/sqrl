@@ -43,6 +43,11 @@ public class QuerySpecification
       Optional<String> limit) {
     this(Optional.of(location), select, from, where, groupBy, having, orderBy, limit);
   }
+  public QuerySpecification(
+      Select select
+     ) {
+    this(Optional.empty(), select, Optional.empty(),Optional.empty(),Optional.empty(),Optional.empty(),Optional.empty(),Optional.empty());
+  }
 
   private QuerySpecification(
       Optional<NodeLocation> location,
