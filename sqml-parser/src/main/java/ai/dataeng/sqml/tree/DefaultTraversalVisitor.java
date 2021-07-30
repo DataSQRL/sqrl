@@ -338,12 +338,4 @@ public abstract class DefaultTraversalVisitor<R, C>
 
     return null;
   }
-
-  @Override
-  public R visitRelationshipAssignment(RelationshipAssignment relationshipAssignment, C context) {
-    process(relationshipAssignment.getJoin(), context);
-
-    return null;
-  }
-
 }

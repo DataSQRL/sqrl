@@ -1,5 +1,7 @@
 package ai.dataeng.sqml.type;
 
+import ai.dataeng.sqml.tree.Expression;
+import ai.dataeng.sqml.tree.Query;
 import java.util.Objects;
 
 public abstract class SqmlType {
@@ -18,7 +20,7 @@ public abstract class SqmlType {
       super("STRING");
     }
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-      return visitor.visit(this, context);
+      return visitor.visitString(this, context);
     }
   }
 
@@ -34,7 +36,7 @@ public abstract class SqmlType {
       super("FLOAT");
     }
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-      return visitor.visit(this, context);
+      return visitor.visitFloat(this, context);
     }
   }
   public static class BooleanSqmlType extends NumberSqmlType {
@@ -42,7 +44,7 @@ public abstract class SqmlType {
       super("BOOLEAN");
     }
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-      return visitor.visit(this, context);
+      return visitor.visitBoolean(this, context);
     }
   }
 
@@ -51,10 +53,9 @@ public abstract class SqmlType {
       super("Integer");
     }
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-      return visitor.visit(this, context);
+      return visitor.visitInteger(this, context);
     }
   }
-
 
   public static class ArraySqmlType extends SqmlType {
 
@@ -65,7 +66,7 @@ public abstract class SqmlType {
       this.subType = subType;
     }
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-      return visitor.visit(this, context);
+      return visitor.visitArray(this, context);
     }
 
     public SqmlType getSubType() {
@@ -90,6 +91,23 @@ public abstract class SqmlType {
     }
   }
 
+  public static class RelationSqmlType extends SqmlType {
+
+    private final Expression expression;
+
+    public RelationSqmlType(Expression expression) {
+      super("RELATION");
+
+      this.expression = expression;
+    }
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+      return visitor.visitRelation(this, context);
+    }
+
+    public Expression getExpression() {
+      return expression;
+    }
+  }
   @Override
   public boolean equals(Object o) {
     if (this == o) {

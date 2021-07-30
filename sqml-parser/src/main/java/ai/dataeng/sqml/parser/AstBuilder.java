@@ -969,7 +969,7 @@ class AstBuilder
             getQualifiedName(ctx.table),
             ctx.identifier() == null ? Optional.empty() :
                 Optional.of((Identifier)visit(ctx.identifier())),
-            (Expression)visit(ctx.expression()),
+            (ctx.expression() != null) ? (Expression)visit(ctx.expression()) : null,
             ctx.inv == null ? Optional.empty() :
                 Optional.of(getQualifiedName(ctx.inv)),
             ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :

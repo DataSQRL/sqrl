@@ -16,6 +16,9 @@ package ai.dataeng.sqml.tree;
 import ai.dataeng.sqml.parser.CreateRelationship;
 import javax.annotation.Nullable;
 
+/**
+ * Concrete elements delegate to its closest abstract parent
+ */
 public abstract class AstVisitor<R, C> {
 
   public R process(Node node) {
@@ -303,16 +306,13 @@ public abstract class AstVisitor<R, C> {
   }
 
   public R visitExpressionAssignment(ExpressionAssignment node, C context) {
-    return visitNode(node, context);
+    return visitAssignment(node, context);
   }
   public R visitQueryAssignment(QueryAssignment node, C context) {
-    return visitNode(node, context);
-  }
-  public R visitRelationshipAssignment(RelationshipAssignment node, C context) {
-    return visitNode(node, context);
+    return visitAssignment(node, context);
   }
   public R visitIsEmpty(IsEmpty node, C context) {
-    return visitNode(node, context);
+    return visitExpression(node, context);
   }
   public R visitJoinSubexpression(JoinSubexpression node, C context) {
     return visitExpression(node, context);

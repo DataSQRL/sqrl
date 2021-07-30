@@ -359,12 +359,6 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  public String visitRelationshipAssignment(RelationshipAssignment relationshipAssignment,
-      Void context) {
-    return relationshipAssignment.getJoin().accept(this, null);
-  }
-
-  @Override
   public String visitIsEmpty(IsEmpty isEmpty, Void context) {
     return "IS " + (isEmpty.isNotEmpty() ? "" : "NOT ") + "EMPTY";
   }

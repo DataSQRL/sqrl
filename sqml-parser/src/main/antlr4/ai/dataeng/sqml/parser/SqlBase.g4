@@ -39,8 +39,8 @@ importAlias
     ;
 
 assignment
-    : query                                                        # queryAssign
-    | expression                                                   # expressionAssign
+    :  expression                                                   # expressionAssign
+    |  query                                                        # queryAssign
     ;
 
 subscriptionType
@@ -49,9 +49,10 @@ subscriptionType
 
 joinSubexpression
     : JOIN table=qualifiedName (AS? identifier)?
-      ON expression
-      (INVERSE inv=qualifiedName)?
+      (ON expression)? //todo: order can be optional
+      (ORDER BY sortItem (',' sortItem)*)?
       (LIMIT limit=(INTEGER_VALUE | ALL))?
+      (INVERSE inv=qualifiedName)?
       (joinSubexpression)?
     ;
 
@@ -151,7 +152,8 @@ expression
     ;
 
 booleanExpression
-    : valueExpression predicate[$valueExpression.ctx]?             #predicated
+//todo: added AS identifier as a hack. need to evaluate further
+    : valueExpression predicate[$valueExpression.ctx]? (AS? identifier)?     #predicated
     | NOT booleanExpression                                        #logicalNot
     | left=booleanExpression operator=AND right=booleanExpression  #logicalBinary
     | left=booleanExpression operator=OR right=booleanExpression   #logicalBinary
@@ -190,7 +192,7 @@ primaryExpression
     | '?'                                                                                 #parameter
     | '(' expression (',' expression)+ ')'                                                #rowConstructor
     | qualifiedName '(' ASTERISK ')'                                                      #functionCall
-    | qualifiedName '(' (expression (',' expression)*)? ')'                               #functionCall
+    | qualifiedName '(' (setQuantifier? expression (',' expression)*)? ')'                #functionCall //todo: add distinct to fnc
     | '(' query ')'                                                                       #subqueryExpression
     // This is an extension to ANSI SQL, which considers EXISTS to be a <boolean expression>
     | EXISTS '(' query ')'                                                                #exists
