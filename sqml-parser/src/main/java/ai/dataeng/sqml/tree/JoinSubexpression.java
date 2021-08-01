@@ -5,15 +5,15 @@ import java.util.Optional;
 
 public class JoinSubexpression extends Expression {
 
-  private final TraversalJoin join;
+  private final InlineJoin join;
 
   public JoinSubexpression(Optional<NodeLocation> location,
-      TraversalJoin join) {
+      InlineJoin join) {
     super(location);
     this.join = join;
   }
 
-  public TraversalJoin getJoin() {
+  public InlineJoin getJoin() {
     return join;
   }
 

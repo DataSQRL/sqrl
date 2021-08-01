@@ -28,7 +28,7 @@ singleStatement
 
 statement
     : query                                                            #statementDefault
-    | CREATE RELATIONSHIP qualifiedName joinSubexpression              #createRelationship
+    | CREATE RELATIONSHIP qualifiedName inlineJoin              #createRelationship
     | CREATE SUBSCRIPTION qualifiedName ON subscriptionType AS query   #createSubscription
     | IMPORT importType=(FUNCTION | SOURCE | PUBLIC)? qualifiedName importAlias?     #importStatement
     | qualifiedName ':=' assignment                                    #assign
@@ -47,13 +47,13 @@ subscriptionType
     : ADD
     ;
 
-joinSubexpression
+inlineJoin
     : JOIN table=qualifiedName (AS? identifier)?
       (ON expression)? //todo: order can be optional
       (ORDER BY sortItem (',' sortItem)*)?
       (LIMIT limit=(INTEGER_VALUE | ALL))?
       (INVERSE inv=qualifiedName)?
-      (joinSubexpression)?
+      (inlineJoin)?
     ;
 
 query
@@ -182,7 +182,7 @@ valueExpression
 
 primaryExpression
     : NULL                                                                                #nullLiteral
-    | joinSubexpression                                                                   #joinSubexpr
+    | inlineJoin                                                                          #inlineJoinExpr
     | interval                                                                            #intervalLiteral
     | identifier string                                                                   #typeConstructor
     | number                                                                              #numericLiteral

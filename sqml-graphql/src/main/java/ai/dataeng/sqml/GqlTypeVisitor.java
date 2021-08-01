@@ -72,6 +72,6 @@ public class GqlTypeVisitor extends SqmlTypeVisitor<GraphQLOutputType, Context> 
   @Override
   public GraphQLOutputType visitRelation(RelationSqmlType type, Context context) {
     return (GraphQLOutputType)type.getExpression().accept(parent,
-        context.newContextWithAppendedName(type.getName()));
+        context);
   }
 }

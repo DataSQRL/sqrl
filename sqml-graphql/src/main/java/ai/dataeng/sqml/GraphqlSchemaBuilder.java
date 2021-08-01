@@ -5,7 +5,6 @@ import ai.dataeng.sqml.dag.Dag;
 import ai.dataeng.sqml.tree.Assign;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Except;
-import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.JoinSubexpression;
@@ -13,7 +12,7 @@ import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.tree.TraversalJoin;
+import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.type.SqmlType;
 import graphql.Scalars;
@@ -178,12 +177,12 @@ public class GraphqlSchemaBuilder {
     }
 
     @Override
-    public Object visitTraversalJoin(TraversalJoin node, Context context) {
+    public Object visitInlineJoin(InlineJoin node, Context context) {
       //Assure that a table type exists
-      getOrCreateObjectPath(node.getTable());
+      GraphQLObjectType.Builder parent = getOrCreateObjectPath(node.getTable());
 
       if (node.getInverse().isPresent()) {
-        GraphQLObjectType.Builder parent = getOrCreateObjectPath(node.getTable());
+        getOrCreateObjectPath(context.getName().getPrefix().get());
         parent.field(
             GraphQLFieldDefinition.newFieldDefinition()
                 .name(toName(node.getInverse().get().getParts()))
@@ -195,13 +194,6 @@ public class GraphqlSchemaBuilder {
       }
 
       GraphQLTypeReference type = GraphQLTypeReference.typeRef(toName(node.getTable().getParts()));
-      GraphQLObjectType.Builder obj = getOrCreateObjectPath(context.getName());
-      GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
-          .name(toName(context.getName().getParts()))
-          .type(GraphQLList.list(type))
-          .arguments(buildRelationArguments())
-          .build();
-      obj.field(f);
       return GraphQLList.list(type);
     }
 

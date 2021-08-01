@@ -313,7 +313,7 @@ public abstract class AstVisitor<R, C> {
     return visitNode(node, context);
   }
 
-  public R visitTraversalJoin(TraversalJoin node, C context) {
+  public R visitInlineJoin(InlineJoin node, C context) {
     return visitNode(node, context);
   }
 

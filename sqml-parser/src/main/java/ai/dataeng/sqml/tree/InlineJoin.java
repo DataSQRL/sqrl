@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class TraversalJoin
+public class InlineJoin
     extends Relation {
 
   private final QualifiedName table;
@@ -27,7 +27,7 @@ public class TraversalJoin
   private final Optional<QualifiedName> inverse;
   private final Optional<Integer> limit;
 
-  public TraversalJoin(Optional<NodeLocation> location, QualifiedName table,
+  public InlineJoin(Optional<NodeLocation> location, QualifiedName table,
       Optional<Identifier> alias, Expression on, Optional<QualifiedName> inverse,
       Optional<Integer> limit) {
     super(location);
@@ -60,7 +60,7 @@ public class TraversalJoin
 
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
-    return visitor.visitTraversalJoin(this, context);
+    return visitor.visitInlineJoin(this, context);
   }
 
   @Override
@@ -77,7 +77,7 @@ public class TraversalJoin
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TraversalJoin that = (TraversalJoin) o;
+    InlineJoin that = (InlineJoin) o;
     return Objects.equals(table, that.table) && Objects.equals(alias, that.alias)
         && Objects.equals(on, that.on) && Objects.equals(inverse, that.inverse)
         && Objects.equals(limit, that.limit);

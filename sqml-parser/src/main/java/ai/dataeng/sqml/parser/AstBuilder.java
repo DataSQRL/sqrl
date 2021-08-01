@@ -85,7 +85,7 @@ import ai.dataeng.sqml.tree.Table;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.TimeLiteral;
 import ai.dataeng.sqml.tree.TimestampLiteral;
-import ai.dataeng.sqml.tree.TraversalJoin;
+import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.tree.WhenClause;
 import com.google.common.collect.ImmutableList;
@@ -950,10 +950,10 @@ class AstBuilder
   }
 
   @Override
-  public Node visitJoinSubexpression(JoinSubexpressionContext ctx) {
+  public Node visitInlineJoin(InlineJoinContext ctx) {
     return new JoinSubexpression(
         Optional.of(getLocation(ctx)),
-        new TraversalJoin(
+        new InlineJoin(
             Optional.of(getLocation(ctx)),
             getQualifiedName(ctx.table),
             ctx.identifier() == null ? Optional.empty() :
@@ -981,7 +981,7 @@ class AstBuilder
 
   @Override
   public Node visitCreateRelationship(CreateRelationshipContext ctx) {
-    JoinSubexpressionContext rctx = ctx.joinSubexpression();
+    InlineJoinContext rctx = ctx.inlineJoin();
     return new CreateRelationship(
         Optional.of(getLocation(ctx)),
         getQualifiedName(ctx.qualifiedName()),
@@ -1046,8 +1046,8 @@ class AstBuilder
   }
 
   @Override
-  public Node visitJoinSubexpr(JoinSubexprContext ctx) {
-    return visit(ctx.joinSubexpression());
+  public Node visitInlineJoinExpr(InlineJoinExprContext ctx) {
+    return visit(ctx.inlineJoin());
   }
 
   private <T> Optional<T> visitIfPresent(ParserRuleContext context, Class<T> clazz) {

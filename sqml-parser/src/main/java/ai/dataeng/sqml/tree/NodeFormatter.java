@@ -374,7 +374,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  public String visitTraversalJoin(TraversalJoin node, Void context) {
+  public String visitInlineJoin(InlineJoin node, Void context) {
     return "JOIN " +node.getTable() + node.getAlias().map(a->" AS " + a.accept(this, null)).orElse("")  +
         " ON " + node.getCriteria() +
         node.getInverse().map(i->" INVERSE " + i).orElse("") +
