@@ -1,18 +1,39 @@
 package ai.dataeng.sqml;
 
+import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.ArraySqmlType;
 import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
-import ai.dataeng.sqml.type.SqmlType.FloatSqmlType;
-import ai.dataeng.sqml.type.SqmlType.IntegerSqmlType;
+import ai.dataeng.sqml.type.SqmlType.DateTimeSqmlType;
+import ai.dataeng.sqml.type.SqmlType.NullSqmlType;
+import ai.dataeng.sqml.type.SqmlType.NumberSqmlType;
+import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
 import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
+import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
-import graphql.Scalars;
 import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLOutputType;
 import java.util.List;
 
 public class GqlTypeArgumentVisitor extends SqmlTypeVisitor<List<GraphQLArgument>, Object> {
+
+  @Override
+  public List<GraphQLArgument> visitSqmlType(SqmlType type, Object context) {
+    throw new RuntimeException(String.format("Could not find type %s", type));
+  }
+
+  @Override
+  public List<GraphQLArgument> visitUnknown(UnknownSqmlType type, Object context) {
+    return List.of();
+  }
+
+  @Override
+  public List<GraphQLArgument> visitDateTime(DateTimeSqmlType type, Object context) {
+    return List.of();
+  }
+
+  @Override
+  public List<GraphQLArgument> visitNull(NullSqmlType type, Object context) {
+    return List.of();
+  }
 
   @Override
   public List<GraphQLArgument> visitArray(ArraySqmlType type, Object context) {
@@ -20,12 +41,7 @@ public class GqlTypeArgumentVisitor extends SqmlTypeVisitor<List<GraphQLArgument
   }
 
   @Override
-  public List<GraphQLArgument> visitFloat(FloatSqmlType type, Object context) {
-    return List.of();
-  }
-
-  @Override
-  public List<GraphQLArgument> visitInteger(IntegerSqmlType type, Object context) {
+  public List<GraphQLArgument> visitNumber(NumberSqmlType numberSqmlType, Object context) {
     return List.of();
   }
 
@@ -36,6 +52,11 @@ public class GqlTypeArgumentVisitor extends SqmlTypeVisitor<List<GraphQLArgument
 
   @Override
   public List<GraphQLArgument> visitBoolean(BooleanSqmlType type, Object context) {
+    return List.of();
+  }
+
+  @Override
+  public List<GraphQLArgument> visitRelation(RelationSqmlType type, Object context) {
     return List.of();
   }
 }

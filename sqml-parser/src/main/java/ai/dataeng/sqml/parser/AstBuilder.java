@@ -25,10 +25,8 @@ import ai.dataeng.sqml.tree.ArithmeticUnaryExpression;
 import ai.dataeng.sqml.tree.Assign;
 import ai.dataeng.sqml.tree.Assignment;
 import ai.dataeng.sqml.tree.BetweenPredicate;
-import ai.dataeng.sqml.tree.BinaryLiteral;
 import ai.dataeng.sqml.tree.BooleanLiteral;
 import ai.dataeng.sqml.tree.Cast;
-import ai.dataeng.sqml.tree.CharLiteral;
 import ai.dataeng.sqml.tree.ComparisonExpression;
 import ai.dataeng.sqml.tree.CreateSubscription;
 import ai.dataeng.sqml.tree.DecimalLiteral;
@@ -848,12 +846,6 @@ class AstBuilder
   }
 
   @Override
-  public Node visitBinaryLiteral(SqlBaseParser.BinaryLiteralContext context) {
-    String raw = context.BINARY_LITERAL().getText();
-    return new BinaryLiteral(getLocation(context), unquote(raw.substring(1)));
-  }
-
-  @Override
   public Node visitTypeConstructor(SqlBaseParser.TypeConstructorContext context) {
     String value = ((StringLiteral) visit(context.string())).getValue();
 
@@ -866,9 +858,6 @@ class AstBuilder
     }
     if (type.equalsIgnoreCase("decimal")) {
       return new DecimalLiteral(getLocation(context), value);
-    }
-    if (type.equalsIgnoreCase("char")) {
-      return new CharLiteral(getLocation(context), value);
     }
 
     return new GenericLiteral(getLocation(context), type, value);

@@ -1,14 +1,13 @@
 package ai.dataeng.sqml.function;
 
 import ai.dataeng.sqml.type.SqmlType;
-import ai.dataeng.sqml.type.Type;
 
 public class TypeSignature {
 
   private final String name;
-  private final Type type;
+  private final SqmlType type;
 
-  public TypeSignature(String name, Type type) {
+  public TypeSignature(String name, SqmlType type) {
     this.name = name;
     this.type = type;
   }
@@ -17,7 +16,7 @@ public class TypeSignature {
     return name;
   }
 
-  public Type getType() {
+  public SqmlType getType() {
     return type;
   }
 }

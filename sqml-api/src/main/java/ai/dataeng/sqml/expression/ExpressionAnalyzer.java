@@ -1,15 +1,13 @@
 package ai.dataeng.sqml.expression;
 
-import ai.dataeng.sqml.ResolvedField;
 import ai.dataeng.sqml.analyzer.Scope;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.function.TypeSignature;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.tree.ArithmeticBinaryExpression;
-import ai.dataeng.sqml.tree.ArithmeticBinaryExpression.Operator;
-import ai.dataeng.sqml.tree.BinaryLiteral;
+import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.BooleanLiteral;
-import ai.dataeng.sqml.tree.CharLiteral;
+import ai.dataeng.sqml.tree.ComparisonExpression;
 import ai.dataeng.sqml.tree.DecimalLiteral;
 import ai.dataeng.sqml.tree.DefaultTraversalVisitor;
 import ai.dataeng.sqml.tree.DoubleLiteral;
@@ -17,21 +15,22 @@ import ai.dataeng.sqml.tree.EnumLiteral;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GenericLiteral;
-import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.IntervalLiteral;
+import ai.dataeng.sqml.tree.JoinSubexpression;
 import ai.dataeng.sqml.tree.LongLiteral;
+import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NullLiteral;
-import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.StringLiteral;
 import ai.dataeng.sqml.tree.TimestampLiteral;
-import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.Type.BooleanType;
-import ai.dataeng.sqml.type.Type.DateType;
-import ai.dataeng.sqml.type.Type.NullType;
-import ai.dataeng.sqml.type.Type.NumberType;
-import ai.dataeng.sqml.type.Type.StringType;
-import ai.dataeng.sqml.type.Type.UnknownType;
+import ai.dataeng.sqml.type.SqmlType;
+import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
+import ai.dataeng.sqml.type.SqmlType.DateTimeSqmlType;
+import ai.dataeng.sqml.type.SqmlType.NullSqmlType;
+import ai.dataeng.sqml.type.SqmlType.NumberSqmlType;
+import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
+import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
+import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
+import java.util.Optional;
 
 public class ExpressionAnalyzer {
   private final Metadata metadata;
@@ -41,9 +40,10 @@ public class ExpressionAnalyzer {
   }
 
   public ExpressionAnalysis analyze(Expression node, Scope scope) {
-    TypeVisitor typeVisitor = new TypeVisitor();
+    ExpressionAnalysis analysis = new ExpressionAnalysis();
+    TypeVisitor typeVisitor = new TypeVisitor(analysis);
     node.accept(typeVisitor, new Context(scope));
-    return null;
+    return analysis;
   }
 
   private static class Context {
@@ -58,97 +58,98 @@ public class ExpressionAnalyzer {
     }
   }
 
-  class TypeVisitor extends DefaultTraversalVisitor<Type, Context> {
+  class TypeVisitor extends AstVisitor<SqmlType, Context> {
+    private final ExpressionAnalysis analysis;
 
-    @Override
-    protected Type visitExpression(Expression node, Context context) {
-      throw new RuntimeException(String.format("Expression needs type inference: %s", node.getClass().getName()));
+    public TypeVisitor(ExpressionAnalysis analysis) {
+      this.analysis = analysis;
     }
 
     @Override
-    protected Type visitIdentifier(Identifier node, Context context) {
-      ResolvedField field = context.getScope().resolveField(node, QualifiedName.of(node.getValue()));
-
-      return null;//field.getType();
+    protected SqmlType visitExpression(Expression node, Context context) {
+      throw new RuntimeException(String.format("Expression needs type inference: %s. %s", 
+          node.getClass().getName(), node.toString()));
     }
 
     @Override
-    protected Type visitArithmeticBinary(ArithmeticBinaryExpression node, Context context) {
-      Type leftType = node.getLeft().accept(this, context);
-      Type rightType = node.getRight().accept(this, context);
-      if (leftType instanceof StringType || rightType instanceof StringType) {
-        return new StringType();
+    protected SqmlType visitComparisonExpression(ComparisonExpression node, Context context) {
+      return addType(node, new BooleanSqmlType());
+    }
+
+    @Override
+    public SqmlType visitJoinSubexpression(JoinSubexpression node, Context context) {
+      return addType(node, new RelationSqmlType(node));
+    }
+
+    private SqmlType addType(Node node, SqmlType type) {
+      analysis.addType(node, type);
+      return type;
+    }
+
+    @Override
+    protected SqmlType visitArithmeticBinary(ArithmeticBinaryExpression node, Context context) {
+      return addType(node, new NumberSqmlType());
+    }
+
+    @Override
+    protected SqmlType visitFunctionCall(FunctionCall node, Context context) {
+      Optional<SqmlFunction> function = metadata.getFunctionProvider().resolve(node.getName());
+      if (function.isEmpty()) {
+        throw new RuntimeException(String.format("Could not find function %s", node.getName()));
       }
+      TypeSignature typeSignature = function.get().getTypeSignature();
 
-      return new NumberType();
+      return addType(node, typeSignature.getType());
     }
 
     @Override
-    protected Type visitFunctionCall(FunctionCall node, Context context) {
-      SqmlFunction function = metadata.getFunctionProvider().resolve(node.getName());
-      TypeSignature typeSignature = function.getTypeSignature();
-
-      return typeSignature.getType();
+    protected SqmlType visitDoubleLiteral(DoubleLiteral node, Context context) {
+      return addType(node, new NumberSqmlType());
     }
 
     @Override
-    protected Type visitDoubleLiteral(DoubleLiteral node, Context context) {
-      return new NumberType();
+    protected SqmlType visitDecimalLiteral(DecimalLiteral node, Context context) {
+      return addType(node, new NumberSqmlType());
     }
 
     @Override
-    protected Type visitDecimalLiteral(DecimalLiteral node, Context context) {
-      return new NumberType();
+    protected SqmlType visitGenericLiteral(GenericLiteral node, Context context) {
+      return addType(node, new UnknownSqmlType());
     }
 
     @Override
-    protected Type visitGenericLiteral(GenericLiteral node, Context context) {
-      return new UnknownType();
+    protected SqmlType visitTimestampLiteral(TimestampLiteral node, Context context) {
+      return addType(node, new DateTimeSqmlType());
     }
 
     @Override
-    protected Type visitTimestampLiteral(TimestampLiteral node, Context context) {
-      return new DateType();
+    protected SqmlType visitIntervalLiteral(IntervalLiteral node, Context context) {
+      return addType(node, new DateTimeSqmlType());
     }
 
     @Override
-    protected Type visitIntervalLiteral(IntervalLiteral node, Context context) {
-      return new DateType();
+    protected SqmlType visitStringLiteral(StringLiteral node, Context context) {
+      return new StringSqmlType();
     }
 
     @Override
-    protected Type visitStringLiteral(StringLiteral node, Context context) {
-      return new StringType();
+    protected SqmlType visitBooleanLiteral(BooleanLiteral node, Context context) {
+      return addType(node, new BooleanSqmlType());
     }
 
     @Override
-    protected Type visitCharLiteral(CharLiteral node, Context context) {
-      return new StringType();
+    protected SqmlType visitEnumLiteral(EnumLiteral node, Context context) {
+      return addType(node, new UnknownSqmlType());
     }
 
     @Override
-    protected Type visitBinaryLiteral(BinaryLiteral node, Context context) {
-      return new UnknownType();
+    protected SqmlType visitNullLiteral(NullLiteral node, Context context) {
+      return addType(node, new NullSqmlType());
     }
 
     @Override
-    protected Type visitBooleanLiteral(BooleanLiteral node, Context context) {
-      return new BooleanType();
-    }
-
-    @Override
-    protected Type visitEnumLiteral(EnumLiteral node, Context context) {
-      return new UnknownType();
-    }
-
-    @Override
-    protected Type visitNullLiteral(NullLiteral node, Context context) {
-      return new NullType();
-    }
-
-    @Override
-    protected Type visitLongLiteral(LongLiteral node, Context context) {
-      return new NumberType();
+    protected SqmlType visitLongLiteral(LongLiteral node, Context context) {
+      return addType(node, new NumberSqmlType());
     }
   }
 }

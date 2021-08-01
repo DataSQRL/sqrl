@@ -1,0 +1,3 @@
+
+Sensor.d := (JOIN x ON x=y) as f;
+Sensor.e := JOIN x ON x=y;

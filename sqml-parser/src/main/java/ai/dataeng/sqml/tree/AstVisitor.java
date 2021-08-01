@@ -153,14 +153,6 @@ public abstract class AstVisitor<R, C> {
     return visitLiteral(node, context);
   }
 
-  protected R visitCharLiteral(CharLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
-  protected R visitBinaryLiteral(BinaryLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
   protected R visitBooleanLiteral(BooleanLiteral node, C context) {
     return visitLiteral(node, context);
   }

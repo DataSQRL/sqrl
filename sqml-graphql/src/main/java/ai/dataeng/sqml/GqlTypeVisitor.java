@@ -5,10 +5,12 @@ import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.ArraySqmlType;
 import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
-import ai.dataeng.sqml.type.SqmlType.FloatSqmlType;
-import ai.dataeng.sqml.type.SqmlType.IntegerSqmlType;
+import ai.dataeng.sqml.type.SqmlType.DateTimeSqmlType;
+import ai.dataeng.sqml.type.SqmlType.NullSqmlType;
+import ai.dataeng.sqml.type.SqmlType.NumberSqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
 import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
+import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import graphql.Scalars;
 import graphql.schema.GraphQLList;
@@ -28,13 +30,23 @@ public class GqlTypeVisitor extends SqmlTypeVisitor<GraphQLOutputType, Context> 
   }
 
   @Override
-  public GraphQLOutputType visitFloat(FloatSqmlType type, Context context) {
+  public GraphQLOutputType visitNumber(NumberSqmlType type, Context context) {
     return Scalars.GraphQLFloat;
   }
 
   @Override
-  public GraphQLOutputType visitInteger(IntegerSqmlType type, Context context) {
-    return Scalars.GraphQLInt;
+  public GraphQLOutputType visitUnknown(UnknownSqmlType type, Context context) {
+    return Scalars.GraphQLString;
+  }
+
+  @Override
+  public GraphQLOutputType visitDateTime(DateTimeSqmlType type, Context context) {
+    return Scalars.GraphQLString;
+  }
+
+  @Override
+  public GraphQLOutputType visitNull(NullSqmlType type, Context context) {
+    return Scalars.GraphQLString;
   }
 
   @Override

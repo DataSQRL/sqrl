@@ -16,6 +16,7 @@ import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
 import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
+import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,31 +29,23 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Analysis {
+  private final Script script;
+  private Map<Expression, SqmlType> typeMap = new HashMap<>();
 
-  private final Map<QualifiedName, SqmlType> typeMap = new HashMap<>();
-  private final Script rewritten;
-  private final Map<Expression, ResolvedField> fieldMap = new HashMap<>();
-  private final Set<Expression> unionRules = new HashSet<>();
-
-  public Analysis(Script rewritten) {
-
-    this.rewritten = rewritten;
-  }
-
-  public Map<QualifiedName, SqmlType> getTypeMap() {
-    return typeMap;
-  }
-
-  public Script getRewrittenScript() {
-    return rewritten;
+  public Analysis(Script script) {
+    this.script = script;
   }
 
   public SqmlType getType(Expression expression) {
-    return new BooleanSqmlType();
+    SqmlType type = typeMap.get(expression);
+    if (type != null) {
+      return type;
+    }
+    return new UnknownSqmlType();
   }
 
-  public String getName(Node node) {
-    return "name" + Math.abs(new Random().nextInt());
+  public void setType(Expression expression, SqmlType type) {
+    typeMap.put(expression, type);
   }
 
   public List<ResolvedField> getFields(Node select) {
@@ -60,10 +53,6 @@ public class Analysis {
         new ResolvedField("testing_a", new StringSqmlType(), false),
         new ResolvedField("testing_b", new StringSqmlType(), false)
     );
-  }
-
-  public boolean followsUnionRules(Union node) {
-    return true;//unionRules.contains(node);
   }
 
   public QualifiedName getName(QualifiedName name) {

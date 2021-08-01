@@ -17,19 +17,11 @@ import java.util.Optional;
 public class Scope {
 
   private final QualifiedName path;
-  private final QuerySpecification rel;
   private final Optional<SqmlType> type;
 
-  public Scope(QualifiedName path, QuerySpecification rel) {
+  public Scope(QualifiedName path) {
     this.path = path;
-    this.rel = rel;
     this.type = Optional.empty();
-  }
-
-  public Scope(QualifiedName path, SqmlType type, QuerySpecification rel) {
-    this.path = path;
-    this.type = Optional.ofNullable(type);
-    this.rel = rel;
   }
 
   public QualifiedName getPath() {
@@ -94,7 +86,4 @@ public class Scope {
     return null;
   }
 
-  public QuerySpecification getRel() {
-    return rel;
-  }
 }

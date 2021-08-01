@@ -148,32 +148,18 @@ public class GraphqlSchemaBuilder {
     @Override
     public GraphQLOutputType visitExpressionAssignment(ExpressionAssignment expressionAssignment,
         Context context) {
-      AstVisitor that = this;
+      SqmlType expressionType = analysis.getType(expressionAssignment.getExpression());
+      Optional<Boolean> isNonNull = analysis.isNonNull(expressionAssignment.getExpression());
+      GraphQLOutputType type = asType(expressionType, isNonNull.isPresent(), context);
 
-      AstVisitor<GraphQLOutputType, Void> expressionVisitor = new AstVisitor<>() {
-        @Override
-        public GraphQLOutputType visitJoinSubexpression(JoinSubexpression node, Void innerContext) {
-          return (GraphQLOutputType)node.getJoin().accept(that, context);
-        }
-
-        @Override
-        protected GraphQLOutputType visitExpression(Expression node, Void innerContext) {
-          SqmlType expressionType = analysis.getType(expressionAssignment.getExpression());
-          Optional<Boolean> isNonNull = analysis.isNonNull(expressionAssignment.getExpression());
-          GraphQLOutputType type = asType(expressionType, isNonNull.isPresent());
-
-          GraphQLObjectType.Builder obj = getOrCreateObjectPath(prefixOrBase(context.getName()));
-          GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
-              .name(context.getName().getSuffix())
-              .type(type)
-              .arguments(expressionType.accept(argumentVisitor, context))
-              .build();
-          obj.field(f);
-          return type;
-        }
-      };
-
-      return expressionAssignment.getExpression().accept(expressionVisitor, null);
+      GraphQLObjectType.Builder obj = getOrCreateObjectPath(prefixOrBase(context.getName()));
+      GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
+          .name(context.getName().getSuffix())
+          .type(type)
+          .arguments(expressionType.accept(argumentVisitor, context))
+          .build();
+      obj.field(f);
+      return type;
     }
 
     @Override
@@ -212,17 +198,11 @@ public class GraphqlSchemaBuilder {
       GraphQLObjectType.Builder obj = getOrCreateObjectPath(context.getName());
       GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
           .name(toName(context.getName().getParts()))
-          .type(type)
+          .type(GraphQLList.list(type))
           .arguments(buildRelationArguments())
           .build();
       obj.field(f);
-      return type;
-//      if (node.getLimit().isPresent() && node.getLimit().get() == 1) {
-//        return createObjRelation(ref, context.getName().getSuffix(), context);
-//      } else {
-//        return createObjRelation(GraphQLList.list(ref),
-//            context.getName().getSuffix(), context);
-//      }
+      return GraphQLList.list(type);
     }
 
     @Override
@@ -242,7 +222,7 @@ public class GraphqlSchemaBuilder {
       for (ResolvedField resolvedField : analysis.getFields(node)) {
         GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
             .name(resolvedField.getName())
-            .type(asType(resolvedField.getType(), resolvedField.isNonNull()))
+            .type(asType(resolvedField.getType(), resolvedField.isNonNull(), context))
             .build();
         builder.field(field);
       }
@@ -325,8 +305,9 @@ public class GraphqlSchemaBuilder {
       return obj;
     }
 
-    private GraphQLOutputType asType(SqmlType type, boolean nonNull) {
-      GraphQLOutputType outputType = type.accept(new GqlTypeVisitor(this), null);
+    private GraphQLOutputType asType(SqmlType type, boolean nonNull,
+        Context context) {
+      GraphQLOutputType outputType = type.accept(new GqlTypeVisitor(this), context);
 
       return nonNull ? GraphQLNonNull.nonNull(outputType) : outputType;
     }

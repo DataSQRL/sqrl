@@ -188,7 +188,6 @@ primaryExpression
     | number                                                                              #numericLiteral
     | booleanValue                                                                        #booleanLiteral
     | string                                                                              #stringLiteral
-    | BINARY_LITERAL                                                                      #binaryLiteral
     | '?'                                                                                 #parameter
     | '(' expression (',' expression)+ ')'                                                #rowConstructor
     | qualifiedName '(' ASTERISK ')'                                                      #functionCall
@@ -521,13 +520,6 @@ STRING
 
 UNICODE_STRING
     : 'U&\'' ( ~'\'' | '\'\'' )* '\''
-    ;
-
-// Note: we allow any character inside the binary literal and validate
-// its a correct literal when the AST is being constructed. This
-// allows us to provide more meaningful error messages to the user
-BINARY_LITERAL
-    :  'X\'' (~'\'')* '\''
     ;
 
 INTEGER_VALUE

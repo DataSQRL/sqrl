@@ -156,16 +156,6 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitCharLiteral(CharLiteral node, Void context) {
-    return String.valueOf(node.getValue());
-  }
-
-  @Override
-  protected String visitBinaryLiteral(BinaryLiteral node, Void context) {
-    return String.valueOf(node.getValue());
-  }
-
-  @Override
   protected String visitEnumLiteral(EnumLiteral node, Void context) {
     return String.valueOf(node.getValue());
   }

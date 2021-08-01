@@ -3,6 +3,7 @@ package ai.dataeng.sqml.function;
 import ai.dataeng.sqml.tree.QualifiedName;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class FunctionProvider {
 
@@ -16,9 +17,13 @@ public class FunctionProvider {
     return new Builder();
   }
 
-  public SqmlFunction resolve(QualifiedName name) {
-
-    return null;
+  public Optional<SqmlFunction> resolve(QualifiedName name) {
+    for (SqmlFunction function : functions) {
+      if (function.getName().equals(name.toString())) {
+        return Optional.of(function);
+      }
+    }
+    return Optional.empty();
   }
 
   public static class Builder {
