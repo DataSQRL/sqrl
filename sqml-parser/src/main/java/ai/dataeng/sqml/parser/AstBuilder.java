@@ -932,19 +932,6 @@ class AstBuilder
   @Override
   public Node visitAssign(AssignContext context) {
     QualifiedName name = getQualifiedName(context.qualifiedName());
-//
-//    if (context.assignment() instanceof RelationAssignContext) {
-//      RelationAssignContext ctx = (RelationAssignContext)context.assignment();
-//      RelationshipJoinContext rctx = ctx.relationshipJoin();
-//      return new CreateRelationship(
-//          Optional.of(getLocation(ctx)),
-//          name,
-//          getQualifiedName(rctx.table),
-//          visit(rctx.expression()),
-//          getQualifiedNameIfPresent(rctx.inv),
-//          getTextIfPresent(rctx.limit)
-//      );
-//    }
 
     return new Assign(getLocation(context), name, (Assignment)visit(context.assignment()));
   }

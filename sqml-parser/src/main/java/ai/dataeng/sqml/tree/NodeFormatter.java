@@ -305,11 +305,6 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitGroupingSets(GroupingSets node, Void context) {
-    return "TBD";
-  }
-
-  @Override
   protected String visitSimpleGroupBy(SimpleGroupBy node, Void context) {
     return node.getExpressions().stream().map(e->e.accept(this, null)).collect(Collectors.joining(" "));
   }

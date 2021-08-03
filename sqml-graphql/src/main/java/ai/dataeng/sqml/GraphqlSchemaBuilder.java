@@ -5,6 +5,7 @@ import ai.dataeng.sqml.dag.Dag;
 import ai.dataeng.sqml.tree.Assign;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Except;
+import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.JoinSubexpression;
@@ -211,10 +212,10 @@ public class GraphqlSchemaBuilder {
     protected Object visitQuerySpecification(QuerySpecification node, Context context) {
       GraphQLObjectType.Builder builder = getOrCreateObjectPath(context.getName());
 
-      for (ResolvedField resolvedField : analysis.getFields(node)) {
+      for (Expression expression : analysis.getOutputExpressions(node)) {
         GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
-            .name(resolvedField.getName())
-            .type(asType(resolvedField.getType(), resolvedField.isNonNull(), context))
+            .name(analysis.getName(expression))
+            .type(asType(analysis.getType(expression), false, context))
             .build();
         builder.field(field);
       }

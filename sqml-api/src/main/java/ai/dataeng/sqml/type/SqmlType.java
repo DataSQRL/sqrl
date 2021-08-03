@@ -1,7 +1,16 @@
 package ai.dataeng.sqml.type;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import ai.dataeng.sqml.analyzer.Field;
 import ai.dataeng.sqml.tree.Expression;
+import ai.dataeng.sqml.tree.QualifiedName;
+import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public abstract class SqmlType {
   protected final String name;
@@ -109,21 +118,103 @@ public abstract class SqmlType {
 
 
   public static class RelationSqmlType extends SqmlType {
-
-    private final Expression expression;
+    private Expression expression;
+    private List<Field> fields;
 
     public RelationSqmlType(Expression expression) {
       super("RELATION");
-
       this.expression = expression;
     }
+
+    public RelationSqmlType(Field... fields) {
+      super("RELATION");
+      this.fields = new ArrayList<>(List.of(fields));
+    }
+
+    public RelationSqmlType(List<Field> fields) {
+      super("RELATION");
+      this.fields = fields;
+    }
+
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
       return visitor.visitRelation(this, context);
+    }
+
+    public List<Field> getFields() {
+      return fields;
     }
 
     public Expression getExpression() {
       return expression;
     }
+
+    public List<Field> resolveFields(QualifiedName name) {
+      //Todo: resolve scoped field: e.g. @.x
+      return fields.stream()
+          .filter(f->matches(f, name))
+          .collect(Collectors.toList());
+    }
+
+    public Optional<Field> resolveField(QualifiedName name) {
+      //todo: resolve fields via sqml logic
+      return fields.stream()
+          .filter(f->matches(f, name))
+          .findFirst();
+    }
+
+    private boolean matches(Field f, QualifiedName name) {
+      boolean matchesFieldName = f.getName().get().equalsIgnoreCase(name.getSuffix());
+      if (!matchesFieldName) {
+        return false;
+      }
+      //must match alias
+      if (f.getRelationAlias().isPresent()) {
+        if (name.getPrefix().isEmpty()) {
+          return false;
+        }
+
+        QualifiedName alias = f.getRelationAlias().get();
+        return alias.equals(name.getPrefix().get());
+      }
+
+      return false;
+    }
+
+    public void addField(Field field) {
+      this.fields.add(field);
+    }
+
+    public void setField(Field field) {
+      this.fields.add(field);
+    }
+
+    public RelationSqmlType join(RelationSqmlType right) {
+      List<Field> joinFields = new ArrayList<>();
+      joinFields.addAll(this.fields);
+      joinFields.addAll(right.getFields());
+
+      return new RelationSqmlType(joinFields);
+    }
+
+    public RelationSqmlType withAlias(String relationAlias) {
+
+      ImmutableList.Builder<Field> fieldsBuilder = ImmutableList.builder();
+      for (int i = 0; i < this.fields.size(); i++) {
+        Field field = this.fields.get(i);
+        Optional<String> columnAlias = field.getName();
+          fieldsBuilder.add(Field.newQualified(
+              QualifiedName.of(relationAlias),
+              columnAlias,
+              field.getType(),
+              field.isHidden(),
+              field.getOriginTable(),
+              field.getOriginColumnName(),
+              field.isAliased()));
+      }
+
+      return new RelationSqmlType(fieldsBuilder.build());
+    }
+
   }
   @Override
   public boolean equals(Object o) {

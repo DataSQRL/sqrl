@@ -306,11 +306,6 @@ public abstract class DefaultTraversalVisitor<R, C>
   }
 
   @Override
-  protected R visitGroupingSets(GroupingSets node, C context) {
-    return null;
-  }
-
-  @Override
   protected R visitQuantifiedComparisonExpression(QuantifiedComparisonExpression node, C context) {
     process(node.getValue(), context);
     process(node.getSubquery(), context);

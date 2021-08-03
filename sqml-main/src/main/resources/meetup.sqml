@@ -1,3 +1,6 @@
+Y.b := 'a';
+X.b := 1;
 
-Sensor.d := (JOIN x ON x=y) as f;
-Sensor.e := JOIN x ON x=y inverse y;
+Sensor.d := SELECT x.b as b1, y.b as b2
+  FROM x as x
+  JOIN Y as y ON 1=1;

@@ -23,6 +23,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,6 +54,11 @@ public class QualifiedName {
         .copyOf(transform(originalParts, part -> part.toLowerCase(ENGLISH)));
 
     return new QualifiedName(ImmutableList.copyOf(originalParts), parts);
+  }
+
+  public static QualifiedName of(Identifier node) {
+    String[] parts = node.getValue().split("\\.");
+    return of(Arrays.asList(parts));
   }
 
   public List<String> getParts() {

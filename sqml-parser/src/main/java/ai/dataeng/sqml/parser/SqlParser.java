@@ -142,18 +142,9 @@ public class SqlParser {
       }
 
       ParserRuleContext tree;
-      try {
-        // first, try parsing with potentially faster SLL mode
-        parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
-        tree = parseFunction.apply(parser);
-      } catch (ParseCancellationException ex) {
-        // if we fail, parse with LL mode
-        tokenStream.reset(); // rewind input stream
-        parser.reset();
-
-        parser.getInterpreter().setPredictionMode(PredictionMode.LL);
-        tree = parseFunction.apply(parser);
-      }
+      // first, try parsing with potentially faster SLL mode
+      parser.getInterpreter().setPredictionMode(PredictionMode.LL);
+      tree = parseFunction.apply(parser);
 
       return new AstBuilder(parsingOptions).visit(tree);
     } catch (StackOverflowError e) {

@@ -56,6 +56,7 @@ public class AliasedRelation
     return alias;
   }
 
+  @Deprecated
   public List<Identifier> getColumnNames() {
     return columnNames;
   }

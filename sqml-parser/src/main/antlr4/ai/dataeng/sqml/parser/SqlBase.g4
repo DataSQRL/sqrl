@@ -152,8 +152,7 @@ expression
     ;
 
 booleanExpression
-//todo: added AS identifier as a hack. need to evaluate further
-    : valueExpression predicate[$valueExpression.ctx]? (AS? identifier)?     #predicated
+    : valueExpression predicate[$valueExpression.ctx]?     #predicated
     | NOT booleanExpression                                        #logicalNot
     | left=booleanExpression operator=AND right=booleanExpression  #logicalBinary
     | left=booleanExpression operator=OR right=booleanExpression   #logicalBinary

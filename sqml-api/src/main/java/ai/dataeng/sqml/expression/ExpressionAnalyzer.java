@@ -1,5 +1,8 @@
 package ai.dataeng.sqml.expression;
 
+import ai.dataeng.sqml.analyzer.Analyzer;
+import ai.dataeng.sqml.analyzer.Analyzer.Visitor;
+import ai.dataeng.sqml.analyzer.Field;
 import ai.dataeng.sqml.analyzer.Scope;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.function.TypeSignature;
@@ -9,18 +12,20 @@ import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.BooleanLiteral;
 import ai.dataeng.sqml.tree.ComparisonExpression;
 import ai.dataeng.sqml.tree.DecimalLiteral;
-import ai.dataeng.sqml.tree.DefaultTraversalVisitor;
 import ai.dataeng.sqml.tree.DoubleLiteral;
 import ai.dataeng.sqml.tree.EnumLiteral;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GenericLiteral;
+import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.IntervalLiteral;
 import ai.dataeng.sqml.tree.JoinSubexpression;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NullLiteral;
+import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.StringLiteral;
+import ai.dataeng.sqml.tree.SubqueryExpression;
 import ai.dataeng.sqml.tree.TimestampLiteral;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
@@ -39,9 +44,10 @@ public class ExpressionAnalyzer {
     this.metadata = metadata;
   }
 
-  public ExpressionAnalysis analyze(Expression node, Scope scope) {
+  public ExpressionAnalysis analyze(Expression node, Scope scope,
+      Visitor visitor) {
     ExpressionAnalysis analysis = new ExpressionAnalysis();
-    TypeVisitor typeVisitor = new TypeVisitor(analysis);
+    TypeVisitor typeVisitor = new TypeVisitor(analysis, visitor);
     node.accept(typeVisitor, new Context(scope));
     return analysis;
   }
@@ -60,15 +66,41 @@ public class ExpressionAnalyzer {
 
   class TypeVisitor extends AstVisitor<SqmlType, Context> {
     private final ExpressionAnalysis analysis;
+    private final Visitor parent;
 
-    public TypeVisitor(ExpressionAnalysis analysis) {
+    public TypeVisitor(ExpressionAnalysis analysis,
+        Visitor parent) {
       this.analysis = analysis;
+      this.parent = parent;
+    }
+
+    @Override
+    protected SqmlType visitNode(Node node, Context context) {
+      throw new RuntimeException(String.format("Could not visit node: %s %s",
+          node.getClass().getName(), node.toString()));
+    }
+
+    @Override
+    protected SqmlType visitIdentifier(Identifier node, Context context) {
+      Optional<Field> field = context.getScope().getRelationType()
+          .resolveField(QualifiedName.of(node));
+      if (field.isEmpty()) {
+        throw new RuntimeException("Could not resolve field");
+      }
+      return addType(node, field.get().getType());
     }
 
     @Override
     protected SqmlType visitExpression(Expression node, Context context) {
       throw new RuntimeException(String.format("Expression needs type inference: %s. %s", 
-          node.getClass().getName(), node.toString()));
+          node.getClass().getName(), node));
+    }
+
+    @Override
+    protected SqmlType visitSubqueryExpression(SubqueryExpression node, Context context) {
+      Scope scope = node.getQuery().accept(parent, context.getScope()); //todo rebind the scope / avoid using current analyzer
+
+      return scope.getRelationType().getFields().get(0).getType();
     }
 
     @Override
@@ -81,7 +113,7 @@ public class ExpressionAnalyzer {
       return addType(node, new RelationSqmlType(node));
     }
 
-    private SqmlType addType(Node node, SqmlType type) {
+    private SqmlType addType(Expression node, SqmlType type) {
       analysis.addType(node, type);
       return type;
     }
@@ -129,7 +161,7 @@ public class ExpressionAnalyzer {
 
     @Override
     protected SqmlType visitStringLiteral(StringLiteral node, Context context) {
-      return new StringSqmlType();
+      return addType(node, new StringSqmlType());
     }
 
     @Override
