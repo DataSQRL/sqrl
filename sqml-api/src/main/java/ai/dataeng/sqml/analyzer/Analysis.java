@@ -26,7 +26,6 @@ import java.util.Set;
 
 public class Analysis {
   private final Script script;
-  private RelationSqmlType root = new RelationSqmlType();
   private Map<Expression, SqmlType> typeMap = new HashMap<>();
   private final Map<Node, Scope> scopes = new LinkedHashMap<>();
   private Map<Node, List<Expression>> outputExpressions = new HashMap<>();
@@ -104,43 +103,6 @@ public class Analysis {
 
   public void setGroupingSets(QuerySpecification node, List<List<Set<Object>>> sets) {
 
-  }
-
-  //move to scope?
-  public RelationSqmlType getOrCreateRelation(QualifiedName name) {
-    RelationSqmlType rel;
-    if (name.getPrefix().isPresent()) {
-      rel = getOrCreateRelation(name.getPrefix().get());
-    } else {
-      rel = root;
-    }
-
-    Optional<Field> field = rel.resolveField(QualifiedName.of(name.getSuffix()));
-    if (field.isEmpty()) {
-      RelationSqmlType newRel = new RelationSqmlType();
-      rel.addField(Field.newUnqualified(name.getSuffix(), newRel));
-      return newRel;
-    }
-    Preconditions.checkState(field.get().getType() instanceof RelationSqmlType,
-        "Mismatched fields. Expecting relation %s, got %s", name,
-        field.get().getType().getClass().getName());
-    return (RelationSqmlType) field.get().getType();
-  }
-
-  public Optional<RelationSqmlType> getRelation(QualifiedName name) {
-    RelationSqmlType rel = root;
-    List<String> parts = name.getParts();
-    for (String part : parts) {
-      Optional<Field> field = rel.resolveField(QualifiedName.of(part));
-      if (field.isEmpty()) {
-        throw new RuntimeException(String.format("Name cannot be found %s", name));
-      }
-      if (!(field.get().getType() instanceof RelationSqmlType)) {
-        throw new RuntimeException(String.format("Name not a relation %s", name));
-      }
-      rel = (RelationSqmlType) field.get().getType();
-    }
-    return Optional.of(rel);
   }
 
   public List<Expression> getOutputExpressions(Node node) {

@@ -1,9 +1,5 @@
-package ai.dataeng.sqml.expression;
+package ai.dataeng.sqml.analyzer;
 
-import ai.dataeng.sqml.analyzer.Analyzer;
-import ai.dataeng.sqml.analyzer.Analyzer.Visitor;
-import ai.dataeng.sqml.analyzer.Field;
-import ai.dataeng.sqml.analyzer.Scope;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.function.TypeSignature;
 import ai.dataeng.sqml.metadata.Metadata;
@@ -46,11 +42,10 @@ public class ExpressionAnalyzer {
     this.metadata = metadata;
   }
 
-  public ExpressionAnalysis analyze(Expression node, Scope scope,
-      Visitor visitor) {
+  public ExpressionAnalysis analyze(Expression node, Scope scope) {
     ExpressionAnalysis analysis = new ExpressionAnalysis();
-    TypeVisitor typeVisitor = new TypeVisitor(analysis, visitor);
-    node.accept(typeVisitor, new Context(scope));
+    Visitor visitor = new Visitor(analysis);
+    node.accept(visitor, new Context(scope));
     return analysis;
   }
 
@@ -66,14 +61,11 @@ public class ExpressionAnalyzer {
     }
   }
 
-  class TypeVisitor extends AstVisitor<SqmlType, Context> {
+  class Visitor extends AstVisitor<SqmlType, Context> {
     private final ExpressionAnalysis analysis;
-    private final Visitor parent;
 
-    public TypeVisitor(ExpressionAnalysis analysis,
-        Visitor parent) {
+    public Visitor(ExpressionAnalysis analysis) {
       this.analysis = analysis;
-      this.parent = parent;
     }
 
     @Override
@@ -99,7 +91,8 @@ public class ExpressionAnalyzer {
 
     @Override
     protected SqmlType visitSubqueryExpression(SubqueryExpression node, Context context) {
-      Scope scope = node.getQuery().accept(parent, context.getScope()); //todo rebind the scope / avoid using current analyzer
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, new Analysis(null));
+      Scope scope = statementAnalyzer.analyze(node.getQuery(), context.getScope());
 
       return scope.getRelationType();
     }

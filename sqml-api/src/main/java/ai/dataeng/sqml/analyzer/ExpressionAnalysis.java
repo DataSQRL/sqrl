@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.expression;
+package ai.dataeng.sqml.analyzer;
 
 import ai.dataeng.sqml.analyzer.FieldId;
 import ai.dataeng.sqml.tree.Expression;

@@ -3,26 +3,32 @@ package ai.dataeng.sqml.analyzer;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
+import com.google.common.base.Preconditions;
+import java.util.List;
+import java.util.Optional;
 
 public class Scope {
-  private final QualifiedName name;
+  private QualifiedName name;
   private Scope parent;
   private Node node;
   private RelationSqmlType relationType;
-  private final Analysis analysis;
+  private final RelationSqmlType root;
 
-  public Scope(QualifiedName name, Analysis analysis) {
+  public Scope() {
+    this.root = new RelationSqmlType();
+  }
+  public Scope(QualifiedName name) {
     this.name = name;
-    this.analysis = analysis;
+    this.root = new RelationSqmlType();
   }
 
   public Scope(QualifiedName name, Scope parent, Node node, RelationSqmlType relationType,
-      Analysis analysis) {
+      RelationSqmlType root) {
     this.name = name;
     this.parent = parent;
     this.node = node;
     this.relationType = relationType;
-    this.analysis = analysis;
+    this.root = root;
   }
 
   public static Scope.Builder builder() {
@@ -30,7 +36,44 @@ public class Scope {
   }
 
   public RelationSqmlType resolveRelation(QualifiedName name) {
-    return this.analysis.getOrCreateRelation(name);
+    return getOrCreateRelation(name);
+  }
+
+  //move to scope?
+  public RelationSqmlType getOrCreateRelation(QualifiedName name) {
+    RelationSqmlType rel;
+    if (name.getPrefix().isPresent()) {
+      rel = getOrCreateRelation(name.getPrefix().get());
+    } else {
+      rel = root;
+    }
+
+    Optional<Field> field = rel.resolveField(QualifiedName.of(name.getSuffix()));
+    if (field.isEmpty()) {
+      RelationSqmlType newRel = new RelationSqmlType();
+      rel.addField(Field.newUnqualified(name.getSuffix(), newRel));
+      return newRel;
+    }
+    Preconditions.checkState(field.get().getType() instanceof RelationSqmlType,
+        "Mismatched fields. Expecting relation %s, got %s", name,
+        field.get().getType().getClass().getName());
+    return (RelationSqmlType) field.get().getType();
+  }
+
+  public Optional<RelationSqmlType> getRelation(QualifiedName name) {
+    RelationSqmlType rel = root;
+    List<String> parts = name.getParts();
+    for (String part : parts) {
+      Optional<Field> field = rel.resolveField(QualifiedName.of(part));
+      if (field.isEmpty()) {
+        throw new RuntimeException(String.format("Name cannot be found %s", name));
+      }
+      if (!(field.get().getType() instanceof RelationSqmlType)) {
+        throw new RuntimeException(String.format("Name not a relation %s", name));
+      }
+      rel = (RelationSqmlType) field.get().getType();
+    }
+    return Optional.of(rel);
   }
 
   public static class Builder {
@@ -39,7 +82,6 @@ public class Scope {
     private Node node;
     private RelationSqmlType relationType;
     private QualifiedName name;
-    private Analysis analysis;
 
     public Builder withName(QualifiedName name) {
       this.name = name;
@@ -57,66 +99,14 @@ public class Scope {
       return this;
     }
 
-    public Builder withAnalysis(Analysis analysis) {
-      this.analysis = analysis;
-      return this;
-    }
-
     public Scope build() {
-      return new Scope(name, parent, node, relationType, analysis);
+      return new Scope(name, parent, node, relationType, parent.root);
     }
   }
 
   public QualifiedName getName() {
     return name;
   }
-//
-//  public String getTypeFromSchema(QualifiedName context, String field) {
-//    Preconditions.checkState(context.getParts().size() > 0,
-//        "Sqml assignment missing first part: %s", context);
-//    String sourceName = context.getParts().get(0);
-//
-//    Schema schema = getSchema(sourceName);
-//
-//    Preconditions.checkNotNull(schema, "Schema could not be found: %s", sourceName);
-//
-//    AbstractField abstractField = null;
-//    List<String> parts = context.getParts();
-//    for (int i = 1; i < parts.size() - 1; i++) {
-//      String part = parts.get(i);
-//      Optional<AbstractField> partField = schema.getField(part);
-//      Preconditions.checkState(partField.isPresent(), "Could not find schema field: %s in %s",
-//          part, context);
-//      abstractField = partField.get();
-//    }
-//    if (abstractField == null) {
-//      abstractField = schema.getField(field)
-//          .orElseThrow(() -> new RuntimeException(
-//              String.format("Could not find field %s in %s", field, context)));
-//    } else {
-//      Preconditions
-//          .checkState(abstractField instanceof SchemaObject, "Terminal not an object %s in %s",
-//              context, field);
-//      abstractField = ((SchemaObject) abstractField).getField(field)
-//          .orElseThrow(() -> new RuntimeException(
-//              String.format("Could not find field %s in %s", field, context)));
-//    }
-//
-//    Preconditions.checkState(abstractField instanceof SchemaField,
-//        "Referenced field does not have a concrete type: %s", abstractField.getName());
-//    return ((SchemaField) abstractField).getType().name();
-//  }
-//
-//
-//  public Schema getSchema(String sourceName) {
-////    Schema localSource = localSources.get(sourceName);
-////    if (localSource != null) {
-////      return localSource;
-////    }
-//
-////    return schemas.get(sourceName);
-//    return null;
-//  }
 
   public RelationSqmlType getRelationType() {
     return relationType;
