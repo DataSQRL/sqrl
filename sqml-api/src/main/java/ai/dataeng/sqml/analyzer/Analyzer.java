@@ -7,14 +7,11 @@ import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.tree.Statement;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Analyzer {
   protected final Metadata metadata;
@@ -79,7 +76,7 @@ public class Analyzer {
     @Override
     public Scope visitQueryAssignment(QueryAssignment queryAssignment, Scope scope) {
       Scope result = analyzeStatement(queryAssignment.getQuery(), scope);
-      RelationSqmlType rel = scope.getOrCreateRelation(scope.getName().getPrefix().get());
+      RelationSqmlType rel = scope.createRelation(scope.getName().getPrefix().get());
       rel.addField(Field.newUnqualified(scope.getName().getSuffix(), result.getRelationType()));
       return result;
     }
@@ -92,7 +89,7 @@ public class Analyzer {
     @Override
     public Scope visitExpressionAssignment(ExpressionAssignment expressionAssignment,
         Scope scope) {
-      RelationSqmlType rel = scope.getOrCreateRelation(scope.getName().getPrefix().get());
+      RelationSqmlType rel = scope.createRelation(scope.getName().getPrefix().get());
       scope = createAndAssignScope(expressionAssignment.getExpression(), scope, rel);
       ExpressionAnalysis exprAnalysis = analyzeExpression(expressionAssignment.getExpression(), scope);
 

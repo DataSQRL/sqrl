@@ -32,9 +32,8 @@ Auction.seller := JOIN User ON User.id = @.seller_id INVERSE auctions;
 User.bids := JOIN Bid ON Bid.bidder_id = @.id INVERSE bidder;
 
 -- Annotate Auction with additional data
-
-Auction.highest_bid := SELECT auction_id, bid_price FROM @.bids ORDER BY bid_price DESC LIMIT 1;
---Auction.highest_bidder := highest_bid.bidder;
+Auction.highest_bid := JOIN @.bids b ORDER BY b.bid_price DESC LIMIT 1;
+Auction.highest_bidder := highest_bid.bidder;
 Auction.highest_bid_price := highest_bid.bid_price;
 
 Auction.num_bids := (SELECT COUNT(*) as cnt FROM @.bids LIMIT 1).cnt;

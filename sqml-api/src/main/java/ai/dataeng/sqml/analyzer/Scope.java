@@ -4,6 +4,7 @@ import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,15 +36,12 @@ public class Scope {
     return new Builder();
   }
 
-  public RelationSqmlType resolveRelation(QualifiedName name) {
-    return getOrCreateRelation(name);
-  }
+  public RelationSqmlType createRelation(QualifiedName name) {
+    name = dereferenceTableName(name);
 
-  //move to scope?
-  public RelationSqmlType getOrCreateRelation(QualifiedName name) {
     RelationSqmlType rel;
     if (name.getPrefix().isPresent()) {
-      rel = getOrCreateRelation(name.getPrefix().get());
+      rel = createRelation(name.getPrefix().get());
     } else {
       rel = root;
     }
@@ -61,6 +59,8 @@ public class Scope {
   }
 
   public Optional<RelationSqmlType> getRelation(QualifiedName name) {
+    name = dereferenceTableName(name);
+
     RelationSqmlType rel = root;
     List<String> parts = name.getParts();
     for (String part : parts) {
@@ -74,6 +74,16 @@ public class Scope {
       rel = (RelationSqmlType) field.get().getType();
     }
     return Optional.of(rel);
+  }
+
+  private QualifiedName dereferenceTableName(QualifiedName name) {
+    if (name.getParts().get(0).equalsIgnoreCase("@")) {
+      List<String> newName = new ArrayList<>(getName().getParts().subList(0, getName().getParts().size() - 1));
+      newName.addAll(name.getParts().subList(1, name.getParts().size()));
+      return QualifiedName.of(newName);
+    }
+
+    return name;
   }
 
   public static class Builder {

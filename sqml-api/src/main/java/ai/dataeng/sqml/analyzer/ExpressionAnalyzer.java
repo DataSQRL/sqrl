@@ -105,7 +105,8 @@ public class ExpressionAnalyzer {
     @Override
     public SqmlType visitInlineJoinExpression(InlineJoinExpression node, Context context) {
       InlineJoin join = node.getJoin();
-      RelationSqmlType rel = context.getScope().resolveRelation(join.getTable());
+      RelationSqmlType rel = context.getScope().getRelation(join.getTable())
+          .orElseThrow(()-> new RuntimeException(String.format("Could not find relation %s %s", join.getTable(), node)));
 
       rel.setExpression(Optional.of(node));
 

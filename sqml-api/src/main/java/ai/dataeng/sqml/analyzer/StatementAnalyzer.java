@@ -141,9 +141,7 @@ public class StatementAnalyzer {
 
     @Override
     protected Scope visitTable(Table table, Scope scope) {
-      QualifiedName name = dereferenceTableName(table.getName(), scope.getName());
-
-      Optional<RelationSqmlType> tableHandle = scope.getRelation(name);
+      Optional<RelationSqmlType> tableHandle = scope.getRelation(table.getName());
       if (tableHandle.isEmpty()) {
         //If no Source that emits that object can be identified, throw error
         throw new RuntimeException(String.format("Could not resolve table %s", table.getName()));
@@ -243,17 +241,6 @@ public class StatementAnalyzer {
 //      }
 
       return scopeBuilder;
-    }
-
-    private QualifiedName dereferenceTableName(QualifiedName name,
-        QualifiedName scopeName) {
-      if (name.getParts().get(0).equalsIgnoreCase("@")) {
-        List<String> newName = new ArrayList<>(scopeName.getParts().subList(0, scopeName.getParts().size() - 1));
-        newName.addAll(name.getParts().subList(1, name.getParts().size()));
-        return QualifiedName.of(newName);
-      }
-
-      return name;
     }
 
     private Scope computeAndAssignOutputScope(QuerySpecification node, Scope scope,
