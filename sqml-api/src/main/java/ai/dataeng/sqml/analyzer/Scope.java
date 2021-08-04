@@ -48,7 +48,7 @@ public class Scope {
 
     Optional<Field> field = rel.resolveField(QualifiedName.of(name.getSuffix()));
     if (field.isEmpty()) {
-      RelationSqmlType newRel = new RelationSqmlType();
+      RelationSqmlType newRel = new RelationSqmlType(name);
       rel.addField(Field.newUnqualified(name.getSuffix(), newRel));
       return newRel;
     }

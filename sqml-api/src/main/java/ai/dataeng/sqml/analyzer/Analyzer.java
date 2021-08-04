@@ -107,7 +107,12 @@ public class Analyzer {
 
     private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
       ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata);
-      return analyzer.analyze(expression, scope);
+      ExpressionAnalysis analysis = analyzer.analyze(expression, scope);
+
+      this.analysis.addTypes(analysis.typeMap);
+      this.analysis.addRelations(analysis.relations);
+
+      return analysis;
     }
 
     private Scope createScope(Scope scope, QualifiedName name) {

@@ -2,13 +2,16 @@ package ai.dataeng.sqml.analyzer;
 
 import static com.google.common.collect.Multimaps.forMap;
 
+import ai.dataeng.sqml.schema.SchemaProvider;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.Identifier;
+import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.QuerySpecification;
+import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
@@ -31,17 +34,15 @@ public class Analysis {
   private Map<Node, List<Expression>> outputExpressions = new HashMap<>();
   private final Multimap<NodeRef<Expression>, FieldId> columnReferences = ArrayListMultimap.create();
   private Map<Expression, String> nameMap = new HashMap<>();
+  private Map<Relation, RelationSqmlType> relations = new HashMap<>();
 
   public Analysis(Script script) {
     this.script = script;
   }
 
-  public SqmlType getType(Expression expression) {
+  public Optional<SqmlType> getType(Expression expression) {
     SqmlType type = typeMap.get(expression);
-    if (type != null) {
-      return type;
-    }
-    return new UnknownSqmlType();
+    return Optional.ofNullable(type);
   }
 
   public void setType(Expression expression, SqmlType type) {
@@ -118,4 +119,15 @@ public class Analysis {
 
   }
 
+  public Optional<RelationSqmlType> getRelation(Relation node) {
+    return Optional.ofNullable(this.relations.get(node));
+  }
+
+  public void setRelation(Relation node, RelationSqmlType type) {
+    this.relations.put(node, type);
+  }
+
+  public void addRelations(Map<Relation, RelationSqmlType> relations) {
+    this.relations.putAll(relations);
+  }
 }

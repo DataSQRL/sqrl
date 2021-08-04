@@ -4,18 +4,25 @@ import ai.dataeng.sqml.analyzer.Analysis;
 import ai.dataeng.sqml.dag.Dag;
 import ai.dataeng.sqml.tree.Assign;
 import ai.dataeng.sqml.tree.AstVisitor;
+import ai.dataeng.sqml.tree.DereferenceExpression;
 import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
+import ai.dataeng.sqml.tree.FunctionCall;
+import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.InlineJoinExpression;
+import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
+import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QuerySpecification;
+import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.type.SqmlType;
+import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
 import graphql.Scalars;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLCodeRegistry;
@@ -24,7 +31,6 @@ import graphql.schema.GraphQLInputObjectField;
 import graphql.schema.GraphQLInputObjectType;
 import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
@@ -102,7 +108,7 @@ public class GraphqlSchemaBuilder {
     }
   }
 
-  static class Visitor extends AstVisitor<Object, Context> {
+  static class Visitor extends AstVisitor<GraphQLOutputType, Context> {
     private final Analysis analysis;
     private GraphQLSchema.Builder schemaBuilder;
     private Map<QualifiedName, GraphQLObjectType.Builder> gqlTypes = new HashMap<>();
@@ -117,18 +123,23 @@ public class GraphqlSchemaBuilder {
     }
 
     @Override
-    protected Object visitScript(Script node, Context context) {
+    protected GraphQLOutputType visitNode(Node node, Context context) {
+      throw new RuntimeException(String.format("Could not process node for graphql schema: %s", node));
+    }
+
+    @Override
+    protected GraphQLOutputType visitScript(Script node, Context context) {
       node.getStatements().stream()
           .forEach(s->s.accept(this, context));
       return null;
     }
 
     @Override
-    protected Object visitAssign(Assign node, Context context) {
+    protected GraphQLOutputType visitAssign(Assign node, Context context) {
       if (containsHiddenField(node.getName())){
         return null;
       }
-      GraphQLOutputType outputType = (GraphQLOutputType) node.getRhs().accept(this, new Context(node.getName()));
+      GraphQLOutputType outputType = node.getRhs().accept(this, new Context(node.getName()));
       if (outputType == null) {
         throw new RuntimeException("No graphql type found for:" + node.getName());
       }
@@ -136,86 +147,82 @@ public class GraphqlSchemaBuilder {
       return null;
     }
 
-    private boolean containsHiddenField(QualifiedName name) {
-      for (String part : name.getParts()) {
-        if (part.startsWith("_")) {
-          return true;
-        }
-      }
-      return false;
+    @Override
+    public GraphQLOutputType visitQueryAssignment(QueryAssignment queryAssignment, Context context) {
+      return queryAssignment.getQuery().accept(this, context);
     }
 
     @Override
     public GraphQLOutputType visitExpressionAssignment(ExpressionAssignment expressionAssignment,
         Context context) {
-      SqmlType expressionType = analysis.getType(expressionAssignment.getExpression());
-      Optional<Boolean> isNonNull = analysis.isNonNull(expressionAssignment.getExpression());
-      GraphQLOutputType type = asType(expressionType, isNonNull.isPresent(), context);
+      GraphQLOutputType type = expressionAssignment.getExpression().accept(this, context);
 
-      GraphQLObjectType.Builder obj = getOrCreateObjectPath(prefixOrBase(context.getName()));
+      GraphQLObjectType.Builder obj = createObject(context.getName().getPrefix().orElse(context.getName()));
       GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
           .name(context.getName().getSuffix())
           .type(type)
-          .arguments(expressionType.accept(argumentVisitor, context))
           .build();
       obj.field(f);
       return type;
     }
 
     @Override
-    protected Object visitIntersect(Intersect node, Context context) {
+    protected GraphQLOutputType visitQuery(Query node, Context context) {
+      GraphQLOutputType type = node.getQueryBody().accept(this, context);
+      //todo limit
+      return type;
+    }
+
+
+    @Override
+    protected GraphQLOutputType visitIntersect(Intersect node, Context context) {
       return node.getRelations().get(0).accept(this, context);
     }
 
     @Override
-    protected Object visitExcept(Except node, Context context) {
+    protected GraphQLOutputType visitExcept(Except node, Context context) {
       return node.getRelations().get(0).accept(this, context);
     }
 
     @Override
-    public Object visitInlineJoinExpression(InlineJoinExpression node, Context context) {
+    public GraphQLOutputType visitInlineJoinExpression(InlineJoinExpression node, Context context) {
       return node.getJoin().accept(this, context);
     }
 
     @Override
-    public Object visitInlineJoin(InlineJoin node, Context context) {
-      //Assure that a table type exists
-      GraphQLObjectType.Builder parent = getOrCreateObjectPath(node.getTable());
+    public GraphQLOutputType visitInlineJoin(InlineJoin node, Context context) {
+      QualifiedName resolvedName = getTableName(node);
+
+      GraphQLObjectType.Builder parent = createObject(resolvedName);
 
       if (node.getInverse().isPresent()) {
-        getOrCreateObjectPath(context.getName().getPrefix().get());
         parent.field(
             GraphQLFieldDefinition.newFieldDefinition()
-                .name(toName(node.getInverse().get().getParts()))
+                .name(toName(node.getInverse().get()))
                 .arguments(buildRelationArguments())
                 .type(GraphQLList.list(
-                    GraphQLTypeReference.typeRef(toName(context.getName().getPrefix().get().getParts()))))
+                    GraphQLTypeReference.typeRef(toName(context.getName().getPrefix().get()))))
                 .build()
         );
       }
 
-      GraphQLTypeReference type = GraphQLTypeReference.typeRef(toName(node.getTable().getParts()));
+      GraphQLTypeReference type = GraphQLTypeReference.typeRef(toName(getTableName(node)));
       return GraphQLList.list(type);
     }
 
     @Override
-    public GraphQLOutputType visitQueryAssignment(QueryAssignment queryAssignment, Context context) {
-      return (GraphQLOutputType)queryAssignment.getQuery().getQueryBody().accept(this, context);
-    }
-
-    @Override
-    protected Object visitUnion(Union node, Context context) {
+    protected GraphQLOutputType visitUnion(Union node, Context context) {
       return node.getRelations().get(0).accept(this, context);
     }
 
     @Override
-    protected Object visitQuerySpecification(QuerySpecification node, Context context) {
-      GraphQLObjectType.Builder builder = getOrCreateObjectPath(context.getName());
+    protected GraphQLOutputType visitQuerySpecification(QuerySpecification node, Context context) {
+      GraphQLObjectType.Builder builder = createObject(context.getName());
 
       for (Expression expression : analysis.getOutputExpressions(node)) {
         GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
             .name(analysis.getName(expression))
-            .type(asType(analysis.getType(expression), false, context))
+            .type(expression.accept(this, context))
             .build();
         builder.field(field);
       }
@@ -228,7 +235,25 @@ public class GraphqlSchemaBuilder {
         return builder.build();
       }
 
-      return GraphQLList.list(GraphQLTypeReference.typeRef(toName(context.getName().getParts())));
+      return GraphQLList.list(GraphQLTypeReference.typeRef(toName(context.getName())));
+    }
+
+    //Catch all for expressions
+    @Override
+    protected GraphQLOutputType visitExpression(Expression node,
+        Context context) {
+      return getType(node, context);
+    }
+
+    private GraphQLOutputType getType(Expression node, Context context) {
+      Optional<SqmlType> type = analysis.getType(node);
+      return type.get().accept(new GqlTypeVisitor(), context);
+    }
+
+    private QualifiedName getTableName(Relation node) {
+      RelationSqmlType rel = this.analysis.getRelation(node)
+          .orElseThrow();
+      return rel.getRelationName();
     }
 
     private List<GraphQLArgument> buildRelationArguments() {
@@ -264,24 +289,20 @@ public class GraphqlSchemaBuilder {
       return bind;
     }
 
-    private String toName(List<String> parts) {
-      return String.join("_", parts);
-    }
-
-    private QualifiedName prefixOrBase(QualifiedName name) {
-      return name.getPrefix().isPresent() ? name.getPrefix().get() : name;
+    public static String toName(QualifiedName name) {
+      return String.join("_", name.getParts());
     }
 
     /**
      * Gets the object builder and creates the path from the base relation along the way
      */
-    private GraphQLObjectType.Builder getOrCreateObjectPath(QualifiedName name) {
+    private GraphQLObjectType.Builder createObject(QualifiedName name) {
       GraphQLObjectType.Builder builder = gqlTypes.get(name);
       if (builder != null) {
         return builder;
       }
 
-      String objName = toName(analysis.getName(name).getParts());
+      String objName = toName(analysis.getName(name));
 
       GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
           .name(objName);
@@ -289,7 +310,7 @@ public class GraphqlSchemaBuilder {
 
       List<String> parentName = name.getParts().subList(0, name.getParts().size() - 1);
       if (parentName.size() != 0) {
-        GraphQLObjectType.Builder b = getOrCreateObjectPath(QualifiedName.of(parentName));
+        GraphQLObjectType.Builder b = createObject(QualifiedName.of(parentName));
         b.field(GraphQLFieldDefinition.newFieldDefinition()
             .name(name.getSuffix())
             .type(GraphQLList.list(GraphQLTypeReference.typeRef(obj.build().getName())))
@@ -298,11 +319,13 @@ public class GraphqlSchemaBuilder {
       return obj;
     }
 
-    private GraphQLOutputType asType(SqmlType type, boolean nonNull,
-        Context context) {
-      GraphQLOutputType outputType = type.accept(new GqlTypeVisitor(this), context);
-
-      return nonNull ? GraphQLNonNull.nonNull(outputType) : outputType;
+    private boolean containsHiddenField(QualifiedName name) {
+      for (String part : name.getParts()) {
+        if (part.startsWith("_")) {
+          return true;
+        }
+      }
+      return false;
     }
 
     public GraphQLSchema.Builder getBuilder() {
@@ -323,12 +346,16 @@ public class GraphqlSchemaBuilder {
       GraphQLObjectType.Builder query = GraphQLObjectType.newObject().name("Query");
       for (Entry<QualifiedName, GraphQLObjectType.Builder> entry : gqlTypes.entrySet()) {
         if (entry.getKey().getParts().size() == 1) {
-          query.field(GraphQLFieldDefinition.newFieldDefinition()
-              .name(toName(entry.getKey().getParts()))
-              .arguments(buildRelationArguments())
-              .type(GraphQLList.list(
-                  new GraphQLTypeReference(entry.getValue().build().getName())))
-              .build());
+          try {
+            query.field(GraphQLFieldDefinition.newFieldDefinition()
+                .name(toName(entry.getKey()))
+                .arguments(buildRelationArguments())
+                .type(GraphQLList.list(
+                    new GraphQLTypeReference(entry.getValue().build().getName())))
+                .build());
+          }catch ( Exception e) {
+            System.out.println();
+          }
         }
       }
 

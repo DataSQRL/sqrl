@@ -148,19 +148,33 @@ public abstract class SqmlType {
   public static class RelationSqmlType extends SqmlType {
     private List<Field> fields;
     private Optional<Expression> expression = Optional.empty();
+    private QualifiedName relationName;
 
-    public RelationSqmlType(Field... fields) {
+    public RelationSqmlType() {
       super("RELATION");
-      this.fields = new ArrayList<>(List.of(fields));
+      this.relationName = null;
+      this.fields = new ArrayList<>();
+    }
+
+    public RelationSqmlType(QualifiedName relationName) {
+      super("RELATION");
+      this.fields = new ArrayList<>();
+      this.relationName = relationName;
     }
 
     public RelationSqmlType(List<Field> fields) {
       super("RELATION");
       this.fields = fields;
+      this.relationName = null;
     }
+
 
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
       return visitor.visitRelation(this, context);
+    }
+
+    public QualifiedName getRelationName() {
+      return relationName;
     }
 
     public List<Field> getFields() {
@@ -179,9 +193,6 @@ public abstract class SqmlType {
     }
 
     public Optional<Field> resolveField(QualifiedName name) {
-      if (name.toString().contains("state")) {
-        System.out.println();
-      }
       RelationSqmlType rel = this;
 
       List<String> parts = name.getParts();

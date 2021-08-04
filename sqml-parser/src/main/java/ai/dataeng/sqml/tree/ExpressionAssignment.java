@@ -27,11 +27,6 @@ public class ExpressionAssignment extends Assignment {
     return false;
   }
 
-  @Override
-  public String toString() {
-    return null;
-  }
-
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitExpressionAssignment(this, context);
   }

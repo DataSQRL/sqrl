@@ -22,6 +22,7 @@ import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NullLiteral;
 import ai.dataeng.sqml.tree.QualifiedName;
+import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.StringLiteral;
 import ai.dataeng.sqml.tree.SubqueryExpression;
 import ai.dataeng.sqml.tree.TimestampLiteral;
@@ -115,6 +116,7 @@ public class ExpressionAnalyzer {
         rel.addField(Field.newUnqualified(join.getInverse().get().toString(), relationSqmlType));
       }
 
+      addRelation(node.getJoin(), rel);
       return addType(node, rel);
     }
 
@@ -202,6 +204,10 @@ public class ExpressionAnalyzer {
     private SqmlType addType(Expression node, SqmlType type) {
       analysis.addType(node, type);
       return type;
+    }
+
+    private void addRelation(Relation relation, RelationSqmlType type) {
+      analysis.setRelation(relation, type);
     }
   }
 }

@@ -27,6 +27,7 @@ import ai.dataeng.sqml.tree.Table;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
+import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableSet;
@@ -200,16 +201,6 @@ public class StatementAnalyzer {
       return new Scope(scope.getName());
     }
 
-    private Scope createAndAssignScope(Node node, Scope parentScope)
-    {
-      return createAndAssignScope(node, parentScope, new ArrayList<>());
-    }
-
-    private Scope createAndAssignScope(Node node, Scope parentScope, Field... fields)
-    {
-      return createAndAssignScope(node, parentScope, new RelationSqmlType(fields));
-    }
-
     private Scope createAndAssignScope(Node node, Scope parentScope, List<Field> fields)
     {
       return createAndAssignScope(node, parentScope, new RelationSqmlType(fields));
@@ -283,7 +274,7 @@ public class StatementAnalyzer {
           }
 
           outputFields.add(Field.newUnqualified(field.map(Identifier::getValue),
-              analysis.getType(expression), originTable, originColumn,
+              analysis.getType(expression).orElse(new UnknownSqmlType()), originTable, originColumn,
               column.getAlias().isPresent()));
         }
         else {

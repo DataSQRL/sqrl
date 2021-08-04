@@ -1,5 +1,7 @@
 package ai.dataeng.sqml;
 
+import static ai.dataeng.sqml.GraphqlSchemaBuilder.Visitor.toName;
+
 import ai.dataeng.sqml.GraphqlSchemaBuilder.Context;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.type.SqmlType;
@@ -18,14 +20,9 @@ import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import graphql.Scalars;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLTypeReference;
 
 public class GqlTypeVisitor extends SqmlTypeVisitor<GraphQLOutputType, Context> {
-
-  private final AstVisitor<Object, Context> parent;
-
-  public GqlTypeVisitor(AstVisitor<Object, Context> parent) {
-    this.parent = parent;
-  }
 
   @Override
   public GraphQLOutputType visitArray(ArraySqmlType type, Context context) {
@@ -74,8 +71,7 @@ public class GqlTypeVisitor extends SqmlTypeVisitor<GraphQLOutputType, Context> 
 
   @Override
   public GraphQLOutputType visitRelation(RelationSqmlType type, Context context) {
-    return (GraphQLOutputType)type.getExpression().map(e->e.accept(parent,
-        context)).orElseThrow(()->new RuntimeException(String.format("Could not resolve type %s", type)));
+    return GraphQLList.list(new GraphQLTypeReference(toName(type.getRelationName())));
   }
 
   @Override
