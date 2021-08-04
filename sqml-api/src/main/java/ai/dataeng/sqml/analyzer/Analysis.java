@@ -2,8 +2,6 @@ package ai.dataeng.sqml.analyzer;
 
 import static com.google.common.collect.Multimaps.forMap;
 
-import ai.dataeng.sqml.ResolvedField;
-import ai.dataeng.sqml.schema.SchemaProvider;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Join;
@@ -14,10 +12,9 @@ import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
-import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
 import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -29,11 +26,11 @@ import java.util.Set;
 
 public class Analysis {
   private final Script script;
+  private RelationSqmlType root = new RelationSqmlType();
   private Map<Expression, SqmlType> typeMap = new HashMap<>();
   private final Map<Node, Scope> scopes = new LinkedHashMap<>();
   private Map<Node, List<Expression>> outputExpressions = new HashMap<>();
   private final Multimap<NodeRef<Expression>, FieldId> columnReferences = ArrayListMultimap.create();
-  private Map<QualifiedName, SqmlType> types = new HashMap<>();
   private Map<Expression, String> nameMap = new HashMap<>();
 
   public Analysis(Script script) {
@@ -58,7 +55,7 @@ public class Analysis {
     } else if (expression instanceof Identifier) {
       nameMap.put(expression, ((Identifier)expression).getValue());
     } else {
-      throw new RuntimeException(String.format("Expressiont not named: %s %s",
+      throw new RuntimeException(String.format("Expression not named: %s %s",
           expression.getClass().getName(), expression));
     }
   }
@@ -109,37 +106,41 @@ public class Analysis {
 
   }
 
-  public Optional<RelationSqmlType> getRelation(QualifiedName name) {
-    SqmlType type = types.get(name);
-    if (!(type instanceof RelationSqmlType)) {
-      return Optional.empty();
-    }
-
-    return Optional.of((RelationSqmlType) type);
-  }
-//
-//  public void addType(QualifiedName name, RelationSqmlType type) {
-//    types.put(name, type);
-//    name.getPrefix().ifPresent(p->{
-//      RelationSqmlType rel = getOrCreateRelation(p);
-//
-//      rel.setField(Field.newUnqualified(name.getSuffix(), type));
-//    });
-//  }
-
+  //move to scope?
   public RelationSqmlType getOrCreateRelation(QualifiedName name) {
-    SqmlType type = types.get(name);
-    if (type == null) {
-      RelationSqmlType relationSqmlType = new RelationSqmlType();
-      types.put(name, relationSqmlType);
-      return relationSqmlType;
-    }
-    if (!(type instanceof RelationSqmlType)) {
-      throw new RuntimeException(String.format("%s not a relation type", name));
+    RelationSqmlType rel;
+    if (name.getPrefix().isPresent()) {
+      rel = getOrCreateRelation(name.getPrefix().get());
+    } else {
+      rel = root;
     }
 
-    return (RelationSqmlType)type;
+    Optional<Field> field = rel.resolveField(QualifiedName.of(name.getSuffix()));
+    if (field.isEmpty()) {
+      RelationSqmlType newRel = new RelationSqmlType();
+      rel.addField(Field.newUnqualified(name.getSuffix(), newRel));
+      return newRel;
+    }
+    Preconditions.checkState(field.get().getType() instanceof RelationSqmlType,
+        "Mismatched fields. Expecting relation %s, got %s", name,
+        field.get().getType().getClass().getName());
+    return (RelationSqmlType) field.get().getType();
+  }
 
+  public Optional<RelationSqmlType> getRelation(QualifiedName name) {
+    RelationSqmlType rel = root;
+    List<String> parts = name.getParts();
+    for (String part : parts) {
+      Optional<Field> field = rel.resolveField(QualifiedName.of(part));
+      if (field.isEmpty()) {
+        throw new RuntimeException(String.format("Name cannot be found %s", name));
+      }
+      if (!(field.get().getType() instanceof RelationSqmlType)) {
+        throw new RuntimeException(String.format("Name not a relation %s", name));
+      }
+      rel = (RelationSqmlType) field.get().getType();
+    }
+    return Optional.of(rel);
   }
 
   public List<Expression> getOutputExpressions(Node node) {
@@ -154,4 +155,5 @@ public class Analysis {
   public void setJoinCriteria(Join node, Expression expression) {
 
   }
+
 }

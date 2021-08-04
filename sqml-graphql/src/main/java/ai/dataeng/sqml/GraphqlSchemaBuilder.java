@@ -8,7 +8,7 @@ import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.Intersect;
-import ai.dataeng.sqml.tree.JoinSubexpression;
+import ai.dataeng.sqml.tree.InlineJoinExpression;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QuerySpecification;
@@ -173,7 +173,7 @@ public class GraphqlSchemaBuilder {
     }
 
     @Override
-    public Object visitJoinSubexpression(JoinSubexpression node, Context context) {
+    public Object visitInlineJoinExpression(InlineJoinExpression node, Context context) {
       return node.getJoin().accept(this, context);
     }
 

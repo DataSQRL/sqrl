@@ -302,7 +302,7 @@ public abstract class AstVisitor<R, C> {
   public R visitIsEmpty(IsEmpty node, C context) {
     return visitExpression(node, context);
   }
-  public R visitJoinSubexpression(JoinSubexpression node, C context) {
+  public R visitInlineJoinExpression(InlineJoinExpression node, C context) {
     return visitExpression(node, context);
   }
   public R visitCreateRelationship(CreateRelationship node, C context) {

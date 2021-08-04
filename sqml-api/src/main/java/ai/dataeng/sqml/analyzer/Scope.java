@@ -1,43 +1,37 @@
 package ai.dataeng.sqml.analyzer;
 
-import ai.dataeng.sqml.ResolvedField;
-import ai.dataeng.sqml.schema.AbstractField;
-import ai.dataeng.sqml.schema.Schema;
-import ai.dataeng.sqml.schema.SchemaField;
-import ai.dataeng.sqml.schema.SchemaObject;
-import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
-import com.google.common.base.Preconditions;
-import java.util.List;
-import java.util.Optional;
 
 public class Scope {
   private final QualifiedName name;
   private Scope parent;
   private Node node;
   private RelationSqmlType relationType;
+  private final Analysis analysis;
 
-  public Scope(QualifiedName name) {
+  public Scope(QualifiedName name, Analysis analysis) {
     this.name = name;
+    this.analysis = analysis;
   }
 
-  public Scope(QualifiedName name, Scope parent, Node node, RelationSqmlType relationType) {
+  public Scope(QualifiedName name, Scope parent, Node node, RelationSqmlType relationType,
+      Analysis analysis) {
     this.name = name;
     this.parent = parent;
     this.node = node;
     this.relationType = relationType;
+    this.analysis = analysis;
   }
 
   public static Scope.Builder builder() {
     return new Builder();
   }
 
-//  public Optional<RelationSqmlType> resolveOrCreateRel(QualifiedName name) {
-//    return null;
-//  }
+  public RelationSqmlType resolveRelation(QualifiedName name) {
+    return this.analysis.getOrCreateRelation(name);
+  }
 
   public static class Builder {
 
@@ -45,6 +39,7 @@ public class Scope {
     private Node node;
     private RelationSqmlType relationType;
     private QualifiedName name;
+    private Analysis analysis;
 
     public Builder withName(QualifiedName name) {
       this.name = name;
@@ -62,8 +57,13 @@ public class Scope {
       return this;
     }
 
+    public Builder withAnalysis(Analysis analysis) {
+      this.analysis = analysis;
+      return this;
+    }
+
     public Scope build() {
-      return new Scope(name, parent, node, relationType);
+      return new Scope(name, parent, node, relationType, analysis);
     }
   }
 

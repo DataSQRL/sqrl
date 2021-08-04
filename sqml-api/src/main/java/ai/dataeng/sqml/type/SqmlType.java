@@ -39,11 +39,31 @@ public abstract class SqmlType {
   }
 
   public static class NumberSqmlType extends ScalarSqmlType {
+    public NumberSqmlType(String name) {
+      super(name);
+    }
     public NumberSqmlType() {
-      super("NUMBER");
+      this("NUMBER");
     }
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
       return visitor.visitNumber(this, context);
+    }
+  }
+
+  public static class IntegerSqmlType extends NumberSqmlType {
+    public IntegerSqmlType() {
+      super("INTEGER");
+    }
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+      return visitor.visitInteger(this, context);
+    }
+  }
+  public static class FloatSqmlType extends NumberSqmlType {
+    public FloatSqmlType() {
+      super("FLOAT");
+    }
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+      return visitor.visitFloat(this, context);
     }
   }
 
@@ -116,15 +136,18 @@ public abstract class SqmlType {
     }
   }
 
+  public static class UuidSqmlType extends ScalarSqmlType {
+    public UuidSqmlType() {
+      super("UUID");
+    }
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+      return visitor.visitUuid(this, context);
+    }
+  }
 
   public static class RelationSqmlType extends SqmlType {
-    private Expression expression;
     private List<Field> fields;
-
-    public RelationSqmlType(Expression expression) {
-      super("RELATION");
-      this.expression = expression;
-    }
+    private Optional<Expression> expression = Optional.empty();
 
     public RelationSqmlType(Field... fields) {
       super("RELATION");
@@ -144,10 +167,6 @@ public abstract class SqmlType {
       return fields;
     }
 
-    public Expression getExpression() {
-      return expression;
-    }
-
     public List<Field> resolveFields(QualifiedName name) {
       //Todo: resolve scoped field: e.g. @.x
       return fields.stream()
@@ -155,11 +174,43 @@ public abstract class SqmlType {
           .collect(Collectors.toList());
     }
 
+    public Optional<Expression> getExpression() {
+      return expression;
+    }
+
     public Optional<Field> resolveField(QualifiedName name) {
-      //todo: resolve fields via sqml logic
-      return fields.stream()
-          .filter(f->matches(f, name))
-          .findFirst();
+      if (name.toString().contains("state")) {
+        System.out.println();
+      }
+      RelationSqmlType rel = this;
+
+      List<String> parts = name.getParts();
+      for (int i = 0; i < parts.size() - 1; i++) {
+        String part = parts.get(i);
+        if (part.equalsIgnoreCase("@")) {
+          throw new RuntimeException("TBD");
+        }
+        Optional<Field> field = rel.getField(part);
+        if (field.isEmpty()) {
+          return Optional.empty();
+        }
+        Field f = field.get();
+        if (!(f.getType() instanceof RelationSqmlType)) {
+          throw new RuntimeException(String.format("Field is not a relation %s", name));
+        }
+        rel = (RelationSqmlType)f.getType();
+      }
+
+      return rel.getField(name.getSuffix());
+    }
+
+    private Optional<Field> getField(String part) {
+      for (Field field : fields) {
+        if (matches(field, QualifiedName.of(part))) {
+          return Optional.of(field);
+        }
+      }
+      return Optional.empty();
     }
 
     private boolean matches(Field f, QualifiedName name) {
@@ -177,14 +228,18 @@ public abstract class SqmlType {
         return alias.equals(name.getPrefix().get());
       }
 
-      return false;
+      return true;
     }
 
     public void addField(Field field) {
-      this.fields.add(field);
-    }
+      //todo shadow fields
+      for (int i = fields.size() - 1; i >= 0; i--) {
+        Field f = fields.get(i);
+        if (f.getName().get().equalsIgnoreCase(field.getName().get())) {
+          fields.remove(i);
+        }
+      }
 
-    public void setField(Field field) {
       this.fields.add(field);
     }
 
@@ -215,6 +270,9 @@ public abstract class SqmlType {
       return new RelationSqmlType(fieldsBuilder.build());
     }
 
+    public void setExpression(Optional<Expression> expression) {
+      this.expression = expression;
+    }
   }
   @Override
   public boolean equals(Object o) {

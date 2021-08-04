@@ -64,11 +64,10 @@ public class SqlParser {
       .specialRule(ai.dataeng.sqml.parser.SqlBaseParser.RULE_query, "<query>")
       .specialRule(ai.dataeng.sqml.parser.SqlBaseParser.RULE_type, "<type>")
       .specialToken(ai.dataeng.sqml.parser.SqlBaseLexer.INTEGER_VALUE, "<integer>")
-      .ignoredRule(ai.dataeng.sqml.parser.SqlBaseParser.RULE_nonReserved)
+//      .ignoredRule(ai.dataeng.sqml.parser.SqlBaseParser.RULE_nonReserved)
       .build();
 
   private final BiConsumer<ai.dataeng.sqml.parser.SqlBaseLexer, ai.dataeng.sqml.parser.SqlBaseParser> initializer;
-  private final EnumSet<IdentifierSymbol> allowedIdentifierSymbols;
   private final boolean enhancedErrorHandlerEnabled;
 
   public SqlParser() {
@@ -83,7 +82,6 @@ public class SqlParser {
   public SqlParser(SqlParserOptions options, BiConsumer<ai.dataeng.sqml.parser.SqlBaseLexer, ai.dataeng.sqml.parser.SqlBaseParser> initializer) {
     this.initializer = requireNonNull(initializer, "initializer is null");
     requireNonNull(options, "options is null");
-    allowedIdentifierSymbols = EnumSet.copyOf(options.getAllowedIdentifierSymbols());
     enhancedErrorHandlerEnabled = options.isEnhancedErrorHandlerEnabled();
   }
 
@@ -142,7 +140,6 @@ public class SqlParser {
       }
 
       ParserRuleContext tree;
-      // first, try parsing with potentially faster SLL mode
       parser.getInterpreter().setPredictionMode(PredictionMode.LL);
       tree = parseFunction.apply(parser);
 

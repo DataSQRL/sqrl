@@ -12,14 +12,16 @@ import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.BooleanLiteral;
 import ai.dataeng.sqml.tree.ComparisonExpression;
 import ai.dataeng.sqml.tree.DecimalLiteral;
+import ai.dataeng.sqml.tree.DereferenceExpression;
 import ai.dataeng.sqml.tree.DoubleLiteral;
 import ai.dataeng.sqml.tree.EnumLiteral;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GenericLiteral;
 import ai.dataeng.sqml.tree.Identifier;
+import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.IntervalLiteral;
-import ai.dataeng.sqml.tree.JoinSubexpression;
+import ai.dataeng.sqml.tree.InlineJoinExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NullLiteral;
@@ -77,15 +79,14 @@ public class ExpressionAnalyzer {
     @Override
     protected SqmlType visitNode(Node node, Context context) {
       throw new RuntimeException(String.format("Could not visit node: %s %s",
-          node.getClass().getName(), node.toString()));
+          node.getClass().getName(), node));
     }
 
     @Override
     protected SqmlType visitIdentifier(Identifier node, Context context) {
-      Optional<Field> field = context.getScope().getRelationType()
-          .resolveField(QualifiedName.of(node));
+      Optional<Field> field = context.getScope().getRelationType().resolveField(QualifiedName.of(node));
       if (field.isEmpty()) {
-        throw new RuntimeException("Could not resolve field");
+        throw new RuntimeException(String.format("Could not resolve field %s", node.getValue()));
       }
       return addType(node, field.get().getType());
     }
@@ -100,7 +101,7 @@ public class ExpressionAnalyzer {
     protected SqmlType visitSubqueryExpression(SubqueryExpression node, Context context) {
       Scope scope = node.getQuery().accept(parent, context.getScope()); //todo rebind the scope / avoid using current analyzer
 
-      return scope.getRelationType().getFields().get(0).getType();
+      return scope.getRelationType();
     }
 
     @Override
@@ -109,13 +110,18 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    public SqmlType visitJoinSubexpression(JoinSubexpression node, Context context) {
-      return addType(node, new RelationSqmlType(node));
-    }
+    public SqmlType visitInlineJoinExpression(InlineJoinExpression node, Context context) {
+      InlineJoin join = node.getJoin();
+      RelationSqmlType rel = context.getScope().resolveRelation(join.getTable());
 
-    private SqmlType addType(Expression node, SqmlType type) {
-      analysis.addType(node, type);
-      return type;
+      rel.setExpression(Optional.of(node));
+
+      if (join.getInverse().isPresent()) {
+        RelationSqmlType relationSqmlType = context.getScope().getRelationType();
+        rel.addField(Field.newUnqualified(join.getInverse().get().toString(), relationSqmlType));
+      }
+
+      return addType(node, rel);
     }
 
     @Override
@@ -182,6 +188,26 @@ public class ExpressionAnalyzer {
     @Override
     protected SqmlType visitLongLiteral(LongLiteral node, Context context) {
       return addType(node, new NumberSqmlType());
+    }
+
+    @Override
+    protected SqmlType visitDereferenceExpression(DereferenceExpression node, Context context) {
+      SqmlType type = node.getBase().accept(this, context);
+      if (!(type instanceof RelationSqmlType)) {
+        throw new RuntimeException(String.format("Dereference type not a relation: %s", node));
+      }
+
+      Optional<Field> field = ((RelationSqmlType)type).resolveField(QualifiedName.of(node.getField()));
+      if (field.isEmpty()) {
+        throw new RuntimeException(String.format("Could not dereference %s in %s", node.getBase(), node.getField()));
+      }
+
+      return addType(node, field.get().getType());
+    }
+
+    private SqmlType addType(Expression node, SqmlType type) {
+      analysis.addType(node, type);
+      return type;
     }
   }
 }

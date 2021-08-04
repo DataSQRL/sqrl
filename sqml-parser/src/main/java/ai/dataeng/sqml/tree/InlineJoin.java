@@ -50,6 +50,7 @@ public class InlineJoin
     return on;
   }
 
+  //todo inverse not a qualified name
   public Optional<QualifiedName> getInverse() {
     return inverse;
   }

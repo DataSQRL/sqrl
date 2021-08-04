@@ -167,7 +167,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   protected String visitDereferenceExpression(DereferenceExpression node, Void context) {
-    return "TBD";//super.visitDereferenceExpression(node, context);
+    return node.getBase().accept(this, context) + "." + node.getField();
   }
 
   @Override
@@ -364,7 +364,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  public String visitJoinSubexpression(JoinSubexpression node, Void context) {
+  public String visitInlineJoinExpression(InlineJoinExpression node, Void context) {
     return node.getJoin().accept(this, null);
   }
 

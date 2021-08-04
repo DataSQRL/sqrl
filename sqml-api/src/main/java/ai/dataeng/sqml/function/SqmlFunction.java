@@ -14,7 +14,7 @@ public class SqmlFunction {
   }
 
   public TypeSignature getTypeSignature() {
-    return new TypeSignature(name, null);
+    return new TypeSignature(name, type);
   }
 
   public String getName() {

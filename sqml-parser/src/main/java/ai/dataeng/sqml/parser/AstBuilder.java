@@ -68,7 +68,7 @@ import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
-import ai.dataeng.sqml.tree.JoinSubexpression;
+import ai.dataeng.sqml.tree.InlineJoinExpression;
 import ai.dataeng.sqml.tree.Row;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.tree.Select;
@@ -938,7 +938,7 @@ class AstBuilder
 
   @Override
   public Node visitInlineJoin(InlineJoinContext ctx) {
-    return new JoinSubexpression(
+    return new InlineJoinExpression(
         Optional.of(getLocation(ctx)),
         new InlineJoin(
             Optional.of(getLocation(ctx)),
@@ -1054,9 +1054,10 @@ class AstBuilder
     List<String> parts = visit(context.identifier(), Identifier.class).stream()
         .map(Identifier::getValue) // TODO: preserve quotedness
         .collect(Collectors.toList());
-    if (context.ASTERISK() != null) {
-      parts.add("*");
-    }
+    //todo .*
+//    if (context.ASTERISK() != null) {
+//      parts.add("*");
+//    }
 
     return QualifiedName.of(parts);
   }

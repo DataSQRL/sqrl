@@ -6,11 +6,14 @@ import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.ArraySqmlType;
 import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
 import ai.dataeng.sqml.type.SqmlType.DateTimeSqmlType;
+import ai.dataeng.sqml.type.SqmlType.FloatSqmlType;
+import ai.dataeng.sqml.type.SqmlType.IntegerSqmlType;
 import ai.dataeng.sqml.type.SqmlType.NullSqmlType;
 import ai.dataeng.sqml.type.SqmlType.NumberSqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
 import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
 import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
+import ai.dataeng.sqml.type.SqmlType.UuidSqmlType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import graphql.Scalars;
 import graphql.schema.GraphQLList;
@@ -71,7 +74,22 @@ public class GqlTypeVisitor extends SqmlTypeVisitor<GraphQLOutputType, Context> 
 
   @Override
   public GraphQLOutputType visitRelation(RelationSqmlType type, Context context) {
-    return (GraphQLOutputType)type.getExpression().accept(parent,
-        context);
+    return (GraphQLOutputType)type.getExpression().map(e->e.accept(parent,
+        context)).orElseThrow(()->new RuntimeException(String.format("Could not resolve type %s", type)));
+  }
+
+  @Override
+  public GraphQLOutputType visitUuid(UuidSqmlType type, Context context) {
+    return Scalars.GraphQLString;
+  }
+
+  @Override
+  public GraphQLOutputType visitFloat(FloatSqmlType type, Context context) {
+    return Scalars.GraphQLFloat;
+  }
+
+  @Override
+  public GraphQLOutputType visitInteger(IntegerSqmlType type, Context context) {
+    return Scalars.GraphQLInt;
   }
 }

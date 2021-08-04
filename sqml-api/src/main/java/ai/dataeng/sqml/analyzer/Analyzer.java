@@ -19,7 +19,6 @@ import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.JoinOn;
-import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.QualifiedName;
@@ -40,7 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class Analyzer {
   protected final Metadata metadata;
@@ -93,7 +91,7 @@ public class Analyzer {
 
     @Override
     protected Scope visitAssign(Assign node, Scope scope) {
-      Scope result = node.getRhs().accept(this, new Scope(node.getName()));
+      Scope result = node.getRhs().accept(this, new Scope(node.getName(), this.analysis));
 
       if (result.getRelationType() == null) {
         throw new RuntimeException(String.format(
@@ -105,8 +103,10 @@ public class Analyzer {
 
     @Override
     public Scope visitQueryAssignment(QueryAssignment queryAssignment, Scope scope) {
-      //Add sqml field here
-      return queryAssignment.getQuery().accept(this, scope);
+      Scope result = queryAssignment.getQuery().accept(this, scope);
+      RelationSqmlType rel = this.analysis.getOrCreateRelation(scope.getName().getPrefix().get());
+      rel.addField(Field.newUnqualified(scope.getName().getSuffix(), result.getRelationType()));
+      return result;
     }
 
     //todo:
@@ -120,6 +120,7 @@ public class Analyzer {
       analysis.setOutputExpressions(node, descriptorToFields(queryBodyScope));
 
       Scope queryScope = Scope.builder()
+          .withAnalysis(this.analysis)
           .withParent(queryBodyScope)
           .withRelationType(node, queryBodyScope.getRelationType())
           .build();
@@ -143,7 +144,7 @@ public class Analyzer {
       List<Expression> orderByExpressions = emptyList();
       Optional<Scope> orderByScope = Optional.empty();
       if (node.getOrderBy().isPresent()) {
-        throw new RuntimeException("Order by tbd");
+//        throw new RuntimeException("Order by tbd");
 //        if (node.getSelect().isDistinct()) {
 //          verifySelectDistinct(node, outputExpressions);
 //        }
@@ -191,7 +192,7 @@ public class Analyzer {
 
     @Override
     protected Scope visitTable(Table table, Scope scope) {
-      QualifiedName name = dereferenceTableName(table.getName());
+      QualifiedName name = dereferenceTableName(table.getName(), scope.getName());
 
       Optional<RelationSqmlType> tableHandle = analysis.getRelation(name);
       if (tableHandle.isEmpty()) {
@@ -210,6 +211,7 @@ public class Analyzer {
     public Scope visitExpressionAssignment(ExpressionAssignment expressionAssignment,
         Scope scope) {
       RelationSqmlType rel = analysis.getOrCreateRelation(scope.getName().getPrefix().get());
+      scope = createAndAssignScope(expressionAssignment.getExpression(), scope, rel);
       ExpressionAnalysis exprAnalysis = analyzeExpression(expressionAssignment.getExpression(), scope);
 
       SqmlType type = exprAnalysis.getType(expressionAssignment.getExpression());
@@ -219,8 +221,8 @@ public class Analyzer {
             expressionAssignment.getExpression()
           ));
       }
-      rel.addField(Field.newUnqualified(scope.getName().getSuffix(), type));
 
+      rel.addField(Field.newUnqualified(scope.getName().getSuffix(), type));
       return createAndAssignScope(expressionAssignment.getExpression(), scope, rel);
     }
 
@@ -263,18 +265,11 @@ public class Analyzer {
     }
 
     private List<Expression> descriptorToFields(Scope scope) {
-
-//      ImmutableList.Builder<Expression> builder = ImmutableList.builder();
-//      for (int fieldIndex = 0; fieldIndex < scope.getRelationType().getAllFieldCount(); fieldIndex++) {
-//        FieldReference expression = new FieldReference(fieldIndex);
-//        builder.add(expression);
-//        analyzeExpression(expression, scope);
-//      }
       return null;
     }
 
     private Scope createScope(Scope scope) {
-      return new Scope(scope.getName());
+      return new Scope(scope.getName(), this.analysis);
     }
 
     private Scope createAndAssignScope(Node node, Scope parentScope)
@@ -296,6 +291,8 @@ public class Analyzer {
     {
       Scope scope = scopeBuilder(parentScope)
           .withRelationType(node, relationType)
+          .withName(parentScope.getName())
+          .withAnalysis(this.analysis)
           .build();
 
       analysis.setScope(node, scope);
@@ -305,6 +302,8 @@ public class Analyzer {
     private Scope.Builder scopeBuilder(Scope parentScope)
     {
       Scope.Builder scopeBuilder = Scope.builder();
+      scopeBuilder.withName(parentScope.getName());
+      scopeBuilder.withAnalysis(this.analysis);
 
       if (parentScope != null) {
         // parent scope represents local query scope hierarchy. Local query scope
@@ -324,9 +323,13 @@ public class Analyzer {
       return scope;
     }
 
-    private QualifiedName dereferenceTableName(QualifiedName name) {
-      //follow @, parent, etc, return fully qualified path
-      //todo
+    private QualifiedName dereferenceTableName(QualifiedName name,
+        QualifiedName scopeName) {
+      if (name.getParts().get(0).equalsIgnoreCase("@")) {
+        List<String> newName = new ArrayList<>(scopeName.getParts().subList(0, scopeName.getParts().size() - 1));
+        newName.addAll(name.getParts().subList(1, name.getParts().size()));
+        return QualifiedName.of(newName);
+      }
 
       return name;
     }

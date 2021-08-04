@@ -3,11 +3,11 @@ package ai.dataeng.sqml.tree;
 import java.util.List;
 import java.util.Optional;
 
-public class JoinSubexpression extends Expression {
+public class InlineJoinExpression extends Expression {
 
   private final InlineJoin join;
 
-  public JoinSubexpression(Optional<NodeLocation> location,
+  public InlineJoinExpression(Optional<NodeLocation> location,
       InlineJoin join) {
     super(location);
     this.join = join;
@@ -18,7 +18,7 @@ public class JoinSubexpression extends Expression {
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
-    return visitor.visitJoinSubexpression(this, context);
+    return visitor.visitInlineJoinExpression(this, context);
   }
 
   @Override

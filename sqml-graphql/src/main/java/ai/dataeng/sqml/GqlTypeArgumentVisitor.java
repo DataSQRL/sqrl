@@ -9,6 +9,7 @@ import ai.dataeng.sqml.type.SqmlType.NumberSqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
 import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
 import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
+import ai.dataeng.sqml.type.SqmlType.UuidSqmlType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import graphql.schema.GraphQLArgument;
 import java.util.List;
@@ -18,6 +19,11 @@ public class GqlTypeArgumentVisitor extends SqmlTypeVisitor<List<GraphQLArgument
   @Override
   public List<GraphQLArgument> visitSqmlType(SqmlType type, Object context) {
     throw new RuntimeException(String.format("Could not find type %s", type));
+  }
+
+  @Override
+  public List<GraphQLArgument> visitUuid(UuidSqmlType type, Object context) {
+    return List.of();
   }
 
   @Override

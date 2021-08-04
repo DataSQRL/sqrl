@@ -2,7 +2,6 @@ package ai.dataeng.sqml.expression;
 
 import ai.dataeng.sqml.analyzer.FieldId;
 import ai.dataeng.sqml.tree.Expression;
-import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.type.SqmlType;
 import java.util.HashMap;

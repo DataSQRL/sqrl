@@ -27,11 +27,11 @@ singleStatement
     ;
 
 statement
-    : query                                                            #statementDefault
+    : qualifiedName ':=' assignment                                    #assign
     | CREATE RELATIONSHIP qualifiedName inlineJoin              #createRelationship
     | CREATE SUBSCRIPTION qualifiedName ON subscriptionType AS query   #createSubscription
     | IMPORT importType=(FUNCTION | SOURCE | PUBLIC)? qualifiedName importAlias?     #importStatement
-    | qualifiedName ':=' assignment                                    #assign
+    | query                                                            #statementDefault
     ;
 
 importAlias
@@ -198,7 +198,7 @@ primaryExpression
     | CAST '(' expression AS type ')'                                                     #cast
     | qualifiedName                                                                       #columnReference
     | base=primaryExpression '.' fieldName=identifier                                     #dereference
-    | '(' expression ')'                                                                  #parenthesizedExpression
+    | '(' expression ')'                                                                 #parenthesizedExpression
     ;
 
 string
@@ -249,7 +249,7 @@ whenClause
     ;
 
 qualifiedName
-    : identifier ('.' identifier)* ('.'ASTERISK)?
+    : identifier ('.' identifier)* ('.*')?
     ;
 
 identifier
@@ -284,9 +284,9 @@ nonReserved
     | PARTITION | PARTITIONS | POSITION | PRECEDING | PRIVILEGES | PROPERTIES
     | RANGE | READ | RENAME | REPEATABLE | REPLACE | RESET | RESPECT | RESTRICT | RETURN | RETURNS | REVOKE | ROLE | ROLES | ROLLBACK | ROW | ROWS
     | SCHEMA | SCHEMAS | SECOND | SECURITY | SERIALIZABLE | SESSION | SET | SETS | SQL
-    | SHOW | SOME | START | SUBSTRING | SYSTEM
+    | SHOW | SOME | SUBSTRING | SYSTEM
     | TABLES | TABLESAMPLE | TEXT | TIMESTAMP | TO | TRANSACTION | TRY_CAST | TYPE
-    | UNBOUNDED | UNCOMMITTED | USE | USER
+    | UNBOUNDED | UNCOMMITTED | USE
     | VALIDATE | VIEW
     | WEEK | WORK | WRITE
     | YEAR
@@ -459,7 +459,6 @@ SETS: 'SETS';
 SHOW: 'SHOW';
 SOME: 'SOME';
 SQL: 'SQL';
-START: 'START';
 SUBSCRIPTION: 'SUBSCRIPTION';
 SUBSTRING: 'SUBSTRING';
 SYSTEM: 'SYSTEM';
@@ -479,7 +478,6 @@ UNBOUNDED: 'UNBOUNDED';
 UNCOMMITTED: 'UNCOMMITTED';
 UNION: 'UNION';
 USE: 'USE';
-USER: 'USER';
 USING: 'USING';
 VALIDATE: 'VALIDATE';
 VALUES: 'VALUES';
