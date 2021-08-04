@@ -1,8 +1,0 @@
-Customer := SELECT email, collect(cid) AS ids, collect(name, first_name + ' ' + last_name) AS names
-FROM
-    (SELECT email, cid, first_name, last_name FROM customer_mdm
-    UNION ALL
-    SELECT email, cid, name FROM customer_db)
-GROUP BY email;
-
-Customer.name := util.longest(names);
