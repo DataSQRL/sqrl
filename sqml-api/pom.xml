@@ -21,6 +21,17 @@
       <groupId>ai.dataeng.sqml</groupId>
       <artifactId>sqml-parser</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-streaming-java_2.12</artifactId>
+      <version>1.13.0</version>
+      <!--<scope>provided</scope>-->
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-clients_2.12</artifactId>
+      <version>1.13.0</version>
+    </dependency>
   </dependencies>
 
 </project>
