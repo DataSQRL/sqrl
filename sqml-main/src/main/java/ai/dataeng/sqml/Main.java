@@ -36,6 +36,7 @@ public class Main {
 
   public static void main(String args[]) throws Exception {
     /* Defined as a source vertex */
+
     Source meetupIngres = HttpIngress.newHttpIngres()
       .url("https://stream.meetup.com/2/rsvps")
       .build();
