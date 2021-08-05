@@ -51,19 +51,19 @@ public class ResolveImportStatements extends ScriptRewrite {
         //no-op
         break;
       case SOURCE:
-        Schema source = metadata.getSchemaProvider().get(node.getQualifiedName().toString());
-        if (source == null) {
-          return; //todo
-        }
-        AddColumnFromSchema addColumnFromSchema = new AddColumnFromSchema(newStatements);
-        source.accept(addColumnFromSchema, null);
+//        Schema source = metadata.getSchemaProvider().get(node.getQualifiedName().toString());
+//        if (source == null) {
+//          return; //todo
+//        }
+//        AddColumnFromSchema addColumnFromSchema = new AddColumnFromSchema(newStatements);
+//        source.accept(addColumnFromSchema, null);
         break;
       case SCRIPT:
         //TODO: TEST FOR CYCLIC IMPORTS
-        Script script = metadata.getScript(node.getQualifiedName().toString());
-        Preconditions.checkNotNull(script,
-            String.format("Could not find script: ", node.getQualifiedName()));
-        rewrite(script, newStatements);
+//        Script script = metadata.getScript(node.getQualifiedName().toString());
+//        Preconditions.checkNotNull(script,
+//            String.format("Could not find script: ", node.getQualifiedName()));
+//        rewrite(script, newStatements);
         break;
     }
   }
