@@ -4,12 +4,14 @@ import ai.dataeng.sqml.analyzer.Analysis;
 import ai.dataeng.sqml.dag.Dag;
 import ai.dataeng.sqml.tree.Assign;
 import ai.dataeng.sqml.tree.AstVisitor;
+import ai.dataeng.sqml.tree.CreateSubscription;
 import ai.dataeng.sqml.tree.DereferenceExpression;
 import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.Identifier;
+import ai.dataeng.sqml.tree.Import;
 import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.InlineJoinExpression;
 import ai.dataeng.sqml.tree.Node;
@@ -135,14 +137,25 @@ public class GraphqlSchemaBuilder {
     }
 
     @Override
+    protected GraphQLOutputType visitImport(Import node, Context context) {
+      return null;
+    }
+
+    @Override
+    public GraphQLOutputType visitCreateSubscription(CreateSubscription node, Context context) {
+      return null;
+    }
+
+    @Override
     protected GraphQLOutputType visitAssign(Assign node, Context context) {
       if (containsHiddenField(node.getName())){
         return null;
       }
-      GraphQLOutputType outputType = node.getRhs().accept(this, new Context(node.getName()));
-      if (outputType == null) {
-        throw new RuntimeException("No graphql type found for:" + node.getName());
-      }
+      if (node.getRhs() == null) return null; //todo: Temporary until we resolve distinct assignments
+      node.getRhs().accept(this, new Context(node.getName()));
+//      if (outputType == null) {
+//        throw new RuntimeException("No graphql type found for:" + node.getName());
+//      }
 
       return null;
     }
@@ -159,11 +172,15 @@ public class GraphqlSchemaBuilder {
 
       GraphQLObjectType.Builder obj = createObject(context.getName().getPrefix().orElse(context.getName()));
       GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
-          .name(context.getName().getSuffix())
+          .name(toGraphqlName(context.getName().getSuffix()))
           .type(type)
           .build();
       obj.field(f);
       return type;
+    }
+
+    public static String toGraphqlName(String name) {
+      return name.replaceAll("[^A-Za-z0-9]", "");
     }
 
     @Override
@@ -220,8 +237,9 @@ public class GraphqlSchemaBuilder {
       GraphQLObjectType.Builder builder = createObject(context.getName());
 
       for (Expression expression : analysis.getOutputExpressions(node)) {
+        if (analysis.getName(expression) == null) continue;//todo
         GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
-            .name(analysis.getName(expression))
+            .name(toGraphqlName(analysis.getName(expression)))
             .type(expression.accept(this, context))
             .build();
         builder.field(field);
@@ -290,7 +308,7 @@ public class GraphqlSchemaBuilder {
     }
 
     public static String toName(QualifiedName name) {
-      return String.join("_", name.getParts());
+      return toGraphqlName(String.join("_", name.getParts()));
     }
 
     /**

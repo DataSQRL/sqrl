@@ -28,7 +28,6 @@ singleStatement
 
 statement
     : qualifiedName ':=' assignment                                    #assign
-    | CREATE RELATIONSHIP qualifiedName inlineJoin              #createRelationship
     | CREATE SUBSCRIPTION qualifiedName ON subscriptionType AS query   #createSubscription
     | IMPORT importType=(FUNCTION | SOURCE | PUBLIC)? qualifiedName importAlias?     #importStatement
     | query                                                            #statementDefault
@@ -41,6 +40,8 @@ importAlias
 assignment
     :  expression                                                   # expressionAssign
     |  query                                                        # queryAssign
+    | DISTINCT qualifiedName ON (qualifiedName (',' qualifiedName)*)
+      (ORDER BY sortItem (',' sortItem)*)?                          # distinctAssignment
     ;
 
 subscriptionType

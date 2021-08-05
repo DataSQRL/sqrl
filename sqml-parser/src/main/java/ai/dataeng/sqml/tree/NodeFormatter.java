@@ -1,6 +1,5 @@
 package ai.dataeng.sqml.tree;
 
-import ai.dataeng.sqml.parser.CreateRelationship;
 import java.util.stream.Collectors;
 
 public class NodeFormatter extends AstVisitor<String, Void> {
@@ -374,12 +373,5 @@ public class NodeFormatter extends AstVisitor<String, Void> {
         " ON " + node.getCriteria() +
         node.getInverse().map(i->" INVERSE " + i).orElse("") +
         node.getLimit().map(i->" LIMIT " + i).orElse("");
-  }
-
-  @Override
-  public String visitCreateRelationship(CreateRelationship node, Void context) {
-    return node.getName() + " := JOIN " + node.getRelation() + " ON " + node.getExpression().accept(this, null)
-         + node.getInverse().map(i->" INVERSE " + i).orElse("") +
-        node.getLimit().map(l-> " LIMIT " + l).orElse("") + ";";
   }
 }

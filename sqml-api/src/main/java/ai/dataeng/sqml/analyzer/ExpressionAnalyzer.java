@@ -18,6 +18,8 @@ import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.IntervalLiteral;
 import ai.dataeng.sqml.tree.InlineJoinExpression;
+import ai.dataeng.sqml.tree.IsEmpty;
+import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NullLiteral;
@@ -77,7 +79,7 @@ public class ExpressionAnalyzer {
 
     @Override
     protected SqmlType visitIdentifier(Identifier node, Context context) {
-      Optional<Field> field = context.getScope().getRelationType().resolveField(QualifiedName.of(node));
+      Optional<Field> field = context.getScope().resolveField(QualifiedName.of(node));
       if (field.isEmpty()) {
         throw new RuntimeException(String.format("Could not resolve field %s", node.getValue()));
       }
@@ -88,6 +90,11 @@ public class ExpressionAnalyzer {
     protected SqmlType visitExpression(Expression node, Context context) {
       throw new RuntimeException(String.format("Expression needs type inference: %s. %s", 
           node.getClass().getName(), node));
+    }
+
+    @Override
+    protected SqmlType visitLogicalBinaryExpression(LogicalBinaryExpression node, Context context) {
+      return addType(node, new BooleanSqmlType());
     }
 
     @Override
@@ -108,8 +115,6 @@ public class ExpressionAnalyzer {
       InlineJoin join = node.getJoin();
       RelationSqmlType rel = context.getScope().getRelation(join.getTable())
           .orElseThrow(()-> new RuntimeException(String.format("Could not find relation %s %s", join.getTable(), node)));
-
-      rel.setExpression(Optional.of(node));
 
       if (join.getInverse().isPresent()) {
         RelationSqmlType relationSqmlType = context.getScope().getRelationType();
@@ -199,6 +204,12 @@ public class ExpressionAnalyzer {
       }
 
       return addType(node, field.get().getType());
+    }
+
+    @Override
+    public SqmlType visitIsEmpty(IsEmpty node, Context context) {
+      //tbd
+      return addType(node, new StringSqmlType());
     }
 
     private SqmlType addType(Expression node, SqmlType type) {

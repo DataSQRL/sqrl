@@ -19,6 +19,10 @@ public class CreateSubscription extends Node {
     this.query = query;
   }
 
+  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
+    return visitor.visitCreateSubscription(this, context);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

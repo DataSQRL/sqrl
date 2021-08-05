@@ -13,7 +13,6 @@
  */
 package ai.dataeng.sqml.tree;
 
-import ai.dataeng.sqml.parser.CreateRelationship;
 import javax.annotation.Nullable;
 
 /**
@@ -305,12 +304,11 @@ public abstract class AstVisitor<R, C> {
   public R visitInlineJoinExpression(InlineJoinExpression node, C context) {
     return visitExpression(node, context);
   }
-  public R visitCreateRelationship(CreateRelationship node, C context) {
-    return visitNode(node, context);
-  }
-
   public R visitInlineJoin(InlineJoin node, C context) {
     return visitNode(node, context);
   }
 
+  public R visitCreateSubscription(CreateSubscription node, C context) {
+    return visitNode(node, context);
+  }
 }

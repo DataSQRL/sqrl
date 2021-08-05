@@ -937,6 +937,11 @@ class AstBuilder
   }
 
   @Override
+  public Node visitDistinctAssignment(DistinctAssignmentContext context) {
+    return null;//new Assign(getLocation(context), );
+  }
+
+  @Override
   public Node visitInlineJoin(InlineJoinContext ctx) {
     return new InlineJoinExpression(
         Optional.of(getLocation(ctx)),
@@ -964,19 +969,6 @@ class AstBuilder
   public Node visitExpressionAssign(ExpressionAssignContext ctx) {
     return new ExpressionAssignment(Optional.of(getLocation(ctx)),
         (Expression)visitExpression(ctx.expression()));
-  }
-
-  @Override
-  public Node visitCreateRelationship(CreateRelationshipContext ctx) {
-    InlineJoinContext rctx = ctx.inlineJoin();
-    return new CreateRelationship(
-        Optional.of(getLocation(ctx)),
-        getQualifiedName(ctx.qualifiedName()),
-        getQualifiedName(rctx.table),
-        visit(rctx.expression()),
-        getQualifiedNameIfPresent(rctx.inv),
-        getTextIfPresent(rctx.limit)
-    );
   }
 
   @Override

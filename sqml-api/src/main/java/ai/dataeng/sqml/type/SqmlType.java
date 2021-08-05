@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import ai.dataeng.sqml.analyzer.Field;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.QualifiedName;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
@@ -147,7 +148,6 @@ public abstract class SqmlType {
 
   public static class RelationSqmlType extends SqmlType {
     private List<Field> fields;
-    private Optional<Expression> expression = Optional.empty();
     private QualifiedName relationName;
 
     public RelationSqmlType() {
@@ -164,7 +164,7 @@ public abstract class SqmlType {
 
     public RelationSqmlType(List<Field> fields) {
       super("RELATION");
-      this.fields = fields;
+      this.fields = new ArrayList<>(fields);
       this.relationName = null;
     }
 
@@ -181,65 +181,55 @@ public abstract class SqmlType {
       return fields;
     }
 
-    public List<Field> resolveFields(QualifiedName name) {
-      //Todo: resolve scoped field: e.g. @.x
-      return fields.stream()
-          .filter(f->matches(f, name))
-          .collect(Collectors.toList());
-    }
-
-    public Optional<Expression> getExpression() {
-      return expression;
-    }
-
     public Optional<Field> resolveField(QualifiedName name) {
+      List<Field> fields = resolveFields(name);
+      if (fields.size() > 1) {
+        throw new RuntimeException(String.format("Ambiguous fields: %s", fields));
+      } else if (fields.size() == 1){
+        return Optional.of(fields.get(0));
+      } else {
+        return Optional.empty();
+      }
+    }
+
+    public List<Field> resolveFields(QualifiedName name) {
+      //if name starts with @ or has parent
+      List<Field> foundFields = new ArrayList<>();
       RelationSqmlType rel = this;
+      boolean maybeAlias = name.getParts().size() > 1;
+      for (Field field : rel.fields) {
+        //Check for an alias
+        if (maybeAlias && field.getRelationAlias().isPresent() &&
+            field.getRelationAlias().get().equalsIgnoreCase(name.getParts().get(0)) &&
+            field.getName().get().equalsIgnoreCase(name.getParts().get(1))) {
+          //check if we have to look for more
+          if (name.getParts().size() > 2) {
+            Preconditions.checkState(field.getType() instanceof RelationSqmlType);
+            QualifiedName nextPart = QualifiedName.of(name.getParts().subList(2, name.getParts().size()));
+            RelationSqmlType nextRelation = (RelationSqmlType) field.getType();
+            List<Field> nested = nextRelation.resolveFields(nextPart);
+            foundFields.addAll(nested);
+          } else {
+            foundFields.add(field);
+          }
+        }
 
-      List<String> parts = name.getParts();
-      for (int i = 0; i < parts.size() - 1; i++) {
-        String part = parts.get(i);
-        if (part.equalsIgnoreCase("@")) {
-          throw new RuntimeException("TBD");
+        //Check unaliased
+        if (field.getRelationAlias().isEmpty() &&
+            field.getName().get().equalsIgnoreCase(name.getParts().get(0))) {
+          if (name.getParts().size() > 1) {
+            Preconditions.checkState(field.getType() instanceof RelationSqmlType);
+            QualifiedName nextPart = QualifiedName.of(name.getParts().subList(1, name.getParts().size()));
+            RelationSqmlType nextRelation = (RelationSqmlType) field.getType();
+            List<Field> nested = nextRelation.resolveFields(nextPart);
+            foundFields.addAll(nested);
+          } else {
+            foundFields.add(field);
+          }
         }
-        Optional<Field> field = rel.getField(part);
-        if (field.isEmpty()) {
-          return Optional.empty();
-        }
-        Field f = field.get();
-        if (!(f.getType() instanceof RelationSqmlType)) {
-          throw new RuntimeException(String.format("Field is not a relation %s", name));
-        }
-        rel = (RelationSqmlType)f.getType();
       }
 
-      return rel.getField(name.getSuffix());
-    }
-
-    private Optional<Field> getField(String part) {
-      for (Field field : fields) {
-        if (matches(field, QualifiedName.of(part))) {
-          return Optional.of(field);
-        }
-      }
-      return Optional.empty();
-    }
-
-    private boolean matches(Field f, QualifiedName name) {
-      boolean matchesFieldName = f.getName().get().equalsIgnoreCase(name.getSuffix());
-      if (!matchesFieldName) {
-        return false;
-      }
-      //must match alias
-      if (f.getRelationAlias().isPresent()) {
-        if (name.getPrefix().isEmpty()) {
-          return false;
-        }
-
-        QualifiedName alias = f.getRelationAlias().get();
-        return alias.equals(name.getPrefix().get());
-      }
-
-      return true;
+      return foundFields;
     }
 
     public void addField(Field field) {
@@ -269,7 +259,7 @@ public abstract class SqmlType {
         Field field = this.fields.get(i);
         Optional<String> columnAlias = field.getName();
           fieldsBuilder.add(Field.newQualified(
-              QualifiedName.of(relationAlias),
+              relationAlias,
               columnAlias,
               field.getType(),
               field.isHidden(),
@@ -279,10 +269,6 @@ public abstract class SqmlType {
       }
 
       return new RelationSqmlType(fieldsBuilder.build());
-    }
-
-    public void setExpression(Optional<Expression> expression) {
-      this.expression = expression;
     }
   }
   @Override

@@ -1,52 +1,47 @@
-Auction.id := casts.toInteger(id);
-Auction.category_id := casts.toInteger(category_id);
-Auction.seller_id := casts.toInteger(seller_id);
-Auction.start_time := casts.toInteger(start_time);
-Auction.end_time := casts.toInteger(end_time);
-Auction.item_name := casts.toString(item_name);
-Auction.item_description := casts.toString(item_description);
+IMPORT adr-data.*;
 
-Bid.id := casts.toUuid(id);
-Bid.auction_id := casts.toInteger(auction_id);
-Bid.bidder_id := casts.toInteger(bidder_id);
-Bid.timestamp := casts.toTimestamp(bidder_id);
-Bid.bid_price := casts.toFloat(bid_price);
+IMPORT FUNCTION vec;
 
-Category.id := casts.toInteger(id);
-Category.name := casts.toString(name);
-Category.description := casts.toString(description);
+Prescriptions.x := 1;
+Prescriptions.dosage := 1;
+Prescriptions.order_no := 1;
+Prescriptions.`end` := 1;
+DrugIngredients.x := 1;
+DrugIngredients.ingredient := 1;
+DrugIngredients.fraction := 1;
+ADRTemplate.x := 1;
+ADRTemplate.reference := 1;
+ADRTemplate.name := 1;
+ADRTemplate.severity := 1;
+Patient.id := 1;
+Patient.diagnosis.x := 1;
+Patient.diagnosis.code := 1;
+Patient.diagnosis.date := 1;
+Patient.diagnosis.identifier := 1;
+Patient.diagnosis.diagnosis := 1;
+MedicalHistory.patient_ssn := 1;
 
-User.id := casts.toInteger(id);
-User.name := casts.toString(name);
-User.email := casts.toString(email);
-User.registrationTime := casts.toInteger(registrationTime);
-User.address.state := casts.toString(state);
-User.address.city := casts.toString(city);
+Patient.prescriptions := JOIN Prescriptions on @.prescriptions.parent.id = Prescriptions.patient_id INVERSE patient;
 
--- Let's establish the relationships in the data
+Patient.activeIngredients := SELECT p.order_no as prescription_no, di.ingredient as ingredient,
+                                    p.dosage * di.fraction as dosage
+                             FROM @.prescriptions p JOIN DrugIngredients di on p.drug_id = di.drug_ref
+                             WHERE p.`end` > now() - time.days(14) and p.start < now + time.days(2);
 
-Auction.bids := JOIN Bid ON Bid.auction_id = @.id INVERSE auction;
-Auction.category := JOIN Category ON Category.id = @.category_id INVERSE auctions;
-Auction.seller := JOIN User ON User.id = @.seller_id INVERSE auctions;
+Patient.history := JOIN MedicalHistory on @.ssn=MedicalHistory.patient_ssn;
 
-User.bids := JOIN Bid ON Bid.bidder_id = @.id INVERSE bidder;
+Patient.conditions := SELECT code, date, diagnosis AS `source`, identifier AS reference FROM @.diagnosis
+                      UNION ALL
+                      SELECT code, occured_on as date, history as `source`, record_id as reference FROM @.history;
 
--- Annotate Auction with additional data
-Auction.highest_bid := JOIN @.bids b ORDER BY b.bid_price DESC LIMIT 1;
-Auction.highest_bidder := highest_bid.bidder;
-Auction.highest_bid_price := highest_bid.bid_price;
 
-Auction.num_bids := (SELECT COUNT(*) as cnt FROM @.bids LIMIT 1).cnt;
-Auction.duration := end_time - start_time;
+ADRDetection := SELECT p.id as patient_id, adr.reference as adr_ref, adr.name as name, adr.severity as severity
+                FROM Patient p, ADRTemplate adr
+                WHERE (SELECT COUNT(adri.ingredient) FROM adr.ingredients adri
+                                                     JOIN patient.activeIngredients pai ON adri.ingredient=pai.ingredient
+                       GROUP BY adri.ingredient HAVING sum(pai.dosage) >= adri.min_dosage) = COUNT(adr.ingredients)
+                AND (SELECT COUNT(adrc.diagnosis) FROM adr.preconditions adrc JOIN patient.conditions pc ON adrc.diagnosis=pc.code
+                       GROUP BY adrc.diagnosis HAVING vec.any(vec.is_null(pc.date)) OR time.latest(pc.date) >= now()-max_duration) = COUNT(adr.conditions);
 
-Auction.location := seller.address.state;
-
--- Identify "HOT" Auctions
-
-Auction.num_recent_bids := SELECT COUNT(*) as cnt FROM @.bids
-                           WHERE timestamp > now() - INTERVAL 1 HOUR;
-
--- Annotate Seller with additional data
-
-User.num_auctions := (SELECT COUNT(*) as cnt FROM @.auctions LIMIT 1).cnt;
-User.num_bids := (SELECT COUNT(*) as cnt FROM @.bids LIMIT 1).cnt;
+CREATE SUBSCRIPTION adr_alert  ON ADD AS
+SELECT uid() as id, now() as timestamp, * FROM ADRDetection;

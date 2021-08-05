@@ -15,6 +15,7 @@ package ai.dataeng.sqml.analyzer;
 
 
 import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
+import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.SqmlType;
 import java.util.Optional;
@@ -25,7 +26,7 @@ public class Field
 {
   private final Optional<QualifiedObjectName> originTable;
   private final Optional<String> originColumnName;
-  private final Optional<QualifiedName> relationAlias;
+  private final Optional<String> relationAlias;
   private final Optional<String> name;
   private final SqmlType type;
   private final boolean hidden;
@@ -56,7 +57,7 @@ public class Field
     return new Field(Optional.empty(), name, type, false, originTable, originColumn, aliased);
   }
 
-  public static Field newQualified(QualifiedName relationAlias, Optional<String> name, SqmlType type, boolean hidden, Optional<QualifiedObjectName> originTable, Optional<String> originColumn, boolean aliased)
+  public static Field newQualified(String relationAlias, Optional<String> name, SqmlType type, boolean hidden, Optional<QualifiedObjectName> originTable, Optional<String> originColumn, boolean aliased)
   {
     requireNonNull(relationAlias, "relationAlias is null");
     requireNonNull(name, "name is null");
@@ -66,7 +67,7 @@ public class Field
     return new Field(Optional.of(relationAlias), name, type, hidden, originTable, originColumn, aliased);
   }
 
-  public Field(Optional<QualifiedName> relationAlias, Optional<String> name, SqmlType type, boolean hidden, Optional<QualifiedObjectName> originTable, Optional<String> originColumnName, boolean aliased)
+  public Field(Optional<String> relationAlias, Optional<String> name, SqmlType type, boolean hidden, Optional<QualifiedObjectName> originTable, Optional<String> originColumnName, boolean aliased)
   {
     requireNonNull(relationAlias, "relationAlias is null");
     requireNonNull(name, "name is null");
@@ -92,7 +93,7 @@ public class Field
     return originColumnName;
   }
 
-  public Optional<QualifiedName> getRelationAlias()
+  public Optional<String> getRelationAlias()
   {
     return relationAlias;
   }
@@ -115,42 +116,6 @@ public class Field
   public boolean isAliased()
   {
     return aliased;
-  }
-
-  public boolean matchesPrefix(Optional<QualifiedName> prefix)
-  {
-    return !prefix.isPresent() || relationAlias.isPresent() && relationAlias.get().hasSuffix(prefix.get());
-  }
-
-  /*
-    Namespaces can have names such as "x", "x.y" or "" if there's no name
-    Name to resolve can have names like "a", "x.a", "x.y.a"
-
-    namespace  name     possible match
-     ""         "a"           y
-     "x"        "a"           y
-     "x.y"      "a"           y
-
-     ""         "x.a"         n
-     "x"        "x.a"         y
-     "x.y"      "x.a"         n
-
-     ""         "x.y.a"       n
-     "x"        "x.y.a"       n
-     "x.y"      "x.y.a"       n
-
-     ""         "y.a"         n
-     "x"        "y.a"         n
-     "x.y"      "y.a"         y
-   */
-  public boolean canResolve(QualifiedName name)
-  {
-    if (!this.name.isPresent()) {
-      return false;
-    }
-
-    // TODO: need to know whether the qualified name and the name of this field were quoted
-    return matchesPrefix(name.getPrefix()) && this.name.get().equalsIgnoreCase(name.getSuffix());
   }
 
   @Override

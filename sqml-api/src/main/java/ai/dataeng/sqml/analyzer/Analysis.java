@@ -45,11 +45,8 @@ public class Analysis {
     return Optional.ofNullable(type);
   }
 
-  public void setType(Expression expression, SqmlType type) {
-    typeMap.put(expression, type);
-  }
-
   public void addName(Expression expression, Optional<Identifier> alias) {
+    //todo fix
     if (alias.isPresent()) {
       nameMap.put(expression, alias.get().toString());
     } else if (expression instanceof Identifier) {

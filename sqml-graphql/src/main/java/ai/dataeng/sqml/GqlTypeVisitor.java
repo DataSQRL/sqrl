@@ -71,6 +71,10 @@ public class GqlTypeVisitor extends SqmlTypeVisitor<GraphQLOutputType, Context> 
 
   @Override
   public GraphQLOutputType visitRelation(RelationSqmlType type, Context context) {
+    if (type.getRelationName() == null) {
+      return Scalars.GraphQLString;
+    }
+
     return GraphQLList.list(new GraphQLTypeReference(toName(type.getRelationName())));
   }
 

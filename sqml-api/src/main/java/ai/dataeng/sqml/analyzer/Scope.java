@@ -37,7 +37,7 @@ public class Scope {
   }
 
   public RelationSqmlType createRelation(QualifiedName name) {
-    name = dereferenceTableName(name);
+    name = dereferenceName(name);
 
     RelationSqmlType rel;
     if (name.getPrefix().isPresent()) {
@@ -59,7 +59,7 @@ public class Scope {
   }
 
   public Optional<RelationSqmlType> getRelation(QualifiedName name) {
-    name = dereferenceTableName(name);
+    name = dereferenceName(name);
 
     RelationSqmlType rel = root;
     List<String> parts = name.getParts();
@@ -76,14 +76,38 @@ public class Scope {
     return Optional.of(rel);
   }
 
-  private QualifiedName dereferenceTableName(QualifiedName name) {
+  public QualifiedName dereferenceName(QualifiedName name) {
     if (name.getParts().get(0).equalsIgnoreCase("@")) {
       List<String> newName = new ArrayList<>(getName().getParts().subList(0, getName().getParts().size() - 1));
       newName.addAll(name.getParts().subList(1, name.getParts().size()));
-      return QualifiedName.of(newName);
+      return dereferenceParentName(QualifiedName.of(newName));
     }
 
-    return name;
+    return dereferenceParentName(name);
+  }
+
+  private QualifiedName dereferenceParentName(QualifiedName name) {
+    List<String> parts = new ArrayList<>(name.getParts());
+    for (int i = parts.size() - 1; i >= 0; i--) {
+      if (parts.get(i).equalsIgnoreCase("parent")) {
+        parts.remove(i);
+        parts.remove(i);
+        i--;
+      }
+    }
+
+    return QualifiedName.of(parts);
+  }
+
+  public List<Field> resolveFields(QualifiedName name) {
+    return getRelationType().resolveFields(dereferenceName(name));
+  }
+
+  public Optional<Field> resolveField(QualifiedName name) {
+    if (relationType == null) {
+      System.out.println();
+    }
+    return getRelationType().resolveField(dereferenceName(name));
   }
 
   public static class Builder {

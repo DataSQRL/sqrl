@@ -7,6 +7,7 @@ import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AllColumns;
+import ai.dataeng.sqml.tree.ArithmeticBinaryExpression;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.DereferenceExpression;
 import ai.dataeng.sqml.tree.Expression;
@@ -24,6 +25,8 @@ import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.Statement;
 import ai.dataeng.sqml.tree.Table;
+import ai.dataeng.sqml.tree.TableSubquery;
+import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
@@ -156,15 +159,23 @@ public class StatementAnalyzer {
     }
 
     @Override
+    protected Scope visitTableSubquery(TableSubquery node, Scope context) {
+      return node.getQuery().accept(this, context);
+    }
+
+    @Override
     protected Scope visitJoin(Join node, Scope scope) {
       Scope left = node.getLeft().accept(this, scope);
       Scope right = node.getRight().accept(this, scope);
 
-      JoinCriteria criteria = node.getCriteria().get();
-
       Scope result = createAndAssignScope(node, scope, left.getRelationType()
           .join(right.getRelationType()));
 
+      if (node.getCriteria().isEmpty()) {
+        return result;
+      }
+
+      JoinCriteria criteria = node.getCriteria().get();
       if (criteria instanceof JoinOn) {
         Expression expression = ((JoinOn) criteria).getExpression();
 
@@ -191,6 +202,18 @@ public class StatementAnalyzer {
       RelationSqmlType descriptor = relationType.withAlias(relation.getAlias().getValue());
 
       return createAndAssignScope(relation, scope, descriptor);
+    }
+
+    @Override
+    protected Scope visitUnion(Union node, Scope context) {
+      //tbd
+      return node.getRelations().get(0).accept(this, context);
+    }
+
+    @Override
+    protected Scope visitArithmeticBinary(ArithmeticBinaryExpression node, Scope context) {
+      // tbd
+      return node.getRight().accept(this, context);
     }
 
     private List<Expression> descriptorToFields(Scope scope) {
@@ -260,7 +283,7 @@ public class StatementAnalyzer {
           }
 
           if (name != null) {
-            List<Field> matchingFields = sourceScope.getRelationType().resolveFields(name);
+            List<Field> matchingFields = sourceScope.resolveFields(name);
             if (!matchingFields.isEmpty()) {
               originTable = matchingFields.get(0).getOriginTable();
               originColumn = matchingFields.get(0).getOriginColumnName();
@@ -298,7 +321,10 @@ public class StatementAnalyzer {
           SingleColumn column = (SingleColumn) item;
           //creates expression to type mapping
           analyzeExpression(column.getExpression(), scope);
-          analysis.addName(column.getExpression(), column.getAlias());
+          //todo fix naming of fields
+          if (column.getAlias().isPresent() || column.getExpression() instanceof Identifier) {
+            analysis.addName(column.getExpression(), column.getAlias());
+          }
           //analysis.recordSubqueries(node, expressionAnalysis);
           outputExpressions.add(column.getExpression());
 
@@ -333,7 +359,7 @@ public class StatementAnalyzer {
             if (analysis.getColumnReferences().containsKey(NodeRef.of(column))) {
               sets.add(ImmutableList.of(ImmutableSet.copyOf(analysis.getColumnReferences().get(NodeRef.of(column)))));
             } else {
-              throw new RuntimeException("TBD complex group by expressions");
+//              throw new RuntimeException("TBD complex group by expressions");
               //verifyNoAggregateWindowOrGroupingFunctions(analysis.getFunctionHandles(), metadata.getFunctionAndTypeManager(), column, "GROUP BY clause");
 //              analysis.recordSubqueries(node, analyzeExpression(column, scope));
 //              complexExpressions.add(column);
