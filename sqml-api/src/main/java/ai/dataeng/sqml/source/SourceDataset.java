@@ -1,6 +1,8 @@
 package ai.dataeng.sqml.source;
 
 import javax.annotation.Nonnull;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * A {@link SourceDataset} defines a group of {@link SourceTable} that comprise one semantically coherent dataset.
@@ -22,5 +24,22 @@ public interface SourceDataset {
      * @return Unique name of this source dataset
      */
     public String getName();
+
+    /**
+     * Returns all tables currently in the dataset
+     * @return
+     */
+    public Collection<? extends SourceTable> getTables();
+
+    /**
+     * Returns {@link SourceTable} of the given name in this dataset or NULL if such does not exist
+     * @param name
+     * @return
+     */
+    public SourceTable getTable(String name);
+
+    public default boolean containsTable(String name) {
+        return getTable(name)!=null;
+    }
 
 }

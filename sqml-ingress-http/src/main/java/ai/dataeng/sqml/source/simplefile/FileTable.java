@@ -59,6 +59,11 @@ public class FileTable implements SourceTable {
     }
 
     @Override
+    public boolean hasSchema() {
+        return false;
+    }
+
+    @Override
     public DataStream<SourceRecord> getDataStream(StreamExecutionEnvironment env) {
         final OffsetDateTime fileTime;
         try {
