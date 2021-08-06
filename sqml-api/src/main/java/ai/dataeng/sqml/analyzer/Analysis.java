@@ -1,30 +1,24 @@
 package ai.dataeng.sqml.analyzer;
 
-import static com.google.common.collect.Multimaps.forMap;
-
-import ai.dataeng.sqml.schema.SchemaProvider;
 import ai.dataeng.sqml.tree.Expression;
+import ai.dataeng.sqml.tree.FunctionCall;
+import ai.dataeng.sqml.tree.GroupingOperation;
 import ai.dataeng.sqml.tree.Identifier;
-import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Node;
-import ai.dataeng.sqml.tree.NodeRef;
+import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.type.SqmlType;
+import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
-import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 
 public class Analysis {
@@ -32,7 +26,6 @@ public class Analysis {
   private Map<Expression, SqmlType> typeMap = new HashMap<>();
   private final Map<Node, Scope> scopes = new LinkedHashMap<>();
   private Map<Node, List<Expression>> outputExpressions = new HashMap<>();
-  private final Multimap<NodeRef<Expression>, FieldId> columnReferences = ArrayListMultimap.create();
   private Map<Expression, String> nameMap = new HashMap<>();
   private Map<Relation, RelationSqmlType> relations = new HashMap<>();
 
@@ -45,24 +38,8 @@ public class Analysis {
     return Optional.ofNullable(type);
   }
 
-  public void addName(Expression expression, Optional<Identifier> alias) {
-    //todo fix
-    if (alias.isPresent()) {
-      nameMap.put(expression, alias.get().toString());
-    } else if (expression instanceof Identifier) {
-      nameMap.put(expression, ((Identifier)expression).getValue());
-    } else {
-      throw new RuntimeException(String.format("Expression not named: %s %s",
-          expression.getClass().getName(), expression));
-    }
-  }
-
   public QualifiedName getName(QualifiedName name) {
-    if (name.getParts().get(0).equals("@")) {
-      return QualifiedName.of("a", Math.abs(new Random().nextInt()) + "");
-    } else {
-      return name;
-    }
+    return name;
   }
 
   public Optional<Boolean> isNonNull(Expression expression) {
@@ -81,20 +58,6 @@ public class Analysis {
     this.typeMap.putAll(expressionTypes);
   }
 
-  public void addColumnReferences(Map<NodeRef<Expression>, FieldId> columnReferences)
-  {
-    this.columnReferences.putAll(forMap(columnReferences));
-  }
-
-  public void addColumnReference(NodeRef<Expression> node, FieldId fieldId)
-  {
-    this.columnReferences.put(node, fieldId);
-  }
-
-  public Multimap<NodeRef<Expression>, FieldId> getColumnReferences() {
-    return columnReferences;
-  }
-
   public void setGroupByExpressions(QuerySpecification node, List<Expression> groupingExpressions) {
 
   }
@@ -108,6 +71,10 @@ public class Analysis {
   }
 
   public String getName(Expression expression) {
+    if (expression instanceof Identifier) {
+      //todo: Hack, figure out a generalized name assignment mechanism
+      return ((Identifier) expression).getValue();
+    }
     return nameMap.get(expression);
 
   }
@@ -120,11 +87,44 @@ public class Analysis {
     return Optional.ofNullable(this.relations.get(node));
   }
 
-  public void setRelation(Relation node, RelationSqmlType type) {
-    this.relations.put(node, type);
-  }
-
   public void addRelations(Map<Relation, RelationSqmlType> relations) {
     this.relations.putAll(relations);
+  }
+
+  public void setOrderByExpressions(Node node, List<Expression> orderByExpressions) {
+
+  }
+
+  public void recordSubqueries(Node node, ExpressionAnalysis expressionAnalysis) {
+
+  }
+
+  public void addCoercion(Expression predicate, BooleanSqmlType instance, boolean b) {
+
+  }
+
+  public void setWhere(Node node, Expression predicate) {
+
+  }
+
+  public void setOrderByAggregates(OrderBy node, List<Expression> orderByAggregationExpressions) {
+
+  }
+
+  public boolean isAggregation(QuerySpecification node) {
+    return false;
+  }
+
+  public void setGroupingOperations(QuerySpecification node,
+      List<GroupingOperation> groupingOperations) {
+
+  }
+
+  public void setAggregates(Node node, List<FunctionCall> aggregates) {
+
+  }
+
+  public void setHaving(Node node, Expression predicate) {
+
   }
 }

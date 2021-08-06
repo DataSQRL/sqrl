@@ -36,24 +36,29 @@ public class Scope {
     return new Builder();
   }
 
-  public RelationSqmlType createRelation(QualifiedName name) {
-    name = dereferenceName(name);
+  public RelationSqmlType createRelation(Optional<QualifiedName> name) {
+    if (name.isEmpty()) {
+      return root;
+    }
+
+    QualifiedName relName = dereferenceName(name.get());
 
     RelationSqmlType rel;
-    if (name.getPrefix().isPresent()) {
-      rel = createRelation(name.getPrefix().get());
+    if (relName.getPrefix().isPresent()) {
+      rel = createRelation(relName.getPrefix());
     } else {
       rel = root;
     }
 
-    Optional<Field> field = rel.resolveField(QualifiedName.of(name.getSuffix()));
+    Optional<Field> field = rel.resolveField(QualifiedName.of(relName.getSuffix()),
+        rel);
     if (field.isEmpty()) {
-      RelationSqmlType newRel = new RelationSqmlType(name);
-      rel.addField(Field.newUnqualified(name.getSuffix(), newRel));
+      RelationSqmlType newRel = new RelationSqmlType(relName);
+      rel.addField(Field.newUnqualified(relName.getSuffix(), newRel));
       return newRel;
     }
     Preconditions.checkState(field.get().getType() instanceof RelationSqmlType,
-        "Mismatched fields. Expecting relation %s, got %s", name,
+        "Mismatched fields. Expecting relation %s, got %s", relName,
         field.get().getType().getClass().getName());
     return (RelationSqmlType) field.get().getType();
   }
@@ -64,7 +69,7 @@ public class Scope {
     RelationSqmlType rel = root;
     List<String> parts = name.getParts();
     for (String part : parts) {
-      Optional<Field> field = rel.resolveField(QualifiedName.of(part));
+      Optional<Field> field = rel.resolveField(QualifiedName.of(part), rel);
       if (field.isEmpty()) {
         throw new RuntimeException(String.format("Name cannot be found %s", name));
       }
@@ -93,6 +98,8 @@ public class Scope {
         parts.remove(i);
         parts.remove(i);
         i--;
+      } else if (parts.get(i).equalsIgnoreCase("siblings")) {
+        parts.remove(i);
       }
     }
 
@@ -100,14 +107,18 @@ public class Scope {
   }
 
   public List<Field> resolveFields(QualifiedName name) {
-    return getRelationType().resolveFields(dereferenceName(name));
+    return getRelationType().resolveFields(dereferenceName(name), relationType);
   }
 
   public Optional<Field> resolveField(QualifiedName name) {
-    if (relationType == null) {
-      System.out.println();
+    if (name.getParts().get(0).equalsIgnoreCase("@")) {
+      return getRelationType().resolveField(dereferenceName(name), root);
     }
-    return getRelationType().resolveField(dereferenceName(name));
+    return getRelationType().resolveField(dereferenceName(name), this.getRelationType());
+  }
+
+  public RelationSqmlType getRoot() {
+    return root;
   }
 
   public static class Builder {

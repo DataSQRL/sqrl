@@ -17,6 +17,14 @@ public class SqmlFunction {
     return new TypeSignature(name, type);
   }
 
+  public SqmlType getType() {
+    return type;
+  }
+
+  public boolean isAggregation() {
+    return isAggregation;
+  }
+
   public String getName() {
     return name;
   }

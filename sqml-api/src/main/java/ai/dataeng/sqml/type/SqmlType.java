@@ -3,7 +3,6 @@ package ai.dataeng.sqml.type;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import ai.dataeng.sqml.analyzer.Field;
-import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.QualifiedName;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -11,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public abstract class SqmlType {
   protected final String name;
@@ -191,8 +189,9 @@ public abstract class SqmlType {
       return fields;
     }
 
-    public Optional<Field> resolveField(QualifiedName name) {
-      List<Field> fields = resolveFields(name);
+    public Optional<Field> resolveField(QualifiedName name,
+        RelationSqmlType relationType) {
+      List<Field> fields = resolveFields(name, relationType);
       if (fields.size() > 1) {
         throw new RuntimeException(String.format("Ambiguous fields: %s", fields));
       } else if (fields.size() == 1){
@@ -202,10 +201,10 @@ public abstract class SqmlType {
       }
     }
 
-    public List<Field> resolveFields(QualifiedName name) {
+    public List<Field> resolveFields(QualifiedName name,
+        RelationSqmlType rel) {
       //if name starts with @ or has parent
       List<Field> foundFields = new ArrayList<>();
-      RelationSqmlType rel = this;
       boolean maybeAlias = name.getParts().size() > 1;
       for (Field field : rel.fields) {
         //Check for an alias
@@ -217,7 +216,7 @@ public abstract class SqmlType {
             Preconditions.checkState(field.getType() instanceof RelationSqmlType);
             QualifiedName nextPart = QualifiedName.of(name.getParts().subList(2, name.getParts().size()));
             RelationSqmlType nextRelation = (RelationSqmlType) field.getType();
-            List<Field> nested = nextRelation.resolveFields(nextPart);
+            List<Field> nested = nextRelation.resolveFields(nextPart, nextRelation);
             foundFields.addAll(nested);
           } else {
             foundFields.add(field);
@@ -231,7 +230,7 @@ public abstract class SqmlType {
             Preconditions.checkState(field.getType() instanceof RelationSqmlType);
             QualifiedName nextPart = QualifiedName.of(name.getParts().subList(1, name.getParts().size()));
             RelationSqmlType nextRelation = (RelationSqmlType) field.getType();
-            List<Field> nested = nextRelation.resolveFields(nextPart);
+            List<Field> nested = nextRelation.resolveFields(nextPart, nextRelation);
             foundFields.addAll(nested);
           } else {
             foundFields.add(field);
@@ -279,6 +278,55 @@ public abstract class SqmlType {
       }
 
       return new RelationSqmlType(fieldsBuilder.build());
+    }
+
+    public List<Field> resolveFieldsWithPrefix(Optional<QualifiedName> starPrefix) {
+      if (starPrefix.isEmpty()) {
+        return fields;
+      }
+      return resolveFieldsWithPrefix(starPrefix.get(), this);
+    }
+    public List<Field> resolveFieldsWithPrefix(QualifiedName name, RelationSqmlType rel) {
+      if (name.getParts().size() == 1 && name.getParts().get(0).equalsIgnoreCase("*")) {
+        return fields;
+      }
+
+      List<Field> foundFields = new ArrayList<>();
+      boolean maybeAlias = name.getParts().size() > 1;
+      for (Field field : rel.fields) {
+        //Check for an alias
+        if (maybeAlias && field.getRelationAlias().isPresent() &&
+            field.getRelationAlias().get().equalsIgnoreCase(name.getParts().get(0)) &&
+            field.getName().get().equalsIgnoreCase(name.getParts().get(1))) {
+          //check if we have to look for more
+          if (name.getParts().size() > 2) {
+            Preconditions.checkState(field.getType() instanceof RelationSqmlType);
+            QualifiedName nextPart = QualifiedName.of(name.getParts().subList(2, name.getParts().size()));
+            RelationSqmlType nextRelation = (RelationSqmlType) field.getType();
+            List<Field> nested = nextRelation.resolveFields(nextPart, nextRelation);
+            foundFields.addAll(nested);
+          } else {
+            foundFields.add(field);
+          }
+        }
+
+        //Check unaliased
+        if (field.getRelationAlias().isEmpty() &&
+            field.getName().get().equalsIgnoreCase(name.getParts().get(0))) {
+          if (name.getParts().size() > 1) {
+            Preconditions.checkState(field.getType() instanceof RelationSqmlType);
+            QualifiedName nextPart = QualifiedName.of(name.getParts().subList(1, name.getParts().size()));
+            RelationSqmlType nextRelation = (RelationSqmlType) field.getType();
+            List<Field> nested = nextRelation.resolveFields(nextPart, nextRelation);
+            foundFields.addAll(nested);
+          } else {
+            foundFields.add(field);
+          }
+        }
+      }
+
+      return foundFields;
+
     }
   }
   @Override

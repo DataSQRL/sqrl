@@ -83,11 +83,12 @@ public class Analyzer {
 
     @Override
     public Scope visitQueryAssignment(QueryAssignment queryAssignment, Scope scope) {
-      RelationSqmlType rel = scope.createRelation(scope.getName().getPrefix().orElse(scope.getName()));
+      RelationSqmlType rel = scope.createRelation(scope.getName().getPrefix());
       Scope newScope = createAndAssignScope(queryAssignment, scope, rel);
       Scope result = analyzeStatement(queryAssignment.getQuery(), newScope);
-      rel.addField(Field.newUnqualified(newScope.getName().getSuffix(), result.getRelationType()));
-      return result;
+      rel.addField(
+          Field.newUnqualified(newScope.getName().getSuffix(), result.getRelationType()));
+      return createAndAssignScope(queryAssignment.getQuery(), result, rel);
     }
 
     private Scope analyzeStatement(Statement statement, Scope scope) {
@@ -98,7 +99,7 @@ public class Analyzer {
     @Override
     public Scope visitExpressionAssignment(ExpressionAssignment expressionAssignment,
         Scope scope) {
-      RelationSqmlType rel = scope.createRelation(scope.getName().getPrefix().get());
+      RelationSqmlType rel = scope.createRelation(scope.getName().getPrefix());
       scope = createAndAssignScope(expressionAssignment.getExpression(), scope, rel);
       ExpressionAnalysis exprAnalysis = analyzeExpression(expressionAssignment.getExpression(), scope);
 

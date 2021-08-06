@@ -37,8 +37,10 @@ import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
 import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
 import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class ExpressionAnalyzer {
+  private Logger log = Logger.getLogger(Expression.class.getName());
   private final Metadata metadata;
 
   public ExpressionAnalyzer(Metadata metadata) {
@@ -81,7 +83,10 @@ public class ExpressionAnalyzer {
     protected SqmlType visitIdentifier(Identifier node, Context context) {
       Optional<Field> field = context.getScope().resolveField(QualifiedName.of(node));
       if (field.isEmpty()) {
-        throw new RuntimeException(String.format("Could not resolve field %s", node.getValue()));
+        log.warning(String.format("Could not resolve field %s", node));
+        return addType(node, new UnknownSqmlType());
+//        Optional<Field> d = context.getScope().resolveField(QualifiedName.of(node));
+//        throw new RuntimeException(String.format("Could not resolve field %s", node.getValue()));
       }
       return addType(node, field.get().getType());
     }
@@ -137,6 +142,9 @@ public class ExpressionAnalyzer {
         throw new RuntimeException(String.format("Could not find function %s", node.getName()));
       }
       TypeSignature typeSignature = function.get().getTypeSignature();
+      for (Expression expression : node.getArguments()) {
+        expression.accept(this, context);
+      }
 
       return addType(node, typeSignature.getType());
     }
@@ -198,7 +206,8 @@ public class ExpressionAnalyzer {
         throw new RuntimeException(String.format("Dereference type not a relation: %s", node));
       }
 
-      Optional<Field> field = ((RelationSqmlType)type).resolveField(QualifiedName.of(node.getField()));
+      Optional<Field> field = ((RelationSqmlType)type).resolveField(QualifiedName.of(node.getField()),
+          (RelationSqmlType)type);
       if (field.isEmpty()) {
         throw new RuntimeException(String.format("Could not dereference %s in %s", node.getBase(), node.getField()));
       }

@@ -1,47 +1,67 @@
-IMPORT adr-data.*;
+Comment.id := '';
+Comment.postid := '';
+Comment.userid := '';
+Comment.replytoid := '';
+Comment.timestamp := '';
+Comment.comment := '';
 
-IMPORT FUNCTION vec;
+Post.id := '';
+Post.userid := '';
+Post.timestamp := '';
+Post.URL := '';
+Post.title := '';
 
-Prescriptions.x := 1;
-Prescriptions.dosage := 1;
-Prescriptions.order_no := 1;
-Prescriptions.`end` := 1;
-DrugIngredients.x := 1;
-DrugIngredients.ingredient := 1;
-DrugIngredients.fraction := 1;
-ADRTemplate.x := 1;
-ADRTemplate.reference := 1;
-ADRTemplate.name := 1;
-ADRTemplate.severity := 1;
-Patient.id := 1;
-Patient.diagnosis.x := 1;
-Patient.diagnosis.code := 1;
-Patient.diagnosis.date := 1;
-Patient.diagnosis.identifier := 1;
-Patient.diagnosis.diagnosis := 1;
-MedicalHistory.patient_ssn := 1;
+User.id := '';
+User.username := '';
+User.registeredOn := '';
+User.starting_karma := '';
+User.currentKarma := 1;
 
-Patient.prescriptions := JOIN Prescriptions on @.prescriptions.parent.id = Prescriptions.patient_id INVERSE patient;
+Vote.timestamp := '';
+Vote.userid := '';
+Vote.type := '';
+Vote.commentid := '';
+Vote.postid := '';
 
-Patient.activeIngredients := SELECT p.order_no as prescription_no, di.ingredient as ingredient,
-                                    p.dosage * di.fraction as dosage
-                             FROM @.prescriptions p JOIN DrugIngredients di on p.drug_id = di.drug_ref
-                             WHERE p.`end` > now() - time.days(14) and p.start < now + time.days(2);
+Vote.user := JOIN User ON User.id = @.userid;
+Vote.latest := (SELECT * FROM Vote WHERE userid = @.userid AND
+                      (commentid = @.commentid OR postid = @.postid) AND timestamp > @.timestamp) IS EMPTY;
+Comment.votes := JOIN Vote ON Vote.commentid = @.id AND Vote.latest = TRUE AND Vote.type = 'up';
+Post.votes := JOIN Vote ON Vote.postid = @.id AND Vote.latest = TRUE AND Vote.type = 'up';
 
-Patient.history := JOIN MedicalHistory on @.ssn=MedicalHistory.patient_ssn;
+Comment.flags := JOIN Vote ON Vote.commentid = @.id AND Vote.latest = TRUE AND Vote.type = 'flag';
+Post.flags := JOIN Vote ON Vote.postid = @.id AND Vote.latest = TRUE AND Vote.type = 'flag';
 
-Patient.conditions := SELECT code, date, diagnosis AS `source`, identifier AS reference FROM @.diagnosis
-                      UNION ALL
-                      SELECT code, occured_on as date, history as `source`, record_id as reference FROM @.history;
+Post.numvotes := SELECT COUNT(*) FROM @.votes LIMIT 1;
+Comment.numvotes := SELECT COUNT(*) FROM @.votes LIMIT 1;
 
+Post.isFlagged := (SELECT COUNT(*) FROM @.flags) > 5;
+Comment.isFlagged := (SELECT COUNT(*) FROM @.flags) > 3;
 
-ADRDetection := SELECT p.id as patient_id, adr.reference as adr_ref, adr.name as name, adr.severity as severity
-                FROM Patient p, ADRTemplate adr
-                WHERE (SELECT COUNT(adri.ingredient) FROM adr.ingredients adri
-                                                     JOIN patient.activeIngredients pai ON adri.ingredient=pai.ingredient
-                       GROUP BY adri.ingredient HAVING sum(pai.dosage) >= adri.min_dosage) = COUNT(adr.ingredients)
-                AND (SELECT COUNT(adrc.diagnosis) FROM adr.preconditions adrc JOIN patient.conditions pc ON adrc.diagnosis=pc.code
-                       GROUP BY adrc.diagnosis HAVING vec.any(vec.is_null(pc.date)) OR time.latest(pc.date) >= now()-max_duration) = COUNT(adr.conditions);
+User.posts := JOIN Post ON Post.userid = @.id INVERSE user;
+User.comments := JOIN Comment ON Comment.userid = @.id INVERSE user;
 
-CREATE SUBSCRIPTION adr_alert  ON ADD AS
-SELECT uid() as id, now() as timestamp, * FROM ADRDetection;
+Vote.userkarma := FROZEN_LOOKUP(@.user.currentKarma); --Looks up the query when event is processed by system
+Vote.karma := math.log10(userkarma);
+
+-- This sets the user assigned karma to a post equal to the current karma of the user which changes over time and so will this value
+User.currentKarma := MAX ((SELECT SUM( math.sqrt(karma)) FROM @.posts.votes)
+            + (SELECT SUM( math.sqrt(karma)) FROM @.comments.votes), MAX(@.starting_karma, 1));
+Post.userKarma := @.user.currentKarma;
+
+/* OR (alternative implementation) */
+
+-- This sets the user assigned karma to the karma of the user at the time of posting
+User.karmaByTime := SELECT timestamp, math.sqrt(karma) AS addKarma FROM @.posts.votes
+                    UNION ALL
+                    SELECT timestamp, math.sqrt(karma) AS addKarma FROM @.comments.votes;
+User.karmaByTime.totalKarma := SELECT SUM(addKarma) FROM @.siblings WHERE timestamp <= @.timestamp;
+
+Post.userKarma := SELECT totalKarma FROM @.user.karmaByTime WHERE timestamp <= @.timestamp ORDER BY timestamp DESC LIMIT 1;
+
+Post.karma := @.userKarma*time.exp-decay(@.timestamp, INTERVAL 2 DAY) +
+              (SELECT karma*time.exp-decay(timestamp, INTERVAL 1 DAY) FROM @.votes);
+
+Newsfeed := SELECT * FROM Post WHERE timestamp > now() - INTERVAL 5 DAY ORDER BY karma DESC;
+
+Comment.karma := SUM(@.votes.karma);

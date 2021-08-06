@@ -1,6 +1,5 @@
 package ai.dataeng.sqml.analyzer;
 
-import ai.dataeng.sqml.analyzer.FieldId;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.Relation;
@@ -15,8 +14,6 @@ public class ExpressionAnalysis {
   Map<Expression, SqmlType> typeMap = new HashMap<>();
   Map<Relation, RelationSqmlType> relations = new HashMap<>();
 
-  private final Map<NodeRef<Expression>, FieldId> columnReferences = new LinkedHashMap<>();
-
   public SqmlType getType(Expression node) {
     return typeMap.get(node);
   }
@@ -27,10 +24,6 @@ public class ExpressionAnalysis {
 
   public Map<Expression, SqmlType> getExpressionTypes() {
     return typeMap;
-  }
-
-  public Map<NodeRef<Expression>, FieldId> getColumnReferences() {
-    return columnReferences;
   }
 
   public Optional<RelationSqmlType> getRelation(Relation node) {

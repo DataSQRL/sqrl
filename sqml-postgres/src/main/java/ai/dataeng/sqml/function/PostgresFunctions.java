@@ -29,6 +29,10 @@ public class PostgresFunctions {
       new SqmlFunction("time.roundtomonth", new SqmlType.DateTimeSqmlType(), false),
       new SqmlFunction("avg", new SqmlType.NumberSqmlType(), false),
       new SqmlFunction("max", new SqmlType.NumberSqmlType(), false),
-      new SqmlFunction("iff", new SqmlType.StringSqmlType(), false)
+      new SqmlFunction("iff", new SqmlType.StringSqmlType(), false),
+      new SqmlFunction("now", new SqmlType.DateTimeSqmlType(), false),
+      new SqmlFunction("math.log10", new SqmlType.FloatSqmlType(), false),
+      new SqmlFunction("math.sqrt", new SqmlType.FloatSqmlType(), false),
+      new SqmlFunction("frozen_lookup", new SqmlType.StringSqmlType(), false)
   );
 }
