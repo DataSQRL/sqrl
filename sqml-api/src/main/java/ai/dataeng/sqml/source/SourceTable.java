@@ -21,6 +21,12 @@ public interface SourceTable {
      */
     public String getName();
 
+    public default SourceTableQualifiedName getQualifiedName() {
+        return new SourceTableQualifiedName(getDataset().getName(),getName());
+    }
+
+    public boolean hasSchema();
+
     /**
      * Produces a {@link DataStream} of {@link SourceRecord} for this table source.
      *

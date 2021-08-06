@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.source.simplefile;
 
 import ai.dataeng.sqml.source.SourceDataset;
+import ai.dataeng.sqml.source.SourceTable;
 import ai.dataeng.sqml.source.SourceTableListener;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -24,7 +26,7 @@ public class DirectoryDataset implements SourceDataset {
     private final Path directory;
     private final String name;
 
-    private final List<FileTable> tableFiles;
+    private final Map<String,FileTable> tableFiles;
 
     private final Set<SourceTableListener> listeners = new HashSet<>();
 
@@ -36,7 +38,7 @@ public class DirectoryDataset implements SourceDataset {
         this.name = name;
         try {
             tableFiles = Files.list(directory).filter(f -> FileTable.supportedFile(f))
-                        .map(f -> new FileTable(this,f)).collect(Collectors.toList());
+                        .map(f -> new FileTable(this,f)).collect(Collectors.toMap(FileTable::getName, Function.identity()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -53,13 +55,23 @@ public class DirectoryDataset implements SourceDataset {
             newListener = listeners.add(listener);
         }
         if (newListener) {
-            tableFiles.forEach(t -> listener.registerSourceTable(t));
+            tableFiles.forEach((k,v) -> listener.registerSourceTable(v));
         }
     }
 
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public Collection<? extends SourceTable> getTables() {
+        return tableFiles.values();
+    }
+
+    @Override
+    public SourceTable getTable(String name) {
+        return tableFiles.get(name);
     }
 
     @Override

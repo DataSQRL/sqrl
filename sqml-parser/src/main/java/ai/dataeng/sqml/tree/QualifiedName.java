@@ -20,6 +20,8 @@ import static java.util.Locale.ENGLISH;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -27,14 +29,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * {@link QualifiedName} is used to identify a field/column within a nested structure. It specifies the full path.
+ */
 public class QualifiedName {
 
-  private final List<String> parts;
+  private final List<String> normalizedParts;
   private final List<String> originalParts;
 
   private QualifiedName(List<String> originalParts, List<String> parts) {
     this.originalParts = originalParts;
-    this.parts = parts;
+    this.normalizedParts = parts;
   }
 
   public static QualifiedName of(String first, String... rest) {
@@ -51,7 +56,7 @@ public class QualifiedName {
     requireNonNull(originalParts, "originalParts is null");
     checkArgument(!isEmpty(originalParts), "originalParts is empty");
     List<String> parts = ImmutableList
-        .copyOf(transform(originalParts, part -> part.toLowerCase(ENGLISH)));
+        .copyOf(transform(originalParts, QualifiedName::normalizeName));
 
     return new QualifiedName(ImmutableList.copyOf(originalParts), parts);
   }
@@ -62,7 +67,7 @@ public class QualifiedName {
   }
 
   public List<String> getParts() {
-    return parts;
+    return normalizedParts;
   }
 
   public List<String> getOriginalParts() {
@@ -71,7 +76,7 @@ public class QualifiedName {
 
   @Override
   public String toString() {
-    return Joiner.on('.').join(parts);
+    return Joiner.on('.').join(normalizedParts);
   }
 
   /**
@@ -79,26 +84,26 @@ public class QualifiedName {
    * returns absent
    */
   public Optional<QualifiedName> getPrefix() {
-    if (parts.size() == 1) {
+    if (normalizedParts.size() == 1) {
       return Optional.empty();
     }
 
-    List<String> subList = parts.subList(0, parts.size() - 1);
+    List<String> subList = normalizedParts.subList(0, normalizedParts.size() - 1);
     return Optional.of(new QualifiedName(subList, subList));
   }
 
   public boolean hasSuffix(QualifiedName suffix) {
-    if (parts.size() < suffix.getParts().size()) {
+    if (normalizedParts.size() < suffix.getParts().size()) {
       return false;
     }
 
-    int start = parts.size() - suffix.getParts().size();
+    int start = normalizedParts.size() - suffix.getParts().size();
 
-    return parts.subList(start, parts.size()).equals(suffix.getParts());
+    return normalizedParts.subList(start, normalizedParts.size()).equals(suffix.getParts());
   }
 
   public String getSuffix() {
-    return Iterables.getLast(parts);
+    return Iterables.getLast(normalizedParts);
   }
 
   @Override
@@ -109,11 +114,18 @@ public class QualifiedName {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    return parts.equals(((QualifiedName) o).parts);
+    return normalizedParts.equals(((QualifiedName) o).normalizedParts);
   }
 
   @Override
   public int hashCode() {
-    return parts.hashCode();
+    return normalizedParts.hashCode();
   }
+
+  public static String normalizeName(String original) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(original),"Invalid name: %s", original);
+    //TODO: What other naming requirements do we have?
+    return original.toLowerCase(ENGLISH);
+  }
+
 }

@@ -31,6 +31,7 @@ public abstract class SqmlType {
   }
 
   public static class StringSqmlType extends ScalarSqmlType {
+    public static StringSqmlType INSTANCE = new StringSqmlType();
     public StringSqmlType() {
       super("STRING");
     }
@@ -40,6 +41,7 @@ public abstract class SqmlType {
   }
 
   public static class NumberSqmlType extends ScalarSqmlType {
+    public static NumberSqmlType INSTANCE = new NumberSqmlType();
     public NumberSqmlType(String name) {
       super(name);
     }
@@ -52,6 +54,7 @@ public abstract class SqmlType {
   }
 
   public static class IntegerSqmlType extends NumberSqmlType {
+    public static IntegerSqmlType INSTANCE = new IntegerSqmlType();
     public IntegerSqmlType() {
       super("INTEGER");
     }
@@ -60,6 +63,7 @@ public abstract class SqmlType {
     }
   }
   public static class FloatSqmlType extends NumberSqmlType {
+    public static FloatSqmlType INSTANCE = new FloatSqmlType();
     public FloatSqmlType() {
       super("FLOAT");
     }
@@ -69,6 +73,7 @@ public abstract class SqmlType {
   }
 
   public static class BooleanSqmlType extends ScalarSqmlType {
+    public static BooleanSqmlType INSTANCE = new BooleanSqmlType();
     public BooleanSqmlType() {
       super("BOOLEAN");
     }
@@ -112,6 +117,7 @@ public abstract class SqmlType {
   }
 
   public static class UnknownSqmlType extends SqmlType {
+    public static UnknownSqmlType INSTANCE = new UnknownSqmlType();
     public UnknownSqmlType() {
       super("UNKNOWN");
     }
@@ -121,6 +127,7 @@ public abstract class SqmlType {
   }
 
   public static class DateTimeSqmlType extends ScalarSqmlType {
+    public static DateTimeSqmlType INSTANCE = new DateTimeSqmlType();
     public DateTimeSqmlType() {
       super("DATE");
     }
@@ -129,6 +136,7 @@ public abstract class SqmlType {
     }
   }
   public static class NullSqmlType extends ScalarSqmlType {
+    public static NullSqmlType INSTANCE = new NullSqmlType();
     public NullSqmlType() {
       super("NULL");
     }
@@ -138,6 +146,7 @@ public abstract class SqmlType {
   }
 
   public static class UuidSqmlType extends ScalarSqmlType {
+    public static UuidSqmlType INSTANCE = new UuidSqmlType();
     public UuidSqmlType() {
       super("UUID");
     }
@@ -147,6 +156,7 @@ public abstract class SqmlType {
   }
 
   public static class RelationSqmlType extends SqmlType {
+    public static RelationSqmlType INSTANCE = new RelationSqmlType();
     private List<Field> fields;
     private QualifiedName relationName;
 
