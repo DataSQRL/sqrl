@@ -1,12 +1,13 @@
 package ai.dataeng.sqml.ingest;
 
+import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.flink.EnvironmentProvider;
+import ai.dataeng.sqml.flink.SaveToKeyValueStoreSink;
 import ai.dataeng.sqml.flink.util.BufferedLatestSelector;
 import ai.dataeng.sqml.flink.util.FlinkUtilities;
 import ai.dataeng.sqml.source.*;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
@@ -24,19 +25,27 @@ import org.apache.flink.util.OutputTag;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class DataSourceMonitor implements SourceTableListener {
 
     public static final int DEFAULT_PARALLELISM = 16;
+    public static final String STATS_KEY = "stats";
+    public static final String DATA_KEY = "data";
 
     private final int defaultParallelism = DEFAULT_PARALLELISM;
     private final EnvironmentProvider envProvider;
 
     private Map<String, SourceDataset> sourceDatasets;
+    private HierarchyKeyValueStore.Factory storeFactory;
+    private HierarchyKeyValueStore store;
 
-    public DataSourceMonitor(EnvironmentProvider envProvider) {
+
+    public DataSourceMonitor(EnvironmentProvider envProvider, HierarchyKeyValueStore.Factory storeFactory) {
         this.envProvider = envProvider;
         this.sourceDatasets = new HashMap<>();
+        this.storeFactory = storeFactory;
+        this.store = storeFactory.open();
     }
 
     public void addDataset(SourceDataset dataset) {
@@ -46,6 +55,13 @@ public class DataSourceMonitor implements SourceTableListener {
 
     }
 
+    public SourceTableStatistics getTableStatistics(SourceTable table) {
+        SourceTableStatistics.Accumulator acc = store.get(SourceTableStatistics.Accumulator.class,
+                table.getQualifiedName().toString(), STATS_KEY);
+        if (acc==null) return null;
+        return acc.getLocalValue();
+    }
+
     private KeySelector<SourceRecord,Integer> hashParallelizer = new KeySelector<SourceRecord, Integer>() {
         @Override
         public Integer getKey(SourceRecord sourceRecord) throws Exception {
@@ -53,9 +69,13 @@ public class DataSourceMonitor implements SourceTableListener {
         }
     };
 
+
+
     @Override
     public void registerSourceTable(SourceTable sourceTable) throws SourceTableListener.DuplicateException {
         StreamExecutionEnvironment flinkEnv = envProvider.get();
+        FlinkUtilities.enableCheckpointing(flinkEnv);
+
         DataStream<SourceRecord> data = sourceTable.getDataStream(flinkEnv);
         if (sourceTable.hasSchema()) {
             /* data = filter out all SourceRecords that don't match schema and put into side output for error reporting.
@@ -80,15 +100,10 @@ public class DataSourceMonitor implements SourceTableListener {
                         acc.merge(add);
                         return acc;
                     }
-                }).map(new MapFunction<SourceTableStatistics.Accumulator, SourceTableStatistics>() {
-                    @Override
-                    public SourceTableStatistics map(SourceTableStatistics.Accumulator accumulator) throws Exception {
-                        return accumulator.getLocalValue();
-                    }
                 }).keyBy(FlinkUtilities.getSingleKeySelector(randomKey)).process(new BufferedLatestSelector(getFlinkName(STATS_NAME_PREFIX, sourceTable),
                         500,
                         SourceTableStatistics.Accumulator.class), TypeInformation.of(SourceTableStatistics.Accumulator.class))
-                .addSink(new PrintSinkFunction<>());
+                .addSink(new SaveToKeyValueStoreSink(storeFactory,SourceTableStatistics.Accumulator.class, sourceTable.getQualifiedName().toString(), STATS_KEY));
         try {
             flinkEnv.execute(getFlinkName(JOB_NAME_PREFIX, sourceTable));
         } catch (Exception e) {
@@ -103,15 +118,18 @@ public class DataSourceMonitor implements SourceTableListener {
         return prefix + "[" + table.getQualifiedName().toString() + "]";
     }
 
+
+
     public static class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, SourceRecord, SourceRecord> {
 
         public static final String STATE_NAME_SUFFIX = "-state";
 
         private int maxRecords = 100000;
-        private int maxTimeInSeconds = 3600;
+        private int maxTimeInMin = 5;
         private OutputTag<SourceTableStatistics.Accumulator> statsOutput;
 
         private transient ValueState<SourceTableStatistics.Accumulator> stats;
+        private transient ValueState<Long> nextTimer;
 
         public KeyedSourceRecordStatistics(OutputTag<SourceTableStatistics.Accumulator> tag) {
             this.statsOutput = tag;
@@ -122,13 +140,17 @@ public class DataSourceMonitor implements SourceTableListener {
             SourceTableStatistics.Accumulator acc = stats.value();
             if (acc == null) {
                 acc = new SourceTableStatistics.Accumulator();
-                context.timerService().registerProcessingTimeTimer(3600 * 1000);
+                long timer = FlinkUtilities.getCurrentProcessingTime() + TimeUnit.MINUTES.toMillis(maxTimeInMin);
+                nextTimer.update(timer);
+                context.timerService().registerProcessingTimeTimer(timer);
             }
             acc.add(sourceRecord);
             stats.update(acc);
             if (acc.getCount() >= maxRecords) {
+                context.timerService().deleteProcessingTimeTimer(nextTimer.value());
                 context.output(statsOutput,acc);
                 stats.clear();
+                nextTimer.clear();
             }
             out.collect(sourceRecord);
         }
@@ -137,14 +159,18 @@ public class DataSourceMonitor implements SourceTableListener {
         public void onTimer(long timestamp, OnTimerContext ctx, Collector<SourceRecord> out) throws Exception {
             ctx.output(statsOutput,stats.value());
             stats.clear();
+            nextTimer.clear();
         }
 
         @Override
         public void open(Configuration config) {
-            ValueStateDescriptor<SourceTableStatistics.Accumulator> descriptor =
-                    new ValueStateDescriptor<>(statsOutput.getId()+STATE_NAME_SUFFIX, // the state name
+            ValueStateDescriptor<SourceTableStatistics.Accumulator> statsDesc =
+                    new ValueStateDescriptor<>(statsOutput.getId()+STATE_NAME_SUFFIX + ".data",
                             TypeInformation.of(new TypeHint<SourceTableStatistics.Accumulator>() {}));
-            stats = getRuntimeContext().getState(descriptor);
+            stats = getRuntimeContext().getState(statsDesc);
+            ValueStateDescriptor<Long> nextTimerDesc =
+                    new ValueStateDescriptor<>(statsOutput.getId()+STATE_NAME_SUFFIX + ".timer", Long.class);
+            nextTimer = getRuntimeContext().getState(nextTimerDesc);
         }
 
     }
