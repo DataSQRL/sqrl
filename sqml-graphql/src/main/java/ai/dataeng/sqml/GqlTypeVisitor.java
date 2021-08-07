@@ -3,6 +3,7 @@ package ai.dataeng.sqml;
 import static ai.dataeng.sqml.GraphqlSchemaBuilder.Visitor.toName;
 
 import ai.dataeng.sqml.GraphqlSchemaBuilder.Context;
+import ai.dataeng.sqml.GraphqlSchemaBuilder.Visitor;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.ArraySqmlType;
@@ -21,8 +22,10 @@ import graphql.Scalars;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLTypeReference;
+import java.util.logging.Logger;
 
 public class GqlTypeVisitor extends SqmlTypeVisitor<GraphQLOutputType, Context> {
+  private Logger log = Logger.getLogger(GqlTypeVisitor.class.getName());
 
   @Override
   public GraphQLOutputType visitArray(ArraySqmlType type, Context context) {
@@ -66,12 +69,13 @@ public class GqlTypeVisitor extends SqmlTypeVisitor<GraphQLOutputType, Context> 
 
   @Override
   public GraphQLOutputType visitScalarType(SqmlType type, Context context) {
-    return super.visitScalarType(type, context);
+    throw new RuntimeException(String.format("Unidentified scalar for api gen: %s", type));
   }
 
   @Override
   public GraphQLOutputType visitRelation(RelationSqmlType type, Context context) {
     if (type.getRelationName() == null) {
+      log.warning(String.format("Could not find name for relation on %s", context.getName()));
       return Scalars.GraphQLString;
     }
 

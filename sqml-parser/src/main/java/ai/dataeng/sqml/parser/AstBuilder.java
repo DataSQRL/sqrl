@@ -31,6 +31,7 @@ import ai.dataeng.sqml.tree.ComparisonExpression;
 import ai.dataeng.sqml.tree.CreateSubscription;
 import ai.dataeng.sqml.tree.DecimalLiteral;
 import ai.dataeng.sqml.tree.DereferenceExpression;
+import ai.dataeng.sqml.tree.DistinctAssignment;
 import ai.dataeng.sqml.tree.DoubleLiteral;
 import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.ExistsPredicate;
@@ -735,15 +736,6 @@ class AstBuilder
   }
 
   @Override
-  public Node visitConcatenation(SqlBaseParser.ConcatenationContext context) {
-    return new FunctionCall(
-        getLocation(context.CONCAT()),
-        QualifiedName.of("concat"), ImmutableList.of(
-        (Expression) visit(context.left),
-        (Expression) visit(context.right)));
-  }
-
-  @Override
   public Node visitParenthesizedExpression(SqlBaseParser.ParenthesizedExpressionContext context) {
     return visit(context.expression());
   }
@@ -798,10 +790,13 @@ class AstBuilder
 
   @Override
   public Node visitFunctionCall(SqlBaseParser.FunctionCallContext context) {
+    boolean distinct = isDistinct(context.setQuantifier());
+
     return new FunctionCall(
         getLocation(context),
         getQualifiedName(context.qualifiedName()),
-        visit(context.expression(), Expression.class));
+        visit(context.expression(), Expression.class),
+        distinct);
   }
 
   // ***************** helpers *****************
@@ -894,17 +889,12 @@ class AstBuilder
   @Override
   public Node visitInterval(SqlBaseParser.IntervalContext context) {
     return new IntervalLiteral(
-        getLocation(context),
-        "1", //todo fix me
-//        ((StringLiteral) visit(context.string())).getValue(),
+        Optional.of(getLocation(context)),
+        (Expression) context.expression().accept(this),
         Optional.ofNullable(context.sign)
             .map(AstBuilder::getIntervalSign)
             .orElse(IntervalLiteral.Sign.POSITIVE),
-        getIntervalFieldType((Token) context.from.getChild(0).getPayload()),
-        Optional.ofNullable(context.to)
-            .map((x) -> x.getChild(0).getPayload())
-            .map(Token.class::cast)
-            .map(AstBuilder::getIntervalFieldType));
+        getIntervalFieldType((Token) context.intervalField().getChild(0).getPayload()));
   }
 
   @Override
@@ -937,8 +927,16 @@ class AstBuilder
   }
 
   @Override
-  public Node visitDistinctAssignment(DistinctAssignmentContext context) {
-    return null;//new Assign(getLocation(context), );
+  public Node visitDistinctAssignment(DistinctAssignmentContext ctx) {
+    return new DistinctAssignment(
+        Optional.of(getLocation(ctx)),
+        (Identifier)visit(ctx.table),
+        ctx.identifier() == null ? List.of() : ctx.identifier().stream()
+            .map(s->(Identifier) visit(s)).collect(toList()),
+        ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
+            .map(s->(SortItem) s.accept(this)).collect(toList())
+
+    );
   }
 
   @Override
@@ -948,11 +946,13 @@ class AstBuilder
         new InlineJoin(
             Optional.of(getLocation(ctx)),
             getQualifiedName(ctx.table),
-            ctx.identifier() == null ? Optional.empty() :
-                Optional.of((Identifier)visit(ctx.identifier())),
+            ctx.alias == null ? Optional.empty() :
+                Optional.of((Identifier)visit(ctx.alias)),
             (ctx.expression() != null) ? (Expression)visit(ctx.expression()) : null,
+            ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
+            .map(s->(SortItem) s.accept(this)).collect(toList()),
             ctx.inv == null ? Optional.empty() :
-                Optional.of(getQualifiedName(ctx.inv)),
+                Optional.of((Identifier)visit(ctx.inv)),
             ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
                 Optional.of(Integer.parseInt(ctx.limit.getText()))
         )
@@ -1046,10 +1046,6 @@ class AstBuilder
     List<String> parts = visit(context.identifier(), Identifier.class).stream()
         .map(Identifier::getValue) // TODO: preserve quotedness
         .collect(Collectors.toList());
-    //todo .*
-//    if (context.ASTERISK() != null) {
-//      parts.add("*");
-//    }
 
     return QualifiedName.of(parts);
   }

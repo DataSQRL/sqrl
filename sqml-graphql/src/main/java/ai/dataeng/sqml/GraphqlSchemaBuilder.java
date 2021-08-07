@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class GraphqlSchemaBuilder {
 
@@ -111,6 +112,7 @@ public class GraphqlSchemaBuilder {
   }
 
   static class Visitor extends AstVisitor<GraphQLOutputType, Context> {
+    private Logger log = Logger.getLogger(Visitor.class.getName());
     private final Analysis analysis;
     private GraphQLSchema.Builder schemaBuilder;
     private Map<QualifiedName, GraphQLObjectType.Builder> gqlTypes = new HashMap<>();
@@ -151,11 +153,7 @@ public class GraphqlSchemaBuilder {
       if (containsHiddenField(node.getName())){
         return null;
       }
-      if (node.getRhs() == null) return null; //todo: Temporary until we resolve distinct assignments
       node.getRhs().accept(this, new Context(node.getName()));
-//      if (outputType == null) {
-//        throw new RuntimeException("No graphql type found for:" + node.getName());
-//      }
 
       return null;
     }
@@ -186,10 +184,8 @@ public class GraphqlSchemaBuilder {
     @Override
     protected GraphQLOutputType visitQuery(Query node, Context context) {
       GraphQLOutputType type = node.getQueryBody().accept(this, context);
-      //todo limit
       return type;
     }
-
 
     @Override
     protected GraphQLOutputType visitIntersect(Intersect node, Context context) {
@@ -215,7 +211,7 @@ public class GraphqlSchemaBuilder {
       if (node.getInverse().isPresent()) {
         parent.field(
             GraphQLFieldDefinition.newFieldDefinition()
-                .name(toName(node.getInverse().get()))
+                .name(toName(QualifiedName.of(node.getInverse().get())))
                 .arguments(buildRelationArguments())
                 .type(GraphQLList.list(
                     GraphQLTypeReference.typeRef(toName(context.getName().getPrefix().get()))))
@@ -237,7 +233,10 @@ public class GraphqlSchemaBuilder {
       GraphQLObjectType.Builder builder = createObject(context.getName());
 
       for (Expression expression : analysis.getOutputExpressions(node)) {
-        if (analysis.getName(expression) == null) continue;//todo
+        if (analysis.getName(expression) == null) {
+          log.warning(String.format("Could not find api name for query expression %s", expression));
+          continue;
+        }
         GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
             .name(toGraphqlName(analysis.getName(expression)))
             .type(expression.accept(this, context))
@@ -350,6 +349,7 @@ public class GraphqlSchemaBuilder {
       for (Entry<QualifiedName, GraphQLObjectType.Builder> entry : gqlTypes.entrySet()) {
         GraphQLObjectType.Builder builder = entry.getValue();
         if (builder.build().getFieldDefinitions().size() == 0) {
+          log.warning(String.format("Relation has no fields: %s", entry.getValue()));
           builder.field(GraphQLFieldDefinition.newFieldDefinition()
                   .name("stub").type(Scalars.GraphQLString).build());
         }
@@ -364,16 +364,12 @@ public class GraphqlSchemaBuilder {
       GraphQLObjectType.Builder query = GraphQLObjectType.newObject().name("Query");
       for (Entry<QualifiedName, GraphQLObjectType.Builder> entry : gqlTypes.entrySet()) {
         if (entry.getKey().getParts().size() == 1) {
-          try {
-            query.field(GraphQLFieldDefinition.newFieldDefinition()
-                .name(toName(entry.getKey()))
-                .arguments(buildRelationArguments())
-                .type(GraphQLList.list(
-                    new GraphQLTypeReference(entry.getValue().build().getName())))
-                .build());
-          }catch ( Exception e) {
-            System.out.println();
-          }
+          query.field(GraphQLFieldDefinition.newFieldDefinition()
+              .name(toName(entry.getKey()))
+              .arguments(buildRelationArguments())
+              .type(GraphQLList.list(
+                  new GraphQLTypeReference(entry.getValue().build().getName())))
+              .build());
         }
       }
 

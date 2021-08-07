@@ -111,10 +111,18 @@ public class Scope {
   }
 
   public Optional<Field> resolveField(QualifiedName name) {
+    Optional<Field> field;
     if (name.getParts().get(0).equalsIgnoreCase("@")) {
-      return getRelationType().resolveField(dereferenceName(name), root);
+      field = getRelationType().resolveField(dereferenceName(name), root);
+    } else {
+      field = getRelationType().resolveField(dereferenceName(name), this.getRelationType());
     }
-    return getRelationType().resolveField(dereferenceName(name), this.getRelationType());
+
+    //todo Order by statements don't exist in the current scope
+    if (field.isEmpty()) {
+      return parent.resolveField(name);
+    }
+    return field;
   }
 
   public RelationSqmlType getRoot() {

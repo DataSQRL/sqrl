@@ -25,14 +25,17 @@ public class FunctionCall
 
   private final QualifiedName name;
   private final List<Expression> arguments;
+  private final boolean distinct;
 
-  public FunctionCall(NodeLocation location, QualifiedName name, List<Expression> arguments) {
-    this(Optional.of(location), name, arguments);
+  public FunctionCall(NodeLocation location, QualifiedName name, List<Expression> arguments,
+      boolean distinct) {
+    this(Optional.of(location), name, arguments, distinct);
   }
 
   private FunctionCall(Optional<NodeLocation> location, QualifiedName name,
-      List<Expression> arguments) {
+      List<Expression> arguments, boolean distinct) {
     super(location);
+    this.distinct = distinct;
     requireNonNull(name, "name is null");
     requireNonNull(arguments, "arguments is null");
 
@@ -46,6 +49,10 @@ public class FunctionCall
 
   public List<Expression> getArguments() {
     return arguments;
+  }
+
+  public boolean isDistinct() {
+    return distinct;
   }
 
   @Override

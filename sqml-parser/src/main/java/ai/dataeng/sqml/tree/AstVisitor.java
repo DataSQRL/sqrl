@@ -311,4 +311,8 @@ public abstract class AstVisitor<R, C> {
   public R visitCreateSubscription(CreateSubscription node, C context) {
     return visitNode(node, context);
   }
+
+  public R visitDistinctAssignment(DistinctAssignment node, C context) {
+    return visitAssignment(node, context);
+  }
 }

@@ -40,20 +40,21 @@ importAlias
 assignment
     :  expression                                                   # expressionAssign
     |  query                                                        # queryAssign
-    | DISTINCT qualifiedName ON (qualifiedName (',' qualifiedName)*)
+    | DISTINCT table=identifier ON (identifier (',' identifier)*)
       (ORDER BY sortItem (',' sortItem)*)?                          # distinctAssignment
     ;
 
 subscriptionType
-    : ADD
+    : ADD //todo: add other types
     ;
 
 inlineJoin
-    : JOIN table=qualifiedName (AS? identifier)?
-      (ON expression)? //todo: order can be optional
+    : JOIN table=qualifiedName (AS? alias=identifier)?
+      (ON expression)?
+      (IN qualifiedName)? //todo IN statement
       (ORDER BY sortItem (',' sortItem)*)?
       (LIMIT limit=(INTEGER_VALUE | ALL))?
-      (INVERSE inv=qualifiedName)?
+      (INVERSE inv=identifier)?
       (inlineJoin)?
     ;
 
@@ -177,7 +178,6 @@ valueExpression
     | operator=(MINUS | PLUS) valueExpression                                           #arithmeticUnary
     | left=valueExpression operator=(ASTERISK | SLASH | PERCENT) right=valueExpression  #arithmeticBinary
     | left=valueExpression operator=(PLUS | MINUS) right=valueExpression                #arithmeticBinary
-    | left=valueExpression CONCAT right=valueExpression                                 #concatenation
     ;
 
 primaryExpression
@@ -191,7 +191,7 @@ primaryExpression
     | '?'                                                                                 #parameter
     | '(' expression (',' expression)+ ')'                                                #rowConstructor
     | qualifiedName '(' ASTERISK ')'                                                      #functionCall
-    | qualifiedName '(' (setQuantifier? expression (',' expression)*)? ')'                #functionCall //todo: add distinct to fnc
+    | qualifiedName '(' (setQuantifier? expression (',' expression)*)? ')'                #functionCall
     | '(' query ')'                                                                       #subqueryExpression
     // This is an extension to ANSI SQL, which considers EXISTS to be a <boolean expression>
     | EXISTS '(' query ')'                                                                #exists
@@ -216,12 +216,7 @@ booleanValue
     ;
 
 interval
-    : INTERVAL sign=(PLUS | MINUS)? intervalStatement from=intervalField (TO to=intervalField)?
-    ;
-
-intervalStatement
-    : number
-    | qualifiedName
+    : INTERVAL sign=(PLUS | MINUS)? expression intervalField
     ;
 
 intervalField
@@ -510,7 +505,6 @@ MINUS: '-';
 ASTERISK: '*';
 SLASH: '/';
 PERCENT: '%';
-CONCAT: '||';
 
 STRING
     : '\'' ( ~'\'' | '\'\'' )* '\''

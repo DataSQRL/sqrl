@@ -21,39 +21,24 @@ import java.util.Optional;
 public class IntervalLiteral
     extends Literal {
 
-  private final String value;
+  private final Expression expression;
   private final Sign sign;
   private final IntervalField startField;
-  private final Optional<IntervalField> endField;
-  public IntervalLiteral(String value, Sign sign, IntervalField startField) {
-    this(Optional.empty(), value, sign, startField, Optional.empty());
-  }
-  public IntervalLiteral(String value, Sign sign, IntervalField startField,
-      Optional<IntervalField> endField) {
-    this(Optional.empty(), value, sign, startField, endField);
-  }
 
-  public IntervalLiteral(NodeLocation location, String value, Sign sign, IntervalField startField,
-      Optional<IntervalField> endField) {
-    this(Optional.of(location), value, sign, startField, endField);
-  }
-
-  private IntervalLiteral(Optional<NodeLocation> location, String value, Sign sign,
-      IntervalField startField, Optional<IntervalField> endField) {
+  public IntervalLiteral(Optional<NodeLocation> location, Expression expression, Sign sign,
+      IntervalField startField) {
     super(location);
-    requireNonNull(value, "value is null");
+    requireNonNull(expression, "expression is null");
     requireNonNull(sign, "sign is null");
     requireNonNull(startField, "startField is null");
-    requireNonNull(endField, "endField is null");
 
-    this.value = value;
+    this.expression = expression;
     this.sign = sign;
     this.startField = startField;
-    this.endField = endField;
   }
 
-  public String getValue() {
-    return value;
+  public Expression getExpression() {
+    return expression;
   }
 
   public Sign getSign() {
@@ -62,10 +47,6 @@ public class IntervalLiteral
 
   public IntervalField getStartField() {
     return startField;
-  }
-
-  public Optional<IntervalField> getEndField() {
-    return endField;
   }
 
   public boolean isYearToMonth() {
@@ -78,23 +59,21 @@ public class IntervalLiteral
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hash(value, sign, startField, endField);
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    IntervalLiteral that = (IntervalLiteral) o;
+    return Objects.equals(expression, that.expression) && sign == that.sign
+        && startField == that.startField;
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    IntervalLiteral other = (IntervalLiteral) obj;
-    return Objects.equals(this.value, other.value) &&
-        Objects.equals(this.sign, other.sign) &&
-        Objects.equals(this.startField, other.startField) &&
-        Objects.equals(this.endField, other.endField);
+  public int hashCode() {
+    return Objects.hash(expression, sign, startField);
   }
 
   public enum Sign {

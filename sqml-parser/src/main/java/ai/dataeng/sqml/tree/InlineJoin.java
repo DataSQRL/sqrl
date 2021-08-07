@@ -23,17 +23,20 @@ public class InlineJoin
 
   private final QualifiedName table;
   private final Optional<Identifier> alias;
-  private final Expression on;
-  private final Optional<QualifiedName> inverse;
+  private final Expression criteria;
+  private final List<SortItem> sortItems;
+  private final Optional<Identifier> inverse;
   private final Optional<Integer> limit;
 
   public InlineJoin(Optional<NodeLocation> location, QualifiedName table,
-      Optional<Identifier> alias, Expression on, Optional<QualifiedName> inverse,
+      Optional<Identifier> alias, Expression criteria, List<SortItem> sortItems,
+      Optional<Identifier> inverse,
       Optional<Integer> limit) {
     super(location);
     this.table = table;
     this.alias = alias;
-    this.on = on;
+    this.criteria = criteria;
+    this.sortItems = sortItems;
     this.inverse = inverse;
     this.limit = limit;
   }
@@ -47,16 +50,19 @@ public class InlineJoin
   }
 
   public Expression getCriteria() {
-    return on;
+    return criteria;
   }
 
-  //todo inverse not a qualified name
-  public Optional<QualifiedName> getInverse() {
+  public Optional<Identifier> getInverse() {
     return inverse;
   }
 
   public Optional<Integer> getLimit() {
     return limit;
+  }
+
+  public List<SortItem> getSortItems() {
+    return sortItems;
   }
 
   @Override
@@ -80,12 +86,12 @@ public class InlineJoin
     }
     InlineJoin that = (InlineJoin) o;
     return Objects.equals(table, that.table) && Objects.equals(alias, that.alias)
-        && Objects.equals(on, that.on) && Objects.equals(inverse, that.inverse)
+        && Objects.equals(criteria, that.criteria) && Objects.equals(inverse, that.inverse)
         && Objects.equals(limit, that.limit);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(table, alias, on, inverse, limit);
+    return Objects.hash(table, alias, criteria, inverse, limit);
   }
 }

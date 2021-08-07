@@ -11,7 +11,7 @@ Post.timestamp := '';
 Post.URL := '';
 Post.title := '';
 
-User.id := '';
+User.id := 1;
 User.username := '';
 User.registeredOn := '';
 User.starting_karma := '';
@@ -32,8 +32,8 @@ Post.votes := JOIN Vote ON Vote.postid = @.id AND Vote.latest = TRUE AND Vote.ty
 Comment.flags := JOIN Vote ON Vote.commentid = @.id AND Vote.latest = TRUE AND Vote.type = 'flag';
 Post.flags := JOIN Vote ON Vote.postid = @.id AND Vote.latest = TRUE AND Vote.type = 'flag';
 
-Post.numvotes := SELECT COUNT(*) FROM @.votes LIMIT 1;
-Comment.numvotes := SELECT COUNT(*) FROM @.votes LIMIT 1;
+Post.numvotes := (SELECT COUNT(*) cnt FROM @.votes LIMIT 1).cnt;
+Comment.numvotes := (SELECT COUNT(*) cnt FROM @.votes LIMIT 1).cnt;
 
 Post.isFlagged := (SELECT COUNT(*) FROM @.flags) > 5;
 Comment.isFlagged := (SELECT COUNT(*) FROM @.flags) > 3;
@@ -45,17 +45,15 @@ Vote.userkarma := FROZEN_LOOKUP(@.user.currentKarma); --Looks up the query when 
 Vote.karma := math.log10(userkarma);
 
 -- This sets the user assigned karma to a post equal to the current karma of the user which changes over time and so will this value
-User.currentKarma := MAX ((SELECT SUM( math.sqrt(karma)) FROM @.posts.votes)
-            + (SELECT SUM( math.sqrt(karma)) FROM @.comments.votes), MAX(@.starting_karma, 1));
+User.currentKarma := MAX((SELECT SUM(math.sqrt(karma)) FROM @.posts.votes)
+            + (SELECT SUM(math.sqrt(karma)) FROM @.comments.votes), MAX(@.starting_karma, 1));
 Post.userKarma := @.user.currentKarma;
-
-/* OR (alternative implementation) */
 
 -- This sets the user assigned karma to the karma of the user at the time of posting
 User.karmaByTime := SELECT timestamp, math.sqrt(karma) AS addKarma FROM @.posts.votes
                     UNION ALL
                     SELECT timestamp, math.sqrt(karma) AS addKarma FROM @.comments.votes;
-User.karmaByTime.totalKarma := SELECT SUM(addKarma) FROM @.siblings WHERE timestamp <= @.timestamp;
+User.karmaByTime.totalKarma := (SELECT SUM(addKarma) as total FROM @.siblings WHERE timestamp <= @.timestamp).total;
 
 Post.userKarma := SELECT totalKarma FROM @.user.karmaByTime WHERE timestamp <= @.timestamp ORDER BY timestamp DESC LIMIT 1;
 

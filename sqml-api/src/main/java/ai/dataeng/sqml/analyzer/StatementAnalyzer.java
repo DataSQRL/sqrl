@@ -6,13 +6,11 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Predicates.alwaysTrue;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Iterables.getLast;
-import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Locale.ENGLISH;
 import static java.util.Objects.requireNonNull;
 
 import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
-import ai.dataeng.sqml.ResolvedField;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.metadata.Metadata;
@@ -24,7 +22,6 @@ import ai.dataeng.sqml.tree.DefaultExpressionTraversalVisitor;
 import ai.dataeng.sqml.tree.DereferenceExpression;
 import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
-import ai.dataeng.sqml.tree.ExpressionTreeRewriter;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.GroupingOperation;
@@ -33,9 +30,7 @@ import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.JoinOn;
-import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
-import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Query;
@@ -53,13 +48,10 @@ import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
 import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
-import ai.dataeng.sqml.util.AstUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -328,12 +320,6 @@ public class StatementAnalyzer {
       return createAndAssignScope(node, scope, new ArrayList<>(List.of(outputDescriptorFields)));
     }
 
-    @Override
-    protected Scope visitArithmeticBinary(ArithmeticBinaryExpression node, Scope context) {
-      // tbd
-      return node.getRight().accept(this, context);
-    }
-
     private void verifyAggregations(
         QuerySpecification node,
         Scope sourceScope,
@@ -533,6 +519,8 @@ public class StatementAnalyzer {
           .build();
 
       analysis.setScope(node, scope);
+
+
       return scope;
     }
 
@@ -558,7 +546,7 @@ public class StatementAnalyzer {
       // ORDER BY should "see" both output and FROM fields during initial analysis and non-aggregation query planning
       Scope orderByScope = Scope.builder()
           .withParent(sourceScope)
-          .withRelationType( node, outputScope.getRelationType())
+          .withRelationType(node, outputScope.getRelationType())
           .build();
       analysis.setScope(node, orderByScope);
       return orderByScope;
@@ -654,6 +642,8 @@ public class StatementAnalyzer {
             }
           }
 
+         field.ifPresent(f->analysis.addName(expression, f.getValue()));
+
           outputFields.add(Field.newUnqualified(field.map(Identifier::getValue),
               analysis.getType(expression).orElse(new UnknownSqmlType()), originTable, originColumn,
               column.getAlias().isPresent()));
@@ -700,6 +690,7 @@ public class StatementAnalyzer {
 
           for (Field field : fields) {
             Identifier identifier = new Identifier(field.getName().get());
+            analysis.addName(identifier, field.getName().get());
             analyzeExpression(identifier, scope);
             outputExpressions.add(identifier);
           }

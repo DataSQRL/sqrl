@@ -133,7 +133,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   protected String visitIntervalLiteral(IntervalLiteral node, Void context) {
-    return "INTERVAL " + String.valueOf(node.getValue()) + " " + node.getStartField().name();
+    return "INTERVAL " + node.getExpression().accept(this, context) + " " + node.getStartField().name();
   }
 
   @Override
@@ -371,6 +371,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   public String visitInlineJoin(InlineJoin node, Void context) {
     return "JOIN " +node.getTable() + node.getAlias().map(a->" AS " + a.accept(this, null)).orElse("")  +
         " ON " + node.getCriteria() +
+//        node.getSortItems().stream().map(i->" ORDER BY  " + i).orElse("") +
         node.getInverse().map(i->" INVERSE " + i).orElse("") +
         node.getLimit().map(i->" LIMIT " + i).orElse("");
   }

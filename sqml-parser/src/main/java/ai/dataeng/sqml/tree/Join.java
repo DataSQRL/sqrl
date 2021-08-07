@@ -25,8 +25,6 @@ import java.util.Optional;
 public class Join
     extends Relation {
 
-  //Todo: Add limits
-  //Todo: Add inverse
   private final Type type;
   private final Relation left;
   private final Relation right;

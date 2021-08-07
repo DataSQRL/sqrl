@@ -1,5 +1,8 @@
 package ai.dataeng.sqml.analyzer;
 
+import static java.lang.String.format;
+
+import ai.dataeng.sqml.OperatorType;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.function.TypeSignature;
 import ai.dataeng.sqml.metadata.Metadata;
@@ -36,6 +39,7 @@ import ai.dataeng.sqml.type.SqmlType.NumberSqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
 import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
 import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
+import com.google.common.collect.ImmutableList;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -132,7 +136,7 @@ public class ExpressionAnalyzer {
 
     @Override
     protected SqmlType visitArithmeticBinary(ArithmeticBinaryExpression node, Context context) {
-      return addType(node, new NumberSqmlType());
+      return getOperator(context, node, OperatorType.valueOf(node.getOperator().name()), node.getLeft(), node.getRight());
     }
 
     @Override
@@ -219,6 +223,39 @@ public class ExpressionAnalyzer {
     public SqmlType visitIsEmpty(IsEmpty node, Context context) {
       //tbd
       return addType(node, new StringSqmlType());
+    }
+
+    private SqmlType getOperator(Context context, Expression node, OperatorType operatorType, Expression... arguments)
+    {
+      //todo: Resolve operators
+//      ImmutableList.Builder<SqmlType> argumentTypes = ImmutableList.builder();
+//      for (Expression expression : arguments) {
+//        argumentTypes.add(expression.accept(this, context));
+//      }
+//
+//      FunctionMetadata operatorMetadata;
+//      try {
+//        operatorMetadata = functionAndTypeManager.getFunctionMetadata(functionAndTypeManager.resolveOperator(operatorType, fromTypes(argumentTypes.build())));
+//      }
+//      catch (OperatorNotFoundException e) {
+//        throw new SemanticException(TYPE_MISMATCH, node, "%s", e.getMessage());
+//      }
+//      catch (PrestoException e) {
+//        if (e.getErrorCode().getCode() == StandardErrorCode.AMBIGUOUS_FUNCTION_CALL.toErrorCode().getCode()) {
+//          throw new SemanticException(SemanticErrorCode.AMBIGUOUS_FUNCTION_CALL, node, e.getMessage());
+//        }
+//        throw e;
+//      }
+//
+//      for (int i = 0; i < arguments.length; i++) {
+//        Expression expression = arguments[i];
+//        Type type = functionAndTypeManager.getType(operatorMetadata.getArgumentTypes().get(i));
+//        coerceType(context, expression, type, format("Operator %s argument %d", operatorMetadata, i));
+//      }
+//
+//      Type type = functionAndTypeManager.getType(operatorMetadata.getReturnType());
+//      return setExpressionType(node, type);
+      return addType(node, new BooleanSqmlType());
     }
 
     private SqmlType addType(Expression node, SqmlType type) {

@@ -6,6 +6,7 @@ import ai.dataeng.sqml.tree.GroupingOperation;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.QuerySpecification;
@@ -71,10 +72,6 @@ public class Analysis {
   }
 
   public String getName(Expression expression) {
-    if (expression instanceof Identifier) {
-      //todo: Hack, figure out a generalized name assignment mechanism
-      return ((Identifier) expression).getValue();
-    }
     return nameMap.get(expression);
 
   }
@@ -112,7 +109,7 @@ public class Analysis {
   }
 
   public boolean isAggregation(QuerySpecification node) {
-    return false;
+    return false;//return groupByExpressions.containsKey(NodeRef.of(node));
   }
 
   public void setGroupingOperations(QuerySpecification node,
@@ -126,5 +123,9 @@ public class Analysis {
 
   public void setHaving(Node node, Expression predicate) {
 
+  }
+
+  public void addName(Expression expression, String name) {
+    this.nameMap.put(expression, name);
   }
 }
