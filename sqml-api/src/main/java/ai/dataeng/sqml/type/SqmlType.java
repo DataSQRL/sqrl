@@ -175,6 +175,12 @@ public abstract class SqmlType {
       this.fields = new ArrayList<>(fields);
       this.relationName = null;
     }
+    public RelationSqmlType(QualifiedName relationName, List<Field> fields) {
+      super("RELATION");
+      this.relationName = relationName;
+      this.fields = new ArrayList<>(fields);
+      this.relationName = null;
+    }
 
 
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
@@ -327,6 +333,10 @@ public abstract class SqmlType {
 
       return foundFields;
 
+    }
+
+    public void setName(QualifiedName name) {
+      this.relationName = name;
     }
   }
   @Override

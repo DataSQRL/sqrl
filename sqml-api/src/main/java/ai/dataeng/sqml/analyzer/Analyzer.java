@@ -83,9 +83,16 @@ public class Analyzer {
 
     @Override
     public Scope visitQueryAssignment(QueryAssignment queryAssignment, Scope scope) {
+      if (scope.getName().toString().equalsIgnoreCase("post.userkarma")) {
+        System.out.println();
+      }
       RelationSqmlType rel = scope.createRelation(scope.getName().getPrefix());
       Scope newScope = createAndAssignScope(queryAssignment, scope, rel);
       Scope result = analyzeStatement(queryAssignment.getQuery(), newScope);
+
+      //todo: hack for lack of cohesive naming pattern
+      result.getRelationType().setName(scope.getName());
+
       rel.addField(
           Field.newUnqualified(newScope.getName().getSuffix(), result.getRelationType()));
       return createAndAssignScope(queryAssignment.getQuery(), result, rel);
