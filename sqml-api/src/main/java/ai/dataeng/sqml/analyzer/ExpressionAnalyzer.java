@@ -19,8 +19,8 @@ import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GenericLiteral;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.InlineJoin;
+import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.IntervalLiteral;
-import ai.dataeng.sqml.tree.InlineJoinExpression;
 import ai.dataeng.sqml.tree.IsEmpty;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
@@ -39,7 +39,6 @@ import ai.dataeng.sqml.type.SqmlType.NumberSqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
 import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
 import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
-import com.google.common.collect.ImmutableList;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -120,17 +119,18 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    public SqmlType visitInlineJoinExpression(InlineJoinExpression node, Context context) {
-      InlineJoin join = node.getJoin();
+    public SqmlType visitInlineJoin(InlineJoin node, Context context) {
+      //Todo: Walk the join
+      InlineJoinBody join = node.getJoin().get(0);
       RelationSqmlType rel = context.getScope().getRelation(join.getTable())
           .orElseThrow(()-> new RuntimeException(String.format("Could not find relation %s %s", join.getTable(), node)));
 
-      if (join.getInverse().isPresent()) {
+      if (node.getInverse().isPresent()) {
         RelationSqmlType relationSqmlType = context.getScope().getRelationType();
-        rel.addField(Field.newUnqualified(join.getInverse().get().toString(), relationSqmlType));
+        rel.addField(Field.newUnqualified(node.getInverse().get().toString(), relationSqmlType));
       }
 
-      addRelation(node.getJoin(), rel);
+      addRelation(node.getJoin().get(0), rel);
       return addType(node, rel);
     }
 

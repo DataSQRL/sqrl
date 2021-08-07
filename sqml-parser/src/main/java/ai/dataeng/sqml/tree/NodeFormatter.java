@@ -363,16 +363,18 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  public String visitInlineJoinExpression(InlineJoinExpression node, Void context) {
-    return node.getJoin().accept(this, null);
+  public String visitInlineJoin(InlineJoin node, Void context) {
+    return node.getJoin().stream()
+        .map(j->j.accept(this, context))
+        .collect(Collectors.joining("\n")) + node.getInverse().map(i->" INVERSE " + i.getValue()).orElse("");
   }
 
   @Override
-  public String visitInlineJoin(InlineJoin node, Void context) {
+  public String visitInlineJoinBody(InlineJoinBody node, Void context) {
     return "JOIN " +node.getTable() + node.getAlias().map(a->" AS " + a.accept(this, null)).orElse("")  +
         " ON " + node.getCriteria() +
-//        node.getSortItems().stream().map(i->" ORDER BY  " + i).orElse("") +
-        node.getInverse().map(i->" INVERSE " + i).orElse("") +
+        (node.getSortItems().isEmpty() ? "" :  " ORDER BY ") +
+        node.getSortItems().stream().map(i-> i.accept(this, context)).collect(Collectors.joining(", ")) +
         node.getLimit().map(i->" LIMIT " + i).orElse("");
   }
 }

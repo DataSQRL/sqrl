@@ -5,15 +5,12 @@ import ai.dataeng.sqml.dag.Dag;
 import ai.dataeng.sqml.tree.Assign;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.CreateSubscription;
-import ai.dataeng.sqml.tree.DereferenceExpression;
 import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
-import ai.dataeng.sqml.tree.FunctionCall;
-import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Import;
+import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.Intersect;
-import ai.dataeng.sqml.tree.InlineJoinExpression;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Query;
@@ -21,7 +18,7 @@ import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.tree.InlineJoin;
+import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
@@ -198,13 +195,8 @@ public class GraphqlSchemaBuilder {
     }
 
     @Override
-    public GraphQLOutputType visitInlineJoinExpression(InlineJoinExpression node, Context context) {
-      return node.getJoin().accept(this, context);
-    }
-
-    @Override
     public GraphQLOutputType visitInlineJoin(InlineJoin node, Context context) {
-      QualifiedName resolvedName = getTableName(node);
+      QualifiedName resolvedName = getTableName(node.getJoin().get(0)); //todo walk join
 
       GraphQLObjectType.Builder parent = createObject(resolvedName);
 
@@ -219,7 +211,7 @@ public class GraphqlSchemaBuilder {
         );
       }
 
-      GraphQLTypeReference type = GraphQLTypeReference.typeRef(toName(getTableName(node)));
+      GraphQLTypeReference type = GraphQLTypeReference.typeRef(toName(getTableName(node.getJoin().get(0))));
       return GraphQLList.list(type);
     }
 

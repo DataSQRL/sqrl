@@ -301,11 +301,9 @@ public abstract class AstVisitor<R, C> {
   public R visitIsEmpty(IsEmpty node, C context) {
     return visitExpression(node, context);
   }
-  public R visitInlineJoinExpression(InlineJoinExpression node, C context) {
-    return visitExpression(node, context);
-  }
-  public R visitInlineJoin(InlineJoin node, C context) {
-    return visitNode(node, context);
+
+  public R visitInlineJoinBody(InlineJoinBody node, C context) {
+    return visitRelation(node, context);
   }
 
   public R visitCreateSubscription(CreateSubscription node, C context) {
@@ -314,5 +312,9 @@ public abstract class AstVisitor<R, C> {
 
   public R visitDistinctAssignment(DistinctAssignment node, C context) {
     return visitAssignment(node, context);
+  }
+
+  public R visitInlineJoin(InlineJoin node, C context) {
+    return visitExpression(node, context);
   }
 }

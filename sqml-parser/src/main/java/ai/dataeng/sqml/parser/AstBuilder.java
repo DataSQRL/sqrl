@@ -46,6 +46,7 @@ import ai.dataeng.sqml.tree.Import;
 import ai.dataeng.sqml.tree.Import.ImportType;
 import ai.dataeng.sqml.tree.InListExpression;
 import ai.dataeng.sqml.tree.InPredicate;
+import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.IntervalLiteral;
 import ai.dataeng.sqml.tree.IsNotNullPredicate;
@@ -69,7 +70,6 @@ import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
-import ai.dataeng.sqml.tree.InlineJoinExpression;
 import ai.dataeng.sqml.tree.Row;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.tree.Select;
@@ -86,7 +86,7 @@ import ai.dataeng.sqml.tree.Table;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.TimeLiteral;
 import ai.dataeng.sqml.tree.TimestampLiteral;
-import ai.dataeng.sqml.tree.InlineJoin;
+import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.tree.WhenClause;
 import com.google.common.collect.ImmutableList;
@@ -941,22 +941,30 @@ class AstBuilder
 
   @Override
   public Node visitInlineJoin(InlineJoinContext ctx) {
-    return new InlineJoinExpression(
+    return new InlineJoin(
         Optional.of(getLocation(ctx)),
-        new InlineJoin(
-            Optional.of(getLocation(ctx)),
-            getQualifiedName(ctx.table),
-            ctx.alias == null ? Optional.empty() :
-                Optional.of((Identifier)visit(ctx.alias)),
-            (ctx.expression() != null) ? (Expression)visit(ctx.expression()) : null,
-            ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
-            .map(s->(SortItem) s.accept(this)).collect(toList()),
-            ctx.inv == null ? Optional.empty() :
-                Optional.of((Identifier)visit(ctx.inv)),
-            ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
-                Optional.of(Integer.parseInt(ctx.limit.getText()))
-        )
+        ctx.inlineJoinBody().stream().map(i->(InlineJoinBody)visit(i))
+        .collect(toList()),
+        ctx.inv == null ? Optional.empty() :
+            Optional.of((Identifier)visit(ctx.inv))
     );
+  }
+
+  @Override
+  public Node visitInlineJoinBody(InlineJoinBodyContext ctx) {
+    return new InlineJoinBody(
+          Optional.of(getLocation(ctx)),
+          getQualifiedName(ctx.table),
+          ctx.alias == null ? Optional.empty() :
+              Optional.of((Identifier)visit(ctx.alias)),
+          (ctx.in != null) ? Optional.of(getQualifiedName(ctx.in))
+            : Optional.empty(),
+        (ctx.expression() != null) ? (Expression)visit(ctx.expression()) : null,
+          ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
+          .map(s->(SortItem) s.accept(this)).collect(toList()),
+          ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
+              Optional.of(Integer.parseInt(ctx.limit.getText()))
+      );
   }
 
   @Override

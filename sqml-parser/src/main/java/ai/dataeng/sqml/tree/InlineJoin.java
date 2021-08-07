@@ -19,50 +19,26 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class InlineJoin
-    extends Relation {
+    extends Expression {
 
-  private final QualifiedName table;
-  private final Optional<Identifier> alias;
-  private final Expression criteria;
-  private final List<SortItem> sortItems;
+  private final List<InlineJoinBody> join;
   private final Optional<Identifier> inverse;
-  private final Optional<Integer> limit;
 
-  public InlineJoin(Optional<NodeLocation> location, QualifiedName table,
-      Optional<Identifier> alias, Expression criteria, List<SortItem> sortItems,
-      Optional<Identifier> inverse,
-      Optional<Integer> limit) {
+  public InlineJoin(Optional<NodeLocation> location,
+      List<InlineJoinBody> join,
+      Optional<Identifier> inverse) {
     super(location);
-    this.table = table;
-    this.alias = alias;
-    this.criteria = criteria;
-    this.sortItems = sortItems;
+
+    this.join = join;
     this.inverse = inverse;
-    this.limit = limit;
   }
 
-  public QualifiedName getTable() {
-    return table;
-  }
-
-  public Optional<Identifier> getAlias() {
-    return alias;
-  }
-
-  public Expression getCriteria() {
-    return criteria;
+  public List<InlineJoinBody> getJoin() {
+    return join;
   }
 
   public Optional<Identifier> getInverse() {
     return inverse;
-  }
-
-  public Optional<Integer> getLimit() {
-    return limit;
-  }
-
-  public List<SortItem> getSortItems() {
-    return sortItems;
   }
 
   @Override
@@ -85,13 +61,12 @@ public class InlineJoin
       return false;
     }
     InlineJoin that = (InlineJoin) o;
-    return Objects.equals(table, that.table) && Objects.equals(alias, that.alias)
-        && Objects.equals(criteria, that.criteria) && Objects.equals(inverse, that.inverse)
-        && Objects.equals(limit, that.limit);
+    return Objects.equals(join, that.join) && Objects
+        .equals(inverse, that.inverse);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(table, alias, criteria, inverse, limit);
+    return Objects.hash(join, inverse);
   }
 }
