@@ -121,7 +121,7 @@ public class ExpressionAnalyzer {
     @Override
     public SqmlType visitInlineJoin(InlineJoin node, Context context) {
       //Todo: Walk the join
-      InlineJoinBody join = node.getJoin().get(0);
+      InlineJoinBody join = node.getJoin();
       RelationSqmlType rel = context.getScope().getRelation(join.getTable())
           .orElseThrow(()-> new RuntimeException(String.format("Could not find relation %s %s", join.getTable(), node)));
 
@@ -130,7 +130,7 @@ public class ExpressionAnalyzer {
         rel.addField(Field.newUnqualified(node.getInverse().get().toString(), relationSqmlType));
       }
 
-      addRelation(node.getJoin().get(0), rel);
+      addRelation(node.getJoin(), rel);
       return addType(node, rel);
     }
 

@@ -23,21 +23,21 @@ public class InlineJoinBody
 
   private final QualifiedName table;
   private final Optional<Identifier> alias;
-  private final Optional<QualifiedName> in;
   private final Expression criteria;
   private final List<SortItem> sortItems;
   private final Optional<Integer> limit;
+  private final Optional<InlineJoinBody> inlineJoinBody;
 
   public InlineJoinBody(Optional<NodeLocation> location, QualifiedName table,
-      Optional<Identifier> alias, Optional<QualifiedName> in, Expression criteria, List<SortItem> sortItems,
-      Optional<Integer> limit) {
+      Optional<Identifier> alias,Expression criteria, List<SortItem> sortItems,
+      Optional<Integer> limit, Optional<InlineJoinBody> inlineJoinBody) {
     super(location);
     this.table = table;
     this.alias = alias;
-    this.in = in;
     this.criteria = criteria;
     this.sortItems = sortItems;
     this.limit = limit;
+    this.inlineJoinBody = inlineJoinBody;
   }
 
   public QualifiedName getTable() {
@@ -60,8 +60,8 @@ public class InlineJoinBody
     return sortItems;
   }
 
-  public Optional<QualifiedName> getIn() {
-    return in;
+  public Optional<InlineJoinBody> getInlineJoinBody() {
+    return inlineJoinBody;
   }
 
   @Override
@@ -85,13 +85,13 @@ public class InlineJoinBody
     }
     InlineJoinBody that = (InlineJoinBody) o;
     return Objects.equals(table, that.table) && Objects.equals(alias, that.alias)
-        && Objects.equals(in, that.in) && Objects.equals(criteria, that.criteria)
+        && Objects.equals(criteria, that.criteria)
         && Objects.equals(sortItems, that.sortItems) && Objects
         .equals(limit, that.limit);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(table, alias, in, criteria, sortItems, limit);
+    return Objects.hash(table, alias, criteria, sortItems, limit);
   }
 }

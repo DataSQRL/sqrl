@@ -49,16 +49,16 @@ subscriptionType
     ;
 
 inlineJoin
-    : (inlineJoinBody)+
+    : inlineJoinBody
       (INVERSE inv=identifier)?
     ;
 
 inlineJoinBody
     : JOIN table=qualifiedName (AS? alias=identifier)?
       (ON expression)?
-      (IN in=qualifiedName)?
       (ORDER BY sortItem (',' sortItem)*)?
       (LIMIT limit=INTEGER_VALUE)?
+      inlineJoinBody?
     ;
 
 query

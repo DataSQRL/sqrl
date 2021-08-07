@@ -943,8 +943,7 @@ class AstBuilder
   public Node visitInlineJoin(InlineJoinContext ctx) {
     return new InlineJoin(
         Optional.of(getLocation(ctx)),
-        ctx.inlineJoinBody().stream().map(i->(InlineJoinBody)visit(i))
-        .collect(toList()),
+        (InlineJoinBody)visit(ctx.inlineJoinBody()),
         ctx.inv == null ? Optional.empty() :
             Optional.of((Identifier)visit(ctx.inv))
     );
@@ -957,13 +956,13 @@ class AstBuilder
           getQualifiedName(ctx.table),
           ctx.alias == null ? Optional.empty() :
               Optional.of((Identifier)visit(ctx.alias)),
-          (ctx.in != null) ? Optional.of(getQualifiedName(ctx.in))
-            : Optional.empty(),
         (ctx.expression() != null) ? (Expression)visit(ctx.expression()) : null,
           ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
           .map(s->(SortItem) s.accept(this)).collect(toList()),
           ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
-              Optional.of(Integer.parseInt(ctx.limit.getText()))
+              Optional.of(Integer.parseInt(ctx.limit.getText())),
+        ctx.inlineJoinBody() != null ? Optional.of((InlineJoinBody) visit(ctx.inlineJoinBody()))
+            : Optional.empty()
       );
   }
 

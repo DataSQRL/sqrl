@@ -196,7 +196,7 @@ public class GraphqlSchemaBuilder {
 
     @Override
     public GraphQLOutputType visitInlineJoin(InlineJoin node, Context context) {
-      QualifiedName resolvedName = getTableName(node.getJoin().get(0)); //todo walk join
+      QualifiedName resolvedName = getLastJoinTable(node.getJoin()); //todo walk join
 
       GraphQLObjectType.Builder parent = createObject(resolvedName);
 
@@ -211,8 +211,12 @@ public class GraphqlSchemaBuilder {
         );
       }
 
-      GraphQLTypeReference type = GraphQLTypeReference.typeRef(toName(getTableName(node.getJoin().get(0))));
+      GraphQLTypeReference type = GraphQLTypeReference.typeRef(toName(getTableName(node.getJoin())));
       return GraphQLList.list(type);
+    }
+
+    private QualifiedName getLastJoinTable(InlineJoinBody join) {
+      return join.getInlineJoinBody().map(this::getLastJoinTable).orElse(join.getTable());
     }
 
     @Override

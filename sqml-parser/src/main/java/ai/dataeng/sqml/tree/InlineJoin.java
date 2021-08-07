@@ -21,11 +21,11 @@ import java.util.Optional;
 public class InlineJoin
     extends Expression {
 
-  private final List<InlineJoinBody> join;
+  private final InlineJoinBody join;
   private final Optional<Identifier> inverse;
 
   public InlineJoin(Optional<NodeLocation> location,
-      List<InlineJoinBody> join,
+      InlineJoinBody join,
       Optional<Identifier> inverse) {
     super(location);
 
@@ -33,7 +33,7 @@ public class InlineJoin
     this.inverse = inverse;
   }
 
-  public List<InlineJoinBody> getJoin() {
+  public InlineJoinBody getJoin() {
     return join;
   }
 
