@@ -40,6 +40,10 @@ public class LogarithmicHistogram implements Serializable {
         private long[] buckets;
         private long count;
 
+        private Accumulator() {
+            //For Kryo
+        }
+
         public Accumulator(float base, int maxBuckets) {
             Preconditions.checkArgument(base>1 && base<100, "Invalid base provided: %s", base);
             Preconditions.checkArgument(maxBuckets>0 && maxBuckets<1000, "Invalid number of buckets: %s", maxBuckets);
