@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.flink.util;
 
+import ai.dataeng.sqml.source.SourceRecord;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.CheckpointingMode;
@@ -12,7 +13,7 @@ public class FlinkUtilities {
 
     public static final Random random = new Random();
 
-    public static int generateBalancedKey(int parallelism) {
+    public static int generateBalancedKey(final int parallelism) {
         return random.nextInt(parallelism<<8);
     }
 
@@ -40,6 +41,16 @@ public class FlinkUtilities {
             baseUri += "/" + subFolders[i];
         }
         return new Path(baseUri);
+    }
+
+    public static<T> KeySelector<T, Integer> getHashPartitioner(final int parallelism) {
+        final int modulus = parallelism;
+        return new KeySelector<T, Integer>() {
+            @Override
+            public Integer getKey(T sourceRecord) throws Exception {
+                return sourceRecord.hashCode()%modulus;
+            }
+        };
     }
 
 
