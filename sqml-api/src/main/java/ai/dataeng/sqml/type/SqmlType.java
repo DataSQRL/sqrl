@@ -22,6 +22,11 @@ public abstract class SqmlType {
     return name;
   }
 
+  public SqmlType combine(SqmlType otherType) {
+    if (this.equals(otherType)) return this;
+    else return null;
+  }
+
   public static abstract class ScalarSqmlType extends SqmlType {
     private ScalarSqmlType(String name) {
       super(name);
@@ -49,6 +54,10 @@ public abstract class SqmlType {
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
       return visitor.visitNumber(this, context);
     }
+    public SqmlType combine(SqmlType otherType) {
+      if (otherType!=null && otherType instanceof NumberSqmlType) return this;
+      else return null;
+    }
   }
 
   public static class IntegerSqmlType extends NumberSqmlType {
@@ -59,6 +68,10 @@ public abstract class SqmlType {
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
       return visitor.visitInteger(this, context);
     }
+    public SqmlType combine(SqmlType otherType) {
+      if (otherType!=null && otherType instanceof NumberSqmlType) return NumberSqmlType.INSTANCE;
+      else return null;
+    }
   }
   public static class FloatSqmlType extends NumberSqmlType {
     public static FloatSqmlType INSTANCE = new FloatSqmlType();
@@ -67,6 +80,10 @@ public abstract class SqmlType {
     }
     public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
       return visitor.visitFloat(this, context);
+    }
+    public SqmlType combine(SqmlType otherType) {
+      if (otherType!=null && otherType instanceof NumberSqmlType) return NumberSqmlType.INSTANCE;
+      else return null;
     }
   }
 

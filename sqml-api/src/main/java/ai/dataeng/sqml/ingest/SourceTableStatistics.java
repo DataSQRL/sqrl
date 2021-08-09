@@ -1,16 +1,26 @@
 package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.source.SourceRecord;
+import ai.dataeng.sqml.tree.QualifiedName;
+import ai.dataeng.sqml.type.SqmlType;
 import lombok.ToString;
 import lombok.Value;
 import org.apache.flink.api.common.accumulators.Accumulator;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 @Value
 public class SourceTableStatistics implements Serializable {
 
     RelationStats relationStats;
+
+    public Map<NamePath, SqmlType> getSchema() {
+        Map<NamePath, SqmlType> schema = new HashMap<>();
+        relationStats.collectSchema(schema, NamePath.BASE);
+        return schema;
+    }
 
     @ToString
     public static class Accumulator implements org.apache.flink.api.common.accumulators.Accumulator<SourceRecord, SourceTableStatistics> {

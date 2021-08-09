@@ -7,6 +7,7 @@ import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.Temporal;
 import java.util.Map;
 import java.util.UUID;
@@ -24,7 +25,7 @@ public class TypeMapping {
             String s = (String)value;
             if (testParse(v -> Long.parseLong(v), s)) return SqmlType.IntegerSqmlType.INSTANCE;
             else if (testParse(v -> Double.parseDouble(v), s)) return SqmlType.FloatSqmlType.INSTANCE;
-            else if (testParse(v -> Boolean.parseBoolean(v), s)) return SqmlType.BooleanSqmlType.INSTANCE;
+            else if (parseBoolean(s)) return SqmlType.BooleanSqmlType.INSTANCE;
             else if (testParse(v -> UUID.fromString(v), s)) return SqmlType.UuidSqmlType.INSTANCE;
             else if (testParse(v -> OffsetDateTime.parse(v), s)) return SqmlType.DateTimeSqmlType.INSTANCE;
             else if (testParse(v -> ZonedDateTime.parse(v), s)) return SqmlType.DateTimeSqmlType.INSTANCE;
@@ -33,11 +34,26 @@ public class TypeMapping {
         return original;
     }
 
+    private static Consumer<String> PARSE_BOOLEAN = new Consumer<String>() {
+        @Override
+        public void accept(String s) {
+
+        }
+    };
+
+    private static boolean parseBoolean(String s) {
+        if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("false")) {
+            return true;
+        } else return false;
+    }
+
     private static boolean testParse(Consumer<String> parser, String value) {
         try {
             parser.accept(value);
             return true;
         } catch (IllegalArgumentException e) {
+            return false;
+        } catch (DateTimeParseException e) {
             return false;
         }
     }

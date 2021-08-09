@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.tree.QualifiedName;
+import ai.dataeng.sqml.type.SqmlType;
 import com.google.common.base.Preconditions;
 import lombok.ToString;
 import lombok.Value;
@@ -20,6 +21,16 @@ public class RelationStats implements Serializable {
 
     long count;
     Map<String,FieldStats> fieldStats;
+
+    public void collectSchema(Map<NamePath, SqmlType> schema, NamePath parent) {
+        for (Map.Entry<String, FieldStats> fieldEntry : fieldStats.entrySet()) {
+            String fieldname = fieldEntry.getKey();
+            FieldStats fieldstats = fieldEntry.getValue();
+            NamePath field = parent.sub(fieldname);
+            schema.put(field, fieldstats.resolveType(field));
+            fieldstats.collectSchema(schema, field);
+        }
+    }
 
 
     @ToString

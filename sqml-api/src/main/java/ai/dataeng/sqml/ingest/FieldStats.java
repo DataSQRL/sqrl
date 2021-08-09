@@ -3,6 +3,8 @@ package ai.dataeng.sqml.ingest;
 import ai.dataeng.sqml.ingest.sketches.LogarithmicHistogram;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.TypeMapping;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import lombok.ToString;
 import lombok.Value;
 import org.apache.flink.api.common.accumulators.LongCounter;
@@ -20,6 +22,55 @@ public class FieldStats implements Serializable {
     Map<SqmlType.ScalarSqmlType, Long> inferredScalarTypes;
     LogarithmicHistogram arrayCardinality;
     RelationStats nestedRelationStats;
+
+    public SqmlType resolveType(NamePath name) {
+        boolean isArray = arrayCardinality.getCount() > 0;
+
+        SqmlType type = null;
+        if (nestedRelationStats.getCount()>0) {
+            Preconditions.checkArgument(presentedScalarTypes.isEmpty() && inferredScalarTypes.isEmpty(),
+                    "Cannot mix scalar values and nested relations");
+            type = SqmlType.RelationSqmlType.INSTANCE;
+        } else {
+            //Must be a scalar - for now we expect scalars to resolve to one type that can encompass all values.
+            //TODO: Generalize to allow for multiple incompatible types (e.g. "STRING | INT")
+            long nonNull = count - numNulls;
+
+            //We only use the inferred types if they cover all of the seen (non-null) values:
+            long total = 0;
+            for (Map.Entry<SqmlType.ScalarSqmlType, Long> infer : inferredScalarTypes.entrySet()) {
+                if (type == null) type = infer.getKey();
+                else {
+                    type = type.combine(infer.getKey());
+                    if (type == null) break; //for now, we don't allow dual types, so abandon type inference
+                }
+                total += infer.getValue();
+            }
+            assert total <= nonNull;
+
+            //If we cannot unambiguously infer a type, take the presented type
+            if (type == null || total < nonNull) {
+                for (Map.Entry<SqmlType.ScalarSqmlType, Long> infer : presentedScalarTypes.entrySet()) {
+                    SqmlType newtype = type==null?infer.getKey():type.combine(infer.getKey());
+                    Preconditions.checkArgument(newtype!=null,"Incompatible types detected in input data: %s vs %s", type, infer.getKey());
+                    type = newtype;
+                }
+            }
+            if (type == null) {
+                if (nonNull==0) throw new IllegalArgumentException("Null-type are not supported yet");
+                else throw new IllegalArgumentException("Missing type in input data");
+            }
+        }
+
+        if (isArray) return new SqmlType.ArraySqmlType(type);
+        else return type;
+    }
+
+    public void collectSchema(Map<NamePath, SqmlType> schema, NamePath name) {
+        if (nestedRelationStats.getCount()>0) {
+            nestedRelationStats.collectSchema(schema,name);
+        }
+    }
 
     @ToString
     public static class Accumulator implements org.apache.flink.api.common.accumulators.Accumulator<Object, FieldStats> {

@@ -12,6 +12,8 @@ import java.util.Map;
  *
  * In addition, the bundle may include an optional schema file that defines the schema of the input data, API, and can
  * provide additional hints that guide the optimizer on how to generate the denormalizations.
+ *
+ * Production {@link SQMLBundle} must also contain the queries and subscriptions that get deployed in the API.
  */
 public class SQMLBundle {
 
@@ -33,19 +35,27 @@ public class SQMLBundle {
         private final Map<String, String> scriptsByname = new HashMap<>();
         private String mainScriptName;
 
-        public void addScript(String name, String content) {
+        public Builder addScript(String name, String content) {
             checkScriptName(name);
             Preconditions.checkArgument(!scriptsByname.containsKey(name));
             scriptsByname.put(name,content);
+            return this;
         }
 
-        public void setMainScript(String name) {
+        public Builder setMainScript(String name) {
             checkScriptName(name);
             Preconditions.checkArgument(mainScriptName == null);
             mainScriptName = name;
+            return this;
         }
 
-        public void checkScriptName(String name) {
+        public Builder setMainScript(String name, String content) {
+            addScript(name, content);
+            setMainScript(name);
+            return this;
+        }
+
+        private void checkScriptName(String name) {
             Preconditions.checkArgument(StringUtils.isNotEmpty(name));
         }
 
