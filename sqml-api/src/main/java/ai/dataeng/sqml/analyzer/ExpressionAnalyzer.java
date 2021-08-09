@@ -8,6 +8,7 @@ import ai.dataeng.sqml.function.TypeSignature;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.tree.ArithmeticBinaryExpression;
 import ai.dataeng.sqml.tree.AstVisitor;
+import ai.dataeng.sqml.tree.BetweenPredicate;
 import ai.dataeng.sqml.tree.BooleanLiteral;
 import ai.dataeng.sqml.tree.ComparisonExpression;
 import ai.dataeng.sqml.tree.DecimalLiteral;
@@ -22,12 +23,15 @@ import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.IntervalLiteral;
 import ai.dataeng.sqml.tree.IsEmpty;
+import ai.dataeng.sqml.tree.IsNotNullPredicate;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.NotExpression;
 import ai.dataeng.sqml.tree.NullLiteral;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Relation;
+import ai.dataeng.sqml.tree.SimpleCaseExpression;
 import ai.dataeng.sqml.tree.StringLiteral;
 import ai.dataeng.sqml.tree.SubqueryExpression;
 import ai.dataeng.sqml.tree.TimestampLiteral;
@@ -88,8 +92,6 @@ public class ExpressionAnalyzer {
       if (field.isEmpty()) {
         log.warning(String.format("Could not resolve field %s", node));
         return addType(node, new UnknownSqmlType());
-//        Optional<Field> d = context.getScope().resolveField(QualifiedName.of(node));
-//        throw new RuntimeException(String.format("Could not resolve field %s", node.getValue()));
       }
       return addType(node, field.get().getType());
     }
@@ -98,6 +100,17 @@ public class ExpressionAnalyzer {
     protected SqmlType visitExpression(Expression node, Context context) {
       throw new RuntimeException(String.format("Expression needs type inference: %s. %s", 
           node.getClass().getName(), node));
+    }
+
+    @Override
+    protected SqmlType visitIsNotNullPredicate(IsNotNullPredicate node, Context context) {
+      return addType(node, new BooleanSqmlType());
+    }
+
+    @Override
+    protected SqmlType visitBetweenPredicate(BetweenPredicate node, Context context) {
+      //todo process between
+      return addType(node, new BooleanSqmlType());
     }
 
     @Override
@@ -122,8 +135,8 @@ public class ExpressionAnalyzer {
     public SqmlType visitInlineJoin(InlineJoin node, Context context) {
       //Todo: Walk the join
       InlineJoinBody join = node.getJoin();
-      RelationSqmlType rel = context.getScope().getRelation(join.getTable())
-          .orElseThrow(()-> new RuntimeException(String.format("Could not find relation %s %s", join.getTable(), node)));
+      RelationSqmlType rel = context.getScope().createRelation(Optional.of(join.getTable()));
+//          .orElseThrow(()-> new RuntimeException(String.format("Could not find relation %s %s", join.getTable(), node)));
 
       if (node.getInverse().isPresent()) {
         RelationSqmlType relationSqmlType = context.getScope().getRelationType();
@@ -141,6 +154,7 @@ public class ExpressionAnalyzer {
 
     @Override
     protected SqmlType visitFunctionCall(FunctionCall node, Context context) {
+      //Todo: Function calls can accept a relation
       Optional<SqmlFunction> function = metadata.getFunctionProvider().resolve(node.getName());
       if (function.isEmpty()) {
         throw new RuntimeException(String.format("Could not find function %s", node.getName()));
@@ -151,6 +165,17 @@ public class ExpressionAnalyzer {
       }
 
       return addType(node, typeSignature.getType());
+    }
+
+    @Override
+    protected SqmlType visitSimpleCaseExpression(SimpleCaseExpression node, Context context) {
+      //todo case when
+      return addType(node, new StringSqmlType());
+    }
+
+    @Override
+    protected SqmlType visitNotExpression(NotExpression node, Context context) {
+      return addType(node, new BooleanSqmlType());
     }
 
     @Override

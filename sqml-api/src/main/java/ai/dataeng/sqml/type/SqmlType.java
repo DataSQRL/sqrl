@@ -247,6 +247,7 @@ public abstract class SqmlType {
         }
 
         //Check unaliased
+        //todo fields may not have names
         if (field.getRelationAlias().isEmpty() &&
             field.getName().get().equalsIgnoreCase(name.getParts().get(0))) {
           if (name.getParts().size() > 1) {

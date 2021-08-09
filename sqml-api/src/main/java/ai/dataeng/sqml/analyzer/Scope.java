@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import scala.annotation.meta.field;
 
 public class Scope {
   private QualifiedName name;
@@ -63,18 +64,24 @@ public class Scope {
     return (RelationSqmlType) field.get().getType();
   }
 
+  // Get relation within scope...
+
   public Optional<RelationSqmlType> getRelation(QualifiedName name) {
     name = dereferenceName(name);
 
     RelationSqmlType rel = root;
+
     List<String> parts = name.getParts();
     for (String part : parts) {
       Optional<Field> field = rel.resolveField(QualifiedName.of(part), rel);
       if (field.isEmpty()) {
-        throw new RuntimeException(String.format("Name cannot be found %s", name));
+        return Optional.empty();
+//        throw new RuntimeException(String.format("Name cannot be found %s", name));
       }
       if (!(field.get().getType() instanceof RelationSqmlType)) {
-        throw new RuntimeException(String.format("Name not a relation %s", name));
+        return Optional.empty();
+
+//        throw new RuntimeException(String.format("Name not a relation %s", name));
       }
       rel = (RelationSqmlType) field.get().getType();
     }
@@ -83,6 +90,8 @@ public class Scope {
 
   public QualifiedName dereferenceName(QualifiedName name) {
     if (name.getParts().get(0).equalsIgnoreCase("@")) {
+      //Get Relation. It must be a
+
       List<String> newName = new ArrayList<>(getName().getParts().subList(0, getName().getParts().size() - 1));
       newName.addAll(name.getParts().subList(1, name.getParts().size()));
       return dereferenceParentName(QualifiedName.of(newName));
@@ -91,18 +100,28 @@ public class Scope {
     return dereferenceParentName(name);
   }
 
+  //Todo: need to rescope Join
   private QualifiedName dereferenceParentName(QualifiedName name) {
     List<String> parts = new ArrayList<>(name.getParts());
     for (int i = parts.size() - 1; i >= 0; i--) {
+      //Todo: grab relation & grab parent...
       if (parts.get(i).equalsIgnoreCase("parent")) {
         parts.remove(i);
-        parts.remove(i);
+        try {
+          parts.remove(i);
+        } catch (Exception e) {
+          System.out.println();
+        }
         i--;
       } else if (parts.get(i).equalsIgnoreCase("siblings")) {
         parts.remove(i);
       }
     }
 
+    if(parts.isEmpty()) {
+      throw new RuntimeException(String.format(
+          "Field referenced resolves to nothing: %s", name));
+    }
     return QualifiedName.of(parts);
   }
 
@@ -111,6 +130,9 @@ public class Scope {
   }
 
   public Optional<Field> resolveField(QualifiedName name) {
+    if (getRelationType() == null || name.getParts().size() == 0) {
+      return Optional.empty();
+    }
     Optional<Field> field;
     if (name.getParts().get(0).equalsIgnoreCase("@")) {
       field = getRelationType().resolveField(dereferenceName(name), root);

@@ -2,6 +2,7 @@ package ai.dataeng.sqml.analyzer;
 
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.NodeRef;
+import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
@@ -33,4 +34,5 @@ public class ExpressionAnalysis {
   public void setRelation(Relation node, RelationSqmlType type) {
     this.relations.put(node, type);
   }
+
 }

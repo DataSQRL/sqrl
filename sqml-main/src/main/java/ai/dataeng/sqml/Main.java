@@ -28,13 +28,53 @@ import ai.dataeng.sqml.vertex.Edge;
 import ai.dataeng.sqml.vertex.PostgresViewVertexFactory;
 import graphql.schema.GraphQLSchema;
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Main {
 
   public static void main(String args[]) throws Exception {
+    String[] toTest = {
+        "./sqml-examples/art/poetry-cloud/poetry.sqml",
+//        "./sqml-examples/crypto/bitcoin-tracer/tracer.sqml",
+        "./sqml-examples/cybersecurity/intrusion/intrusion.sqml",
+        "./sqml-examples/ecommerce/public-api/api.sqml",
+        "./sqml-examples/environment/monitoring/monitoring.sqml",
+        "./sqml-examples/financial/fraud-detection/fraud.sqml",
+//        "./sqml-examples/gaming/weworkout/weworkout.sqml",
+        "./sqml-examples/iot/homegenie/homegenie.sqml",
+        "./sqml-examples/location/visitor-guide/guide.sqml",
+        "./sqml-examples/logistics/tracking/tracking.sqml",
+        "./sqml-examples/media/cookout/cookout.sqml",
+        "./sqml-examples/medical/adr/adr-detection.sqml",
+//        "./sqml-examples/military/platoon/platoon.sqml",
+        "./sqml-examples/news/newsrank/newsrank.sqml",
+//        "./sqml-examples/retail/c360/c360.sqml",
+        "./sqml-examples/social-network/social-commons/social-commons.sqml",
+        "./sqml-examples/system-monitoring/monitoring/monitoring.sqml",
+//        "./sqml-examples/telecommunications/content-delivery/content.sqml", //todo union all ?
+        "./sqml-examples/telecommunications/user-portal/portal.sqml",
+        "./sqml-examples/transportation/busbutler/busbutler.sqml",
+    };
+    Main main = new Main();
+    for (String test : toTest) {
+      try {
+        main.test(test);
+      } catch (Exception e) {
+        e.printStackTrace();
+        System.out.println("Failed on " + test);
+        return;
+      }
+    }
+  }
+
+  public void test(String sqmlUri) throws URISyntaxException, IOException {
     /* Defined as a source vertex */
 
     Source meetupIngres = HttpIngress.newHttpIngres()
@@ -52,7 +92,7 @@ public class Main {
       .scriptRegistry(
            LocalScriptRegistry.newScriptRegistry()
              .script("meetup", parser.parse(Files.readString(
-                 new File(Main.class.getClassLoader().getResource("meetup.sqml").toURI()).toPath()))))
+                 new File(sqmlUri).toPath()))))
       .queryProvider(
           GraphqlQueryProvider.newQueryProvider()
             .query("meetup", gqlParser.parse("queries")))

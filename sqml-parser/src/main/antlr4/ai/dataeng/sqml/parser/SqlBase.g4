@@ -29,7 +29,7 @@ singleStatement
 statement
     : qualifiedName ':=' assignment                                    #assign
     | CREATE SUBSCRIPTION qualifiedName ON subscriptionType AS query   #createSubscription
-    | IMPORT importType=(FUNCTION | SOURCE | PUBLIC)? qualifiedName importAlias?     #importStatement
+    | IMPORT importType=(FUNCTION | SOURCE | PUBLIC)? qualifiedName (WITH primaryExpression)? importAlias?     #importStatement
     | query                                                            #statementDefault
     ;
 
@@ -211,7 +211,7 @@ string
     ;
 
 comparisonOperator
-    : EQ | NEQ | LT | LTE | GT | GTE
+    : EQ | NEQ | LT | LTE | GT | GTE | IS
     ;
 
 booleanValue

@@ -115,7 +115,8 @@ public abstract class DefaultTraversalVisitor<R, C>
   @Override
   protected R visitInPredicate(InPredicate node, C context) {
     process(node.getValue(), context);
-    process(node.getValueList(), context);
+    //todo: IN may not be a list
+    //process(node.getValueList(), context);
 
     return null;
   }

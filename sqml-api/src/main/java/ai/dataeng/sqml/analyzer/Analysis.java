@@ -29,6 +29,8 @@ public class Analysis {
   private Map<Node, List<Expression>> outputExpressions = new HashMap<>();
   private Map<Expression, String> nameMap = new HashMap<>();
   private Map<Relation, RelationSqmlType> relations = new HashMap<>();
+  private Map<QualifiedName, QualifiedName> resolvedNames = new HashMap<>();
+  private RelationSqmlType model;
 
   public Analysis(Script script) {
     this.script = script;
@@ -40,6 +42,10 @@ public class Analysis {
   }
 
   public QualifiedName getName(QualifiedName name) {
+    if (resolvedNames.containsKey(name)) {
+      return resolvedNames.get(name);
+    }
+
     return name;
   }
 
@@ -61,6 +67,10 @@ public class Analysis {
 
   public void setGroupByExpressions(QuerySpecification node, List<Expression> groupingExpressions) {
 
+  }
+
+  public void setResolvedName(QualifiedName name, QualifiedName resolvedName) {
+    this.resolvedNames.put(name, resolvedName);
   }
 
   public void setGroupingSets(QuerySpecification node, List<List<Set<Object>>> sets) {
@@ -127,5 +137,13 @@ public class Analysis {
 
   public void addName(Expression expression, String name) {
     this.nameMap.put(expression, name);
+  }
+
+  public QualifiedName resolveName(QualifiedName name) {
+    return null;
+  }
+
+  public void setModel(RelationSqmlType model) {
+    this.model = model;
   }
 }

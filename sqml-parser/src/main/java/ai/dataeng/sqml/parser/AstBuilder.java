@@ -250,6 +250,8 @@ class AstBuilder
         return ComparisonExpression.Operator.GREATER_THAN;
       case SqlBaseLexer.GTE:
         return ComparisonExpression.Operator.GREATER_THAN_OR_EQUAL;
+      case SqlBaseLexer.IS:
+        return ComparisonExpression.Operator.EQUAL;
     }
 
     throw new IllegalArgumentException("Unsupported operator: " + symbol.getText());

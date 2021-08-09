@@ -33,6 +33,14 @@ public class PostgresFunctions {
       new SqmlFunction("now", new SqmlType.DateTimeSqmlType(), false),
       new SqmlFunction("math.log10", new SqmlType.FloatSqmlType(), false),
       new SqmlFunction("math.sqrt", new SqmlType.FloatSqmlType(), false),
+      new SqmlFunction("stats.removeoutlier", new SqmlType.FloatSqmlType(), false),
+      new SqmlFunction("stats.normal.variance", new SqmlType.FloatSqmlType(), false),
+      new SqmlFunction("stats.truncated_normal.percentile", new SqmlType.FloatSqmlType(), false),
+      new SqmlFunction("stats.poisson.percentile", new SqmlType.FloatSqmlType(), false),
+      new SqmlFunction("time.parse", new SqmlType.FloatSqmlType(), false),
+      new SqmlFunction("math.floor", new SqmlType.FloatSqmlType(), false),
+      new SqmlFunction("col.multiply", new SqmlType.FloatSqmlType(), false),
+      new SqmlFunction("time.roundtomin", new SqmlType.DateTimeSqmlType(), false),
       new SqmlFunction("frozen_lookup", new SqmlType.StringSqmlType(), false)
   );
 }

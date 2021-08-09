@@ -163,13 +163,13 @@ public class StatementAnalyzer {
 
     @Override
     protected Scope visitTable(Table table, Scope scope) {
-      Optional<RelationSqmlType> tableHandle = scope.getRelation(table.getName());
-      if (tableHandle.isEmpty()) {
+      RelationSqmlType tableHandle = scope.createRelation(Optional.of(table.getName()));
+//      if (tableHandle.isEmpty()) {
         //If no Source that emits that object can be identified, throw error
-        throw new RuntimeException(String.format("Could not resolve table %s", table.getName()));
-      }
+//        throw new RuntimeException(String.format("Could not resolve table %s", table.getName()));
+//      }
 
-      RelationSqmlType relation = tableHandle.get();
+      RelationSqmlType relation = tableHandle;
 
       //Get all defined fields
       List<Field> fields = relation.getFields();
@@ -189,7 +189,8 @@ public class StatementAnalyzer {
       Scope result = createAndAssignScope(node, scope, left.getRelationType()
           .join(right.getRelationType()));
 
-      if (node.getType() == Join.Type.CROSS || node.getType() == Join.Type.IMPLICIT) {
+      //Todo verify that an empty criteria on a join can be a valid traversal
+      if (node.getType() == Join.Type.CROSS || node.getType() == Join.Type.IMPLICIT || node.getCriteria().isEmpty()) {
         return result;
       }
 

@@ -45,7 +45,7 @@ public class Analyzer {
 
     private final Analysis analysis;
     private final Metadata metadata;
-
+ 
     public Visitor(Analysis analysis, Metadata metadata) {
       this.analysis = analysis;
       this.metadata = metadata;
@@ -61,6 +61,7 @@ public class Analyzer {
       Scope scope = new Scope();
       node.getStatements()
           .forEach(n -> n.accept(this, scope));
+      this.analysis.setModel(scope.getRoot());
       return null;
     }
 
@@ -73,10 +74,10 @@ public class Analyzer {
     protected Scope visitAssign(Assign node, Scope scope) {
       Scope result = node.getRhs().accept(this, createScope(scope, node.getName()));
 
-      if (result.getRelationType() == null) {
-        throw new RuntimeException(String.format(
-            "Temporary exception, unknown type: %s, %s", node, scope));
-      }
+//      if (result.getRelationType() == null) {
+//        throw new RuntimeException(String.format(
+//            "Temporary exception, unknown type: %s, %s", node, scope));
+//      }
 
       return result;
     }

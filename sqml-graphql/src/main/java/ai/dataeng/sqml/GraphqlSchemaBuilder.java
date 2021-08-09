@@ -5,6 +5,7 @@ import ai.dataeng.sqml.dag.Dag;
 import ai.dataeng.sqml.tree.Assign;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.CreateSubscription;
+import ai.dataeng.sqml.tree.DistinctAssignment;
 import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
@@ -19,6 +20,7 @@ import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.tree.InlineJoinBody;
+import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
@@ -125,7 +127,13 @@ public class GraphqlSchemaBuilder {
 
     @Override
     protected GraphQLOutputType visitNode(Node node, Context context) {
-      throw new RuntimeException(String.format("Could not process node for graphql schema: %s", node));
+      throw new RuntimeException(String.format("Could not process node for graphql schema: %s", node.getClass().getName()));
+    }
+
+    @Override
+    protected GraphQLOutputType visitTableSubquery(TableSubquery node, Context context) {
+      //todo table subquery
+      return Scalars.GraphQLString;
     }
 
     @Override
@@ -174,6 +182,11 @@ public class GraphqlSchemaBuilder {
       return type;
     }
 
+    @Override
+    public GraphQLOutputType visitDistinctAssignment(DistinctAssignment node, Context context) {
+      return null;
+    }
+
     public static String toGraphqlName(String name) {
       return name.replaceAll("[^A-Za-z0-9]", "");
     }
@@ -196,9 +209,16 @@ public class GraphqlSchemaBuilder {
 
     @Override
     public GraphQLOutputType visitInlineJoin(InlineJoin node, Context context) {
-      QualifiedName resolvedName = getLastJoinTable(node.getJoin()); //todo walk join
 
-      GraphQLObjectType.Builder parent = createObject(resolvedName);
+      Optional<RelationSqmlType> rel = analysis.getRelation(node.getJoin());
+      if (rel.isEmpty()) {
+        log.warning("Could not resole relation name, stubbing for now...");
+        return Scalars.GraphQLString;
+      }
+      GraphQLObjectType.Builder parent = createObject(rel
+          .get()
+              .getRelationName()
+      );
 
       if (node.getInverse().isPresent()) {
         parent.field(

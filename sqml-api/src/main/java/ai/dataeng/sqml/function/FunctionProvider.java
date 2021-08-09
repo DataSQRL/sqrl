@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.function;
 
 import ai.dataeng.sqml.tree.QualifiedName;
+import ai.dataeng.sqml.type.SqmlType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +24,10 @@ public class FunctionProvider {
         return Optional.of(function);
       }
     }
-    return Optional.empty();
+    System.out.println("Missing function " + name);
+    return Optional.of(
+        new SqmlFunction(name.toString(), new SqmlType.UnknownSqmlType(), false));
+//    return Optional.empty();
   }
 
   public static class Builder {
