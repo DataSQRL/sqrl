@@ -20,7 +20,7 @@ import org.apache.flink.util.OutputTag;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DataSourceMonitor implements SourceTableListener {
+class DataSourceMonitor implements SourceTableListener {
 
     public static final int DEFAULT_PARALLELISM = 16;
     public static final String STATS_KEY = "stats";
@@ -29,46 +29,12 @@ public class DataSourceMonitor implements SourceTableListener {
     private final int defaultParallelism = DEFAULT_PARALLELISM;
     private final EnvironmentProvider envProvider;
 
-    private Map<String, SourceDataset> sourceDatasets;
     private HierarchyKeyValueStore.Factory storeFactory;
-    private HierarchyKeyValueStore store;
 
 
     public DataSourceMonitor(EnvironmentProvider envProvider, HierarchyKeyValueStore.Factory storeFactory) {
         this.envProvider = envProvider;
-        this.sourceDatasets = new HashMap<>();
         this.storeFactory = storeFactory;
-        this.store = storeFactory.open();
-    }
-
-    public void addDataset(@NonNull SourceDataset dataset) {
-        Preconditions.checkArgument(!sourceDatasets.containsKey(dataset.getName()),"Dataset with given name already exists: %s", dataset.getName());
-        sourceDatasets.put(dataset.getName(),dataset);
-        dataset.addSourceTableListener(this);
-
-    }
-
-    public SourceDataset getDataset(@NonNull String name) {
-        return sourceDatasets.get(name);
-    }
-
-    public SourceTableStatistics getTableStatistics(@NonNull SourceTable table) {
-        SourceTableStatistics.Accumulator acc = store.get(SourceTableStatistics.Accumulator.class,
-                table.getQualifiedName().toString(), STATS_KEY);
-        if (acc==null) return null;
-        return acc.getLocalValue();
-    }
-
-    public SourceTableStatistics getTableStatistics(@NonNull SourceTableQualifiedName tableName) {
-        return getTableStatistics(getTable(tableName));
-    }
-
-    public SourceTable getTable(@NonNull SourceTableQualifiedName tableName) {
-        SourceDataset dataset = getDataset(tableName.getDataset());
-        Preconditions.checkArgument(dataset!=null,"Dataset not found: %s", tableName.getDataset());
-        SourceTable table = dataset.getTable(tableName.getTable());
-        Preconditions.checkArgument(table!=null,"Table [%s] not found in dataset [%s]", tableName.getTable(), tableName.getDataset());
-        return table;
     }
 
     @Override

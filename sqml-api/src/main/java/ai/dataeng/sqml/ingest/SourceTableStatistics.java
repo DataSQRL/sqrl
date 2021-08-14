@@ -16,10 +16,10 @@ public class SourceTableStatistics implements Serializable {
 
     RelationStats relationStats;
 
-    public Map<NamePath, SqmlType> getSchema() {
-        Map<NamePath, SqmlType> schema = new HashMap<>();
-        relationStats.collectSchema(schema, NamePath.BASE);
-        return schema;
+    public SourceTableSchema getSchema() {
+        SourceTableSchema.Builder builder = SourceTableSchema.build();
+        relationStats.collectSchema(builder);
+        return builder.build();
     }
 
     @ToString

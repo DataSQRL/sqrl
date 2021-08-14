@@ -66,9 +66,47 @@ public class FieldStats implements Serializable {
         else return type;
     }
 
-    public void collectSchema(Map<NamePath, SqmlType> schema, NamePath name) {
+    public void collectSchema(SourceTableSchema.Builder builder, String fieldName) {
+        boolean isArray = arrayCardinality.getCount() > 0;
+        boolean notNull = numNulls==0;
+
+
         if (nestedRelationStats.getCount()>0) {
-            nestedRelationStats.collectSchema(schema,name);
+            Preconditions.checkArgument(presentedScalarTypes.isEmpty() && inferredScalarTypes.isEmpty(),
+                    "Cannot mix scalar values and nested relations");
+            SourceTableSchema.Builder nestedBuilder = builder.addNestedTable(fieldName, isArray, notNull);
+            nestedRelationStats.collectSchema(nestedBuilder);
+        } else {
+            //Must be a scalar - for now we expect scalars to resolve to one type that can encompass all values.
+            //TODO: Generalize to allow for multiple incompatible types (e.g. "STRING | INT")
+            SqmlType.ScalarSqmlType type = null;
+            long nonNull = count - numNulls;
+
+            //We only use the inferred types if they cover all of the seen (non-null) values:
+            long total = 0;
+            for (Map.Entry<SqmlType.ScalarSqmlType, Long> infer : inferredScalarTypes.entrySet()) {
+                if (type == null) type = infer.getKey();
+                else {
+                    type = (SqmlType.ScalarSqmlType) type.combine(infer.getKey());
+                    if (type == null) break; //for now, we don't allow dual types, so abandon type inference
+                }
+                total += infer.getValue();
+            }
+            assert total <= nonNull;
+
+            //If we cannot unambiguously infer a type, take the presented type
+            if (type == null || total < nonNull) {
+                for (Map.Entry<SqmlType.ScalarSqmlType, Long> infer : presentedScalarTypes.entrySet()) {
+                    SqmlType.ScalarSqmlType newtype = type==null?infer.getKey():(SqmlType.ScalarSqmlType)type.combine(infer.getKey());
+                    Preconditions.checkArgument(newtype!=null,"Incompatible types detected in input data: %s vs %s", type, infer.getKey());
+                    type = newtype;
+                }
+            }
+            if (type == null) {
+                if (nonNull==0) throw new IllegalArgumentException("Null-type are not supported yet");
+                else throw new IllegalArgumentException("Missing type in input data");
+            }
+            builder.addField(fieldName, isArray, notNull, type);
         }
     }
 

@@ -3,9 +3,11 @@ package ai.dataeng.sqml;
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.execution.SQMLBundle;
-import ai.dataeng.sqml.ingest.DataSourceMonitor;
+import ai.dataeng.sqml.flink.EnvironmentProvider;
 import ai.dataeng.sqml.flink.DefaultEnvironmentProvider;
+import ai.dataeng.sqml.ingest.DataSourceRegistry;
 import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.SourceTableSchema;
 import ai.dataeng.sqml.ingest.SourceTableStatistics;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
 import ai.dataeng.sqml.type.SqmlType;
@@ -26,12 +28,15 @@ public class Main2 {
 
     public static final Path outputBase = Path.of("tmp","datasource");
 
+    private static final EnvironmentProvider envProvider = new DefaultEnvironmentProvider();
 
     public static void main(String[] args) throws Exception {
-        DirectoryDataset dd = new DirectoryDataset(RETAIL_DATA_DIR);
         HierarchyKeyValueStore.Factory kvStoreFactory = new LocalFileHierarchyKeyValueStore.Factory(outputBase.toString());
-        final DataSourceMonitor env = new DataSourceMonitor(new DefaultEnvironmentProvider(), kvStoreFactory);
-        env.addDataset(dd);
+        DataSourceRegistry ddRegistry = new DataSourceRegistry(kvStoreFactory);
+        DirectoryDataset dd = new DirectoryDataset(RETAIL_DATA_DIR);
+        ddRegistry.addDataset(dd);
+
+        //ddRegistry.monitorDatasets(envProvider);
 
         Thread.sleep(1000);
 
@@ -40,9 +45,10 @@ public class Main2 {
 
         //Retrieve the collected statistics
         for (String table : RETAIL_TABLE_NAMES) {
-            SourceTableStatistics tableStats = env.getTableStatistics(dd.getTable(table));
-            Map<NamePath, SqmlType> schema = tableStats.getSchema();
-            schema.forEach((k,v) -> System.out.printf("%s -> %s\n", k.getQualifiedName(table), v));
+            SourceTableStatistics tableStats = ddRegistry.getTableStatistics(dd.getTable(table));
+            SourceTableSchema schema = tableStats.getSchema();
+            System.out.println(schema);
         }
     }
+
 }

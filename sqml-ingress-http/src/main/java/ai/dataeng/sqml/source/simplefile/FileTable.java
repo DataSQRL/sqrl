@@ -10,7 +10,9 @@ import com.google.common.base.Strings;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import javax.annotation.Nonnull;
@@ -73,7 +75,9 @@ public class FileTable implements SourceTable {
         }
         List<Map<String,Object>> data = fileType.getRecords(file);
         List<SourceRecord> records = data.stream().map(m -> new SourceRecord(m,fileTime)).collect(Collectors.toList());;
-        return env.fromCollection(records);
+        DataStreamSource<SourceRecord> stream = env.fromCollection(records);
+        stream.assignTimestampsAndWatermarks(WatermarkStrategy.<SourceRecord>forMonotonousTimestamps().withTimestampAssigner((event, timestamp) -> event.getSourceTime().toEpochSecond()));
+        return stream;
     }
 
     @Override

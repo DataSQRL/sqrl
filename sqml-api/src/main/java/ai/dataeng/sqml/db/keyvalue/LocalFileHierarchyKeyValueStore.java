@@ -33,6 +33,7 @@ public class LocalFileHierarchyKeyValueStore implements HierarchyKeyValueStore {
     @Override
     public <T> void put(T value, String firstKey, String... moreKeys) {
         Path file = getFile(firstKey, moreKeys);
+        System.out.println("Writing to: " + file.toString());
         if (Files.notExists(file.getParent())) {
             try {
                 Files.createDirectories(file.getParent());
@@ -51,7 +52,11 @@ public class LocalFileHierarchyKeyValueStore implements HierarchyKeyValueStore {
     @Override
     public <T> T get(Class<T> clazz, String firstKey, String... moreKeys) {
         Path file = getFile(firstKey, moreKeys);
-        if (Files.notExists(file)) return null;
+        try {
+            if (Files.notExists(file) || Files.size(file)==0) return null;
+        } catch (IOException e) {
+            return null;
+        }
         try (InputStream instream = Files.newInputStream(file);
              Input in = new Input(instream)) {
             return kryo.readObject(in, clazz);

@@ -22,13 +22,11 @@ public class RelationStats implements Serializable {
     long count;
     Map<String,FieldStats> fieldStats;
 
-    public void collectSchema(Map<NamePath, SqmlType> schema, NamePath parent) {
+    public void collectSchema(SourceTableSchema.Builder builder) {
         for (Map.Entry<String, FieldStats> fieldEntry : fieldStats.entrySet()) {
             String fieldname = fieldEntry.getKey();
             FieldStats fieldstats = fieldEntry.getValue();
-            NamePath field = parent.sub(fieldname);
-            schema.put(field, fieldstats.resolveType(field));
-            fieldstats.collectSchema(schema, field);
+            fieldstats.collectSchema(builder, fieldname);
         }
     }
 

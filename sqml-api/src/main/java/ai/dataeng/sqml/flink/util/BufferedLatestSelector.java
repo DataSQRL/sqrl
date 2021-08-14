@@ -30,6 +30,7 @@ public class BufferedLatestSelector<T> extends KeyedProcessFunction<Integer, T, 
     public void processElement(T value, Context context, Collector<T> out) throws Exception {
         if (latest.value() == null) {
             context.timerService().registerProcessingTimeTimer(FlinkUtilities.getCurrentProcessingTime()+bufferTimeMs);
+//            context.timerService().registerEventTimeTimer(Long.MAX_VALUE-1);
         }
         latest.update(value);
     }

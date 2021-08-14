@@ -36,6 +36,8 @@ public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, S
             long timer = FlinkUtilities.getCurrentProcessingTime() + TimeUnit.MINUTES.toMillis(maxTimeInMin);
             nextTimer.update(timer);
             context.timerService().registerProcessingTimeTimer(timer);
+            //Register an event timer into the far future to trigger when the stream ends
+            //context.timerService().registerEventTimeTimer(Long.MAX_VALUE);
         }
         acc.add(sourceRecord);
         stats.update(acc);
@@ -50,7 +52,8 @@ public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, S
 
     @Override
     public void onTimer(long timestamp, OnTimerContext ctx, Collector<SourceRecord> out) throws Exception {
-        ctx.output(statsOutput, stats.value());
+        SourceTableStatistics.Accumulator acc = stats.value();
+        if (acc != null) ctx.output(statsOutput, acc);
         stats.clear();
         nextTimer.clear();
     }
