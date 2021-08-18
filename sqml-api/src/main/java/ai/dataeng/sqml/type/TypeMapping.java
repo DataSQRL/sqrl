@@ -1,5 +1,8 @@
 package ai.dataeng.sqml.type;
 
+import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.SchemaAdjustment;
+import ai.dataeng.sqml.ingest.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
 
 import java.math.BigDecimal;
@@ -9,9 +12,10 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.Temporal;
-import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class TypeMapping {
 
@@ -25,7 +29,7 @@ public class TypeMapping {
             String s = (String)value;
             if (testParse(v -> Long.parseLong(v), s)) return SqmlType.IntegerSqmlType.INSTANCE;
             else if (testParse(v -> Double.parseDouble(v), s)) return SqmlType.FloatSqmlType.INSTANCE;
-            else if (parseBoolean(s)) return SqmlType.BooleanSqmlType.INSTANCE;
+            else if (testBoolean(s)) return SqmlType.BooleanSqmlType.INSTANCE;
             else if (testParse(v -> UUID.fromString(v), s)) return SqmlType.UuidSqmlType.INSTANCE;
             else if (testParse(v -> OffsetDateTime.parse(v), s)) return SqmlType.DateTimeSqmlType.INSTANCE;
             else if (testParse(v -> ZonedDateTime.parse(v), s)) return SqmlType.DateTimeSqmlType.INSTANCE;
@@ -34,18 +38,70 @@ public class TypeMapping {
         return original;
     }
 
-    private static Consumer<String> PARSE_BOOLEAN = new Consumer<String>() {
-        @Override
-        public void accept(String s) {
-
+    public static SchemaAdjustment<Object> adjustType(SqmlType.ScalarSqmlType datatype, Object value, NamePath path, SchemaAdjustmentSettings settings) {
+        if (datatype instanceof SqmlType.StringSqmlType) {
+            if (value instanceof String) return SchemaAdjustment.none();
+            else if (settings.castDataType()) return SchemaAdjustment.data(Objects.toString(value));
+            else return incompatibleType(datatype,value,path);
+        } else if (datatype instanceof SqmlType.IntegerSqmlType) {
+            if (value instanceof Integer || value instanceof Long || value instanceof Short || value instanceof Byte) return SchemaAdjustment.none();
+            else if (value instanceof Number && settings.castDataType()) return SchemaAdjustment.data(((Number)value).longValue());
+            else if (value instanceof String && settings.castDataType()) return parseFromString(value,s -> Long.parseLong(s),path,datatype);
+            else return incompatibleType(datatype,value,path);
+        } else if (datatype instanceof SqmlType.FloatSqmlType) {
+            if (value instanceof Float || value instanceof Double) return SchemaAdjustment.none();
+            else if (value instanceof Number && settings.castDataType()) return SchemaAdjustment.data(((Number)value).doubleValue());
+            else if (value instanceof String && settings.castDataType()) return parseFromString(value,s -> Double.parseDouble(s),path,datatype);
+            else return incompatibleType(datatype,value,path);
+        } else if (datatype instanceof SqmlType.NumberSqmlType) {
+            if (value instanceof Number) return SchemaAdjustment.none();
+            else if (value instanceof String && settings.castDataType()) return parseFromString(value,s -> Double.parseDouble(s),path,datatype);
+            else return incompatibleType(datatype,value,path);
+        } else if (datatype instanceof SqmlType.BooleanSqmlType) {
+            if (value instanceof Boolean) return SchemaAdjustment.none();
+            else if (value instanceof String && settings.castDataType()) return parseFromString(value,s -> parseBoolean,path,datatype);
+            else return incompatibleType(datatype,value,path);
+        } else if (datatype instanceof SqmlType.UuidSqmlType) {
+            if (value instanceof UUID) return SchemaAdjustment.none();
+            else return incompatibleType(datatype,value,path);
+        } else if (datatype instanceof SqmlType.DateTimeSqmlType) { //TODO: need to make more robust!
+            if (value instanceof OffsetDateTime) return SchemaAdjustment.none();
+            else if (value instanceof String && settings.castDataType()) return parseFromString(value,s -> OffsetDateTime.parse(s),path,datatype);
+            else return incompatibleType(datatype,value,path);
         }
-    };
+        return SchemaAdjustment.none();
+    }
 
-    private static boolean parseBoolean(String s) {
+    private static SchemaAdjustment<Object> incompatibleType(SqmlType.ScalarSqmlType datatype, Object value, NamePath path) {
+        return SchemaAdjustment.error(path, value, String.format("Incompatible data type. Expected data of type [%s]",datatype));
+    }
+
+    private static SchemaAdjustment parseFromString(Object value, Function<String,Object> parser, NamePath path, SqmlType.ScalarSqmlType datatype) {
+        Preconditions.checkArgument(value instanceof String);
+        try {
+            Object result = parser.apply((String)value);
+            return SchemaAdjustment.data(result);
+        } catch (IllegalArgumentException e) {
+            return SchemaAdjustment.error(path, value, String.format("Could not parse value to data type [%s]",datatype));
+        } catch (DateTimeParseException e) {
+            return SchemaAdjustment.error(path, value, String.format("Could not parse value to data type [%s]",datatype));
+        }
+    }
+
+    private static boolean testBoolean(String s) {
         if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("false")) {
             return true;
         } else return false;
     }
+
+    private static Function<String,Boolean> parseBoolean = new Function<String, Boolean>() {
+        @Override
+        public Boolean apply(String s) {
+            if (s.equalsIgnoreCase("true")) return true;
+            else if (s.equalsIgnoreCase("false")) return false;
+            throw new IllegalArgumentException("Not a boolean");
+        }
+    };
 
     private static boolean testParse(Consumer<String> parser, String value) {
         try {
