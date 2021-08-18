@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.ingest;
 
+import ai.dataeng.sqml.source.SourceRecord;
 import ai.dataeng.sqml.type.SqmlType;
 import com.google.common.base.Preconditions;
 import lombok.EqualsAndHashCode;
@@ -9,6 +10,7 @@ import lombok.Value;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 @Value
 public class SourceTableSchema {
@@ -17,6 +19,14 @@ public class SourceTableSchema {
 
     private SourceTableSchema(Table table) {
         this.table = table;
+    }
+
+    public void forEach(BiConsumer<String,Element> consumer) {
+        table.forEach(consumer);
+    }
+
+    public SourceRecord verifyAndAdjust(SourceRecord record, SchemaAdjustmentSettings settings) {
+        return record;
     }
 
     @Getter @ToString @EqualsAndHashCode
@@ -30,6 +40,12 @@ public class SourceTableSchema {
             this.notNull = notNull;
         }
 
+        public abstract boolean isField();
+
+        public boolean isNestedTable() {
+            return !isField();
+        }
+
     }
 
     @Getter @ToString @EqualsAndHashCode
@@ -41,6 +57,11 @@ public class SourceTableSchema {
             super(isArray, notNull);
             this.type = type;
         }
+
+        @Override
+        public boolean isField() {
+            return true;
+        }
     }
 
     @ToString @EqualsAndHashCode
@@ -51,6 +72,15 @@ public class SourceTableSchema {
         private Table(boolean isArray, boolean notNull) {
             super(isArray, notNull);
             schema = new HashMap<>();
+        }
+
+        @Override
+        public boolean isField() {
+            return false;
+        }
+
+        public void forEach(BiConsumer<String,Element> consumer) {
+            schema.forEach(consumer);
         }
     }
 

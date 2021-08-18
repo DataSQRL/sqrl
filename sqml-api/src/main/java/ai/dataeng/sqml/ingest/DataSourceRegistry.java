@@ -31,7 +31,7 @@ public class DataSourceRegistry {
     }
 
     public synchronized void monitorDatasets(EnvironmentProvider envProvider) {
-        Preconditions.checkArgument(monitor!=null,"Monitor is already running");
+        Preconditions.checkArgument(monitor==null,"Monitor is already running");
         monitor = new DataSourceMonitor(envProvider, storeFactory);
         for (SourceDataset dataset : sourceDatasets.values()) dataset.addSourceTableListener(monitor);
     }

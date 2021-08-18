@@ -1,8 +1,6 @@
 package ai.dataeng.sqml.flink.util;
 
-import ai.dataeng.sqml.source.SourceRecord;
 import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -33,14 +31,6 @@ public class FlinkUtilities {
     public static void enableCheckpointing(StreamExecutionEnvironment env) {
         env.enableCheckpointing(TimeUnit.MINUTES.toMillis(1), CheckpointingMode.EXACTLY_ONCE);
         env.getCheckpointConfig().setMaxConcurrentCheckpoints(1);
-    }
-
-    public static Path getPath(String baseUri, String... subFolders) {
-        if (baseUri.endsWith("/")) baseUri = baseUri.substring(0,baseUri.length()-1);
-        for (int i = 0; i < subFolders.length; i++) {
-            baseUri += "/" + subFolders[i];
-        }
-        return new Path(baseUri);
     }
 
     public static<T> KeySelector<T, Integer> getHashPartitioner(final int parallelism) {

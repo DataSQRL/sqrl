@@ -68,8 +68,8 @@ class DataSourceMonitor implements SourceTableListener {
                         }
                 })
                 .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
-                .process(new BufferedLatestSelector(getFlinkName(STATS_NAME_PREFIX, sourceTable),
-                        500, SourceTableStatistics.Accumulator.class), TypeInformation.of(SourceTableStatistics.Accumulator.class))
+//                .process(new BufferedLatestSelector(getFlinkName(STATS_NAME_PREFIX, sourceTable),
+//                        500, SourceTableStatistics.Accumulator.class), TypeInformation.of(SourceTableStatistics.Accumulator.class))
                 .addSink(new SaveToKeyValueStoreSink(storeFactory,SourceTableStatistics.Accumulator.class, sourceTable.getQualifiedName().toString(), STATS_KEY));
         try {
             flinkEnv.execute(getFlinkName(JOB_NAME_PREFIX, sourceTable));

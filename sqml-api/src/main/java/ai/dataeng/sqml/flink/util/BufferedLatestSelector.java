@@ -1,15 +1,10 @@
 package ai.dataeng.sqml.flink.util;
 
-import ai.dataeng.sqml.ingest.SourceTableStatistics;
-import ai.dataeng.sqml.source.SourceRecord;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
-import org.apache.flink.api.common.typeinfo.TypeHint;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.OutputTag;
 
 public class BufferedLatestSelector<T> extends KeyedProcessFunction<Integer, T, T> {
 
@@ -30,7 +25,8 @@ public class BufferedLatestSelector<T> extends KeyedProcessFunction<Integer, T, 
     public void processElement(T value, Context context, Collector<T> out) throws Exception {
         if (latest.value() == null) {
             context.timerService().registerProcessingTimeTimer(FlinkUtilities.getCurrentProcessingTime()+bufferTimeMs);
-//            context.timerService().registerEventTimeTimer(Long.MAX_VALUE-1);
+            //This event timer seems to cause an infinite loop but without it, there is no output
+            context.timerService().registerEventTimeTimer(Long.MAX_VALUE);
         }
         latest.update(value);
     }

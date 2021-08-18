@@ -5,16 +5,33 @@ import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.execution.SQMLBundle;
 import ai.dataeng.sqml.flink.EnvironmentProvider;
 import ai.dataeng.sqml.flink.DefaultEnvironmentProvider;
-import ai.dataeng.sqml.ingest.DataSourceRegistry;
-import ai.dataeng.sqml.ingest.NamePath;
-import ai.dataeng.sqml.ingest.SourceTableSchema;
-import ai.dataeng.sqml.ingest.SourceTableStatistics;
+import ai.dataeng.sqml.flink.SaveToKeyValueStoreSink;
+import ai.dataeng.sqml.flink.util.BufferedLatestSelector;
+import ai.dataeng.sqml.flink.util.FlinkUtilities;
+import ai.dataeng.sqml.ingest.*;
+import ai.dataeng.sqml.source.SourceRecord;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
-import ai.dataeng.sqml.type.SqmlType;
+import org.apache.flink.api.common.RuntimeExecutionMode;
+import org.apache.flink.api.common.accumulators.LongCounter;
+import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
+import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
+import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class Main2 {
 
@@ -36,7 +53,7 @@ public class Main2 {
         DirectoryDataset dd = new DirectoryDataset(RETAIL_DATA_DIR);
         ddRegistry.addDataset(dd);
 
-        //ddRegistry.monitorDatasets(envProvider);
+        ddRegistry.monitorDatasets(envProvider);
 
         Thread.sleep(1000);
 
@@ -49,6 +66,8 @@ public class Main2 {
             SourceTableSchema schema = tableStats.getSchema();
             System.out.println(schema);
         }
+
     }
+
 
 }

@@ -37,7 +37,7 @@ public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, S
             nextTimer.update(timer);
             context.timerService().registerProcessingTimeTimer(timer);
             //Register an event timer into the far future to trigger when the stream ends
-            //context.timerService().registerEventTimeTimer(Long.MAX_VALUE);
+            context.timerService().registerEventTimeTimer(Long.MAX_VALUE);
         }
         acc.add(sourceRecord);
         stats.update(acc);
