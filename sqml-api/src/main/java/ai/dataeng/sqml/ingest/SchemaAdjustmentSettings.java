@@ -1,7 +1,11 @@
 package ai.dataeng.sqml.ingest;
 
 
-public interface SchemaAdjustmentSettings {
+import java.io.Serializable;
+
+public interface SchemaAdjustmentSettings extends Serializable {
+
+    public static final SchemaAdjustmentSettings DEFAULT = new SchemaAdjustmentSettings() {};
 
     default boolean singleton2Arrays() {
         return true;

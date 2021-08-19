@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 @Value
@@ -42,7 +43,7 @@ public class SchemaAdjustment<D> {
 
 
     @Value
-    public static class ErrorMessage {
+    public static class ErrorMessage implements Serializable {
 
         private final @NonNull NamePath fieldName;
         private final Object fieldValue;

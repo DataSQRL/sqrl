@@ -6,13 +6,20 @@ import ai.dataeng.sqml.type.TypeMapping;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import lombok.*;
+import org.apache.flink.table.api.DataTypes;
+import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.types.AbstractDataType;
+import org.apache.flink.table.types.DataType;
+import org.apache.flink.types.Row;
+import org.apache.flink.types.RowKind;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Value
-public class SourceTableSchema {
+public class SourceTableSchema implements Serializable {
 
     private final Table table;
 
@@ -33,11 +40,13 @@ public class SourceTableSchema {
         Iterator<Map.Entry<String,Object>> dataIter = tableData.entrySet().iterator();
         int nonNullElements = 0;
         boolean transformed = false;
+        boolean need2NormalizeNames = false;
         while (dataIter.hasNext()) {
             Map.Entry<String,Object> entry = dataIter.next();
             String name = entry.getKey();
-            Object data = entry.getKey();
-            Element element = tableSchema.schema.get(normalizeName(name));
+            Object data = entry.getValue();
+            String normalizedName = normalizeName(name);
+            Element element = tableSchema.schema.get(normalizedName);
             if (element==null) {
                 if (settings.dropFields()) {
                     dataIter.remove();
@@ -45,6 +54,7 @@ public class SourceTableSchema {
                     return SchemaAdjustment.error(path.sub(name),data,"Field is not defined in schema");
                 }
             } else {
+                if (!normalizedName.equals(name)) need2NormalizeNames = true;
                 List<Object> list = null;
                 if (data instanceof List || data.getClass().isArray()) {
                     if (data.getClass().isArray()) {
@@ -116,17 +126,25 @@ public class SourceTableSchema {
                 }
             }
         }
+        if (need2NormalizeNames) {
+            List<String> nonNormalNames = tableData.keySet().stream().filter(name -> !name.equals(normalizeName(name))).collect(Collectors.toList());
+            for (String name : nonNormalNames) {
+                tableData.put(normalizeName(name),tableData.get(name));
+                tableData.remove(name);
+            }
+        }
         if (nonNullElements < tableSchema.numNonNull()) {
-            //Some non-null elements aren't in the record
-            Set<String> elements = tableSchema.schema.entrySet().stream().filter(e -> e.getValue().isNotNull()).map(e -> e.getKey()).collect(Collectors.toSet());
-            tableData.keySet().forEach(name -> elements.remove(normalizeName(name)));
-            for (String elementName : elements) {
-                Element element = tableSchema.schema.get(elementName);
-                if (element.isArray() && settings.null2EmptyArray()) {
-                    tableData.put(elementName,Collections.EMPTY_LIST);
-                    transformed = true;
-                } else {
-                    return SchemaAdjustment.error(path.sub(elementName),null,"Field must be non-null but missing in data");
+            //Some non-null elements aren't in the record - we can now look them up directly since names have been normalized
+            for (Map.Entry<String,Element> schemaElement : tableSchema.schema.entrySet()) {
+                Element element = schemaElement.getValue();
+                String elementName = schemaElement.getKey();
+                if (element.isNotNull() && !tableData.containsKey(schemaElement.getKey())) {
+                    if (element.isArray() && settings.null2EmptyArray()) {
+                        tableData.put(elementName,Collections.EMPTY_LIST);
+                        transformed = true;
+                    } else {
+                        return SchemaAdjustment.error(path.sub(elementName),null,"Field must be non-null but missing in data");
+                    }
                 }
             }
         }
@@ -147,12 +165,82 @@ public class SourceTableSchema {
         } else {
             Field field = (Field) element;
             //Validate and/or cast data type
-            return TypeMapping.adjustType(field.type,data, path, settings);
+            return TypeMapping.adjustType(field.type, data, path, settings);
         }
     }
 
+    public Schema getFlinkTableSchema() {
+        Schema.Builder builder = Schema.newBuilder();
+        for (Map.Entry<String,Element> entry : table.schema.entrySet()) {
+            builder.column(entry.getKey(),getFlinkDataType(entry.getValue()));
+        }
+        //TODO: add watermark
+        return builder.build();
+    }
+
+    private static AbstractDataType getFlinkDataType(Element element) {
+        AbstractDataType elementType;
+        if (element.isNestedTable()) {
+            Table table = (Table)element;
+            DataTypes.UnresolvedField[] fields = new DataTypes.UnresolvedField[table.getArity()];
+            int i=0;
+            for (Map.Entry<String,Element> entry : table.schema.entrySet()) {
+                fields[i++]=DataTypes.FIELD(entry.getKey(),getFlinkDataType(entry.getValue()));
+            }
+            elementType = DataTypes.ROW(fields);
+        } else {
+            elementType = TypeMapping.getFlinkDataType(((Field)element).type);
+        }
+        if (element.isArray) {
+            return DataTypes.ARRAY(elementType);
+        } else {
+            return elementType;
+        }
+    }
+
+    public Row convert2Row(SourceRecord record) {
+        //TODO: need to add timestamp columns (ingest and source)
+        return convert2Row(table, record.getData());
+    }
+
+    private static Row convert2Row(Table table, Map<String,Object> record) {
+        Object[] columns = new Object[table.getArity()];
+        int position = 0;
+        for (Map.Entry<String, Element> column : table.schema.entrySet()) {
+            String colname = column.getKey();
+            Element colschema = column.getValue();
+            Object data = record.get(colname);
+
+            if (data == null) {
+                columns[position] = null;
+            } else {
+                if (colschema.isArray) {
+                    List<Object> rowValues = new ArrayList<>();
+                    List<Object> dataValues = (List)data;
+                    for (Object o: dataValues) {
+                        if (colschema.isNestedTable()) {
+                            rowValues.add(convert2Row((Table)colschema,(Map)data));
+                        } else {
+                            rowValues.add(data);
+                        }
+                    }
+                    columns[position] =rowValues;
+                } else {
+                    if (colschema.isNestedTable()) {
+                        columns[position] = convert2Row((Table)colschema,(Map)data);
+                    } else {
+                        columns[position] = data;
+                    }
+                }
+            }
+            position++;
+        }
+        return Row.ofKind(RowKind.INSERT,100,"John Mekker", "john.mekker@gmail.com");
+    }
+
+
     @Getter @ToString @EqualsAndHashCode
-    public static abstract class Element {
+    public static abstract class Element implements Serializable {
 
         private final boolean isArray;
         private final boolean notNull;
@@ -194,6 +282,10 @@ public class SourceTableSchema {
         private Table(boolean isArray, boolean notNull) {
             super(isArray, notNull);
             schema = new HashMap<>();
+        }
+
+        public int getArity() {
+            return schema.size();
         }
 
         private int numNonNull = -1;

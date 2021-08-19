@@ -4,6 +4,11 @@ import ai.dataeng.sqml.ingest.NamePath;
 import ai.dataeng.sqml.ingest.SchemaAdjustment;
 import ai.dataeng.sqml.ingest.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
+import org.apache.flink.table.api.DataTypes;
+import org.apache.flink.table.types.AbstractDataType;
+import org.apache.flink.table.types.AtomicDataType;
+import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.UnresolvedDataType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -70,6 +75,26 @@ public class TypeMapping {
             else return incompatibleType(datatype,value,path);
         }
         return SchemaAdjustment.none();
+    }
+
+    public static AbstractDataType getFlinkDataType(SqmlType.ScalarSqmlType datatype) {
+        if (datatype instanceof SqmlType.StringSqmlType) {
+            return DataTypes.STRING();
+        } else if (datatype instanceof SqmlType.IntegerSqmlType) {
+            return DataTypes.BIGINT();
+        } else if (datatype instanceof SqmlType.FloatSqmlType) {
+            return DataTypes.DECIMAL(6,9);
+        } else if (datatype instanceof SqmlType.NumberSqmlType) {
+            return DataTypes.DECIMAL(6, 9);
+        } else if (datatype instanceof SqmlType.BooleanSqmlType) {
+            return DataTypes.BOOLEAN();
+        } else if (datatype instanceof SqmlType.UuidSqmlType) {
+            return DataTypes.of(UUID.class);
+        } else if (datatype instanceof SqmlType.DateTimeSqmlType) { //TODO: need to make more robust!
+            return DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE();
+        } else {
+            throw new IllegalArgumentException("Unrecognized data type: " + datatype);
+        }
     }
 
     private static SchemaAdjustment<Object> incompatibleType(SqmlType.ScalarSqmlType datatype, Object value, NamePath path) {

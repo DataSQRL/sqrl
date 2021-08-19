@@ -6,12 +6,14 @@ import ai.dataeng.sqml.analyzer.Field;
 import ai.dataeng.sqml.tree.QualifiedName;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public abstract class SqmlType {
+public abstract class SqmlType implements Serializable {
   protected final String name;
 
   private SqmlType(String name) {

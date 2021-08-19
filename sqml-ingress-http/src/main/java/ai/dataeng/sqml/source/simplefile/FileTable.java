@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Iterator;
 import java.util.List;
@@ -67,9 +68,9 @@ public class FileTable implements SourceTable {
 
     @Override
     public DataStream<SourceRecord> getDataStream(StreamExecutionEnvironment env) {
-        final OffsetDateTime fileTime;
+        final Instant fileTime;
         try {
-            fileTime = Time.convert(Files.getLastModifiedTime(file));
+            fileTime = Files.getLastModifiedTime(file).toInstant();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
