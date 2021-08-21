@@ -5,7 +5,6 @@ import ai.dataeng.sqml.analyzer.Analysis;
 import ai.dataeng.sqml.analyzer.Analyzer;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.rewrite.AddColumnsFromStatistics;
-import ai.dataeng.sqml.rewrite.ResolveImportStatements;
 import ai.dataeng.sqml.rewrite.ScriptRewriter;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.vertex.SqlVertexFactory;
@@ -19,8 +18,7 @@ public class ShreddingSqlOptimizer extends Optimizer {
 
     ScriptRewriter scriptRewriter = new ScriptRewriter(
         List.of(
-            new AddColumnsFromStatistics(metadata),
-            new ResolveImportStatements(metadata)));
+            new AddColumnsFromStatistics(metadata)));
     Script rewritten = scriptRewriter.rewrite(script);
 
     Analysis analysis = Analyzer.analyze(rewritten, metadata);

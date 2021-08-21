@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.dag;
 
+import ai.dataeng.sqml.execution.Bundle;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.optimizer.Optimizer;
@@ -7,25 +8,16 @@ import ai.dataeng.sqml.optimizer.OptimizerResult;
 import ai.dataeng.sqml.query.GraphqlQueryProvider;
 import ai.dataeng.sqml.registry.ScriptRegistry;
 import ai.dataeng.sqml.schema.SchemaProvider;
-import ai.dataeng.sqml.schema.SchemaProvider.Builder;
-import ai.dataeng.sqml.source.Source;
 import ai.dataeng.sqml.statistics.StatisticsProvider;
-import ai.dataeng.sqml.vertex.Vertex;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class Dag {
 
   private final OptimizerResult result;
-  private final ArrayList<Vertex> vertices;
   private final GraphqlQueryProvider queries;
 
-  public Dag(OptimizerResult result, ArrayList<Vertex> vertices,
+  public Dag(OptimizerResult result,
       GraphqlQueryProvider queries) {
     this.result = result;
-    this.vertices = vertices;
     this.queries = queries;
   }
 
@@ -33,15 +25,9 @@ public class Dag {
     return queries;
   }
 
-  public List<Vertex> getVertices() {
-    return vertices;
-  }
-
   public OptimizerResult getOptimizationResult() {
     return result;
   }
-
-  ///
 
   public static Builder newDag() {
     return new Builder();
@@ -54,11 +40,11 @@ public class Dag {
     private GraphqlQueryProvider queries;
     private StatisticsProvider statisticsProvider;
     private Optimizer optimizer;
-    private Map<String, Source> sources = new HashMap<>();
     private SchemaProvider schemaProvider;
+    private Bundle bundle;
 
-    public Builder source(String name, Source source) {
-      sources.put(name, source);
+    public Builder bundle(Bundle bundle) {
+      this.bundle = bundle;
       return this;
     }
 
@@ -121,8 +107,8 @@ public class Dag {
 
     public Dag build(String name) {
       OptimizerResult result = optimizer.optimize(name, new Metadata(functionProvider, scriptRegistry,
-          queries, statisticsProvider, sources, schemaProvider));
-      return new Dag(result, new ArrayList<>(sources.values()), queries);
+          queries, statisticsProvider, bundle, schemaProvider));
+      return new Dag(result, queries);
     }
   }
 }

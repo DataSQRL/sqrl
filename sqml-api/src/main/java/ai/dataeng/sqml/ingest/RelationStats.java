@@ -1,17 +1,15 @@
 package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.type.SqmlType;
+import ai.dataeng.sqml.type.Type;
 import com.google.common.base.Preconditions;
 import lombok.ToString;
 import lombok.Value;
-import org.checkerframework.checker.units.qual.A;
 
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Value

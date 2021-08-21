@@ -1,13 +1,13 @@
 package ai.dataeng.sqml.function;
 
-import ai.dataeng.sqml.type.SqmlType;
+import ai.dataeng.sqml.type.Type;
 
 public class SqmlFunction {
   private final String name;
-  private final SqmlType type;
+  private final Type type;
   private final boolean isAggregation;
 
-  public SqmlFunction(String name, SqmlType type, boolean isAggregation) {
+  public SqmlFunction(String name, Type type, boolean isAggregation) {
     this.name = name;
     this.type = type;
     this.isAggregation = isAggregation;
@@ -17,7 +17,7 @@ public class SqmlFunction {
     return new TypeSignature(name, type);
   }
 
-  public SqmlType getType() {
+  public Type getType() {
     return type;
   }
 

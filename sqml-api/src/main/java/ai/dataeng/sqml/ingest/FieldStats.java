@@ -1,12 +1,15 @@
 package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.ingest.sketches.LogarithmicHistogram;
-import ai.dataeng.sqml.type.SqmlType;
+import ai.dataeng.sqml.type.ArrayType;
+import ai.dataeng.sqml.type.ScalarType;
+import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.TypeMapping;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import lombok.ToString;
 import lombok.Value;
+import org.apache.calcite.interpreter.Scalar;
 import org.apache.flink.api.common.accumulators.LongCounter;
 
 import java.io.Serializable;
@@ -18,19 +21,19 @@ public class FieldStats implements Serializable {
 
     long count;
     long numNulls;
-    Map<SqmlType.ScalarSqmlType, Long> presentedScalarTypes;
-    Map<SqmlType.ScalarSqmlType, Long> inferredScalarTypes;
+    Map<ScalarType, Long> presentedScalarTypes;
+    Map<ScalarType, Long> inferredScalarTypes;
     LogarithmicHistogram arrayCardinality;
     RelationStats nestedRelationStats;
 
-    public SqmlType resolveType(NamePath name) {
+    public Type resolveType(NamePath name) {
         boolean isArray = arrayCardinality.getCount() > 0;
 
-        SqmlType type = null;
+        Type type = null;
         if (nestedRelationStats.getCount()>0) {
             Preconditions.checkArgument(presentedScalarTypes.isEmpty() && inferredScalarTypes.isEmpty(),
                     "Cannot mix scalar values and nested relations");
-            type = SqmlType.RelationSqmlType.INSTANCE;
+            type = RelationType.INSTANCE;
         } else {
             //Must be a scalar - for now we expect scalars to resolve to one type that can encompass all values.
             //TODO: Generalize to allow for multiple incompatible types (e.g. "STRING | INT")
@@ -38,7 +41,7 @@ public class FieldStats implements Serializable {
 
             //We only use the inferred types if they cover all of the seen (non-null) values:
             long total = 0;
-            for (Map.Entry<SqmlType.ScalarSqmlType, Long> infer : inferredScalarTypes.entrySet()) {
+            for (Map.Entry<ScalarType, Long> infer : inferredScalarTypes.entrySet()) {
                 if (type == null) type = infer.getKey();
                 else {
                     type = type.combine(infer.getKey());
@@ -50,8 +53,8 @@ public class FieldStats implements Serializable {
 
             //If we cannot unambiguously infer a type, take the presented type
             if (type == null || total < nonNull) {
-                for (Map.Entry<SqmlType.ScalarSqmlType, Long> infer : presentedScalarTypes.entrySet()) {
-                    SqmlType newtype = type==null?infer.getKey():type.combine(infer.getKey());
+                for (Map.Entry<ScalarType, Long> infer : presentedScalarTypes.entrySet()) {
+                    Type newtype = type==null?infer.getKey():type.combine(infer.getKey());
                     Preconditions.checkArgument(newtype!=null,"Incompatible types detected in input data: %s vs %s", type, infer.getKey());
                     type = newtype;
                 }
@@ -62,7 +65,7 @@ public class FieldStats implements Serializable {
             }
         }
 
-        if (isArray) return new SqmlType.ArraySqmlType(type);
+        if (isArray) return new ArrayType(type);
         else return type;
     }
 
@@ -79,15 +82,15 @@ public class FieldStats implements Serializable {
         } else {
             //Must be a scalar - for now we expect scalars to resolve to one type that can encompass all values.
             //TODO: Generalize to allow for multiple incompatible types (e.g. "STRING | INT")
-            SqmlType.ScalarSqmlType type = null;
+            ScalarType type = null;
             long nonNull = count - numNulls;
 
             //We only use the inferred types if they cover all of the seen (non-null) values:
             long total = 0;
-            for (Map.Entry<SqmlType.ScalarSqmlType, Long> infer : inferredScalarTypes.entrySet()) {
+            for (Map.Entry<ScalarType, Long> infer : inferredScalarTypes.entrySet()) {
                 if (type == null) type = infer.getKey();
                 else {
-                    type = (SqmlType.ScalarSqmlType) type.combine(infer.getKey());
+                    type = (ScalarType) type.combine(infer.getKey());
                     if (type == null) break; //for now, we don't allow dual types, so abandon type inference
                 }
                 total += infer.getValue();
@@ -96,8 +99,8 @@ public class FieldStats implements Serializable {
 
             //If we cannot unambiguously infer a type, take the presented type
             if (type == null || total < nonNull) {
-                for (Map.Entry<SqmlType.ScalarSqmlType, Long> infer : presentedScalarTypes.entrySet()) {
-                    SqmlType.ScalarSqmlType newtype = type==null?infer.getKey():(SqmlType.ScalarSqmlType)type.combine(infer.getKey());
+                for (Map.Entry<ScalarType, Long> infer : presentedScalarTypes.entrySet()) {
+                    ScalarType newtype = type==null?infer.getKey():(ScalarType)type.combine(infer.getKey());
                     Preconditions.checkArgument(newtype!=null,"Incompatible types detected in input data: %s vs %s", type, infer.getKey());
                     type = newtype;
                 }
@@ -118,8 +121,8 @@ public class FieldStats implements Serializable {
 
         long count;
         long numNulls;
-        Map<SqmlType.ScalarSqmlType, LongCounter> presentedScalarTypes;
-        Map<SqmlType.ScalarSqmlType, LongCounter> inferredScalarTypes;
+        Map<ScalarType, LongCounter> presentedScalarTypes;
+        Map<ScalarType, LongCounter> inferredScalarTypes;
 
         //Only needed if value is an array
         LogarithmicHistogram.Accumulator arrayCardinality;
@@ -146,35 +149,35 @@ public class FieldStats implements Serializable {
                         numElements = arr.length;
                     }
                     //Data type for all elements in list
-                    SqmlType type = null;
-                    SqmlType.ScalarSqmlType inferredType = null;
+                    Type type = null;
+                    ScalarType inferredType = null;
                     while (elements.hasNext()) {
                         Object next = elements.next();
                         if (next instanceof Map) {
                             addNested((Map)next);
                             if (type == null) {
-                                type = SqmlType.RelationSqmlType.INSTANCE;
-                            } else if (!(type instanceof SqmlType.RelationSqmlType)) {
+                                type = RelationType.INSTANCE;
+                            } else if (!(type instanceof RelationType)) {
                                 throw new IllegalArgumentException(String.format("Elements with incompatible types in same list: %s", o));
                             }
                         } else {
                             //not an array or map => must be scalar, let's find the common scalar type for all elements
-                            SqmlType.ScalarSqmlType singleType = TypeMapping.scalar2Sqml(o);
+                            ScalarType singleType = TypeMapping.scalar2Sqml(o);
                             if (type == null) {
                                 type = singleType;
                             } else if (!(type.getClass().isInstance(singleType))) {
                                 throw new IllegalArgumentException(String.format("Elements with incompatible types in same list: %s", o));
                             }
-                            SqmlType.ScalarSqmlType inferredSingleType = TypeMapping.inferType(singleType, next);
+                            ScalarType inferredSingleType = TypeMapping.inferType(singleType, next);
                             //Need to be careful with how we infer types for lists - only infer if all elements agree
                             if (inferredType == null) {
                                 inferredType = inferredSingleType;
                             } else if (!inferredSingleType.equals(inferredType)) {
-                                inferredType = (SqmlType.ScalarSqmlType) type;
+                                inferredType = (ScalarType) type;
                             }
                         }
                     }
-                    if (type instanceof SqmlType.ScalarSqmlType) incPresentedType((SqmlType.ScalarSqmlType) type);
+                    if (type instanceof ScalarType) incPresentedType((ScalarType) type);
                     if (inferredType!=null && !inferredType.equals(type)) incInferredType(inferredType);
                     addArrayCardinality(numElements);
                 } else {
@@ -183,9 +186,9 @@ public class FieldStats implements Serializable {
                         addNested((Map)o);
                     } else {
                         //not an array or map => must be scalar
-                        SqmlType.ScalarSqmlType type = TypeMapping.scalar2Sqml(o);
+                        ScalarType type = TypeMapping.scalar2Sqml(o);
                         incPresentedType(type);
-                        SqmlType.ScalarSqmlType inferredType = TypeMapping.inferType(type, o);
+                        ScalarType inferredType = TypeMapping.inferType(type, o);
                         if (!inferredType.equals(type)) {
                             incInferredType(inferredType);
                         }
@@ -198,17 +201,17 @@ public class FieldStats implements Serializable {
         We use deferred initialization of the data structures below to save space.
          */
 
-        private void incPresentedType(SqmlType.ScalarSqmlType type) {
+        private void incPresentedType(ScalarType type) {
             if (presentedScalarTypes==null) presentedScalarTypes=new HashMap<>(4);
             incType(type, presentedScalarTypes);
         }
 
-        private void incInferredType(SqmlType.ScalarSqmlType type) {
+        private void incInferredType(ScalarType type) {
             if (inferredScalarTypes==null) inferredScalarTypes=new HashMap<>(4);
             incType(type, inferredScalarTypes);
         }
 
-        private static void incType(SqmlType.ScalarSqmlType type, Map<SqmlType.ScalarSqmlType, LongCounter> countMap) {
+        private static void incType(ScalarType type, Map<ScalarType, LongCounter> countMap) {
             LongCounter count = countMap.get(type);
             if (count == null) {
                 count = new LongCounter(0);
@@ -227,7 +230,7 @@ public class FieldStats implements Serializable {
             relationAccum.add(nested);
         }
 
-        private static Map<SqmlType.ScalarSqmlType, Long> convert(Map<SqmlType.ScalarSqmlType, LongCounter> typeCounter) {
+        private static Map<ScalarType, Long> convert(Map<ScalarType, LongCounter> typeCounter) {
             if (typeCounter==null) return Collections.EMPTY_MAP;
             return typeCounter.entrySet().stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getLocalValue()));
@@ -273,7 +276,7 @@ public class FieldStats implements Serializable {
             }
         }
 
-        private static void mergeCounterMaps(Map<SqmlType.ScalarSqmlType, LongCounter> to, Map<SqmlType.ScalarSqmlType, LongCounter> from) {
+        private static void mergeCounterMaps(Map<ScalarType, LongCounter> to, Map<ScalarType, LongCounter> from) {
             from.forEach((k,v) -> {
                LongCounter counter = to.get(k);
                if (counter==null) {
@@ -297,8 +300,8 @@ public class FieldStats implements Serializable {
             return newAcc;
         }
 
-        private static Map<SqmlType.ScalarSqmlType, LongCounter> copyCounter(Map<SqmlType.ScalarSqmlType, LongCounter> counter) {
-            Map<SqmlType.ScalarSqmlType, LongCounter> newMap = new HashMap<>(counter.size());
+        private static Map<ScalarType, LongCounter> copyCounter(Map<ScalarType, LongCounter> counter) {
+            Map<ScalarType, LongCounter> newMap = new HashMap<>(counter.size());
             counter.forEach((k,v) -> newMap.put(k,v.clone()));
             return newMap;
         }

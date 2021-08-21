@@ -128,4 +128,87 @@ public class QualifiedName {
     return original.toLowerCase(ENGLISH);
   }
 
+  /**
+   * Gets the parent scope or the root
+   */
+  public QualifiedName getParent() {
+    return this.getPrefix().orElse(this);
+  }
+
+  public QualifiedName withSuffix(String part) {
+    return QualifiedName.of(Iterables.concat(this.getParts(), List.of(part)));
+  }
+
+  public NamePart getFirst() {
+    String part = this.getParts().get(0);
+    if (part.equalsIgnoreCase("@")) {
+      return new SelfPart(part);
+    } else if (part.equalsIgnoreCase("parent")) {
+      return new ParentPart(part);
+    } else if (part.equalsIgnoreCase("sibling")) {
+      return new SibilingPart(part);
+    } else {
+      return new DataPart(part);
+    }
+  }
+
+  public QualifiedName getRest() {
+    return QualifiedName.of(this.getParts().subList(1, this.getParts().size()));
+  }
+
+  public static abstract class NamePart {
+    public String name;
+    public NamePart(String name) {
+      this.name = name;
+    }
+    public <R, C> R accept(QualifiedNameVisitor<R, C> visitor, C context) {
+      return visitor.visitNamePart(this, context);
+    }
+  }
+
+  public static class ParentPart extends NamePart {
+    public ParentPart(String name) {
+      super(name);
+    }
+
+    public <R, C> R accept(QualifiedNameVisitor<R, C> visitor, C context) {
+      return visitor.visitParentPart(this, context);
+    }
+  }
+  public static class SelfPart extends NamePart {
+    public SelfPart(String name) {
+      super(name);
+    }
+
+    public <R, C> R accept(QualifiedNameVisitor<R, C> visitor, C context) {
+      return visitor.visitSelfPart(this, context);
+    }
+  }
+  public static class SibilingPart extends NamePart {
+    public SibilingPart(String name) {
+      super(name);
+    }
+
+    public <R, C> R accept(QualifiedNameVisitor<R, C> visitor, C context) {
+      return visitor.visitSibilingPart(this, context);
+    }
+  }
+  public static class DataPart extends NamePart {
+    public DataPart(String name) {
+      super(name);
+    }
+
+    public <R, C> R accept(QualifiedNameVisitor<R, C> visitor, C context) {
+      return visitor.visitDataPart(this, context);
+    }
+  }
+  public static abstract class QualifiedNameVisitor<R, C> {
+    public R visitNamePart(NamePart dataPart, C context) {
+      return null;
+    }
+    public abstract R visitDataPart(DataPart dataPart, C context);
+    public abstract R visitParentPart(ParentPart dataPart, C context);
+    public abstract R visitSelfPart(SelfPart dataPart, C context);
+    public abstract R visitSibilingPart(SibilingPart dataPart, C context);
+  }
 }

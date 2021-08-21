@@ -2,7 +2,6 @@ package ai.dataeng.sqml.servlet;
 
 
 import ai.dataeng.sqml.dag.Dag;
-import ai.dataeng.sqml.runtime.SqmlRuntime;
 import graphql.schema.GraphQLSchema;
 
 public class GraphqlServlet {
@@ -14,10 +13,6 @@ public class GraphqlServlet {
   public static class Builder {
 
     public Builder port(int port) {
-      return this;
-    }
-
-    public Builder runtime(SqmlRuntime runtime) {
       return this;
     }
 

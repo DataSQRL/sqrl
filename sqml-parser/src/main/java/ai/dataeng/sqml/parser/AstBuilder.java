@@ -44,6 +44,8 @@ import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Import;
 import ai.dataeng.sqml.tree.Import.ImportType;
+import ai.dataeng.sqml.tree.ImportFunction;
+import ai.dataeng.sqml.tree.ImportState;
 import ai.dataeng.sqml.tree.InListExpression;
 import ai.dataeng.sqml.tree.InPredicate;
 import ai.dataeng.sqml.tree.InlineJoin;
@@ -915,10 +917,17 @@ class AstBuilder
 
   @Override
   public Node visitImportStatement(ImportStatementContext ctx) {
-    Optional<ImportType> type = (ctx.importType == null) ?
-        Optional.empty() : Optional.of(ImportType.valueOf(ctx.importType.getText().toUpperCase(Locale.ROOT)));
+    return visit(ctx.importDefinition());
+  }
 
-    return new Import(getLocation(ctx), type, getQualifiedName(ctx.qualifiedName()));
+  @Override
+  public Node visitImportFunction(ImportFunctionContext ctx) {
+    return new ImportFunction(getLocation(ctx), getQualifiedName(ctx.qualifiedName()));
+  }
+
+  @Override
+  public Node visitImportState(ImportStateContext ctx) {
+    return new ImportState(getLocation(ctx), getQualifiedName(ctx.qualifiedName()));
   }
 
   @Override

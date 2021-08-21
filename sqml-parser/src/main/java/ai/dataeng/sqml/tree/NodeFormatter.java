@@ -15,7 +15,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   protected String visitImport(Import node, Void context) {
-    return "IMPORT " + node.getType().map(i->i + " ").orElse("")  + node.getQualifiedName() + ";";
+    return "IMPORT " + node.getType() + node.getQualifiedName() + ";";
   }
 
   @Override

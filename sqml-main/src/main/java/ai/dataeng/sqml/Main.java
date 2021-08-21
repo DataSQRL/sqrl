@@ -1,30 +1,20 @@
 package ai.dataeng.sqml;
 
 import ai.dataeng.sqml.dag.Dag;
-import ai.dataeng.sqml.execution.ExecutionResult;
-import ai.dataeng.sqml.execution.LocalExecutionStrategy;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.function.PostgresFunctions;
-import ai.dataeng.sqml.migrate.PostgresSqmlMigration;
 import ai.dataeng.sqml.optimizer.ShreddingSqlOptimizer;
 import ai.dataeng.sqml.parser.QueryParser;
 import ai.dataeng.sqml.parser.SqmlParser;
 import ai.dataeng.sqml.query.GraphqlQueryProvider;
 import ai.dataeng.sqml.registry.LocalScriptRegistry;
-import ai.dataeng.sqml.runtime.SqmlRuntime;
 import ai.dataeng.sqml.schema.Schema;
 import ai.dataeng.sqml.schema.SchemaField;
 import ai.dataeng.sqml.schema.SchemaProvider;
 import ai.dataeng.sqml.schema.Validators;
-import ai.dataeng.sqml.servlet.GraphqlServlet;
 import ai.dataeng.sqml.source.HttpIngress;
 import ai.dataeng.sqml.source.Source;
 import ai.dataeng.sqml.statistics.StaticStatisticsProvider;
-import ai.dataeng.sqml.statistics.StatisticsProvider;
-import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.type.SqmlType;
-import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
-import ai.dataeng.sqml.vertex.Edge;
 import ai.dataeng.sqml.vertex.PostgresViewVertexFactory;
 import graphql.schema.GraphQLSchema;
 import java.io.File;
@@ -33,34 +23,31 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class Main {
 
   public static void main(String args[]) throws Exception {
     String[] toTest = {
-        "./sqml-examples/art/poetry-cloud/poetry.sqml",
+//        "./sqml-examples/art/poetry-cloud/poetry.sqml",
 //        "./sqml-examples/crypto/bitcoin-tracer/tracer.sqml",
-        "./sqml-examples/cybersecurity/intrusion/intrusion.sqml",
-        "./sqml-examples/ecommerce/public-api/api.sqml",
-        "./sqml-examples/environment/monitoring/monitoring.sqml",
-        "./sqml-examples/financial/fraud-detection/fraud.sqml",
+//        "./sqml-examples/cybersecurity/intrusion/intrusion.sqml",
+//        "./sqml-examples/ecommerce/public-api/api.sqml",
+//        "./sqml-examples/environment/monitoring/monitoring.sqml",
+//        "./sqml-examples/financial/fraud-detection/fraud.sqml",
 //        "./sqml-examples/gaming/weworkout/weworkout.sqml",
-        "./sqml-examples/iot/homegenie/homegenie.sqml",
-        "./sqml-examples/location/visitor-guide/guide.sqml",
-        "./sqml-examples/logistics/tracking/tracking.sqml",
-        "./sqml-examples/media/cookout/cookout.sqml",
-        "./sqml-examples/medical/adr/adr-detection.sqml",
+//        "./sqml-examples/iot/homegenie/homegenie.sqml",
+//        "./sqml-examples/location/visitor-guide/guide.sqml",
+//        "./sqml-examples/logistics/tracking/tracking.sqml",
+//        "./sqml-examples/media/cookout/cookout.sqml",
+//        "./sqml-examples/medical/adr/adr-detection.sqml",
 //        "./sqml-examples/military/platoon/platoon.sqml",
-        "./sqml-examples/news/newsrank/newsrank.sqml",
-//        "./sqml-examples/retail/c360/c360.sqml",
-        "./sqml-examples/social-network/social-commons/social-commons.sqml",
-        "./sqml-examples/system-monitoring/monitoring/monitoring.sqml",
+//        "./sqml-examples/news/newsrank/newsrank.sqml",
+        "./sqml-examples/retail/c360/c360.sqml",
+//        "./sqml-examples/social-network/social-commons/social-commons.sqml",
+//        "./sqml-examples/system-monitoring/monitoring/monitoring.sqml",
 //        "./sqml-examples/telecommunications/content-delivery/content.sqml", //todo union all ?
-        "./sqml-examples/telecommunications/user-portal/portal.sqml",
-        "./sqml-examples/transportation/busbutler/busbutler.sqml",
+//        "./sqml-examples/telecommunications/user-portal/portal.sqml",
+//        "./sqml-examples/transportation/busbutler/busbutler.sqml",
     };
     Main main = new Main();
     for (String test : toTest) {
@@ -85,7 +72,7 @@ public class Main {
     QueryParser gqlParser = QueryParser.newGraphqlParser();
 
     Dag dag = Dag.newDag()
-      .source("meetup", meetupIngres)
+      .bundle(null)
       .functionProvider(
            FunctionProvider.newFunctionProvider()
              .function(PostgresFunctions.SqmlSystemFunctions))
@@ -140,10 +127,10 @@ public class Main {
 
 //    ExecutionResult result = runtime.execute("get");
 
-    GraphQLSchema graphqlSchema = GraphqlSchemaBuilder
-        .newGraphqlSchema()
-        .dag(dag)
-        .build();
+//    GraphQLSchema graphqlSchema = GraphqlSchemaBuilder
+//        .newGraphqlSchema()
+//        .dag(dag)
+//        .build();
 //
 //    GraphqlServlet gqlServlet = GraphqlServlet.newGraphqlServlet()
 //      .port(8080)

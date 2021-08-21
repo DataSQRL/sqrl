@@ -29,8 +29,12 @@ singleStatement
 statement
     : qualifiedName ':=' assignment                                    #assign
     | CREATE SUBSCRIPTION qualifiedName ON subscriptionType AS query   #createSubscription
-    | IMPORT importType=(FUNCTION | SOURCE | PUBLIC)? qualifiedName (WITH primaryExpression)? importAlias?     #importStatement
-    | query                                                            #statementDefault
+    | IMPORT importDefinition                                          #importStatement
+    ;
+
+importDefinition
+    : FUNCTION qualifiedName                                           #importFunction
+    | STATE qualifiedName                                              #importState
     ;
 
 importAlias
@@ -458,6 +462,7 @@ SETS: 'SETS';
 SHOW: 'SHOW';
 SOME: 'SOME';
 SQL: 'SQL';
+STATE: 'STATE';
 SUBSCRIPTION: 'SUBSCRIPTION';
 SUBSTRING: 'SUBSTRING';
 SYSTEM: 'SYSTEM';

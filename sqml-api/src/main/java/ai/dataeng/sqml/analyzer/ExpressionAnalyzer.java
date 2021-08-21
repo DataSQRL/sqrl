@@ -27,22 +27,26 @@ import ai.dataeng.sqml.tree.IsNotNullPredicate;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.NotExpression;
 import ai.dataeng.sqml.tree.NullLiteral;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.SimpleCaseExpression;
+import ai.dataeng.sqml.tree.StackableAstVisitor.StackableAstVisitorContext;
 import ai.dataeng.sqml.tree.StringLiteral;
 import ai.dataeng.sqml.tree.SubqueryExpression;
 import ai.dataeng.sqml.tree.TimestampLiteral;
-import ai.dataeng.sqml.type.SqmlType;
-import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
-import ai.dataeng.sqml.type.SqmlType.DateTimeSqmlType;
-import ai.dataeng.sqml.type.SqmlType.NullSqmlType;
-import ai.dataeng.sqml.type.SqmlType.NumberSqmlType;
-import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
-import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
-import ai.dataeng.sqml.type.SqmlType.UnknownSqmlType;
+import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.type.BooleanType;
+import ai.dataeng.sqml.type.DateTimeType;
+import ai.dataeng.sqml.type.NullType;
+import ai.dataeng.sqml.type.NumberType;
+import ai.dataeng.sqml.type.RelationType;
+import ai.dataeng.sqml.type.StringType;
+import ai.dataeng.sqml.type.UnknownType;
+import com.google.common.collect.ImmutableList;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -61,7 +65,7 @@ public class ExpressionAnalyzer {
     return analysis;
   }
 
-  private static class Context {
+  public static class Context {
     private final Scope scope;
 
     public Context(Scope scope) {
@@ -73,7 +77,7 @@ public class ExpressionAnalyzer {
     }
   }
 
-  class Visitor extends AstVisitor<SqmlType, Context> {
+  class Visitor extends AstVisitor<Type, Context> {
     private final ExpressionAnalysis analysis;
 
     public Visitor(ExpressionAnalysis analysis) {
@@ -81,66 +85,73 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    protected SqmlType visitNode(Node node, Context context) {
+    protected Type visitNode(Node node, Context context) {
       throw new RuntimeException(String.format("Could not visit node: %s %s",
           node.getClass().getName(), node));
     }
 
     @Override
-    protected SqmlType visitIdentifier(Identifier node, Context context) {
-      Optional<Field> field = context.getScope().resolveField(QualifiedName.of(node));
-      if (field.isEmpty()) {
-        log.warning(String.format("Could not resolve field %s", node));
-        return addType(node, new UnknownSqmlType());
+    protected Type visitIdentifier(Identifier node, Context context) {
+      Optional<Type> resolvedType = context.getScope().resolveType(QualifiedName.of(node));
+      if (resolvedType.isEmpty()) {
+        throw new RuntimeException(String.format("Could not resolve identifier %s", node));
       }
-      return addType(node, field.get().getType());
+      return addType(node, resolvedType.get());
     }
 
     @Override
-    protected SqmlType visitExpression(Expression node, Context context) {
+    protected Type visitExpression(Expression node, Context context) {
       throw new RuntimeException(String.format("Expression needs type inference: %s. %s", 
           node.getClass().getName(), node));
     }
 
     @Override
-    protected SqmlType visitIsNotNullPredicate(IsNotNullPredicate node, Context context) {
-      return addType(node, new BooleanSqmlType());
+    protected Type visitIsNotNullPredicate(IsNotNullPredicate node, Context context) {
+      node.getValue().accept(this, context);
+      return addType(node, new BooleanType());
     }
 
     @Override
-    protected SqmlType visitBetweenPredicate(BetweenPredicate node, Context context) {
-      //todo process between
-      return addType(node, new BooleanSqmlType());
+    protected Type visitBetweenPredicate(BetweenPredicate node, Context context) {
+      node.getValue().accept(this, context);
+      return addType(node, new BooleanType());
     }
 
     @Override
-    protected SqmlType visitLogicalBinaryExpression(LogicalBinaryExpression node, Context context) {
-      return addType(node, new BooleanSqmlType());
+    protected Type visitLogicalBinaryExpression(LogicalBinaryExpression node, Context context) {
+      node.getLeft().accept(this, context);
+      node.getRight().accept(this, context);
+      return addType(node, new BooleanType());
     }
 
     @Override
-    protected SqmlType visitSubqueryExpression(SubqueryExpression node, Context context) {
+    protected Type visitSubqueryExpression(SubqueryExpression node, Context context) {
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, new Analysis(null));
       Scope scope = statementAnalyzer.analyze(node.getQuery(), context.getScope());
 
-      return scope.getRelationType();
+      return scope.getRelation();
     }
 
     @Override
-    protected SqmlType visitComparisonExpression(ComparisonExpression node, Context context) {
-      return addType(node, new BooleanSqmlType());
+    protected Type visitComparisonExpression(ComparisonExpression node, Context context) {
+      Type left = node.getLeft().accept(this, context);
+      Type right = node.getRight().accept(this, context);
+
+      //todo determine if compariable
+
+      return addType(node, new BooleanType());
     }
 
     @Override
-    public SqmlType visitInlineJoin(InlineJoin node, Context context) {
+    public Type visitInlineJoin(InlineJoin node, Context context) {
       //Todo: Walk the join
       InlineJoinBody join = node.getJoin();
-      RelationSqmlType rel = context.getScope().createRelation(Optional.of(join.getTable()));
-//          .orElseThrow(()-> new RuntimeException(String.format("Could not find relation %s %s", join.getTable(), node)));
+      RelationType rel = context.getScope().resolveRelation(join.getTable())
+          .orElseThrow(()-> new RuntimeException(String.format("Could not find relation %s %s", join.getTable(), node)));
 
       if (node.getInverse().isPresent()) {
-        RelationSqmlType relationSqmlType = context.getScope().getRelationType();
-        rel.addField(Field.newUnqualified(node.getInverse().get().toString(), relationSqmlType));
+        RelationType relationType = context.getScope().getRelation();
+        rel.addField(Field.newUnqualified(node.getInverse().get().toString(), relationType));
       }
 
       addRelation(node.getJoin(), rel);
@@ -148,12 +159,12 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    protected SqmlType visitArithmeticBinary(ArithmeticBinaryExpression node, Context context) {
+    protected Type visitArithmeticBinary(ArithmeticBinaryExpression node, Context context) {
       return getOperator(context, node, OperatorType.valueOf(node.getOperator().name()), node.getLeft(), node.getRight());
     }
 
     @Override
-    protected SqmlType visitFunctionCall(FunctionCall node, Context context) {
+    protected Type visitFunctionCall(FunctionCall node, Context context) {
       //Todo: Function calls can accept a relation
       Optional<SqmlFunction> function = metadata.getFunctionProvider().resolve(node.getName());
       if (function.isEmpty()) {
@@ -168,75 +179,74 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    protected SqmlType visitSimpleCaseExpression(SimpleCaseExpression node, Context context) {
+    protected Type visitSimpleCaseExpression(SimpleCaseExpression node, Context context) {
       //todo case when
-      return addType(node, new StringSqmlType());
+      return addType(node, new StringType());
     }
 
     @Override
-    protected SqmlType visitNotExpression(NotExpression node, Context context) {
-      return addType(node, new BooleanSqmlType());
+    protected Type visitNotExpression(NotExpression node, Context context) {
+      return addType(node, new BooleanType());
     }
 
     @Override
-    protected SqmlType visitDoubleLiteral(DoubleLiteral node, Context context) {
-      return addType(node, new NumberSqmlType());
+    protected Type visitDoubleLiteral(DoubleLiteral node, Context context) {
+      return addType(node, new NumberType());
     }
 
     @Override
-    protected SqmlType visitDecimalLiteral(DecimalLiteral node, Context context) {
-      return addType(node, new NumberSqmlType());
+    protected Type visitDecimalLiteral(DecimalLiteral node, Context context) {
+      return addType(node, new NumberType());
     }
 
     @Override
-    protected SqmlType visitGenericLiteral(GenericLiteral node, Context context) {
-      return addType(node, new UnknownSqmlType());
+    protected Type visitGenericLiteral(GenericLiteral node, Context context) {
+      return addType(node, new UnknownType());
     }
 
     @Override
-    protected SqmlType visitTimestampLiteral(TimestampLiteral node, Context context) {
-      return addType(node, new DateTimeSqmlType());
+    protected Type visitTimestampLiteral(TimestampLiteral node, Context context) {
+      return addType(node, new DateTimeType());
     }
 
     @Override
-    protected SqmlType visitIntervalLiteral(IntervalLiteral node, Context context) {
-      return addType(node, new DateTimeSqmlType());
+    protected Type visitIntervalLiteral(IntervalLiteral node, Context context) {
+      return addType(node, new DateTimeType());
     }
 
     @Override
-    protected SqmlType visitStringLiteral(StringLiteral node, Context context) {
-      return addType(node, new StringSqmlType());
+    protected Type visitStringLiteral(StringLiteral node, Context context) {
+      return addType(node, new StringType());
     }
 
     @Override
-    protected SqmlType visitBooleanLiteral(BooleanLiteral node, Context context) {
-      return addType(node, new BooleanSqmlType());
+    protected Type visitBooleanLiteral(BooleanLiteral node, Context context) {
+      return addType(node, new BooleanType());
     }
 
     @Override
-    protected SqmlType visitEnumLiteral(EnumLiteral node, Context context) {
-      return addType(node, new UnknownSqmlType());
+    protected Type visitEnumLiteral(EnumLiteral node, Context context) {
+      return addType(node, new UnknownType());
     }
 
     @Override
-    protected SqmlType visitNullLiteral(NullLiteral node, Context context) {
-      return addType(node, new NullSqmlType());
+    protected Type visitNullLiteral(NullLiteral node, Context context) {
+      return addType(node, new NullType());
     }
 
     @Override
-    protected SqmlType visitLongLiteral(LongLiteral node, Context context) {
-      return addType(node, new NumberSqmlType());
+    protected Type visitLongLiteral(LongLiteral node, Context context) {
+      return addType(node, new NumberType());
     }
 
     @Override
-    protected SqmlType visitDereferenceExpression(DereferenceExpression node, Context context) {
-      SqmlType type = node.getBase().accept(this, context);
-      if (!(type instanceof RelationSqmlType)) {
+    protected Type visitDereferenceExpression(DereferenceExpression node, Context context) {
+      Type type = node.getBase().accept(this, context);
+      if (!(type instanceof RelationType)) {
         throw new RuntimeException(String.format("Dereference type not a relation: %s", node));
       }
-
-      Optional<Field> field = ((RelationSqmlType)type).resolveField(QualifiedName.of(node.getField()),
-          (RelationSqmlType)type);
+      RelationType relType = (RelationType) type;
+      Optional<Field> field = relType.getField(node.getField().getValue());
       if (field.isEmpty()) {
         throw new RuntimeException(String.format("Could not dereference %s in %s", node.getBase(), node.getField()));
       }
@@ -245,18 +255,17 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    public SqmlType visitIsEmpty(IsEmpty node, Context context) {
+    public Type visitIsEmpty(IsEmpty node, Context context) {
       //tbd
-      return addType(node, new StringSqmlType());
+      return addType(node, new StringType());
     }
 
-    private SqmlType getOperator(Context context, Expression node, OperatorType operatorType, Expression... arguments)
+    private Type getOperator(Context context, Expression node, OperatorType operatorType, Expression... arguments)
     {
-      //todo: Resolve operators
-//      ImmutableList.Builder<SqmlType> argumentTypes = ImmutableList.builder();
-//      for (Expression expression : arguments) {
-//        argumentTypes.add(expression.accept(this, context));
-//      }
+      ImmutableList.Builder<Type> argumentTypes = ImmutableList.builder();
+      for (Expression expression : arguments) {
+        argumentTypes.add(process(expression, context));
+      }
 //
 //      FunctionMetadata operatorMetadata;
 //      try {
@@ -279,16 +288,15 @@ public class ExpressionAnalyzer {
 //      }
 //
 //      Type type = functionAndTypeManager.getType(operatorMetadata.getReturnType());
-//      return setExpressionType(node, type);
-      return addType(node, new BooleanSqmlType());
+      return addType(node, new BooleanType());
     }
 
-    private SqmlType addType(Expression node, SqmlType type) {
+    private Type addType(Expression node, Type type) {
       analysis.addType(node, type);
       return type;
     }
 
-    private void addRelation(Relation relation, RelationSqmlType type) {
+    private void addRelation(Relation relation, RelationType type) {
       analysis.setRelation(relation, type);
     }
   }

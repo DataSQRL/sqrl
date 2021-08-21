@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.schema;
 
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
+import ai.dataeng.sqml.type.RelationType;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -21,7 +21,7 @@ public class SchemaProvider {
     return new Builder();
   }
 
-  public Optional<RelationSqmlType> get(QualifiedName name) {
+  public Optional<RelationType> get(QualifiedName name) {
     return null;
   }
 

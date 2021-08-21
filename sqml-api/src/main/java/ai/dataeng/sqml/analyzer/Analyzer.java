@@ -12,9 +12,11 @@ import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.tree.Statement;
-import ai.dataeng.sqml.type.SqmlType;
-import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
+import ai.dataeng.sqml.type.RelationType.NamedRelationType;
+import ai.dataeng.sqml.type.RelationType.RootRelationType;
+import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.type.RelationType;
+import org.apache.flink.util.Preconditions;
 
 public class Analyzer {
   protected final Metadata metadata;
@@ -58,7 +60,7 @@ public class Analyzer {
 
     @Override
     protected Scope visitScript(Script node, Scope context) {
-      Scope scope = new Scope();
+      Scope scope = new Scope(new RootRelationType(new RelationType()));
       node.getStatements()
           .forEach(n -> n.accept(this, scope));
       this.analysis.setModel(scope.getRoot());
@@ -67,60 +69,47 @@ public class Analyzer {
 
     @Override
     protected Scope visitImport(Import node, Scope context) {
-      return null;
+      ImportAnalyzer importResolver = new ImportAnalyzer(this.metadata);
+      Scope scope = importResolver.analyzeImport(node, context);
+      return scope;
     }
 
     @Override
     protected Scope visitAssign(Assign node, Scope scope) {
       Scope result = node.getRhs().accept(this, createScope(scope, node.getName()));
-
-//      if (result.getRelationType() == null) {
-//        throw new RuntimeException(String.format(
-//            "Temporary exception, unknown type: %s, %s", node, scope));
-//      }
-
       return result;
     }
 
     @Override
     public Scope visitQueryAssignment(QueryAssignment queryAssignment, Scope scope) {
-      if (scope.getName().toString().equalsIgnoreCase("post.userkarma")) {
-        System.out.println();
-      }
-      RelationSqmlType rel = scope.createRelation(scope.getName().getPrefix());
-      Scope newScope = createAndAssignScope(queryAssignment, scope, rel);
-      Scope result = analyzeStatement(queryAssignment.getQuery(), newScope);
-
-      //todo: hack for lack of cohesive naming pattern
-      result.getRelationType().setName(scope.getName());
-
-      rel.addField(
-          Field.newUnqualified(newScope.getName().getSuffix(), result.getRelationType()));
-      return createAndAssignScope(queryAssignment.getQuery(), result, rel);
-    }
-
-    private Scope analyzeStatement(Statement statement, Scope scope) {
+      //Query assignments statements operate on the root scope
+      //Scope newScope = createAndAssignScope(queryAssignment, scope, scope.getRoot());
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(this.metadata, this.analysis);
-      return statementAnalyzer.analyze(statement, scope);
+      Scope result = statementAnalyzer.analyze(queryAssignment.getQuery(), scope);
+      RelationType rel = new NamedRelationType(result.getRelation(), scope.getName().getSuffix());
+      scope.addRelation(scope.getName(), rel);
+
+      return result;
     }
 
     @Override
     public Scope visitExpressionAssignment(ExpressionAssignment expressionAssignment,
-        Scope scope) {
-      RelationSqmlType rel = scope.createRelation(scope.getName().getPrefix());
-      scope = createAndAssignScope(expressionAssignment.getExpression(), scope, rel);
-      ExpressionAnalysis exprAnalysis = analyzeExpression(expressionAssignment.getExpression(), scope);
+        final Scope scope) {
+      RelationType rel = scope.getName().getPrefix()
+          .map(p -> scope.resolveRelation(p)
+              .orElseThrow(()->new RuntimeException(String.format("Could not find relation %s", scope.getName().getPrefix()))))
+          .orElse(scope.getRoot());
 
-      SqmlType type = exprAnalysis.getType(expressionAssignment.getExpression());
-      if (type == null) {
-        throw new RuntimeException(String.format("Could not find type for %s %s",
+      Scope assignedScope = createAndAssignScope(expressionAssignment.getExpression(), scope, rel);
+      ExpressionAnalysis exprAnalysis = analyzeExpression(expressionAssignment.getExpression(), assignedScope, true);
+
+      Type type = exprAnalysis.getType(expressionAssignment.getExpression());
+      Preconditions.checkNotNull(type, "Could not find type for %s %s",
             expressionAssignment.getExpression().getClass().getName(),
-            expressionAssignment.getExpression()
-        ));
-      }
+            expressionAssignment.getExpression());
 
-      rel.addField(Field.newUnqualified(scope.getName().getSuffix(), type));
-      return createAndAssignScope(expressionAssignment.getExpression(), scope, rel);
+      rel.addField(Field.newDataField(assignedScope.getName().getSuffix(), type));
+      return createAndAssignScope(expressionAssignment.getExpression(), assignedScope, rel);
     }
 
     @Override
@@ -134,7 +123,7 @@ public class Analyzer {
       return context;
     }
 
-    private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
+    private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope, boolean allowFieldCreation) {
       ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata);
       ExpressionAnalysis analysis = analyzer.analyze(expression, scope);
 
@@ -148,14 +137,15 @@ public class Analyzer {
       return Scope.builder()
           .withName(name)
           .withParent(scope)
+          .withRelationType(scope.getRoot())
           .build();
     }
 
-    private Scope createAndAssignScope(Node node, Scope parentScope, RelationSqmlType relationType)
+    private Scope createAndAssignScope(Node node, Scope parentScope, RelationType relationType)
     {
       Scope scope = Scope.builder()
           .withParent(parentScope)
-          .withRelationType(node, relationType)
+          .withRelationType(relationType)
           .withName(parentScope.getName())
           .build();
 

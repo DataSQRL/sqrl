@@ -1,17 +1,11 @@
 package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.source.SourceRecord;
-import ai.dataeng.sqml.type.SqmlType;
+import ai.dataeng.sqml.type.ScalarType;
 import ai.dataeng.sqml.type.TypeMapping;
 import com.google.common.base.Preconditions;
 import lombok.*;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.typeutils.RowTypeInfo;
-import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.types.AbstractDataType;
-import org.apache.flink.types.Row;
-import org.apache.flink.types.RowKind;
 
 import java.io.Serializable;
 import java.util.*;
@@ -294,9 +288,9 @@ public class SourceTableSchema implements Serializable {
     @Getter @ToString @EqualsAndHashCode
     public static class Field extends Element {
 
-        private final SqmlType.ScalarSqmlType type;
+        private final ScalarType type;
 
-        private Field(boolean isArray, boolean notNull, SqmlType.ScalarSqmlType type) {
+        private Field(boolean isArray, boolean notNull, ScalarType type) {
             super(isArray, notNull);
             this.type = type;
         }
@@ -379,7 +373,7 @@ public class SourceTableSchema implements Serializable {
             table = new Table(false, true);
         }
 
-        public Builder addField(String name, boolean isArray, boolean notNull, SqmlType.ScalarSqmlType type) {
+        public Builder addField(String name, boolean isArray, boolean notNull, ScalarType type) {
             table.schema.put(normalizeName(name), new Field(isArray, notNull, type));
             return this;
         }

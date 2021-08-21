@@ -1,5 +1,9 @@
 package ai.dataeng.sqml.analyzer;
 
+import static com.google.common.collect.Multimaps.forMap;
+import static com.google.common.collect.Multimaps.unmodifiableMultimap;
+import static java.util.Collections.unmodifiableSet;
+
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupingOperation;
@@ -12,11 +16,15 @@ import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.type.SqmlType;
-import ai.dataeng.sqml.type.SqmlType.BooleanSqmlType;
-import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
+import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.type.BooleanType;
+import ai.dataeng.sqml.type.RelationType;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,33 +32,24 @@ import java.util.Set;
 
 public class Analysis {
   private final Script script;
-  private Map<Expression, SqmlType> typeMap = new HashMap<>();
+  private Map<Expression, Type> typeMap = new HashMap<>();
   private final Map<Node, Scope> scopes = new LinkedHashMap<>();
   private Map<Node, List<Expression>> outputExpressions = new HashMap<>();
-  private Map<Expression, String> nameMap = new HashMap<>();
-  private Map<Relation, RelationSqmlType> relations = new HashMap<>();
-  private Map<QualifiedName, QualifiedName> resolvedNames = new HashMap<>();
-  private RelationSqmlType model;
+  private Map<Relation, RelationType> relations = new HashMap<>();
+  private RelationType model;
+  private Map<QualifiedName, Field> sourceScopedFields = new HashMap<>();
+  private final Map<NodeRef<Expression>, Type> coercions = new LinkedHashMap<>();
+  private final Set<NodeRef<Expression>> typeOnlyCoercions = new LinkedHashSet<>();
+  private final List<Expression> parameters = List.of();
+  private final Multimap<NodeRef<Expression>, FieldId> columnReferences = ArrayListMultimap.create();
 
   public Analysis(Script script) {
     this.script = script;
   }
 
-  public Optional<SqmlType> getType(Expression expression) {
-    SqmlType type = typeMap.get(expression);
+  public Optional<Type> getType(Expression expression) {
+    Type type = typeMap.get(expression);
     return Optional.ofNullable(type);
-  }
-
-  public QualifiedName getName(QualifiedName name) {
-    if (resolvedNames.containsKey(name)) {
-      return resolvedNames.get(name);
-    }
-
-    return name;
-  }
-
-  public Optional<Boolean> isNonNull(Expression expression) {
-    return Optional.empty();
   }
 
   public void setScope(Node node, Scope scope) {
@@ -61,7 +60,7 @@ public class Analysis {
     outputExpressions.put(node, expressions);
   }
 
-  public void addTypes(Map<Expression, SqmlType> expressionTypes) {
+  public void addTypes(Map<Expression, Type> expressionTypes) {
     this.typeMap.putAll(expressionTypes);
   }
 
@@ -69,20 +68,7 @@ public class Analysis {
 
   }
 
-  public void setResolvedName(QualifiedName name, QualifiedName resolvedName) {
-    this.resolvedNames.put(name, resolvedName);
-  }
-
-  public void setGroupingSets(QuerySpecification node, List<List<Set<Object>>> sets) {
-
-  }
-
-  public List<Expression> getOutputExpressions(Node node) {
-    return outputExpressions.get(node);
-  }
-
-  public String getName(Expression expression) {
-    return nameMap.get(expression);
+  public void setGroupingSets(QuerySpecification node, List<List<Set<FieldId>>> sets) {
 
   }
 
@@ -90,11 +76,11 @@ public class Analysis {
 
   }
 
-  public Optional<RelationSqmlType> getRelation(Relation node) {
+  public Optional<RelationType> getRelation(Relation node) {
     return Optional.ofNullable(this.relations.get(node));
   }
 
-  public void addRelations(Map<Relation, RelationSqmlType> relations) {
+  public void addRelations(Map<Relation, RelationType> relations) {
     this.relations.putAll(relations);
   }
 
@@ -106,7 +92,7 @@ public class Analysis {
 
   }
 
-  public void addCoercion(Expression predicate, BooleanSqmlType instance, boolean b) {
+  public void addCoercion(Expression predicate, BooleanType instance, boolean b) {
 
   }
 
@@ -135,15 +121,60 @@ public class Analysis {
 
   }
 
-  public void addName(Expression expression, String name) {
-    this.nameMap.put(expression, name);
-  }
-
-  public QualifiedName resolveName(QualifiedName name) {
-    return null;
-  }
-
-  public void setModel(RelationSqmlType model) {
+  public void setModel(RelationType model) {
     this.model = model;
   }
+
+  public RelationType getModel() {
+    return model;
+  }
+
+  public void setMultiplicity(Node node, Long multiplicity) {
+
+  }
+
+  public void addSourceScopedFields(Map<QualifiedName, Field> sourceScopedFields) {
+    this.sourceScopedFields.putAll(sourceScopedFields);
+  }
+
+  public Type getCoercion(Expression expression)
+  {
+    return coercions.get(NodeRef.of(expression));
+  }
+
+  public boolean isTypeOnlyCoercion(Expression expression)
+  {
+    return typeOnlyCoercions.contains(NodeRef.of(expression));
+  }
+  public void addCoercion(Expression expression, Type type, boolean isTypeOnlyCoercion)
+  {
+    this.coercions.put(NodeRef.of(expression), type);
+    if (isTypeOnlyCoercion) {
+      this.typeOnlyCoercions.add(NodeRef.of(expression));
+    }
+  }
+  public void addCoercions(Map<NodeRef<Expression>, Type> coercions, Set<NodeRef<Expression>> typeOnlyCoercions)
+  {
+    this.coercions.putAll(coercions);
+    this.typeOnlyCoercions.addAll(typeOnlyCoercions);
+  }
+  public List<Expression> getParameters()
+  {
+    return parameters;
+  }
+
+
+  public Multimap<NodeRef<Expression>, FieldId> getColumnReferenceFields() {
+    return unmodifiableMultimap(columnReferences);
+  }
+  public void addColumnReferences(Map<NodeRef<Expression>, FieldId> columnReferences)
+  {
+    this.columnReferences.putAll(forMap(columnReferences));
+  }
+
+  public void addColumnReference(NodeRef<Expression> node, FieldId fieldId)
+  {
+    this.columnReferences.put(node, fieldId);
+  }
+
 }

@@ -17,14 +17,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public final class Import
-    extends Expression {
+public abstract class Import extends Node {
 
-  private final NodeLocation location;
-  private final Optional<ImportType> type;
-  private final QualifiedName qualifiedName;
+  protected final NodeLocation location;
+  protected final ImportType type;
+  protected final QualifiedName qualifiedName;
 
-  public Import(NodeLocation location, Optional<ImportType> type,
+  public Import(NodeLocation location, ImportType type,
       QualifiedName qualifiedName) {
     super(Optional.ofNullable(location));
     this.location = location;
@@ -32,15 +31,14 @@ public final class Import
     this.qualifiedName = qualifiedName;
   }
 
-  public Optional<ImportType> getType() {
+  public ImportType getType() {
     return type;
   }
 
-  @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitImport(this, context);
   }
-  @Override
+
   public List<? extends Node> getChildren() {
     return null;
   }
@@ -76,6 +74,6 @@ public final class Import
   }
 
   public enum ImportType {
-    FUNCTION, SOURCE, SCRIPT, PUBLIC
+    FUNCTION, STATE, SCRIPT, PUBLIC
   }
 }

@@ -35,6 +35,12 @@ public abstract class AstVisitor<R, C> {
   protected R visitImport(Import node, C context) {
     return visitNode(node, context);
   }
+  protected R visitImportFunction(ImportFunction node, C context) {
+    return visitImport(node, context);
+  }
+  protected R visitImportState(ImportState node, C context) {
+    return visitImport(node, context);
+  }
 
   protected R visitAssign(Assign node, C context) {
     return visitNode(node, context);
@@ -315,6 +321,10 @@ public abstract class AstVisitor<R, C> {
   }
 
   public R visitInlineJoin(InlineJoin node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitFieldReference(FieldReference node, C context) {
     return visitExpression(node, context);
   }
 }

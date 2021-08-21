@@ -71,6 +71,12 @@ public class Query
     return limit;
   }
 
+  public Optional<Long> parseLimit() {
+    return getLimit()
+        .filter(l->l.equalsIgnoreCase("ALL"))
+        .map(l->Long.parseLong(l));
+  }
+
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitQuery(this, context);

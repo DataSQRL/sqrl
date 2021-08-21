@@ -1,50 +1,40 @@
 package ai.dataeng.sqml;
 
+import static org.apache.flink.table.api.Expressions.$;
+
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
-import ai.dataeng.sqml.execution.SQMLBundle;
-import ai.dataeng.sqml.flink.EnvironmentProvider;
+import ai.dataeng.sqml.execution.Bundle;
 import ai.dataeng.sqml.flink.DefaultEnvironmentProvider;
-import ai.dataeng.sqml.flink.SaveToKeyValueStoreSink;
-import ai.dataeng.sqml.flink.util.BufferedLatestSelector;
-import ai.dataeng.sqml.flink.util.FlinkUtilities;
-import ai.dataeng.sqml.ingest.*;
+import ai.dataeng.sqml.flink.EnvironmentProvider;
+import ai.dataeng.sqml.ingest.DataSourceRegistry;
+import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.RecordShredder;
+import ai.dataeng.sqml.ingest.SchemaAdjustmentSettings;
+import ai.dataeng.sqml.ingest.SchemaValidationError;
+import ai.dataeng.sqml.ingest.SchemaValidationProcess;
+import ai.dataeng.sqml.ingest.SourceTableSchema;
+import ai.dataeng.sqml.ingest.SourceTableStatistics;
 import ai.dataeng.sqml.source.SourceDataset;
 import ai.dataeng.sqml.source.SourceRecord;
 import ai.dataeng.sqml.source.SourceTable;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import org.apache.flink.api.common.RuntimeExecutionMode;
-import org.apache.flink.api.common.accumulators.LongCounter;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.ReduceFunction;
-import org.apache.flink.api.common.state.ValueState;
-import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
-import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
-import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
-import org.apache.flink.types.RowKind;
-import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static org.apache.flink.table.api.Expressions.$;
 
 public class Main2 {
 
@@ -141,11 +131,15 @@ public class Main2 {
         Thread.sleep(1000);
 
         String content = Files.readString(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION));
-        SQMLBundle sqml = new SQMLBundle.Builder().setMainScript(RETAIL_SCRIPT_NAME, content).build();
+        Bundle sqml = new Bundle.Builder().setMainScript(RETAIL_SCRIPT_NAME, content).build();
         SourceDataset dd = ddRegistry.getDataset(RETAIL_DATA_DIR_NAME);
 
         //Retrieve the collected statistics
         for (String table : RETAIL_TABLE_NAMES) {
+            if (dd.getTable(table) == null) {
+                System.out.println(String.format("Table is null %s", table));
+                continue;
+            }
             SourceTableStatistics tableStats = ddRegistry.getTableStatistics(dd.getTable(table));
             SourceTableSchema schema = tableStats.getSchema();
             System.out.println(schema);

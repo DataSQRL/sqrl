@@ -1,29 +1,26 @@
 package ai.dataeng.sqml;
 
 import ai.dataeng.sqml.analyzer.Analysis;
-import ai.dataeng.sqml.dag.Dag;
-import ai.dataeng.sqml.tree.Assign;
-import ai.dataeng.sqml.tree.AstVisitor;
-import ai.dataeng.sqml.tree.CreateSubscription;
-import ai.dataeng.sqml.tree.DistinctAssignment;
-import ai.dataeng.sqml.tree.Except;
-import ai.dataeng.sqml.tree.Expression;
-import ai.dataeng.sqml.tree.ExpressionAssignment;
-import ai.dataeng.sqml.tree.Import;
-import ai.dataeng.sqml.tree.InlineJoin;
-import ai.dataeng.sqml.tree.Intersect;
-import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.analyzer.Field;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.Query;
-import ai.dataeng.sqml.tree.QueryAssignment;
-import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.tree.InlineJoinBody;
-import ai.dataeng.sqml.tree.TableSubquery;
-import ai.dataeng.sqml.tree.Union;
-import ai.dataeng.sqml.type.SqmlType;
-import ai.dataeng.sqml.type.SqmlType.RelationSqmlType;
+import ai.dataeng.sqml.type.BooleanType;
+import ai.dataeng.sqml.type.DateTimeType;
+import ai.dataeng.sqml.type.FloatType;
+import ai.dataeng.sqml.type.IntegerType;
+import ai.dataeng.sqml.type.NullType;
+import ai.dataeng.sqml.type.NumberType;
+import ai.dataeng.sqml.type.RelationType.ImportRelationType;
+import ai.dataeng.sqml.type.RelationType.NamedRelationType;
+import ai.dataeng.sqml.type.RelationType.RootRelationType;
+import ai.dataeng.sqml.type.StringType;
+import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.type.ArrayType;
+import ai.dataeng.sqml.type.RelationType;
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
+import ai.dataeng.sqml.type.UnknownType;
+import ai.dataeng.sqml.type.UuidType;
 import graphql.Scalars;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLCodeRegistry;
@@ -43,7 +40,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -56,18 +52,21 @@ public class GraphqlSchemaBuilder {
 
   public static class Builder {
 
-    private Dag dag;
+    private Script script;
+    private Analysis analysis;
 
-    public Builder dag(Dag dag) {
-      this.dag = dag;
+    public Builder script(Script script) {
+      this.script = script;
+      return this;
+    }
+    public Builder analysis(Analysis analysis) {
+      this.analysis = analysis;
       return this;
     }
 
     public GraphQLSchema build(){
-      Script script = dag.getOptimizationResult().getScript();
-      Analysis analysis = dag.getOptimizationResult().getAnalysis();
       Visitor visitor = new Visitor(analysis);
-      script.accept(visitor, null);
+      analysis.getModel().accept(visitor, null);
       GraphQLSchema.Builder schemaBuilder = visitor.getBuilder();
       System.out.println(new SchemaPrinter().print(schemaBuilder.build()));
 
@@ -110,15 +109,16 @@ public class GraphqlSchemaBuilder {
     }
   }
 
-  static class Visitor extends AstVisitor<GraphQLOutputType, Context> {
+  static class Visitor extends SqmlTypeVisitor<GraphQLOutputType, Context> {
+
     private Logger log = Logger.getLogger(Visitor.class.getName());
     private final Analysis analysis;
     private GraphQLSchema.Builder schemaBuilder;
     private Map<QualifiedName, GraphQLObjectType.Builder> gqlTypes = new HashMap<>();
     private Set<GraphQLType> additionalTypes = new HashSet<>();
-    public final GqlTypeArgumentVisitor argumentVisitor = new GqlTypeArgumentVisitor();
     GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
     private GraphQLInputType bind;
+    Set<String> seen = new HashSet<>();
 
     public Visitor(Analysis analysis) {
       this.analysis = analysis;
@@ -126,167 +126,120 @@ public class GraphqlSchemaBuilder {
     }
 
     @Override
-    protected GraphQLOutputType visitNode(Node node, Context context) {
-      throw new RuntimeException(String.format("Could not process node for graphql schema: %s", node.getClass().getName()));
+    public GraphQLOutputType visitSqmlType(Type type, Context context) {
+      throw new RuntimeException("Could not resolve SQML type for the graphql schema");
     }
 
     @Override
-    protected GraphQLOutputType visitTableSubquery(TableSubquery node, Context context) {
-      //todo table subquery
+    public GraphQLOutputType visitArray(ArrayType type, Context context) {
+      return GraphQLList.list(type.getSubType().accept(this, context));
+    }
+
+    @Override
+    public GraphQLOutputType visitNumber(NumberType type, Context context) {
+      return Scalars.GraphQLFloat;
+    }
+
+    @Override
+    public GraphQLOutputType visitUnknown(UnknownType type, Context context) {
       return Scalars.GraphQLString;
     }
 
     @Override
-    protected GraphQLOutputType visitScript(Script node, Context context) {
-      node.getStatements().stream()
-          .forEach(s->s.accept(this, context));
-      return null;
+    public GraphQLOutputType visitDateTime(DateTimeType type, Context context) {
+      return Scalars.GraphQLString;
     }
 
     @Override
-    protected GraphQLOutputType visitImport(Import node, Context context) {
-      return null;
+    public GraphQLOutputType visitNull(NullType type, Context context) {
+      return Scalars.GraphQLString;
     }
 
     @Override
-    public GraphQLOutputType visitCreateSubscription(CreateSubscription node, Context context) {
-      return null;
+    public GraphQLOutputType visitString(StringType type, Context context) {
+      return Scalars.GraphQLString;
     }
 
     @Override
-    protected GraphQLOutputType visitAssign(Assign node, Context context) {
-      if (containsHiddenField(node.getName())){
-        return null;
+    public GraphQLOutputType visitBoolean(BooleanType type, Context context) {
+      return Scalars.GraphQLBoolean;
+    }
+
+    @Override
+    public GraphQLOutputType visitScalarType(Type type, Context context) {
+      throw new RuntimeException(String.format("Unidentified scalar for api gen: %s", type));
+    }
+
+    @Override
+    public GraphQLOutputType visitRelation(RelationType type, Context context) {
+      throw new RuntimeException("Unidentified relation");
+    }
+
+    @Override
+    public GraphQLOutputType visitNamedRelation(NamedRelationType type, Context context) {
+      String name = toName(type.getRelationName());
+      if (seen.contains(name)) {
+        return new GraphQLTypeReference(name);
       }
-      node.getRhs().accept(this, new Context(node.getName()));
 
+      seen.add(name);
+      GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
+          .name(name);
+
+      for (Field field : type.getFields()) {
+        if (field.isHidden()) {
+          continue;
+        }
+        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
+            .name(toName(field.getName().get()))
+            .type(field.getType().accept(this, context))
+            .build();
+        obj.field(f);
+      }
+      schemaBuilder.additionalType(obj.build());
+
+      return GraphQLList.list(new GraphQLTypeReference(name));
+    }
+
+
+    @Override
+    public GraphQLOutputType visitRootRelation(RootRelationType type, Context context) {
+      GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
+          .name("Query");
+
+      for (Field field : type.getVisibleFields()) {
+        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
+            .name(toName(field.getName().get()))
+            .type(field.getType().accept(this, context))
+            .build();
+        obj.field(f);
+      }
+      schemaBuilder.query(obj);
       return null;
     }
 
     @Override
-    public GraphQLOutputType visitQueryAssignment(QueryAssignment queryAssignment, Context context) {
-      return queryAssignment.getQuery().accept(this, context);
+    public GraphQLOutputType visitImportRelation(ImportRelationType type, Context context) {
+      return visitNamedRelation(type, context);
     }
 
     @Override
-    public GraphQLOutputType visitExpressionAssignment(ExpressionAssignment expressionAssignment,
-        Context context) {
-      GraphQLOutputType type = expressionAssignment.getExpression().accept(this, context);
-
-      GraphQLObjectType.Builder obj = createObject(context.getName().getPrefix().orElse(context.getName()));
-      GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
-          .name(toGraphqlName(context.getName().getSuffix()))
-          .type(type)
-          .build();
-      obj.field(f);
-      return type;
+    public GraphQLOutputType visitUuid(UuidType type, Context context) {
+      return Scalars.GraphQLString;
     }
 
     @Override
-    public GraphQLOutputType visitDistinctAssignment(DistinctAssignment node, Context context) {
-      return null;
+    public GraphQLOutputType visitFloat(FloatType type, Context context) {
+      return Scalars.GraphQLFloat;
+    }
+
+    @Override
+    public GraphQLOutputType visitInteger(IntegerType type, Context context) {
+      return Scalars.GraphQLInt;
     }
 
     public static String toGraphqlName(String name) {
-      return name.replaceAll("[^A-Za-z0-9]", "");
-    }
-
-    @Override
-    protected GraphQLOutputType visitQuery(Query node, Context context) {
-      GraphQLOutputType type = node.getQueryBody().accept(this, context);
-      return type;
-    }
-
-    @Override
-    protected GraphQLOutputType visitIntersect(Intersect node, Context context) {
-      return node.getRelations().get(0).accept(this, context);
-    }
-
-    @Override
-    protected GraphQLOutputType visitExcept(Except node, Context context) {
-      return node.getRelations().get(0).accept(this, context);
-    }
-
-    @Override
-    public GraphQLOutputType visitInlineJoin(InlineJoin node, Context context) {
-
-      Optional<RelationSqmlType> rel = analysis.getRelation(node.getJoin());
-      if (rel.isEmpty()) {
-        log.warning("Could not resole relation name, stubbing for now...");
-        return Scalars.GraphQLString;
-      }
-      GraphQLObjectType.Builder parent = createObject(rel
-          .get()
-              .getRelationName()
-      );
-
-      if (node.getInverse().isPresent()) {
-        parent.field(
-            GraphQLFieldDefinition.newFieldDefinition()
-                .name(toName(QualifiedName.of(node.getInverse().get())))
-                .arguments(buildRelationArguments())
-                .type(GraphQLList.list(
-                    GraphQLTypeReference.typeRef(toName(context.getName().getPrefix().get()))))
-                .build()
-        );
-      }
-
-      GraphQLTypeReference type = GraphQLTypeReference.typeRef(toName(getTableName(node.getJoin())));
-      return GraphQLList.list(type);
-    }
-
-    private QualifiedName getLastJoinTable(InlineJoinBody join) {
-      return join.getInlineJoinBody().map(this::getLastJoinTable).orElse(join.getTable());
-    }
-
-    @Override
-    protected GraphQLOutputType visitUnion(Union node, Context context) {
-      return node.getRelations().get(0).accept(this, context);
-    }
-
-    @Override
-    protected GraphQLOutputType visitQuerySpecification(QuerySpecification node, Context context) {
-      GraphQLObjectType.Builder builder = createObject(context.getName());
-
-      for (Expression expression : analysis.getOutputExpressions(node)) {
-        if (analysis.getName(expression) == null) {
-          log.warning(String.format("Could not find api name for query expression %s", expression));
-          continue;
-        }
-        GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
-            .name(toGraphqlName(analysis.getName(expression)))
-            .type(expression.accept(this, context))
-            .build();
-        builder.field(field);
-      }
-
-      if (context.getInterfaceName().isPresent()) {
-        builder.withInterface(GraphQLTypeReference.typeRef(context.getInterfaceName().get()));
-      }
-
-      if (node.getLimit().isPresent() && node.getLimit().get().equalsIgnoreCase("1")) {
-        return builder.build();
-      }
-
-      return GraphQLList.list(GraphQLTypeReference.typeRef(toName(context.getName())));
-    }
-
-    //Catch all for expressions
-    @Override
-    protected GraphQLOutputType visitExpression(Expression node,
-        Context context) {
-      return getType(node, context);
-    }
-
-    private GraphQLOutputType getType(Expression node, Context context) {
-      Optional<SqmlType> type = analysis.getType(node);
-      return type.get().accept(new GqlTypeVisitor(), context);
-    }
-
-    private QualifiedName getTableName(Relation node) {
-      RelationSqmlType rel = this.analysis.getRelation(node)
-          .orElseThrow();
-      return rel.getRelationName();
+      return name.replaceAll("[^A-Za-z0-9_]", "");
     }
 
     private List<GraphQLArgument> buildRelationArguments() {
@@ -326,30 +279,8 @@ public class GraphqlSchemaBuilder {
       return toGraphqlName(String.join("_", name.getParts()));
     }
 
-    /**
-     * Gets the object builder and creates the path from the base relation along the way
-     */
-    private GraphQLObjectType.Builder createObject(QualifiedName name) {
-      GraphQLObjectType.Builder builder = gqlTypes.get(name);
-      if (builder != null) {
-        return builder;
-      }
-
-      String objName = toName(analysis.getName(name));
-
-      GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
-          .name(objName);
-      gqlTypes.put(name, obj);
-
-      List<String> parentName = name.getParts().subList(0, name.getParts().size() - 1);
-      if (parentName.size() != 0) {
-        GraphQLObjectType.Builder b = createObject(QualifiedName.of(parentName));
-        b.field(GraphQLFieldDefinition.newFieldDefinition()
-            .name(name.getSuffix())
-            .type(GraphQLList.list(GraphQLTypeReference.typeRef(obj.build().getName())))
-            .build());
-      }
-      return obj;
+    public static String toName(String name) {
+      return toGraphqlName(name);
     }
 
     private boolean containsHiddenField(QualifiedName name) {
@@ -362,37 +293,6 @@ public class GraphqlSchemaBuilder {
     }
 
     public GraphQLSchema.Builder getBuilder() {
-      for (Entry<QualifiedName, GraphQLObjectType.Builder> entry : gqlTypes.entrySet()) {
-        GraphQLObjectType.Builder builder = entry.getValue();
-        if (builder.build().getFieldDefinitions().size() == 0) {
-          log.warning(String.format("Relation has no fields: %s", entry.getValue()));
-          builder.field(GraphQLFieldDefinition.newFieldDefinition()
-                  .name("stub").type(Scalars.GraphQLString).build());
-        }
-
-        schemaBuilder.additionalType(entry.getValue().build());
-      }
-
-      for (GraphQLType addl : this.additionalTypes) {
-        schemaBuilder.additionalType(addl);
-      }
-
-      GraphQLObjectType.Builder query = GraphQLObjectType.newObject().name("Query");
-      for (Entry<QualifiedName, GraphQLObjectType.Builder> entry : gqlTypes.entrySet()) {
-        if (entry.getKey().getParts().size() == 1) {
-          query.field(GraphQLFieldDefinition.newFieldDefinition()
-              .name(toName(entry.getKey()))
-              .arguments(buildRelationArguments())
-              .type(GraphQLList.list(
-                  new GraphQLTypeReference(entry.getValue().build().getName())))
-              .build());
-        }
-      }
-
-      schemaBuilder.query(query);
-
-      schemaBuilder.codeRegistry(codeRegistry.build());
-
       return schemaBuilder;
     }
   }

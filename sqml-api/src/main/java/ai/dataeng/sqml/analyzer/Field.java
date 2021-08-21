@@ -15,59 +15,88 @@ package ai.dataeng.sqml.analyzer;
 
 
 import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
-import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.type.SqmlType;
+import ai.dataeng.sqml.type.Type;
+import java.util.Locale;
 import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
-public class Field
-{
+public class Field {
   private final Optional<QualifiedObjectName> originTable;
   private final Optional<String> originColumnName;
   private final Optional<String> relationAlias;
   private final Optional<String> name;
-  private final SqmlType type;
+  private final Type type;
   private final boolean hidden;
   private final boolean aliased;
+  private final Optional<QualifiedName> fullPath;
+  private final Optional<String> originalName;
 
-  public static Field newUnqualified(String name, SqmlType type)
+  public static Field newUnqualified(String name, Type type)
   {
     requireNonNull(name, "name is null");
     requireNonNull(type, "type is null");
 
-    return new Field(Optional.empty(), Optional.of(name), type, false, Optional.empty(), Optional.empty(), false);
+    return new Field(Optional.empty(), Optional.of(name), type, false, Optional.empty(), Optional.empty(), false,
+        Optional.empty());
   }
 
-  public static Field newUnqualified(Optional<String> name, SqmlType type)
+  public static Field newUnqualified(Optional<String> name, Type type)
   {
     requireNonNull(name, "name is null");
     requireNonNull(type, "type is null");
 
-    return new Field(Optional.empty(), name, type, false, Optional.empty(), Optional.empty(), false);
+    return new Field(Optional.empty(), name, type, false, Optional.empty(), Optional.empty(), false,
+        Optional.empty());
   }
 
-  public static Field newUnqualified(Optional<String> name, SqmlType type, Optional<QualifiedObjectName> originTable, Optional<String> originColumn, boolean aliased)
+  public static Field newUnqualified(Optional<String> name, Type type, Optional<QualifiedObjectName> originTable, Optional<String> originColumn, boolean aliased)
   {
     requireNonNull(name, "name is null");
     requireNonNull(type, "type is null");
     requireNonNull(originTable, "originTable is null");
 
-    return new Field(Optional.empty(), name, type, false, originTable, originColumn, aliased);
+    return new Field(Optional.empty(), name, type, false, originTable, originColumn, aliased,
+        Optional.empty());
   }
 
-  public static Field newQualified(String relationAlias, Optional<String> name, SqmlType type, boolean hidden, Optional<QualifiedObjectName> originTable, Optional<String> originColumn, boolean aliased)
+  public static Field newQualified(String relationAlias, Optional<String> name, Type type, boolean hidden, Optional<QualifiedObjectName> originTable, Optional<String> originColumn, boolean aliased)
   {
     requireNonNull(relationAlias, "relationAlias is null");
     requireNonNull(name, "name is null");
     requireNonNull(type, "type is null");
     requireNonNull(originTable, "originTable is null");
 
-    return new Field(Optional.of(relationAlias), name, type, hidden, originTable, originColumn, aliased);
+    return new Field(Optional.of(relationAlias), name, type, hidden, originTable, originColumn, aliased,
+        Optional.empty());
   }
 
-  public Field(Optional<String> relationAlias, Optional<String> name, SqmlType type, boolean hidden, Optional<QualifiedObjectName> originTable, Optional<String> originColumnName, boolean aliased)
+
+  public static Field newUnqualified(String name, Type type, QualifiedName fullPath) {
+      requireNonNull(name, "name is null");
+      requireNonNull(type, "type is null");
+      requireNonNull(fullPath, "fullPath is null");
+
+      return new Field(Optional.empty(), Optional.of(name), type, false, Optional.empty(), Optional.empty(), false,
+          Optional.of(fullPath));
+  }
+  public static Field newUnqualified(String name, Type type, boolean hidden) {
+    requireNonNull(name, "name is null");
+    requireNonNull(type, "type is null");
+
+    return new Field(Optional.empty(), Optional.of(name), type, hidden, Optional.empty(), Optional.empty(), false,
+        Optional.empty());
+  }
+
+  public static Field newDataField(String name, Type type) {
+    return new Field(Optional.empty(), Optional.of(name), type, false, Optional.empty(), Optional.empty(), false,
+        Optional.empty());
+  }
+
+  public Field(Optional<String> relationAlias, Optional<String> name, Type type, boolean hidden,
+      Optional<QualifiedObjectName> originTable, Optional<String> originColumnName, boolean aliased,
+      Optional<QualifiedName> fullPath)
   {
     requireNonNull(relationAlias, "relationAlias is null");
     requireNonNull(name, "name is null");
@@ -76,12 +105,14 @@ public class Field
     requireNonNull(originColumnName, "originColumnName is null");
 
     this.relationAlias = relationAlias;
-    this.name = name;
+    this.originalName = name;
+    this.name = name.map(e->e.toLowerCase(Locale.ROOT));
     this.type = type;
     this.hidden = hidden;
     this.originTable = originTable;
     this.originColumnName = originColumnName;
     this.aliased = aliased;
+    this.fullPath = fullPath;
   }
 
   public Optional<QualifiedObjectName> getOriginTable() {
@@ -103,7 +134,7 @@ public class Field
     return name;
   }
 
-  public SqmlType getType()
+  public Type getType()
   {
     return type;
   }
@@ -116,6 +147,10 @@ public class Field
   public boolean isAliased()
   {
     return aliased;
+  }
+
+  public Optional<QualifiedName> getFullPath() {
+    return fullPath;
   }
 
   @Override

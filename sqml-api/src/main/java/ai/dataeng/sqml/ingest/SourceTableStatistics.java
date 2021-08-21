@@ -1,11 +1,9 @@
 package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.source.SourceRecord;
-import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.type.SqmlType;
+import ai.dataeng.sqml.type.Type;
 import lombok.ToString;
 import lombok.Value;
-import org.apache.flink.api.common.accumulators.Accumulator;
 
 import java.io.Serializable;
 import java.util.HashMap;

@@ -1,8 +1,10 @@
 package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.source.SourceRecord;
-import ai.dataeng.sqml.type.SqmlType;
+import ai.dataeng.sqml.type.IntegerType;
+import ai.dataeng.sqml.type.ScalarType;
 import ai.dataeng.sqml.type.TypeMapping;
+import ai.dataeng.sqml.type.UuidType;
 import lombok.Value;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
@@ -160,7 +162,7 @@ public class RecordShredder implements FlatMapFunction<SourceRecord, Row> {
     public static class SpecialFieldProjection implements FieldProjection {
 
         private final String name;
-        private final SqmlType.ScalarSqmlType type;
+        private final ScalarType type;
 
         @Override
         public String getColumnName() {
@@ -178,9 +180,9 @@ public class RecordShredder implements FlatMapFunction<SourceRecord, Row> {
         }
     }
 
-    public static final FieldProjection ROOT_UUID = new SpecialFieldProjection("_uuid", SqmlType.UuidSqmlType.INSTANCE);
+    public static final FieldProjection ROOT_UUID = new SpecialFieldProjection("_uuid", UuidType.INSTANCE);
 
-    public static final FieldProjection ARRAY_INDEX = new SpecialFieldProjection("_idx", SqmlType.IntegerSqmlType.INSTANCE);
+    public static final FieldProjection ARRAY_INDEX = new SpecialFieldProjection("_idx", IntegerType.INSTANCE);
 
     public static class NamePathProjection implements FieldProjection {
 

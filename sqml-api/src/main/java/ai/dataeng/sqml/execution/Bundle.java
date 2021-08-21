@@ -1,39 +1,40 @@
 package ai.dataeng.sqml.execution;
 
 import com.google.common.base.Preconditions;
+import java.nio.file.Path;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An {@link SQMLBundle} contains the main SQML script that defines the dataset to be exposed as an API as well
+ * An {@link Bundle} contains the main SQML script that defines the dataset to be exposed as an API as well
  * as all supporting SQML scripts that are imported (directly or indirectly) by the main script.
  *
  * In addition, the bundle may include an optional schema file that defines the schema of the input data, API, and can
  * provide additional hints that guide the optimizer on how to generate the denormalizations.
  *
- * Production {@link SQMLBundle} must also contain the queries and subscriptions that get deployed in the API.
+ * Production {@link Bundle} must also contain the queries and subscriptions that get deployed in the API.
  */
-public class SQMLBundle {
-
+@Getter
+public class Bundle {
     private final Map<String, String> scriptsByname;
     private final String mainScriptName;
+    private final Path path;
     //TODO: Add schema and hints
 
-
-    private SQMLBundle(Map<String, String> scriptsByname, String mainScriptName) {
+    private Bundle(Map<String, String> scriptsByname, String mainScriptName, Path path) {
         this.scriptsByname = scriptsByname;
         this.mainScriptName = mainScriptName;
+        this.path = path;
     }
-
-
-
 
     public static class Builder {
 
         private final Map<String, String> scriptsByname = new HashMap<>();
         private String mainScriptName;
+        private Path path;
 
         public Builder addScript(String name, String content) {
             checkScriptName(name);
@@ -55,15 +56,17 @@ public class SQMLBundle {
             return this;
         }
 
+        public Builder setPath(Path path) {
+            this.path = path;
+            return this;
+        }
+
         private void checkScriptName(String name) {
             Preconditions.checkArgument(StringUtils.isNotEmpty(name));
         }
 
-        public SQMLBundle build() {
-            return new SQMLBundle(scriptsByname,mainScriptName);
+        public Bundle build() {
+            return new Bundle(scriptsByname, mainScriptName, path);
         }
-
-
     }
-
 }

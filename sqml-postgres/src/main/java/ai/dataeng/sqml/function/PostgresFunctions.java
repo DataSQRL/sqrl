@@ -1,46 +1,52 @@
 package ai.dataeng.sqml.function;
 
-import ai.dataeng.sqml.type.SqmlType;
-import ai.dataeng.sqml.type.SqmlType.StringSqmlType;
+import ai.dataeng.sqml.type.ArrayType;
+import ai.dataeng.sqml.type.BooleanType;
+import ai.dataeng.sqml.type.DateTimeType;
+import ai.dataeng.sqml.type.FloatType;
+import ai.dataeng.sqml.type.IntegerType;
+import ai.dataeng.sqml.type.NumberType;
+import ai.dataeng.sqml.type.StringType;
+import ai.dataeng.sqml.type.UuidType;
 import java.util.List;
 
 public class PostgresFunctions {
 
   public static List<SqmlFunction> SqmlSystemFunctions = List.of(
-      new SqmlFunction("concat", new SqmlType.StringSqmlType(), false),
-      new SqmlFunction("math.abs", new SqmlType.NumberSqmlType(), false),
-      new SqmlFunction("count", new SqmlType.IntegerSqmlType(), false),
-      new SqmlFunction("casts.tointeger", new SqmlType.IntegerSqmlType(), false),
-      new SqmlFunction("casts.toboolean", new SqmlType.BooleanSqmlType(), false),
-      new SqmlFunction("casts.tofloat", new SqmlType.FloatSqmlType(), false),
-      new SqmlFunction("casts.tostring", new SqmlType.StringSqmlType(), false),
-      new SqmlFunction("casts.touuid", new SqmlType.UuidSqmlType(), false),
-      new SqmlFunction("casts.totimestamp", new SqmlType.DateTimeSqmlType(), false),
-      new SqmlFunction("collect_as_set", new SqmlType.ArraySqmlType(new StringSqmlType()), false), //todo subtype
-      new SqmlFunction("sum", new SqmlType.NumberSqmlType(), false),
-      new SqmlFunction("roundtoday", new SqmlType.DateTimeSqmlType(), false),
-      new SqmlFunction("timefct.roundtomin", new SqmlType.DateTimeSqmlType(), false), //todo unite
-      new SqmlFunction("timefct.roundtohour", new SqmlType.DateTimeSqmlType(), false),
-      new SqmlFunction("timefct.dayofweek", new SqmlType.DateTimeSqmlType(), false),
-      new SqmlFunction("timefct.hourofday", new SqmlType.DateTimeSqmlType(), false),
-      new SqmlFunction("time.roundtoday", new SqmlType.DateTimeSqmlType(), false),
-      new SqmlFunction("time.dayofweek", new SqmlType.DateTimeSqmlType(), false),
-      new SqmlFunction("time.roundtoweek", new SqmlType.DateTimeSqmlType(), false),
-      new SqmlFunction("time.roundtomonth", new SqmlType.DateTimeSqmlType(), false),
-      new SqmlFunction("avg", new SqmlType.NumberSqmlType(), false),
-      new SqmlFunction("max", new SqmlType.NumberSqmlType(), false),
-      new SqmlFunction("iff", new SqmlType.StringSqmlType(), false),
-      new SqmlFunction("now", new SqmlType.DateTimeSqmlType(), false),
-      new SqmlFunction("math.log10", new SqmlType.FloatSqmlType(), false),
-      new SqmlFunction("math.sqrt", new SqmlType.FloatSqmlType(), false),
-      new SqmlFunction("stats.removeoutlier", new SqmlType.FloatSqmlType(), false),
-      new SqmlFunction("stats.normal.variance", new SqmlType.FloatSqmlType(), false),
-      new SqmlFunction("stats.truncated_normal.percentile", new SqmlType.FloatSqmlType(), false),
-      new SqmlFunction("stats.poisson.percentile", new SqmlType.FloatSqmlType(), false),
-      new SqmlFunction("time.parse", new SqmlType.FloatSqmlType(), false),
-      new SqmlFunction("math.floor", new SqmlType.FloatSqmlType(), false),
-      new SqmlFunction("col.multiply", new SqmlType.FloatSqmlType(), false),
-      new SqmlFunction("time.roundtomin", new SqmlType.DateTimeSqmlType(), false),
-      new SqmlFunction("frozen_lookup", new SqmlType.StringSqmlType(), false)
+      new SqmlFunction("concat", new StringType(), false),
+      new SqmlFunction("math.abs", new NumberType(), false),
+      new SqmlFunction("count", new IntegerType(), false),
+      new SqmlFunction("casts.tointeger", new IntegerType(), false),
+      new SqmlFunction("casts.toboolean", new BooleanType(), false),
+      new SqmlFunction("casts.tofloat", new FloatType(), false),
+      new SqmlFunction("casts.tostring", new StringType(), false),
+      new SqmlFunction("casts.touuid", new UuidType(), false),
+      new SqmlFunction("casts.totimestamp", new DateTimeType(), false),
+      new SqmlFunction("collect_as_set", new ArrayType(new StringType()), false), //todo subtype
+      new SqmlFunction("sum", new NumberType(), false),
+      new SqmlFunction("roundtoday", new DateTimeType(), false),
+      new SqmlFunction("timefct.roundtomin", new DateTimeType(), false), //todo unite
+      new SqmlFunction("timefct.roundtohour", new DateTimeType(), false),
+      new SqmlFunction("timefct.dayofweek", new DateTimeType(), false),
+      new SqmlFunction("timefct.hourofday", new DateTimeType(), false),
+      new SqmlFunction("time.roundtoday", new DateTimeType(), false),
+      new SqmlFunction("time.dayofweek", new DateTimeType(), false),
+      new SqmlFunction("time.roundtoweek", new DateTimeType(), false),
+      new SqmlFunction("time.roundtomonth", new DateTimeType(), false),
+      new SqmlFunction("avg", new NumberType(), false),
+      new SqmlFunction("max", new NumberType(), false),
+      new SqmlFunction("iff", new StringType(), false),
+      new SqmlFunction("now", new DateTimeType(), false),
+      new SqmlFunction("math.log10", new FloatType(), false),
+      new SqmlFunction("math.sqrt", new FloatType(), false),
+      new SqmlFunction("stats.removeoutlier", new FloatType(), false),
+      new SqmlFunction("stats.normal.variance", new FloatType(), false),
+      new SqmlFunction("stats.truncated_normal.percentile", new FloatType(), false),
+      new SqmlFunction("stats.poisson.percentile", new FloatType(), false),
+      new SqmlFunction("time.parse", new FloatType(), false),
+      new SqmlFunction("math.floor", new FloatType(), false),
+      new SqmlFunction("col.multiply", new FloatType(), false),
+      new SqmlFunction("time.roundtomin", new DateTimeType(), false),
+      new SqmlFunction("frozen_lookup", new StringType(), false)
   );
 }
