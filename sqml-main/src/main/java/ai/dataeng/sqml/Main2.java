@@ -22,6 +22,7 @@ import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -42,6 +43,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static org.apache.flink.table.api.Expressions.$;
 
 public class Main2 {
 
@@ -123,7 +126,10 @@ public class Main2 {
                 .build()*/);
         table.printSchema();
 
-        
+        Table counts = table.select($("customerid").count().as("count"));
+
+        DataStream<Tuple2<Boolean, Row>> result = tableEnv.toRetractStream(counts, Row.class);
+        result.print();
 
         flinkEnv.execute();
     }
