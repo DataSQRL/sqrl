@@ -4,12 +4,12 @@ import ai.dataeng.sqml.source.SourceRecord;
 import ai.dataeng.sqml.type.SqmlType;
 import ai.dataeng.sqml.type.TypeMapping;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import lombok.*;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.types.AbstractDataType;
-import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 
@@ -17,6 +17,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Value
 public class SourceTableSchema implements Serializable {
@@ -32,7 +33,7 @@ public class SourceTableSchema implements Serializable {
     }
 
     public SchemaAdjustment<SourceRecord> verifyAndAdjust(SourceRecord record, SchemaAdjustmentSettings settings) {
-        SchemaAdjustment<Map<String,Object>> result = verifyAndAdjustTable(record.getData(), table, NamePath.BASE, settings);
+        SchemaAdjustment<Map<String,Object>> result = verifyAndAdjustTable(record.getData(), table, NamePath.ROOT, settings);
         return new SchemaAdjustment(result.transformedData()?record:null, result.getError());
     }
 
@@ -51,73 +52,90 @@ public class SourceTableSchema implements Serializable {
                 if (settings.dropFields()) {
                     dataIter.remove();
                 } else {
-                    return SchemaAdjustment.error(path.sub(name),data,"Field is not defined in schema");
+                    return SchemaAdjustment.error(path.resolve(name),data,"Field is not defined in schema");
                 }
             } else {
                 if (!normalizedName.equals(name)) need2NormalizeNames = true;
-                List<Object> list = null;
-                if (data instanceof List || data.getClass().isArray()) {
+                Object[] arr = null;
+                if (data instanceof Collection || data.getClass().isArray()) {
                     if (data.getClass().isArray()) {
-                        list = Arrays.asList((Object[])data);
-                        entry.setValue(list);
+                        arr =(Object[])data;
+                    } else {
+                        Collection col = (Collection)data;
+                        arr = new Object[col.size()];
+                        int i=0;
+                        for (Iterator it = col.iterator(); it.hasNext();) arr[i++]=it.next();
+                        entry.setValue(arr);
                         transformed = true;
-                    } else list = (List)data;
+                    }
+                    //Remove null values
+                    int numNulls=0;
+                    for (int i=0;i<arr.length;i++) {
+                        if (arr[i]==null) numNulls++;
+                    }
+                    if (numNulls>0) {
+                        if (settings.removeListNulls()) {
+                            Object[] newArr = new Object[arr.length-numNulls];
+                            int j=0;
+                            for (int i=0;i<arr.length;i++) {
+                                if (arr[i]!=null) newArr[j++]=arr[i];
+                            }
+                            entry.setValue(newArr);
+                            arr = newArr;
+                            transformed = true;
+                        } else {
+                            return SchemaAdjustment.error(path.resolve(name), arr, "Array contains null values");
+                        }
+                    }
+
                     if (!element.isArray()) {
-                        if (list.size()<=1 && settings.array2Singleton()) {
-                            if (list.isEmpty()) {
+                        if (arr.length<=1 && settings.array2Singleton()) {
+                            if (arr.length==0) {
                                 data = null;
                             } else {
-                                data = Iterables.getOnlyElement(list);
+                                data = arr[0];
                             }
                             entry.setValue(data);
                             transformed = true;
                         } else {
-                            return SchemaAdjustment.error(path.sub(name),list,"Field is a list but expecting value");
+                            return SchemaAdjustment.error(path.resolve(name),arr,"Field is an array but expecting value");
                         }
                     }
                 } else if (element.isArray()) {
                     if (data == null && settings.null2EmptyArray()) {
-                        list = Collections.EMPTY_LIST;
-                        entry.setValue(list);
+                        arr = new Object[0];
+                        entry.setValue(arr);
                         transformed = true;
                     } else if (data != null && settings.singleton2Arrays()) {
-                        list = Collections.singletonList(data);
-                        entry.setValue(list);
+                        arr = new Object[]{data};
+                        entry.setValue(arr);
                         transformed = true;
                     } else {
-                        return SchemaAdjustment.error(path.sub(name),data,"Field is a value but expecting a list");
+                        return SchemaAdjustment.error(path.resolve(name),data,"Field is a value but expecting a list");
                     }
                 }
 
                 if (element.isNotNull()) nonNullElements++;
                 if (data == null) {
                     if (element.isNotNull()) {
-                        return SchemaAdjustment.error(path.sub(name),data,"Field must be non-null");
+                        return SchemaAdjustment.error(path.resolve(name),data,"Field must be non-null");
                     }
                 }
 
-                if (list!=null) {
-                    for (int i = 0; i < list.size(); i++) {
-                        Object o = list.get(i);
-                        if (o==null) {
-                            if (settings.removeListNulls()) {
-                                list.remove(i);
-                                i--;
-                                transformed = true;
-                            } else {
-                                return SchemaAdjustment.error(path.sub(name),list,"List contains null values");
-                            }
-                        } else {
-                            SchemaAdjustment<Object> result = verifyAndAdjustField(o,element,path.sub(name),settings);
-                            if (result.isError()) return result.castError();
-                            else if (result.transformedData()) {
-                                list.set(i,result.getData());
-                                transformed = true;
-                            }
+                if (element.isArray()) {
+                    assert arr != null;
+                    for (int i = 0; i < arr.length; i++) {
+                        Object o = arr[i];
+                        assert o!=null;
+                        SchemaAdjustment<Object> result = verifyAndAdjustField(o,element,path.resolve(name),settings);
+                        if (result.isError()) return result.castError();
+                        else if (result.transformedData()) {
+                            arr[i] = result.getData();
+                            transformed = true;
                         }
                     }
                 } else {
-                    SchemaAdjustment<Object> result = verifyAndAdjustField(data,element,path.sub(name),settings);
+                    SchemaAdjustment<Object> result = verifyAndAdjustField(data,element,path.resolve(name),settings);
                     if (result.isError()) return result.castError();
                     else if (result.transformedData()) {
                         entry.setValue(result.getData());
@@ -143,7 +161,7 @@ public class SourceTableSchema implements Serializable {
                         tableData.put(elementName,Collections.EMPTY_LIST);
                         transformed = true;
                     } else {
-                        return SchemaAdjustment.error(path.sub(elementName),null,"Field must be non-null but missing in data");
+                        return SchemaAdjustment.error(path.resolve(elementName),null,"Field must be non-null but missing in data");
                     }
                 }
             }
@@ -169,74 +187,79 @@ public class SourceTableSchema implements Serializable {
         }
     }
 
-    public Schema getFlinkTableSchema() {
-        Schema.Builder builder = Schema.newBuilder();
-        for (Map.Entry<String,Element> entry : table.schema.entrySet()) {
-            builder.column(entry.getKey(),getFlinkDataType(entry.getValue()));
-        }
-        //TODO: add watermark
-        return builder.build();
+    public Element getElement(NamePath path) {
+        return table.getElement(path);
     }
 
-    private static AbstractDataType getFlinkDataType(Element element) {
-        AbstractDataType elementType;
-        if (element.isNestedTable()) {
-            Table table = (Table)element;
-            DataTypes.UnresolvedField[] fields = new DataTypes.UnresolvedField[table.getArity()];
-            int i=0;
-            for (Map.Entry<String,Element> entry : table.schema.entrySet()) {
-                fields[i++]=DataTypes.FIELD(entry.getKey(),getFlinkDataType(entry.getValue()));
-            }
-            elementType = DataTypes.ROW(fields);
-        } else {
-            elementType = TypeMapping.getFlinkDataType(((Field)element).type);
-        }
-        if (element.isArray) {
-            return DataTypes.ARRAY(elementType);
-        } else {
-            return elementType;
-        }
-    }
-
-    public Row convert2Row(SourceRecord record) {
-        //TODO: need to add timestamp columns (ingest and source)
-        return convert2Row(table, record.getData());
-    }
-
-    private static Row convert2Row(Table table, Map<String,Object> record) {
-        Object[] columns = new Object[table.getArity()];
-        int position = 0;
-        for (Map.Entry<String, Element> column : table.schema.entrySet()) {
-            String colname = column.getKey();
-            Element colschema = column.getValue();
-            Object data = record.get(colname);
-
-            if (data == null) {
-                columns[position] = null;
-            } else {
-                if (colschema.isArray) {
-                    List<Object> rowValues = new ArrayList<>();
-                    List<Object> dataValues = (List)data;
-                    for (Object o: dataValues) {
-                        if (colschema.isNestedTable()) {
-                            rowValues.add(convert2Row((Table)colschema,(Map)data));
-                        } else {
-                            rowValues.add(data);
-                        }
-                    }
-                    columns[position] =rowValues;
-                } else {
-                    if (colschema.isNestedTable()) {
-                        columns[position] = convert2Row((Table)colschema,(Map)data);
-                    } else {
-                        columns[position] = data;
-                    }
-                }
-            }
-            position++;
-        }
-        return Row.ofKind(RowKind.INSERT,100,"John Mekker", "john.mekker@gmail.com");
-    }
+//    public Schema getFlinkTableSchema() {
+//        Schema.Builder builder = Schema.newBuilder();
+//        for (Map.Entry<String,Element> entry : table.schema.entrySet()) {
+//            builder.column(entry.getKey(),getFlinkDataType(entry.getValue()));
+//            builder.
+//        }
+//        //TODO: add watermark/timestamps
+//        return builder.build();
+//    }
+//
+//    private static AbstractDataType getFlinkDataType(Element element) {
+//        AbstractDataType elementType;
+//        if (element.isNestedTable()) {
+//            Table table = (Table)element;
+//            DataTypes.UnresolvedField[] fields = new DataTypes.UnresolvedField[table.getArity()];
+//            int i=0;
+//            for (Map.Entry<String,Element> entry : table.schema.entrySet()) {
+//                fields[i++]=DataTypes.FIELD(entry.getKey(),getFlinkDataType(entry.getValue()));
+//            }
+//            elementType = DataTypes.ROW(fields);
+//        } else {
+//            elementType = TypeMapping.getFlinkDataType(((Field)element).type);
+//        }
+//        if (element.isArray) {
+//            return DataTypes.ARRAY(elementType);
+//        } else {
+//            return elementType;
+//        }
+//    }
+//
+//    public Row convert2Row(SourceRecord record) {
+//        //TODO: need to add timestamp columns (ingest and source)
+//        return convert2Row(table, record.getData());
+//    }
+//
+//    private static Row convert2Row(Table table, Map<String,Object> record) {
+//        Object[] columns = new Object[table.getArity()];
+//        int position = 0;
+//        for (Map.Entry<String, Element> column : table.schema.entrySet()) {
+//            String colname = column.getKey();
+//            Element colschema = column.getValue();
+//            Object data = record.get(colname);
+//
+//            if (data == null) {
+//                columns[position] = null;
+//            } else {
+//                if (colschema.isArray) {
+//                    List<Object> rowValues = new ArrayList<>();
+//                    List<Object> dataValues = (List)data;
+//                    for (Object o: dataValues) {
+//                        if (colschema.isNestedTable()) {
+//                            rowValues.add(convert2Row((Table)colschema,(Map)data));
+//                        } else {
+//                            rowValues.add(data);
+//                        }
+//                    }
+//                    columns[position] =rowValues;
+//                } else {
+//                    if (colschema.isNestedTable()) {
+//                        columns[position] = convert2Row((Table)colschema,(Map)data);
+//                    } else {
+//                        columns[position] = data;
+//                    }
+//                }
+//            }
+//            position++;
+//        }
+//        return Row.ofKind(RowKind.INSERT,columns);
+//    }
 
 
     @Getter @ToString @EqualsAndHashCode
@@ -256,6 +279,16 @@ public class SourceTableSchema implements Serializable {
             return !isField();
         }
 
+        public Field asField() {
+            Preconditions.checkArgument(isField(),"Element is not a field: %s", this);
+            return (Field)this;
+        }
+
+        public Table asTable() {
+            Preconditions.checkArgument(isNestedTable(),"Element is not a table: %s", this);
+            return (Table)this;
+        }
+
     }
 
     @Getter @ToString @EqualsAndHashCode
@@ -272,6 +305,10 @@ public class SourceTableSchema implements Serializable {
         public boolean isField() {
             return true;
         }
+
+        public TypeInformation getFlinkTypeInfo() {
+            return TypeMapping.getFlinkTypeInfo(type, isArray());
+        }
     }
 
     @ToString @EqualsAndHashCode
@@ -284,8 +321,29 @@ public class SourceTableSchema implements Serializable {
             schema = new HashMap<>();
         }
 
-        public int getArity() {
-            return schema.size();
+        private int numFields = -1;
+
+        public int getNumFields() {
+            if (numFields<0) {
+                numFields = (int)schema.values().stream().filter(e -> e.isField()).count();
+            }
+            return numFields;
+        }
+
+        public Element getElement(NamePath path) {
+            if (path.equals(NamePath.ROOT)) return this;
+            Element base = this;
+            for (String nested : path) {
+                Preconditions.checkArgument(base instanceof Table, "Invalid path traverses through field: %s", path);
+                Table t = (Table)base;
+                base = t.schema.get(nested);
+                Preconditions.checkArgument(base!=null, "Nested field [%s] of path [%s] does not exist", nested, path);
+            }
+            return base;
+        }
+
+        public Stream<Map.Entry<String,Element>> getFields() {
+            return schema.entrySet().stream().filter(e -> e.getValue().isField());
         }
 
         private int numNonNull = -1;

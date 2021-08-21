@@ -1,12 +1,14 @@
 package ai.dataeng.sqml.source;
 
-import javax.annotation.Nonnull;
+import lombok.NonNull;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Raw records of a {@link SourceTable} are represented as {@link SourceRecord}
@@ -16,15 +18,17 @@ public class SourceRecord implements Serializable {
     private final Map<String,Object> data;
     private final Instant sourceTime;
     private final Instant ingestTime;
+    private final UUID uuid;
 
-    public SourceRecord(@Nonnull Map<String, Object> data, @Nonnull Instant sourceTime, @Nonnull Instant ingestTime) {
+    public SourceRecord(@NonNull Map<String, Object> data, @NonNull Instant sourceTime, @NonNull Instant ingestTime, UUID uuid) {
         this.data = data;
         this.sourceTime = sourceTime;
         this.ingestTime = ingestTime;
+        this.uuid = uuid;
     }
 
     public SourceRecord(Map<String, Object> data, Instant sourceTime) {
-        this(data, sourceTime, Instant.now());
+        this(data, sourceTime, Instant.now(), UUID.randomUUID());
     }
 
     public Map<String, Object> getData() {
@@ -37,6 +41,14 @@ public class SourceRecord implements Serializable {
 
     public Instant getIngestTime() {
         return ingestTime;
+    }
+
+    public boolean hasUUID() {
+        return uuid!=null;
+    }
+
+    public UUID getUuid() {
+        return uuid;
     }
 
     @Override

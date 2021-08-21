@@ -19,14 +19,17 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
+import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
@@ -62,9 +65,9 @@ public class Main2 {
         ddRegistry.addDataset(dd);
 
 //        collectStats(ddRegistry);
-//        simpleDBPipeline(ddRegistry);
+        simpleDBPipeline(ddRegistry);
 
-        simpleTest();
+//        simpleTest();
     }
 
     public static void simpleTest() throws Exception {
@@ -73,10 +76,17 @@ public class Main2 {
 
         DataStream<Integer> integers = flinkEnv.fromElements(12, 5);
 
-        DataStream<Row> rows = integers.map(i -> Row.of("Name"+i, i));
+//        DataStream<Row> rows = integers.map(i -> Row.of("Name"+i, i));
 
 //  This alternative way of constructing this data stream produces the expected table schema
-//      DataStream<Row> rows = flinkEnv.fromElements(Row.of("Name12", 12), Row.of("Name5", 5));
+        Row row1 = Row.of("Mary",5);
+        TypeInformation[] typeArray = new TypeInformation[2];
+        typeArray[0] = BasicTypeInfo.STRING_TYPE_INFO;
+        typeArray[1] = BasicTypeInfo.INT_TYPE_INFO;
+        RowTypeInfo typeinfo = new RowTypeInfo(typeArray,new String[]{"name","number"});
+        DataStream<Row> rows = flinkEnv.fromCollection(
+              List.of(row1), typeinfo
+        );
 
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(flinkEnv);
         Table table = tableEnv.fromDataStream(rows);
@@ -98,16 +108,22 @@ public class Main2 {
 
         DataStream<SourceRecord> stream = stable.getDataStream(flinkEnv);
         final OutputTag<SchemaValidationError> schemaErrorTag = new OutputTag<>("schema-error"){};
+        SingleOutputStreamOperator<SourceRecord> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, tableSchema, SchemaAdjustmentSettings.DEFAULT));
+        RecordShredder shredder = new RecordShredder(NamePath.ROOT, tableSchema);
+        SingleOutputStreamOperator<Row> process = validate.flatMap(shredder,shredder.getTypeInfo());
 
-        SingleOutputStreamOperator<Row> process = stream.process(new SchemaValidationProcess(schemaErrorTag, tableSchema, SchemaAdjustmentSettings.DEFAULT));
 
-        process.getSideOutput(schemaErrorTag).addSink(new PrintSinkFunction<>()); //TODO: handle errors
+        validate.getSideOutput(schemaErrorTag).addSink(new PrintSinkFunction<>()); //TODO: handle errors
 
         process.addSink(new PrintSinkFunction<>());
 
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(flinkEnv);
-        Table table = tableEnv.fromDataStream(process /*, tableSchema.getFlinkTableSchema()*/);
+        Table table = tableEnv.fromDataStream(process/*, Schema.newBuilder()
+                .watermark("__timestamp", "SOURCE_WATERMARK()")
+                .build()*/);
         table.printSchema();
+
+        
 
         flinkEnv.execute();
     }

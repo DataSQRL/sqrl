@@ -4,6 +4,11 @@ import ai.dataeng.sqml.ingest.NamePath;
 import ai.dataeng.sqml.ingest.SchemaAdjustment;
 import ai.dataeng.sqml.ingest.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
+import org.apache.flink.api.common.typeinfo.BasicArrayTypeInfo;
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
+import org.apache.flink.api.common.typeinfo.TypeInfo;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.typeutils.ObjectArrayTypeInfo;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.types.AbstractDataType;
 import org.apache.flink.table.types.AtomicDataType;
@@ -12,6 +17,7 @@ import org.apache.flink.table.types.UnresolvedDataType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
@@ -89,9 +95,39 @@ public class TypeMapping {
         } else if (datatype instanceof SqmlType.BooleanSqmlType) {
             return DataTypes.BOOLEAN();
         } else if (datatype instanceof SqmlType.UuidSqmlType) {
-            return DataTypes.of(UUID.class);
+            return DataTypes.STRING();
         } else if (datatype instanceof SqmlType.DateTimeSqmlType) { //TODO: need to make more robust!
             return DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE();
+        } else {
+            throw new IllegalArgumentException("Unrecognized data type: " + datatype);
+        }
+    }
+
+    public static final ObjectArrayTypeInfo INSTANT_ARRAY_TYPE_INFO = ObjectArrayTypeInfo.getInfoFor(Instant[].class, BasicTypeInfo.INSTANT_TYPE_INFO);
+
+
+    public static TypeInformation getFlinkTypeInfo(SqmlType.ScalarSqmlType datatype, boolean isArray) {
+        if (datatype instanceof SqmlType.StringSqmlType) {
+            if (isArray) return BasicArrayTypeInfo.STRING_ARRAY_TYPE_INFO;
+            else return BasicTypeInfo.STRING_TYPE_INFO;
+        } else if (datatype instanceof SqmlType.IntegerSqmlType) {
+            if (isArray) return BasicArrayTypeInfo.LONG_ARRAY_TYPE_INFO;
+            else return BasicTypeInfo.LONG_TYPE_INFO;
+        } else if (datatype instanceof SqmlType.FloatSqmlType) {
+            if (isArray) return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
+            else return BasicTypeInfo.DOUBLE_TYPE_INFO;
+        } else if (datatype instanceof SqmlType.NumberSqmlType) {
+            if (isArray) return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
+            else return BasicTypeInfo.DOUBLE_TYPE_INFO;
+        } else if (datatype instanceof SqmlType.BooleanSqmlType) {
+            if (isArray) return BasicArrayTypeInfo.BOOLEAN_ARRAY_TYPE_INFO;
+            else return BasicTypeInfo.BOOLEAN_TYPE_INFO;
+        } else if (datatype instanceof SqmlType.UuidSqmlType) {
+            if (isArray) return BasicArrayTypeInfo.STRING_ARRAY_TYPE_INFO;
+            else return BasicTypeInfo.STRING_TYPE_INFO;
+        } else if (datatype instanceof SqmlType.DateTimeSqmlType) { //TODO: need to make more robust!
+            if (isArray) return INSTANT_ARRAY_TYPE_INFO;
+            else return BasicTypeInfo.INSTANT_TYPE_INFO;
         } else {
             throw new IllegalArgumentException("Unrecognized data type: " + datatype);
         }
