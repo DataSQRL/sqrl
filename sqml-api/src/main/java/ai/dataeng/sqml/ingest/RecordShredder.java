@@ -105,9 +105,9 @@ public class RecordShredder implements FlatMapFunction<SourceRecord, Row> {
                 for (int i = 0; i < arr.length; i++) {
                     Object[] colcopy = cols.clone();
                     if (addIndex) {
-                        colcopy[colno]=i;
+                        colcopy[colno]= Long.valueOf(i);
                     }
-                    constructRows((Map)nested,cols.clone(),colno+(addIndex?1:0),depth+1,collector);
+                    constructRows((Map)arr[i],colcopy,colno+(addIndex?1:0),depth+1,collector);
                 }
             } else throw new IllegalArgumentException("Unexpected data encountered: " + nested);
         }

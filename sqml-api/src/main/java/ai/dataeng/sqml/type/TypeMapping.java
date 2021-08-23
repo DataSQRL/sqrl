@@ -50,17 +50,20 @@ public class TypeMapping {
             else if (settings.castDataType()) return SchemaAdjustment.data(Objects.toString(value));
             else return incompatibleType(datatype,value,path);
         } else if (datatype instanceof IntegerType) {
-            if (value instanceof Integer || value instanceof Long || value instanceof Short || value instanceof Byte) return SchemaAdjustment.none();
+            if (value instanceof Long) return SchemaAdjustment.none();
+            else if (value instanceof Integer || value instanceof Short || value instanceof Byte) return SchemaAdjustment.data(((Number)value).longValue());
             else if (value instanceof Number && settings.castDataType()) return SchemaAdjustment.data(((Number)value).longValue());
             else if (value instanceof String && settings.castDataType()) return parseFromString(value,s -> Long.parseLong(s),path,datatype);
             else return incompatibleType(datatype,value,path);
         } else if (datatype instanceof FloatType) {
-            if (value instanceof Float || value instanceof Double) return SchemaAdjustment.none();
+            if (value instanceof Double) return SchemaAdjustment.none();
+            else if (value instanceof Float) return SchemaAdjustment.data(((Number)value).doubleValue());
             else if (value instanceof Number && settings.castDataType()) return SchemaAdjustment.data(((Number)value).doubleValue());
             else if (value instanceof String && settings.castDataType()) return parseFromString(value,s -> Double.parseDouble(s),path,datatype);
             else return incompatibleType(datatype,value,path);
         } else if (datatype instanceof NumberType) {
-            if (value instanceof Number) return SchemaAdjustment.none();
+            if (value instanceof Double) return SchemaAdjustment.none();
+            if (value instanceof Number) return SchemaAdjustment.data(((Number)value).doubleValue());
             else if (value instanceof String && settings.castDataType()) return parseFromString(value,s -> Double.parseDouble(s),path,datatype);
             else return incompatibleType(datatype,value,path);
         } else if (datatype instanceof BooleanType) {

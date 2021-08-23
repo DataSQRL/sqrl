@@ -27,6 +27,10 @@ public class NamePath implements Iterable<String>, Serializable {
         }
     }
 
+    public static NamePath of(@NonNull String... names) {
+        return new NamePath(names);
+    }
+
     public NamePath resolve(@NonNull String name) {
         name = SourceTableSchema.normalizeName(name);
         String[] newnames = Arrays.copyOf(names,names.length+1);

@@ -10,7 +10,7 @@ public class DefaultEnvironmentProvider implements EnvironmentProvider {
     public StreamExecutionEnvironment get() {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
-        FlinkUtilities.enableCheckpointing(env);
+//        FlinkUtilities.enableCheckpointing(env);
         return env;
     }
 }

@@ -21,7 +21,11 @@ import ai.dataeng.sqml.source.SourceTable;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -94,32 +98,49 @@ public class Main2 {
         StreamExecutionEnvironment flinkEnv = envProvider.get();
 
         SourceDataset dd = ddRegistry.getDataset(RETAIL_DATA_DIR_NAME);
-        SourceTable stable = dd.getTable(RETAIL_TABLE_NAMES[0]);
 
-        SourceTableStatistics tableStats = ddRegistry.getTableStatistics(stable);
-        SourceTableSchema tableSchema = tableStats.getSchema();
+        Map<String,NamePath[]> imports = new HashMap<>();
+        imports.put(RETAIL_TABLE_NAMES[0],new NamePath[]{NamePath.ROOT}); //Customer
+        imports.put(RETAIL_TABLE_NAMES[1],new NamePath[]{NamePath.ROOT, NamePath.of("entries")}); //Order
+        imports.put(RETAIL_TABLE_NAMES[2],new NamePath[]{NamePath.ROOT}); //Product
 
-        DataStream<SourceRecord> stream = stable.getDataStream(flinkEnv);
-        final OutputTag<SchemaValidationError> schemaErrorTag = new OutputTag<>("schema-error"){};
-        SingleOutputStreamOperator<SourceRecord> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, tableSchema, SchemaAdjustmentSettings.DEFAULT));
-        RecordShredder shredder = new RecordShredder(NamePath.ROOT, tableSchema);
-        SingleOutputStreamOperator<Row> process = validate.flatMap(shredder,shredder.getTypeInfo());
+        Map<String,Table> shreddedImports = new HashMap<>();
 
+        for (Map.Entry<String,NamePath[]> importEntry : imports.entrySet()) {
+            String tableName = importEntry.getKey();
+            SourceTable stable = dd.getTable(tableName);
+            SourceTableStatistics tableStats = ddRegistry.getTableStatistics(stable);
+            SourceTableSchema tableSchema = tableStats.getSchema();
 
-        validate.getSideOutput(schemaErrorTag).addSink(new PrintSinkFunction<>()); //TODO: handle errors
+            DataStream<SourceRecord> stream = stable.getDataStream(flinkEnv);
+            final OutputTag<SchemaValidationError> schemaErrorTag = new OutputTag<>("schema-error-"+tableName){};
+            SingleOutputStreamOperator<SourceRecord> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, tableSchema, SchemaAdjustmentSettings.DEFAULT));
+            validate.getSideOutput(schemaErrorTag).addSink(new PrintSinkFunction<>()); //TODO: handle errors
 
-        process.addSink(new PrintSinkFunction<>());
+            for (NamePath shreddingPath : importEntry.getValue()) {
+                RecordShredder shredder = new RecordShredder(shreddingPath, tableSchema);
+                SingleOutputStreamOperator<Row> process = validate.flatMap(shredder, shredder.getTypeInfo());
 
-        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(flinkEnv);
-        Table table = tableEnv.fromDataStream(process/*, Schema.newBuilder()
+                process.addSink(new PrintSinkFunction<>()); //TODO: remove, debugging only
+
+                StreamTableEnvironment tableEnv = StreamTableEnvironment.create(flinkEnv);
+                Table table = tableEnv.fromDataStream(process/*, Schema.newBuilder()
                 .watermark("__timestamp", "SOURCE_WATERMARK()")
                 .build()*/);
-        table.printSchema();
+                table.printSchema();
 
-        Table counts = table.select($("customerid").count().as("count"));
+                String shreddedTableName = tableName;
+                if (shreddingPath.getNumComponents()>0) shreddedTableName += "_" + shreddingPath.toString('_');
 
-        DataStream<Tuple2<Boolean, Row>> result = tableEnv.toRetractStream(counts, Row.class);
-        result.print();
+                shreddedImports.put(shreddedTableName, table);
+            }
+        }
+
+
+//        Table counts = table.select($("customerid").count().as("count"));
+//
+//        DataStream<Tuple2<Boolean, Row>> result = tableEnv.toRetractStream(counts, Row.class);
+//        result.print();
 
         flinkEnv.execute();
     }
