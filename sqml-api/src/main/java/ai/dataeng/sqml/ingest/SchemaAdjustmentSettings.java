@@ -31,4 +31,6 @@ public interface SchemaAdjustmentSettings extends Serializable {
         return true;
     }
 
+    default java.time.ZoneOffset getLocalTimezone() { throw new UnsupportedOperationException("Needs to be implemented"); }
+
 }

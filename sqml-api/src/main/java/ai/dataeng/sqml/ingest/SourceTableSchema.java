@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.ingest;
 
+import ai.dataeng.sqml.db.DestinationTableSchema;
 import ai.dataeng.sqml.source.SourceRecord;
 import ai.dataeng.sqml.type.ScalarType;
 import ai.dataeng.sqml.type.TypeMapping;
@@ -230,9 +231,6 @@ public class SourceTableSchema implements Serializable {
             return true;
         }
 
-        public TypeInformation getFlinkTypeInfo() {
-            return TypeMapping.getFlinkTypeInfo(type, isArray());
-        }
     }
 
     @ToString @EqualsAndHashCode

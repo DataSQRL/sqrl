@@ -9,7 +9,6 @@ import ai.dataeng.sqml.type.TypeMapping;
 import com.google.common.base.Preconditions;
 import lombok.ToString;
 import lombok.Value;
-import org.apache.calcite.interpreter.Scalar;
 import org.apache.flink.api.common.accumulators.LongCounter;
 
 import java.io.Serializable;
@@ -162,7 +161,7 @@ public class FieldStats implements Serializable {
                             }
                         } else {
                             //not an array or map => must be scalar, let's find the common scalar type for all elements
-                            ScalarType singleType = TypeMapping.scalar2Sqml(o);
+                            ScalarType singleType = TypeMapping.java2Sqml(o);
                             if (type == null) {
                                 type = singleType;
                             } else if (!(type.getClass().isInstance(singleType))) {
@@ -186,7 +185,7 @@ public class FieldStats implements Serializable {
                         addNested((Map)o);
                     } else {
                         //not an array or map => must be scalar
-                        ScalarType type = TypeMapping.scalar2Sqml(o);
+                        ScalarType type = TypeMapping.java2Sqml(o);
                         incPresentedType(type);
                         ScalarType inferredType = TypeMapping.inferType(type, o);
                         if (!inferredType.equals(type)) {

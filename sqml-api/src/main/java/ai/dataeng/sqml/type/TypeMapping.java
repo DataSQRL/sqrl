@@ -74,62 +74,42 @@ public class TypeMapping {
             if (value instanceof UUID) return SchemaAdjustment.none();
             else return incompatibleType(datatype,value,path);
         } else if (datatype instanceof DateTimeType) { //TODO: need to make more robust!
-            if (value instanceof OffsetDateTime) return SchemaAdjustment.none();
-            else if (value instanceof String && settings.castDataType()) return parseFromString(value,s -> OffsetDateTime.parse(s),path,datatype);
+            if (value instanceof Instant) return SchemaAdjustment.none();
+            else if (value instanceof OffsetDateTime) return SchemaAdjustment.data(((OffsetDateTime)value).toInstant());
+            else if (value instanceof ZonedDateTime) return SchemaAdjustment.data(((ZonedDateTime)value).toInstant());
+            else if (value instanceof LocalDateTime) return SchemaAdjustment.data(((LocalDateTime)value).toInstant(settings.getLocalTimezone()));
+            else if (value instanceof String && settings.castDataType()) {
+                SchemaAdjustment adj = parseFromString(value,s -> OffsetDateTime.parse(s),path,datatype);
+                if (adj.isError()) return adj;
+                Instant instant = ((OffsetDateTime)adj.getData()).toInstant();
+                return SchemaAdjustment.data(instant);
+            }
             else return incompatibleType(datatype,value,path);
         }
         return SchemaAdjustment.none();
     }
 
-    public static AbstractDataType getFlinkDataType(ScalarType datatype) {
-        if (datatype instanceof StringType) {
-            return DataTypes.STRING();
-        } else if (datatype instanceof IntegerType) {
-            return DataTypes.BIGINT();
-        } else if (datatype instanceof FloatType) {
-            return DataTypes.DECIMAL(6,9);
-        } else if (datatype instanceof NumberType) {
-            return DataTypes.DECIMAL(6, 9);
-        } else if (datatype instanceof BooleanType) {
-            return DataTypes.BOOLEAN();
-        } else if (datatype instanceof UuidType) {
-            return DataTypes.STRING();
-        } else if (datatype instanceof DateTimeType) { //TODO: need to make more robust!
-            return DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE();
-        } else {
-            throw new IllegalArgumentException("Unrecognized data type: " + datatype);
-        }
-    }
-
-    public static final ObjectArrayTypeInfo INSTANT_ARRAY_TYPE_INFO = ObjectArrayTypeInfo.getInfoFor(Instant[].class, BasicTypeInfo.INSTANT_TYPE_INFO);
+//    public static AbstractDataType getFlinkDataType(ScalarType datatype) {
+//        if (datatype instanceof StringType) {
+//            return DataTypes.STRING();
+//        } else if (datatype instanceof IntegerType) {
+//            return DataTypes.BIGINT();
+//        } else if (datatype instanceof FloatType) {
+//            return DataTypes.DECIMAL(6,9);
+//        } else if (datatype instanceof NumberType) {
+//            return DataTypes.DECIMAL(6, 9);
+//        } else if (datatype instanceof BooleanType) {
+//            return DataTypes.BOOLEAN();
+//        } else if (datatype instanceof UuidType) {
+//            return DataTypes.STRING();
+//        } else if (datatype instanceof DateTimeType) { //TODO: need to make more robust!
+//            return DataTypes.TIMESTAMP();
+//        } else {
+//            throw new IllegalArgumentException("Unrecognized data type: " + datatype);
+//        }
+//    }
 
 
-    public static TypeInformation getFlinkTypeInfo(ScalarType datatype, boolean isArray) {
-        if (datatype instanceof StringType) {
-            if (isArray) return BasicArrayTypeInfo.STRING_ARRAY_TYPE_INFO;
-            else return BasicTypeInfo.STRING_TYPE_INFO;
-        } else if (datatype instanceof IntegerType) {
-            if (isArray) return BasicArrayTypeInfo.LONG_ARRAY_TYPE_INFO;
-            else return BasicTypeInfo.LONG_TYPE_INFO;
-        } else if (datatype instanceof FloatType) {
-            if (isArray) return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
-            else return BasicTypeInfo.DOUBLE_TYPE_INFO;
-        } else if (datatype instanceof NumberType) {
-            if (isArray) return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
-            else return BasicTypeInfo.DOUBLE_TYPE_INFO;
-        } else if (datatype instanceof BooleanType) {
-            if (isArray) return BasicArrayTypeInfo.BOOLEAN_ARRAY_TYPE_INFO;
-            else return BasicTypeInfo.BOOLEAN_TYPE_INFO;
-        } else if (datatype instanceof UuidType) {
-            if (isArray) return BasicArrayTypeInfo.STRING_ARRAY_TYPE_INFO;
-            else return BasicTypeInfo.STRING_TYPE_INFO;
-        } else if (datatype instanceof DateTimeType) { //TODO: need to make more robust!
-            if (isArray) return INSTANT_ARRAY_TYPE_INFO;
-            else return BasicTypeInfo.INSTANT_TYPE_INFO;
-        } else {
-            throw new IllegalArgumentException("Unrecognized data type: " + datatype);
-        }
-    }
 
     private static SchemaAdjustment<Object> incompatibleType(ScalarType datatype, Object value, NamePath path) {
         return SchemaAdjustment.error(path, value, String.format("Incompatible data type. Expected data of type [%s]",datatype));
@@ -173,7 +153,7 @@ public class TypeMapping {
         }
     }
 
-    public static ScalarType scalar2Sqml(Object value) {
+    public static ScalarType java2Sqml(Object value) {
         if (value==null) return NullType.INSTANCE;
         else if (value instanceof UUID) return UuidType.INSTANCE;
         else if (value instanceof Number) {

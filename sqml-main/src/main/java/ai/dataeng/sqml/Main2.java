@@ -7,6 +7,7 @@ import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.execution.Bundle;
 import ai.dataeng.sqml.flink.DefaultEnvironmentProvider;
 import ai.dataeng.sqml.flink.EnvironmentProvider;
+import ai.dataeng.sqml.flink.util.FlinkUtilities;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
 import ai.dataeng.sqml.ingest.NamePath;
 import ai.dataeng.sqml.ingest.RecordShredder;
@@ -96,6 +97,7 @@ public class Main2 {
 
     public static void simpleDBPipeline(DataSourceRegistry ddRegistry) throws Exception {
         StreamExecutionEnvironment flinkEnv = envProvider.get();
+        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(flinkEnv);
 
         SourceDataset dd = ddRegistry.getDataset(RETAIL_DATA_DIR_NAME);
 
@@ -118,12 +120,12 @@ public class Main2 {
             validate.getSideOutput(schemaErrorTag).addSink(new PrintSinkFunction<>()); //TODO: handle errors
 
             for (NamePath shreddingPath : importEntry.getValue()) {
-                RecordShredder shredder = new RecordShredder(shreddingPath, tableSchema);
-                SingleOutputStreamOperator<Row> process = validate.flatMap(shredder, shredder.getTypeInfo());
+                RecordShredder shredder = RecordShredder.from(shreddingPath, tableSchema);
+                SingleOutputStreamOperator<Row> process = validate.flatMap(shredder.getProcess(),
+                        FlinkUtilities.convert2RowTypeInfo(shredder.getResultSchema()));
 
                 process.addSink(new PrintSinkFunction<>()); //TODO: remove, debugging only
 
-                StreamTableEnvironment tableEnv = StreamTableEnvironment.create(flinkEnv);
                 Table table = tableEnv.fromDataStream(process/*, Schema.newBuilder()
                 .watermark("__timestamp", "SOURCE_WATERMARK()")
                 .build()*/);
@@ -136,11 +138,14 @@ public class Main2 {
             }
         }
 
+        shreddedImports.keySet().forEach(t -> System.out.println(t));
+        Table OrderEntries = shreddedImports.get("Order_entries");
+        Table Product = shreddedImports.get("Product");
 
-//        Table counts = table.select($("customerid").count().as("count"));
-//
-//        DataStream<Tuple2<Boolean, Row>> result = tableEnv.toRetractStream(counts, Row.class);
-//        result.print();
+        Table productOrders = OrderEntries.groupBy($("productid")).select($("productid"),$("quantity").sum().as("quantity"));
+
+        DataStream<Tuple2<Boolean, Row>> result = tableEnv.toRetractStream(productOrders, Row.class);
+        result.print();
 
         flinkEnv.execute();
     }
