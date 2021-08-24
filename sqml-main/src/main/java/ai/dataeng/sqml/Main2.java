@@ -2,6 +2,7 @@ package ai.dataeng.sqml;
 
 import static org.apache.flink.table.api.Expressions.$;
 
+import ai.dataeng.sqml.db.DestinationTableSchema;
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.db.tabular.JDBCSinkFactory;
@@ -27,6 +28,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.*;
 
+import ai.dataeng.sqml.type.IntegerType;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -182,9 +184,12 @@ public class Main2 {
         Table OrderEntries = shreddedImports.get("Order_entries");
         Table Product = shreddedImports.get("Product");
 
-        Table productOrders = OrderEntries.groupBy($("productid")).select($("productid"),$("quantity").sum().as("quantity"));
+        Table po = OrderEntries.groupBy($("productid")).select($("productid"),$("quantity").sum().as("quantity"));
 
-        tableEnv.toRetractStream(productOrders, Row.class).flatMap(new RowMapFunction()).print();
+        DestinationTableSchema poschema = DestinationTableSchema.builder().add(DestinationTableSchema.Field.primaryKey("productid", IntegerType.INSTANCE))
+                        .add(DestinationTableSchema.Field.simple("quantity",IntegerType.INSTANCE)).build();
+        tableEnv.toRetractStream(po, Row.class).flatMap(new RowMapFunction()).addSink(dbSinkFactory.getSink("po_count",poschema));
+
 
         flinkEnv.execute();
     }
