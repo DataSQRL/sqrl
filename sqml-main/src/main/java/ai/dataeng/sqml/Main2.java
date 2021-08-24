@@ -59,12 +59,12 @@ public class Main2 {
     public static final String[] RETAIL_TABLE_NAMES = { "Customer", "Order", "Product"};
 
     public static final Path outputBase = Path.of("tmp","datasource");
-    public static final Path dbPath = Path.of("tmp","db");
+    public static final Path dbPath = Path.of("tmp","output");
 
     private static final EnvironmentProvider envProvider = new DefaultEnvironmentProvider();
 
     private static final JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-            .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString())
+            .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false")
             .withDriverName("org.h2.Driver")
             .build();
 
@@ -89,12 +89,15 @@ public class Main2 {
         Connection conn = getConnection();
         DSLContext dsl = DSL.using(conn,SQLDialect.H2);
 
-        dsl.meta().getTables().stream().map(t -> t.getName()).forEach( n -> System.out.println(n));
+//        dsl.meta().getTables().stream().map(t -> t.getName()).forEach( n -> System.out.println(n));
 
         //Why does this not work when the Customer table is listed above???
-//        for (Record r : dsl.select().from(RETAIL_TABLE_NAMES[0]).fetch()) {
-//            System.out.println(r);
-//        }
+        for (String tableName : RETAIL_TABLE_NAMES) {
+            tableName = JDBCSinkFactory.sqlName(tableName);
+            for (Record r : dsl.select().from(tableName).fetch()) {
+                System.out.println(r);
+            }
+        }
     }
 
     public static void simpleTest() throws Exception {

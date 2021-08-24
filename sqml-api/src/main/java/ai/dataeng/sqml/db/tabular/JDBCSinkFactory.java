@@ -36,7 +36,7 @@ public class JDBCSinkFactory implements TabularSinkFactory {
         this.dialect = dialect;
     }
 
-    private static final String sqlName(String name) {
+    public static final String sqlName(String name) {
         return "\"" + name + "\"";
     }
 
