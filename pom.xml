@@ -16,8 +16,6 @@
         <module>sqml-execution-local</module>
         <module>sqml-postgres</module>
         <module>sqml-ingress-http</module>
-        <module>sqml-postgres-view</module>
-        <module>sqml-optimizer-shredding-api</module>
         <module>sqml-graphql-jetty</module>
         <module>sqml-script-registry-local</module>
     </modules>
@@ -66,11 +64,6 @@
             </dependency>
             <dependency>
                 <groupId>ai.dataeng.sqml</groupId>
-                <artifactId>sqml-optimizer-shredding-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.dataeng.sqml</groupId>
                 <artifactId>sqml-execution-local</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -82,11 +75,6 @@
             <dependency>
                 <groupId>ai.dataeng.sqml</groupId>
                 <artifactId>sqml-postgres</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.dataeng.sqml</groupId>
-                <artifactId>sqml-postgres-view</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -42,16 +42,6 @@ public class RetailTest {
         .build();
 
 
-    //1. Create c360 SQML bundle
-    //2. Resolve it in analyzer
-    //3. Resolve a 'model'
-    //4. Work on a major component
-    // - Graphql query parser
-    // - Remove DAG
-    // - Remove schema inferencer
-    // - Remove graphql visitor, move to sqml model visitor
-    // - Add wrapper to scalar fields
-
   }
 
   private SchemaProvider mockSchemaProvider() {

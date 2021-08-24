@@ -7,7 +7,6 @@ import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.rewrite.AddColumnsFromStatistics;
 import ai.dataeng.sqml.rewrite.ScriptRewriter;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.vertex.SqlVertexFactory;
 import java.util.List;
 
 public class ShreddingSqlOptimizer extends Optimizer {
@@ -35,10 +34,6 @@ public class ShreddingSqlOptimizer extends Optimizer {
 
     public Optimizer build() {
       return new ShreddingSqlOptimizer();
-    }
-
-    public Builder vertexFactory(SqlVertexFactory newSqlVertexFactory) {
-      return new Builder();
     }
   }
 }

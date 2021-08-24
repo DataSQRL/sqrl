@@ -58,7 +58,7 @@ public class Main2 {
     public static final Path RETAIL_SCRIPT_DIR = RETAIL_DIR.resolve(RETAIL_SCRIPT_NAME);
     public static final String SQML_SCRIPT_EXTENSION = ".sqml";
 
-    public static final String[] RETAIL_TABLE_NAMES = { "Customer", "Order", "Product"};
+    public static final String[] RETAIL_TABLE_NAMES = { "Customer", "Orders", "Product"};
 
     public static final Path outputBase = Path.of("tmp","datasource");
     public static final Path dbPath = Path.of("tmp","output");
@@ -181,7 +181,7 @@ public class Main2 {
             }
         }
 
-        Table OrderEntries = shreddedImports.get("Order_entries");
+        Table OrderEntries = shreddedImports.get("Orders_entries");
         Table Product = shreddedImports.get("Product");
 
         Table po = OrderEntries.groupBy($("productid")).select($("productid"),$("quantity").sum().as("quantity"));

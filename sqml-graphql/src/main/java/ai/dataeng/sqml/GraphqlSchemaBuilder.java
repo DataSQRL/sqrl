@@ -201,7 +201,6 @@ public class GraphqlSchemaBuilder {
       return GraphQLList.list(new GraphQLTypeReference(name));
     }
 
-
     @Override
     public GraphQLOutputType visitRootRelation(RootRelationType type, Context context) {
       GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
