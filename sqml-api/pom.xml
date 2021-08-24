@@ -45,6 +45,16 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-jdbc_2.12</artifactId>
+      <version>1.13.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jooq</groupId>
+      <artifactId>jooq</artifactId>
+      <version>3.15.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
       <artifactId>flink-file-sink-common</artifactId>
       <version>1.13.0</version>
     </dependency>

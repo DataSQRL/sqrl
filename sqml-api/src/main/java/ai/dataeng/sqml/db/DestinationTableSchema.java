@@ -3,13 +3,14 @@ package ai.dataeng.sqml.db;
 import ai.dataeng.sqml.ingest.SourceTableSchema;
 import ai.dataeng.sqml.type.ScalarType;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterators;
 import lombok.Value;
 
 import java.io.Serializable;
 import java.util.*;
 
 @Value
-public class DestinationTableSchema implements Serializable {
+public class DestinationTableSchema implements Serializable, Iterable<DestinationTableSchema.Field> {
 
     private final Field[] fields;
 
@@ -35,6 +36,11 @@ public class DestinationTableSchema implements Serializable {
 
     public int length() {
         return fields.length;
+    }
+
+    @Override
+    public Iterator<Field> iterator() {
+        return Iterators.forArray(fields);
     }
 
 

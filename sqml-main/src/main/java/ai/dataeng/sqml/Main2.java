@@ -4,6 +4,8 @@ import static org.apache.flink.table.api.Expressions.$;
 
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
+import ai.dataeng.sqml.db.tabular.JDBCSinkFactory;
+import ai.dataeng.sqml.db.tabular.RowMapFunction;
 import ai.dataeng.sqml.execution.Bundle;
 import ai.dataeng.sqml.flink.DefaultEnvironmentProvider;
 import ai.dataeng.sqml.flink.EnvironmentProvider;
@@ -22,16 +24,16 @@ import ai.dataeng.sqml.source.SourceTable;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Connection;
+import java.util.*;
 
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
+import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.apache.flink.connector.jdbc.internal.connection.SimpleJdbcConnectionProvider;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -40,6 +42,10 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.OutputTag;
+import org.jooq.DSLContext;
+import org.jooq.Record;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DSL;
 
 public class Main2 {
 
@@ -53,8 +59,14 @@ public class Main2 {
     public static final String[] RETAIL_TABLE_NAMES = { "Customer", "Order", "Product"};
 
     public static final Path outputBase = Path.of("tmp","datasource");
+    public static final Path dbPath = Path.of("tmp","db");
 
     private static final EnvironmentProvider envProvider = new DefaultEnvironmentProvider();
+
+    private static final JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+            .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString())
+            .withDriverName("org.h2.Driver")
+            .build();
 
     public static void main(String[] args) throws Exception {
         HierarchyKeyValueStore.Factory kvStoreFactory = new LocalFileHierarchyKeyValueStore.Factory(outputBase.toString());
@@ -65,7 +77,24 @@ public class Main2 {
 //        collectStats(ddRegistry);
         simpleDBPipeline(ddRegistry);
 
-//        simpleTest();
+//        testDB();
+    }
+
+    private static Connection getConnection() throws Exception {
+        SimpleJdbcConnectionProvider provider = new SimpleJdbcConnectionProvider(jdbcOptions);
+        return provider.getOrEstablishConnection();
+    }
+
+    public static void testDB() throws Exception {
+        Connection conn = getConnection();
+        DSLContext dsl = DSL.using(conn,SQLDialect.H2);
+
+        dsl.meta().getTables().stream().map(t -> t.getName()).forEach( n -> System.out.println(n));
+
+        //Why does this not work when the Customer table is listed above???
+//        for (Record r : dsl.select().from(RETAIL_TABLE_NAMES[0]).fetch()) {
+//            System.out.println(r);
+//        }
     }
 
     public static void simpleTest() throws Exception {
@@ -95,9 +124,14 @@ public class Main2 {
         flinkEnv.execute();
     }
 
+
+
     public static void simpleDBPipeline(DataSourceRegistry ddRegistry) throws Exception {
         StreamExecutionEnvironment flinkEnv = envProvider.get();
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(flinkEnv);
+
+
+        JDBCSinkFactory dbSinkFactory = new JDBCSinkFactory(jdbcOptions, SQLDialect.H2);
 
         SourceDataset dd = ddRegistry.getDataset(RETAIL_DATA_DIR_NAME);
 
@@ -135,17 +169,19 @@ public class Main2 {
                 if (shreddingPath.getNumComponents()>0) shreddedTableName += "_" + shreddingPath.toString('_');
 
                 shreddedImports.put(shreddedTableName, table);
+
+                tableEnv.toRetractStream(table, Row.class).flatMap(new RowMapFunction())
+                        .addSink(dbSinkFactory.getSink(shreddedTableName,shredder.getResultSchema()));
+
             }
         }
 
-        shreddedImports.keySet().forEach(t -> System.out.println(t));
         Table OrderEntries = shreddedImports.get("Order_entries");
         Table Product = shreddedImports.get("Product");
 
         Table productOrders = OrderEntries.groupBy($("productid")).select($("productid"),$("quantity").sum().as("quantity"));
 
-        DataStream<Tuple2<Boolean, Row>> result = tableEnv.toRetractStream(productOrders, Row.class);
-        result.print();
+        tableEnv.toRetractStream(productOrders, Row.class).flatMap(new RowMapFunction()).print();
 
         flinkEnv.execute();
     }
