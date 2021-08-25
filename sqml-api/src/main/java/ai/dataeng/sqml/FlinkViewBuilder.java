@@ -53,7 +53,7 @@ public class FlinkViewBuilder {
     public Void visitNamedRelation(NamedRelationType type, Context context) {
 
 
-      return super.visitNamedRelation(type, context);
+      return null;
     }
 
     @Override
@@ -69,7 +69,7 @@ public class FlinkViewBuilder {
     @Override
     public Void visitImportRelation(ImportRelationType type, Context context) {
 
-      return super.visitImportRelation(type, context);
+      return null;
     }
   }
 }
