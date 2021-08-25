@@ -8,8 +8,8 @@ import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.db.tabular.JDBCSinkFactory;
 import ai.dataeng.sqml.db.tabular.RowMapFunction;
 import ai.dataeng.sqml.execution.Bundle;
-import ai.dataeng.sqml.flink.DefaultEnvironmentProvider;
-import ai.dataeng.sqml.flink.EnvironmentProvider;
+import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
+import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.flink.util.FlinkUtilities;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
 import ai.dataeng.sqml.ingest.NamePath;
@@ -32,7 +32,6 @@ import ai.dataeng.sqml.type.IntegerType;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.internal.connection.SimpleJdbcConnectionProvider;
@@ -63,7 +62,7 @@ public class Main2 {
     public static final Path outputBase = Path.of("tmp","datasource");
     public static final Path dbPath = Path.of("tmp","output");
 
-    private static final EnvironmentProvider envProvider = new DefaultEnvironmentProvider();
+    private static final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
 
     private static final JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
             .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false")
@@ -132,7 +131,7 @@ public class Main2 {
 
 
     public static void simpleDBPipeline(DataSourceRegistry ddRegistry) throws Exception {
-        StreamExecutionEnvironment flinkEnv = envProvider.get();
+        StreamExecutionEnvironment flinkEnv = envProvider.create();
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(flinkEnv);
 
 

@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.execution;
 
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
-import ai.dataeng.sqml.flink.DefaultEnvironmentProvider;
-import ai.dataeng.sqml.flink.EnvironmentProvider;
+import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
+import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
 import ai.dataeng.sqml.source.SourceDataset;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -12,7 +12,7 @@ public class SQMLServer {
     private final HierarchyKeyValueStore.Factory metadataStoreFactory;
     private final DataSourceRegistry registry;
 
-    private final EnvironmentProvider envProvider = new DefaultEnvironmentProvider();
+    private final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
 
     public SQMLServer(HierarchyKeyValueStore.Factory metadataStoreFactory) {
         this.metadataStoreFactory = metadataStoreFactory;
@@ -24,7 +24,7 @@ public class SQMLServer {
     }
 
     public void run(Bundle sqml) throws Exception {
-        StreamExecutionEnvironment flinkEnv = envProvider.get();
+        StreamExecutionEnvironment flinkEnv = envProvider.create();
         compile(sqml,flinkEnv);
         //4. Store bundle meta data and execute Flink Job
         flinkEnv.execute("somename");

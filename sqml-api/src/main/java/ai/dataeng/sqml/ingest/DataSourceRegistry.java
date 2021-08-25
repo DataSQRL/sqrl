@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
-import ai.dataeng.sqml.flink.EnvironmentProvider;
+import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.source.SourceDataset;
 import ai.dataeng.sqml.source.SourceTable;
 import ai.dataeng.sqml.source.SourceTableQualifiedName;
@@ -30,7 +30,7 @@ public class DataSourceRegistry {
         sourceDatasets.put(dataset.getName(),dataset);
     }
 
-    public synchronized void monitorDatasets(EnvironmentProvider envProvider) {
+    public synchronized void monitorDatasets(EnvironmentFactory envProvider) {
         Preconditions.checkArgument(monitor==null,"Monitor is already running");
         monitor = new DataSourceMonitor(envProvider, storeFactory);
         for (SourceDataset dataset : sourceDatasets.values()) dataset.addSourceTableListener(monitor);

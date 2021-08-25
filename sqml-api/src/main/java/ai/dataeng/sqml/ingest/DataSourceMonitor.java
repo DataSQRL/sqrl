@@ -1,24 +1,17 @@
 package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
-import ai.dataeng.sqml.flink.EnvironmentProvider;
+import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.flink.SaveToKeyValueStoreSink;
-import ai.dataeng.sqml.flink.util.BufferedLatestSelector;
 import ai.dataeng.sqml.flink.util.FlinkUtilities;
 import ai.dataeng.sqml.source.*;
-import com.google.common.base.Preconditions;
-import lombok.NonNull;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.flink.api.common.functions.ReduceFunction;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.util.OutputTag;
-
-import java.util.HashMap;
-import java.util.Map;
 
 class DataSourceMonitor implements SourceTableListener {
 
@@ -27,19 +20,19 @@ class DataSourceMonitor implements SourceTableListener {
     public static final String DATA_KEY = "data";
 
     private final int defaultParallelism = DEFAULT_PARALLELISM;
-    private final EnvironmentProvider envProvider;
+    private final EnvironmentFactory envProvider;
 
     private HierarchyKeyValueStore.Factory storeFactory;
 
 
-    public DataSourceMonitor(EnvironmentProvider envProvider, HierarchyKeyValueStore.Factory storeFactory) {
+    public DataSourceMonitor(EnvironmentFactory envProvider, HierarchyKeyValueStore.Factory storeFactory) {
         this.envProvider = envProvider;
         this.storeFactory = storeFactory;
     }
 
     @Override
     public void registerSourceTable(SourceTable sourceTable) throws SourceTableListener.DuplicateException {
-        StreamExecutionEnvironment flinkEnv = envProvider.get();
+        StreamExecutionEnvironment flinkEnv = envProvider.create();
 
         DataStream<SourceRecord> data = sourceTable.getDataStream(flinkEnv);
         if (sourceTable.hasSchema()) {

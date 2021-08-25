@@ -7,8 +7,8 @@ import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.db.tabular.JDBCSinkFactory;
 import ai.dataeng.sqml.db.tabular.RowMapFunction;
 import ai.dataeng.sqml.execution.Bundle;
-import ai.dataeng.sqml.flink.DefaultEnvironmentProvider;
-import ai.dataeng.sqml.flink.EnvironmentProvider;
+import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
+import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.function.PostgresFunctions;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
@@ -58,13 +58,13 @@ public class Main {
     Script script = parser.parse(new String(
         Files.readAllBytes(Paths.get(bundle.getMainScriptName()))));
 
-    final EnvironmentProvider envProvider = new DefaultEnvironmentProvider();
+    final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
 
     Metadata metadata = new Metadata(FunctionProvider.newFunctionProvider()
         .function(PostgresFunctions.SqmlSystemFunctions).build(), null,
         null, null, bundle, new SchemaProvider(null),
-        createDatasetRegistry(), envProvider.get(),
-        StreamTableEnvironment.create(envProvider.get())
+        createDatasetRegistry(), envProvider.create(),
+        StreamTableEnvironment.create(envProvider.create())
       );
 
     ImportPipelineResolver importPipeline = new ImportPipelineResolver(metadata);
