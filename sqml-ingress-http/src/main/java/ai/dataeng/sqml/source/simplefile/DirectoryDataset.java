@@ -38,7 +38,8 @@ public class DirectoryDataset implements SourceDataset {
         this.name = name;
         try {
             tableFiles = Files.list(directory).filter(f -> FileTable.supportedFile(f))
-                        .map(f -> new FileTable(this,f)).collect(Collectors.toMap(FileTable::getName, Function.identity()));
+                        .map(f -> new FileTable(this,f)).collect(Collectors.toMap(t->t.getName().toLowerCase(
+                    Locale.ROOT), Function.identity()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

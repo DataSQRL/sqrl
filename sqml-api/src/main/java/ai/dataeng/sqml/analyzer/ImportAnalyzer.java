@@ -13,7 +13,10 @@ import ai.dataeng.sqml.type.RelationType.ImportRelationType;
 import ai.dataeng.sqml.type.Type;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.Value;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonSubTypes;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -27,7 +30,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YA
 
 public class ImportAnalyzer {
 
-  private final Metadata metadata;
+  protected final Metadata metadata;
 
   public ImportAnalyzer(Metadata metadata) {
     this.metadata = metadata;
@@ -64,7 +67,7 @@ public class ImportAnalyzer {
       }
       Field type = importSchema.accept(new StateVisitor(),
           new ImportContext(node.getQualifiedName().getSuffix(),
-              scope));
+              scope, null));
       scope.addRootField(type);
       return scope;
     }
@@ -77,7 +80,7 @@ public class ImportAnalyzer {
     }
   }
 
-  public static class StateVisitor extends ImportSchemaVisitor<Field, ImportContext> {
+  public class StateVisitor extends ImportSchemaVisitor<Field, ImportContext> {
 
     @Override
     public Field visitSchema(ImportSchema importSchema, ImportContext context) {
@@ -106,7 +109,9 @@ public class ImportAnalyzer {
 
     @Override
     public Field visitNestedColumn(ImportNestedColumn importNestedColumn, ImportContext context) {
-      RelationType rel = new ImportRelationType(new RelationType(), importNestedColumn.name);
+      context.name = context.getName(importNestedColumn.name);
+      RelationType rel = new ImportRelationType(new RelationType(), importNestedColumn.name,
+          metadata.getTableHandle(context.name));
       for (ImportColumn column : importNestedColumn.columns) {
         Field field = column.accept(this, context);
         if (field.getType() instanceof RelationType) { //set parent
@@ -119,10 +124,19 @@ public class ImportAnalyzer {
   }
 
 
-  @Value
+  @AllArgsConstructor
+  @Getter
   public class ImportContext {
     public String stateName;
     public Scope scope;
+    public QualifiedName name;
+    public QualifiedName getName(String value) {
+      if (name == null) {
+        return QualifiedName.of(value);
+      } else {
+        return name.append(value);
+      }
+    }
   }
 
   public static abstract class ImportSchemaVisitor<R, C> {

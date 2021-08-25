@@ -68,7 +68,7 @@ public class GraphqlSchemaBuilder {
       Visitor visitor = new Visitor(analysis);
       analysis.getModel().accept(visitor, null);
       GraphQLSchema.Builder schemaBuilder = visitor.getBuilder();
-      System.out.println(new SchemaPrinter().print(schemaBuilder.build()));
+//      System.out.println(new SchemaPrinter().print(schemaBuilder.build()));
 
       return schemaBuilder.build();
     }

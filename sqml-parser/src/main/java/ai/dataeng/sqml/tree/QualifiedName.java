@@ -25,6 +25,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -154,6 +155,13 @@ public class QualifiedName {
 
   public QualifiedName getRest() {
     return QualifiedName.of(this.getParts().subList(1, this.getParts().size()));
+  }
+
+  public QualifiedName append(String name) {
+    List<String> newName = new ArrayList<>(this.getParts());
+    newName.add(name);
+
+    return QualifiedName.of(newName);
   }
 
   public static abstract class NamePart {

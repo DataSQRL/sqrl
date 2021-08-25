@@ -24,6 +24,10 @@ public class Bundle {
     private final Path path;
     //TODO: Add schema and hints
 
+    public static Bundle.Builder bundle() {
+        return new Bundle.Builder();
+    }
+
     private Bundle(Map<String, String> scriptsByname, String mainScriptName, Path path) {
         this.scriptsByname = scriptsByname;
         this.mainScriptName = mainScriptName;

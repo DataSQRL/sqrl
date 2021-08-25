@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.type;
 
 import ai.dataeng.sqml.analyzer.Field;
+import ai.dataeng.sqml.metadata.Metadata.TableHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -164,8 +165,17 @@ public class RelationType extends Type {
     }
   }
   public static class ImportRelationType extends NamedRelationType {
-    public ImportRelationType(RelationType delegate, String name) {
+
+    private final TableHandle tableHandle;
+
+    public ImportRelationType(RelationType delegate, String name,
+        TableHandle tableHandle) {
       super(delegate, name);
+      this.tableHandle = tableHandle;
+    }
+
+    public TableHandle getTableHandle() {
+      return tableHandle;
     }
 
     @Override
