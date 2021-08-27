@@ -1,5 +1,7 @@
-package ai.dataeng.sqml.ingest;
+package ai.dataeng.sqml.ingest.stats;
 
+import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.ingest.sketches.LogarithmicHistogram;
 import ai.dataeng.sqml.type.ArrayType;
 import ai.dataeng.sqml.type.ScalarType;

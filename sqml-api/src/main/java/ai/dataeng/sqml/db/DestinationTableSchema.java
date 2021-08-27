@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.db;
 
-import ai.dataeng.sqml.ingest.SourceTableSchema;
+import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.type.ScalarType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;

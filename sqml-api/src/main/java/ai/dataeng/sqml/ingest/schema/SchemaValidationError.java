@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.ingest;
+package ai.dataeng.sqml.ingest.schema;
 
 import ai.dataeng.sqml.source.SourceRecord;
 import lombok.Value;

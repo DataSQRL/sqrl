@@ -1,12 +1,11 @@
-package ai.dataeng.sqml.ingest;
+package ai.dataeng.sqml.ingest.schema;
 
-import ai.dataeng.sqml.db.DestinationTableSchema;
+import ai.dataeng.sqml.ingest.NamePath;
 import ai.dataeng.sqml.source.SourceRecord;
 import ai.dataeng.sqml.type.ScalarType;
 import ai.dataeng.sqml.type.TypeMapping;
 import com.google.common.base.Preconditions;
 import lombok.*;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 
 import java.io.Serializable;
 import java.util.*;

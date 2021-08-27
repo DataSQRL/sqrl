@@ -34,7 +34,7 @@ statement
 
 importDefinition
     : FUNCTION qualifiedName                                           #importFunction
-    | STATE qualifiedName                                              #importState
+    | qualifiedName                                                    #importData
     ;
 
 importAlias

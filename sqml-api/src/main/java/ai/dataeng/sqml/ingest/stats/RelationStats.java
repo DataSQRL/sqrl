@@ -1,7 +1,7 @@
-package ai.dataeng.sqml.ingest;
+package ai.dataeng.sqml.ingest.stats;
 
+import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.type.Type;
 import com.google.common.base.Preconditions;
 import lombok.ToString;
 import lombok.Value;

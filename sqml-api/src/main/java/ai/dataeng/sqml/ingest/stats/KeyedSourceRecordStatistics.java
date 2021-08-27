@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.ingest;
+package ai.dataeng.sqml.ingest.stats;
 
 import ai.dataeng.sqml.flink.util.FlinkUtilities;
 import ai.dataeng.sqml.source.SourceRecord;

@@ -1,8 +1,9 @@
-package ai.dataeng.sqml.ingest;
+package ai.dataeng.sqml.ingest.shredding;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
+import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.source.SourceRecord;
-import ai.dataeng.sqml.type.DateTimeType;
 import lombok.Value;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.types.Row;

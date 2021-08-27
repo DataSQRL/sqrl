@@ -1,13 +1,11 @@
-package ai.dataeng.sqml.ingest;
+package ai.dataeng.sqml.ingest.stats;
 
+import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.source.SourceRecord;
-import ai.dataeng.sqml.type.Type;
 import lombok.ToString;
 import lombok.Value;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 @Value
 public class SourceTableStatistics implements Serializable {

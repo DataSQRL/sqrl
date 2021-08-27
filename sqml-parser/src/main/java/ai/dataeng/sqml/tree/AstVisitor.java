@@ -38,7 +38,7 @@ public abstract class AstVisitor<R, C> {
   protected R visitImportFunction(ImportFunction node, C context) {
     return visitImport(node, context);
   }
-  protected R visitImportState(ImportState node, C context) {
+  protected R visitImportState(ImportData node, C context) {
     return visitImport(node, context);
   }
 

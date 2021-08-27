@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.type;
 
 import ai.dataeng.sqml.ingest.NamePath;
-import ai.dataeng.sqml.ingest.SchemaAdjustment;
-import ai.dataeng.sqml.ingest.SchemaAdjustmentSettings;
+import ai.dataeng.sqml.ingest.schema.SchemaAdjustment;
+import ai.dataeng.sqml.ingest.schema.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -16,12 +16,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import org.apache.flink.api.common.typeinfo.BasicArrayTypeInfo;
-import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.typeutils.ObjectArrayTypeInfo;
-import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.types.AbstractDataType;
 
 public class TypeMapping {
 

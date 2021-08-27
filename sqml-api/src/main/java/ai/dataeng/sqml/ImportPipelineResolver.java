@@ -1,44 +1,24 @@
 package ai.dataeng.sqml;
 
-import static org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonTypeInfo.Id.DEDUCTION;
-
-import ai.dataeng.sqml.analyzer.Field;
-import ai.dataeng.sqml.db.tabular.RowMapFunction;
 import ai.dataeng.sqml.flink.util.FlinkUtilities;
 import ai.dataeng.sqml.ingest.NamePath;
-import ai.dataeng.sqml.ingest.RecordShredder;
-import ai.dataeng.sqml.ingest.SchemaAdjustmentSettings;
-import ai.dataeng.sqml.ingest.SchemaValidationError;
-import ai.dataeng.sqml.ingest.SchemaValidationProcess;
-import ai.dataeng.sqml.ingest.SourceTableSchema;
-import ai.dataeng.sqml.ingest.SourceTableStatistics;
+import ai.dataeng.sqml.ingest.shredding.RecordShredder;
+import ai.dataeng.sqml.ingest.schema.SchemaAdjustmentSettings;
+import ai.dataeng.sqml.ingest.schema.SchemaValidationError;
+import ai.dataeng.sqml.ingest.schema.SchemaValidationProcess;
+import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
+import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.source.SourceRecord;
 import ai.dataeng.sqml.source.SourceTable;
 import ai.dataeng.sqml.tree.AstVisitor;
-import ai.dataeng.sqml.tree.Import;
-import ai.dataeng.sqml.tree.ImportFunction;
-import ai.dataeng.sqml.tree.ImportState;
+import ai.dataeng.sqml.tree.ImportData;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.tree.Statement;
-import ai.dataeng.sqml.type.RelationType;
-import ai.dataeng.sqml.type.RelationType.ImportRelationType;
-import ai.dataeng.sqml.type.Type;
-import java.io.IOException;
-import java.nio.file.Path;
+
 import java.util.List;
-import lombok.Value;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonSubTypes;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.DatabindContext;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JavaType;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.jsontype.impl.TypeIdResolverBase;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
@@ -70,7 +50,7 @@ public class ImportPipelineResolver {
     }
 
     @Override
-    protected Void visitImportState(ImportState node, Void context) {
+    protected Void visitImportState(ImportData node, Void context) {
       String loc = node.getQualifiedName().getParts().get(0);
       String tableName = node.getQualifiedName().getParts().get(1);
 

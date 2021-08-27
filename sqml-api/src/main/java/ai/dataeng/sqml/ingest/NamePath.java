@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.ingest;
 
+import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.tree.QualifiedName;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
@@ -8,7 +9,6 @@ import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
 import scala.Array;
 
-import javax.naming.Name;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -23,7 +23,7 @@ public class NamePath implements Iterable<String>, Serializable {
     private NamePath(@NonNull String... names) {
         this.names = names;
         for (int i = 0; i < names.length; i++) {
-            names[i]=SourceTableSchema.normalizeName(names[i]);
+            names[i]= SourceTableSchema.normalizeName(names[i]);
         }
     }
 

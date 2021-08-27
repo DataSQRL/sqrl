@@ -4,7 +4,7 @@ import ai.dataeng.sqml.db.DestinationTableSchema;
 import ai.dataeng.sqml.execution.Bundle;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
-import ai.dataeng.sqml.ingest.SourceTableStatistics;
+import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.query.GraphqlQueryProvider;
 import ai.dataeng.sqml.registry.ScriptRegistry;
 import ai.dataeng.sqml.schema.SchemaProvider;

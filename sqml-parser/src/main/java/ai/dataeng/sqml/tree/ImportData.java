@@ -15,12 +15,11 @@ package ai.dataeng.sqml.tree;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
-public final class ImportState extends Import {
+public final class ImportData extends Import {
 
-  public ImportState(NodeLocation location, QualifiedName qualifiedName) {
-    super(location, Import.ImportType.STATE, qualifiedName);
+  public ImportData(NodeLocation location, QualifiedName qualifiedName) {
+    super(location, Import.ImportType.DATA, qualifiedName);
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
@@ -39,7 +38,7 @@ public final class ImportState extends Import {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ImportState anImport = (ImportState) o;
+    ImportData anImport = (ImportData) o;
     return Objects.equals(location, anImport.location) && Objects
         .equals(qualifiedName, anImport.qualifiedName);
   }
@@ -61,7 +60,4 @@ public final class ImportState extends Import {
     return qualifiedName;
   }
 
-  public enum ImportType {
-    FUNCTION, SOURCE, SCRIPT, PUBLIC
-  }
 }

@@ -4,6 +4,8 @@ import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.flink.SaveToKeyValueStoreSink;
 import ai.dataeng.sqml.flink.util.FlinkUtilities;
+import ai.dataeng.sqml.ingest.stats.KeyedSourceRecordStatistics;
+import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.source.*;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.flink.api.common.functions.ReduceFunction;

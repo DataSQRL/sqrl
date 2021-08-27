@@ -74,6 +74,6 @@ public abstract class Import extends Node {
   }
 
   public enum ImportType {
-    FUNCTION, STATE, SCRIPT, PUBLIC
+    FUNCTION, DATA
   }
 }

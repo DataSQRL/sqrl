@@ -1,11 +1,7 @@
-package ai.dataeng.sqml.ingest;
+package ai.dataeng.sqml.ingest.schema;
 
 import ai.dataeng.sqml.source.SourceRecord;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.typeutils.RowTypeInfo;
-import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
-import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 

@@ -1,6 +1,6 @@
-package ai.dataeng.sqml.ingest;
+package ai.dataeng.sqml.ingest.schema;
 
-import ai.dataeng.sqml.source.SourceRecord;
+import ai.dataeng.sqml.ingest.NamePath;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;

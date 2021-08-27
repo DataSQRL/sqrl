@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.ingest;
+package ai.dataeng.sqml.ingest.shredding;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
 import ai.dataeng.sqml.source.SourceRecord;

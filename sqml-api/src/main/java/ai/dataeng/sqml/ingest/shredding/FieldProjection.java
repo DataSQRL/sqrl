@@ -1,6 +1,7 @@
-package ai.dataeng.sqml.ingest;
+package ai.dataeng.sqml.ingest.shredding;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
+import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.type.IntegerType;
 import ai.dataeng.sqml.type.ScalarType;
 import ai.dataeng.sqml.type.UuidType;

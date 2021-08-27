@@ -13,12 +13,12 @@ import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.flink.util.FlinkUtilities;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
 import ai.dataeng.sqml.ingest.NamePath;
-import ai.dataeng.sqml.ingest.RecordShredder;
-import ai.dataeng.sqml.ingest.SchemaAdjustmentSettings;
-import ai.dataeng.sqml.ingest.SchemaValidationError;
-import ai.dataeng.sqml.ingest.SchemaValidationProcess;
-import ai.dataeng.sqml.ingest.SourceTableSchema;
-import ai.dataeng.sqml.ingest.SourceTableStatistics;
+import ai.dataeng.sqml.ingest.shredding.RecordShredder;
+import ai.dataeng.sqml.ingest.schema.SchemaAdjustmentSettings;
+import ai.dataeng.sqml.ingest.schema.SchemaValidationError;
+import ai.dataeng.sqml.ingest.schema.SchemaValidationProcess;
+import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
+import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.source.SourceDataset;
 import ai.dataeng.sqml.source.SourceRecord;
 import ai.dataeng.sqml.source.SourceTable;
@@ -75,8 +75,8 @@ public class Main2 {
         DirectoryDataset dd = new DirectoryDataset(RETAIL_DATA_DIR);
         ddRegistry.addDataset(dd);
 
-//        collectStats(ddRegistry);
-        simpleDBPipeline(ddRegistry);
+        collectStats(ddRegistry);
+//        simpleDBPipeline(ddRegistry);
 
 //        testDB();
     }
