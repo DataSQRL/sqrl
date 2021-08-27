@@ -1,11 +1,9 @@
-package ai.dataeng.sqml.source;
+package ai.dataeng.sqml.ingest.source;
 
 import lombok.NonNull;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;

@@ -1,12 +1,7 @@
 package ai.dataeng.sqml.source.util;
 
-import ai.dataeng.sqml.source.SourceRecord;
-import ai.dataeng.sqml.time.Time;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 
-import java.nio.file.attribute.FileTime;
-import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 

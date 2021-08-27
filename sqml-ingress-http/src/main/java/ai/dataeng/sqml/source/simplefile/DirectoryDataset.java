@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.source.simplefile;
 
-import ai.dataeng.sqml.source.SourceDataset;
-import ai.dataeng.sqml.source.SourceTable;
-import ai.dataeng.sqml.source.SourceTableListener;
+import ai.dataeng.sqml.ingest.source.SourceDataset;
+import ai.dataeng.sqml.ingest.source.SourceTable;
+import ai.dataeng.sqml.ingest.source.SourceTableListener;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
@@ -14,9 +14,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * A {@link SourceDataset} that treats all files matching a certain set of extensions in a given directory as {@link ai.dataeng.sqml.source.SourceTable}.
+ * A {@link SourceDataset} that treats all files matching a certain set of extensions in a given directory as {@link SourceTable}.
  *
- * TODO: This dataset currently does not watch the directory for new files to add as {@link ai.dataeng.sqml.source.SourceTable}
+ * TODO: This dataset currently does not watch the directory for new files to add as {@link SourceTable}
  * to the registered {@link SourceTableListener}. It only looks for files when it is first created.
  */
 public class DirectoryDataset implements SourceDataset {

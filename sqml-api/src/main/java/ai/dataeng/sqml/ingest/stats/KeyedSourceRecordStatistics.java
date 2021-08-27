@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.ingest.stats;
 
 import ai.dataeng.sqml.flink.util.FlinkUtilities;
-import ai.dataeng.sqml.source.SourceRecord;
+import ai.dataeng.sqml.ingest.source.SourceRecord;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;

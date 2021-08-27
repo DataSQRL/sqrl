@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.ingest.schema;
 
-import ai.dataeng.sqml.source.SourceRecord;
+import ai.dataeng.sqml.ingest.source.SourceRecord;
 import lombok.Value;
 
 import java.io.Serializable;

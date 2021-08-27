@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.ingest.stats;
 
 import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
-import ai.dataeng.sqml.source.SourceRecord;
+import ai.dataeng.sqml.ingest.source.SourceRecord;
 import lombok.ToString;
 import lombok.Value;
 

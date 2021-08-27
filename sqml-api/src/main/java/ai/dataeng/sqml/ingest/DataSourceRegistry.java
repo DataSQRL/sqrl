@@ -3,9 +3,9 @@ package ai.dataeng.sqml.ingest;
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
-import ai.dataeng.sqml.source.SourceDataset;
-import ai.dataeng.sqml.source.SourceTable;
-import ai.dataeng.sqml.source.SourceTableQualifiedName;
+import ai.dataeng.sqml.ingest.source.SourceDataset;
+import ai.dataeng.sqml.ingest.source.SourceTable;
+import ai.dataeng.sqml.ingest.source.SourceTableQualifiedName;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 

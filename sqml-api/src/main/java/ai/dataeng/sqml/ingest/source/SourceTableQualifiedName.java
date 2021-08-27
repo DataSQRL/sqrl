@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.source;
+package ai.dataeng.sqml.ingest.source;
 
 import lombok.NonNull;
 import lombok.Value;

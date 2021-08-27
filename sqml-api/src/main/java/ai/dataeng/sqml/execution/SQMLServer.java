@@ -4,7 +4,7 @@ import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
-import ai.dataeng.sqml.source.SourceDataset;
+import ai.dataeng.sqml.ingest.source.SourceDataset;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 

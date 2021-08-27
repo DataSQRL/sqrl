@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.ingest.schema;
 
 import ai.dataeng.sqml.ingest.NamePath;
-import ai.dataeng.sqml.source.SourceRecord;
+import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.type.ScalarType;
 import ai.dataeng.sqml.type.TypeMapping;
 import com.google.common.base.Preconditions;

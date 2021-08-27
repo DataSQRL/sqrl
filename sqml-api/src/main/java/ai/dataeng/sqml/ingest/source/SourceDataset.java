@@ -1,8 +1,7 @@
-package ai.dataeng.sqml.source;
+package ai.dataeng.sqml.ingest.source;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * A {@link SourceDataset} defines a group of {@link SourceTable} that comprise one semantically coherent dataset.
