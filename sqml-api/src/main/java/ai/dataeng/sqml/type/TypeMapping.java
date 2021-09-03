@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.type;
 
-import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.NamePathOld;
 import ai.dataeng.sqml.ingest.schema.SchemaAdjustment;
 import ai.dataeng.sqml.ingest.schema.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
@@ -38,7 +38,7 @@ public class TypeMapping {
         return original;
     }
 
-    public static SchemaAdjustment<Object> adjustType(ScalarType datatype, Object value, NamePath path, SchemaAdjustmentSettings settings) {
+    public static SchemaAdjustment<Object> adjustType(ScalarType datatype, Object value, NamePathOld path, SchemaAdjustmentSettings settings) {
         if (datatype instanceof StringType) {
             if (value instanceof String) return SchemaAdjustment.none();
             else if (settings.castDataType()) return SchemaAdjustment.data(Objects.toString(value));
@@ -105,11 +105,11 @@ public class TypeMapping {
 
 
 
-    private static SchemaAdjustment<Object> incompatibleType(ScalarType datatype, Object value, NamePath path) {
+    private static SchemaAdjustment<Object> incompatibleType(ScalarType datatype, Object value, NamePathOld path) {
         return SchemaAdjustment.error(path, value, String.format("Incompatible data type. Expected data of type [%s]",datatype));
     }
 
-    private static SchemaAdjustment parseFromString(Object value, Function<String,Object> parser, NamePath path, ScalarType datatype) {
+    private static SchemaAdjustment parseFromString(Object value, Function<String,Object> parser, NamePathOld path, ScalarType datatype) {
         Preconditions.checkArgument(value instanceof String);
         try {
             Object result = parser.apply((String)value);

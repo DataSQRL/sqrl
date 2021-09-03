@@ -1,7 +1,7 @@
 package ai.dataeng.sqml;
 
 import ai.dataeng.sqml.flink.util.FlinkUtilities;
-import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.NamePathOld;
 import ai.dataeng.sqml.ingest.shredding.RecordShredder;
 import ai.dataeng.sqml.ingest.schema.SchemaAdjustmentSettings;
 import ai.dataeng.sqml.ingest.schema.SchemaValidationError;
@@ -72,12 +72,12 @@ public class ImportPipelineResolver {
 
       for (int i = 1; i < parts.getParts().size(); i++) {
         //Todo: hackery, move to qualified name
-        NamePath shreddingPath;
+        NamePathOld shreddingPath;
         if (i == 1) {
-          shreddingPath = NamePath.ROOT;
+          shreddingPath = NamePathOld.ROOT;
         } else {
           List<String> shreddedPart = parts.getParts().subList(2, i + 1);
-          shreddingPath = NamePath.of(shreddedPart.toArray(new String[0]));
+          shreddingPath = NamePathOld.of(shreddedPart.toArray(new String[0]));
         }
         RecordShredder shredder = RecordShredder.from(shreddingPath, tableSchema);
         SingleOutputStreamOperator<Row> process = validate.flatMap(shredder.getProcess(),

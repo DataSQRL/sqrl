@@ -1,12 +1,11 @@
 package ai.dataeng.sqml.source.simplefile;
 
+import ai.dataeng.sqml.ingest.schema.name.Name;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.ingest.source.SourceTable;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -25,15 +24,14 @@ public class FileTable implements SourceTable {
 
     private final DirectoryDataset directory;
     private final Path file;
-    private final String name;
+    private final Name name;
 
     private final FileType fileType;
 
-    public FileTable(@Nonnull DirectoryDataset parent, @Nonnull Path file, @Nonnull String name) {
+    public FileTable(@Nonnull DirectoryDataset parent, @Nonnull Path file, @Nonnull Name name) {
         Preconditions.checkArgument(Files.exists(file) && Files.isRegularFile(file) && Files.isReadable(file),
                 "Not a readable file: %s", file);
         Preconditions.checkNotNull(supportedFile(file),"Not a supported file extension: %s", file);
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Not a valid name: %s", name);
         this.directory = parent;
         this.file = file;
         this.name = name;
@@ -41,7 +39,7 @@ public class FileTable implements SourceTable {
     }
 
     public FileTable(DirectoryDataset parent, Path file) {
-        this(parent, file, StringUtils.capitalize(FilenameUtils.removeExtension(file.getFileName().toString())));
+        this(parent, file, Name.of(FilenameUtils.removeExtension(file.getFileName().toString()),parent.getCanonicalizer()));
     }
 
     @Override
@@ -50,7 +48,7 @@ public class FileTable implements SourceTable {
     }
 
     @Override
-    public String getName() {
+    public Name getName() {
         return name;
     }
 

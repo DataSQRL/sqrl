@@ -3,8 +3,6 @@ package ai.dataeng.sqml;
 import static org.apache.flink.table.api.Expressions.$;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
-import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
-import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.db.tabular.JDBCSinkFactory;
 import ai.dataeng.sqml.db.tabular.RowMapFunction;
 import ai.dataeng.sqml.execution.Bundle;
@@ -12,7 +10,9 @@ import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.flink.util.FlinkUtilities;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
-import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.NamePathOld;
+import ai.dataeng.sqml.ingest.schema.external.DatasetDefinition;
+import ai.dataeng.sqml.ingest.schema.external.SchemaDefinition;
 import ai.dataeng.sqml.ingest.shredding.RecordShredder;
 import ai.dataeng.sqml.ingest.schema.SchemaAdjustmentSettings;
 import ai.dataeng.sqml.ingest.schema.SchemaValidationError;
@@ -22,7 +22,7 @@ import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.ingest.source.SourceTable;
-import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -35,6 +35,8 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.internal.connection.SimpleJdbcConnectionProvider;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -56,6 +58,7 @@ public class Main2 {
     public static final String RETAIL_SCRIPT_NAME = "c360";
     public static final Path RETAIL_SCRIPT_DIR = RETAIL_DIR.resolve(RETAIL_SCRIPT_NAME);
     public static final String SQML_SCRIPT_EXTENSION = ".sqml";
+    public static final Path RETAIL_PRE_SCHEMA_FILE = RETAIL_SCRIPT_DIR.resolve("pre-schema.yml");
 
     public static final String[] RETAIL_TABLE_NAMES = { "Customer", "Orders", "Product"};
 
@@ -70,12 +73,13 @@ public class Main2 {
             .build();
 
     public static void main(String[] args) throws Exception {
-        HierarchyKeyValueStore.Factory kvStoreFactory = new LocalFileHierarchyKeyValueStore.Factory(outputBase.toString());
-        DataSourceRegistry ddRegistry = new DataSourceRegistry(kvStoreFactory);
-        DirectoryDataset dd = new DirectoryDataset(RETAIL_DATA_DIR);
-        ddRegistry.addDataset(dd);
-
-        collectStats(ddRegistry);
+        readSchema();
+//        HierarchyKeyValueStore.Factory kvStoreFactory = new LocalFileHierarchyKeyValueStore.Factory(outputBase.toString());
+//        DataSourceRegistry ddRegistry = new DataSourceRegistry(kvStoreFactory);
+//        DirectoryDataset dd = new DirectoryDataset(RETAIL_DATA_DIR);
+//        ddRegistry.addDataset(dd);
+//
+//        collectStats(ddRegistry);
 //        simpleDBPipeline(ddRegistry);
 
 //        testDB();
@@ -128,6 +132,15 @@ public class Main2 {
         flinkEnv.execute();
     }
 
+    public static void readSchema() throws Exception {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        SchemaDefinition importSchema = mapper.readValue(RETAIL_PRE_SCHEMA_FILE.toFile(),
+                SchemaDefinition.class);
+
+        for (DatasetDefinition dd : importSchema.datasets) {
+            System.out.println(dd.name);
+        }
+    }
 
 
     public static void simpleDBPipeline(DataSourceRegistry ddRegistry) throws Exception {
@@ -139,14 +152,14 @@ public class Main2 {
 
         SourceDataset dd = ddRegistry.getDataset(RETAIL_DATA_DIR_NAME);
 
-        Map<String,NamePath[]> imports = new HashMap<>();
-        imports.put(RETAIL_TABLE_NAMES[0],new NamePath[]{NamePath.ROOT}); //Customer
-        imports.put(RETAIL_TABLE_NAMES[1],new NamePath[]{NamePath.ROOT, NamePath.of("entries")}); //Order
-        imports.put(RETAIL_TABLE_NAMES[2],new NamePath[]{NamePath.ROOT}); //Product
+        Map<String, NamePathOld[]> imports = new HashMap<>();
+        imports.put(RETAIL_TABLE_NAMES[0],new NamePathOld[]{NamePathOld.ROOT}); //Customer
+        imports.put(RETAIL_TABLE_NAMES[1],new NamePathOld[]{NamePathOld.ROOT, NamePathOld.of("entries")}); //Order
+        imports.put(RETAIL_TABLE_NAMES[2],new NamePathOld[]{NamePathOld.ROOT}); //Product
 
         Map<String,Table> shreddedImports = new HashMap<>();
 
-        for (Map.Entry<String,NamePath[]> importEntry : imports.entrySet()) {
+        for (Map.Entry<String, NamePathOld[]> importEntry : imports.entrySet()) {
             String tableName = importEntry.getKey();
             SourceTable stable = dd.getTable(tableName);
             SourceTableStatistics tableStats = ddRegistry.getTableStatistics(stable);
@@ -157,7 +170,7 @@ public class Main2 {
             SingleOutputStreamOperator<SourceRecord> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, tableSchema, SchemaAdjustmentSettings.DEFAULT));
             validate.getSideOutput(schemaErrorTag).addSink(new PrintSinkFunction<>()); //TODO: handle errors
 
-            for (NamePath shreddingPath : importEntry.getValue()) {
+            for (NamePathOld shreddingPath : importEntry.getValue()) {
                 RecordShredder shredder = RecordShredder.from(shreddingPath, tableSchema);
                 SingleOutputStreamOperator<Row> process = validate.flatMap(shredder.getProcess(),
                         FlinkUtilities.convert2RowTypeInfo(shredder.getResultSchema()));

@@ -14,40 +14,40 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 @Value
-public class NamePath implements Iterable<String>, Serializable {
+public class NamePathOld implements Iterable<String>, Serializable {
 
-    public static NamePath ROOT = new NamePath(new String[0]);
+    public static NamePathOld ROOT = new NamePathOld(new String[0]);
 
     private final String[] names;
 
-    private NamePath(@NonNull String... names) {
+    private NamePathOld(@NonNull String... names) {
         this.names = names;
         for (int i = 0; i < names.length; i++) {
             names[i]= SourceTableSchema.normalizeName(names[i]);
         }
     }
 
-    public static NamePath of(@NonNull String... names) {
-        return new NamePath(names);
+    public static NamePathOld of(@NonNull String... names) {
+        return new NamePathOld(names);
     }
 
-    public NamePath resolve(@NonNull String name) {
+    public NamePathOld resolve(@NonNull String name) {
         name = SourceTableSchema.normalizeName(name);
         String[] newnames = Arrays.copyOf(names,names.length+1);
         newnames[names.length] = name.trim();
-        return new NamePath(newnames);
+        return new NamePathOld(newnames);
     }
 
-    public NamePath resolve(@NonNull NamePath sub) {
+    public NamePathOld resolve(@NonNull NamePathOld sub) {
         String[] newnames = Arrays.copyOf(names,names.length+sub.names.length);
         Array.copy(sub.names, 0, newnames, names.length, sub.names.length);
-        return new NamePath(newnames);
+        return new NamePathOld(newnames);
     }
 
-    public NamePath prefix(int depth) {
+    public NamePathOld prefix(int depth) {
         if (depth==0) return ROOT;
         String[] newnames = Arrays.copyOf(names,depth);
-        return new NamePath(newnames);
+        return new NamePathOld(newnames);
     }
 
     public int getNumComponents() {

@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.ingest.shredding;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
-import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.NamePathOld;
 import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import lombok.Value;
@@ -22,7 +22,7 @@ public class RecordShredder {
     private final RecordShredderFlatMap process;
 
 
-    public static RecordShredder from(NamePath tableIdentifier, FieldProjection[][] keyProjections, SourceTableSchema schema, RecordProjection[] recordProjections) {
+    public static RecordShredder from(NamePathOld tableIdentifier, FieldProjection[][] keyProjections, SourceTableSchema schema, RecordProjection[] recordProjections) {
         Preconditions.checkArgument(keyProjections.length==tableIdentifier.getNumComponents()+1,"Invalid number of projections provided: %s", keyProjections);
 
         DestinationTableSchema.Builder builder = DestinationTableSchema.builder();
@@ -30,7 +30,7 @@ public class RecordShredder {
         //Add parent keys
         for (int depth = 0; depth < keyProjections.length; depth ++) {
             FieldProjection[] proj = keyProjections[depth];
-            NamePath base = tableIdentifier.prefix(depth);
+            NamePathOld base = tableIdentifier.prefix(depth);
 
             for (int projNo = 0; projNo < proj.length; projNo++) {
                 String prefix = "";
@@ -47,7 +47,7 @@ public class RecordShredder {
             boolean isKey = false;
             for (FieldProjection proj : keyProjections[keyProjections.length-1]) {
                 if (proj instanceof FieldProjection.NamePath) {
-                    NamePath np = ((FieldProjection.NamePath)proj).getPath();
+                    NamePathOld np = ((FieldProjection.NamePath)proj).getPath();
                     if (np.getNumComponents()==1 && np.getComponent(0).equals(fieldName)) isKey = true;
                 }
             }
@@ -69,11 +69,11 @@ public class RecordShredder {
                         keyProjections, recordProjections));
     }
 
-    public static RecordShredder from(NamePath tableIdentifier, SourceTableSchema schema) {
+    public static RecordShredder from(NamePathOld tableIdentifier, SourceTableSchema schema) {
         return from(tableIdentifier,defaultParentKeys(tableIdentifier,schema),schema, new RecordProjection[]{RecordProjection.DEFAULT_TIMESTAMP});
     }
 
-    private static final FieldProjection[][] defaultParentKeys(NamePath tableIdentifier, SourceTableSchema schema) {
+    private static final FieldProjection[][] defaultParentKeys(NamePathOld tableIdentifier, SourceTableSchema schema) {
         int depth = tableIdentifier.getNumComponents();
         FieldProjection[][] projs = new FieldProjection[depth+1][];
         for (int i = 0; i < projs.length; i++) {
@@ -94,13 +94,13 @@ public class RecordShredder {
 
     public static class RecordShredderFlatMap implements FlatMapFunction<SourceRecord, Row> {
 
-        private final NamePath tableIdentifier;
+        private final NamePathOld tableIdentifier;
         private final int rowLength;
         private final String[] sourceTableFields;
         private final FieldProjection[][] keyProjections;
         private final RecordProjection[] recordProjections;
 
-        public RecordShredderFlatMap(NamePath tableIdentifier, int rowLength, String[] sourceTableFields,
+        public RecordShredderFlatMap(NamePathOld tableIdentifier, int rowLength, String[] sourceTableFields,
                                      FieldProjection[][] keyProjections, RecordProjection[] recordProjections) {
             this.tableIdentifier = tableIdentifier;
             this.rowLength = rowLength;

@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.ingest.shredding;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
+import ai.dataeng.sqml.ingest.NamePathOld;
 import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.type.IntegerType;
 import ai.dataeng.sqml.type.ScalarType;
@@ -41,9 +42,9 @@ public interface FieldProjection extends Serializable {
     @Value
     class NamePath implements FieldProjection {
 
-        private final ai.dataeng.sqml.ingest.NamePath path;
+        private final NamePathOld path;
 
-        public NamePath(ai.dataeng.sqml.ingest.NamePath path) {
+        public NamePath(NamePathOld path) {
             Preconditions.checkArgument(path.getNumComponents()>0);
             this.path = path;
         }

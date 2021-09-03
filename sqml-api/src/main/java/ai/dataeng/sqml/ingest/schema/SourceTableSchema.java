@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.ingest.schema;
 
-import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.NamePathOld;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.type.ScalarType;
 import ai.dataeng.sqml.type.TypeMapping;
@@ -27,11 +27,11 @@ public class SourceTableSchema implements Serializable {
     }
 
     public SchemaAdjustment<SourceRecord> verifyAndAdjust(SourceRecord record, SchemaAdjustmentSettings settings) {
-        SchemaAdjustment<Map<String,Object>> result = verifyAndAdjustTable(record.getData(), table, NamePath.ROOT, settings);
+        SchemaAdjustment<Map<String,Object>> result = verifyAndAdjustTable(record.getData(), table, NamePathOld.ROOT, settings);
         return new SchemaAdjustment(result.transformedData()?record:null, result.getError());
     }
 
-    private static SchemaAdjustment<Map<String,Object>> verifyAndAdjustTable(Map<String, Object> tableData, Table tableSchema, NamePath path, SchemaAdjustmentSettings settings) {
+    private static SchemaAdjustment<Map<String,Object>> verifyAndAdjustTable(Map<String, Object> tableData, Table tableSchema, NamePathOld path, SchemaAdjustmentSettings settings) {
         Iterator<Map.Entry<String,Object>> dataIter = tableData.entrySet().iterator();
         int nonNullElements = 0;
         boolean transformed = false;
@@ -164,7 +164,7 @@ public class SourceTableSchema implements Serializable {
         else return SchemaAdjustment.none();
     }
 
-    private static SchemaAdjustment<Object> verifyAndAdjustField(@NonNull Object data, Element element, NamePath path, SchemaAdjustmentSettings settings) {
+    private static SchemaAdjustment<Object> verifyAndAdjustField(@NonNull Object data, Element element, NamePathOld path, SchemaAdjustmentSettings settings) {
         if (element.isNestedTable()) {
             if (data instanceof Map) {
                 SchemaAdjustment<Map<String,Object>> nestedAdjust = verifyAndAdjustTable((Map)data,(Table)element,path,settings);
@@ -177,11 +177,11 @@ public class SourceTableSchema implements Serializable {
         } else {
             Field field = (Field) element;
             //Validate and/or cast data type
-            return TypeMapping.adjustType(field.type, data, path, settings);
+            return TypeMapping.adjustType(field.getType(), data, path, settings);
         }
     }
 
-    public Element getElement(NamePath path) {
+    public Element getElement(NamePathOld path) {
         return table.getElement(path);
     }
 
@@ -251,8 +251,8 @@ public class SourceTableSchema implements Serializable {
             return numFields;
         }
 
-        public Element getElement(NamePath path) {
-            if (path.equals(NamePath.ROOT)) return this;
+        public Element getElement(NamePathOld path) {
+            if (path.equals(NamePathOld.ROOT)) return this;
             Element base = this;
             for (String nested : path) {
                 Preconditions.checkArgument(base instanceof Table, "Invalid path traverses through field: %s", path);

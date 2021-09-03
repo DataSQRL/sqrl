@@ -1,10 +1,11 @@
 package ai.dataeng.sqml.source.simplefile;
 
+import ai.dataeng.sqml.ingest.schema.name.Name;
+import ai.dataeng.sqml.ingest.schema.name.NameCanonicalizer;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceTable;
 import ai.dataeng.sqml.ingest.source.SourceTableListener;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,29 +25,29 @@ public class DirectoryDataset implements SourceDataset {
     public static final String[] FILE_EXTENSIONS = {"csv", "json"};
 
     private final Path directory;
-    private final String name;
+    private final Name name;
+    private final NameCanonicalizer canonicalizer= NameCanonicalizer.LOWERCASE_ENGLISH;
 
-    private final Map<String,FileTable> tableFiles;
+    private final Map<Name,FileTable> tableFiles;
 
     private final Set<SourceTableListener> listeners = new HashSet<>();
 
-    public DirectoryDataset(Path directory, String name) {
+    public DirectoryDataset(Path directory, Name name) {
         Preconditions.checkArgument(Files.exists(directory) && Files.isDirectory(directory) && Files.isReadable(directory),
                 "Not a readable directory: %s", directory);
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Not a valid name: %s", name);
         this.directory = directory;
         this.name = name;
         try {
             tableFiles = Files.list(directory).filter(f -> FileTable.supportedFile(f))
-                        .map(f -> new FileTable(this,f)).collect(Collectors.toMap(t->t.getName().toLowerCase(
-                    Locale.ROOT), Function.identity()));
+                        .map(f -> new FileTable(this,f)).collect(Collectors.toMap(
+                                t->t.getName(), Function.identity()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public DirectoryDataset(Path directory) {
-        this(directory, directory.getFileName().toString());
+        this(directory, Name.system(directory.getFileName().toString()));
     }
 
     @Override
@@ -61,7 +62,7 @@ public class DirectoryDataset implements SourceDataset {
     }
 
     @Override
-    public String getName() {
+    public Name getName() {
         return name;
     }
 
@@ -71,8 +72,13 @@ public class DirectoryDataset implements SourceDataset {
     }
 
     @Override
-    public SourceTable getTable(String name) {
+    public SourceTable getTable(Name name) {
         return tableFiles.get(name);
+    }
+
+    @Override
+    public NameCanonicalizer getCanonicalizer() {
+        return canonicalizer;
     }
 
     @Override

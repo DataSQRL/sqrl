@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.ingest.stats;
 
-import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.NamePathOld;
 import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.ingest.sketches.LogarithmicHistogram;
 import ai.dataeng.sqml.type.ArrayType;
@@ -27,7 +27,7 @@ public class FieldStats implements Serializable {
     LogarithmicHistogram arrayCardinality;
     RelationStats nestedRelationStats;
 
-    public Type resolveType(NamePath name) {
+    public Type resolveType(NamePathOld name) {
         boolean isArray = arrayCardinality.getCount() > 0;
 
         Type type = null;

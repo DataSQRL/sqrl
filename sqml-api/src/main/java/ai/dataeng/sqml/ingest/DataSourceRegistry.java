@@ -2,6 +2,7 @@ package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
+import ai.dataeng.sqml.ingest.schema.name.Name;
 import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceTable;
@@ -12,12 +13,12 @@ import lombok.NonNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DataSourceRegistry {
+public class DataSourceRegistry implements DatasetLookup {
 
     private HierarchyKeyValueStore.Factory storeFactory;
     private HierarchyKeyValueStore store;
 
-    private Map<String, SourceDataset> sourceDatasets;
+    private Map<Name, SourceDataset> sourceDatasets;
     private DataSourceMonitor monitor;
 
     public DataSourceRegistry(HierarchyKeyValueStore.Factory storeFactory) {
@@ -37,7 +38,7 @@ public class DataSourceRegistry {
         for (SourceDataset dataset : sourceDatasets.values()) dataset.addSourceTableListener(monitor);
     }
 
-    public SourceDataset getDataset(@NonNull String name) {
+    public SourceDataset getDataset(@NonNull Name name) {
         return sourceDatasets.get(name);
     }
 

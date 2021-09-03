@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.ingest.schema;
 
-import ai.dataeng.sqml.ingest.NamePath;
+import ai.dataeng.sqml.ingest.NamePathOld;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;
@@ -29,7 +29,7 @@ public class SchemaAdjustment<D> {
         return (SchemaAdjustment<T>) this;
     }
 
-    public static<D> SchemaAdjustment<D> error(NamePath fieldName, Object fieldValue, String message) {
+    public static<D> SchemaAdjustment<D> error(NamePathOld fieldName, Object fieldValue, String message) {
         return new SchemaAdjustment<>(null,new ErrorMessage(fieldName,fieldValue,message));
     }
 
@@ -45,7 +45,7 @@ public class SchemaAdjustment<D> {
     @Value
     public static class ErrorMessage implements Serializable {
 
-        private final @NonNull NamePath fieldName;
+        private final @NonNull NamePathOld fieldName;
         private final Object fieldValue;
         private final @NonNull String message;
 

@@ -1,6 +1,9 @@
 package ai.dataeng.sqml.ingest.source;
 
-import javax.annotation.Nonnull;
+import ai.dataeng.sqml.ingest.schema.name.Name;
+import ai.dataeng.sqml.ingest.schema.name.NameCanonicalizer;
+
+import lombok.NonNull;
 import java.util.Collection;
 
 /**
@@ -14,7 +17,7 @@ public interface SourceDataset {
      * Add execution environment to listen for source tables
      * @param listener
      */
-    public void addSourceTableListener(@Nonnull SourceTableListener listener);
+    public void addSourceTableListener(@NonNull SourceTableListener listener);
 
     /**
      * Each {@link SourceDataset} is uniquely identified by a name within an execution environment. Datasets are
@@ -22,7 +25,7 @@ public interface SourceDataset {
      *
      * @return Unique name of this source dataset
      */
-    public String getName();
+    public Name getName();
 
     /**
      * Returns all tables currently in the dataset
@@ -35,7 +38,13 @@ public interface SourceDataset {
      * @param name
      * @return
      */
-    public SourceTable getTable(String name);
+    public SourceTable getTable(Name name);
+
+    default public SourceTable getTable(String name) {
+        return getTable(Name.of(name,getCanonicalizer()));
+    }
+
+    public NameCanonicalizer getCanonicalizer();
 
     public default boolean containsTable(String name) {
         return getTable(name)!=null;

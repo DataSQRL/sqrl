@@ -1,5 +1,7 @@
 package ai.dataeng.sqml.ingest.source;
 
+import ai.dataeng.sqml.ingest.schema.name.Name;
+import ai.dataeng.sqml.ingest.schema.name.NamePath;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -19,13 +21,13 @@ public interface SourceTable {
      * Returns the name of this table. It must be unique within its {@link SourceDataset}
      * @return
      */
-    public String getName();
-
-    public default SourceTableQualifiedName getQualifiedName() {
-        return new SourceTableQualifiedName(getDataset().getName(),getName());
-    }
+    public Name getName();
 
     public boolean hasSchema();
+
+    default NamePath getQualifiedName() {
+        return NamePath.of(getDataset().getName(),getName());
+    }
 
     /**
      * Produces a {@link DataStream} of {@link SourceRecord} for this table source.
