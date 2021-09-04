@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.source.simplefile;
 
-import ai.dataeng.sqml.ingest.schema.name.Name;
-import ai.dataeng.sqml.ingest.schema.name.NameCanonicalizer;
+import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceTable;
 import ai.dataeng.sqml.ingest.source.SourceTableListener;

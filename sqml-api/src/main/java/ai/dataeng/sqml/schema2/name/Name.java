@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.ingest.schema.name;
+package ai.dataeng.sqml.schema2.name;
 
 import java.io.Serializable;
 

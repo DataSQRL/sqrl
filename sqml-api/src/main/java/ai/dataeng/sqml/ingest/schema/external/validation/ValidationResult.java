@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.ingest.schema.external.validation;
 
-import ai.dataeng.sqml.ingest.schema.name.NamePath;
+import ai.dataeng.sqml.schema2.name.NamePath;
 import lombok.Value;
 
 import java.util.ArrayList;

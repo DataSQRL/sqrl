@@ -1,12 +1,11 @@
 package ai.dataeng.sqml.ingest.schema;
 
-import ai.dataeng.sqml.ingest.schema.name.Name;
+import ai.dataeng.sqml.schema2.constraint.Constraint;
+import ai.dataeng.sqml.schema2.name.Name;
 
 import java.util.List;
 
 public class FlexibleSchema {
-
-
 
     public static class Element {
 
@@ -32,7 +31,7 @@ public class FlexibleSchema {
 
         Name variantName;
 
-        boolean isArray;
+        int arrayDepth;
         boolean nonNull;
 
         List<Constraint> constraints;

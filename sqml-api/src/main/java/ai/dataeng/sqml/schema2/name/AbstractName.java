@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.ingest.schema.name;
+package ai.dataeng.sqml.schema2.name;
 
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;

@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.ingest.source;
 
-import ai.dataeng.sqml.ingest.schema.name.Name;
-import ai.dataeng.sqml.ingest.schema.name.NamePath;
+import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.schema2.name.NamePath;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 

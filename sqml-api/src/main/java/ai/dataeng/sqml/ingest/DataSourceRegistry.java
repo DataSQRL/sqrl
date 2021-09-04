@@ -2,7 +2,7 @@ package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
-import ai.dataeng.sqml.ingest.schema.name.Name;
+import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceTable;
