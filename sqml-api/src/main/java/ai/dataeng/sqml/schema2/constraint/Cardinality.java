@@ -42,6 +42,16 @@ public class Cardinality implements Constraint {
     }
 
     @Override
+    public Name getName() {
+        return NAME;
+    }
+
+    @Override
+    public Map<String, Object> export() {
+        return Map.of(Factory.KEYS[0], min, Factory.KEYS[1], max);
+    }
+
+    @Override
     public String toString() {
         return NAME.getDisplay() + "[" + min + ":" + max + "]";
     }

@@ -38,6 +38,17 @@ public class NotNull implements Constraint {
         return NAME.getDisplay();
     }
 
+    @Override
+    public Name getName() {
+        return NAME;
+    }
+
+    @Override
+    public Map<String, Object> export() {
+        return null;
+    }
+
+
     public static class Factory implements Constraint.Factory {
 
         @Override

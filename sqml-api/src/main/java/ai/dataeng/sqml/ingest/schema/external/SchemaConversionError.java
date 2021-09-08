@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.ingest.schema;
+package ai.dataeng.sqml.ingest.schema.external;
 
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.basic.SimpleConversionError;

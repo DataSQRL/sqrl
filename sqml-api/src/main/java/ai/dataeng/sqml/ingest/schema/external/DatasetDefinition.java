@@ -13,9 +13,5 @@ public class DatasetDefinition {
 
     public List<TableDefinition> tables;
 
-    public <R, C> R accept(SchemaDefinitionVisitor<R, C> visitor, C context, NamePath location) {
-        return visitor.visitDataset(this, context, location);
-    }
-
 
 }

@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class RelationType<F extends Field> implements Type {
+public class RelationType<F extends Field> implements Type, Iterable<F> {
 
     protected final List<F> fields;
 
@@ -34,6 +34,15 @@ public class RelationType<F extends Field> implements Type {
 
     public static<F extends Field> Builder<F> build() {
         return new Builder<>();
+    }
+
+    public List<F> getFields() {
+        return fields;
+    }
+
+    @Override
+    public Iterator<F> iterator() {
+        return fields.iterator();
     }
 
     public static class Builder<F extends Field> extends AbstractBuilder<F,Builder<F>> {

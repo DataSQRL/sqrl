@@ -8,9 +8,5 @@ public class SchemaDefinition {
 
     public List<DatasetDefinition> datasets;
 
-    public <R, C> R accept(SchemaDefinitionVisitor<R, C> visitor, C context, NamePath location) {
-        return visitor.visitSchema(this, context, location);
-    }
-
 
 }

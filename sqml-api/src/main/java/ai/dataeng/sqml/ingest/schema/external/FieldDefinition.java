@@ -17,10 +17,6 @@ public class FieldDefinition extends AbstractElementDefinition implements FieldT
         return mixed!=null;
     }
 
-    public <R, C> R accept(SchemaDefinitionVisitor<R, C> visitor, C context, NamePath location) {
-        return visitor.visitField(this, context, location);
-    }
-
     @Override
     public String getType() {
         return type;

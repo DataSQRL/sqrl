@@ -18,6 +18,10 @@ public interface Constraint {
 
     public boolean appliesTo(Type type);
 
+    public Name getName();
+
+    public Map<String,Object> export();
+
     public interface Factory {
 
         Name getName();

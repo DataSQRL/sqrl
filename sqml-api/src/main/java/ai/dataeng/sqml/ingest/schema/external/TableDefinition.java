@@ -13,9 +13,4 @@ public class TableDefinition extends AbstractElementDefinition {
     public List<FieldDefinition> columns;
     public List<String> tests;
 
-    public <R, C> R accept(SchemaDefinitionVisitor<R, C> visitor, C context, NamePath location) {
-        return visitor.visitTable(this, context, location);
-    }
-
-
 }

@@ -11,6 +11,10 @@ public class SchemaElementDescription {
     private final String description;
 
 
+    public boolean isEmpty() {
+        return Strings.isNullOrEmpty(description);
+    }
+
     public static SchemaElementDescription of(String description) {
         if (Strings.isNullOrEmpty(description)) return NONE;
         else return new SchemaElementDescription(description);

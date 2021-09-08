@@ -3,7 +3,6 @@ package ai.dataeng.sqml.ingest.schema.external;
 import ai.dataeng.sqml.ingest.DatasetLookup;
 import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.ingest.schema.SchemaElementDescription;
 import ai.dataeng.sqml.ingest.schema.SpecialNameMapping;
 import ai.dataeng.sqml.ingest.schema.version.StringVersionId;
@@ -16,13 +15,13 @@ import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.basic.ConversionResult;
-import ai.dataeng.sqml.schema2.basic.SimpleConversionError;
 import ai.dataeng.sqml.schema2.constraint.Cardinality;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.schema2.constraint.ConstraintHelper;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NamePath;
 import ai.dataeng.sqml.schema2.name.SpecialName;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Value;
 
@@ -32,9 +31,12 @@ import java.util.*;
  * Converts a {@link SchemaDefinition} that is parsed out of a YAML file into a {@link FlexibleDatasetSchema}
  * to be used internally.
  *
- * 
+ * {@link SchemaDefinition} can represent two types of schema definitions: the schema of the imported datasets
+ * for an SQML script or the schema attached to a {@link SourceDataset} which can evolve over time.
+ * Hence, this conversion has two modes captured in {@link SchemaImport.Mode} for those respective schema types
+ * as they interpret the yaml slightly differently - most notably the import schema does not allow schema evolution.
  */
-public class SchemaConversion {
+public class SchemaImport {
 
     private enum Mode { IMPORT, EVOLUTION }
 
@@ -43,7 +45,7 @@ public class SchemaConversion {
     private List<SchemaConversionError> errors;
     private Mode mode;
 
-    public SchemaConversion(DatasetLookup datasetLookup, Constraint.Lookup constraintLookup) {
+    public SchemaImport(DatasetLookup datasetLookup, Constraint.Lookup constraintLookup) {
         this.datasetLookup = datasetLookup;
         this.constraintLookup = constraintLookup;
     }
@@ -211,7 +213,8 @@ public class SchemaConversion {
         List<Constraint> constraints = new ArrayList<>(tests.size());
         for (String testString : tests) {
             Constraint.Factory cf = constraintLookup.get(testString);
-            ConversionResult<Constraint, ConversionError> r = cf.create(Collections.EMPTY_MAP); //TODO: extract parameters from yaml
+            //TODO: extract parameters from yaml
+            ConversionResult<Constraint, ConversionError> r = cf.create(Collections.EMPTY_MAP);
             if (r.hasError()) errors.add(SchemaConversionError.convert(location,r.getError()));
             if (r.hasResult()) constraints.add(r.getResult());
         }
@@ -288,6 +291,19 @@ public class SchemaConversion {
             BasicType type = BasicType.getTypeByName(basicType);
             if (type==null) return null;
             return new BasicTypeParse(depth,type);
+        }
+
+        public static String export(FlexibleDatasetSchema.FieldType ft) {
+            Preconditions.checkArgument(ft.getType() instanceof BasicType);
+            return export(ft.getArrayDepth(),(BasicType) ft.getType());
+        }
+
+        public static String export(int arrayDepth, BasicType type) {
+            String r = type.getName();
+            for (int i = 0; i < arrayDepth; i++) {
+                r = "[" + r + "]";
+            }
+            return r;
         }
 
     }
