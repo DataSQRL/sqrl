@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.source.simplefile;
 
+import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
@@ -25,18 +26,16 @@ public class DirectoryDataset implements SourceDataset {
     public static final String[] FILE_EXTENSIONS = {"csv", "json"};
 
     private final Path directory;
-    private final Name name;
-    private final NameCanonicalizer canonicalizer= NameCanonicalizer.LOWERCASE_ENGLISH;
-
+    private final DatasetRegistration registration;
     private final Map<Name,FileTable> tableFiles;
 
     private final Set<SourceTableListener> listeners = new HashSet<>();
 
-    public DirectoryDataset(Path directory, Name name) {
+    public DirectoryDataset(DatasetRegistration registration, Path directory) {
         Preconditions.checkArgument(Files.exists(directory) && Files.isDirectory(directory) && Files.isReadable(directory),
                 "Not a readable directory: %s", directory);
+        this.registration = registration;
         this.directory = directory;
-        this.name = name;
         try {
             tableFiles = Files.list(directory).filter(f -> FileTable.supportedFile(f))
                         .map(f -> new FileTable(this,f)).collect(Collectors.toMap(
@@ -44,10 +43,6 @@ public class DirectoryDataset implements SourceDataset {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public DirectoryDataset(Path directory) {
-        this(directory, Name.system(directory.getFileName().toString()));
     }
 
     @Override
@@ -61,10 +56,6 @@ public class DirectoryDataset implements SourceDataset {
         }
     }
 
-    @Override
-    public Name getName() {
-        return name;
-    }
 
     @Override
     public Collection<? extends SourceTable> getTables() {
@@ -77,8 +68,8 @@ public class DirectoryDataset implements SourceDataset {
     }
 
     @Override
-    public NameCanonicalizer getCanonicalizer() {
-        return canonicalizer;
+    public DatasetRegistration getRegistration() {
+        return registration;
     }
 
     @Override
@@ -86,19 +77,18 @@ public class DirectoryDataset implements SourceDataset {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DirectoryDataset that = (DirectoryDataset) o;
-        return directory.equals(that.directory) && name.equals(that.name);
+        return directory.equals(that.directory);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(directory, name);
+        return Objects.hash(directory);
     }
 
     @Override
     public String toString() {
         return "DirectoryDataset{" +
                 "directory=" + directory +
-                ", name='" + name + '\'' +
                 '}';
     }
 }

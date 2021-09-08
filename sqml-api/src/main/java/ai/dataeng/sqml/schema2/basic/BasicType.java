@@ -8,9 +8,11 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public interface BasicType extends Type {
+public interface BasicType<JavaType> extends Type {
 
     String getName();
+
+    TypeConversion<JavaType> conversion();
 
     //TODO: replace by discovery pattern so that new datatype can be registered
     public static final BasicType[] ALL_TYPES = {BooleanType.INSTANCE, StringType.INSTANCE,

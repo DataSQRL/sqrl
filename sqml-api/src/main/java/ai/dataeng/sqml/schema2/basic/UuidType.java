@@ -1,10 +1,12 @@
 package ai.dataeng.sqml.schema2.basic;
 
-public class UuidType extends AbstractBasicType {
+import java.util.UUID;
+
+public class UuidType extends AbstractBasicType<UUID> {
 
     public static final UuidType INSTANCE = new UuidType();
 
     UuidType() {
-        super("UUID");
+        super("UUID", UUID.class, s -> UUID.fromString(s));
     }
 }

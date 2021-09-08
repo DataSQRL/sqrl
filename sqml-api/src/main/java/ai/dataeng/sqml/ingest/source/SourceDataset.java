@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.ingest.source;
 
+import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 
@@ -20,14 +21,6 @@ public interface SourceDataset {
     public void addSourceTableListener(@NonNull SourceTableListener listener);
 
     /**
-     * Each {@link SourceDataset} is uniquely identified by a name within an execution environment. Datasets are
-     * imported within an SQML script by that name.
-     *
-     * @return Unique name of this source dataset
-     */
-    public Name getName();
-
-    /**
      * Returns all tables currently in the dataset
      * @return
      */
@@ -41,13 +34,17 @@ public interface SourceDataset {
     public SourceTable getTable(Name name);
 
     default public SourceTable getTable(String name) {
-        return getTable(Name.of(name,getCanonicalizer()));
+        return getTable(getRegistration().toName(name));
     }
-
-    public NameCanonicalizer getCanonicalizer();
 
     public default boolean containsTable(String name) {
         return getTable(name)!=null;
+    }
+
+    public DatasetRegistration getRegistration();
+
+    public default Name getName() {
+        return getRegistration().getName();
     }
 
 }

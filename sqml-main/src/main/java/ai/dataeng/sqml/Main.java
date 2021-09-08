@@ -12,6 +12,7 @@ import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.function.PostgresFunctions;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
+import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.metadata.Metadata.TableHandle;
 import ai.dataeng.sqml.parser.SqmlParser;
@@ -95,7 +96,7 @@ public class Main {
   private DataSourceRegistry createDatasetRegistry() {
     HierarchyKeyValueStore.Factory kvStoreFactory = new LocalFileHierarchyKeyValueStore.Factory(outputBase.toString());
     DataSourceRegistry ddRegistry = new DataSourceRegistry(kvStoreFactory);
-    DirectoryDataset dd = new DirectoryDataset(RETAIL_DATA_DIR);
+    DirectoryDataset dd = new DirectoryDataset(DatasetRegistration.of(RETAIL_DATA_DIR.getFileName().toString()), RETAIL_DATA_DIR);
     ddRegistry.addDataset(dd);
     return ddRegistry;
   }

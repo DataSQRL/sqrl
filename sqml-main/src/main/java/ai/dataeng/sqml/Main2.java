@@ -76,7 +76,7 @@ public class Main2 {
         readSchema();
 //        HierarchyKeyValueStore.Factory kvStoreFactory = new LocalFileHierarchyKeyValueStore.Factory(outputBase.toString());
 //        DataSourceRegistry ddRegistry = new DataSourceRegistry(kvStoreFactory);
-//        DirectoryDataset dd = new DirectoryDataset(RETAIL_DATA_DIR);
+//        DirectoryDataset dd = new DirectoryDataset(DatasetRegistration.of(RETAIL_DATA_DIR.getFileName().toString()), RETAIL_DATA_DIR);
 //        ddRegistry.addDataset(dd);
 //
 //        collectStats(ddRegistry);

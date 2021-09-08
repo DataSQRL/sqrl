@@ -26,7 +26,7 @@ public interface SourceTable {
     public boolean hasSchema();
 
     default NamePath getQualifiedName() {
-        return NamePath.of(getDataset().getName(),getName());
+        return NamePath.of(getDataset().getRegistration().getName(),getName());
     }
 
     /**

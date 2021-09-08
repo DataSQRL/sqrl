@@ -39,7 +39,7 @@ public class FileTable implements SourceTable {
     }
 
     public FileTable(DirectoryDataset parent, Path file) {
-        this(parent, file, Name.of(FilenameUtils.removeExtension(file.getFileName().toString()),parent.getCanonicalizer()));
+        this(parent, file, parent.getRegistration().toName(FilenameUtils.removeExtension(file.getFileName().toString())));
     }
 
     @Override

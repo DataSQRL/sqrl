@@ -1,9 +1,10 @@
 package ai.dataeng.sqml.schema2;
 
 import ai.dataeng.sqml.schema2.name.Name;
+import com.google.common.base.Preconditions;
+import lombok.NonNull;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -11,7 +12,8 @@ public class RelationType<F extends Field> implements Type {
 
     protected final List<F> fields;
 
-    protected RelationType(List<F> fields) {
+    protected RelationType(@NonNull List<F> fields) {
+        //Preconditions.checkArgument(!fields.isEmpty()); TODO: should this be checked?
         this.fields = fields;
     }
 
@@ -29,4 +31,45 @@ public class RelationType<F extends Field> implements Type {
     public String toString() {
         return "{" + fields.stream().map(f -> f.toString()).collect(Collectors.joining("; ")) + "}";
     }
+
+    public static<F extends Field> Builder<F> build() {
+        return new Builder<>();
+    }
+
+    public static class Builder<F extends Field> extends AbstractBuilder<F,Builder<F>> {
+
+        public Builder() {
+            super(true);
+        }
+
+        public RelationType<F> build() {
+            return new RelationType<>(fields);
+        }
+    }
+
+    protected static class AbstractBuilder<F extends Field, B extends AbstractBuilder<F,B>> {
+
+        protected final List<F> fields = new ArrayList<>();
+        protected final Set<Name> fieldNames;
+
+        public AbstractBuilder(boolean checkFieldNameUniqueness) {
+            if (checkFieldNameUniqueness) fieldNames = new HashSet<>();
+            else fieldNames = null;
+        }
+
+        public boolean hasFieldWithName(@NonNull Name name) {
+            Preconditions.checkArgument(fieldNames!=null);
+            return fieldNames.contains(name);
+        }
+
+        public B add(@NonNull F field) {
+            Preconditions.checkArgument(fieldNames==null || !fieldNames.contains(field.getName()));
+            fields.add(field);
+            if (fieldNames!=null) fieldNames.add(field.getName());
+            return (B)this;
+        }
+
+    }
+
+
 }

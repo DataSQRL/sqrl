@@ -9,7 +9,7 @@ public class DatasetDefinition {
     public String name;
     public String version;
     public String description;
-    public Long applies_after;
+    public Long applies_at;
 
     public List<TableDefinition> tables;
 

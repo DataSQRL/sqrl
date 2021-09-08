@@ -1,6 +1,10 @@
 package ai.dataeng.sqml.schema2.constraint;
 
 import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.basic.ConversionError;
+import ai.dataeng.sqml.schema2.basic.ConversionResult;
+import ai.dataeng.sqml.schema2.basic.SimpleConversionError;
+import ai.dataeng.sqml.schema2.name.Name;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -16,28 +20,32 @@ public interface Constraint {
 
     public interface Factory {
 
-        String getName();
+        Name getName();
 
-        Constraint create(Map<String,Object> parameters);
+        ConversionResult<Constraint, ConversionError> create(Map<String,Object> parameters);
 
     }
 
     public interface Lookup {
 
-        public Factory get(String constraintName);
+        public Factory get(Name constraintName);
+
+        public default Factory get(String constraintName) {
+            return get(Name.system(constraintName));
+        }
 
     }
 
     //TODO: Discover Factories
-    public static final Constraint.Factory[] FACTORIES = {new NotNull.Factory()};
+    public static final Constraint.Factory[] FACTORIES = {new NotNull.Factory(), new Cardinality.Factory()};
 
     public static final Lookup FACTORY_LOOKUP = new Lookup() {
 
-        private final Map<String,Constraint.Factory> factoriesByName = Arrays.stream(FACTORIES).collect(Collectors.toMap(f -> f.getName().trim().toLowerCase(Locale.ENGLISH), Function.identity()));
+        private final Map<Name,Constraint.Factory> factoriesByName = Arrays.stream(FACTORIES).collect(Collectors.toMap(f -> f.getName(), Function.identity()));
 
         @Override
-        public Factory get(String constraintName) {
-            return factoriesByName.get(constraintName.trim().toLowerCase(Locale.ENGLISH));
+        public Factory get(Name constraintName) {
+            return factoriesByName.get(constraintName);
         }
     };
 
