@@ -17,10 +17,14 @@ public class DatasetRegistration {
     private final Map<VersionIdentifier, Version> versionMapper;
 //    private final VersionedDatasetSchema schema;
 
-    public DatasetRegistration(Name name, NameCanonicalizer canonicalizer) {
+    public DatasetRegistration(Name name, NameCanonicalizer canonicalizer, Map<VersionIdentifier, Version> versionMapper) {
         this.name = name;
         this.canonicalizer = canonicalizer;
-        this.versionMapper = new HashMap<>();
+        this.versionMapper = versionMapper;
+    }
+
+    public DatasetRegistration(Name name, NameCanonicalizer canonicalizer) {
+        this(name,canonicalizer, new HashMap<>());
     }
 
     public static DatasetRegistration of(String name) {

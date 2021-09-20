@@ -54,6 +54,14 @@ public class SchemaImport {
         errors.add(error);
     }
 
+    public boolean hasErrors() {
+        return !errors.isEmpty();
+    }
+
+    public List<SchemaConversionError> getErrors() {
+        return errors;
+    }
+
     public Map<Name, FlexibleDatasetSchema> convertImportSchema(SchemaDefinition schema) {
         errors = new ArrayList<>();
         mode = Mode.IMPORT;
@@ -75,7 +83,7 @@ public class SchemaImport {
             }
             NamePath location = NamePath.of(reg.getName());
             FlexibleDatasetSchema ddschema = convert(location, dataset, reg);
-            if (Strings.isNullOrEmpty(dataset.version) || !reg.hasVersionId(StringVersionId.of(dataset.version))) {
+            if (!reg.hasVersionId(ddschema.getVersionId())) {
                 addError(SchemaConversionError.fatal(location, "Invalid or unknown dataset version: %s", dataset.version));
             }
             result.put(reg.getName(), ddschema);
@@ -90,10 +98,7 @@ public class SchemaImport {
             addError(SchemaConversionError.warn(NamePath.ROOT, "Dataset name is ignored. Please refer to the documentation on how to change the name of a dataset"));
         }
         FlexibleDatasetSchema result = convert(NamePath.ROOT,dataset,source);
-        if (Strings.isNullOrEmpty(dataset.version)) {
-            addError(SchemaConversionError.fatal(NamePath.ROOT, "Dataset version is required to uniquely identify this schema evolution."));
-        }
-        VersionIdentifier versionId = StringVersionId.of(dataset.version);
+        VersionIdentifier versionId = result.getVersionId();
         Version version = source.getVersionById(versionId);
         if (version==null) {
             //Must specify a version then
@@ -103,16 +108,18 @@ public class SchemaImport {
                 version = new TimeVersion(dataset.applies_at);
             }
         } else {
-            if (dataset.applies_at!=null && !version.equals(new TimeVersion(dataset.applies_at))) {
-                addError(SchemaConversionError.fatal(NamePath.ROOT, "Version [%s] identifies an existing version with time point [%s] that does not match the provided time point [%s].",dataset.version, version, dataset.applies_at));
-            }
+            addError(SchemaConversionError.fatal(NamePath.ROOT, "Version [%s] identifies an existing version [%s]. Schema evolution version identifiers should be unique.",dataset.version, version));
         }
         return new SchemaEvolution(result,version);
     }
 
     private FlexibleDatasetSchema convert(NamePath location, DatasetDefinition dataset, DatasetRegistration source) {
         FlexibleDatasetSchema.Builder builder = new FlexibleDatasetSchema.Builder();
-        builder.setVersionId(StringVersionId.of(dataset.version));
+        if (Strings.isNullOrEmpty(dataset.version)) {
+            addError(SchemaConversionError.fatal(NamePath.ROOT, "Dataset version is required."));
+        } else {
+            builder.setVersionId(StringVersionId.of(dataset.version));
+        }
         builder.setDescription(SchemaElementDescription.of(dataset.description));
         for (TableDefinition table : dataset.tables) {
             Optional<FlexibleDatasetSchema.TableField> tableConvert = convert(location, table, source);
@@ -131,7 +138,7 @@ public class SchemaImport {
         builder.setPartialSchema(table.partial_schema==null?TableDefinition.PARTIAL_SCHEMA_DEFAULT:table.partial_schema);
         builder.setConstraints(convertConstraints(location,table.tests,source));
         if (table.columns==null || table.columns.isEmpty()) {
-            errors.add(SchemaConversionError.fatal(location,"Table does not have column definitions"));
+            addError(SchemaConversionError.fatal(location,"Table does not have column definitions"));
             return Optional.empty();
         }
         builder.setFields(convert(location,table.columns,source));
@@ -158,10 +165,10 @@ public class SchemaImport {
         final Map<Name, FieldTypeDefinition> ftds;
         if (field.mixed!=null) {
             if (field.type!=null || field.columns!=null || field.tests!=null) {
-                errors.add(SchemaConversionError.warn(location,"When [mixed] types are defined, field level type, column, and test definitions are ignored"));
+                addError(SchemaConversionError.warn(location,"When [mixed] types are defined, field level type, column, and test definitions are ignored"));
             }
             if (field.mixed.isEmpty()) {
-                errors.add(SchemaConversionError.fatal(location,"[mixed] type are empty"));
+                addError(SchemaConversionError.fatal(location,"[mixed] type are empty"));
             }
             ftds = new HashMap<>(field.mixed.size());
             for (Map.Entry<String,FieldTypeDefinitionImpl> entry : field.mixed.entrySet()) {
@@ -189,7 +196,7 @@ public class SchemaImport {
         List<Constraint> constraints = convertConstraints(location, ftd.getTests(), source);
         if (ftd.getColumns()!=null) {
             if (ftd.getType()!=null) {
-                errors.add(SchemaConversionError.warn(location,"Cannot define columns and type. Type is ignored"));
+                addError(SchemaConversionError.warn(location,"Cannot define columns and type. Type is ignored"));
             }
             arrayDepth = ConstraintHelper.getConstraint(constraints, Cardinality.class)
                     .map(c -> c.isSingleton()?0:1).orElse(1);
@@ -197,12 +204,12 @@ public class SchemaImport {
         } else if (!Strings.isNullOrEmpty(ftd.getType())) {
             BasicTypeParse btp = BasicTypeParse.parse(ftd.getType());
             if (btp==null) {
-                errors.add(SchemaConversionError.fatal(location,"Type unrecognized: %s", ftd.getType()));
+                addError(SchemaConversionError.fatal(location,"Type unrecognized: %s", ftd.getType()));
                 return Optional.empty();
             }
             type = btp.type; arrayDepth = btp.arrayDepth;
         } else {
-            errors.add(SchemaConversionError.fatal(location,"Type definition missing (specify either [type] or [columns])"));
+            addError(SchemaConversionError.fatal(location,"Type definition missing (specify either [type] or [columns])"));
             return Optional.empty();
         }
         return Optional.of(new FlexibleDatasetSchema.FieldType(variant, type, arrayDepth, constraints));
@@ -213,9 +220,13 @@ public class SchemaImport {
         List<Constraint> constraints = new ArrayList<>(tests.size());
         for (String testString : tests) {
             Constraint.Factory cf = constraintLookup.get(testString);
+            if (cf == null) {
+                addError(SchemaConversionError.warn(location,"Unknown test [%s] - this constraint is ignored", testString));
+                continue;
+            }
             //TODO: extract parameters from yaml
             ConversionResult<Constraint, ConversionError> r = cf.create(Collections.EMPTY_MAP);
-            if (r.hasError()) errors.add(SchemaConversionError.convert(location,r.getError()));
+            if (r.hasError()) addError(SchemaConversionError.convert(location,r.getError()));
             if (r.hasResult()) constraints.add(r.getResult());
         }
         return constraints;

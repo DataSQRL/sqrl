@@ -16,7 +16,7 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
     private final SchemaElementDescription description;
     private final VersionIdentifier versionId;
 
-    private FlexibleDatasetSchema(@NonNull List<TableField> fields, @NonNull SchemaElementDescription description, @NonNull VersionIdentifier versionId) {
+    private FlexibleDatasetSchema(@NonNull List<TableField> fields, @NonNull SchemaElementDescription description, VersionIdentifier versionId) {
         super(fields);
         this.description = description;
         this.versionId = versionId;

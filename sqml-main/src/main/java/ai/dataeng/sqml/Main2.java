@@ -10,14 +10,20 @@ import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.flink.util.FlinkUtilities;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
+import ai.dataeng.sqml.ingest.DatasetLookup;
+import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.NamePathOld;
+import ai.dataeng.sqml.ingest.schema.*;
 import ai.dataeng.sqml.ingest.schema.external.DatasetDefinition;
 import ai.dataeng.sqml.ingest.schema.external.SchemaDefinition;
+import ai.dataeng.sqml.ingest.schema.external.SchemaExport;
+import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
+import ai.dataeng.sqml.ingest.schema.version.StringVersionId;
+import ai.dataeng.sqml.ingest.schema.version.TimeVersion;
+import ai.dataeng.sqml.ingest.schema.version.Version;
+import ai.dataeng.sqml.ingest.schema.version.VersionIdentifier;
 import ai.dataeng.sqml.ingest.shredding.RecordShredder;
-import ai.dataeng.sqml.ingest.schema.SchemaAdjustmentSettings;
-import ai.dataeng.sqml.ingest.schema.SchemaValidationError;
-import ai.dataeng.sqml.ingest.schema.SchemaValidationProcess;
-import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
+import ai.dataeng.sqml.ingest.source.SourceTableListener;
 import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
@@ -28,6 +34,9 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.*;
 
+import ai.dataeng.sqml.schema2.constraint.Constraint;
+import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.IntegerType;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
@@ -35,6 +44,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.internal.connection.SimpleJdbcConnectionProvider;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -134,11 +144,70 @@ public class Main2 {
 
     public static void readSchema() throws Exception {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         SchemaDefinition importSchema = mapper.readValue(RETAIL_PRE_SCHEMA_FILE.toFile(),
                 SchemaDefinition.class);
 
-        for (DatasetDefinition dd : importSchema.datasets) {
-            System.out.println(dd.name);
+        SchemaImport importer = new SchemaImport(new MockDatasetLookup("0","1"), Constraint.FACTORY_LOOKUP);
+        Map<Name, FlexibleDatasetSchema> result = importer.convertImportSchema(importSchema);
+
+        if (importer.hasErrors()) {
+            System.out.println("Import errors:");
+            importer.getErrors().forEach(e -> System.out.println(e));
+        }
+
+        result.forEach((k,v) -> {
+            System.out.println(k.getDisplay());
+            v.forEach(t -> System.out.println(t.getName()));
+        });
+
+        SchemaExport exporter = new SchemaExport();
+        SchemaDefinition sd = exporter.export(result);
+
+        System.out.println("-------Exported JSON-------");
+        mapper.writeValue(System.out,sd);
+
+
+//        for (DatasetDefinition dd : importSchema.datasets) {
+//            System.out.println(dd.name);
+//        }
+    }
+
+    public static class MockDatasetLookup implements DatasetLookup {
+
+        private final Map<VersionIdentifier, Version> versionMapper;
+
+        MockDatasetLookup(String... versionIds) {
+            versionMapper = new HashMap<>(versionIds.length);
+            int i=0;
+            for (String id : versionIds) {
+                versionMapper.put(StringVersionId.of(id),new TimeVersion(i++));
+            }
+        }
+
+        @Override
+        public SourceDataset getDataset(final Name name) {
+            return new SourceDataset() {
+                @Override
+                public void addSourceTableListener(SourceTableListener listener) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public Collection<? extends SourceTable> getTables() {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public SourceTable getTable(Name name) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public DatasetRegistration getRegistration() {
+                    return new DatasetRegistration(name, NameCanonicalizer.LOWERCASE_ENGLISH, versionMapper);
+                }
+            };
         }
     }
 

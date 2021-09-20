@@ -1,6 +1,8 @@
 package ai.dataeng.sqml.schema2.basic;
 
-import lombok.Value;
+import lombok.ToString;
+
+import java.util.Objects;
 
 public class SimpleConversionError implements ConversionError {
 
@@ -44,5 +46,10 @@ public class SimpleConversionError implements ConversionError {
 
     public Object getValue() {
         return value;
+    }
+
+    @Override
+    public String toString() {
+        return severity.name() + "[" + msg + "]value=" + Objects.toString(value);
     }
 }

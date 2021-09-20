@@ -13,10 +13,6 @@ public class FieldDefinition extends AbstractElementDefinition implements FieldT
 
     public Map<String, FieldTypeDefinitionImpl> mixed;
 
-    public boolean isMixed() {
-        return mixed!=null;
-    }
-
     @Override
     public String getType() {
         return type;

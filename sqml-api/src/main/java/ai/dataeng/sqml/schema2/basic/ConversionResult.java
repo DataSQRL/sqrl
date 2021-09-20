@@ -46,7 +46,7 @@ public class ConversionResult<Result extends Object,E extends ConversionError> {
     }
 
     public static<R, E extends ConversionError> ConversionResult<R,E> of(R result) {
-        return of(result,null);
+        return new ConversionResult<>(result, null);
     }
 
     public static<R, E extends ConversionError> ConversionResult<R,E> of(R result, E warning) {
