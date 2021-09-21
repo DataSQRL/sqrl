@@ -25,7 +25,7 @@ public class QuerySpecification
     extends QueryBody {
 
   private final Select select;
-  private final Optional<Relation> from;
+  private final Relation from;
   private final Optional<Expression> where;
   private final Optional<GroupBy> groupBy;
   private final Optional<Expression> having;
@@ -35,7 +35,7 @@ public class QuerySpecification
   public QuerySpecification(
       NodeLocation location,
       Select select,
-      Optional<Relation> from,
+      Relation from,
       Optional<Expression> where,
       Optional<GroupBy> groupBy,
       Optional<Expression> having,
@@ -43,16 +43,11 @@ public class QuerySpecification
       Optional<String> limit) {
     this(Optional.of(location), select, from, where, groupBy, having, orderBy, limit);
   }
-  public QuerySpecification(
-      Select select
-     ) {
-    this(Optional.empty(), select, Optional.empty(),Optional.empty(),Optional.empty(),Optional.empty(),Optional.empty(),Optional.empty());
-  }
 
   private QuerySpecification(
       Optional<NodeLocation> location,
       Select select,
-      Optional<Relation> from,
+      Relation from,
       Optional<Expression> where,
       Optional<GroupBy> groupBy,
       Optional<Expression> having,
@@ -80,7 +75,7 @@ public class QuerySpecification
     return select;
   }
 
-  public Optional<Relation> getFrom() {
+  public Relation getFrom() {
     return from;
   }
 
@@ -118,7 +113,7 @@ public class QuerySpecification
   public List<Node> getChildren() {
     ImmutableList.Builder<Node> nodes = ImmutableList.builder();
     nodes.add(select);
-    from.ifPresent(nodes::add);
+    nodes.add(from);
     where.ifPresent(nodes::add);
     groupBy.ifPresent(nodes::add);
     having.ifPresent(nodes::add);

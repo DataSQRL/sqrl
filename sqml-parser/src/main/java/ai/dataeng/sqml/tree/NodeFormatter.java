@@ -81,7 +81,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   protected String visitQuerySpecification(QuerySpecification node, Void context) {
     return "SELECT " + node.getSelect().accept(this, null) +
-        node.getFrom().map(f-> " FROM " +f.accept(this, null)).orElse("") +
+        node.getFrom().accept(this, null) +
         node.getWhere().map(w-> " WHERE " +w.accept(this, null)).orElse("") +
         node.getGroupBy().map(g-> " GROUP BY " +g.accept(this, null)).orElse("") +
         node.getHaving().map(h-> " HAVING " +h.accept(this, null)).orElse("") +

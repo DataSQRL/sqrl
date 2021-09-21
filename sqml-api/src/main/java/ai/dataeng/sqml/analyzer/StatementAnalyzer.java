@@ -696,9 +696,6 @@ public class StatementAnalyzer {
             if (starPrefix.isPresent()) {
               throw new RuntimeException(String.format("Table '%s' not found", starPrefix.get()));
             }
-            if (!node.getFrom().isPresent()) {
-              throw new RuntimeException(String.format("SELECT * not allowed in queries without FROM clause"));
-            }
             throw new RuntimeException(String.format("SELECT * not allowed from relation that has no columns"));
           }
           for (Field field : fields) {
@@ -821,11 +818,7 @@ public class StatementAnalyzer {
 
     private Scope analyzeFrom(QuerySpecification node, Scope scope)
     {
-      if (node.getFrom().isPresent()) {
-        return node.getFrom().get().accept(this, scope);
-      }
-
-      return createScope(scope);
+      return node.getFrom().accept(this, scope);
     }
   }
 }

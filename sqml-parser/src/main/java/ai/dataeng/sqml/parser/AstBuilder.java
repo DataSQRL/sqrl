@@ -397,11 +397,13 @@ class AstBuilder
 
   @Override
   public Node visitQuerySpecification(SqlBaseParser.QuerySpecificationContext context) {
-    Optional<Relation> from = Optional.empty();
+    Relation from;
     List<SelectItem> selectItems = visit(context.selectItem(), SelectItem.class);
 
     List<Relation> relations = visit(context.relation(), Relation.class);
-    if (!relations.isEmpty()) {
+    if (relations.isEmpty()) {
+      throw new RuntimeException("FROM required");
+    } else {
       // synthesize implicit join nodes
       Iterator<Relation> iterator = relations.iterator();
       Relation relation = iterator.next();
@@ -411,7 +413,7 @@ class AstBuilder
             Optional.empty());
       }
 
-      from = Optional.of(relation);
+      from = relation;
     }
 
     return new QuerySpecification(
