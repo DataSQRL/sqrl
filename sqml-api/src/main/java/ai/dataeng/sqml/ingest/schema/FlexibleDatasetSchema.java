@@ -14,26 +14,23 @@ import java.util.List;
 public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.TableField> {
 
     private final SchemaElementDescription description;
-    private final VersionIdentifier versionId;
 
-    private FlexibleDatasetSchema(@NonNull List<TableField> fields, @NonNull SchemaElementDescription description, VersionIdentifier versionId) {
+    private FlexibleDatasetSchema(@NonNull List<TableField> fields, @NonNull SchemaElementDescription description) {
         super(fields);
         this.description = description;
-        this.versionId = versionId;
     }
 
     @Setter
     public static class Builder extends RelationType.AbstractBuilder<FlexibleDatasetSchema.TableField, Builder> {
 
         private SchemaElementDescription description;
-        private VersionIdentifier versionId;
 
         public Builder() {
             super(true);
         }
 
         public FlexibleDatasetSchema build() {
-            return new FlexibleDatasetSchema(fields, description, versionId);
+            return new FlexibleDatasetSchema(fields, description);
         }
 
     }
@@ -46,7 +43,6 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
         private final Name name;
         private final SchemaElementDescription description;
         private final Object default_value;
-        private final NameMapping nameMapping;
 
         @Setter
         public static abstract class Builder {
@@ -54,7 +50,6 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
             protected Name name;
             protected SchemaElementDescription description;
             protected Object default_value;
-            protected NameMapping nameMapping;
 
         }
 
@@ -68,9 +63,9 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
         private final RelationType<FlexibleField> fields;
         private final List<Constraint> constraints;
 
-        public TableField(Name name, SchemaElementDescription description, Object default_value, NameMapping nameMapping,
+        public TableField(Name name, SchemaElementDescription description, Object default_value,
                           boolean isPartialSchema, RelationType<FlexibleField> fields, List<Constraint> constraints) {
-            super(name,description,default_value,nameMapping);
+            super(name,description,default_value);
             this.isPartialSchema = isPartialSchema;
             this.fields = fields;
             this.constraints = constraints;
@@ -84,7 +79,7 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
             protected List<Constraint> constraints;
 
             public TableField build() {
-                return new TableField(name,description,default_value, nameMapping, isPartialSchema, fields, constraints);
+                return new TableField(name,description,default_value, isPartialSchema, fields, constraints);
             }
 
         }
@@ -96,9 +91,9 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
 
         private final List<FieldType> types;
 
-        public FlexibleField(Name name, SchemaElementDescription description, Object default_value, NameMapping nameMapping,
+        public FlexibleField(Name name, SchemaElementDescription description, Object default_value,
                              List<FieldType> types) {
-            super(name, description, default_value, nameMapping);
+            super(name, description, default_value);
             this.types = types;
         }
 
@@ -108,7 +103,7 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
             protected List<FieldType> types;
 
             public FlexibleField build() {
-                return new FlexibleField(name,description,default_value, nameMapping, types);
+                return new FlexibleField(name,description,default_value, types);
             }
 
         }

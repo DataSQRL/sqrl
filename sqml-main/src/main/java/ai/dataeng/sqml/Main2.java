@@ -14,14 +14,9 @@ import ai.dataeng.sqml.ingest.DatasetLookup;
 import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.NamePathOld;
 import ai.dataeng.sqml.ingest.schema.*;
-import ai.dataeng.sqml.ingest.schema.external.DatasetDefinition;
 import ai.dataeng.sqml.ingest.schema.external.SchemaDefinition;
 import ai.dataeng.sqml.ingest.schema.external.SchemaExport;
 import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
-import ai.dataeng.sqml.ingest.schema.version.StringVersionId;
-import ai.dataeng.sqml.ingest.schema.version.TimeVersion;
-import ai.dataeng.sqml.ingest.schema.version.Version;
-import ai.dataeng.sqml.ingest.schema.version.VersionIdentifier;
 import ai.dataeng.sqml.ingest.shredding.RecordShredder;
 import ai.dataeng.sqml.ingest.source.SourceTableListener;
 import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
@@ -148,7 +143,7 @@ public class Main2 {
         SchemaDefinition importSchema = mapper.readValue(RETAIL_PRE_SCHEMA_FILE.toFile(),
                 SchemaDefinition.class);
 
-        SchemaImport importer = new SchemaImport(new MockDatasetLookup("0","1"), Constraint.FACTORY_LOOKUP);
+        SchemaImport importer = new SchemaImport(new MockDatasetLookup(), Constraint.FACTORY_LOOKUP);
         Map<Name, FlexibleDatasetSchema> result = importer.convertImportSchema(importSchema);
 
         if (importer.hasErrors()) {
@@ -175,16 +170,6 @@ public class Main2 {
 
     public static class MockDatasetLookup implements DatasetLookup {
 
-        private final Map<VersionIdentifier, Version> versionMapper;
-
-        MockDatasetLookup(String... versionIds) {
-            versionMapper = new HashMap<>(versionIds.length);
-            int i=0;
-            for (String id : versionIds) {
-                versionMapper.put(StringVersionId.of(id),new TimeVersion(i++));
-            }
-        }
-
         @Override
         public SourceDataset getDataset(final Name name) {
             return new SourceDataset() {
@@ -205,7 +190,7 @@ public class Main2 {
 
                 @Override
                 public DatasetRegistration getRegistration() {
-                    return new DatasetRegistration(name, NameCanonicalizer.LOWERCASE_ENGLISH, versionMapper);
+                    return new DatasetRegistration(name, NameCanonicalizer.LOWERCASE_ENGLISH);
                 }
             };
         }

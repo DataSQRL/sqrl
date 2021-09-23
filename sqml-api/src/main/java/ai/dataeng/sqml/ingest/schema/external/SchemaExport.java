@@ -18,6 +18,7 @@ public class SchemaExport {
 
     public SchemaDefinition export(Map<Name, FlexibleDatasetSchema> datasets) {
         SchemaDefinition schema = new SchemaDefinition();
+        schema.version = SchemaImport.VERSION.toString();
         schema.datasets = new ArrayList<>(datasets.size());
         datasets.forEach((n,d) -> schema.datasets.add(export(n,d)));
         return schema;
@@ -26,7 +27,6 @@ public class SchemaExport {
     private DatasetDefinition export(Name name, FlexibleDatasetSchema dataset) {
         DatasetDefinition dd = new DatasetDefinition();
         dd.name = name.getDisplay();
-        dd.version = dataset.getVersionId().getId();
         if (!dataset.getDescription().isEmpty()) dd.description = dataset.getDescription().getDescription();
         dd.tables = new ArrayList<>();
         dataset.forEach(tf -> dd.tables.add(export(tf)));

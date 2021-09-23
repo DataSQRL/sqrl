@@ -10,9 +10,6 @@ public class AbstractElementDefinition {
     public Object default_value;
     //TODO: add hints
 
-    //Schema evolution
-    public String previous_name;
-    public Boolean removed;
 
 
 }

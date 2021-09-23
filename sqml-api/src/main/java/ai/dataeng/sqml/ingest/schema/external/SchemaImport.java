@@ -4,10 +4,7 @@ import ai.dataeng.sqml.ingest.DatasetLookup;
 import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.schema.SchemaElementDescription;
-import ai.dataeng.sqml.ingest.schema.SpecialNameMapping;
 import ai.dataeng.sqml.ingest.schema.version.StringVersionId;
-import ai.dataeng.sqml.ingest.schema.version.TimeVersion;
-import ai.dataeng.sqml.ingest.schema.version.Version;
 import ai.dataeng.sqml.ingest.schema.version.VersionIdentifier;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.schema2.RelationType;
@@ -31,19 +28,17 @@ import java.util.*;
  * Converts a {@link SchemaDefinition} that is parsed out of a YAML file into a {@link FlexibleDatasetSchema}
  * to be used internally.
  *
- * {@link SchemaDefinition} can represent two types of schema definitions: the schema of the imported datasets
- * for an SQML script or the schema attached to a {@link SourceDataset} which can evolve over time.
- * Hence, this conversion has two modes captured in {@link SchemaImport.Mode} for those respective schema types
- * as they interpret the yaml slightly differently - most notably the import schema does not allow schema evolution.
+ * A {@link SchemaDefinition} is provided by a user in connection with an SQML script to specify the expected
+ * schema of the source datasets consumed by the script.
+ *
  */
 public class SchemaImport {
 
-    private enum Mode { IMPORT, EVOLUTION }
+    public static final VersionIdentifier VERSION = StringVersionId.of("1");
 
     private final DatasetLookup datasetLookup;
     private final Constraint.Lookup constraintLookup;
     private List<SchemaConversionError> errors;
-    private Mode mode;
 
     public SchemaImport(DatasetLookup datasetLookup, Constraint.Lookup constraintLookup) {
         this.datasetLookup = datasetLookup;
@@ -64,7 +59,13 @@ public class SchemaImport {
 
     public Map<Name, FlexibleDatasetSchema> convertImportSchema(SchemaDefinition schema) {
         errors = new ArrayList<>();
-        mode = Mode.IMPORT;
+        VersionIdentifier version;
+        if (Strings.isNullOrEmpty(schema.version)) version = VERSION;
+        else version = StringVersionId.of(schema.version);
+        if (!version.equals(VERSION)) {
+            addError(SchemaConversionError.fatal(NamePath.ROOT, "Unrecognized version: %s. Supported versions are: %s", version, VERSION));
+            return Collections.EMPTY_MAP;
+        }
         Map<Name,FlexibleDatasetSchema> result = new HashMap<>(schema.datasets.size());
         for (DatasetDefinition dataset: schema.datasets) {
             if (Strings.isNullOrEmpty(dataset.name)) {
@@ -83,43 +84,13 @@ public class SchemaImport {
             }
             NamePath location = NamePath.of(reg.getName());
             FlexibleDatasetSchema ddschema = convert(location, dataset, reg);
-            if (!reg.hasVersionId(ddschema.getVersionId())) {
-                addError(SchemaConversionError.fatal(location, "Invalid or unknown dataset version: %s", dataset.version));
-            }
             result.put(reg.getName(), ddschema);
         }
         return result;
     }
 
-    public SchemaEvolution convertEvolutionSchema(DatasetDefinition dataset, DatasetRegistration source) {
-        errors = new ArrayList<>();
-        mode = Mode.EVOLUTION;
-        if (!Strings.isNullOrEmpty(dataset.name)) {
-            addError(SchemaConversionError.warn(NamePath.ROOT, "Dataset name is ignored. Please refer to the documentation on how to change the name of a dataset"));
-        }
-        FlexibleDatasetSchema result = convert(NamePath.ROOT,dataset,source);
-        VersionIdentifier versionId = result.getVersionId();
-        Version version = source.getVersionById(versionId);
-        if (version==null) {
-            //Must specify a version then
-            if (dataset.applies_at==null) {
-                addError(SchemaConversionError.fatal(NamePath.ROOT, "Need to provide time point when schema applies [applies_at]."));
-            } else {
-                version = new TimeVersion(dataset.applies_at);
-            }
-        } else {
-            addError(SchemaConversionError.fatal(NamePath.ROOT, "Version [%s] identifies an existing version [%s]. Schema evolution version identifiers should be unique.",dataset.version, version));
-        }
-        return new SchemaEvolution(result,version);
-    }
-
     private FlexibleDatasetSchema convert(NamePath location, DatasetDefinition dataset, DatasetRegistration source) {
         FlexibleDatasetSchema.Builder builder = new FlexibleDatasetSchema.Builder();
-        if (Strings.isNullOrEmpty(dataset.version)) {
-            addError(SchemaConversionError.fatal(NamePath.ROOT, "Dataset version is required."));
-        } else {
-            builder.setVersionId(StringVersionId.of(dataset.version));
-        }
         builder.setDescription(SchemaElementDescription.of(dataset.description));
         for (TableDefinition table : dataset.tables) {
             Optional<FlexibleDatasetSchema.TableField> tableConvert = convert(location, table, source);
@@ -251,39 +222,7 @@ public class SchemaImport {
         }
         builder.setDescription(SchemaElementDescription.of(element.description));
         builder.setDefault_value(element.default_value); //TODO: Validate that default value has right type
-        boolean removed = element.removed!=null && element.removed==true;
-        if (mode==Mode.EVOLUTION) {
-            if (!Strings.isNullOrEmpty(element.previous_name)) {
-                if (removed) {
-                    addError(SchemaConversionError.warn(location, "Field cannot be renamed at removed at same time. Renaming is ignored: %s", element.name));
-                } else {
-                    builder.setNameMapping(new SpecialNameMapping.Previous(source.toName(element.previous_name)));
-                }
-            }
-            if (removed) {
-                builder.setNameMapping(SpecialNameMapping.REMOVED);
-            }
-        } else if (removed || !Strings.isNullOrEmpty(element.previous_name)) {
-            addError(SchemaConversionError.warn(location, "Schema evolution directives are ignored on field: %s", element.name));
-        }
         return name;
-    }
-
-
-
-    @Value
-    public static class SchemaEvolution {
-
-        private final FlexibleDatasetSchema datasetSchema;
-        private final Version version;
-        private final VersionIdentifier versionId;
-
-        private SchemaEvolution(FlexibleDatasetSchema dataset, Version version) {
-            this.datasetSchema = dataset;
-            this.version = version;
-            this.versionId = dataset.getVersionId();
-        }
-
     }
 
     @Value

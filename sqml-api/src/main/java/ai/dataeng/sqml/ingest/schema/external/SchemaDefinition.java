@@ -6,6 +6,7 @@ import java.util.List;
 
 public class SchemaDefinition {
 
+    public String version;
     public List<DatasetDefinition> datasets;
 
 
