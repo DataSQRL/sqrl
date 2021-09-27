@@ -1,27 +1,22 @@
-package ai.dataeng.sqml.ingest.schema.external;
+package ai.dataeng.sqml.ingest.schema;
 
+import ai.dataeng.sqml.ingest.LocationConversionError;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.schema2.basic.SimpleConversionError;
 import ai.dataeng.sqml.schema2.name.NamePath;
 import lombok.NonNull;
 
-public class SchemaConversionError extends SimpleConversionError {
-
-    protected final NamePath location;
+public class SchemaConversionError extends LocationConversionError<NamePath> {
 
     public SchemaConversionError(Severity severity, @NonNull NamePath location, String msg, Object value) {
-        super(severity, msg, value);
-        this.location = location;
+        super(severity, location, msg, value);
     }
 
     public SchemaConversionError(@NonNull NamePath location, ConversionError error) {
-        super(error);
-        this.location = location;
+        super(location, error);
     }
 
     public SchemaConversionError(Severity severity, @NonNull NamePath location, String msg, Object... args) {
-        super(severity, msg, args);
-        this.location = location;
+        super(severity, location, msg, args);
     }
 
     public static SchemaConversionError fatal(NamePath location, String msg, Object... args) {
@@ -34,11 +29,6 @@ public class SchemaConversionError extends SimpleConversionError {
 
     public static SchemaConversionError convert(NamePath location, ConversionError error) {
         return new SchemaConversionError(location,error);
-    }
-
-    @Override
-    public String toString() {
-        return super.toString() + ";location=" + location.toString();
     }
 
 }

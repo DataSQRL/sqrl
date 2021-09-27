@@ -2,6 +2,7 @@ package ai.dataeng.sqml.ingest.schema.external;
 
 import ai.dataeng.sqml.ingest.DatasetLookup;
 import ai.dataeng.sqml.ingest.DatasetRegistration;
+import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.schema.SchemaElementDescription;
 import ai.dataeng.sqml.ingest.schema.version.StringVersionId;
@@ -38,27 +39,27 @@ public class SchemaImport {
 
     private final DatasetLookup datasetLookup;
     private final Constraint.Lookup constraintLookup;
-    private List<SchemaConversionError> errors;
+    private ConversionError.Bundle<SchemaConversionError> errors;
 
     public SchemaImport(DatasetLookup datasetLookup, Constraint.Lookup constraintLookup) {
         this.datasetLookup = datasetLookup;
         this.constraintLookup = constraintLookup;
     }
 
-    private void addError(SchemaConversionError error) {
+    public boolean hasErrors() {
+        return errors.hasErrors();
+    }
+
+    public void addError(SchemaConversionError error) {
         errors.add(error);
     }
 
-    public boolean hasErrors() {
-        return !errors.isEmpty();
-    }
-
-    public List<SchemaConversionError> getErrors() {
+    public ConversionError.Bundle<SchemaConversionError> getErrors() {
         return errors;
     }
 
     public Map<Name, FlexibleDatasetSchema> convertImportSchema(SchemaDefinition schema) {
-        errors = new ArrayList<>();
+        errors = new ConversionError.Bundle<>();
         VersionIdentifier version;
         if (Strings.isNullOrEmpty(schema.version)) version = VERSION;
         else version = StringVersionId.of(schema.version);

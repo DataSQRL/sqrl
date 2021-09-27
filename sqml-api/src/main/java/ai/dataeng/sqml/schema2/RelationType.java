@@ -10,11 +10,17 @@ import java.util.stream.Collectors;
 
 public class RelationType<F extends Field> implements Type, Iterable<F> {
 
+    public static final RelationType EMPTY = new RelationType();
+
     protected final List<F> fields;
 
     protected RelationType(@NonNull List<F> fields) {
         //Preconditions.checkArgument(!fields.isEmpty()); TODO: should this be checked?
         this.fields = fields;
+    }
+
+    private RelationType() {
+        this.fields = Collections.EMPTY_LIST;
     }
 
     //Lazily initialized when requested because this only works for fields with names

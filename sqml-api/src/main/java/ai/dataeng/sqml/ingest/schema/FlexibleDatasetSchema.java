@@ -1,6 +1,5 @@
 package ai.dataeng.sqml.ingest.schema;
 
-import ai.dataeng.sqml.ingest.schema.version.VersionIdentifier;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
@@ -90,20 +89,23 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
     public static class FlexibleField extends AbstractField implements Field {
 
         private final List<FieldType> types;
+        private final boolean combineTypes;
 
         public FlexibleField(Name name, SchemaElementDescription description, Object default_value,
-                             List<FieldType> types) {
+                             List<FieldType> types, boolean combineTypes) {
             super(name, description, default_value);
             this.types = types;
+            this.combineTypes = combineTypes;
         }
 
         @Setter
         public static class Builder extends AbstractField.Builder {
 
             protected List<FieldType> types;
+            protected boolean combineTypes = false;
 
             public FlexibleField build() {
-                return new FlexibleField(name,description,default_value, types);
+                return new FlexibleField(name,description,default_value, types, combineTypes);
             }
 
         }
@@ -121,6 +123,19 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
 
     }
 
+    public static enum TypeHandling {
+
+        RAW(false, false), DETECT(false, true), COMBINE_RAW(true, false), COMBINE_DETECT(true, true);
+
+        private final boolean combine;
+        private final boolean detect;
+
+
+        TypeHandling(boolean combine, boolean detect) {
+            this.combine = combine;
+            this.detect = detect;
+        }
+    }
 
 
 }

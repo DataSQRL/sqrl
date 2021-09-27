@@ -4,7 +4,9 @@ import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 
-public class DatasetRegistration {
+import java.io.Serializable;
+
+public class DatasetRegistration implements Serializable {
 
     private final Name name;
     private final NameCanonicalizer canonicalizer;

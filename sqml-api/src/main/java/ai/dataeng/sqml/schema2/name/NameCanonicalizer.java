@@ -1,12 +1,13 @@
 package ai.dataeng.sqml.schema2.name;
 
+import java.io.Serializable;
 import java.util.Locale;
 
 /**
  * Produces the canonical version of a field name
  */
 @FunctionalInterface
-public interface NameCanonicalizer {
+public interface NameCanonicalizer extends Serializable {
 
     String getCanonical(String name);
 

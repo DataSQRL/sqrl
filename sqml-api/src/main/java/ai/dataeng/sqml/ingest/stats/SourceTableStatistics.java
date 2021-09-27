@@ -1,65 +1,48 @@
 package ai.dataeng.sqml.ingest.stats;
 
+import ai.dataeng.sqml.ingest.DatasetRegistration;
+import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
+import ai.dataeng.sqml.schema2.basic.ConversionError;
 import lombok.ToString;
-import lombok.Value;
 
-import java.io.Serializable;
+@ToString
+public class SourceTableStatistics implements Accumulator<SourceRecord, SourceTableStatistics> {
 
-@Value
-public class SourceTableStatistics implements Serializable {
 
-    RelationStats relationStats;
+    final RelationStats relation;
+    final DatasetRegistration registration;
+
+    public SourceTableStatistics(DatasetRegistration registration) {
+        this.relation = new RelationStats(registration.getCanonicalizer());
+        this.registration = registration;
+    }
 
     public SourceTableSchema getSchema() {
         SourceTableSchema.Builder builder = SourceTableSchema.build();
-        relationStats.collectSchema(builder);
+        relation.collectSchema(builder);
         return builder.build();
     }
 
-    @ToString
-    public static class Accumulator implements org.apache.flink.api.common.accumulators.Accumulator<SourceRecord, SourceTableStatistics> {
+    public ConversionError.Bundle<StatsIngestError> validate(SourceRecord sourceRecord) {
+        ConversionError.Bundle<StatsIngestError> errors = new ConversionError.Bundle<>();
+        RelationStats.validate(sourceRecord.getData(),DocumentPath.ROOT,errors, registration.getCanonicalizer());
+        return errors;
+    }
 
-        //TODO: add statistics for ingest and source datetime
-        RelationStats.Accumulator relationAccum;
+    @Override
+    public void add(SourceRecord sourceRecord) {
+        //TODO: Analyze timestamps on record
+        relation.add(sourceRecord.getData());
+    }
 
-        public Accumulator() {
-            this.relationAccum = new RelationStats.Accumulator();
-        }
+    @Override
+    public void merge(SourceTableStatistics accumulator) {
+        relation.merge(accumulator.relation);
+    }
 
-        private Accumulator(RelationStats.Accumulator relationAccum) {
-            this.relationAccum = relationAccum;
-        }
-
-        public long getCount() {
-            return relationAccum.getCount();
-        }
-
-        @Override
-        public void add(SourceRecord sourceRecord) {
-            relationAccum.add(sourceRecord.getData());
-        }
-
-        @Override
-        public SourceTableStatistics getLocalValue() {
-            return new SourceTableStatistics(relationAccum.getLocalValue());
-        }
-
-        @Override
-        public void resetLocal() {
-            relationAccum.resetLocal();
-        }
-
-        @Override
-        public void merge(org.apache.flink.api.common.accumulators.Accumulator<SourceRecord, SourceTableStatistics> accumulator) {
-            Accumulator acc = (Accumulator) accumulator;
-            relationAccum.merge(acc.relationAccum);
-        }
-
-        @Override
-        public Accumulator clone() {
-            return new Accumulator(relationAccum.clone());
-        }
+    public long getCount() {
+        return relation.getCount();
     }
 }

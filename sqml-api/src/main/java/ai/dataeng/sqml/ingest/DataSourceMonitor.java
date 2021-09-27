@@ -46,10 +46,10 @@ class DataSourceMonitor implements SourceTableListener {
              */
             throw new NotImplementedException("Need to implement schema enforcement filter with side output to error sink");
         }
-        final OutputTag<SourceTableStatistics.Accumulator> statsOutput = new OutputTag<>(getFlinkName(STATS_NAME_PREFIX, sourceTable)){};
+        final OutputTag<SourceTableStatistics> statsOutput = new OutputTag<>(getFlinkName(STATS_NAME_PREFIX, sourceTable)){};
 
         SingleOutputStreamOperator<SourceRecord> process = data.keyBy(FlinkUtilities.getHashPartitioner(defaultParallelism))
-                                                                .process(new KeyedSourceRecordStatistics(statsOutput));
+                                                                .process(new KeyedSourceRecordStatistics(statsOutput, sourceTable.getDataset().getRegistration()));
         process.addSink(new PrintSinkFunction<>()); //TODO: persist last 100 for querying
 
         //Process the gathered statistics in the side output
@@ -57,9 +57,9 @@ class DataSourceMonitor implements SourceTableListener {
         process.getSideOutput(statsOutput)
                 .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
                 .reduce(
-                    new ReduceFunction<SourceTableStatistics.Accumulator>() {
+                    new ReduceFunction<SourceTableStatistics>() {
                         @Override
-                        public SourceTableStatistics.Accumulator reduce(SourceTableStatistics.Accumulator acc, SourceTableStatistics.Accumulator add) throws Exception {
+                        public SourceTableStatistics reduce(SourceTableStatistics acc, SourceTableStatistics add) throws Exception {
                             acc.merge(add);
                             return acc;
                         }
@@ -67,7 +67,7 @@ class DataSourceMonitor implements SourceTableListener {
                 .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
 //                .process(new BufferedLatestSelector(getFlinkName(STATS_NAME_PREFIX, sourceTable),
 //                        500, SourceTableStatistics.Accumulator.class), TypeInformation.of(SourceTableStatistics.Accumulator.class))
-                .addSink(new SaveToKeyValueStoreSink(storeFactory,SourceTableStatistics.Accumulator.class, sourceTable.getQualifiedName().toString(), STATS_KEY));
+                .addSink(new SaveToKeyValueStoreSink(storeFactory,SourceTableStatistics.class, sourceTable.getQualifiedName().toString(), STATS_KEY));
         try {
             flinkEnv.execute(getFlinkName(JOB_NAME_PREFIX, sourceTable));
         } catch (Exception e) {

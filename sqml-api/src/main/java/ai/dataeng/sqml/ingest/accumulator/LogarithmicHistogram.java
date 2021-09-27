@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.ingest.sketches;
+package ai.dataeng.sqml.ingest.accumulator;
 
 import com.google.common.base.Preconditions;
 import lombok.ToString;

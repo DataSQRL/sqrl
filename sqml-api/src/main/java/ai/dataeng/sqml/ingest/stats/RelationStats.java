@@ -1,96 +1,81 @@
 package ai.dataeng.sqml.ingest.stats;
 
 import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
-import ai.dataeng.sqml.tree.QualifiedName;
-import com.google.common.base.Preconditions;
-import lombok.ToString;
-import lombok.Value;
+import ai.dataeng.sqml.schema2.basic.ConversionError;
+import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
+import com.google.common.base.Strings;
 
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
-@Value
-public class RelationStats implements Serializable {
+public class RelationStats implements Accumulator<Map<String,Object>,RelationStats> {
 
     public static final RelationStats EMPTY = new RelationStats(0, Collections.EMPTY_MAP);
+    private static final int INITIAL_CAPACITY = 8;
 
     long count;
-    Map<String,FieldStats> fieldStats;
+    Map<Name,FieldStats> fieldStats;
+    final NameCanonicalizer canonicalizer;
 
-    public void collectSchema(SourceTableSchema.Builder builder) {
-        for (Map.Entry<String, FieldStats> fieldEntry : fieldStats.entrySet()) {
-            String fieldname = fieldEntry.getKey();
-            FieldStats fieldstats = fieldEntry.getValue();
-            fieldstats.collectSchema(builder, fieldname);
+    public RelationStats(NameCanonicalizer canonicalizer) {
+        this.fieldStats = new HashMap<>(INITIAL_CAPACITY);
+        this.count = 0;
+        this.canonicalizer = canonicalizer;
+    }
+
+    private RelationStats(long count, Map<Name,FieldStats> fieldStats) {
+        this.count = count;
+        this.fieldStats = fieldStats;
+        this.canonicalizer = null;
+    }
+
+    public long getCount() {
+        return count;
+    }
+
+    public static void validate(Map<String, Object> value, DocumentPath path, ConversionError.Bundle<StatsIngestError> errors,
+                                NameCanonicalizer canonicalizer) {
+        if (value==null || value.isEmpty()) errors.add(StatsIngestError.fatal(path,"Invalid value: %s", value));
+        Set<Name> names = new HashSet<>(value.size());
+        for (Map.Entry<String,Object> entry : value.entrySet()) {
+            String name = entry.getKey();
+            if (Strings.isNullOrEmpty(name)) errors.add(StatsIngestError.fatal(path,"Invalid name: %s", name));
+            if (!names.add(Name.of(name,canonicalizer))) errors.add(StatsIngestError.fatal(path,"Duplicate name: %s", name));
+            FieldStats.validate(entry.getValue(), path.resolve(name), errors, canonicalizer);
         }
     }
 
-
-    @ToString
-    public static class Accumulator implements org.apache.flink.api.common.accumulators.Accumulator<Map<String,Object>,RelationStats> {
-
-        static final int INITIAL_CAPACITY = 8;
-
-        private Map<String,FieldStats.Accumulator> fieldAccums;
-        private long count=0;
-
-        public Accumulator() {
-            fieldAccums = new HashMap<>(INITIAL_CAPACITY);
-            count = 0;
-        }
-
-        public long getCount() {
-            return count;
-        }
-
-        @Override
-        public void add(Map<String, Object> value) {
-            Preconditions.checkArgument(value!=null && !value.isEmpty(),"Invalid value");
-            //We use lazy initialization to save space since most fields are scalars.
-            count++;
-            for (Map.Entry<String,Object> entry : value.entrySet()) {
-                String normalizedName = QualifiedName.normalizeName(entry.getKey());
-                FieldStats.Accumulator fieldAccum = fieldAccums.get(normalizedName);
-                if (fieldAccum==null) {
-                    fieldAccum = new FieldStats.Accumulator();
-                    fieldAccums.put(normalizedName,fieldAccum);
-                }
-                fieldAccum.add(entry.getValue());
+    @Override
+    public void add(Map<String, Object> value) {
+        count++;
+        for (Map.Entry<String,Object> entry : value.entrySet()) {
+            Name name = Name.of(entry.getKey(), canonicalizer);
+            FieldStats fieldAccum = fieldStats.get(name);
+            if (fieldAccum==null) {
+                fieldAccum = new FieldStats(canonicalizer);
+                fieldStats.put(name,fieldAccum);
             }
+            fieldAccum.add(entry.getValue());
         }
+    }
 
-        @Override
-        public RelationStats getLocalValue() {
-            return new RelationStats(count, fieldAccums.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey,e -> e.getValue().getLocalValue())));
-        }
+    @Override
+    public void merge(RelationStats acc) {
+        count += acc.count;
+        acc.fieldStats.forEach((k, v) -> {
+            FieldStats fieldaccum = fieldStats.get(k);
+            if (fieldaccum == null) {
+                fieldaccum = new FieldStats(canonicalizer);
+                fieldStats.put(k, fieldaccum);
+            }
+            fieldaccum.merge(v);
+        });
+    }
 
-        @Override
-        public void resetLocal() {
-            count = 0;
-            fieldAccums.clear();
-        }
-
-        @Override
-        public void merge(org.apache.flink.api.common.accumulators.Accumulator<Map<String, Object>, RelationStats> accumulator) {
-            Accumulator acc = (Accumulator) accumulator;
-            count += acc.count;
-            acc.fieldAccums.forEach((k, v) -> {
-                FieldStats.Accumulator fieldaccum = fieldAccums.get(k);
-                if (fieldaccum == null) fieldAccums.put(k, v.clone());
-                else fieldaccum.merge(v);
-            });
-        }
-
-        @Override
-        public Accumulator clone() {
-            Accumulator newAccum = new Accumulator();
-            newAccum.count = count;
-            fieldAccums.forEach((k,v) -> newAccum.fieldAccums.put(k,v.clone()));
-            return newAccum;
+    public void collectSchema(SourceTableSchema.Builder builder) {
+        for (Map.Entry<Name, FieldStats> fieldEntry : fieldStats.entrySet()) {
+            FieldStats fieldstats = fieldEntry.getValue();
+            fieldstats.collectSchema(builder, fieldEntry.getKey());
         }
     }
 

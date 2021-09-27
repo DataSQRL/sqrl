@@ -43,10 +43,9 @@ public class DataSourceRegistry implements DatasetLookup {
     }
 
     public SourceTableStatistics getTableStatistics(@NonNull SourceTable table) {
-        SourceTableStatistics.Accumulator acc = store.get(SourceTableStatistics.Accumulator.class,
+        SourceTableStatistics acc = store.get(SourceTableStatistics.class,
                 table.getQualifiedName().toString(), DataSourceMonitor.STATS_KEY);
-        if (acc==null) return null;
-        return acc.getLocalValue();
+        return acc;
     }
 
     public SourceTableStatistics getTableStatistics(@NonNull SourceTableQualifiedName tableName) {

@@ -12,5 +12,10 @@ public class StringVersionId implements VersionIdentifier {
         return new StringVersionId(id.trim());
     }
 
+    @Override
+    public String toString() {
+        return id;
+    }
+
 
 }
