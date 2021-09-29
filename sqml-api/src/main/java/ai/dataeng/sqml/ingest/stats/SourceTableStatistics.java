@@ -1,10 +1,11 @@
 package ai.dataeng.sqml.ingest.stats;
 
 import ai.dataeng.sqml.ingest.DatasetRegistration;
-import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
-import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
+import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
+import ai.dataeng.sqml.schema2.name.Name;
+import lombok.NonNull;
 import lombok.ToString;
 
 @ToString
@@ -17,12 +18,6 @@ public class SourceTableStatistics implements Accumulator<SourceRecord, SourceTa
     public SourceTableStatistics(DatasetRegistration registration) {
         this.relation = new RelationStats(registration.getCanonicalizer());
         this.registration = registration;
-    }
-
-    public SourceTableSchema getSchema() {
-        SourceTableSchema.Builder builder = SourceTableSchema.build();
-        relation.collectSchema(builder);
-        return builder.build();
     }
 
     public ConversionError.Bundle<StatsIngestError> validate(SourceRecord sourceRecord) {

@@ -28,9 +28,8 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
     }
 
     @Override
-    public BasicType combine(@NonNull BasicType other) {
-        if (other.getName().equals(name)) return this;
-        else return null;
+    public BasicType parentType() {
+        return null;
     }
 
     @Override
@@ -95,6 +94,11 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
                 }
             }
             return ConversionResult.fatal("Cannot convert [%s]", original);
+        }
+
+        @Override
+        public Object cast2Parent(@NonNull J o) {
+            throw new UnsupportedOperationException();
         }
 
     }

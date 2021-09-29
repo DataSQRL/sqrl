@@ -1,5 +1,7 @@
 package ai.dataeng.sqml.schema2.basic;
 
+import lombok.NonNull;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -45,6 +47,12 @@ public interface ConversionError {
             if (errors==null) return Collections.emptyIterator();
             return errors.iterator();
         }
+
+        public void merge(Bundle<E> other) {
+            if (other==null) return;
+            for (E err : other) add(err);
+        }
+
     }
 
 }

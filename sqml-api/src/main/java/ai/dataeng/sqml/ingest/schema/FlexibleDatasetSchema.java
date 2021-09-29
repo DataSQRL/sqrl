@@ -7,11 +7,15 @@ import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.schema2.name.Name;
 import lombok.*;
 
+import java.util.Collections;
 import java.util.List;
 
 @Getter
 public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.TableField> {
 
+    public static final FlexibleDatasetSchema EMPTY = new FlexibleDatasetSchema(Collections.EMPTY_LIST, SchemaElementDescription.NONE);
+
+    @NonNull
     private final SchemaElementDescription description;
 
     private FlexibleDatasetSchema(@NonNull List<TableField> fields, @NonNull SchemaElementDescription description) {
@@ -22,7 +26,7 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
     @Setter
     public static class Builder extends RelationType.AbstractBuilder<FlexibleDatasetSchema.TableField, Builder> {
 
-        private SchemaElementDescription description;
+        private SchemaElementDescription description = SchemaElementDescription.NONE;
 
         public Builder() {
             super(true);
@@ -39,7 +43,9 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
     @AllArgsConstructor
     public static class AbstractField implements ai.dataeng.sqml.schema2.Field {
 
+        @NonNull
         private final Name name;
+        @NonNull
         private final SchemaElementDescription description;
         private final Object default_value;
 
@@ -47,8 +53,14 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
         public static abstract class Builder {
 
             protected Name name;
-            protected SchemaElementDescription description;
+            protected SchemaElementDescription description = SchemaElementDescription.NONE;
             protected Object default_value;
+
+            public void copyFrom(AbstractField f) {
+                name = f.name;
+                description = f.description;
+                default_value = f.default_value;
+            }
 
         }
 
@@ -59,7 +71,9 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
     public static class TableField extends AbstractField {
 
         private final boolean isPartialSchema;
+        @NonNull
         private final RelationType<FlexibleField> fields;
+        @NonNull
         private final List<Constraint> constraints;
 
         public TableField(Name name, SchemaElementDescription description, Object default_value,
@@ -73,14 +87,28 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
         @Setter
         public static class Builder extends AbstractField.Builder {
 
-            protected boolean isPartialSchema;
+            protected boolean isPartialSchema = true;
             protected RelationType<FlexibleField> fields;
-            protected List<Constraint> constraints;
+            protected List<Constraint> constraints = Collections.EMPTY_LIST;
+
+            public void copyFrom(TableField f) {
+                super.copyFrom(f);
+                isPartialSchema = f.isPartialSchema;
+                fields = f.fields;
+                constraints = f.constraints;
+            }
 
             public TableField build() {
                 return new TableField(name,description,default_value, isPartialSchema, fields, constraints);
             }
 
+        }
+
+        public static TableField empty(Name name) {
+            Builder b = new Builder();
+            b.setName(name);
+            b.setFields(RelationType.EMPTY);
+            return b.build();
         }
     }
 
@@ -88,24 +116,28 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
     @ToString
     public static class FlexibleField extends AbstractField implements Field {
 
+        @NonNull
         private final List<FieldType> types;
-        private final boolean combineTypes;
+        //TODO: Should we allow constraints on fields so users can declare NOT_NULL constraints or is that not necessary for mixed field types anyways?
 
         public FlexibleField(Name name, SchemaElementDescription description, Object default_value,
-                             List<FieldType> types, boolean combineTypes) {
+                             List<FieldType> types) {
             super(name, description, default_value);
             this.types = types;
-            this.combineTypes = combineTypes;
         }
 
         @Setter
         public static class Builder extends AbstractField.Builder {
 
             protected List<FieldType> types;
-            protected boolean combineTypes = false;
+
+            public void copyFrom(FlexibleField f) {
+                super.copyFrom(f);
+                types = f.types;
+            }
 
             public FlexibleField build() {
-                return new FlexibleField(name,description,default_value, types, combineTypes);
+                return new FlexibleField(name,description,default_value, types);
             }
 
         }
@@ -114,27 +146,16 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
     @Value
     public static class FieldType {
 
+        @NonNull
         private final Name variantName;
 
+        @NonNull
         private final Type type;
         private final int arrayDepth;
 
+        @NonNull
         private final List<Constraint> constraints;
 
-    }
-
-    public static enum TypeHandling {
-
-        RAW(false, false), DETECT(false, true), COMBINE_RAW(true, false), COMBINE_DETECT(true, true);
-
-        private final boolean combine;
-        private final boolean detect;
-
-
-        TypeHandling(boolean combine, boolean detect) {
-            this.combine = combine;
-            this.detect = detect;
-        }
     }
 
 

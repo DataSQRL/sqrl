@@ -40,6 +40,13 @@ public interface Name extends Serializable, Comparable<Name> {
         return new StandardName(canonicalizer.getCanonical(name),name);
     }
 
+    public static final String CONCATENATE_STRING = "_";
+
+    public static Name concatenate(Name name1, Name name2) {
+        return new StandardName(name1.getCanonical()+CONCATENATE_STRING+name2.getCanonical(),
+                name1.getDisplay()+CONCATENATE_STRING+name2.getDisplay());
+    }
+
     public static Name system(String name) {
         return new SimpleName(NameCanonicalizer.SYSTEM.getCanonical(name));
     }

@@ -1,10 +1,15 @@
 package ai.dataeng.sqml.ingest.stats;
 
+import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
+import ai.dataeng.sqml.ingest.schema.external.FieldDefinition;
+import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import lombok.NonNull;
 
 import java.util.*;
 
@@ -29,6 +34,12 @@ public class RelationStats implements Accumulator<Map<String,Object>,RelationSta
         this.canonicalizer = null;
     }
 
+    public RelationStats clone() {
+        RelationStats copy = new RelationStats(canonicalizer);
+        copy.merge(this);
+        return copy;
+    }
+
     public long getCount() {
         return count;
     }
@@ -45,6 +56,11 @@ public class RelationStats implements Accumulator<Map<String,Object>,RelationSta
         }
     }
 
+    void add(Name name, FieldStats field) {
+        Preconditions.checkNotNull(!fieldStats.containsKey(name));
+        fieldStats.put(name,field);
+    }
+
     @Override
     public void add(Map<String, Object> value) {
         count++;
@@ -55,7 +71,7 @@ public class RelationStats implements Accumulator<Map<String,Object>,RelationSta
                 fieldAccum = new FieldStats(canonicalizer);
                 fieldStats.put(name,fieldAccum);
             }
-            fieldAccum.add(entry.getValue());
+            fieldAccum.add(entry.getValue(), entry.getKey());
         }
     }
 
@@ -70,13 +86,6 @@ public class RelationStats implements Accumulator<Map<String,Object>,RelationSta
             }
             fieldaccum.merge(v);
         });
-    }
-
-    public void collectSchema(SourceTableSchema.Builder builder) {
-        for (Map.Entry<Name, FieldStats> fieldEntry : fieldStats.entrySet()) {
-            FieldStats fieldstats = fieldEntry.getValue();
-            fieldstats.collectSchema(builder, fieldEntry.getKey());
-        }
     }
 
 }

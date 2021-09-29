@@ -1,13 +1,12 @@
 package ai.dataeng.sqml.schema2.basic;
 
 import ai.dataeng.sqml.schema2.Type;
+import com.google.common.collect.Multimap;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -16,7 +15,7 @@ public interface BasicType<JavaType> extends Type {
 
     String getName();
 
-    BasicType combine(@NonNull BasicType other);
+    BasicType parentType();
 
     TypeConversion<JavaType> conversion();
 
@@ -25,6 +24,33 @@ public interface BasicType<JavaType> extends Type {
                                                  NumberType.INSTANCE, IntegerType.INSTANCE, FloatType.INSTANCE,
                                                  DateTimeType.INSTANCE, UuidType.INSTANCE
     };
+
+    public static final BasicType ROOT_TYPE = StringType.INSTANCE;
+
+    public static BasicType combine(@NonNull BasicType t1, @NonNull BasicType t2, boolean forced) {
+        Set<BasicType> visitedTypes = new HashSet<>();
+        visitedTypes.add(t2);
+        BasicType parent = t1;
+        while (parent!=null) {
+            if (visitedTypes.contains(parent)) return parent;
+            else visitedTypes.add(parent);
+            parent = parent.parentType();
+        }
+        parent = t2.parentType();
+        while (parent!=null) {
+            if (visitedTypes.contains(parent)) return parent;
+            parent = parent.parentType();
+        }
+        if (forced) return ROOT_TYPE; //coerce casting to the root type
+        else return null;
+    }
+
+    public static BasicType combine(@NonNull BasicType t1, @NonNull BasicType t2) {
+        return combine(t1,t2,false);
+    }
+
+
+//    public static final Multimap<BasicType,BasicType> TYPE_TREE =
 
     public static final Map<String,BasicType> ALL_TYPES_BY_NAME = Arrays.stream(ALL_TYPES)
             .collect(Collectors.toUnmodifiableMap(t -> t.getName().trim().toLowerCase(Locale.ENGLISH), Function.identity()));
@@ -52,5 +78,6 @@ public interface BasicType<JavaType> extends Type {
         }
         return null;
     }
+
 
 }

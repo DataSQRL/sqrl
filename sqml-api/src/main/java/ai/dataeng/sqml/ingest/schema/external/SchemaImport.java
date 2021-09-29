@@ -50,13 +50,14 @@ public class SchemaImport {
         return errors.hasErrors();
     }
 
-    public void addError(SchemaConversionError error) {
-        errors.add(error);
-    }
-
     public ConversionError.Bundle<SchemaConversionError> getErrors() {
         return errors;
     }
+
+    private void addError(SchemaConversionError error) {
+        errors.add(error);
+    }
+
 
     public Map<Name, FlexibleDatasetSchema> convertImportSchema(SchemaDefinition schema) {
         errors = new ConversionError.Bundle<>();

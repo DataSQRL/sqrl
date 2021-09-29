@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.ingest.stats;
 
+import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.ingest.accumulator.LogarithmicHistogram;
 import ai.dataeng.sqml.schema2.basic.BasicType;
@@ -8,6 +9,7 @@ import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.schema2.name.StandardName;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -16,16 +18,18 @@ import org.apache.flink.api.common.accumulators.LongCounter;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FieldStats {
 
-    private final NameCanonicalizer canonicalizer;
+    final NameCanonicalizer canonicalizer;
 
     long count = 0;
     long numNulls = 0;
     Map<FieldTypeStats,FieldTypeStats> types = new HashMap<>(4);
+    Map<String, AtomicLong> nameCounts = new HashMap<>(2);
 
     public FieldStats(NameCanonicalizer canonicalizer) {
         this.canonicalizer = canonicalizer;
@@ -54,10 +58,8 @@ public class FieldStats {
                 }
                 if (type == null) type = elementType;
                 else if (!elementType.equals(type)) {
-                    Type newType;
-                    if (type instanceof BasicType && elementType instanceof BasicType
-                            && (newType=((BasicType)type).combine((BasicType)elementType))!=null) {
-                        type = newType;
+                    if (type instanceof BasicType && elementType instanceof BasicType) {
+                        type = BasicType.combine((BasicType)type,(BasicType)elementType, true);
                     } else {
                         errors.add(StatsIngestError.fatal(path,"Array contains elements with incompatible types: [%s]. Found [%s] and [%s]", o, type, elementType));
                     }
@@ -74,8 +76,9 @@ public class FieldStats {
         }
     }
 
-    public void add(Object o) {
+    public void add(Object o, @NonNull String displayName) {
         count++;
+        addNameCount(displayName,1);
         if (o==null) {
             numNulls++;
         } else {
@@ -110,6 +113,7 @@ public class FieldStats {
                             //Try to infer type
                             if (next instanceof String) inferredType = BasicType.inferType((String)next);
                         } else if (inferredType != null) {
+                            elementType = BasicType.combine((BasicType)elementType,getBasicType(next),true);
                             BasicType infer2 = BasicType.inferType((String)next);
                             if (infer2==null || !infer2.equals(inferredType)) inferredType = null;
                         }
@@ -125,7 +129,6 @@ public class FieldStats {
                 if (o instanceof Map) {
                     elementType = RelationType.EMPTY;
                     inferredType = BasicType.inferType((Map)o);
-                    addNested((Map)o);
                 } else {
                     //not an array or map => must be scalar
                     elementType = getBasicType(o);
@@ -202,55 +205,25 @@ public class FieldStats {
             }
             thisStats.merge(fstats,canonicalizer);
         }
+        acc.nameCounts.forEach( (n,c) -> addNameCount(n, c.get()));
     }
 
-
-
-    public void collectSchema(SourceTableSchema.Builder builder, Name fieldName) {
-        boolean isArray = arrayCardinality.getCount() > 0;
-        boolean notNull = numNulls==0;
-
-
-        if (nestedRelationStats.getCount()>0) {
-            Preconditions.checkArgument(presentedScalarTypes.isEmpty() && inferredScalarTypes.isEmpty(),
-                    "Cannot mix scalar values and nested relations");
-            SourceTableSchema.Builder nestedBuilder = builder.addNestedTable(fieldName, isArray, notNull);
-            nestedRelationStats.collectSchema(nestedBuilder);
-        } else {
-            //Must be a scalar - for now we expect scalars to resolve to one type that can encompass all values.
-            //TODO: Generalize to allow for multiple incompatible types (e.g. "STRING | INT")
-            ScalarType type = null;
-            long nonNull = count - numNulls;
-
-            //We only use the inferred types if they cover all of the seen (non-null) values:
-            long total = 0;
-            for (Map.Entry<ScalarType, LongCounter> infer : inferredScalarTypes.entrySet()) {
-                if (type == null) type = infer.getKey();
-                else {
-                    type = (ScalarType) type.combine(infer.getKey());
-                    if (type == null) break; //for now, we don't allow dual types, so abandon type inference
-                }
-                total += infer.getValue().getLocalValue();
-            }
-            assert total <= nonNull;
-
-            //If we cannot unambiguously infer a type, take the presented type
-            if (type == null || total < nonNull) {
-                for (Map.Entry<ScalarType, LongCounter> infer : presentedScalarTypes.entrySet()) {
-                    ScalarType newtype = type==null?infer.getKey():(ScalarType)type.combine(infer.getKey());
-                    Preconditions.checkArgument(newtype!=null,"Incompatible types detected in input data: %s vs %s", type, infer.getKey());
-                    type = newtype;
-                }
-            }
-            if (type == null) {
-                if (nonNull==0) throw new IllegalArgumentException("Null-type are not supported yet");
-                else throw new IllegalArgumentException("Missing type in input data");
-            }
-            builder.addField(fieldName, isArray, notNull, type);
+    private void addNameCount(@NonNull String name, long count) {
+        AtomicLong counter = nameCounts.get(name);
+        if (counter==null) {
+            counter = new AtomicLong(0);
+            nameCounts.put(name,counter);
         }
+        counter.addAndGet(count);
     }
 
-
-
+    Name getName() {
+        return Name.of(nameCounts.entrySet().stream().max(new Comparator<Map.Entry<String, AtomicLong>>() {
+            @Override
+            public int compare(Map.Entry<String, AtomicLong> o1, Map.Entry<String, AtomicLong> o2) {
+                return Long.compare(o1.getValue().get(),o2.getValue().get());
+            }
+        }).get().getKey(),canonicalizer);
+    }
 
 }

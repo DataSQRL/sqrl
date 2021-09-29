@@ -25,7 +25,9 @@ public class SpecialName extends AbstractName {
     }
 
     public static Name SINGLETON = new SpecialName("singleton");
-    public static Name REMOVED = new SpecialName("removed");
     public static Name LOCAL = new SpecialName("local");
+    public static Name VALUE = new SpecialName("value");
+
+
 
 }

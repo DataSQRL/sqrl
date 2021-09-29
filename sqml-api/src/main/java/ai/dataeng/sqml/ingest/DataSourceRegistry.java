@@ -38,26 +38,16 @@ public class DataSourceRegistry implements DatasetLookup {
         for (SourceDataset dataset : sourceDatasets.values()) dataset.addSourceTableListener(monitor);
     }
 
+    @Override
     public SourceDataset getDataset(@NonNull Name name) {
         return sourceDatasets.get(name);
     }
 
+    @Override
     public SourceTableStatistics getTableStatistics(@NonNull SourceTable table) {
         SourceTableStatistics acc = store.get(SourceTableStatistics.class,
                 table.getQualifiedName().toString(), DataSourceMonitor.STATS_KEY);
         return acc;
-    }
-
-    public SourceTableStatistics getTableStatistics(@NonNull SourceTableQualifiedName tableName) {
-        return getTableStatistics(getTable(tableName));
-    }
-
-    public SourceTable getTable(@NonNull SourceTableQualifiedName tableName) {
-        SourceDataset dataset = getDataset(tableName.getDataset());
-        Preconditions.checkArgument(dataset!=null,"Dataset not found: %s", tableName.getDataset());
-        SourceTable table = dataset.getTable(tableName.getTable());
-        Preconditions.checkArgument(table!=null,"Table [%s] not found in dataset [%s]", tableName.getTable(), tableName.getDataset());
-        return table;
     }
 
 }

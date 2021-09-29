@@ -84,6 +84,11 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
             return (B)this;
         }
 
+        public B addAll(RelationType<F> copyFrom) {
+            for (F f : copyFrom) add(f);
+            return (B)this;
+        }
+
     }
 
 

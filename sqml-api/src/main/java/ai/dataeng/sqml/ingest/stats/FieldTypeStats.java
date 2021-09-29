@@ -23,6 +23,10 @@ public class FieldTypeStats implements Serializable, Cloneable {
     //Only not-null if detected is a NestedRelation
     RelationStats nestedRelationStats;
 
+    public FieldTypeStats(@NonNull FieldTypeStats.TypeDepth raw) {
+        this(raw,raw);
+    }
+
     public FieldTypeStats(@NonNull FieldTypeStats.TypeDepth raw, @NonNull FieldTypeStats.TypeDepth detected) {
         this.raw = raw;
         this.detected = detected;
@@ -48,6 +52,10 @@ public class FieldTypeStats implements Serializable, Cloneable {
 
     public void add() {
         count++;
+    }
+
+    public boolean hasDetected() {
+        return !raw.equals(detected);
     }
 
     public void addNested(@NonNull Map<String,Object> nested, @NonNull NameCanonicalizer canonicalizer) {
@@ -104,7 +112,12 @@ public class FieldTypeStats implements Serializable, Cloneable {
 
         boolean isBasic();
 
-        BasicTypeDepth getType();
+        BasicType getBasicType();
+
+        default Type getType() {
+            if (isBasic()) return getBasicType();
+            else return RelationType.EMPTY;
+        }
 
         int getArrayDepth();
 
@@ -123,8 +136,8 @@ public class FieldTypeStats implements Serializable, Cloneable {
     @Value
     public static class BasicTypeDepth implements TypeDepth {
 
-        int arrayDepth;
-        BasicType type;
+        final int arrayDepth;
+        final BasicType basicType;
 
         @Override
         public boolean isBasic() {
@@ -145,7 +158,7 @@ public class FieldTypeStats implements Serializable, Cloneable {
         }
 
         @Override
-        public BasicTypeDepth getType() {
+        public BasicType getBasicType() {
             throw new UnsupportedOperationException();
         }
 

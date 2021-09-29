@@ -1,5 +1,7 @@
 package ai.dataeng.sqml.schema2.basic;
 
+import lombok.NonNull;
+
 public class StringType extends AbstractBasicType<String> {
 
     public static final StringType INSTANCE = new StringType();
@@ -21,6 +23,8 @@ public class StringType extends AbstractBasicType<String> {
         public String convert(Object o) {
             return o.toString();
         }
+
+
     }
 
 }
