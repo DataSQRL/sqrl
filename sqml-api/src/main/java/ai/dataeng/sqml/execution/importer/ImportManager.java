@@ -39,23 +39,13 @@ public class ImportManager {
         this.datasetLookup = datasetLookup;
     }
 
-    private static void addMapping(Name mapTo, ImportSchema.Mapping original, Map<Name, ImportSchema.Mapping> mappings,
-                                   ConversionError.Bundle<SchemaConversionError> errors) {
-        if (mappings.containsKey(mapTo)) {
-            errors.add(SchemaConversionError.fatal(NamePath.ROOT,"Duplicate IMPORT name: %s. Import names must be unique.",mapTo));
-        } else {
-            mappings.put(mapTo,original);
-        }
-    }
-
-    public Pair<ImportSchema, ConversionError.Bundle<SchemaConversionError>> createImportSchema() {
+    public ImportSchema createImportSchema(ConversionError.Bundle<SchemaConversionError> errors) {
         //What we need to create
         Map<Name, FlexibleDatasetSchema> sourceSchemas = new HashMap<>();
         RelationType.Builder<StandardField> schemaBuilder = new RelationType.Builder();
         Map<Name, ImportSchema.Mapping> nameMapping = new HashMap<>();
 
         SchemaConverter schemaConverter = new SchemaConverter();
-        ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
 
         //First, lets group imports by dataset
         Map<Name,List<ImportDirective>> importsByDataset = imports.stream().collect(Collectors.groupingBy(ImportDirective::getDatasetName));
@@ -166,12 +156,10 @@ public class ImportManager {
                 sourceSchemas.put(datasetName,sourceSchema.build());
             }
         }
-        return new ImmutablePair<>(
-                new ImportSchema(datasetLookup,sourceSchemas,schemaBuilder.build(),nameMapping),
-                errors);
+        return new ImportSchema(datasetLookup,sourceSchemas,schemaBuilder.build(),nameMapping);
     }
 
-    public FlexibleDatasetSchema.TableField createTable(SourceTable table, Name datasetname,
+    private FlexibleDatasetSchema.TableField createTable(SourceTable table, Name datasetname,
                                                         FlexibleDatasetSchema.TableField userSchema,
                                                         ConversionError.Bundle<SchemaConversionError> errors) {
         SchemaGenerator generator = new SchemaGenerator();
@@ -182,6 +170,15 @@ public class ImportManager {
                 NamePath.of(datasetname, table.getName()));
         errors.merge(generator.getErrors());
         return result;
+    }
+
+    private static void addMapping(Name mapTo, ImportSchema.Mapping original, Map<Name, ImportSchema.Mapping> mappings,
+                                   ConversionError.Bundle<SchemaConversionError> errors) {
+        if (mappings.containsKey(mapTo)) {
+            errors.add(SchemaConversionError.fatal(NamePath.ROOT,"Duplicate IMPORT name: %s. Import names must be unique.",mapTo));
+        } else {
+            mappings.put(mapTo,original);
+        }
     }
 
     public void registerScript(@NonNull String name, @NonNull RelationType<StandardField> datasetSchema) {

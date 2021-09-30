@@ -56,7 +56,7 @@ public class ImportPipelineResolver {
 
       SourceTable stable = metadata.getDataset(loc).getTable(tableName);
       SourceTableStatistics tableStats = metadata.getDatasourceTableStatistics(stable);
-      SourceTableSchema tableSchema = tableStats.getSchema();
+      SourceTableSchema tableSchema = null; //TODO: FIX! tableStats.getSchema();
 
       DataStream<SourceRecord> stream = stable.getDataStream(metadata.getFlinkEnv());
       final OutputTag<SchemaValidationError> schemaErrorTag = new OutputTag<>("schema-error-"+tableName){};

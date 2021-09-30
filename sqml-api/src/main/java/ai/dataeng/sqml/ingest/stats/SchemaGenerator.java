@@ -20,17 +20,20 @@ import java.util.*;
 
 public class SchemaGenerator {
 
-    private ConversionError.Bundle<SchemaConversionError> errors;
+    private ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
     private boolean isComplete;
 
     public FlexibleDatasetSchema.TableField mergeSchema(@NonNull SourceTableStatistics tableStats, @NonNull FlexibleDatasetSchema.TableField tableDef, @NonNull NamePath location) {
-        errors = new ConversionError.Bundle<>();
         isComplete = !tableDef.isPartialSchema();
         FlexibleDatasetSchema.TableField.Builder builder = new FlexibleDatasetSchema.TableField.Builder();
         builder.copyFrom(tableDef);
         builder.setPartialSchema(false);
-        builder.setFields(merge(tableStats.relation,tableDef.getFields(),location));
+        builder.setFields(merge(tableStats.relation, tableDef.getFields(), location));
         return builder.build();
+    }
+
+    public FlexibleDatasetSchema.TableField mergeSchema(@NonNull SourceTableStatistics tableStats, @NonNull Name tableName, @NonNull NamePath location) {
+        return mergeSchema(tableStats, FlexibleDatasetSchema.TableField.empty(tableName), location);
     }
 
     RelationType<FlexibleDatasetSchema.FlexibleField> merge(@NonNull RelationStats relation, @NonNull RelationType<FlexibleDatasetSchema.FlexibleField> fields, @NonNull NamePath location) {

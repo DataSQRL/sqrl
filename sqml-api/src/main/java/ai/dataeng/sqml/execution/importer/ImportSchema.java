@@ -30,6 +30,10 @@ public class ImportSchema {
         return nameMapping.get(name);
     }
 
+    public Map<Name, Mapping> getMappings() {
+        return nameMapping;
+    }
+
     public SourceTableImport getSourceTable(@NonNull Name tableName) {
         Mapping mapping = nameMapping.get(tableName);
         Preconditions.checkArgument(mapping!=null,"Table has not been imported into local scope: %s", tableName);
@@ -44,7 +48,7 @@ public class ImportSchema {
         return getSourceTableInternal(tableName, mapping.datasetName);
     }
 
-    public SourceTableImport getSourceTableInternal(@NonNull Name originalTableName, @NonNull Name originalDSName) {
+    private SourceTableImport getSourceTableInternal(@NonNull Name originalTableName, @NonNull Name originalDSName) {
         SourceDataset ds = datasetLookup.getDataset(originalDSName);
         Preconditions.checkArgument(ds!=null, "Dataset does not exist: %s", originalDSName);
         FlexibleDatasetSchema dsSchema = sourceSchemas.get(originalDSName);
