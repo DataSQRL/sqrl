@@ -8,6 +8,8 @@ import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.basic.StringType;
+import ai.dataeng.sqml.schema2.constraint.Cardinality;
+import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NamePath;
 import ai.dataeng.sqml.schema2.name.SpecialName;
@@ -87,7 +89,6 @@ public class SchemaGenerator {
                     maxArrayDepth = Math.max(td.getArrayDepth(), maxArrayDepth);
                 } else {
                     type = null; //abort type finding since it's a nested relation
-                    break;
                 }
                 if (type == null) break; //abort
             }
@@ -98,6 +99,7 @@ public class SchemaGenerator {
                 //Combine all of the encountered raw types
                 maxArrayDepth = 0;
                 type = null;
+                int nestedRelationArrayDepth = 0;
                 RelationStats nested = null;
                 for (FieldTypeStats fts : statTypes) {
                     FieldTypeStats.TypeDepth td = fts.raw;
@@ -109,6 +111,7 @@ public class SchemaGenerator {
                         assert fts.nestedRelationStats != null;
                         if (nested == null) nested = fts.nestedRelationStats.clone();
                         else nested.merge(fts.nestedRelationStats);
+                        nestedRelationArrayDepth = Math.max(nestedRelationArrayDepth,td.getArrayDepth());
                     }
                 }
                 if (type != null) {
@@ -126,8 +129,12 @@ public class SchemaGenerator {
                                 .add(b.build())
                                 .build();
                     }
+                    List<Constraint> constraints = Collections.EMPTY_LIST;
+                    if (nestedRelationArrayDepth==0) {
+                        constraints.add(new Cardinality(0,1));
+                    }
                     result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, nestedType,
-                            1, Collections.EMPTY_LIST);
+                            1, constraints);
                 }
             }
             assert result != null;

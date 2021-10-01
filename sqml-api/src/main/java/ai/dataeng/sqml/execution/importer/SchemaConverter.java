@@ -26,11 +26,11 @@ public class SchemaConverter {
     }
 
     public StandardField convert(FlexibleDatasetSchema.TableField table) {
-        return new StandardField(table.getName(),convert(table.getFields()),table.getConstraints());
+        return convert(table, table.getName());
     }
 
     public StandardField convert(FlexibleDatasetSchema.TableField table, Name newName) {
-        return new StandardField(newName,convert(table.getFields()),table.getConstraints());
+        return new StandardField(newName,new ArrayType(convert(table.getFields())),table.getConstraints());
     }
 
     private RelationType<StandardField> convert(RelationType<FlexibleDatasetSchema.FlexibleField> relation) {

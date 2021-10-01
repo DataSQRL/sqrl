@@ -113,7 +113,7 @@ public class FieldStats implements Serializable {
                     }
                     numElements++;
                 }
-                FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(elementType,inferredType));
+                FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(elementType, inferredType, arrayDepth));
                 fieldStats.add(numElements,relationStats);
             } else {
                 //Single element
@@ -130,7 +130,7 @@ public class FieldStats implements Serializable {
                         inferredType = BasicTypeManager.inferType((String)o);
                     }
                 }
-                FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(elementType,inferredType));
+                FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(elementType, inferredType, 0));
                 fieldStats.add();
                 if (o instanceof Map) fieldStats.addNested((Map)o,canonicalizer);
             }

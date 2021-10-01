@@ -5,6 +5,7 @@ import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
+import com.google.common.base.Preconditions;
 import lombok.*;
 
 import java.io.Serializable;
@@ -47,16 +48,8 @@ public class FieldTypeStats implements Serializable, Cloneable {
         return new FieldTypeStats(r,d);
     }
 
-    public static FieldTypeStats of(@NonNull Type raw, BasicType detected) {
-        return of(raw,detected,0);
-    }
-
     public void add() {
         count++;
-    }
-
-    public boolean hasDetected() {
-        return !raw.equals(detected);
     }
 
     public void addNested(@NonNull Map<String,Object> nested, @NonNull NameCanonicalizer canonicalizer) {
@@ -137,7 +130,8 @@ public class FieldTypeStats implements Serializable, Cloneable {
         }
 
         public static TypeDepth of(@NonNull Type type, int arrayDepth) {
-            if (type instanceof RelationType) return NestedRelation.INSTANCE;
+            Preconditions.checkArgument(arrayDepth>=0 && arrayDepth<100,"Array depth out of bounds: %s",arrayDepth);
+            if (type instanceof RelationType) return new NestedRelation(arrayDepth);
             else if (type instanceof BasicType) return new BasicTypeDepth(arrayDepth, (BasicType) type);
             else throw new IllegalArgumentException("Unsupported type: " + type);
         }
@@ -161,14 +155,19 @@ public class FieldTypeStats implements Serializable, Cloneable {
         }
     }
 
+    @Getter
     @EqualsAndHashCode
     @ToString
     public static class NestedRelation implements TypeDepth {
 
-        static final NestedRelation INSTANCE = new NestedRelation();
+        int arrayDepth;
 
         private NestedRelation() {} //For Kryo
 
+        NestedRelation(int arrayDepth) {
+            Preconditions.checkArgument(arrayDepth<=1);
+            this.arrayDepth = arrayDepth;
+        }
 
         @Override
         public boolean isBasic() {
@@ -180,10 +179,6 @@ public class FieldTypeStats implements Serializable, Cloneable {
             throw new UnsupportedOperationException();
         }
 
-        @Override
-        public int getArrayDepth() {
-            return 1;
-        }
     }
 
 
