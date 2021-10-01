@@ -48,7 +48,7 @@ public class SimpleConversionError implements ConversionError {
 
     @Override
     public String toString() {
-        return severity.name() + "[" + msg + "]value=" + Objects.toString(value);
+        return severity.name() + "[" + msg + "]"; //value=" + Objects.toString(value);
     }
 
 

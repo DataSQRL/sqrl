@@ -21,8 +21,10 @@ public interface ConversionError {
         return getSeverity() == Severity.WARN;
     }
 
+    default boolean isNotice() { return getSeverity() == Severity.NOTICE; }
+
     public enum Severity {
-        WARN, FATAL;
+        NOTICE, WARN, FATAL;
     }
 
     public static class Bundle<E extends ConversionError> implements Iterable<E> {

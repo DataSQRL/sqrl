@@ -109,6 +109,16 @@ public class FieldTypeStats implements Serializable, Cloneable {
         return Objects.hash(raw, detected);
     }
 
+    @Override
+    public String toString() {
+        String result = "{" + raw.toString();
+        if (!raw.equals(detected)) {
+            result+= "|" + detected.toString();
+        }
+        result += "}";
+        return result;
+    }
+
     public interface TypeDepth {
 
         boolean isBasic();
@@ -152,11 +162,13 @@ public class FieldTypeStats implements Serializable, Cloneable {
     }
 
     @EqualsAndHashCode
+    @ToString
     public static class NestedRelation implements TypeDepth {
 
         static final NestedRelation INSTANCE = new NestedRelation();
 
-        NestedRelation() {}
+        private NestedRelation() {} //For Kryo
+
 
         @Override
         public boolean isBasic() {

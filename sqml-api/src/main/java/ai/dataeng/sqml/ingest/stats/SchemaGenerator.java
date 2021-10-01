@@ -41,13 +41,13 @@ public class SchemaGenerator {
         Set<Name> coveredNames = new HashSet<>();
         RelationType.Builder<FlexibleDatasetSchema.FlexibleField> builder = RelationType.<FlexibleDatasetSchema.FlexibleField>build();
         for (FlexibleDatasetSchema.FlexibleField f : fields) {
-            builder.add(merge(relation.fieldStats.get(f.getName()),f,location.resolve(f.getName())));
+            builder.add(merge(relation.fieldStats.get(f.getName()), f, location.resolve(f.getName())));
             coveredNames.add(f.getName());
         }
         if (!isComplete) {
-            for (Map.Entry<Name,FieldStats> e : relation.fieldStats.entrySet()) {
+            for (Map.Entry<Name, FieldStats> e : relation.fieldStats.entrySet()) {
                 if (!coveredNames.contains(e.getKey())) {
-                    builder.add(merge(e.getValue(),null,location.resolve(e.getKey())));
+                    builder.add(merge(e.getValue(), null, location.resolve(e.getKey())));
                 }
             }
         }
@@ -55,15 +55,15 @@ public class SchemaGenerator {
     }
 
     FlexibleDatasetSchema.FlexibleField merge(FieldStats fieldStats, FlexibleDatasetSchema.FlexibleField fieldDef, @NonNull NamePath location) {
-        Preconditions.checkArgument(fieldDef!=null || !isComplete);
+        Preconditions.checkArgument(fieldDef != null || !isComplete);
         FlexibleDatasetSchema.FlexibleField.Builder builder = new FlexibleDatasetSchema.FlexibleField.Builder();
-        if (fieldDef!=null) builder.copyFrom(fieldDef);
+        if (fieldDef != null) builder.copyFrom(fieldDef);
         else {
-            builder.setName(Name.changeDisplayName(location.getLast(),fieldStats.getDisplayName()));
+            builder.setName(Name.changeDisplayName(location.getLast(), fieldStats.getDisplayName()));
         }
         List<FlexibleDatasetSchema.FieldType> types = merge(
-                fieldStats!=null?fieldStats.types.keySet():Collections.EMPTY_SET,
-                fieldDef!=null?fieldDef.getTypes():Collections.EMPTY_LIST,location);
+                fieldStats != null ? fieldStats.types.keySet() : Collections.EMPTY_SET,
+                fieldDef != null ? fieldDef.getTypes() : Collections.EMPTY_LIST, location);
         builder.setTypes(types);
         return builder.build();
     }
@@ -82,18 +82,18 @@ public class SchemaGenerator {
             for (FieldTypeStats fts : statTypes) {
                 FieldTypeStats.TypeDepth td = fts.detected;
                 if (td.isBasic()) {
-                    if (type==null) type = td.getBasicType();
-                    else type = BasicTypeManager.combine(type,td.getBasicType(),false);
-                    maxArrayDepth = Math.max(td.getArrayDepth(),maxArrayDepth);
+                    if (type == null) type = td.getBasicType();
+                    else type = BasicTypeManager.combine(type, td.getBasicType(), false);
+                    maxArrayDepth = Math.max(td.getArrayDepth(), maxArrayDepth);
                 } else {
                     type = null; //abort type finding since it's a nested relation
                     break;
                 }
                 if (type == null) break; //abort
             }
-            if (type!=null) {
+            if (type != null) {
                 //We have found a shared detected type
-                result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON,type,maxArrayDepth,Collections.EMPTY_LIST);
+                result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth, Collections.EMPTY_LIST);
             } else {
                 //Combine all of the encountered raw types
                 maxArrayDepth = 0;
@@ -102,21 +102,21 @@ public class SchemaGenerator {
                 for (FieldTypeStats fts : statTypes) {
                     FieldTypeStats.TypeDepth td = fts.raw;
                     if (td.isBasic()) {
-                        if (type==null) type = td.getBasicType();
-                        else type = BasicTypeManager.combine(type,td.getBasicType(),true);
-                        maxArrayDepth = Math.max(td.getArrayDepth(),maxArrayDepth);
+                        if (type == null) type = td.getBasicType();
+                        else type = BasicTypeManager.combine(type, td.getBasicType(), true);
+                        maxArrayDepth = Math.max(td.getArrayDepth(), maxArrayDepth);
                     } else {
-                        assert fts.nestedRelationStats!=null;
+                        assert fts.nestedRelationStats != null;
                         if (nested == null) nested = fts.nestedRelationStats.clone();
                         else nested.merge(fts.nestedRelationStats);
                     }
                 }
-                if (type!=null) {
-                    result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON,type,maxArrayDepth,Collections.EMPTY_LIST);
+                if (type != null) {
+                    result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth, Collections.EMPTY_LIST);
                 }
-                if (nested!=null) {
+                if (nested != null) {
                     RelationType<FlexibleDatasetSchema.FlexibleField> nestedType = merge(nested, RelationType.EMPTY, location);
-                    if (result!=null) {
+                    if (result != null) {
                         //Need to embed basictype into nested relation as value
                         FlexibleDatasetSchema.FlexibleField.Builder b = new FlexibleDatasetSchema.FlexibleField.Builder();
                         b.setName(SpecialName.VALUE);
@@ -126,11 +126,11 @@ public class SchemaGenerator {
                                 .add(b.build())
                                 .build();
                     }
-                    result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON,nestedType,
-                            1,Collections.EMPTY_LIST);
+                    result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, nestedType,
+                            1, Collections.EMPTY_LIST);
                 }
             }
-            assert result!=null;
+            assert result != null;
             return Collections.singletonList(result);
         } else {
              /*
@@ -144,22 +144,18 @@ public class SchemaGenerator {
             Multimap<FlexibleDatasetSchema.FieldType, FieldTypeStats> typePairing = ArrayListMultimap.create();
             for (FieldTypeStats fts : statTypes) {
                 //Try to match on raw first
-                FlexibleDatasetSchema.FieldType match = matchType(fts.raw, fieldTypes, false);
-                if (match!=null) typePairing.put(match,fts);
-                else {
-                    //Try to match on detected
-                    match = matchType(fts.detected, fieldTypes, false);
-                    if (match!=null) typePairing.put(match,fts);
-                    else {
-                        //Force a match
-                        match = matchType(fts.raw, fieldTypes, true);
-                        if (match!=null) typePairing.put(match,fts);
-                        else addError(SchemaConversionError.warn(location,"Cannot match field type [%s] onto defined schema. Such records will be ignored.",fts.raw));
+                FlexibleDatasetSchema.FieldType match = matchType(fts.raw, fts.detected, fieldTypes);
+                if (match != null) {
+                    if (!match.getType().getClass().equals(fts.raw.getType().getClass()) || match.getArrayDepth()!=fts.raw.getArrayDepth()) {
+                        addError(SchemaConversionError.notice(location, "Matched field type [%s] onto [%s]", fts, match));
                     }
+                    typePairing.put(match, fts);
+                } else {
+                    addError(SchemaConversionError.warn(location, "Cannot match field type [%s] onto defined schema. Such records will be ignored.", fts.raw));
                 }
             }
             for (FlexibleDatasetSchema.FieldType ft : fieldTypes) {
-                result.add(merge(typePairing.get(ft),ft,location));
+                result.add(merge(typePairing.get(ft), ft, location));
             }
             return result;
         }
@@ -170,53 +166,80 @@ public class SchemaGenerator {
         else {
             RelationStats nested = null;
             for (FieldTypeStats fts : ftstats) {
-                if (nested==null) nested = fts.nestedRelationStats.clone();
+                if (nested == null) nested = fts.nestedRelationStats.clone();
                 else nested.merge(fts.nestedRelationStats);
             }
             return new FlexibleDatasetSchema.FieldType(ftdef.getVariantName(),
-                    merge(nested==null?RelationStats.EMPTY:nested,(RelationType)ftdef.getType(),location),
-                    ftdef.getArrayDepth(),ftdef.getConstraints());
+                    merge(nested == null ? RelationStats.EMPTY : nested, (RelationType) ftdef.getType(), location),
+                    ftdef.getArrayDepth(), ftdef.getConstraints());
         }
     }
 
-    public static FlexibleDatasetSchema.FieldType matchType(FieldTypeStats.TypeDepth typeDepth, List<FlexibleDatasetSchema.FieldType> fieldTypes, boolean force) {
-        return matchType(typeDepth.getType(),typeDepth.getArrayDepth(),fieldTypes, force);
+    private static FlexibleDatasetSchema.FieldType matchType(FieldTypeStats.TypeDepth rawType, FieldTypeStats.TypeDepth detectedType,
+                                                             List<FlexibleDatasetSchema.FieldType> fieldTypes) {
+        return matchType(rawType.getType(), rawType.getArrayDepth(), detectedType.getType(), detectedType.getArrayDepth(), fieldTypes);
     }
 
-    public static FlexibleDatasetSchema.FieldType matchType(Type type, int arrayDepth, List<FlexibleDatasetSchema.FieldType> fieldTypes, boolean force) {
+    private static FlexibleDatasetSchema.FieldType matchType(Type rawType, int rawArrayDepth,
+                                                             Type detectedType, int detectedArrayDepth,
+                                                             List<FlexibleDatasetSchema.FieldType> fieldTypes) {
+        FlexibleDatasetSchema.FieldType match;
+        //First, try to match raw type
+        match = matchSingleType(rawType, rawArrayDepth, fieldTypes);
+        if (match == null) {
+            //Second, try to match on detected
+            match = matchSingleType(detectedType, detectedArrayDepth, fieldTypes);
+            if (match == null) {
+                //If neither of those worked, try to force a match which means casting raw to STRING if available
+                match = fieldTypes.stream().filter(ft -> rawArrayDepth<=ft.getArrayDepth() && ft.getType() instanceof StringType)
+                        .min(Comparator.comparing(FlexibleDatasetSchema.FieldType::getArrayDepth)).orElse(null);
+            }
+        }
+        return match;
+    }
+
+    private static FlexibleDatasetSchema.FieldType matchSingleType(Type type, int arrayDepth, List<FlexibleDatasetSchema.FieldType> fieldTypes) {
         if (type instanceof RelationType) {
             assert arrayDepth==1;
             return fieldTypes.stream().filter(ft -> ft.getType() instanceof RelationType).findFirst().orElse(null);
         } else {
             BasicType btype = (BasicType) type;
             return fieldTypes.stream().filter(ft -> ft.getType() instanceof BasicType)
-                    .map(ft -> new ImmutablePair<>(typeDistance(btype, arrayDepth, (BasicType)ft.getType(), ft.getArrayDepth(), force),ft))
+                    .map(ft -> new ImmutablePair<>(typeDistance(btype, arrayDepth, (BasicType)ft.getType(), ft.getArrayDepth()),ft))
                     .filter(p -> p.getKey()>=0).min(Comparator.comparing(ImmutablePair::getKey)).map(ImmutablePair::getValue).orElse(null);
         }
     }
 
-    private static final int DISTANCE_PADDING = 1000;
+    private static final int ARRAY_DISTANCE_OFFSET = 100; //Assume maximum array depth is 100
 
-    public static int typeDistance(BasicType childType, int childArrayDepth, BasicType ancestorType, int ancestorArrayDepth, boolean force) {
+    public static int typeDistance(BasicType childType, int childArrayDepth, BasicType ancestorType, int ancestorArrayDepth) {
         if (childArrayDepth>ancestorArrayDepth) return -1;
-        return typeDistance(childType,ancestorType, force)*DISTANCE_PADDING + (ancestorArrayDepth-childArrayDepth);
+        return typeDistance(childType,ancestorType)* ARRAY_DISTANCE_OFFSET + (ancestorArrayDepth-childArrayDepth);
     }
 
-    public static int typeDistance(BasicType childType, BasicType ancestorType, boolean force) {
-        BasicType parent = childType;
+    private static final int SIBLING_DISTANCE_OFFSET = 5;
+
+    public static int typeDistance(BasicType baseType, BasicType relatedType) {
+        BasicType parent = baseType;
         int distance = 0;
-        while (parent!=null && !parent.equals(ancestorType)) {
+        Map<BasicType,Integer> distanceMap = new HashMap<>();
+        while (parent!=null && !parent.equals(relatedType)) {
+            distanceMap.put(parent,distance);
             parent = parent.parentType();
             distance++;
         }
-        if (parent==null) { //We did not find a match within the type hierarchy
-            if (force) {
-                //TODO: Cast to sibling
-
-                //Final fallback: cast up to STRING
-                if (ancestorType instanceof StringType) return DISTANCE_PADDING;
+        if (parent==null) { //We did not find a match within the ancestors. Let's see if it's a sibling
+            parent = relatedType.parentType();
+            distance = 1;
+            while (parent!=null && !distanceMap.containsKey(parent)) {
+                parent = parent.parentType();
+                distance++;
             }
-            return -1;
+            if (parent==null) { //Could not find a path between the two types in the type hierarchy
+                return -1;
+            } else {
+                return distance*SIBLING_DISTANCE_OFFSET+distanceMap.get(parent);
+            }
         } else {
             return distance;
         }

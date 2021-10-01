@@ -27,6 +27,10 @@ public class SchemaConversionError extends LocationConversionError<NamePath> {
         return new SchemaConversionError(Severity.WARN, location, msg, args);
     }
 
+    public static SchemaConversionError notice(NamePath location, String msg, Object... args) {
+        return new SchemaConversionError(Severity.NOTICE, location, msg, args);
+    }
+
     public static SchemaConversionError convert(NamePath location, ConversionError error) {
         return new SchemaConversionError(location,error);
     }
