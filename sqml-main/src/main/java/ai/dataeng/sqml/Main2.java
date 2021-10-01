@@ -167,6 +167,11 @@ public class Main2 {
         ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
         ImportSchema schema = sqmlImporter.createImportSchema(errors);
 
+        if (errors.hasErrors()) {
+            System.out.println("-------Import Errors-------");
+            errors.forEach(e -> System.out.println(e));
+        }
+
         System.out.println("-------Script Schema-------");
         System.out.println(schema.getSchema());
         System.out.println("-------Tables-------");

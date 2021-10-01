@@ -148,7 +148,7 @@ public class SchemaGenerator {
                 if (match!=null) typePairing.put(match,fts);
                 else {
                     //Try to match on detected
-                    match = matchType(fts.raw, fieldTypes, false);
+                    match = matchType(fts.detected, fieldTypes, false);
                     if (match!=null) typePairing.put(match,fts);
                     else {
                         //Force a match
@@ -203,15 +203,23 @@ public class SchemaGenerator {
     }
 
     public static int typeDistance(BasicType childType, BasicType ancestorType, boolean force) {
-        if (force && ancestorType instanceof StringType) return DISTANCE_PADDING;
         BasicType parent = childType;
         int distance = 0;
-        while (!parent.equals(ancestorType)) {
+        while (parent!=null && !parent.equals(ancestorType)) {
             parent = parent.parentType();
-            if (parent==null) return -1;
             distance++;
         }
-        return distance;
+        if (parent==null) { //We did not find a match within the type hierarchy
+            if (force) {
+                //TODO: Cast to sibling
+
+                //Final fallback: cast up to STRING
+                if (ancestorType instanceof StringType) return DISTANCE_PADDING;
+            }
+            return -1;
+        } else {
+            return distance;
+        }
     }
 
 
