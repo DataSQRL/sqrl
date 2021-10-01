@@ -11,6 +11,7 @@ import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.BasicType;
+import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.basic.ConversionResult;
 import ai.dataeng.sqml.schema2.constraint.Cardinality;
@@ -240,7 +241,7 @@ public class SchemaImport {
                 depth++;
                 basicType = basicType.substring(1,basicType.length()-1);
             }
-            BasicType type = BasicType.getTypeByName(basicType);
+            BasicType type = BasicTypeManager.getTypeByName(basicType);
             if (type==null) return null;
             return new BasicTypeParse(depth,type);
         }

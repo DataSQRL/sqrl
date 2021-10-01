@@ -1,5 +1,8 @@
 package ai.dataeng.sqml.schema2.name;
 
+import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 
 /**
@@ -37,7 +40,14 @@ public interface Name extends Serializable, Comparable<Name> {
 //    }
 
     public static Name of(String name, NameCanonicalizer canonicalizer) {
+        Preconditions.checkArgument(StringUtils.isNotEmpty(name));
+        name = name.trim();
         return new StandardName(canonicalizer.getCanonical(name),name);
+    }
+
+    public static Name changeDisplayName(Name name, String displayName) {
+        Preconditions.checkArgument(StringUtils.isNotEmpty(displayName));
+        return new StandardName(name.getCanonical(),displayName.trim());
     }
 
     public static final String CONCATENATE_STRING = "_";

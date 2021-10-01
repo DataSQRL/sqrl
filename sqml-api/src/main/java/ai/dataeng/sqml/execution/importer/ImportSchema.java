@@ -38,7 +38,7 @@ public class ImportSchema {
         Mapping mapping = nameMapping.get(tableName);
         Preconditions.checkArgument(mapping!=null,"Table has not been imported into local scope: %s", tableName);
         Preconditions.checkArgument(mapping.isSource() && mapping.isTable(), "Name does not reference source table: %s", tableName);
-        return getSourceTable(mapping.tableName, mapping.datasetName);
+        return getSourceTableInternal(mapping.tableName, mapping.datasetName);
     }
 
     public SourceTableImport getSourceTable(@NonNull Name tableName, @NonNull Name datasetName) {

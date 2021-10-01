@@ -5,8 +5,7 @@ import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
-import lombok.NonNull;
-import lombok.Value;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -14,14 +13,16 @@ import java.util.Objects;
 
 public class FieldTypeStats implements Serializable, Cloneable {
 
-    final @NonNull FieldTypeStats.TypeDepth raw;
-    final @NonNull FieldTypeStats.TypeDepth detected;
+    FieldTypeStats.TypeDepth raw;
+    FieldTypeStats.TypeDepth detected;
 
     long count;
     //Only not-null if detected is an array
     LogarithmicHistogram.Accumulator arrayCardinality;
     //Only not-null if detected is a NestedRelation
     RelationStats nestedRelationStats;
+
+    public FieldTypeStats() {} //For Kryo;
 
     public FieldTypeStats(@NonNull FieldTypeStats.TypeDepth raw) {
         this(raw,raw);
@@ -59,8 +60,8 @@ public class FieldTypeStats implements Serializable, Cloneable {
     }
 
     public void addNested(@NonNull Map<String,Object> nested, @NonNull NameCanonicalizer canonicalizer) {
-        if (nestedRelationStats==null) nestedRelationStats=new RelationStats(canonicalizer);
-        nestedRelationStats.add(nested);
+        if (nestedRelationStats==null) nestedRelationStats=new RelationStats();
+        nestedRelationStats.add(nested, canonicalizer);
     }
 
     public void add(int numArrayElements, RelationStats relationStats) {
@@ -81,7 +82,7 @@ public class FieldTypeStats implements Serializable, Cloneable {
         arrayCardinality.add(numElements);
     }
 
-    public void merge(@NonNull FieldTypeStats other, @NonNull NameCanonicalizer canonicalizer) {
+    public void merge(@NonNull FieldTypeStats other) {
         assert equals(other);
         count+=other.count;
         if (other.arrayCardinality!=null) {
@@ -89,7 +90,7 @@ public class FieldTypeStats implements Serializable, Cloneable {
             arrayCardinality.merge(other.arrayCardinality);
         }
         if (other.nestedRelationStats !=null) {
-            if (nestedRelationStats ==null) nestedRelationStats = new RelationStats(canonicalizer);
+            if (nestedRelationStats ==null) nestedRelationStats = new RelationStats();
             nestedRelationStats.merge(other.nestedRelationStats);
         }
     }
@@ -133,11 +134,16 @@ public class FieldTypeStats implements Serializable, Cloneable {
 
     }
 
-    @Value
+    @AllArgsConstructor
+    @Getter
+    @EqualsAndHashCode
+    @ToString
     public static class BasicTypeDepth implements TypeDepth {
 
-        final int arrayDepth;
-        final BasicType basicType;
+        int arrayDepth;
+        BasicType basicType;
+
+        private BasicTypeDepth() {} //For Kryo
 
         @Override
         public boolean isBasic() {
@@ -145,12 +151,12 @@ public class FieldTypeStats implements Serializable, Cloneable {
         }
     }
 
-    @Value
+    @EqualsAndHashCode
     public static class NestedRelation implements TypeDepth {
 
         static final NestedRelation INSTANCE = new NestedRelation();
 
-        private NestedRelation() {}
+        NestedRelation() {}
 
         @Override
         public boolean isBasic() {

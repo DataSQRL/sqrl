@@ -36,18 +36,18 @@ public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, S
     public void processElement(SourceRecord sourceRecord, Context context, Collector<SourceRecord> out) throws Exception {
         SourceTableStatistics acc = stats.value();
         if (acc == null) {
-            acc = new SourceTableStatistics(datasetReg);
+            acc = new SourceTableStatistics();
             long timer = FlinkUtilities.getCurrentProcessingTime() + TimeUnit.MINUTES.toMillis(maxTimeInMin);
             nextTimer.update(timer);
             context.timerService().registerProcessingTimeTimer(timer);
             //Register an event timer into the far future to trigger when the stream ends
             context.timerService().registerEventTimeTimer(Long.MAX_VALUE);
         }
-        ConversionError.Bundle<StatsIngestError> errors = acc.validate(sourceRecord);
+        ConversionError.Bundle<StatsIngestError> errors = acc.validate(sourceRecord, datasetReg);
         if (errors.isFatal()) {
             //TODO: Record is flawed, put it in sideoutput and issue warning
         } else {
-            acc.add(sourceRecord);
+            acc.add(sourceRecord, datasetReg);
             stats.update(acc);
             if (acc.getCount() >= maxRecords) {
                 context.timerService().deleteProcessingTimeTimer(nextTimer.value());

@@ -12,14 +12,19 @@ public class NumberType extends AbstractBasicType<Double> {
 
     public static final NumberType INSTANCE = new NumberType();
 
-    NumberType() {
-        super("NUMBER", new Conversion());
+    @Override
+    public String getName() {
+        return "NUMBER";
     }
 
-    public static class Conversion extends AbstractBasicType.Conversion<Double> {
+    @Override
+    public TypeConversion<Double> conversion() {
+        return new Conversion();
+    }
+
+    public static class Conversion implements TypeConversion<Double> {
 
         public Conversion() {
-            super(Double.class, s -> Double.parseDouble(s));
         }
 
         @Override

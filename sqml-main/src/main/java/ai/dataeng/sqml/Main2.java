@@ -18,11 +18,12 @@ import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.*;
 
+import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.schema2.name.Name;
@@ -73,12 +74,15 @@ public class Main2 {
             .build();
 
     public static void main(String[] args) throws Exception {
+        BasicTypeManager.inferType("test");
+
         HierarchyKeyValueStore.Factory kvStoreFactory = new LocalFileHierarchyKeyValueStore.Factory(outputBase.toString());
         DataSourceRegistry ddRegistry = new DataSourceRegistry(kvStoreFactory);
         DirectoryDataset dd = new DirectoryDataset(DatasetRegistration.of(RETAIL_DATASET), RETAIL_DATA_DIR);
         ddRegistry.addDataset(dd);
 
-        collectStats(ddRegistry);
+//        collectStats(ddRegistry);
+        importSchema(ddRegistry);
 //        simpleDBPipeline(ddRegistry);
 
 //        testDB();
@@ -153,7 +157,7 @@ public class Main2 {
         }
 
         System.out.println("-------Import Schema-------");
-        printSchema(userSchema);
+        System.out.print(toString(userSchema));
 
         ImportManager sqmlImporter = new ImportManager(ddRegistry);
         sqmlImporter.registerUserSchema(userSchema);
@@ -171,26 +175,28 @@ public class Main2 {
             ImportSchema.SourceTableImport tableImport = schema.getSourceTable(entry.getKey());
             Preconditions.checkNotNull(tableImport);
             System.out.println("Table name: " + entry.getKey());
-            printSchema(Name.system("local"),singleton(tableImport.getSchema()));
+            System.out.print(toString(Name.system("local"),singleton(tableImport.getSchema())));
         }
     }
 
-    private static void printSchema(Name name, FlexibleDatasetSchema schema) {
-        printSchema(Collections.singletonMap(name,schema));
+    private static String toString(Name name, FlexibleDatasetSchema schema) {
+        return toString(Collections.singletonMap(name,schema));
     }
 
-    private static void printSchema(Map<Name, FlexibleDatasetSchema> schema) {
+    private static String toString(Map<Name, FlexibleDatasetSchema> schema) {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
         SchemaExport exporter = new SchemaExport();
         SchemaDefinition sd = exporter.export(schema);
 
+        StringWriter s = new StringWriter();
         try {
-            mapper.writeValue(System.out, sd);
+            mapper.writeValue(s, sd);
         } catch (IOException e ) {
             throw new RuntimeException(e);
         }
+        return s.toString();
     }
 
     public static void collectStats(DataSourceRegistry ddRegistry) throws Exception {
@@ -198,7 +204,7 @@ public class Main2 {
 
         Thread.sleep(1000);
 
-        SourceDataset dd = ddRegistry.getDataset(RETAIL_DATA_DIR_NAME);
+        SourceDataset dd = ddRegistry.getDataset(RETAIL_DATASET);
         SchemaGenerator schemaGenerator = new SchemaGenerator();
         FlexibleDatasetSchema.Builder dataset = new FlexibleDatasetSchema.Builder();
         //Retrieve the collected statistics
@@ -218,7 +224,7 @@ public class Main2 {
         }
 
         System.out.println("-------Exported JSON-------");
-        printSchema(Name.system("ecommerce"),dataset.build());
+        System.out.print(toString(Name.system("ecommerce"),dataset.build()));
 
     }
 

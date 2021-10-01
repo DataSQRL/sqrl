@@ -1,12 +1,24 @@
 package ai.dataeng.sqml.schema2.basic;
 
 import java.time.OffsetDateTime;
+import java.util.function.Function;
 
-public class DateTimeType extends AbstractBasicType<OffsetDateTime> {
+public class DateTimeType extends SimpleBasicType<OffsetDateTime> {
 
     public static final DateTimeType INSTANCE = new DateTimeType();
 
-    DateTimeType() {
-        super("DATETIME", OffsetDateTime.class, s -> OffsetDateTime.parse(s));
+    @Override
+    public String getName() {
+        return "DATETIME";
+    }
+
+    @Override
+    protected Class<OffsetDateTime> getJavaClass() {
+        return OffsetDateTime.class;
+    }
+
+    @Override
+    protected Function<String, OffsetDateTime> getStringParser() {
+        return s -> OffsetDateTime.parse(s);
     }
 }

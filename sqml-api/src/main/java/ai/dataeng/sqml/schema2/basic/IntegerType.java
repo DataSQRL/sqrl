@@ -14,15 +14,21 @@ public class IntegerType extends AbstractBasicType<Long> {
 
     public static final IntegerType INSTANCE = new IntegerType();
 
-    IntegerType() {
-        super("INTEGER", new Conversion());
+    @Override
+    public String getName() {
+        return "INTEGER";
     }
 
     public BasicType parentType() {
         return NumberType.INSTANCE;
     }
 
-    public static class Conversion extends AbstractBasicType.Conversion<Long> {
+    @Override
+    public TypeConversion<Long> conversion() {
+        return new Conversion();
+    }
+
+    public static class Conversion extends SimpleBasicType.Conversion<Long> {
 
         private static final Set<Class> INT_CLASSES = ImmutableSet.of(Integer.class, Long.class, Byte.class, Short.class);
 

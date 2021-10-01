@@ -11,9 +11,9 @@ public interface NameCanonicalizer extends Serializable {
 
     String getCanonical(String name);
 
-    NameCanonicalizer LOWERCASE_ENGLISH = name -> name.trim().toLowerCase(Locale.ENGLISH);
+    NameCanonicalizer LOWERCASE_ENGLISH = new LowercaseEnglishCanonicalizer();
 
-    NameCanonicalizer AS_IS = name -> name.trim();
+    NameCanonicalizer AS_IS = new IdentityCanonicalizer();
 
     NameCanonicalizer SYSTEM = LOWERCASE_ENGLISH;
 

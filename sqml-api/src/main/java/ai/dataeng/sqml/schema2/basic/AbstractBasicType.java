@@ -9,22 +9,7 @@ import java.util.function.Function;
 
 public abstract class AbstractBasicType<J> implements BasicType<J> {
 
-    private final String name;
-    private final TypeConversion<J> conversion;
-
-    AbstractBasicType(String name, TypeConversion<J> conversion) {
-        this.name = name;
-        this.conversion = conversion;
-    }
-
-    AbstractBasicType(String name, Class<J> clazz, Function<String,J> stringParser) {
-        this.name = name;
-        this.conversion = new Conversion<>(clazz,stringParser);
-    }
-
-    @Override
-    public String getName() {
-        return name;
+    AbstractBasicType() {
     }
 
     @Override
@@ -34,7 +19,7 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return getName().hashCode();
     }
 
     @Override
@@ -42,13 +27,9 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AbstractBasicType<?> that = (AbstractBasicType<?>) o;
-        return name.equals(that.name);
+        return getName().equals(that.getName());
     }
 
-    @Override
-    public TypeConversion<J> conversion() {
-        return null;
-    }
 
     @Override
     public String toString() {
@@ -56,52 +37,7 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
     }
 
 
-    public static class Conversion<J> implements TypeConversion<J> {
 
-        private final Class<J> clazz;
-        private final Function<String,J> stringParser;
-
-        public Conversion(Class<J> clazz, Function<String, J> stringParser) {
-            this.clazz = clazz;
-            this.stringParser = stringParser;
-        }
-
-        @Override
-        public Set<Class> getJavaTypes() {
-            return Collections.singleton(clazz);
-        }
-
-        public boolean isInferredType(String original) {
-            try {
-                stringParser.apply(original);
-                return true;
-            } catch (IllegalArgumentException e) {
-                return false;
-            } catch (DateTimeParseException e) {
-                return false;
-            }
-        }
-
-        public ConversionResult<J, ConversionError> parse(Object original) {
-            if (original instanceof String) {
-                try {
-                    J result = stringParser.apply((String) original);
-                    return ConversionResult.of(result);
-                } catch (IllegalArgumentException e) {
-                    return ConversionResult.fatal("Could not parse value [%s] to data type [%s]", original, clazz);
-                } catch (DateTimeParseException e) {
-                    return ConversionResult.fatal("Could not parse value [%s] to data type [%s]", original, clazz);
-                }
-            }
-            return ConversionResult.fatal("Cannot convert [%s]", original);
-        }
-
-        @Override
-        public Object cast2Parent(@NonNull J o) {
-            throw new UnsupportedOperationException();
-        }
-
-    }
 
 
 }

@@ -1,11 +1,15 @@
 package ai.dataeng.sqml.schema2.name;
 
+import lombok.NonNull;
+
 public class StandardName extends AbstractName {
 
-    private final String canonicalName;
-    private final String displayName;
+    private String canonicalName;
+    private String displayName;
 
-    StandardName(String canonicalName, String displayName) {
+    StandardName() {} //For Kryo
+
+    StandardName(@NonNull String canonicalName, @NonNull String displayName) {
         this.canonicalName = validateName(canonicalName);
         this.displayName = validateName(displayName);
     }

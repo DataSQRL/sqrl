@@ -2,22 +2,31 @@ package ai.dataeng.sqml.schema2.basic;
 
 import lombok.NonNull;
 
+import java.util.Collections;
+import java.util.Set;
+
 public class StringType extends AbstractBasicType<String> {
 
     public static final StringType INSTANCE = new StringType();
 
-    StringType() {
-        super("STRING", new Conversion());
+    @Override
+    public String getName() {
+        return "STRING";
     }
 
-    public static class Conversion extends AbstractBasicType.Conversion<String> {
+    @Override
+    public TypeConversion<String> conversion() {
+        return new Conversion();
+    }
+
+    public static class Conversion implements TypeConversion<String> {
 
         public Conversion() {
-            super(String.class, s -> s);
         }
 
-        public ConversionResult<String, ConversionError> parse(Object original) {
-            return ConversionResult.of(original.toString());
+        @Override
+        public Set<Class> getJavaTypes() {
+            return Collections.singleton(String.class);
         }
 
         public String convert(Object o) {

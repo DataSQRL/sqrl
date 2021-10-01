@@ -5,6 +5,7 @@ import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.BasicType;
+import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.basic.StringType;
 import ai.dataeng.sqml.schema2.name.Name;
@@ -58,7 +59,7 @@ public class SchemaGenerator {
         FlexibleDatasetSchema.FlexibleField.Builder builder = new FlexibleDatasetSchema.FlexibleField.Builder();
         if (fieldDef!=null) builder.copyFrom(fieldDef);
         else {
-            builder.setName(fieldStats.getName());
+            builder.setName(Name.changeDisplayName(location.getLast(),fieldStats.getDisplayName()));
         }
         List<FlexibleDatasetSchema.FieldType> types = merge(
                 fieldStats!=null?fieldStats.types.keySet():Collections.EMPTY_SET,
@@ -82,7 +83,7 @@ public class SchemaGenerator {
                 FieldTypeStats.TypeDepth td = fts.detected;
                 if (td.isBasic()) {
                     if (type==null) type = td.getBasicType();
-                    else type = BasicType.combine(type,td.getBasicType(),false);
+                    else type = BasicTypeManager.combine(type,td.getBasicType(),false);
                     maxArrayDepth = Math.max(td.getArrayDepth(),maxArrayDepth);
                 } else {
                     type = null; //abort type finding since it's a nested relation
@@ -102,7 +103,7 @@ public class SchemaGenerator {
                     FieldTypeStats.TypeDepth td = fts.raw;
                     if (td.isBasic()) {
                         if (type==null) type = td.getBasicType();
-                        else type = BasicType.combine(type,td.getBasicType(),true);
+                        else type = BasicTypeManager.combine(type,td.getBasicType(),true);
                         maxArrayDepth = Math.max(td.getArrayDepth(),maxArrayDepth);
                     } else {
                         assert fts.nestedRelationStats!=null;

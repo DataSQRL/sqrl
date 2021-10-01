@@ -1,38 +1,31 @@
 package ai.dataeng.sqml.ingest.stats;
 
-import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
-import ai.dataeng.sqml.ingest.accumulator.LogarithmicHistogram;
 import ai.dataeng.sqml.schema2.basic.BasicType;
+import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.RelationType;
-import ai.dataeng.sqml.schema2.name.StandardName;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.api.common.accumulators.LongCounter;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FieldStats {
-
-    final NameCanonicalizer canonicalizer;
+public class FieldStats implements Serializable {
 
     long count = 0;
     long numNulls = 0;
     Map<FieldTypeStats,FieldTypeStats> types = new HashMap<>(4);
     Map<String, AtomicLong> nameCounts = new HashMap<>(2);
 
-    public FieldStats(NameCanonicalizer canonicalizer) {
-        this.canonicalizer = canonicalizer;
+    public FieldStats() {
     }
 
     public static void validate(Object o, DocumentPath path, ConversionError.Bundle<StatsIngestError> errors,
@@ -59,7 +52,7 @@ public class FieldStats {
                 if (type == null) type = elementType;
                 else if (!elementType.equals(type)) {
                     if (type instanceof BasicType && elementType instanceof BasicType) {
-                        type = BasicType.combine((BasicType)type,(BasicType)elementType, true);
+                        type = BasicTypeManager.combine((BasicType)type,(BasicType)elementType, true);
                     } else {
                         errors.add(StatsIngestError.fatal(path,"Array contains elements with incompatible types: [%s]. Found [%s] and [%s]", o, type, elementType));
                     }
@@ -76,7 +69,7 @@ public class FieldStats {
         }
     }
 
-    public void add(Object o, @NonNull String displayName) {
+    public void add(Object o, @NonNull String displayName, NameCanonicalizer canonicalizer) {
         count++;
         addNameCount(displayName,1);
         if (o==null) {
@@ -98,23 +91,23 @@ public class FieldStats {
                         Map map = (Map)next;
                         if (numElements==0) {
                             elementType = RelationType.EMPTY;
-                            relationStats = new RelationStats(canonicalizer);
+                            relationStats = new RelationStats();
                             //Try to infer type
-                            inferredType = BasicType.inferType(map);
+                            inferredType = BasicTypeManager.inferType(map);
                         } else if (inferredType != null) {
-                            BasicType infer2 = BasicType.inferType(map);
+                            BasicType infer2 = BasicTypeManager.inferType(map);
                             if (infer2==null || !infer2.equals(inferredType)) inferredType = null;
                         }
-                        relationStats.add(map);
+                        relationStats.add(map, canonicalizer);
                     } else {
                         //not an array or map => must be scalar, let's find the common scalar type for all elements
                         if (numElements==0) {
                             elementType = getBasicType(next);
                             //Try to infer type
-                            if (next instanceof String) inferredType = BasicType.inferType((String)next);
+                            if (next instanceof String) inferredType = BasicTypeManager.inferType((String)next);
                         } else if (inferredType != null) {
-                            elementType = BasicType.combine((BasicType)elementType,getBasicType(next),true);
-                            BasicType infer2 = BasicType.inferType((String)next);
+                            elementType = BasicTypeManager.combine((BasicType)elementType,getBasicType(next),true);
+                            BasicType infer2 = BasicTypeManager.inferType((String)next);
                             if (infer2==null || !infer2.equals(inferredType)) inferredType = null;
                         }
                     }
@@ -128,12 +121,14 @@ public class FieldStats {
                 BasicType inferredType = null;
                 if (o instanceof Map) {
                     elementType = RelationType.EMPTY;
-                    inferredType = BasicType.inferType((Map)o);
+                    inferredType = BasicTypeManager.inferType((Map)o);
                 } else {
                     //not an array or map => must be scalar
                     elementType = getBasicType(o);
                     //Try to infer type
-                    if (o instanceof String) inferredType = BasicType.inferType((String)o);
+                    if (o instanceof String) {
+                        inferredType = BasicTypeManager.inferType((String)o);
+                    }
                 }
                 FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(elementType,inferredType));
                 fieldStats.add();
@@ -154,7 +149,7 @@ public class FieldStats {
     }
 
     public static BasicType getBasicType(@NonNull Object o, ConversionError.Bundle<StatsIngestError> errors, DocumentPath path) {
-        BasicType elementType = BasicType.JAVA_TO_TYPE.get(o.getClass());
+        BasicType elementType = BasicTypeManager.getTypeByJavaClass(o.getClass());
         if (elementType == null) {
             if (errors != null) {
                 errors.add(StatsIngestError.fatal(path, "Unsupported data type for value: %s [%s]", o, o.getClass()));
@@ -203,12 +198,13 @@ public class FieldStats {
                 thisStats = new FieldTypeStats(fstats);
                 types.put(thisStats,thisStats);
             }
-            thisStats.merge(fstats,canonicalizer);
+            thisStats.merge(fstats);
         }
         acc.nameCounts.forEach( (n,c) -> addNameCount(n, c.get()));
     }
 
     private void addNameCount(@NonNull String name, long count) {
+        name = name.trim();
         AtomicLong counter = nameCounts.get(name);
         if (counter==null) {
             counter = new AtomicLong(0);
@@ -217,13 +213,13 @@ public class FieldStats {
         counter.addAndGet(count);
     }
 
-    Name getName() {
-        return Name.of(nameCounts.entrySet().stream().max(new Comparator<Map.Entry<String, AtomicLong>>() {
+    String getDisplayName() {
+        return nameCounts.entrySet().stream().max(new Comparator<Map.Entry<String, AtomicLong>>() {
             @Override
             public int compare(Map.Entry<String, AtomicLong> o1, Map.Entry<String, AtomicLong> o2) {
                 return Long.compare(o1.getValue().get(),o2.getValue().get());
             }
-        }).get().getKey(),canonicalizer);
+        }).get().getKey();
     }
 
 }

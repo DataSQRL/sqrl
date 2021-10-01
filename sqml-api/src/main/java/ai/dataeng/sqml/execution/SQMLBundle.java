@@ -77,7 +77,7 @@ public class SQMLBundle {
 
 
         public SQMLBundle build() {
-            Preconditions.checkArgument(scripts.stream().noneMatch(SQMLScript::isMain),"Bundle does not have a main script");
+            Preconditions.checkArgument(scripts.stream().anyMatch(SQMLScript::isMain),"Bundle does not have a main script");
             return new SQMLBundle(scripts, path);
         }
 

@@ -10,8 +10,9 @@ public class FloatType extends AbstractBasicType<Double> {
 
     public static final FloatType INSTANCE = new FloatType();
 
-    FloatType() {
-        super("FLOAT", new Conversion());
+    @Override
+    public String getName() {
+        return "FLOAT";
     }
 
     @Override
@@ -19,7 +20,12 @@ public class FloatType extends AbstractBasicType<Double> {
         return NumberType.INSTANCE;
     }
 
-    public static class Conversion extends AbstractBasicType.Conversion<Double> {
+    @Override
+    public TypeConversion<Double> conversion() {
+        return new Conversion();
+    }
+
+    public static class Conversion extends SimpleBasicType.Conversion<Double> {
 
         private static final Set<Class> FLOAT_CLASSES = ImmutableSet.of(Float.class, Double.class);
 
