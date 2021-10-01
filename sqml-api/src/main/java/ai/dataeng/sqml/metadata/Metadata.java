@@ -1,15 +1,15 @@
 package ai.dataeng.sqml.metadata;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
-import ai.dataeng.sqml.execution.Bundle;
+import ai.dataeng.sqml.execution.SQMLBundle;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
-import ai.dataeng.sqml.ingest.SourceTableStatistics;
+import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.query.GraphqlQueryProvider;
 import ai.dataeng.sqml.registry.ScriptRegistry;
 import ai.dataeng.sqml.schema.SchemaProvider;
-import ai.dataeng.sqml.source.SourceDataset;
-import ai.dataeng.sqml.source.SourceTable;
+import ai.dataeng.sqml.ingest.source.SourceDataset;
+import ai.dataeng.sqml.ingest.source.SourceTable;
 import ai.dataeng.sqml.statistics.StatisticsProvider;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Script;
@@ -27,7 +27,7 @@ public class Metadata {
   private final ScriptRegistry scriptRegistry;
   private final GraphqlQueryProvider queries;
   private final StatisticsProvider statisticsProvider;
-  private final Bundle bundle;
+  private final SQMLBundle bundle;
   private final SchemaProvider schemaProvider;
   private final DataSourceRegistry datasetRegistry;
   private final StreamExecutionEnvironment flinkEnv;
@@ -36,11 +36,11 @@ public class Metadata {
   private Map<QualifiedName, TableHandle> tableHandles = new HashMap<>();
 
   public Metadata(FunctionProvider functionProvider, ScriptRegistry scriptRegistry,
-      GraphqlQueryProvider queries, StatisticsProvider statisticsProvider,
-      Bundle bundle, SchemaProvider schemaProvider,
-      DataSourceRegistry datasetRegistry,
-      StreamExecutionEnvironment flinkEnv,
-      StreamTableEnvironment streamTableEnvironment) {
+                  GraphqlQueryProvider queries, StatisticsProvider statisticsProvider,
+                  SQMLBundle bundle, SchemaProvider schemaProvider,
+                  DataSourceRegistry datasetRegistry,
+                  StreamExecutionEnvironment flinkEnv,
+                  StreamTableEnvironment streamTableEnvironment) {
 
     this.functionProvider = functionProvider;
     this.scriptRegistry = scriptRegistry;
@@ -77,7 +77,7 @@ public class Metadata {
     return scriptRegistry.getScript(name);
   }
 
-  public Bundle getBundle() {
+  public SQMLBundle getBundle() {
     return this.bundle;
   }
 

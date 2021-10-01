@@ -1,7 +1,6 @@
 package ai.dataeng.sqml.flink;
 
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
-import ai.dataeng.sqml.ingest.SourceTableStatistics;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 

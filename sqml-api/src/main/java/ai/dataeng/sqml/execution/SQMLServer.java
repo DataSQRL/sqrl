@@ -4,8 +4,9 @@ import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
-import ai.dataeng.sqml.source.SourceDataset;
+import ai.dataeng.sqml.ingest.source.SourceDataset;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
 
 public class SQMLServer {
 
@@ -23,14 +24,14 @@ public class SQMLServer {
         registry.addDataset(dataset);
     }
 
-    public void run(Bundle sqml) throws Exception {
+    public void run(SQMLBundle sqml) throws Exception {
         StreamExecutionEnvironment flinkEnv = envProvider.create();
         compile(sqml,flinkEnv);
         //4. Store bundle meta data and execute Flink Job
         flinkEnv.execute("somename");
     }
 
-    public void compile(Bundle sqml, StreamExecutionEnvironment flinkEnv) {
+    public void compile(SQMLBundle sqml, StreamExecutionEnvironment flinkEnv) {
         //1. Parse
 
         //2. Analyze: resolve import dependencies, data types, and view definitions

@@ -1,9 +1,6 @@
 package ai.dataeng.sqml.flink.util;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
-import ai.dataeng.sqml.ingest.NamePath;
-import ai.dataeng.sqml.ingest.RecordShredder;
-import ai.dataeng.sqml.ingest.SourceTableSchema;
 import ai.dataeng.sqml.type.*;
 import org.apache.flink.api.common.typeinfo.BasicArrayTypeInfo;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
@@ -15,9 +12,6 @@ import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 

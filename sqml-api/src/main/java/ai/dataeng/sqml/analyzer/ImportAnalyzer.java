@@ -6,18 +6,16 @@ import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Import;
 import ai.dataeng.sqml.tree.ImportFunction;
-import ai.dataeng.sqml.tree.ImportState;
+import ai.dataeng.sqml.tree.ImportData;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.RelationType.ImportRelationType;
 import ai.dataeng.sqml.type.Type;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Value;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonSubTypes;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
@@ -50,7 +48,7 @@ public class ImportAnalyzer {
     }
 
     @Override
-    protected Scope visitImportState(ImportState node, Scope scope) {
+    protected Scope visitImportState(ImportData node, Scope scope) {
       if (scope.resolveRelation(QualifiedName.of(node.getQualifiedName().getSuffix())).isPresent()) {
         throw new RuntimeException(String.format("Imported Field already exists %s", node.getQualifiedName()));
       }

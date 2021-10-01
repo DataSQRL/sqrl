@@ -1,6 +1,5 @@
 package ai.dataeng.sqml.source.simplefile;
 
-import ai.dataeng.sqml.source.SourceRecord;
 import ai.dataeng.sqml.source.util.SourceRecordCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;

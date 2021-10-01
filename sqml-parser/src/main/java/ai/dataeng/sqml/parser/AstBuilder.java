@@ -42,10 +42,8 @@ import ai.dataeng.sqml.tree.GenericLiteral;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.Identifier;
-import ai.dataeng.sqml.tree.Import;
-import ai.dataeng.sqml.tree.Import.ImportType;
 import ai.dataeng.sqml.tree.ImportFunction;
-import ai.dataeng.sqml.tree.ImportState;
+import ai.dataeng.sqml.tree.ImportData;
 import ai.dataeng.sqml.tree.InListExpression;
 import ai.dataeng.sqml.tree.InPredicate;
 import ai.dataeng.sqml.tree.InlineJoin;
@@ -94,7 +92,6 @@ import ai.dataeng.sqml.tree.WhenClause;
 import com.google.common.collect.ImmutableList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -928,8 +925,8 @@ class AstBuilder
   }
 
   @Override
-  public Node visitImportState(ImportStateContext ctx) {
-    return new ImportState(getLocation(ctx), getQualifiedName(ctx.qualifiedName()));
+  public Node visitImportData(ImportDataContext ctx) {
+    return new ImportData(getLocation(ctx), getQualifiedName(ctx.qualifiedName()));
   }
 
   @Override

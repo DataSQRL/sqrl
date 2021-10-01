@@ -1,48 +1,50 @@
 package ai.dataeng.sqml;
 
-import static org.apache.flink.table.api.Expressions.$;
-
-import ai.dataeng.sqml.db.DestinationTableSchema;
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.db.tabular.JDBCSinkFactory;
-import ai.dataeng.sqml.db.tabular.RowMapFunction;
-import ai.dataeng.sqml.execution.Bundle;
+import ai.dataeng.sqml.execution.SQMLBundle;
+import ai.dataeng.sqml.execution.importer.ImportManager;
+import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
-import ai.dataeng.sqml.flink.util.FlinkUtilities;
-import ai.dataeng.sqml.ingest.DataSourceRegistry;
-import ai.dataeng.sqml.ingest.NamePath;
-import ai.dataeng.sqml.ingest.RecordShredder;
-import ai.dataeng.sqml.ingest.SchemaAdjustmentSettings;
-import ai.dataeng.sqml.ingest.SchemaValidationError;
-import ai.dataeng.sqml.ingest.SchemaValidationProcess;
-import ai.dataeng.sqml.ingest.SourceTableSchema;
-import ai.dataeng.sqml.ingest.SourceTableStatistics;
-import ai.dataeng.sqml.source.SourceDataset;
-import ai.dataeng.sqml.source.SourceRecord;
-import ai.dataeng.sqml.source.SourceTable;
-import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
-import java.nio.file.Files;
+import ai.dataeng.sqml.ingest.*;
+import ai.dataeng.sqml.ingest.schema.*;
+import ai.dataeng.sqml.ingest.schema.external.SchemaDefinition;
+import ai.dataeng.sqml.ingest.schema.external.SchemaExport;
+import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
+import ai.dataeng.sqml.ingest.stats.SchemaGenerator;
+import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
+import ai.dataeng.sqml.ingest.source.SourceDataset;
+
+import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.*;
 
-import ai.dataeng.sqml.type.IntegerType;
+import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
+import ai.dataeng.sqml.schema2.basic.ConversionError;
+import ai.dataeng.sqml.schema2.constraint.Constraint;
+import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.schema2.name.NamePath;
+import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
+import com.google.common.base.Preconditions;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.internal.connection.SimpleJdbcConnectionProvider;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInclude;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
-import org.apache.flink.util.OutputTag;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.SQLDialect;
@@ -52,10 +54,12 @@ public class Main2 {
 
     public static final Path RETAIL_DIR = Path.of(System.getProperty("user.dir")).resolve("sqml-examples").resolve("retail");
     public static final String RETAIL_DATA_DIR_NAME = "ecommerce-data";
+    public static final String RETAIL_DATASET = "ecommerce";
     public static final Path RETAIL_DATA_DIR = RETAIL_DIR.resolve(RETAIL_DATA_DIR_NAME);
     public static final String RETAIL_SCRIPT_NAME = "c360";
     public static final Path RETAIL_SCRIPT_DIR = RETAIL_DIR.resolve(RETAIL_SCRIPT_NAME);
     public static final String SQML_SCRIPT_EXTENSION = ".sqml";
+    public static final Path RETAIL_IMPORT_SCHEMA_FILE = RETAIL_SCRIPT_DIR.resolve("pre-schema.yml");
 
     public static final String[] RETAIL_TABLE_NAMES = { "Customer", "Orders", "Product"};
 
@@ -70,13 +74,16 @@ public class Main2 {
             .build();
 
     public static void main(String[] args) throws Exception {
+        BasicTypeManager.inferType("test");
+
         HierarchyKeyValueStore.Factory kvStoreFactory = new LocalFileHierarchyKeyValueStore.Factory(outputBase.toString());
         DataSourceRegistry ddRegistry = new DataSourceRegistry(kvStoreFactory);
-        DirectoryDataset dd = new DirectoryDataset(RETAIL_DATA_DIR);
+        DirectoryDataset dd = new DirectoryDataset(DatasetRegistration.of(RETAIL_DATASET), RETAIL_DATA_DIR);
         ddRegistry.addDataset(dd);
 
 //        collectStats(ddRegistry);
-        simpleDBPipeline(ddRegistry);
+        importSchema(ddRegistry);
+//        simpleDBPipeline(ddRegistry);
 
 //        testDB();
     }
@@ -128,8 +135,109 @@ public class Main2 {
         flinkEnv.execute();
     }
 
+    public static void importSchema(DataSourceRegistry ddRegistry) throws Exception {
+        ddRegistry.monitorDatasets(envProvider);
 
+        Thread.sleep(1000);
 
+        SQMLBundle bundle = new SQMLBundle.Builder().createScript().setName(RETAIL_SCRIPT_NAME)
+                .setScript(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION))
+                .setImportSchema(RETAIL_IMPORT_SCHEMA_FILE)
+                .asMain()
+                .add().build();
+
+        SQMLBundle.SQMLScript sqml = bundle.getMainScript();
+
+        SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
+        Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
+
+        if (schemaImporter.hasErrors()) {
+            System.out.println("Import errors:");
+            schemaImporter.getErrors().forEach(e -> System.out.println(e));
+        }
+
+        System.out.println("-------Import Schema-------");
+        System.out.print(toString(userSchema));
+
+        ImportManager sqmlImporter = new ImportManager(ddRegistry);
+        sqmlImporter.registerUserSchema(userSchema);
+
+        sqmlImporter.importAllTable(RETAIL_DATASET);
+
+        ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
+        ImportSchema schema = sqmlImporter.createImportSchema(errors);
+
+        if (errors.hasErrors()) {
+            System.out.println("-------Import Errors-------");
+            errors.forEach(e -> System.out.println(e));
+        }
+
+        System.out.println("-------Script Schema-------");
+        System.out.println(schema.getSchema());
+        System.out.println("-------Tables-------");
+        for (Map.Entry<Name, ImportSchema.Mapping> entry : schema.getMappings().entrySet()) {
+            Preconditions.checkArgument(entry.getValue().isTable() && entry.getValue().isSource());
+            ImportSchema.SourceTableImport tableImport = schema.getSourceTable(entry.getKey());
+            Preconditions.checkNotNull(tableImport);
+            System.out.println("Table name: " + entry.getKey());
+            System.out.print(toString(Name.system("local"),singleton(tableImport.getSchema())));
+        }
+    }
+
+    private static String toString(Name name, FlexibleDatasetSchema schema) {
+        return toString(Collections.singletonMap(name,schema));
+    }
+
+    private static String toString(Map<Name, FlexibleDatasetSchema> schema) {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        SchemaExport exporter = new SchemaExport();
+        SchemaDefinition sd = exporter.export(schema);
+
+        StringWriter s = new StringWriter();
+        try {
+            mapper.writeValue(s, sd);
+        } catch (IOException e ) {
+            throw new RuntimeException(e);
+        }
+        return s.toString();
+    }
+
+    public static void collectStats(DataSourceRegistry ddRegistry) throws Exception {
+        ddRegistry.monitorDatasets(envProvider);
+
+        Thread.sleep(1000);
+
+        SourceDataset dd = ddRegistry.getDataset(RETAIL_DATASET);
+        SchemaGenerator schemaGenerator = new SchemaGenerator();
+        FlexibleDatasetSchema.Builder dataset = new FlexibleDatasetSchema.Builder();
+        //Retrieve the collected statistics
+        for (String table : RETAIL_TABLE_NAMES) {
+            if (dd.getTable(table) == null) {
+                System.out.println(String.format("Table is null %s", table));
+                continue;
+            }
+            SourceTableStatistics tableStats = ddRegistry.getTableStatistics(dd.getTable(table));
+            Name tableName = Name.system(table);
+            dataset.add(schemaGenerator.mergeSchema(tableStats, tableName, NamePath.of(tableName)));
+        }
+
+        if (schemaGenerator.hasErrors()) {
+            System.out.println("## Generator errors:");
+            schemaGenerator.getErrors().forEach(e -> System.out.println(e));
+        }
+
+        System.out.println("-------Exported JSON-------");
+        System.out.print(toString(Name.system("ecommerce"),dataset.build()));
+
+    }
+
+    private static FlexibleDatasetSchema singleton(FlexibleDatasetSchema.TableField table) {
+        return new FlexibleDatasetSchema.Builder().add(table).build();
+    }
+
+/*
     public static void simpleDBPipeline(DataSourceRegistry ddRegistry) throws Exception {
         StreamExecutionEnvironment flinkEnv = envProvider.create();
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(flinkEnv);
@@ -139,14 +247,14 @@ public class Main2 {
 
         SourceDataset dd = ddRegistry.getDataset(RETAIL_DATA_DIR_NAME);
 
-        Map<String,NamePath[]> imports = new HashMap<>();
-        imports.put(RETAIL_TABLE_NAMES[0],new NamePath[]{NamePath.ROOT}); //Customer
-        imports.put(RETAIL_TABLE_NAMES[1],new NamePath[]{NamePath.ROOT, NamePath.of("entries")}); //Order
-        imports.put(RETAIL_TABLE_NAMES[2],new NamePath[]{NamePath.ROOT}); //Product
+        Map<String, NamePathOld[]> imports = new HashMap<>();
+        imports.put(RETAIL_TABLE_NAMES[0],new NamePathOld[]{NamePathOld.ROOT}); //Customer
+        imports.put(RETAIL_TABLE_NAMES[1],new NamePathOld[]{NamePathOld.ROOT, NamePathOld.of("entries")}); //Order
+        imports.put(RETAIL_TABLE_NAMES[2],new NamePathOld[]{NamePathOld.ROOT}); //Product
 
         Map<String,Table> shreddedImports = new HashMap<>();
 
-        for (Map.Entry<String,NamePath[]> importEntry : imports.entrySet()) {
+        for (Map.Entry<String, NamePathOld[]> importEntry : imports.entrySet()) {
             String tableName = importEntry.getKey();
             SourceTable stable = dd.getTable(tableName);
             SourceTableStatistics tableStats = ddRegistry.getTableStatistics(stable);
@@ -157,16 +265,14 @@ public class Main2 {
             SingleOutputStreamOperator<SourceRecord> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, tableSchema, SchemaAdjustmentSettings.DEFAULT));
             validate.getSideOutput(schemaErrorTag).addSink(new PrintSinkFunction<>()); //TODO: handle errors
 
-            for (NamePath shreddingPath : importEntry.getValue()) {
+            for (NamePathOld shreddingPath : importEntry.getValue()) {
                 RecordShredder shredder = RecordShredder.from(shreddingPath, tableSchema);
                 SingleOutputStreamOperator<Row> process = validate.flatMap(shredder.getProcess(),
                         FlinkUtilities.convert2RowTypeInfo(shredder.getResultSchema()));
 
                 process.addSink(new PrintSinkFunction<>()); //TODO: remove, debugging only
 
-                Table table = tableEnv.fromDataStream(process/*, Schema.newBuilder()
-                .watermark("__timestamp", "SOURCE_WATERMARK()")
-                .build()*/);
+                Table table = tableEnv.fromDataStream(process);
                 table.printSchema();
 
                 String shreddedTableName = tableName;
@@ -192,28 +298,9 @@ public class Main2 {
 
         flinkEnv.execute();
     }
-
-    public static void collectStats(DataSourceRegistry ddRegistry) throws Exception {
-        ddRegistry.monitorDatasets(envProvider);
+    */
 
 
-        Thread.sleep(1000);
-
-        String content = Files.readString(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION));
-        Bundle sqml = new Bundle.Builder().setMainScript(RETAIL_SCRIPT_NAME, content).build();
-        SourceDataset dd = ddRegistry.getDataset(RETAIL_DATA_DIR_NAME);
-
-        //Retrieve the collected statistics
-        for (String table : RETAIL_TABLE_NAMES) {
-            if (dd.getTable(table) == null) {
-                System.out.println(String.format("Table is null %s", table));
-                continue;
-            }
-            SourceTableStatistics tableStats = ddRegistry.getTableStatistics(dd.getTable(table));
-            SourceTableSchema schema = tableStats.getSchema();
-            System.out.println(schema);
-        }
-    }
 
 
 }

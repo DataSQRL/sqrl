@@ -1,10 +1,12 @@
 package ai.dataeng.sqml.source.simplefile;
 
-import ai.dataeng.sqml.source.SourceDataset;
-import ai.dataeng.sqml.source.SourceTable;
-import ai.dataeng.sqml.source.SourceTableListener;
+import ai.dataeng.sqml.ingest.DatasetRegistration;
+import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
+import ai.dataeng.sqml.ingest.source.SourceDataset;
+import ai.dataeng.sqml.ingest.source.SourceTable;
+import ai.dataeng.sqml.ingest.source.SourceTableListener;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,9 +16,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * A {@link SourceDataset} that treats all files matching a certain set of extensions in a given directory as {@link ai.dataeng.sqml.source.SourceTable}.
+ * A {@link SourceDataset} that treats all files matching a certain set of extensions in a given directory as {@link SourceTable}.
  *
- * TODO: This dataset currently does not watch the directory for new files to add as {@link ai.dataeng.sqml.source.SourceTable}
+ * TODO: This dataset currently does not watch the directory for new files to add as {@link SourceTable}
  * to the registered {@link SourceTableListener}. It only looks for files when it is first created.
  */
 public class DirectoryDataset implements SourceDataset {
@@ -24,29 +26,23 @@ public class DirectoryDataset implements SourceDataset {
     public static final String[] FILE_EXTENSIONS = {"csv", "json"};
 
     private final Path directory;
-    private final String name;
-
-    private final Map<String,FileTable> tableFiles;
+    private final DatasetRegistration registration;
+    private final Map<Name,FileTable> tableFiles;
 
     private final Set<SourceTableListener> listeners = new HashSet<>();
 
-    public DirectoryDataset(Path directory, String name) {
+    public DirectoryDataset(DatasetRegistration registration, Path directory) {
         Preconditions.checkArgument(Files.exists(directory) && Files.isDirectory(directory) && Files.isReadable(directory),
                 "Not a readable directory: %s", directory);
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Not a valid name: %s", name);
+        this.registration = registration;
         this.directory = directory;
-        this.name = name;
         try {
             tableFiles = Files.list(directory).filter(f -> FileTable.supportedFile(f))
-                        .map(f -> new FileTable(this,f)).collect(Collectors.toMap(t->t.getName().toLowerCase(
-                    Locale.ROOT), Function.identity()));
+                        .map(f -> new FileTable(this,f)).collect(Collectors.toMap(
+                                t->t.getName(), Function.identity()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public DirectoryDataset(Path directory) {
-        this(directory, directory.getFileName().toString());
     }
 
     @Override
@@ -60,10 +56,6 @@ public class DirectoryDataset implements SourceDataset {
         }
     }
 
-    @Override
-    public String getName() {
-        return name;
-    }
 
     @Override
     public Collection<? extends SourceTable> getTables() {
@@ -71,8 +63,13 @@ public class DirectoryDataset implements SourceDataset {
     }
 
     @Override
-    public SourceTable getTable(String name) {
+    public SourceTable getTable(Name name) {
         return tableFiles.get(name);
+    }
+
+    @Override
+    public DatasetRegistration getRegistration() {
+        return registration;
     }
 
     @Override
@@ -80,19 +77,18 @@ public class DirectoryDataset implements SourceDataset {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DirectoryDataset that = (DirectoryDataset) o;
-        return directory.equals(that.directory) && name.equals(that.name);
+        return directory.equals(that.directory);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(directory, name);
+        return Objects.hash(directory);
     }
 
     @Override
     public String toString() {
         return "DirectoryDataset{" +
                 "directory=" + directory +
-                ", name='" + name + '\'' +
                 '}';
     }
 }
