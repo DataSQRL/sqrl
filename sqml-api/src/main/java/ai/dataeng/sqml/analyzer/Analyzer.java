@@ -1,21 +1,31 @@
 package ai.dataeng.sqml.analyzer;
 
+import ai.dataeng.sqml.imports.ImportObject;
+import ai.dataeng.sqml.imports.ImportVisitor;
+import ai.dataeng.sqml.logical.DistinctRelationDefinition;
+import ai.dataeng.sqml.logical.RelationIdentifier;
+import ai.dataeng.sqml.logical.ExtendedChildQueryRelationDefinition;
+import ai.dataeng.sqml.logical.ExtendedFieldRelationDefinition;
+import ai.dataeng.sqml.logical.ExtendedChildRelationDefinition;
+import ai.dataeng.sqml.logical.LogicalPlan;
+import ai.dataeng.sqml.logical.QueryField;
+import ai.dataeng.sqml.logical.QueryRelationDefinition;
+import ai.dataeng.sqml.logical.RelationDefinition;
 import ai.dataeng.sqml.metadata.Metadata;
-import ai.dataeng.sqml.tree.Assign;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.CreateSubscription;
 import ai.dataeng.sqml.tree.DistinctAssignment;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
-import ai.dataeng.sqml.tree.Import;
+import ai.dataeng.sqml.tree.ImportDefinition;
+import ai.dataeng.sqml.tree.InlineJoin;
+import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.type.RelationType.NamedRelationType;
-import ai.dataeng.sqml.type.RelationType.RootRelationType;
 import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.RelationType;
+import java.util.List;
 import org.apache.flink.util.Preconditions;
 
 public class Analyzer {
@@ -60,56 +70,85 @@ public class Analyzer {
 
     @Override
     protected Scope visitScript(Script node, Scope context) {
-      Scope scope = new Scope(new RootRelationType(new RelationType()));
+      Scope scope = new Scope(analysis.getLogicalPlan());
+
       node.getStatements()
           .forEach(n -> n.accept(this, scope));
-      this.analysis.setModel(scope.getRoot());
       return null;
     }
 
     @Override
-    protected Scope visitImport(Import node, Scope context) {
-      ImportAnalyzer importResolver = new ImportAnalyzer(this.metadata);
-      Scope scope = importResolver.analyzeImport(node, context);
-      return scope;
-    }
-
-    @Override
-    protected Scope visitAssign(Assign node, Scope scope) {
-      Scope result = node.getRhs().accept(this, createScope(scope, node.getName()));
-      return result;
+    protected Scope visitImportDefinition(ImportDefinition node, Scope context) {
+      List<ImportObject> importObjects = metadata.getImportLoader()
+          .load(node.getQualifiedName().toOriginalString());
+      if (importObjects.isEmpty()) {
+        throw new RuntimeException(String.format("Import definition could be found at: %s", node.getQualifiedName()));
+      }
+//      ImportVisitor importVisitor = new ImportAnalyzer(metadata, node, analysis);
+//      for (ImportObject object : importObjects) {
+//        object.accept(importVisitor, context);
+//      }
+      return context;
     }
 
     @Override
     public Scope visitQueryAssignment(QueryAssignment queryAssignment, Scope scope) {
-      //Query assignments statements operate on the root scope
-      //Scope newScope = createAndAssignScope(queryAssignment, scope, scope.getRoot());
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(this.metadata, this.analysis);
-      Scope result = statementAnalyzer.analyze(queryAssignment.getQuery(), scope);
-      RelationType rel = new NamedRelationType(result.getRelation(), scope.getName().getSuffix());
-      scope.addRelation(scope.getName(), rel);
+      RelationDefinition currentParent = analysis.getLogicalPlan()
+          .getCurrentDefinition(queryAssignment.getName().getPrefix().get())
+          .orElseThrow(() -> new RuntimeException("Base belation not yet defined"));
 
-      return result;
+      Scope newScope = createAndAssignScope(queryAssignment, null, analysis.getLogicalPlan(), currentParent);
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(this.metadata, this.analysis);
+      Scope result = queryAssignment.getQuery().accept(statementAnalyzer, newScope);
+      // Obtain the relation header and convert it to an sqml relation
+      QueryRelationDefinition queryRelationDefinition = new QueryRelationDefinition(result.getRelation(),
+          new RelationIdentifier(queryAssignment.getName()), currentParent);
+      if (queryAssignment.getName().getPrefix().isEmpty()) {
+        throw new RuntimeException("Query defining base relation not yet implemented");
+      } else {
+        ExtendedChildQueryRelationDefinition field = new ExtendedChildQueryRelationDefinition(queryAssignment.getName().getSuffix(),
+            queryAssignment.getQuery(), currentParent, new QueryField(queryAssignment.getName().getSuffix(), queryRelationDefinition));
+        analysis.getLogicalPlan().setCurrentDefinition(queryAssignment.getName(), queryRelationDefinition);
+        setRelation(queryAssignment.getName().getPrefix().get(), field);
+      }
+
+      return createAndAssignScope(queryAssignment, queryRelationDefinition,
+          analysis.getLogicalPlan(), currentParent);
     }
+
+//    private RelationDefinition getRelation(QualifiedName qualifiedName) {
+//      return this.analysis.getLogicalPlan().getCurrentDefinition(qualifiedName)
+//          .orElseThrow(()->new RuntimeException("Could not find relation"));
+//    }
 
     @Override
     public Scope visitExpressionAssignment(ExpressionAssignment expressionAssignment,
         final Scope scope) {
-      RelationType rel = scope.getName().getPrefix()
-          .map(p -> scope.resolveRelation(p)
-              .orElseThrow(()->new RuntimeException(String.format("Could not find relation %s", scope.getName().getPrefix()))))
-          .orElse(scope.getRoot());
+      QualifiedName entityName = expressionAssignment.getName().getPrefix()
+          .orElseThrow(()->new RuntimeException(String.format("Could not find relation %s", expressionAssignment.getName())));
+      RelationDefinition relationDefinition = analysis.getLogicalPlan().getCurrentDefinition(entityName)
+          .orElseThrow(()->new RuntimeException(String.format("Could not find relation %s", entityName)));
 
-      Scope assignedScope = createAndAssignScope(expressionAssignment.getExpression(), scope, rel);
-      ExpressionAnalysis exprAnalysis = analyzeExpression(expressionAssignment.getExpression(), assignedScope, true);
+      Scope assignedScope = createAndAssignScope(expressionAssignment.getExpression(),
+          relationDefinition, analysis.getLogicalPlan(), relationDefinition);
+      ExpressionAnalysis exprAnalysis = analyzeExpression(expressionAssignment.getExpression(), assignedScope);
 
       Type type = exprAnalysis.getType(expressionAssignment.getExpression());
       Preconditions.checkNotNull(type, "Could not find type for %s %s",
             expressionAssignment.getExpression().getClass().getName(),
             expressionAssignment.getExpression());
 
-      rel.addField(Field.newDataField(assignedScope.getName().getSuffix(), type));
-      return createAndAssignScope(expressionAssignment.getExpression(), assignedScope, rel);
+      String columnName = expressionAssignment.getName().getSuffix();
+
+      ExtendedFieldRelationDefinition extendedFieldRelationDefinition = new ExtendedFieldRelationDefinition(
+          columnName,
+          expressionAssignment.getExpression(), relationDefinition,
+          Field.newDataField(expressionAssignment.getName().getSuffix(), type));
+      setRelation(entityName, extendedFieldRelationDefinition);
+
+      return createAndAssignScope(expressionAssignment.getExpression(),
+          extendedFieldRelationDefinition,
+          analysis.getLogicalPlan(), relationDefinition);
     }
 
     @Override
@@ -118,39 +157,75 @@ public class Analyzer {
     }
 
     @Override
-    public Scope visitDistinctAssignment(DistinctAssignment node, Scope context) {
-      //todo: add primary key
-      return context;
+    public Scope visitDistinctAssignment(DistinctAssignment node, Scope scope) {
+      QualifiedName entityName = QualifiedName.of(node.getTable());
+      RelationDefinition shadowedDefinition = analysis.getLogicalPlan().getCurrentDefinition(entityName)
+          .orElseThrow(()->new RuntimeException(String.format("Could not find relation %s", node.getTable().getValue())));
+
+      DistinctRelationDefinition distinctRelationDefinition = new DistinctRelationDefinition(
+          node.getName(),
+          node,
+          shadowedDefinition,
+          new RelationIdentifier(entityName)
+      );
+      setRelation(entityName, distinctRelationDefinition);
+
+      return scope;
     }
 
-    private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope, boolean allowFieldCreation) {
+    @Override
+    public Scope visitInlineJoin(InlineJoin node, Scope scope) {
+      InlineJoinBody join = node.getJoin();
+
+      throw new RuntimeException("Join Declaration TBD");
+//      RelationType rel = scope.resolveRelation(join.getTable())
+//          .orElseThrow(()-> new RuntimeException(String.format("Could not find relation %s %s", join.getTable(), node)));
+
+//      if (node.getInverse().isPresent()) {
+//        RelationType relationType = scope.getRelation();
+//        rel.addField(Field.newUnqualified(node.getInverse().get().toString(), relationType));
+//      }
+
+      //addRelation(node.getJoin(), rel);
+//      return scope;
+    }
+
+    private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
       ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata);
       ExpressionAnalysis analysis = analyzer.analyze(expression, scope);
 
       this.analysis.addTypes(analysis.typeMap);
-      this.analysis.addRelations(analysis.relations);
 
       return analysis;
     }
 
-    private Scope createScope(Scope scope, QualifiedName name) {
-      return Scope.builder()
-          .withName(name)
-          .withParent(scope)
-          .withRelationType(scope.getRoot())
-          .build();
-    }
-
-    private Scope createAndAssignScope(Node node, Scope parentScope, RelationType relationType)
-    {
+    private Scope createAndAssignScope(Node node,
+        RelationDefinition relationDefinition, LogicalPlan logicalPlan, RelationDefinition current) {
       Scope scope = Scope.builder()
-          .withParent(parentScope)
-          .withRelationType(relationType)
-          .withName(parentScope.getName())
+          .withRelationType(relationDefinition)
+          .withCurrentSqmlRelation(current)
+          .withLogicalPlan(logicalPlan)
           .build();
 
       analysis.setScope(node, scope);
       return scope;
+    }
+
+    private void setRelation(QualifiedName name, RelationDefinition relationDefinition) {
+      //1. The parent relation need to be aware of the new column
+      //2. Changes of this table should also redefine all of its relational parents...
+      // This is because those changes are now visible for new relations defined.
+      analysis.getLogicalPlan().setCurrentDefinition(name,
+          relationDefinition);
+
+      while (name.getPrefix().isPresent()) {
+        name = name.getPrefix().get();
+        RelationDefinition previous = analysis.getLogicalPlan().getCurrentDefinition(name)
+            .get();
+        relationDefinition = new ExtendedChildRelationDefinition(previous);
+        analysis.getLogicalPlan().setCurrentDefinition(name,
+            relationDefinition);
+      }
     }
   }
 }

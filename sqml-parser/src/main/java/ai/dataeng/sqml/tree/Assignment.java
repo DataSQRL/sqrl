@@ -11,4 +11,5 @@ public abstract class Assignment extends Node {
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitAssignment(this, context);
   }
+  public abstract QualifiedName getName();
 }

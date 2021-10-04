@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class InlineJoinBody
-    extends Relation {
+    extends Expression {
 
   private final QualifiedName table;
   private final Optional<Identifier> alias;

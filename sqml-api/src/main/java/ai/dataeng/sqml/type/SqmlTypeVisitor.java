@@ -1,8 +1,13 @@
 package ai.dataeng.sqml.type;
 
-import ai.dataeng.sqml.type.RelationType.ImportRelationType;
-import ai.dataeng.sqml.type.RelationType.NamedRelationType;
-import ai.dataeng.sqml.type.RelationType.RootRelationType;
+
+import ai.dataeng.sqml.logical.DistinctRelationDefinition;
+import ai.dataeng.sqml.logical.ExtendedChildQueryRelationDefinition;
+import ai.dataeng.sqml.logical.ExtendedChildRelationDefinition;
+import ai.dataeng.sqml.logical.ExtendedFieldRelationDefinition;
+import ai.dataeng.sqml.logical.ImportRelationDefinition;
+import ai.dataeng.sqml.logical.QueryRelationDefinition;
+import ai.dataeng.sqml.logical.RelationDefinition;
 
 public class SqmlTypeVisitor<R, C> {
   public R visitSqmlType(Type type, C context) {
@@ -46,12 +51,34 @@ public class SqmlTypeVisitor<R, C> {
     return visitNumber(type, context);
   }
 
-  public R visitNamedRelation(NamedRelationType type, C context) {
-    return visitRelation(type, context);
+
+  public R visitRelationDefinition(RelationDefinition relation, C context) {
+    return null;
   }
-  public R visitRootRelation(RootRelationType type, C context) {
-    return visitRelation((RelationType)type, context);
-  }  public R visitImportRelation(ImportRelationType type, C context) {
-    return visitNamedRelation(type, context);
+
+  public R visitImportTableDefinition(ImportRelationDefinition relation, C context) {
+    return visitRelationDefinition(relation, context);
+  }
+
+  public R visitExtendedRelation(ExtendedFieldRelationDefinition relation, C context) {
+    return visitRelationDefinition(relation, context);
+  }
+
+  public R visitDistinctRelation(DistinctRelationDefinition relation, C context) {
+    return visitRelationDefinition(relation, context);
+  }
+
+  public R visitQueryRelationDefinition(QueryRelationDefinition relation, C context) {
+    return visitRelationDefinition(relation, context);
+  }
+
+  public R visitExtendedChild(ExtendedChildRelationDefinition relation,
+      C context) {
+    return visitRelationDefinition(relation, context);
+  }
+
+  public R visitExtendedChildQueryRelation(
+      ExtendedChildQueryRelationDefinition relation, C context) {
+    return visitRelationDefinition(relation, context);
   }
 }

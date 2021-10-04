@@ -31,5 +31,10 @@
             <artifactId>postgresql</artifactId>
             <version>42.2.22</version>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.20</version>
+        </dependency>
     </dependencies>
 </project>

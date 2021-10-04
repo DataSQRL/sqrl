@@ -4,14 +4,16 @@ import java.util.List;
 import java.util.Optional;
 
 public class DistinctAssignment extends Assignment {
+
+  private final QualifiedName name;
   private final Identifier table;
   private final List<Identifier> fields;
   private final List<SortItem> order;
 
   public DistinctAssignment(Optional<NodeLocation> location,
-      Identifier table, List<Identifier> fields, List<SortItem> order) {
+      QualifiedName name, Identifier table, List<Identifier> fields, List<SortItem> order) {
     super(location);
-
+    this.name = name;
     this.table = table;
     this.fields = fields;
     this.order = order;
@@ -30,6 +32,10 @@ public class DistinctAssignment extends Assignment {
   }
 
   @Override
+  public QualifiedName getName() {
+    return name;
+  }
+  @Override
   public List<? extends Node> getChildren() {
     return null;
   }
@@ -47,4 +53,5 @@ public class DistinctAssignment extends Assignment {
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitDistinctAssignment(this, context);
   }
+
 }

@@ -26,16 +26,18 @@ public class FunctionCall
   private final QualifiedName name;
   private final List<Expression> arguments;
   private final boolean distinct;
+  private final Optional<Window> over;
 
   public FunctionCall(NodeLocation location, QualifiedName name, List<Expression> arguments,
       boolean distinct) {
-    this(Optional.of(location), name, arguments, distinct);
+    this(Optional.of(location), name, arguments, distinct, Optional.empty());
   }
 
-  private FunctionCall(Optional<NodeLocation> location, QualifiedName name,
-      List<Expression> arguments, boolean distinct) {
+  public FunctionCall(Optional<NodeLocation> location, QualifiedName name,
+      List<Expression> arguments, boolean distinct, Optional<Window> over) {
     super(location);
     this.distinct = distinct;
+    this.over = over;
     requireNonNull(name, "name is null");
     requireNonNull(arguments, "arguments is null");
 
@@ -53,6 +55,10 @@ public class FunctionCall
 
   public boolean isDistinct() {
     return distinct;
+  }
+
+  public Optional<Window> getOver() {
+    return over;
   }
 
   @Override

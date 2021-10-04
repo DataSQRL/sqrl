@@ -22,8 +22,6 @@ import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.ArithmeticBinaryExpression;
 import ai.dataeng.sqml.tree.ArithmeticUnaryExpression;
-import ai.dataeng.sqml.tree.Assign;
-import ai.dataeng.sqml.tree.Assignment;
 import ai.dataeng.sqml.tree.BetweenPredicate;
 import ai.dataeng.sqml.tree.BooleanLiteral;
 import ai.dataeng.sqml.tree.Cast;
@@ -42,8 +40,7 @@ import ai.dataeng.sqml.tree.GenericLiteral;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.Identifier;
-import ai.dataeng.sqml.tree.ImportFunction;
-import ai.dataeng.sqml.tree.ImportData;
+import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.InListExpression;
 import ai.dataeng.sqml.tree.InPredicate;
 import ai.dataeng.sqml.tree.InlineJoin;
@@ -52,6 +49,7 @@ import ai.dataeng.sqml.tree.IntervalLiteral;
 import ai.dataeng.sqml.tree.IsNotNullPredicate;
 import ai.dataeng.sqml.tree.IsNullPredicate;
 import ai.dataeng.sqml.tree.Join;
+import ai.dataeng.sqml.tree.JoinAssignment;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.LikePredicate;
@@ -90,6 +88,7 @@ import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.tree.WhenClause;
 import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -920,33 +919,36 @@ class AstBuilder
   }
 
   @Override
-  public Node visitImportFunction(ImportFunctionContext ctx) {
-    return new ImportFunction(getLocation(ctx), getQualifiedName(ctx.qualifiedName()));
-  }
-
-  @Override
-  public Node visitImportData(ImportDataContext ctx) {
-    return new ImportData(getLocation(ctx), getQualifiedName(ctx.qualifiedName()));
+  public Node visitImportDefinition(ImportDefinitionContext ctx) {
+    return new ImportDefinition(getLocation(ctx), getQualifiedName(ctx.qualifiedName()));
   }
 
   @Override
   public Node visitAssign(AssignContext context) {
-    QualifiedName name = getQualifiedName(context.qualifiedName());
-
-    return new Assign(getLocation(context), name, (Assignment)visit(context.assignment()));
+    return context.assignment().accept(this);
   }
 
   @Override
   public Node visitDistinctAssignment(DistinctAssignmentContext ctx) {
+    QualifiedName name = getQualifiedName(ctx.qualifiedName());
     return new DistinctAssignment(
         Optional.of(getLocation(ctx)),
+        name,
         (Identifier)visit(ctx.table),
-        ctx.identifier() == null ? List.of() : ctx.identifier().stream()
+        ctx.identifier() == null ? List.of() : ctx.identifier().stream().skip(1)
             .map(s->(Identifier) visit(s)).collect(toList()),
         ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
             .map(s->(SortItem) s.accept(this)).collect(toList())
 
     );
+  }
+
+  @Override
+  public Node visitJoinAssignment(JoinAssignmentContext ctx) {
+    QualifiedName name = getQualifiedName(ctx.qualifiedName());
+
+    return new JoinAssignment(Optional.of(getLocation(ctx)), name,
+        (InlineJoin) visit(ctx.inlineJoin()));
   }
 
   @Override
@@ -978,13 +980,17 @@ class AstBuilder
 
   @Override
   public Node visitQueryAssign(QueryAssignContext ctx) {
-    return new QueryAssignment(Optional.of(getLocation(ctx)),
+    QualifiedName name = getQualifiedName(ctx.qualifiedName());
+
+    return new QueryAssignment(Optional.of(getLocation(ctx)), name,
         (Query)visitQuery(ctx.query()));
   }
 
   @Override
   public Node visitExpressionAssign(ExpressionAssignContext ctx) {
-    return new ExpressionAssignment(Optional.of(getLocation(ctx)),
+    QualifiedName name = getQualifiedName(ctx.qualifiedName());
+
+    return new ExpressionAssignment(Optional.of(getLocation(ctx)), name,
         (Expression)visitExpression(ctx.expression()));
   }
 
@@ -1043,7 +1049,7 @@ class AstBuilder
 
   @Override
   public Node visitInlineJoinExpr(InlineJoinExprContext ctx) {
-    return visit(ctx.inlineJoin());
+    return visit(ctx.inlineJoinBody());
   }
 
   private <T> Optional<T> visitIfPresent(ParserRuleContext context, Class<T> clazz) {
@@ -1063,6 +1069,10 @@ class AstBuilder
     List<String> parts = visit(context.identifier(), Identifier.class).stream()
         .map(Identifier::getValue) // TODO: preserve quotedness
         .collect(Collectors.toList());
+    if (context.all != null ) {
+      parts = new ArrayList<>(parts);
+      parts.add("*");
+    }
 
     return QualifiedName.of(parts);
   }

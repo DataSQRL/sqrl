@@ -13,9 +13,10 @@ import java.util.List;
 public class PostgresFunctions {
 
   public static List<SqmlFunction> SqmlSystemFunctions = List.of(
+      new SqmlFunction("echo", new StringType(), false),
       new SqmlFunction("concat", new StringType(), false),
       new SqmlFunction("math.abs", new NumberType(), false),
-      new SqmlFunction("count", new IntegerType(), false),
+      new SqmlFunction("count", new IntegerType(), true),
       new SqmlFunction("casts.tointeger", new IntegerType(), false),
       new SqmlFunction("casts.toboolean", new BooleanType(), false),
       new SqmlFunction("casts.tofloat", new FloatType(), false),

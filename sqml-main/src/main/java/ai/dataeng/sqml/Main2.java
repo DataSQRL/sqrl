@@ -8,21 +8,16 @@ import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
-import ai.dataeng.sqml.ingest.*;
-import ai.dataeng.sqml.ingest.schema.*;
+import ai.dataeng.sqml.ingest.DataSourceRegistry;
+import ai.dataeng.sqml.ingest.DatasetRegistration;
+import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.ingest.schema.external.SchemaDefinition;
 import ai.dataeng.sqml.ingest.schema.external.SchemaExport;
 import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
+import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.stats.SchemaGenerator;
 import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
-import ai.dataeng.sqml.ingest.source.SourceDataset;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.util.*;
-
 import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
@@ -30,6 +25,13 @@ import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NamePath;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -61,7 +63,7 @@ public class Main2 {
     public static final String SQML_SCRIPT_EXTENSION = ".sqml";
     public static final Path RETAIL_IMPORT_SCHEMA_FILE = RETAIL_SCRIPT_DIR.resolve("pre-schema.yml");
 
-    public static final String[] RETAIL_TABLE_NAMES = { "Customer", "Orders", "Product"};
+    public static final String[] RETAIL_TABLE_NAMES = { "customer", "orders", "product"};
 
     public static final Path outputBase = Path.of("tmp","datasource");
     public static final Path dbPath = Path.of("tmp","output");
@@ -286,14 +288,14 @@ public class Main2 {
             }
         }
 
-        Table OrderEntries = shreddedImports.get("Orders_entries");
-        Table Product = shreddedImports.get("Product");
+//        Table OrderEntries = shreddedImports.get("Orders_entries");
+//        Table Product = shreddedImports.get("Product");
 
-        Table po = OrderEntries.groupBy($("productid")).select($("productid"),$("quantity").sum().as("quantity"));
-
-        DestinationTableSchema poschema = DestinationTableSchema.builder().add(DestinationTableSchema.Field.primaryKey("productid", IntegerType.INSTANCE))
-                        .add(DestinationTableSchema.Field.simple("quantity",IntegerType.INSTANCE)).build();
-        tableEnv.toRetractStream(po, Row.class).flatMap(new RowMapFunction()).addSink(dbSinkFactory.getSink("po_count",poschema));
+//        Table po = OrderEntries.groupBy($("productid")).select($("productid"),$("quantity").sum().as("quantity"));
+//
+//        DestinationTableSchema poschema = DestinationTableSchema.builder().add(DestinationTableSchema.Field.primaryKey("productid", IntegerType.INSTANCE))
+//                        .add(DestinationTableSchema.Field.simple("quantity",IntegerType.INSTANCE)).build();
+//        tableEnv.toRetractStream(Product, Row.class).flatMap(new RowMapFunction()).addSink(dbSinkFactory.getSink("po_count",poschema));
 
 
         flinkEnv.execute();

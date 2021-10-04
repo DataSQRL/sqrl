@@ -32,22 +32,16 @@ public abstract class AstVisitor<R, C> {
     return null;
   }
 
-  protected R visitImport(Import node, C context) {
-    return visitNode(node, context);
-  }
-  protected R visitImportFunction(ImportFunction node, C context) {
-    return visitImport(node, context);
-  }
-  protected R visitImportState(ImportData node, C context) {
-    return visitImport(node, context);
-  }
-
-  protected R visitAssign(Assign node, C context) {
+  protected R visitImportDefinition(ImportDefinition node, C context) {
     return visitNode(node, context);
   }
 
   protected R visitAssignment(Assignment node, C context) {
     return visitNode(node, context);
+  }
+
+  public R visitDeclaration(Declaration declaration, C context) {
+    return visitNode(declaration, context);
   }
 
   protected R visitExpression(Expression node, C context) {
@@ -309,7 +303,7 @@ public abstract class AstVisitor<R, C> {
   }
 
   public R visitInlineJoinBody(InlineJoinBody node, C context) {
-    return visitRelation(node, context);
+    return visitExpression(node, context);
   }
 
   public R visitCreateSubscription(CreateSubscription node, C context) {
@@ -320,11 +314,22 @@ public abstract class AstVisitor<R, C> {
     return visitAssignment(node, context);
   }
 
+  public R visitJoinAssignment(JoinAssignment node, C context) {
+    return visitAssignment(node, context);
+  }
   public R visitInlineJoin(InlineJoin node, C context) {
-    return visitExpression(node, context);
+    return visitDeclaration(node, context);
   }
 
   public R visitFieldReference(FieldReference node, C context) {
     return visitExpression(node, context);
+  }
+
+  public R visitWindow(Window window, C context) {
+    return visitNode(window, context);
+  }
+
+  public R visitDistinctOn(DistinctOn node, C context) {
+    return visitNode(node, context);
   }
 }

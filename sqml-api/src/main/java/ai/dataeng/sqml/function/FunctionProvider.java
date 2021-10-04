@@ -11,7 +11,7 @@ public class FunctionProvider {
   private final List<SqmlFunction> functions;
 
   public FunctionProvider(List<SqmlFunction> functions) {
-    this.functions = functions;
+    this.functions = new ArrayList<>(functions);
   }
 
   public static Builder newFunctionProvider() {
@@ -28,6 +28,10 @@ public class FunctionProvider {
     return Optional.of(
         new SqmlFunction(name.toString(), new UnknownType(), false));
 //    return Optional.empty();
+  }
+
+  public void add(String name, SqmlFunction function) {
+    functions.add(function);
   }
 
   public static class Builder {

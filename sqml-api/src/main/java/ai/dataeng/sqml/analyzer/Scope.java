@@ -1,58 +1,40 @@
 package ai.dataeng.sqml.analyzer;
 
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.Iterables.find;
-import static com.google.common.collect.Iterables.getOnlyElement;
-
 import ai.dataeng.sqml.analyzer.TypeResolver.RelationResolverContext;
-import ai.dataeng.sqml.tree.Expression;
+import ai.dataeng.sqml.logical.LogicalPlan;
+import ai.dataeng.sqml.logical.RelationDefinition;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.type.RelationType.RootRelationType;
-import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.RelationType;
-import com.google.common.base.Preconditions;
+import ai.dataeng.sqml.type.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Logger;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
+
+//TODO: ADD:
+// 1. Functions should be registered here. Functions are scoped within scripts. ( can be aliased )
+@Slf4j
+@Getter
 public class Scope {
-  private QualifiedName name;
-  private Optional<Scope> parent;
-  private RelationType relation;
-  private final RelationType root;
-  private Logger log = Logger.getLogger(Scope.class.getName());
+  private LogicalPlan logicalPlan;
+  private RelationType currentRelation;
+  private RelationDefinition currentSqmlRelation;
 
-  public Scope(RootRelationType root) {
-    this.root = root;
-    this.relation = root;
+  public Scope(LogicalPlan logicalPlan) {
+    this(null, logicalPlan, null);
   }
-
-  public Scope(QualifiedName name) {
-    this.name = name;
-    this.root = new RelationType();
-    this.relation = root;
-  }
-
-  public Scope(QualifiedName name, Optional<Scope> parent, RelationType relation,
-      RelationType root) {
-    checkState(relation != null, "Relation cannot be null");
-    this.name = name;
-    this.parent = parent;
-    this.relation = relation;
-    this.root = root;
+  public Scope(RelationType currentRelation, LogicalPlan logicalPlan,
+      RelationDefinition currentSqmlRelation) {
+    this.currentRelation = currentRelation;
+    this.logicalPlan = logicalPlan;
+    this.currentSqmlRelation = currentSqmlRelation;
   }
 
   public static Scope.Builder builder() {
     return new Builder();
-  }
-
-  /**
-   * Creates a relation on the given name
-   */
-  public RelationType getRoot() {
-    return root;
   }
 
   public Optional<Type> resolveType(QualifiedName name) {
@@ -68,36 +50,43 @@ public class Scope {
     return relations.stream().findFirst();
   }
 
-  public Optional<RelationType> resolveRelation(QualifiedName name) {
-    Set<Type> relations = getRelation().accept(
-        new TypeResolver(), new RelationResolverContext(Optional.of(name), this));
-
-    if (relations.size() > 1) {
-      throw new RuntimeException(String.format("Ambigious field %s", name));
+  public Optional<RelationDefinition> resolveRelation(QualifiedName name) {
+    if (name.getParts().get(0).equalsIgnoreCase("@")) {
+      QualifiedName entityName = currentSqmlRelation.getRelationName();
+      List<String> parts = new ArrayList<>(entityName.getParts());
+      parts.addAll(name.getParts().subList(1, name.getParts().size()));
+      name = QualifiedName.of(parts);
     }
-    if (relations.size() == 0) {
-      return Optional.empty();
-    }
-    Preconditions.checkState(relations.stream().findFirst().get() instanceof RelationType,
-        "Relation not a relational type: %s found %s", name, relations.stream().findFirst().get());
-    return Optional.of((RelationType)relations.stream().findFirst().get());
+    return logicalPlan.getCurrentDefinition(name);
+//    Set<Type> relations = getRelation().accept(
+//        new TypeResolver(), new RelationResolverContext(Optional.of(name), this));
+
+//    if (relations.size() > 1) {
+//      throw new RuntimeException(String.format("Ambigious field %s", name));
+//    }
+//    if (tableDefinition.isEmpty()) {
+//      return Optional.empty();
+//    }
+//    Preconditions.checkState(relations.stream().findFirst().get() instanceof RelationType,
+//        "Relation not a relational type: %s found %s", name, relations.stream().findFirst().get());
+//    return Optional.of((RelationType)relations.stream().findFirst().get());
   }
 
-  public void addRelation(QualifiedName name, RelationType relation) {
-    RelationType rel = name.getPrefix().map(p-> resolveRelation(p)
-            .orElseThrow(()->new RuntimeException(String.format("Could not find relation prefix %s", name))))
-        .orElse(root);
-    relation.setParent(rel); //todo This isn't a great place to do this...
-    rel.addField(Field.newUnqualified(name.getSuffix(), relation));
-  }
+//  public void addRelation(QualifiedName name, RelationType relation) {
+//    RelationType rel = name.getPrefix().map(p-> resolveRelation(p)
+//            .orElseThrow(()->new RuntimeException(String.format("Could not find relation prefix %s", name))))
+//        .orElse(root);
+//    relation.setParent(rel); //todo This isn't a great place to do this...
+//    rel.addField(Field.newUnqualified(name.getSuffix(), relation));
+//  }
 
-  public void addFunction(QualifiedName name) {
+//  public void addFunction(QualifiedName name) {
+//
+//  }
 
-  }
-
-  public void addRootField(Field field) {
-    this.root.addField(field);
-  }
+//  public void addRootField(Field field) {
+//    this.root.addField(field);
+//  }
 
   public List<Field> resolveFieldsWithPrefix(Optional<QualifiedName> prefix) {
     if (prefix.isPresent()) {
@@ -106,23 +95,23 @@ public class Scope {
     return getRelation().getFields();
   }
 
-  public RelationType getRelationType() {
+  public RelationId getRelationId() {
     return null;
   }
 
-  public RelationId getRelationId() {
-    return null;
+  public void addRelation(String name, RelationType relation) {
+  }
+
+  public RelationType getRelation() {
+    return currentRelation;
   }
 
   public static class Builder {
     private Scope parent;
     private RelationType relationType;
-    private QualifiedName name;
+    private LogicalPlan logicalPlan;
+    private RelationDefinition currentSqmlRelation;
 
-    public Builder withName(QualifiedName name) {
-      this.name = name;
-      return this;
-    }
     public Builder withParent(Scope scope) {
       this.parent = scope;
       return this;
@@ -133,16 +122,18 @@ public class Scope {
       return this;
     }
 
-    public Scope build() {
-      return new Scope(name, Optional.ofNullable(parent), relationType, parent.root);
+    public Builder withCurrentSqmlRelation(RelationDefinition currentSqmlRelation) {
+      this.currentSqmlRelation = currentSqmlRelation;
+      return this;
     }
-  }
 
-  public QualifiedName getName() {
-    return name;
-  }
+    public Builder withLogicalPlan(LogicalPlan logicalPlan) {
+      this.logicalPlan = logicalPlan;
+      return this;
+    }
 
-  public RelationType getRelation() {
-    return relation;
+    public Scope build() {
+      return new Scope(relationType, logicalPlan, currentSqmlRelation);
+    }
   }
 }

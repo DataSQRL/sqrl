@@ -27,14 +27,13 @@ singleStatement
     ;
 
 statement
-    : qualifiedName ':=' assignment                                    #assign
+    : assignment                                                       #assign
     | CREATE SUBSCRIPTION qualifiedName ON subscriptionType AS query   #createSubscription
     | IMPORT importDefinition                                          #importStatement
     ;
 
 importDefinition
-    : FUNCTION qualifiedName                                           #importFunction
-    | qualifiedName                                                    #importData
+    : qualifiedName
     ;
 
 importAlias
@@ -42,9 +41,10 @@ importAlias
     ;
 
 assignment
-    :  expression                                                   # expressionAssign
-    |  query                                                        # queryAssign
-    | DISTINCT table=identifier ON (identifier (',' identifier)*)
+    : qualifiedName ':=' inlineJoin                                                    # joinAssignment
+    | qualifiedName ':=' expression                                                    # expressionAssign
+    | qualifiedName ':=' query                                                         # queryAssign
+    | qualifiedName ':=' DISTINCT table=identifier ON '(' identifier (',' identifier)* ')'
       (ORDER BY sortItem (',' sortItem)*)?                          # distinctAssignment
     ;
 
@@ -189,7 +189,7 @@ valueExpression
 
 primaryExpression
     : NULL                                                                                #nullLiteral
-    | inlineJoin                                                                          #inlineJoinExpr
+    | inlineJoinBody                                                                          #inlineJoinExpr
     | interval                                                                            #intervalLiteral
     | identifier string                                                                   #typeConstructor
     | number                                                                              #numericLiteral
@@ -252,7 +252,7 @@ whenClause
     ;
 
 qualifiedName
-    : identifier ('.' identifier)* ('.*')?
+    : identifier ('.' identifier)* (all='.*')?
     ;
 
 identifier

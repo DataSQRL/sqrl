@@ -39,12 +39,6 @@ public abstract class DefaultTraversalVisitor<R, C>
   }
 
   @Override
-  protected R visitAssign(Assign node, C context) {
-    process(node.getRhs(), context);
-    return super.visitAssign(node, context);
-  }
-
-  @Override
   protected R visitBetweenPredicate(BetweenPredicate node, C context) {
     process(node.getValue(), context);
     process(node.getMin(), context);

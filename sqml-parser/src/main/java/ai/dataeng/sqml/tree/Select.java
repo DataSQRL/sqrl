@@ -25,19 +25,26 @@ public class Select
     extends Node {
 
   private final boolean distinct;
+  private final Optional<DistinctOn> distinctOn;
   private final List<SelectItem> selectItems;
 
   public Select(boolean distinct, List<SelectItem> selectItems) {
-    this(Optional.empty(), distinct, selectItems);
+    this(Optional.empty(), distinct, Optional.empty(), selectItems);
+  }
+
+  public Select(DistinctOn distinctOn, List<SelectItem> selectItems) {
+    this(Optional.empty(), true, Optional.of(distinctOn), selectItems);
   }
 
   public Select(NodeLocation location, boolean distinct, List<SelectItem> selectItems) {
-    this(Optional.of(location), distinct, selectItems);
+    this(Optional.of(location), distinct, Optional.empty(), selectItems);
   }
 
-  private Select(Optional<NodeLocation> location, boolean distinct, List<SelectItem> selectItems) {
+  private Select(Optional<NodeLocation> location, boolean distinct, Optional<DistinctOn> distinctOn,
+      List<SelectItem> selectItems) {
     super(location);
     this.distinct = distinct;
+    this.distinctOn = distinctOn;
     this.selectItems = ImmutableList.copyOf(requireNonNull(selectItems, "selectItems"));
   }
 
@@ -47,6 +54,10 @@ public class Select
 
   public List<SelectItem> getSelectItems() {
     return selectItems;
+  }
+
+  public Optional<DistinctOn> getDistinctOn() {
+    return distinctOn;
   }
 
   @Override

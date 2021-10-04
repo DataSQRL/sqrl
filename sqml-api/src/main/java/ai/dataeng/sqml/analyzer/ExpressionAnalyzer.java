@@ -127,7 +127,7 @@ public class ExpressionAnalyzer {
     @Override
     protected Type visitSubqueryExpression(SubqueryExpression node, Context context) {
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, new Analysis(null));
-      Scope scope = statementAnalyzer.analyze(node.getQuery(), context.getScope());
+      Scope scope = node.getQuery().accept(statementAnalyzer, context.getScope());
 
       return scope.getRelation();
     }
@@ -143,19 +143,19 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    public Type visitInlineJoin(InlineJoin node, Context context) {
+    public Type visitInlineJoinBody(InlineJoinBody node, Context context) {
       //Todo: Walk the join
-      InlineJoinBody join = node.getJoin();
-      RelationType rel = context.getScope().resolveRelation(join.getTable())
-          .orElseThrow(()-> new RuntimeException(String.format("Could not find relation %s %s", join.getTable(), node)));
+//      RelationType rel = context.getScope().resolveRelation(node.getTable())
+//          .orElseThrow(()-> new RuntimeException(String.format("Could not find relation %s %s", node.getTable(), node)));
 
-      if (node.getInverse().isPresent()) {
-        RelationType relationType = context.getScope().getRelation();
-        rel.addField(Field.newUnqualified(node.getInverse().get().toString(), relationType));
-      }
+//      if (node.getInverse().isPresent()) {
+//        RelationType relationType = context.getScope().getRelation();
+//        rel.addField(Field.newUnqualified(node.getInverse().get().toString(), relationType));
+//      }
 
-      addRelation(node.getJoin(), rel);
-      return addType(node, rel);
+//      addRelation(node.getJoin(), rel);
+//      return addType(node, rel);
+      return null;
     }
 
     @Override

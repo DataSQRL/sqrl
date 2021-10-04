@@ -13,6 +13,7 @@
  */
 package ai.dataeng.sqml.analyzer;
 
+import ai.dataeng.sqml.logical.RelationDefinition;
 import ai.dataeng.sqml.type.RelationType;
 import java.util.Objects;
 
@@ -27,8 +28,8 @@ public final class FieldId
         requireNonNull(field, "field is null");
 
         Scope sourceScope = field.getScope();
-        RelationType relationType = sourceScope.getRelationType();
-        return new FieldId(sourceScope.getRelationId(), relationType.indexOf(field.getField()));
+        RelationType relationDefinition = sourceScope.getRelation();
+        return new FieldId(sourceScope.getRelationId(), relationDefinition.getFields().indexOf(field.getField()));
     }
 
     private final RelationId relationId;

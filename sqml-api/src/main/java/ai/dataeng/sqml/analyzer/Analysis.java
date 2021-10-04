@@ -2,12 +2,12 @@ package ai.dataeng.sqml.analyzer;
 
 import static com.google.common.collect.Multimaps.forMap;
 import static com.google.common.collect.Multimaps.unmodifiableMultimap;
-import static java.util.Collections.unmodifiableSet;
 
+import ai.dataeng.sqml.function.SqmlFunction;
+import ai.dataeng.sqml.logical.LogicalPlan;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupingOperation;
-import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeRef;
@@ -16,13 +16,13 @@ import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.BooleanType;
 import ai.dataeng.sqml.type.RelationType;
+import ai.dataeng.sqml.type.Type;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,6 +42,8 @@ public class Analysis {
   private final Set<NodeRef<Expression>> typeOnlyCoercions = new LinkedHashSet<>();
   private final List<Expression> parameters = List.of();
   private final Multimap<NodeRef<Expression>, FieldId> columnReferences = ArrayListMultimap.create();
+  private final LogicalPlan logicalPlan = new LogicalPlan();
+  private List<SqmlFunction> functions = new ArrayList<>();
 
   public Analysis(Script script) {
     this.script = script;
@@ -104,7 +106,7 @@ public class Analysis {
 
   }
 
-  public boolean isAggregation(QuerySpecification node) {
+  public boolean isAggregation(Node node) {
     return false;//return groupByExpressions.containsKey(NodeRef.of(node));
   }
 
@@ -119,14 +121,6 @@ public class Analysis {
 
   public void setHaving(Node node, Expression predicate) {
 
-  }
-
-  public void setModel(RelationType model) {
-    this.model = model;
-  }
-
-  public RelationType getModel() {
-    return model;
   }
 
   public void setMultiplicity(Node node, Long multiplicity) {
@@ -177,4 +171,15 @@ public class Analysis {
     this.columnReferences.put(node, fieldId);
   }
 
+  public LogicalPlan getLogicalPlan() {
+    return logicalPlan;
+  }
+
+  public List<SqmlFunction> getDefinedFunctions() {
+    return functions;
+  }
+
+  public void addFunction(SqmlFunction function) {
+    this.functions.add(function);
+  }
 }

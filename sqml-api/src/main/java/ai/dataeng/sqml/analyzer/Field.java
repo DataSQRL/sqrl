@@ -23,15 +23,20 @@ import java.util.Optional;
 import static java.util.Objects.requireNonNull;
 
 public class Field {
-  private final Optional<QualifiedObjectName> originTable;
-  private final Optional<String> originColumnName;
-  private final Optional<String> relationAlias;
-  private final Optional<String> name;
-  private final Type type;
-  private final boolean hidden;
-  private final boolean aliased;
-  private final Optional<QualifiedName> fullPath;
-  private final Optional<String> originalName;
+  private Optional<QualifiedObjectName> originTable;
+  private Optional<String> originColumnName;
+  private Optional<String> relationAlias;
+  private Optional<String> name;
+  private Type type;
+  private boolean hidden;
+  private boolean aliased;
+  private Optional<QualifiedName> fullPath;
+  private Optional<String> originalName;
+
+  public Field(Type type) {
+
+    this.type = type;
+  }
 
   public static Field newUnqualified(String name, Type type)
   {
@@ -134,8 +139,7 @@ public class Field {
     return name;
   }
 
-  public Type getType()
-  {
+  public Type getType() {
     return type;
   }
 

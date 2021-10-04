@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.SortItem.Ordering;
 import java.util.stream.Collectors;
 
 public class NodeFormatter extends AstVisitor<String, Void> {
@@ -14,13 +15,8 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitImport(Import node, Void context) {
-    return "IMPORT " + node.getType() + node.getQualifiedName() + ";";
-  }
-
-  @Override
-  protected String visitAssign(Assign node, Void context) {
-    return node.getName() + " := " + node.getRhs().accept(this, null) + ";";
+  protected String visitImportDefinition(ImportDefinition node, Void context) {
+    return "IMPORT " + node.getQualifiedName() + ";";
   }
 
   @Override
@@ -31,7 +27,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   protected String visitComparisonExpression(ComparisonExpression node, Void context) {
-    return node.getLeft().accept(this, null) + " " + node.getOperator() + " " +
+    return node.getLeft().accept(this, null) + " " + node.getOperator().getValue() + " " +
         node.getRight().accept(this, null);
   }
 
@@ -68,7 +64,9 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   protected String visitSelect(Select node, Void context) {
-    return node.getSelectItems().stream()
+    return (node.isDistinct()? "DISTINCT" : "") +
+        node.getDistinctOn().map(o->o.accept(this, null)).orElse("") +
+        node.getSelectItems().stream()
         .map(s->s.accept(this, null))
         .collect(Collectors.joining(", "));
   }
@@ -145,7 +143,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   protected String visitFunctionCall(FunctionCall node, Void context) {
     return node.getName() + "(" + node.getArguments().stream().map(a->a.accept(this, null)).collect(
-        Collectors.joining(", ")) + ")";
+        Collectors.joining(", ")) + ")" + node.getOver().map(o->o.accept(this, context)).orElse("");
   }
 
   @Override
@@ -240,12 +238,13 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   protected String visitSortItem(SortItem node, Void context) {
-    return node.getSortKey().accept(this, null) + " " + node.getOrdering().name();
+    return node.getSortKey().accept(this, null) + " " +
+        (node.getOrdering() == Ordering.ASCENDING ? "ASC" : "DESC");
   }
 
   @Override
   protected String visitTable(Table node, Void context) {
-    return node.getName().toString();
+    return " FROM " + node.getName().toString();
   }
 
   @Override
@@ -375,5 +374,29 @@ public class NodeFormatter extends AstVisitor<String, Void> {
         node.getSortItems().stream().map(i-> i.accept(this, context)).collect(Collectors.joining(", ")) +
         node.getLimit().map(i->" LIMIT " + i).orElse("") +
         node.getInlineJoinBody().map(j->j.accept(this, context));
+  }
+
+  @Override
+  public String visitExpression(Expression node, Void context) {
+    return node.accept(this, context);
+  }
+
+  @Override
+  protected String visitSelectItem(SelectItem node, Void context) {
+    throw new RuntimeException(String.format("Undefiend node in printer %s", node.getClass().getName()));
+  }
+
+  @Override
+  public String visitWindow(Window window, Void context) {
+    return
+        " OVER (PARTITION BY " + window.getPartitionBy().stream()
+            .map(e->e.accept(this, context))
+            .collect(Collectors.joining(", ")) + ")";
+  }
+
+  @Override
+  public String visitDistinctOn(DistinctOn node, Void context) {
+    return String.format(" ON (%s) ", node.getOn().stream()
+        .map(e->e.getValue()).collect(Collectors.joining(",")));
   }
 }

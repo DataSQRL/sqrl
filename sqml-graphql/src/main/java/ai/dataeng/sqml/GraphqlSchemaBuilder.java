@@ -3,22 +3,18 @@ package ai.dataeng.sqml;
 import ai.dataeng.sqml.analyzer.Analysis;
 import ai.dataeng.sqml.analyzer.Field;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Script;
+import ai.dataeng.sqml.type.ArrayType;
 import ai.dataeng.sqml.type.BooleanType;
 import ai.dataeng.sqml.type.DateTimeType;
 import ai.dataeng.sqml.type.FloatType;
 import ai.dataeng.sqml.type.IntegerType;
 import ai.dataeng.sqml.type.NullType;
 import ai.dataeng.sqml.type.NumberType;
-import ai.dataeng.sqml.type.RelationType.ImportRelationType;
-import ai.dataeng.sqml.type.RelationType.NamedRelationType;
-import ai.dataeng.sqml.type.RelationType.RootRelationType;
-import ai.dataeng.sqml.type.StringType;
-import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.ArrayType;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
+import ai.dataeng.sqml.type.StringType;
+import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.UnknownType;
 import ai.dataeng.sqml.type.UuidType;
 import graphql.Scalars;
@@ -34,7 +30,6 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
-import graphql.schema.idl.SchemaPrinter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,6 +49,7 @@ public class GraphqlSchemaBuilder {
 
     private Script script;
     private Analysis analysis;
+    private GraphQLCodeRegistry codeRegistry;
 
     public Builder script(Script script) {
       this.script = script;
@@ -65,12 +61,19 @@ public class GraphqlSchemaBuilder {
     }
 
     public GraphQLSchema build(){
-      Visitor visitor = new Visitor(analysis);
-      analysis.getModel().accept(visitor, null);
-      GraphQLSchema.Builder schemaBuilder = visitor.getBuilder();
+//      Visitor visitor = new Visitor(analysis);
+//      analysis.getModel().accept(visitor, null);
+//      GraphQLSchema.Builder schemaBuilder = visitor.getBuilder();
+//      schemaBuilder.codeRegistry(this.codeRegistry);
+
 //      System.out.println(new SchemaPrinter().print(schemaBuilder.build()));
 
-      return schemaBuilder.build();
+      return null;
+    }
+
+    public Builder codeRegistry(GraphQLCodeRegistry codeRegistry) {
+      this.codeRegistry = codeRegistry;
+      return this;
     }
   }
 
@@ -109,7 +112,7 @@ public class GraphqlSchemaBuilder {
     }
   }
 
-  static class Visitor extends SqmlTypeVisitor<GraphQLOutputType, Context> {
+  public static class Visitor extends SqmlTypeVisitor<GraphQLOutputType, Context> {
 
     private Logger log = Logger.getLogger(Visitor.class.getName());
     private final Analysis analysis;
@@ -125,102 +128,49 @@ public class GraphqlSchemaBuilder {
       schemaBuilder = GraphQLSchema.newSchema();
     }
 
-    @Override
-    public GraphQLOutputType visitSqmlType(Type type, Context context) {
-      throw new RuntimeException("Could not resolve SQML type for the graphql schema");
-    }
 
-    @Override
-    public GraphQLOutputType visitArray(ArrayType type, Context context) {
-      return GraphQLList.list(type.getSubType().accept(this, context));
-    }
-
-    @Override
-    public GraphQLOutputType visitNumber(NumberType type, Context context) {
-      return Scalars.GraphQLFloat;
-    }
-
-    @Override
-    public GraphQLOutputType visitUnknown(UnknownType type, Context context) {
-      return Scalars.GraphQLString;
-    }
-
-    @Override
-    public GraphQLOutputType visitDateTime(DateTimeType type, Context context) {
-      return Scalars.GraphQLString;
-    }
-
-    @Override
-    public GraphQLOutputType visitNull(NullType type, Context context) {
-      return Scalars.GraphQLString;
-    }
-
-    @Override
-    public GraphQLOutputType visitString(StringType type, Context context) {
-      return Scalars.GraphQLString;
-    }
-
-    @Override
-    public GraphQLOutputType visitBoolean(BooleanType type, Context context) {
-      return Scalars.GraphQLBoolean;
-    }
-
-    @Override
-    public GraphQLOutputType visitScalarType(Type type, Context context) {
-      throw new RuntimeException(String.format("Unidentified scalar for api gen: %s", type));
-    }
-
-    @Override
-    public GraphQLOutputType visitRelation(RelationType type, Context context) {
-      throw new RuntimeException("Unidentified relation");
-    }
-
-    @Override
-    public GraphQLOutputType visitNamedRelation(NamedRelationType type, Context context) {
-      String name = toName(type.getRelationName());
-      if (seen.contains(name)) {
-        return new GraphQLTypeReference(name);
-      }
-
-      seen.add(name);
-      GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
-          .name(name);
-
-      for (Field field : type.getFields()) {
-        if (field.isHidden()) {
-          continue;
-        }
-        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
-            .name(toName(field.getName().get()))
-            .type(field.getType().accept(this, context))
-            .build();
-        obj.field(f);
-      }
-      schemaBuilder.additionalType(obj.build());
-
-      return GraphQLList.list(new GraphQLTypeReference(name));
-    }
-
-    @Override
-    public GraphQLOutputType visitRootRelation(RootRelationType type, Context context) {
-      GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
-          .name("Query");
-
-      for (Field field : type.getVisibleFields()) {
-        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
-            .name(toName(field.getName().get()))
-            .type(field.getType().accept(this, context))
-            .build();
-        obj.field(f);
-      }
-      schemaBuilder.query(obj);
-      return null;
-    }
-
-    @Override
-    public GraphQLOutputType visitImportRelation(ImportRelationType type, Context context) {
-      return visitNamedRelation(type, context);
-    }
+//
+//    @Override
+//    public GraphQLOutputType visitNamedRelation(NamedRelationType type, Context context) {
+//      String name = toName(type.getRelationName());
+//      if (seen.contains(name)) {
+//        return new GraphQLTypeReference(name);
+//      }
+//
+//      seen.add(name);
+//      GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
+//          .name(name);
+//
+//      for (Field field : type.getFields()) {
+//        if (field.isHidden()) {
+//          continue;
+//        }
+//        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
+//            .name(toName(field.getName().get()))
+//            .type(field.getType().accept(this, context))
+//            .build();
+//        obj.field(f);
+//      }
+//      schemaBuilder.additionalType(obj.build());
+//
+//      return GraphQLList.list(new GraphQLTypeReference(name));
+//    }
+//
+//    @Override
+//    public GraphQLOutputType visitRootRelation(RootRelationType type, Context context) {
+//      GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
+//          .name("Query");
+//
+//      for (Field field : type.getVisibleFields()) {
+//        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
+//            .name(toName(field.getName().get()))
+//            .type(field.getType().accept(this, context))
+//            .build();
+//        obj.field(f);
+//      }
+//      schemaBuilder.query(obj);
+//      return null;
+//    }
 
     @Override
     public GraphQLOutputType visitUuid(UuidType type, Context context) {

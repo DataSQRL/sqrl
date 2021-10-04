@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 /**
  * {@link QualifiedName} is used to identify a field/column within a nested structure. It specifies the full path.
@@ -162,6 +163,10 @@ public class QualifiedName {
     newName.add(name);
 
     return QualifiedName.of(newName);
+  }
+
+  public String toOriginalString() {
+    return String.join(".", this.originalParts);
   }
 
   public static abstract class NamePart {

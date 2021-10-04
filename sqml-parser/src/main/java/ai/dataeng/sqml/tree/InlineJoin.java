@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class InlineJoin
-    extends Expression {
+    extends Declaration {
 
   private final InlineJoinBody join;
   private final Optional<Identifier> inverse;
