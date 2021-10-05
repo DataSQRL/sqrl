@@ -100,7 +100,7 @@ public class SourceTableSchema implements Serializable {
                         arr = new Object[0];
                         entry.setValue(arr);
                         transformed = true;
-                    } else if (data != null && settings.singleton2Arrays()) {
+                    } else if (data != null && settings.deepenArrays()) {
                         arr = new Object[]{data};
                         entry.setValue(arr);
                         transformed = true;

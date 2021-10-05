@@ -16,6 +16,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class FieldStats implements Serializable {
@@ -69,68 +70,90 @@ public class FieldStats implements Serializable {
         }
     }
 
+    public static FieldTypeStats.TypeSignature detectTypeSignature(Object o,
+                                                                   Function<String,BasicType> detectFromString,
+                                                                   Function<Map<String,Object>,BasicType> detectFromComposite) {
+        Type rawType = null;
+        BasicType detectedType = null;
+        int arrayDepth = 0;
+        if (isArray(o)) {
+            Pair<Stream<Object>,Integer> array = flatMapArray(o);
+            arrayDepth = array.getRight();
+            Iterator<Object> arrIter = array.getLeft().iterator();
+            int numElements = 0;
+            while (arrIter.hasNext()) {
+                Object next = arrIter.next();
+                if (next==null) continue;
+                if (next instanceof Map) {
+                    Map map = (Map)next;
+                    if (numElements==0) {
+                        rawType = RelationType.EMPTY;
+                        //Try to infer type
+                        detectedType = detectFromComposite.apply(map);
+                    } else if (detectedType != null) {
+                        BasicType detect2 = detectFromComposite.apply(map);
+                        if (detect2==null || !detect2.equals(detectedType)) detectedType = null;
+                    }
+                } else {
+                    //not an array or map => must be scalar, let's find the common scalar type for all elements
+                    if (numElements==0) {
+                        rawType = getBasicType(next);
+                        //Try to infer type
+                        if (next instanceof String) detectedType = detectFromString.apply((String)next);
+                    } else if (detectedType != null) {
+                        rawType = BasicTypeManager.combine((BasicType)rawType,getBasicType(next),true);
+                        BasicType detect2 = detectFromString.apply((String)next);
+                        if (detect2==null || !detect2.equals(detectedType)) detectedType = null;
+                    }
+                }
+                numElements++;
+            }
+        } else {
+            //Single element
+            if (o instanceof Map) {
+                rawType = RelationType.EMPTY;
+                detectedType = detectFromComposite.apply((Map)o);
+            } else {
+                //not an array or map => must be scalar
+                rawType = getBasicType(o);
+                //Try to infer type
+                if (o instanceof String) {
+                    detectedType = detectFromString.apply((String)o);
+                }
+            }
+        }
+        FieldTypeStats.TypeDepth raw = FieldTypeStats.TypeDepth.of(rawType, arrayDepth);
+        FieldTypeStats.TypeDepth detected;
+        if (detectedType != null) {
+             detected = FieldTypeStats.TypeDepth.of(detectedType, arrayDepth);
+        } else {
+            detected = raw;
+        }
+        return new FieldTypeStats.TypeSignature(raw, detected);
+    }
+
     public void add(Object o, @NonNull String displayName, NameCanonicalizer canonicalizer) {
         count++;
         addNameCount(displayName,1);
         if (o==null) {
             numNulls++;
         } else {
+            FieldTypeStats.TypeSignature typeSignature = detectTypeSignature(o, BasicTypeManager::inferType,
+                    BasicTypeManager::inferType);
+            FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(typeSignature));
             if (isArray(o)) {
-                Pair<Stream<Object>,Integer> array = flatMapArray(o);
-                int arrayDepth = array.getRight();
-                Iterator<Object> arrIter = array.getLeft().iterator();
-                //Data type for all elements in list
-                Type elementType = null;
-                BasicType inferredType = null;
-                RelationStats relationStats = null;
+                Iterator<Object> arrIter = flatMapArray(o).getLeft().iterator();
                 int numElements = 0;
                 while (arrIter.hasNext()) {
                     Object next = arrIter.next();
                     if (next==null) continue;
                     if (next instanceof Map) {
-                        Map map = (Map)next;
-                        if (numElements==0) {
-                            elementType = RelationType.EMPTY;
-                            relationStats = new RelationStats();
-                            //Try to infer type
-                            inferredType = BasicTypeManager.inferType(map);
-                        } else if (inferredType != null) {
-                            BasicType infer2 = BasicTypeManager.inferType(map);
-                            if (infer2==null || !infer2.equals(inferredType)) inferredType = null;
-                        }
-                        relationStats.add(map, canonicalizer);
-                    } else {
-                        //not an array or map => must be scalar, let's find the common scalar type for all elements
-                        if (numElements==0) {
-                            elementType = getBasicType(next);
-                            //Try to infer type
-                            if (next instanceof String) inferredType = BasicTypeManager.inferType((String)next);
-                        } else if (inferredType != null) {
-                            elementType = BasicTypeManager.combine((BasicType)elementType,getBasicType(next),true);
-                            BasicType infer2 = BasicTypeManager.inferType((String)next);
-                            if (infer2==null || !infer2.equals(inferredType)) inferredType = null;
-                        }
+                        fieldStats.addNested((Map)next, canonicalizer);
                     }
                     numElements++;
                 }
-                FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(elementType, inferredType, arrayDepth));
-                fieldStats.add(numElements,relationStats);
+                fieldStats.add(numElements);
             } else {
-                //Single element
-                Type elementType;
-                BasicType inferredType = null;
-                if (o instanceof Map) {
-                    elementType = RelationType.EMPTY;
-                    inferredType = BasicTypeManager.inferType((Map)o);
-                } else {
-                    //not an array or map => must be scalar
-                    elementType = getBasicType(o);
-                    //Try to infer type
-                    if (o instanceof String) {
-                        inferredType = BasicTypeManager.inferType((String)o);
-                    }
-                }
-                FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(elementType, inferredType, 0));
                 fieldStats.add();
                 if (o instanceof Map) fieldStats.addNested((Map)o,canonicalizer);
             }

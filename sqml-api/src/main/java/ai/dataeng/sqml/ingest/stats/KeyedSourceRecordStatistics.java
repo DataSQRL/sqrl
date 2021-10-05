@@ -15,7 +15,7 @@ import org.apache.flink.util.OutputTag;
 
 import java.util.concurrent.TimeUnit;
 
-public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, SourceRecord, SourceRecord> {
+public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, SourceRecord<String>, SourceRecord<String>> {
 
     public static final String STATE_NAME_SUFFIX = "-state";
 
@@ -33,7 +33,7 @@ public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, S
     }
 
     @Override
-    public void processElement(SourceRecord sourceRecord, Context context, Collector<SourceRecord> out) throws Exception {
+    public void processElement(SourceRecord<String> sourceRecord, Context context, Collector<SourceRecord<String>> out) throws Exception {
         SourceTableStatistics acc = stats.value();
         if (acc == null) {
             acc = new SourceTableStatistics();
@@ -60,7 +60,7 @@ public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, S
     }
 
     @Override
-    public void onTimer(long timestamp, OnTimerContext ctx, Collector<SourceRecord> out) throws Exception {
+    public void onTimer(long timestamp, OnTimerContext ctx, Collector<SourceRecord<String>> out) throws Exception {
         SourceTableStatistics acc = stats.value();
         if (acc != null) ctx.output(statsOutput, acc);
         stats.clear();

@@ -2,8 +2,12 @@ package ai.dataeng.sqml.ingest.shredding;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
 import ai.dataeng.sqml.ingest.NamePathOld;
+import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
+import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.schema2.StandardField;
+import ai.dataeng.sqml.schema2.name.NamePath;
 import lombok.Value;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.types.Row;
@@ -22,25 +26,27 @@ public class RecordShredder {
     private final RecordShredderFlatMap process;
 
 
-    public static RecordShredder from(NamePathOld tableIdentifier, FieldProjection[][] keyProjections, SourceTableSchema schema, RecordProjection[] recordProjections) {
-        Preconditions.checkArgument(keyProjections.length==tableIdentifier.getNumComponents()+1,"Invalid number of projections provided: %s", keyProjections);
+    public static RecordShredder from(NamePath tableIdentifier, FieldProjection[][] keyProjections,
+                                      RelationType<StandardField> tableSchema, RecordProjection[] recordProjections) {
+        Preconditions.checkArgument(keyProjections.length==tableIdentifier.getLength()+1,
+                "Invalid number of projections provided: %s", keyProjections);
 
         DestinationTableSchema.Builder builder = DestinationTableSchema.builder();
         List<String> remainingTableFields = new ArrayList<>();
         //Add parent keys
         for (int depth = 0; depth < keyProjections.length; depth ++) {
             FieldProjection[] proj = keyProjections[depth];
-            NamePathOld base = tableIdentifier.prefix(depth);
+            NamePath base = tableIdentifier.prefix(depth);
 
             for (int projNo = 0; projNo < proj.length; projNo++) {
                 String prefix = "";
                 if (depth < keyProjections.length-1) prefix = "_parent"+depth+"_"+projNo;
 
-                builder.add(proj[projNo].getField(schema.getElement(base).asTable()));
+                builder.add(proj[projNo].getField(tableSchema.getElement(base).asTable()));
             }
         }
         //Add table columns
-        SourceTableSchema.Table table = schema.getElement(tableIdentifier).asTable();
+        SourceTableSchema.Table table = tableSchema.getElement(tableIdentifier).asTable();
         table.getFields().forEach(e -> {
             //only add field if it is not already part of the key, i.e. none of the innermost FieldProjection reference that field
             String fieldName = e.getKey();

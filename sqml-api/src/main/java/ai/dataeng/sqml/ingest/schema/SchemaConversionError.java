@@ -5,6 +5,8 @@ import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.name.NamePath;
 import lombok.NonNull;
 
+import java.io.Serializable;
+
 public class SchemaConversionError extends LocationConversionError<NamePath> {
 
     public SchemaConversionError(Severity severity, @NonNull NamePath location, String msg, Object value) {

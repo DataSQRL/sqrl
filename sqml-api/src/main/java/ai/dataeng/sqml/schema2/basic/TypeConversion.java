@@ -16,7 +16,7 @@ public interface TypeConversion<T> {
         return false;
     }
 
-    public default ConversionResult<T, ConversionError> parse(Object original) {
+    public default ConversionResult<T, ConversionError> parseDetected(Object original) {
         return ConversionResult.fatal("Cannot convert [%s]", original);
     }
 

@@ -118,7 +118,6 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
 
         @NonNull
         private final List<FieldType> types;
-        //TODO: Should we allow constraints on fields so users can declare NOT_NULL constraints or is that not necessary for mixed field types anyways?
 
         public FlexibleField(Name name, SchemaElementDescription description, Object default_value,
                              List<FieldType> types) {

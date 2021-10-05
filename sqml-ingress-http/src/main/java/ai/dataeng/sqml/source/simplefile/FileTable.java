@@ -58,7 +58,7 @@ public class FileTable implements SourceTable {
     }
 
     @Override
-    public DataStream<SourceRecord> getDataStream(StreamExecutionEnvironment env) {
+    public DataStream<SourceRecord<String>> getDataStream(StreamExecutionEnvironment env) {
         final Instant fileTime;
         try {
             fileTime = Files.getLastModifiedTime(file).toInstant();
@@ -66,8 +66,8 @@ public class FileTable implements SourceTable {
             throw new RuntimeException(e);
         }
         List<Map<String,Object>> data = fileType.getRecords(file);
-        List<SourceRecord> records = data.stream().map(m -> new SourceRecord(m,fileTime)).collect(Collectors.toList());;
-        DataStreamSource<SourceRecord> stream = env.fromCollection(records);
+        List<SourceRecord<String>> records = data.stream().map(m -> new SourceRecord(m,fileTime)).collect(Collectors.toList());;
+        DataStreamSource<SourceRecord<String>> stream = env.fromCollection(records);
 //        stream.assignTimestampsAndWatermarks(WatermarkStrategy.<SourceRecord>forMonotonousTimestamps().withTimestampAssigner((event, timestamp) -> event.getSourceTime().toEpochSecond()));
         return stream;
     }

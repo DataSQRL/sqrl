@@ -44,7 +44,7 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
             }
         }
 
-        public ConversionResult<J, ConversionError> parse(Object original) {
+        public ConversionResult<J, ConversionError> parseDetected(Object original) {
             if (original instanceof String) {
                 try {
                     J result = stringParser.apply((String) original);

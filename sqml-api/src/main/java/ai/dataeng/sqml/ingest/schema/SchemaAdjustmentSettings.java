@@ -7,15 +7,11 @@ public interface SchemaAdjustmentSettings extends Serializable {
 
     public static final SchemaAdjustmentSettings DEFAULT = new SchemaAdjustmentSettings() {};
 
-    default boolean singleton2Arrays() {
+    default boolean deepenArrays() {
         return true;
     }
 
     default boolean removeListNulls() {
-        return true;
-    }
-
-    default boolean array2Singleton() {
         return true;
     }
 

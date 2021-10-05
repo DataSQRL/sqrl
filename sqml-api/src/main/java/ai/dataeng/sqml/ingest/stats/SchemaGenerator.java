@@ -182,7 +182,7 @@ public class SchemaGenerator {
         }
     }
 
-    private static FlexibleDatasetSchema.FieldType matchType(FieldTypeStats.TypeDepth rawType, FieldTypeStats.TypeDepth detectedType,
+    public static FlexibleDatasetSchema.FieldType matchType(FieldTypeStats.TypeDepth rawType, FieldTypeStats.TypeDepth detectedType,
                                                              List<FlexibleDatasetSchema.FieldType> fieldTypes) {
         return matchType(rawType.getType(), rawType.getArrayDepth(), detectedType.getType(), detectedType.getArrayDepth(), fieldTypes);
     }

@@ -39,13 +39,8 @@ public class FieldTypeStats implements Serializable, Cloneable {
         this(other.raw,other.detected);
     }
 
-    public static FieldTypeStats of(@NonNull Type raw, BasicType detected,
-                          int arrayDepth) {
-        FieldTypeStats.TypeDepth r,d;
-        r = TypeDepth.of(raw,arrayDepth);
-        if (detected!=null) d = TypeDepth.of(detected,arrayDepth);
-        else d = r;
-        return new FieldTypeStats(r,d);
+    public static FieldTypeStats of(@NonNull TypeSignature signature) {
+        return new FieldTypeStats(signature.raw,signature.detected);
     }
 
     public void add() {
@@ -57,14 +52,9 @@ public class FieldTypeStats implements Serializable, Cloneable {
         nestedRelationStats.add(nested, canonicalizer);
     }
 
-    public void add(int numArrayElements, RelationStats relationStats) {
+    public void add(int numArrayElements) {
         count++;
         addArrayCardinality(numArrayElements);
-        if (relationStats!=null) {
-            assert raw instanceof NestedRelation;
-            if (nestedRelationStats==null) nestedRelationStats = relationStats;
-            else nestedRelationStats.merge(relationStats);
-        }
     }
 
     public static final int ARRAY_CARDINALITY_BASE = 4;
@@ -178,6 +168,16 @@ public class FieldTypeStats implements Serializable, Cloneable {
         public BasicType getBasicType() {
             throw new UnsupportedOperationException();
         }
+
+    }
+
+    @Value
+    public static class TypeSignature {
+
+        @NonNull
+        private final TypeDepth raw;
+        @NonNull
+        private final TypeDepth detected;
 
     }
 
