@@ -66,7 +66,7 @@ public class FileTable implements SourceTable {
             throw new RuntimeException(e);
         }
         List<Map<String,Object>> data = fileType.getRecords(file);
-        List<SourceRecord<String>> records = data.stream().map(m -> new SourceRecord(m,fileTime)).collect(Collectors.toList());;
+        List<SourceRecord<String>> records = data.stream().map(m -> new SourceRecord<String>(m,fileTime)).collect(Collectors.toList());;
         DataStreamSource<SourceRecord<String>> stream = env.fromCollection(records);
 //        stream.assignTimestampsAndWatermarks(WatermarkStrategy.<SourceRecord>forMonotonousTimestamps().withTimestampAssigner((event, timestamp) -> event.getSourceTime().toEpochSecond()));
         return stream;

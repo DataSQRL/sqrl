@@ -4,11 +4,9 @@ import ai.dataeng.sqml.ingest.DatasetLookup;
 import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceTable;
-import ai.dataeng.sqml.schema2.ArrayType;
-import ai.dataeng.sqml.schema2.RelationType;
-import ai.dataeng.sqml.schema2.StandardField;
-import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.*;
 import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.schema2.name.NamePath;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -40,25 +38,16 @@ public class ImportSchema {
         Mapping mapping = nameMapping.get(tableName);
         Preconditions.checkArgument(mapping!=null,"Table has not been imported into local scope: %s", tableName);
         Preconditions.checkArgument(mapping.isSource() && mapping.isTable(), "Name does not reference source table: %s", tableName);
-        return getSourceTableInternal(mapping.tableName, mapping.datasetName, getTableSchema(tableName, null));
+        return getSourceTableInternal(mapping.tableName, mapping.datasetName,
+                TypeHelper.getNestedRelation(schema, NamePath.of(tableName)));
     }
 
     public SourceTableImport getSourceTable(@NonNull Name tableName, @NonNull Name datasetName) {
         Mapping mapping = nameMapping.get(datasetName);
         Preconditions.checkArgument(mapping!=null,"Dataset has not been imported: %s", datasetName);
         Preconditions.checkArgument(mapping.isSource() && mapping.isDataset(), "Name does not reference source dataset: %s", datasetName);
-        return getSourceTableInternal(tableName, mapping.datasetName, getTableSchema(tableName, datasetName));
-    }
-
-    private RelationType<StandardField> getTableSchema(@NonNull Name table, Name dataset) {
-        RelationType<StandardField> base = schema;
-        if (dataset!=null) {
-            base = (RelationType)schema.getFieldByName(dataset).getType();
-        }
-        Type t = base.getFieldByName(table).getType();
-        //Should be not null and array
-        assert t!=null && (t instanceof ArrayType);
-        return (RelationType)((ArrayType)t).getSubType();
+        return getSourceTableInternal(tableName, mapping.datasetName,
+                TypeHelper.getNestedRelation(schema, NamePath.of(tableName, datasetName)));
     }
 
     private SourceTableImport getSourceTableInternal(@NonNull Name originalTableName, @NonNull Name originalDSName,

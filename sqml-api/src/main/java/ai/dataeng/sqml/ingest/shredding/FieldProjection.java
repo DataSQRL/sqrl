@@ -1,36 +1,37 @@
 package ai.dataeng.sqml.ingest.shredding;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
-import ai.dataeng.sqml.ingest.NamePathOld;
-import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
-import ai.dataeng.sqml.type.IntegerType;
-import ai.dataeng.sqml.type.ScalarType;
-import ai.dataeng.sqml.type.UuidType;
+import ai.dataeng.sqml.schema2.*;
+import ai.dataeng.sqml.schema2.basic.BasicType;
+import ai.dataeng.sqml.schema2.basic.IntegerType;
+import ai.dataeng.sqml.schema2.basic.UuidType;
+import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.schema2.name.NamePath;
+import com.google.common.base.Preconditions;
 import lombok.Value;
-import org.apache.flink.util.Preconditions;
 
 import java.io.Serializable;
 import java.util.Map;
 
 public interface FieldProjection extends Serializable {
 
-    DestinationTableSchema.Field getField(SourceTableSchema.Table table);
+    DestinationTableSchema.Field getField(RelationType<StandardField> table);
 
-    Object getData(Map<String, Object> data);
+    Object getData(Map<Name, Object> data);
 
     @Value
     class SpecialCase implements FieldProjection {
 
         private final String name;
-        private final ScalarType type;
+        private final BasicType type;
 
         @Override
-        public DestinationTableSchema.Field getField(SourceTableSchema.Table table) {
+        public DestinationTableSchema.Field getField(RelationType<StandardField> table) {
             return DestinationTableSchema.Field.primaryKey(name, type);
         }
 
         @Override
-        public Object getData(Map<String, Object> data) {
+        public Object getData(Map<Name, Object> data) {
             throw new UnsupportedOperationException();
         }
     }
@@ -40,31 +41,31 @@ public interface FieldProjection extends Serializable {
     FieldProjection ARRAY_INDEX = new SpecialCase("_idx", IntegerType.INSTANCE);
 
     @Value
-    class NamePath implements FieldProjection {
+    class NamePathProjection implements FieldProjection {
 
-        private final NamePathOld path;
+        private final NamePath path;
 
-        public NamePath(NamePathOld path) {
-            Preconditions.checkArgument(path.getNumComponents()>0);
+        public NamePathProjection(NamePath path) {
+            Preconditions.checkArgument(path.getLength()>0);
             this.path = path;
         }
 
         @Override
-        public DestinationTableSchema.Field getField(SourceTableSchema.Table table) {
-            SourceTableSchema.Field sourceField = table.getElement(path).asField();
-            Preconditions.checkArgument(!sourceField.isArray(),"A primary key projection cannot be of type ARRAY");
-            return DestinationTableSchema.Field.primaryKey(path.toString('_'),sourceField.getType());
+        public DestinationTableSchema.Field getField(RelationType<StandardField> table) {
+            Type type = TypeHelper.getNestedType(table,path);
+            Preconditions.checkArgument(type instanceof BasicType,"A primary key projection must be of basic type: %s", type);
+            return DestinationTableSchema.Field.primaryKey(path.toString('_'), (BasicType) type);
         }
 
         @Override
-        public Object getData(Map<String, Object> data) {
-            Map<String, Object> base = data;
-            for (int i = 0; i < path.getNumComponents()-2; i++) {
-                Object map = base.get(path.getComponent(i));
+        public Object getData(Map<Name, Object> data) {
+            Map<Name, Object> base = data;
+            for (int i = 0; i < path.getLength()-2; i++) {
+                Object map = base.get(path.get(i));
                 Preconditions.checkArgument(map instanceof Map, "Illegal field projection");
                 base = (Map)map;
             }
-            return base.get(path.getLastComponent());
+            return base.get(path.getLast());
         }
     }
 

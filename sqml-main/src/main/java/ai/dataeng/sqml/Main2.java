@@ -182,7 +182,7 @@ public class Main2 {
             ImportSchema.SourceTableImport tableImport = schema.getSourceTable(entry.getKey());
             Preconditions.checkNotNull(tableImport);
             System.out.println("Table name: " + entry.getKey());
-            System.out.print(toString(Name.system("local"),singleton(tableImport.getSchema())));
+            System.out.print(toString(Name.system("local"),singleton(tableImport.getSourceSchema())));
         }
     }
 

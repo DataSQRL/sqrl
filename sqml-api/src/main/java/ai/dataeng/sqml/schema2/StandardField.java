@@ -7,7 +7,7 @@ import lombok.Value;
 import java.util.List;
 
 @Value
-public class StandardField implements Field {
+public class StandardField implements TypedField {
 
     private final Name name;
     private final Type type;

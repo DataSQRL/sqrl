@@ -1,8 +1,5 @@
 package ai.dataeng.sqml.ingest.stats;
 
-import ai.dataeng.sqml.ingest.NamePathOld;
-import ai.dataeng.sqml.schema2.name.Name;
-import ai.dataeng.sqml.schema2.name.NamePath;
 
 import java.util.Arrays;
 

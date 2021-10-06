@@ -1,6 +1,10 @@
 package ai.dataeng.sqml.db;
 
+import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.schema2.StandardField;
+import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.basic.BasicType;
+import ai.dataeng.sqml.schema2.constraint.ConstraintHelper;
 import ai.dataeng.sqml.type.ScalarType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
@@ -48,21 +52,30 @@ public class DestinationTableSchema implements Serializable, Iterable<Destinatio
     public static class Field implements Serializable {
 
         private final String name;
-        private final ScalarType type;
+        private final BasicType type;
         private final boolean isNonNull;
+        //TODO: We only support single-dimension arrays for now - need to expand for multi-dimensional support
         private final boolean isArray;
         private final boolean isPrimaryKey;
 
-        public static Field simple(String name, ScalarType type) {
+        public static Field simple(String name, BasicType type) {
             return new Field(name, type,false, false, false);
         }
 
-        public static Field primaryKey(String name, ScalarType type) {
+        public static Field primaryKey(String name, BasicType type) {
             return new Field(name, type, true, false, true);
         }
 
         public static Field convert(String name, StandardField field) {
-            return new Field(name, field.getType(), field.isNotNull(), field.isArray(), false);
+            Type type = field.getType();
+            boolean isArray = false;
+            if (type instanceof ArrayType) {
+                isArray = true;
+                type = ((ArrayType) type).getSubType();
+            }
+            boolean isNonNull = ConstraintHelper.isNonNull(field.getConstraints());
+            Preconditions.checkArgument(type instanceof BasicType);
+            return new Field(name, (BasicType) type, isNonNull, isArray, false);
         }
 
     }
