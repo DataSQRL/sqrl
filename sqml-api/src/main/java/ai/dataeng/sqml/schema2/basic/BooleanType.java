@@ -1,10 +1,5 @@
 package ai.dataeng.sqml.schema2.basic;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import lombok.NonNull;
-
-import java.util.Set;
 import java.util.function.Function;
 
 public class BooleanType extends AbstractBasicType<Boolean> {
@@ -41,8 +36,10 @@ public class BooleanType extends AbstractBasicType<Boolean> {
             super(Boolean.class, parseBoolean);
         }
 
-        public Object cast2Parent(@NonNull Boolean o) {
-            return o?1:0;
+        public Boolean convert(Object o) {
+            if (o instanceof Boolean) return (Boolean)o;
+            if (o instanceof Number) return ((Number)o).longValue()>0;
+            throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
         }
 
     }

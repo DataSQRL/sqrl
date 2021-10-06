@@ -1,6 +1,5 @@
 package ai.dataeng.sqml.schema2.basic;
 
-import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -59,28 +58,18 @@ public class BasicTypeManager {
         return ALL_TYPES_BY_NAME.get(name.trim().toLowerCase(Locale.ENGLISH));
     }
 
-    public static BasicType inferType(Map<String, Object> originalComposite) {
+    public static BasicType detectType(Map<String, Object> originalComposite) {
         for (BasicType type : ALL_TYPES) {
-            if (type.conversion().isInferredType(originalComposite)) return type;
+            if (type.conversion().detectType(originalComposite)) return type;
         }
         return null;
     }
 
-    public static BasicType inferType(String original) {
+    public static BasicType detectType(String original) {
         for (BasicType type : ALL_TYPES) {
-            if (type.conversion().isInferredType(original)) return type;
+            if (type.conversion().detectType(original)) return type;
         }
         return null;
     }
 
-    public static Object cast2Ancestor(@NonNull Object o, @NonNull BasicType from, @NonNull BasicType to) {
-        if (to.equals(ROOT_TYPE)) return o.toString(); //only when forced
-        BasicType parent = from;
-        while (!parent.equals(to)) {
-            o = parent.conversion().cast2Parent(o);
-            parent = parent.parentType();
-            Preconditions.checkNotNull(parent, "[%s] is not an ancestor of [%s]", to, from);
-        }
-        return o;
-    }
 }

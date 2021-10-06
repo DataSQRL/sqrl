@@ -4,20 +4,25 @@ import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.name.Name;
+import lombok.Value;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
 public class SchemaValidationProcess extends ProcessFunction<SourceRecord<String>, SourceRecord<Name>> {
 
-    private final OutputTag<SchemaValidationError> errorTag;
+    private final OutputTag<Error> errorTag;
     private final FlexibleDatasetSchema.TableField schema;
     private final SchemaAdjustmentSettings settings;
     private final DatasetRegistration dataset;
 
     private transient SchemaValidator validator;
 
-    public SchemaValidationProcess(OutputTag<SchemaValidationError> error, FlexibleDatasetSchema.TableField schema,
+    public SchemaValidationProcess(OutputTag<Error> error, FlexibleDatasetSchema.TableField schema,
                                    SchemaAdjustmentSettings settings, DatasetRegistration dataset) {
         this.errorTag = error;
         this.schema = schema;
@@ -31,10 +36,23 @@ public class SchemaValidationProcess extends ProcessFunction<SourceRecord<String
         ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
         SourceRecord<Name> result = validator.verifyAndAdjust(sourceRecord, errors);
         if (errors.isFatal()) {
-            context.output(errorTag, SchemaValidationError.of(errors,sourceRecord));
+            context.output(errorTag, Error.of(errors,sourceRecord));
         } else {
             out.collect(result);
         }
     }
 
+    @Value
+    public static class Error implements Serializable {
+
+        private List<String> errors;
+        private SourceRecord<String> sourceRecord;
+
+        public static Error of(ConversionError.Bundle<SchemaConversionError> errors, SourceRecord<String> sourceRecord) {
+            List<String> errorMsgs = new ArrayList<>();
+            errors.forEach(e -> errorMsgs.add(e.toString()));
+            return new Error(errorMsgs, sourceRecord);
+        }
+
+    }
 }

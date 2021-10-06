@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.db;
 
-import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
+import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.type.ScalarType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
@@ -61,7 +61,7 @@ public class DestinationTableSchema implements Serializable, Iterable<Destinatio
             return new Field(name, type, true, false, true);
         }
 
-        public static Field convert(String name, SourceTableSchema.Field field) {
+        public static Field convert(String name, StandardField field) {
             return new Field(name, field.getType(), field.isNotNull(), field.isArray(), false);
         }
 

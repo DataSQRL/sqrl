@@ -1,9 +1,6 @@
 package ai.dataeng.sqml.ingest.shredding;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
-import ai.dataeng.sqml.ingest.NamePathOld;
-import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.StandardField;

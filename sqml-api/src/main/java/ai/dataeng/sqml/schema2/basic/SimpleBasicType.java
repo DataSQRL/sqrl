@@ -33,7 +33,7 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
             return Collections.singleton(clazz);
         }
 
-        public boolean isInferredType(String original) {
+        public boolean detectType(String original) {
             try {
                 stringParser.apply(original);
                 return true;

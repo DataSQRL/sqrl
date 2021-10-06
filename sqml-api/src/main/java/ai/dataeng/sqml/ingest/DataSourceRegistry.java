@@ -47,6 +47,7 @@ public class DataSourceRegistry implements DatasetLookup {
     public SourceTableStatistics getTableStatistics(@NonNull SourceTable table) {
         SourceTableStatistics acc = store.get(SourceTableStatistics.class,
                 table.getQualifiedName().toString(), DataSourceMonitor.STATS_KEY);
+        if (acc == null) acc = new SourceTableStatistics();
         return acc;
     }
 

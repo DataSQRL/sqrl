@@ -1,13 +1,8 @@
 package ai.dataeng.sqml.schema2.basic;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import lombok.NonNull;
 
-import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 public class IntegerType extends AbstractBasicType<Long> {
@@ -41,13 +36,11 @@ public class IntegerType extends AbstractBasicType<Long> {
             return INT_CLASSES;
         }
 
-        public Object cast2Parent(@NonNull Long o) {
-            return o.doubleValue();
-        }
-
         public Long convert(Object o) {
-            Preconditions.checkArgument(o instanceof Number);
-            return ((Number)o).longValue();
+            if (o instanceof Long) return (Long)o;
+            if (o instanceof Number) return ((Number)o).longValue();
+            if (o instanceof Boolean) return ((Boolean)o).booleanValue()?1L:0L;
+            throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
         }
     }
 

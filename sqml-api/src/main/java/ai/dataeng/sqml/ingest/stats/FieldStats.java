@@ -3,7 +3,6 @@ package ai.dataeng.sqml.ingest.stats;
 import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.RelationType;
@@ -88,7 +87,7 @@ public class FieldStats implements Serializable {
                     Map map = (Map)next;
                     if (numElements==0) {
                         rawType = RelationType.EMPTY;
-                        //Try to infer type
+                        //Try to detect type
                         detectedType = detectFromComposite.apply(map);
                     } else if (detectedType != null) {
                         BasicType detect2 = detectFromComposite.apply(map);
@@ -98,7 +97,7 @@ public class FieldStats implements Serializable {
                     //not an array or map => must be scalar, let's find the common scalar type for all elements
                     if (numElements==0) {
                         rawType = getBasicType(next);
-                        //Try to infer type
+                        //Try to detect type
                         if (next instanceof String) detectedType = detectFromString.apply((String)next);
                     } else if (detectedType != null) {
                         rawType = BasicTypeManager.combine((BasicType)rawType,getBasicType(next),true);
@@ -116,7 +115,7 @@ public class FieldStats implements Serializable {
             } else {
                 //not an array or map => must be scalar
                 rawType = getBasicType(o);
-                //Try to infer type
+                //Try to detect type
                 if (o instanceof String) {
                     detectedType = detectFromString.apply((String)o);
                 }
@@ -138,8 +137,8 @@ public class FieldStats implements Serializable {
         if (o==null) {
             numNulls++;
         } else {
-            FieldTypeStats.TypeSignature typeSignature = detectTypeSignature(o, BasicTypeManager::inferType,
-                    BasicTypeManager::inferType);
+            FieldTypeStats.TypeSignature typeSignature = detectTypeSignature(o, BasicTypeManager::detectType,
+                    BasicTypeManager::detectType);
             FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(typeSignature));
             if (isArray(o)) {
                 Iterator<Object> arrIter = flatMapArray(o).getLeft().iterator();

@@ -95,15 +95,15 @@ public class SchemaValidator {
         return null;
     }
 
-    private static BasicType inferType(Map<String, Object> originalComposite, List<FlexibleDatasetSchema.FieldType> ftypes) {
-        return inferTypeInternal((t,d) -> t.conversion().isInferredType(d),originalComposite,ftypes);
+    private static BasicType detectType(Map<String, Object> originalComposite, List<FlexibleDatasetSchema.FieldType> ftypes) {
+        return detectTypeInternal((t, d) -> t.conversion().detectType(d),originalComposite,ftypes);
     }
 
-    private static BasicType inferType(String original, List<FlexibleDatasetSchema.FieldType> ftypes) {
-        return inferTypeInternal((t,d) -> t.conversion().isInferredType(d),original,ftypes);
+    private static BasicType detectType(String original, List<FlexibleDatasetSchema.FieldType> ftypes) {
+        return detectTypeInternal((t, d) -> t.conversion().detectType(d),original,ftypes);
     }
 
-    private static<O> BasicType inferTypeInternal(BiPredicate<BasicType, O> typeFilter, O data, List<FlexibleDatasetSchema.FieldType> ftypes) {
+    private static<O> BasicType detectTypeInternal(BiPredicate<BasicType, O> typeFilter, O data, List<FlexibleDatasetSchema.FieldType> ftypes) {
         return ftypes.stream().filter(t -> t.getType() instanceof BasicType).map(t -> (BasicType)t.getType())
                 .filter(t -> typeFilter.test(t,data)).findFirst().orElse(null);
     }
@@ -111,8 +111,8 @@ public class SchemaValidator {
     private Pair<Name,Object> verifyAndAdjust(Object data, FlexibleDatasetSchema.FlexibleField field,
                                               NamePath location, ConversionError.Bundle<SchemaConversionError> errors) {
         List<FlexibleDatasetSchema.FieldType> types = field.getTypes();
-        FieldTypeStats.TypeSignature typeSignature = FieldStats.detectTypeSignature(data, s -> inferType(s,types),
-                m -> inferType(m,types));
+        FieldTypeStats.TypeSignature typeSignature = FieldStats.detectTypeSignature(data, s -> detectType(s,types),
+                m -> detectType(m,types));
         FlexibleDatasetSchema.FieldType match = SchemaGenerator.matchType(typeSignature.getRaw(), typeSignature.getDetected(), types);
         if (match != null) {
             Object converted = verifyAndAdjust(data, match, field, typeSignature.getRaw().getArrayDepth(), location, errors);

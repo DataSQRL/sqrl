@@ -33,8 +33,7 @@ public class NumberType extends AbstractBasicType<Double> {
         }
 
         public Double convert(Object o) {
-            Preconditions.checkArgument(o instanceof Number);
-            return ((Number)o).doubleValue();
+            return FloatType.Conversion.convertInternal(o);
         }
     }
 
