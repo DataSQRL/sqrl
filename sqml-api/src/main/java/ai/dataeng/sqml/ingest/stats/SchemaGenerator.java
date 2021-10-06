@@ -82,11 +82,11 @@ public class SchemaGenerator {
             int maxArrayDepth = 0;
             BasicType type = null;
             for (FieldTypeStats fts : statTypes) {
-                FieldTypeStats.TypeDepth td = fts.detected;
-                if (td.isBasic()) {
-                    if (type == null) type = td.getBasicType();
-                    else type = BasicTypeManager.combine(type, td.getBasicType(), false);
-                    maxArrayDepth = Math.max(td.getArrayDepth(), maxArrayDepth);
+                Type td = fts.getDetected();
+                if (td instanceof BasicType) {
+                    if (type == null) type = (BasicType)td;
+                    else type = BasicTypeManager.combine(type, (BasicType)td, false);
+                    maxArrayDepth = Math.max(fts.getArrayDepth(), maxArrayDepth);
                 } else {
                     type = null; //abort type finding since it's a nested relation
                 }
@@ -102,16 +102,16 @@ public class SchemaGenerator {
                 int nestedRelationArrayDepth = 0;
                 RelationStats nested = null;
                 for (FieldTypeStats fts : statTypes) {
-                    FieldTypeStats.TypeDepth td = fts.raw;
-                    if (td.isBasic()) {
-                        if (type == null) type = td.getBasicType();
-                        else type = BasicTypeManager.combine(type, td.getBasicType(), true);
-                        maxArrayDepth = Math.max(td.getArrayDepth(), maxArrayDepth);
+                    Type td = fts.raw;
+                    if (td instanceof BasicType) {
+                        if (type == null) type = (BasicType) td;
+                        else type = BasicTypeManager.combine(type, (BasicType) td, true);
+                        maxArrayDepth = Math.max(fts.getArrayDepth(), maxArrayDepth);
                     } else {
                         assert fts.nestedRelationStats != null;
                         if (nested == null) nested = fts.nestedRelationStats.clone();
                         else nested.merge(fts.nestedRelationStats);
-                        nestedRelationArrayDepth = Math.max(nestedRelationArrayDepth,td.getArrayDepth());
+                        nestedRelationArrayDepth = Math.max(nestedRelationArrayDepth,fts.getArrayDepth());
                     }
                 }
                 if (type != null) {
@@ -151,9 +151,9 @@ public class SchemaGenerator {
             Multimap<FlexibleDatasetSchema.FieldType, FieldTypeStats> typePairing = ArrayListMultimap.create();
             for (FieldTypeStats fts : statTypes) {
                 //Try to match on raw first
-                FlexibleDatasetSchema.FieldType match = matchType(fts.raw, fts.detected, fieldTypes);
+                FlexibleDatasetSchema.FieldType match = matchType(fts, fieldTypes);
                 if (match != null) {
-                    if (!match.getType().getClass().equals(fts.raw.getType().getClass()) || match.getArrayDepth()!=fts.raw.getArrayDepth()) {
+                    if (!match.getType().getClass().equals(fts.getRaw().getClass()) || match.getArrayDepth()!=fts.getArrayDepth()) {
                         addError(SchemaConversionError.notice(location, "Matched field type [%s] onto [%s]", fts, match));
                     }
                     typePairing.put(match, fts);
@@ -182,23 +182,22 @@ public class SchemaGenerator {
         }
     }
 
-    public static FlexibleDatasetSchema.FieldType matchType(FieldTypeStats.TypeDepth rawType, FieldTypeStats.TypeDepth detectedType,
-                                                             List<FlexibleDatasetSchema.FieldType> fieldTypes) {
-        return matchType(rawType.getType(), rawType.getArrayDepth(), detectedType.getType(), detectedType.getArrayDepth(), fieldTypes);
-    }
+//    public static FlexibleDatasetSchema.FieldType matchType(FieldTypeStats.TypeDepth rawType, FieldTypeStats.TypeDepth detectedType,
+//                                                             List<FlexibleDatasetSchema.FieldType> fieldTypes) {
+//        return matchType(rawType.getType(), rawType.getArrayDepth(), detectedType.getType(), detectedType.getArrayDepth(), fieldTypes);
+//    }
 
-    private static FlexibleDatasetSchema.FieldType matchType(Type rawType, int rawArrayDepth,
-                                                             Type detectedType, int detectedArrayDepth,
+    public static FlexibleDatasetSchema.FieldType matchType(TypeSignature typeSignature,
                                                              List<FlexibleDatasetSchema.FieldType> fieldTypes) {
         FlexibleDatasetSchema.FieldType match;
         //First, try to match raw type
-        match = matchSingleType(rawType, rawArrayDepth, fieldTypes);
+        match = matchSingleType(typeSignature.getRaw(), typeSignature.getArrayDepth(), fieldTypes);
         if (match == null) {
             //Second, try to match on detected
-            match = matchSingleType(detectedType, detectedArrayDepth, fieldTypes);
+            match = matchSingleType(typeSignature.getDetected(), typeSignature.getArrayDepth(), fieldTypes);
             if (match == null) {
                 //If neither of those worked, try to force a match which means casting raw to STRING if available
-                match = fieldTypes.stream().filter(ft -> rawArrayDepth<=ft.getArrayDepth() && ft.getType() instanceof StringType)
+                match = fieldTypes.stream().filter(ft -> typeSignature.getArrayDepth()<=ft.getArrayDepth() && ft.getType() instanceof StringType)
                         .min(Comparator.comparing(FlexibleDatasetSchema.FieldType::getArrayDepth)).orElse(null);
             }
         }

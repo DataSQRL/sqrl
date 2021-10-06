@@ -69,9 +69,9 @@ public class FieldStats implements Serializable {
         }
     }
 
-    public static FieldTypeStats.TypeSignature detectTypeSignature(Object o,
-                                                                   Function<String,BasicType> detectFromString,
-                                                                   Function<Map<String,Object>,BasicType> detectFromComposite) {
+    public static TypeSignature.Simple detectTypeSignature(Object o,
+                                                           Function<String,BasicType> detectFromString,
+                                                           Function<Map<String,Object>,BasicType> detectFromComposite) {
         Type rawType = null;
         BasicType detectedType = null;
         int arrayDepth = 0;
@@ -121,14 +121,7 @@ public class FieldStats implements Serializable {
                 }
             }
         }
-        FieldTypeStats.TypeDepth raw = FieldTypeStats.TypeDepth.of(rawType, arrayDepth);
-        FieldTypeStats.TypeDepth detected;
-        if (detectedType != null) {
-             detected = FieldTypeStats.TypeDepth.of(detectedType, arrayDepth);
-        } else {
-            detected = raw;
-        }
-        return new FieldTypeStats.TypeSignature(raw, detected);
+        return new TypeSignature.Simple(rawType, detectedType==null?rawType:detectedType, arrayDepth);
     }
 
     public void add(Object o, @NonNull String displayName, NameCanonicalizer canonicalizer) {
@@ -137,7 +130,7 @@ public class FieldStats implements Serializable {
         if (o==null) {
             numNulls++;
         } else {
-            FieldTypeStats.TypeSignature typeSignature = detectTypeSignature(o, BasicTypeManager::detectType,
+            TypeSignature.Simple typeSignature = detectTypeSignature(o, BasicTypeManager::detectType,
                     BasicTypeManager::detectType);
             FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(typeSignature));
             if (isArray(o)) {

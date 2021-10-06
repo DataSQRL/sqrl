@@ -3,8 +3,8 @@ package ai.dataeng.sqml.ingest.schema;
 import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.ingest.stats.FieldStats;
-import ai.dataeng.sqml.ingest.stats.FieldTypeStats;
 import ai.dataeng.sqml.ingest.stats.SchemaGenerator;
+import ai.dataeng.sqml.ingest.stats.TypeSignature;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.BasicType;
@@ -111,11 +111,11 @@ public class SchemaValidator {
     private Pair<Name,Object> verifyAndAdjust(Object data, FlexibleDatasetSchema.FlexibleField field,
                                               NamePath location, ConversionError.Bundle<SchemaConversionError> errors) {
         List<FlexibleDatasetSchema.FieldType> types = field.getTypes();
-        FieldTypeStats.TypeSignature typeSignature = FieldStats.detectTypeSignature(data, s -> detectType(s,types),
+        TypeSignature.Simple typeSignature = FieldStats.detectTypeSignature(data, s -> detectType(s,types),
                 m -> detectType(m,types));
-        FlexibleDatasetSchema.FieldType match = SchemaGenerator.matchType(typeSignature.getRaw(), typeSignature.getDetected(), types);
+        FlexibleDatasetSchema.FieldType match = SchemaGenerator.matchType(typeSignature, types);
         if (match != null) {
-            Object converted = verifyAndAdjust(data, match, field, typeSignature.getRaw().getArrayDepth(), location, errors);
+            Object converted = verifyAndAdjust(data, match, field, typeSignature.getArrayDepth(), location, errors);
             return ImmutablePair.of(FlexibleSchemaHelper.getCombinedName(field,match),converted);
         } else {
             errors.add(SchemaConversionError.notice(location, "Cannot match field data [%s] onto schema field [%s], hence field is ignored", data, field));
