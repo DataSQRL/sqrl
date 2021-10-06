@@ -2,7 +2,6 @@ package ai.dataeng.sqml.schema2.basic;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import lombok.NonNull;
 
 import java.util.Set;
 
@@ -38,13 +37,15 @@ public class FloatType extends AbstractBasicType<Double> {
             return FLOAT_CLASSES;
         }
 
-        public Object cast2Parent(@NonNull Double o) {
-            return o;
+        public Double convert(Object o) {
+            return convertInternal(o);
         }
 
-        public Double convert(Object o) {
-            Preconditions.checkArgument(o instanceof Number);
-            return ((Number)o).doubleValue();
+        public static Double convertInternal(Object o) {
+            if (o instanceof Double) return (Double)o;
+            if (o instanceof Number) return ((Number)o).doubleValue();
+            if (o instanceof Boolean) return ((Boolean)o).booleanValue()?1.0:0.0;
+            throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
         }
 
 

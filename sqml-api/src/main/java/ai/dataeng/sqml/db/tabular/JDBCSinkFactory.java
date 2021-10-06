@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.db.tabular;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
-import ai.dataeng.sqml.type.*;
+import ai.dataeng.sqml.schema2.basic.*;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
@@ -82,7 +82,7 @@ public class JDBCSinkFactory implements TabularSinkFactory {
                 DestinationTableSchema.Field field = schema.get(i);
                 if (field.isArray()) ps.setArray(i+1, row.getFieldAs(i));
                 else {
-                    ScalarType type = field.getType();
+                    BasicType type = field.getType();
                     if (type instanceof StringType) ps.setString(i+1,row.getFieldAs(i));
                     else if (type instanceof IntegerType) ps.setLong(i+1,row.getFieldAs(i));
                     else if (type instanceof FloatType) ps.setDouble(i+1,row.getFieldAs(i));
@@ -122,7 +122,7 @@ public class JDBCSinkFactory implements TabularSinkFactory {
     }
 
     public static DataType<?> getJooqSQLType(DestinationTableSchema.Field f) {
-        ScalarType type = f.getType();
+        BasicType type = f.getType();
         DataType mapType;
         if (f.getType() instanceof StringType) mapType = SQLDataType.LONGVARCHAR;
         else if (f.getType() instanceof IntegerType) mapType = SQLDataType.BIGINT;

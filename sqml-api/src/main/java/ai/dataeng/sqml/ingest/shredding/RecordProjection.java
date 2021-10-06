@@ -2,7 +2,8 @@ package ai.dataeng.sqml.ingest.shredding;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
-import ai.dataeng.sqml.type.DateTimeType;
+import ai.dataeng.sqml.schema2.basic.DateTimeType;
+import ai.dataeng.sqml.schema2.name.Name;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -11,7 +12,7 @@ public interface RecordProjection<T> extends Serializable {
 
     DestinationTableSchema.Field getField();
 
-    T getData(SourceRecord record);
+    T getData(SourceRecord<Name> record);
 
     abstract class TimestampProjection implements RecordProjection<Instant> {
 

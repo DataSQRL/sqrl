@@ -1,21 +1,19 @@
 package ai.dataeng.sqml.ingest.stats;
 
 import ai.dataeng.sqml.ingest.accumulator.LogarithmicHistogram;
-import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
-import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
-import com.google.common.base.Preconditions;
 import lombok.*;
 
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
-public class FieldTypeStats implements Serializable, Cloneable {
+public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
 
-    FieldTypeStats.TypeDepth raw;
-    FieldTypeStats.TypeDepth detected;
+    Type raw;
+    Type detected;
+    int arrayDepth;
 
     long count;
     //Only not-null if detected is an array
@@ -25,27 +23,38 @@ public class FieldTypeStats implements Serializable, Cloneable {
 
     public FieldTypeStats() {} //For Kryo;
 
-    public FieldTypeStats(@NonNull FieldTypeStats.TypeDepth raw) {
-        this(raw,raw);
+    public FieldTypeStats(@NonNull Type raw, int arrayDepth) {
+        this(raw,raw,arrayDepth);
     }
 
-    public FieldTypeStats(@NonNull FieldTypeStats.TypeDepth raw, @NonNull FieldTypeStats.TypeDepth detected) {
+    public FieldTypeStats(@NonNull Type raw, @NonNull Type detected, int arrayDepth) {
         this.raw = raw;
         this.detected = detected;
+        this.arrayDepth = arrayDepth;
         this.count = 0;
     }
 
     public FieldTypeStats(FieldTypeStats other) {
-        this(other.raw,other.detected);
+        this(other.raw, other.detected, other.arrayDepth);
     }
 
-    public static FieldTypeStats of(@NonNull Type raw, BasicType detected,
-                          int arrayDepth) {
-        FieldTypeStats.TypeDepth r,d;
-        r = TypeDepth.of(raw,arrayDepth);
-        if (detected!=null) d = TypeDepth.of(detected,arrayDepth);
-        else d = r;
-        return new FieldTypeStats(r,d);
+    public static FieldTypeStats of(@NonNull TypeSignature.Simple signature) {
+        return new FieldTypeStats(signature.getRaw(),signature.getDetected(), signature.getArrayDepth());
+    }
+
+    @Override
+    public Type getRaw() {
+        return raw;
+    }
+
+    @Override
+    public Type getDetected() {
+        return detected;
+    }
+
+    @Override
+    public int getArrayDepth() {
+        return arrayDepth;
     }
 
     public void add() {
@@ -57,14 +66,9 @@ public class FieldTypeStats implements Serializable, Cloneable {
         nestedRelationStats.add(nested, canonicalizer);
     }
 
-    public void add(int numArrayElements, RelationStats relationStats) {
+    public void add(int numArrayElements) {
         count++;
         addArrayCardinality(numArrayElements);
-        if (relationStats!=null) {
-            assert raw instanceof NestedRelation;
-            if (nestedRelationStats==null) nestedRelationStats = relationStats;
-            else nestedRelationStats.merge(relationStats);
-        }
     }
 
     public static final int ARRAY_CARDINALITY_BASE = 4;
@@ -94,12 +98,12 @@ public class FieldTypeStats implements Serializable, Cloneable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FieldTypeStats that = (FieldTypeStats) o;
-        return raw.equals(that.raw) && detected.equals(that.detected);
+        return raw.equals(that.raw) && detected.equals(that.detected) && arrayDepth==that.arrayDepth;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(raw, detected);
+        return Objects.hash(raw, detected, arrayDepth);
     }
 
     @Override
@@ -108,77 +112,8 @@ public class FieldTypeStats implements Serializable, Cloneable {
         if (!raw.equals(detected)) {
             result+= "|" + detected.toString();
         }
-        result += "}";
+        result += "}^"+arrayDepth;
         return result;
-    }
-
-    public interface TypeDepth {
-
-        boolean isBasic();
-
-        BasicType getBasicType();
-
-        default Type getType() {
-            if (isBasic()) return getBasicType();
-            else return RelationType.EMPTY;
-        }
-
-        int getArrayDepth();
-
-        default boolean isArray() {
-            return getArrayDepth()>0;
-        }
-
-        public static TypeDepth of(@NonNull Type type, int arrayDepth) {
-            Preconditions.checkArgument(arrayDepth>=0 && arrayDepth<100,"Array depth out of bounds: %s",arrayDepth);
-            if (type instanceof RelationType) return new NestedRelation(arrayDepth);
-            else if (type instanceof BasicType) return new BasicTypeDepth(arrayDepth, (BasicType) type);
-            else throw new IllegalArgumentException("Unsupported type: " + type);
-        }
-
-    }
-
-    @AllArgsConstructor
-    @Getter
-    @EqualsAndHashCode
-    @ToString
-    public static class BasicTypeDepth implements TypeDepth {
-
-        int arrayDepth;
-        BasicType basicType;
-
-        private BasicTypeDepth() {} //For Kryo
-
-        @Override
-        public boolean isBasic() {
-            return true;
-        }
-    }
-
-    @Getter
-    @EqualsAndHashCode
-    @ToString
-    public static class NestedRelation implements TypeDepth {
-
-        int arrayDepth;
-
-        private NestedRelation() {} //For Kryo
-
-        NestedRelation(int arrayDepth) {
-            Preconditions.checkArgument(arrayDepth<=1);
-            this.arrayDepth = arrayDepth;
-        }
-
-        @Override
-        public boolean isBasic() {
-            return false;
-        }
-
-        @Override
-        public BasicType getBasicType() {
-            throw new UnsupportedOperationException();
-        }
-
     }
 
 

@@ -8,6 +8,7 @@ import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceTable;
 import ai.dataeng.sqml.ingest.stats.SchemaGenerator;
+import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
@@ -163,10 +164,14 @@ public class ImportManager {
                                                         FlexibleDatasetSchema.TableField userSchema,
                                                         ConversionError.Bundle<SchemaConversionError> errors) {
         SchemaGenerator generator = new SchemaGenerator();
+        SourceTableStatistics stats = datasetLookup.getTableStatistics(table);
         if (userSchema==null) {
+            if (stats.getCount()==0) {
+                errors.add(SchemaConversionError.fatal(NamePath.of(datasetname),"We cannot infer schema for table [%s] due to lack of data. Need to provide user schema.", table.getName()));
+            }
             userSchema = FlexibleDatasetSchema.TableField.empty(table.getName());
         }
-        FlexibleDatasetSchema.TableField result = generator.mergeSchema(datasetLookup.getTableStatistics(table), userSchema,
+        FlexibleDatasetSchema.TableField result = generator.mergeSchema(stats, userSchema,
                 NamePath.of(datasetname, table.getName()));
         errors.merge(generator.getErrors());
         return result;

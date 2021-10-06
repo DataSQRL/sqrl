@@ -38,7 +38,7 @@ class DataSourceMonitor implements SourceTableListener {
     public void registerSourceTable(SourceTable sourceTable) throws SourceTableListener.DuplicateException {
         StreamExecutionEnvironment flinkEnv = envProvider.create();
 
-        DataStream<SourceRecord> data = sourceTable.getDataStream(flinkEnv);
+        DataStream<SourceRecord<String>> data = sourceTable.getDataStream(flinkEnv);
         if (sourceTable.hasSchema()) {
             /* data = filter out all SourceRecords that don't match schema and put into side output for error reporting.
                schema is broadcast via Broadcst State (https://ci.apache.org/projects/flink/flink-docs-release-1.13/docs/dev/datastream/fault-tolerance/state/#broadcast-state)
@@ -48,7 +48,7 @@ class DataSourceMonitor implements SourceTableListener {
         }
         final OutputTag<SourceTableStatistics> statsOutput = new OutputTag<>(getFlinkName(STATS_NAME_PREFIX, sourceTable)){};
 
-        SingleOutputStreamOperator<SourceRecord> process = data.keyBy(FlinkUtilities.getHashPartitioner(defaultParallelism))
+        SingleOutputStreamOperator<SourceRecord<String>> process = data.keyBy(FlinkUtilities.getHashPartitioner(defaultParallelism))
                                                                 .process(new KeyedSourceRecordStatistics(statsOutput, sourceTable.getDataset().getRegistration()));
         process.addSink(new PrintSinkFunction<>()); //TODO: persist last 100 for querying
 

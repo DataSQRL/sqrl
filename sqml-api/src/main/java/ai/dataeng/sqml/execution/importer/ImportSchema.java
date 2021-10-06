@@ -4,9 +4,9 @@ import ai.dataeng.sqml.ingest.DatasetLookup;
 import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceTable;
-import ai.dataeng.sqml.schema2.RelationType;
-import ai.dataeng.sqml.schema2.StandardField;
+import ai.dataeng.sqml.schema2.*;
 import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.schema2.name.NamePath;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -38,26 +38,29 @@ public class ImportSchema {
         Mapping mapping = nameMapping.get(tableName);
         Preconditions.checkArgument(mapping!=null,"Table has not been imported into local scope: %s", tableName);
         Preconditions.checkArgument(mapping.isSource() && mapping.isTable(), "Name does not reference source table: %s", tableName);
-        return getSourceTableInternal(mapping.tableName, mapping.datasetName);
+        return getSourceTableInternal(mapping.tableName, mapping.datasetName,
+                TypeHelper.getNestedRelation(schema, NamePath.of(tableName)));
     }
 
     public SourceTableImport getSourceTable(@NonNull Name tableName, @NonNull Name datasetName) {
         Mapping mapping = nameMapping.get(datasetName);
         Preconditions.checkArgument(mapping!=null,"Dataset has not been imported: %s", datasetName);
         Preconditions.checkArgument(mapping.isSource() && mapping.isDataset(), "Name does not reference source dataset: %s", datasetName);
-        return getSourceTableInternal(tableName, mapping.datasetName);
+        return getSourceTableInternal(tableName, mapping.datasetName,
+                TypeHelper.getNestedRelation(schema, NamePath.of(tableName, datasetName)));
     }
 
-    private SourceTableImport getSourceTableInternal(@NonNull Name originalTableName, @NonNull Name originalDSName) {
+    private SourceTableImport getSourceTableInternal(@NonNull Name originalTableName, @NonNull Name originalDSName,
+                                                     @NonNull RelationType<StandardField> tableSchema) {
         SourceDataset ds = datasetLookup.getDataset(originalDSName);
         Preconditions.checkArgument(ds!=null, "Dataset does not exist: %s", originalDSName);
         FlexibleDatasetSchema dsSchema = sourceSchemas.get(originalDSName);
         assert dsSchema!=null;
         SourceTable table = ds.getTable(originalTableName);
         Preconditions.checkArgument(table!=null, "Dataset [%s] does not contain table: %s", originalDSName, originalTableName);
-        FlexibleDatasetSchema.TableField tableSchema = dsSchema.getFieldByName(originalTableName);
-        assert tableSchema!=null;
-        return new SourceTableImport(table, tableSchema);
+        FlexibleDatasetSchema.TableField sourceSchema = dsSchema.getFieldByName(originalTableName);
+        assert sourceSchema!=null;
+        return new SourceTableImport(table, sourceSchema, tableSchema);
     }
 
     enum ImportType {
@@ -98,7 +101,9 @@ public class ImportSchema {
         @NonNull
         private final SourceTable table;
         @NonNull
-        private final FlexibleDatasetSchema.TableField schema;
+        private final FlexibleDatasetSchema.TableField sourceSchema;
+        @NonNull
+        private final RelationType<StandardField> tableSchema;
 
     }
 

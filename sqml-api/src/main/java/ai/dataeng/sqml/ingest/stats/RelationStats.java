@@ -1,15 +1,10 @@
 package ai.dataeng.sqml.ingest.stats;
 
-import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.ingest.schema.SourceTableSchema;
-import ai.dataeng.sqml.ingest.schema.external.FieldDefinition;
-import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import lombok.NonNull;
 
 import java.util.*;
 

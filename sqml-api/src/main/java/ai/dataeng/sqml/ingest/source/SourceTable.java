@@ -36,7 +36,7 @@ public interface SourceTable {
      *
      * @return
      */
-    public DataStream<SourceRecord> getDataStream(StreamExecutionEnvironment env);
+    public DataStream<SourceRecord<String>> getDataStream(StreamExecutionEnvironment env);
 
 
 

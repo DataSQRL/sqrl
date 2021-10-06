@@ -11,25 +11,25 @@ import java.util.UUID;
 /**
  * Raw records of a {@link SourceTable} are represented as {@link SourceRecord}
  */
-public class SourceRecord implements Serializable {
+public class SourceRecord<K> implements Serializable {
 
-    private final Map<String,Object> data;
+    private final Map<K,Object> data;
     private final Instant sourceTime;
     private final Instant ingestTime;
     private final UUID uuid;
 
-    public SourceRecord(@NonNull Map<String, Object> data, @NonNull Instant sourceTime, @NonNull Instant ingestTime, UUID uuid) {
+    public SourceRecord(@NonNull Map<K, Object> data, @NonNull Instant sourceTime, @NonNull Instant ingestTime, UUID uuid) {
         this.data = data;
         this.sourceTime = sourceTime;
         this.ingestTime = ingestTime;
         this.uuid = uuid;
     }
 
-    public SourceRecord(Map<String, Object> data, Instant sourceTime) {
+    public SourceRecord(Map<K, Object> data, Instant sourceTime) {
         this(data, sourceTime, Instant.now(), UUID.randomUUID());
     }
 
-    public Map<String, Object> getData() {
+    public Map<K, Object> getData() {
         return data;
     }
 
@@ -47,6 +47,10 @@ public class SourceRecord implements Serializable {
 
     public UUID getUuid() {
         return uuid;
+    }
+
+    public<T> SourceRecord<T> replaceData(Map<T,Object> newData) {
+        return new SourceRecord<>(newData, sourceTime, ingestTime, uuid);
     }
 
     @Override

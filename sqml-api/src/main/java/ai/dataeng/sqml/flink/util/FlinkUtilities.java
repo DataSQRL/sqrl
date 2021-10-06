@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.flink.util;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
-import ai.dataeng.sqml.type.*;
+import ai.dataeng.sqml.schema2.basic.*;
 import org.apache.flink.api.common.typeinfo.BasicArrayTypeInfo;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -54,7 +54,7 @@ public class FlinkUtilities {
     public static final ObjectArrayTypeInfo INSTANT_ARRAY_TYPE_INFO = ObjectArrayTypeInfo.getInfoFor(Instant[].class, BasicTypeInfo.INSTANT_TYPE_INFO);
 
 
-    public static TypeInformation getFlinkTypeInfo(ScalarType datatype, boolean isArray) {
+    public static TypeInformation getFlinkTypeInfo(BasicType datatype, boolean isArray) {
         if (datatype instanceof StringType) {
             if (isArray) return BasicArrayTypeInfo.STRING_ARRAY_TYPE_INFO;
             else return BasicTypeInfo.STRING_TYPE_INFO;

@@ -1,33 +1,58 @@
 package ai.dataeng.sqml.ingest.schema;
 
+import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
+import ai.dataeng.sqml.schema2.basic.ConversionError;
+import ai.dataeng.sqml.schema2.name.Name;
+import lombok.Value;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
-public class SchemaValidationProcess extends ProcessFunction<SourceRecord, SourceRecord> {
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-    private final OutputTag<SchemaValidationError> errorTag;
-    private final SourceTableSchema schema;
+public class SchemaValidationProcess extends ProcessFunction<SourceRecord<String>, SourceRecord<Name>> {
+
+    private final OutputTag<Error> errorTag;
+    private final FlexibleDatasetSchema.TableField schema;
     private final SchemaAdjustmentSettings settings;
+    private final DatasetRegistration dataset;
 
-    public SchemaValidationProcess(OutputTag<SchemaValidationError> error, SourceTableSchema schema, SchemaAdjustmentSettings settings) {
+    private transient SchemaValidator validator;
+
+    public SchemaValidationProcess(OutputTag<Error> error, FlexibleDatasetSchema.TableField schema,
+                                   SchemaAdjustmentSettings settings, DatasetRegistration dataset) {
         this.errorTag = error;
         this.schema = schema;
         this.settings = settings;
+        this.dataset = dataset;
+        this.validator = new SchemaValidator(schema, settings, dataset);
     }
 
     @Override
-    public void processElement(SourceRecord sourceRecord, Context context, Collector<SourceRecord> out) {
-        SchemaAdjustment<SourceRecord> result = schema.verifyAndAdjust(sourceRecord, settings);
-        if (result.isError()) {
-            context.output(errorTag, new SchemaValidationError(result.getError(),sourceRecord));
+    public void processElement(SourceRecord<String> sourceRecord, Context context, Collector<SourceRecord<Name>> out) {
+        ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
+        SourceRecord<Name> result = validator.verifyAndAdjust(sourceRecord, errors);
+        if (errors.isFatal()) {
+            context.output(errorTag, Error.of(errors,sourceRecord));
         } else {
-            if (result.transformedData()) {
-                sourceRecord = result.getData();
-            }
-            out.collect(sourceRecord);
+            out.collect(result);
         }
     }
 
+    @Value
+    public static class Error implements Serializable {
+
+        private List<String> errors;
+        private SourceRecord<String> sourceRecord;
+
+        public static Error of(ConversionError.Bundle<SchemaConversionError> errors, SourceRecord<String> sourceRecord) {
+            List<String> errorMsgs = new ArrayList<>();
+            errors.forEach(e -> errorMsgs.add(e.toString()));
+            return new Error(errorMsgs, sourceRecord);
+        }
+
+    }
 }

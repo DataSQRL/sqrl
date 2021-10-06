@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.execution.importer;
 
 import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.ingest.schema.FlexibleSchemaHelper;
 import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.StandardField;
@@ -50,18 +51,7 @@ public class SchemaConverter {
     }
 
     private StandardField convert(FlexibleDatasetSchema.FlexibleField field, FlexibleDatasetSchema.FieldType ftype) {
-        Name name = field.getName();
-        if (name instanceof SpecialName) {
-            if (name.equals(SpecialName.VALUE)) {
-                name = Name.system("_value"); //TODO: Need to check if this clashes with other names in RelationType
-            } else throw new IllegalArgumentException(String.format("Unrecognized name: %s",name));
-        }
-
-        if (!ftype.getVariantName().equals(SpecialName.SINGLETON)) {
-            name = Name.concatenate(field.getName(),ftype.getVariantName());
-        }
-
-        return new StandardField(name,
+        return new StandardField(FlexibleSchemaHelper.getCombinedName(field,ftype),
                 convert(ftype.getType(), ftype.getArrayDepth(), ftype.getConstraints()),
                 ftype.getConstraints());
     }
