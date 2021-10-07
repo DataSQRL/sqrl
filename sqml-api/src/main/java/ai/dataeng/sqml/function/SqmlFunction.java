@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.function;
 
-import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.schema2.Type;
 
 public class SqmlFunction {
   private final String name;

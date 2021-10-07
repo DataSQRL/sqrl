@@ -13,10 +13,7 @@
  */
 package ai.dataeng.sqml.analyzer;
 
-import ai.dataeng.sqml.analyzer.Field;
-import ai.dataeng.sqml.analyzer.Scope;
-import ai.dataeng.sqml.type.Type;
-
+import ai.dataeng.sqml.schema2.Field;
 import javax.annotation.concurrent.Immutable;
 
 import static java.util.Objects.requireNonNull;
@@ -39,10 +36,10 @@ public class ResolvedField
     this.local = local;
   }
 
-  public Type getType()
-  {
-    return field.getType();
-  }
+//  public Type getType()
+//  {
+//    return field.getType();
+//  }
 
   public Scope getScope()
   {

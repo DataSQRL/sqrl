@@ -3,9 +3,10 @@ package ai.dataeng.sqml.analyzer;
 import ai.dataeng.sqml.analyzer.TypeResolver.RelationResolverContext;
 import ai.dataeng.sqml.logical.LogicalPlan;
 import ai.dataeng.sqml.logical.RelationDefinition;
+import ai.dataeng.sqml.schema2.Field;
+import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.type.RelationType;
-import ai.dataeng.sqml.type.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Getter
 public class Scope {
+
   private LogicalPlan logicalPlan;
   private RelationType currentRelation;
   private RelationDefinition currentSqmlRelation;
@@ -26,6 +28,7 @@ public class Scope {
   public Scope(LogicalPlan logicalPlan) {
     this(null, logicalPlan, null);
   }
+
   public Scope(RelationType currentRelation, LogicalPlan logicalPlan,
       RelationDefinition currentSqmlRelation) {
     this.currentRelation = currentRelation;
@@ -92,7 +95,7 @@ public class Scope {
     if (prefix.isPresent()) {
       throw new RuntimeException("SELECT * with alias not yet implemented");
     }
-    return getRelation().getFields();
+    return (List<Field>)getRelation().getFields();
   }
 
   public RelationId getRelationId() {
@@ -102,7 +105,7 @@ public class Scope {
   public void addRelation(String name, RelationType relation) {
   }
 
-  public RelationType getRelation() {
+  public RelationType<?> getRelation() {
     return currentRelation;
   }
 

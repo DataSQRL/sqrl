@@ -41,7 +41,7 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
     @Getter
     @ToString
     @AllArgsConstructor
-    public static class AbstractField implements ai.dataeng.sqml.schema2.Field {
+    public static abstract class AbstractField implements ai.dataeng.sqml.schema2.Field {
 
         @NonNull
         private final Name name;

@@ -1,11 +1,12 @@
 package ai.dataeng.sqml.analyzer;
 
+import ai.dataeng.sqml.schema2.Field;
+import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Relation;
-import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.RelationType;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;

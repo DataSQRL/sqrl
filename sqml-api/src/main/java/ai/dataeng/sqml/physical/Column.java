@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.physical;
 
-import ai.dataeng.sqml.analyzer.Field;
+import ai.dataeng.sqml.schema2.Field;
 import lombok.Value;
 
 @Value

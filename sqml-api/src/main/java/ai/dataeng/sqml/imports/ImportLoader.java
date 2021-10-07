@@ -1,6 +1,10 @@
 package ai.dataeng.sqml.imports;
 
+import ai.dataeng.sqml.execution.importer.ImportManager;
+import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.function.SqmlFunction;
+import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
+import ai.dataeng.sqml.schema2.basic.ConversionError;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ClassInfo;
@@ -11,7 +15,16 @@ import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 
 public class ImportLoader {
+
+  private final ImportManager importManager;
+  private final ImportSchema schema;
   private Map<String, ImportObject> importObjects = new HashMap<>();
+
+  public ImportLoader(ImportManager importManager,
+      ImportSchema schema) {
+    this.importManager = importManager;
+    this.schema = schema;
+  }
 
   public void register(String name, ImportObject object) {
     importObjects.put(name, object);

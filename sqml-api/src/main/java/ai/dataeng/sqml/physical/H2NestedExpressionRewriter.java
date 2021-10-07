@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.physical;
 
-import ai.dataeng.sqml.analyzer.Field;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.metadata.Metadata;
+import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
@@ -54,7 +54,7 @@ public class H2NestedExpressionRewriter extends AstVisitor<Node, RewriteScope> {
 
   private List<Expression> toIdentifierList(List<Field> fields) {
     return fields.stream()
-        .map(e->new Identifier(e.getName().get()))
+        .map(e->new Identifier(e.getName().getCanonical()))
         .collect(Collectors.toList());
   }
 }

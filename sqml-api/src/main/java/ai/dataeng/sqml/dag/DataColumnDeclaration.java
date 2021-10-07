@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.dag;
 
 
-import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.schema2.Type;
 
 /**
  * Defines a "standard" column in the sense of relational algebra in that it contains data of a particular type.

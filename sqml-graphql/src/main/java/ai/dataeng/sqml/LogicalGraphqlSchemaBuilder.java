@@ -1,22 +1,16 @@
 package ai.dataeng.sqml;
 
 import ai.dataeng.sqml.analyzer.Analysis;
-import ai.dataeng.sqml.analyzer.Field;
 import ai.dataeng.sqml.logical.RelationIdentifier;
 import ai.dataeng.sqml.logical.LogicalPlan;
 import ai.dataeng.sqml.logical.LogicalPlanVisitor;
 import ai.dataeng.sqml.logical.RelationDefinition;
 import ai.dataeng.sqml.physical.PhysicalPlan;
+import ai.dataeng.sqml.schema2.Field;
+import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.schema2.basic.DateTimeType;
+import ai.dataeng.sqml.schema2.basic.StringType;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.type.ArrayType;
-import ai.dataeng.sqml.type.BooleanType;
-import ai.dataeng.sqml.type.DateTimeType;
-import ai.dataeng.sqml.type.NullType;
-import ai.dataeng.sqml.type.NumberType;
-import ai.dataeng.sqml.type.RelationType;
-import ai.dataeng.sqml.type.StringType;
-import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.UnknownType;
 import graphql.Scalars;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
@@ -107,7 +101,7 @@ public class LogicalGraphqlSchemaBuilder {
         String fieldName = toName(relationIdentifier.getName());
         GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
             .name(fieldName)
-            .type(rel.accept(this, new Context("Query", fieldName)))
+//            .type(rel.accept(this, new Context("Query", fieldName)))
             .build();
         obj.field(f);
       }
@@ -136,10 +130,10 @@ public class LogicalGraphqlSchemaBuilder {
         if (field.isHidden()) {
           continue;
         }
-        String fieldName = toName(field.getName().get());
+        String fieldName = toName(field.getName().getDisplay());
         GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
             .name(fieldName)
-            .type(field.getType().accept(this, new Context(name, fieldName)))
+//            .type(field.getType().accept(this, new Context(name, fieldName)))
             .build();
         obj.field(f);
       }
@@ -156,51 +150,51 @@ public class LogicalGraphqlSchemaBuilder {
       seen.add(name);
       return Optional.empty();
     }
-
-    @Override
-    public GraphQLOutputType visitSqmlType(Type type, Context context) {
-      throw new RuntimeException("Could not resolve SQML type for the graphql schema");
-    }
-
-    @Override
-    public GraphQLOutputType visitArray(ArrayType type, Context context) {
-      return GraphQLList.list(type.getSubType().accept(this, context));
-    }
-
-    @Override
-    public GraphQLOutputType visitNumber(NumberType type, Context context) {
-      return Scalars.GraphQLFloat;
-    }
-
-    @Override
-    public GraphQLOutputType visitUnknown(UnknownType type, Context context) {
-      return Scalars.GraphQLString;
-    }
-
-    @Override
-    public GraphQLOutputType visitDateTime(DateTimeType type, Context context) {
-      return Scalars.GraphQLString;
-    }
-
-    @Override
-    public GraphQLOutputType visitNull(NullType type, Context context) {
-      return Scalars.GraphQLString;
-    }
-
-    @Override
-    public GraphQLOutputType visitString(StringType type, Context context) {
-      return Scalars.GraphQLString;
-    }
-
-    @Override
-    public GraphQLOutputType visitBoolean(BooleanType type, Context context) {
-      return Scalars.GraphQLBoolean;
-    }
-
-    @Override
-    public GraphQLOutputType visitScalarType(Type type, Context context) {
-      throw new RuntimeException(String.format("Unidentified scalar for api gen: %s", type));
-    }
+//
+//    @Override
+//    public GraphQLOutputType visitSqmlType(Type type, Context context) {
+//      throw new RuntimeException("Could not resolve SQML type for the graphql schema");
+//    }
+//
+//    @Override
+//    public GraphQLOutputType visitArray(ArrayType type, Context context) {
+//      return GraphQLList.list(type.getSubType().accept(this, context));
+//    }
+//
+//    @Override
+//    public GraphQLOutputType visitNumber(NumberType type, Context context) {
+//      return Scalars.GraphQLFloat;
+//    }
+//
+//    @Override
+//    public GraphQLOutputType visitUnknown(UnknownType type, Context context) {
+//      return Scalars.GraphQLString;
+//    }
+//
+//    @Override
+//    public GraphQLOutputType visitDateTime(DateTimeType type, Context context) {
+//      return Scalars.GraphQLString;
+//    }
+//
+//    @Override
+//    public GraphQLOutputType visitNull(NullType type, Context context) {
+//      return Scalars.GraphQLString;
+//    }
+//
+//    @Override
+//    public GraphQLOutputType visitString(StringType type, Context context) {
+//      return Scalars.GraphQLString;
+//    }
+//
+//    @Override
+//    public GraphQLOutputType visitBoolean(BooleanType type, Context context) {
+//      return Scalars.GraphQLBoolean;
+//    }
+//
+//    @Override
+//    public GraphQLOutputType visitScalarType(Type type, Context context) {
+//      throw new RuntimeException(String.format("Unidentified scalar for api gen: %s", type));
+//    }
 
     @Override
     public GraphQLOutputType visitRelation(RelationType type, Context context) {

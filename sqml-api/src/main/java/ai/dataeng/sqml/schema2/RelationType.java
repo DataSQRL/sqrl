@@ -1,6 +1,8 @@
 package ai.dataeng.sqml.schema2;
 
 import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 
@@ -14,13 +16,13 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
 
     protected final List<F> fields;
 
-    protected RelationType(@NonNull List<F> fields) {
-        //Preconditions.checkArgument(!fields.isEmpty()); TODO: should this be checked?
-        this.fields = fields;
+    protected RelationType() {
+        this(Collections.EMPTY_LIST);
     }
 
-    private RelationType() {
-        this.fields = Collections.EMPTY_LIST;
+    public RelationType(@NonNull List<F> fields) {
+        //Preconditions.checkArgument(!fields.isEmpty()); TODO: should this be checked?
+        this.fields = fields;
     }
 
     //Lazily initialized when requested because this only works for fields with names
@@ -49,6 +51,10 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
     @Override
     public Iterator<F> iterator() {
         return fields.iterator();
+    }
+
+    public Optional<Field> getField(String value) {
+        return Optional.ofNullable(fieldsByName.get(Name.of(value, NameCanonicalizer.SYSTEM)));
     }
 
     public static class Builder<F extends Field> extends AbstractBuilder<F,Builder<F>> {
@@ -91,5 +97,7 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
 
     }
 
-
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+        return visitor.visitRelation(this, context);
+    }
 }

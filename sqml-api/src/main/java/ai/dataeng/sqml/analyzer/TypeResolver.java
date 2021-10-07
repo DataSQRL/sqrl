@@ -1,20 +1,9 @@
 package ai.dataeng.sqml.analyzer;
 
 import ai.dataeng.sqml.analyzer.TypeResolver.RelationResolverContext;
+import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.QualifiedName.DataPart;
-import ai.dataeng.sqml.tree.QualifiedName.NamePart;
-import ai.dataeng.sqml.tree.QualifiedName.ParentPart;
-import ai.dataeng.sqml.tree.QualifiedName.QualifiedNameVisitor;
-import ai.dataeng.sqml.tree.QualifiedName.SelfPart;
-import ai.dataeng.sqml.tree.QualifiedName.SibilingPart;
-import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
-import ai.dataeng.sqml.type.Type;
-import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Value;

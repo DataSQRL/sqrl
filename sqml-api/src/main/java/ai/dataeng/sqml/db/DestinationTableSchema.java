@@ -5,7 +5,6 @@ import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.constraint.ConstraintHelper;
-import ai.dataeng.sqml.type.ScalarType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import lombok.Value;

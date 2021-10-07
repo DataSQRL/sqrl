@@ -6,6 +6,14 @@ import ai.dataeng.sqml.OperatorType;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.function.TypeSignature;
 import ai.dataeng.sqml.metadata.Metadata;
+import ai.dataeng.sqml.schema2.Field;
+import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.basic.BooleanType;
+import ai.dataeng.sqml.schema2.basic.DateTimeType;
+import ai.dataeng.sqml.schema2.basic.NullType;
+import ai.dataeng.sqml.schema2.basic.NumberType;
+import ai.dataeng.sqml.schema2.basic.StringType;
 import ai.dataeng.sqml.tree.ArithmeticBinaryExpression;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.BetweenPredicate;
@@ -19,7 +27,6 @@ import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GenericLiteral;
 import ai.dataeng.sqml.tree.Identifier;
-import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.IntervalLiteral;
 import ai.dataeng.sqml.tree.IsEmpty;
@@ -27,26 +34,15 @@ import ai.dataeng.sqml.tree.IsNotNullPredicate;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
-import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.NotExpression;
 import ai.dataeng.sqml.tree.NullLiteral;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.SimpleCaseExpression;
-import ai.dataeng.sqml.tree.StackableAstVisitor.StackableAstVisitorContext;
 import ai.dataeng.sqml.tree.StringLiteral;
 import ai.dataeng.sqml.tree.SubqueryExpression;
 import ai.dataeng.sqml.tree.TimestampLiteral;
-import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.BooleanType;
-import ai.dataeng.sqml.type.DateTimeType;
-import ai.dataeng.sqml.type.NullType;
-import ai.dataeng.sqml.type.NumberType;
-import ai.dataeng.sqml.type.RelationType;
-import ai.dataeng.sqml.type.StringType;
-import ai.dataeng.sqml.type.UnknownType;
 import com.google.common.collect.ImmutableList;
-import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -201,7 +197,7 @@ public class ExpressionAnalyzer {
 
     @Override
     protected Type visitGenericLiteral(GenericLiteral node, Context context) {
-      return addType(node, new UnknownType());
+      throw new RuntimeException("Generic literal not supported yet.");
     }
 
     @Override
@@ -226,7 +222,7 @@ public class ExpressionAnalyzer {
 
     @Override
     protected Type visitEnumLiteral(EnumLiteral node, Context context) {
-      return addType(node, new UnknownType());
+      throw new RuntimeException("Enum literal not supported yet.");
     }
 
     @Override

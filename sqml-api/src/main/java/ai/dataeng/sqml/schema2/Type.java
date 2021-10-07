@@ -4,4 +4,11 @@ import java.io.Serializable;
 
 public interface Type extends Serializable {
 
+  default boolean isOrderable() {
+    return true;
+  }
+
+  default boolean isComparable() {
+    return true;
+  }
 }

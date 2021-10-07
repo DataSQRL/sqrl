@@ -13,8 +13,7 @@
  */
 package ai.dataeng.sqml.analyzer;
 
-import ai.dataeng.sqml.logical.RelationDefinition;
-import ai.dataeng.sqml.type.RelationType;
+import ai.dataeng.sqml.schema2.RelationType;
 import java.util.Objects;
 
 import static com.google.common.base.MoreObjects.toStringHelper;

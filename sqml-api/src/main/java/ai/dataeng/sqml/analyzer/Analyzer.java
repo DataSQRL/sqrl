@@ -1,8 +1,10 @@
 package ai.dataeng.sqml.analyzer;
 
-import ai.dataeng.sqml.imports.ImportObject;
-import ai.dataeng.sqml.imports.ImportVisitor;
+import ai.dataeng.sqml.execution.importer.ImportManager;
+import ai.dataeng.sqml.execution.importer.ImportSchema;
+import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.logical.DistinctRelationDefinition;
+import ai.dataeng.sqml.logical.ImportRelationDefinition;
 import ai.dataeng.sqml.logical.RelationIdentifier;
 import ai.dataeng.sqml.logical.ExtendedChildQueryRelationDefinition;
 import ai.dataeng.sqml.logical.ExtendedFieldRelationDefinition;
@@ -12,6 +14,9 @@ import ai.dataeng.sqml.logical.QueryField;
 import ai.dataeng.sqml.logical.QueryRelationDefinition;
 import ai.dataeng.sqml.logical.RelationDefinition;
 import ai.dataeng.sqml.metadata.Metadata;
+import ai.dataeng.sqml.schema2.Field;
+import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.CreateSubscription;
 import ai.dataeng.sqml.tree.DistinctAssignment;
@@ -24,8 +29,9 @@ import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.type.Type;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.flink.util.Preconditions;
 
 public class Analyzer {
@@ -57,7 +63,9 @@ public class Analyzer {
 
     private final Analysis analysis;
     private final Metadata metadata;
- 
+    private final AtomicBoolean importResolved = new AtomicBoolean(false);
+    private ImportManager importManager;
+
     public Visitor(Analysis analysis, Metadata metadata) {
       this.analysis = analysis;
       this.metadata = metadata;
@@ -70,25 +78,57 @@ public class Analyzer {
 
     @Override
     protected Scope visitScript(Script node, Scope context) {
+      this.importManager = new ImportManager(metadata.getEnv()
+          .getDdRegistry());
       Scope scope = new Scope(analysis.getLogicalPlan());
 
-      node.getStatements()
-          .forEach(n -> n.accept(this, scope));
+      List<Node> statements = node.getStatements();
+      for (int i = 0; i < statements.size(); i++) {
+        statements.get(i).accept(this, scope);
+
+        //Test for end of imports
+        Optional<Node> nextStatement = getNextStatement(statements, i + 1);
+        if (nextStatement.map(s->!(s instanceof ImportDefinition))
+            .orElse(false)) {
+          resolveImports(scope);
+        }
+      }
       return null;
     }
 
-    @Override
-    protected Scope visitImportDefinition(ImportDefinition node, Scope context) {
-      List<ImportObject> importObjects = metadata.getImportLoader()
-          .load(node.getQualifiedName().toOriginalString());
-      if (importObjects.isEmpty()) {
-        throw new RuntimeException(String.format("Import definition could be found at: %s", node.getQualifiedName()));
+    private void resolveImports(Scope scope) {
+      importResolved.set(true);
+      ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
+      ImportSchema schema = importManager.createImportSchema(errors);
+      System.out.println(schema);
+
+      ImportRelationDefinition importRelationDefinition =
+        new ImportRelationDefinition(schema);
+
+      analysis.getLogicalPlan()
+          .setCurrentDefinition(QualifiedName.of("tableName"), null);
+    }
+
+    private Optional<Node> getNextStatement(List<Node> statements, int i) {
+      if (i < statements.size()) {
+        return Optional.of(statements.get(i));
       }
-//      ImportVisitor importVisitor = new ImportAnalyzer(metadata, node, analysis);
-//      for (ImportObject object : importObjects) {
-//        object.accept(importVisitor, context);
-//      }
-      return context;
+      return Optional.empty();
+    }
+
+    @Override
+    protected Scope visitImportDefinition(ImportDefinition node, Scope scope) {
+      if (importResolved.get()) {
+        throw new RuntimeException(String.format("Import statement must be in header %s", node.getQualifiedName()));
+      }
+
+      if (node.getQualifiedName().getParts().get(node.getQualifiedName().getParts().size() - 1).equalsIgnoreCase("*")) {
+        importManager.importAllTable(node.getQualifiedName().getParts().get(0));
+      } else {
+//        importManager.importTable(node.getQualifiedName().toOriginalString());
+      }
+
+      return scope;
     }
 
     @Override

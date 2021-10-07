@@ -1,13 +1,13 @@
 package ai.dataeng.sqml.function;
 
-import ai.dataeng.sqml.type.ArrayType;
-import ai.dataeng.sqml.type.BooleanType;
-import ai.dataeng.sqml.type.DateTimeType;
-import ai.dataeng.sqml.type.FloatType;
-import ai.dataeng.sqml.type.IntegerType;
-import ai.dataeng.sqml.type.NumberType;
-import ai.dataeng.sqml.type.StringType;
-import ai.dataeng.sqml.type.UuidType;
+import ai.dataeng.sqml.schema2.ArrayType;
+import ai.dataeng.sqml.schema2.basic.BooleanType;
+import ai.dataeng.sqml.schema2.basic.DateTimeType;
+import ai.dataeng.sqml.schema2.basic.FloatType;
+import ai.dataeng.sqml.schema2.basic.IntegerType;
+import ai.dataeng.sqml.schema2.basic.NumberType;
+import ai.dataeng.sqml.schema2.basic.StringType;
+import ai.dataeng.sqml.schema2.basic.UuidType;
 import java.util.List;
 
 public class PostgresFunctions {

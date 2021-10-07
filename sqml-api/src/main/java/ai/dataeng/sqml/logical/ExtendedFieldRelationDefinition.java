@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.logical;
 
-import ai.dataeng.sqml.analyzer.Field;
+import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
@@ -25,9 +25,9 @@ public class ExtendedFieldRelationDefinition extends RelationDefinition {
     this.field = field;
   }
 
-  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-    return visitor.visitExtendedRelation(this, context);
-  }
+//  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+//    return visitor.visitExtendedRelation(this, context);
+//  }
 
   @Override
   protected List<Field> getPrimaryKeys() {

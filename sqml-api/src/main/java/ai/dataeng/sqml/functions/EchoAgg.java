@@ -1,8 +1,7 @@
 package ai.dataeng.sqml.functions;
 
 import ai.dataeng.sqml.function.SqmlFunction;
-import ai.dataeng.sqml.type.StringType;
-import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.schema2.basic.StringType;
 import java.sql.Connection;
 import java.sql.SQLException;
 

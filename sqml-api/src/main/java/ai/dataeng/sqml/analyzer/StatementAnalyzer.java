@@ -7,7 +7,6 @@ import static ai.dataeng.sqml.analyzer.ExpressionTreeUtils.extractExpressions;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Iterables.getLast;
-import static com.google.common.collect.Iterables.isEmpty;
 import static java.util.Collections.emptyList;
 import static java.util.Locale.ENGLISH;
 import static java.util.Objects.requireNonNull;
@@ -16,6 +15,10 @@ import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.logical.RelationDefinition;
 import ai.dataeng.sqml.metadata.Metadata;
+import ai.dataeng.sqml.schema2.Field;
+import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.basic.BooleanType;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
@@ -24,7 +27,6 @@ import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionRewriter;
 import ai.dataeng.sqml.tree.ExpressionTreeRewriter;
-import ai.dataeng.sqml.tree.FieldReference;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.GroupingOperation;
@@ -48,10 +50,6 @@ import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.Table;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.Union;
-import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.BooleanType;
-import ai.dataeng.sqml.type.RelationType;
-import ai.dataeng.sqml.type.UnknownType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMultimap;
@@ -293,15 +291,15 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
     Field[] outputDescriptorFields = new Field[outputFieldTypes.length];
     RelationType firstDescriptor = relationScopes.get(0).getRelation();
     for (int i = 0; i < outputFieldTypes.length; i++) {
-      Field oldField = firstDescriptor.getFields().get(i);
-      outputDescriptorFields[i] = new Field(
-          oldField.getRelationAlias(),
-          oldField.getName(),
-          outputFieldTypes[i],
-          oldField.isHidden(),
-          oldField.getOriginTable(),
-          oldField.getOriginColumnName(),
-          oldField.isAliased(), Optional.empty());
+      Field oldField = (Field)firstDescriptor.getFields().get(i);
+//      outputDescriptorFields[i] = new Field(
+//          oldField.getRelationAlias(),
+//          oldField.getName(),
+//          outputFieldTypes[i],
+//          oldField.isHidden(),
+//          oldField.getOriginTable(),
+//          oldField.getOriginColumnName(),
+//          oldField.isAliased(), Optional.empty());
     }
 
     for (int i = 0; i < node.getRelations().size(); i++) {
@@ -310,7 +308,7 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
       RelationType relationType = relationScope.getRelation();
       for (int j = 0; j < relationType.getFields().size(); j++) {
         Type outputFieldType = outputFieldTypes[j];
-        Type descFieldType = relationType.getFields().get(j).getType();
+        Type descFieldType = ((Field)relationType.getFields().get(j)).getType();
         if (!outputFieldType.equals(descFieldType)) {
 //            analysis.addRelationCoercion(relation, outputFieldTypes);
           throw new RuntimeException(String.format("Mismatched types in set operation %s", relationType.getFields().get(j)));
@@ -455,11 +453,9 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
 
     Type predicateType = expressionAnalysis.getType(predicate);
     if (!(predicateType instanceof BooleanType)) {
-      if (!(predicateType instanceof UnknownType)) {
-        throw new RuntimeException(String.format("WHERE clause must evaluate to a boolean: actual type %s", predicateType));
-      }
+      throw new RuntimeException(String.format("WHERE clause must evaluate to a boolean: actual type %s", predicateType));
       // coerce null to boolean
-      analysis.addCoercion(predicate, BooleanType.INSTANCE, false);
+//      analysis.addCoercion(predicate, BooleanType.INSTANCE, false);
     }
 
     analysis.setWhere(node, predicate);
@@ -607,7 +603,7 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
         Optional<QualifiedName> starPrefix = ((AllColumns) item).getPrefix();
 
         for (Field field : sourceScope.resolveFieldsWithPrefix(starPrefix)) {
-          outputFields.add(Field.newUnqualified(field.getName(), field.getType(), field.getOriginTable(), field.getOriginColumnName(), false));
+          outputFields.add(Field.newUnqualified(field.getName(), field.getType()));
         }
       } else if (item instanceof SingleColumn) {
         SingleColumn column = (SingleColumn) item;
@@ -640,9 +636,11 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
           }
         }
 
-        outputFields.add(Field.newUnqualified(field.map(Identifier::getValue),
-            analysis.getType(expression).orElse(new UnknownType()), originTable, originColumn,
-            column.getAlias().isPresent()));
+        outputFields.add(
+            Field.newUnqualified(field.map(Identifier::getValue),
+            analysis.getType(expression).orElseThrow(),
+            column.getAlias().isPresent())
+        );
       }
       else {
         throw new IllegalArgumentException("Unsupported SelectItem type: " + item.getClass().getName());
@@ -662,7 +660,7 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
       analysis.recordSubqueries(node, expressionAnalysis);
 
       Type predicateType = expressionAnalysis.getType(predicate);
-      if (!(predicateType instanceof BooleanType) && !(predicateType instanceof UnknownType)) {
+      if (!(predicateType instanceof BooleanType)) {
         throw new RuntimeException(String.format("HAVING clause must evaluate to a boolean: actual type %s", predicateType));
       }
 
@@ -726,16 +724,12 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
   public RelationType withAlias(RelationType rel, String relationAlias) {
     ImmutableList.Builder<Field> fieldsBuilder = ImmutableList.builder();
     for (int i = 0; i < rel.getFields().size(); i++) {
-      Field field = rel.getFields().get(i);
-      Optional<String> columnAlias = field.getName();
+      Field field = ((Field)rel.getFields().get(i));
+//      Optional<String> columnAlias = field.getName();
       fieldsBuilder.add(Field.newQualified(
           relationAlias,
-          columnAlias,
-          field.getType(),
-          field.isHidden(),
-          field.getOriginTable(),
-          field.getOriginColumnName(),
-          field.isAliased()));
+          null,
+          field.getType()));
     }
 
     return new RelationType(fieldsBuilder.build());

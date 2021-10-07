@@ -2,8 +2,8 @@ package ai.dataeng.sqml;
 
 import static graphql.schema.FieldCoordinates.coordinates;
 
-import ai.dataeng.sqml.analyzer.Field;
 import ai.dataeng.sqml.physical.PhysicalPlanNode;
+import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.ComparisonExpression;
 import ai.dataeng.sqml.tree.ComparisonExpression.Operator;
@@ -97,8 +97,8 @@ public class CodeRegistryBuilder {
     List<ComparisonExpression> comparisonExpressions = new ArrayList<>();
     for (Field field : node.getRelationDefinition().getContextKey()) {
       ComparisonExpression comparisonExpression = new ComparisonExpression(Operator.EQUAL,
-          new Identifier(field.getName().get()),
-          new LongLiteral(source.get(field.getName().get()).toString()));
+          new Identifier(field.getName().getDisplay()),
+          new LongLiteral(source.get(field.getName().getDisplay()).toString()));
       comparisonExpressions.add(comparisonExpression);
     }
 
