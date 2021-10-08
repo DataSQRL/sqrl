@@ -9,10 +9,6 @@ import lombok.Data;
 import lombok.NonNull;
 
 public abstract class RelationDefinition extends RelationType<Field> {
-    protected RelationDefinition() {
-        super();
-    }
-
     public abstract List<Field> getFields();
     public abstract QualifiedName getRelationName();
     public abstract RelationIdentifier getRelationIdentifier();

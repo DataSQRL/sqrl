@@ -3,14 +3,12 @@ package ai.dataeng.sqml;
 import ai.dataeng.sqml.analyzer.Analysis;
 import ai.dataeng.sqml.logical.RelationIdentifier;
 import ai.dataeng.sqml.logical.LogicalPlan;
-import ai.dataeng.sqml.logical.LogicalPlanVisitor;
 import ai.dataeng.sqml.logical.RelationDefinition;
 import ai.dataeng.sqml.physical.PhysicalPlan;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
-import ai.dataeng.sqml.schema2.basic.DateTimeType;
-import ai.dataeng.sqml.schema2.basic.StringType;
 import ai.dataeng.sqml.tree.QualifiedName;
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import graphql.Scalars;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
@@ -52,7 +50,7 @@ public class LogicalGraphqlSchemaBuilder {
 
     public GraphQLSchema build() {
       Visitor visitor = new Visitor(analysis, codeRegistryBuilder, physicalPlan);
-      analysis.getLogicalPlan().accept(visitor, null);
+      visitor.visit(analysis.getLogicalPlan(), null);
       GraphQLSchema.Builder schemaBuilder = visitor.getBuilder();
       schemaBuilder.codeRegistry(this.codeRegistryBuilder.build());
 
@@ -67,7 +65,7 @@ public class LogicalGraphqlSchemaBuilder {
     }
   }
 
-  static class Visitor extends LogicalPlanVisitor<GraphQLOutputType, Context> {
+  static class Visitor extends SqmlTypeVisitor<GraphQLOutputType, Context> {
     private final Analysis analysis;
     private final CodeRegistryBuilder codeRegistryBuilder;
     private final PhysicalPlan physicalPlan;
@@ -89,7 +87,6 @@ public class LogicalGraphqlSchemaBuilder {
       return schemaBuilder;
     }
 
-    @Override
     public GraphQLOutputType visit(LogicalPlan logicalPlan, Context context) {
       GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
           .name("Query");

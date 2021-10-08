@@ -26,9 +26,9 @@ public class DistinctRelationDefinition extends RelationDefinition {
     this.relationIdentifier = relationIdentifier;
   }
 
-//  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-//    return visitor.visitDistinctRelation(this, context);
-//  }
+  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+    return visitor.visitDistinctRelation(this, context);
+  }
 
   @Override
   protected List<Field> getPrimaryKeys() {
@@ -37,12 +37,12 @@ public class DistinctRelationDefinition extends RelationDefinition {
         .stream().map(e->e.getValue())
         .collect(Collectors.toSet());
 
-//    Todo: not right, could be an expression
-//    for (Field field : parent.getFields()) {
-//      if (fieldSet.contains(field.getName().get())) {
-//        fields.add(field);
-//      }
-//    }
+//    Todo: not right, could be an expression ?
+    for (Field field : parent.getFields()) {
+      if (fieldSet.contains(field.getName().getCanonical())) {
+        fields.add(field);
+      }
+    }
 
     return fields; //todo add
   }

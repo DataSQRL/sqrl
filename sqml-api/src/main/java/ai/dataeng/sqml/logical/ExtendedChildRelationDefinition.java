@@ -29,9 +29,9 @@ public class ExtendedChildRelationDefinition extends RelationDefinition {
     return parent.getRelationIdentifier();
   }
 
-//  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-//    return visitor.visitExtendedChild(this, context);
-//  }
+  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+    return visitor.visitExtendedChild(this, context);
+  }
 
   @Override
   protected List<Field> getPrimaryKeys() {

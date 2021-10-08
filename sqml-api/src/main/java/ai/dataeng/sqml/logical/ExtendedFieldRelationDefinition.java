@@ -25,9 +25,9 @@ public class ExtendedFieldRelationDefinition extends RelationDefinition {
     this.field = field;
   }
 
-//  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-//    return visitor.visitExtendedRelation(this, context);
-//  }
+  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+    return visitor.visitExtendedRelation(this, context);
+  }
 
   @Override
   protected List<Field> getPrimaryKeys() {

@@ -107,6 +107,7 @@ public class Analyzer {
         throw new RuntimeException(String.format("Import statement must be in header %s", node.getQualifiedName()));
       }
 
+      //Todo fix
       if (node.getQualifiedName().getParts().get(node.getQualifiedName().getParts().size() - 1).equalsIgnoreCase("*")) {
         importManager.importAllTable(node.getQualifiedName().getParts().get(0));
       } else {
@@ -240,7 +241,7 @@ public class Analyzer {
           .orElseThrow(()->new RuntimeException("Could not find relation for inline join"));
 
       ExtendedFieldRelationDefinition extendedFieldRelationDefinition = new ExtendedFieldRelationDefinition(name.getSuffix(), node, relationDefinition,
-          DataField.newDataField(Name.of("", NameCanonicalizer.SYSTEM), inlineJoinFieldDefinition));
+          inlineJoinFieldDefinition);
       scope.setCurrentDefinition(name, extendedFieldRelationDefinition);
 
       if (node.getInverse().isPresent()) {

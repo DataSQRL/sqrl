@@ -14,14 +14,12 @@ import lombok.Getter;
 public class LogicalPlan {
 
   private final Collection<RelationDefinition> tableDefinitions;
+  private final List<SubscriptionDefinition> subscriptionDefinitions;
 
   public LogicalPlan(Collection<RelationDefinition> tableDefinitions,
       List<SubscriptionDefinition> subscriptionDefinitions) {
     this.tableDefinitions = tableDefinitions;
-  }
-
-  public <R, C> R accept(LogicalPlanVisitor<R, C> visitor, C context) {
-    return visitor.visit(this, context);
+    this.subscriptionDefinitions = subscriptionDefinitions;
   }
 
   public List<RelationIdentifier> getBaseEntities() {

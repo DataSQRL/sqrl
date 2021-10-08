@@ -92,4 +92,8 @@ public class StatementAnalysis {
   public void addRelatedRelation(RelationDefinition relationDefinition) {
     referencedRelations.add(relationDefinition);
   }
+
+  public void setMultiplicity(Node node, Optional<Long> parseLimit) {
+
+  }
 }

@@ -1,28 +1,12 @@
 package ai.dataeng.sqml.logical;
 
 import ai.dataeng.sqml.schema2.Field;
-import ai.dataeng.sqml.tree.QualifiedName;
-import java.util.List;
+import ai.dataeng.sqml.schema2.name.Name;
 
-public class InlineJoinFieldDefinition extends RelationDefinition {
-
-  @Override
-  public List<Field> getFields() {
-    return null;
-  }
+public class InlineJoinFieldDefinition implements Field {
 
   @Override
-  public QualifiedName getRelationName() {
-    return null;
-  }
-
-  @Override
-  public RelationIdentifier getRelationIdentifier() {
-    return null;
-  }
-
-  @Override
-  protected List<Field> getPrimaryKeys() {
+  public Name getName() {
     return null;
   }
 }

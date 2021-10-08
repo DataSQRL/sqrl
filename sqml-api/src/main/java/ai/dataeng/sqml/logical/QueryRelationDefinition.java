@@ -4,6 +4,7 @@ import ai.dataeng.sqml.analyzer.Scope;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.tree.QualifiedName;
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -24,10 +25,10 @@ public class QueryRelationDefinition extends RelationDefinition {
     this.relationIdentifier = relationIdentifier;
     this.parentRelation = parentRelation;
   }
-//
-//  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-//    return visitor.visitQueryRelationDefinition(this, context);
-//  }
+
+  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+    return visitor.visitQueryRelationDefinition(this, context);
+  }
 
   @Override
   public List<Field> getFields() {

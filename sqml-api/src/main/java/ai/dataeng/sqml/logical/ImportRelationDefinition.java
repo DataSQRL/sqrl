@@ -29,9 +29,9 @@ public class ImportRelationDefinition extends RelationDefinition {
     this.relation = relation;
   }
 
-//  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-//    return visitor.visitImportTableDefinition(this, context);
-//  }
+  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+    return visitor.visitImportTableDefinition(this, context);
+  }
 
   @Override
   protected List<Field> getPrimaryKeys() {

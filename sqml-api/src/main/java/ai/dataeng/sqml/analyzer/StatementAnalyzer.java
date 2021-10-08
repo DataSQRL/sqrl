@@ -156,6 +156,11 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       computeAndAssignOrderByScopeWithAggregation(node.getOrderBy().get(), sourceScope, outputScope, orderByAggregations, groupByExpressions, orderByGroupingOperations);
     }
 
+    //1. Associate group by expressions with sqml columns
+
+
+    analysis.setMultiplicity(node, node.parseLimit());
+
     return outputScope;
   }
 

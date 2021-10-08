@@ -8,40 +8,20 @@ import ai.dataeng.sqml.logical.ExtendedChildRelationDefinition;
 import ai.dataeng.sqml.logical.ExtendedFieldRelationDefinition;
 import ai.dataeng.sqml.logical.ImportRelationDefinition;
 import ai.dataeng.sqml.logical.LogicalPlan;
-import ai.dataeng.sqml.logical.LogicalPlanVisitor;
 import ai.dataeng.sqml.logical.QueryRelationDefinition;
 import ai.dataeng.sqml.logical.RelationDefinition;
 import ai.dataeng.sqml.metadata.Metadata;
-import ai.dataeng.sqml.schema2.Field;
-import ai.dataeng.sqml.schema2.basic.StringType;
-import ai.dataeng.sqml.schema2.basic.UuidType;
-import ai.dataeng.sqml.tree.DistinctOn;
-import ai.dataeng.sqml.tree.Expression;
-import ai.dataeng.sqml.tree.GroupBy;
-import ai.dataeng.sqml.tree.Identifier;
-import ai.dataeng.sqml.tree.Node;
-import ai.dataeng.sqml.tree.NodeFormatter;
-import ai.dataeng.sqml.tree.NodeLocation;
-import ai.dataeng.sqml.tree.OrderBy;
-import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.Query;
-import ai.dataeng.sqml.tree.QuerySpecification;
-import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
-import ai.dataeng.sqml.tree.SingleColumn;
-import ai.dataeng.sqml.tree.SortItem;
-import ai.dataeng.sqml.tree.SortItem.Ordering;
-import ai.dataeng.sqml.tree.Table;
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class PhysicalPlanner extends LogicalPlanVisitor<PhysicalPlanNode, Object> {
+public class PhysicalPlanner extends SqmlTypeVisitor<PhysicalPlanNode, Object> {
   private final SqmlEnv env;
   private final Analysis analysis;
   private final Metadata metadata;
@@ -56,8 +36,7 @@ public class PhysicalPlanner extends LogicalPlanVisitor<PhysicalPlanNode, Object
     physicalPlan = new PhysicalPlan(analysis.getLogicalPlan());
   }
 
-  @Override
-  public PhysicalPlanNode visit(LogicalPlan logicalPlan, Object context) {
+  public PhysicalPlanNode visitPlan(LogicalPlan logicalPlan, Object context) {
     for (RelationDefinition entry : logicalPlan.getTableDefinitions()) {
       entry.accept(this, context);
     }

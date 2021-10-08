@@ -174,7 +174,7 @@ class ImportTest {
     LogicalPlan logicalPlan = analysis.getLogicalPlan();
 
     PhysicalPlanner planner = new PhysicalPlanner(env, analysis, metadata);
-    logicalPlan.accept(planner, null);
+    planner.visitPlan(logicalPlan, null);
     PhysicalPlan physicalPlan = planner.getPhysicalPlan();
 
 //    env.getFlinkEnv().execute();
