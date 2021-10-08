@@ -43,7 +43,7 @@ public class Analysis {
   private final Set<NodeRef<Expression>> typeOnlyCoercions = new LinkedHashSet<>();
   private final List<Expression> parameters = List.of();
   private final Multimap<NodeRef<Expression>, FieldId> columnReferences = ArrayListMultimap.create();
-  private final LogicalPlan logicalPlan = new LogicalPlan();
+  private LogicalPlan logicalPlan;
   private List<SqmlFunction> functions = new ArrayList<>();
 
   public Analysis(Script script) {
@@ -124,10 +124,6 @@ public class Analysis {
 
   }
 
-  public void setMultiplicity(Node node, Long multiplicity) {
-
-  }
-
   public void addSourceScopedFields(Map<QualifiedName, Field> sourceScopedFields) {
     this.sourceScopedFields.putAll(sourceScopedFields);
   }
@@ -182,5 +178,9 @@ public class Analysis {
 
   public void addFunction(SqmlFunction function) {
     this.functions.add(function);
+  }
+
+  public void setLogicalPlan(LogicalPlan logicalPlan) {
+    this.logicalPlan = logicalPlan;
   }
 }

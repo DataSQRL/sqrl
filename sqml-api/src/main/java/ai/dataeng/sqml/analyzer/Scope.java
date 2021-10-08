@@ -2,7 +2,10 @@ package ai.dataeng.sqml.analyzer;
 
 import ai.dataeng.sqml.analyzer.TypeResolver.RelationResolverContext;
 import ai.dataeng.sqml.logical.LogicalPlan;
+import ai.dataeng.sqml.logical.LogicalPlan.Builder;
+import ai.dataeng.sqml.logical.QueryRelationDefinition;
 import ai.dataeng.sqml.logical.RelationDefinition;
+import ai.dataeng.sqml.logical.SubscriptionDefinition;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
@@ -14,26 +17,24 @@ import java.util.Set;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-
-//TODO: ADD:
-// 1. Functions should be registered here. Functions are scoped within scripts. ( can be aliased )
 @Slf4j
 @Getter
 public class Scope {
-
-  private LogicalPlan logicalPlan;
+  private LogicalPlan.Builder logicalPlanBuilder;
   private RelationType currentRelation;
-  private RelationDefinition currentSqmlRelation;
+  private Optional<RelationDefinition> currentSqmlRelation;
+  private Optional<Long> limit;
 
-  public Scope(LogicalPlan logicalPlan) {
-    this(null, logicalPlan, null);
+  public Scope() {
+    this(null, new LogicalPlan.Builder(), Optional.empty(), Optional.empty());
   }
 
-  public Scope(RelationType currentRelation, LogicalPlan logicalPlan,
-      RelationDefinition currentSqmlRelation) {
+  public Scope(RelationType currentRelation, LogicalPlan.Builder logicalPlanBuilder,
+      Optional<RelationDefinition> currentSqmlRelation, Optional<Long> limit) {
     this.currentRelation = currentRelation;
-    this.logicalPlan = logicalPlan;
+    this.logicalPlanBuilder = logicalPlanBuilder;
     this.currentSqmlRelation = currentSqmlRelation;
+    this.limit = limit;
   }
 
   public static Scope.Builder builder() {
@@ -45,7 +46,7 @@ public class Scope {
         new TypeResolver(), new RelationResolverContext(Optional.of(name), this));
 
     if (relations.size() > 1) {
-      throw new RuntimeException(String.format("Ambigious field %s", name));
+      throw new RuntimeException(String.format("Ambiguous field %s", name));
     }
     if (relations.size() == 0) {
       return Optional.empty();
@@ -55,12 +56,12 @@ public class Scope {
 
   public Optional<RelationDefinition> resolveRelation(QualifiedName name) {
     if (name.getParts().get(0).equalsIgnoreCase("@")) {
-      QualifiedName entityName = currentSqmlRelation.getRelationName();
+      QualifiedName entityName = currentSqmlRelation.orElseThrow(()->new RuntimeException("No base relation")).getRelationName();
       List<String> parts = new ArrayList<>(entityName.getParts());
       parts.addAll(name.getParts().subList(1, name.getParts().size()));
       name = QualifiedName.of(parts);
     }
-    return logicalPlan.getCurrentDefinition(name);
+    return logicalPlanBuilder.getCurrentDefinition(name);
 //    Set<Type> relations = getRelation().accept(
 //        new TypeResolver(), new RelationResolverContext(Optional.of(name), this));
 
@@ -102,18 +103,37 @@ public class Scope {
     return null;
   }
 
-  public void addRelation(String name, RelationType relation) {
-  }
-
   public RelationType<?> getRelation() {
     return currentRelation;
+  }
+
+  public Optional<RelationDefinition> getCurrentDefinition(QualifiedName entityName) {
+    return logicalPlanBuilder.getCurrentDefinition(entityName);
+  }
+
+  public void setCurrentDefinition(QualifiedName name,
+      RelationDefinition relationDefinition) {
+    logicalPlanBuilder.setCurrentDefinition(name, relationDefinition);
+  }
+
+  public void setSubscriptionDefinition(SubscriptionDefinition subscriptionDefinition) {
+    logicalPlanBuilder.setSubscriptionDefinition(subscriptionDefinition);
+
+  }
+
+  public void setMultiplicity(Optional<Long> limit) {
+    this.limit = limit;
+  }
+
+  public Optional<Long> getLimit() {
+    return limit;
   }
 
   public static class Builder {
     private Scope parent;
     private RelationType relationType;
-    private LogicalPlan logicalPlan;
-    private RelationDefinition currentSqmlRelation;
+    private Optional<RelationDefinition> currentSqmlRelation;
+    private Optional<Long> limit;
 
     public Builder withParent(Scope scope) {
       this.parent = scope;
@@ -125,18 +145,18 @@ public class Scope {
       return this;
     }
 
-    public Builder withCurrentSqmlRelation(RelationDefinition currentSqmlRelation) {
+    public Builder withCurrentSqmlRelation(Optional<RelationDefinition> currentSqmlRelation) {
       this.currentSqmlRelation = currentSqmlRelation;
       return this;
     }
 
-    public Builder withLogicalPlan(LogicalPlan logicalPlan) {
-      this.logicalPlan = logicalPlan;
+    public Builder withMultiplicity(Optional<Long> limit) {
+      this.limit = limit;
       return this;
     }
 
     public Scope build() {
-      return new Scope(relationType, logicalPlan, currentSqmlRelation);
+      return new Scope(relationType, parent.logicalPlanBuilder, currentSqmlRelation, limit);
     }
   }
 }

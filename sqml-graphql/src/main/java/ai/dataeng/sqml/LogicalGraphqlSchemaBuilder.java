@@ -95,15 +95,15 @@ public class LogicalGraphqlSchemaBuilder {
           .name("Query");
 
       for (RelationIdentifier relationIdentifier : logicalPlan.getBaseEntities()) {
-        RelationDefinition rel = logicalPlan.getCurrentDefinition(relationIdentifier.getName())
-            .get();
-
-        String fieldName = toName(relationIdentifier.getName());
-        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
-            .name(fieldName)
-//            .type(rel.accept(this, new Context("Query", fieldName)))
-            .build();
-        obj.field(f);
+//        RelationDefinition rel = logicalPlan.getCurrentDefinition(relationIdentifier.getName())
+//            .get();
+//
+//        String fieldName = toName(relationIdentifier.getName());
+//        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
+//            .name(fieldName)
+////            .type(rel.accept(this, new Context("Query", fieldName)))
+//            .build();
+//        obj.field(f);
       }
 
       schemaBuilder.query(obj);

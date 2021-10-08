@@ -19,6 +19,18 @@ public class CreateSubscription extends Node {
     this.query = query;
   }
 
+  public SubscriptionType getSubscriptionType() {
+    return subscriptionType;
+  }
+
+  public QualifiedName getName() {
+    return name;
+  }
+
+  public Query getQuery() {
+    return query;
+  }
+
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitCreateSubscription(this, context);
   }

@@ -122,7 +122,7 @@ public class ExpressionAnalyzer {
 
     @Override
     protected Type visitSubqueryExpression(SubqueryExpression node, Context context) {
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, new Analysis(null));
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata);
       Scope scope = node.getQuery().accept(statementAnalyzer, context.getScope());
 
       return scope.getRelation();

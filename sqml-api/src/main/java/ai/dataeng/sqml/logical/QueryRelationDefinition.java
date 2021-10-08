@@ -1,10 +1,12 @@
 package ai.dataeng.sqml.logical;
 
+import ai.dataeng.sqml.analyzer.Scope;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import lombok.Getter;
 
 @Getter
@@ -12,10 +14,11 @@ public class QueryRelationDefinition extends RelationDefinition {
 
   private final RelationType relation;
   private final RelationIdentifier relationIdentifier;
-  private final RelationDefinition parentRelation;
+  private final Optional<RelationDefinition> parentRelation;
 
   public QueryRelationDefinition(RelationType relation, RelationIdentifier relationIdentifier,
-      RelationDefinition parentRelation) {
+      Optional<RelationDefinition> parentRelation, Scope scope,
+      Set<RelationDefinition> referencedRelations) {
     super();
     this.relation = relation;
     this.relationIdentifier = relationIdentifier;
@@ -42,7 +45,7 @@ public class QueryRelationDefinition extends RelationDefinition {
 
   @Override
   public List<Field> getContextKey() {
-    return parentRelation.getPrimaryKeys();
+    return parentRelation.map(r->getPrimaryKeys()).orElse(List.of());
   }
 
   @Override

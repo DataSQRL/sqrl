@@ -13,6 +13,7 @@ import static java.util.Objects.requireNonNull;
 
 import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
 import ai.dataeng.sqml.function.FunctionProvider;
+import ai.dataeng.sqml.logical.DataField;
 import ai.dataeng.sqml.logical.RelationDefinition;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
@@ -59,28 +60,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
-private Logger log = Logger.getLogger(StatementAnalyzer.class.getName());
 
-private final Metadata metadata;
-private final Analysis analysis;
+  private final Metadata metadata;
+  private final StatementAnalysis analysis;
 
-public StatementAnalyzer(Metadata metadata, Analysis analysis) {
-  this.metadata = metadata;
-  this.analysis = analysis;
-}
-//
-//  // Currently we only analyze queries here although this could be a Statement
-//  public Scope analyze(Query query,
-//      Scope scope) {
-//    Visitor visitor = new Visitor();
-//    return query.accept(visitor, scope);
-//  }
-//
-//  public class Visitor extends AstVisitor<Scope, Scope> {
+  public StatementAnalyzer(Metadata metadata) {
+    this(metadata, new StatementAnalysis());
+  }
+
+  public StatementAnalyzer(Metadata metadata, StatementAnalysis statementAnalysis) {
+    this.metadata = metadata;
+    this.analysis = statementAnalysis;
+  }
+
+  public StatementAnalysis getAnalysis() {
+    return this.analysis;
+  }
 
   @Override
   protected Scope visitNode(Node node, Scope context) {
@@ -91,23 +91,18 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
   protected Scope visitQuery(Query node, Scope scope) {
     //Unions have a limit & order that is outside the query body. If these are empty, just process the
     //  query body as if it was a standalone query.
+    Scope queryScope = node.getQueryBody().accept(this, scope);
     if (node.parseLimit().isEmpty() && node.getOrderBy().isEmpty()) {
-      return node.getQueryBody().accept(this, scope);
-    } else {
-      throw new RuntimeException("TBD: Limit and Order");
+      return queryScope;
     }
-//
-//    List<Expression> orderByExpressions = emptyList();
-//    if (node.getOrderBy().isPresent()) {
-//      orderByExpressions = analyzeOrderBy(node, getSortItemsFromOrderBy(node.getOrderBy()), queryBodyScope);
-//    }
-//    analysis.setOrderByExpressions(node, orderByExpressions);
-//
-//    if (node.parseLimit().isPresent()) {
-//      analysis.setMultiplicity(node, node.parseLimit().get());
-//    }
-//
-//    return createAndAssignScope(node, scope, queryBodyScope.getRelation());
+
+    List<Expression> orderByExpressions = emptyList();
+    if (node.getOrderBy().isPresent()) {
+      orderByExpressions = analyzeOrderBy(node, getSortItemsFromOrderBy(node.getOrderBy()), queryScope);
+    }
+    analysis.setOrderByExpressions(node, orderByExpressions);
+
+    return createAndAssignScope(node, scope, queryScope.getRelation(), node.parseLimit());
   }
 
   @Override
@@ -129,7 +124,7 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
       }
 
       OrderBy orderBy = node.getOrderBy().get();
-      orderByScope = Optional.of(computeAndAssignOrderByScope(orderBy, sourceScope, outputScope));
+      orderByScope = Optional.of(computeAndAssignOrderByScope(orderBy, sourceScope, outputScope, node));
 
       orderByExpressions = analyzeOrderBy(node, orderBy.getSortItems(), orderByScope.get());
     }
@@ -143,7 +138,7 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
 
     if (!aggregates.isEmpty() && groupByExpressions.isEmpty()) {
       // Have Aggregation functions but no explicit GROUP BY clause
-      analysis.setGroupByExpressions(node, ImmutableList.of());
+//      analysis.setGroupByExpressions(node, ImmutableList.of());
     }
 
     verifyAggregations(node, sourceScope, orderByScope, groupByExpressions, sourceExpressions, orderByExpressions);
@@ -161,11 +156,6 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
       computeAndAssignOrderByScopeWithAggregation(node.getOrderBy().get(), sourceScope, outputScope, orderByAggregations, groupByExpressions, orderByGroupingOperations);
     }
 
-    if (node.parseLimit().isPresent()) {
-      //todo bubble up multiplicity
-      analysis.setMultiplicity(node, node.parseLimit().get());
-    }
-
     return outputScope;
   }
 
@@ -173,7 +163,10 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
   protected Scope visitTable(Table table, Scope scope) {
     RelationDefinition relation = scope.resolveRelation(table.getName())
         .orElseThrow(() -> new RuntimeException(String.format("Could not find table: %s", table.getName())));
-    return createAndAssignScope(table, scope, relation);
+
+    analysis.addRelatedRelation(relation);
+
+    return createAndAssignScope(table, scope, relation, Optional.empty());
   }
 
   @Override
@@ -186,7 +179,8 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
     Scope left = node.getLeft().accept(this, scope);
     Scope right = node.getRight().accept(this, scope);
 
-    Scope result = createAndAssignScope(node, scope, join(left.getRelation(), right.getRelation()));
+    Scope result = createAndAssignScope(node, scope, join(left.getRelation(), right.getRelation()),
+        Optional.empty());
 
     //Todo verify that an empty criteria on a join can be a valid traversal
     if (node.getType() == Join.Type.CROSS || node.getType() == Join.Type.IMPLICIT || node.getCriteria().isEmpty()) {
@@ -206,7 +200,7 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
       verifyNoAggregateGroupingFunctions(metadata.getFunctionProvider(), expression, "JOIN clause");
 
       //todo: restrict grouping criteria
-      analysis.setJoinCriteria(node, expression);
+//      analysis.setJoinCriteria(node, expression);
     } else {
       throw new RuntimeException("Unsupported join");
     }
@@ -222,7 +216,7 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
 
     RelationType descriptor = withAlias(relationType, relation.getAlias().getValue());
 
-    return createAndAssignScope(relation, scope, descriptor);
+    return createAndAssignScope(relation, scope, descriptor, Optional.empty());
   }
 
   @Override
@@ -247,7 +241,8 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
     List<Scope> relationScopes = node.getRelations().stream()
         .map(relation -> {
           Scope relationScope = process(relation, scope);
-          return createAndAssignScope(relation, scope, relationScope.getRelation());
+          return createAndAssignScope(relation, scope, relationScope.getRelation(),
+              Optional.empty());
         })
         .collect(toImmutableList());
 
@@ -288,7 +283,7 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
       }
     }
 
-    Field[] outputDescriptorFields = new Field[outputFieldTypes.length];
+    DataField[] outputDescriptorFields = new DataField[outputFieldTypes.length];
     RelationType firstDescriptor = relationScopes.get(0).getRelation();
     for (int i = 0; i < outputFieldTypes.length; i++) {
       Field oldField = (Field)firstDescriptor.getFields().get(i);
@@ -317,7 +312,7 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
       }
     }
 
-    return createAndAssignScope(node, scope, new ArrayList<>(List.of(outputDescriptorFields)));
+    return createAndAssignScope(node, scope, new ArrayList<>(List.of(outputDescriptorFields)), Optional.empty());
   }
 
   private void verifyAggregations(
@@ -476,8 +471,7 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
     }
   }
 
-  private List<Expression> analyzeOrderBy(Node node, List<SortItem> sortItems, Scope orderByScope)
-  {
+  private List<Expression> analyzeOrderBy(Node node, List<SortItem> sortItems, Scope orderByScope) {
     ImmutableList.Builder<Expression> orderByFieldsBuilder = ImmutableList.builder();
 
     for (SortItem item : sortItems) {
@@ -503,16 +497,18 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
     return orderBy.map(OrderBy::getSortItems).orElse(ImmutableList.of());
   }
 
-  private Scope createAndAssignScope(Node node, Scope parentScope, List<Field> fields) {
-    return createAndAssignScope(node, parentScope, new RelationType(fields));
+  private Scope createAndAssignScope(Node node, Scope parentScope, List<DataField> fields,
+      Optional<Long> limit) {
+    return createAndAssignScope(node, parentScope, new RelationType<DataField>(fields), limit);
   }
 
-  private Scope createAndAssignScope(Node node, Scope parentScope, RelationType relationType)
-  {
+  private Scope createAndAssignScope(Node node, Scope parentScope, RelationType relationType,
+      Optional<Long> limit) {
     Scope scope = scopeBuilder(parentScope)
         .withParent(parentScope)
         .withCurrentSqmlRelation(parentScope.getCurrentSqmlRelation())
         .withRelationType(relationType)
+        .withMultiplicity(limit)
         .build();
 
     analysis.setScope(node, scope);
@@ -536,13 +532,15 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
     return scopeBuilder;
   }
 
-  private Scope computeAndAssignOrderByScope(OrderBy node, Scope sourceScope, Scope outputScope)
-  {
+  private Scope computeAndAssignOrderByScope(OrderBy node, Scope sourceScope, Scope outputScope,
+      QuerySpecification querySpecification) {
     // ORDER BY should "see" both output and FROM fields during initial analysis and non-aggregation query planning
+    //Todo move to function
     Scope orderByScope = Scope.builder()
         .withParent(sourceScope)
         .withCurrentSqmlRelation(sourceScope.getCurrentSqmlRelation())
         .withRelationType(outputScope.getRelation())
+        .withMultiplicity(querySpecification.parseLimit())
         .build();
     analysis.setScope(node, orderByScope);
     return orderByScope;
@@ -596,14 +594,14 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
   }
   private Scope computeAndAssignOutputScope(QuerySpecification node, Scope scope,
       Scope sourceScope) {
-    Builder<Field> outputFields = ImmutableList.builder();
+    Builder<DataField> outputFields = ImmutableList.builder();
 
     for (SelectItem item : node.getSelect().getSelectItems()) {
       if (item instanceof AllColumns) {
         Optional<QualifiedName> starPrefix = ((AllColumns) item).getPrefix();
 
         for (Field field : sourceScope.resolveFieldsWithPrefix(starPrefix)) {
-          outputFields.add(Field.newUnqualified(field.getName(), field.getType()));
+          outputFields.add(DataField.newDataField(field.getName(), field.getType()));
         }
       } else if (item instanceof SingleColumn) {
         SingleColumn column = (SingleColumn) item;
@@ -637,9 +635,9 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
         }
 
         outputFields.add(
-            Field.newUnqualified(field.map(Identifier::getValue),
-            analysis.getType(expression).orElseThrow(),
-            column.getAlias().isPresent())
+            DataField.newDataField(field.map(Identifier::getValue).get(),
+            analysis.getType(expression).orElseThrow())
+//            column.getAlias().isPresent())
         );
       }
       else {
@@ -647,7 +645,7 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
       }
     }
 
-    return createAndAssignScope(node, scope, new ArrayList<>(outputFields.build()));
+    return createAndAssignScope(node, scope, new ArrayList<>(outputFields.build()), node.parseLimit());
   }
 
   private void analyzeHaving(QuerySpecification node, Scope scope) {
@@ -726,10 +724,10 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
     for (int i = 0; i < rel.getFields().size(); i++) {
       Field field = ((Field)rel.getFields().get(i));
 //      Optional<String> columnAlias = field.getName();
-      fieldsBuilder.add(Field.newQualified(
-          relationAlias,
-          null,
-          field.getType()));
+      fieldsBuilder.add(DataField.newDataField(
+          field.getName(),
+          field.getType(),
+          Optional.ofNullable(relationAlias)));
     }
 
     return new RelationType(fieldsBuilder.build());
@@ -795,5 +793,4 @@ public StatementAnalyzer(Metadata metadata, Analysis analysis) {
 
     return exprAnalysis;
   }
-//  }
 }

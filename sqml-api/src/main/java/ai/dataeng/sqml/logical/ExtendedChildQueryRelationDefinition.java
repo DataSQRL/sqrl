@@ -16,6 +16,7 @@ public class ExtendedChildQueryRelationDefinition extends RelationDefinition {
   private final RelationDefinition parent;
   private final Field field;
 
+
   public ExtendedChildQueryRelationDefinition(String name, Node node,
       RelationDefinition parent, Field field) {
     super();
@@ -25,9 +26,9 @@ public class ExtendedChildQueryRelationDefinition extends RelationDefinition {
     this.field = field;
   }
 
-//  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-//    return visitor.visitExtendedChildQueryRelation(this, context);
-//  }
+  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+    return visitor.visitExtendedChildQueryRelation(this, context);
+  }
 
   @Override
   protected List<Field> getPrimaryKeys() {

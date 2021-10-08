@@ -58,8 +58,8 @@ public class PhysicalPlanner extends LogicalPlanVisitor<PhysicalPlanNode, Object
 
   @Override
   public PhysicalPlanNode visit(LogicalPlan logicalPlan, Object context) {
-    for (Entry<QualifiedName, RelationDefinition> entry : logicalPlan.getTableDefinitions().entrySet()) {
-      entry.getValue().accept(this, context);
+    for (RelationDefinition entry : logicalPlan.getTableDefinitions()) {
+      entry.accept(this, context);
     }
     return null;
   }

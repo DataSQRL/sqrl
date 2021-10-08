@@ -29,12 +29,12 @@ class ScopeReferenceExtractor
 {
     private ScopeReferenceExtractor() {}
 
-    public static boolean hasReferencesToScope(Node node, Analysis analysis, Scope scope)
+    public static boolean hasReferencesToScope(Node node, StatementAnalysis analysis, Scope scope)
     {
         return getReferencesToScope(node, analysis, scope).findAny().isPresent();
     }
 
-    public static Stream<Expression> getReferencesToScope(Node node, Analysis analysis, Scope scope)
+    public static Stream<Expression> getReferencesToScope(Node node, StatementAnalysis analysis, Scope scope)
     {
         Multimap<NodeRef<Expression>, FieldId> columnReferences = analysis.getColumnReferenceFields();
 

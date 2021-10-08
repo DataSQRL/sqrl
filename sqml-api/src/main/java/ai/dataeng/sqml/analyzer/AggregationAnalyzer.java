@@ -77,7 +77,7 @@ class AggregationAnalyzer
     private final Multimap<NodeRef<Expression>, FieldId> columnReferences;
 
     private final Metadata metadata;
-    private final Analysis analysis;
+    private final StatementAnalysis analysis;
 
     private final Scope sourceScope;
     private final Optional<Scope> orderByScope;
@@ -89,7 +89,7 @@ class AggregationAnalyzer
         Scope sourceScope,
         Expression expression,
         Metadata metadata,
-        Analysis analysis)
+        StatementAnalysis analysis)
     {
         AggregationAnalyzer analyzer = new AggregationAnalyzer(groupByExpressions, sourceScope, Optional.empty(), metadata, analysis);
         analyzer.analyze(expression);
@@ -101,13 +101,13 @@ class AggregationAnalyzer
         Scope orderByScope,
         Expression expression,
         Metadata metadata,
-        Analysis analysis)
+        StatementAnalysis analysis)
     {
         AggregationAnalyzer analyzer = new AggregationAnalyzer(groupByExpressions, sourceScope, Optional.of(orderByScope), metadata, analysis);
         analyzer.analyze(expression);
     }
 
-    private AggregationAnalyzer(List<Expression> groupByExpressions, Scope sourceScope, Optional<Scope> orderByScope, Metadata metadata, Analysis analysis)
+    private AggregationAnalyzer(List<Expression> groupByExpressions, Scope sourceScope, Optional<Scope> orderByScope, Metadata metadata, StatementAnalysis analysis)
     {
         requireNonNull(groupByExpressions, "groupByExpressions is null");
         requireNonNull(sourceScope, "sourceScope is null");

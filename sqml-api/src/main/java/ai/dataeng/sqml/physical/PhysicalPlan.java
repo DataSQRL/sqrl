@@ -23,7 +23,6 @@ public class PhysicalPlan {
 
   public List<PhysicalPlanNode> getBaseNodes() {
     return logicalPlan.getTableDefinitions()
-        .values()
         .stream().map(e->mapper.get(e))
         .filter(e->e!=null)
         .collect(Collectors.toList());

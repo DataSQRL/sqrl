@@ -63,7 +63,7 @@ public class ImportSchema {
         return new SourceTableImport(table, sourceSchema, tableSchema);
     }
 
-    enum ImportType {
+    public enum ImportType {
         SCRIPT, SOURCE;
     }
 

@@ -76,9 +76,9 @@ class ImportTest {
 
     ddRegistry.addDataset(new DirectoryDataset(DatasetRegistration.of(RETAIL_DATASET), RETAIL_DATA_DIR));
 
-    ddRegistry.monitorDatasets(envProvider);
+//    ddRegistry.monitorDatasets(envProvider);
 
-    Thread.sleep(1000);
+//    Thread.sleep(1000);
 
     SQMLBundle bundle = new SQMLBundle.Builder().createScript().setName(RETAIL_SCRIPT_NAME)
         .setScript(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION))
@@ -132,7 +132,7 @@ class ImportTest {
     SqmlParser parser = SqmlParser.newSqmlParser();
 
     Script script = parser.parse(
-        "IMPORT ecommerce.*;\n"
+        "IMPORT ecommerce.Product;\n"
 //        + "IMPORT ai.dataeng.sqml.functions.Echo;"
 //        + "IMPORT ai.dataeng.sqml.functions.EchoAgg;"
         + "Product := DISTINCT Product ON (productid);\n"
