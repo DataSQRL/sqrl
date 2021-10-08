@@ -920,7 +920,8 @@ class AstBuilder
 
   @Override
   public Node visitImportDefinition(ImportDefinitionContext ctx) {
-    return new ImportDefinition(getLocation(ctx), getQualifiedName(ctx.qualifiedName()));
+    Optional<Identifier> alias = Optional.ofNullable(ctx.alias == null ? null : (Identifier)visit(ctx.alias));
+    return new ImportDefinition(getLocation(ctx), getQualifiedName(ctx.qualifiedName()), alias);
   }
 
   @Override

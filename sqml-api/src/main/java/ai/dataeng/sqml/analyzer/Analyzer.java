@@ -107,12 +107,19 @@ public class Analyzer {
         throw new RuntimeException(String.format("Import statement must be in header %s", node.getQualifiedName()));
       }
 
-      //Todo fix
-      if (node.getQualifiedName().getParts().get(node.getQualifiedName().getParts().size() - 1).equalsIgnoreCase("*")) {
-        importManager.importAllTable(node.getQualifiedName().getParts().get(0));
-      } else {
-        importManager.importTable(node.getQualifiedName().getParts().get(0),
-            node.getQualifiedName().getParts().get(1), Optional.empty());
+      if (node.getQualifiedName().getParts().size() == 1) {
+        if (node.getQualifiedName().getParts().get(0).equalsIgnoreCase("*")) {
+          throw new RuntimeException("Cannot import * at base level");
+        }
+        importManager.importDataset(node.getQualifiedName().getParts().get(0), node.getAlias().map(Identifier::getValue));
+      } else if (node.getQualifiedName().getParts().size() > 1) {
+        if (node.getQualifiedName().getParts().get(node.getQualifiedName().getParts().size() - 1)
+            .equalsIgnoreCase("*")) {
+          importManager.importAllTable(node.getQualifiedName().getParts().get(0));
+        } else {
+          importManager.importTable(node.getQualifiedName().getParts().get(0),
+              node.getQualifiedName().getParts().get(1), node.getAlias().map(Identifier::getValue));
+        }
       }
 
       return scope;
@@ -181,8 +188,6 @@ public class Analyzer {
       ExpressionAnalysis exprAnalysis = analyzeExpression(expression, assignedScope);
 
       Type type = exprAnalysis.getType(expression);
-//      Preconditions.checkNotNull(type, "Could not find type for %s %s",
-//            expression.getClass().getName(), expression);
 
       String fieldName = name.getSuffix();
       ExtendedFieldRelationDefinition extendedFieldRelationDefinition = new ExtendedFieldRelationDefinition(

@@ -21,12 +21,18 @@ public class ImportDefinition extends Node {
 
   protected final NodeLocation location;
   protected final QualifiedName qualifiedName;
+  private final Optional<Identifier> alias;
 
   public ImportDefinition(NodeLocation location,
-      QualifiedName qualifiedName) {
+      QualifiedName qualifiedName, Optional<Identifier> alias) {
     super(Optional.ofNullable(location));
     this.location = location;
     this.qualifiedName = qualifiedName;
+    this.alias = alias;
+  }
+
+  public Optional<Identifier> getAlias() {
+    return alias;
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {

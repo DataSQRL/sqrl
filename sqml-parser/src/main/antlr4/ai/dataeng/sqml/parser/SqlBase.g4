@@ -33,11 +33,7 @@ statement
     ;
 
 importDefinition
-    : qualifiedName
-    ;
-
-importAlias
-    : AS qualifiedName
+    : qualifiedName (AS? alias=identifier)?
     ;
 
 assignment
