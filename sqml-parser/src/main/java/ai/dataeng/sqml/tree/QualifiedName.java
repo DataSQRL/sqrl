@@ -90,7 +90,7 @@ public class QualifiedName {
    * returns absent
    */
   public Optional<QualifiedName> getPrefix() {
-    if (normalizedParts.size() == 1) {
+    if (normalizedParts.size() <= 1) {
       return Optional.empty();
     }
 

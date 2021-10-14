@@ -4,18 +4,14 @@ import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
 import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
-import ai.dataeng.sqml.logical.InlineJoinFieldDefinition;
-import ai.dataeng.sqml.logical.RelationDefinition;
-import ai.dataeng.sqml.logical3.LogicalPlan2;
 import ai.dataeng.sqml.logical3.LogicalPlan2.DataField;
+import ai.dataeng.sqml.logical3.LogicalPlan2.DelegateLogicalField;
 import ai.dataeng.sqml.logical3.LogicalPlan2.DistinctRelationField;
 import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.ModifiableRelationType;
 import ai.dataeng.sqml.logical3.LogicalPlan2.RelationshipField;
 import ai.dataeng.sqml.logical3.LogicalPlan2.SelectRelationField;
 import ai.dataeng.sqml.logical3.LogicalPlan2.SubscriptionField;
 import ai.dataeng.sqml.metadata.Metadata;
-import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
@@ -29,7 +25,6 @@ import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.InlineJoin;
-import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.JoinAssignment;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
@@ -132,10 +127,7 @@ public class Analyzer {
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(this.metadata);
       Scope result = query.accept(statementAnalyzer, newScope);
 
-      ModifiableRelationType<LogicalField> relationType =
-          name.getPrefix().map(n-> scope.resolveRelation(n).orElseThrow()).orElseGet(
-              scope::getRootRelation);
-      relationType.add(new SelectRelationField(toName(name), result.getRelation(), Optional.empty()));
+      scope.addField(new SelectRelationField(toName(name), result.getRelation(), Optional.empty()));
 
       return createAndAssignScope(queryAssignment, null,
           name, scope);
@@ -153,11 +145,7 @@ public class Analyzer {
 
       Type type = exprAnalysis.getType(expression);
 
-      ModifiableRelationType<LogicalField> relationType =
-          name.getPrefix().map(n-> scope.resolveRelation(n).orElseThrow()).orElseGet(
-              scope::getRootRelation);
-
-      relationType.add(new DataField(toName(name), type, List.of()));
+      scope.addField(new DataField(toName(name), type, List.of()));
 
       return createAndAssignScope(expression,
           null,
@@ -169,7 +157,7 @@ public class Analyzer {
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata);
       Scope queryScope = subscription.getQuery().accept(statementAnalyzer, scope);
 
-      scope.getRootRelation().add(new SubscriptionField(
+      scope.addRootField(new SubscriptionField(
           toName(subscription.getName()), queryScope.getCurrentRelation()));
 
       return createAndAssignScope(subscription,
@@ -179,24 +167,18 @@ public class Analyzer {
 
     @Override
     public Scope visitDistinctAssignment(DistinctAssignment node, Scope scope) {
-      ModifiableRelationType rel = scope.resolveRelation(node.getName())
-          .orElseThrow(()->new RuntimeException(String.format("Could not find sqml relation %s", node.getName())));
-
-      ModifiableRelationType<LogicalField> table = scope.resolveRelation(QualifiedName.of(node.getTable()))
+      RelationType<LogicalField> table = scope.resolveRelation(QualifiedName.of(node.getTable()))
           .orElseThrow(()->new RuntimeException(String.format("Could not find table %s", node.getTable().getValue())));
 
-      rel.add(new DistinctRelationField(toName(node.getName()), table));
+      scope.addField(new DistinctRelationField(toName(node.getName()), table));
       return scope;
     }
 
     @Override
     public Scope visitJoinAssignment(JoinAssignment node, Scope scope) {
-      ModifiableRelationType<LogicalField> table = scope.resolveRelation(node.getName())
-          .orElseThrow(()->new RuntimeException(String.format("Could not find table %s", node.getName())));
-
       visitInlineJoin(node.getInlineJoin(), scope);
 
-      table.add(new RelationshipField(toName(node.getName()), null, null));
+      scope.addField(new RelationshipField(toName(node.getName()), null, null));
 
       return createAndAssignScope(node, null, node.getName(), scope);
     }
@@ -215,7 +197,7 @@ public class Analyzer {
       return analysis;
     }
 
-    private Scope createAndAssignScope(Node node, ModifiableRelationType relationType, QualifiedName contextName,
+    private Scope createAndAssignScope(Node node, RelationType relationType, QualifiedName contextName,
         Scope parentScope) {
       Scope scope = Scope.builder()
           .withParent(parentScope)
@@ -242,9 +224,7 @@ public class Analyzer {
       ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
       ImportSchema schema = importManager.createImportSchema(errors);
       for (Map.Entry<Name, Mapping> mapping : schema.getMappings().entrySet()) {
-        QualifiedName name = QualifiedName.of(mapping.getKey().getCanonical());
-        scope.setImportRelation(mapping.getKey(), mapping.getValue(),
-            (RelationType)((ArrayType)schema.getSchema().getFieldByName(mapping.getKey()).getType()).getSubType());
+        scope.addRootField(new DelegateLogicalField(schema.getSchema().getFieldByName(mapping.getKey())));
       }
     }
 
@@ -256,6 +236,9 @@ public class Analyzer {
     }
     public Name toName(QualifiedName name) {
       return Name.of(name.toOriginalString(), NameCanonicalizer.SYSTEM);
+    }
+    public Name toName(String name) {
+      return Name.of(name, NameCanonicalizer.SYSTEM);
     }
   }
 }

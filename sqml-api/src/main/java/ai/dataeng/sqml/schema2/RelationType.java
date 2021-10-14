@@ -16,8 +16,8 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
 
     protected final List<F> fields;
 
-    protected RelationType() {
-        this(Collections.EMPTY_LIST);
+    public RelationType() {
+        this(new ArrayList<>());
     }
 
     public RelationType(@NonNull List<F> fields) {
@@ -28,11 +28,26 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
     //Lazily initialized when requested because this only works for fields with names
     protected transient Map<Name,F> fieldsByName = null;
 
+    /**
+     * Returns a field with the given name or null if such does not exist.
+     * If two fields have the same name, it returns the one added last (i.e. has the highest index in the array)
+     *
+     * @param name
+     * @return
+     */
     public F getFieldByName(Name name) {
-        if (fieldsByName ==null) {
-            fieldsByName = fields.stream().collect(Collectors.toUnmodifiableMap(t -> t.getName(), Function.identity()));
+        if (fieldsByName == null) {
+            fieldsByName = fields.stream().collect(
+                Collectors.toUnmodifiableMap(t -> t.getName(), Function.identity(),
+                    (v1, v2) -> v2));
         }
         return fieldsByName.get(name);
+    }
+
+    public void add(F field) {
+        fields.add(field);
+        //Need to reset fieldsByName so this new field can be found
+        fieldsByName = null;
     }
 
     @Override

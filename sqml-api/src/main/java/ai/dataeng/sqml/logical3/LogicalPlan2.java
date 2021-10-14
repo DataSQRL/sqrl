@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.logical3;
 
 import ai.dataeng.sqml.execution.importer.ImportSchema;
-import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
+import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
@@ -11,67 +11,68 @@ import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 import ai.dataeng.sqml.schema2.name.NamePath;
 import ai.dataeng.sqml.tree.QualifiedName;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
 public class LogicalPlan2 {
 
-  private final ModifiableRelationType<LogicalField> root;
+  private final RelationType<LogicalField> root;
 
-  public LogicalPlan2(ModifiableRelationType<LogicalField> root) {
-
+  public LogicalPlan2(RelationType<LogicalField> root) {
     this.root = root;
   }
 
   @Getter
   public static class Builder {
-    public ModifiableRelationType<LogicalField> root = new ModifiableRelationType<>();
+    public RelationType<LogicalField> root = new RelationType<>();
 
-    public void setImportRelation(Name name, Mapping mapping,
-        RelationType relationType) {
-      ModifiableRelationType rel = toModifiableRelation(relationType);
-      root.add(new DataField(name, rel, List.of()));
-    }
-
-    private ModifiableRelationType<LogicalField> toModifiableRelation(RelationType relationType) {
-      ModifiableRelationType<LogicalField> rel = new ModifiableRelationType<>();
-      for (Field field : (List<Field>)relationType.getFields()) {
-        rel.add(new DataField(field.getName(), field.getType(), List.of())); //todo import field
-      }
-
-      return rel;
-    }
-
-    public Optional<ModifiableRelationType<LogicalField>> resolveModifiableRelation(QualifiedName contextName,
+    public Optional<RelationType<LogicalField>> resolveRelation(QualifiedName contextName,
         QualifiedName name) {
 
-      ModifiableRelationType<LogicalField> rel = root;
+      RelationType<LogicalField> rel = root;
       for (String part : name.getParts()) {
         Field f = rel.getFieldByName(Name.of(part, NameCanonicalizer.SYSTEM));
         if (f == null) {
           return Optional.empty();
         }
-        Type type = f.getType();
-        if (!(type instanceof ModifiableRelationType)) {
+        Type type = unbox(f.getType());
+        if (type == null) {
           return Optional.empty();
         }
-        rel = (ModifiableRelationType<LogicalField>) type;
+        rel = (RelationType<LogicalField>) type;
       }
 
       return Optional.of(rel);
     }
 
+    private Type unbox(Type type) {
+      if (type instanceof RelationType) {
+        return type;
+      }
+      if (type instanceof ArrayType) {
+        ArrayType arr = (ArrayType) type;
+        return unbox(arr.getSubType());
+      }
+      return null;
+    }
+
+    public void addRootField(LogicalField field) {
+      root.add(field);
+    }
+
+    public void addField(RelationType<LogicalField> relationType, LogicalField field) {
+      relationType.add(field);
+    }
+
     public LogicalPlan2 build() {
       return new LogicalPlan2(root);
     }
+
   }
 
   @Getter
@@ -88,6 +89,22 @@ public class LogicalPlan2 {
       references.add(reference);
     }
   }
+
+  public static class DelegateLogicalField extends LogicalField {
+
+    private final Field field;
+
+    public DelegateLogicalField(Field field) {
+      super(field.getName());
+      this.field = field;
+    }
+
+    @Override
+    public Type getType() {
+      return field.getType();
+    }
+  }
+
 
   public static class DataField extends LogicalField {
 
@@ -108,21 +125,21 @@ public class LogicalPlan2 {
 
   public static class DistinctRelationField extends QueryField {
 
-    public DistinctRelationField(Name name, ModifiableRelationType<LogicalField> type) {
+    public DistinctRelationField(Name name, RelationType<LogicalField> type) {
       super(name, type);
     }
   }
 
   public static abstract class QueryField extends LogicalField {
 
-    protected final ModifiableRelationType<LogicalField> type;
+    protected final RelationType<LogicalField> type;
 
-    public QueryField(Name name, ModifiableRelationType<LogicalField> type) {
+    public QueryField(Name name, RelationType<LogicalField> type) {
       super(name);
       this.type = type;
     }
 
-    public ModifiableRelationType<LogicalField> getType() {
+    public RelationType<LogicalField> getType() {
       return type;
     }
   }
@@ -155,7 +172,7 @@ public class LogicalPlan2 {
 
     private final Optional<LogicalField> parent;
 
-    public SelectRelationField(Name name, ModifiableRelationType<LogicalField> type, Optional<LogicalField> parent) {
+    public SelectRelationField(Name name, RelationType<LogicalField> type, Optional<LogicalField> parent) {
       super(name, type);
       this.parent = parent;
     }
@@ -164,54 +181,21 @@ public class LogicalPlan2 {
 
     private final ImportSchema.SourceTableImport tableImport;
 
-    public SourceTableField(Name name, ModifiableRelationType<LogicalField> type, List<Constraint> constraints,
+    public SourceTableField(Name name, RelationType<LogicalField> type, List<Constraint> constraints,
         ImportSchema.SourceTableImport tableImport) {
       super(name, type, constraints);
       this.tableImport = tableImport;
     }
 
-    public ModifiableRelationType<LogicalField> getType() {
-      return (ModifiableRelationType<LogicalField>)super.getType();
+    public RelationType<LogicalField> getType() {
+      return (RelationType<LogicalField>)super.getType();
     }
   }
 
   public static class SubscriptionField extends QueryField {
 
-    public SubscriptionField(Name name, ModifiableRelationType<LogicalField> type) {
+    public SubscriptionField(Name name, RelationType<LogicalField> type) {
       super(name, type);
-    }
-
-  }
-
-  public static class ModifiableRelationType<F extends Field> extends RelationType<F> {
-
-    public ModifiableRelationType() {
-      super(new ArrayList<>());
-    }
-    public ModifiableRelationType(List<F> fields) {
-      super(fields);
-    }
-
-    public void add(F field) {
-      fields.add(field);
-      //Need to reset fieldsByName so this new field can be found
-      fieldsByName = null;
-    }
-
-    /**
-     * Returns a field with the given name or null if such does not exist.
-     * If two fields have the same name, it returns the one added last (i.e. has the highest index in the array)
-     *
-     * @param name
-     * @return
-     */
-    public F getFieldByName(Name name) {
-      if (fieldsByName == null) {
-        fieldsByName = fields.stream().collect(
-            Collectors.toUnmodifiableMap(t -> t.getName(), Function.identity(),
-            (v1, v2) -> v2));
-      }
-      return fieldsByName.get(name);
     }
 
   }

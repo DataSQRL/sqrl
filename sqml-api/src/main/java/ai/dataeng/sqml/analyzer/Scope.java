@@ -4,8 +4,10 @@ import ai.dataeng.sqml.analyzer.TypeResolver.RelationResolverContext;
 import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
 import ai.dataeng.sqml.logical3.LogicalPlan2;
 import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.ModifiableRelationType;
+import ai.dataeng.sqml.logical3.LogicalPlan2.SelectRelationField;
+import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.tree.QualifiedName;
@@ -18,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Getter
 public class Scope {
-  private ModifiableRelationType currentRelation;
+  private RelationType currentRelation;
   private final LogicalPlan2.Builder planBuilder;
   private final QualifiedName contextName;
 
@@ -26,7 +28,7 @@ public class Scope {
     this(null, new LogicalPlan2.Builder(), QualifiedName.of());
   }
 
-  public Scope(ModifiableRelationType currentRelation, LogicalPlan2.Builder planBuilder,
+  public Scope(RelationType currentRelation, LogicalPlan2.Builder planBuilder,
       QualifiedName contextName) {
     this.currentRelation = currentRelation;
     this.planBuilder = planBuilder;
@@ -50,8 +52,8 @@ public class Scope {
     return relations.stream().findFirst();
   }
 
-  public Optional<ModifiableRelationType<LogicalField>> resolveRelation(QualifiedName name) {
-    return planBuilder.resolveModifiableRelation(this.getContextName(), name);
+  public Optional<RelationType<LogicalField>> resolveRelation(QualifiedName name) {
+    return planBuilder.resolveRelation(this.getContextName(), name);
   }
 
   public QualifiedName getContextName() {
@@ -70,22 +72,37 @@ public class Scope {
     return null;
   }
 
-  public ModifiableRelationType<LogicalField> getRelation() {
+  public RelationType<LogicalField> getRelation() {
     return currentRelation;
   }
 
   public void setImportRelation(Name name, Mapping mapping,
       RelationType relationType) {
-    planBuilder.setImportRelation(name, mapping, relationType);
+//    planBuilder.setImportRelation(name, mapping, relationType);
   }
 
-  public ModifiableRelationType getRootRelation() {
+  public RelationType getRootRelation() {
     return this.planBuilder.getRoot();
+  }
+
+  public void addRootField(LogicalField field) {
+    planBuilder.addRootField(field);
+  }
+
+  public void addField(LogicalField field) {
+    RelationType<LogicalField> relationType =
+        getContextName().getPrefix().map(n-> resolveRelation(n).orElseThrow()).orElseGet(
+            this::getRootRelation);
+    addField(field, relationType);
+  }
+
+  public void addField(LogicalField field, RelationType relationType) {
+    planBuilder.addField(relationType, field);
   }
 
   public static class Builder {
     private Scope parent;
-    private ModifiableRelationType relationType;
+    private RelationType relationType;
     private QualifiedName contextName;
 
     public Builder withParent(Scope scope) {
@@ -93,7 +110,7 @@ public class Scope {
       return this;
     }
 
-    public Builder withRelationType(ModifiableRelationType relationType) {
+    public Builder withRelationType(RelationType relationType) {
       this.relationType = relationType;
       return this;
     }

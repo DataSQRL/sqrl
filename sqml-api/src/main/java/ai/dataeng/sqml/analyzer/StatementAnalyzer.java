@@ -15,7 +15,6 @@ import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.logical.DataField;
 import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.ModifiableRelationType;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
@@ -162,7 +161,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
   @Override
   protected Scope visitTable(Table table, Scope scope) {
-    ModifiableRelationType relation = scope.resolveRelation(table.getName())
+    RelationType relation = scope.resolveRelation(table.getName())
         .orElseThrow(() -> new RuntimeException(String.format("Could not find table: %s", table.getName())));
 
     return createAndAssignScope(table, scope, relation);
@@ -214,7 +213,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     RelationType relationType = relationScope.getRelation();
 
-    ModifiableRelationType descriptor = withAlias(relationType, relation.getAlias().getValue());
+    RelationType descriptor = withAlias(relationType, relation.getAlias().getValue());
 
     return createAndAssignScope(relation, scope, descriptor);
   }
@@ -497,10 +496,10 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   private Scope createAndAssignScope(Node node, Scope parentScope, List<Field> fields) {
-    return createAndAssignScope(node, parentScope, new ModifiableRelationType<Field>(fields));
+    return createAndAssignScope(node, parentScope, new RelationType<Field>(fields));
   }
 
-  private Scope createAndAssignScope(Node node, Scope parentScope, ModifiableRelationType relationType) {
+  private Scope createAndAssignScope(Node node, Scope parentScope, RelationType relationType) {
     Scope scope = Scope.builder()
         .withParent(parentScope)
         .withContextName(parentScope.getContextName())
@@ -698,7 +697,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return new RelationType(joinFields);
   }
 
-  public ModifiableRelationType withAlias(RelationType rel, String relationAlias) {
+  public RelationType withAlias(RelationType rel, String relationAlias) {
     ImmutableList.Builder<Field> fieldsBuilder = ImmutableList.builder();
     for (int i = 0; i < rel.getFields().size(); i++) {
       Field field = ((Field)rel.getFields().get(i));
@@ -709,7 +708,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           Optional.ofNullable(relationAlias)));
     }
 
-    return new ModifiableRelationType(fieldsBuilder.build());
+    return new RelationType(fieldsBuilder.build());
   }
 
   private List<Expression> analyzeGroupBy(QuerySpecification node, Scope scope, List<Expression> outputExpressions)
