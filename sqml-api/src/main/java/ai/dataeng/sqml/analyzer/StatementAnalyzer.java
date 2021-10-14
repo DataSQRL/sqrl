@@ -14,7 +14,8 @@ import static java.util.Objects.requireNonNull;
 import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.logical.DataField;
-import ai.dataeng.sqml.logical.RelationDefinition;
+import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
+import ai.dataeng.sqml.logical3.LogicalPlan2.ModifiableRelationType;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
@@ -96,13 +97,11 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       return queryScope;
     }
 
-    List<Expression> orderByExpressions = emptyList();
     if (node.getOrderBy().isPresent()) {
-      orderByExpressions = analyzeOrderBy(node, getSortItemsFromOrderBy(node.getOrderBy()), queryScope);
+      List<Expression> orderByExpressions = analyzeOrderBy(node, getSortItemsFromOrderBy(node.getOrderBy()), queryScope);
     }
-    analysis.setOrderByExpressions(node, orderByExpressions);
 
-    return createAndAssignScope(node, scope, queryScope.getRelation(), node.parseLimit());
+    return createAndAssignScope(node, scope, queryScope.getRelation());
   }
 
   @Override
@@ -128,7 +127,9 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
       orderByExpressions = analyzeOrderBy(node, orderBy.getSortItems(), orderByScope.get());
     }
-    analysis.setOrderByExpressions(node, orderByExpressions);
+
+
+    Optional<Long> multiplicity = node.parseLimit();
 
     List<Expression> sourceExpressions = new ArrayList<>(outputExpressions);
     node.getHaving().ifPresent(sourceExpressions::add);
@@ -156,27 +157,22 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       computeAndAssignOrderByScopeWithAggregation(node.getOrderBy().get(), sourceScope, outputScope, orderByAggregations, groupByExpressions, orderByGroupingOperations);
     }
 
-    //1. Associate group by expressions with sqml columns
-
-
-    analysis.setMultiplicity(node, node.parseLimit());
-
     return outputScope;
   }
 
   @Override
   protected Scope visitTable(Table table, Scope scope) {
-    RelationDefinition relation = scope.resolveRelation(table.getName())
+    ModifiableRelationType relation = scope.resolveRelation(table.getName())
         .orElseThrow(() -> new RuntimeException(String.format("Could not find table: %s", table.getName())));
 
-    analysis.addRelatedRelation(relation);
-
-    return createAndAssignScope(table, scope, relation, Optional.empty());
+    return createAndAssignScope(table, scope, relation);
   }
 
   @Override
-  protected Scope visitTableSubquery(TableSubquery node, Scope context) {
-    return node.getQuery().accept(this, context);
+  protected Scope visitTableSubquery(TableSubquery node, Scope scope) {
+    StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, this.analysis);
+    Scope queryScope = node.getQuery().accept(statementAnalyzer, scope);
+    return createAndAssignScope(node, scope, queryScope.getRelation());
   }
 
   @Override
@@ -184,8 +180,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     Scope left = node.getLeft().accept(this, scope);
     Scope right = node.getRight().accept(this, scope);
 
-    Scope result = createAndAssignScope(node, scope, join(left.getRelation(), right.getRelation()),
-        Optional.empty());
+    Scope result = createAndAssignScope(node, scope, join(left.getRelation(), right.getRelation()).getFields());
 
     //Todo verify that an empty criteria on a join can be a valid traversal
     if (node.getType() == Join.Type.CROSS || node.getType() == Join.Type.IMPLICIT || node.getCriteria().isEmpty()) {
@@ -219,9 +214,9 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     RelationType relationType = relationScope.getRelation();
 
-    RelationType descriptor = withAlias(relationType, relation.getAlias().getValue());
+    ModifiableRelationType descriptor = withAlias(relationType, relation.getAlias().getValue());
 
-    return createAndAssignScope(relation, scope, descriptor, Optional.empty());
+    return createAndAssignScope(relation, scope, descriptor);
   }
 
   @Override
@@ -246,8 +241,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     List<Scope> relationScopes = node.getRelations().stream()
         .map(relation -> {
           Scope relationScope = process(relation, scope);
-          return createAndAssignScope(relation, scope, relationScope.getRelation(),
-              Optional.empty());
+          return createAndAssignScope(relation, scope, relationScope.getRelation());
         })
         .collect(toImmutableList());
 
@@ -317,7 +311,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       }
     }
 
-    return createAndAssignScope(node, scope, new ArrayList<>(List.of(outputDescriptorFields)), Optional.empty());
+    return createAndAssignScope(node, scope, new ArrayList<>(List.of(outputDescriptorFields)));
   }
 
   private void verifyAggregations(
@@ -502,39 +496,20 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return orderBy.map(OrderBy::getSortItems).orElse(ImmutableList.of());
   }
 
-  private Scope createAndAssignScope(Node node, Scope parentScope, List<DataField> fields,
-      Optional<Long> limit) {
-    return createAndAssignScope(node, parentScope, new RelationType<DataField>(fields), limit);
+  private Scope createAndAssignScope(Node node, Scope parentScope, List<Field> fields) {
+    return createAndAssignScope(node, parentScope, new ModifiableRelationType<Field>(fields));
   }
 
-  private Scope createAndAssignScope(Node node, Scope parentScope, RelationType relationType,
-      Optional<Long> limit) {
-    Scope scope = scopeBuilder(parentScope)
+  private Scope createAndAssignScope(Node node, Scope parentScope, ModifiableRelationType relationType) {
+    Scope scope = Scope.builder()
         .withParent(parentScope)
-        .withCurrentSqmlRelation(parentScope.getCurrentSqmlRelation())
+        .withContextName(parentScope.getContextName())
         .withRelationType(relationType)
-        .withMultiplicity(limit)
         .build();
 
     analysis.setScope(node, scope);
 
     return scope;
-  }
-
-  private Scope.Builder scopeBuilder(Scope parentScope)
-  {
-    Scope.Builder scopeBuilder = Scope.builder();
-
-    if (parentScope != null) {
-      // parent scope represents local query scope hierarchy. Local query scope
-      // hierarchy should have outer query scope as ancestor already.
-      scopeBuilder.withParent(parentScope);
-    }
-//      else if (outerQueryScope.isPresent()) {
-//        scopeBuilder.withOuterQueryParent(outerQueryScope.get());
-//      }
-
-    return scopeBuilder;
   }
 
   private Scope computeAndAssignOrderByScope(OrderBy node, Scope sourceScope, Scope outputScope,
@@ -543,9 +518,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     //Todo move to function
     Scope orderByScope = Scope.builder()
         .withParent(sourceScope)
-        .withCurrentSqmlRelation(sourceScope.getCurrentSqmlRelation())
+        .withContextName(sourceScope.getContextName())
         .withRelationType(outputScope.getRelation())
-        .withMultiplicity(querySpecification.parseLimit())
         .build();
     analysis.setScope(node, orderByScope);
     return orderByScope;
@@ -650,7 +624,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       }
     }
 
-    return createAndAssignScope(node, scope, new ArrayList<>(outputFields.build()), node.parseLimit());
+    return createAndAssignScope(node, scope, new ArrayList<>(outputFields.build()));
   }
 
   private void analyzeHaving(QuerySpecification node, Scope scope) {
@@ -678,7 +652,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       if (item instanceof AllColumns) {
         Optional<QualifiedName> starPrefix = ((AllColumns) item).getPrefix();
 
-        List<Field> fields = scope.resolveFieldsWithPrefix(starPrefix);
+        List<LogicalField> fields = scope.resolveFieldsWithPrefix(starPrefix);
         if (fields.isEmpty()) {
           if (starPrefix.isPresent()) {
             throw new RuntimeException(String.format("Table '%s' not found", starPrefix.get()));
@@ -724,7 +698,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return new RelationType(joinFields);
   }
 
-  public RelationType withAlias(RelationType rel, String relationAlias) {
+  public ModifiableRelationType withAlias(RelationType rel, String relationAlias) {
     ImmutableList.Builder<Field> fieldsBuilder = ImmutableList.builder();
     for (int i = 0; i < rel.getFields().size(); i++) {
       Field field = ((Field)rel.getFields().get(i));
@@ -735,7 +709,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           Optional.ofNullable(relationAlias)));
     }
 
-    return new RelationType(fieldsBuilder.build());
+    return new ModifiableRelationType(fieldsBuilder.build());
   }
 
   private List<Expression> analyzeGroupBy(QuerySpecification node, Scope scope, List<Expression> outputExpressions)

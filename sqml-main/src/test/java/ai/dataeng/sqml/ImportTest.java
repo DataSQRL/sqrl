@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.junit.jupiter.api.Test;
 
@@ -136,11 +137,12 @@ class ImportTest {
 //        + "IMPORT ai.dataeng.sqml.functions.Echo;"
 //        + "IMPORT ai.dataeng.sqml.functions.EchoAgg;"
         + "Product := DISTINCT Product ON (productid);\n"
-        + "Product.nested := SELECT * FROM @ limit 10;\n"
+        + "Product.nested := SELECT * FROM Product limit 10;\n"
     );
 
     //Script processing
     Analysis analysis = Analyzer.analyze(script, metadata);
+    System.out.println(analysis.getPlan());
 
     analysis.getDefinedFunctions().stream()
         .forEach((f)->{

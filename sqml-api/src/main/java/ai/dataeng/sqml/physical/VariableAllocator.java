@@ -1,5 +1,5 @@
 package ai.dataeng.sqml.physical;
 
-public class Table {
+public class VariableAllocator {
 
 }

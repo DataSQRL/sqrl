@@ -56,11 +56,15 @@ public class QualifiedName {
 
   public static QualifiedName of(Iterable<String> originalParts) {
     requireNonNull(originalParts, "originalParts is null");
-    checkArgument(!isEmpty(originalParts), "originalParts is empty");
+//    checkArgument(!isEmpty(originalParts), "originalParts is empty");
     List<String> parts = ImmutableList
         .copyOf(transform(originalParts, QualifiedName::normalizeName));
 
     return new QualifiedName(ImmutableList.copyOf(originalParts), parts);
+  }
+
+  public static QualifiedName of() {
+    return of(List.of());
   }
 
   public static QualifiedName of(Identifier node) {
@@ -155,5 +159,4 @@ public class QualifiedName {
   public String toOriginalString() {
     return String.join(".", this.originalParts);
   }
-
 }

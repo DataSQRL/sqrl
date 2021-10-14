@@ -15,14 +15,14 @@ import lombok.Getter;
 public class DistinctRelationDefinition extends RelationDefinition {
   private final QualifiedName qualifiedName;
   private final DistinctAssignment expression;
-  private final RelationDefinition parent;
+  private final RelationDefinition relatedDef;
   private final RelationIdentifier relationIdentifier;
 
   public DistinctRelationDefinition(QualifiedName qualifiedName, DistinctAssignment expression,
-      RelationDefinition parent, RelationIdentifier relationIdentifier) {
+      RelationDefinition shadowed, RelationIdentifier relationIdentifier) {
     this.qualifiedName = qualifiedName;
     this.expression = expression;
-    this.parent = parent;
+    this.relatedDef = shadowed;
     this.relationIdentifier = relationIdentifier;
   }
 
@@ -38,11 +38,11 @@ public class DistinctRelationDefinition extends RelationDefinition {
         .collect(Collectors.toSet());
 
 //    Todo: not right, could be an expression ?
-    for (Field field : parent.getFields()) {
-      if (fieldSet.contains(field.getName().getCanonical())) {
-        fields.add(field);
-      }
-    }
+//    for (Field field : parent.getFields()) {
+//      if (fieldSet.contains(field.getName().getCanonical())) {
+//        fields.add(field);
+//      }
+//    }
 
     return fields; //todo add
   }
@@ -50,9 +50,10 @@ public class DistinctRelationDefinition extends RelationDefinition {
   @Override
   public List<Field> getFields() {
     //Distinct table definitions only inherit some fields
-    return parent.getFields().stream()
-        .filter(this::allowableFields)
-        .collect(Collectors.toList());
+//    return parent.getFields().stream()
+//        .filter(this::allowableFields)
+//        .collect(Collectors.toList());
+    return List.of();
   }
 
   @Override

@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.physical;
 
 import ai.dataeng.sqml.analyzer.Analysis;
+import ai.dataeng.sqml.analyzer.SqlQueryRewriter;
 import ai.dataeng.sqml.env.SqmlEnv;
 import ai.dataeng.sqml.logical.DistinctRelationDefinition;
 import ai.dataeng.sqml.logical.ExtendedChildQueryRelationDefinition;
@@ -11,7 +12,17 @@ import ai.dataeng.sqml.logical.LogicalPlan;
 import ai.dataeng.sqml.logical.QueryRelationDefinition;
 import ai.dataeng.sqml.logical.RelationDefinition;
 import ai.dataeng.sqml.metadata.Metadata;
+import ai.dataeng.sqml.tree.Expression;
+import ai.dataeng.sqml.tree.GroupBy;
+import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.NodeFormatter;
+import ai.dataeng.sqml.tree.NodeLocation;
+import ai.dataeng.sqml.tree.OrderBy;
+import ai.dataeng.sqml.tree.Query;
+import ai.dataeng.sqml.tree.QuerySpecification;
+import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
+import ai.dataeng.sqml.tree.Table;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +48,9 @@ public class PhysicalPlanner extends SqmlTypeVisitor<PhysicalPlanNode, Object> {
   }
 
   public PhysicalPlanNode visitPlan(LogicalPlan logicalPlan, Object context) {
-    for (RelationDefinition entry : logicalPlan.getTableDefinitions()) {
-      entry.accept(this, context);
-    }
+//    for (RelationDefinition entry : logicalPlan.getTableDefinitions()) {
+//      entry.accept(this, context);
+//    }
     return null;
   }
 
@@ -74,57 +85,56 @@ public class PhysicalPlanner extends SqmlTypeVisitor<PhysicalPlanNode, Object> {
   @Override
   @SneakyThrows
   public PhysicalPlanNode visitExtendedRelation(ExtendedFieldRelationDefinition rel, Object context) {
-//    Optional<PhysicalPlanNode> seen;
-//    if ((seen = setAndCheckSeen(rel)).isPresent()) {
-//      return seen.get();
-//    }
-//
-//    RelationDefinition parentTable = rel.getParent();
-//    PhysicalPlanNode parentPlanNode = parentTable.accept(this, context);
-//
-//    //Select items are all extended fields + the extended field
-//    List<Column> selectColumns = new ArrayList<>(parentPlanNode.getColumns());
-//    List<SelectItem> items = toSelectItems(selectColumns);
-//    H2NestedExpressionRewriter h2QueryRewriter = new H2NestedExpressionRewriter(metadata);
-//    SelectItem item = (SelectItem)rel.getNode().accept(h2QueryRewriter, new RewriteScope(parentTable.getFields(), //todo primary keys
-//        rel.getName()));
-//    if (item == null) {
-//
-//      throw new RuntimeException("Expression could not be translated, TBD features");
-//    }
-//
-//    Query query = new Query(
-//        new QuerySpecification(
-//            Optional.<NodeLocation>empty(),
-//            new Select(false, items),
-//            new Table(rel.getRelationName()),
-//            Optional.<Expression>empty(),
-//            Optional.<GroupBy>empty(),
-//            Optional.<Expression>empty(),
-//            Optional.<OrderBy>empty(),
-//            Optional.<String>empty()
-//        ),
-//        Optional.empty(),
-//        Optional.empty()
-//    );
-//
-//    String entityName = rel.getRelationName().getParts().get(0);
-//    String tableName = String.format("%s_%d", entityName, viewIncrementer.incrementAndGet());
-//
-//    TranslationMapper translationMapper = new TranslationMapper();
-//    Node rewritten = query.accept(translationMapper, null);
-//
-//    NodeFormatter nodeFormatter = new NodeFormatter();
-//
-//    String sqlQuery = String.format("create or replace view %s as %s ", tableName,
-//        nodeFormatter.process(rewritten));
-//
-//    System.out.println(sqlQuery);
-////    env.getConnectionProvider().getOrEstablishConnection()
-////        .createStatement().execute(sqlQuery);
-//
-//    return createPhysicalPlanNode(tableName, List.of(), rel);
-    return null;
+    Optional<PhysicalPlanNode> seen;
+    if ((seen = setAndCheckSeen(rel)).isPresent()) {
+      return seen.get();
+    }
+
+    RelationDefinition parentTable = rel.getParent();
+    PhysicalPlanNode parentPlanNode = parentTable.accept(this, context);
+
+    //Select items are all extended fields + the extended field
+    List<Column> selectColumns = new ArrayList<>(parentPlanNode.getColumns());
+    List<SelectItem> items = toSelectItems(selectColumns);
+    H2NestedExpressionRewriter h2QueryRewriter = new H2NestedExpressionRewriter(metadata);
+    SelectItem item = (SelectItem)rel.getNode().accept(h2QueryRewriter, new RewriteScope(parentTable.getFields(), //todo primary keys
+        rel.getName()));
+    if (item == null) {
+
+      throw new RuntimeException("Expression could not be translated, TBD features");
+    }
+
+    Query query = new Query(
+        new QuerySpecification(
+            Optional.<NodeLocation>empty(),
+            new Select(false, items),
+            new Table(rel.getRelationName()),
+            Optional.<Expression>empty(),
+            Optional.<GroupBy>empty(),
+            Optional.<Expression>empty(),
+            Optional.<OrderBy>empty(),
+            Optional.<String>empty()
+        ),
+        Optional.empty(),
+        Optional.empty()
+    );
+
+    String entityName = rel.getRelationName().getParts().get(0);
+    String tableName = String.format("%s_%d", entityName, viewIncrementer.incrementAndGet());
+
+    TranslationMapper translationMapper = new TranslationMapper();
+    Node rewritten = query.accept(translationMapper, null);
+
+    NodeFormatter nodeFormatter = new NodeFormatter();
+
+    String sqlQuery = String.format("create or replace view %s as %s ", tableName,
+        nodeFormatter.process(rewritten));
+
+    System.out.println(sqlQuery);
+//    env.getConnectionProvider().getOrEstablishConnection()
+//        .createStatement().execute(sqlQuery);
+
+    return createPhysicalPlanNode(tableName, List.of(), rel);
   }
 
   private List<SelectItem> toSelectItems(List<Column> columns) {
@@ -198,6 +208,10 @@ public class PhysicalPlanner extends SqmlTypeVisitor<PhysicalPlanNode, Object> {
   @Override
   public PhysicalPlanNode visitQueryRelationDefinition(QueryRelationDefinition relation,
       Object context) {
+    SqlQueryRewriter queryRewriter = new SqlQueryRewriter(relation, null);
+    relation.getQuery().accept(queryRewriter, null);
+
+
     return createPhysicalPlanNode("product", List.of(), relation);
   }
 

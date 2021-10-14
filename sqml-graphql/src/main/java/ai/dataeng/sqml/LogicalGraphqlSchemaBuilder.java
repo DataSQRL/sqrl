@@ -91,7 +91,7 @@ public class LogicalGraphqlSchemaBuilder {
       GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
           .name("Query");
 
-      for (RelationIdentifier relationIdentifier : logicalPlan.getBaseEntities()) {
+//      for (RelationIdentifier relationIdentifier : logicalPlan.getBaseEntities()) {
 //        RelationDefinition rel = logicalPlan.getCurrentDefinition(relationIdentifier.getName())
 //            .get();
 //
@@ -101,7 +101,7 @@ public class LogicalGraphqlSchemaBuilder {
 ////            .type(rel.accept(this, new Context("Query", fieldName)))
 //            .build();
 //        obj.field(f);
-      }
+//      }
 
       schemaBuilder.query(obj);
       return null;

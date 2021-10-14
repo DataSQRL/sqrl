@@ -26,7 +26,7 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
     }
 
     //Lazily initialized when requested because this only works for fields with names
-    private transient Map<Name,F> fieldsByName = null;
+    protected transient Map<Name,F> fieldsByName = null;
 
     public F getFieldByName(Name name) {
         if (fieldsByName ==null) {

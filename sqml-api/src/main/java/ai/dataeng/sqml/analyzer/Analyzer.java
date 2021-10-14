@@ -4,18 +4,16 @@ import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
 import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
-import ai.dataeng.sqml.logical.DataField;
-import ai.dataeng.sqml.logical.DistinctRelationDefinition;
-import ai.dataeng.sqml.logical.ImportRelationDefinition;
 import ai.dataeng.sqml.logical.InlineJoinFieldDefinition;
-import ai.dataeng.sqml.logical.RelationIdentifier;
-import ai.dataeng.sqml.logical.ExtendedChildQueryRelationDefinition;
-import ai.dataeng.sqml.logical.ExtendedFieldRelationDefinition;
-import ai.dataeng.sqml.logical.ExtendedChildRelationDefinition;
-import ai.dataeng.sqml.logical.QueryField;
-import ai.dataeng.sqml.logical.QueryRelationDefinition;
 import ai.dataeng.sqml.logical.RelationDefinition;
-import ai.dataeng.sqml.logical.SubscriptionDefinition;
+import ai.dataeng.sqml.logical3.LogicalPlan2;
+import ai.dataeng.sqml.logical3.LogicalPlan2.DataField;
+import ai.dataeng.sqml.logical3.LogicalPlan2.DistinctRelationField;
+import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
+import ai.dataeng.sqml.logical3.LogicalPlan2.ModifiableRelationType;
+import ai.dataeng.sqml.logical3.LogicalPlan2.RelationshipField;
+import ai.dataeng.sqml.logical3.LogicalPlan2.SelectRelationField;
+import ai.dataeng.sqml.logical3.LogicalPlan2.SubscriptionField;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.schema2.RelationType;
@@ -32,6 +30,7 @@ import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.InlineJoinBody;
+import ai.dataeng.sqml.tree.JoinAssignment;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Query;
@@ -93,10 +92,10 @@ public class Analyzer {
       List<Node> statements = node.getStatements();
       for (int i = 0; i < statements.size(); i++) {
         statements.get(i).accept(this, scope);
-        completeImportHeader(statements, i, scope);
+        tryCompleteImportHeader(statements, i, scope);
       }
 
-      analysis.setLogicalPlan(scope.getLogicalPlanBuilder().build());
+      analysis.setLogicalPlan2(scope.getPlanBuilder().build());
 
       return null;
     }
@@ -128,79 +127,41 @@ public class Analyzer {
     @Override
     public Scope visitQueryAssignment(QueryAssignment queryAssignment, Scope scope) {
       QualifiedName name = queryAssignment.getName();
-      if (name.getPrefix().isEmpty()) {
-        return visitBaseQueryAssignment(queryAssignment, scope);
-      }
-      QualifiedName namePrefix = name.getPrefix().get();
-      RelationDefinition currentParent = scope
-            .getCurrentDefinition(namePrefix)
-            .orElseThrow(() -> new RuntimeException("Base relation not yet defined"));
-
       Query query = queryAssignment.getQuery();
-      Scope newScope = createAndAssignScope(query, null, Optional.of(currentParent), scope);
+      Scope newScope = createAndAssignScope(query, null, name, scope);
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(this.metadata);
       Scope result = query.accept(statementAnalyzer, newScope);
 
-      QueryRelationDefinition queryRelationDefinition = new QueryRelationDefinition(result.getRelation(),
-          new RelationIdentifier(name), Optional.of(currentParent), scope, statementAnalyzer.getAnalysis()
-          .getReferencedRelations());
-      scope.setCurrentDefinition(name, queryRelationDefinition);
+      ModifiableRelationType<LogicalField> relationType =
+          name.getPrefix().map(n-> scope.resolveRelation(n).orElseThrow()).orElseGet(
+              scope::getRootRelation);
+      relationType.add(new SelectRelationField(toName(name), result.getRelation(), Optional.empty()));
 
-      ExtendedChildQueryRelationDefinition field = new ExtendedChildQueryRelationDefinition(name.getSuffix(),
-          queryAssignment.getQuery(), currentParent, new QueryField(name.getSuffix(), queryRelationDefinition));
-      scope.setCurrentDefinition(namePrefix, field);
-
-      notifyAncestors(namePrefix, scope);
-
-      return createAndAssignScope(queryAssignment, queryRelationDefinition,
-          Optional.of(currentParent), scope);
-    }
-
-    private Scope visitBaseQueryAssignment(QueryAssignment queryAssignment, Scope scope) {
-      QualifiedName name = queryAssignment.getName();
-      Query query = queryAssignment.getQuery();
-      Scope newScope = createAndAssignScope(query, null, Optional.empty(), scope);
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(this.metadata);
-      Scope result = query.accept(statementAnalyzer, newScope);
-
-      QueryRelationDefinition queryRelationDefinition = new QueryRelationDefinition(result.getRelation(),
-          new RelationIdentifier(name),
-          Optional.empty(), scope, statementAnalyzer.getAnalysis().getReferencedRelations());
-      scope.setCurrentDefinition(name, queryRelationDefinition);
-
-      return createAndAssignScope(queryAssignment, queryRelationDefinition,
-          Optional.empty(), scope);
+      return createAndAssignScope(queryAssignment, null,
+          name, scope);
     }
 
     @Override
     public Scope visitExpressionAssignment(ExpressionAssignment expressionAssignment,
         final Scope scope) {
       QualifiedName name = expressionAssignment.getName();
-      QualifiedName prefixName = name.getPrefix()
-          .orElseThrow(()->new RuntimeException(String.format("Cannot assign expression as a base relation %s", name)));
-      RelationDefinition relationDefinition = scope.getCurrentDefinition(prefixName)
-          .orElseThrow(()->new RuntimeException(String.format("Could not find relation %s", prefixName)));
 
       Expression expression = expressionAssignment.getExpression();
-
       Scope assignedScope = createAndAssignScope(expression,
-          relationDefinition, Optional.of(relationDefinition), scope);
+          null, name, scope);
       ExpressionAnalysis exprAnalysis = analyzeExpression(expression, assignedScope);
 
       Type type = exprAnalysis.getType(expression);
 
-      String fieldName = name.getSuffix();
-      ExtendedFieldRelationDefinition extendedFieldRelationDefinition = new ExtendedFieldRelationDefinition(
-          fieldName,
-          expression, relationDefinition,
-          DataField.newDataField(name.getSuffix(), type));
+      ModifiableRelationType<LogicalField> relationType =
+          name.getPrefix().map(n-> scope.resolveRelation(n).orElseThrow()).orElseGet(
+              scope::getRootRelation);
 
-      scope.setCurrentDefinition(prefixName, extendedFieldRelationDefinition);
-      notifyAncestors(prefixName, scope);
+      relationType.add(new DataField(toName(name), type, List.of()));
 
       return createAndAssignScope(expression,
-          extendedFieldRelationDefinition,
-          Optional.of(extendedFieldRelationDefinition), scope);
+          null,
+          name, scope);
     }
 
     @Override
@@ -208,60 +169,41 @@ public class Analyzer {
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata);
       Scope queryScope = subscription.getQuery().accept(statementAnalyzer, scope);
 
-      SubscriptionDefinition subscriptionDefinition = new SubscriptionDefinition(subscription,
-          queryScope);
-      scope.setSubscriptionDefinition(subscriptionDefinition);
+      scope.getRootRelation().add(new SubscriptionField(
+          toName(subscription.getName()), queryScope.getCurrentRelation()));
 
       return createAndAssignScope(subscription,
-          subscriptionDefinition,
-          Optional.of(subscriptionDefinition), scope);
+          null,
+          subscription.getName(), scope);
     }
 
     @Override
     public Scope visitDistinctAssignment(DistinctAssignment node, Scope scope) {
-      QualifiedName tableName = QualifiedName.of(node.getTable());
-      RelationDefinition shadowedDefinition = scope.getCurrentDefinition(tableName)
-          .orElseThrow(()->new RuntimeException(String.format("Could not find relation %s", node.getTable().getValue())));
+      ModifiableRelationType rel = scope.resolveRelation(node.getName())
+          .orElseThrow(()->new RuntimeException(String.format("Could not find sqml relation %s", node.getName())));
 
-      DistinctRelationDefinition distinctRelationDefinition = new DistinctRelationDefinition(
-          node.getName(),
-          node,
-          shadowedDefinition,
-          new RelationIdentifier(tableName)
-      );
-      scope.setCurrentDefinition(tableName, distinctRelationDefinition);
+      ModifiableRelationType<LogicalField> table = scope.resolveRelation(QualifiedName.of(node.getTable()))
+          .orElseThrow(()->new RuntimeException(String.format("Could not find table %s", node.getTable().getValue())));
 
-      notifyAncestors(tableName, scope);
-
+      rel.add(new DistinctRelationField(toName(node.getName()), table));
       return scope;
     }
 
     @Override
-    public Scope visitInlineJoin(InlineJoin node, Scope scope) {
-      QualifiedName name = QualifiedName.of("");
-      InlineJoinBody join = node.getJoin();
-      InlineJoinFieldDefinition inlineJoinFieldDefinition = new InlineJoinFieldDefinition();
+    public Scope visitJoinAssignment(JoinAssignment node, Scope scope) {
+      ModifiableRelationType<LogicalField> table = scope.resolveRelation(node.getName())
+          .orElseThrow(()->new RuntimeException(String.format("Could not find table %s", node.getName())));
 
-      RelationDefinition relationDefinition = scope.getCurrentDefinition(name)
-          .orElseThrow(()->new RuntimeException("Could not find relation for inline join"));
+      visitInlineJoin(node.getInlineJoin(), scope);
 
-      ExtendedFieldRelationDefinition extendedFieldRelationDefinition = new ExtendedFieldRelationDefinition(name.getSuffix(), node, relationDefinition,
-          inlineJoinFieldDefinition);
-      scope.setCurrentDefinition(name, extendedFieldRelationDefinition);
+      table.add(new RelationshipField(toName(node.getName()), null, null));
 
-      if (node.getInverse().isPresent()) {
-        RelationType relationType = scope.getRelation();
-        Identifier identifier = node.getInverse().get();
-        RelationDefinition inverse = scope.getCurrentDefinition(QualifiedName.of(identifier))
-            .orElseThrow(()->new RuntimeException("Could not find inverse relation for inline join"));
+      return createAndAssignScope(node, null, node.getName(), scope);
+    }
 
-        ExtendedFieldRelationDefinition inverseField = new ExtendedFieldRelationDefinition(identifier.getValue(), node, inverse,
-            DataField.newDataField(Name.of(identifier.getValue(), NameCanonicalizer.SYSTEM), inverse));
-
-        scope.setCurrentDefinition(inverse.getPath(), inverseField);
-      }
-
-      return createAndAssignScope(node, extendedFieldRelationDefinition, Optional.empty(), scope);
+    @Override
+    public Scope visitInlineJoin(InlineJoin node, Scope context) {
+      return super.visitInlineJoin(node, context);
     }
 
     private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
@@ -273,33 +215,19 @@ public class Analyzer {
       return analysis;
     }
 
-    private Scope createAndAssignScope(Node node,
-        RelationDefinition relationDefinition, Optional<RelationDefinition> current,
+    private Scope createAndAssignScope(Node node, ModifiableRelationType relationType, QualifiedName contextName,
         Scope parentScope) {
       Scope scope = Scope.builder()
           .withParent(parentScope)
-          .withRelationType(relationDefinition)
-          .withCurrentSqmlRelation(current)
+          .withRelationType(relationType)
+          .withContextName(contextName)
           .build();
 
       analysis.setScope(node, scope);
       return scope;
     }
 
-    private void notifyAncestors(QualifiedName name, Scope scope) {
-      RelationDefinition relationDefinition;
-
-      while (name.getPrefix().isPresent()) {
-        name = name.getPrefix().get();
-        RelationDefinition previous = scope.getCurrentDefinition(name)
-            .get();
-        relationDefinition = new ExtendedChildRelationDefinition(previous);
-        scope.setCurrentDefinition(name,
-            relationDefinition);
-      }
-    }
-
-    private void completeImportHeader(List<Node> statements,
+    private void tryCompleteImportHeader(List<Node> statements,
         int i, Scope scope) {
       //Test for end of imports
       Optional<Node> nextStatement = getNextStatement(statements, i + 1);
@@ -315,18 +243,9 @@ public class Analyzer {
       ImportSchema schema = importManager.createImportSchema(errors);
       for (Map.Entry<Name, Mapping> mapping : schema.getMappings().entrySet()) {
         QualifiedName name = QualifiedName.of(mapping.getKey().getCanonical());
-
-        ImportRelationDefinition importRelationDefinition =
-            new ImportRelationDefinition(mapping.getValue().getDatasetName(),
-                mapping.getValue().getType(),
-                mapping.getValue().getTableName(),
-                name,
-                //Todo: remove schema amalgam
-                (RelationType)((ArrayType)schema.getSchema().getFieldByName(mapping.getKey()).getType()).getSubType());
-
-        scope.setCurrentDefinition(name, importRelationDefinition);
+        scope.setImportRelation(mapping.getKey(), mapping.getValue(),
+            (RelationType)((ArrayType)schema.getSchema().getFieldByName(mapping.getKey()).getType()).getSubType());
       }
-
     }
 
     private Optional<Node> getNextStatement(List<Node> statements, int i) {
@@ -335,6 +254,8 @@ public class Analyzer {
       }
       return Optional.empty();
     }
-
+    public Name toName(QualifiedName name) {
+      return Name.of(name.toOriginalString(), NameCanonicalizer.SYSTEM);
+    }
   }
 }

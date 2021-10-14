@@ -10,6 +10,7 @@ import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Query;
+import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Table;
 import com.google.common.collect.Multimap;
@@ -95,5 +96,9 @@ public class StatementAnalysis {
 
   public void setMultiplicity(Node node, Optional<Long> parseLimit) {
 
+  }
+
+  public Optional<Long> getMultiplicity(QueryBody queryBody) {
+    return Optional.empty();
   }
 }

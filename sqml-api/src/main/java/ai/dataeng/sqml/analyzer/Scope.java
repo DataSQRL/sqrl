@@ -1,16 +1,14 @@
 package ai.dataeng.sqml.analyzer;
 
 import ai.dataeng.sqml.analyzer.TypeResolver.RelationResolverContext;
-import ai.dataeng.sqml.logical.LogicalPlan;
-import ai.dataeng.sqml.logical.LogicalPlan.Builder;
-import ai.dataeng.sqml.logical.QueryRelationDefinition;
-import ai.dataeng.sqml.logical.RelationDefinition;
-import ai.dataeng.sqml.logical.SubscriptionDefinition;
-import ai.dataeng.sqml.schema2.Field;
+import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
+import ai.dataeng.sqml.logical3.LogicalPlan2;
+import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
+import ai.dataeng.sqml.logical3.LogicalPlan2.ModifiableRelationType;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.tree.QualifiedName;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -20,21 +18,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Getter
 public class Scope {
-  private LogicalPlan.Builder logicalPlanBuilder;
-  private RelationType currentRelation;
-  private Optional<RelationDefinition> currentSqmlRelation;
-  private Optional<Long> limit;
+  private ModifiableRelationType currentRelation;
+  private final LogicalPlan2.Builder planBuilder;
+  private final QualifiedName contextName;
 
   public Scope() {
-    this(null, new LogicalPlan.Builder(), Optional.empty(), Optional.empty());
+    this(null, new LogicalPlan2.Builder(), QualifiedName.of());
   }
 
-  public Scope(RelationType currentRelation, LogicalPlan.Builder logicalPlanBuilder,
-      Optional<RelationDefinition> currentSqmlRelation, Optional<Long> limit) {
+  public Scope(ModifiableRelationType currentRelation, LogicalPlan2.Builder planBuilder,
+      QualifiedName contextName) {
     this.currentRelation = currentRelation;
-    this.logicalPlanBuilder = logicalPlanBuilder;
-    this.currentSqmlRelation = currentSqmlRelation;
-    this.limit = limit;
+    this.planBuilder = planBuilder;
+    this.contextName = contextName;
   }
 
   public static Scope.Builder builder() {
@@ -54,109 +50,62 @@ public class Scope {
     return relations.stream().findFirst();
   }
 
-  public Optional<RelationDefinition> resolveRelation(QualifiedName name) {
-    if (name.getParts().get(0).equalsIgnoreCase("@")) {
-      QualifiedName entityName = currentSqmlRelation.orElseThrow(()->new RuntimeException("No base relation")).getRelationName();
-      List<String> parts = new ArrayList<>(entityName.getParts());
-      parts.addAll(name.getParts().subList(1, name.getParts().size()));
-      name = QualifiedName.of(parts);
-    }
-    return logicalPlanBuilder.getCurrentDefinition(name);
-//    Set<Type> relations = getRelation().accept(
-//        new TypeResolver(), new RelationResolverContext(Optional.of(name), this));
-
-//    if (relations.size() > 1) {
-//      throw new RuntimeException(String.format("Ambigious field %s", name));
-//    }
-//    if (tableDefinition.isEmpty()) {
-//      return Optional.empty();
-//    }
-//    Preconditions.checkState(relations.stream().findFirst().get() instanceof RelationType,
-//        "Relation not a relational type: %s found %s", name, relations.stream().findFirst().get());
-//    return Optional.of((RelationType)relations.stream().findFirst().get());
+  public Optional<ModifiableRelationType<LogicalField>> resolveRelation(QualifiedName name) {
+    return planBuilder.resolveModifiableRelation(this.getContextName(), name);
   }
 
-//  public void addRelation(QualifiedName name, RelationType relation) {
-//    RelationType rel = name.getPrefix().map(p-> resolveRelation(p)
-//            .orElseThrow(()->new RuntimeException(String.format("Could not find relation prefix %s", name))))
-//        .orElse(root);
-//    relation.setParent(rel); //todo This isn't a great place to do this...
-//    rel.addField(Field.newUnqualified(name.getSuffix(), relation));
-//  }
+  public QualifiedName getContextName() {
+    return contextName;
+  }
 
-//  public void addFunction(QualifiedName name) {
-//
-//  }
 
-//  public void addRootField(Field field) {
-//    this.root.addField(field);
-//  }
-
-  public List<Field> resolveFieldsWithPrefix(Optional<QualifiedName> prefix) {
+  public List<LogicalField> resolveFieldsWithPrefix(Optional<QualifiedName> prefix) {
     if (prefix.isPresent()) {
       throw new RuntimeException("SELECT * with alias not yet implemented");
     }
-    return (List<Field>)getRelation().getFields();
+    return (List<LogicalField>)getRelation().getFields();
   }
 
   public RelationId getRelationId() {
     return null;
   }
 
-  public RelationType<?> getRelation() {
+  public ModifiableRelationType<LogicalField> getRelation() {
     return currentRelation;
   }
 
-  public Optional<RelationDefinition> getCurrentDefinition(QualifiedName entityName) {
-    return logicalPlanBuilder.getCurrentDefinition(entityName);
+  public void setImportRelation(Name name, Mapping mapping,
+      RelationType relationType) {
+    planBuilder.setImportRelation(name, mapping, relationType);
   }
 
-  public void setCurrentDefinition(QualifiedName name,
-      RelationDefinition relationDefinition) {
-    logicalPlanBuilder.setCurrentDefinition(name, relationDefinition);
-  }
-
-  public void setSubscriptionDefinition(SubscriptionDefinition subscriptionDefinition) {
-    logicalPlanBuilder.setSubscriptionDefinition(subscriptionDefinition);
-
-  }
-
-  public void setMultiplicity(Optional<Long> limit) {
-    this.limit = limit;
-  }
-
-  public Optional<Long> getLimit() {
-    return limit;
+  public ModifiableRelationType getRootRelation() {
+    return this.planBuilder.getRoot();
   }
 
   public static class Builder {
     private Scope parent;
-    private RelationType relationType;
-    private Optional<RelationDefinition> currentSqmlRelation;
-    private Optional<Long> limit;
+    private ModifiableRelationType relationType;
+    private QualifiedName contextName;
 
     public Builder withParent(Scope scope) {
       this.parent = scope;
       return this;
     }
 
-    public Builder withRelationType(RelationType relationType) {
+    public Builder withRelationType(ModifiableRelationType relationType) {
       this.relationType = relationType;
       return this;
     }
 
-    public Builder withCurrentSqmlRelation(Optional<RelationDefinition> currentSqmlRelation) {
-      this.currentSqmlRelation = currentSqmlRelation;
-      return this;
-    }
-
-    public Builder withMultiplicity(Optional<Long> limit) {
-      this.limit = limit;
+    public Builder withContextName(QualifiedName contextName) {
+      this.contextName = contextName;
       return this;
     }
 
     public Scope build() {
-      return new Scope(relationType, parent.logicalPlanBuilder, currentSqmlRelation, limit);
+      return new Scope(relationType, parent.planBuilder, contextName);
     }
+
   }
 }
