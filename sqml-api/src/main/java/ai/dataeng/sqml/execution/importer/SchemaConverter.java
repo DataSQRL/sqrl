@@ -10,11 +10,13 @@ import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.constraint.Cardinality;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.schema2.constraint.ConstraintHelper;
+import ai.dataeng.sqml.schema2.constraint.NotNull;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.SpecialName;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SchemaConverter {
 
@@ -45,15 +47,23 @@ public class SchemaConverter {
     private List<StandardField> convert(FlexibleDatasetSchema.FlexibleField field) {
         List<StandardField> result = new ArrayList<>(field.getTypes().size());
         for (FlexibleDatasetSchema.FieldType ft : field.getTypes()) {
-            result.add(convert(field,ft));
+            result.add(convert(field,ft, field.getTypes().size()>1));
         }
         return result;
     }
 
-    private StandardField convert(FlexibleDatasetSchema.FlexibleField field, FlexibleDatasetSchema.FieldType ftype) {
+    private StandardField convert(FlexibleDatasetSchema.FlexibleField field, FlexibleDatasetSchema.FieldType ftype,
+                                  final boolean isMixedType) {
+        List<Constraint> constraints = ftype.getConstraints().stream()
+                .filter(c -> {
+                    //Since we map mixed types onto multiple fields, not-null no longer applies
+                    if (c instanceof NotNull && isMixedType) return false;
+                    return true;
+                })
+                .collect(Collectors.toList());
         return new StandardField(FlexibleSchemaHelper.getCombinedName(field,ftype),
                 convert(ftype.getType(), ftype.getArrayDepth(), ftype.getConstraints()),
-                ftype.getConstraints());
+                constraints);
     }
 
     private Type convert(Type type, int arrayDepth, List<Constraint> constraints) {

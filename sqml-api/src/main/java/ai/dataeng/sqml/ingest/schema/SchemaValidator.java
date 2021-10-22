@@ -9,6 +9,7 @@ import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
+import ai.dataeng.sqml.schema2.basic.ConversionResult;
 import ai.dataeng.sqml.schema2.basic.StringType;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
@@ -18,13 +19,14 @@ import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.BiPredicate;
 
 /**
  * Follows {@link ai.dataeng.sqml.ingest.stats.SchemaGenerator} in structure and semantics.
  */
-public class SchemaValidator {
+public class SchemaValidator implements Serializable {
 
     private final SchemaAdjustmentSettings settings;
     private final FlexibleDatasetSchema.TableField tableSchema;
@@ -46,8 +48,8 @@ public class SchemaValidator {
 
     private Map<Name,Object> verifyAndAdjust(Map<String, Object> relationData, RelationType<FlexibleDatasetSchema.FlexibleField> relationSchema,
                                              NamePath location, ConversionError.Bundle<SchemaConversionError> errors) {
-        int nonNullElements = 0;
         Map<Name,Object> result = new HashMap<>(relationData.size());
+        Set<Name> visitedFields = new HashSet<>();
         for (Map.Entry<String,Object> entry : relationData.entrySet()) {
             Name name = Name.of(entry.getKey(), canonicalizer);
             Object data = entry.getValue();
@@ -66,10 +68,12 @@ public class SchemaValidator {
                 }
                 if (fieldResult!=null) result.put(fieldResult.getKey(),fieldResult.getValue());
             }
+            visitedFields.add(name);
         }
 
+        //See if we missed any non-null fields
         for (FlexibleDatasetSchema.FlexibleField field : relationSchema.getFields()) {
-            if (result.get(field.getName())==null && isNonNull(field)) {
+            if (!visitedFields.contains(field.getName()) && isNonNull(field)) {
                 Pair<Name,Object> fieldResult = handleNull(field, location, errors);
                 if (fieldResult!=null) result.put(fieldResult.getKey(),fieldResult.getValue());
             }
@@ -170,12 +174,18 @@ public class SchemaValidator {
             if (!settings.castDataType()) {
                 errors.add(SchemaConversionError.fatal(location,"Encountered [%s] but expected [%s]", data, type));
             }
-            data = type.conversion().parseDetected(data);
+            ConversionResult conversionResult = type.conversion().parseDetected(data);
+            if (conversionResult.hasError()) {
+                errors.add(SchemaConversionError.fatal(location,"Could not parse [%s] for type [%s]", data, type));
+                return null;
+            } else {
+                data = conversionResult.getResult();
+            }
         }
         try {
             return type.conversion().convert(data);
         } catch (IllegalArgumentException e) {
-            errors.add(SchemaConversionError.fatal(location,"Could not convert [%s] to [%s]", data, type));
+            errors.add(SchemaConversionError.fatal(location,"Could not convert [%s] to type [%s]", data, type));
             return null;
         }
     }

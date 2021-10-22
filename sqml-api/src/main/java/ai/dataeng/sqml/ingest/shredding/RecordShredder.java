@@ -2,9 +2,8 @@ package ai.dataeng.sqml.ingest.shredding;
 
 import ai.dataeng.sqml.db.DestinationTableSchema;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
-import ai.dataeng.sqml.schema2.ArrayType;
-import ai.dataeng.sqml.schema2.RelationType;
-import ai.dataeng.sqml.schema2.StandardField;
+import ai.dataeng.sqml.schema2.*;
+import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NamePath;
 import static ai.dataeng.sqml.schema2.TypeHelper.*;
@@ -26,9 +25,10 @@ public class RecordShredder {
 
     private final DestinationTableSchema resultSchema;
     private final RecordShredderFlatMap process;
+    private final NamePath tableIdentifier;
 
 
-    public static RecordShredder from(NamePath tableIdentifier, FieldProjection[][] keyProjections,
+    public static RecordShredder from(final NamePath tableIdentifier, FieldProjection[][] keyProjections,
                                       RelationType<StandardField> schema, RecordProjection[] recordProjections) {
         Preconditions.checkArgument(keyProjections.length==tableIdentifier.getLength()+1,
                 "Invalid number of projections provided: %s", Arrays.deepToString(keyProjections));
@@ -59,7 +59,7 @@ public class RecordShredder {
                     if (np.getLength()==1 && np.get(0).equals(fieldName)) isKey = true;
                 }
             }
-            if (!isKey) {
+            if (!isKey && (TypeHelper.unfurlType(field.getType()) instanceof BasicType)) { //filter out keys and nested tables
                 builder.add(DestinationTableSchema.Field.convert(fieldName.getCanonical(), field));
                 remainingTableFields.add(fieldName);
             }
@@ -74,14 +74,15 @@ public class RecordShredder {
         return new RecordShredder(resultSchema,
                 new RecordShredderFlatMap(tableIdentifier,resultSchema.length(),
                         remainingTableFields.toArray(new Name[remainingTableFields.size()]),
-                        keyProjections, recordProjections));
+                        keyProjections, recordProjections),
+                tableIdentifier);
     }
 
     public static RecordShredder from(NamePath tableIdentifier, RelationType<StandardField> schema) {
-        return from(tableIdentifier,defaultParentKeys(tableIdentifier,schema), schema, new RecordProjection[]{RecordProjection.DEFAULT_TIMESTAMP});
+        return from(tableIdentifier, defaultParentKeys(tableIdentifier, schema), schema, new RecordProjection[]{RecordProjection.DEFAULT_TIMESTAMP});
     }
 
-    private static final FieldProjection[][] defaultParentKeys(NamePath tableIdentifier, RelationType<StandardField> schema) {
+    private static FieldProjection[][] defaultParentKeys(NamePath tableIdentifier, RelationType<StandardField> schema) {
         int depth = tableIdentifier.getLength();
         FieldProjection[][] projs = new FieldProjection[depth+1][];
         for (int i = 0; i < projs.length; i++) {
@@ -96,7 +97,22 @@ public class RecordShredder {
         return projs;
     }
 
+    public static List<RecordShredder> from(final RelationType<StandardField> tableSchema) {
+        List<RecordShredder> shredders = new ArrayList<>();
+        findNestedTables(NamePath.ROOT, tableSchema, tableSchema, shredders);
+        return shredders;
+    }
 
+    private static void findNestedTables(NamePath tableIdentifier, RelationType<StandardField> nestedTableSchema,
+                                         RelationType<StandardField> rootTableSchema, List<RecordShredder> shredders) {
+        shredders.add(from(tableIdentifier,rootTableSchema));
+        for (StandardField field : nestedTableSchema) {
+            Type type = TypeHelper.unfurlType(field.getType());
+            if (type instanceof RelationType) {
+                findNestedTables(tableIdentifier.resolve(field.getName()), (RelationType)type, rootTableSchema, shredders);
+            }
+        }
+    }
 
 
 
@@ -159,15 +175,15 @@ public class RecordShredder {
                 Object nested = data.get(tableIdentifier.get(depth));
                 if (nested instanceof Map) {
                     constructRows((Map) nested, cols, colno, depth + 1, collector);
-                } else if (nested.getClass().isArray()) {
-                    Object[] arr = (Object[]) nested;
+                } else if (nested instanceof List) {
+                    List arr = (List)nested;
                     boolean addIndex = keyProjections[depth + 1].length > 0 && keyProjections[depth + 1][0].equals(FieldProjection.ARRAY_INDEX);
-                    for (int i = 0; i < arr.length; i++) {
+                    for (int i = 0; i < arr.size(); i++) {
                         Object[] colcopy = cols.clone();
                         if (addIndex) {
                             colcopy[colno] = Long.valueOf(i);
                         }
-                        constructRows((Map) arr[i], colcopy, colno + (addIndex ? 1 : 0), depth + 1, collector);
+                        constructRows((Map) arr.get(i), colcopy, colno + (addIndex ? 1 : 0), depth + 1, collector);
                     }
                 } else throw new IllegalArgumentException("Unexpected data encountered: " + nested);
             }

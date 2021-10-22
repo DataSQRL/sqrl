@@ -16,18 +16,11 @@ import java.util.List;
 public class SchemaValidationProcess extends ProcessFunction<SourceRecord<String>, SourceRecord<Name>> {
 
     private final OutputTag<Error> errorTag;
-    private final FlexibleDatasetSchema.TableField schema;
-    private final SchemaAdjustmentSettings settings;
-    private final DatasetRegistration dataset;
-
-    private transient SchemaValidator validator;
+    private final SchemaValidator validator;
 
     public SchemaValidationProcess(OutputTag<Error> error, FlexibleDatasetSchema.TableField schema,
                                    SchemaAdjustmentSettings settings, DatasetRegistration dataset) {
         this.errorTag = error;
-        this.schema = schema;
-        this.settings = settings;
-        this.dataset = dataset;
         this.validator = new SchemaValidator(schema, settings, dataset);
     }
 

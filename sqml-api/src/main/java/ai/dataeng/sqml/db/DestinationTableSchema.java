@@ -73,7 +73,7 @@ public class DestinationTableSchema implements Serializable, Iterable<Destinatio
                 type = ((ArrayType) type).getSubType();
             }
             boolean isNonNull = ConstraintHelper.isNonNull(field.getConstraints());
-            Preconditions.checkArgument(type instanceof BasicType);
+            Preconditions.checkArgument(type instanceof BasicType, "Invalid type: %s", type);
             return new Field(name, (BasicType) type, isNonNull, isArray, false);
         }
 

@@ -35,4 +35,9 @@ public class TypeHelper {
         return (RelationType) type;
     }
 
+    public static Type unfurlType(Type type) {
+        if (type instanceof ArrayType) return unfurlType(((ArrayType) type).getSubType());
+        return type;
+    }
+
 }

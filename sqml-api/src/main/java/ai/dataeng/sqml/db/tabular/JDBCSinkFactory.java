@@ -80,7 +80,8 @@ public class JDBCSinkFactory implements TabularSinkFactory {
             Preconditions.checkArgument(row.getArity() == schema.length(), "Incompatible Row: %s",row);
             for (int i = 0; i < schema.length(); i++) {
                 DestinationTableSchema.Field field = schema.get(i);
-                if (field.isArray()) ps.setArray(i+1, row.getFieldAs(i));
+                if (row.getField(i) == null) ps.setNull(i+1, getJooqSQLType(field).getSQLType());
+                else if (field.isArray()) ps.setArray(i+1, row.getFieldAs(i));
                 else {
                     BasicType type = field.getType();
                     if (type instanceof StringType) ps.setString(i+1,row.getFieldAs(i));
@@ -111,6 +112,12 @@ public class JDBCSinkFactory implements TabularSinkFactory {
         }
         CreateTableConstraintStep tableConstraint = createTable.primaryKey(getPrimaryKeyNames(schema).toArray(new String[0]));
         tableConstraint.execute();
+    }
+
+    public Iterable<Record> getTableContent(String tableName) throws Exception {
+        DSLContext context = DSL.using(getConnection(), dialect);
+        tableName = JDBCSinkFactory.sqlName(tableName);
+        return context.select().from(tableName).fetch();
     }
 
     private static List<String> getPrimaryKeyNames(DestinationTableSchema schema) {

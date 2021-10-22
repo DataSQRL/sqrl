@@ -11,11 +11,15 @@ import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
 import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.ingest.schema.SchemaAdjustmentSettings;
 import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
+import ai.dataeng.sqml.ingest.schema.SchemaValidationProcess;
 import ai.dataeng.sqml.ingest.schema.external.SchemaDefinition;
 import ai.dataeng.sqml.ingest.schema.external.SchemaExport;
 import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
+import ai.dataeng.sqml.ingest.shredding.RecordShredder;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
+import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.ingest.stats.SchemaGenerator;
 import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
@@ -29,9 +33,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Path;
 import java.sql.Connection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -42,11 +45,13 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInc
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
+import org.apache.flink.util.OutputTag;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.SQLDialect;
@@ -83,8 +88,19 @@ public class Main2 {
         DirectoryDataset dd = new DirectoryDataset(DatasetRegistration.of(RETAIL_DATASET), RETAIL_DATA_DIR);
         ddRegistry.addDataset(dd);
 
+        ddRegistry.monitorDatasets(envProvider);
+
+        Thread.sleep(1000);
+
+        SQMLBundle bundle = new SQMLBundle.Builder().createScript().setName(RETAIL_SCRIPT_NAME)
+                .setScript(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION))
+                .setImportSchema(RETAIL_IMPORT_SCHEMA_FILE)
+                .asMain()
+                .add().build();
+
 //        collectStats(ddRegistry);
-        importSchema(ddRegistry);
+//        importSchema(ddRegistry, bundle);
+        tableShredding(ddRegistry, bundle);
 //        simpleDBPipeline(ddRegistry);
 
 //        testDB();
@@ -137,17 +153,64 @@ public class Main2 {
         flinkEnv.execute();
     }
 
-    public static void importSchema(DataSourceRegistry ddRegistry) throws Exception {
-        ddRegistry.monitorDatasets(envProvider);
+    public static void tableShredding(DataSourceRegistry ddRegistry, SQMLBundle bundle) throws Exception {
+        SQMLBundle.SQMLScript sqml = bundle.getMainScript();
 
-        Thread.sleep(1000);
+        SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
+        Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
 
-        SQMLBundle bundle = new SQMLBundle.Builder().createScript().setName(RETAIL_SCRIPT_NAME)
-                .setScript(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION))
-                .setImportSchema(RETAIL_IMPORT_SCHEMA_FILE)
-                .asMain()
-                .add().build();
+        Preconditions.checkArgument(!schemaImporter.getErrors().isFatal());
 
+        ImportManager sqmlImporter = new ImportManager(ddRegistry);
+        sqmlImporter.registerUserSchema(userSchema);
+        sqmlImporter.importAllTable(RETAIL_DATASET);
+
+        ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
+        ImportSchema schema = sqmlImporter.createImportSchema(errors);
+
+        Preconditions.checkArgument(!errors.isFatal());
+        StreamExecutionEnvironment flinkEnv = envProvider.create();
+        JDBCSinkFactory dbSinkFactory = new JDBCSinkFactory(jdbcOptions, SQLDialect.H2);
+
+        Set<String> tableNames = new HashSet<>();
+
+        for (String tableName : RETAIL_TABLE_NAMES) {
+            ImportSchema.SourceTableImport tableImport = schema.getSourceTable(Name.system(tableName));
+            Preconditions.checkNotNull(tableImport);
+//            System.out.print(toString(Name.system("local"),singleton(tableImport.getSourceSchema())));
+
+            DataStream<SourceRecord<String>> stream = tableImport.getTable().getDataStream(flinkEnv);
+            final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>("schema-error-"+tableName){};
+            SingleOutputStreamOperator<SourceRecord<Name>> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, tableImport.getSourceSchema(),
+                    SchemaAdjustmentSettings.DEFAULT, tableImport.getTable().getDataset().getRegistration()));
+            validate.getSideOutput(schemaErrorTag).addSink(new PrintSinkFunction<>()); //TODO: handle errors
+
+            for (RecordShredder shredder : RecordShredder.from(tableImport.getTableSchema())) {
+                SingleOutputStreamOperator<Row> process = validate.flatMap(shredder.getProcess());
+
+                String shreddedTableName = tableName;
+                if (shredder.getTableIdentifier().getLength()>0) {
+                    shreddedTableName += "_" + shredder.getTableIdentifier().toString('_');
+                }
+                tableNames.add(shreddedTableName);
+
+//                process.addSink(new PrintSinkFunction<>()); //TODO: remove, debugging only
+                process.addSink(dbSinkFactory.getSink(shreddedTableName,shredder.getResultSchema()));
+            }
+        }
+
+        flinkEnv.execute();
+
+        //Print out contents of tables in H2
+        for (String shreddedTable : tableNames) {
+            System.out.println("== " + shreddedTable + "==");
+            for (Record r : dbSinkFactory.getTableContent(shreddedTable)) {
+                System.out.println(r);
+            }
+        }
+    }
+
+    public static void importSchema(DataSourceRegistry ddRegistry, SQMLBundle bundle) throws Exception {
         SQMLBundle.SQMLScript sqml = bundle.getMainScript();
 
         SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);

@@ -7,6 +7,7 @@ import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.schema2.name.Name;
 import lombok.*;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,13 +42,14 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
     @Getter
     @ToString
     @AllArgsConstructor
+    @NoArgsConstructor
     public static abstract class AbstractField implements ai.dataeng.sqml.schema2.Field {
 
         @NonNull
-        private final Name name;
+        private Name name;
         @NonNull
-        private final SchemaElementDescription description;
-        private final Object default_value;
+        private SchemaElementDescription description;
+        private Object default_value;
 
         @Setter
         public static abstract class Builder {
@@ -68,13 +70,14 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
 
     @Getter
     @ToString
+    @NoArgsConstructor
     public static class TableField extends AbstractField {
 
-        private final boolean isPartialSchema;
+        private boolean isPartialSchema;
         @NonNull
-        private final RelationType<FlexibleField> fields;
+        private RelationType<FlexibleField> fields;
         @NonNull
-        private final List<Constraint> constraints;
+        private List<Constraint> constraints;
 
         public TableField(Name name, SchemaElementDescription description, Object default_value,
                           boolean isPartialSchema, RelationType<FlexibleField> fields, List<Constraint> constraints) {
@@ -114,10 +117,11 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
 
     @Getter
     @ToString
+    @NoArgsConstructor
     public static class FlexibleField extends AbstractField implements Field {
 
         @NonNull
-        private final List<FieldType> types;
+        private List<FieldType> types;
 
         public FlexibleField(Name name, SchemaElementDescription description, Object default_value,
                              List<FieldType> types) {
@@ -142,18 +146,22 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
         }
     }
 
-    @Value
-    public static class FieldType {
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    @ToString
+    public static class FieldType implements Serializable {
 
         @NonNull
-        private final Name variantName;
+        private Name variantName;
 
         @NonNull
-        private final Type type;
-        private final int arrayDepth;
+        private Type type;
+        private int arrayDepth;
 
         @NonNull
-        private final List<Constraint> constraints;
+        private List<Constraint> constraints;
 
     }
 

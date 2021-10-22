@@ -1,14 +1,20 @@
 package ai.dataeng.sqml.ingest.schema;
 
 import com.google.common.base.Strings;
-import lombok.Value;
+import lombok.*;
 
-@Value
-public class SchemaElementDescription {
+import java.io.Serializable;
+
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+@ToString
+public class SchemaElementDescription implements Serializable {
 
     public static final SchemaElementDescription NONE = new SchemaElementDescription("");
 
-    private final String description;
+    private String description;
 
 
     public boolean isEmpty() {

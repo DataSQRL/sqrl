@@ -6,13 +6,14 @@ import ai.dataeng.sqml.schema2.basic.ConversionResult;
 import ai.dataeng.sqml.schema2.basic.SimpleConversionError;
 import ai.dataeng.sqml.schema2.name.Name;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public interface Constraint {
+public interface Constraint extends Serializable {
 
     public boolean satisfies(Object value);
 

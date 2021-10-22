@@ -7,18 +7,22 @@ import ai.dataeng.sqml.schema2.basic.ConversionResult;
 import ai.dataeng.sqml.schema2.basic.SimpleConversionError;
 import ai.dataeng.sqml.schema2.name.Name;
 import com.google.common.base.Preconditions;
+import lombok.Getter;
 
 import java.util.Map;
 import java.util.Optional;
 
+@Getter
 public class Cardinality implements Constraint {
 
     public static final Name NAME = Name.system("cardianlity");
 
     public static final Cardinality UNCONSTRAINED = new Cardinality(0,Long.MAX_VALUE);
 
-    private final long min;
-    private final long max;
+    private long min;
+    private long max;
+
+    private Cardinality() {} //For Kryo
 
     public Cardinality(long min, long max) {
         Preconditions.checkArgument(min>=0);
