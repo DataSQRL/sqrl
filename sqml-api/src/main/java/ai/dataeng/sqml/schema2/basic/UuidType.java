@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.schema2.basic;
 
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -20,5 +21,9 @@ public class UuidType extends SimpleBasicType<UUID> {
     @Override
     protected Function<String, UUID> getStringParser() {
         return s -> UUID.fromString(s);
+    }
+
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+        return visitor.visitUuidType(this, context);
     }
 }

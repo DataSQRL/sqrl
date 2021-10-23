@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.schema2.basic;
 
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import lombok.NonNull;
 
 import java.time.format.DateTimeParseException;
@@ -36,8 +37,7 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
         return getName();
     }
 
-
-
-
-
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+        return visitor.visitBasicType(this, context);
+    }
 }

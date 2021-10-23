@@ -426,7 +426,7 @@ class AstBuilder
   @Override
   public Node visitGroupBy(SqlBaseParser.GroupByContext context) {
     return new GroupBy(getLocation(context),
-        visit(context.groupingElement(), GroupingElement.class));
+        (GroupingElement)visit(context.groupingElement()));
   }
 
   @Override

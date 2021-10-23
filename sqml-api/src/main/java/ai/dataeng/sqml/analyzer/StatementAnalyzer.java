@@ -13,13 +13,15 @@ import static java.util.Objects.requireNonNull;
 
 import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
 import ai.dataeng.sqml.function.FunctionProvider;
-import ai.dataeng.sqml.logical.DataField;
+import ai.dataeng.sqml.logical3.LogicalPlan2.DataField;
 import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.BooleanType;
+import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
@@ -579,7 +581,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         Optional<QualifiedName> starPrefix = ((AllColumns) item).getPrefix();
 
         for (Field field : sourceScope.resolveFieldsWithPrefix(starPrefix)) {
-          outputFields.add(DataField.newDataField(field.getName(), field.getType()));
+          outputFields.add(new DataField(field.getName(), field.getType(), List.of()));
         }
       } else if (item instanceof SingleColumn) {
         SingleColumn column = (SingleColumn) item;
@@ -613,8 +615,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         }
 
         outputFields.add(
-            DataField.newDataField(field.map(Identifier::getValue).get(),
-            analysis.getType(expression).orElseThrow())
+            new DataField(Name.of(field.map(Identifier::getValue).get(), NameCanonicalizer.SYSTEM),
+            analysis.getType(expression).orElseThrow(), List.of())
 //            column.getAlias().isPresent())
         );
       }
@@ -702,10 +704,12 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     for (int i = 0; i < rel.getFields().size(); i++) {
       Field field = ((Field)rel.getFields().get(i));
 //      Optional<String> columnAlias = field.getName();
-      fieldsBuilder.add(DataField.newDataField(
+      fieldsBuilder.add(new DataField(
           field.getName(),
           field.getType(),
-          Optional.ofNullable(relationAlias)));
+          List.of()
+         ));
+      // Optional.ofNullable(relationAlias)
     }
 
     return new RelationType(fieldsBuilder.build());
@@ -713,51 +717,49 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
   private List<Expression> analyzeGroupBy(QuerySpecification node, Scope scope, List<Expression> outputExpressions)
   {
-    if (node.getGroupBy().isPresent()) {
-      List<List<Set<FieldId>>> sets = new ArrayList();
-      List<Expression> groupingExpressions = new ArrayList();
-
-      for (GroupingElement groupingElement : node.getGroupBy().get().getGroupingElements()) {
-        for (Expression column : groupingElement.getExpressions()) {
-          if (column instanceof LongLiteral) {
-            throw new RuntimeException("Ordinals not supported in group by statements");
-          }
-          //Group by statement must be one of the select fields
-          if (!(column instanceof Identifier)) {
-            log.info(String.format("GROUP BY statement should use column aliases instead of expressions. %s", column));
-            analyzeExpression(column, scope);
-            outputExpressions.stream()
-                .filter(e->e.equals(column))
-                .findAny()
-                .orElseThrow(()->new RuntimeException(String.format("SELECT should contain GROUP BY expression %s", column)));
-            groupingExpressions.add(column);
-          } else {
-            Expression rewrittenGroupByExpression = ExpressionTreeRewriter.rewriteWith(
-                new OrderByExpressionRewriter(extractNamedOutputExpressions(node.getSelect())), column);
-            int index = outputExpressions.indexOf(rewrittenGroupByExpression);
-            if (index == -1) {
-              throw new RuntimeException(String.format("SELECT should contain GROUP BY expression %s", column));
-            }
-            groupingExpressions.add(outputExpressions.get(index));
-          }
-        }
-      }
-
-      List<Expression> expressions = groupingExpressions;
-      for (Expression expression : expressions) {
-        Type type = analysis.getType(expression)
-            .get();
-        if (!type.isComparable()) {
-          throw new RuntimeException(String.format("%s is not comparable, and therefore cannot be used in GROUP BY", type));
-        }
-      }
-
-      analysis.setGroupByExpressions(node, groupingExpressions);
-
-      return groupingExpressions;
+    if (node.getGroupBy().isEmpty()) {
+      return List.of();
     }
 
-    return ImmutableList.of();
+    List<List<Set<FieldId>>> sets = new ArrayList();
+    List<Expression> groupingExpressions = new ArrayList();
+    GroupingElement groupingElement = node.getGroupBy().get().getGroupingElement();
+    for (Expression column : groupingElement.getExpressions()) {
+      if (column instanceof LongLiteral) {
+        throw new RuntimeException("Ordinals not supported in group by statements");
+      }
+      //Group by statement must be one of the select fields
+      if (!(column instanceof Identifier)) {
+        log.info(String.format("GROUP BY statement should use column aliases instead of expressions. %s", column));
+        analyzeExpression(column, scope);
+        outputExpressions.stream()
+            .filter(e->e.equals(column))
+            .findAny()
+            .orElseThrow(()->new RuntimeException(String.format("SELECT should contain GROUP BY expression %s", column)));
+        groupingExpressions.add(column);
+      } else {
+        Expression rewrittenGroupByExpression = ExpressionTreeRewriter.rewriteWith(
+            new OrderByExpressionRewriter(extractNamedOutputExpressions(node.getSelect())), column);
+        int index = outputExpressions.indexOf(rewrittenGroupByExpression);
+        if (index == -1) {
+          throw new RuntimeException(String.format("SELECT should contain GROUP BY expression %s", column));
+        }
+        groupingExpressions.add(outputExpressions.get(index));
+      }
+    }
+
+    List<Expression> expressions = groupingExpressions;
+    for (Expression expression : expressions) {
+      Type type = analysis.getType(expression)
+          .get();
+      if (!type.isComparable()) {
+        throw new RuntimeException(String.format("%s is not comparable, and therefore cannot be used in GROUP BY", type));
+      }
+    }
+
+    analysis.setGroupByExpressions(node, groupingExpressions);
+
+    return groupingExpressions;
   }
 
   private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {

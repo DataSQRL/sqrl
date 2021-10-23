@@ -24,25 +24,25 @@ import java.util.Optional;
 public class GroupBy
     extends Node {
 
-  private final List<GroupingElement> groupingElements;
+  private final GroupingElement groupingElement;
 
-  public GroupBy(List<GroupingElement> groupingElements) {
+  public GroupBy(GroupingElement groupingElements) {
     this(Optional.empty(), groupingElements);
   }
 
   public GroupBy(NodeLocation location,
-      List<GroupingElement> groupingElements) {
-    this(Optional.of(location), groupingElements);
+      GroupingElement groupingElement) {
+    this(Optional.of(location), groupingElement);
   }
 
   private GroupBy(Optional<NodeLocation> location,
-      List<GroupingElement> groupingElements) {
+      GroupingElement groupingElement) {
     super(location);
-    this.groupingElements = ImmutableList.copyOf(requireNonNull(groupingElements));
+    this.groupingElement = requireNonNull(groupingElement);
   }
 
-  public List<GroupingElement> getGroupingElements() {
-    return groupingElements;
+  public GroupingElement getGroupingElement() {
+    return groupingElement;
   }
 
   @Override
@@ -52,7 +52,7 @@ public class GroupBy
 
   @Override
   public List<? extends Node> getChildren() {
-    return groupingElements;
+    return List.of(groupingElement);
   }
 
   @Override
@@ -64,18 +64,18 @@ public class GroupBy
       return false;
     }
     GroupBy groupBy = (GroupBy) o;
-    return Objects.equals(groupingElements, groupBy.groupingElements);
+    return Objects.equals(groupingElement, groupBy.groupingElement);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupingElements);
+    return Objects.hash(groupingElement);
   }
 
   @Override
   public String toString() {
     return toStringHelper(this)
-        .add("groupingElements", groupingElements)
+        .add("groupingElement", groupingElement)
         .toString();
   }
 }

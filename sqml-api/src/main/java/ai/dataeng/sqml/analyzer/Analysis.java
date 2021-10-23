@@ -4,7 +4,6 @@ import static com.google.common.collect.Multimaps.forMap;
 import static com.google.common.collect.Multimaps.unmodifiableMultimap;
 
 import ai.dataeng.sqml.function.SqmlFunction;
-import ai.dataeng.sqml.logical.LogicalPlan;
 import ai.dataeng.sqml.logical3.LogicalPlan2;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
@@ -44,7 +43,6 @@ public class Analysis {
   private final Set<NodeRef<Expression>> typeOnlyCoercions = new LinkedHashSet<>();
   private final List<Expression> parameters = List.of();
   private final Multimap<NodeRef<Expression>, FieldId> columnReferences = ArrayListMultimap.create();
-  private LogicalPlan logicalPlan;
   private List<SqmlFunction> functions = new ArrayList<>();
   private LogicalPlan2 plan;
 
@@ -170,20 +168,12 @@ public class Analysis {
     this.columnReferences.put(node, fieldId);
   }
 
-  public LogicalPlan getLogicalPlan() {
-    return logicalPlan;
-  }
-
   public List<SqmlFunction> getDefinedFunctions() {
     return functions;
   }
 
   public void addFunction(SqmlFunction function) {
     this.functions.add(function);
-  }
-
-  public void setLogicalPlan(LogicalPlan logicalPlan) {
-    this.logicalPlan = logicalPlan;
   }
 
   public void setLogicalPlan2(LogicalPlan2 plan) {

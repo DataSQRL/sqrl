@@ -1,5 +1,9 @@
 package ai.dataeng.sqml.analyzer;
 
+import ai.dataeng.sqml.ViewQueryRewriter;
+import ai.dataeng.sqml.ViewQueryRewriter.ViewMaterializerContext;
+import ai.dataeng.sqml.ViewQueryRewriter.ViewScope;
+import ai.dataeng.sqml.ViewQueryRewriter.ViewTable;
 import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
@@ -66,13 +70,11 @@ public class Analyzer {
     private final Analysis analysis;
     private final Metadata metadata;
     private final AtomicBoolean importResolved = new AtomicBoolean(false);
-    private final ImportManager importManager;
+    ViewQueryRewriter viewMaterializer = new ViewQueryRewriter();
 
     public Visitor(Analysis analysis, Metadata metadata) {
       this.analysis = analysis;
       this.metadata = metadata;
-      this.importManager = new ImportManager(metadata.getEnv()
-          .getDdRegistry());
     }
 
     @Override
@@ -101,6 +103,10 @@ public class Analyzer {
         throw new RuntimeException(String.format("Import statement must be in header %s", node.getQualifiedName()));
       }
 
+      ImportManager importManager = new ImportManager(metadata.getEnv()
+          .getDdRegistry());
+
+      //TODO: One import set per line
       if (node.getQualifiedName().getParts().size() == 1) {
         if (node.getQualifiedName().getParts().get(0).equalsIgnoreCase("*")) {
           throw new RuntimeException("Cannot import * at base level");
@@ -116,6 +122,15 @@ public class Analyzer {
         }
       }
 
+      ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
+      ImportSchema schema = importManager.createImportSchema(errors);
+
+      //schema.getSchema().getFieldByName(mapping.getKey()))
+      for (Map.Entry<Name, Mapping> mapping : schema.getMappings().entrySet()) {
+        scope.addRootField(new DelegateLogicalField(schema.getSchema().getFieldByName(mapping.getKey())));
+      }
+
+      ViewScope scope2 = node.accept(viewMaterializer, new ViewMaterializerContext(null, scope, schema));
       return scope;
     }
 
@@ -128,6 +143,20 @@ public class Analyzer {
       Scope result = query.accept(statementAnalyzer, newScope);
 
       scope.addField(new SelectRelationField(toName(name), result.getRelation(), Optional.empty()));
+
+      ViewScope scope2 = queryAssignment.accept(viewMaterializer, new ViewMaterializerContext(
+          statementAnalyzer.getAnalysis(), result, null
+      ));
+      ViewTable viewTable = new ViewTable(
+          queryAssignment.getName(),
+          scope2.getTableName(),
+          scope2.getColumns(),
+          Optional.of(scope2.getNode())
+      );
+
+      viewMaterializer.tables.add(viewTable);
+
+//      System.out.println(scope2.getNode().accept(new NodeFormatter(), null));
 
       return createAndAssignScope(queryAssignment, null,
           name, scope);
@@ -146,6 +175,8 @@ public class Analyzer {
       Type type = exprAnalysis.getType(expression);
 
       scope.addField(new DataField(toName(name), type, List.of()));
+
+      //Create MV, add field
 
       return createAndAssignScope(expression,
           null,
@@ -221,11 +252,6 @@ public class Analyzer {
 
     private void resolveImports(Scope scope) {
       importResolved.set(true);
-      ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
-      ImportSchema schema = importManager.createImportSchema(errors);
-      for (Map.Entry<Name, Mapping> mapping : schema.getMappings().entrySet()) {
-        scope.addRootField(new DelegateLogicalField(schema.getSchema().getFieldByName(mapping.getKey())));
-      }
     }
 
     private Optional<Node> getNextStatement(List<Node> statements, int i) {
@@ -237,8 +263,8 @@ public class Analyzer {
     public Name toName(QualifiedName name) {
       return Name.of(name.toOriginalString(), NameCanonicalizer.SYSTEM);
     }
-    public Name toName(String name) {
-      return Name.of(name, NameCanonicalizer.SYSTEM);
-    }
+  }
+  public static Name toName(String name) {
+    return Name.of(name, NameCanonicalizer.SYSTEM);
   }
 }

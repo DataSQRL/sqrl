@@ -2,6 +2,7 @@ package ai.dataeng.sqml.analyzer;
 
 import ai.dataeng.sqml.analyzer.TypeResolver.RelationResolverContext;
 import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.basic.StringType;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import java.util.Optional;

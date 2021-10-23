@@ -1,12 +1,8 @@
 package ai.dataeng.sqml.schema2.basic;
 
-import ai.dataeng.sqml.schema2.type.Null;
-import com.google.common.collect.ImmutableSet;
-import java.util.Set;
-import java.util.function.Function;
-import lombok.NonNull;
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 
-public class NullType extends AbstractBasicType<Null> {
+public class NullType extends AbstractBasicType<NullType> {
 
     public static final NullType INSTANCE = new NullType();
 
@@ -21,13 +17,17 @@ public class NullType extends AbstractBasicType<Null> {
     }
 
     @Override
-    public TypeConversion<Null> conversion() {
+    public TypeConversion<NullType> conversion() {
         return new Conversion();
     }
 
-    public static class Conversion extends SimpleBasicType.Conversion<Null> {
+    public static class Conversion extends SimpleBasicType.Conversion<NullType> {
         public Conversion() {
-            super(Null.class, s -> new Null());
+            super(
+                NullType.class, s -> new NullType());
         }
+    }
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+        return visitor.visitNullType(this, context);
     }
 }

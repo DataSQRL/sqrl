@@ -22,7 +22,6 @@ import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
 import ai.dataeng.sqml.ingest.source.SourceTable;
-import ai.dataeng.sqml.logical.LogicalPlan;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.parser.SqmlParser;
 import ai.dataeng.sqml.physical.PhysicalPlan;
@@ -80,54 +79,54 @@ class ImportTest {
 //    ddRegistry.monitorDatasets(envProvider);
 
 //    Thread.sleep(1000);
+//
+//    SQMLBundle bundle = new SQMLBundle.Builder().createScript().setName(RETAIL_SCRIPT_NAME)
+//        .setScript(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION))
+//        .setImportSchema(RETAIL_IMPORT_SCHEMA_FILE)
+//        .asMain()
+//        .add().build();
+//
+//    SQMLBundle.SQMLScript sqml = bundle.getMainScript();
+//
+//    Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
+//
+//    if (schemaImporter.hasErrors()) {
+//      System.out.println("Import errors:");
+//      schemaImporter.getErrors().forEach(e -> System.out.println(e));
+//    }
+//
+//    System.out.println("-------Import Schema-------");
+////    System.out.print(toString(userSchema));
+//
+//    ImportManager sqmlManager = new ImportManager(ddRegistry);
+//    sqmlManager.registerUserSchema(userSchema);
+//
+//    sqmlManager.importAllTable(RETAIL_DATASET);
+//
+//    ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
+//    ImportSchema schema = sqmlManager.createImportSchema(errors);
+//
+//    if (errors.hasErrors()) {
+//      System.out.println("-------Import Errors-------");
+//      errors.forEach(e -> System.out.println(e));
+//    }
+//
+//    System.out.println("-------Script Schema-------");
+//    System.out.println(schema.getSchema());
+//    System.out.println("-------Tables-------");
 
-    SQMLBundle bundle = new SQMLBundle.Builder().createScript().setName(RETAIL_SCRIPT_NAME)
-        .setScript(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION))
-        .setImportSchema(RETAIL_IMPORT_SCHEMA_FILE)
-        .asMain()
-        .add().build();
-
-    SQMLBundle.SQMLScript sqml = bundle.getMainScript();
-
-    Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
-
-    if (schemaImporter.hasErrors()) {
-      System.out.println("Import errors:");
-      schemaImporter.getErrors().forEach(e -> System.out.println(e));
-    }
-
-    System.out.println("-------Import Schema-------");
-//    System.out.print(toString(userSchema));
-
-    ImportManager sqmlManager = new ImportManager(ddRegistry);
-    sqmlManager.registerUserSchema(userSchema);
-
-    sqmlManager.importAllTable(RETAIL_DATASET);
-
-    ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
-    ImportSchema schema = sqmlManager.createImportSchema(errors);
-
-    if (errors.hasErrors()) {
-      System.out.println("-------Import Errors-------");
-      errors.forEach(e -> System.out.println(e));
-    }
-
-    System.out.println("-------Script Schema-------");
-    System.out.println(schema.getSchema());
-    System.out.println("-------Tables-------");
-
-    ImportLoader importLoader = new ImportLoader(sqmlManager, schema);
-    for (Name name : schema.getMappings().keySet()) {
-      importLoader.register(RETAIL_DATA_DIR_NAME + "." + name.getCanonical(), new TableImportObject(
-          schema.getMappings().get(name), RETAIL_DATA_DIR_NAME + "." + name.getCanonical()
-      ));
-    }
+//    ImportLoader importLoader = new ImportLoader(sqmlManager, schema);
+//    for (Name name : schema.getMappings().keySet()) {
+//      importLoader.register(RETAIL_DATA_DIR_NAME + "." + name.getCanonical(), new TableImportObject(
+//          schema.getMappings().get(name), RETAIL_DATA_DIR_NAME + "." + name.getCanonical()
+//      ));
+//    }
 
     SqmlEnv env = new SqmlEnv(ddRegistry);
 
     //The Data needed for sqml
     Metadata metadata = new Metadata(new FunctionProvider(PostgresFunctions.SqmlSystemFunctions),
-        env, importLoader);
+        env, null);
 
     //Be able to run with a standard import
     SqmlParser parser = SqmlParser.newSqmlParser();
@@ -136,8 +135,8 @@ class ImportTest {
         "IMPORT ecommerce.Product;\n"
 //        + "IMPORT ai.dataeng.sqml.functions.Echo;"
 //        + "IMPORT ai.dataeng.sqml.functions.EchoAgg;"
-        + "Product := DISTINCT Product ON (productid);\n"
-        + "Product.nested := SELECT * FROM Product limit 10;\n"
+//        + "Product := DISTINCT Product ON (productid);\n"
+        + "Product2 := SELECT productid + 1 as n FROM Product;\n"
     );
 
     //Script processing
@@ -173,11 +172,6 @@ class ImportTest {
           }
         });
 
-    LogicalPlan logicalPlan = analysis.getLogicalPlan();
-
-    PhysicalPlanner planner = new PhysicalPlanner(env, analysis, metadata);
-    planner.visitPlan(logicalPlan, null);
-    PhysicalPlan physicalPlan = planner.getPhysicalPlan();
 
 //    env.getFlinkEnv().execute();
 
@@ -187,7 +181,6 @@ class ImportTest {
     GraphQLSchema graphqlSchema = LogicalGraphqlSchemaBuilder
         .newGraphqlSchema()
         .analysis(analysis)
-        .physicalPlan(physicalPlan)
 //        .codeRegistry(codeRegistryBuilder.build())
         .build();
 

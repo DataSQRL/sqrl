@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.schema2.basic;
 
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import java.util.function.Function;
 
 public class BooleanType extends AbstractBasicType<Boolean> {
@@ -43,5 +44,7 @@ public class BooleanType extends AbstractBasicType<Boolean> {
         }
 
     }
-
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+        return visitor.visitBooleanType(this, context);
+    }
 }

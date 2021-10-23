@@ -28,6 +28,10 @@ public class FunctionCall
   private final boolean distinct;
   private final Optional<Window> over;
 
+  public FunctionCall(QualifiedName name, List<Expression> arguments,
+      boolean distinct) {
+    this(Optional.empty(), name, arguments, distinct, Optional.empty());
+  }
   public FunctionCall(NodeLocation location, QualifiedName name, List<Expression> arguments,
       boolean distinct) {
     this(Optional.of(location), name, arguments, distinct, Optional.empty());

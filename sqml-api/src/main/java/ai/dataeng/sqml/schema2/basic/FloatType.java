@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.schema2.basic;
 
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 
@@ -47,7 +48,9 @@ public class FloatType extends AbstractBasicType<Double> {
             if (o instanceof Boolean) return ((Boolean)o).booleanValue()?1.0:0.0;
             throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
         }
+    }
 
-
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+        return visitor.visitFloatType(this, context);
     }
 }

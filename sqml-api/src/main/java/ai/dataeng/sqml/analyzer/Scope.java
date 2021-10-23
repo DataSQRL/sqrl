@@ -9,8 +9,10 @@ import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.basic.StringType;
 import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.tree.QualifiedName;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -23,6 +25,7 @@ public class Scope {
   private RelationType currentRelation;
   private final LogicalPlan2.Builder planBuilder;
   private final QualifiedName contextName;
+  private final Set<LogicalField> references = new HashSet<>();
 
   public Scope() {
     this(null, new LogicalPlan2.Builder(), QualifiedName.of());
@@ -40,16 +43,18 @@ public class Scope {
   }
 
   public Optional<Type> resolveType(QualifiedName name) {
-    Set<Type> relations = getRelation().accept(
-        new TypeResolver(), new RelationResolverContext(Optional.of(name), this));
-
-    if (relations.size() > 1) {
-      throw new RuntimeException(String.format("Ambiguous field %s", name));
-    }
-    if (relations.size() == 0) {
-      return Optional.empty();
-    }
-    return relations.stream().findFirst();
+    return Optional.of(new StringType());
+//
+//    Set<Type> relations = getRelation().accept(
+//        new TypeResolver(), new RelationResolverContext(Optional.of(name), this));
+//
+//    if (relations.size() > 1) {
+//      throw new RuntimeException(String.format("Ambiguous field %s", name));
+//    }
+//    if (relations.size() == 0) {
+//      return Optional.empty();
+//    }
+//    return relations.stream().findFirst();
   }
 
   public Optional<RelationType<LogicalField>> resolveRelation(QualifiedName name) {
@@ -76,11 +81,6 @@ public class Scope {
     return currentRelation;
   }
 
-  public void setImportRelation(Name name, Mapping mapping,
-      RelationType relationType) {
-//    planBuilder.setImportRelation(name, mapping, relationType);
-  }
-
   public RelationType getRootRelation() {
     return this.planBuilder.getRoot();
   }
@@ -98,6 +98,10 @@ public class Scope {
 
   public void addField(LogicalField field, RelationType relationType) {
     planBuilder.addField(relationType, field);
+  }
+
+  public void addReference(LogicalField field) {
+    this.references.add(field);
   }
 
   public static class Builder {

@@ -27,6 +27,10 @@ public class LogicalPlan2 {
     this.root = root;
   }
 
+  public RelationType<LogicalField> getRoot() {
+    return root;
+  }
+
   @Getter
   public static class Builder {
     public RelationType<LogicalField> root = new RelationType<>();
@@ -72,7 +76,6 @@ public class LogicalPlan2 {
     public LogicalPlan2 build() {
       return new LogicalPlan2(root);
     }
-
   }
 
   @Getter

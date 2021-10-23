@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.schema2.basic;
 
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import lombok.NonNull;
 
 import java.util.Collections;
@@ -32,8 +33,9 @@ public class StringType extends AbstractBasicType<String> {
         public String convert(Object o) {
             return o.toString();
         }
-
-
     }
 
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+        return visitor.visitStringType(this, context);
+    }
 }

@@ -95,7 +95,7 @@ querySpecification
     ;
 
 groupBy
-    : groupingElement (',' groupingElement)*
+    : groupingElement
     ;
 
 groupingElement

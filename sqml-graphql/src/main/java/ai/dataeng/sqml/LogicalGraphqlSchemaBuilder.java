@@ -1,12 +1,23 @@
 package ai.dataeng.sqml;
 
 import ai.dataeng.sqml.analyzer.Analysis;
-import ai.dataeng.sqml.logical.RelationIdentifier;
-import ai.dataeng.sqml.logical.LogicalPlan;
-import ai.dataeng.sqml.logical.RelationDefinition;
+import ai.dataeng.sqml.dag.RelationDefinition;
+import ai.dataeng.sqml.logical3.LogicalPlan2;
+import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
 import ai.dataeng.sqml.physical.PhysicalPlan;
+import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.basic.BooleanType;
+import ai.dataeng.sqml.schema2.basic.DateTimeType;
+import ai.dataeng.sqml.schema2.basic.FloatType;
+import ai.dataeng.sqml.schema2.basic.IntegerType;
+import ai.dataeng.sqml.schema2.basic.NullType;
+import ai.dataeng.sqml.schema2.basic.NumberType;
+import ai.dataeng.sqml.schema2.basic.StringType;
+import ai.dataeng.sqml.schema2.basic.UuidType;
+import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import graphql.Scalars;
@@ -30,6 +41,7 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import scala.annotation.meta.field;
 
 @Slf4j
 public class LogicalGraphqlSchemaBuilder {
@@ -50,7 +62,7 @@ public class LogicalGraphqlSchemaBuilder {
 
     public GraphQLSchema build() {
       Visitor visitor = new Visitor(analysis, codeRegistryBuilder, physicalPlan);
-      visitor.visit(analysis.getLogicalPlan(), null);
+      visitor.visit(analysis.getPlan(), null);
       GraphQLSchema.Builder schemaBuilder = visitor.getBuilder();
       schemaBuilder.codeRegistry(this.codeRegistryBuilder.build());
 
@@ -87,115 +99,96 @@ public class LogicalGraphqlSchemaBuilder {
       return schemaBuilder;
     }
 
-    public GraphQLOutputType visit(LogicalPlan logicalPlan, Context context) {
+    public GraphQLOutputType visit(LogicalPlan2 logicalPlan, Context context) {
       GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
           .name("Query");
 
-//      for (RelationIdentifier relationIdentifier : logicalPlan.getBaseEntities()) {
-//        RelationDefinition rel = logicalPlan.getCurrentDefinition(relationIdentifier.getName())
-//            .get();
-//
-//        String fieldName = toName(relationIdentifier.getName());
-//        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
-//            .name(fieldName)
-////            .type(rel.accept(this, new Context("Query", fieldName)))
-//            .build();
-//        obj.field(f);
-//      }
+      for (LogicalField field : logicalPlan.getRoot()) {
+        Type type = field.getType();
+
+        String fieldName = toName(field.getName());
+        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
+            .name(fieldName)
+            .type(type.accept(this, new Context("Query", fieldName)))
+            .build();
+        obj.field(f);
+      }
 
       schemaBuilder.query(obj);
       return null;
     }
 
     @Override
-    public GraphQLOutputType visitRelationDefinition(RelationDefinition rel, Context context) {
-      codeRegistryBuilder.buildQuery(context.getParentType(),
-          context.getFieldName(),
-          physicalPlan.getMapper().get(rel));
+    public GraphQLOutputType visitArrayType(ArrayType type, Context context) {
+      return GraphQLList.list(type.getSubType().accept(this, context));
+    }
 
-      Optional<GraphQLTypeReference> visited;
-      if ((visited = getOrObserve(rel.getRelationIdentifier())).isPresent()) {
-        return visited.get();
-      }
+    @Override
+    public GraphQLOutputType visitNumberType(NumberType type, Context context) {
+      return Scalars.GraphQLFloat;
+    }
 
-      String name = toName(rel.getRelationIdentifier().getName());
+    @Override
+    public GraphQLOutputType visitDateTimeType(DateTimeType type, Context context) {
+      return Scalars.GraphQLString;
+    }
+
+    @Override
+    public GraphQLOutputType visitNullType(NullType type, Context context) {
+      return Scalars.GraphQLString;
+    }
+
+    @Override
+    public GraphQLOutputType visitStringType(StringType type, Context context) {
+      return Scalars.GraphQLString;
+    }
+
+    @Override
+    public GraphQLOutputType visitBooleanType(BooleanType type, Context context) {
+      return Scalars.GraphQLBoolean;
+    }
+
+    @Override
+    public GraphQLOutputType visitFloatType(FloatType type, Context context) {
+      return Scalars.GraphQLString;
+    }
+
+    @Override
+    public GraphQLOutputType visitIntegerType(IntegerType type, Context context) {
+      return Scalars.GraphQLString;
+    }
+
+    @Override
+    public GraphQLOutputType visitUuidType(UuidType type, Context context) {
+      return Scalars.GraphQLString;
+    }
+
+    @Override
+    public <F extends Field> GraphQLOutputType visitRelation(RelationType relationType,
+        Context context) {
+//            codeRegistryBuilder.buildQuery(context.getParentType(),
+//          context.getFieldName(),
+//          physicalPlan.getMapper().get(rel));
+//
+//      String name = toName(relationType.);
 
       GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
-          .name(name);
+          .name(context.fieldName);
 
-      for (Field field : rel.getFields()) {
+      for (Field field : (List<Field>)relationType.getFields()) {
         if (field.isHidden()) {
           continue;
         }
         String fieldName = toName(field.getName().getDisplay());
         GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
             .name(fieldName)
-//            .type(field.getType().accept(this, new Context(name, fieldName)))
+            .type(field.getType().accept(this, new Context(context.fieldName, fieldName)))
             .build();
         obj.field(f);
       }
       schemaBuilder.additionalType(obj.build());
 
-      return GraphQLList.list(new GraphQLTypeReference(name));
-    }
-
-    private Optional<GraphQLTypeReference> getOrObserve(RelationIdentifier relationIdentifier) {
-      String name = toName(relationIdentifier.getName());
-      if (seen.contains(relationIdentifier)) {
-        return Optional.of(new GraphQLTypeReference(name));
-      }
-      seen.add(name);
-      return Optional.empty();
-    }
-//
-//    @Override
-//    public GraphQLOutputType visitSqmlType(Type type, Context context) {
-//      throw new RuntimeException("Could not resolve SQML type for the graphql schema");
-//    }
-//
-//    @Override
-//    public GraphQLOutputType visitArray(ArrayType type, Context context) {
-//      return GraphQLList.list(type.getSubType().accept(this, context));
-//    }
-//
-//    @Override
-//    public GraphQLOutputType visitNumber(NumberType type, Context context) {
-//      return Scalars.GraphQLFloat;
-//    }
-//
-//    @Override
-//    public GraphQLOutputType visitUnknown(UnknownType type, Context context) {
-//      return Scalars.GraphQLString;
-//    }
-//
-//    @Override
-//    public GraphQLOutputType visitDateTime(DateTimeType type, Context context) {
-//      return Scalars.GraphQLString;
-//    }
-//
-//    @Override
-//    public GraphQLOutputType visitNull(NullType type, Context context) {
-//      return Scalars.GraphQLString;
-//    }
-//
-//    @Override
-//    public GraphQLOutputType visitString(StringType type, Context context) {
-//      return Scalars.GraphQLString;
-//    }
-//
-//    @Override
-//    public GraphQLOutputType visitBoolean(BooleanType type, Context context) {
-//      return Scalars.GraphQLBoolean;
-//    }
-//
-//    @Override
-//    public GraphQLOutputType visitScalarType(Type type, Context context) {
-//      throw new RuntimeException(String.format("Unidentified scalar for api gen: %s", type));
-//    }
-
-    @Override
-    public GraphQLOutputType visitRelation(RelationType type, Context context) {
-      throw new RuntimeException(String.format("Unidentified relation %s", type.getClass().getName()));
+      return new GraphQLTypeReference(context.fieldName);
     }
 
     public static String toGraphqlName(String name) {
@@ -237,6 +230,10 @@ public class LogicalGraphqlSchemaBuilder {
 
     public static String toName(QualifiedName name) {
       return toGraphqlName(String.join("_", name.getParts()));
+    }
+
+    public static String toName(Name name) {
+      return toGraphqlName(name.getDisplay());
     }
 
     public static String toName(String name) {
