@@ -2,36 +2,12 @@ package ai.dataeng.sqml;
 
 import static graphql.schema.FieldCoordinates.coordinates;
 
-import ai.dataeng.sqml.physical.PhysicalPlanNode;
-import ai.dataeng.sqml.schema2.Field;
-import ai.dataeng.sqml.tree.AllColumns;
-import ai.dataeng.sqml.tree.ComparisonExpression;
-import ai.dataeng.sqml.tree.ComparisonExpression.Operator;
-import ai.dataeng.sqml.tree.Expression;
-import ai.dataeng.sqml.tree.GroupBy;
-import ai.dataeng.sqml.tree.Identifier;
-import ai.dataeng.sqml.tree.LogicalBinaryExpression;
-import ai.dataeng.sqml.tree.LongLiteral;
-import ai.dataeng.sqml.tree.NodeFormatter;
-import ai.dataeng.sqml.tree.NodeLocation;
-import ai.dataeng.sqml.tree.OrderBy;
-import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.Query;
-import ai.dataeng.sqml.tree.QuerySpecification;
-import ai.dataeng.sqml.tree.Select;
-import ai.dataeng.sqml.tree.Table;
-import com.google.common.collect.ImmutableMap;
 import graphql.language.Selection;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLCodeRegistry;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CodeRegistryBuilder {
   GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
 
-  public void buildQuery(String parentType, String fieldName, PhysicalPlanNode node) {
+  public void buildQuery(String parentType, String fieldName) {
     codeRegistry.dataFetcher(coordinates(parentType, fieldName),
         new DataFetcher<List<Map<String, Object>>>() {
           @Override

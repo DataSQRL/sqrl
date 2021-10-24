@@ -7,28 +7,16 @@ import ai.dataeng.sqml.analyzer.Analyzer;
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.env.SqmlEnv;
-import ai.dataeng.sqml.execution.SQMLBundle;
-import ai.dataeng.sqml.execution.importer.ImportManager;
-import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.function.PostgresFunctions;
-import ai.dataeng.sqml.imports.ImportLoader;
-import ai.dataeng.sqml.imports.TableImportObject;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
 import ai.dataeng.sqml.ingest.DatasetRegistration;
-import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
-import ai.dataeng.sqml.ingest.source.SourceTable;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.parser.SqmlParser;
-import ai.dataeng.sqml.physical.PhysicalPlan;
-import ai.dataeng.sqml.physical.PhysicalPlanner;
-import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
-import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
 import ai.dataeng.sqml.tree.Script;
 import graphql.ExecutionInput;
@@ -39,8 +27,6 @@ import graphql.schema.GraphQLSchema;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.junit.jupiter.api.Test;
 
@@ -142,46 +128,39 @@ class ImportTest {
     //Script processing
     Analysis analysis = Analyzer.analyze(script, metadata);
     System.out.println(analysis.getPlan());
-
-    analysis.getDefinedFunctions().stream()
-        .forEach((f)->{
-          try {
-            if (f.isAggregation()) {
-              env.getConnectionProvider().getOrEstablishConnection()
-                  .createStatement().execute(String.format("DROP AGGREGATE IF EXISTS %s;", f.getName()));
-              env.getConnectionProvider().getOrEstablishConnection()
-                  .createStatement().execute(String.format("CREATE AGGREGATE %s FOR \"%s\";", f.getName(),
-                      f.getClass().getName()));
-
-            } else {
-              env.getConnectionProvider().getOrEstablishConnection()
-                  .createStatement()
-                  .execute(String.format("DROP ALIAS IF EXISTS %s ", f.getName()));
-
-              String registerFunctionQuery = String.format("CREATE OR REPLACE ALIAS %s \n"
-                  + "   FOR \"%s\";", f.getName(), f.getClass().getName() + ".fn");
-
-              env.getConnectionProvider().getOrEstablishConnection()
-                  .createStatement().execute(registerFunctionQuery);
-            }
-
-          } catch (SQLException e) {
-            e.printStackTrace();
-          } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-          }
-        });
-
-
-//    env.getFlinkEnv().execute();
-
-//    CodeRegistryBuilder codeRegistryBuilder = new CodeRegistryBuilder();
-//    physicalPlan.accept(codeRegistryBuilder, null);
+//
+//    analysis.getDefinedFunctions().stream()
+//        .forEach((f)->{
+//          try {
+//            if (f.isAggregation()) {
+//              env.getConnectionProvider().getOrEstablishConnection()
+//                  .createStatement().execute(String.format("DROP AGGREGATE IF EXISTS %s;", f.getName()));
+//              env.getConnectionProvider().getOrEstablishConnection()
+//                  .createStatement().execute(String.format("CREATE AGGREGATE %s FOR \"%s\";", f.getName(),
+//                      f.getClass().getName()));
+//
+//            } else {
+//              env.getConnectionProvider().getOrEstablishConnection()
+//                  .createStatement()
+//                  .execute(String.format("DROP ALIAS IF EXISTS %s ", f.getName()));
+//
+//              String registerFunctionQuery = String.format("CREATE OR REPLACE ALIAS %s \n"
+//                  + "   FOR \"%s\";", f.getName(), f.getClass().getName() + ".fn");
+//
+//              env.getConnectionProvider().getOrEstablishConnection()
+//                  .createStatement().execute(registerFunctionQuery);
+//            }
+//
+//          } catch (SQLException e) {
+//            e.printStackTrace();
+//          } catch (ClassNotFoundException e) {
+//            e.printStackTrace();
+//          }
+//        });
 
     GraphQLSchema graphqlSchema = LogicalGraphqlSchemaBuilder
         .newGraphqlSchema()
         .analysis(analysis)
-//        .codeRegistry(codeRegistryBuilder.build())
         .build();
 
     GraphQL graphQL = GraphQL.newGraphQL(graphqlSchema)

@@ -1,10 +1,12 @@
 package ai.dataeng.sqml;
 
-import ai.dataeng.sqml.ViewQueryRewriter.ViewMaterializerContext;
+import ai.dataeng.sqml.ViewQueryRewriter.ViewRewriterContext;
 import ai.dataeng.sqml.ViewQueryRewriter.ViewScope;
+import ai.dataeng.sqml.analyzer.ExpressionAnalysis;
 import ai.dataeng.sqml.analyzer.Scope;
 import ai.dataeng.sqml.analyzer.StatementAnalysis;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
+import ai.dataeng.sqml.physical.PhysicalModel;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionRewriter;
@@ -33,37 +35,42 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Value;
 
-public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewMaterializerContext> {
-  public List<ViewTable> tables = new ArrayList<>();
+public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext> {
+  private final PhysicalModel plan;
+  private final ColumnNameGen columnNameGen;
 
-  ColumnNameGen columnNameGen = new ColumnNameGen();
+  public ViewQueryRewriter(PhysicalModel plan,
+      ColumnNameGen columnNameGen) {
+    this.plan = plan;
+    this.columnNameGen = columnNameGen;
+  }
   @Override
-  protected ViewScope visitImportDefinition(ImportDefinition node, ViewMaterializerContext context) {
-    tables.add(
-        new ViewTable(QualifiedName.of("product"),
+  protected ViewScope visitImportDefinition(ImportDefinition node, ViewRewriterContext context) {
+    ViewTable table = new ViewTable(QualifiedName.of("product"),
         "product_1",
         List.of(new DataColumn("productid", "productid_1"),
             new DataColumn(null, "uuid")),
         Optional.empty()
-        ));
-    return null;
+    );
+
+    return new ViewScope(node, table);
   }
 
   @Override
-  public ViewScope visitQueryAssignment(QueryAssignment node, ViewMaterializerContext context) {
+  public ViewScope visitQueryAssignment(QueryAssignment node, ViewRewriterContext context) {
     //todo Create materialization map
     return node.getQuery().accept(this, context);
   }
 
   @Override
-  protected ViewScope visitQuery(Query node, ViewMaterializerContext context) {
+  protected ViewScope visitQuery(Query node, ViewRewriterContext context) {
     //Todo: reminder of Query node
     return node.getQueryBody().accept(this, context);
   }
 
   @Override
   protected ViewScope visitQuerySpecification(QuerySpecification node,
-      ViewMaterializerContext context) {
+      ViewRewriterContext context) {
     ViewScope fromScope = node.getFrom().accept(this, context);
     Optional<Expression> whereNode = node.getWhere().map(where -> processWhere(node, fromScope, where));
 
@@ -145,7 +152,7 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewMaterializerCon
   }
 
   @Override
-  protected ViewScope visitTable(Table node, ViewMaterializerContext context) {
+  protected ViewScope visitTable(Table node, ViewRewriterContext context) {
     Preconditions.checkState(node.getName().getParts().size() == 1, "Table paths tbd");
     Optional<ViewTable> table = getTable(node.getName());
     Preconditions.checkState(table.isPresent(), "Could not find table %s", node.getName());
@@ -157,7 +164,7 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewMaterializerCon
   }
 
   private Optional<ViewTable> getTable(QualifiedName name) {
-    List<ViewTable> viewTables = this.tables;
+    List<ViewTable> viewTables = this.plan.getTables();
     for (int i = viewTables.size() - 1; i >= 0; i--) {
       ViewTable table = viewTables.get(i);
       if (table.getPath().equals(name)) {
@@ -184,21 +191,14 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewMaterializerCon
   public static class ViewScope {
     Node node;
     ViewTable table;
-
-    public String getTableName() {
-      return null;
-    }
-
-    public List<DataColumn> getColumns() {
-      return null;
-    }
   }
 
   @Value
-  public static class ViewMaterializerContext {
-    StatementAnalysis analysis;
+  public static class ViewRewriterContext {
     Scope result;
-    ImportSchema schema;
+    Optional<StatementAnalysis> analysis;
+    Optional<ImportSchema> schema;
+    Optional<ExpressionAnalysis> expressionAnalysis;
   }
 
   @Value
@@ -210,24 +210,25 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewMaterializerCon
 
     Optional<Node> queryAst;
 
-    public List<DataColumn> getColumns() {
-      Map<String, DataColumn> cols = columns.stream().collect(
-          Collectors.toUnmodifiableMap(t -> t.getLogicalName(), Function.identity(),
+    public List<DataColumn> getSqmlColumns() {
+      Map<String, DataColumn> cols = columns.stream()
+          .filter(c->c.getLogicalName() != null)
+          .collect(
+          Collectors.toUnmodifiableMap(DataColumn::getLogicalName, Function.identity(),
               (v1, v2) -> v2));
       return new ArrayList<>(cols.values());
     }
 
-    public Optional<DataColumn> getColumn(String value) {
+    public Optional<DataColumn> getColumn(String logicalName) {
       List<DataColumn> selectionSet = columns;
       for (int i = selectionSet.size() - 1; i >= 0; i--) {
         DataColumn column = selectionSet.get(i);
-        if (column.getLogicalName() != null && column.getLogicalName().equals(value)) {
+        if (column.getLogicalName() != null && column.getLogicalName().equals(logicalName)) {
           return Optional.of(column);
         }
       }
       return Optional.empty();
     }
-
   }
 
   public interface Column {
@@ -240,7 +241,7 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewMaterializerCon
     String physicalName;
   }
 
-  public class ColumnNameGen {
+  public static class ColumnNameGen {
     int count = 0;
     public String generateName(String name) {
       return name + "_" + (++count);

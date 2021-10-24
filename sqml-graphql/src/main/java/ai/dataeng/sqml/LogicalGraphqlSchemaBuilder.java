@@ -1,10 +1,8 @@
 package ai.dataeng.sqml;
 
 import ai.dataeng.sqml.analyzer.Analysis;
-import ai.dataeng.sqml.dag.RelationDefinition;
 import ai.dataeng.sqml.logical3.LogicalPlan2;
 import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
-import ai.dataeng.sqml.physical.PhysicalPlan;
 import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
@@ -37,11 +35,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import scala.annotation.meta.field;
 
 @Slf4j
 public class LogicalGraphqlSchemaBuilder {
@@ -53,7 +49,6 @@ public class LogicalGraphqlSchemaBuilder {
   public static class Builder {
     private Analysis analysis;
     private CodeRegistryBuilder codeRegistryBuilder = new CodeRegistryBuilder();
-    private PhysicalPlan physicalPlan;
 
     public Builder analysis(Analysis analysis) {
       this.analysis = analysis;
@@ -61,7 +56,7 @@ public class LogicalGraphqlSchemaBuilder {
     }
 
     public GraphQLSchema build() {
-      Visitor visitor = new Visitor(analysis, codeRegistryBuilder, physicalPlan);
+      Visitor visitor = new Visitor(analysis, codeRegistryBuilder);
       visitor.visit(analysis.getPlan(), null);
       GraphQLSchema.Builder schemaBuilder = visitor.getBuilder();
       schemaBuilder.codeRegistry(this.codeRegistryBuilder.build());
@@ -71,27 +66,20 @@ public class LogicalGraphqlSchemaBuilder {
       return schemaBuilder.build();
     }
 
-    public Builder physicalPlan(PhysicalPlan physicalPlan) {
-      this.physicalPlan = physicalPlan;
-      return this;
-    }
   }
 
   static class Visitor extends SqmlTypeVisitor<GraphQLOutputType, Context> {
     private final Analysis analysis;
     private final CodeRegistryBuilder codeRegistryBuilder;
-    private final PhysicalPlan physicalPlan;
     private GraphQLSchema.Builder schemaBuilder;
     private Map<QualifiedName, GraphQLObjectType.Builder> gqlTypes = new HashMap<>();
     private Set<GraphQLType> additionalTypes = new HashSet<>();
     private GraphQLInputType bind;
     Set<String> seen = new HashSet<>();
 
-    public Visitor(Analysis analysis, CodeRegistryBuilder codeRegistryBuilder,
-        PhysicalPlan physicalPlan) {
+    public Visitor(Analysis analysis, CodeRegistryBuilder codeRegistryBuilder) {
       this.analysis = analysis;
       this.codeRegistryBuilder = codeRegistryBuilder;
-      this.physicalPlan = physicalPlan;
       this.schemaBuilder = GraphQLSchema.newSchema();
     }
 

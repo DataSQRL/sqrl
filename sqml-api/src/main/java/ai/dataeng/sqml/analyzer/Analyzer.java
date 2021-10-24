@@ -1,9 +1,9 @@
 package ai.dataeng.sqml.analyzer;
 
 import ai.dataeng.sqml.ViewQueryRewriter;
-import ai.dataeng.sqml.ViewQueryRewriter.ViewMaterializerContext;
+import ai.dataeng.sqml.ViewQueryRewriter.ColumnNameGen;
+import ai.dataeng.sqml.ViewQueryRewriter.ViewRewriterContext;
 import ai.dataeng.sqml.ViewQueryRewriter.ViewScope;
-import ai.dataeng.sqml.ViewQueryRewriter.ViewTable;
 import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
@@ -16,6 +16,7 @@ import ai.dataeng.sqml.logical3.LogicalPlan2.RelationshipField;
 import ai.dataeng.sqml.logical3.LogicalPlan2.SelectRelationField;
 import ai.dataeng.sqml.logical3.LogicalPlan2.SubscriptionField;
 import ai.dataeng.sqml.metadata.Metadata;
+import ai.dataeng.sqml.physical.PhysicalModel;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
@@ -70,7 +71,8 @@ public class Analyzer {
     private final Analysis analysis;
     private final Metadata metadata;
     private final AtomicBoolean importResolved = new AtomicBoolean(false);
-    ViewQueryRewriter viewMaterializer = new ViewQueryRewriter();
+    private final PhysicalModel plan = new PhysicalModel();
+    private final ColumnNameGen columnNameGen = new ColumnNameGen();
 
     public Visitor(Analysis analysis, Metadata metadata) {
       this.analysis = analysis;
@@ -130,7 +132,8 @@ public class Analyzer {
         scope.addRootField(new DelegateLogicalField(schema.getSchema().getFieldByName(mapping.getKey())));
       }
 
-      ViewScope scope2 = node.accept(viewMaterializer, new ViewMaterializerContext(null, scope, schema));
+      createPhysicalView(node, scope, Optional.of(schema), Optional.empty(), Optional.empty());
+
       return scope;
     }
 
@@ -144,19 +147,8 @@ public class Analyzer {
 
       scope.addField(new SelectRelationField(toName(name), result.getRelation(), Optional.empty()));
 
-      ViewScope scope2 = queryAssignment.accept(viewMaterializer, new ViewMaterializerContext(
-          statementAnalyzer.getAnalysis(), result, null
-      ));
-      ViewTable viewTable = new ViewTable(
-          queryAssignment.getName(),
-          scope2.getTableName(),
-          scope2.getColumns(),
-          Optional.of(scope2.getNode())
-      );
-
-      viewMaterializer.tables.add(viewTable);
-
-//      System.out.println(scope2.getNode().accept(new NodeFormatter(), null));
+      createPhysicalView(queryAssignment, result, Optional.empty(), Optional.of(statementAnalyzer.getAnalysis()),
+          Optional.empty());
 
       return createAndAssignScope(queryAssignment, null,
           name, scope);
@@ -176,7 +168,8 @@ public class Analyzer {
 
       scope.addField(new DataField(toName(name), type, List.of()));
 
-      //Create MV, add field
+      createPhysicalView(expressionAssignment, scope, Optional.empty(),
+          Optional.empty(), Optional.of(exprAnalysis));
 
       return createAndAssignScope(expression,
           null,
@@ -260,11 +253,19 @@ public class Analyzer {
       }
       return Optional.empty();
     }
+
     public Name toName(QualifiedName name) {
       return Name.of(name.toOriginalString(), NameCanonicalizer.SYSTEM);
     }
-  }
-  public static Name toName(String name) {
-    return Name.of(name, NameCanonicalizer.SYSTEM);
+
+    private void createPhysicalView(Node node, Scope scope,
+        Optional<ImportSchema> schema, Optional<StatementAnalysis> analysis,
+        Optional<ExpressionAnalysis> expressionAnalysis) {
+      ViewQueryRewriter viewRewriter = new ViewQueryRewriter(plan, columnNameGen);
+      ViewScope scope2 = node.accept(viewRewriter, new ViewRewriterContext(scope, analysis,
+          schema, expressionAnalysis));
+
+      plan.addTable(scope2.getTable());
+    }
   }
 }
