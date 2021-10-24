@@ -16,6 +16,7 @@ import ai.dataeng.sqml.schema2.basic.NumberType;
 import ai.dataeng.sqml.schema2.basic.StringType;
 import ai.dataeng.sqml.schema2.basic.UuidType;
 import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import graphql.Scalars;
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +63,13 @@ public class LogicalGraphqlSchemaBuilder {
       GraphQLSchema.Builder schemaBuilder = visitor.getBuilder();
       schemaBuilder.codeRegistry(this.codeRegistryBuilder.build());
 
+      analysis.getPhysicalModel().getTables()
+              .stream().map(t->t.getQueryAst().map(q->q.accept(new NodeFormatter(), null)))
+              .filter(Optional::isPresent)
+              .map(Optional::get)
+              .forEach(e-> System.out.println(e));
+
+      System.out.println();
       System.out.println(new SchemaPrinter().print(schemaBuilder.build()));
 
       return schemaBuilder.build();

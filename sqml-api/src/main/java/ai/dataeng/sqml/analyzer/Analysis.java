@@ -5,6 +5,7 @@ import static com.google.common.collect.Multimaps.unmodifiableMultimap;
 
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.logical3.LogicalPlan2;
+import ai.dataeng.sqml.physical.PhysicalModel;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
@@ -45,9 +46,11 @@ public class Analysis {
   private final Multimap<NodeRef<Expression>, FieldId> columnReferences = ArrayListMultimap.create();
   private List<SqmlFunction> functions = new ArrayList<>();
   private LogicalPlan2 plan;
+  private PhysicalModel physicalModel;
 
-  public Analysis(Script script) {
+  public Analysis(Script script, PhysicalModel physicalModel) {
     this.script = script;
+    this.physicalModel = physicalModel;
   }
 
   public Optional<Type> getType(Expression expression) {
@@ -183,5 +186,13 @@ public class Analysis {
 
   public LogicalPlan2 getPlan() {
     return plan;
+  }
+
+  public void setPhysicalModel(PhysicalModel physicalModel) {
+    this.physicalModel = physicalModel;
+  }
+
+  public PhysicalModel getPhysicalModel() {
+    return physicalModel;
   }
 }

@@ -53,7 +53,7 @@ public class Analyzer {
   }
 
   public static Analysis analyze(Script script, Metadata metadata) {
-    Analysis analysis = new Analysis(script);
+    Analysis analysis = new Analysis(script, new PhysicalModel());
     Analyzer analyzer = new Analyzer(script, metadata, analysis);
 
     analyzer.analyze();
@@ -71,7 +71,6 @@ public class Analyzer {
     private final Analysis analysis;
     private final Metadata metadata;
     private final AtomicBoolean importResolved = new AtomicBoolean(false);
-    private final PhysicalModel plan = new PhysicalModel();
     private final ColumnNameGen columnNameGen = new ColumnNameGen();
 
     public Visitor(Analysis analysis, Metadata metadata) {
@@ -261,11 +260,13 @@ public class Analyzer {
     private void createPhysicalView(Node node, Scope scope,
         Optional<ImportSchema> schema, Optional<StatementAnalysis> analysis,
         Optional<ExpressionAnalysis> expressionAnalysis) {
-      ViewQueryRewriter viewRewriter = new ViewQueryRewriter(plan, columnNameGen);
+      ViewQueryRewriter viewRewriter = new ViewQueryRewriter(this.analysis.getPhysicalModel(),
+          columnNameGen);
       ViewScope scope2 = node.accept(viewRewriter, new ViewRewriterContext(scope, analysis,
           schema, expressionAnalysis));
 
-      plan.addTable(scope2.getTable());
+      this.analysis.getPhysicalModel()
+          .addTable(scope2.getTable());
     }
   }
 }

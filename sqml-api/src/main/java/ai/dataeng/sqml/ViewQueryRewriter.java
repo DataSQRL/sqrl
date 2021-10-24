@@ -53,13 +53,20 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
         Optional.empty()
     );
 
-    return new ViewScope(node, table);
+    return new ViewScope(node, table, table.getColumns());
   }
 
   @Override
   public ViewScope visitQueryAssignment(QueryAssignment node, ViewRewriterContext context) {
     //todo Create materialization map
-    return node.getQuery().accept(this, context);
+    ViewScope rewritten = node.getQuery().accept(this, context);
+    ViewTable viewTable = new ViewTable(
+        node.getName(),
+        columnNameGen.generateName(node.getName().getParts().get(0)),
+        rewritten.getColumns(),
+        Optional.of(rewritten.node));
+
+    return new ViewScope(node, viewTable, rewritten.getColumns());
   }
 
   @Override
@@ -74,7 +81,7 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
     ViewScope fromScope = node.getFrom().accept(this, context);
     Optional<Expression> whereNode = node.getWhere().map(where -> processWhere(node, fromScope, where));
 
-    Select select = processSelect(node, fromScope);
+    SelectResults select = processSelect(node, fromScope);
 
     Optional<GroupBy> groupBy = processGroupBy(node, fromScope, null);
 
@@ -82,14 +89,14 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
 
     return new ViewScope(new QuerySpecification(
         node.getLocation(),
-        select,
+        select.getSelect(),
         (Relation)fromScope.node,
         whereNode,
         groupBy,
         having,
         Optional.empty(), //order by
         Optional.empty()// limit
-    ), null);
+    ), null, select.getColumns());
   }
 
   private Optional<Expression> processHaving(QuerySpecification node, ViewScope fromScope) {
@@ -122,7 +129,8 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
     return rewriteExpression(where, fromScope);
   }
 
-  private Select processSelect(QuerySpecification node, ViewScope from) {
+  private SelectResults processSelect(QuerySpecification node, ViewScope from) {
+    List<DataColumn> dataColumns = new ArrayList<>();
     List<SelectItem> columns = new ArrayList<>();
     for (SelectItem item : node.getSelect().getSelectItems()) {
       if (item instanceof SingleColumn) {
@@ -134,17 +142,21 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
         String physicalName = columnNameGen.generateName(column.getAlias().get().getValue());
         columns.add(new SingleColumn(rewritten,
             new Identifier(physicalName)));
-        //Todo: Mapping from alias or name to column name
 
-//        from.addMapping(physicalName, column.getAlias().get().getValue());
+        dataColumns.add(new DataColumn(column.getAlias().get().getValue(), physicalName));
       } else {
         throw new RuntimeException("tbd");
       }
     }
 
-    //
+    return new SelectResults(new Select(node.getSelect().isDistinct(), columns),
+        dataColumns);
+  }
 
-    return new Select(node.getSelect().isDistinct(), columns);
+  @Value
+  class SelectResults {
+    Select select;
+    List<DataColumn> columns;
   }
 
   private Expression rewriteExpression(Expression expression, ViewScope viewScope) {
@@ -159,7 +171,8 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
 
     return new ViewScope(
         new Table(QualifiedName.of(table.get().getTableName())),
-        table.get()
+        table.get(),
+        table.get().getColumns()
       );
   }
 
@@ -190,7 +203,8 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
   @Value
   public static class ViewScope {
     Node node;
-    ViewTable table;
+    ViewTable table; //todo: to analysis object?
+    List<DataColumn> columns;
   }
 
   @Value
