@@ -1,16 +1,11 @@
 package ai.dataeng.sqml.analyzer;
 
-import ai.dataeng.sqml.analyzer.TypeResolver.RelationResolverContext;
-import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
 import ai.dataeng.sqml.logical3.LogicalPlan2;
+import ai.dataeng.sqml.logical3.LogicalPlan2.Builder;
 import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.SelectRelationField;
-import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
-import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.StringType;
-import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.tree.QualifiedName;
 import java.util.HashSet;
 import java.util.List;
@@ -61,6 +56,14 @@ public class Scope {
     return planBuilder.resolveRelation(this.getContextName(), name);
   }
 
+  public Optional<LogicalField> resolveField(QualifiedName name) {
+    return planBuilder.resolveField(this.getContextName(), name);
+  }
+
+  public LogicalPlan2.Builder getPlanBuilder() {
+    return planBuilder;
+  }
+
   public QualifiedName getContextName() {
     return contextName;
   }
@@ -91,7 +94,9 @@ public class Scope {
 
   public void addField(LogicalField field) {
     RelationType<LogicalField> relationType =
-        getContextName().getPrefix().map(n-> resolveRelation(n).orElseThrow()).orElseGet(
+        getContextName().getPrefix().map(n-> resolveRelation(n).orElseThrow(
+            ()->new RuntimeException(String.format("Could not find relation %s", n))
+        )).orElseGet(
             this::getRootRelation);
     addField(field, relationType);
   }

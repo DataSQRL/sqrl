@@ -2,6 +2,8 @@ package ai.dataeng.sqml;
 
 import static graphql.schema.FieldCoordinates.coordinates;
 
+import ai.dataeng.sqml.ViewQueryRewriter.ViewTable;
+import ai.dataeng.sqml.schema2.Field;
 import graphql.language.Selection;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
@@ -15,13 +17,14 @@ import lombok.extern.slf4j.Slf4j;
 public class CodeRegistryBuilder {
   GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
 
-  public void buildQuery(String parentType, String fieldName) {
-    codeRegistry.dataFetcher(coordinates(parentType, fieldName),
+  public void buildQuery(String parentType, Field field, ViewTable viewTable) {
+    codeRegistry.dataFetcher(coordinates(parentType, field.getName().getDisplay()),
         new DataFetcher<List<Map<String, Object>>>() {
           @Override
           public List<Map<String, Object>> get(DataFetchingEnvironment environment) throws Exception {
             GraphqlSqmlContext context = environment.getContext();
 
+            System.out.println(viewTable);
             //Todo: push logic into plan node so predicates can be pushed into it
 
             //If node has context fields
@@ -62,7 +65,7 @@ public class CodeRegistryBuilder {
 //            ResultSet rs = context.getConnection().createStatement()
 //                .executeQuery(queryStr);
 //            return toResult(rs);
-            return null;
+            return List.of();
           }
       });
   }

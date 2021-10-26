@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import ai.dataeng.sqml.OperatorType;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.function.TypeSignature;
+import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
@@ -241,7 +242,7 @@ public class ExpressionAnalyzer {
       if (!(type instanceof RelationType)) {
         throw new RuntimeException(String.format("Dereference type not a relation: %s", node));
       }
-      RelationType relType = (RelationType) type;
+      RelationType<LogicalField> relType = (RelationType<LogicalField>) type;
       Optional<Field> field = relType.getField(node.getField().getValue());
       if (field.isEmpty()) {
         throw new RuntimeException(String.format("Could not dereference %s in %s", node.getBase(), node.getField()));

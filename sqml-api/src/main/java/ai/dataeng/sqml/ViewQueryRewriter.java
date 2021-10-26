@@ -11,6 +11,7 @@ import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionRewriter;
 import ai.dataeng.sqml.tree.ExpressionTreeRewriter;
+import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.Identifier;
@@ -48,8 +49,13 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
   protected ViewScope visitImportDefinition(ImportDefinition node, ViewRewriterContext context) {
     ViewTable table = new ViewTable(QualifiedName.of("product"),
         "product_1",
-        List.of(new DataColumn("productid", "productid_1"),
-            new DataColumn(null, "uuid")),
+        List.of(
+            new DataColumn("productid", "productid"),
+            new DataColumn("name", "name"),
+            new DataColumn("description", "description"),
+            new DataColumn("category", "category"),
+            new DataColumn(null, "uuid")
+        ),
         Optional.empty()
     );
 
@@ -139,11 +145,11 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
 
         //Todo: tracking aliasing ?
         Expression rewritten = rewriteExpression(column.getExpression(), from);
-        String physicalName = columnNameGen.generateName(column.getAlias().get().getValue());
+        String physicalName = columnNameGen.generateName(column);
         columns.add(new SingleColumn(rewritten,
             new Identifier(physicalName)));
 
-        dataColumns.add(new DataColumn(column.getAlias().get().getValue(), physicalName));
+        dataColumns.add(new DataColumn(extractColumnName(column), physicalName));
       } else {
         throw new RuntimeException("tbd");
       }
@@ -151,6 +157,16 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
 
     return new SelectResults(new Select(node.getSelect().isDistinct(), columns),
         dataColumns);
+  }
+
+  private String extractColumnName(SingleColumn name) {
+    if (name.getAlias().isPresent()) {
+      return name.getAlias().get().getValue() + "_" + (++columnNameGen.count);
+    } else if (name.getExpression() instanceof Identifier) {
+      return ((Identifier)name.getExpression()).getValue() + "_" + (++columnNameGen.count);
+    }
+
+    return "VAR_" + (++columnNameGen.count);
   }
 
   @Value
@@ -166,7 +182,7 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
   @Override
   protected ViewScope visitTable(Table node, ViewRewriterContext context) {
     Preconditions.checkState(node.getName().getParts().size() == 1, "Table paths tbd");
-    Optional<ViewTable> table = getTable(node.getName());
+    Optional<ViewTable> table = this.plan.getTableByName(node.getName());
     Preconditions.checkState(table.isPresent(), "Could not find table %s", node.getName());
 
     return new ViewScope(
@@ -176,25 +192,20 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
       );
   }
 
-  private Optional<ViewTable> getTable(QualifiedName name) {
-    List<ViewTable> viewTables = this.plan.getTables();
-    for (int i = viewTables.size() - 1; i >= 0; i--) {
-      ViewTable table = viewTables.get(i);
-      if (table.getPath().equals(name)) {
-        return Optional.of(table);
-      }
-    }
-
-    return Optional.empty();
-  }
-
   public class TableExpressionRewriter
       extends ExpressionRewriter<ViewScope> {
 
     @Override
+    public Expression rewriteFunctionCall(FunctionCall node, ViewScope context,
+        ExpressionTreeRewriter<ViewScope> treeRewriter) {
+      return super.rewriteFunctionCall(node, context, treeRewriter);
+    }
+
+    @Override
     public Expression rewriteIdentifier(Identifier node, ViewScope context,
         ExpressionTreeRewriter<ViewScope> treeRewriter) {
-            Optional<DataColumn> column = context.getTable().getColumn(node.getValue());
+
+      Optional<DataColumn> column = context.getTable().getColumn(node.getValue());
       if (column.isEmpty()) throw new RuntimeException(String.format("Could not find column %s", node.getValue()));
       return new Identifier(column.get().getPhysicalName()); //todo: new identifier?
     }
@@ -256,7 +267,16 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
   }
 
   public static class ColumnNameGen {
-    int count = 0;
+    public int count = 0;
+    public String generateName(SingleColumn name) {
+      if (name.getAlias().isPresent()) {
+        return name.getAlias().get().getValue() + "_" + (++count);
+      } else if (name.getExpression() instanceof Identifier) {
+        return ((Identifier)name.getExpression()).getValue() + "_" + (++count);
+      }
+
+      return "VAR_" + (++count);
+    }
     public String generateName(String name) {
       return name + "_" + (++count);
     }

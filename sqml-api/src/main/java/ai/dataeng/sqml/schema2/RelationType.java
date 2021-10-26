@@ -35,6 +35,7 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
      * @param name
      * @return
      */
+    //TODO: Should be optional
     public F getFieldByName(Name name) {
         if (fieldsByName == null) {
             fieldsByName = fields.stream().collect(
@@ -69,7 +70,7 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
     }
 
     public Optional<Field> getField(String value) {
-        return Optional.ofNullable(fieldsByName.get(Name.of(value, NameCanonicalizer.SYSTEM)));
+        return Optional.ofNullable(getFieldByName(Name.of(value, NameCanonicalizer.SYSTEM)));
     }
 
     public static class Builder<F extends Field> extends AbstractBuilder<F,Builder<F>> {

@@ -16,7 +16,7 @@ import ai.dataeng.sqml.schema2.basic.StringType;
 import ai.dataeng.sqml.schema2.basic.UuidType;
 
 public class SqmlTypeVisitor<R, C> {
-  public <F extends Field> R visitRelation(RelationType relationType, C context) {
+  public <F extends Field> R visitRelation(RelationType<F> relationType, C context) {
     return null;
   }
   public R visitType(Type type, C context) {

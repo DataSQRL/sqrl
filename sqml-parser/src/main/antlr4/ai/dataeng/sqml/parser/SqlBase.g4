@@ -103,7 +103,7 @@ groupingElement
     ;
 
 groupingSet
-    : '(' (expression (',' expression)*)? ')'
+    : (expression (',' expression)*)?
     | expression
     ;
 

@@ -11,6 +11,7 @@ import ai.dataeng.sqml.schema2.name.Name;
 import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
 import ai.dataeng.sqml.schema2.name.NamePath;
 import ai.dataeng.sqml.tree.QualifiedName;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -35,12 +36,52 @@ public class LogicalPlan2 {
   public static class Builder {
     public RelationType<LogicalField> root = new RelationType<>();
 
+    //First attempt to resolve field on current relation, if missing, try root scope
     public Optional<RelationType<LogicalField>> resolveRelation(QualifiedName contextName,
         QualifiedName name) {
+      return resolveField(contextName, name)
+          .map(e->(RelationType<LogicalField>)unbox(e.getType()));
+    }
+    public Optional<LogicalField> resolveField(QualifiedName contextName,
+        QualifiedName name) {
+      //Resolving root scope
+      if (contextName.getPrefix().isEmpty()) {
+        return resolveRelation(root, name);
+      }
 
-      RelationType<LogicalField> rel = root;
-      for (String part : name.getParts()) {
-        Field f = rel.getFieldByName(Name.of(part, NameCanonicalizer.SYSTEM));
+      if (name.getParts().get(0).equals("@")) {
+        System.out.println();
+      }
+
+      Optional<LogicalField> contextRel = resolveRelation(root, contextName.getPrefix().get());
+      if (contextRel.isEmpty()) {
+        throw new RuntimeException("Cannot find parent relation");
+      }
+      Optional<LogicalField> localRel = resolveRelation((RelationType<LogicalField>)
+          unbox(contextRel.get().getType()), name);
+      if (localRel.isPresent()) {
+        return localRel;
+      }
+
+      return resolveRelation(root, name);
+    }
+
+    private Optional<LogicalField> resolveRelation(RelationType<LogicalField> rel, QualifiedName name) {
+      LogicalField field = null;
+      List<String> parts = name.getParts();
+      for (int i = 0; i < parts.size(); i++) {
+        String part = parts.get(i);
+        if (part.equals("@")) {
+          if (i != 0) {
+            return Optional.empty();
+          }
+          if (rel == root) {
+            return Optional.empty();
+          }
+          continue;
+        }
+
+        LogicalField f = rel.getFieldByName(Name.of(part, NameCanonicalizer.SYSTEM));
         if (f == null) {
           return Optional.empty();
         }
@@ -49,12 +90,13 @@ public class LogicalPlan2 {
           return Optional.empty();
         }
         rel = (RelationType<LogicalField>) type;
+        field = f;
       }
 
-      return Optional.of(rel);
+      return Optional.of(field);
     }
 
-    private Type unbox(Type type) {
+    public static Type unbox(Type type) {
       if (type instanceof RelationType) {
         return type;
       }
@@ -90,6 +132,11 @@ public class LogicalPlan2 {
 
     public void addReference(@NonNull Reference reference) {
       references.add(reference);
+    }
+
+    @Override
+    public boolean isHidden() {
+      return name.getDisplay().startsWith("_");
     }
   }
 
@@ -166,20 +213,71 @@ public class LogicalPlan2 {
       this.to = to;
     }
 
+    public LogicalField getTo() {
+      return to;
+    }
+
     @Override
     public Type getType() {
       return to.getType();
     }
   }
-  public static class SelectRelationField extends QueryField {
+  public static class QueryRelationField extends QueryField {
 
     private final Optional<LogicalField> parent;
 
-    public SelectRelationField(Name name, RelationType<LogicalField> type, Optional<LogicalField> parent) {
+    public QueryRelationField(Name name, RelationType<LogicalField> type, Optional<LogicalField> parent) {
       super(name, type);
       this.parent = parent;
     }
   }
+
+  /**
+   * Field that resolve when resolving '@'
+   */
+  public static class SelfField extends LogicalField {
+
+    private final RelationType self;
+
+    public SelfField(RelationType self) {
+      super(Name.of("@", NameCanonicalizer.SYSTEM));
+      this.self = self;
+    }
+
+    @Override
+    public Type getType() {
+      return self;
+    }
+
+    @Override
+    public boolean isHidden() {
+      return true;
+    }
+  }
+
+  /**
+   * Field that resolve when resolving 'parent'
+   */
+  public static class ParentField extends LogicalField {
+
+    private final RelationType self;
+
+    public ParentField(RelationType self) {
+      super(Name.of("parent", NameCanonicalizer.SYSTEM));
+      this.self = self;
+    }
+
+    @Override
+    public Type getType() {
+      return self;
+    }
+
+    @Override
+    public boolean isHidden() {
+      return true;
+    }
+  }
+
   public static class SourceTableField extends DataField {
 
     private final ImportSchema.SourceTableImport tableImport;

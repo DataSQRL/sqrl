@@ -34,6 +34,7 @@ import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.GroupingOperation;
 import ai.dataeng.sqml.tree.Identifier;
+import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinCriteria;
@@ -164,7 +165,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   @Override
   protected Scope visitTable(Table table, Scope scope) {
     RelationType relation = scope.resolveRelation(table.getName())
-        .orElseThrow(() -> new RuntimeException(String.format("Could not find table: %s", table.getName())));
+        .orElseThrow(() ->
+            new RuntimeException(String.format("Could not find table: %s", table.getName())));
 
     return createAndAssignScope(table, scope, relation);
   }
@@ -614,8 +616,15 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           }
         }
 
+        String identifierName = field.map(Identifier::getValue)
+            .orElse("VAR");
+
+        if (analysis.getType(expression).isEmpty()) {
+          log.error("analysis type could not be found:" + expression);
+          continue;
+        }
         outputFields.add(
-            new DataField(Name.of(field.map(Identifier::getValue).get(), NameCanonicalizer.SYSTEM),
+            new DataField(Name.of(identifierName, NameCanonicalizer.SYSTEM),
             analysis.getType(expression).orElseThrow(), List.of())
 //            column.getAlias().isPresent())
         );
