@@ -1,6 +1,5 @@
 package ai.dataeng.sqml.analyzer;
 
-import ai.dataeng.sqml.dag.RelationDefinition;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.Type;
@@ -10,12 +9,9 @@ import ai.dataeng.sqml.tree.GroupingOperation;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
-import com.esotericsoftware.kryo.util.IntMap;
 import com.google.common.collect.Multimap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

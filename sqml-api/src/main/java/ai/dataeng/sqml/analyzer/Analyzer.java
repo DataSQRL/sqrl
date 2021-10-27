@@ -12,11 +12,13 @@ import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
 import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.logical3.ExpressionField;
 import ai.dataeng.sqml.logical3.LogicalPlan;
+import ai.dataeng.sqml.logical3.ParentField;
 import ai.dataeng.sqml.logical3.QueryRelationField;
 import ai.dataeng.sqml.logical3.RelationshipField;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.physical.PhysicalModel;
 import ai.dataeng.sqml.physical.ViewExpressionRewriter;
+import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.schema2.Type;
@@ -39,6 +41,7 @@ import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.tree.name.Name;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -132,7 +135,8 @@ public class Analyzer {
       //schema.getSchema().getFieldByName(mapping.getKey()))
       for (Map.Entry<Name, Mapping> mapping : schema.getMappings().entrySet()) {
         StandardField field = schema.getSchema().getFieldByName(mapping.getKey());
-
+        //add parent fields
+        addParentFields(field, Optional.empty());
         analysis.getPlanBuilder().getRoot().add(field);
       }
 
@@ -140,62 +144,31 @@ public class Analyzer {
 
       return scope;
     }
-//
-//    private LogicalField decorateRelation(StandardField field, Optional<RelationType> parent) {
-//      Type type = decorateRelation(field.getType());
-//      LogicalField f = new LogicalPlan.DataField(field.getName(),
-//          type, field.getConstraints());
-//
-//      Type unboxed = unbox(type);
-//      if (unboxed instanceof RelationType && parent.isPresent()) {
-//        RelationType rel = (RelationType) unboxed;
-//        rel.add(new ParentField(parent.get()));
-//      }
-//
-//      return f;
-//    }
-//
-//    private Type decorateRelation(Type type) {
-//      SqmlTypeVisitor<Type, Type> sqmlTypeVisitor = new SqmlTypeVisitor<Type, Type>() {
-//        @Override
-//        public <F extends Field> Type visitRelation(RelationType<F> relationType, Type context) {
-//          RelationType<LogicalField> rel = new RelationType<>();
-//          for (StandardField field : (List<StandardField>) relationType.getFields()) {
-//            rel.add(decorateRelation(field, Optional.of(rel)));
-//          }
-//
-//          return rel;
-//        }
-//
-//        @Override
-//        public Type visitType(Type type, Type context) {
-//          return type;
-//        }
-//
-//        @Override
-//        public Type visitArrayType(ArrayType type, Type context) {
-//          return new ArrayType(type.getSubType().accept(this, context));
-//        }
-//      };
-//
-//      return type.accept(sqmlTypeVisitor, null);
-//    }
 
     @Override
     public Scope visitQueryAssignment(QueryAssignment queryAssignment, Scope scope) {
       QualifiedName name = queryAssignment.getName();
       Query query = queryAssignment.getQuery();
 
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(this.metadata);
-      Scope result = query.accept(statementAnalyzer, Scope.create(getPrefixField(queryAssignment)));
+      Optional<TypedField> prefixField = getPrefixField(queryAssignment);
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(this.metadata,
+          this.analysis.getPlanBuilder());
+      Scope result = query.accept(statementAnalyzer, Scope.create(prefixField));
 
       QueryRelationField createdField = new QueryRelationField(name.getSuffix(), result.getRelation());
+      prefixField.ifPresent(f->addParentField(f, result.getRelation()));
       addField(queryAssignment, createdField);
 
       createPhysicalView(queryAssignment, result, Optional.empty(), Optional.of(statementAnalyzer.getAnalysis()),
           Optional.empty());
 
       return null;
+    }
+
+    private void addParentField(TypedField f, RelationType<TypedField> relation) {
+      Type type = unbox(f.getType());
+      Preconditions.checkState(type instanceof RelationType);
+      relation.add(new ParentField(((RelationType)type)));
     }
 
     @Override
@@ -228,7 +201,7 @@ public class Analyzer {
 
     @Override
     public Scope visitCreateSubscription(CreateSubscription subscription, Scope scope) {
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata);
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, this.analysis.getPlanBuilder());
       Scope queryScope = subscription.getQuery().accept(statementAnalyzer, scope);
 
       return null;
@@ -243,7 +216,10 @@ public class Analyzer {
     @Override
     public Scope visitJoinAssignment(JoinAssignment node, Scope scope) {
       QualifiedName table = node.getInlineJoin().getJoin().getTable();
-      TypedField to = analysis.getPlanBuilder().getField(table)
+      Optional<TypedField> field = analysis.getPlanBuilder()
+          .getField(node.getName().getPrefix());
+
+      TypedField to = analysis.getPlanBuilder().resolveTableField(table, field)
           .orElseThrow(/*todo throw table must exist*/);
 
       RelationshipField createdField = new RelationshipField(node.getName().getSuffix(), to);
@@ -262,18 +238,30 @@ public class Analyzer {
       return context;
     }
 
+    private void addParentFields(StandardField field, Optional<RelationType> parent) {
+      Type type = unbox(field.getType());
+      if (!(type instanceof RelationType)) {
+        return;
+      }
+      RelationType<Field> rel = (RelationType<Field>) type;
+      for (Field sField : rel.getFields()) {
+        if (sField instanceof StandardField) {
+          addParentFields((StandardField)sField, Optional.of(rel));
+        }
+      }
+
+      parent.ifPresent(relationType -> rel.add(new ParentField(relationType)));
+    }
+
     private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
-      ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata);
+      ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata, this.analysis.getPlanBuilder());
       ExpressionAnalysis analysis = analyzer.analyze(expression, scope);
 
       return analysis;
     }
 
     private Optional<TypedField> getPrefixField(Assignment assignment) {
-      Optional<TypedField> field = assignment.getName().getPrefix()
-          .map(p -> this.analysis.getPlanBuilder().getField(p))
-          .orElseThrow(/*todo*/);
-      return field;
+      return analysis.getPlanBuilder().getField(assignment.getName().getPrefix());
     }
 
     private void tryCompleteImportHeader(List<Node> statements,
@@ -316,6 +304,9 @@ public class Analyzer {
     private void createPhysicalView(Node node, Scope scope,
         Optional<ImportSchema> schema, Optional<StatementAnalysis> analysis,
         Optional<ExpressionAnalysis> expressionAnalysis) {
+      if (true) {
+        return;
+      }
       try {
         ViewQueryRewriter viewRewriter = new ViewQueryRewriter(this.analysis.getPhysicalModel(),
             columnNameGen);

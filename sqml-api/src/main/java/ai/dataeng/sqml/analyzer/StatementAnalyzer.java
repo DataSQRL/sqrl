@@ -4,6 +4,7 @@ import static ai.dataeng.sqml.analyzer.AggregationAnalyzer.verifyOrderByAggregat
 import static ai.dataeng.sqml.analyzer.AggregationAnalyzer.verifySourceAggregations;
 import static ai.dataeng.sqml.analyzer.ExpressionTreeUtils.extractAggregateFunctions;
 import static ai.dataeng.sqml.analyzer.ExpressionTreeUtils.extractExpressions;
+import static ai.dataeng.sqml.logical3.LogicalPlan.Builder.unbox;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Iterables.getLast;
@@ -13,6 +14,7 @@ import static java.util.Objects.requireNonNull;
 
 import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
 import ai.dataeng.sqml.function.FunctionProvider;
+import ai.dataeng.sqml.logical3.LogicalPlan;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
@@ -53,6 +55,7 @@ import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.Table;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.Union;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMultimap;
@@ -64,20 +67,25 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import scala.annotation.meta.field;
 
 @Slf4j
 public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
   private final Metadata metadata;
   private final StatementAnalysis analysis;
+  private final LogicalPlan.Builder planBuilder;
 
-  public StatementAnalyzer(Metadata metadata) {
-    this(metadata, new StatementAnalysis());
+  public StatementAnalyzer(Metadata metadata,
+      LogicalPlan.Builder planBuilder) {
+    this(metadata, new StatementAnalysis(), planBuilder);
   }
 
-  public StatementAnalyzer(Metadata metadata, StatementAnalysis statementAnalysis) {
+  public StatementAnalyzer(Metadata metadata, StatementAnalysis statementAnalysis,
+      LogicalPlan.Builder planBuilder) {
     this.metadata = metadata;
     this.analysis = statementAnalysis;
+    this.planBuilder = planBuilder;
   }
 
   public StatementAnalysis getAnalysis() {
@@ -163,22 +171,18 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
   @Override
   protected Scope visitTable(Table table, Scope scope) {
-    //Todo: If @ then resolve local relation
-    // If no @, resolve from global scope
+    QualifiedName tableName = table.getName();
+    TypedField field = planBuilder.resolveTableField(tableName, scope.getField())
+        .orElseThrow(/*todo*/);
+    Type type = unbox(field.getType());
+    Preconditions.checkState(type instanceof RelationType);
 
-//    relationType.add(new ParentField(self));//todo: move to table
-
-    RelationType relation = (RelationType)scope.getField(table.getName())
-        .get().getType();
-//        .orElseThrow(() ->
-//            new RuntimeException(String.format("Could not find table: %s", table.getName())));
-
-    return createAndAssignScope(table, scope, relation);
+    return createAndAssignScope(table, scope, (RelationType) type);
   }
 
   @Override
   protected Scope visitTableSubquery(TableSubquery node, Scope scope) {
-    StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, this.analysis);
+    StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, this.analysis, planBuilder);
     Scope queryScope = node.getQuery().accept(statementAnalyzer, scope);
     return createAndAssignScope(node, scope, queryScope.getRelation());
   }
@@ -759,7 +763,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
-    ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata);
+    ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata, planBuilder);
     ExpressionAnalysis exprAnalysis = analyzer.analyze(expression, scope);
 
     analysis.addCoercions(exprAnalysis.getExpressionCoercions(),

@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import ai.dataeng.sqml.OperatorType;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.function.TypeSignature;
+import ai.dataeng.sqml.logical3.LogicalPlan.Builder;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
@@ -50,9 +51,12 @@ import java.util.logging.Logger;
 public class ExpressionAnalyzer {
   private Logger log = Logger.getLogger(Expression.class.getName());
   private final Metadata metadata;
+  private final Builder planBuilder;
 
-  public ExpressionAnalyzer(Metadata metadata) {
+  public ExpressionAnalyzer(Metadata metadata,
+      Builder planBuilder) {
     this.metadata = metadata;
+    this.planBuilder = planBuilder;
   }
 
   public ExpressionAnalysis analyze(Expression node, Scope scope) {
@@ -123,7 +127,8 @@ public class ExpressionAnalyzer {
 
     @Override
     protected Type visitSubqueryExpression(SubqueryExpression node, Context context) {
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata);
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata,
+          planBuilder);
       Scope scope = node.getQuery().accept(statementAnalyzer, context.getScope());
 
       return scope.getRelation();
