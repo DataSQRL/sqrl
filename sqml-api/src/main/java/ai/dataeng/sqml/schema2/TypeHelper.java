@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.schema2;
 
-import ai.dataeng.sqml.schema2.name.NamePath;
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 

@@ -3,12 +3,10 @@ package ai.dataeng.sqml.schema2.constraint;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.basic.ConversionResult;
-import ai.dataeng.sqml.schema2.basic.SimpleConversionError;
-import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.tree.name.Name;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;

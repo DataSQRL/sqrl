@@ -181,7 +181,7 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
 
   @Override
   protected ViewScope visitTable(Table node, ViewRewriterContext context) {
-    Preconditions.checkState(node.getName().getParts().size() == 1, "Table paths tbd");
+//    Preconditions.checkState(node.getName().getParts().size() == 1, "Table paths tbd");
     Optional<ViewTable> table = this.plan.getTableByName(node.getName());
     Preconditions.checkState(table.isPresent(), "Could not find table %s", node.getName());
 

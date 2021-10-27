@@ -5,11 +5,11 @@ import static java.lang.String.format;
 import ai.dataeng.sqml.OperatorType;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.function.TypeSignature;
-import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.TypedField;
 import ai.dataeng.sqml.schema2.basic.BooleanType;
 import ai.dataeng.sqml.schema2.basic.DateTimeType;
 import ai.dataeng.sqml.schema2.basic.NullType;
@@ -167,6 +167,8 @@ public class ExpressionAnalyzer {
       if (function.isEmpty()) {
         throw new RuntimeException(String.format("Could not find function %s", node.getName()));
       }
+      analysis.qualifyFunction(node, function.get());
+
       TypeSignature typeSignature = function.get().getTypeSignature();
       for (Expression expression : node.getArguments()) {
         expression.accept(this, context);
@@ -242,7 +244,7 @@ public class ExpressionAnalyzer {
       if (!(type instanceof RelationType)) {
         throw new RuntimeException(String.format("Dereference type not a relation: %s", node));
       }
-      RelationType<LogicalField> relType = (RelationType<LogicalField>) type;
+      RelationType<TypedField> relType = (RelationType<TypedField>) type;
       Optional<Field> field = relType.getField(node.getField().getValue());
       if (field.isEmpty()) {
         throw new RuntimeException(String.format("Could not dereference %s in %s", node.getBase(), node.getField()));

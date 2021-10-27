@@ -3,7 +3,7 @@ package ai.dataeng.sqml.ingest.schema;
 import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.tree.name.Name;
 import lombok.Value;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;

@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.analyzer;
 
 import ai.dataeng.sqml.dag.RelationDefinition;
+import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.tree.Expression;
@@ -26,6 +27,7 @@ public class StatementAnalysis {
 
   Map<Expression, Type> typeMap = new HashMap<>();
   Map<QuerySpecification, List<GroupingOperation>> groupingMap = new HashMap<>();
+  private Map<FunctionCall, SqmlFunction> functionMap = new HashMap<>();
 
   public void setGroupingOperations(QuerySpecification node,
       List<GroupingOperation> groupingOperations) {
@@ -91,5 +93,13 @@ public class StatementAnalysis {
 
   public void setGroupByExpressions(Node node, List<Expression> groupingExpressions) {
 
+  }
+
+  public void qualifyFunctions(Map<FunctionCall, SqmlFunction> functionMap) {
+    this.functionMap.putAll(functionMap);
+  }
+
+  public Map<FunctionCall, SqmlFunction> getFunctionMap() {
+    return functionMap;
   }
 }

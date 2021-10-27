@@ -5,15 +5,13 @@ import java.util.Optional;
 
 public class DistinctAssignment extends Assignment {
 
-  private final QualifiedName name;
   private final Identifier table;
   private final List<Identifier> fields;
   private final List<SortItem> order;
 
   public DistinctAssignment(Optional<NodeLocation> location,
       QualifiedName name, Identifier table, List<Identifier> fields, List<SortItem> order) {
-    super(location);
-    this.name = name;
+    super(location, name);
     this.table = table;
     this.fields = fields;
     this.order = order;
@@ -31,10 +29,6 @@ public class DistinctAssignment extends Assignment {
     return order;
   }
 
-  @Override
-  public QualifiedName getName() {
-    return name;
-  }
   @Override
   public List<? extends Node> getChildren() {
     return null;

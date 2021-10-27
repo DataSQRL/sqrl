@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.schema2.name;
+package ai.dataeng.sqml.tree.name;
 
 import java.util.Locale;
 

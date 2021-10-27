@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.schema2;
 
-import ai.dataeng.sqml.schema2.name.Name;
-import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
@@ -73,7 +73,16 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
         return Optional.ofNullable(getFieldByName(Name.of(value, NameCanonicalizer.SYSTEM)));
     }
 
-    public static class Builder<F extends Field> extends AbstractBuilder<F,Builder<F>> {
+    public RelationType withAlias(String alias) {
+        RelationType rel = new RelationType();
+        for (Field f : fields) {
+            rel.add(f.withAlias(alias));
+        }
+
+        return rel;
+    }
+
+  public static class Builder<F extends Field> extends AbstractBuilder<F,Builder<F>> {
 
         public Builder() {
             super(true);

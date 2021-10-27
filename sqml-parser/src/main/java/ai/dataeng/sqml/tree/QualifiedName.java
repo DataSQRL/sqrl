@@ -13,12 +13,11 @@
  */
 package ai.dataeng.sqml.tree;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Iterables.isEmpty;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Locale.ENGLISH;
 import static java.util.Objects.requireNonNull;
 
+import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -29,19 +28,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 /**
  * {@link QualifiedName} is used to identify a field/column within a nested structure. It specifies the full path.
  */
 public class QualifiedName {
 
-  private final List<String> normalizedParts;
-  private final List<String> originalParts;
+  private final List<Name> nameParts;
 
-  private QualifiedName(List<String> originalParts, List<String> parts) {
-    this.originalParts = originalParts;
-    this.normalizedParts = parts;
+  private QualifiedName(List<Name> nameParts) {
+    this.nameParts = nameParts;
   }
 
   public static QualifiedName of(String first, String... rest) {
@@ -56,11 +53,10 @@ public class QualifiedName {
 
   public static QualifiedName of(Iterable<String> originalParts) {
     requireNonNull(originalParts, "originalParts is null");
-//    checkArgument(!isEmpty(originalParts), "originalParts is empty");
-    List<String> parts = ImmutableList
+    List<Name> parts = ImmutableList
         .copyOf(transform(originalParts, QualifiedName::normalizeName));
 
-    return new QualifiedName(ImmutableList.copyOf(originalParts), parts);
+    return new QualifiedName(parts);
   }
 
   public static QualifiedName of() {
@@ -73,16 +69,20 @@ public class QualifiedName {
   }
 
   public List<String> getParts() {
-    return normalizedParts;
+    return nameParts.stream()
+        .map(e->e.getCanonical())
+        .collect(Collectors.toList());
   }
 
   public List<String> getOriginalParts() {
-    return originalParts;
+    return nameParts.stream()
+        .map(e->e.getDisplay())
+        .collect(Collectors.toList());
   }
 
   @Override
   public String toString() {
-    return Joiner.on('.').join(normalizedParts);
+    return Joiner.on('.').join(nameParts);
   }
 
   /**
@@ -90,26 +90,16 @@ public class QualifiedName {
    * returns absent
    */
   public Optional<QualifiedName> getPrefix() {
-    if (normalizedParts.size() <= 1) {
+    if (nameParts.size() <= 1) {
       return Optional.empty();
     }
 
-    List<String> subList = normalizedParts.subList(0, normalizedParts.size() - 1);
-    return Optional.of(new QualifiedName(subList, subList));
+    List<Name> subList = nameParts.subList(0, nameParts.size() - 1);
+    return Optional.of(new QualifiedName(subList));
   }
 
-  public boolean hasSuffix(QualifiedName suffix) {
-    if (normalizedParts.size() < suffix.getParts().size()) {
-      return false;
-    }
-
-    int start = normalizedParts.size() - suffix.getParts().size();
-
-    return normalizedParts.subList(start, normalizedParts.size()).equals(suffix.getParts());
-  }
-
-  public String getSuffix() {
-    return Iterables.getLast(normalizedParts);
+  public Name getSuffix() {
+    return Iterables.getLast(nameParts);
   }
 
   @Override
@@ -120,18 +110,16 @@ public class QualifiedName {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    return normalizedParts.equals(((QualifiedName) o).normalizedParts);
+    return nameParts.equals(((QualifiedName) o).nameParts);
   }
 
   @Override
   public int hashCode() {
-    return normalizedParts.hashCode();
+    return nameParts.hashCode();
   }
 
-  public static String normalizeName(String original) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(original),"Invalid name: %s", original);
-    //TODO: What other naming requirements do we have?
-    return original.toLowerCase(ENGLISH);
+  public static Name normalizeName(String original) {
+    return Name.system(original);
   }
 
   /**
@@ -139,24 +127,5 @@ public class QualifiedName {
    */
   public QualifiedName getParent() {
     return this.getPrefix().orElse(this);
-  }
-
-  public QualifiedName withSuffix(String part) {
-    return QualifiedName.of(Iterables.concat(this.getParts(), List.of(part)));
-  }
-
-  public QualifiedName getRest() {
-    return QualifiedName.of(this.getParts().subList(1, this.getParts().size()));
-  }
-
-  public QualifiedName append(String name) {
-    List<String> newName = new ArrayList<>(this.getParts());
-    newName.add(name);
-
-    return QualifiedName.of(newName);
-  }
-
-  public String toOriginalString() {
-    return String.join(".", this.originalParts);
   }
 }

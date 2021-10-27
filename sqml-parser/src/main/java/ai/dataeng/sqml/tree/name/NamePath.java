@@ -1,11 +1,10 @@
-package ai.dataeng.sqml.schema2.name;
+package ai.dataeng.sqml.tree.name;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
-import scala.Array;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -34,7 +33,7 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
 
     public NamePath resolve(@NonNull NamePath sub) {
         Name[] newnames = Arrays.copyOf(names,names.length+sub.names.length);
-        Array.copy(sub.names, 0, newnames, names.length, sub.names.length);
+        System.arraycopy(sub.names, 0, newnames, names.length, sub.names.length);
         return new NamePath(newnames);
     }
 

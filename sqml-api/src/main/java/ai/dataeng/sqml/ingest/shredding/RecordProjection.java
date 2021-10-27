@@ -3,7 +3,7 @@ package ai.dataeng.sqml.ingest.shredding;
 import ai.dataeng.sqml.db.DestinationTableSchema;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.schema2.basic.DateTimeType;
-import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.tree.name.Name;
 
 import java.io.Serializable;
 import java.time.Instant;

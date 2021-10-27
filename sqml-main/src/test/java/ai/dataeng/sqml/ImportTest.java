@@ -23,7 +23,7 @@ import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.parser.SqmlParser;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
-import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
 import ai.dataeng.sqml.tree.Script;
 import graphql.ExecutionInput;
@@ -34,7 +34,6 @@ import graphql.schema.GraphQLSchema;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
@@ -71,11 +70,11 @@ class ImportTest {
     SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
 
     ddRegistry.addDataset(new DirectoryDataset(DatasetRegistration.of(RETAIL_DATASET), RETAIL_DATA_DIR));
-
-//    ddRegistry.monitorDatasets(envProvider);
-
-//    Thread.sleep(1000);
 //
+//    ddRegistry.monitorDatasets(envProvider);
+//
+//    Thread.sleep(1000);
+
     SQMLBundle bundle = new SQMLBundle.Builder().createScript().setName(RETAIL_SCRIPT_NAME)
         .setScript(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION))
         .setImportSchema(RETAIL_IMPORT_SCHEMA_FILE)

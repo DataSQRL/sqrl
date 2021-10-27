@@ -3,7 +3,7 @@ package ai.dataeng.sqml.ingest.stats;
 import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
+import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.RelationType;
 import com.google.common.base.Preconditions;

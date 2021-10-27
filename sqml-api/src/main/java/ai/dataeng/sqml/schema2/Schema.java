@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.schema2;
 
-import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.tree.name.Name;
 
 import java.util.Map;
 

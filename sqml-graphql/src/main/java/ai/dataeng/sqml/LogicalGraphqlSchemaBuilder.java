@@ -1,18 +1,15 @@
 package ai.dataeng.sqml;
 
-import static ai.dataeng.sqml.logical3.LogicalPlan2.Builder.unbox;
+import static ai.dataeng.sqml.logical3.LogicalPlan.Builder.unbox;
 
-import ai.dataeng.sqml.ViewQueryRewriter.ViewTable;
 import ai.dataeng.sqml.analyzer.Analysis;
-import ai.dataeng.sqml.logical3.LogicalPlan2;
-import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.ParentField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.RelationshipField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.SelfField;
+import ai.dataeng.sqml.logical3.LogicalPlan;
+import ai.dataeng.sqml.logical3.RelationshipField;
 import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.TypedField;
 import ai.dataeng.sqml.schema2.basic.BooleanType;
 import ai.dataeng.sqml.schema2.basic.DateTimeType;
 import ai.dataeng.sqml.schema2.basic.FloatType;
@@ -21,13 +18,11 @@ import ai.dataeng.sqml.schema2.basic.NullType;
 import ai.dataeng.sqml.schema2.basic.NumberType;
 import ai.dataeng.sqml.schema2.basic.StringType;
 import ai.dataeng.sqml.schema2.basic.UuidType;
-import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import graphql.Scalars;
-import graphql.language.NullValue;
-import graphql.scalar.GraphqlBooleanCoercing;
 import graphql.schema.Coercing;
 import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
@@ -51,12 +46,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import scala.annotation.meta.field;
 
 @Slf4j
 public class LogicalGraphqlSchemaBuilder {
@@ -194,11 +187,11 @@ public class LogicalGraphqlSchemaBuilder {
       return schemaBuilder;
     }
 
-    public Optional<GraphQLOutputType> visit(LogicalPlan2 logicalPlan, Context context) {
+    public Optional<GraphQLOutputType> visit(LogicalPlan logicalPlan, Context context) {
       GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
           .name("Query");
 
-      for (LogicalField field : logicalPlan.getRoot()) {
+      for (TypedField field : logicalPlan.getRoot()) {
         Type type = field.getType();
 
         Optional<GraphQLOutputType> outputType = type.accept(this, new Context("Query", field));
@@ -275,7 +268,7 @@ public class LogicalGraphqlSchemaBuilder {
           .name(name);
 
       boolean hasField = false;
-      for (LogicalField field : (List<LogicalField>)relationType.getFields()) {
+      for (TypedField field : (List<TypedField>)relationType.getFields()) {
         // Create any hidden types to assure they appear if referenced
         if (field.isHidden()) {
           continue;
@@ -283,7 +276,7 @@ public class LogicalGraphqlSchemaBuilder {
 
         Optional<GraphQLOutputType> type;
         if (field instanceof RelationshipField) {
-          LogicalField to = ((RelationshipField)field).getTo();
+          TypedField to = ((RelationshipField)field).getTo();
           if (!seen.contains(unbox(to.getType()))) { //hidden types may be referencable
             type = to.getType().accept(this, new Context(name, to));
           } else {

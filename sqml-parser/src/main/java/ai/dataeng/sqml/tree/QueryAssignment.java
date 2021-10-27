@@ -5,19 +5,12 @@ import java.util.Optional;
 
 public class QueryAssignment extends Assignment {
 
-  private final QualifiedName name;
   private final Query query;
 
   public QueryAssignment(Optional<NodeLocation> location, QualifiedName name,
       Query query) {
-    super(location);
-    this.name = name;
+    super(location, name);
     this.query = query;
-  }
-
-  @Override
-  public QualifiedName getName() {
-    return name;
   }
 
   @Override
