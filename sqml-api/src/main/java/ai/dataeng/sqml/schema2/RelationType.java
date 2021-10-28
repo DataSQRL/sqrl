@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.schema2;
 
+import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
@@ -76,7 +77,7 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
     public RelationType withAlias(String alias) {
         RelationType rel = new RelationType();
         for (Field f : fields) {
-            rel.add(f.withAlias(alias));
+            rel.add(f.withAlias(QualifiedName.of(alias)));
         }
 
         return rel;

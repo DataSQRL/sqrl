@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.schema2;
 
 import ai.dataeng.sqml.schema2.constraint.Constraint;
+import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.name.Name;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -16,7 +17,7 @@ public class StandardField implements TypedField {
     private final Name name;
     private final Type type;
     private final List<Constraint> constraints;
-    private final Optional<String> alias;
+    private final Optional<QualifiedName> alias;
 
     @Override
     public String toString() {
@@ -24,7 +25,7 @@ public class StandardField implements TypedField {
     }
 
     @Override
-    public Field withAlias(String alias) {
+    public Field withAlias(QualifiedName alias) {
         return new StandardField(name, type, constraints, Optional.of(alias));
     }
 }

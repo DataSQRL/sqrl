@@ -41,6 +41,14 @@ public class LogicalPlan {
     }
 
     public void addField(QualifiedName name, TypedField add) {
+      TypedField field = getField(name)
+          .orElse(rootField);
+
+      RelationType type = (RelationType) unbox(field.getType());
+      type.add(add);
+    }
+
+    public void addFieldPrefix(QualifiedName name, TypedField add) {
       TypedField field = name.getPrefix().map(f->getField(f).orElseThrow(/*todo*/))
           .orElse(rootField);
 
@@ -85,12 +93,12 @@ public class LogicalPlan {
         String part = parts.get(i);
         Type type = unbox(field.getType());
         if (!(type instanceof RelationType)) {
-          throw new RuntimeException("Could not find relation");
+          return Optional.empty();
         }
         RelationType rel = (RelationType) type;
         Optional<TypedField> fieldOptional = rel.getField(part);
         if (fieldOptional.isEmpty()) {
-          throw new RuntimeException("Could not find relation:" + name);
+          return Optional.empty();
         }
         field = fieldOptional.get();
       }

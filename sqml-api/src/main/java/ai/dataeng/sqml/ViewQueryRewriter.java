@@ -1,12 +1,14 @@
 package ai.dataeng.sqml;
 
 import ai.dataeng.sqml.ViewQueryRewriter.ViewRewriterContext;
-import ai.dataeng.sqml.ViewQueryRewriter.ViewScope;
+import ai.dataeng.sqml.ViewQueryRewriter.RewriterContext;
 import ai.dataeng.sqml.analyzer.ExpressionAnalysis;
 import ai.dataeng.sqml.analyzer.Scope;
 import ai.dataeng.sqml.analyzer.StatementAnalysis;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
+import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
 import ai.dataeng.sqml.physical.PhysicalModel;
+import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionRewriter;
@@ -27,6 +29,7 @@ import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.Table;
+import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +39,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Value;
 
-public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext> {
+public class ViewQueryRewriter extends AstVisitor<RewriterContext, ViewRewriterContext> {
   private final PhysicalModel plan;
   private final ColumnNameGen columnNameGen;
 
@@ -46,45 +49,90 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
     this.columnNameGen = columnNameGen;
   }
   @Override
-  protected ViewScope visitImportDefinition(ImportDefinition node, ViewRewriterContext context) {
-    ViewTable table = new ViewTable(QualifiedName.of("product"),
-        "product_1",
-        List.of(
-            new DataColumn("productid", "productid"),
-            new DataColumn("name", "name"),
-            new DataColumn("description", "description"),
-            new DataColumn("category", "category"),
-            new DataColumn(null, "uuid")
-        ),
-        Optional.empty()
-    );
+  protected RewriterContext visitImportDefinition(ImportDefinition node, ViewRewriterContext context) {
+    ImportSchema schema = context.getSchema().get();
+    for (Map.Entry<Name, Mapping> mapping : schema.getMappings().entrySet()) {
+      StandardField field = schema.getSchema().getFieldByName(mapping.getKey());
+      if (field.getName().getCanonical().equalsIgnoreCase("product")) {
+        ViewTable table = new ViewTable(QualifiedName.of("product"),
+            "product_1",
+            List.of(
+                new DataColumn("productid", "productid_1"),
+                new DataColumn("name", "name_1"),
+                new DataColumn("description", "description_1"),
+                new DataColumn("category", "category_1"),
+                new DataColumn(null, "uuid")
+            ),
+            Optional.empty()
+        );
+        plan.addTable(table);
+        return new RewriterContext(node, table, table.getColumns());
+      } else if (field.getName().getCanonical().equalsIgnoreCase("orders")) {
+        ViewTable table = new ViewTable(QualifiedName.of("orders"),
+            "orders_1",
+            List.of(
+                new DataColumn("customerid", "customerid_1"),
+                new DataColumn("id", "id_1"),
+                new DataColumn("time", "time_1"),
+                new DataColumn(null, "uuid")
+            ),
+            Optional.empty()
+        );
+        plan.addTable(table);
+        ViewTable entries = new ViewTable(QualifiedName.of("orders.entries"),
+            "orders_entries_1",
+            List.of(
+                new DataColumn("productid", "productid_1"),
+                new DataColumn("quantity", "quantity_1"),
+                new DataColumn("unit_price", "unit_price_1"),
+                new DataColumn("discount", "discount_1"),
+                new DataColumn(null, "uuid")
+            ),
+            Optional.empty()
+        );
+        plan.addTable(entries);
+      } else if (field.getName().getCanonical().equalsIgnoreCase("customer")) {
+        ViewTable table = new ViewTable(QualifiedName.of("customer"),
+            "customer_1",
+            List.of(
+                new DataColumn("customerid", "customerid_1"),
+                new DataColumn("name", "name_1"),
+                new DataColumn("email", "email_1"),
+                new DataColumn(null, "uuid")
+            ),
+            Optional.empty()
+        );
+        plan.addTable(table);
+      }
 
-    return new ViewScope(node, table, table.getColumns());
+    }
+
+    return null;
   }
 
   @Override
-  public ViewScope visitQueryAssignment(QueryAssignment node, ViewRewriterContext context) {
+  public RewriterContext visitQueryAssignment(QueryAssignment node, ViewRewriterContext context) {
     //todo Create materialization map
-    ViewScope rewritten = node.getQuery().accept(this, context);
+    RewriterContext rewritten = node.getQuery().accept(this, context);
     ViewTable viewTable = new ViewTable(
         node.getName(),
         columnNameGen.generateName(node.getName().getParts().get(0)),
         rewritten.getColumns(),
         Optional.of(rewritten.node));
 
-    return new ViewScope(node, viewTable, rewritten.getColumns());
+    return new RewriterContext(node, viewTable, rewritten.getColumns());
   }
 
   @Override
-  protected ViewScope visitQuery(Query node, ViewRewriterContext context) {
+  protected RewriterContext visitQuery(Query node, ViewRewriterContext context) {
     //Todo: reminder of Query node
     return node.getQueryBody().accept(this, context);
   }
 
   @Override
-  protected ViewScope visitQuerySpecification(QuerySpecification node,
+  protected RewriterContext visitQuerySpecification(QuerySpecification node,
       ViewRewriterContext context) {
-    ViewScope fromScope = node.getFrom().accept(this, context);
+    RewriterContext fromScope = node.getFrom().accept(this, context);
     Optional<Expression> whereNode = node.getWhere().map(where -> processWhere(node, fromScope, where));
 
     SelectResults select = processSelect(node, fromScope);
@@ -93,7 +141,7 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
 
     Optional<Expression> having = processHaving(node, fromScope);
 
-    return new ViewScope(new QuerySpecification(
+    return new RewriterContext(new QuerySpecification(
         node.getLocation(),
         select.getSelect(),
         (Relation)fromScope.node,
@@ -105,7 +153,7 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
     ), null, select.getColumns());
   }
 
-  private Optional<Expression> processHaving(QuerySpecification node, ViewScope fromScope) {
+  private Optional<Expression> processHaving(QuerySpecification node, RewriterContext fromScope) {
     if (node.getHaving().isPresent()) {
       Expression having = node.getHaving().get();
       return Optional.of(rewriteExpression(having, fromScope));
@@ -113,7 +161,7 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
     return Optional.empty();
   }
 
-  private Optional<GroupBy> processGroupBy(QuerySpecification node, ViewScope fromScope,
+  private Optional<GroupBy> processGroupBy(QuerySpecification node, RewriterContext fromScope,
       //Output expressions are referenced expressions in the select clause (e.g. select x + 1 as y ... group by y;)
       List<Expression> outputExpressions) {
     if (node.getGroupBy().isEmpty()) return Optional.empty();
@@ -131,11 +179,11 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
     return Optional.of(new GroupBy(new SimpleGroupBy(expressions)));
   }
 
-  private Expression processWhere(QuerySpecification node, ViewScope fromScope, Expression where) {
+  private Expression processWhere(QuerySpecification node, RewriterContext fromScope, Expression where) {
     return rewriteExpression(where, fromScope);
   }
 
-  private SelectResults processSelect(QuerySpecification node, ViewScope from) {
+  private SelectResults processSelect(QuerySpecification node, RewriterContext from) {
     List<DataColumn> dataColumns = new ArrayList<>();
     List<SelectItem> columns = new ArrayList<>();
     for (SelectItem item : node.getSelect().getSelectItems()) {
@@ -175,17 +223,17 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
     List<DataColumn> columns;
   }
 
-  private Expression rewriteExpression(Expression expression, ViewScope viewScope) {
+  private Expression rewriteExpression(Expression expression, RewriterContext viewScope) {
     return ExpressionTreeRewriter.rewriteWith(new TableExpressionRewriter(), expression, viewScope);
   }
 
   @Override
-  protected ViewScope visitTable(Table node, ViewRewriterContext context) {
+  protected RewriterContext visitTable(Table node, ViewRewriterContext context) {
 //    Preconditions.checkState(node.getName().getParts().size() == 1, "Table paths tbd");
     Optional<ViewTable> table = this.plan.getTableByName(node.getName());
     Preconditions.checkState(table.isPresent(), "Could not find table %s", node.getName());
 
-    return new ViewScope(
+    return new RewriterContext(
         new Table(QualifiedName.of(table.get().getTableName())),
         table.get(),
         table.get().getColumns()
@@ -193,17 +241,17 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
   }
 
   public class TableExpressionRewriter
-      extends ExpressionRewriter<ViewScope> {
+      extends ExpressionRewriter<RewriterContext> {
 
     @Override
-    public Expression rewriteFunctionCall(FunctionCall node, ViewScope context,
-        ExpressionTreeRewriter<ViewScope> treeRewriter) {
+    public Expression rewriteFunctionCall(FunctionCall node, RewriterContext context,
+        ExpressionTreeRewriter<RewriterContext> treeRewriter) {
       return super.rewriteFunctionCall(node, context, treeRewriter);
     }
 
     @Override
-    public Expression rewriteIdentifier(Identifier node, ViewScope context,
-        ExpressionTreeRewriter<ViewScope> treeRewriter) {
+    public Expression rewriteIdentifier(Identifier node, RewriterContext context,
+        ExpressionTreeRewriter<RewriterContext> treeRewriter) {
 
       Optional<DataColumn> column = context.getTable().getColumn(node.getValue());
       if (column.isEmpty()) throw new RuntimeException(String.format("Could not find column %s", node.getValue()));
@@ -212,7 +260,7 @@ public class ViewQueryRewriter extends AstVisitor<ViewScope, ViewRewriterContext
   }
 
   @Value
-  public static class ViewScope {
+  public static class RewriterContext {
     Node node;
     ViewTable table; //todo: to analysis object?
     List<DataColumn> columns;

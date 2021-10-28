@@ -45,6 +45,7 @@ import ai.dataeng.sqml.tree.StringLiteral;
 import ai.dataeng.sqml.tree.SubqueryExpression;
 import ai.dataeng.sqml.tree.TimestampLiteral;
 import com.google.common.collect.ImmutableList;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -93,11 +94,26 @@ public class ExpressionAnalyzer {
 
     @Override
     protected Type visitIdentifier(Identifier node, Context context) {
-      Optional<Type> resolvedType = context.getScope().resolveType(QualifiedName.of(node));
-      if (resolvedType.isEmpty()) {
-        throw new RuntimeException(String.format("Could not resolve identifier %s", node));
+      List<FieldPath> fieldPath2 = context.getScope()
+          .toFieldPath(QualifiedName.of(node));
+      if (fieldPath2.size() == 0) {
+        System.out.println();
       }
-      return addType(node, resolvedType.get());
+      List<FieldPath> fieldPath = context.getScope()
+          .toFieldPath(QualifiedName.of(node));
+      if (fieldPath.isEmpty()) {
+        throw new RuntimeException(String.format("Could not resolve identifier %s", node));
+      } else if (fieldPath.size() > 1) {
+        throw new RuntimeException(String.format("Ambiguous identifier %s", node));
+      }
+      FieldPath fieldPath1 = fieldPath.get(0);
+
+      analysis.setFieldPath(node, fieldPath1);
+      Type resolvedType = fieldPath1.getFields().get(fieldPath1.getFields().size() - 1).getType();
+//      if (resolvedType.isEmpty()) {
+//        throw new RuntimeException(String.format("Could not resolve identifier %s", node));
+//      }
+      return addType(node, resolvedType);
     }
 
     @Override

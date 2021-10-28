@@ -68,6 +68,10 @@ public class QualifiedName {
     return of(Arrays.asList(parts));
   }
 
+  public static QualifiedName of(Name name) {
+    return new QualifiedName(List.of(name));
+  }
+
   public List<String> getParts() {
     return nameParts.stream()
         .map(e->e.getCanonical())
@@ -127,5 +131,29 @@ public class QualifiedName {
    */
   public QualifiedName getParent() {
     return this.getPrefix().orElse(this);
+  }
+
+  public QualifiedName append(Name name) {
+    List<Name> parts = new ArrayList<>(nameParts);
+    parts.add(name);
+    return new QualifiedName(parts);
+  }
+
+  public boolean hasPrefix(QualifiedName prefix) {
+    int i;
+    for (i = 0; i < nameParts.size() && i < prefix.nameParts.size(); i++) {
+      if (!(nameParts.get(i).getCanonical().equals(prefix.nameParts.get(i).getCanonical()))) {
+        return false;
+      }
+    }
+
+    return i == prefix.nameParts.size();
+  }
+
+  public QualifiedName withoutPrefix(QualifiedName prefix) {
+    if (!hasPrefix(prefix)) {
+      throw new RuntimeException("Not a prefix");
+    }
+    return new QualifiedName(nameParts.subList(prefix.nameParts.size(), nameParts.size()));
   }
 }

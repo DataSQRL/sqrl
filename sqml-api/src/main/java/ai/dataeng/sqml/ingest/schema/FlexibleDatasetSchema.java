@@ -4,7 +4,9 @@ import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
+import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.name.Name;
+import java.util.Optional;
 import lombok.*;
 
 import java.io.Serializable;
@@ -67,7 +69,7 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
         }
 
         @Override
-        public Field withAlias(String alias) {
+        public Field withAlias(QualifiedName alias) {
             return null;
         }
     }
@@ -89,6 +91,11 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
             this.isPartialSchema = isPartialSchema;
             this.fields = fields;
             this.constraints = constraints;
+        }
+
+        @Override
+        public Optional<QualifiedName> getAlias() {
+            return Optional.empty();
         }
 
         @Setter
@@ -131,6 +138,11 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
                              List<FieldType> types) {
             super(name, description, default_value);
             this.types = types;
+        }
+
+        @Override
+        public Optional<QualifiedName> getAlias() {
+            return Optional.empty();
         }
 
         @Setter

@@ -1,51 +1,34 @@
 package ai.dataeng.sqml.physical;
 
-import ai.dataeng.sqml.ViewQueryRewriter;
 import ai.dataeng.sqml.ViewQueryRewriter.ColumnNameGen;
-import ai.dataeng.sqml.ViewQueryRewriter.DataColumn;
-import ai.dataeng.sqml.ViewQueryRewriter.TableExpressionRewriter;
 import ai.dataeng.sqml.ViewQueryRewriter.ViewRewriterContext;
-import ai.dataeng.sqml.ViewQueryRewriter.ViewScope;
+import ai.dataeng.sqml.ViewQueryRewriter.RewriterContext;
 import ai.dataeng.sqml.ViewQueryRewriter.ViewTable;
 import ai.dataeng.sqml.analyzer.Analysis;
 import ai.dataeng.sqml.analyzer.ExpressionAnalysis;
 import ai.dataeng.sqml.analyzer.Scope;
-import ai.dataeng.sqml.analyzer.StatementAnalysis;
-import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.function.SqmlFunction;
+import ai.dataeng.sqml.schema2.TypedField;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionRewriter;
 import ai.dataeng.sqml.tree.ExpressionTreeRewriter;
 import ai.dataeng.sqml.tree.FunctionCall;
-import ai.dataeng.sqml.tree.GroupBy;
-import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.Identifier;
-import ai.dataeng.sqml.tree.ImportDefinition;
-import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Query;
-import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Select;
-import ai.dataeng.sqml.tree.SelectItem;
-import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.Table;
 import ai.dataeng.sqml.tree.Window;
-import com.google.common.base.Preconditions;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.Value;
-import org.apache.flink.table.api.Over;
 
-public class ViewExpressionRewriter extends AstVisitor<ViewScope, ViewRewriterContext> {
+public class ViewExpressionRewriter extends AstVisitor<RewriterContext, ViewRewriterContext> {
   private final PhysicalModel plan;
   private final ColumnNameGen columnNameGen;
   private final Analysis analysis;
@@ -63,25 +46,31 @@ public class ViewExpressionRewriter extends AstVisitor<ViewScope, ViewRewriterCo
   /**
    * x.y := a - b    => select a - b as y, * from x;
    * x.y := sum(a)   => select sum(a) over (partition by pk), * from x;
-   * x.y := sum(z.b) => select sum(z-alias.b) over (partition by pk), * from x
+   * x.y := sum(z.b) => select sum(zalias.b) over (partition by pk), * from x
    *                    left outer join z on (join condition) as z-alias;
    * x.y := @.total_output + @.fee;
    */
-  public ViewScope rewrite(Expression expression, ViewScope viewScope, QualifiedName name) {
-    //Process expression
-    // If view scope has a Join requirement, materialize join
-    // If view scope has
+  public RewriterContext rewrite(Expression expression, RewriterContext viewScope, QualifiedName name,
+      Scope scope) {
     Optional<ViewTable> table = plan.getTableByName(name.getPrefix().get());
     String tableName = "a";
-    SingleColumn column = new SingleColumn(rewriteExpression(expression, viewScope));
-//    List<DataColumn> existingColumns = table.get().getColumns();
+
+    Expression expression1 = rewriteExpression(expression, viewScope);
+    SingleColumn column = new SingleColumn(expression1);
+
+    ExpressionSqlizer sqlizer = new ExpressionSqlizer(analysis);
+    ExpressionSqlizerAnalysis expr = sqlizer.rewrite(expression, expressionAnalysis);
+
+    Relation from = buildRelation(scope);
+    Expression output = expression;
+
     Query query = new Query(
         new QuerySpecification(
           Optional.empty(),
           new Select(false, List.of(
               column
           )),
-          buildRelation(table, viewScope),
+            from,
           Optional.empty(),
           Optional.empty(),
           Optional.empty(),
@@ -103,28 +92,37 @@ public class ViewExpressionRewriter extends AstVisitor<ViewScope, ViewRewriterCo
         query.accept(new NodeFormatter(), null)
     );
 
-    return new ViewScope(
+    return new RewriterContext(
         expression,
         viewTable,
         List.of() //columns
     );
   }
 
-  private Expression rewriteExpression(Expression expression, ViewScope viewScope) {
-    return ExpressionTreeRewriter.rewriteWith(new TableExpressionRewriter(), expression, viewScope);
+  private Expression rewriteExpression(Expression expression, RewriterContext rewriterContext) {
+    return ExpressionTreeRewriter.rewriteWith(new TableExpressionRewriter(), expression,
+        rewriterContext);
   }
 
-  private Relation buildRelation(Optional<ViewTable> table, ViewScope viewScope) {
-    return new Table(QualifiedName.of("tbl"));
+  private Relation buildRelation(Scope scope) {
+    TypedField field = scope.getField().orElseThrow(/*expression must be on query*/);
+
+//    List<FieldPath> fieldPaths = expressionAnalysis.getFieldPaths();
+//    FieldTree fieldTree = new FieldTree(fieldPaths);
+
+    ViewTable table = plan.getTableByName(field.getQualifiedName())
+        .orElseThrow(/*No physical table found for path*/);
+
+    return new Table(QualifiedName.of(table.getTableName()));
   }
 
 
   public class TableExpressionRewriter
-      extends ExpressionRewriter<ViewScope> {
+      extends ExpressionRewriter<RewriterContext> {
 
     @Override
-    public Expression rewriteFunctionCall(FunctionCall node, ViewScope context,
-        ExpressionTreeRewriter<ViewScope> treeRewriter) {
+    public Expression rewriteFunctionCall(FunctionCall node, RewriterContext context,
+        ExpressionTreeRewriter<RewriterContext> treeRewriter) {
       //If aggregate expression, convert to OVER PARTITION BY PK
       //Else return expression
       SqmlFunction function = expressionAnalysis.getFunction(node);
@@ -144,27 +142,23 @@ public class ViewExpressionRewriter extends AstVisitor<ViewScope, ViewRewriterCo
       }
     }
 
-    private List<Expression> partition(ViewScope context) {
+    private List<Expression> partition(RewriterContext context) {
       return List.of(new Identifier("pk"));
     }
 
+    /**
+     * Identifier could be:
+     *  field
+     *  rel.field
+     *  *
+     */
     @Override
-    public Expression rewriteIdentifier(Identifier node, ViewScope context,
-        ExpressionTreeRewriter<ViewScope> treeRewriter) {
-      //Walk node path.
-      //visitSelf
-      // -
-      //
+    public Expression rewriteIdentifier(Identifier node, RewriterContext context,
+        ExpressionTreeRewriter<RewriterContext> treeRewriter) {
 
       return node;
-//      Optional<DataColumn> column = context.getTable().getColumn(node.getValue());
-//      if (column.isEmpty()) throw new RuntimeException(String.format("Could not find column %s", node.getValue()));
-//      return new Identifier(column.get().getPhysicalName()); //todo: new identifier?
     }
   }
-
-  //TODO: @ is an alias to disambiguate global scope and local fields
-  //
 
   class PathWalker {
     public void walk(QualifiedName path) {

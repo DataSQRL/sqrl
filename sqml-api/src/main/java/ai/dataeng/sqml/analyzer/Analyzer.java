@@ -5,7 +5,7 @@ import static ai.dataeng.sqml.logical3.LogicalPlan.Builder.unbox;
 import ai.dataeng.sqml.ViewQueryRewriter;
 import ai.dataeng.sqml.ViewQueryRewriter.ColumnNameGen;
 import ai.dataeng.sqml.ViewQueryRewriter.ViewRewriterContext;
-import ai.dataeng.sqml.ViewQueryRewriter.ViewScope;
+import ai.dataeng.sqml.ViewQueryRewriter.RewriterContext;
 import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
@@ -165,12 +165,6 @@ public class Analyzer {
       return null;
     }
 
-    private void addParentField(TypedField f, RelationType<TypedField> relation) {
-      Type type = unbox(f.getType());
-      Preconditions.checkState(type instanceof RelationType);
-      relation.add(new ParentField(((RelationType)type)));
-    }
-
     @Override
     public Scope visitExpressionAssignment(ExpressionAssignment expressionAssignment,
         final Scope scope) {
@@ -187,13 +181,14 @@ public class Analyzer {
                 unbox(field.getType()).getClass().getName()));
       }
 
-      ExpressionAnalysis exprAnalysis = analyzeExpression(expression, Scope.create(fieldOptional));
+      Scope exprScope = Scope.create((RelationType)unbox(field.getType()), fieldOptional);
+      ExpressionAnalysis exprAnalysis = analyzeExpression(expression, exprScope);
       Type type = exprAnalysis.getType(expression);
 
       TypedField createdField = new ExpressionField(name.getSuffix(), type, Optional.empty());
       addField(expressionAssignment, createdField);
 
-      createPhysicalExpression(expressionAssignment, null,
+      createPhysicalExpression(expressionAssignment, exprScope,
           exprAnalysis);
 
       return null;
@@ -225,11 +220,15 @@ public class Analyzer {
       RelationshipField createdField = new RelationshipField(node.getName().getSuffix(), to);
       addField(node, createdField);
 
-      return null;
-    }
+      Optional<Identifier> identifier = node.getInlineJoin().getInverse();
+      if (identifier.isPresent()) {
+        QualifiedName name = QualifiedName.of(identifier.get());
+        TypedField field1 = field.get();
+        RelationshipField inverseField = new RelationshipField(name.getSuffix(), field1);
+        analysis.getPlanBuilder().addField(to.getQualifiedName(), inverseField);
+      }
 
-    private void addField(Assignment node, TypedField createdField) {
-      analysis.getPlanBuilder().addField(node.getName(), createdField);
+      return null;
     }
 
     @Override
@@ -238,7 +237,16 @@ public class Analyzer {
       return context;
     }
 
-    private void addParentFields(StandardField field, Optional<RelationType> parent) {
+    private void addParentField(TypedField f, RelationType<TypedField> relation) {
+      Preconditions.checkState(unbox(f.getType()) instanceof RelationType);
+      relation.add(new ParentField(f));
+    }
+
+    private void addField(Assignment node, TypedField createdField) {
+      analysis.getPlanBuilder().addFieldPrefix(node.getName(), createdField);
+    }
+
+    private void addParentFields(StandardField field, Optional<TypedField> parent) {
       Type type = unbox(field.getType());
       if (!(type instanceof RelationType)) {
         return;
@@ -246,11 +254,11 @@ public class Analyzer {
       RelationType<Field> rel = (RelationType<Field>) type;
       for (Field sField : rel.getFields()) {
         if (sField instanceof StandardField) {
-          addParentFields((StandardField)sField, Optional.of(rel));
+          addParentFields((StandardField)sField, Optional.of(field));
         }
       }
 
-      parent.ifPresent(relationType -> rel.add(new ParentField(relationType)));
+      parent.ifPresent(f -> rel.add(new ParentField(f)));
     }
 
     private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
@@ -290,27 +298,23 @@ public class Analyzer {
       try {
         ViewExpressionRewriter viewRewriter = new ViewExpressionRewriter(this.analysis.getPhysicalModel(),
             columnNameGen, this.analysis, expressionAnalysis);
-        ViewScope viewScope = new ViewScope(node, null, null);
-        ViewScope scope2 = viewRewriter.rewrite(node.getExpression(), viewScope, node.getName());
+        RewriterContext rewriterContext = new RewriterContext(node, null, null);
+        RewriterContext scope2 = viewRewriter.rewrite(node.getExpression(), rewriterContext, node.getName(), scope);
 
         this.analysis.getPhysicalModel()
             .addTable(scope2.getTable());
       } catch (Exception e) {
         log.error("Physical plan err");
-        e.printStackTrace();
       }
     }
 
     private void createPhysicalView(Node node, Scope scope,
         Optional<ImportSchema> schema, Optional<StatementAnalysis> analysis,
         Optional<ExpressionAnalysis> expressionAnalysis) {
-      if (true) {
-        return;
-      }
       try {
         ViewQueryRewriter viewRewriter = new ViewQueryRewriter(this.analysis.getPhysicalModel(),
             columnNameGen);
-        ViewScope scope2 = node.accept(viewRewriter, new ViewRewriterContext(scope, analysis,
+        RewriterContext scope2 = node.accept(viewRewriter, new ViewRewriterContext(scope, analysis,
             schema, expressionAnalysis));
         if (scope2 == null) {
           log.error("Err, no scope");
@@ -320,11 +324,10 @@ public class Analyzer {
           return;
         }
         System.out.println(scope2.getTable().getQueryAst().get().accept(new NodeFormatter(), null));
-        this.analysis.getPhysicalModel()
-            .addTable(scope2.getTable());
+
       } catch (Exception e) {
         log.error("Physical plan err");
-        e.printStackTrace();
+//        e.printStackTrace();
       }
     }
   }
