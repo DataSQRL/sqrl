@@ -5,8 +5,8 @@ import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
-import ai.dataeng.sqml.schema2.name.Name;
-import ai.dataeng.sqml.schema2.name.SpecialName;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.SpecialName;
 import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;

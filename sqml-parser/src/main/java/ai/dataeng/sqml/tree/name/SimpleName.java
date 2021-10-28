@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.schema2.name;
+package ai.dataeng.sqml.tree.name;
 
 public class SimpleName extends AbstractName {
 

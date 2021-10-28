@@ -5,10 +5,12 @@ import static java.lang.String.format;
 import ai.dataeng.sqml.OperatorType;
 import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.function.TypeSignature;
+import ai.dataeng.sqml.logical3.LogicalPlan.Builder;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.TypedField;
 import ai.dataeng.sqml.schema2.basic.BooleanType;
 import ai.dataeng.sqml.schema2.basic.DateTimeType;
 import ai.dataeng.sqml.schema2.basic.NullType;
@@ -49,9 +51,12 @@ import java.util.logging.Logger;
 public class ExpressionAnalyzer {
   private Logger log = Logger.getLogger(Expression.class.getName());
   private final Metadata metadata;
+  private final Builder planBuilder;
 
-  public ExpressionAnalyzer(Metadata metadata) {
+  public ExpressionAnalyzer(Metadata metadata,
+      Builder planBuilder) {
     this.metadata = metadata;
+    this.planBuilder = planBuilder;
   }
 
   public ExpressionAnalysis analyze(Expression node, Scope scope) {
@@ -122,7 +127,8 @@ public class ExpressionAnalyzer {
 
     @Override
     protected Type visitSubqueryExpression(SubqueryExpression node, Context context) {
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata);
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata,
+          planBuilder);
       Scope scope = node.getQuery().accept(statementAnalyzer, context.getScope());
 
       return scope.getRelation();
@@ -166,6 +172,8 @@ public class ExpressionAnalyzer {
       if (function.isEmpty()) {
         throw new RuntimeException(String.format("Could not find function %s", node.getName()));
       }
+      analysis.qualifyFunction(node, function.get());
+
       TypeSignature typeSignature = function.get().getTypeSignature();
       for (Expression expression : node.getArguments()) {
         expression.accept(this, context);
@@ -241,7 +249,7 @@ public class ExpressionAnalyzer {
       if (!(type instanceof RelationType)) {
         throw new RuntimeException(String.format("Dereference type not a relation: %s", node));
       }
-      RelationType relType = (RelationType) type;
+      RelationType<TypedField> relType = (RelationType<TypedField>) type;
       Optional<Field> field = relType.getField(node.getField().getValue());
       if (field.isEmpty()) {
         throw new RuntimeException(String.format("Could not dereference %s in %s", node.getBase(), node.getField()));

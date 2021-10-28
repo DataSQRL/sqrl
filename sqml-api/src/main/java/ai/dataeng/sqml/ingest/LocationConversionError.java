@@ -2,7 +2,6 @@ package ai.dataeng.sqml.ingest;
 
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.basic.SimpleConversionError;
-import ai.dataeng.sqml.schema2.name.NamePath;
 import lombok.NonNull;
 
 public class LocationConversionError<L> extends SimpleConversionError {

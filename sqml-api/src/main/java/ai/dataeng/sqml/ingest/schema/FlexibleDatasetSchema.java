@@ -4,7 +4,7 @@ import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
-import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.tree.name.Name;
 import lombok.*;
 
 import java.io.Serializable;
@@ -66,6 +66,10 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
 
         }
 
+        @Override
+        public Field withAlias(String alias) {
+            return null;
+        }
     }
 
     @Getter

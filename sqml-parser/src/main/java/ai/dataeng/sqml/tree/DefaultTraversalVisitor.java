@@ -282,9 +282,7 @@ public abstract class DefaultTraversalVisitor<R, C>
 
   @Override
   protected R visitGroupBy(GroupBy node, C context) {
-    for (GroupingElement groupingElement : node.getGroupingElements()) {
-      process(groupingElement, context);
-    }
+    process(node.getGroupingElement(), context);
 
     return null;
   }

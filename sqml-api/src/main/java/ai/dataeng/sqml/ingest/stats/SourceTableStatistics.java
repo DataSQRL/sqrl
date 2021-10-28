@@ -1,15 +1,9 @@
 package ai.dataeng.sqml.ingest.stats;
 
 import ai.dataeng.sqml.ingest.DatasetRegistration;
-import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.schema2.name.Name;
-import lombok.NonNull;
 import lombok.ToString;
-
-import java.io.Serializable;
-import java.util.Map;
 
 @ToString
 public class SourceTableStatistics implements Accumulator<SourceRecord<String>, SourceTableStatistics, DatasetRegistration> {

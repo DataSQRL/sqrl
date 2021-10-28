@@ -1,22 +1,30 @@
 package ai.dataeng.sqml.analyzer;
 
+import static ai.dataeng.sqml.logical3.LogicalPlan.Builder.unbox;
+
+import ai.dataeng.sqml.ViewQueryRewriter;
+import ai.dataeng.sqml.ViewQueryRewriter.ColumnNameGen;
+import ai.dataeng.sqml.ViewQueryRewriter.ViewRewriterContext;
+import ai.dataeng.sqml.ViewQueryRewriter.ViewScope;
 import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
 import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
-import ai.dataeng.sqml.logical3.LogicalPlan2.DataField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.DelegateLogicalField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.DistinctRelationField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.RelationshipField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.SelectRelationField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.SubscriptionField;
+import ai.dataeng.sqml.logical3.ExpressionField;
+import ai.dataeng.sqml.logical3.LogicalPlan;
+import ai.dataeng.sqml.logical3.ParentField;
+import ai.dataeng.sqml.logical3.QueryRelationField;
+import ai.dataeng.sqml.logical3.RelationshipField;
 import ai.dataeng.sqml.metadata.Metadata;
+import ai.dataeng.sqml.physical.PhysicalModel;
+import ai.dataeng.sqml.physical.ViewExpressionRewriter;
+import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.TypedField;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.schema2.name.Name;
-import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
+import ai.dataeng.sqml.tree.Assignment;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.CreateSubscription;
 import ai.dataeng.sqml.tree.DistinctAssignment;
@@ -27,15 +35,20 @@ import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.JoinAssignment;
 import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.Script;
+import ai.dataeng.sqml.tree.name.Name;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class Analyzer {
   protected final Metadata metadata;
   protected final Analysis analysis;
@@ -48,7 +61,7 @@ public class Analyzer {
   }
 
   public static Analysis analyze(Script script, Metadata metadata) {
-    Analysis analysis = new Analysis(script);
+    Analysis analysis = new Analysis(script, new PhysicalModel(), new LogicalPlan.Builder());
     Analyzer analyzer = new Analyzer(script, metadata, analysis);
 
     analyzer.analyze();
@@ -66,13 +79,11 @@ public class Analyzer {
     private final Analysis analysis;
     private final Metadata metadata;
     private final AtomicBoolean importResolved = new AtomicBoolean(false);
-    private final ImportManager importManager;
+    private final ColumnNameGen columnNameGen = new ColumnNameGen();
 
     public Visitor(Analysis analysis, Metadata metadata) {
       this.analysis = analysis;
       this.metadata = metadata;
-      this.importManager = new ImportManager(metadata.getEnv()
-          .getDdRegistry());
     }
 
     @Override
@@ -90,8 +101,6 @@ public class Analyzer {
         tryCompleteImportHeader(statements, i, scope);
       }
 
-      analysis.setLogicalPlan2(scope.getPlanBuilder().build());
-
       return null;
     }
 
@@ -101,6 +110,10 @@ public class Analyzer {
         throw new RuntimeException(String.format("Import statement must be in header %s", node.getQualifiedName()));
       }
 
+      ImportManager importManager = new ImportManager(metadata.getEnv()
+          .getDdRegistry());
+
+      //TODO: One import set per line
       if (node.getQualifiedName().getParts().size() == 1) {
         if (node.getQualifiedName().getParts().get(0).equalsIgnoreCase("*")) {
           throw new RuntimeException("Cannot import * at base level");
@@ -116,6 +129,19 @@ public class Analyzer {
         }
       }
 
+      ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
+      ImportSchema schema = importManager.createImportSchema(errors);
+
+      //schema.getSchema().getFieldByName(mapping.getKey()))
+      for (Map.Entry<Name, Mapping> mapping : schema.getMappings().entrySet()) {
+        StandardField field = schema.getSchema().getFieldByName(mapping.getKey());
+        //add parent fields
+        addParentFields(field, Optional.empty());
+        analysis.getPlanBuilder().getRoot().add(field);
+      }
+
+      createPhysicalView(node, scope, Optional.of(schema), Optional.empty(), Optional.empty());
+
       return scope;
     }
 
@@ -123,90 +149,119 @@ public class Analyzer {
     public Scope visitQueryAssignment(QueryAssignment queryAssignment, Scope scope) {
       QualifiedName name = queryAssignment.getName();
       Query query = queryAssignment.getQuery();
-      Scope newScope = createAndAssignScope(query, null, name, scope);
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(this.metadata);
-      Scope result = query.accept(statementAnalyzer, newScope);
 
-      scope.addField(new SelectRelationField(toName(name), result.getRelation(), Optional.empty()));
+      Optional<TypedField> prefixField = getPrefixField(queryAssignment);
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(this.metadata,
+          this.analysis.getPlanBuilder());
+      Scope result = query.accept(statementAnalyzer, Scope.create(prefixField));
 
-      return createAndAssignScope(queryAssignment, null,
-          name, scope);
+      QueryRelationField createdField = new QueryRelationField(name.getSuffix(), result.getRelation());
+      prefixField.ifPresent(f->addParentField(f, result.getRelation()));
+      addField(queryAssignment, createdField);
+
+      createPhysicalView(queryAssignment, result, Optional.empty(), Optional.of(statementAnalyzer.getAnalysis()),
+          Optional.empty());
+
+      return null;
+    }
+
+    private void addParentField(TypedField f, RelationType<TypedField> relation) {
+      Type type = unbox(f.getType());
+      Preconditions.checkState(type instanceof RelationType);
+      relation.add(new ParentField(((RelationType)type)));
     }
 
     @Override
     public Scope visitExpressionAssignment(ExpressionAssignment expressionAssignment,
         final Scope scope) {
       QualifiedName name = expressionAssignment.getName();
-
       Expression expression = expressionAssignment.getExpression();
-      Scope assignedScope = createAndAssignScope(expression,
-          null, name, scope);
-      ExpressionAnalysis exprAnalysis = analyzeExpression(expression, assignedScope);
 
+      Optional<TypedField> fieldOptional = getPrefixField(expressionAssignment);
+      TypedField field = fieldOptional
+          .orElseThrow(/* expression must be assigned to relation */);
+
+      if (!(unbox(field.getType()) instanceof RelationType)) {
+        throw new RuntimeException(
+            String.format("Can only extend a relation with an expression. Found: %s ",
+                unbox(field.getType()).getClass().getName()));
+      }
+
+      ExpressionAnalysis exprAnalysis = analyzeExpression(expression, Scope.create(fieldOptional));
       Type type = exprAnalysis.getType(expression);
 
-      scope.addField(new DataField(toName(name), type, List.of()));
+      TypedField createdField = new ExpressionField(name.getSuffix(), type, Optional.empty());
+      addField(expressionAssignment, createdField);
 
-      return createAndAssignScope(expression,
-          null,
-          name, scope);
+      createPhysicalExpression(expressionAssignment, null,
+          exprAnalysis);
+
+      return null;
     }
 
     @Override
     public Scope visitCreateSubscription(CreateSubscription subscription, Scope scope) {
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata);
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, this.analysis.getPlanBuilder());
       Scope queryScope = subscription.getQuery().accept(statementAnalyzer, scope);
 
-      scope.addRootField(new SubscriptionField(
-          toName(subscription.getName()), queryScope.getCurrentRelation()));
-
-      return createAndAssignScope(subscription,
-          null,
-          subscription.getName(), scope);
+      return null;
     }
 
     @Override
     public Scope visitDistinctAssignment(DistinctAssignment node, Scope scope) {
-      RelationType<LogicalField> table = scope.resolveRelation(QualifiedName.of(node.getTable()))
-          .orElseThrow(()->new RuntimeException(String.format("Could not find table %s", node.getTable().getValue())));
 
-      scope.addField(new DistinctRelationField(toName(node.getName()), table));
-      return scope;
+      return null;
     }
 
     @Override
     public Scope visitJoinAssignment(JoinAssignment node, Scope scope) {
-      visitInlineJoin(node.getInlineJoin(), scope);
+      QualifiedName table = node.getInlineJoin().getJoin().getTable();
+      Optional<TypedField> field = analysis.getPlanBuilder()
+          .getField(node.getName().getPrefix());
 
-      scope.addField(new RelationshipField(toName(node.getName()), null, null));
+      TypedField to = analysis.getPlanBuilder().resolveTableField(table, field)
+          .orElseThrow(/*todo throw table must exist*/);
 
-      return createAndAssignScope(node, null, node.getName(), scope);
+      RelationshipField createdField = new RelationshipField(node.getName().getSuffix(), to);
+      addField(node, createdField);
+
+      return null;
+    }
+
+    private void addField(Assignment node, TypedField createdField) {
+      analysis.getPlanBuilder().addField(node.getName(), createdField);
     }
 
     @Override
     public Scope visitInlineJoin(InlineJoin node, Scope context) {
-      return super.visitInlineJoin(node, context);
+      //Todo: inline join assignment
+      return context;
+    }
+
+    private void addParentFields(StandardField field, Optional<RelationType> parent) {
+      Type type = unbox(field.getType());
+      if (!(type instanceof RelationType)) {
+        return;
+      }
+      RelationType<Field> rel = (RelationType<Field>) type;
+      for (Field sField : rel.getFields()) {
+        if (sField instanceof StandardField) {
+          addParentFields((StandardField)sField, Optional.of(rel));
+        }
+      }
+
+      parent.ifPresent(relationType -> rel.add(new ParentField(relationType)));
     }
 
     private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
-      ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata);
+      ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata, this.analysis.getPlanBuilder());
       ExpressionAnalysis analysis = analyzer.analyze(expression, scope);
-
-      this.analysis.addTypes(analysis.typeMap);
 
       return analysis;
     }
 
-    private Scope createAndAssignScope(Node node, RelationType relationType, QualifiedName contextName,
-        Scope parentScope) {
-      Scope scope = Scope.builder()
-          .withParent(parentScope)
-          .withRelationType(relationType)
-          .withContextName(contextName)
-          .build();
-
-      analysis.setScope(node, scope);
-      return scope;
+    private Optional<TypedField> getPrefixField(Assignment assignment) {
+      return analysis.getPlanBuilder().getField(assignment.getName().getPrefix());
     }
 
     private void tryCompleteImportHeader(List<Node> statements,
@@ -221,11 +276,6 @@ public class Analyzer {
 
     private void resolveImports(Scope scope) {
       importResolved.set(true);
-      ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
-      ImportSchema schema = importManager.createImportSchema(errors);
-      for (Map.Entry<Name, Mapping> mapping : schema.getMappings().entrySet()) {
-        scope.addRootField(new DelegateLogicalField(schema.getSchema().getFieldByName(mapping.getKey())));
-      }
     }
 
     private Optional<Node> getNextStatement(List<Node> statements, int i) {
@@ -234,11 +284,48 @@ public class Analyzer {
       }
       return Optional.empty();
     }
-    public Name toName(QualifiedName name) {
-      return Name.of(name.toOriginalString(), NameCanonicalizer.SYSTEM);
+
+    private void createPhysicalExpression(ExpressionAssignment node, Scope scope,
+        ExpressionAnalysis expressionAnalysis) {
+      try {
+        ViewExpressionRewriter viewRewriter = new ViewExpressionRewriter(this.analysis.getPhysicalModel(),
+            columnNameGen, this.analysis, expressionAnalysis);
+        ViewScope viewScope = new ViewScope(node, null, null);
+        ViewScope scope2 = viewRewriter.rewrite(node.getExpression(), viewScope, node.getName());
+
+        this.analysis.getPhysicalModel()
+            .addTable(scope2.getTable());
+      } catch (Exception e) {
+        log.error("Physical plan err");
+        e.printStackTrace();
+      }
     }
-    public Name toName(String name) {
-      return Name.of(name, NameCanonicalizer.SYSTEM);
+
+    private void createPhysicalView(Node node, Scope scope,
+        Optional<ImportSchema> schema, Optional<StatementAnalysis> analysis,
+        Optional<ExpressionAnalysis> expressionAnalysis) {
+      if (true) {
+        return;
+      }
+      try {
+        ViewQueryRewriter viewRewriter = new ViewQueryRewriter(this.analysis.getPhysicalModel(),
+            columnNameGen);
+        ViewScope scope2 = node.accept(viewRewriter, new ViewRewriterContext(scope, analysis,
+            schema, expressionAnalysis));
+        if (scope2 == null) {
+          log.error("Err, no scope");
+          return;
+        }
+        if (true) {
+          return;
+        }
+        System.out.println(scope2.getTable().getQueryAst().get().accept(new NodeFormatter(), null));
+        this.analysis.getPhysicalModel()
+            .addTable(scope2.getTable());
+      } catch (Exception e) {
+        log.error("Physical plan err");
+        e.printStackTrace();
+      }
     }
   }
 }

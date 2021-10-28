@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.ingest.stats;
 
 import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.schema2.name.Name;
-import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 

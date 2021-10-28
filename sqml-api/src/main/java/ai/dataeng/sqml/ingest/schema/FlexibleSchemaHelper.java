@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.ingest.schema;
 
 import ai.dataeng.sqml.schema2.constraint.ConstraintHelper;
-import ai.dataeng.sqml.schema2.name.Name;
-import ai.dataeng.sqml.schema2.name.SpecialName;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.SpecialName;
 
 public class FlexibleSchemaHelper {
 

@@ -1,8 +1,5 @@
 package ai.dataeng.sqml.ingest.schema.external;
 
-import ai.dataeng.sqml.schema2.name.NamePath;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 public class DatasetDefinition {

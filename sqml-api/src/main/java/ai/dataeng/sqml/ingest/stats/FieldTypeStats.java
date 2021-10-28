@@ -2,7 +2,7 @@ package ai.dataeng.sqml.ingest.stats;
 
 import ai.dataeng.sqml.ingest.accumulator.LogarithmicHistogram;
 import ai.dataeng.sqml.schema2.Type;
-import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
+import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import lombok.*;
 
 import java.io.Serializable;

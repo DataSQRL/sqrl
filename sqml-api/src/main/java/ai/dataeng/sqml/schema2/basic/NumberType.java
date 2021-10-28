@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.schema2.basic;
 
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import lombok.NonNull;
@@ -36,5 +37,7 @@ public class NumberType extends AbstractBasicType<Double> {
             return FloatType.Conversion.convertInternal(o);
         }
     }
-
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+        return visitor.visitNumberType(this, context);
+    }
 }

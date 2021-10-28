@@ -13,14 +13,12 @@ import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
-import ai.dataeng.sqml.schema2.name.Name;
-import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
-import ai.dataeng.sqml.schema2.name.NamePath;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NameCanonicalizer;
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 
 import java.util.*;
@@ -78,7 +76,7 @@ public class ImportManager {
                                 }
                             }
                             if (!importLocal) {
-                                schemaBuilder.add(new StandardField(imp.asName.orElse(imp.datasetName),localSchemaBuilder.build(),Collections.EMPTY_LIST));
+                                schemaBuilder.add(new StandardField(imp.asName.orElse(imp.datasetName),localSchemaBuilder.build(),Collections.EMPTY_LIST, Optional.empty()));
                             }
                             break;
                         case TABLE:
@@ -86,7 +84,7 @@ public class ImportManager {
                             if (table == null) {
                                 errors.add(SchemaConversionError.fatal(NamePath.of(datasetName), "Unknown table: %s", imp.tableName));
                             } else {
-                                StandardField tableRename = new StandardField(imp.asName.orElse(table.getName()), table.getType(), table.getConstraints());
+                                StandardField tableRename = new StandardField(imp.asName.orElse(table.getName()), table.getType(), table.getConstraints(), Optional.empty());
                                 localSchemaBuilder.add(tableRename);
                                 addMapping(imp.asName.orElse(table.getName()),
                                         new ImportSchema.Mapping(ImportSchema.ImportType.SCRIPT, datasetName, table.getName()),
@@ -133,7 +131,7 @@ public class ImportManager {
                                 }
                             }
                             if (!importLocal) {
-                                schemaBuilder.add(new StandardField(imp.asName.orElse(imp.datasetName),localSchemaBuilder.build(),Collections.EMPTY_LIST));
+                                schemaBuilder.add(new StandardField(imp.asName.orElse(imp.datasetName),localSchemaBuilder.build(),Collections.EMPTY_LIST, Optional.empty()));
                             }
                             break;
                         case TABLE:

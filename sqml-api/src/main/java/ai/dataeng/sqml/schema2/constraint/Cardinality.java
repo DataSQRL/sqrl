@@ -4,8 +4,7 @@ import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.basic.ConversionResult;
-import ai.dataeng.sqml.schema2.basic.SimpleConversionError;
-import ai.dataeng.sqml.schema2.name.Name;
+import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 

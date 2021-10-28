@@ -4,6 +4,7 @@ import static ai.dataeng.sqml.analyzer.AggregationAnalyzer.verifyOrderByAggregat
 import static ai.dataeng.sqml.analyzer.AggregationAnalyzer.verifySourceAggregations;
 import static ai.dataeng.sqml.analyzer.ExpressionTreeUtils.extractAggregateFunctions;
 import static ai.dataeng.sqml.analyzer.ExpressionTreeUtils.extractExpressions;
+import static ai.dataeng.sqml.logical3.LogicalPlan.Builder.unbox;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Iterables.getLast;
@@ -13,13 +14,16 @@ import static java.util.Objects.requireNonNull;
 
 import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
 import ai.dataeng.sqml.function.FunctionProvider;
-import ai.dataeng.sqml.logical.DataField;
-import ai.dataeng.sqml.logical3.LogicalPlan2.LogicalField;
+import ai.dataeng.sqml.logical3.LogicalPlan;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.TypedField;
 import ai.dataeng.sqml.schema2.basic.BooleanType;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
@@ -51,6 +55,7 @@ import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.Table;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.Union;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMultimap;
@@ -62,20 +67,25 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import scala.annotation.meta.field;
 
 @Slf4j
 public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
   private final Metadata metadata;
   private final StatementAnalysis analysis;
+  private final LogicalPlan.Builder planBuilder;
 
-  public StatementAnalyzer(Metadata metadata) {
-    this(metadata, new StatementAnalysis());
+  public StatementAnalyzer(Metadata metadata,
+      LogicalPlan.Builder planBuilder) {
+    this(metadata, new StatementAnalysis(), planBuilder);
   }
 
-  public StatementAnalyzer(Metadata metadata, StatementAnalysis statementAnalysis) {
+  public StatementAnalyzer(Metadata metadata, StatementAnalysis statementAnalysis,
+      LogicalPlan.Builder planBuilder) {
     this.metadata = metadata;
     this.analysis = statementAnalysis;
+    this.planBuilder = planBuilder;
   }
 
   public StatementAnalysis getAnalysis() {
@@ -161,15 +171,18 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
   @Override
   protected Scope visitTable(Table table, Scope scope) {
-    RelationType relation = scope.resolveRelation(table.getName())
-        .orElseThrow(() -> new RuntimeException(String.format("Could not find table: %s", table.getName())));
+    QualifiedName tableName = table.getName();
+    TypedField field = planBuilder.resolveTableField(tableName, scope.getField())
+        .orElseThrow(/*todo*/);
+    Type type = unbox(field.getType());
+    Preconditions.checkState(type instanceof RelationType);
 
-    return createAndAssignScope(table, scope, relation);
+    return createAndAssignScope(table, scope, (RelationType) type);
   }
 
   @Override
   protected Scope visitTableSubquery(TableSubquery node, Scope scope) {
-    StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, this.analysis);
+    StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, this.analysis, planBuilder);
     Scope queryScope = node.getQuery().accept(statementAnalyzer, scope);
     return createAndAssignScope(node, scope, queryScope.getRelation());
   }
@@ -213,7 +226,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     RelationType relationType = relationScope.getRelation();
 
-    RelationType descriptor = withAlias(relationType, relation.getAlias().getValue());
+    RelationType descriptor = relationType.withAlias(relation.getAlias().getValue());
 
     return createAndAssignScope(relation, scope, descriptor);
   }
@@ -281,7 +294,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       }
     }
 
-    DataField[] outputDescriptorFields = new DataField[outputFieldTypes.length];
+    TypedField[] outputDescriptorFields = new TypedField[outputFieldTypes.length];
     RelationType firstDescriptor = relationScopes.get(0).getRelation();
     for (int i = 0; i < outputFieldTypes.length; i++) {
       Field oldField = (Field)firstDescriptor.getFields().get(i);
@@ -502,7 +515,6 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   private Scope createAndAssignScope(Node node, Scope parentScope, RelationType relationType) {
     Scope scope = Scope.builder()
         .withParent(parentScope)
-        .withContextName(parentScope.getContextName())
         .withRelationType(relationType)
         .build();
 
@@ -517,7 +529,6 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     //Todo move to function
     Scope orderByScope = Scope.builder()
         .withParent(sourceScope)
-        .withContextName(sourceScope.getContextName())
         .withRelationType(outputScope.getRelation())
         .build();
     analysis.setScope(node, orderByScope);
@@ -572,14 +583,14 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
   private Scope computeAndAssignOutputScope(QuerySpecification node, Scope scope,
       Scope sourceScope) {
-    Builder<DataField> outputFields = ImmutableList.builder();
+    Builder<StandardField> outputFields = ImmutableList.builder();
 
     for (SelectItem item : node.getSelect().getSelectItems()) {
       if (item instanceof AllColumns) {
         Optional<QualifiedName> starPrefix = ((AllColumns) item).getPrefix();
 
         for (Field field : sourceScope.resolveFieldsWithPrefix(starPrefix)) {
-          outputFields.add(DataField.newDataField(field.getName(), field.getType()));
+          outputFields.add(new StandardField(field.getName(), field.getType(), List.of(), Optional.empty()));
         }
       } else if (item instanceof SingleColumn) {
         SingleColumn column = (SingleColumn) item;
@@ -612,9 +623,16 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           }
         }
 
+        String identifierName = field.map(Identifier::getValue)
+            .orElse("VAR");
+
+        if (analysis.getType(expression).isEmpty()) {
+          log.error("analysis type could not be found:" + expression);
+          continue;
+        }
         outputFields.add(
-            DataField.newDataField(field.map(Identifier::getValue).get(),
-            analysis.getType(expression).orElseThrow())
+            new StandardField(Name.of(identifierName, NameCanonicalizer.SYSTEM),
+            analysis.getType(expression).orElseThrow(), List.of(), Optional.empty())
 //            column.getAlias().isPresent())
         );
       }
@@ -651,7 +669,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       if (item instanceof AllColumns) {
         Optional<QualifiedName> starPrefix = ((AllColumns) item).getPrefix();
 
-        List<LogicalField> fields = scope.resolveFieldsWithPrefix(starPrefix);
+        List<TypedField> fields = scope.resolveFieldsWithPrefix(starPrefix);
         if (fields.isEmpty()) {
           if (starPrefix.isPresent()) {
             throw new RuntimeException(String.format("Table '%s' not found", starPrefix.get()));
@@ -697,78 +715,62 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return new RelationType(joinFields);
   }
 
-  public RelationType withAlias(RelationType rel, String relationAlias) {
-    ImmutableList.Builder<Field> fieldsBuilder = ImmutableList.builder();
-    for (int i = 0; i < rel.getFields().size(); i++) {
-      Field field = ((Field)rel.getFields().get(i));
-//      Optional<String> columnAlias = field.getName();
-      fieldsBuilder.add(DataField.newDataField(
-          field.getName(),
-          field.getType(),
-          Optional.ofNullable(relationAlias)));
-    }
-
-    return new RelationType(fieldsBuilder.build());
-  }
-
   private List<Expression> analyzeGroupBy(QuerySpecification node, Scope scope, List<Expression> outputExpressions)
   {
-    if (node.getGroupBy().isPresent()) {
-      List<List<Set<FieldId>>> sets = new ArrayList();
-      List<Expression> groupingExpressions = new ArrayList();
-
-      for (GroupingElement groupingElement : node.getGroupBy().get().getGroupingElements()) {
-        for (Expression column : groupingElement.getExpressions()) {
-          if (column instanceof LongLiteral) {
-            throw new RuntimeException("Ordinals not supported in group by statements");
-          }
-          //Group by statement must be one of the select fields
-          if (!(column instanceof Identifier)) {
-            log.info(String.format("GROUP BY statement should use column aliases instead of expressions. %s", column));
-            analyzeExpression(column, scope);
-            outputExpressions.stream()
-                .filter(e->e.equals(column))
-                .findAny()
-                .orElseThrow(()->new RuntimeException(String.format("SELECT should contain GROUP BY expression %s", column)));
-            groupingExpressions.add(column);
-          } else {
-            Expression rewrittenGroupByExpression = ExpressionTreeRewriter.rewriteWith(
-                new OrderByExpressionRewriter(extractNamedOutputExpressions(node.getSelect())), column);
-            int index = outputExpressions.indexOf(rewrittenGroupByExpression);
-            if (index == -1) {
-              throw new RuntimeException(String.format("SELECT should contain GROUP BY expression %s", column));
-            }
-            groupingExpressions.add(outputExpressions.get(index));
-          }
-        }
-      }
-
-      List<Expression> expressions = groupingExpressions;
-      for (Expression expression : expressions) {
-        Type type = analysis.getType(expression)
-            .get();
-        if (!type.isComparable()) {
-          throw new RuntimeException(String.format("%s is not comparable, and therefore cannot be used in GROUP BY", type));
-        }
-      }
-
-      analysis.setGroupByExpressions(node, groupingExpressions);
-
-      return groupingExpressions;
+    if (node.getGroupBy().isEmpty()) {
+      return List.of();
     }
 
-    return ImmutableList.of();
+    List<List<Set<FieldId>>> sets = new ArrayList();
+    List<Expression> groupingExpressions = new ArrayList();
+    GroupingElement groupingElement = node.getGroupBy().get().getGroupingElement();
+    for (Expression column : groupingElement.getExpressions()) {
+      if (column instanceof LongLiteral) {
+        throw new RuntimeException("Ordinals not supported in group by statements");
+      }
+      //Group by statement must be one of the select fields
+      if (!(column instanceof Identifier)) {
+        log.info(String.format("GROUP BY statement should use column aliases instead of expressions. %s", column));
+        analyzeExpression(column, scope);
+        outputExpressions.stream()
+            .filter(e->e.equals(column))
+            .findAny()
+            .orElseThrow(()->new RuntimeException(String.format("SELECT should contain GROUP BY expression %s", column)));
+        groupingExpressions.add(column);
+      } else {
+        Expression rewrittenGroupByExpression = ExpressionTreeRewriter.rewriteWith(
+            new OrderByExpressionRewriter(extractNamedOutputExpressions(node.getSelect())), column);
+        int index = outputExpressions.indexOf(rewrittenGroupByExpression);
+        if (index == -1) {
+          throw new RuntimeException(String.format("SELECT should contain GROUP BY expression %s", column));
+        }
+        groupingExpressions.add(outputExpressions.get(index));
+      }
+    }
+
+    List<Expression> expressions = groupingExpressions;
+    for (Expression expression : expressions) {
+      Type type = analysis.getType(expression)
+          .get();
+      if (!type.isComparable()) {
+        throw new RuntimeException(String.format("%s is not comparable, and therefore cannot be used in GROUP BY", type));
+      }
+    }
+
+    analysis.setGroupByExpressions(node, groupingExpressions);
+
+    return groupingExpressions;
   }
 
   private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
-    ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata);
+    ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata, planBuilder);
     ExpressionAnalysis exprAnalysis = analyzer.analyze(expression, scope);
 
     analysis.addCoercions(exprAnalysis.getExpressionCoercions(),
         exprAnalysis.getTypeOnlyCoercions());
     analysis.addTypes(exprAnalysis.getExpressionTypes());
     analysis.addSourceScopedFields(exprAnalysis.getSourceScopedFields());
-
+    analysis.qualifyFunctions(exprAnalysis.getFunctionMap());
     return exprAnalysis;
   }
 }

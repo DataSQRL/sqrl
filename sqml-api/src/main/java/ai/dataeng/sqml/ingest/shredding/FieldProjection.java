@@ -5,8 +5,8 @@ import ai.dataeng.sqml.schema2.*;
 import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.basic.IntegerType;
 import ai.dataeng.sqml.schema2.basic.UuidType;
-import ai.dataeng.sqml.schema2.name.Name;
-import ai.dataeng.sqml.schema2.name.NamePath;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
 import lombok.Value;
 

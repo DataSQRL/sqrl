@@ -436,29 +436,20 @@ public final class ExpressionTreeRewriter<C> {
 
     @Override
     public Expression visitFunctionCall(FunctionCall node, Context<C> context) {
-//      if (!context.isDefaultRewrite()) {
-//        Expression result = rewriter
-//            .rewriteFunctionCall(node, context.get(), ExpressionTreeRewriter.this);
-//        if (result != null) {
-//          return result;
-//        }
-//      }
-//
-//      Optional<Expression> filter = node.getFilter();
-//      if (filter.isPresent()) {
-//        Expression filterExpression = filter.get();
-//        Expression newFilterExpression = rewrite(filterExpression, context.get());
-//        filter = Optional.of(newFilterExpression);
-//      }
-//
-//      List<Expression> arguments = rewrite(node.getArguments(), context);
-//
-//      if (!sameElements(node.getArguments(), arguments)
-//          || !sameElements(filter, node.getFilter())) {
-//        return new FunctionCall(node.getName(), filter,
-//            node.getOrderBy().map(orderBy -> rewriteOrderBy(orderBy, context)), node.isDistinct(),
-//            node.isIgnoreNulls(), arguments);
-//      }
+      if (!context.isDefaultRewrite()) {
+        Expression result = rewriter
+            .rewriteFunctionCall(node, context.get(), ExpressionTreeRewriter.this);
+        if (result != null) {
+          return result;
+        }
+      }
+
+      List<Expression> arguments = rewrite(node.getArguments(), context);
+
+      if (!sameElements(node.getArguments(), arguments)) {
+        return new FunctionCall(node.getName(), arguments,
+             node.isDistinct());
+      }
       return node;
     }
 

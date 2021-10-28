@@ -11,11 +11,11 @@ import ai.dataeng.sqml.schema2.constraint.Cardinality;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.schema2.constraint.ConstraintHelper;
 import ai.dataeng.sqml.schema2.constraint.NotNull;
-import ai.dataeng.sqml.schema2.name.Name;
-import ai.dataeng.sqml.schema2.name.SpecialName;
+import ai.dataeng.sqml.tree.name.Name;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SchemaConverter {
@@ -33,7 +33,7 @@ public class SchemaConverter {
     }
 
     public StandardField convert(FlexibleDatasetSchema.TableField table, Name newName) {
-        return new StandardField(newName,new ArrayType(convert(table.getFields())),table.getConstraints());
+        return new StandardField(newName,new ArrayType(convert(table.getFields())),table.getConstraints(), Optional.empty());
     }
 
     private RelationType<StandardField> convert(RelationType<FlexibleDatasetSchema.FlexibleField> relation) {
@@ -63,7 +63,7 @@ public class SchemaConverter {
                 .collect(Collectors.toList());
         return new StandardField(FlexibleSchemaHelper.getCombinedName(field,ftype),
                 convert(ftype.getType(), ftype.getArrayDepth(), ftype.getConstraints()),
-                constraints);
+                constraints, Optional.empty());
     }
 
     private Type convert(Type type, int arrayDepth, List<Constraint> constraints) {

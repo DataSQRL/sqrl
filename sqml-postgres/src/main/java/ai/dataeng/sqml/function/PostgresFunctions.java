@@ -24,7 +24,7 @@ public class PostgresFunctions {
       new SqmlFunction("casts.touuid", new UuidType(), false),
       new SqmlFunction("casts.totimestamp", new DateTimeType(), false),
       new SqmlFunction("collect_as_set", new ArrayType(new StringType()), false), //todo subtype
-      new SqmlFunction("sum", new NumberType(), false),
+      new SqmlFunction("sum", new NumberType(), true),
       new SqmlFunction("roundtoday", new DateTimeType(), false),
       new SqmlFunction("timefct.roundtomin", new DateTimeType(), false), //todo unite
       new SqmlFunction("timefct.roundtohour", new DateTimeType(), false),

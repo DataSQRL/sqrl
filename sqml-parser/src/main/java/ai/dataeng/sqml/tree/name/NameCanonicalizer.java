@@ -1,7 +1,6 @@
-package ai.dataeng.sqml.schema2.name;
+package ai.dataeng.sqml.tree.name;
 
 import java.io.Serializable;
-import java.util.Locale;
 
 /**
  * Produces the canonical version of a field name

@@ -95,7 +95,7 @@ querySpecification
     ;
 
 groupBy
-    : groupingElement (',' groupingElement)*
+    : groupingElement
     ;
 
 groupingElement
@@ -103,7 +103,7 @@ groupingElement
     ;
 
 groupingSet
-    : '(' (expression (',' expression)*)? ')'
+    : (expression (',' expression)*)?
     | expression
     ;
 

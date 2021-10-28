@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.analyzer;
 
-import ai.dataeng.sqml.logical.RelationDefinition;
+import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.tree.Expression;
@@ -9,12 +9,9 @@ import ai.dataeng.sqml.tree.GroupingOperation;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.Query;
-import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
-import ai.dataeng.sqml.tree.Table;
 import com.google.common.collect.Multimap;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,10 +20,18 @@ import lombok.Getter;
 
 @Getter
 public class StatementAnalysis {
-  Set<RelationDefinition> referencedRelations = new HashSet<>();
+
+  Map<Expression, Type> typeMap = new HashMap<>();
+  Map<QuerySpecification, List<GroupingOperation>> groupingMap = new HashMap<>();
+  private Map<FunctionCall, SqmlFunction> functionMap = new HashMap<>();
+
   public void setGroupingOperations(QuerySpecification node,
       List<GroupingOperation> groupingOperations) {
+    groupingMap.put(node, groupingOperations);
+  }
 
+  public List<GroupingOperation> getGroupingOperations(QuerySpecification node) {
+    return groupingMap.get(node);
   }
 
   public void setAggregates(QuerySpecification node, List<FunctionCall> aggregates) {
@@ -54,7 +59,7 @@ public class StatementAnalysis {
   }
 
   public Optional<Type> getType(Expression expression) {
-    return null;
+    return Optional.ofNullable(typeMap.get(expression));
   }
 
   public void setScope(Node node, Scope scope) {
@@ -75,7 +80,7 @@ public class StatementAnalysis {
   }
 
   public void addTypes(Map<Expression, Type> expressionTypes) {
-
+    this.typeMap.putAll(expressionTypes);
   }
 
   public void addSourceScopedFields(Map<QualifiedName, Field> sourceScopedFields) {
@@ -86,19 +91,11 @@ public class StatementAnalysis {
 
   }
 
-  public void setOrderByExpressions(Node node, List<Expression> orderByExpressions) {
-
+  public void qualifyFunctions(Map<FunctionCall, SqmlFunction> functionMap) {
+    this.functionMap.putAll(functionMap);
   }
 
-  public void addRelatedRelation(RelationDefinition relationDefinition) {
-    referencedRelations.add(relationDefinition);
-  }
-
-  public void setMultiplicity(Node node, Optional<Long> parseLimit) {
-
-  }
-
-  public Optional<Long> getMultiplicity(QueryBody queryBody) {
-    return Optional.empty();
+  public Map<FunctionCall, SqmlFunction> getFunctionMap() {
+    return functionMap;
   }
 }

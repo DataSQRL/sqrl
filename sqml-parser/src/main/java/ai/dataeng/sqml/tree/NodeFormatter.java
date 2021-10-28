@@ -21,7 +21,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   protected String visitArithmeticBinary(ArithmeticBinaryExpression node, Void context) {
-    return node.getLeft().accept(this, null) + " " + node.getOperator() + " " +
+    return node.getLeft().accept(this, null) + " " + node.getOperator().getValue() + " " +
         node.getRight().accept(this, null);
   }
 
@@ -292,8 +292,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   protected String visitGroupBy(GroupBy node, Void context) {
-    return node.getGroupingElements().stream().map(g->g.accept(this, null))
-        .collect(Collectors.joining(" "));
+    return node.getGroupingElement().accept(this, null);
   }
 
   @Override

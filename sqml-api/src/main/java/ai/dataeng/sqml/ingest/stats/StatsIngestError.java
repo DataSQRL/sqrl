@@ -2,7 +2,6 @@ package ai.dataeng.sqml.ingest.stats;
 
 import ai.dataeng.sqml.ingest.LocationConversionError;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.schema2.name.NamePath;
 import lombok.NonNull;
 
 public class StatsIngestError extends LocationConversionError<DocumentPath> {

@@ -6,23 +6,16 @@ import java.util.Optional;
 public class JoinAssignment extends Assignment {
 
   private final InlineJoin inlineJoin;
-  private final QualifiedName name;
 
   public JoinAssignment(Optional<NodeLocation> location,
       QualifiedName name, InlineJoin inlineJoin) {
-    super(location);
+    super(location, name);
 
     this.inlineJoin = inlineJoin;
-    this.name = name;
   }
 
   public InlineJoin getInlineJoin() {
     return inlineJoin;
-  }
-
-  @Override
-  public QualifiedName getName() {
-    return name;
   }
 
   @Override

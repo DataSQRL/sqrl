@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.schema2.basic;
 
+import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import java.time.OffsetDateTime;
 import java.util.function.Function;
 
@@ -20,5 +21,8 @@ public class DateTimeType extends SimpleBasicType<OffsetDateTime> {
     @Override
     protected Function<String, OffsetDateTime> getStringParser() {
         return s -> OffsetDateTime.parse(s);
+    }
+    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+        return visitor.visitDateTimeType(this, context);
     }
 }

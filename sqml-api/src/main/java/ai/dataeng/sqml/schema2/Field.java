@@ -1,10 +1,9 @@
 package ai.dataeng.sqml.schema2;
 
 
-import ai.dataeng.sqml.schema2.name.Name;
-
 import java.io.Serializable;
 import java.util.Optional;
+import ai.dataeng.sqml.tree.name.Name;
 
 public interface Field extends Serializable {
     public Name getName();
@@ -16,4 +15,6 @@ public interface Field extends Serializable {
     default boolean isHidden() {
         return false;
     }
+
+    Field withAlias(String alias);
 }

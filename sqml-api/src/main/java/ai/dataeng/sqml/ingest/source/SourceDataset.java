@@ -1,8 +1,7 @@
 package ai.dataeng.sqml.ingest.source;
 
 import ai.dataeng.sqml.ingest.DatasetRegistration;
-import ai.dataeng.sqml.schema2.name.Name;
-import ai.dataeng.sqml.schema2.name.NameCanonicalizer;
+import ai.dataeng.sqml.tree.name.Name;
 
 import lombok.NonNull;
 import java.util.Collection;

@@ -2,10 +2,8 @@ package ai.dataeng.sqml.ingest.schema;
 
 import ai.dataeng.sqml.ingest.LocationConversionError;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.schema2.name.NamePath;
+import ai.dataeng.sqml.tree.name.NamePath;
 import lombok.NonNull;
-
-import java.io.Serializable;
 
 public class SchemaConversionError extends LocationConversionError<NamePath> {
 
