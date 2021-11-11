@@ -14,32 +14,25 @@
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
+
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+    <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
+    <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+    <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
+
+    <vertx.version>4.2.0</vertx.version>
+    <junit-jupiter.version>5.7.0</junit-jupiter.version>
+
+    <main.verticle>ai.dataeng.sqml.MainVerticle</main.verticle>
+    <launcher.class>io.vertx.core.Launcher</launcher.class>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>ai.dataeng.sqml</groupId>
-      <artifactId>sqml-ingress-http</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ai.dataeng.sqml</groupId>
-      <artifactId>sqml-execution-local</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ai.dataeng.sqml</groupId>
-      <artifactId>sqml-script-registry-local</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ai.dataeng.sqml</groupId>
-      <artifactId>sqml-parser</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ai.dataeng.sqml</groupId>
-      <artifactId>sqml-postgres</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ai.dataeng.sqml</groupId>
-      <artifactId>sqml-graphql-jetty</artifactId>
+      <artifactId>sqml-api</artifactId>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
@@ -62,7 +55,6 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>1.18.20</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -74,6 +66,65 @@
       <artifactId>slf4j-simple</artifactId>
       <version>1.7.32</version>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>3.12.4</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <release>11</release>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${maven-shade-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <manifestEntries>
+                    <Main-Class>${launcher.class}</Main-Class>
+                    <Main-Verticle>${main.verticle}</Main-Verticle>
+                  </manifestEntries>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-fat.jar
+              </outputFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>${exec-maven-plugin.version}</version>
+        <configuration>
+          <mainClass>io.vertx.core.Launcher</mainClass>
+          <arguments>
+            <argument>run</argument>
+            <argument>${main.verticle}</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

@@ -46,6 +46,10 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
         return fieldsByName.get(name);
     }
 
+    public Optional<F> getFieldByNameOptional(Name name) {
+        return Optional.ofNullable(getFieldByName(name));
+    }
+
     public void add(F field) {
         fields.add(field);
         //Need to reset fieldsByName so this new field can be found

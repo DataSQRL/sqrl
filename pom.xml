@@ -11,13 +11,7 @@
     <modules>
         <module>sqml-api</module>
         <module>sqml-parser</module>
-        <module>sqml-graphql</module>
         <module>sqml-main</module>
-        <module>sqml-execution-local</module>
-        <module>sqml-postgres</module>
-        <module>sqml-ingress-http</module>
-        <module>sqml-graphql-jetty</module>
-        <module>sqml-script-registry-local</module>
     </modules>
 
     <properties>
@@ -59,42 +53,12 @@
             </dependency>
             <dependency>
                 <groupId>ai.dataeng.sqml</groupId>
-                <artifactId>sqml-script-registry-local</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.dataeng.sqml</groupId>
-                <artifactId>sqml-execution-local</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.dataeng.sqml</groupId>
-                <artifactId>sqml-graphql-jetty</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.dataeng.sqml</groupId>
-                <artifactId>sqml-postgres</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.dataeng.sqml</groupId>
                 <artifactId>presto-matching</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.dataeng.sqml</groupId>
-                <artifactId>sqml-graphql</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.dataeng.sqml</groupId>
                 <artifactId>sqml-main</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.dataeng.sqml</groupId>
-                <artifactId>sqml-ingress-http</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

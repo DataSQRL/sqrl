@@ -9,6 +9,7 @@ import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
 import ai.dataeng.sqml.physical.PhysicalModel;
 import ai.dataeng.sqml.schema2.StandardField;
+import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionRewriter;
@@ -32,6 +33,7 @@ import ai.dataeng.sqml.tree.Table;
 import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -79,7 +81,7 @@ public class ViewQueryRewriter extends AstVisitor<RewriterContext, ViewRewriterC
             Optional.empty()
         );
         plan.addTable(table);
-        ViewTable entries = new ViewTable(QualifiedName.of("orders.entries"),
+        ViewTable entries = new ViewTable(QualifiedName.of("orders","entries"),
             "orders_entries_1",
             List.of(
                 new DataColumn("productid", "productid_1"),
@@ -118,7 +120,7 @@ public class ViewQueryRewriter extends AstVisitor<RewriterContext, ViewRewriterC
         node.getName(),
         columnNameGen.generateName(node.getName().getParts().get(0)),
         rewritten.getColumns(),
-        Optional.of(rewritten.node));
+        Optional.of((Query)rewritten.node));
 
     return new RewriterContext(node, viewTable, rewritten.getColumns());
   }
@@ -281,7 +283,7 @@ public class ViewQueryRewriter extends AstVisitor<RewriterContext, ViewRewriterC
     String tableName;
     List<DataColumn> columns;
 
-    Optional<Node> queryAst;
+    Optional<Query> queryAst;
 
     public List<DataColumn> getSqmlColumns() {
       Map<String, DataColumn> cols = columns.stream()
@@ -305,7 +307,6 @@ public class ViewQueryRewriter extends AstVisitor<RewriterContext, ViewRewriterC
   }
 
   public interface Column {
-
   }
 
   @Value

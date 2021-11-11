@@ -47,6 +47,7 @@ import ai.dataeng.sqml.tree.TimestampLiteral;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 public class ExpressionAnalyzer {
@@ -94,11 +95,8 @@ public class ExpressionAnalyzer {
 
     @Override
     protected Type visitIdentifier(Identifier node, Context context) {
-      List<FieldPath> fieldPath2 = context.getScope()
-          .toFieldPath(QualifiedName.of(node));
-      if (fieldPath2.size() == 0) {
-        System.out.println();
-      }
+      //Todo: To Resolved Field
+      //Todo: Fix shadowing
       List<FieldPath> fieldPath = context.getScope()
           .toFieldPath(QualifiedName.of(node));
       if (fieldPath.isEmpty()) {

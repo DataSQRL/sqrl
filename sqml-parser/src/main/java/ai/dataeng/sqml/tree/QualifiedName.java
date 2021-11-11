@@ -156,4 +156,12 @@ public class QualifiedName {
     }
     return new QualifiedName(nameParts.subList(prefix.nameParts.size(), nameParts.size()));
   }
+
+  public boolean equalsCanonical(QualifiedName name) {
+    return this.getParts().equals(name.getParts());
+  }
+
+  public List<Name> getNameParts() {
+    return nameParts;
+  }
 }

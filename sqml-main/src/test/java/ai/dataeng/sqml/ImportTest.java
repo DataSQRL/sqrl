@@ -8,12 +8,14 @@ import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.env.SqmlEnv;
 import ai.dataeng.sqml.execution.SQMLBundle;
+import ai.dataeng.sqml.execution.importer.DatasetImportManagerFactory;
 import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.function.PostgresFunctions;
+import ai.dataeng.sqml.graphql.LogicalGraphqlSchemaBuilder;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
 import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
@@ -30,6 +32,7 @@ import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.GraphQLError;
+import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLSchema;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +40,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.dataloader.DataLoader;
+import org.dataloader.DataLoaderRegistry;
 import org.junit.jupiter.api.Test;
 
 class ImportTest {
@@ -60,6 +65,7 @@ class ImportTest {
       .withDriverName("org.h2.Driver")
       .build();
   private static final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
+  private DataLoader<Integer, Object> characterDataLoader;
 
 
   @Test
@@ -70,9 +76,9 @@ class ImportTest {
     SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
 
     ddRegistry.addDataset(new DirectoryDataset(DatasetRegistration.of(RETAIL_DATASET), RETAIL_DATA_DIR));
-//
+
 //    ddRegistry.monitorDatasets(envProvider);
-//
+
 //    Thread.sleep(1000);
 
     SQMLBundle bundle = new SQMLBundle.Builder().createScript().setName(RETAIL_SCRIPT_NAME)
@@ -84,15 +90,15 @@ class ImportTest {
     SQMLBundle.SQMLScript sqml = bundle.getMainScript();
 //
     Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
-//
-//    if (schemaImporter.hasErrors()) {
-//      System.out.println("Import errors:");
-//      schemaImporter.getErrors().forEach(e -> System.out.println(e));
-//    }
-//
-//    System.out.println("-------Import Schema-------");
-////    System.out.print(toString(userSchema));
-//
+
+    if (schemaImporter.hasErrors()) {
+      System.out.println("Import errors:");
+      schemaImporter.getErrors().forEach(e -> System.out.println(e));
+    }
+
+    System.out.println("-------Import Schema-------");
+//    System.out.print(toString(userSchema));
+
     ImportManager sqmlManager = new ImportManager(ddRegistry);
     sqmlManager.registerUserSchema(userSchema);
 
@@ -121,7 +127,7 @@ class ImportTest {
 
     //The Data needed for sqml
     Metadata metadata = new Metadata(new FunctionProvider(PostgresFunctions.SqmlSystemFunctions),
-        env, null);
+        env, null, new DatasetImportManagerFactory(env.getDdRegistry()));
 
     //Be able to run with a standard import
     SqmlParser parser = SqmlParser.newSqmlParser();
@@ -177,27 +183,24 @@ class ImportTest {
 //            e.printStackTrace();
 //          }
 //        });
-
-    GraphQLSchema graphqlSchema = LogicalGraphqlSchemaBuilder
-        .newGraphqlSchema()
-        .analysis(analysis)
-        .build();
-
-    GraphQL graphQL = GraphQL.newGraphQL(graphqlSchema)
-        .build();
-
-    GraphqlSqmlContext context = new GraphqlSqmlContext(env);
-
-    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query("query { product { name, nested {name} } }")
-        .context(context)
-        .build();
-
-    ExecutionResult executionResult = graphQL.execute(executionInput);
-
-    Object data = executionResult.getData();
-    System.out.println(data);
-    List<GraphQLError> errors2 = executionResult.getErrors();
-    System.out.println(errors2);
-    assertEquals(true, errors2.isEmpty());
+//
+//    GraphQLSchema graphqlSchema = LogicalGraphqlSchemaBuilder
+//        .newGraphqlSchema()
+//        .setCodeRegistryBuilder(GraphQLCodeRegistry.newCodeRegistry().build())
+//        .analysis(analysis)
+//        .build();
+//
+//    GraphQL graphQL = GraphQL.newGraphQL(graphqlSchema)
+//        .build();
+//
+//    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query("query { orders { customerid, entries { productid } } }")
+//        .build();
+//    ExecutionResult executionResult = graphQL.execute(executionInput);
+//
+//    Object data = executionResult.getData();
+//    System.out.println(data);
+//    List<GraphQLError> errors2 = executionResult.getErrors();
+//    System.out.println(errors2);
+//    assertEquals(true, errors2.isEmpty());
   }
 }

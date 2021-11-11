@@ -32,7 +32,7 @@ public class ViewExpressionRewriter extends AstVisitor<RewriterContext, ViewRewr
   private final PhysicalModel plan;
   private final ColumnNameGen columnNameGen;
   private final Analysis analysis;
-  private final ExpressionAnalysis expressionAnalysis;
+  private final ExpressionAnalysis exprAnalysis;
 
   public ViewExpressionRewriter(PhysicalModel plan,
       ColumnNameGen columnNameGen, Analysis analysis,
@@ -40,7 +40,7 @@ public class ViewExpressionRewriter extends AstVisitor<RewriterContext, ViewRewr
     this.plan = plan;
     this.columnNameGen = columnNameGen;
     this.analysis = analysis;
-    this.expressionAnalysis = expressionAnalysis;
+    this.exprAnalysis = expressionAnalysis;
   }
 
   /**
@@ -52,51 +52,8 @@ public class ViewExpressionRewriter extends AstVisitor<RewriterContext, ViewRewr
    */
   public RewriterContext rewrite(Expression expression, RewriterContext viewScope, QualifiedName name,
       Scope scope) {
-    Optional<ViewTable> table = plan.getTableByName(name.getPrefix().get());
-    String tableName = "a";
 
-    Expression expression1 = rewriteExpression(expression, viewScope);
-    SingleColumn column = new SingleColumn(expression1);
-
-    ExpressionSqlizer sqlizer = new ExpressionSqlizer(analysis);
-    ExpressionSqlizerAnalysis expr = sqlizer.rewrite(expression, expressionAnalysis);
-
-    Relation from = buildRelation(scope);
-    Expression output = expression;
-
-    Query query = new Query(
-        new QuerySpecification(
-          Optional.empty(),
-          new Select(false, List.of(
-              column
-          )),
-            from,
-          Optional.empty(),
-          Optional.empty(),
-          Optional.empty(),
-          Optional.empty(),
-          Optional.empty()
-        ),
-        Optional.empty(),
-        Optional.empty()
-    );
-
-    ViewTable viewTable = new ViewTable(
-        name,
-        tableName,
-        List.of(),
-        Optional.of(query)
-    );
-
-    System.out.println(
-        query.accept(new NodeFormatter(), null)
-    );
-
-    return new RewriterContext(
-        expression,
-        viewTable,
-        List.of() //columns
-    );
+    return null;
   }
 
   private Expression rewriteExpression(Expression expression, RewriterContext rewriterContext) {
@@ -125,7 +82,7 @@ public class ViewExpressionRewriter extends AstVisitor<RewriterContext, ViewRewr
         ExpressionTreeRewriter<RewriterContext> treeRewriter) {
       //If aggregate expression, convert to OVER PARTITION BY PK
       //Else return expression
-      SqmlFunction function = expressionAnalysis.getFunction(node);
+      SqmlFunction function = exprAnalysis.getFunction(node);
       if (function.isAggregation()) {
 
         return new FunctionCall(
@@ -155,22 +112,7 @@ public class ViewExpressionRewriter extends AstVisitor<RewriterContext, ViewRewr
     @Override
     public Expression rewriteIdentifier(Identifier node, RewriterContext context,
         ExpressionTreeRewriter<RewriterContext> treeRewriter) {
-
       return node;
     }
   }
-
-  class PathWalker {
-    public void walk(QualifiedName path) {
-
-    }
-  }
-
-  class PathVisitor {
-    public void visitSelf() {}
-    public void visitParent() {}
-    public void visitRelation() {}
-    public void visitField() {}
-  }
-
 }

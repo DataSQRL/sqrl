@@ -22,7 +22,7 @@ public class PhysicalModel {
   public Optional<ViewTable> getTableByName(QualifiedName name) {
     for (int i = tables.size() - 1; i >= 0; i--) {
       ViewTable table = tables.get(i);
-      if (table.getPath().equals(name)) {
+      if (table.getPath().equalsCanonical(name)) {
         return Optional.of(table);
       }
     }

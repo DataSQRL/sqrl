@@ -11,6 +11,10 @@ import ai.dataeng.sqml.tree.name.Name;
 public interface Field extends Serializable {
     public Name getName();
 
+    public default String getCanonicalName() {
+        return getName().getCanonical();
+    }
+
     public default Type getType() {
         return null;
     }

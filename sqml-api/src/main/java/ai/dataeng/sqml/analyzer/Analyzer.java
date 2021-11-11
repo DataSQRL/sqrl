@@ -110,8 +110,7 @@ public class Analyzer {
         throw new RuntimeException(String.format("Import statement must be in header %s", node.getQualifiedName()));
       }
 
-      ImportManager importManager = new ImportManager(metadata.getEnv()
-          .getDdRegistry());
+      ImportManager importManager = metadata.getImportManagerFactory().create();
 
       //TODO: One import set per line
       if (node.getQualifiedName().getParts().size() == 1) {
@@ -132,15 +131,23 @@ public class Analyzer {
       ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
       ImportSchema schema = importManager.createImportSchema(errors);
 
-      //schema.getSchema().getFieldByName(mapping.getKey()))
-      for (Map.Entry<Name, Mapping> mapping : schema.getMappings().entrySet()) {
-        StandardField field = schema.getSchema().getFieldByName(mapping.getKey());
-        //add parent fields
-        addParentFields(field, Optional.empty());
-        analysis.getPlanBuilder().getRoot().add(field);
+      if (schema.getMappings().isEmpty()) {
+        throw new RuntimeException("No import could be found for: "+ node);
       }
 
-      createPhysicalView(node, scope, Optional.of(schema), Optional.empty(), Optional.empty());
+      //schema.getSchema().getFieldByName(mapping.getKey()))
+      for (Map.Entry<Name, Mapping> mapping : schema.getMappings().entrySet()) {
+        Optional<StandardField> field = schema.getSchema().getFieldByNameOptional(mapping.getKey());
+        //add parent fields
+        if (field.isEmpty()) {
+          throw new RuntimeException(String.format("Could not resolve import %s", node.getQualifiedName()));
+        }
+
+        addParentFields(field.get(), Optional.empty());
+        analysis.getPlanBuilder().getRoot().add(field.get());
+      }
+
+//      createPhysicalView(node, scope, Optional.of(schema), Optional.empty(), Optional.empty());
 
       return scope;
     }
@@ -159,8 +166,8 @@ public class Analyzer {
       prefixField.ifPresent(f->addParentField(f, result.getRelation()));
       addField(queryAssignment, createdField);
 
-      createPhysicalView(queryAssignment, result, Optional.empty(), Optional.of(statementAnalyzer.getAnalysis()),
-          Optional.empty());
+//      createPhysicalView(queryAssignment, result, Optional.empty(), Optional.of(statementAnalyzer.getAnalysis()),
+//          Optional.empty());
 
       return null;
     }
@@ -173,7 +180,7 @@ public class Analyzer {
 
       Optional<TypedField> fieldOptional = getPrefixField(expressionAssignment);
       TypedField field = fieldOptional
-          .orElseThrow(/* expression must be assigned to relation */);
+          .orElseThrow(()->new RuntimeException(""+expressionAssignment)/* expression must be assigned to relation */);
 
       if (!(unbox(field.getType()) instanceof RelationType)) {
         throw new RuntimeException(
@@ -188,8 +195,8 @@ public class Analyzer {
       TypedField createdField = new ExpressionField(name.getSuffix(), type, Optional.empty());
       addField(expressionAssignment, createdField);
 
-      createPhysicalExpression(expressionAssignment, exprScope,
-          exprAnalysis);
+//      createPhysicalExpression(expressionAssignment, exprScope,
+//          exprAnalysis);
 
       return null;
     }
@@ -214,6 +221,8 @@ public class Analyzer {
       Optional<TypedField> field = analysis.getPlanBuilder()
           .getField(node.getName().getPrefix());
 
+//      node.getInlineJoin().getJoin().accept(this, scope);
+
       TypedField to = analysis.getPlanBuilder().resolveTableField(table, field)
           .orElseThrow(/*todo throw table must exist*/);
 
@@ -233,7 +242,7 @@ public class Analyzer {
 
     @Override
     public Scope visitInlineJoin(InlineJoin node, Scope context) {
-      //Todo: inline join assignment
+
       return context;
     }
 
@@ -305,12 +314,16 @@ public class Analyzer {
             .addTable(scope2.getTable());
       } catch (Exception e) {
         log.error("Physical plan err");
+        e.printStackTrace();
       }
     }
 
     private void createPhysicalView(Node node, Scope scope,
         Optional<ImportSchema> schema, Optional<StatementAnalysis> analysis,
         Optional<ExpressionAnalysis> expressionAnalysis) {
+      if (schema.isEmpty()) {
+        return;
+      }
       try {
         ViewQueryRewriter viewRewriter = new ViewQueryRewriter(this.analysis.getPhysicalModel(),
             columnNameGen);
@@ -327,7 +340,7 @@ public class Analyzer {
 
       } catch (Exception e) {
         log.error("Physical plan err");
-//        e.printStackTrace();
+        e.printStackTrace();
       }
     }
   }

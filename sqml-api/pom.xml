@@ -17,9 +17,31 @@
   </properties>
 
   <dependencies>
+
     <dependency>
       <groupId>ai.dataeng.sqml</groupId>
       <artifactId>sqml-parser</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web-graphql</artifactId>
+      <version>4.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-pg-client</artifactId>
+      <version>4.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-jdbc-client</artifactId>
+      <version>4.1.0</version>
+    </dependency>
+    <!-- required for vertx jdbc -->
+    <dependency>
+      <groupId>io.agroal</groupId>
+      <artifactId>agroal-pool</artifactId>
+      <version>1.11</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
