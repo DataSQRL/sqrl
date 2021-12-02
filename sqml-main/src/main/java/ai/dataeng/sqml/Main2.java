@@ -195,7 +195,7 @@ public class Main2 {
                 tableNames.add(shreddedTableName);
 
                 process.addSink(new PrintSinkFunction<>()); //TODO: remove, debugging only
-//                process.addSink(dbSinkFactory.getSink(shreddedTableName,shredder.getResultSchema()));
+                process.addSink(dbSinkFactory.getSink(shreddedTableName,shredder.getResultSchema()));
             }
         }
 
