@@ -35,10 +35,6 @@ public class SchemaModel {
             return fields;
         }
 
-        public Optional<Table> getParentTable() {
-            return fields.stream().filter(f -> f instanceof RelationshipField).map(f -> (RelationshipField)f)
-                    .filter(f -> f.getType()==RelationshipType.PARENT).map(f -> f.getToTable()).findFirst();
-        }
     }
 
 
@@ -56,9 +52,6 @@ public class SchemaModel {
     @Getter
     public static class DataField extends Field {
 
-        BasicType type;
-        int arrayDepth;
-        boolean notnull;
         LogicalPlan.Column logicalColumn;
 
 
@@ -67,19 +60,9 @@ public class SchemaModel {
     @Getter
     public static class RelationshipField extends Field {
 
-        Table toTable;
-        RelationshipType type;
-        RelationshipMultiplicity multiplicity;
         LogicalPlan.Relationship logicalRelationship;
 
     }
 
-    public enum RelationshipType {
-        PARENT, CHILD, JOIN;
-    }
-
-    public enum RelationshipMultiplicity {
-        ZERO_ONE, ONE, MANY;
-    }
 
 }

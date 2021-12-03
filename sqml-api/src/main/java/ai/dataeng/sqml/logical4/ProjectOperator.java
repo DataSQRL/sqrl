@@ -2,7 +2,7 @@ package ai.dataeng.sqml.logical4;
 
 import java.util.List;
 
-public class AggregateOperator extends LogicalPlan.RowNode {
+public class ProjectOperator extends LogicalPlan.RowNode {
 
     LogicalPlan.RowNode input;
 

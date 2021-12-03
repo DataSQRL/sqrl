@@ -1,8 +1,11 @@
 package ai.dataeng.sqml.logical4;
 
-import lombok.AllArgsConstructor;
+import ai.dataeng.sqml.schema2.basic.BasicType;
+import ai.dataeng.sqml.tree.Relation;
+import lombok.Getter;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The {@link LogicalPlan} is a logical representation of the data flow that produces the tables and fields as defined
@@ -12,9 +15,10 @@ import java.util.List;
  */
 public class LogicalPlan {
 
-    public static final String IDENTIFIER_DELIMITER = "_";
+    public static final String TABLE_DELIMITER = "_";
+    public static final String VERSION_DELIMITER = "v";
 
-
+    private AtomicInteger tableIdCounter = new AtomicInteger(0);
 
     public static abstract class Node {
 
@@ -38,63 +42,45 @@ public class LogicalPlan {
 
     }
 
-    public static abstract class ConversionNode extends Node {
+    public static abstract class RowNode extends Node {
 
-        abstract List<DocumentNode> getInputs();
+        abstract List<RowNode> getInputs();
 
-        List<RecordNode> getConsumers() {
+        List<RowNode> getConsumers() {
             return (List)consumers;
         }
 
+        /**
+         * The schema of the records produced by this node.
+         *
+         * The first dimension of this double-array index the tables that are joined for the records.
+         * If the records are not the result of a join, the returned array has length 1.
+         *
+         * The inner array contains the columns associated with the table index.
+         *
+         * The index into the flattened schema array matches the index into the produced record.
+         * Hence, the length of the record equals the sum of the lengths of all the inner arrays.
+         *
+         * @return
+         */
+        abstract Column[][] getOutputSchema();
+
     }
 
-    public static abstract class RecordNode extends Node {
-
-        abstract List<RecordNode> getInputs();
-
-        List<RecordNode> getConsumers() {
-            return (List)consumers;
-        }
-
-    }
-
-    @AllArgsConstructor
-    public static class TableLabel extends RecordNode {
-
-        RecordNode tableNode;
-        Table table;
-        TableLabel previousLabel;
-
-        @Override
-        List<RecordNode> getInputs() {
-            return List.of(tableNode);
-        }
-
-        private int version() {
-            if (previousLabel==null) return 0;
-            else return previousLabel.version()+1;
-        }
-
-        public String getId() {
-            return table.getId() + IDENTIFIER_DELIMITER + Integer.toHexString(version());
-        }
-    }
 
 
     public static class Table {
 
         int uniqueId;
-        String name;
-        TableLabel current;
+        String providedName;
+        RowNode currentNode;
 
-        public TableLabel getCurrentTableNode() {
-            return current;
+        public RowNode getCurrentNode() {
+            return currentNode;
         }
 
-        public TableLabel getNextLabel(RecordNode input) {
-            TableLabel label = new TableLabel(input, this, current);
-            current = label;
-            return label;
+        public void updateNode(RowNode node) {
+            currentNode = node;
         }
 
         public String uniqueId2String() {
@@ -102,26 +88,50 @@ public class LogicalPlan {
         }
 
         public String getId() {
-            return name + IDENTIFIER_DELIMITER + uniqueId2String();
+            return providedName + TABLE_DELIMITER + uniqueId2String();
         }
 
     }
 
 
     public static class Column {
-
+        //Identity of the column
         Table table;
-        String name;
+        String providedName;
         int version;
 
+        //Column definition
+        BasicType type;
+        int arrayDepth;
+        boolean notnull;
+
         public String getId() {
-            return name + IDENTIFIER_DELIMITER + Integer.toHexString(version) + IDENTIFIER_DELIMITER + table.uniqueId2String();
+            String qualifiedName = providedName + TABLE_DELIMITER + table.uniqueId2String();
+            if (version>0) qualifiedName += VERSION_DELIMITER + Integer.toHexString(version);
+            return qualifiedName;
         }
 
     }
 
+    @Getter
     public static class Relationship {
+
+        Table toTable;
+        Relationship.Type type;
+        Relationship.Multiplicity multiplicity;
+
         //captures the logical representation of the join that defines this relationship
+
+
+
+        public enum Type {
+            PARENT, CHILD, JOIN;
+        }
+
+        public enum Multiplicity {
+            ZERO_ONE, ONE, MANY;
+        }
+
     }
 
 }
