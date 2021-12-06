@@ -11,7 +11,7 @@ public class NotNull implements Constraint {
 
     public static final Name NAME = Name.system("not_null");
 
-    private static final NotNull INSTANCE = new NotNull();
+    public static final NotNull INSTANCE = new NotNull();
 
     private NotNull() {
     }

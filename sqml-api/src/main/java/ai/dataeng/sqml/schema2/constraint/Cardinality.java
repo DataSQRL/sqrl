@@ -34,6 +34,10 @@ public class Cardinality implements Constraint {
         return max<=1;
     }
 
+    public boolean isNonZero() {
+        return min>0;
+    }
+
     @Override
     public boolean satisfies(Object value) {
         Preconditions.checkArgument(value.getClass().isArray());

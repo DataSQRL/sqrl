@@ -36,6 +36,10 @@ public interface ConversionError {
             errors.add(error);
         }
 
+        public<T extends E> void addAll(Bundle<T> errors) {
+            for (T error : errors) add(error);
+        }
+
         public boolean hasErrors() {
             return errors==null || !errors.isEmpty();
         }

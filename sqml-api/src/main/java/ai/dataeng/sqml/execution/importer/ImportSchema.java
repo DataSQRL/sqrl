@@ -47,7 +47,7 @@ public class ImportSchema {
         Preconditions.checkArgument(mapping!=null,"Dataset has not been imported: %s", datasetName);
         Preconditions.checkArgument(mapping.isSource() && mapping.isDataset(), "Name does not reference source dataset: %s", datasetName);
         return getSourceTableInternal(tableName, mapping.datasetName,
-                TypeHelper.getNestedRelation(schema, NamePath.of(tableName, datasetName)));
+                TypeHelper.getNestedRelation(schema, NamePath.of(datasetName, tableName)));
     }
 
     private SourceTableImport getSourceTableInternal(@NonNull Name originalTableName, @NonNull Name originalDSName,
