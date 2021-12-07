@@ -1,12 +1,16 @@
 package ai.dataeng.sqml.logical4;
 
-import java.util.List;
+import ai.dataeng.sqml.logical4.LogicalPlan.RowNode;
+import ai.dataeng.sqml.relation.RowExpression;
+import lombok.Getter;
 
+@Getter
 public class FilterOperator extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
 
-    //Filter expression
+    LogicalPlan.RowNode input;
+    RowExpression predicate;
 
-    public FilterOperator(LogicalPlan.RowNode input) {
+    public FilterOperator(RowNode input, RowExpression predicate) {
         super(input);
     }
 

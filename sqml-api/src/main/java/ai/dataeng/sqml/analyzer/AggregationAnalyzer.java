@@ -152,19 +152,19 @@ class AggregationAnalyzer
         extends AstVisitor<Boolean, Void>
     {
         @Override
-        protected Boolean visitExpression(Expression node, Void context)
+        public Boolean visitExpression(Expression node, Void context)
         {
             throw new UnsupportedOperationException("aggregation analysis not yet implemented for: " + node.getClass().getName());
         }
 
         @Override
-        protected Boolean visitAtTimeZone(AtTimeZone node, Void context)
+        public Boolean visitAtTimeZone(AtTimeZone node, Void context)
         {
             return process(node.getValue(), context);
         }
 
         @Override
-        protected Boolean visitSubqueryExpression(SubqueryExpression node, Void context)
+        public Boolean visitSubqueryExpression(SubqueryExpression node, Void context)
         {
             /*
              * Column reference can resolve to (a) some subquery's scope, (b) a projection (ORDER BY scope),
@@ -183,26 +183,26 @@ class AggregationAnalyzer
         }
 
         @Override
-        protected Boolean visitExists(ExistsPredicate node, Void context)
+        public Boolean visitExists(ExistsPredicate node, Void context)
         {
             checkState(node.getSubquery() instanceof SubqueryExpression);
             return process(node.getSubquery(), context);
         }
 
         @Override
-        protected Boolean visitArrayConstructor(ArrayConstructor node, Void context)
+        public Boolean visitArrayConstructor(ArrayConstructor node, Void context)
         {
             return node.getValues().stream().allMatch(expression -> process(expression, context));
         }
 
         @Override
-        protected Boolean visitCast(Cast node, Void context)
+        public Boolean visitCast(Cast node, Void context)
         {
             return process(node.getExpression(), context);
         }
 
         @Override
-        protected Boolean visitBetweenPredicate(BetweenPredicate node, Void context)
+        public Boolean visitBetweenPredicate(BetweenPredicate node, Void context)
         {
             return process(node.getMin(), context) &&
                 process(node.getValue(), context) &&
@@ -210,55 +210,55 @@ class AggregationAnalyzer
         }
 
         @Override
-        protected Boolean visitArithmeticBinary(ArithmeticBinaryExpression node, Void context)
+        public Boolean visitArithmeticBinary(ArithmeticBinaryExpression node, Void context)
         {
             return process(node.getLeft(), context) && process(node.getRight(), context);
         }
 
         @Override
-        protected Boolean visitComparisonExpression(ComparisonExpression node, Void context)
+        public Boolean visitComparisonExpression(ComparisonExpression node, Void context)
         {
             return process(node.getLeft(), context) && process(node.getRight(), context);
         }
 
         @Override
-        protected Boolean visitLiteral(Literal node, Void context)
+        public Boolean visitLiteral(Literal node, Void context)
         {
             return true;
         }
 
         @Override
-        protected Boolean visitIsNotNullPredicate(IsNotNullPredicate node, Void context)
+        public Boolean visitIsNotNullPredicate(IsNotNullPredicate node, Void context)
         {
             return process(node.getValue(), context);
         }
 
         @Override
-        protected Boolean visitIsNullPredicate(IsNullPredicate node, Void context)
+        public Boolean visitIsNullPredicate(IsNullPredicate node, Void context)
         {
             return process(node.getValue(), context);
         }
 
         @Override
-        protected Boolean visitLikePredicate(LikePredicate node, Void context)
+        public Boolean visitLikePredicate(LikePredicate node, Void context)
         {
             return process(node.getValue(), context) && process(node.getPattern(), context);
         }
 
         @Override
-        protected Boolean visitInListExpression(InListExpression node, Void context)
+        public Boolean visitInListExpression(InListExpression node, Void context)
         {
             return node.getValues().stream().allMatch(expression -> process(expression, context));
         }
 
         @Override
-        protected Boolean visitInPredicate(InPredicate node, Void context)
+        public Boolean visitInPredicate(InPredicate node, Void context)
         {
             return process(node.getValue(), context) && process(node.getValueList(), context);
         }
 
         @Override
-        protected Boolean visitFunctionCall(FunctionCall node, Void context)
+        public Boolean visitFunctionCall(FunctionCall node, Void context)
         {
             if (metadata.getFunctionProvider().resolve(node.getName()).get().isAggregation()) {
                 List<FunctionCall> aggregateFunctions = extractAggregateFunctions(node.getArguments(), metadata.getFunctionProvider());
@@ -287,13 +287,13 @@ class AggregationAnalyzer
         }
 
         @Override
-        protected Boolean visitIdentifier(Identifier node, Void context)
+        public Boolean visitIdentifier(Identifier node, Void context)
         {
             return isGroupingKey(node);
         }
 
         @Override
-        protected Boolean visitDereferenceExpression(DereferenceExpression node, Void context)
+        public Boolean visitDereferenceExpression(DereferenceExpression node, Void context)
         {
             if (columnReferences.containsKey(NodeRef.<Expression>of(node))) {
                 return isGroupingKey(node);
@@ -321,25 +321,25 @@ class AggregationAnalyzer
             return columnReferences.get(NodeRef.of(expression)).iterator().next();
         }
         @Override
-        protected Boolean visitArithmeticUnary(ArithmeticUnaryExpression node, Void context)
+        public Boolean visitArithmeticUnary(ArithmeticUnaryExpression node, Void context)
         {
             return process(node.getValue(), context);
         }
 
         @Override
-        protected Boolean visitNotExpression(NotExpression node, Void context)
+        public Boolean visitNotExpression(NotExpression node, Void context)
         {
             return process(node.getValue(), context);
         }
 
         @Override
-        protected Boolean visitLogicalBinaryExpression(LogicalBinaryExpression node, Void context)
+        public Boolean visitLogicalBinaryExpression(LogicalBinaryExpression node, Void context)
         {
             return process(node.getLeft(), context) && process(node.getRight(), context);
         }
 
         @Override
-        protected Boolean visitSimpleCaseExpression(SimpleCaseExpression node, Void context)
+        public Boolean visitSimpleCaseExpression(SimpleCaseExpression node, Void context)
         {
 //            if (!process(node.getOperand(), context)) {
 //                return false;

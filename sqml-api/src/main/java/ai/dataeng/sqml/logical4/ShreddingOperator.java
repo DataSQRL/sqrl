@@ -1,13 +1,12 @@
 package ai.dataeng.sqml.logical4;
 
 import ai.dataeng.sqml.physical.flink.FieldProjection;
-import ai.dataeng.sqml.physical.flink.RecordShredderFlatMap;
+import ai.dataeng.sqml.relation.VariableReferenceExpression;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
-import lombok.Getter;
-
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
 
 @Getter
 public class ShreddingOperator extends LogicalPlan.RowNode<LogicalPlan.DocumentNode> {
@@ -15,10 +14,13 @@ public class ShreddingOperator extends LogicalPlan.RowNode<LogicalPlan.DocumentN
     final NamePath tableIdentifier;
     final FieldProjection[] projections;
     final LogicalPlan.Column[] outputSchema;
+    final List<VariableReferenceExpression> output;
 
-    private ShreddingOperator(LogicalPlan.DocumentNode input, NamePath tableIdentifier,
-                             FieldProjection[] projections, LogicalPlan.Column[] outputSchema) {
+    public ShreddingOperator(LogicalPlan.DocumentNode input, NamePath tableIdentifier,
+                             FieldProjection[] projections, LogicalPlan.Column[] outputSchema,
+                             List<VariableReferenceExpression> output) {
         super(input);
+        this.output = output;
         assert projections.length == outputSchema.length;
         this.tableIdentifier = tableIdentifier;
         this.projections = projections;
@@ -76,7 +78,9 @@ public class ShreddingOperator extends LogicalPlan.RowNode<LogicalPlan.DocumentN
         }
         ShreddingOperator shredder = new ShreddingOperator(source, tableIdentifier,
                 projections.toArray(new FieldProjection[0]),
-                outputSchema.toArray(new LogicalPlan.Column[0]));
+                outputSchema.toArray(new LogicalPlan.Column[0]),
+                null
+            );
 
         //Connect with source node in the DAG
         source.addConsumer(shredder);

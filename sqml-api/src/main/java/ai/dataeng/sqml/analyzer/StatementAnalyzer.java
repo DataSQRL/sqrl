@@ -93,12 +93,12 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   @Override
-  protected Scope visitNode(Node node, Scope context) {
+  public Scope visitNode(Node node, Scope context) {
     throw new RuntimeException(String.format("Could not process node %s : %s", node.getClass().getName(), node));
   }
 
   @Override
-  protected Scope visitQuery(Query node, Scope scope) {
+  public Scope visitQuery(Query node, Scope scope) {
     //Unions have a limit & order that is outside the query body. If these are empty, just process the
     //  query body as if it was a standalone query.
     Scope queryScope = node.getQueryBody().accept(this, scope);
@@ -114,7 +114,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   @Override
-  protected Scope visitQuerySpecification(QuerySpecification node, Scope scope) {
+  public Scope visitQuerySpecification(QuerySpecification node, Scope scope) {
     Scope sourceScope = node.getFrom().accept(this, scope);
 
     node.getWhere().ifPresent(where -> analyzeWhere(node, sourceScope, where));
@@ -170,7 +170,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   @Override
-  protected Scope visitTable(Table table, Scope scope) {
+  public Scope visitTable(Table table, Scope scope) {
     QualifiedName tableName = table.getName();
     TypedField field = planBuilder.resolveTableField(tableName, scope.getField())
         .orElseThrow(/*todo*/);
@@ -181,14 +181,14 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   @Override
-  protected Scope visitTableSubquery(TableSubquery node, Scope scope) {
+  public Scope visitTableSubquery(TableSubquery node, Scope scope) {
     StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, this.analysis, planBuilder);
     Scope queryScope = node.getQuery().accept(statementAnalyzer, scope);
     return createAndAssignScope(node, scope, queryScope.getRelation());
   }
 
   @Override
-  protected Scope visitJoin(Join node, Scope scope) {
+  public Scope visitJoin(Join node, Scope scope) {
     Scope left = node.getLeft().accept(this, scope);
     Scope right = node.getRight().accept(this, scope);
 
@@ -221,7 +221,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   @Override
-  protected Scope visitAliasedRelation(AliasedRelation relation, Scope scope) {
+  public Scope visitAliasedRelation(AliasedRelation relation, Scope scope) {
     Scope relationScope = relation.getRelation().accept(this, scope);
 
     RelationType relationType = relationScope.getRelation();
@@ -232,22 +232,22 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   @Override
-  protected Scope visitUnion(Union node, Scope scope) {
+  public Scope visitUnion(Union node, Scope scope) {
     return visitSetOperation(node, scope);
   }
 
   @Override
-  protected Scope visitIntersect(Intersect node, Scope scope) {
+  public Scope visitIntersect(Intersect node, Scope scope) {
     return visitSetOperation(node, scope);
   }
 
   @Override
-  protected Scope visitExcept(Except node, Scope scope) {
+  public Scope visitExcept(Except node, Scope scope) {
     return visitSetOperation(node, scope);
   }
 
   @Override
-  protected Scope visitSetOperation(SetOperation node, Scope scope)
+  public Scope visitSetOperation(SetOperation node, Scope scope)
   {
     checkState(node.getRelations().size() >= 2);
     List<Scope> relationScopes = node.getRelations().stream()

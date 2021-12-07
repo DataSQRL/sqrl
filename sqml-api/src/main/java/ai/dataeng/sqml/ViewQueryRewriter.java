@@ -51,7 +51,7 @@ public class ViewQueryRewriter extends AstVisitor<RewriterContext, ViewRewriterC
     this.columnNameGen = columnNameGen;
   }
   @Override
-  protected RewriterContext visitImportDefinition(ImportDefinition node, ViewRewriterContext context) {
+  public RewriterContext visitImportDefinition(ImportDefinition node, ViewRewriterContext context) {
     ImportSchema schema = context.getSchema().get();
     for (Map.Entry<Name, Mapping> mapping : schema.getMappings().entrySet()) {
       StandardField field = schema.getSchema().getFieldByName(mapping.getKey());
@@ -126,13 +126,13 @@ public class ViewQueryRewriter extends AstVisitor<RewriterContext, ViewRewriterC
   }
 
   @Override
-  protected RewriterContext visitQuery(Query node, ViewRewriterContext context) {
+  public RewriterContext visitQuery(Query node, ViewRewriterContext context) {
     //Todo: reminder of Query node
     return node.getQueryBody().accept(this, context);
   }
 
   @Override
-  protected RewriterContext visitQuerySpecification(QuerySpecification node,
+  public RewriterContext visitQuerySpecification(QuerySpecification node,
       ViewRewriterContext context) {
     RewriterContext fromScope = node.getFrom().accept(this, context);
     Optional<Expression> whereNode = node.getWhere().map(where -> processWhere(node, fromScope, where));
@@ -230,7 +230,7 @@ public class ViewQueryRewriter extends AstVisitor<RewriterContext, ViewRewriterC
   }
 
   @Override
-  protected RewriterContext visitTable(Table node, ViewRewriterContext context) {
+  public RewriterContext visitTable(Table node, ViewRewriterContext context) {
 //    Preconditions.checkState(node.getName().getParts().size() == 1, "Table paths tbd");
     Optional<ViewTable> table = this.plan.getTableByName(node.getName());
     Preconditions.checkState(table.isPresent(), "Could not find table %s", node.getName());

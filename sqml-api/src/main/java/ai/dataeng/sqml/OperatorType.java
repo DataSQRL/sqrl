@@ -22,10 +22,7 @@ import java.util.function.Function;
 import static java.util.Locale.ENGLISH;
 import static java.util.stream.Collectors.toMap;
 
-public enum OperatorType
-{
-    // TODO: Move out this class. Ideally this class should not be in presto-common module.
-
+public enum OperatorType {
     ADD("+", false),
     SUBTRACT("-", false),
     MULTIPLY("*", false),
@@ -38,14 +35,7 @@ public enum OperatorType
     LESS_THAN_OR_EQUAL("<=", false),
     GREATER_THAN(">", false),
     GREATER_THAN_OR_EQUAL(">=", false),
-    BETWEEN("BETWEEN", false),
-    CAST("CAST", false),
-    SUBSCRIPT("[]", false),
-    HASH_CODE("HASH CODE", false),
-    SATURATED_FLOOR_CAST("SATURATED FLOOR CAST", false),
-    IS_DISTINCT_FROM("IS DISTINCT FROM", true),
-    XX_HASH_64("XX HASH 64", false),
-    INDETERMINATE("INDETERMINATE", true);
+    BETWEEN("BETWEEN", false);
 
     private static final Map<QualifiedObjectName, OperatorType> OPERATOR_TYPES = Arrays.stream(OperatorType.values()).collect(toMap(OperatorType::getFunctionName, Function.identity()));
 
@@ -87,8 +77,7 @@ public enum OperatorType
                 this.equals(LESS_THAN) ||
                 this.equals(LESS_THAN_OR_EQUAL) ||
                 this.equals(GREATER_THAN) ||
-                this.equals(GREATER_THAN_OR_EQUAL) ||
-                this.equals(IS_DISTINCT_FROM);
+                this.equals(GREATER_THAN_OR_EQUAL);
     }
 
     public boolean isArithmeticOperator()

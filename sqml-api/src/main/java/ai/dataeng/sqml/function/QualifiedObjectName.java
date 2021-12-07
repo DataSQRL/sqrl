@@ -11,17 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ai.dataeng.sqml.tree;
+package ai.dataeng.sqml.function;
 
-/**
- * When walking Expressions, don't traverse into SubqueryExpressions
- */
-public abstract class DefaultExpressionTraversalVisitor<R, C>
-    extends DefaultTraversalVisitor<R, C> {
+import lombok.Value;
 
-  @Override
-  public R visitSubqueryExpression(SubqueryExpression node, C context) {
-    // Don't traverse into Subqueries within an Expression
-    return null;
-  }
+@Value
+public class QualifiedObjectName
+{
+    String scriptName;
+    String namespaceName;
+    String objectName;
 }

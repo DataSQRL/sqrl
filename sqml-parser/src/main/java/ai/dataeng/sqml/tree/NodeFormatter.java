@@ -10,39 +10,39 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitNode(Node node, Void context) {
+  public String visitNode(Node node, Void context) {
     return "{}";
   }
 
   @Override
-  protected String visitImportDefinition(ImportDefinition node, Void context) {
+  public String visitImportDefinition(ImportDefinition node, Void context) {
     return "IMPORT " + node.getQualifiedName() + ";";
   }
 
   @Override
-  protected String visitArithmeticBinary(ArithmeticBinaryExpression node, Void context) {
+  public String visitArithmeticBinary(ArithmeticBinaryExpression node, Void context) {
     return node.getLeft().accept(this, null) + " " + node.getOperator().getValue() + " " +
         node.getRight().accept(this, null);
   }
 
   @Override
-  protected String visitComparisonExpression(ComparisonExpression node, Void context) {
+  public String visitComparisonExpression(ComparisonExpression node, Void context) {
     return node.getLeft().accept(this, null) + " " + node.getOperator().getValue() + " " +
         node.getRight().accept(this, null);
   }
 
   @Override
-  protected String visitDoubleLiteral(DoubleLiteral node, Void context) {
+  public String visitDoubleLiteral(DoubleLiteral node, Void context) {
     return String.valueOf(node.getValue());
   }
 
   @Override
-  protected String visitDecimalLiteral(DecimalLiteral node, Void context) {
+  public String visitDecimalLiteral(DecimalLiteral node, Void context) {
     return String.valueOf(node.getValue());
   }
 
   @Override
-  protected String visitQuery(Query node, Void context) {
+  public String visitQuery(Query node, Void context) {
     return node.getQueryBody().accept(this, null) +
         node.getOrderBy().map(o->
             o.getSortItems().stream()
@@ -53,17 +53,17 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitGenericLiteral(GenericLiteral node, Void context) {
+  public String visitGenericLiteral(GenericLiteral node, Void context) {
     return String.valueOf(node.getValue());
   }
 
   @Override
-  protected String visitTimeLiteral(TimeLiteral node, Void context) {
+  public String visitTimeLiteral(TimeLiteral node, Void context) {
     return String.valueOf(node.getValue());
   }
 
   @Override
-  protected String visitSelect(Select node, Void context) {
+  public String visitSelect(Select node, Void context) {
     return (node.isDistinct()? "DISTINCT" : "") +
         node.getDistinctOn().map(o->o.accept(this, null)).orElse("") +
         node.getSelectItems().stream()
@@ -72,12 +72,12 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitOrderBy(OrderBy node, Void context) {
+  public String visitOrderBy(OrderBy node, Void context) {
     return node.getSortItems().stream().map(s->s.accept(this, null)).collect(Collectors.joining(", "));
   }
 
   @Override
-  protected String visitQuerySpecification(QuerySpecification node, Void context) {
+  public String visitQuerySpecification(QuerySpecification node, Void context) {
     return "SELECT " + node.getSelect().accept(this, null) +
         node.getFrom().accept(this, null) +
         node.getWhere().map(w-> " WHERE " +w.accept(this, null)).orElse("") +
@@ -88,7 +88,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitUnion(Union node, Void context) {
+  public String visitUnion(Union node, Void context) {
     return node.getRelations().stream()
         .map(r->r.accept(this, null))
         .collect(Collectors.joining(
@@ -97,7 +97,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitIntersect(Intersect node, Void context) {
+  public String visitIntersect(Intersect node, Void context) {
     return node.getRelations().stream()
         .map(r->r.accept(this, null))
         .collect(Collectors.joining(
@@ -106,7 +106,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitExcept(Except node, Void context) {
+  public String visitExcept(Except node, Void context) {
     return node.getRelations().stream()
         .map(r->r.accept(this, null))
         .collect(Collectors.joining(
@@ -115,151 +115,151 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitTimestampLiteral(TimestampLiteral node, Void context) {
+  public String visitTimestampLiteral(TimestampLiteral node, Void context) {
     return String.valueOf(node.getValue());
   }
 
   @Override
-  protected String visitBetweenPredicate(BetweenPredicate node, Void context) {
+  public String visitBetweenPredicate(BetweenPredicate node, Void context) {
     return "BETWEEN " + node.getMin() + " AND " + node.getMax();
   }
 
   @Override
-  protected String visitWhenClause(WhenClause node, Void context) {
+  public String visitWhenClause(WhenClause node, Void context) {
     return "WHEN " + node.getOperand().accept(this, null) + " THEN " + node.getResult().accept(this, null);
   }
 
   @Override
-  protected String visitIntervalLiteral(IntervalLiteral node, Void context) {
+  public String visitIntervalLiteral(IntervalLiteral node, Void context) {
     return "INTERVAL " + node.getExpression().accept(this, context) + " " + node.getStartField().name();
   }
 
   @Override
-  protected String visitInPredicate(InPredicate node, Void context) {
+  public String visitInPredicate(InPredicate node, Void context) {
     return " IN TBD "; //node.getValue().accept(this, null) +
        // " IN (" + node.getValueList().accept(this, null) + ")";
   }
 
   @Override
-  protected String visitFunctionCall(FunctionCall node, Void context) {
+  public String visitFunctionCall(FunctionCall node, Void context) {
     return node.getName() + "(" + node.getArguments().stream().map(a->a.accept(this, null)).collect(
         Collectors.joining(", ")) + ")" + node.getOver().map(o->o.accept(this, context)).orElse("");
   }
 
   @Override
-  protected String visitSimpleCaseExpression(SimpleCaseExpression node, Void context) {
+  public String visitSimpleCaseExpression(SimpleCaseExpression node, Void context) {
     return "CASE " + node.getWhenClauses().stream().map(w->w.accept(this, null)).collect(
         Collectors.joining("\n")) + node.getDefaultValue().map(e->" ELSE " + e.accept(this, null)).orElse("");
   }
 
   @Override
-  protected String visitEnumLiteral(EnumLiteral node, Void context) {
+  public String visitEnumLiteral(EnumLiteral node, Void context) {
     return String.valueOf(node.getValue());
   }
 
   @Override
-  protected String visitInListExpression(InListExpression node, Void context) {
+  public String visitInListExpression(InListExpression node, Void context) {
     return node.getValues().stream().map(i->i.accept(this, null)).collect(Collectors.joining(", "));
   }
 
   @Override
-  protected String visitDereferenceExpression(DereferenceExpression node, Void context) {
+  public String visitDereferenceExpression(DereferenceExpression node, Void context) {
     return node.getBase().accept(this, context) + "." + node.getField();
   }
 
   @Override
-  protected String visitNullLiteral(NullLiteral node, Void context) {
+  public String visitNullLiteral(NullLiteral node, Void context) {
     return "null";
   }
 
   @Override
-  protected String visitArithmeticUnary(ArithmeticUnaryExpression node, Void context) {
+  public String visitArithmeticUnary(ArithmeticUnaryExpression node, Void context) {
     return node.getSign().name() + node.getValue().accept(this, null);
   }
 
   @Override
-  protected String visitNotExpression(NotExpression node, Void context) {
+  public String visitNotExpression(NotExpression node, Void context) {
     return "NOT " + node.getValue().accept(this, null);
   }
 
   @Override
-  protected String visitSingleColumn(SingleColumn node, Void context) {
+  public String visitSingleColumn(SingleColumn node, Void context) {
     return node.getExpression().accept(this, null) +
         node.getAlias().map(a->" AS " + a.accept(this, null))
         .orElse("");
   }
 
   @Override
-  protected String visitAllColumns(AllColumns node, Void context) {
+  public String visitAllColumns(AllColumns node, Void context) {
     return "*";
   }
 
   @Override
-  protected String visitLikePredicate(LikePredicate node, Void context) {
+  public String visitLikePredicate(LikePredicate node, Void context) {
     return node.getValue().accept(this, null) + " LIKE " + node.getPattern().accept(this, null);
   }
 
   @Override
-  protected String visitIsNotNullPredicate(IsNotNullPredicate node, Void context) {
+  public String visitIsNotNullPredicate(IsNotNullPredicate node, Void context) {
     return node.getValue().accept(this, null) + "IS NOT NULL";
   }
 
   @Override
-  protected String visitIsNullPredicate(IsNullPredicate node, Void context) {
+  public String visitIsNullPredicate(IsNullPredicate node, Void context) {
     return node.getValue().accept(this, null) + "IS NULL";
   }
 
   @Override
-  protected String visitArrayConstructor(ArrayConstructor node, Void context) {
+  public String visitArrayConstructor(ArrayConstructor node, Void context) {
     return "ARRAY<"+node.getValues().stream().map(t->t.accept(this, null)).collect(Collectors.joining(", ")) + ">";
   }
 
   @Override
-  protected String visitLongLiteral(LongLiteral node, Void context) {
+  public String visitLongLiteral(LongLiteral node, Void context) {
     return String.valueOf(node.getValue());
   }
 
   @Override
-  protected String visitParameter(Parameter node, Void context) {
+  public String visitParameter(Parameter node, Void context) {
     return String.valueOf(node.getPosition());
   }
 
   @Override
-  protected String visitLogicalBinaryExpression(LogicalBinaryExpression node, Void context) {
+  public String visitLogicalBinaryExpression(LogicalBinaryExpression node, Void context) {
     return node.getLeft().accept(this, null) +
         node.getOperator().name() +
         node.getRight().accept(this, null);
   }
 
   @Override
-  protected String visitSubqueryExpression(SubqueryExpression node, Void context) {
+  public String visitSubqueryExpression(SubqueryExpression node, Void context) {
     return "(" + node.getQuery().accept(this, null) + ")";
   }
 
   @Override
-  protected String visitSortItem(SortItem node, Void context) {
+  public String visitSortItem(SortItem node, Void context) {
     return node.getSortKey().accept(this, null) + " " +
         (node.getOrdering() == Ordering.ASCENDING ? "ASC" : "DESC");
   }
 
   @Override
-  protected String visitTable(Table node, Void context) {
+  public String visitTable(Table node, Void context) {
     return " FROM " + node.getName().toString();
   }
 
   @Override
-  protected String visitRow(Row node, Void context) {
+  public String visitRow(Row node, Void context) {
     return "TBD";
   }
 
   @Override
-  protected String visitTableSubquery(TableSubquery node, Void context) {
+  public String visitTableSubquery(TableSubquery node, Void context) {
     return "(" + node.getQuery().accept(this, null) +
        ")";
   }
 
   @Override
-  protected String visitAliasedRelation(AliasedRelation node, Void context) {
+  public String visitAliasedRelation(AliasedRelation node, Void context) {
     return node.getRelation().accept(this, null) +
         " AS " + node.getAlias().accept(this, null) +
         "("+node.getColumnNames().stream().map(c->c.accept(this, null))
@@ -267,7 +267,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitJoin(Join node, Void context) {
+  public String visitJoin(Join node, Void context) {
     return node.getType() + " JOIN " +
         node.getLeft().accept(this, null) + " " +
         node.getRight().accept(this, null) + " " +
@@ -276,55 +276,55 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitExists(ExistsPredicate node, Void context) {
+  public String visitExists(ExistsPredicate node, Void context) {
     return "EXISTS(" + node.getSubquery().accept(this, null) + ")";
   }
 
   @Override
-  protected String visitCast(Cast node, Void context) {
+  public String visitCast(Cast node, Void context) {
     return "CAST("+ node.getExpression().accept(this, null) +" AS " +node.getType()+")";
   }
 
   @Override
-  protected String visitAtTimeZone(AtTimeZone node, Void context) {
+  public String visitAtTimeZone(AtTimeZone node, Void context) {
     return super.visitAtTimeZone(node, context);
   }
 
   @Override
-  protected String visitGroupBy(GroupBy node, Void context) {
+  public String visitGroupBy(GroupBy node, Void context) {
     return node.getGroupingElement().accept(this, null);
   }
 
   @Override
-  protected String visitGroupingElement(GroupingElement node, Void context) {
+  public String visitGroupingElement(GroupingElement node, Void context) {
     return node.getExpressions().stream().map(g->g.accept(this, null))
         .collect(Collectors.joining(" "));
   }
 
   @Override
-  protected String visitSimpleGroupBy(SimpleGroupBy node, Void context) {
+  public String visitSimpleGroupBy(SimpleGroupBy node, Void context) {
     return node.getExpressions().stream().map(e->e.accept(this, null)).collect(Collectors.joining(" "));
   }
 
   @Override
-  protected String visitSymbolReference(SymbolReference node, Void context) {
+  public String visitSymbolReference(SymbolReference node, Void context) {
     return node.getName();
   }
 
   @Override
-  protected String visitQuantifiedComparisonExpression(QuantifiedComparisonExpression node,
+  public String visitQuantifiedComparisonExpression(QuantifiedComparisonExpression node,
       Void context) {
     return "TBD";
   }
 
   @Override
-  protected String visitGroupingOperation(GroupingOperation node, Void context) {
+  public String visitGroupingOperation(GroupingOperation node, Void context) {
     return node.getGroupingColumns().stream().map(g->g.accept(this, null))
         .collect(Collectors.joining(" "));
   }
 
   @Override
-  protected String visitScript(Script node, Void context) {
+  public String visitScript(Script node, Void context) {
     return node.getStatements()
         .stream().map(s->s.accept(this, null))
         .collect(Collectors.joining("\n"));
@@ -346,17 +346,17 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitStringLiteral(StringLiteral node, Void context) {
+  public String visitStringLiteral(StringLiteral node, Void context) {
     return String.valueOf(node.getValue());
   }
 
   @Override
-  protected String visitBooleanLiteral(BooleanLiteral node, Void context) {
+  public String visitBooleanLiteral(BooleanLiteral node, Void context) {
     return String.valueOf(node.getValue());
   }
 
   @Override
-  protected String visitIdentifier(Identifier node, Void context) {
+  public String visitIdentifier(Identifier node, Void context) {
     return node.getValue();
   }
 
@@ -381,7 +381,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  protected String visitSelectItem(SelectItem node, Void context) {
+  public String visitSelectItem(SelectItem node, Void context) {
     throw new RuntimeException(String.format("Undefiend node in printer %s", node.getClass().getName()));
   }
 

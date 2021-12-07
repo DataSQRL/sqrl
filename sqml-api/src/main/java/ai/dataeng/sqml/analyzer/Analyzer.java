@@ -50,9 +50,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class Analyzer {
-  protected final Metadata metadata;
-  protected final Analysis analysis;
-  protected final Script script;
+  public final Metadata metadata;
+  public final Analysis analysis;
+  public final Script script;
 
   private Analyzer(Script script, Metadata metadata, Analysis analysis) {
     this.script = script;
@@ -87,12 +87,12 @@ public class Analyzer {
     }
 
     @Override
-    protected Scope visitNode(Node node, Scope context) {
+    public Scope visitNode(Node node, Scope context) {
       throw new RuntimeException(String.format("Could not process node %s : %s", node.getClass().getName(), node));
     }
 
     @Override
-    protected Scope visitScript(Script node, Scope context) {
+    public Scope visitScript(Script node, Scope context) {
       Scope scope = new Scope();
 
       List<Node> statements = node.getStatements();
@@ -105,7 +105,7 @@ public class Analyzer {
     }
 
     @Override
-    protected Scope visitImportDefinition(ImportDefinition node, Scope scope) {
+    public Scope visitImportDefinition(ImportDefinition node, Scope scope) {
       if (importResolved.get()) {
         throw new RuntimeException(String.format("Import statement must be in header %s", node.getQualifiedName()));
       }

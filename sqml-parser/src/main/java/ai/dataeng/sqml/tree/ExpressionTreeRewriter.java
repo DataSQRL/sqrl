@@ -111,7 +111,7 @@ public final class ExpressionTreeRewriter<C> {
       extends AstVisitor<Expression, ExpressionTreeRewriter.Context<C>> {
 
     @Override
-    protected Expression visitExpression(Expression node, Context<C> context) {
+    public Expression visitExpression(Expression node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteExpression(node, context.get(), ExpressionTreeRewriter.this);
@@ -126,7 +126,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitRow(Row node, Context<C> context) {
+    public Expression visitRow(Row node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter.rewriteRow(node, context.get(), ExpressionTreeRewriter.this);
         if (result != null) {
@@ -144,7 +144,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitArithmeticUnary(ArithmeticUnaryExpression node, Context<C> context) {
+    public Expression visitArithmeticUnary(ArithmeticUnaryExpression node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteArithmeticUnary(node, context.get(), ExpressionTreeRewriter.this);
@@ -182,7 +182,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitArrayConstructor(ArrayConstructor node, Context<C> context) {
+    public Expression visitArrayConstructor(ArrayConstructor node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteArrayConstructor(node, context.get(), ExpressionTreeRewriter.this);
@@ -201,7 +201,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitAtTimeZone(AtTimeZone node, Context<C> context) {
+    public Expression visitAtTimeZone(AtTimeZone node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteAtTimeZone(node, context.get(), ExpressionTreeRewriter.this);
@@ -221,7 +221,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 //
 //    @Override
-//    protected Expression visitSubscriptExpression(SubscriptExpression node, Context<C> context) {
+//    public Expression visitSubscriptExpression(SubscriptExpression node, Context<C> context) {
 //      if (!context.isDefaultRewrite()) {
 //        Expression result = rewriter
 //            .rewriteSubscriptExpression(node, context.get(), ExpressionTreeRewriter.this);
@@ -261,7 +261,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitBetweenPredicate(BetweenPredicate node, Context<C> context) {
+    public Expression visitBetweenPredicate(BetweenPredicate node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteBetweenPredicate(node, context.get(), ExpressionTreeRewriter.this);
@@ -322,7 +322,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitIsNullPredicate(IsNullPredicate node, Context<C> context) {
+    public Expression visitIsNullPredicate(IsNullPredicate node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteIsNullPredicate(node, context.get(), ExpressionTreeRewriter.this);
@@ -341,7 +341,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitIsNotNullPredicate(IsNotNullPredicate node, Context<C> context) {
+    public Expression visitIsNotNullPredicate(IsNotNullPredicate node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteIsNotNullPredicate(node, context.get(), ExpressionTreeRewriter.this);
@@ -360,7 +360,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 //
 //    @Override
-//    protected Expression visitSearchedCaseExpression(SearchedCaseExpression node,
+//    public Expression visitSearchedCaseExpression(SearchedCaseExpression node,
 //        Context<C> context) {
 //      if (!context.isDefaultRewrite()) {
 //        Expression result = rewriter
@@ -387,7 +387,7 @@ public final class ExpressionTreeRewriter<C> {
 //    }
 
     @Override
-    protected Expression visitSimpleCaseExpression(SimpleCaseExpression node, Context<C> context) {
+    public Expression visitSimpleCaseExpression(SimpleCaseExpression node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteSimpleCaseExpression(node, context.get(), ExpressionTreeRewriter.this);
@@ -416,7 +416,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitWhenClause(WhenClause node, Context<C> context) {
+    public Expression visitWhenClause(WhenClause node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteWhenClause(node, context.get(), ExpressionTreeRewriter.this);
@@ -518,7 +518,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitInListExpression(InListExpression node, Context<C> context) {
+    public Expression visitInListExpression(InListExpression node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteInListExpression(node, context.get(), ExpressionTreeRewriter.this);
@@ -537,7 +537,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitExists(ExistsPredicate node, Context<C> context) {
+    public Expression visitExists(ExistsPredicate node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteExists(node, context.get(), ExpressionTreeRewriter.this);
@@ -646,7 +646,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitSymbolReference(SymbolReference node, Context<C> context) {
+    public Expression visitSymbolReference(SymbolReference node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteSymbolReference(node, context.get(), ExpressionTreeRewriter.this);
@@ -659,7 +659,7 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    protected Expression visitQuantifiedComparisonExpression(QuantifiedComparisonExpression node,
+    public Expression visitQuantifiedComparisonExpression(QuantifiedComparisonExpression node,
         Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter

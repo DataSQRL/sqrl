@@ -88,13 +88,13 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    protected Type visitNode(Node node, Context context) {
+    public Type visitNode(Node node, Context context) {
       throw new RuntimeException(String.format("Could not visit node: %s %s",
           node.getClass().getName(), node));
     }
 
     @Override
-    protected Type visitIdentifier(Identifier node, Context context) {
+    public Type visitIdentifier(Identifier node, Context context) {
       //Todo: To Resolved Field
       //Todo: Fix shadowing
       List<FieldPath> fieldPath = context.getScope()
@@ -115,32 +115,32 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    protected Type visitExpression(Expression node, Context context) {
+    public Type visitExpression(Expression node, Context context) {
       throw new RuntimeException(String.format("Expression needs type inference: %s. %s", 
           node.getClass().getName(), node));
     }
 
     @Override
-    protected Type visitIsNotNullPredicate(IsNotNullPredicate node, Context context) {
+    public Type visitIsNotNullPredicate(IsNotNullPredicate node, Context context) {
       node.getValue().accept(this, context);
       return addType(node, new BooleanType());
     }
 
     @Override
-    protected Type visitBetweenPredicate(BetweenPredicate node, Context context) {
+    public Type visitBetweenPredicate(BetweenPredicate node, Context context) {
       node.getValue().accept(this, context);
       return addType(node, new BooleanType());
     }
 
     @Override
-    protected Type visitLogicalBinaryExpression(LogicalBinaryExpression node, Context context) {
+    public Type visitLogicalBinaryExpression(LogicalBinaryExpression node, Context context) {
       node.getLeft().accept(this, context);
       node.getRight().accept(this, context);
       return addType(node, new BooleanType());
     }
 
     @Override
-    protected Type visitSubqueryExpression(SubqueryExpression node, Context context) {
+    public Type visitSubqueryExpression(SubqueryExpression node, Context context) {
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata,
           planBuilder);
       Scope scope = node.getQuery().accept(statementAnalyzer, context.getScope());
@@ -149,7 +149,7 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    protected Type visitComparisonExpression(ComparisonExpression node, Context context) {
+    public Type visitComparisonExpression(ComparisonExpression node, Context context) {
       Type left = node.getLeft().accept(this, context);
       Type right = node.getRight().accept(this, context);
 
@@ -175,12 +175,12 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    protected Type visitArithmeticBinary(ArithmeticBinaryExpression node, Context context) {
+    public Type visitArithmeticBinary(ArithmeticBinaryExpression node, Context context) {
       return getOperator(context, node, OperatorType.valueOf(node.getOperator().name()), node.getLeft(), node.getRight());
     }
 
     @Override
-    protected Type visitFunctionCall(FunctionCall node, Context context) {
+    public Type visitFunctionCall(FunctionCall node, Context context) {
       //Todo: Function calls can accept a relation
       Optional<SqmlFunction> function = metadata.getFunctionProvider().resolve(node.getName());
       if (function.isEmpty()) {
@@ -197,68 +197,68 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    protected Type visitSimpleCaseExpression(SimpleCaseExpression node, Context context) {
+    public Type visitSimpleCaseExpression(SimpleCaseExpression node, Context context) {
       //todo case when
       return addType(node, new StringType());
     }
 
     @Override
-    protected Type visitNotExpression(NotExpression node, Context context) {
+    public Type visitNotExpression(NotExpression node, Context context) {
       return addType(node, new BooleanType());
     }
 
     @Override
-    protected Type visitDoubleLiteral(DoubleLiteral node, Context context) {
+    public Type visitDoubleLiteral(DoubleLiteral node, Context context) {
       return addType(node, new NumberType());
     }
 
     @Override
-    protected Type visitDecimalLiteral(DecimalLiteral node, Context context) {
+    public Type visitDecimalLiteral(DecimalLiteral node, Context context) {
       return addType(node, new NumberType());
     }
 
     @Override
-    protected Type visitGenericLiteral(GenericLiteral node, Context context) {
+    public Type visitGenericLiteral(GenericLiteral node, Context context) {
       throw new RuntimeException("Generic literal not supported yet.");
     }
 
     @Override
-    protected Type visitTimestampLiteral(TimestampLiteral node, Context context) {
+    public Type visitTimestampLiteral(TimestampLiteral node, Context context) {
       return addType(node, new DateTimeType());
     }
 
     @Override
-    protected Type visitIntervalLiteral(IntervalLiteral node, Context context) {
+    public Type visitIntervalLiteral(IntervalLiteral node, Context context) {
       return addType(node, new DateTimeType());
     }
 
     @Override
-    protected Type visitStringLiteral(StringLiteral node, Context context) {
+    public Type visitStringLiteral(StringLiteral node, Context context) {
       return addType(node, new StringType());
     }
 
     @Override
-    protected Type visitBooleanLiteral(BooleanLiteral node, Context context) {
+    public Type visitBooleanLiteral(BooleanLiteral node, Context context) {
       return addType(node, new BooleanType());
     }
 
     @Override
-    protected Type visitEnumLiteral(EnumLiteral node, Context context) {
+    public Type visitEnumLiteral(EnumLiteral node, Context context) {
       throw new RuntimeException("Enum literal not supported yet.");
     }
 
     @Override
-    protected Type visitNullLiteral(NullLiteral node, Context context) {
+    public Type visitNullLiteral(NullLiteral node, Context context) {
       return addType(node, new NullType());
     }
 
     @Override
-    protected Type visitLongLiteral(LongLiteral node, Context context) {
+    public Type visitLongLiteral(LongLiteral node, Context context) {
       return addType(node, new NumberType());
     }
 
     @Override
-    protected Type visitDereferenceExpression(DereferenceExpression node, Context context) {
+    public Type visitDereferenceExpression(DereferenceExpression node, Context context) {
       Type type = node.getBase().accept(this, context);
       if (!(type instanceof RelationType)) {
         throw new RuntimeException(String.format("Dereference type not a relation: %s", node));

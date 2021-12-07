@@ -62,7 +62,7 @@ public class ImportResolver {
             Map<NamePath, LogicalPlan.Column[]> outputSchema = new HashMap<>();
             LogicalPlan.Table rootTable = tableConversion(sourceImport.getSourceSchema().getFields(),outputSchema,
                     asName.orElse(tblImport.getTableName()), NamePath.ROOT, null);
-            DocumentSource source = new DocumentSource(sourceImport.getSourceSchema(), sourceImport.getTable(),outputSchema);
+            DocumentSource source = new DocumentSource(sourceImport.getSourceSchema(), sourceImport.getTable(),outputSchema, null);
             logicalPlan.sourceNodes.add(source);
             //Add shredder for each entry in outputSchema
             for (Map.Entry<NamePath, LogicalPlan.Column[]> entry : outputSchema.entrySet()) {

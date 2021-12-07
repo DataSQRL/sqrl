@@ -6,6 +6,7 @@ import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.AbstractBasicType;
+import ai.dataeng.sqml.schema2.basic.BigIntegerType;
 import ai.dataeng.sqml.schema2.basic.BooleanType;
 import ai.dataeng.sqml.schema2.basic.DateTimeType;
 import ai.dataeng.sqml.schema2.basic.FloatType;
@@ -52,6 +53,7 @@ public class SqmlTypeVisitor<R, C> {
   public R visitArrayType(ArrayType type, C context) {
     return visitType(type, context);
   }
-
-  //Todo: other field types
+  public R visitBigIntegerType(BigIntegerType type, C context) {
+    return visitBasicType(type, context);
+  }
 }
