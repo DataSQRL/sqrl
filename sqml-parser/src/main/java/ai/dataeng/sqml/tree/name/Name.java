@@ -10,6 +10,8 @@ import java.io.Serializable;
  */
 public interface Name extends Serializable, Comparable<Name> {
 
+    public static final String HIDDEN_PREFIX = "_";
+
     /**
      * Returns the canonical version of the field name.
      *
@@ -28,6 +30,10 @@ public interface Name extends Serializable, Comparable<Name> {
      * @return the display name
      */
     String getDisplay();
+
+    default boolean isHidden() {
+        return getCanonical().startsWith(HIDDEN_PREFIX);
+    }
 
 //    /**
 //     * Returns the name of this field as used internally to make it unambiguous. This name is unique within a
@@ -50,18 +56,20 @@ public interface Name extends Serializable, Comparable<Name> {
         return new StandardName(name.getCanonical(),displayName.trim());
     }
 
-    public static final String CONCATENATE_STRING = "_";
+    public static final String COMBINATION_SEPERATOR = "_";
 
-    public static Name concatenate(Name name1, Name name2) {
-        return new StandardName(name1.getCanonical()+CONCATENATE_STRING+name2.getCanonical(),
-                name1.getDisplay()+CONCATENATE_STRING+name2.getDisplay());
+    public static Name combine(Name name1, Name name2) {
+        return new StandardName(name1.getCanonical()+ COMBINATION_SEPERATOR +name2.getCanonical(),
+                name1.getDisplay()+ COMBINATION_SEPERATOR +name2.getDisplay());
     }
 
     public static Name system(String name) {
         return new SimpleName(NameCanonicalizer.SYSTEM.getCanonical(name));
     }
 
-
+    public static Name hidden(String name) {
+        return system(HIDDEN_PREFIX+name);
+    }
 
 
 

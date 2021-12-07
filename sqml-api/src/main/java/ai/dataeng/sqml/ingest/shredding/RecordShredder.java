@@ -82,7 +82,7 @@ public class RecordShredder {
     }
 
     public static RecordShredder from(NamePath tableIdentifier, RelationType<StandardField> schema) {
-        return from(tableIdentifier, defaultParentKeys(tableIdentifier, schema), schema, new RecordProjection[]{RecordProjection.DEFAULT_TIMESTAMP});
+        return from(tableIdentifier, defaultParentKeys(tableIdentifier, schema), schema, new RecordProjection[]{RecordProjection.INGEST_TIMESTAMP});
     }
 
     private static FieldProjection[][] defaultParentKeys(NamePath tableIdentifier, RelationType<StandardField> schema) {

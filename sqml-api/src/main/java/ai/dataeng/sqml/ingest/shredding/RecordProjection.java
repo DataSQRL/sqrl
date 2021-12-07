@@ -33,7 +33,7 @@ public interface RecordProjection<T> extends Serializable {
 
     }
 
-    RecordProjection DEFAULT_TIMESTAMP = new TimestampProjection("__ingesttime") {
+    RecordProjection INGEST_TIMESTAMP = new TimestampProjection("__ingesttime") {
         @Override
         public Instant getData(SourceRecord record) {
             return record.getIngestTime();

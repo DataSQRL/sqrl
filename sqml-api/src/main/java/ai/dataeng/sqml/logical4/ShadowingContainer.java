@@ -4,9 +4,7 @@ import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.collect.Iterators;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -20,8 +18,8 @@ import java.util.stream.Stream;
  */
 public class ShadowingContainer<E extends ShadowingContainer.Nameable> implements Iterable<E> {
 
-    private List<E> elements;
-    private Map<Name,E> byName;
+    private List<E> elements = new ArrayList<>();
+    private Map<Name,E> byName = new HashMap<>();
 
     /**
      * Adds an element to this container
@@ -79,6 +77,13 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
      */
     public Stream<Pair<E,Boolean>> shadowStream() {
         return elements.stream().map(e -> Pair.of(e,!e.equals(byName.get(e.getName()))));
+    }
+
+    /**
+     * @return Returns a stream with only visible elements
+     */
+    public Stream<E> visibleStream() {
+        return elements.stream().filter(e -> e.equals(byName.get(e.getName())));
     }
 
     public List<E> getElements() {

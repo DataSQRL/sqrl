@@ -22,6 +22,12 @@ import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.ingest.stats.SchemaGenerator;
 import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
+import ai.dataeng.sqml.logical4.ImportResolver;
+import ai.dataeng.sqml.logical4.LogicalPlan;
+import ai.dataeng.sqml.logical4.QueryAnalyzer;
+import ai.dataeng.sqml.optimizer.LogicalPlanOptimizer;
+import ai.dataeng.sqml.optimizer.SimpleOptimizer;
+import ai.dataeng.sqml.physical.flink.FlinkGenerator;
 import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
@@ -100,7 +106,7 @@ public class Main2 {
 
 //        collectStats(ddRegistry);
 //        importSchema(ddRegistry, bundle);
-        tableShredding(ddRegistry, bundle);
+        end2endExample(ddRegistry, bundle);
 //        simpleDBPipeline(ddRegistry);
 
 //        testDB();
@@ -151,6 +157,46 @@ public class Main2 {
         rows.addSink(new PrintSinkFunction<>());
 
         flinkEnv.execute();
+    }
+
+    public static void end2endExample(DataSourceRegistry ddRegistry, SQMLBundle bundle) throws Exception {
+        SQMLBundle.SQMLScript sqml = bundle.getMainScript();
+
+        //Setup user schema and getting schema from statistics data
+        SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
+        Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
+        Preconditions.checkArgument(!schemaImporter.getErrors().isFatal());
+        ImportManager sqmlImporter = new ImportManager(ddRegistry);
+        sqmlImporter.registerUserSchema(userSchema);
+
+        ConversionError.Bundle<ConversionError> errors = new ConversionError.Bundle<>();
+        LogicalPlan logicalPlan = new LogicalPlan();
+        //1. Imports
+        ImportResolver importer = new ImportResolver(sqmlImporter, logicalPlan, errors);
+        importer.resolveImport(ImportResolver.ImportMode.TABLE, Name.system(RETAIL_DATASET),
+                Optional.of(Name.system(RETAIL_TABLE_NAMES[1])), Optional.empty());
+        //2. SQRL statements
+        //tbd
+        //3. Queries
+        QueryAnalyzer.addDevModeQueries(logicalPlan);
+
+
+        Preconditions.checkArgument(!errors.isFatal());
+
+        LogicalPlanOptimizer.Result optimized = new SimpleOptimizer().optimize(logicalPlan);
+
+        StreamExecutionEnvironment flinkEnv = new FlinkGenerator(envProvider).generateStream(optimized);
+        flinkEnv.execute();
+
+        //Print out contents of tables in H2
+        /*
+        for (String shreddedTable : tableNames) {
+            System.out.println("== " + shreddedTable + "==");
+            for (Record r : dbSinkFactory.getTableContent(shreddedTable)) {
+                System.out.println(r);
+            }
+        }
+         */
     }
 
     public static void tableShredding(DataSourceRegistry ddRegistry, SQMLBundle bundle) throws Exception {

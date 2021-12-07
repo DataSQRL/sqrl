@@ -36,6 +36,7 @@ public class SchemaConverter {
         return new StandardField(newName,new ArrayType(convert(table.getFields())),table.getConstraints(), Optional.empty());
     }
 
+
     private RelationType<StandardField> convert(RelationType<FlexibleDatasetSchema.FlexibleField> relation) {
         RelationType.Builder<StandardField> builder = new RelationType.Builder<>();
         for (FlexibleDatasetSchema.FlexibleField field : relation) {
@@ -85,5 +86,4 @@ public class SchemaConverter {
         }
         return result;
     }
-
 }
