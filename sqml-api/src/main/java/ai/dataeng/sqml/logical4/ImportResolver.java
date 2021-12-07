@@ -17,7 +17,6 @@ import lombok.AllArgsConstructor;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
 @AllArgsConstructor
 public class ImportResolver {
 
@@ -63,15 +62,11 @@ public class ImportResolver {
             Map<NamePath, LogicalPlan.Column[]> outputSchema = new HashMap<>();
             LogicalPlan.Table rootTable = tableConversion(sourceImport.getSourceSchema().getFields(),outputSchema,
                     asName.orElse(tblImport.getTableName()), NamePath.ROOT, null);
-            SourceOperator source = new SourceOperator(sourceImport.getSourceSchema(), sourceImport.getTable(),outputSchema);
+            DocumentSource source = new DocumentSource(sourceImport.getSourceSchema(), sourceImport.getTable(),outputSchema);
             logicalPlan.sourceNodes.add(source);
             //Add shredder for each entry in outputSchema
             for (Map.Entry<NamePath, LogicalPlan.Column[]> entry : outputSchema.entrySet()) {
-                ShreddingOperator shredder = ShreddingOperator.shredAtPath(source, entry.getKey(), rootTable);
-                //Connect with source node in the DAG
-                source.addConsumer(shredder);
-                //Point the table at the shredder as most current
-                entry.getValue()[0].table.updateNode(shredder);
+                ShreddingOperator.shredAtPath(source, entry.getKey(), rootTable);
             }
             return rootTable;
         } else {
@@ -82,10 +77,11 @@ public class ImportResolver {
     private LogicalPlan.Table tableConversion(RelationType<FlexibleDatasetSchema.FlexibleField> relation,
                                               Map<NamePath, LogicalPlan.Column[]> outputSchema,
                                               Name name, NamePath path, LogicalPlan.Table parent) {
+        if (parent!=null) name = Name.combine(parent.getName(),name);
         LogicalPlan.Table table = logicalPlan.createTable(name);
         List<LogicalPlan.Column> columns = new ArrayList<>();
         for (FlexibleDatasetSchema.FlexibleField field : relation) {
-            for (LogicalPlan.Field f : fieldConversion(field, outputSchema, path.resolve(name), table)) {
+            for (LogicalPlan.Field f : fieldConversion(field, outputSchema, path, table)) {
                 table.fields.add(f);
                 if (f instanceof LogicalPlan.Column) columns.add((LogicalPlan.Column) f);
             }
@@ -119,7 +115,7 @@ public class ImportResolver {
 
         if (ftype.getType() instanceof RelationType) {
             LogicalPlan.Table table = tableConversion((RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType(),
-                    outputSchema, name, path, parent);
+                    outputSchema, name, path.resolve(name), parent);
             //Add parent relationship
             table.fields.add(new LogicalPlan.Relationship(PARENT_RELATIONSHIP,parent,
                     LogicalPlan.Relationship.Type.PARENT, LogicalPlan.Relationship.Multiplicity.ONE));
@@ -132,7 +128,7 @@ public class ImportResolver {
                     multiplicity = LogicalPlan.Relationship.Multiplicity.ONE;
                 }
             }
-            return new LogicalPlan.Relationship(name,table,
+            return new LogicalPlan.Relationship(name, table,
                     LogicalPlan.Relationship.Type.CHILD, multiplicity);
         } else {
             assert ftype.getType() instanceof BasicType;

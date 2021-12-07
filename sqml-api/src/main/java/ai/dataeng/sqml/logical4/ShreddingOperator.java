@@ -2,51 +2,39 @@ package ai.dataeng.sqml.logical4;
 
 import ai.dataeng.sqml.physical.flink.FieldProjection;
 import ai.dataeng.sqml.physical.flink.RecordShredderFlatMap;
-import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
-import com.google.common.base.Preconditions;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static ai.dataeng.sqml.schema2.TypeHelper.getNestedType;
+@Getter
+public class ShreddingOperator extends LogicalPlan.RowNode<LogicalPlan.DocumentNode> {
 
-public class ShreddingOperator extends LogicalPlan.RowNode {
-
-    final LogicalPlan.DocumentNode input;
     final NamePath tableIdentifier;
     final FieldProjection[] projections;
     final LogicalPlan.Column[] outputSchema;
 
     private ShreddingOperator(LogicalPlan.DocumentNode input, NamePath tableIdentifier,
                              FieldProjection[] projections, LogicalPlan.Column[] outputSchema) {
+        super(input);
         assert projections.length == outputSchema.length;
-        this.input = input;
         this.tableIdentifier = tableIdentifier;
         this.projections = projections;
         this.outputSchema = outputSchema;
     }
 
-    List<LogicalPlan.RowNode> getConsumers() {
+    public List<LogicalPlan.RowNode> getConsumers() {
         return (List)consumers;
     }
 
     @Override
-    List<LogicalPlan.DocumentNode> getInputs() {
-        return List.of(input);
-    }
-
-    @Override
-    LogicalPlan.Column[][] getOutputSchema() {
+    public LogicalPlan.Column[][] getOutputSchema() {
         return new LogicalPlan.Column[][]{outputSchema};
     }
 
-    public RecordShredderFlatMap getFlinkProcess() {
-        return new RecordShredderFlatMap(tableIdentifier,projections);
-    }
-
-    public static ShreddingOperator shredAtPath(SourceOperator source, NamePath tableIdentifier, LogicalPlan.Table rootTable) {
+    public static ShreddingOperator shredAtPath(DocumentSource source, NamePath tableIdentifier, LogicalPlan.Table rootTable) {
         int maxdepth = tableIdentifier.getLength();
         List<FieldProjection> projections = new ArrayList<>();
         List<LogicalPlan.Column> outputSchema = new ArrayList<>();
@@ -54,7 +42,7 @@ public class ShreddingOperator extends LogicalPlan.RowNode {
         LogicalPlan.Column[] inputSchema = source.outputSchema.get(tableIdentifier);
         assert inputSchema!=null && inputSchema.length>0;
 
-        LogicalPlan.Table targetTable = inputSchema[0].table;
+        LogicalPlan.Table targetTable = LogicalPlanUtil.getTable(inputSchema);
 
         LogicalPlan.Table currentTable = rootTable;
         for (int depth = 0; depth <= maxdepth; depth++) {
@@ -86,9 +74,15 @@ public class ShreddingOperator extends LogicalPlan.RowNode {
             outputSchema.add(col);
             projections.add(new FieldProjection.NamePathProjection(NamePath.of(col.name),maxdepth));
         }
-        return new ShreddingOperator(source, tableIdentifier,
+        ShreddingOperator shredder = new ShreddingOperator(source, tableIdentifier,
                 projections.toArray(new FieldProjection[0]),
                 outputSchema.toArray(new LogicalPlan.Column[0]));
+
+        //Connect with source node in the DAG
+        source.addConsumer(shredder);
+        //Point the table at the shredder as most current
+        targetTable.updateNode(shredder);
+        return shredder;
     }
 
 }

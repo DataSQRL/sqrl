@@ -1,23 +1,18 @@
 package ai.dataeng.sqml.logical4;
 
-import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.schema.SchemaAdjustmentSettings;
-import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.ingest.source.SourceTable;
-import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
-import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NonNull;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-@AllArgsConstructor
-public class SourceOperator extends LogicalPlan.DocumentNode {
+@Getter
+public class DocumentSource extends LogicalPlan.DocumentNode<LogicalPlan.Node> {
 
     @NonNull
     final FlexibleDatasetSchema.TableField sourceSchema;
@@ -30,13 +25,15 @@ public class SourceOperator extends LogicalPlan.DocumentNode {
     @NonNull
     final SchemaAdjustmentSettings settings = SchemaAdjustmentSettings.DEFAULT;
 
-    @Override
-    List<LogicalPlan.DocumentNode> getInputs() {
-        return Collections.EMPTY_LIST;
+    public DocumentSource(FlexibleDatasetSchema.TableField sourceSchema, @NonNull SourceTable table, @NonNull Map<NamePath, LogicalPlan.Column[]> outputSchema) {
+        super(Collections.EMPTY_LIST);
+        this.sourceSchema = sourceSchema;
+        this.table = table;
+        this.outputSchema = outputSchema;
     }
 
     @Override
-    Map<NamePath, LogicalPlan.Column[]> getOutputSchema() {
+    public Map<NamePath, LogicalPlan.Column[]> getOutputSchema() {
         return outputSchema;
     }
 

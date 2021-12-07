@@ -23,7 +23,7 @@ public class FlexibleSchemaHelper {
         }
 
         if (!type.getVariantName().equals(SpecialName.SINGLETON)) {
-            name = Name.concatenate(field.getName(),type.getVariantName());
+            name = Name.combine(field.getName(),type.getVariantName());
         }
         return name;
     }

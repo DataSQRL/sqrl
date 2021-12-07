@@ -4,11 +4,10 @@ import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -19,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class LogicalPlan {
 
-    public static final String TABLE_DELIMITER = "_";
+    public static final String TABLE_DELIMITER = "_t";
     public static final String VERSION_DELIMITER = "v";
 
     /**
@@ -40,40 +39,86 @@ public class LogicalPlan {
      * All source nodes in the logical plan
      */
     List<Node> sourceNodes = new ArrayList<>();
-    AtomicInteger tableIdCounter = new AtomicInteger(0);
 
-    public static abstract class Node {
+    private final AtomicInteger tableIdCounter = new AtomicInteger(0);
 
-        List<Node> consumers;
+    public List<Node> getSourceNodes() {
+        return sourceNodes;
+    }
 
-        abstract List<? extends Node> getInputs();
+    public static abstract class Node<I extends Node, C extends Node> {
 
-        List<? extends Node> getConsumers() {
+        final protected List<C> consumers = new ArrayList<>();
+        final protected List<I> inputs;
+
+        protected Node(List<I> inputs) {
+            this.inputs = inputs;
+        }
+
+        protected Node(I input) {
+            this(Arrays.asList(input));
+        }
+
+        public List<I> getInputs() {
+            return inputs;
+        }
+
+        public I getInput() {
+            Preconditions.checkArgument(inputs.size()==1);
+            return inputs.get(0);
+        }
+
+        public List<C> getConsumers() {
             return consumers;
         }
 
-        public void addConsumer(Node node) {
+        public void addConsumer(C node) {
             consumers.add(node);
         }
 
-    }
-
-    public static abstract class DocumentNode extends Node {
-
-        abstract List<DocumentNode> getInputs();
-
-        List<DocumentNode> getConsumers() {
-            return (List)consumers;
+        public boolean removeConsumer(C node) {
+            return consumers.remove(node);
         }
 
-        abstract Map<NamePath,Column[]> getOutputSchema();
+        public void replaceConsumer(C old, C replacement) {
+            if (!removeConsumer(old)) throw new NoSuchElementException(String.format("Not a valid consumer: %s", old));
+            addConsumer(replacement);
+        }
+
+        public void replaceInput(I old, I replacement) {
+            for (int i = 0; i < inputs.size(); i++) {
+                if (inputs.get(i).equals(old)) {
+                    inputs.set(i,replacement);
+                    return;
+                }
+            }
+            throw new NoSuchElementException("Could not find intput: " + old);
+        }
 
     }
 
-    public static abstract class RowNode extends Node {
+    public static abstract class DocumentNode<C extends Node> extends Node<DocumentNode,C> {
 
-        List<RowNode> getConsumers() {
-            return (List)consumers;
+        public DocumentNode(List<DocumentNode> inputs) {
+            super(inputs);
+        }
+
+        public DocumentNode(DocumentNode input) {
+            super(input);
+        }
+
+        public abstract Map<NamePath,Column[]> getOutputSchema();
+
+    }
+
+    public static abstract class RowNode<I extends Node> extends Node<I,RowNode> {
+
+        public RowNode(List<I> inputs) {
+            super(inputs);
+        }
+
+        public RowNode(I input) {
+            super(input);
         }
 
         /**
@@ -89,7 +134,7 @@ public class LogicalPlan {
          *
          * @return
          */
-        abstract Column[][] getOutputSchema();
+        public abstract Column[][] getOutputSchema();
 
     }
 
@@ -120,29 +165,17 @@ public class LogicalPlan {
         }
     }
 
+    @Getter
     public static class Table implements DatasetOrTable {
 
         final Name name;
         final int uniqueId;
-        ShadowingContainer<Field> fields = new ShadowingContainer<>();
+        final ShadowingContainer<Field> fields = new ShadowingContainer<>();
         RowNode currentNode;
 
         private Table(int uniqueId, Name name) {
             this.name = name;
             this.uniqueId = uniqueId;
-        }
-
-        @Override
-        public Name getName() {
-            return name;
-        }
-
-        public ShadowingContainer<Field> getFields() {
-            return fields;
-        }
-
-        public RowNode getCurrentNode() {
-            return currentNode;
         }
 
         public void updateNode(RowNode node) {
@@ -154,9 +187,21 @@ public class LogicalPlan {
         }
 
         public String getId() {
-            return name + TABLE_DELIMITER + uniqueId2String();
+            return name.getCanonical() + TABLE_DELIMITER + uniqueId2String();
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Table table = (Table) o;
+            return uniqueId == table.uniqueId;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(uniqueId);
+        }
     }
 
     public Table createTable(Name name) {
@@ -180,6 +225,7 @@ public class LogicalPlan {
 
     }
 
+    @Getter
     public static class Column extends Field {
         //Identity of the column
         final Table table;
