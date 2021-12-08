@@ -2,6 +2,7 @@ package ai.dataeng.sqml.logical4;
 
 import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
+import ai.dataeng.sqml.schema2.constraint.ConstraintHelper;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
@@ -234,6 +235,7 @@ public class LogicalPlan {
         //Column definition
         final BasicType type;
         final int arrayDepth;
+        final boolean nonNull;
         final List<Constraint> constraints;
         final boolean isPrimaryKey;
 
@@ -247,6 +249,7 @@ public class LogicalPlan {
             this.arrayDepth = arrayDepth;
             this.constraints = constraints;
             this.isPrimaryKey = isPrimaryKey;
+            this.nonNull = ConstraintHelper.isNonNull(constraints);
         }
 
         public Column(Name name, Table table, int version,

@@ -62,7 +62,7 @@ public class ImportResolver {
             Map<NamePath, LogicalPlan.Column[]> outputSchema = new HashMap<>();
             LogicalPlan.Table rootTable = tableConversion(sourceImport.getSourceSchema().getFields(),outputSchema,
                     asName.orElse(tblImport.getTableName()), NamePath.ROOT, null);
-            DocumentSource source = new DocumentSource(sourceImport.getSourceSchema(), sourceImport.getTable(),outputSchema, null);
+            DocumentSource source = new DocumentSource(sourceImport.getSourceSchema(), sourceImport.getTable(),outputSchema);
             logicalPlan.sourceNodes.add(source);
             //Add shredder for each entry in outputSchema
             for (Map.Entry<NamePath, LogicalPlan.Column[]> entry : outputSchema.entrySet()) {
@@ -132,7 +132,7 @@ public class ImportResolver {
                     LogicalPlan.Relationship.Type.CHILD, multiplicity);
         } else {
             assert ftype.getType() instanceof BasicType;
-            return new LogicalPlan.Column(name,parent,0,(BasicType)ftype.getType(),ftype.getArrayDepth(), constraints);
+            return new LogicalPlan.Column(name, parent,0,(BasicType)ftype.getType(),ftype.getArrayDepth(), constraints, false);
         }
     }
 

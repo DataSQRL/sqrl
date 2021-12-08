@@ -21,19 +21,16 @@ public class DocumentSource extends LogicalPlan.DocumentNode<LogicalPlan.Node> {
     final SourceTable table;
     @NonNull
     final Map<NamePath, LogicalPlan.Column[]> outputSchema;
-    final List<VariableReferenceExpression> outputVariables;
 
     //TODO: Users should be able to control this via global config or hints
     @NonNull
     final SchemaAdjustmentSettings settings = SchemaAdjustmentSettings.DEFAULT;
 
-    public DocumentSource(FlexibleDatasetSchema.TableField sourceSchema, @NonNull SourceTable table, @NonNull Map<NamePath, LogicalPlan.Column[]> outputSchema,
-        List<VariableReferenceExpression> outputVariables) {
+    public DocumentSource(FlexibleDatasetSchema.TableField sourceSchema, @NonNull SourceTable table, @NonNull Map<NamePath, LogicalPlan.Column[]> outputSchema) {
         super(Collections.EMPTY_LIST);
         this.sourceSchema = sourceSchema;
         this.table = table;
         this.outputSchema = outputSchema;
-        this.outputVariables = outputVariables;
     }
 
     @Override

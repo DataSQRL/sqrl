@@ -7,11 +7,11 @@ import lombok.Getter;
 @Getter
 public class FilterOperator extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
 
-    LogicalPlan.RowNode input;
     RowExpression predicate;
 
     public FilterOperator(RowNode input, RowExpression predicate) {
         super(input);
+        this.predicate = predicate;
     }
 
     @Override

@@ -7,25 +7,20 @@ import java.util.Map;
 import lombok.Value;
 
 public class ProjectOperator extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
-    LogicalPlan.RowNode input;
 
-    Map<VariableReferenceExpression, RowExpression> assignments;
-    Locality locality;
+    /* tableB := SELECT coalscene(a,0) as a FROM tableA;   column("a", tableB) -> callexp("coalscene", (column("a", tableA), constant(0)))
+     */
 
-    public ProjectOperator(LogicalPlan.RowNode input, Map<VariableReferenceExpression, RowExpression> assignments,
-        Locality locality) {
+    Map<LogicalPlan.Column, RowExpression> projections;
+
+    public ProjectOperator(LogicalPlan.RowNode input, Map<LogicalPlan.Column, RowExpression> projections) {
         super(input);
+        this.projections = projections;
     }
 
     @Override
     public LogicalPlan.Column[][] getOutputSchema() {
-        return new LogicalPlan.Column[0][];
+        return new LogicalPlan.Column[][]{projections.keySet().toArray(new LogicalPlan.Column[0])};
     }
 
-    public enum Locality
-    {
-        UNKNOWN,
-        LOCAL,
-        REMOTE,
-    }
 }

@@ -14,13 +14,10 @@ public class ShreddingOperator extends LogicalPlan.RowNode<LogicalPlan.DocumentN
     final NamePath tableIdentifier;
     final FieldProjection[] projections;
     final LogicalPlan.Column[] outputSchema;
-    final List<VariableReferenceExpression> output;
 
     public ShreddingOperator(LogicalPlan.DocumentNode input, NamePath tableIdentifier,
-                             FieldProjection[] projections, LogicalPlan.Column[] outputSchema,
-                             List<VariableReferenceExpression> output) {
+                             FieldProjection[] projections, LogicalPlan.Column[] outputSchema) {
         super(input);
-        this.output = output;
         assert projections.length == outputSchema.length;
         this.tableIdentifier = tableIdentifier;
         this.projections = projections;
@@ -78,9 +75,7 @@ public class ShreddingOperator extends LogicalPlan.RowNode<LogicalPlan.DocumentN
         }
         ShreddingOperator shredder = new ShreddingOperator(source, tableIdentifier,
                 projections.toArray(new FieldProjection[0]),
-                outputSchema.toArray(new LogicalPlan.Column[0]),
-                null
-            );
+                outputSchema.toArray(new LogicalPlan.Column[0]));
 
         //Connect with source node in the DAG
         source.addConsumer(shredder);
