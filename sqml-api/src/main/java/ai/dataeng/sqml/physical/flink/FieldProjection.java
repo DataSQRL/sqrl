@@ -49,7 +49,7 @@ public interface FieldProjection extends Serializable {
 
         public LogicalPlan.Column createColumn(LogicalPlan.Table table) {
             return new LogicalPlan.Column(getName(),table,0,type,0,
-                    Collections.singletonList(NotNull.INSTANCE),isPrimary);
+                    Collections.singletonList(NotNull.INSTANCE),isPrimary, false);
         }
 
         @Override

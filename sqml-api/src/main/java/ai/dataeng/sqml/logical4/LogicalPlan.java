@@ -246,10 +246,11 @@ public class LogicalPlan {
         final boolean nonNull;
         final List<Constraint> constraints;
         final boolean isPrimaryKey;
+        final boolean isSystem;
 
         public Column(Name name, Table table, int version,
                       BasicType type, int arrayDepth, List<Constraint> constraints,
-                      boolean isPrimaryKey) {
+                      boolean isPrimaryKey, boolean isSystem) {
             super(name);
             this.table = table;
             this.version = version;
@@ -257,18 +258,19 @@ public class LogicalPlan {
             this.arrayDepth = arrayDepth;
             this.constraints = constraints;
             this.isPrimaryKey = isPrimaryKey;
+            this.isSystem = isSystem;
             this.nonNull = ConstraintHelper.isNonNull(constraints);
-        }
-
-        public Column(Name name, Table table, int version,
-                      BasicType type, int arrayDepth, List<Constraint> constraints) {
-            this(name,table,version,type,arrayDepth,constraints,false);
         }
 
         public String getId() {
             String qualifiedName = name + TABLE_DELIMITER + table.uniqueId2String();
             if (version>0) qualifiedName += VERSION_DELIMITER + Integer.toHexString(version);
             return qualifiedName;
+        }
+
+        @Override
+        public boolean isSystem() {
+            return isSystem;
         }
 
     }

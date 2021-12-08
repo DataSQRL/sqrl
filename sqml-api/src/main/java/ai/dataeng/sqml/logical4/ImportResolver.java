@@ -136,7 +136,7 @@ public class ImportResolver {
                     LogicalPlan.Relationship.Type.CHILD, multiplicity);
         } else {
             assert ftype.getType() instanceof BasicType;
-            return new LogicalPlan.Column(name, parent,0,(BasicType)ftype.getType(),ftype.getArrayDepth(), constraints, false);
+            return new LogicalPlan.Column(name, parent,0,(BasicType)ftype.getType(),ftype.getArrayDepth(), constraints, false, false);
         }
     }
 

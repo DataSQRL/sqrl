@@ -28,7 +28,8 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
      */
     public boolean add(E e) {
         elements.add(e);
-        return (byName.put(e.getName(),e)!=null);
+        if (e.isSystem()) return false;
+        else return (byName.put(e.getName(),e)!=null);
     }
 
     /**
@@ -93,6 +94,10 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
     public interface Nameable {
 
         Name getName();
+
+        default boolean isSystem() {
+            return false;
+        }
 
     }
 
