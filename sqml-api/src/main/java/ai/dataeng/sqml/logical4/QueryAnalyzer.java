@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Augments the {@link LogicalPlan} with operators based on the query workload.
+ * Adds {@link LogicalPlan.Node} to a {@link LogicalPlan} to represent the query workload in the logical plan.
  */
 public class QueryAnalyzer {
 
@@ -15,7 +15,7 @@ public class QueryAnalyzer {
      * In development mode, we don't have a fixed set of queries to analyze. Instead, we assume
      * that every non-hidden table defined in the root of the script can be queried for any of its fields.
      *
-     * Hence, we add a {@link QueryNode} for all such tables and any tables that are reachable from these
+     * Hence, we add a {@link AccessNode} for all such tables and any tables that are reachable from these
      * tables via relationships.
      *
      * @param logicalPlan
@@ -45,7 +45,7 @@ public class QueryAnalyzer {
 
         for (LogicalPlan.Table queryTable : included) {
             assert queryTable.currentNode!=null;
-            QueryNode query = new QueryNode(queryTable.currentNode);
+            AccessNode query = new AccessNode(queryTable.currentNode);
             LogicalPlanUtil.appendOperatorForTable(queryTable, query);
         }
     }

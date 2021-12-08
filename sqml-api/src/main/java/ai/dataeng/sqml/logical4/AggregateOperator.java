@@ -7,7 +7,11 @@ import java.util.Map;
 
 import lombok.Value;
 
-
+/**
+ * Aggregates incoming records by {@link AggregateOperator#groupByKeys} and computes the provided aggregate functions
+ * {@link AggregateOperator#aggregates} for each group.
+ * Emits a row on each group update. The row contains the groupByKeys and one column for each aggregate function to contain its aggregate value.
+ */
 @Value
 public class AggregateOperator extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
 

@@ -6,10 +6,11 @@ import java.util.List;
 import java.util.Map;
 import lombok.Value;
 
+/**
+ * Maps input rows onto output rows based on the provided projections.
+ * Projections compute additional column values, drop columns, or rename columns.
+ */
 public class ProjectOperator extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
-
-    /* tableB := SELECT coalscene(a,0) as a FROM tableA;   column("a", tableB) -> callexp("coalscene", (column("a", tableA), constant(0)))
-     */
 
     Map<LogicalPlan.Column, RowExpression> projections;
 

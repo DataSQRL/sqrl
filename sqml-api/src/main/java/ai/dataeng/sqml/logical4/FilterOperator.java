@@ -3,8 +3,12 @@ package ai.dataeng.sqml.logical4;
 import ai.dataeng.sqml.logical4.LogicalPlan.RowNode;
 import ai.dataeng.sqml.relation.RowExpression;
 import lombok.Getter;
+import lombok.Value;
 
-@Getter
+/**
+ * Filters the input stream based on the provided predicate.
+ */
+@Value
 public class FilterOperator extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
 
     RowExpression predicate;

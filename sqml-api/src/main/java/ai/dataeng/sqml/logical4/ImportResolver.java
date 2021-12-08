@@ -17,6 +17,10 @@ import lombok.AllArgsConstructor;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+/**
+ * Resolve imports in SQRL scripts and produces the {@link LogicalPlan.Node}s as sources.
+ */
 @AllArgsConstructor
 public class ImportResolver {
 

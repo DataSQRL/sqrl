@@ -4,6 +4,10 @@ import com.google.common.base.Preconditions;
 
 import java.util.*;
 
+/**
+ * Iterates over a {@link LogicalPlan} from source to sink. It ensures that all inputs to a node are visisted
+ * before the node itself is visited.
+ */
 public class LogicalPlanIterator implements Iterator<LogicalPlan.Node> {
 
     private final Set<LogicalPlan.Node> visited = new HashSet<>();

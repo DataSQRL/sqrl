@@ -7,9 +7,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class QueryNode extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
+/**
+ * Represents query access or stream access to the input rows.
+ *
+ * Work in progress
+ */
+public class AccessNode extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
 
-    public QueryNode(LogicalPlan.RowNode input) {
+    public AccessNode(LogicalPlan.RowNode input) {
         super(input);
     }
 

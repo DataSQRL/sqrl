@@ -7,6 +7,9 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
 
+/**
+ * Utility methods for handling and modifying {@link LogicalPlan}
+ */
 public class LogicalPlanUtil {
 
     public static <F extends LogicalPlan.Field> F getField(LogicalPlan.Table table, Name name) {

@@ -7,12 +7,16 @@ import ai.dataeng.sqml.relation.VariableReferenceExpression;
 import ai.dataeng.sqml.tree.name.NamePath;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Value;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-@Getter
+/**
+ * Represents an event source of document records.
+ */
+@Value
 public class DocumentSource extends LogicalPlan.DocumentNode<LogicalPlan.Node> {
 
     @NonNull

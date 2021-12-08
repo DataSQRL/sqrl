@@ -7,8 +7,13 @@ import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
+import lombok.Value;
 
-@Getter
+/**
+ * Shreds incoming document records into table rows based on the provided {@link ShreddingOperator#projections}
+ * at a level within the document tree identified by {@link ShreddingOperator#tableIdentifier}.
+ */
+@Value
 public class ShreddingOperator extends LogicalPlan.RowNode<LogicalPlan.DocumentNode> {
 
     final NamePath tableIdentifier;
@@ -38,7 +43,7 @@ public class ShreddingOperator extends LogicalPlan.RowNode<LogicalPlan.DocumentN
         List<FieldProjection> projections = new ArrayList<>();
         List<LogicalPlan.Column> outputSchema = new ArrayList<>();
 
-        LogicalPlan.Column[] inputSchema = source.outputSchema.get(tableIdentifier);
+        LogicalPlan.Column[] inputSchema = source.getOutputSchema().get(tableIdentifier);
         assert inputSchema!=null && inputSchema.length>0;
 
         LogicalPlan.Table targetTable = LogicalPlanUtil.getTable(inputSchema);
