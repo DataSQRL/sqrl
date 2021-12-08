@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.function.Function;
 
 public class LogicalPlanUtil {
 
@@ -24,6 +25,12 @@ public class LogicalPlanUtil {
     public static void appendOperatorForTable(LogicalPlan.Table table, LogicalPlan.RowNode addedNode) {
         table.currentNode.addConsumer(addedNode);
         table.updateNode(addedNode);
+    }
+
+    public static void appendNodeToTable(LogicalPlan.Table table, Function<LogicalPlan.RowNode, LogicalPlan.RowNode> nodeConstructor) {
+        LogicalPlan.RowNode node = nodeConstructor.apply(table.currentNode);
+        table.currentNode.addConsumer(node);
+        table.updateNode(node);
     }
 
     public static boolean isSource(LogicalPlan.Node node) {

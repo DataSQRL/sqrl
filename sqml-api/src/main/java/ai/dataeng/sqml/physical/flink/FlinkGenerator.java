@@ -52,6 +52,9 @@ public class FlinkGenerator {
             } else if (node instanceof ShreddingOperator) {
                 ShreddingOperator shredder = (ShreddingOperator) node;
                 converted = getInput(lp2pp, shredder.getInput()).flatMap(new RecordShredderFlatMap(shredder.getTableIdentifier(), shredder.getProjections()));
+            } else if (node instanceof FilterOperator) {
+                FilterOperator filter = (FilterOperator) node;
+                converted = getInput(lp2pp, filter.getInput()).filter(new FilterFunction(filter.getPredicate()));
             } else if (node instanceof MaterializeSink) {
                 MaterializeSink sink = (MaterializeSink) node;
                 getInput(lp2pp, sink.getInput()).addSink(new PrintSinkFunction<>()); //TODO: .addSink(dbSinkFactory.getSink(shreddedTableName,shredder.getResultSchema()));

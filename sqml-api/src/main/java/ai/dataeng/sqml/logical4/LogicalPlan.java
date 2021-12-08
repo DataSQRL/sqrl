@@ -47,6 +47,10 @@ public class LogicalPlan {
         return sourceNodes;
     }
 
+    public DatasetOrTable getSchemaElement(Name name) {
+        return schema.getByName(name);
+    }
+
     public static abstract class Node<I extends Node, C extends Node> {
 
         final protected List<C> consumers = new ArrayList<>();
@@ -185,6 +189,10 @@ public class LogicalPlan {
 
         public String uniqueId2String() {
             return Integer.toHexString(uniqueId);
+        }
+
+        public Field getField(Name name) {
+            return fields.getByName(name);
         }
 
         public String getId() {

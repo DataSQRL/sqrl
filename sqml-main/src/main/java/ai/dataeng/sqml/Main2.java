@@ -22,12 +22,11 @@ import ai.dataeng.sqml.ingest.source.SourceDataset;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.ingest.stats.SchemaGenerator;
 import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
-import ai.dataeng.sqml.logical4.ImportResolver;
-import ai.dataeng.sqml.logical4.LogicalPlan;
-import ai.dataeng.sqml.logical4.QueryAnalyzer;
+import ai.dataeng.sqml.logical4.*;
 import ai.dataeng.sqml.optimizer.LogicalPlanOptimizer;
 import ai.dataeng.sqml.optimizer.SimpleOptimizer;
 import ai.dataeng.sqml.physical.flink.FlinkGenerator;
+import ai.dataeng.sqml.relation.RowExpression;
 import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
@@ -172,11 +171,15 @@ public class Main2 {
         ConversionError.Bundle<ConversionError> errors = new ConversionError.Bundle<>();
         LogicalPlan logicalPlan = new LogicalPlan();
         //1. Imports
+        Name ordersName = Name.system(RETAIL_TABLE_NAMES[1]);
         ImportResolver importer = new ImportResolver(sqmlImporter, logicalPlan, errors);
         importer.resolveImport(ImportResolver.ImportMode.TABLE, Name.system(RETAIL_DATASET),
-                Optional.of(Name.system(RETAIL_TABLE_NAMES[1])), Optional.empty());
+                Optional.of(ordersName), Optional.empty());
         //2. SQRL statements
-        //tbd
+        LogicalPlan.Table orders = (LogicalPlan.Table) logicalPlan.getSchemaElement(ordersName);
+        LogicalPlan.Column ordersTime = (LogicalPlan.Column) orders.getField(Name.system("time"));
+        RowExpression predicate = null; //TODO: create expression
+        LogicalPlanUtil.appendNodeToTable(orders, n -> new FilterOperator(n, predicate));
         //3. Queries
         QueryAnalyzer.addDevModeQueries(logicalPlan);
 
