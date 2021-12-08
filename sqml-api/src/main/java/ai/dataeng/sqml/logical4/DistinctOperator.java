@@ -18,4 +18,8 @@ public class DistinctOperator extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
         return new LogicalPlan.Column[0][];
     }
 
+    @Override
+    public StreamType getStreamType() {
+        return StreamType.RETRACT;
+    }
 }

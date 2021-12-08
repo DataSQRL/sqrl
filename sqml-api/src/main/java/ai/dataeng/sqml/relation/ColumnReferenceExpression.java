@@ -17,38 +17,45 @@ import ai.dataeng.sqml.logical4.LogicalPlan;
 import ai.dataeng.sqml.schema2.Type;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import lombok.Getter;
+import lombok.Value;
 import org.apache.flink.types.Row;
 
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
+@Getter
 public class ColumnReferenceExpression
         extends RowExpression
         implements Comparable<ColumnReferenceExpression>
 {
     final LogicalPlan.Column column;
-    int rowOffset = -1;
+    final int tableIndex;
 
     public ColumnReferenceExpression(LogicalPlan.Column column) {
+        this(column, 0);
+    }
+
+    public ColumnReferenceExpression(LogicalPlan.Column column, int tableIndex) {
         this.column = column;
+        this.tableIndex = tableIndex;
     }
 
-    /**
-     * The offset gets set when using the expression in a physical plan for expedicated execution of expressions
-     * @param rowOffset
-     */
-    public void setRowOffset(int rowOffset) {
-        Preconditions.checkArgument(rowOffset>=0);
-        this.rowOffset = rowOffset;
+    public static int findRowOffset(LogicalPlan.Column column, int tableIndex, LogicalPlan.Column[][] inputSchema) {
+        Preconditions.checkArgument(inputSchema!=null && inputSchema.length>=tableIndex);
+        int offset = 0;
+        for (int tableno = 0; tableno < inputSchema.length; tableno++) {
+            LogicalPlan.Column[] tableSchema = inputSchema[tableno];
+            for (int colno = 0; colno < tableSchema.length; colno++) {
+                if (tableno==tableIndex && tableSchema[colno].equals(column)) return offset;
+                offset++;
+            }
+        }
+        throw new NoSuchElementException(String.format("Column [%s @%s] could not be found in input schema", column, tableIndex));
     }
 
-    /**
-     * This method gets called when the expression is evaluated in the physical plan execution
-     * @param row
-     * @return
-     */
-    public Object evaluate(Row row) {
-        Preconditions.checkArgument(row!=null && rowOffset>=0);
-        return row.getField(rowOffset);
+    public int getRowOffset(LogicalPlan.Column[][] inputSchema) {
+        return findRowOffset(column,tableIndex,inputSchema);
     }
 
     public String getName()

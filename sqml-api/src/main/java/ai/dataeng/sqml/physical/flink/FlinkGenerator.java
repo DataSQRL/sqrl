@@ -10,10 +10,10 @@ import ai.dataeng.sqml.optimizer.MaterializeSink;
 import ai.dataeng.sqml.optimizer.MaterializeSource;
 import ai.dataeng.sqml.tree.name.Name;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
-import org.apache.flink.types.Row;
 import org.apache.flink.util.OutputTag;
 
 import java.util.HashMap;
@@ -54,7 +54,17 @@ public class FlinkGenerator {
                 converted = getInput(lp2pp, shredder.getInput()).flatMap(new RecordShredderFlatMap(shredder.getTableIdentifier(), shredder.getProjections()));
             } else if (node instanceof FilterOperator) {
                 FilterOperator filter = (FilterOperator) node;
-                converted = getInput(lp2pp, filter.getInput()).filter(new FilterFunction(filter.getPredicate()));
+                converted = getInput(lp2pp, filter.getInput()).flatMap(new FilterFunction(filter.getPredicate()));
+            } else if (node instanceof AggregateOperator) {
+                AggregateOperator agg = (AggregateOperator) node;
+                DataStream<RowUpdate> input = getInput(lp2pp, agg.getInput());
+                //First, we key by the group-by keys
+                RowKeySelector keySelector = RowKeySelector.from(agg.getGroupByKeys().values(),agg.getInput());
+                if (agg.getInput().getStreamType()==StreamType.RETRACT) {
+                    //If we are dealing with a retract stream, we have to separate RowUpdate's if they differ on keys
+                    input = input.flatMap(keySelector.getRowSeparator());
+                }
+                converted = input.keyBy(keySelector).process(new AggregationProcess());
             } else if (node instanceof MaterializeSink) {
                 MaterializeSink sink = (MaterializeSink) node;
                 getInput(lp2pp, sink.getInput()).addSink(new PrintSinkFunction<>()); //TODO: .addSink(dbSinkFactory.getSink(shreddedTableName,shredder.getResultSchema()));

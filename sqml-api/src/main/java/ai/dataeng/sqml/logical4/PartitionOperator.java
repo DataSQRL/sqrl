@@ -6,6 +6,8 @@ import java.util.Arrays;
  * Groups the input stream by the {@link PartitionOperator#groupByKeys}, orders each group by the {@link PartitionOperator#order},
  * and then emits up to {@link PartitionOperator#limit} elements with the rank value of each emitted element within their
  * group added as an additional column {@link PartitionOperator#rank}.
+ *
+ * TODO: support within partition joins
  */
 public class PartitionOperator extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
 
@@ -33,5 +35,8 @@ public class PartitionOperator extends LogicalPlan.RowNode<LogicalPlan.RowNode> 
         return new LogicalPlan.Column[][]{outputSchema};
     }
 
-
+    @Override
+    public StreamType getStreamType() {
+        return StreamType.RETRACT;
+    }
 }

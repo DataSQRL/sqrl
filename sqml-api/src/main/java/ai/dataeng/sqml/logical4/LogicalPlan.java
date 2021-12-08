@@ -64,6 +64,8 @@ public class LogicalPlan {
             this(Arrays.asList(input));
         }
 
+        public abstract StreamType getStreamType();
+
         public List<I> getInputs() {
             return inputs;
         }
@@ -114,6 +116,10 @@ public class LogicalPlan {
 
         public abstract Map<NamePath,Column[]> getOutputSchema();
 
+        public StreamType getStreamType() {
+            return StreamType.EVENT;
+        }
+
     }
 
     public static abstract class RowNode<I extends Node> extends Node<I,RowNode> {
@@ -124,6 +130,20 @@ public class LogicalPlan {
 
         public RowNode(I input) {
             super(input);
+        }
+
+        /**
+         * By default, we assume the {@link StreamType} is inherited from the inputs.
+         * {@link RowNode}'s that change the {@link StreamType} need to overwrite this method.
+         * @return
+         */
+        @Override
+        public StreamType getStreamType() {
+            for (I input : getInputs()) {
+                if (input.getStreamType()==StreamType.RETRACT) return StreamType.RETRACT;
+            }
+            //Only if all inputs are EVENT is the resulting stream an EVENT stream
+            return StreamType.EVENT;
         }
 
         /**
@@ -183,6 +203,8 @@ public class LogicalPlan {
             this.uniqueId = uniqueId;
         }
 
+
+
         public void updateNode(RowNode node) {
             currentNode = node;
         }
@@ -193,6 +215,10 @@ public class LogicalPlan {
 
         public Field getField(Name name) {
             return fields.getByName(name);
+        }
+
+        public boolean addField(Field field) {
+            return fields.add(field);
         }
 
         public String getId() {
@@ -236,15 +262,17 @@ public class LogicalPlan {
 
     @Getter
     public static class Column extends Field {
-        //Identity of the column
+        //Identity of the column in addition to name
         final Table table;
         final int version;
 
-        //Column definition
+        //Type definition
         final BasicType type;
         final int arrayDepth;
         final boolean nonNull;
         final List<Constraint> constraints;
+
+        //System information
         final boolean isPrimaryKey;
         final boolean isSystem;
 

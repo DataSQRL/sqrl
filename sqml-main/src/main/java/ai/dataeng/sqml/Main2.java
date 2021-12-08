@@ -26,11 +26,13 @@ import ai.dataeng.sqml.logical4.*;
 import ai.dataeng.sqml.optimizer.LogicalPlanOptimizer;
 import ai.dataeng.sqml.optimizer.SimpleOptimizer;
 import ai.dataeng.sqml.physical.flink.FlinkGenerator;
+import ai.dataeng.sqml.relation.ColumnReferenceExpression;
 import ai.dataeng.sqml.relation.RowExpression;
 import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
 import com.google.common.base.Preconditions;
@@ -40,6 +42,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.*;
 
+import org.apache.calcite.interpreter.FilterNode;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -80,10 +83,15 @@ public class Main2 {
 
     private static final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
 
+
     private static final JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
             .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false")
             .withDriverName("org.h2.Driver")
             .build();
+
+    private static final Name toName(String name) {
+        return Name.of(name,NameCanonicalizer.LOWERCASE_ENGLISH);
+    }
 
     public static void main(String[] args) throws Exception {
         BasicTypeManager.detectType("test");
@@ -171,15 +179,24 @@ public class Main2 {
         ConversionError.Bundle<ConversionError> errors = new ConversionError.Bundle<>();
         LogicalPlan logicalPlan = new LogicalPlan();
         //1. Imports
-        Name ordersName = Name.system(RETAIL_TABLE_NAMES[1]);
+        Name ordersName = toName(RETAIL_TABLE_NAMES[1]);
         ImportResolver importer = new ImportResolver(sqmlImporter, logicalPlan, errors);
-        importer.resolveImport(ImportResolver.ImportMode.TABLE, Name.system(RETAIL_DATASET),
+        importer.resolveImport(ImportResolver.ImportMode.TABLE, toName(RETAIL_DATASET),
                 Optional.of(ordersName), Optional.empty());
         //2. SQRL statements
         LogicalPlan.Table orders = (LogicalPlan.Table) logicalPlan.getSchemaElement(ordersName);
-        LogicalPlan.Column ordersTime = (LogicalPlan.Column) orders.getField(Name.system("time"));
+        LogicalPlan.Column ordersTime = (LogicalPlan.Column) orders.getField(toName("time"));
         RowExpression predicate = null; //TODO: create expression
-        LogicalPlanUtil.appendNodeToTable(orders, n -> new FilterOperator(n, predicate));
+        FilterOperator filter = new FilterOperator(orders.getCurrentNode(), predicate);
+        orders.getCurrentNode().addConsumer(filter);
+        LogicalPlan.Table customerNoOrders = logicalPlan.createTable(toName("CustomerOrderStats"));
+        LogicalPlan.Column customerid = (LogicalPlan.Column) orders.getField(toName("customerid"));
+        AggregateOperator countAgg = AggregateOperator.createAggregateAndPopulateTable(filter, customerNoOrders,
+                Map.of(customerid.getName(),new ColumnReferenceExpression(customerid)),
+                Map.of(toName("num_orders"),new AggregateOperator.Aggregation(
+                                                        AggregateOperator.AggregateFunction.COUNT,
+                                                        List.of(new ColumnReferenceExpression(customerid)))));
+        filter.addConsumer(countAgg);
         //3. Queries
         QueryAnalyzer.addDevModeQueries(logicalPlan);
 
