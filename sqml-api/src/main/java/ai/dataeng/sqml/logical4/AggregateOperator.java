@@ -1,13 +1,10 @@
 package ai.dataeng.sqml.logical4;
 
 import ai.dataeng.sqml.function.FunctionHandle;
-import ai.dataeng.sqml.relation.CallExpression;
 
 import java.util.List;
 import java.util.Map;
 
-import ai.dataeng.sqml.relation.RowExpression;
-import ai.dataeng.sqml.schema2.Type;
 import lombok.Value;
 
 
