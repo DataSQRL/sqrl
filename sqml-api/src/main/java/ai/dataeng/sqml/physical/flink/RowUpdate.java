@@ -73,6 +73,10 @@ public interface RowUpdate extends Serializable {
             this.add = add;
         }
 
+        public Simple(RowUpdate ru, Row add) {
+            this(ru.getIngestTime(),add);
+        }
+
         public Simple(Instant ingestTime, Object... values) {
             this(ingestTime,new Row(values));
         }
@@ -106,6 +110,11 @@ public interface RowUpdate extends Serializable {
             this.add = add;
             this.retract = retract;
         }
+
+        public Full(RowUpdate ru, @Nullable Row add, @Nullable Row retract) {
+            this(ru.getIngestTime(),add,retract);
+        }
+
 
         @Override
         public Type getType() {

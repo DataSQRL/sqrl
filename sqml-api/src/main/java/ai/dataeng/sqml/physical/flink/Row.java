@@ -22,6 +22,10 @@ public class Row implements Serializable {
         return values[position];
     }
 
+    protected Object[] getRawValues() {
+        return values;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

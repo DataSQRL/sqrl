@@ -1,16 +1,13 @@
 package ai.dataeng.sqml.physical.flink;
 
 import ai.dataeng.sqml.flink.EnvironmentFactory;
-import ai.dataeng.sqml.ingest.schema.SchemaAdjustmentSettings;
 import ai.dataeng.sqml.ingest.schema.SchemaValidationProcess;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.logical4.*;
 import ai.dataeng.sqml.optimizer.LogicalPlanOptimizer;
 import ai.dataeng.sqml.optimizer.MaterializeSink;
-import ai.dataeng.sqml.optimizer.MaterializeSource;
 import ai.dataeng.sqml.tree.name.Name;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
@@ -64,7 +61,7 @@ public class FlinkGenerator {
                     //If we are dealing with a retract stream, we have to separate RowUpdate's if they differ on keys
                     input = input.flatMap(keySelector.getRowSeparator());
                 }
-                converted = input.keyBy(keySelector).process(new AggregationProcess());
+                converted = input.keyBy(keySelector).process(AggregationProcess.from(agg));
             } else if (node instanceof MaterializeSink) {
                 MaterializeSink sink = (MaterializeSink) node;
                 getInput(lp2pp, sink.getInput()).addSink(new PrintSinkFunction<>()); //TODO: .addSink(dbSinkFactory.getSink(shreddedTableName,shredder.getResultSchema()));

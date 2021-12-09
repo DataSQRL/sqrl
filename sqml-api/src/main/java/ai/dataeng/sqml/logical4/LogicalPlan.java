@@ -117,7 +117,7 @@ public class LogicalPlan {
         public abstract Map<NamePath,Column[]> getOutputSchema();
 
         public StreamType getStreamType() {
-            return StreamType.EVENT;
+            return StreamType.ADD_ONLY;
         }
 
     }
@@ -143,7 +143,7 @@ public class LogicalPlan {
                 if (input.getStreamType()==StreamType.RETRACT) return StreamType.RETRACT;
             }
             //Only if all inputs are EVENT is the resulting stream an EVENT stream
-            return StreamType.EVENT;
+            return StreamType.ADD_ONLY;
         }
 
         /**
@@ -245,7 +245,13 @@ public class LogicalPlan {
         return table;
     }
 
-    public static abstract class Field implements ShadowingContainer.Nameable {
+    public Table createTable(Name name, boolean isSystem) {
+        Table table = createTable(name);
+        if (!isSystem) schema.add(table);
+        return table;
+    }
+
+        public static abstract class Field implements ShadowingContainer.Nameable {
 
         final Name name;
 

@@ -10,12 +10,12 @@ import java.util.Collection;
 
 public class RowKeySelector implements KeySelector<RowUpdate, Row> {
 
-    private int[] indexes;
+    private int[] keyIndexes;
 
     public RowKeySelector() {} //Kryo
 
-    public RowKeySelector(int[] indexes) {
-        this.indexes = indexes;
+    public RowKeySelector(int[] keyIndexes) {
+        this.keyIndexes = keyIndexes;
     }
 
     @Override
@@ -26,9 +26,9 @@ public class RowKeySelector implements KeySelector<RowUpdate, Row> {
     }
 
     private Row getKey(Row data) {
-        Object[] keyValues = new Object[indexes.length];
-        for (int i = 0; i < indexes.length; i++) {
-            keyValues[i]=data.getValue(indexes[i]);
+        Object[] keyValues = new Object[keyIndexes.length];
+        for (int i = 0; i < keyIndexes.length; i++) {
+            keyValues[i]=data.getValue(keyIndexes[i]);
         }
         return new Row(keyValues);
     }
@@ -44,7 +44,7 @@ public class RowKeySelector implements KeySelector<RowUpdate, Row> {
     }
 
     public KeyedRowSeparator getRowSeparator() {
-        return new KeyedRowSeparator(indexes);
+        return new KeyedRowSeparator(keyIndexes);
     }
 
     public static class KeyedRowSeparator implements FlatMapFunction<RowUpdate,RowUpdate> {

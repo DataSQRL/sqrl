@@ -26,7 +26,7 @@ public class SubscriptionOperator extends LogicalPlan.RowNode<LogicalPlan.RowNod
 
     @Override
     public StreamType getStreamType() {
-        return StreamType.EVENT;
+        return StreamType.ADD_ONLY;
     }
 
     public enum Type {

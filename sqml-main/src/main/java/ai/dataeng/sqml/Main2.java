@@ -189,7 +189,7 @@ public class Main2 {
         RowExpression predicate = null; //TODO: create expression
         FilterOperator filter = new FilterOperator(orders.getCurrentNode(), predicate);
         orders.getCurrentNode().addConsumer(filter);
-        LogicalPlan.Table customerNoOrders = logicalPlan.createTable(toName("CustomerOrderStats"));
+        LogicalPlan.Table customerNoOrders = logicalPlan.createTable(toName("CustomerOrderStats"),false);
         LogicalPlan.Column customerid = (LogicalPlan.Column) orders.getField(toName("customerid"));
         AggregateOperator countAgg = AggregateOperator.createAggregateAndPopulateTable(filter, customerNoOrders,
                 Map.of(customerid.getName(),new ColumnReferenceExpression(customerid)),
