@@ -48,7 +48,7 @@ public class ImportResolver {
         } else {
             assert importMode == ImportMode.TABLE;
             ImportManager.TableImport tblimport = importManager.importTable(datasetName, tableName.get(), schemaErrors);
-            logicalPlan.schema.add(createTable(tblimport, asName));
+            createTable(tblimport, asName);
         }
         errors.addAll(schemaErrors);
     }
@@ -82,7 +82,8 @@ public class ImportResolver {
                                               Map<NamePath, LogicalPlan.Column[]> outputSchema,
                                               Name name, NamePath path, LogicalPlan.Table parent) {
         if (parent!=null) name = Name.combine(parent.getName(),name);
-        LogicalPlan.Table table = logicalPlan.createTable(name);
+        //Only the root table (i.e. without a parent) is visible in the schema
+        LogicalPlan.Table table = logicalPlan.createTable(name, parent!=null);
         List<LogicalPlan.Column> columns = new ArrayList<>();
         for (FlexibleDatasetSchema.FlexibleField field : relation) {
             for (LogicalPlan.Field f : fieldConversion(field, outputSchema, path, table)) {

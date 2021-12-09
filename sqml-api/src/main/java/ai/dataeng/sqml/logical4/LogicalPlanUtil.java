@@ -7,7 +7,6 @@ import ai.dataeng.sqml.logical4.LogicalPlan.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.function.Function;
 
 /**
  * Utility methods for handling and modifying {@link LogicalPlan}
@@ -47,7 +46,7 @@ public class LogicalPlanUtil {
     public static Column copyColumnToTable(Column column, Table table, Name name, boolean isPrimary) {
         Column copy = new Column(name,table,getNextVersion(table, name),
                 column.type, column.arrayDepth,
-                List.copyOf(column.constraints),isPrimary,column.isSystem);
+                List.copyOf(column.constraints),isPrimary,column.isInternal);
         table.addField(copy);
         return copy;
     }

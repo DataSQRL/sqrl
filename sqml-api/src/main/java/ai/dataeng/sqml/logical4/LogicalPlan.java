@@ -33,10 +33,6 @@ public class LogicalPlan {
      */
     ShadowingContainer<DatasetOrTable> schema = new ShadowingContainer<>();
     /**
-     * All tables in the logical plan, not just those accessible through the schema
-     */
-    List<Table> allTables = new ArrayList<>();
-    /**
      * All source nodes in the logical plan
      */
     List<Node> sourceNodes = new ArrayList<>();
@@ -196,14 +192,15 @@ public class LogicalPlan {
         final Name name;
         final int uniqueId;
         final ShadowingContainer<Field> fields = new ShadowingContainer<>();
+        final boolean isInternal;
         RowNode currentNode;
 
-        private Table(int uniqueId, Name name) {
+
+        private Table(int uniqueId, Name name, boolean isInternal) {
             this.name = name;
             this.uniqueId = uniqueId;
+            this.isInternal = isInternal;
         }
-
-
 
         public void updateNode(RowNode node) {
             currentNode = node;
@@ -226,6 +223,11 @@ public class LogicalPlan {
         }
 
         @Override
+        public boolean isVisible() {
+            return !isInternal;
+        }
+
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
@@ -239,19 +241,14 @@ public class LogicalPlan {
         }
     }
 
-    public Table createTable(Name name) {
-        Table table = new Table(tableIdCounter.incrementAndGet(), name);
-        allTables.add(table);
+    public Table createTable(Name name, boolean isInternal) {
+        Table table = new Table(tableIdCounter.incrementAndGet(), name, isInternal);
+        schema.add(table);
         return table;
     }
 
-    public Table createTable(Name name, boolean isSystem) {
-        Table table = createTable(name);
-        if (!isSystem) schema.add(table);
-        return table;
-    }
 
-        public static abstract class Field implements ShadowingContainer.Nameable {
+    public static abstract class Field implements ShadowingContainer.Nameable {
 
         final Name name;
 
@@ -280,11 +277,11 @@ public class LogicalPlan {
 
         //System information
         final boolean isPrimaryKey;
-        final boolean isSystem;
+        final boolean isInternal;
 
         public Column(Name name, Table table, int version,
                       BasicType type, int arrayDepth, List<Constraint> constraints,
-                      boolean isPrimaryKey, boolean isSystem) {
+                      boolean isPrimaryKey, boolean isInternal) {
             super(name);
             this.table = table;
             this.version = version;
@@ -292,7 +289,7 @@ public class LogicalPlan {
             this.arrayDepth = arrayDepth;
             this.constraints = constraints;
             this.isPrimaryKey = isPrimaryKey;
-            this.isSystem = isSystem;
+            this.isInternal = isInternal;
             this.nonNull = ConstraintHelper.isNonNull(constraints);
         }
 
@@ -303,8 +300,8 @@ public class LogicalPlan {
         }
 
         @Override
-        public boolean isSystem() {
-            return isSystem;
+        public boolean isVisible() {
+            return !isInternal;
         }
 
     }
