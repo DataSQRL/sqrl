@@ -54,10 +54,10 @@ public class AggregationProcess extends KeyedProcessFunction<Row,RowUpdate,RowUp
         boolean aggregatorUpdated = initialized;
         boolean aggregateChanged = false;
         for (int i = 0; i < aggregatorDefinitions.length; i++) {
-            Object[] add = assembleArguments(rowUpdate.getAddition(), aggregatorDefinitions[i]);
+            Object[] append = assembleArguments(rowUpdate.getAppend(), aggregatorDefinitions[i]);
             Object[] retract = assembleArguments(rowUpdate.getRetraction(), aggregatorDefinitions[i]);
-            if (!Arrays.deepEquals(add,retract)) {
-                updates[i]=aggregators.get(i).add(add,retract);
+            if (!Arrays.deepEquals(append,retract)) {
+                updates[i]=aggregators.get(i).add(append,retract);
                 aggregatorUpdated=true;
                 aggregateChanged |= !Objects.equals(updates[i].newValue,updates[i].oldValue);
             } else {
@@ -69,23 +69,23 @@ public class AggregationProcess extends KeyedProcessFunction<Row,RowUpdate,RowUp
 
         if (aggregateChanged) {
             //Construct output RowUpdate
-            Row add = assembleOutputRow(context.getCurrentKey(),updates,true);
-            if (streamType==StreamType.ADD_ONLY || initialized) {
-                collector.collect(new RowUpdate.Simple(rowUpdate,add));
+            Row append = assembleOutputRow(context.getCurrentKey(),updates,true);
+            if (streamType==StreamType.APPEND || initialized) {
+                collector.collect(new RowUpdate.AppendOnly(rowUpdate,append));
             } else {
                 Row retract = assembleOutputRow(context.getCurrentKey(),updates,false);
-                collector.collect(new RowUpdate.Full(rowUpdate,add,retract));
+                collector.collect(new RowUpdate.Full(rowUpdate,append,retract));
             }
         }
     }
 
-    private Row assembleOutputRow(Row keys, Aggregator.Update[] updates, boolean add) {
+    private Row assembleOutputRow(Row keys, Aggregator.Update[] updates, boolean append /*false=retract*/) {
         Object[] cols = new Object[keys.getArity()+updates.length];
         System.arraycopy(keys.getRawValues(),0,cols,0,keys.getArity());
         int offset=keys.getArity();
         for (int i = 0; i < updates.length; i++) {
             Aggregator.Update update = updates[i];
-            cols[offset++]=add?update.newValue:update.oldValue;
+            cols[offset++]=append?update.newValue:update.oldValue;
         }
         return new Row(cols);
     }
@@ -152,7 +152,7 @@ public class AggregationProcess extends KeyedProcessFunction<Row,RowUpdate,RowUp
 
     public interface Aggregator extends Serializable {
 
-        Update add(@Nullable Object[] addition, @Nullable Object[] retraction);
+        Update add(@Nullable Object[] append, @Nullable Object[] retraction);
 
         Object getValue();
 

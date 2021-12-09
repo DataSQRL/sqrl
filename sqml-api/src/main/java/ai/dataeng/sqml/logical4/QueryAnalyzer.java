@@ -45,7 +45,7 @@ public class QueryAnalyzer {
 
         for (LogicalPlan.Table queryTable : included) {
             assert queryTable.currentNode!=null;
-            AccessNode query = new AccessNode(queryTable.currentNode);
+            AccessNode query = AccessNode.forEntireTable(queryTable, AccessNode.Type.QUERY);
             LogicalPlanUtil.appendOperatorForTable(queryTable, query);
         }
     }

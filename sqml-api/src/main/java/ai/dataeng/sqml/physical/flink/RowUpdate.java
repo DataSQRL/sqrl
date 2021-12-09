@@ -1,7 +1,6 @@
 package ai.dataeng.sqml.physical.flink;
 
 import com.google.common.base.Preconditions;
-import lombok.Getter;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
@@ -11,11 +10,11 @@ public interface RowUpdate extends Serializable {
 
     Type getType();
 
-    Row getAddition();
+    Row getAppend();
 
     Row getRetraction();
 
-    default boolean hasAddition() {
+    default boolean hasAppend() {
         return getType()!=Type.DELETE;
     }
 
@@ -54,7 +53,7 @@ public interface RowUpdate extends Serializable {
         public String toString() {
             StringBuilder s = new StringBuilder();
             s.append(getType().prefix);
-            if (hasAddition()) s.append(getAddition().toString());
+            if (hasAppend()) s.append(getAppend().toString());
             if (hasRetraction()) s.append(getRetraction().toString());
             s.append("@").append(ingestTime);
             return s.toString();
@@ -62,22 +61,22 @@ public interface RowUpdate extends Serializable {
 
     }
 
-    class Simple extends Base {
+    class AppendOnly extends Base {
         private static final long serialVersionUID = 7L;
 
-        private final Row add;
+        private final Row append;
 
-        public Simple(Instant ingestTime, Row add) {
+        public AppendOnly(Instant ingestTime, Row append) {
             super(ingestTime);
-            Preconditions.checkNotNull(add);
-            this.add = add;
+            Preconditions.checkNotNull(append);
+            this.append = append;
         }
 
-        public Simple(RowUpdate ru, Row add) {
-            this(ru.getIngestTime(),add);
+        public AppendOnly(RowUpdate ru, Row append) {
+            this(ru.getIngestTime(), append);
         }
 
-        public Simple(Instant ingestTime, Object... values) {
+        public AppendOnly(Instant ingestTime, Object... values) {
             this(ingestTime,new Row(values));
         }
 
@@ -87,8 +86,8 @@ public interface RowUpdate extends Serializable {
         }
 
         @Override
-        public Row getAddition() {
-            return add;
+        public Row getAppend() {
+            return append;
         }
 
         @Override
@@ -101,13 +100,13 @@ public interface RowUpdate extends Serializable {
     class Full extends Base {
         private static final long serialVersionUID = 7L;
 
-        private final Row add;
+        private final Row append;
         private final Row retract;
 
-        public Full(Instant ingestTime, @Nullable Row add, @Nullable Row retract) {
+        public Full(Instant ingestTime, @Nullable Row append, @Nullable Row retract) {
             super(ingestTime);
-            Preconditions.checkArgument(!(add==null && retract==null));
-            this.add = add;
+            Preconditions.checkArgument(!(append==null && retract==null));
+            this.append = append;
             this.retract = retract;
         }
 
@@ -118,15 +117,15 @@ public interface RowUpdate extends Serializable {
 
         @Override
         public Type getType() {
-            if (add!=null) {
+            if (append !=null) {
                 if (retract==null) return Type.INSERT;
                 else return Type.UPDATE;
             } else return Type.DELETE;
         }
 
         @Override
-        public Row getAddition() {
-            return add;
+        public Row getAppend() {
+            return append;
         }
 
         @Override

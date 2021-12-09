@@ -20,12 +20,16 @@ public class RowKeySelector implements KeySelector<RowUpdate, Row> {
 
     @Override
     public Row getKey(RowUpdate update) throws Exception {
-        Row key = getKey(update.hasAddition()?update.getAddition():update.getRetraction());
+        Row key = getKey(update.hasAppend()?update.getAppend():update.getRetraction());
         assert update.getType()!=RowUpdate.Type.UPDATE || key.equals(getKey(update.getRetraction())); //Those should have been separated by KeyedRowSeperator
         return key;
     }
 
     private Row getKey(Row data) {
+        return getKey(data,keyIndexes);
+    }
+
+    private static Row getKey(Row data, int[] keyIndexes) {
         Object[] keyValues = new Object[keyIndexes.length];
         for (int i = 0; i < keyIndexes.length; i++) {
             keyValues[i]=data.getValue(keyIndexes[i]);
@@ -49,17 +53,27 @@ public class RowKeySelector implements KeySelector<RowUpdate, Row> {
 
     public static class KeyedRowSeparator implements FlatMapFunction<RowUpdate,RowUpdate> {
 
-        private int[] indexes;
+        private int[] keyIndexes;
 
         public KeyedRowSeparator() {} //Kryo
 
-        public KeyedRowSeparator(int[] indexes) {
-            this.indexes = indexes;
+        public KeyedRowSeparator(int[] keyIndexes) {
+            this.keyIndexes = keyIndexes;
         }
 
         @Override
         public void flatMap(RowUpdate rowUpdate, Collector<RowUpdate> collector) throws Exception {
-
+            boolean separateUpdate = false;
+            if (rowUpdate.getType() == RowUpdate.Type.UPDATE) {
+                //if the key columns have different values we need to separate them
+                separateUpdate = !getKey(rowUpdate.getAppend(),keyIndexes).equals(getKey(rowUpdate.getRetraction(),keyIndexes));
+            }
+            if (separateUpdate) {
+                collector.collect(new RowUpdate.Full(rowUpdate, rowUpdate.getAppend(), null));
+                collector.collect(new RowUpdate.Full(rowUpdate, null, rowUpdate.getRetraction()));
+            } else {
+                collector.collect(rowUpdate);
+            }
         }
     }
 }

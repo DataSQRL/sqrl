@@ -122,7 +122,7 @@ public class ImportResolver {
             LogicalPlan.Table table = tableConversion((RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType(),
                     outputSchema, name, path.resolve(name), parent);
             //Add parent relationship
-            table.fields.add(new LogicalPlan.Relationship(PARENT_RELATIONSHIP,parent,
+            table.fields.add(new LogicalPlan.Relationship(PARENT_RELATIONSHIP,table, parent,
                     LogicalPlan.Relationship.Type.PARENT, LogicalPlan.Relationship.Multiplicity.ONE));
             //Return child relationship
             LogicalPlan.Relationship.Multiplicity multiplicity = LogicalPlan.Relationship.Multiplicity.MANY;
@@ -133,7 +133,7 @@ public class ImportResolver {
                     multiplicity = LogicalPlan.Relationship.Multiplicity.ONE;
                 }
             }
-            return new LogicalPlan.Relationship(name, table,
+            return new LogicalPlan.Relationship(name, parent, table,
                     LogicalPlan.Relationship.Type.CHILD, multiplicity);
         } else {
             assert ftype.getType() instanceof BasicType;

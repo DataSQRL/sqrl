@@ -1,15 +1,11 @@
 package ai.dataeng.sqml.physical.flink;
 
-import ai.dataeng.sqml.ingest.shredding.RecordProjection;
 import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.Preconditions;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -47,7 +43,7 @@ public class RecordShredderFlatMap implements FlatMapFunction<SourceRecord<Name>
         //Need to go down one level or wrap up the record because its complete
         if (colno >= projections.length) {
             //We have projected out all fields, let's create Row and emit
-            RowUpdate row = new RowUpdate.Simple(sourceRecord.getIngestTime(), cols);
+            RowUpdate row = new RowUpdate.AppendOnly(sourceRecord.getIngestTime(), cols);
             //System.out.println("Shredded row: " + row);
             collector.collect(row);
         } else {

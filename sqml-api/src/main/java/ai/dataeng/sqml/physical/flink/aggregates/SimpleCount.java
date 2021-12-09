@@ -12,11 +12,11 @@ public class SimpleCount implements AggregationProcess.Aggregator {
     private long count = 0;
 
     @Override
-    public Update add(@Nullable Object[] addition, @Nullable Object[] retraction) {
-        assert addition==null || addition.length==1;
+    public Update add(@Nullable Object[] append, @Nullable Object[] retraction) {
+        assert append ==null || append.length==1;
         assert retraction==null || retraction.length==1;
         long before = count;
-        if (addition!=null && addition[0]!=null) {
+        if (append !=null && append[0]!=null) {
             count++;
         }
         if (retraction!=null && retraction[0]!=null) {

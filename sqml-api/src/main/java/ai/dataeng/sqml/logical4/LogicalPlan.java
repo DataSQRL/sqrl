@@ -113,7 +113,7 @@ public class LogicalPlan {
         public abstract Map<NamePath,Column[]> getOutputSchema();
 
         public StreamType getStreamType() {
-            return StreamType.ADD_ONLY;
+            return StreamType.APPEND;
         }
 
     }
@@ -139,7 +139,7 @@ public class LogicalPlan {
                 if (input.getStreamType()==StreamType.RETRACT) return StreamType.RETRACT;
             }
             //Only if all inputs are EVENT is the resulting stream an EVENT stream
-            return StreamType.ADD_ONLY;
+            return StreamType.APPEND;
         }
 
         /**
@@ -248,17 +248,15 @@ public class LogicalPlan {
     }
 
 
+    @Getter
     public static abstract class Field implements ShadowingContainer.Nameable {
 
         final Name name;
+        final Table table;
 
-        protected Field(Name name) {
+        protected Field(Name name, Table table) {
             this.name = name;
-        }
-
-        @Override
-        public Name getName() {
-            return name;
+            this.table = table;
         }
 
     }
@@ -266,7 +264,6 @@ public class LogicalPlan {
     @Getter
     public static class Column extends Field {
         //Identity of the column in addition to name
-        final Table table;
         final int version;
 
         //Type definition
@@ -282,8 +279,7 @@ public class LogicalPlan {
         public Column(Name name, Table table, int version,
                       BasicType type, int arrayDepth, List<Constraint> constraints,
                       boolean isPrimaryKey, boolean isInternal) {
-            super(name);
-            this.table = table;
+            super(name, table);
             this.version = version;
             this.type = type;
             this.arrayDepth = arrayDepth;
@@ -315,8 +311,8 @@ public class LogicalPlan {
         final Relationship.Type type;
         final Relationship.Multiplicity multiplicity;
 
-        public Relationship(Name name, Table toTable, Type type, Multiplicity multiplicity) {
-            super(name);
+        public Relationship(Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity) {
+            super(name, fromTable);
             this.toTable = toTable;
             this.type = type;
             this.multiplicity = multiplicity;

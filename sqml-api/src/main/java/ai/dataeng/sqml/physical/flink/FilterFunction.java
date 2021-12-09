@@ -16,15 +16,15 @@ public class FilterFunction implements FlatMapFunction<RowUpdate,RowUpdate> {
 
     @Override
     public void flatMap(RowUpdate rowUpdate, Collector<RowUpdate> collector) throws Exception {
-        if (rowUpdate instanceof RowUpdate.Simple) {
-            if (evaluate(rowUpdate.getAddition())) collector.collect(rowUpdate);
+        if (rowUpdate instanceof RowUpdate.AppendOnly) {
+            if (evaluate(rowUpdate.getAppend())) collector.collect(rowUpdate);
         } else {
             RowUpdate.Full update = (RowUpdate.Full) rowUpdate;
-            boolean addSatisfy = update.hasAddition() && evaluate(update.getAddition());
+            boolean appendSatisfy = update.hasAppend() && evaluate(update.getAppend());
             boolean retractSatisfy = update.hasRetraction() && evaluate(update.getRetraction());
-            if (addSatisfy || retractSatisfy) {
+            if (appendSatisfy || retractSatisfy) {
                 collector.collect(new RowUpdate.Full(update.getIngestTime(),
-                        addSatisfy?update.getAddition():null,
+                        appendSatisfy?update.getAppend():null,
                         retractSatisfy?update.getRetraction():null));
             }
         }
