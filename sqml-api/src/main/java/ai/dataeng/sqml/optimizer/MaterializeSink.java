@@ -2,17 +2,15 @@ package ai.dataeng.sqml.optimizer;
 
 import ai.dataeng.sqml.logical4.LogicalPlan;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 public class MaterializeSink extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
 
-    final String tableName;
+    final MaterializeSource source;
 
-    public MaterializeSink(LogicalPlan.RowNode input, String tableName) {
+    public MaterializeSink(LogicalPlan.RowNode input, LogicalPlan.Table table) {
         super(input);
-        this.tableName = tableName;
+        assert getInput().getOutputSchema().length==1;
+        LogicalPlan.Column[] tableSchema = getInput().getOutputSchema()[0].clone();
+        this.source = new MaterializeSource(table, tableSchema);
     }
 
     @Override
@@ -22,8 +20,6 @@ public class MaterializeSink extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
     }
 
     public MaterializeSource getSource() {
-        assert getInput().getOutputSchema().length==1;
-        LogicalPlan.Column[] tableSchema = getInput().getOutputSchema()[0].clone();
-        return new MaterializeSource(tableSchema,tableName);
+        return source;
     }
 }

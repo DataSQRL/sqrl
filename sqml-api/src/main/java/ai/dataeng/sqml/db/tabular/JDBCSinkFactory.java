@@ -80,6 +80,7 @@ public class JDBCSinkFactory implements TabularSinkFactory {
             Preconditions.checkArgument(row.getArity() == schema.length(), "Incompatible Row: %s",row);
             for (int i = 0; i < schema.length(); i++) {
                 DestinationTableSchema.Field field = schema.get(i);
+                java.sql.Types types;
                 if (row.getField(i) == null) ps.setNull(i+1, getJooqSQLType(field).getSQLType());
                 else if (field.isArray()) ps.setArray(i+1, row.getFieldAs(i));
                 else {

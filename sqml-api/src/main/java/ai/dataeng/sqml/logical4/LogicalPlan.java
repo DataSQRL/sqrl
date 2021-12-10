@@ -19,8 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class LogicalPlan {
 
-    public static final String TABLE_DELIMITER = "_t";
-    public static final String VERSION_DELIMITER = "v";
+    public static final String ID_DELIMITER = "_";
 
     /**
      * The {@link LogicalPlan#schema} represents the schema of the tables defined in an SQRL script.
@@ -206,10 +205,6 @@ public class LogicalPlan {
             currentNode = node;
         }
 
-        public String uniqueId2String() {
-            return Integer.toHexString(uniqueId);
-        }
-
         public Field getField(Name name) {
             return fields.getByName(name);
         }
@@ -219,7 +214,7 @@ public class LogicalPlan {
         }
 
         public String getId() {
-            return name.getCanonical() + TABLE_DELIMITER + uniqueId2String();
+            return name.getCanonical() + ID_DELIMITER + Integer.toHexString(uniqueId);
         }
 
         @Override
@@ -290,9 +285,7 @@ public class LogicalPlan {
         }
 
         public String getId() {
-            String qualifiedName = name + TABLE_DELIMITER + table.uniqueId2String();
-            if (version>0) qualifiedName += VERSION_DELIMITER + Integer.toHexString(version);
-            return qualifiedName;
+            return name.getCanonical() + ID_DELIMITER +  Integer.toHexString(version);
         }
 
         @Override

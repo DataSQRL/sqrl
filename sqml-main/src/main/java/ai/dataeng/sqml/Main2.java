@@ -25,7 +25,10 @@ import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.logical4.*;
 import ai.dataeng.sqml.optimizer.LogicalPlanOptimizer;
 import ai.dataeng.sqml.optimizer.SimpleOptimizer;
+import ai.dataeng.sqml.physical.flink.FlinkConfiguration;
 import ai.dataeng.sqml.physical.flink.FlinkGenerator;
+import ai.dataeng.sqml.physical.sql.SQLConfiguration;
+import ai.dataeng.sqml.physical.sql.SQLGenerator;
 import ai.dataeng.sqml.relation.ColumnReferenceExpression;
 import ai.dataeng.sqml.relation.RowExpression;
 import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
@@ -42,7 +45,6 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.*;
 
-import org.apache.calcite.interpreter.FilterNode;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -88,6 +90,9 @@ public class Main2 {
             .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false")
             .withDriverName("org.h2.Driver")
             .build();
+
+    private static final FlinkConfiguration flinkConfig = new FlinkConfiguration(jdbcOptions);
+    private static final SQLConfiguration sqlConfig = new SQLConfiguration(SQLDialect.H2,jdbcOptions);
 
     private static final Name toName(String name) {
         return Name.of(name,NameCanonicalizer.LOWERCASE_ENGLISH);
@@ -204,19 +209,25 @@ public class Main2 {
         Preconditions.checkArgument(!errors.isFatal());
 
         LogicalPlanOptimizer.Result optimized = new SimpleOptimizer().optimize(logicalPlan);
-
-        StreamExecutionEnvironment flinkEnv = new FlinkGenerator(envProvider).generateStream(optimized);
+        SQLGenerator.Result sql = new SQLGenerator(sqlConfig).generateDatabase(optimized);
+        sql.executeDMLs();
+        StreamExecutionEnvironment flinkEnv = new FlinkGenerator(flinkConfig, envProvider).generateStream(optimized, sql.getSinkMapper());
         flinkEnv.execute();
 
         //Print out contents of tables in H2
-        /*
-        for (String shreddedTable : tableNames) {
-            System.out.println("== " + shreddedTable + "==");
-            for (Record r : dbSinkFactory.getTableContent(shreddedTable)) {
+        Set<String> tableNames = Set.copyOf(sql.getToTable().values());
+        DSLContext context = sqlConfig.getJooQ();
+        for (String tableName : tableNames) {
+            System.out.println("== " + tableName + "==");
+            for (Record r : getTableContent(context, tableName)) {
                 System.out.println(r);
             }
         }
-         */
+    }
+
+    public static Iterable<Record> getTableContent(DSLContext context, String tableName) throws Exception {
+        tableName = JDBCSinkFactory.sqlName(tableName);
+        return context.select().from(tableName).fetch();
     }
 
     public static void tableShredding(DataSourceRegistry ddRegistry, SQMLBundle bundle) throws Exception {

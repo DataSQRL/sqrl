@@ -23,7 +23,7 @@ public class SimpleOptimizer implements LogicalPlanOptimizer {
             if (node instanceof AccessNode) {
                 AccessNode qnode = (AccessNode) node;
                 LogicalPlan.RowNode input = qnode.getInput();
-                MaterializeSink sinkNode = new MaterializeSink(input, qnode.getTable().getId());
+                MaterializeSink sinkNode = new MaterializeSink(input, qnode.getTable());
                 input.replaceConsumer(qnode, sinkNode);
                 MaterializeSource sourceNode = sinkNode.getSource();
                 qnode.replaceInput(input, sourceNode);

@@ -6,13 +6,17 @@ import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.logical4.*;
 import ai.dataeng.sqml.optimizer.LogicalPlanOptimizer;
 import ai.dataeng.sqml.optimizer.MaterializeSink;
+import ai.dataeng.sqml.optimizer.MaterializeSource;
+import ai.dataeng.sqml.physical.DatabaseSink;
 import ai.dataeng.sqml.tree.name.Name;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.util.OutputTag;
+import org.apache.flink.util.Preconditions;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,13 +24,15 @@ public class FlinkGenerator {
 
     public static final String SCHEMA_ERROR_OUTPUT = "schema-error";
 
+    private final FlinkConfiguration configuration;
     private final EnvironmentFactory envProvider;
 
-    public FlinkGenerator(EnvironmentFactory envProvider) {
+    public FlinkGenerator(FlinkConfiguration configuration, EnvironmentFactory envProvider) {
+        this.configuration = configuration;
         this.envProvider = envProvider;
     }
 
-    public StreamExecutionEnvironment generateStream(LogicalPlanOptimizer.Result logical) {
+    public StreamExecutionEnvironment generateStream(LogicalPlanOptimizer.Result logical, Map<MaterializeSource, DatabaseSink> sinkMapper) {
         StreamExecutionEnvironment flinkEnv = envProvider.create();
 
         final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>(SCHEMA_ERROR_OUTPUT){}; //TODO: can we use one for all or do they need to be unique?
@@ -51,7 +57,7 @@ public class FlinkGenerator {
                 converted = getInput(lp2pp, shredder.getInput()).flatMap(new RecordShredderFlatMap(shredder.getTableIdentifier(), shredder.getProjections()));
             } else if (node instanceof FilterOperator) {
                 FilterOperator filter = (FilterOperator) node;
-                converted = getInput(lp2pp, filter.getInput()).flatMap(new FilterFunction(filter.getPredicate()));
+                converted = getInput(lp2pp, filter.getInput()).flatMap(new FilterProcess(filter.getPredicate()));
             } else if (node instanceof AggregateOperator) {
                 AggregateOperator agg = (AggregateOperator) node;
                 DataStream<RowUpdate> input = getInput(lp2pp, agg.getInput());
@@ -64,7 +70,20 @@ public class FlinkGenerator {
                 converted = input.keyBy(keySelector).process(AggregationProcess.from(agg));
             } else if (node instanceof MaterializeSink) {
                 MaterializeSink sink = (MaterializeSink) node;
-                getInput(lp2pp, sink.getInput()).addSink(new PrintSinkFunction<>()); //TODO: .addSink(dbSinkFactory.getSink(shreddedTableName,shredder.getResultSchema()));
+                DataStream input = getInput(lp2pp, sink.getInput());
+                DatabaseSink dbsink = sinkMapper.get(sink.getSource());
+                DatabaseUtil dbUtil = new DatabaseUtil(configuration);
+                Preconditions.checkNotNull(dbsink);
+                //bifurcate stream if we need to deal with deletes
+                if (sink.getInput().getStreamType()==StreamType.RETRACT) {
+                    input.filter(new DatabaseUtil.RowUpdateFilter(RowUpdate.Type.UPDATE, RowUpdate.Type.INSERT))
+                            .addSink(dbUtil.getDatabaseSink(dbsink.getUpsertQuery(), StreamType.APPEND));
+                    input.filter(new DatabaseUtil.RowUpdateFilter(RowUpdate.Type.DELETE))
+                            .addSink(dbUtil.getDatabaseSink(dbsink.getDeleteQuery(), StreamType.RETRACT));
+                } else {
+                    input.addSink(dbUtil.getDatabaseSink(dbsink.getUpsertQuery(), StreamType.APPEND));
+                }
+                input.addSink(new PrintSinkFunction<>()); //TODO: remove, debug only
             } else {
                 throw new UnsupportedOperationException(node.getClass().getName());
             }
@@ -80,5 +99,7 @@ public class FlinkGenerator {
     private static<S extends DataStream> S getInput(Map<LogicalPlan.Node, DataStream> lp2pp, LogicalPlan.Node node) {
         return (S)lp2pp.get(node);
     }
+
+
 
 }
