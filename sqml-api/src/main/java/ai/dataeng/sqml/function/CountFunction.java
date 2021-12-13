@@ -30,7 +30,7 @@ public class CountFunction extends AggregateFunction<Long, Accumulator> {
   @Override
   public void retract(Accumulator accumulator, Long... i) {
     if (i[0] != null) {
-      accumulator.count += i[0];
+      accumulator.count -= i[0];
     }
   }
 
