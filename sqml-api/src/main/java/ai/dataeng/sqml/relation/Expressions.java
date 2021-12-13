@@ -13,7 +13,6 @@
  */
 package ai.dataeng.sqml.relation;
 
-import ai.dataeng.sqml.function.FunctionAndTypeManager;
 import ai.dataeng.sqml.function.FunctionHandle;
 import ai.dataeng.sqml.relation.SpecialFormExpression.Form;
 import ai.dataeng.sqml.schema2.Type;
@@ -53,18 +52,6 @@ public final class Expressions
     public static CallExpression call(String displayName, FunctionHandle functionHandle, Type returnType, List<RowExpression> arguments)
     {
         return new CallExpression(displayName, functionHandle, returnType, arguments);
-    }
-
-    public static CallExpression call(FunctionAndTypeManager functionAndTypeManager, String name, Type returnType, RowExpression... arguments)
-    {
-        return call(functionAndTypeManager, name, returnType, ImmutableList.copyOf(arguments));
-    }
-
-    public static CallExpression call(FunctionAndTypeManager functionAndTypeManager, String name, Type returnType, List<RowExpression> arguments)
-    {
-//        FunctionHandle functionHandle = functionAndTypeManager.lookupFunction(name, fromTypes(arguments.stream().map(RowExpression::getType).collect(toImmutableList())));
-//        return call(name, functionHandle, returnType, arguments);
-      return null;
     }
 
     public static SpecialFormExpression specialForm(Form form, Type returnType, List<RowExpression> arguments)

@@ -2,10 +2,7 @@ package ai.dataeng.sqml.analyzer;
 
 import static ai.dataeng.sqml.logical3.LogicalPlan.Builder.unbox;
 
-import ai.dataeng.sqml.ViewQueryRewriter;
 import ai.dataeng.sqml.ViewQueryRewriter.ColumnNameGen;
-import ai.dataeng.sqml.ViewQueryRewriter.ViewRewriterContext;
-import ai.dataeng.sqml.ViewQueryRewriter.RewriterContext;
 import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
@@ -17,7 +14,6 @@ import ai.dataeng.sqml.logical3.QueryRelationField;
 import ai.dataeng.sqml.logical3.RelationshipField;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.physical.PhysicalModel;
-import ai.dataeng.sqml.physical.ViewExpressionRewriter;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.StandardField;
@@ -35,7 +31,6 @@ import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.InlineJoin;
 import ai.dataeng.sqml.tree.JoinAssignment;
 import ai.dataeng.sqml.tree.Node;
-import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
@@ -300,48 +295,6 @@ public class Analyzer {
         return Optional.of(statements.get(i));
       }
       return Optional.empty();
-    }
-
-    private void createPhysicalExpression(ExpressionAssignment node, Scope scope,
-        ExpressionAnalysis expressionAnalysis) {
-      try {
-        ViewExpressionRewriter viewRewriter = new ViewExpressionRewriter(this.analysis.getPhysicalModel(),
-            columnNameGen, this.analysis, expressionAnalysis);
-        RewriterContext rewriterContext = new RewriterContext(node, null, null);
-        RewriterContext scope2 = viewRewriter.rewrite(node.getExpression(), rewriterContext, node.getName(), scope);
-
-        this.analysis.getPhysicalModel()
-            .addTable(scope2.getTable());
-      } catch (Exception e) {
-        log.error("Physical plan err");
-        e.printStackTrace();
-      }
-    }
-
-    private void createPhysicalView(Node node, Scope scope,
-        Optional<ImportSchema> schema, Optional<StatementAnalysis> analysis,
-        Optional<ExpressionAnalysis> expressionAnalysis) {
-      if (schema.isEmpty()) {
-        return;
-      }
-      try {
-        ViewQueryRewriter viewRewriter = new ViewQueryRewriter(this.analysis.getPhysicalModel(),
-            columnNameGen);
-        RewriterContext scope2 = node.accept(viewRewriter, new ViewRewriterContext(scope, analysis,
-            schema, expressionAnalysis));
-        if (scope2 == null) {
-          log.error("Err, no scope");
-          return;
-        }
-        if (true) {
-          return;
-        }
-        System.out.println(scope2.getTable().getQueryAst().get().accept(new NodeFormatter(), null));
-
-      } catch (Exception e) {
-        log.error("Physical plan err");
-        e.printStackTrace();
-      }
     }
   }
 }

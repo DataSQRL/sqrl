@@ -3,8 +3,9 @@ package ai.dataeng.sqml.analyzer;
 import static java.lang.String.format;
 
 import ai.dataeng.sqml.OperatorType;
-import ai.dataeng.sqml.function.SqmlFunction;
-import ai.dataeng.sqml.function.TypeSignature;
+import ai.dataeng.sqml.function.definition.FunctionDefinition;
+import ai.dataeng.sqml.function.definition.inference.TypeInference;
+import ai.dataeng.sqml.ingest.stats.TypeSignature;
 import ai.dataeng.sqml.logical3.LogicalPlan.Builder;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
@@ -44,6 +45,7 @@ import ai.dataeng.sqml.tree.SimpleCaseExpression;
 import ai.dataeng.sqml.tree.StringLiteral;
 import ai.dataeng.sqml.tree.SubqueryExpression;
 import ai.dataeng.sqml.tree.TimestampLiteral;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Optional;
@@ -182,18 +184,21 @@ public class ExpressionAnalyzer {
     @Override
     public Type visitFunctionCall(FunctionCall node, Context context) {
       //Todo: Function calls can accept a relation
-      Optional<SqmlFunction> function = metadata.getFunctionProvider().resolve(node.getName());
+      Optional<FunctionDefinition> function = metadata.getFunctionProvider().resolve(node.getName());
       if (function.isEmpty()) {
         throw new RuntimeException(String.format("Could not find function %s", node.getName()));
       }
-      analysis.qualifyFunction(node, function.get());
+      //analysis.qualifyFunction(node, function.get());
 
-      TypeSignature typeSignature = function.get().getTypeSignature();
+      TypeInference typeInference = function.get().getTypeInference();
+      //Todo: extend this for implicit type casting
+      Optional<Type> type = typeInference.getOutputTypeStrategy().inferType(null); //todo Call context
+      Preconditions.checkNotNull(type, "Function's output type could not be found. (no inference yet)");
       for (Expression expression : node.getArguments()) {
         expression.accept(this, context);
       }
 
-      return addType(node, typeSignature.getType());
+      return addType(node, type.get());
     }
 
     @Override

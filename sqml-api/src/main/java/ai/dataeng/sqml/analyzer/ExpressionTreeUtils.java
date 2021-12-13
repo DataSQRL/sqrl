@@ -18,7 +18,8 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 
 import ai.dataeng.sqml.function.FunctionProvider;
-import ai.dataeng.sqml.function.SqmlFunction;
+import ai.dataeng.sqml.function.definition.FunctionDefinition;
+import ai.dataeng.sqml.function.definition.FunctionKind;
 import ai.dataeng.sqml.tree.DefaultExpressionTraversalVisitor;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
@@ -37,10 +38,10 @@ public final class ExpressionTreeUtils
     }
     public static Predicate<FunctionCall> isAggregationPredicate(FunctionProvider functionProvider) {
         return functionCall -> {
-            Optional<SqmlFunction> function = functionProvider.resolve(functionCall.getName());
+            Optional<FunctionDefinition> function = functionProvider.resolve(functionCall.getName());
             return function.orElseThrow(()->
                     new RuntimeException(String.format("Could not find function %s", functionCall.getName())))
-                .isAggregation();
+                .getKind() == FunctionKind.AGGREGATE;
         };
     }
 

@@ -31,8 +31,6 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 import ai.dataeng.sqml.OperatorType;
-import ai.dataeng.sqml.function.FunctionMetadataManager;
-import ai.dataeng.sqml.function.StandardFunctionResolution;
 import ai.dataeng.sqml.relation.SpecialFormExpression.Form;
 import ai.dataeng.sqml.schema2.basic.BooleanType;
 
@@ -58,14 +56,16 @@ public final class LogicalRowExpressions
     private static final int ELIMINATE_COMMON_SIZE_LIMIT = 10000;
 
     private final DeterminismEvaluator determinismEvaluator;
-    private final StandardFunctionResolution functionResolution;
-    private final FunctionMetadataManager functionMetadataManager;
+//    private final StandardFunctionResolution functionResolution;
+//    private final FunctionMetadataManager functionMetadataManager;
 
-    public LogicalRowExpressions(DeterminismEvaluator determinismEvaluator, StandardFunctionResolution functionResolution, FunctionMetadataManager functionMetadataManager)
+    public LogicalRowExpressions(DeterminismEvaluator determinismEvaluator
+//        , StandardFunctionResolution functionResolution, FunctionMetadataManager functionMetadataManager
+    )
     {
         this.determinismEvaluator = requireNonNull(determinismEvaluator, "determinismEvaluator is null");
-        this.functionResolution = requireNonNull(functionResolution, "functionResolution is null");
-        this.functionMetadataManager = requireNonNull(functionMetadataManager, "functionMetadataManager is null");
+//        this.functionResolution = requireNonNull(functionResolution, "functionResolution is null");
+//        this.functionMetadataManager = requireNonNull(functionMetadataManager, "functionMetadataManager is null");
     }
 
     public static List<RowExpression> extractConjuncts(RowExpression expression)
@@ -434,14 +434,15 @@ public final class LogicalRowExpressions
         {
             OperatorType newOperator = negate(getOperator(expression).orElse(null));
             if (newOperator == null) {
-                return new CallExpression("NOT", functionResolution.notFunction(), BooleanType.INSTANCE, singletonList(expression));
+//                return new CallExpression("NOT", functionResolution.notFunction(), BooleanType.INSTANCE, singletonList(expression));
+                return null;
             }
             checkArgument(expression.getArguments().size() == 2, "Comparison expression must have exactly two arguments");
             RowExpression left = expression.getArguments().get(0).accept(this, null);
             RowExpression right = expression.getArguments().get(1).accept(this, null);
             return new CallExpression(
                     newOperator.getOperator(),
-                    functionResolution.comparisonFunction(newOperator, left.getType(), right.getType()),
+                    null,//functionResolution.comparisonFunction(newOperator, left.getType(), right.getType()),
                     BooleanType.INSTANCE,
                     asList(left, right));
         }
@@ -587,12 +588,14 @@ public final class LogicalRowExpressions
 
     private boolean isNegationExpression(RowExpression expression)
     {
-        return expression instanceof CallExpression && ((CallExpression) expression).getFunctionHandle().equals(functionResolution.notFunction());
+//        return expression instanceof CallExpression && ((CallExpression) expression).getFunctionHandle().equals(functionResolution.notFunction());
+        return false;
     }
 
     private boolean isComparisonExpression(RowExpression expression)
     {
-        return expression instanceof CallExpression && functionResolution.isComparisonFunction(((CallExpression) expression).getFunctionHandle());
+//        return expression instanceof CallExpression && functionResolution.isComparisonFunction(((CallExpression) expression).getFunctionHandle());
+        return false;
     }
 
     /**
@@ -729,15 +732,16 @@ public final class LogicalRowExpressions
 
     private Optional<OperatorType> getOperator(RowExpression expression)
     {
-        if (expression instanceof CallExpression) {
-            return functionMetadataManager.getFunctionMetadata(((CallExpression) expression).getFunctionHandle()).getOperatorType();
-        }
+//        if (expression instanceof CallExpression) {
+//            return functionMetadataManager.getFunctionMetadata(((CallExpression) expression).getFunctionHandle()).getOperatorType();
+//        }
         return Optional.empty();
     }
 
     private RowExpression notCallExpression(RowExpression argument)
     {
-        return new CallExpression("not", functionResolution.notFunction(), BooleanType.INSTANCE, singletonList(argument));
+//        return new CallExpression("not", functionResolution.notFunction(), BooleanType.INSTANCE, singletonList(argument));
+        return null;
     }
 
     private static OperatorType negate(OperatorType operator)

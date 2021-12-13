@@ -10,7 +10,6 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Iterables.getLast;
 import static java.util.Collections.emptyList;
 import static java.util.Locale.ENGLISH;
-import static java.util.Objects.requireNonNull;
 
 import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
 import ai.dataeng.sqml.function.FunctionProvider;
@@ -770,7 +769,6 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         exprAnalysis.getTypeOnlyCoercions());
     analysis.addTypes(exprAnalysis.getExpressionTypes());
     analysis.addSourceScopedFields(exprAnalysis.getSourceScopedFields());
-    analysis.qualifyFunctions(exprAnalysis.getFunctionMap());
     return exprAnalysis;
   }
 }

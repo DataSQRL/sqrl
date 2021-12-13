@@ -15,34 +15,34 @@ package ai.dataeng.sqml.relation;
 
 import static java.util.Objects.requireNonNull;
 
-import ai.dataeng.sqml.function.FunctionAndTypeManager;
+import ai.dataeng.sqml.function.definition.FunctionManager;
 import lombok.Value;
 
 @Value
 public class RowExpressionDeterminismEvaluator
         implements DeterminismEvaluator
 {
-    FunctionAndTypeManager functionAndTypeManager;
+    FunctionManager functionManager;
 
-    public RowExpressionDeterminismEvaluator(FunctionAndTypeManager functionAndTypeManager)
+    public RowExpressionDeterminismEvaluator(FunctionManager functionManager)
     {
-        this.functionAndTypeManager = requireNonNull(functionAndTypeManager, "functionManager is null");
+        this.functionManager = requireNonNull(functionManager, "functionManager is null");
     }
 
     @Override
     public boolean isDeterministic(RowExpression expression)
     {
-        return expression.accept(new Visitor(functionAndTypeManager), null);
+        return expression.accept(new Visitor(functionManager), null);
     }
 
     private static class Visitor
             implements RowExpressionVisitor<Boolean, Void>
     {
-        private final FunctionAndTypeManager functionAndTypeManager;
+        private final FunctionManager functionManager;
 
-        public Visitor(FunctionAndTypeManager functionAndTypeManager)
+        public Visitor(FunctionManager functionManager)
         {
-            this.functionAndTypeManager = functionAndTypeManager;
+            this.functionManager = functionManager;
         }
 
         @Override

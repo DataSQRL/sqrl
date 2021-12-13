@@ -1,15 +1,11 @@
 package ai.dataeng.sqml.analyzer;
 
-import ai.dataeng.sqml.db.DestinationTableSchema;
-import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
-import ai.dataeng.sqml.function.SqmlFunction;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.Identifier;
-import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Relation;
@@ -29,7 +25,6 @@ public class ExpressionAnalysis {
   private final Map<NodeRef<Expression>, Type> expressionCoercions = new LinkedHashMap<>();
   private final Set<NodeRef<Expression>> typeOnlyCoercions = new LinkedHashSet<>();
   private final Map<NodeRef<Expression>, FieldId> columnReferences = new LinkedHashMap<>();
-  private Map<FunctionCall, SqmlFunction> functionMap = new HashMap<>();
   private Map<Identifier, FieldPath> fieldPaths = new HashMap<>();
 
   public Type getType(Expression node) {
@@ -70,18 +65,6 @@ public class ExpressionAnalysis {
 
   public Map<NodeRef<Expression>, FieldId> getColumnReferences() {
     return columnReferences;
-  }
-
-  public void qualifyFunction(FunctionCall node, SqmlFunction function) {
-    this.functionMap.put(node, function);
-  }
-
-  public Map<FunctionCall, SqmlFunction> getFunctionMap() {
-    return functionMap;
-  }
-
-  public SqmlFunction getFunction(FunctionCall node) {
-    return functionMap.get(node);
   }
 
   public List<FieldPath> getFieldPaths() {

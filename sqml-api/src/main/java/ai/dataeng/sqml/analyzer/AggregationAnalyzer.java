@@ -28,6 +28,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.Objects.requireNonNull;
 
+import ai.dataeng.sqml.function.definition.FunctionKind;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.tree.ArithmeticBinaryExpression;
 import ai.dataeng.sqml.tree.ArithmeticUnaryExpression;
@@ -260,7 +261,7 @@ class AggregationAnalyzer
         @Override
         public Boolean visitFunctionCall(FunctionCall node, Void context)
         {
-            if (metadata.getFunctionProvider().resolve(node.getName()).get().isAggregation()) {
+            if (metadata.getFunctionProvider().resolve(node.getName()).get().getKind() == FunctionKind.AGGREGATE) {
                 List<FunctionCall> aggregateFunctions = extractAggregateFunctions(node.getArguments(), metadata.getFunctionProvider());
 
                 if (!aggregateFunctions.isEmpty()) {

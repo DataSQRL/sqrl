@@ -19,7 +19,6 @@ import static ai.dataeng.sqml.relation.Expressions.specialForm;
 import static ai.dataeng.sqml.relation.SpecialFormExpression.Form.AND;
 import static ai.dataeng.sqml.relation.SpecialFormExpression.Form.OR;
 
-import ai.dataeng.sqml.function.FunctionAndTypeManager;
 import ai.dataeng.sqml.relation.SpecialFormExpression.Form;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.basic.BigIntegerType;
@@ -47,13 +46,11 @@ public final class SqlToRowExpressionTranslator
 
     public static RowExpression translate(
             Expression expression,
-            Map<NodeRef<Expression>, Type> types,
-            FunctionAndTypeManager functionAndTypeManager
+            Map<NodeRef<Expression>, Type> types
     )
     {
         Visitor visitor = new Visitor(
-                types,
-                functionAndTypeManager
+                types
         );
         RowExpression result = visitor.process(expression, null);
 //        requireNonNull(result, "translated expression is null");
@@ -64,14 +61,11 @@ public final class SqlToRowExpressionTranslator
             extends AstVisitor<RowExpression, Void>
     {
         private final Map<NodeRef<Expression>, Type> types;
-        private final FunctionAndTypeManager functionAndTypeManager;
 
         private Visitor(
-                Map<NodeRef<Expression>, Type> types,
-                FunctionAndTypeManager functionAndTypeManager)
+                Map<NodeRef<Expression>, Type> types)
         {
             this.types = types;
-            this.functionAndTypeManager = functionAndTypeManager;
 //            this.functionResolution = new FunctionResolution(functionAndTypeManager);
         }
 
