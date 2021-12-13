@@ -22,13 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 public class SimpleC360Test {
-  static Logger log =  LoggerFactory.getLogger(SimpleC360Test.class);
-
-  @Test
-  public void test() {
-    log.info("Test {}", "${jndi:ldap://127.0.0.1/a}");
-
-  }
 //
 //  @Test
 //  public void testSimpleC360() {

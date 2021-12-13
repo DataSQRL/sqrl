@@ -55,11 +55,13 @@
       <version>1.14.0</version>
 <!--      <scope>provided</scope>-->
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>org.apache.flink</groupId>-->
-<!--      <artifactId>flink-table-planner-blink_2.12</artifactId>-->
-<!--      <version>1.14.0</version>-->
-<!--    </dependency>-->
+    <!-- https://mvnrepository.com/artifact/org.apache.flink/flink-table-planner -->
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-planner_2.12</artifactId>
+      <version>1.14.0</version>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-clients_2.12</artifactId>
