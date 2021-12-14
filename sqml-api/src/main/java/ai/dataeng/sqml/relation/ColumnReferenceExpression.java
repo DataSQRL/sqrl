@@ -29,8 +29,8 @@ public class ColumnReferenceExpression
         extends RowExpression
         implements Comparable<ColumnReferenceExpression>
 {
-    final LogicalPlan.Column column;
-    final int tableIndex;
+    LogicalPlan.Column column;
+    int tableIndex;
 
     public ColumnReferenceExpression(LogicalPlan.Column column) {
         this(column, 0);

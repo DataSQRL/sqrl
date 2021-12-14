@@ -2,6 +2,7 @@ package ai.dataeng.sqml;
 
 import ai.dataeng.sqml.analyzer.Analysis;
 import ai.dataeng.sqml.analyzer.Analyzer;
+import ai.dataeng.sqml.analyzer.StatementAnalysis;
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.env.SqmlEnv;
@@ -19,10 +20,15 @@ import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.parser.SqmlParser;
+import ai.dataeng.sqml.planner.LogicalPlanBuilder;
+import ai.dataeng.sqml.planner.RowNodeIdAllocator;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
+import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.Script;
+import ai.dataeng.sqml.tree.Statement;
 import ai.dataeng.sqml.tree.name.Name;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,24 +42,24 @@ class ImportTest {
   public static final Path RETAIL_DIR = Path.of("../sqml-examples/retail/");
 //  public static final Path RETAIL_DIR = Path.of(System.getProperty("user.dir")).resolve("sqml-examples").resolve("retail");
   public static final String RETAIL_DATA_DIR_NAME = "ecommerce-data";
-  public static final String RETAIL_DATASET = "ecommerce";
+  public static final String RETAIL_DATASET = "ecommerce-data";
   public static final Path RETAIL_DATA_DIR = RETAIL_DIR.resolve(RETAIL_DATA_DIR_NAME);
   public static final String RETAIL_SCRIPT_NAME = "c360";
   public static final Path RETAIL_SCRIPT_DIR = RETAIL_DIR.resolve(RETAIL_SCRIPT_NAME);
   public static final String SQML_SCRIPT_EXTENSION = ".sqml";
   public static final Path RETAIL_IMPORT_SCHEMA_FILE = RETAIL_SCRIPT_DIR.resolve("pre-schema.yml");
 
-  public static final String[] RETAIL_TABLE_NAMES = { "Customer", "Orders", "Product"};
+//  public static final String[] RETAIL_TABLE_NAMES = { "Customer", "Orders", "Product"};
 
   public static final Path outputBase = Path.of("tmp","datasource");
-  public static final Path dbPath = Path.of("tmp","output");
-
-  private static final JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-      .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false")
-      .withDriverName("org.h2.Driver")
-      .build();
-  private static final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
-  private DataLoader<Integer, Object> characterDataLoader;
+//  public static final Path dbPath = Path.of("tmp","output");
+//
+//  private static final JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+//      .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false")
+//      .withDriverName("org.h2.Driver")
+//      .build();
+//  private static final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
+//  private DataLoader<Integer, Object> characterDataLoader;
 
 
   @Test
@@ -130,7 +136,10 @@ class ImportTest {
     //Script processing
     Analysis analysis = Analyzer.analyze(script, metadata);
     System.out.println(analysis.getPlan());
-
+    QueryAssignment node = (QueryAssignment) script.getStatements().get(1);
+    StatementAnalysis statementAnalysis = analysis.getStatementAnalysis(node);
+    LogicalPlanBuilder planner = new LogicalPlanBuilder(new RowNodeIdAllocator(), metadata);
+    planner.planStatement(statementAnalysis, node.getQuery());
 
 //
 //    analysis.getDefinedFunctions().stream()

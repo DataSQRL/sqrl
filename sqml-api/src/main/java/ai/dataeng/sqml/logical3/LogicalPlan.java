@@ -106,4 +106,11 @@ public class LogicalPlan {
       return Optional.ofNullable(field);
     }
   }
+
+  @Override
+  public String toString() {
+    return "LogicalPlan{" +
+        "root=" + root +
+        '}';
+  }
 }

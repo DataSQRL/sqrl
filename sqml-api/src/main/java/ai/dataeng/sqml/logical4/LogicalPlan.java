@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.logical4;
 
+import ai.dataeng.sqml.relation.ColumnReferenceExpression;
 import ai.dataeng.sqml.schema2.basic.BasicType;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.schema2.constraint.ConstraintHelper;
@@ -156,6 +157,9 @@ public class LogicalPlan {
          */
         public abstract Column[][] getOutputSchema();
 
+        public ColumnReferenceExpression[] getOutputVariables() {
+            return new ColumnReferenceExpression[0];
+        }
     }
 
     /**

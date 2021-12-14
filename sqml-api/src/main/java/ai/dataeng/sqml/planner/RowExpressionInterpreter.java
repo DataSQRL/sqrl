@@ -13,38 +13,38 @@
 // */
 //package ai.dataeng.sqml.planner;
 //
-//import com.facebook.airlift.json.JsonCodec;
-//import com.facebook.presto.client.FailureInfo;
-//import com.facebook.presto.common.block.BlockBuilder;
-//import com.facebook.presto.common.block.RowBlockBuilder;
-//import com.facebook.presto.common.function.OperatorType;
-//import com.facebook.presto.common.type.ArrayType;
-//import com.facebook.presto.common.type.FunctionType;
-//import com.facebook.presto.common.type.RowType;
-//import com.facebook.presto.common.type.StandardTypes;
-//import com.facebook.presto.common.type.Type;
-//import com.facebook.presto.common.type.TypeSignature;
-//import com.facebook.presto.metadata.FunctionAndTypeManager;
-//import com.facebook.presto.metadata.Metadata;
-//import com.facebook.presto.spi.ConnectorSession;
-//import com.facebook.presto.spi.PrestoException;
-//import com.facebook.presto.spi.function.FunctionHandle;
-//import com.facebook.presto.spi.function.FunctionImplementationType;
-//import com.facebook.presto.spi.function.FunctionMetadata;
-//import com.facebook.presto.spi.function.SqlInvokedScalarFunctionImplementation;
-//import com.facebook.presto.spi.relation.CallExpression;
-//import com.facebook.presto.spi.relation.ConstantExpression;
-//import com.facebook.presto.spi.relation.InputReferenceExpression;
-//import com.facebook.presto.spi.relation.LambdaDefinitionExpression;
-//import com.facebook.presto.spi.relation.RowExpression;
-//import com.facebook.presto.spi.relation.RowExpressionVisitor;
-//import com.facebook.presto.spi.relation.SpecialFormExpression;
-//import com.facebook.presto.spi.relation.VariableReferenceExpression;
-//import com.facebook.presto.sql.InterpretedFunctionInvoker;
-//import com.facebook.presto.sql.planner.Interpreters.LambdaVariableResolver;
-//import com.facebook.presto.sql.relational.FunctionResolution;
-//import com.facebook.presto.sql.relational.RowExpressionDeterminismEvaluator;
-//import com.facebook.presto.util.Failures;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //import com.google.common.collect.ImmutableList;
 //import com.google.common.primitives.Primitives;
 //import io.airlift.joni.Regex;
@@ -202,7 +202,7 @@
 //        }
 //
 //        @Override
-//        public Object visitVariableReference(VariableReferenceExpression node, Object context)
+//        public Object visitVariableReference(ColumnReferenceExpression node, Object context)
 //        {
 //            if (context instanceof VariableResolver) {
 //                return ((VariableResolver) context).getValue(node);

@@ -2,7 +2,6 @@ package ai.dataeng.sqml.analyzer;
 
 import static ai.dataeng.sqml.logical3.LogicalPlan.Builder.unbox;
 
-import ai.dataeng.sqml.ViewQueryRewriter.ColumnNameGen;
 import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
@@ -74,7 +73,6 @@ public class Analyzer {
     private final Analysis analysis;
     private final Metadata metadata;
     private final AtomicBoolean importResolved = new AtomicBoolean(false);
-    private final ColumnNameGen columnNameGen = new ColumnNameGen();
 
     public Visitor(Analysis analysis, Metadata metadata) {
       this.analysis = analysis;
@@ -154,9 +152,10 @@ public class Analyzer {
 
       Optional<TypedField> prefixField = getPrefixField(queryAssignment);
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(this.metadata,
-          this.analysis.getPlanBuilder());
+          this.analysis.getPlanBuilder(), queryAssignment.getQuery());
       Scope result = query.accept(statementAnalyzer, Scope.create(prefixField));
 
+      analysis.setStatementAnalysis(queryAssignment, statementAnalyzer.getAnalysis());
       QueryRelationField createdField = new QueryRelationField(name.getSuffix(), result.getRelation());
       prefixField.ifPresent(f->addParentField(f, result.getRelation()));
       addField(queryAssignment, createdField);
@@ -198,7 +197,7 @@ public class Analyzer {
 
     @Override
     public Scope visitCreateSubscription(CreateSubscription subscription, Scope scope) {
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, this.analysis.getPlanBuilder());
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata, this.analysis.getPlanBuilder(), subscription.getQuery());
       Scope queryScope = subscription.getQuery().accept(statementAnalyzer, scope);
 
       return null;

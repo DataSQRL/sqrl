@@ -5,6 +5,7 @@ import static ai.dataeng.sqml.analyzer.AggregationAnalyzer.verifySourceAggregati
 import static ai.dataeng.sqml.analyzer.ExpressionTreeUtils.extractAggregateFunctions;
 import static ai.dataeng.sqml.analyzer.ExpressionTreeUtils.extractExpressions;
 import static ai.dataeng.sqml.logical3.LogicalPlan.Builder.unbox;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Iterables.getLast;
@@ -21,6 +22,7 @@ import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.TypedField;
 import ai.dataeng.sqml.schema2.basic.BooleanType;
+import ai.dataeng.sqml.tree.Statement;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.tree.AliasedRelation;
@@ -60,6 +62,7 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
+import io.r2dbc.spi.ColumnMetadata;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -76,8 +79,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   private final LogicalPlan.Builder planBuilder;
 
   public StatementAnalyzer(Metadata metadata,
-      LogicalPlan.Builder planBuilder) {
-    this(metadata, new StatementAnalysis(), planBuilder);
+      LogicalPlan.Builder planBuilder, Statement statement) {
+    this(metadata, new StatementAnalysis(statement, List.of(), false), planBuilder);
   }
 
   public StatementAnalyzer(Metadata metadata, StatementAnalysis statementAnalysis,
@@ -175,6 +178,10 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         .orElseThrow(/*todo*/);
     Type type = unbox(field.getType());
     Preconditions.checkState(type instanceof RelationType);
+
+    for (Field column : ((RelationType<?>) type).getFields()) {
+      analysis.setColumn(field, new ColumnHandle(column));
+    }
 
     return createAndAssignScope(table, scope, (RelationType) type);
   }
@@ -454,7 +461,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     verifyNoAggregateGroupingFunctions(metadata.getFunctionProvider(), predicate, "WHERE clause");
 
-    analysis.recordSubqueries(node, expressionAnalysis);
+//    analysis.recordSubqueries(node, expressionAnalysis);
 
     Type predicateType = expressionAnalysis.getType(predicate);
     if (!(predicateType instanceof BooleanType)) {
@@ -488,9 +495,9 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       Expression expression = item.getSortKey();
 
       ExpressionAnalysis expressionAnalysis = analyzeExpression(expression, orderByScope);
-      analysis.recordSubqueries(node, expressionAnalysis);
-      Type type = analysis.getType(expression)
-          .get();
+//      analysis.recordSubqueries(node, expressionAnalysis);
+      Type type = analysis.getType(expression);
+//          .get();
       if (!type.isOrderable()) {
         throw new RuntimeException(String.format(
             "Type %s is not orderable, and therefore cannot be used in ORDER BY: %s", type, expression));
@@ -625,13 +632,13 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         String identifierName = field.map(Identifier::getValue)
             .orElse("VAR");
 
-        if (analysis.getType(expression).isEmpty()) {
+        if (analysis.getType(expression) == null) {
           log.error("analysis type could not be found:" + expression);
           continue;
         }
         outputFields.add(
             new StandardField(Name.of(identifierName, NameCanonicalizer.SYSTEM),
-            analysis.getType(expression).orElseThrow(), List.of(), Optional.empty())
+            analysis.getType(expression), List.of(), Optional.empty())
 //            column.getAlias().isPresent())
         );
       }
@@ -650,7 +657,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       ExpressionAnalysis expressionAnalysis = analyzeExpression(predicate, scope);
 
 
-      analysis.recordSubqueries(node, expressionAnalysis);
+//      analysis.recordSubqueries(node, expressionAnalysis);
 
       Type predicateType = expressionAnalysis.getType(predicate);
       if (!(predicateType instanceof BooleanType)) {
@@ -689,7 +696,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         SingleColumn column = (SingleColumn) item;
         ExpressionAnalysis expressionAnalysis = analyzeExpression(column.getExpression(), scope);
 
-        analysis.recordSubqueries(node, expressionAnalysis);
+//        analysis.recordSubqueries(node, expressionAnalysis);
         outputExpressions.add(column.getExpression());
 
         Type type = expressionAnalysis.getType(column.getExpression());
@@ -749,14 +756,14 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     List<Expression> expressions = groupingExpressions;
     for (Expression expression : expressions) {
-      Type type = analysis.getType(expression)
-          .get();
+      Type type = analysis.getType(expression);
+//          .get();
       if (!type.isComparable()) {
         throw new RuntimeException(String.format("%s is not comparable, and therefore cannot be used in GROUP BY", type));
       }
     }
 
-    analysis.setGroupByExpressions(node, groupingExpressions);
+//    analysis.setGroupByExpressions(node, groupingExpressions);
 
     return groupingExpressions;
   }
@@ -768,7 +775,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     analysis.addCoercions(exprAnalysis.getExpressionCoercions(),
         exprAnalysis.getTypeOnlyCoercions());
     analysis.addTypes(exprAnalysis.getExpressionTypes());
-    analysis.addSourceScopedFields(exprAnalysis.getSourceScopedFields());
+    analysis.addFunctionHandles(exprAnalysis.getResolvedFunctions());
+    analysis.addColumnReferences(exprAnalysis.getColumnReferences());
     return exprAnalysis;
   }
 }

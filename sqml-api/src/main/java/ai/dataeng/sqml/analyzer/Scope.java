@@ -2,11 +2,9 @@ package ai.dataeng.sqml.analyzer;
 
 import static ai.dataeng.sqml.logical3.LogicalPlan.Builder.unbox;
 
-import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
-import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.TypedField;
-import ai.dataeng.sqml.schema2.basic.StringType;
+import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.QualifiedName;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,6 +95,10 @@ public class Scope {
 
 
     return paths;
+  }
+
+  public Optional<ResolvedField> tryResolveField(Expression expression) {
+    return null;
   }
 
   public static class Builder {

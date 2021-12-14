@@ -1,81 +1,102 @@
 package ai.dataeng.sqml.analyzer;
 
-import ai.dataeng.sqml.schema2.Field;
-import ai.dataeng.sqml.schema2.RelationType;
+import ai.dataeng.sqml.function.FunctionHandle;
 import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.tree.ExistsPredicate;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
-import ai.dataeng.sqml.tree.Identifier;
+import ai.dataeng.sqml.tree.InPredicate;
 import ai.dataeng.sqml.tree.NodeRef;
-import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.Relation;
-import java.util.ArrayList;
+import ai.dataeng.sqml.tree.QuantifiedComparisonExpression;
+import ai.dataeng.sqml.tree.SubqueryExpression;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import lombok.Getter;
 
+@Getter
 public class ExpressionAnalysis {
-  Map<Expression, Type> typeMap = new HashMap<>();
-  Map<Relation, RelationType> relations = new HashMap<>();
-  Map<QualifiedName, Field> sourceScopedFields = new HashMap<>();
-  private final Map<NodeRef<Expression>, Type> expressionCoercions = new LinkedHashMap<>();
-  private final Set<NodeRef<Expression>> typeOnlyCoercions = new LinkedHashSet<>();
-  private final Map<NodeRef<Expression>, FieldId> columnReferences = new LinkedHashMap<>();
-  private Map<Identifier, FieldPath> fieldPaths = new HashMap<>();
+  private final Map<NodeRef<Expression>, Type> expressionTypes;
+  private final Map<NodeRef<Expression>, Type> expressionCoercions;
+  private final Set<NodeRef<Expression>> typeOnlyCoercions;
+  private final Map<NodeRef<Expression>, FieldId> columnReferences;
+  private final Set<NodeRef<InPredicate>> subqueryInPredicates;
+  private final Set<NodeRef<SubqueryExpression>> scalarSubqueries;
+  private final Set<NodeRef<ExistsPredicate>> existsSubqueries;
+  private final Set<NodeRef<QuantifiedComparisonExpression>> quantifiedComparisons;
+  private final Map<NodeRef<FunctionCall>, FunctionHandle> resolvedFunctions = new HashMap<>();
 
-  public Type getType(Expression node) {
-    return typeMap.get(node);
+  // For lambda argument references, maps each QualifiedNameReference to the referenced LambdaArgumentDeclaration
+//  private final Map<NodeRef<Identifier>, LambdaArgumentDeclaration> lambdaArgumentReferences;
+//  private final Set<NodeRef<FunctionCall>> windowFunctions;
+
+  public ExpressionAnalysis()
+  {
+    this.expressionTypes = new HashMap<>();
+    this.expressionCoercions = new HashMap<>();
+    this.typeOnlyCoercions = new HashSet<>();
+    this.columnReferences = new HashMap<>();
+    this.subqueryInPredicates = new HashSet<>();
+    this.scalarSubqueries = new HashSet<>();
+    this.existsSubqueries = new HashSet<>();
+    this.quantifiedComparisons = new HashSet<>();
+//    this.lambdaArgumentReferences = ImmutableMap.copyOf(requireNonNull(lambdaArgumentReferences, "lambdaArgumentReferences is null"));
+//    this.windowFunctions = ImmutableSet.copyOf(requireNonNull(windowFunctions, "windowFunctions is null"));
   }
 
-  public void addType(Expression node, Type type) {
-    typeMap.put(node, type);
+  public Type getType(Expression expression)
+  {
+    return expressionTypes.get(NodeRef.of(expression));
   }
 
-  public Map<Expression, Type> getExpressionTypes() {
-    return typeMap;
+  public Map<NodeRef<Expression>, Type> getExpressionTypes()
+  {
+    return expressionTypes;
   }
 
-  public Optional<RelationType> getRelation(Relation node) {
-    return Optional.ofNullable(this.relations.get(node));
+  public Type getCoercion(Expression expression)
+  {
+    return expressionCoercions.get(NodeRef.of(expression));
   }
 
-  public void setRelation(Relation node, RelationType type) {
-    this.relations.put(node, type);
+  public boolean isTypeOnlyCoercion(Expression expression)
+  {
+    return typeOnlyCoercions.contains(NodeRef.of(expression));
   }
 
-  public void addSourceScopedType(QualifiedName path, Field field) {
-    sourceScopedFields.put(path, field);
+  public boolean isColumnReference(Expression node)
+  {
+    return columnReferences.containsKey(NodeRef.of(node));
   }
 
-  public Map<QualifiedName, Field> getSourceScopedFields() {
-    return sourceScopedFields;
+  public Set<NodeRef<InPredicate>> getSubqueryInPredicates()
+  {
+    return subqueryInPredicates;
   }
 
-  public Map<NodeRef<Expression>, Type> getExpressionCoercions() {
-    return expressionCoercions;
+  public Set<NodeRef<SubqueryExpression>> getScalarSubqueries()
+  {
+    return scalarSubqueries;
   }
 
-  public Set<NodeRef<Expression>> getTypeOnlyCoercions() {
-    return typeOnlyCoercions;
+  public Set<NodeRef<ExistsPredicate>> getExistsSubqueries()
+  {
+    return existsSubqueries;
   }
 
-  public Map<NodeRef<Expression>, FieldId> getColumnReferences() {
-    return columnReferences;
+  public Set<NodeRef<QuantifiedComparisonExpression>> getQuantifiedComparisons()
+  {
+    return quantifiedComparisons;
   }
 
-  public List<FieldPath> getFieldPaths() {
-    return new ArrayList<>(fieldPaths.values());
+  public void putExpressionType(NodeRef<Expression> node, Type type) {
+    expressionTypes.put(node, type);
   }
 
-  public FieldPath getFieldPath(Identifier node) {
-    return fieldPaths.get(node);
-  }
+//  public Set<NodeRef<FunctionCall>> getWindowFunctions()
+//  {
+//    return windowFunctions;
+//  }
 
-  public void setFieldPath(Identifier node, FieldPath fieldPath) {
-    fieldPaths.put(node, fieldPath);
-  }
 }

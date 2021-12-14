@@ -37,6 +37,7 @@ import ai.dataeng.sqml.tree.IsNotNullPredicate;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.NotExpression;
 import ai.dataeng.sqml.tree.NullLiteral;
 import ai.dataeng.sqml.tree.QualifiedName;
@@ -108,7 +109,7 @@ public class ExpressionAnalyzer {
       }
       FieldPath fieldPath1 = fieldPath.get(0);
 
-      analysis.setFieldPath(node, fieldPath1);
+//      analysis.setFieldPath(node, fieldPath1);
       Type resolvedType = fieldPath1.getFields().get(fieldPath1.getFields().size() - 1).getType();
 //      if (resolvedType.isEmpty()) {
 //        throw new RuntimeException(String.format("Could not resolve identifier %s", node));
@@ -140,15 +141,15 @@ public class ExpressionAnalyzer {
       node.getRight().accept(this, context);
       return addType(node, new BooleanType());
     }
-
-    @Override
-    public Type visitSubqueryExpression(SubqueryExpression node, Context context) {
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata,
-          planBuilder);
-      Scope scope = node.getQuery().accept(statementAnalyzer, context.getScope());
-
-      return scope.getRelation();
-    }
+//
+//    @Override
+//    public Type visitSubqueryExpression(SubqueryExpression node, Context context) {
+//      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(metadata,
+//          planBuilder, node);
+//      Scope scope = node.getQuery().accept(statementAnalyzer, context.getScope());
+//
+//      return scope.getRelation();
+//    }
 
     @Override
     public Type visitComparisonExpression(ComparisonExpression node, Context context) {
@@ -313,14 +314,15 @@ public class ExpressionAnalyzer {
 //      Type type = functionAndTypeManager.getType(operatorMetadata.getReturnType());
       return addType(node, new BooleanType());
     }
-
+//
     private Type addType(Expression node, Type type) {
-      analysis.addType(node, type);
+      analysis.putExpressionType(NodeRef.of(node), type);
+
       return type;
     }
-
-    private void addRelation(Relation relation, RelationType type) {
-      analysis.setRelation(relation, type);
-    }
+//
+//    private void addRelation(Relation relation, RelationType type) {
+//      analysis.setRelation(relation, type);
+//    }
   }
 }

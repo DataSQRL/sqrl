@@ -50,7 +50,7 @@ public class ImportManager {
     }
 
     public void registerUserSchema(Map<Name, FlexibleDatasetSchema> schema) {
-        Preconditions.checkArgument(schema!=null && !schema.isEmpty());
+        Preconditions.checkArgument(schema!=null && !schema.isEmpty(), "Schema is empty");
         this.userSchema = schema;
     }
 

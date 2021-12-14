@@ -69,6 +69,12 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
         return fields;
     }
 
+    public List<F> getScalarFields() {
+        return fields.stream()
+            .filter(e->!(e.getType() instanceof ArrayType))
+            .collect(Collectors.toList());
+    }
+
     @Override
     public Iterator<F> iterator() {
         return fields.iterator();
@@ -85,6 +91,10 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
         }
 
         return rel;
+    }
+
+    public int getAllFieldCount() {
+        return fields.size();
     }
 
   public static class Builder<F extends Field> extends AbstractBuilder<F,Builder<F>> {
