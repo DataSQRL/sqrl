@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.analyzer;
 
+import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
 import ai.dataeng.sqml.OperatorType;
@@ -27,6 +28,7 @@ import ai.dataeng.sqml.tree.DereferenceExpression;
 import ai.dataeng.sqml.tree.DoubleLiteral;
 import ai.dataeng.sqml.tree.EnumLiteral;
 import ai.dataeng.sqml.tree.Expression;
+import ai.dataeng.sqml.tree.FieldReference;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GenericLiteral;
 import ai.dataeng.sqml.tree.Identifier;
@@ -43,6 +45,7 @@ import ai.dataeng.sqml.tree.NullLiteral;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.SimpleCaseExpression;
+import ai.dataeng.sqml.tree.StackableAstVisitor.StackableAstVisitorContext;
 import ai.dataeng.sqml.tree.StringLiteral;
 import ai.dataeng.sqml.tree.SubqueryExpression;
 import ai.dataeng.sqml.tree.TimestampLiteral;
@@ -115,6 +118,31 @@ public class ExpressionAnalyzer {
 //        throw new RuntimeException(String.format("Could not resolve identifier %s", node));
 //      }
       return addType(node, resolvedType);
+    }
+
+    @Override
+    public Type visitFieldReference(FieldReference node, Context context)
+    {
+      Field field = context.getScope().getRelation().getScalarFields().get(node.getFieldIndex());
+
+      return handleResolvedField(node, new FieldId(context.getScope().getRelationId(), node.getFieldIndex()), field, context);
+    }
+
+    private Type handleResolvedField(Expression node, ResolvedField resolvedField, Context context)
+    {
+      return handleResolvedField(node, FieldId.from(resolvedField), resolvedField.getField(), context);
+    }
+
+    private Type handleResolvedField(Expression node, FieldId fieldId, Field field, Context context)
+    {
+      //todo
+//      if (field.getOriginTable().isPresent() && field.getOriginColumnName().isPresent()) {
+//        tableColumnReferences.put(field.getOriginTable().get(), field.getOriginColumnName().get());
+//      }
+
+      FieldId previous = analysis.getColumnReferences().put(NodeRef.of(node), fieldId);
+      checkState(previous == null, "%s already known to refer to %s", node, previous);
+      return addType(node, field.getType());
     }
 
     @Override

@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.logical4;
 
+import ai.dataeng.sqml.relation.ColumnReferenceExpression;
 import ai.dataeng.sqml.relation.RowExpression;
 import ai.dataeng.sqml.relation.VariableReferenceExpression;
 import java.util.List;
@@ -12,9 +13,9 @@ import lombok.Value;
  */
 public class ProjectOperator extends LogicalPlan.RowNode<LogicalPlan.RowNode> {
 
-    Map<LogicalPlan.Column, RowExpression> projections;
+    Map<ColumnReferenceExpression, RowExpression> projections;
 
-    public ProjectOperator(LogicalPlan.RowNode input, Map<LogicalPlan.Column, RowExpression> projections) {
+    public ProjectOperator(LogicalPlan.RowNode input, Map<ColumnReferenceExpression, RowExpression> projections) {
         super(input);
         this.projections = projections;
     }

@@ -646,6 +646,19 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
+    public Expression visitFieldReference(FieldReference node, Context<C> context)
+    {
+      if (!context.isDefaultRewrite()) {
+        Expression result = rewriter.rewriteFieldReference(node, context.get(), ExpressionTreeRewriter.this);
+        if (result != null) {
+          return result;
+        }
+      }
+
+      return node;
+    }
+
+    @Override
     public Expression visitSymbolReference(SymbolReference node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter

@@ -21,6 +21,7 @@ import ai.dataeng.sqml.logical4.ShadowingContainer.Nameable;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.schema2.RelationType;
 import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.schema2.basic.IntegerType;
 import ai.dataeng.sqml.tree.ExistsPredicate;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
@@ -79,7 +80,7 @@ public class StatementAnalysis {
   private final Map<NodeRef<QuerySpecification>, List<FunctionCall>> aggregates = new LinkedHashMap<>();
   private final Map<NodeRef<OrderBy>, List<Expression>> orderByAggregates = new LinkedHashMap<>();
   private final Map<NodeRef<QuerySpecification>, List<Expression>> groupByExpressions = new LinkedHashMap<>();
-  private final Map<NodeRef<QuerySpecification>, GroupingSetAnalysis> groupingSets = new LinkedHashMap<>();
+  private final Map<NodeRef<QuerySpecification>, List<Set<FieldId>>> groupingSets = new LinkedHashMap<>();
 
   private final Map<NodeRef<Node>, Expression> where = new LinkedHashMap<>();
   private final Map<NodeRef<QuerySpecification>, Expression> having = new LinkedHashMap<>();
@@ -206,6 +207,10 @@ public class StatementAnalysis {
 
   public Type getTypeWithCoercions(Expression expression)
   {
+    if (true) {
+      return IntegerType.INSTANCE;
+    }
+
     NodeRef<Expression> key = NodeRef.of(expression);
     checkArgument(types.containsKey(key), "Expression not analyzed: %s", expression);
     if (coercions.containsKey(key)) {
@@ -241,11 +246,6 @@ public class StatementAnalysis {
     return coercions.get(NodeRef.of(expression));
   }
 
-  public void setGroupingSets(QuerySpecification node, GroupingSetAnalysis groupingSets)
-  {
-    this.groupingSets.put(NodeRef.of(node), groupingSets);
-  }
-
   public void setGroupByExpressions(QuerySpecification node, List<Expression> expressions)
   {
     groupByExpressions.put(NodeRef.of(node), expressions);
@@ -261,7 +261,12 @@ public class StatementAnalysis {
     return typeOnlyCoercions.contains(NodeRef.of(expression));
   }
 
-  public GroupingSetAnalysis getGroupingSets(QuerySpecification node)
+  public void setGroupingSets(QuerySpecification node, List<Set<FieldId>> set)
+  {
+    this.groupingSets.put(NodeRef.of(node), set);
+  }
+
+  public List<Set<FieldId>> getGroupingSet(QuerySpecification node)
   {
     return groupingSets.get(NodeRef.of(node));
   }
@@ -699,9 +704,6 @@ public class StatementAnalysis {
     return redundantOrderBy.contains(NodeRef.of(orderBy));
   }
 
-  public Set<FieldId> getGroupingSet(QuerySpecification node) {
-    return null;
-  }
 //
 //  public Map<String, Map<SchemaTableName, String>> getOriginalColumnMapping(Node node)
 //  {

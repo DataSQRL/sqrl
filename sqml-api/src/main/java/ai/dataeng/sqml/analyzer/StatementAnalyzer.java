@@ -22,6 +22,8 @@ import ai.dataeng.sqml.schema2.StandardField;
 import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.TypedField;
 import ai.dataeng.sqml.schema2.basic.BooleanType;
+import ai.dataeng.sqml.tree.FieldReference;
+import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.Statement;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
@@ -60,6 +62,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import io.r2dbc.spi.ColumnMetadata;
@@ -103,16 +106,33 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   public Scope visitQuery(Query node, Scope scope) {
     //Unions have a limit & order that is outside the query body. If these are empty, just process the
     //  query body as if it was a standalone query.
-    Scope queryScope = node.getQueryBody().accept(this, scope);
-    if (node.parseLimit().isEmpty() && node.getOrderBy().isEmpty()) {
-      return queryScope;
-    }
+    Scope queryBodyScope = node.getQueryBody().accept(this, scope);
+//    if (node.parseLimit().isEmpty() && node.getOrderBy().isEmpty()) {
+//      return queryBodyScope;
+//    }
 
     if (node.getOrderBy().isPresent()) {
-      List<Expression> orderByExpressions = analyzeOrderBy(node, getSortItemsFromOrderBy(node.getOrderBy()), queryScope);
+      List<Expression> orderByExpressions = analyzeOrderBy(node, getSortItemsFromOrderBy(node.getOrderBy()), queryBodyScope);
+      analysis.setOrderByExpressions(node, orderByExpressions);
+    } else {
+      analysis.setOrderByExpressions(node, List.of());
     }
 
-    return createAndAssignScope(node, scope, queryScope.getRelation());
+    // Input fields == Output fields
+    analysis.setOutputExpressions(node, descriptorToFields(queryBodyScope));
+
+    return createAndAssignScope(node, scope, queryBodyScope.getRelation());
+  }
+
+  private List<Expression> descriptorToFields(Scope scope)
+  {
+    ImmutableList.Builder<Expression> builder = ImmutableList.builder();
+    for (int fieldIndex = 0; fieldIndex < scope.getRelation().getAllFieldCount(); fieldIndex++) {
+      FieldReference expression = new FieldReference(fieldIndex);
+      builder.add(expression);
+//      analyzeExpression(expression, scope);
+    }
+    return builder.build();
   }
 
   @Override
@@ -150,7 +170,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     if (!aggregates.isEmpty() && groupByExpressions.isEmpty()) {
       // Have Aggregation functions but no explicit GROUP BY clause
-//      analysis.setGroupByExpressions(node, ImmutableList.of());
+      analysis.setGroupByExpressions(node, ImmutableList.of());
     }
 
     verifyAggregations(node, sourceScope, orderByScope, groupByExpressions, sourceExpressions, orderByExpressions);
@@ -727,13 +747,23 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       return List.of();
     }
 
-    List<List<Set<FieldId>>> sets = new ArrayList();
+    List<Set<FieldId>> set = new ArrayList();
     List<Expression> groupingExpressions = new ArrayList();
     GroupingElement groupingElement = node.getGroupBy().get().getGroupingElement();
     for (Expression column : groupingElement.getExpressions()) {
       if (column instanceof LongLiteral) {
         throw new RuntimeException("Ordinals not supported in group by statements");
       }
+
+      if (analysis.getColumnReferenceFields().containsKey(NodeRef.of(column))) {
+        set.add(
+            ImmutableSet.copyOf(analysis.getColumnReferenceFields().get(NodeRef.of(column))));
+      }
+//      else {
+//        verifyNoAggregateWindowOrGroupingFunctions(analysis.getFunctionHandles(), metadata.getFunctionAndTypeManager(), column, "GROUP BY clause");
+////        analysis.recordSubqueries(node, analyzeExpression(column, scope));
+//        complexExpressions.add(column);
+//      }
       //Group by statement must be one of the select fields
       if (!(column instanceof Identifier)) {
         log.info(String.format("GROUP BY statement should use column aliases instead of expressions. %s", column));
@@ -754,8 +784,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       }
     }
 
-    List<Expression> expressions = groupingExpressions;
-    for (Expression expression : expressions) {
+    for (Expression expression : groupingExpressions) {
       Type type = analysis.getType(expression);
 //          .get();
       if (!type.isComparable()) {
@@ -763,7 +792,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       }
     }
 
-//    analysis.setGroupByExpressions(node, groupingExpressions);
+    analysis.setGroupByExpressions(node, groupingExpressions);
+    analysis.setGroupingSets(node, set);
 
     return groupingExpressions;
   }

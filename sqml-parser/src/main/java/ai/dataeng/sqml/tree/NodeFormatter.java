@@ -398,4 +398,9 @@ public class NodeFormatter extends AstVisitor<String, Void> {
     return String.format(" ON (%s) ", node.getOn().stream()
         .map(e->e.getValue()).collect(Collectors.joining(",")));
   }
+
+  @Override
+  public String visitFieldReference(FieldReference node, Void context) {
+    return node.getFieldIndex() + "";
+  }
 }

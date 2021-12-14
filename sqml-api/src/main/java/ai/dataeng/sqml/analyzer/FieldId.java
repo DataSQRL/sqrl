@@ -31,12 +31,12 @@ public final class FieldId
         return new FieldId(sourceScope.getRelationId(), relationDefinition.getFields().indexOf(field.getField()));
     }
 
-    private final RelationId relationId;
+    private RelationId relationId;
     private final int fieldIndex;
 
     public FieldId(RelationId relationId, int fieldIndex)
     {
-        this.relationId = requireNonNull(relationId, "relationId is null");
+//        this.relationId = requireNonNull(relationId, "relationId is null");
 
         checkArgument(fieldIndex >= 0, "fieldIndex must be non-negative, got: %s", fieldIndex);
         this.fieldIndex = fieldIndex;

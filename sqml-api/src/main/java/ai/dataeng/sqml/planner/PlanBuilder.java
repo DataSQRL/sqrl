@@ -31,14 +31,20 @@ class PlanBuilder
 {
     private final TranslationMap translations;
     private final Node root;
+    private final Node currentNode;
 
-    public PlanBuilder(TranslationMap translations, Node root)
+    public PlanBuilder(TranslationMap translations, Node root) {
+        this(translations, root, root);
+    }
+    public PlanBuilder(TranslationMap translations, Node root, Node currentNode)
     {
         requireNonNull(translations, "translations is null");
         requireNonNull(root, "root is null");
+        requireNonNull(currentNode, "currentNode is null");
 
         this.translations = translations;
         this.root = root;
+        this.currentNode = currentNode;
     }
 
     public TranslationMap copyTranslations()
@@ -91,6 +97,10 @@ class PlanBuilder
     public TranslationMap getTranslations()
     {
         return translations;
+    }
+
+    public Node getCurrentNode() {
+        return this.currentNode;
     }
 //
 //    public PlanBuilder appendProjections(Iterable<Expression> expressions, PlanVariableAllocator variableAllocator, RowNodeIdAllocator idAllocator)

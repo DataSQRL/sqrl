@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.schema2;
 
+import ai.dataeng.sqml.logical3.ParentField;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
@@ -72,6 +73,7 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
     public List<F> getScalarFields() {
         return fields.stream()
             .filter(e->!(e.getType() instanceof ArrayType))
+            .filter(e->!(e instanceof ParentField))
             .collect(Collectors.toList());
     }
 
@@ -94,7 +96,7 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
     }
 
     public int getAllFieldCount() {
-        return fields.size();
+        return getScalarFields().size();
     }
 
   public static class Builder<F extends Field> extends AbstractBuilder<F,Builder<F>> {

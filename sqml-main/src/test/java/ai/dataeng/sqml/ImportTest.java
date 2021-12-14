@@ -21,6 +21,7 @@ import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.parser.SqmlParser;
 import ai.dataeng.sqml.planner.LogicalPlanBuilder;
+import ai.dataeng.sqml.planner.RelationPlan;
 import ai.dataeng.sqml.planner.RowNodeIdAllocator;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
@@ -139,8 +140,9 @@ class ImportTest {
     QueryAssignment node = (QueryAssignment) script.getStatements().get(1);
     StatementAnalysis statementAnalysis = analysis.getStatementAnalysis(node);
     LogicalPlanBuilder planner = new LogicalPlanBuilder(new RowNodeIdAllocator(), metadata);
-    planner.planStatement(statementAnalysis, node.getQuery());
-
+    RelationPlan plan = planner.planStatement(statementAnalysis, node.getQuery());
+    System.out.println(plan);
+    System.out.println();
 //
 //    analysis.getDefinedFunctions().stream()
 //        .forEach((f)->{

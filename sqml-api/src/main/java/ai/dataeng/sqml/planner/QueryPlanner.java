@@ -13,60 +13,40 @@
  */
 package ai.dataeng.sqml.planner;
 
-import ai.dataeng.sqml.analyzer.Analysis;
 import ai.dataeng.sqml.analyzer.FieldId;
-import ai.dataeng.sqml.analyzer.RelationId;
-import ai.dataeng.sqml.analyzer.Scope;
 import ai.dataeng.sqml.analyzer.StatementAnalysis;
 import ai.dataeng.sqml.logical4.AggregateOperator;
 import ai.dataeng.sqml.logical4.AggregateOperator.Aggregation;
 import ai.dataeng.sqml.logical4.FilterOperator;
+import ai.dataeng.sqml.logical4.LogicalPlan;
+import ai.dataeng.sqml.logical4.LogicalPlan.RowNode;
 import ai.dataeng.sqml.logical4.ProjectOperator;
 import ai.dataeng.sqml.metadata.Metadata;
-import ai.dataeng.sqml.relation.CallExpression;
-import ai.dataeng.sqml.relation.RowExpression;
 import ai.dataeng.sqml.relation.ColumnReferenceExpression;
-import ai.dataeng.sqml.schema2.RelationType;
-import ai.dataeng.sqml.schema2.Type;
+import ai.dataeng.sqml.relation.VariableReferenceExpression;
 import ai.dataeng.sqml.tree.Cast;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FieldReference;
 import ai.dataeng.sqml.tree.FunctionCall;
-import ai.dataeng.sqml.tree.GroupingOperation;
 import ai.dataeng.sqml.tree.Node;
-import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QuerySpecification;
-import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.SymbolReference;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.IntStream;
-import org.apache.calcite.interpreter.ProjectNode;
-import org.apache.calcite.interpreter.SortNode;
-import org.apache.calcite.interpreter.TableScanNode;
-import org.apache.calcite.interpreter.ValuesNode;
-import org.apache.calcite.interpreter.WindowNode;
-import org.apache.calcite.linq4j.tree.LambdaExpression;
-import org.apache.flink.optimizer.plan.PlanNode;
-import org.h2.expression.analysis.WindowFrame;
 
-import static ai.dataeng.sqml.planner.AssignmentUtils.identitiesAsSymbolReferences;
 import static ai.dataeng.sqml.planner.OriginalExpressionUtils.asSymbolReference;
 import static ai.dataeng.sqml.planner.OriginalExpressionUtils.castToRowExpression;
-import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.Streams.stream;
 import static java.util.Objects.requireNonNull;
 
@@ -106,7 +86,7 @@ class QueryPlanner
 
 //        builder = sort(builder, query);
 //        builder = limit(builder, query);
-        builder = project(builder, analysis.getOutputExpressions(query));
+//        builder = project(builder, analysis.getOutputExpressions(query));
 
         return new RelationPlan(builder.getRoot(), analysis.getScope(query), computeOutputs(builder, analysis.getOutputExpressions(query)));
     }
@@ -114,7 +94,7 @@ class QueryPlanner
     public RelationPlan plan(QuerySpecification node)
     {
         PlanBuilder builder = planFrom(node);
-        RelationPlan fromRelationPlan = builder.getRelationPlan();
+//        RelationPlan fromRelationPlan = builder.getRelationPlan();
 
         builder = filter(builder, analysis.getWhere(node), node);
         builder = aggregate(builder, node);
@@ -237,7 +217,7 @@ class QueryPlanner
 //        subPlan = subqueryPlanner.handleSubqueries(subPlan, rewrittenBeforeSubqueries, node);
         Expression rewrittenAfterSubqueries = subPlan.rewrite(predicate);
 
-        return subPlan.withNewRoot(new FilterOperator(null, null));//idAllocator.getNextId(), subPlan.getRoot(), castToRowExpression(rewrittenAfterSubqueries)));
+        return subPlan.withNewRoot(new FilterOperator((RowNode)subPlan.getRoot(), castToRowExpression(rewrittenAfterSubqueries)));//idAllocator.getNextId(), subPlan.getRoot(), castToRowExpression(rewrittenAfterSubqueries)));
     }
 
     private PlanBuilder project(PlanBuilder subPlan, Iterable<Expression> expressions, RelationPlan parentRelationPlan)
@@ -263,7 +243,7 @@ class QueryPlanner
             outputTranslations.put(expression, variable);
         }
 
-        return new PlanBuilder(outputTranslations, new ProjectOperator(null, null));
+        return new PlanBuilder(outputTranslations, new ProjectOperator((RowNode)subPlan.getRoot(), projections.build().getMap()));
 //                idAllocator.getNextId(),
 //                subPlan.getRoot(),
 //                projections.build()));
@@ -396,7 +376,7 @@ class QueryPlanner
         // This tracks the grouping sets before complex expressions are considered (see comments below)
         // It's also used to compute the descriptors needed to implement grouping()
         List<Set<FieldId>> columnOnlyGroupingSets = ImmutableList.of(ImmutableSet.of());
-        List<ColumnReferenceExpression> groupingSets = ImmutableList.of();
+        List<List<ColumnReferenceExpression>> groupingSets = ImmutableList.of();
 
         if (node.getGroupBy().isPresent()) {
             // For the purpose of "distinct", we need to canonicalize column references that may have varying
@@ -406,7 +386,8 @@ class QueryPlanner
             // The catch is that simple group-by expressions can be arbitrary expressions (this is a departure from the SQL specification).
             // But, they don't affect the number of grouping sets or the behavior of "distinct" . We can compute all the candidate
             // grouping sets in terms of fieldId, dedup as appropriate and then cross-join them with the complex expressions.
-            Set<FieldId> groupingSet = analysis.getGroupingSet(node);
+            List<Set<FieldId>> gs = analysis.getGroupingSet(node);//todo: should be a list or a set?
+            Preconditions.checkNotNull(gs, "Grouping set should not be null {}", node);
 //            Analysis.GroupingSetAnalysis groupingSetAnalysis = analysis.getGroupingSets(node);
 //            columnOnlyGroupingSets = enumerateGroupingSets(groupingSetAnalysis);
 //
@@ -418,20 +399,20 @@ class QueryPlanner
 
             // add in the complex expressions an turn materialize the grouping sets in terms of plan columns
             ImmutableList.Builder<List<ColumnReferenceExpression>> groupingSetBuilder = ImmutableList.builder();
-//            for (Set<FieldId> groupingSet : columnOnlyGroupingSets) {
+            for (Set<FieldId> groupingSet : columnOnlyGroupingSets) {
                 ImmutableList.Builder<ColumnReferenceExpression> columns = ImmutableList.builder();
 //                groupingSetAnalysis.getComplexExpressions().stream()
-//                        .map(groupingTranslations::get)
-//                        .forEach(columns::add);
+//                    .map(groupingTranslations::get)
+//                    .forEach(columns::add);
 
                 groupingSet.stream()
-                        .map(field -> groupingTranslations.get(new FieldReference(field.getFieldIndex())))
-                        .forEach(columns::add);
-            groupingSets = columns.build();
-                groupingSetBuilder.add(columns.build());
-//            }
+                    .map(field -> groupingTranslations.get(new FieldReference(field.getFieldIndex())))
+                    .forEach(columns::add);
 
-//            groupingSets = groupingSetBuilder.build();
+                groupingSetBuilder.add(columns.build());
+            }
+
+            groupingSets = groupingSetBuilder.build();
         }
 
         // 2.c. Generate GroupIdNode (multiple grouping sets) or ProjectNode (single grouping set)
@@ -446,7 +427,7 @@ class QueryPlanner
             aggregationArguments.stream().map(AssignmentUtils::identityAsSymbolReference).forEach(assignments::put);
             groupingSetMappings.forEach((key, value) -> assignments.put(key, castToRowExpression(asSymbolReference(value))));
 
-            ProjectOperator project = new ProjectOperator(null, null);//idAllocator.getNextId(), subPlan.getRoot(), assignments.build());
+            ProjectOperator project = new ProjectOperator((RowNode)subPlan.getRoot(), assignments.build().getMap());//idAllocator.getNextId(), subPlan.getRoot(), assignments.build());
             subPlan = new PlanBuilder(groupingTranslations, project);
 //        }
 
@@ -497,7 +478,10 @@ class QueryPlanner
 //                .forEach(groupingKeys::add);
         groupIdVariable.ifPresent(groupingKeys::add);
 
-        AggregateOperator aggregationNode = new AggregateOperator(null, null, null);
+        AggregateOperator aggregationNode = new AggregateOperator((RowNode) subPlan.getRoot(),
+            new LinkedHashMap<>(),
+            new LinkedHashMap<>()
+        );
 //                idAllocator.getNextId(),
 //                subPlan.getRoot(),
 //                aggregations,

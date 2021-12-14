@@ -21,8 +21,12 @@ import ai.dataeng.sqml.analyzer.StatementAnalysis;
 import ai.dataeng.sqml.analyzer.TableHandle;
 import ai.dataeng.sqml.logical4.DocumentComputeOperator;
 import ai.dataeng.sqml.logical4.DocumentComputeOperator.Computation;
+import ai.dataeng.sqml.logical4.LogicalPlan;
+import ai.dataeng.sqml.logical4.LogicalPlan.Column;
 import ai.dataeng.sqml.logical4.LogicalPlan.Node;
+import ai.dataeng.sqml.logical4.ShreddingOperator;
 import ai.dataeng.sqml.metadata.Metadata;
+import ai.dataeng.sqml.physical.flink.FieldProjection;
 import ai.dataeng.sqml.relation.ColumnReferenceExpression;
 import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.schema2.Field;
@@ -85,11 +89,17 @@ class RelationPlanner
         for (Field field : scope.getRelation().getScalarFields()) {
             ColumnReferenceExpression variable = variableAllocator.newVariable(field.getName().getCanonical(), field.getType());
             outputVariablesBuilder.add(variable);
-            columns.put(variable, analysis.getColumn(field));
+            ColumnHandle columnHandle = analysis.getColumn(field);
+            if (columnHandle == null) {
+                System.out.println(field);
+                continue;
+            }
+            columns.put(variable, columnHandle);
         }
 
         List<ColumnReferenceExpression> outputVariables = outputVariablesBuilder.build();
-        Node root = new DocumentComputeOperator(null, null);//idAllocator.getNextId(), handle, outputVariables, columns.build());
+        //Todo: lookup operator in operator catalog
+        Node root = new ShreddingOperator(null, null, new FieldProjection[0], new Column[0]);//idAllocator.getNextId(), handle, outputVariables, columns.build());
         return new RelationPlan(root, scope, outputVariables);
     }
 //

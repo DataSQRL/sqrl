@@ -37,7 +37,7 @@ import static java.util.Objects.requireNonNull;
  * For instance if a child scope has n fields, then first parent scope field
  * will have index n.
  */
-class RelationPlan
+public class RelationPlan
 {
     private final Node root;
     private final List<ColumnReferenceExpression> fieldMappings; // for each field in the relation, the corresponding variable from "root"
