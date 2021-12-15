@@ -1,5 +1,16 @@
 package ai.dataeng.sqml;
 
+import ai.dataeng.execution.DefaultDataFetcher;
+import ai.dataeng.execution.connection.JdbcPool;
+import ai.dataeng.execution.criteria.EqualsCriteria;
+import ai.dataeng.execution.page.NoPage;
+import ai.dataeng.execution.page.SystemPageProvider;
+import ai.dataeng.execution.table.H2Table;
+import ai.dataeng.execution.table.column.Columns;
+import ai.dataeng.execution.table.column.H2Column;
+import ai.dataeng.execution.table.column.IntegerColumn;
+import ai.dataeng.execution.table.column.PrimaryKeyColumn;
+import ai.dataeng.execution.table.column.UUIDColumn;
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.db.tabular.JDBCSinkFactory;
@@ -38,9 +49,28 @@ import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import graphql.ExecutionInput;
+import graphql.ExecutionResult;
+import graphql.GraphQL;
+import graphql.GraphQLError;
+import graphql.schema.FieldCoordinates;
+import graphql.schema.GraphQLCodeRegistry;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.idl.RuntimeWiring;
+import graphql.schema.idl.SchemaParser;
+import graphql.schema.idl.TypeDefinitionRegistry;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.impl.VertxInternal;
+import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.sqlclient.Pool;
+import io.vertx.sqlclient.PoolOptions;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URL;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.*;
@@ -62,6 +92,7 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.OutputTag;
+import org.dataloader.DataLoaderRegistry;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.SQLDialect;
@@ -85,9 +116,9 @@ public class Main2 {
 
     private static final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
 
-
+    static final String JDBC_URL = "jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false";
     private static final JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-            .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false")
+            .withUrl(JDBC_URL)
             .withDriverName("org.h2.Driver")
             .build();
 
@@ -120,7 +151,7 @@ public class Main2 {
 //        importSchema(ddRegistry, bundle);
         end2endExample(ddRegistry, bundle);
 //        simpleDBPipeline(ddRegistry);
-
+        graphqlTest();
 //        testDB();
     }
 
@@ -176,8 +207,10 @@ public class Main2 {
 
         //Setup user schema and getting schema from statistics data
         SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
-        Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
-        Preconditions.checkArgument(!schemaImporter.getErrors().isFatal(), schemaImporter.getErrors());
+        Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(
+            sqml.parseSchema());
+        Preconditions.checkArgument(!schemaImporter.getErrors().isFatal(),
+            schemaImporter.getErrors());
         ImportManager sqmlImporter = new ImportManager(ddRegistry);
         sqmlImporter.registerUserSchema(userSchema);
 
@@ -187,31 +220,33 @@ public class Main2 {
         Name ordersName = toName(RETAIL_TABLE_NAMES[1]);
         ImportResolver importer = new ImportResolver(sqmlImporter, logicalPlan, errors);
         importer.resolveImport(ImportResolver.ImportMode.TABLE, toName(RETAIL_DATASET),
-                Optional.of(ordersName), Optional.empty());
+            Optional.of(ordersName), Optional.empty());
         //2. SQRL statements
         LogicalPlan.Table orders = (LogicalPlan.Table) logicalPlan.getSchemaElement(ordersName);
         LogicalPlan.Column ordersTime = (LogicalPlan.Column) orders.getField(toName("time"));
         RowExpression predicate = null; //TODO: create expression
         FilterOperator filter = new FilterOperator(orders.getCurrentNode(), predicate);
         orders.getCurrentNode().addConsumer(filter);
-        LogicalPlan.Table customerNoOrders = logicalPlan.createTable(toName("CustomerOrderStats"),false);
+        LogicalPlan.Table customerNoOrders = logicalPlan.createTable(toName("CustomerOrderStats"),
+            false);
         LogicalPlan.Column customerid = (LogicalPlan.Column) orders.getField(toName("customerid"));
-        AggregateOperator countAgg = AggregateOperator.createAggregateAndPopulateTable(filter, customerNoOrders,
-                Map.of(customerid.getName(),new ColumnReferenceExpression(customerid)),
-                Map.of(toName("num_orders"),new AggregateOperator.Aggregation(
-                                                        AggregateOperator.AggregateFunction.COUNT,
-                                                        List.of(new ColumnReferenceExpression(customerid)))));
+        AggregateOperator countAgg = AggregateOperator.createAggregateAndPopulateTable(filter,
+            customerNoOrders,
+            Map.of(customerid.getName(), new ColumnReferenceExpression(customerid)),
+            Map.of(toName("num_orders"), new AggregateOperator.Aggregation(
+                AggregateOperator.AggregateFunction.COUNT,
+                List.of(new ColumnReferenceExpression(customerid)))));
         filter.addConsumer(countAgg);
         //3. Queries
         QueryAnalyzer.addDevModeQueries(logicalPlan);
-
 
         Preconditions.checkArgument(!errors.isFatal());
 
         LogicalPlanOptimizer.Result optimized = new SimpleOptimizer().optimize(logicalPlan);
         SQLGenerator.Result sql = new SQLGenerator(sqlConfig).generateDatabase(optimized);
         sql.executeDMLs();
-        StreamExecutionEnvironment flinkEnv = new FlinkGenerator(flinkConfig, envProvider).generateStream(optimized, sql.getSinkMapper());
+        StreamExecutionEnvironment flinkEnv = new FlinkGenerator(flinkConfig,
+            envProvider).generateStream(optimized, sql.getSinkMapper());
         flinkEnv.execute();
 
         //Print out contents of tables in H2
@@ -223,6 +258,97 @@ public class Main2 {
                 System.out.println(r);
             }
         }
+    }
+
+    public static void graphqlTest() throws Exception {
+
+        ///Graphql bit
+
+        SchemaParser schemaParser = new SchemaParser();
+        URL url = com.google.common.io.Resources.getResource("c360-small.graphqls");
+        String schema = com.google.common.io.Resources.toString(url, Charsets.UTF_8);
+        TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(schema);
+
+        graphql.schema.idl.SchemaGenerator schemaGenerator = new graphql.schema.idl.SchemaGenerator();
+
+        VertxOptions vertxOptions = new VertxOptions();
+        VertxInternal vertx = (VertxInternal) Vertx.vertx(vertxOptions);
+
+        //In memory pool, if connection times out then the data is erased
+        Pool client = JDBCPool.pool(
+            vertx,
+            // configure the connection
+            new JDBCConnectOptions()
+                // H2 connection string
+                .setJdbcUrl(JDBC_URL)
+                // username
+//                .setUser("sa")
+                // password
+//                .setPassword("")
+                ,
+            // configure the pool
+            new PoolOptions()
+                .setMaxSize(1)
+        );
+
+        H2Column ordersPk = new UUIDColumn("_uuid_0", "_uuid_0"); //todo: PK identifier
+        H2Column columnC = new IntegerColumn("customerid", "customerid_0");
+        H2Table ordersTable = new H2Table(new Columns(List.of(columnC, ordersPk)), "orders_1", Optional.empty());
+
+        H2Column column = new IntegerColumn("discount", "discount_0");
+        H2Table entries = new H2Table(new Columns(List.of(column)), "orders_entries_2",
+            Optional.of(new EqualsCriteria("_uuid_0", "_uuid_0")));
+
+        H2Table customerOrderStats = new H2Table(new Columns(List.of(
+            new IntegerColumn("customerid", "customerid_0"),
+            new IntegerColumn("num_orders", "num_orders_0")
+        )), "customerorderstats_3",
+            Optional.empty());
+
+        DataLoaderRegistry dataLoaderRegistry = new DataLoaderRegistry();
+        GraphQLSchema graphQLSchema = schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, RuntimeWiring.newRuntimeWiring()
+            .codeRegistry(GraphQLCodeRegistry.newCodeRegistry()
+                .dataFetcher(FieldCoordinates.coordinates("Query", "orders"),
+                    new DefaultDataFetcher(new JdbcPool(client), new NoPage(), ordersTable))
+                .dataFetcher(FieldCoordinates.coordinates("orders", "entries"),
+                    new DefaultDataFetcher(/*dataLoaderRegistry, */new JdbcPool(client), new SystemPageProvider(), entries))
+                .dataFetcher(FieldCoordinates.coordinates("Query", "CustomerOrderStats"),
+                    new DefaultDataFetcher(new JdbcPool(client), new NoPage(), customerOrderStats))
+                .build())
+            .build());
+
+//    System.out.println(new SchemaPrinter().print(graphQLSchema));
+
+        GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema)
+            .build();
+
+        ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(
+                "query Test {\n"
+                    + "    CustomerOrderStats { customerid, num_orders }\n"
+                    + "    orders(limit: 2) {\n"
+                    + "        customerid"
+                    + "        entries(order_by: [{discount: DESC}]) {\n"
+                    + "            data {\n"
+                    + "                discount\n"
+                    + "            } \n"
+                    + "            pageInfo { \n"
+                    + "                cursor\n"
+                    + "                hasNext\n"
+                    + "             }\n"
+                    + "        }\n"
+                    + "    }\n"
+                    + "}")
+            .dataLoaderRegistry(dataLoaderRegistry)
+            .build();
+        ExecutionResult executionResult = graphQL.execute(executionInput);
+
+        Object data = executionResult.getData();
+        System.out.println();
+        System.out.println(data);
+        List<GraphQLError> errors2 = executionResult.getErrors();
+        System.out.println(errors2);
+
+        vertx.close();
     }
 
     public static Iterable<Record> getTableContent(DSLContext context, String tableName) throws Exception {

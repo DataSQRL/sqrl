@@ -1,0 +1,9 @@
+query Test {
+    orders(filter: {customerid: {equals: 1}}) {
+        entries(order_by: {discount: ASC}) {
+            data {
+                discount
+            }
+        }
+    }
+}

@@ -1,0 +1,48 @@
+type Query {
+    orders(filter: OrderFilter, limit: Int): [orders]
+    CustomerOrderStats: [CustomerOrderStats]
+}
+
+type CustomerOrderStats {
+    customerid: Int
+    num_orders: Int
+}
+
+type entries {
+    discount: Float
+}
+
+type orders {
+    customerid: Int
+    entries(page_size: Int, page_state: String, order_by: [ordersOrderBy]): entriespage
+}
+
+type entriespage {
+    data: [entries]
+    pageInfo: PageInfo
+}
+
+input ordersOrderBy {
+    discount: OrderDirection
+}
+
+enum OrderDirection {
+    ASC, DESC
+}
+
+type PageInfo {
+    hasNext: Boolean
+    cursor: String
+}
+
+input OrderFilter {
+    customerid: IntFilter
+}
+
+input IntFilter {
+    equals: Int
+    gt: Int
+    lt: Int
+    lteq: Int
+    gteq: Int
+}
