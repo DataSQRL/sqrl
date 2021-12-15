@@ -5,6 +5,7 @@ import ai.dataeng.sqml.analyzer.Analyzer;
 import ai.dataeng.sqml.analyzer.StatementAnalysis;
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
+import ai.dataeng.sqml.db.tabular.JDBCSinkFactory;
 import ai.dataeng.sqml.env.SqmlEnv;
 import ai.dataeng.sqml.execution.SQMLBundle;
 import ai.dataeng.sqml.execution.importer.DatasetImportManagerFactory;
@@ -18,8 +19,17 @@ import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
+import ai.dataeng.sqml.logical4.ImportResolver;
+import ai.dataeng.sqml.logical4.LogicalPlan;
+import ai.dataeng.sqml.logical4.QueryAnalyzer;
 import ai.dataeng.sqml.metadata.Metadata;
+import ai.dataeng.sqml.optimizer.LogicalPlanOptimizer;
+import ai.dataeng.sqml.optimizer.SimpleOptimizer;
 import ai.dataeng.sqml.parser.SqmlParser;
+import ai.dataeng.sqml.physical.flink.FlinkConfiguration;
+import ai.dataeng.sqml.physical.flink.FlinkGenerator;
+import ai.dataeng.sqml.physical.sql.SQLConfiguration;
+import ai.dataeng.sqml.physical.sql.SQLGenerator;
 import ai.dataeng.sqml.planner.LogicalPlanBuilder;
 import ai.dataeng.sqml.planner.RelationPlan;
 import ai.dataeng.sqml.planner.RowNodeIdAllocator;
@@ -31,12 +41,19 @@ import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.tree.Statement;
 import ai.dataeng.sqml.tree.name.Name;
+import com.google.common.base.Preconditions;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.dataloader.DataLoader;
+import org.jooq.DSLContext;
+import org.jooq.Record;
+import org.jooq.SQLDialect;
 import org.junit.jupiter.api.Test;
 
 class ImportTest {
@@ -53,13 +70,15 @@ class ImportTest {
 //  public static final String[] RETAIL_TABLE_NAMES = { "Customer", "Orders", "Product"};
 
   public static final Path outputBase = Path.of("tmp","datasource");
-//  public static final Path dbPath = Path.of("tmp","output");
+  public static final Path dbPath = Path.of("tmp","output");
 //
-//  private static final JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-//      .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false")
-//      .withDriverName("org.h2.Driver")
-//      .build();
-//  private static final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
+  private static final JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+      .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false")
+      .withDriverName("org.h2.Driver")
+      .build();
+  private static final SQLConfiguration sqlConfig = new SQLConfiguration(SQLDialect.H2,jdbcOptions);
+
+  private static final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
 //  private DataLoader<Integer, Object> characterDataLoader;
 
 
@@ -137,12 +156,56 @@ class ImportTest {
     //Script processing
     Analysis analysis = Analyzer.analyze(script, metadata);
     System.out.println(analysis.getPlan());
+
+    ///temp import
+    LogicalPlan logicalPlan = new LogicalPlan();
+    //1. Imports
+//    SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
+//    Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
+    Preconditions.checkArgument(!schemaImporter.getErrors().isFatal());
+    ImportManager sqmlImporter = new ImportManager(ddRegistry);
+    sqmlImporter.registerUserSchema(userSchema);
+
+    ConversionError.Bundle<ConversionError> errors2 = new ConversionError.Bundle<>();
+
+    Name ordersName = Name.system("orders");
+    ImportResolver importer = new ImportResolver(sqmlImporter, logicalPlan, errors2);
+    importer.resolveImport(ImportResolver.ImportMode.TABLE, Name.system(RETAIL_DATASET),
+        Optional.of(ordersName), Optional.empty());
+    ///
+
+
     QueryAssignment node = (QueryAssignment) script.getStatements().get(1);
     StatementAnalysis statementAnalysis = analysis.getStatementAnalysis(node);
-    LogicalPlanBuilder planner = new LogicalPlanBuilder(new RowNodeIdAllocator(), metadata);
+    LogicalPlanBuilder planner = new LogicalPlanBuilder(new RowNodeIdAllocator(), metadata, logicalPlan);
     RelationPlan plan = planner.planStatement(statementAnalysis, node.getQuery());
+    plan.assemble();
     System.out.println(plan);
     System.out.println();
+
+    QueryAnalyzer.addDevModeQueries(logicalPlan);
+
+    Preconditions.checkArgument(!errors.isFatal());
+
+    LogicalPlanOptimizer.Result optimized = new SimpleOptimizer().optimize(logicalPlan);
+    SQLGenerator.Result sql = new SQLGenerator(sqlConfig).generateDatabase(optimized);
+    System.out.println(sql);
+    final FlinkConfiguration flinkConfig = new FlinkConfiguration(jdbcOptions);
+
+    sql.executeDMLs();
+    StreamExecutionEnvironment flinkEnv = new FlinkGenerator(flinkConfig, envProvider).generateStream(optimized, sql.getSinkMapper());
+    flinkEnv.execute();
+
+    //Print out contents of tables in H2
+    Set<String> tableNames = Set.copyOf(sql.getToTable().values());
+    DSLContext context = sqlConfig.getJooQ();
+    for (String tableName : tableNames) {
+      System.out.println("== " + tableName + "==");
+      for (Record r : getTableContent(context, tableName)) {
+        System.out.println(r);
+      }
+    }
+
 //
 //    analysis.getDefinedFunctions().stream()
 //        .forEach((f)->{
@@ -191,5 +254,10 @@ class ImportTest {
 //    List<GraphQLError> errors2 = executionResult.getErrors();
 //    System.out.println(errors2);
 //    assertEquals(true, errors2.isEmpty());
+  }
+
+  public static Iterable<Record> getTableContent(DSLContext context, String tableName) throws Exception {
+    tableName = JDBCSinkFactory.sqlName(tableName);
+    return context.select().from(tableName).fetch();
   }
 }

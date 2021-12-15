@@ -57,32 +57,32 @@ public class PlanVariableAllocator
         variables = new HashMap<>();
     }
 
-    public PlanVariableAllocator(Collection<ColumnReferenceExpression> initial)
-    {
-        this.variables = requireNonNull(initial, "initial is null").stream()
-                .collect(Collectors.toMap(ColumnReferenceExpression::getName, ColumnReferenceExpression::getType));
-    }
+//    public PlanVariableAllocator(Collection<ColumnReferenceExpression> initial)
+//    {
+//        this.variables = requireNonNull(initial, "initial is null").stream()
+//                .collect(Collectors.toMap(ColumnReferenceExpression::getName, ColumnReferenceExpression::getType));
+//    }
 
-    public ColumnReferenceExpression newVariable(ColumnReferenceExpression variableHint)
-    {
-        checkArgument(variables.containsKey(variableHint.getName()), "variableHint name not in variables map");
-        return newVariable(variableHint.getName(), variableHint.getType());
-    }
-
-    public ColumnReferenceExpression newVariable(QualifiedName nameHint, Type type)
-    {
-        return newVariable(nameHint.getSuffix().getCanonical(), type, null);
-    }
+//    public ColumnReferenceExpression newVariable(ColumnReferenceExpression variableHint)
+//    {
+//        checkArgument(variables.containsKey(variableHint.getName()), "variableHint name not in variables map");
+//        return newVariable(variableHint.getName(), variableHint.getType());
+//    }
+//
+//    public ColumnReferenceExpression newVariable(QualifiedName nameHint, Type type)
+//    {
+//        return newVariable(nameHint.getSuffix().getCanonical(), type, null);
+//    }
 
     public ColumnReferenceExpression newVariable(String nameHint, Type type)
     {
         return newVariable(nameHint, type, null);
     }
-
-    public ColumnReferenceExpression newHashVariable()
-    {
-        return newVariable("$hashValue", BigIntegerType.INSTANCE);
-    }
+//
+//    public ColumnReferenceExpression newHashVariable()
+//    {
+//        return newVariable("$hashValue", BigIntegerType.INSTANCE);
+//    }
 
     @Override
     public ColumnReferenceExpression newVariable(String nameHint, Type type, String suffix)
@@ -146,10 +146,10 @@ public class PlanVariableAllocator
         return newVariable(nameHint, type, suffix);
     }
 
-    public ColumnReferenceExpression newVariable(Field field)
-    {
-        return newVariable(field.getName().getCanonical(), field.getType(), null);
-    }
+//    public ColumnReferenceExpression newVariable(Field field)
+//    {
+//        return newVariable(field.getName().getCanonical(), field.getType(), null);
+//    }
 
 //    public TypeProvider getTypes()
 //    {
@@ -170,21 +170,21 @@ public class PlanVariableAllocator
         return new ColumnReferenceExpression(new Column(Name.system(name),
         null, 0, (BasicType) variables.get(name), 0, List.of(), false, false));
     }
-
-    public ColumnReferenceExpression newVariable(RowExpression expression)
-    {
-        return newVariable(expression, null);
-    }
-
-    public ColumnReferenceExpression newVariable(RowExpression expression, String suffix)
-    {
-        String nameHint = "expr";
-        if (expression instanceof ColumnReferenceExpression) {
-            nameHint = ((ColumnReferenceExpression) expression).getName();
-        }
-        else if (expression instanceof CallExpression) {
-            nameHint = ((CallExpression) expression).getDisplayName();
-        }
-        return newVariable(nameHint, expression.getType(), suffix);
-    }
+//
+//    public ColumnReferenceExpression newVariable(RowExpression expression)
+//    {
+//        return newVariable(expression, null);
+//    }
+//
+//    public ColumnReferenceExpression newVariable(RowExpression expression, String suffix)
+//    {
+//        String nameHint = "expr";
+//        if (expression instanceof ColumnReferenceExpression) {
+//            nameHint = ((ColumnReferenceExpression) expression).getName();
+//        }
+//        else if (expression instanceof CallExpression) {
+//            nameHint = ((CallExpression) expression).getDisplayName();
+//        }
+//        return newVariable(nameHint, expression.getType(), suffix);
+//    }
 }

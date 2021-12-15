@@ -177,7 +177,7 @@ public class Main2 {
         //Setup user schema and getting schema from statistics data
         SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
         Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
-        Preconditions.checkArgument(!schemaImporter.getErrors().isFatal());
+        Preconditions.checkArgument(!schemaImporter.getErrors().isFatal(), schemaImporter.getErrors());
         ImportManager sqmlImporter = new ImportManager(ddRegistry);
         sqmlImporter.registerUserSchema(userSchema);
 

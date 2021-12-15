@@ -23,7 +23,6 @@ import ai.dataeng.sqml.logical4.LogicalPlan.RowNode;
 import ai.dataeng.sqml.logical4.ProjectOperator;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.relation.ColumnReferenceExpression;
-import ai.dataeng.sqml.relation.VariableReferenceExpression;
 import ai.dataeng.sqml.tree.Cast;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FieldReference;
@@ -32,6 +31,7 @@ import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.SymbolReference;
+import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -56,13 +56,16 @@ class QueryPlanner
     private final PlanVariableAllocator variableAllocator;
     private final RowNodeIdAllocator idAllocator;
     private final Metadata metadata;
+    private final LogicalPlan logicalPlan;
 
     QueryPlanner(
         StatementAnalysis analysis,
             PlanVariableAllocator variableAllocator,
             RowNodeIdAllocator idAllocator,
-            Metadata metadata)
+            Metadata metadata,
+            LogicalPlan logicalPlan)
     {
+        this.logicalPlan = logicalPlan;
         requireNonNull(analysis, "analysis is null");
         requireNonNull(variableAllocator, "variableAllocator is null");
         requireNonNull(idAllocator, "idAllocator is null");
@@ -149,7 +152,8 @@ class QueryPlanner
 
     private PlanBuilder planQueryBody(Query query)
     {
-        RelationPlan relationPlan = new RelationPlanner(analysis, variableAllocator, idAllocator, metadata)
+        RelationPlan relationPlan = new RelationPlanner(analysis, variableAllocator, idAllocator, metadata,
+            logicalPlan)
                 .process(query.getQueryBody(), null);
 
         return planBuilderFor(relationPlan);
@@ -160,7 +164,8 @@ class QueryPlanner
         RelationPlan relationPlan;
 
 //        if (node.getFrom().isPresent()) {
-            relationPlan = new RelationPlanner(analysis, variableAllocator, idAllocator, metadata)
+            relationPlan = new RelationPlanner(analysis, variableAllocator, idAllocator, metadata,
+                logicalPlan)
                     .process(node.getFrom(), null);
 //        }
 //        else {
@@ -478,10 +483,21 @@ class QueryPlanner
 //                .forEach(groupingKeys::add);
         groupIdVariable.ifPresent(groupingKeys::add);
 
-        AggregateOperator aggregationNode = new AggregateOperator((RowNode) subPlan.getRoot(),
-            new LinkedHashMap<>(),
-            new LinkedHashMap<>()
-        );
+        //todo: add agg operators
+        LogicalPlan.Table orders = (LogicalPlan.Table) logicalPlan.getSchemaElement(Name.system("orders"));
+        LogicalPlan.Table customerNoOrders = logicalPlan.createTable(Name.system("CustomerOrderStats"),false);
+        LogicalPlan.Column customerid = (LogicalPlan.Column) orders.getField(Name.system("customerid"));
+
+        AggregateOperator aggregationNode = AggregateOperator.createAggregateAndPopulateTable((RowNode) subPlan.getRoot(), customerNoOrders,
+            Map.of(customerid.getName(),new ColumnReferenceExpression(customerid)),
+            Map.of(Name.system("num_orders"),new AggregateOperator.Aggregation(
+                AggregateOperator.AggregateFunction.COUNT,
+                List.of(new ColumnReferenceExpression(customerid)))));
+            ;
+//        AggregateOperator aggregationNode = new AggregateOperator(,
+//            new LinkedHashMap<>(),
+//            new LinkedHashMap<>()
+//        );
 //                idAllocator.getNextId(),
 //                subPlan.getRoot(),
 //                aggregations,

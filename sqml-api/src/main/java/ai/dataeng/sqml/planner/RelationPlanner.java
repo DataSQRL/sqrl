@@ -19,8 +19,6 @@ import ai.dataeng.sqml.analyzer.ColumnHandle;
 import ai.dataeng.sqml.analyzer.Scope;
 import ai.dataeng.sqml.analyzer.StatementAnalysis;
 import ai.dataeng.sqml.analyzer.TableHandle;
-import ai.dataeng.sqml.logical4.DocumentComputeOperator;
-import ai.dataeng.sqml.logical4.DocumentComputeOperator.Computation;
 import ai.dataeng.sqml.logical4.LogicalPlan;
 import ai.dataeng.sqml.logical4.LogicalPlan.Column;
 import ai.dataeng.sqml.logical4.LogicalPlan.Node;
@@ -28,12 +26,12 @@ import ai.dataeng.sqml.logical4.ShreddingOperator;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.physical.flink.FieldProjection;
 import ai.dataeng.sqml.relation.ColumnReferenceExpression;
-import ai.dataeng.sqml.schema2.ArrayType;
 import ai.dataeng.sqml.schema2.Field;
 import ai.dataeng.sqml.tree.DefaultTraversalVisitor;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Table;
+import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
@@ -45,16 +43,18 @@ class RelationPlanner
     private final PlanVariableAllocator variableAllocator;
     private final RowNodeIdAllocator idAllocator;
     private final Metadata metadata;
+    private final LogicalPlan logicalPlan;
 //    private final Session session;
 //    private final SubqueryPlanner subqueryPlanner;
 
     RelationPlanner(
-            StatementAnalysis analysis,
-            PlanVariableAllocator variableAllocator,
-            RowNodeIdAllocator idAllocator,
-            Metadata metadata
-    )
+        StatementAnalysis analysis,
+        PlanVariableAllocator variableAllocator,
+        RowNodeIdAllocator idAllocator,
+        Metadata metadata,
+        LogicalPlan logicalPlan)
     {
+        this.logicalPlan = logicalPlan;
         requireNonNull(analysis, "analysis is null");
         requireNonNull(variableAllocator, "variableAllocator is null");
         requireNonNull(idAllocator, "idAllocator is null");
@@ -82,7 +82,8 @@ class RelationPlanner
 //            return new RelationPlan(subPlan.getRoot(), scope, subPlan.getFieldMappings());
 //        }
 
-        TableHandle handle = analysis.getTableHandle(node);
+        LogicalPlan.Table table = (LogicalPlan.Table) logicalPlan.getSchemaElement(Name.system(node.getName().toString()));
+//        TableHandle handle = analysis.getTableHandle(node);
 
         ImmutableList.Builder<ColumnReferenceExpression> outputVariablesBuilder = ImmutableList.builder();
         ImmutableMap.Builder<ColumnReferenceExpression, ColumnHandle> columns = ImmutableMap.builder();
@@ -94,13 +95,12 @@ class RelationPlanner
                 System.out.println(field);
                 continue;
             }
-            columns.put(variable, columnHandle);
+            columns.put(variable, columnHandle); //todo: handle
         }
 
         List<ColumnReferenceExpression> outputVariables = outputVariablesBuilder.build();
         //Todo: lookup operator in operator catalog
-        Node root = new ShreddingOperator(null, null, new FieldProjection[0], new Column[0]);//idAllocator.getNextId(), handle, outputVariables, columns.build());
-        return new RelationPlan(root, scope, outputVariables);
+        return new RelationPlan(table.getCurrentNode(), scope, outputVariables);
     }
 //
 //    @Override
@@ -574,14 +574,14 @@ class RelationPlanner
     @Override
     public RelationPlan visitQuery(Query node, Void context)
     {
-        return new QueryPlanner(analysis, variableAllocator, idAllocator, metadata)
+        return new QueryPlanner(analysis, variableAllocator, idAllocator, metadata, logicalPlan)
                 .plan(node);
     }
 
     @Override
     public RelationPlan visitQuerySpecification(QuerySpecification node, Void context)
     {
-        return new QueryPlanner(analysis, variableAllocator, idAllocator, metadata)
+        return new QueryPlanner(analysis, variableAllocator, idAllocator, metadata, logicalPlan)
                 .plan(node);
     }
 //

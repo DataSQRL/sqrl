@@ -280,6 +280,7 @@ public class LogicalPlan {
                       boolean isPrimaryKey, boolean isInternal) {
             super(name, table);
             this.version = version;
+            Preconditions.checkNotNull(type);
             this.type = type;
             this.arrayDepth = arrayDepth;
             this.constraints = constraints;

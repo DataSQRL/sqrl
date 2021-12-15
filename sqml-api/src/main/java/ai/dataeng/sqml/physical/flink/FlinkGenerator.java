@@ -84,6 +84,8 @@ public class FlinkGenerator {
                     input.addSink(dbUtil.getDatabaseSink(dbsink.getUpsertQuery(), StreamType.APPEND));
                 }
                 input.addSink(new PrintSinkFunction<>()); //TODO: remove, debug only
+            } else if(node instanceof ProjectOperator) {
+                converted = getInput(lp2pp, ((ProjectOperator)node).getInput());
             } else {
                 throw new UnsupportedOperationException(node.getClass().getName());
             }

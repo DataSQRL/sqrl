@@ -14,6 +14,7 @@
 package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.analyzer.Scope;
+import ai.dataeng.sqml.logical4.LogicalPlan;
 import ai.dataeng.sqml.logical4.LogicalPlan.Node;
 import ai.dataeng.sqml.logical4.LogicalPlan.RowNode;
 import ai.dataeng.sqml.relation.ColumnReferenceExpression;
@@ -95,5 +96,20 @@ public class RelationPlan
 //            current = current.get().getLocalParent();
 //        }
         return allFieldCount;
+    }
+
+    public void assemble() {
+        setConsumer(this.root);
+    }
+
+    private void setConsumer(Node node) {
+        for (Node input : (List<Node>)node.getInputs()) {
+            if (input.getConsumers().contains(node)) {
+                continue;
+            }
+            input.addConsumer(node);
+            setConsumer(input);
+        }
+
     }
 }
