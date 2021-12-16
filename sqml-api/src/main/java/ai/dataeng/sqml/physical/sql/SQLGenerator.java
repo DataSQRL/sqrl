@@ -8,7 +8,6 @@ import ai.dataeng.sqml.optimizer.MaterializeSource;
 import ai.dataeng.sqml.physical.DatabaseSink;
 import lombok.AllArgsConstructor;
 import lombok.Value;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.jooq.DSLContext;
 
 import java.sql.SQLException;
@@ -53,60 +52,6 @@ public class SQLGenerator {
             }
         }
         return new Result(configuration, dmlQueries, sinkMapper, toTable);
-    }
-
-    private abstract class TableBuilder {
-
-        final String tableName;
-        boolean isFinished;
-
-        final List<String> dmlQueries;
-        final DatabaseUtil dbUtil;
-
-        private TableBuilder(String tableName, List<String> dmlQueries, DatabaseUtil dbUtil) {
-            this.tableName = tableName;
-            this.dmlQueries = dmlQueries;
-            this.dbUtil = dbUtil;
-        }
-
-        public abstract String getSQL();
-
-        public String finish() {
-            if (!isFinished) {
-                dmlQueries.add(getSQL());
-                isFinished = true;
-            }
-            return tableName;
-        }
-
-    }
-
-    private class CreateTableBuilder extends TableBuilder {
-
-        private final String sql;
-
-        private CreateTableBuilder(String tableName, LogicalPlan.Column[] tableSchema,
-                                   List<String> dmlQueries, DatabaseUtil dbUtil) {
-            super(tableName, dmlQueries, dbUtil);
-            sql = dbUtil.createTableDML(tableName, tableSchema);
-        }
-
-        @Override
-        public String getSQL() {
-            return sql;
-        }
-    }
-
-    private class ViewBuilder extends TableBuilder {
-
-        private ViewBuilder(String tableName, List<String> dmlQueries, DatabaseUtil dbUtil) {
-            super(tableName, dmlQueries, dbUtil);
-        }
-
-        @Override
-        public String getSQL() {
-            return null; //TODO
-        }
     }
 
     @Value

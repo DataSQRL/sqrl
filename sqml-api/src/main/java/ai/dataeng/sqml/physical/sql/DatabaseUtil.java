@@ -37,7 +37,6 @@ public class DatabaseUtil {
 
         if (column.getArrayDepth() > 0) mapType = mapType.getArrayDataType();
         else if (column.isNonNull()) mapType = mapType.notNull();
-
         return mapType;
     }
 
