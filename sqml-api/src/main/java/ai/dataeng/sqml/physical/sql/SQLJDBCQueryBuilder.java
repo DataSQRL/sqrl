@@ -1,17 +1,12 @@
 package ai.dataeng.sqml.physical.sql;
 
-import ai.dataeng.sqml.db.DestinationTableSchema;
 import ai.dataeng.sqml.physical.DatabaseSink;
 import ai.dataeng.sqml.physical.flink.Row;
-import ai.dataeng.sqml.physical.flink.RowUpdate;
-import ai.dataeng.sqml.schema2.basic.*;
-import com.google.common.base.Preconditions;
+import ai.dataeng.sqml.physical.sql.util.DatabaseUtil;
 import lombok.AllArgsConstructor;
 
-import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -41,6 +36,6 @@ public class SQLJDBCQueryBuilder implements DatabaseSink.JDBCQueryBuilder {
             else ps.setObject(queryPos, value, sqlType);
             queryPos++;
         }
-        ps.setObject(queryPos, ingestTime, DatabaseUtil.TIMESTAMP_COLUMN_JOOQ_TYPE.getSQLType());
+        ps.setObject(queryPos, ingestTime, DatabaseUtil.TIMESTAMP_COLUMN_SQL_TYPE.getTypeNo());
     }
 }

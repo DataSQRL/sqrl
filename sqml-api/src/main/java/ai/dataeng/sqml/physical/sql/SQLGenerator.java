@@ -6,15 +6,20 @@ import ai.dataeng.sqml.logical4.LogicalPlanIterator;
 import ai.dataeng.sqml.optimizer.LogicalPlanOptimizer;
 import ai.dataeng.sqml.optimizer.MaterializeSource;
 import ai.dataeng.sqml.physical.DatabaseSink;
+import ai.dataeng.sqml.physical.sql.util.CreateTableBuilder;
+import ai.dataeng.sqml.physical.sql.util.DatabaseUtil;
+import ai.dataeng.sqml.physical.sql.util.TableBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Value;
-import org.jooq.DSLContext;
 
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class SQLGenerator {
@@ -39,7 +44,7 @@ public class SQLGenerator {
                 MaterializeSource source = (MaterializeSource) node;
                 String tableName = source.getTable().getId();
                 LogicalPlan.Column[] tableSchema = source.getTableSchema();
-                tableBuilder = new CreateTableBuilder(tableName,tableSchema,dmlQueries,dbUtil);
+                tableBuilder = new CreateTableBuilder(tableName,dmlQueries,dbUtil).addColumns(tableSchema);
                 sinkMapper.put(source, dbUtil.getSink(tableName, tableSchema));
             } else if (node instanceof AccessNode) {
                 //Do we need to convert relationships for the GraphQL API?
@@ -65,17 +70,14 @@ public class SQLGenerator {
         //Map relationships for GraphQL API?
 
         public void executeDMLs() {
-            try {
-                DSLContext context = configuration.getJooQ();
-                for (String dml : dmlQueries) {
-                    context.execute(dml);
-                }
+            String dmls = dmlQueries.stream().collect(Collectors.joining("\n"));
+            System.out.println(dmls);
+            try (Connection conn = configuration.getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate(dmls);
             } catch (SQLException e) {
                 throw new RuntimeException("Could not execute SQL query",e);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException("Could not load database driver",e);
-            } catch (Exception e) {
-                throw new RuntimeException("Encountered exception",e);
             }
         }
     }

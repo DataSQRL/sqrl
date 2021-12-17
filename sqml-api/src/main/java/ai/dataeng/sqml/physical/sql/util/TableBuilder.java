@@ -1,10 +1,10 @@
-package ai.dataeng.sqml.physical.sql;
+package ai.dataeng.sqml.physical.sql.util;
 
 import com.google.common.base.Preconditions;
 
 import java.util.List;
 
-abstract class TableBuilder {
+public abstract class TableBuilder {
 
     final String tableName;
     boolean isFinished;
