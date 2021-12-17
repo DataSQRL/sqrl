@@ -5,7 +5,6 @@ import ai.dataeng.sqml.analyzer.Analyzer;
 import ai.dataeng.sqml.analyzer.StatementAnalysis;
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
-import ai.dataeng.sqml.db.tabular.JDBCSinkFactory;
 import ai.dataeng.sqml.env.SqmlEnv;
 import ai.dataeng.sqml.execution.SQMLBundle;
 import ai.dataeng.sqml.execution.importer.DatasetImportManagerFactory;
@@ -36,25 +35,21 @@ import ai.dataeng.sqml.planner.RowNodeIdAllocator;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
 import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
-import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.tree.Statement;
 import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Preconditions;
+import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.junit.jupiter.api.Test;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.dataloader.DataLoader;
-import org.jooq.DSLContext;
-import org.jooq.Record;
-import org.jooq.SQLDialect;
-import org.junit.jupiter.api.Test;
+
+import static ai.dataeng.sqml.physical.sql.SQLConfiguration.Dialect.H2;
 
 class ImportTest {
   public static final Path RETAIL_DIR = Path.of("../sqml-examples/retail/");
@@ -76,7 +71,7 @@ class ImportTest {
       .withUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false")
       .withDriverName("org.h2.Driver")
       .build();
-  private static final SQLConfiguration sqlConfig = new SQLConfiguration(SQLDialect.H2,jdbcOptions);
+  private static final SQLConfiguration sqlConfig = new SQLConfiguration(H2,jdbcOptions);
 
   private static final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
 //  private DataLoader<Integer, Object> characterDataLoader;
@@ -196,15 +191,6 @@ class ImportTest {
     StreamExecutionEnvironment flinkEnv = new FlinkGenerator(flinkConfig, envProvider).generateStream(optimized, sql.getSinkMapper());
     flinkEnv.execute();
 
-    //Print out contents of tables in H2
-    Set<String> tableNames = Set.copyOf(sql.getToTable().values());
-    DSLContext context = sqlConfig.getJooQ();
-    for (String tableName : tableNames) {
-      System.out.println("== " + tableName + "==");
-      for (Record r : getTableContent(context, tableName)) {
-        System.out.println(r);
-      }
-    }
 
 //
 //    analysis.getDefinedFunctions().stream()
@@ -256,8 +242,4 @@ class ImportTest {
 //    assertEquals(true, errors2.isEmpty());
   }
 
-  public static Iterable<Record> getTableContent(DSLContext context, String tableName) throws Exception {
-    tableName = JDBCSinkFactory.sqlName(tableName);
-    return context.select().from(tableName).fetch();
-  }
 }

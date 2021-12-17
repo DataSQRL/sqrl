@@ -9,11 +9,9 @@ import ai.dataeng.execution.table.H2Table;
 import ai.dataeng.execution.table.column.Columns;
 import ai.dataeng.execution.table.column.H2Column;
 import ai.dataeng.execution.table.column.IntegerColumn;
-import ai.dataeng.execution.table.column.PrimaryKeyColumn;
 import ai.dataeng.execution.table.column.UUIDColumn;
 import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
-import ai.dataeng.sqml.db.tabular.JDBCSinkFactory;
 import ai.dataeng.sqml.execution.SQMLBundle;
 import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
@@ -22,15 +20,11 @@ import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.ingest.DataSourceRegistry;
 import ai.dataeng.sqml.ingest.DatasetRegistration;
 import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.ingest.schema.SchemaAdjustmentSettings;
 import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
-import ai.dataeng.sqml.ingest.schema.SchemaValidationProcess;
 import ai.dataeng.sqml.ingest.schema.external.SchemaDefinition;
 import ai.dataeng.sqml.ingest.schema.external.SchemaExport;
 import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
-import ai.dataeng.sqml.ingest.shredding.RecordShredder;
 import ai.dataeng.sqml.ingest.source.SourceDataset;
-import ai.dataeng.sqml.ingest.source.SourceRecord;
 import ai.dataeng.sqml.ingest.stats.SchemaGenerator;
 import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.logical4.*;
@@ -40,15 +34,16 @@ import ai.dataeng.sqml.physical.flink.FlinkConfiguration;
 import ai.dataeng.sqml.physical.flink.FlinkGenerator;
 import ai.dataeng.sqml.physical.sql.SQLConfiguration;
 import ai.dataeng.sqml.physical.sql.SQLGenerator;
+import ai.dataeng.sqml.physical.sql.util.DatabaseUtil;
 import ai.dataeng.sqml.relation.ColumnReferenceExpression;
 import ai.dataeng.sqml.relation.RowExpression;
 import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.schema2.constraint.Constraint;
+import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.tree.name.NamePath;
-import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import graphql.ExecutionInput;
@@ -68,13 +63,6 @@ import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.net.URL;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.util.*;
-
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -85,18 +73,22 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInc
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
-import org.apache.flink.util.OutputTag;
 import org.dataloader.DataLoaderRegistry;
-import org.jooq.DSLContext;
-import org.jooq.Record;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.net.URL;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.*;
 
 public class Main2 {
 
@@ -123,7 +115,7 @@ public class Main2 {
             .build();
 
     private static final FlinkConfiguration flinkConfig = new FlinkConfiguration(jdbcOptions);
-    private static final SQLConfiguration sqlConfig = new SQLConfiguration(SQLDialect.H2,jdbcOptions);
+    private static final SQLConfiguration sqlConfig = new SQLConfiguration(SQLConfiguration.Dialect.H2,jdbcOptions);
 
     private static final Name toName(String name) {
         return Name.of(name,NameCanonicalizer.LOWERCASE_ENGLISH);
@@ -158,21 +150,6 @@ public class Main2 {
     private static Connection getConnection() throws Exception {
         SimpleJdbcConnectionProvider provider = new SimpleJdbcConnectionProvider(jdbcOptions);
         return provider.getOrEstablishConnection();
-    }
-
-    public static void testDB() throws Exception {
-        Connection conn = getConnection();
-        DSLContext dsl = DSL.using(conn,SQLDialect.H2);
-
-//        dsl.meta().getTables().stream().map(t -> t.getName()).forEach( n -> System.out.println(n));
-
-        //Why does this not work when the Customer table is listed above???
-        for (String tableName : RETAIL_TABLE_NAMES) {
-            tableName = JDBCSinkFactory.sqlName(tableName);
-            for (Record r : dsl.select().from(tableName).fetch()) {
-                System.out.println(r);
-            }
-        }
     }
 
     public static void simpleTest() throws Exception {
@@ -251,13 +228,17 @@ public class Main2 {
 
         //Print out contents of tables in H2
         Set<String> tableNames = Set.copyOf(sql.getToTable().values());
-        DSLContext context = sqlConfig.getJooQ();
-        for (String tableName : tableNames) {
-            System.out.println("== " + tableName + "==");
-            for (Record r : getTableContent(context, tableName)) {
-                System.out.println(r);
+        try (Connection conn = sqlConfig.getConnection()) {
+            for (String tableName : tableNames) {
+                System.out.println("== " + tableName + "==");
+                printTableContent(conn,tableName);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not execute SQL query",e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Could not load database driver",e);
         }
+
     }
 
     public static void graphqlTest() throws Exception {
@@ -351,67 +332,13 @@ public class Main2 {
         vertx.close();
     }
 
-    public static Iterable<Record> getTableContent(DSLContext context, String tableName) throws Exception {
-        tableName = JDBCSinkFactory.sqlName(tableName);
-        return context.select().from(tableName).fetch();
-    }
-
-    public static void tableShredding(DataSourceRegistry ddRegistry, SQMLBundle bundle) throws Exception {
-        SQMLBundle.SQMLScript sqml = bundle.getMainScript();
-
-        SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
-        Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
-
-        Preconditions.checkArgument(!schemaImporter.getErrors().isFatal());
-
-        ImportManager sqmlImporter = new ImportManager(ddRegistry);
-        sqmlImporter.registerUserSchema(userSchema);
-        sqmlImporter.importAllTable(RETAIL_DATASET);
-
-        ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
-        ImportSchema schema = sqmlImporter.createImportSchema(errors);
-
-        Preconditions.checkArgument(!errors.isFatal());
-        StreamExecutionEnvironment flinkEnv = envProvider.create();
-        JDBCSinkFactory dbSinkFactory = new JDBCSinkFactory(jdbcOptions, SQLDialect.H2);
-
-        Set<String> tableNames = new HashSet<>();
-
-        for (String tableName : RETAIL_TABLE_NAMES) {
-            ImportSchema.SourceTableImport tableImport = schema.getSourceTable(Name.system(tableName));
-            Preconditions.checkNotNull(tableImport);
-//            System.out.print(toString(Name.system("local"),singleton(tableImport.getSourceSchema())));
-
-            DataStream<SourceRecord<String>> stream = tableImport.getTable().getDataStream(flinkEnv);
-            final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>("schema-error-"+tableName){};
-            SingleOutputStreamOperator<SourceRecord<Name>> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, tableImport.getSourceSchema(),
-                    SchemaAdjustmentSettings.DEFAULT, tableImport.getTable().getDataset().getRegistration()));
-            validate.getSideOutput(schemaErrorTag).addSink(new PrintSinkFunction<>()); //TODO: handle errors
-
-            for (RecordShredder shredder : RecordShredder.from(tableImport.getTableSchema())) {
-                SingleOutputStreamOperator<Row> process = validate.flatMap(shredder.getProcess());
-
-                String shreddedTableName = tableName;
-                if (shredder.getTableIdentifier().getLength()>0) {
-                    shreddedTableName += "_" + shredder.getTableIdentifier().toString('_');
-                }
-                tableNames.add(shreddedTableName);
-
-                process.addSink(new PrintSinkFunction<>()); //TODO: remove, debugging only
-                process.addSink(dbSinkFactory.getSink(shreddedTableName,shredder.getResultSchema()));
-            }
-        }
-
-        flinkEnv.execute();
-
-        //Print out contents of tables in H2
-        for (String shreddedTable : tableNames) {
-            System.out.println("== " + shreddedTable + "==");
-            for (Record r : dbSinkFactory.getTableContent(shreddedTable)) {
-                System.out.println(r);
-            }
+    public static void printTableContent(Connection conn, String tableName) throws SQLException {
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery("SELECT * FROM " + DatabaseUtil.sqlName(tableName));
+            System.out.println(DatabaseUtil.result2String(rs));
         }
     }
+
 
     public static void importSchema(DataSourceRegistry ddRegistry, SQMLBundle bundle) throws Exception {
         SQMLBundle.SQMLScript sqml = bundle.getMainScript();

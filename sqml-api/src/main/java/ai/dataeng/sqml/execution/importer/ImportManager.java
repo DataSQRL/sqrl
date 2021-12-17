@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
-import org.jooq.Table;
 
 
 import java.util.*;
