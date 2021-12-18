@@ -30,6 +30,29 @@ public class ImportResolver {
     private final LogicalPlan logicalPlan;
     private final ConversionError.Bundle<ConversionError> errors;
 
+
+    public void resolveImport2(ImportMode importMode, Name datasetName,
+        Optional<Name> tableName, Optional<Name> asName) {
+        ConversionError.Bundle<SchemaConversionError> schemaErrors = new ConversionError.Bundle<>();
+
+        assert importMode == ImportMode.TABLE;
+        ImportManager.SourceTableImport tblImport = importManager.importTable(datasetName, tableName.get(), schemaErrors);
+
+        ImportManager.SourceTableImport sourceImport = (ImportManager.SourceTableImport) tblImport;
+
+        Map<NamePath, LogicalPlan.Column[]> outputSchema = new HashMap<>();
+        LogicalPlan.Table rootTable = tableConversion(sourceImport.getSourceSchema().getFields(),outputSchema,
+            asName.orElse(tblImport.getTableName()), NamePath.ROOT, null);
+        DocumentSource source = new DocumentSource(sourceImport.getSourceSchema(), sourceImport.getTable(),outputSchema);
+        logicalPlan.sourceNodes.add(source);
+        //Add shredder for each entry in outputSchema
+        for (Map.Entry<NamePath, LogicalPlan.Column[]> entry : outputSchema.entrySet()) {
+            ShreddingOperator.shredAtPath(source, entry.getKey(), rootTable);
+        }
+
+        errors.addAll(schemaErrors);
+    }
+
     public void resolveImport(ImportMode importMode, Name datasetName,
                                   Optional<Name> tableName, Optional<Name> asName) {
         ConversionError.Bundle<SchemaConversionError> schemaErrors = new ConversionError.Bundle<>();

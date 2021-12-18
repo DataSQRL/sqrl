@@ -2,6 +2,7 @@ package ai.dataeng.sqml.tree.name;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
+import java.util.Optional;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
@@ -58,6 +59,14 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
     public Name get(int index) {
         Preconditions.checkArgument(index>=0 && index<getNumComponents());
         return names[index];
+    }
+
+    public Optional<Name> getOptional(int index) {
+        if(index>=0 && index<getNumComponents()) {
+            return Optional.of(names[index]);
+        } else {
+            return Optional.empty();
+        }
     }
 
     public Name getLast() {

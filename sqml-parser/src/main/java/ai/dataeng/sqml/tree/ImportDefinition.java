@@ -13,6 +13,7 @@
  */
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,6 +22,7 @@ public class ImportDefinition extends Node {
 
   protected final NodeLocation location;
   protected final QualifiedName qualifiedName;
+  protected final NamePath namePath;
   private final Optional<Identifier> alias;
 
   public ImportDefinition(NodeLocation location,
@@ -28,7 +30,12 @@ public class ImportDefinition extends Node {
     super(Optional.ofNullable(location));
     this.location = location;
     this.qualifiedName = qualifiedName;
+    this.namePath = qualifiedName.toNamePath();
     this.alias = alias;
+  }
+
+  public NamePath getNamePath() {
+    return namePath;
   }
 
   public Optional<Identifier> getAlias() {

@@ -9,6 +9,7 @@ import ai.dataeng.execution.table.column.FloatColumn;
 import ai.dataeng.execution.table.column.H2Column;
 import ai.dataeng.execution.table.column.IntegerColumn;
 import ai.dataeng.execution.table.column.ScalarArrayColumn;
+import ai.dataeng.execution.table.column.StringColumn;
 import ai.dataeng.execution.table.column.TimeColumn;
 import ai.dataeng.execution.table.column.UUIDColumn;
 import ai.dataeng.execution.table.column.ZonedDateTimeColumn;
@@ -55,6 +56,11 @@ public class ArgumentParser extends
 
     @Override
     public Object visitBooleanColumn(BooleanColumn column, Object context) {
+      return visitEqualityColumn(column, column);
+    }
+
+    @Override
+    public Object visitStringColumn(StringColumn column, Object context) {
       return visitEqualityColumn(column, column);
     }
 

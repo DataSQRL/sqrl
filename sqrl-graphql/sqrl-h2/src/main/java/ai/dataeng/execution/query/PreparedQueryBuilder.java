@@ -78,6 +78,8 @@ public class PreparedQueryBuilder {
       builder.append(" OFFSET " + pageProvider.pageState(environment).get());
     }
 
+    System.out.println(builder.toString());
+    System.out.println(arguments);
     String query = builder.toString();
     RowMapperBuilder rowMapperBuilder = new RowMapperBuilder(pageProvider);
 

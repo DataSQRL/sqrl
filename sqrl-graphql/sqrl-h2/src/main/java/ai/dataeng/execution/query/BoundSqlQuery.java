@@ -20,6 +20,7 @@ public class BoundSqlQuery {
 
     Future<RowSet<Row>> result;
     if (arguments.isPresent()) {
+      System.out.println(arguments.get().deepToString());
       result = preparedQuery.execute(arguments.get());
     } else {
       result = preparedQuery.execute();

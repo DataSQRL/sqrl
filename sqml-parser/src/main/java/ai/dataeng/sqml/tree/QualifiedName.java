@@ -18,6 +18,7 @@ import static java.util.Locale.ENGLISH;
 import static java.util.Objects.requireNonNull;
 
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -163,5 +164,9 @@ public class QualifiedName {
 
   public List<Name> getNameParts() {
     return nameParts;
+  }
+
+  public NamePath toNamePath() {
+    return NamePath.of(nameParts.toArray(new Name[0]));
   }
 }
