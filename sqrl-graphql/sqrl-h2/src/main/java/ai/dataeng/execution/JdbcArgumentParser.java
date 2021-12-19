@@ -19,7 +19,10 @@ import graphql.schema.DataFetchingEnvironment;
 import java.util.Map;
 import lombok.Value;
 
-public class ArgumentParser extends
+/**
+ * Assumes a (filter: ..) structure
+ */
+public class JdbcArgumentParser extends
     H2ColumnVisitor2<Object, ArgumentContext> {
 
   @Override
@@ -116,7 +119,7 @@ public class ArgumentParser extends
           case "lt":
             sql = "%s < ?";
             break;
-          case "lteg":
+          case "lteq":
             sql = "%s <= ?";
             break;
           case "gt":

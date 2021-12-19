@@ -76,7 +76,7 @@ public class Servlet extends AbstractVerticle {
 //    VertxInternal vertx = (VertxInternal) Vertx.vertx(vertxOptions);
 
     Map<String, H2Table> tableMap = new SqrlSinkBuilder(env, tableManager)
-        .build(false);
+        .build(true);
 
     UberTranslator uberTranslator = new UberTranslator();
 

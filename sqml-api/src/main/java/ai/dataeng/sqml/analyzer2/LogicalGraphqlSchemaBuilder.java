@@ -2,13 +2,10 @@ package ai.dataeng.sqml.analyzer2;
 
 import ai.dataeng.execution.DefaultDataFetcher;
 import ai.dataeng.execution.connection.JdbcPool;
-import ai.dataeng.execution.criteria.EqualsCriteria;
 import ai.dataeng.execution.page.NoPage;
 import ai.dataeng.execution.page.SystemPageProvider;
 import ai.dataeng.execution.table.H2Table;
-import ai.dataeng.execution.table.column.Columns;
-import ai.dataeng.execution.table.column.H2Column;
-import ai.dataeng.execution.table.column.IntegerColumn;
+import ai.dataeng.sqml.graphql.filter.JdbcArgumentBuilder;
 import ai.dataeng.sqml.logical4.LogicalPlan;
 import ai.dataeng.sqml.logical4.LogicalPlan.DatasetOrTable;
 import ai.dataeng.sqml.logical4.LogicalPlan.Relationship;
@@ -45,13 +42,15 @@ import graphql.schema.GraphQLInputObjectField;
 import graphql.schema.GraphQLInputObjectType;
 import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNamedInputType;
+import graphql.schema.GraphQLNamedOutputType;
+import graphql.schema.GraphQLNamedSchemaElement;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
-import graphql.schema.idl.RuntimeWiring;
 import io.vertx.core.Vertx;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
@@ -75,6 +74,7 @@ public class LogicalGraphqlSchemaBuilder {
   final Map<Class<? extends Type>, GraphQLOutputType> types;
   final ShadowingContainer<DatasetOrTable> schema;
   private final Vertx vertx;
+  private final GraphqlTypeCatalog typeCatalog;
   GraphQLSchema.Builder schemaBuilder = GraphQLSchema.newSchema();
   UberTranslator uberTranslator;
   Map<String, H2Table> tableMap;
@@ -87,6 +87,7 @@ public class LogicalGraphqlSchemaBuilder {
     this.vertx = vertx;
     this.uberTranslator = uberTranslator;
     this.tableMap = tableMap;
+    this.typeCatalog = new GraphqlTypeCatalog();
   }
 
 //  public static Builder newGraphqlSchema() {
@@ -123,31 +124,22 @@ public class LogicalGraphqlSchemaBuilder {
 //  }
 
   public GraphQLSchema build() {
-
     GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
         .name("Query");
 
     for (DatasetOrTable field : schema) {
       Table table = (Table)field;
-
-//      Type type = field.get();
-
-//      Optional<GraphQLOutputType> outputType = table.accept(this, new Context("Query", table));
-//      if (outputType.isPresent()) {
-
-        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
-            .name(table.getName().getCanonical())
-            .type(GraphQLList.list(createOutputType(table)))
-            .build();
-        obj.field(f);
-//      }
+      GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
+          .name(table.getName().getCanonical())
+          //TODO: Create a graphql object wrapper to construct this
+          .type(typeCatalog.register(createPagedOutputType(table)))
+          .arguments(new JdbcArgumentBuilder(Multiplicity.MANY, table, true, typeCatalog).build())
+          .build();
+      obj.field(f);
     }
 
     schemaBuilder.query(obj);
     schemaBuilder.codeRegistry(buildCodeRegistry());
-//    return Optional.of(obj.build());
-//    GraphQLSchema.Builder schemaBuilder = visitor.getBuilder();
-//    schemaBuilder.codeRegistry(this.codeRegistry);
     return schemaBuilder.build();
   }
 
@@ -171,7 +163,7 @@ public class LogicalGraphqlSchemaBuilder {
       Table tbl = (Table) ds;
       String gqlName = uberTranslator.getGraphqlName(tbl);
       codeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", gqlName),
-          new DefaultDataFetcher(pool, new NoPage(), tableMap.get(tbl.getName().getDisplay())));
+          new DefaultDataFetcher(pool, new SystemPageProvider(), tableMap.get(tbl.getName().getDisplay())));
     }
 
     for (DatasetOrTable ds : schema) {
@@ -193,46 +185,50 @@ public class LogicalGraphqlSchemaBuilder {
 
   private void resolveNestedFetchers(JdbcPool pool, Relationship field, Builder codeRegistry,
       Table parent) {
+    System.out.println(uberTranslator.getGraphqlTypeName(parent) + ":" +
+        uberTranslator.getGraphqlName(field.getToTable()));
+
     codeRegistry.dataFetcher(FieldCoordinates.coordinates(uberTranslator.getGraphqlTypeName(parent),
             uberTranslator.getGraphqlName(field.getToTable())),
         new DefaultDataFetcher(/*dataLoaderRegistry, */pool, new NoPage(), tableMap.get(field.getToTable().getName().getDisplay())));
   }
 
-  public GraphQLOutputType createOutputType(Table table) {
+  //TODO: let page wrapper be informed by page strategy
+  //TODO: Assure types are only defined once
+  public GraphQLObjectType createPagedOutputType(Table table) {
+    GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
+        .name(table.getName().getDisplay()+"Page")
+        .field(GraphQLFieldDefinition.newFieldDefinition()
+            .name("data")
+            .type(GraphQLList.list(typeCatalog.register(createOutputType(table))))
+            .build())
+        .field(GraphQLFieldDefinition.newFieldDefinition()
+            .name("pageInfo")
+            .type(typeCatalog.register(createPageInfo()))
+            .build());
+
+    return obj.build();
+  }
+
+  private GraphQLNamedOutputType createPageInfo() {
+
+    return GraphQLObjectType.newObject()
+        .name("PageInfo")
+        .field(GraphQLFieldDefinition.newFieldDefinition()
+            .name("hasNext")
+            .type(Scalars.GraphQLBoolean)
+            .build())
+        .field(GraphQLFieldDefinition.newFieldDefinition()
+            .name("cursor")
+            .type(Scalars.GraphQLString)
+            .build())
+        .build();
+  }
+
+
+  public GraphQLNamedOutputType createOutputType(Table table) {
     GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
         .name(table.getName().getDisplay());
-
-//    if (true) {
-//      Optional<GraphQLOutputType> type;
-////      if (field instanceof RelationshipField) {
-////        TypedField to = ((RelationshipField)field).getTo();
-////        if (!seen.contains(unbox(to.getType()))) { //hidden types may be referencable
-////          type = to.getType().accept(this, new Context(name, to));
-////        } else {
-////          String typename = toName(to.getName());
-////          type = Optional.of(new GraphQLTypeReference(typename));
-////        }
-////      } else {
-////        type = field.getType().accept(this, new Context(name, field));
-////      }
-//
-//      if (type.isPresent()) {
-//        hasField = true;
-//        String fieldName = toName(field.getName().getDisplay());
-//        GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
-//            .name(fieldName)
-//            .type(type.get())
-//            .build();
-//        obj.field(f);
-//      }
-//    }
-//
-//    if (!hasField) {
-//      return Optional.empty();
-//    }
-//
-
-//    return Optional.of(new GraphQLTypeReference(name));
 
     for (LogicalPlan.Field field : table.getFields()) {
       if (!field.isVisible()) {
@@ -240,18 +236,20 @@ public class LogicalGraphqlSchemaBuilder {
       }
 
       GraphQLOutputType output;
+      List<GraphQLArgument> argument;
       if (field instanceof LogicalPlan.Relationship) {
         LogicalPlan.Relationship rel = (LogicalPlan.Relationship) field;
         output = createOutputType(rel.getToTable());
         if (rel.getMultiplicity() == Multiplicity.MANY) {
           output = GraphQLList.list(output);
         }
-
+        argument = new JdbcArgumentBuilder(rel.getMultiplicity(), rel.getToTable(), false, typeCatalog).build();
       } else if (field instanceof LogicalPlan.Column) {
         LogicalPlan.Column col = (LogicalPlan.Column) field;
         Visitor sqmlTypeVisitor = new Visitor(Map.of());
         output = col.getType().accept(sqmlTypeVisitor, null)
             .get();
+        argument = List.of();
       } else {
         throw new RuntimeException("");
       }
@@ -259,6 +257,7 @@ public class LogicalGraphqlSchemaBuilder {
       GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
           .name(field.getName().getCanonical())
           .type(output)
+          .arguments(argument)
           .build();
 
       obj.field(f);
@@ -490,5 +489,25 @@ public class LogicalGraphqlSchemaBuilder {
   static class Context {
     private final String parentType;
     private final Field field;
+  }
+
+  public static class GraphqlTypeCatalog {
+    Map<String, GraphQLNamedInputType> inputTypes = new HashMap<>();
+    Map<String, GraphQLNamedOutputType> outputTypes = new HashMap<>();
+
+    public GraphQLNamedOutputType register(GraphQLNamedOutputType outputType) {
+      if (outputTypes.containsKey(outputType.getName())) {
+        return new GraphQLTypeReference(outputType.getName());
+      }
+      outputTypes.put(outputType.getName(), outputType);
+      return outputType;
+    }
+    public GraphQLNamedInputType register(GraphQLNamedInputType inputType) {
+      if (inputTypes.containsKey(inputType.getName())) {
+        return new GraphQLTypeReference(inputType.getName());
+      }
+      inputTypes.put(inputType.getName(), inputType);
+      return inputType;
+    }
   }
 }

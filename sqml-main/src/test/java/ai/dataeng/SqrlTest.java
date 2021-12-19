@@ -146,21 +146,20 @@ public class SqrlTest {
 //
     GraphQL graphQL = GraphqlBuilder.graphqlTest(vertx, schema);
 
-
-
     ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(
             "query Test {\n"
-                + "    customerorderstats { customerid, num_orders }\n"
-                + "    orders {"//(limit: 2) {\n"
-                + "        customerid, id\n"
-                + "        entries {"//(order_by: [{discount: DESC}]) {\n"
+                + "    customerorderstats { data {customerid, num_orders} }\n"
+                + "    orders(limit: 2) {"// {\n"
+                + "        data {"
+                + "           customerid, id\n"
+                + "           entries (filter: {total: {gt: 100}}, order: [{discount: DESC}]){"// {\n"
 //                + "            data {\n"
                 + "               total, discount\n"
 //                + "            } \n"
 //                + "            pageInfo { \n"
 //                + "                cursor\n"
 //                + "                hasNext\n"
-//                + "             }\n"
+            + "               }\n"
                 + "        }\n"
                 + "    }\n"
                 + "}")
