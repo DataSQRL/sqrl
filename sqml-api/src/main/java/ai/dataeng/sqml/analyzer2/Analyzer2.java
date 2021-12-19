@@ -74,56 +74,21 @@ public class Analyzer2 {
 
     @Override
     public Scope visitImportDefinition(ImportDefinition node, Scope scope) {
-      final String ordersPath = "file:///Users/henneberger/Projects/sqml-official/sqml-examples/retail/ecommerce-data/orders.json";
-
-      TableResult tableResult = env.executeSql(
-          "CREATE TABLE Orders ("
-              + "  id BIGINT,"
-              + "  customerid INT,"
-              + "  `time` INT,"
-              + "  `proctime` AS PROCTIME(),"
-//              + "  `uuid` AS UUID(),"
-              + "  entries ARRAY<ROW<productid INT, quantity INT, unit_price INT, discount INT>>"
-              + ") WITH ("
-              + "  'connector' = 'filesystem',"
-              + "  'path' = '"
-              + ordersPath
-              + "',"
-              + "  'format' = 'json'"
-              + ")");
-
-      Table orders = env.sqlQuery(
-          "SELECT id, customerid, `time`, `proctime`, UUID() as `uuid`, entries FROM Orders");
-
-      TableResult reslt = env.executeSql(
-          "CREATE VIEW Orders2 AS SELECT id, customerid, `time`, `proctime`, UUID() as `uuid`, entries FROM Orders");
-      SqrlEntity decoratedOrders = new SqrlEntity(orders);
-      decoratedOrders.setPrimaryKey(List.of(Name.of("id", LOWERCASE_ENGLISH)));
-      tableManager.getTables().put(Name.of("Orders", LOWERCASE_ENGLISH).toNamePath(), decoratedOrders);
-
-      //FK are id mapping to id
-      Table entries = env.sqlQuery(
-          "SELECT o.id AS `id`, o.proctime, e.* FROM Orders o, UNNEST(o.`entries`) e");
-      SqrlEntity decoratedEntries = new SqrlEntity(entries);
-
-      decoratedOrders.addRelationship(Name.system("entries"), decoratedEntries);
-      tableManager.getTables().put(NamePath.of(
-          Name.of("Orders", LOWERCASE_ENGLISH),
-          Name.of("entries", LOWERCASE_ENGLISH)
-      ), decoratedEntries);
+      ImportStub importStub = new ImportStub(env, tableManager);
+      importStub.importTable(node.getNamePath());
 
       return null;
     }
 
     @Override
     public Scope visitQueryAssignment(QueryAssignment node, Scope context) {
-//        Node rewritten = NodeTreeRewriter.rewriteWith(new FieldAndTableAliasRewriter(), node.getQuery(), null);
-        //Must be after aliasing
-      SqrlEntity ent = tableManager.getTables().get(node.getNamePath().getPrefix().get());
       Node n = node.getQuery();
+
       HasContextTable ctx = new HasContextTable();
       n.accept(ctx, null);
       if (ctx.isHasContext()) {
+        SqrlEntity ent = tableManager.getTables().get(node.getNamePath().getPrefix().get());
+
         n = NodeTreeRewriter.rewriteWith(new DecontextualizerRewriter(),
             node.getQuery(),
             new RewriterContext(node.getNamePath().getPrefix().get(), ent));
@@ -132,26 +97,13 @@ public class Analyzer2 {
       n = NodeTreeRewriter.rewriteWith(new TableNameRewriter(), n, null);
 
       String query = n.accept(new NodeFormatter(), null);
+
       System.out.println(query);
 
-      //Nested tables
-//      Node node2 = NodeTreeRewriter.rewriteWith(new DummyRewriter(), node.getQuery(), null);
-//      System.out.println(node2.accept(new NodeFormatter(), null));
-//      tableManager.getTables().get(Name.system("Orders")).getTable().addColumns()
-//
-//
-//      String CustomerOrderStats = "SELECT customerid, count(*) as num_orders\n"
-//          + "                      FROM " + tableManager.getTables().get(Name.system("Orders")).getTable() + "\n"
-//          + "                      GROUP BY customerid";
-//
-//
-      TableEnvironmentImpl envImpl = ((TableEnvironmentImpl)env);
-      List<Operation> operations = envImpl.getParser().parse(query);
-      System.out.println(operations);
-
       Table table = env.sqlQuery(query);
-      SqrlEntity queryEntity = new SqrlEntity(table);
-
+      SqrlEntity queryEntity = new SqrlEntity(node.getNamePath(), table);
+      //TODO: Discover primary keys
+      queryEntity.setPrimaryKey(List.of(Name.system("customerid")));
       tableManager.getTables().put(node.getNamePath(), queryEntity);
 
       return null;
@@ -292,6 +244,4 @@ public class Analyzer2 {
       return new Identifier(field.getQualifiedName());
     }
   }
-
-
 }

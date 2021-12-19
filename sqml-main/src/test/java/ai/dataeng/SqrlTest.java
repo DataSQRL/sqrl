@@ -2,33 +2,35 @@ package ai.dataeng;
 
 import static ai.dataeng.sqml.physical.sql.SQLConfiguration.Dialect.H2;
 
+import ai.dataeng.execution.criteria.EqualsCriteria;
+import ai.dataeng.execution.table.H2Table;
+import ai.dataeng.execution.table.column.Columns;
+import ai.dataeng.execution.table.column.H2Column;
+import ai.dataeng.execution.table.column.IntegerColumn;
 import ai.dataeng.sqml.analyzer2.Analyzer2;
 import ai.dataeng.sqml.analyzer2.GraphqlBuilder;
+import ai.dataeng.sqml.analyzer2.LogicalGraphqlSchemaBuilder;
+import ai.dataeng.sqml.analyzer2.SqrlSchemaConverter;
 import ai.dataeng.sqml.analyzer2.SqrlSinkBuilder;
 import ai.dataeng.sqml.analyzer2.TableManager;
-import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
-import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
-import ai.dataeng.sqml.env.SqmlEnv;
-import ai.dataeng.sqml.execution.SQMLBundle;
-import ai.dataeng.sqml.execution.importer.ImportManager;
-import ai.dataeng.sqml.execution.importer.ImportSchema;
+import ai.dataeng.sqml.analyzer2.UberTranslator;
 import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
 import ai.dataeng.sqml.flink.EnvironmentFactory;
-import ai.dataeng.sqml.ingest.DataSourceRegistry;
-import ai.dataeng.sqml.ingest.DatasetRegistration;
-import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
-import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
 import ai.dataeng.sqml.logical4.LogicalPlan;
 import ai.dataeng.sqml.parser.SqmlParser;
 import ai.dataeng.sqml.physical.sql.SQLConfiguration;
-import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.schema2.constraint.Constraint;
-import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.tree.name.Name;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.idl.SchemaPrinter;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.impl.VertxInternal;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -73,7 +75,7 @@ public class SqrlTest {
 
   @Test
   public void testgraphql() throws Exception {
-    GraphqlBuilder.graphqlTest();
+//    GraphqlBuilder.graphqlTest(vertx, schema);
   }
 
 
@@ -117,11 +119,47 @@ public class SqrlTest {
     //Script processing
     new Analyzer2(script, env, tableManager)
         .analyze();
+
+    LogicalPlan plan = new SqrlSchemaConverter()
+        .convert(tableManager);
+
+    VertxOptions vertxOptions = new VertxOptions();
+    VertxInternal vertx = (VertxInternal) Vertx.vertx(vertxOptions);
+
+
+
+
+//    H2Column ordersPk = new UUIDColumn("_uuid_0", "_uuid_0"); //todo: PK identifier
+    H2Column columnC = new IntegerColumn("customerid", "customerid");
+    H2Column columnid = new IntegerColumn("id", "id");
+//    H2Column id = new StringColumn("uuid", "uuid");
+    H2Table ordersTable = new H2Table(new Columns(List.of( columnC, columnid)),
+        Name.system("Orders").getCanonical().replaceAll("\\.", "_") + "_flink", Optional.empty());
+
+    H2Column column = new IntegerColumn("discount", "discount");
+    H2Table entries = new H2Table(new Columns(List.of(column)), "orders_entries_flink",
+        Optional.of(new EqualsCriteria("id", "id")));
+
+    H2Table customerOrderStats = new H2Table(new Columns(List.of(
+        new IntegerColumn("customerid", "customerid"),
+        new IntegerColumn("num_orders", "num_orders")
+    )), Name.system("CustomerOrderStats").getCanonical().replaceAll("\\.", "_") + "_flink",
+        Optional.empty());
+
+//    Map<String, H2Table> tableMap = Map.of("Orders", ordersTable, "entries", entries, "CustomerOrderStats", customerOrderStats);
 //
-//    new SqrlSinkBuilder(env, tableManager)
-//        .build();
+    Map<String, H2Table> tableMap = new SqrlSinkBuilder(env, tableManager)
+        .build(true);
+
+    UberTranslator uberTranslator = new UberTranslator();
+
+    GraphQLSchema schema = new LogicalGraphqlSchemaBuilder(Map.of(), plan.getSchema(), vertx, uberTranslator, tableMap)
+        .build();
+
+    System.out.println(new SchemaPrinter().print(schema));
+
 //
-//    GraphqlBuilder.graphqlTest();
+    GraphqlBuilder.graphqlTest(vertx, schema);
   }
 
   @SneakyThrows
