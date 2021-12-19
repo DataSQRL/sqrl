@@ -571,7 +571,7 @@ public class SqrlSinkBuilder {
 
     @Override
     public String visit(DoubleType doubleType) {
-      return "DOUBLE";
+      return "DECIMAL";
     }
 
     @Override
