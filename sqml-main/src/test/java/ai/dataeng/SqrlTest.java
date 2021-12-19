@@ -19,10 +19,16 @@ import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.logical4.LogicalPlan;
 import ai.dataeng.sqml.parser.SqmlParser;
 import ai.dataeng.sqml.physical.sql.SQLConfiguration;
+import ai.dataeng.sqml.servlet.Servlet;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.tree.name.Name;
+import graphql.ExecutionInput;
+import graphql.ExecutionResult;
+import graphql.GraphQL;
+import graphql.GraphQLError;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaPrinter;
+import io.vertx.core.Launcher;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.impl.VertxInternal;
@@ -128,7 +134,7 @@ public class SqrlTest {
     VertxInternal vertx = (VertxInternal) Vertx.vertx(vertxOptions);
 
     Map<String, H2Table> tableMap = new SqrlSinkBuilder(env, tableManager)
-        .build(true);
+        .build(false);
 
     UberTranslator uberTranslator = new UberTranslator();
 
@@ -138,6 +144,44 @@ public class SqrlTest {
     System.out.println(new SchemaPrinter().print(schema));
 
 //
-    GraphqlBuilder.graphqlTest(vertx, schema);
+    GraphQL graphQL = GraphqlBuilder.graphqlTest(vertx, schema);
+
+
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(
+            "query Test {\n"
+                + "    customerorderstats { customerid, num_orders }\n"
+                + "    orders {"//(limit: 2) {\n"
+                + "        customerid, id\n"
+                + "        entries {"//(order_by: [{discount: DESC}]) {\n"
+//                + "            data {\n"
+                + "               total, discount\n"
+//                + "            } \n"
+//                + "            pageInfo { \n"
+//                + "                cursor\n"
+//                + "                hasNext\n"
+//                + "             }\n"
+                + "        }\n"
+                + "    }\n"
+                + "}")
+//        .dataLoaderRegistry(dataLoaderRegistry)
+        .build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Object data = executionResult.getData();
+    System.out.println();
+    System.out.println(data);
+    List<GraphQLError> errors2 = executionResult.getErrors();
+    System.out.println(errors2);
+
+//    Launcher.executeCommand("run", Servlet.class.getName());
+//    vertx.deployVerticle(new Servlet(graphQL))
+//        .onFailure(e->e.printStackTrace())
+//        .onSuccess(e-> System.out.println(e));
+//    Servlet servlet = new Servlet(graphQL, vertx);
+//    servlet.start();
+//    vertx.close();
+
+//    while (true) Thread.sleep(100);
   }
 }
