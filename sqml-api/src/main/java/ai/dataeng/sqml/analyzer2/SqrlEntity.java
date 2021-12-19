@@ -29,4 +29,13 @@ public class SqrlEntity {
   public List<Name> getPrimaryKey() {
     return primaryKey;
   }
+
+  public List<Name> getContextKey() {
+    List<Name> contextKeys = new ArrayList<>();
+    if (parent != null) {
+      contextKeys.addAll(parent.getContextKey());
+    }
+    contextKeys.addAll(primaryKey);
+    return contextKeys;
+  }
 }

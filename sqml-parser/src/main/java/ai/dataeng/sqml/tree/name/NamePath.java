@@ -1,8 +1,12 @@
 package ai.dataeng.sqml.tree.name;
 
+import ai.dataeng.sqml.tree.QualifiedName;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +28,9 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
 
     public static NamePath of(@NonNull Name... names) {
         return new NamePath(names);
+    }
+    public static NamePath of(@NonNull List<Name> names) {
+        return new NamePath(names.toArray(new Name[0]));
     }
 
     public NamePath resolve(@NonNull Name name) {
@@ -108,4 +115,34 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
     public int compareTo(NamePath o) {
         return Arrays.compare(names,o.names);
     }
+
+    public Name toName() {
+        return null;
+    }
+    public Optional<NamePath> getPrefix() {
+
+        if (names.length <= 1) {
+            return Optional.empty();
+        }
+
+        Name[] newNames = Arrays.copyOfRange(names, 0, names.length - 1);
+        return Optional.of(NamePath.of(newNames));
+    }
+
+    public String getDisplay() {
+        return Arrays.stream(names)
+            .map(e->e.getDisplay())
+            .collect(Collectors.joining("."));
+    }
+
+    public NamePath popFirst() {
+        Name[] newNames = Arrays.copyOfRange(names, 1, names.length);
+        return NamePath.of(newNames);
+    }
+
+//    public NamePath concat(NamePath namePath) {
+//        Name[] newNames = Arrays.copyOfRange(names, 0, names.length - 1);
+//        return Optional.of(NamePath.of(newNames));
+//        return null;
+//    }
 }

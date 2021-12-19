@@ -58,9 +58,16 @@ public class SqrlTest {
   @Test
   public void testGroupBy() {
     String script = "IMPORT ecommerce-data.Orders\n"
-        + "CustomerOrderStats := SELECT customerid, count(*) as num_orders\n"
+        + "CustomerOrderStats := SELECT customerid, count(1) as num_orders\n"
         + "                      FROM Orders\n"
         + "                      GROUP BY customerid;";
+    run(script);
+  }
+  @Test
+  public void testNestedRelation() {
+    String script = "IMPORT ecommerce-data.Orders;\n"
+        + "Orders.total := SELECT sum(quantity) AS quantity\n"
+        + "                FROM @.entries;";
     run(script);
   }
 
@@ -110,11 +117,11 @@ public class SqrlTest {
     //Script processing
     new Analyzer2(script, env, tableManager)
         .analyze();
-
-    new SqrlSinkBuilder(env, tableManager)
-        .build();
-
-    GraphqlBuilder.graphqlTest();
+//
+//    new SqrlSinkBuilder(env, tableManager)
+//        .build();
+//
+//    GraphqlBuilder.graphqlTest();
   }
 
   @SneakyThrows

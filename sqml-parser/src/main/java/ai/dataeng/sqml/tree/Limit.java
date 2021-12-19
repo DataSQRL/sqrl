@@ -13,54 +13,45 @@
  */
 package ai.dataeng.sqml.tree;
 
-import static com.google.common.base.MoreObjects.toStringHelper;
+import static io.airlift.slice.Slices.utf8Slice;
+import static java.util.Objects.requireNonNull;
 
-import ai.dataeng.sqml.tree.name.NamePath;
-import com.google.common.collect.ImmutableList;
+import io.airlift.slice.Slice;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class Table
-    extends QueryBody {
+public class Limit
+    extends Node {
 
-  private final NamePath name;
+  private final String value;
 
-  public Table(NamePath name) {
-    this(Optional.empty(), name);
+  public Limit(String value) {
+    this(Optional.empty(), value);
   }
 
-  public Table(NodeLocation location, NamePath name) {
-    this(Optional.of(location), name);
+  public Limit(NodeLocation location, String value) {
+    this(Optional.of(location), value);
   }
 
-  private Table(Optional<NodeLocation> location, NamePath name) {
+  private Limit(Optional<NodeLocation> location, String value) {
     super(location);
-    this.name = name;
+    requireNonNull(value, "value is null");
+    this.value = value;
   }
 
-  public QualifiedName getName() {
-    return QualifiedName.of(name.toString());
-  }
-  public NamePath getNamePath() {
-    return name;
+  public String getValue() {
+    return value;
   }
 
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
-    return visitor.visitTable(this, context);
+    return visitor.visitLimitNode(this, context);
   }
 
   @Override
-  public List<Node> getChildren() {
-    return ImmutableList.of();
-  }
-
-  @Override
-  public String toString() {
-    return toStringHelper(this)
-        .addValue(name)
-        .toString();
+  public List<? extends Node> getChildren() {
+    return null;
   }
 
   @Override
@@ -72,12 +63,12 @@ public class Table
       return false;
     }
 
-    Table table = (Table) o;
-    return Objects.equals(name, table.name);
+    Limit that = (Limit) o;
+    return Objects.equals(value, that.value);
   }
 
   @Override
   public int hashCode() {
-    return name.hashCode();
+    return value.hashCode();
   }
 }

@@ -26,12 +26,12 @@ public class Query
 
   private final QueryBody queryBody;
   private final Optional<OrderBy> orderBy;
-  private final Optional<String> limit;
+  private final Optional<Limit> limit;
 
   public Query(
       QueryBody queryBody,
       Optional<OrderBy> orderBy,
-      Optional<String> limit) {
+      Optional<Limit> limit) {
     this(Optional.empty(), queryBody, orderBy, limit);
   }
 
@@ -39,15 +39,15 @@ public class Query
       NodeLocation location,
       QueryBody queryBody,
       Optional<OrderBy> orderBy,
-      Optional<String> limit) {
+      Optional<Limit> limit) {
     this(Optional.of(location), queryBody, orderBy, limit);
   }
 
-  private Query(
+  public Query(
       Optional<NodeLocation> location,
       QueryBody queryBody,
       Optional<OrderBy> orderBy,
-      Optional<String> limit) {
+      Optional<Limit> limit) {
     super(location);
     requireNonNull("with is null");
     requireNonNull(queryBody, "queryBody is null");
@@ -67,14 +67,14 @@ public class Query
     return orderBy;
   }
 
-  public Optional<String> getLimit() {
+  public Optional<Limit> getLimit() {
     return limit;
   }
 
   public Optional<Long> parseLimit() {
     return getLimit()
-        .filter(l->l.equalsIgnoreCase("ALL"))
-        .map(l->Long.parseLong(l));
+        .filter(l->l.getValue().equalsIgnoreCase("ALL"))
+        .map(l->Long.parseLong(l.getValue()));
   }
 
   @Override

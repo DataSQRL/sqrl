@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+//todo visitor?
 public class JoinOn
     extends JoinCriteria {
 
@@ -60,4 +61,9 @@ public class JoinOn
   public List<Node> getNodes() {
     return ImmutableList.of(expression);
   }
+
+  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
+    return visitor.visitJoinOn(this, context);
+  }
+
 }

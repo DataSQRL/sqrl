@@ -139,11 +139,7 @@ joinCriteria
     ;
 
 aliasedRelation
-    : relationPrimary (AS? identifier columnAliases?)?
-    ;
-
-columnAliases
-    : '(' identifier (',' identifier)* ')'
+    : relationPrimary (AS? identifier)?
     ;
 
 relationPrimary

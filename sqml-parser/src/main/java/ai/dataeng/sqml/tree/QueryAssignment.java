@@ -1,16 +1,24 @@
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.List;
 import java.util.Optional;
 
 public class QueryAssignment extends Assignment {
 
   private final Query query;
+  private final NamePath namePath;
 
-  public QueryAssignment(Optional<NodeLocation> location, QualifiedName name,
+  public QueryAssignment(Optional<NodeLocation> location, NamePath namePath,
       Query query) {
-    super(location, name);
+    super(location, null);
     this.query = query;
+    this.namePath = namePath;
+  }
+
+  @Override
+  public NamePath getNamePath() {
+    return namePath;
   }
 
   @Override

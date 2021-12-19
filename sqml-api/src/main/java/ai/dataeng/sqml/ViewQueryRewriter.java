@@ -31,6 +31,8 @@ import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.Table;
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NameCanonicalizer;
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -234,12 +236,13 @@ public class ViewQueryRewriter extends AstVisitor<RewriterContext, ViewRewriterC
 //    Preconditions.checkState(node.getName().getParts().size() == 1, "Table paths tbd");
     Optional<ViewTable> table = this.plan.getTableByName(node.getName());
     Preconditions.checkState(table.isPresent(), "Could not find table %s", node.getName());
-
-    return new RewriterContext(
-        new Table(QualifiedName.of(table.get().getTableName())),
-        table.get(),
-        table.get().getColumns()
-      );
+//
+//    return new RewriterContext(
+//        new Table(NamePath.of(Name.of(table.get().getTableName(), NameCanonicalizer.AS_IS)),
+//        table.get(),
+//        table.get().getColumns()
+//      );
+    return null;
   }
 
   public class TableExpressionRewriter

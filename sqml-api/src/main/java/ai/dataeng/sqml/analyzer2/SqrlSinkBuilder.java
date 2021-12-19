@@ -3,6 +3,7 @@ package ai.dataeng.sqml.analyzer2;
 import static org.apache.flink.table.api.Expressions.$;
 
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -64,8 +65,8 @@ public class SqrlSinkBuilder {
 
     StatementSetImpl set = (StatementSetImpl) env.createStatementSet();
 
-    for (Map.Entry<Name, SqrlEntity> entityEntry : tableManager.getTables().entrySet()) {
-      Name name = entityEntry.getKey();
+    for (Map.Entry<NamePath, SqrlEntity> entityEntry : tableManager.getTables().entrySet()) {
+      Name name = entityEntry.getKey().toName();
       Name tableName = Name.system(name.getCanonical().replaceAll("\\.", "_") + "_flink");
       SqrlEntity entity = entityEntry.getValue();
       String sql = "CREATE TABLE %s("

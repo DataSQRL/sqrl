@@ -30,6 +30,11 @@ public class AllColumns
     prefix = Optional.empty();
   }
 
+  public AllColumns(Optional<QualifiedName> prefix) {
+    super(Optional.empty());
+    this.prefix = prefix;
+  }
+
   public AllColumns(NodeLocation location) {
     super(Optional.of(location));
     prefix = Optional.empty();

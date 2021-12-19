@@ -13,6 +13,7 @@
  */
 package ai.dataeng.sqml.parser;
 
+import static ai.dataeng.sqml.tree.name.NameCanonicalizer.LOWERCASE_ENGLISH;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -53,6 +54,7 @@ import ai.dataeng.sqml.tree.JoinAssignment;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.LikePredicate;
+import ai.dataeng.sqml.tree.Limit;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.NaturalJoin;
@@ -87,6 +89,9 @@ import ai.dataeng.sqml.tree.TimestampLiteral;
 import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.tree.WhenClause;
+import ai.dataeng.sqml.tree.name.LowercaseEnglishCanonicalizer;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -361,6 +366,12 @@ class AstBuilder
           .of(new OrderBy(getLocation(context.ORDER()), visit(context.sortItem(), SortItem.class)));
     }
 
+    Optional<Limit> limit = Optional.empty();
+    Optional<String> limitStr = getTextIfPresent(context.limit);
+    if (context.LIMIT() != null && limitStr.isPresent()) {
+      limit = Optional.of(new Limit(limitStr.get()));
+    }
+
     if (term instanceof QuerySpecification) {
       // When we have a simple query specification
       // followed by order by limit, fold the order by and limit
@@ -379,7 +390,7 @@ class AstBuilder
               query.getGroupBy(),
               query.getHaving(),
               orderBy,
-              getTextIfPresent(context.limit)),
+              query.getLimit()),
           Optional.empty(),
           Optional.empty());
     }
@@ -388,7 +399,7 @@ class AstBuilder
         getLocation(context),
         term,
         orderBy,
-        getTextIfPresent(context.limit));
+        limit);
   }
 
   @Override
@@ -572,18 +583,13 @@ class AstBuilder
       return child;
     }
 
-    List<Identifier> aliases = null;
-    if (context.columnAliases() != null) {
-      aliases = visit(context.columnAliases().identifier(), Identifier.class);
-    }
-
     return new AliasedRelation(getLocation(context), child,
-        (Identifier) visit(context.identifier()), aliases);
+        (Identifier) visit(context.identifier()));
   }
 
   @Override
   public Node visitTableName(SqlBaseParser.TableNameContext context) {
-    return new Table(getLocation(context), getQualifiedName(context.qualifiedName()));
+    return new Table(getLocation(context), getNamePath(context.qualifiedName()));
   }
 
   @Override
@@ -981,9 +987,9 @@ class AstBuilder
 
   @Override
   public Node visitQueryAssign(QueryAssignContext ctx) {
-    QualifiedName name = getQualifiedName(ctx.qualifiedName());
+//    QualifiedName name = getQualifiedName(ctx.qualifiedName());
 
-    return new QueryAssignment(Optional.of(getLocation(ctx)), name,
+    return new QueryAssignment(Optional.of(getLocation(ctx)), getNamePath(ctx.qualifiedName()),
         (Query)visitQuery(ctx.query()));
   }
 
@@ -1066,6 +1072,18 @@ class AstBuilder
         .collect(toList());
   }
 
+  private NamePath getNamePath(SqlBaseParser.QualifiedNameContext context) {
+    List<Name> parts = visit(context.identifier(), Identifier.class).stream()
+        .map(Identifier::getValue) // TODO: preserve quotedness
+        .map(e->Name.of(e, LOWERCASE_ENGLISH))
+        .collect(Collectors.toList());
+    if (context.all != null ) {
+      parts = new ArrayList<>(parts);
+      parts.add(Name.of("*", LOWERCASE_ENGLISH));
+    }
+
+    return NamePath.of(parts);
+  }
   private QualifiedName getQualifiedName(SqlBaseParser.QualifiedNameContext context) {
     List<String> parts = visit(context.identifier(), Identifier.class).stream()
         .map(Identifier::getValue) // TODO: preserve quotedness
