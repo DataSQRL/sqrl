@@ -8,6 +8,7 @@ import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.DefaultTraversalVisitor;
 import ai.dataeng.sqml.tree.Expression;
+import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.Identifier;
@@ -108,7 +109,22 @@ public class Analyzer2 {
 
       return null;
     }
+
+    @Override
+    public Scope visitExpressionAssignment(ExpressionAssignment node, Scope context) {
+      SqrlEntity ent = tableManager.getTables().get(node.getNamePath().getPrefix().get());
+      String expr = node.getExpression().accept(new NodeFormatter(), null);
+
+
+      Table table = ent.getTable().addColumns(expr + " AS " + node.getNamePath().getLast().getDisplay());
+      //Updates table ref
+      ent.setTable(table);
+
+      return null;
+    }
   }
+
+
 
 
   @Value

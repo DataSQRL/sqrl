@@ -38,7 +38,7 @@ public class GraphqlBuilder {
                 + "        customerid, id\n"
                 + "        entries {"//(order_by: [{discount: DESC}]) {\n"
 //                + "            data {\n"
-                + "                discount\n"
+                + "               total, discount\n"
 //                + "            } \n"
 //                + "            pageInfo { \n"
 //                + "                cursor\n"

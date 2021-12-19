@@ -60,6 +60,7 @@ public class SqrlTest {
   @Test
   public void testGroupBy() {
     String script = "IMPORT ecommerce-data.Orders\n"
+        + "Orders.entries.total := quantity * unit_price - discount;\n"
         + "CustomerOrderStats := SELECT customerid, count(1) as num_orders\n"
         + "                      FROM Orders\n"
         + "                      GROUP BY customerid;";
@@ -126,30 +127,8 @@ public class SqrlTest {
     VertxOptions vertxOptions = new VertxOptions();
     VertxInternal vertx = (VertxInternal) Vertx.vertx(vertxOptions);
 
-
-
-
-//    H2Column ordersPk = new UUIDColumn("_uuid_0", "_uuid_0"); //todo: PK identifier
-    H2Column columnC = new IntegerColumn("customerid", "customerid");
-    H2Column columnid = new IntegerColumn("id", "id");
-//    H2Column id = new StringColumn("uuid", "uuid");
-    H2Table ordersTable = new H2Table(new Columns(List.of( columnC, columnid)),
-        Name.system("Orders").getCanonical().replaceAll("\\.", "_") + "_flink", Optional.empty());
-
-    H2Column column = new IntegerColumn("discount", "discount");
-    H2Table entries = new H2Table(new Columns(List.of(column)), "orders_entries_flink",
-        Optional.of(new EqualsCriteria("id", "id")));
-
-    H2Table customerOrderStats = new H2Table(new Columns(List.of(
-        new IntegerColumn("customerid", "customerid"),
-        new IntegerColumn("num_orders", "num_orders")
-    )), Name.system("CustomerOrderStats").getCanonical().replaceAll("\\.", "_") + "_flink",
-        Optional.empty());
-
-//    Map<String, H2Table> tableMap = Map.of("Orders", ordersTable, "entries", entries, "CustomerOrderStats", customerOrderStats);
-//
     Map<String, H2Table> tableMap = new SqrlSinkBuilder(env, tableManager)
-        .build(false);
+        .build(true);
 
     UberTranslator uberTranslator = new UberTranslator();
 
@@ -160,10 +139,5 @@ public class SqrlTest {
 
 //
     GraphqlBuilder.graphqlTest(vertx, schema);
-  }
-
-  @SneakyThrows
-  @Test
-  public void test() {
   }
 }
