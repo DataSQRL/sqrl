@@ -42,4 +42,12 @@ public class SqrlEntity {
     contextKeys.addAll(primaryKey);
     return contextKeys;
   }
+
+  public List<Name> getContextKeyWoPk() {
+    List<Name> contextKeys = new ArrayList<>();
+    if (parent != null) {
+      contextKeys.addAll(parent.getContextKey());
+    }
+    return contextKeys;
+  }
 }

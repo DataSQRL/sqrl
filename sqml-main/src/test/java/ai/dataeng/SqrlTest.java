@@ -149,7 +149,7 @@ public class SqrlTest {
 //    Map<String, H2Table> tableMap = Map.of("Orders", ordersTable, "entries", entries, "CustomerOrderStats", customerOrderStats);
 //
     Map<String, H2Table> tableMap = new SqrlSinkBuilder(env, tableManager)
-        .build(true);
+        .build(false);
 
     UberTranslator uberTranslator = new UberTranslator();
 

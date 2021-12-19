@@ -154,8 +154,8 @@ public class SqrlSinkBuilder {
 
   private Optional<Criteria> convertPk(SqrlEntity entity) {
 
-    if (!entity.getPrimaryKey().isEmpty()) {
-      return Optional.of(new EqualsCriteria(entity.getPrimaryKey().get(0).getCanonical(), entity.getPrimaryKey().get(0).getCanonical()));
+    if (!entity.getContextKeyWoPk().isEmpty()) {
+      return Optional.of(new EqualsCriteria(entity.getContextKeyWoPk().get(0).getCanonical(), entity.getContextKeyWoPk().get(0).getCanonical()));
     }
 
     return Optional.empty();
