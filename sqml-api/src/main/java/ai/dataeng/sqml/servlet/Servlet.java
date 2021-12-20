@@ -7,7 +7,7 @@ import ai.dataeng.sqml.analyzer2.LogicalGraphqlSchemaBuilder;
 import ai.dataeng.sqml.analyzer2.SqrlSchemaConverter;
 import ai.dataeng.sqml.analyzer2.SqrlSinkBuilder;
 import ai.dataeng.sqml.analyzer2.TableManager;
-import ai.dataeng.sqml.analyzer2.UberTranslator;
+import ai.dataeng.sqml.analyzer2.NameTranslator;
 import ai.dataeng.sqml.logical4.LogicalPlan;
 import ai.dataeng.sqml.parser.SqmlParser;
 import ai.dataeng.sqml.tree.Script;
@@ -17,9 +17,6 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaPrinter;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
-import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -75,12 +72,14 @@ public class Servlet extends AbstractVerticle {
 //    VertxOptions vertxOptions = new VertxOptions();
 //    VertxInternal vertx = (VertxInternal) Vertx.vertx(vertxOptions);
 
-    Map<String, H2Table> tableMap = new SqrlSinkBuilder(env, tableManager)
+    //TODO: create jdbc
+    Map<String, H2Table> tableMap = new SqrlSinkBuilder(env, tableManager, "")
         .build(true);
 
-    UberTranslator uberTranslator = new UberTranslator();
+    NameTranslator nameTranslator = new NameTranslator();
 
-    GraphQLSchema schema = new LogicalGraphqlSchemaBuilder(Map.of(), plan.getSchema(), vertx, uberTranslator, tableMap)
+    GraphQLSchema schema = new LogicalGraphqlSchemaBuilder(Map.of(), plan.getSchema(), vertx,
+        nameTranslator, tableMap, /*Todo: pool*/null)
         .build();
 
     System.out.println(new SchemaPrinter().print(schema));

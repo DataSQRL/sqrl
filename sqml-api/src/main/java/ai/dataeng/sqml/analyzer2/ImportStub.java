@@ -4,6 +4,7 @@ import static ai.dataeng.sqml.tree.name.NameCanonicalizer.LOWERCASE_ENGLISH;
 
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import java.nio.file.Path;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -17,7 +18,9 @@ public class ImportStub {
   TableManager tableManager;
 
   public void importTable(NamePath namePath) {
-    final String ordersPath = "file:///Users/henneberger/Projects/sqml-official/sqml-examples/retail/ecommerce-data/orders.json";
+    Path RETAIL_DIR = Path.of("../sqml-examples/retail/");
+    final String RETAIL_DATA_DIR_NAME = "ecommerce-data";
+    final Path RETAIL_DATA_DIR = RETAIL_DIR.resolve(RETAIL_DATA_DIR_NAME);
 
     TableResult tableResult = env.executeSql(
         "CREATE TABLE Orders ("
@@ -36,7 +39,7 @@ public class ImportStub {
             + ") WITH ("
             + "  'connector' = 'filesystem',"
             + "  'path' = '"
-            + ordersPath
+            + RETAIL_DATA_DIR.resolve("orders.json")
             + "',"
             + "  'format' = 'json'"
             + ")");

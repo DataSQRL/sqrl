@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.dialect.JdbcDialects;
@@ -64,18 +65,16 @@ import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.table.types.logical.YearMonthIntervalType;
 import org.apache.flink.table.types.logical.ZonedTimestampType;
 
+@AllArgsConstructor
 public class SqrlSinkBuilder {
 
   private final TableEnvironment env;
   private final TableManager tableManager;
-
-  public SqrlSinkBuilder(TableEnvironment env, TableManager tableManager) {
-    this.env = env;
-    this.tableManager = tableManager;
-  }
+  private final String jdbcUrl;
 
   @SneakyThrows
   public Map<String, H2Table> build(boolean execute) {
+    System.out.println(jdbcUrl);
     Map<String, H2Table> tableMap = new HashMap<>();
 
     StatementSetImpl set = (StatementSetImpl) env.createStatementSet();
@@ -93,7 +92,9 @@ public class SqrlSinkBuilder {
           + getPK(entity)
           + ") WITH ( "
           + "'connector' = 'jdbc',"
-          + "'url'='jdbc:postgresql://localhost:5432/henneberger'," //todo: TestContainers postgres url in config
+          + "'url'='"+jdbcUrl+"',"
+          + "'username'='test',"
+          + "'password'='test',"
           + "'table-name' = '%s'"
           + ")";
       H2Table table = convertToH2Table(entity, tableName.getDisplay(), entity.getNamePath().getLength() != 1);
@@ -115,7 +116,9 @@ public class SqrlSinkBuilder {
             + ")";
 
       JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-          .withUrl("jdbc:postgresql://localhost:5432/henneberger")
+          .withUrl(jdbcUrl)
+          .withUsername("test")
+          .withPassword("test")
           .build();
       Connection conn = getConnection(jdbcOptions);
       if (execute) {

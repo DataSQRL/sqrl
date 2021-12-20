@@ -4,7 +4,7 @@ import ai.dataeng.sqml.logical4.LogicalPlan;
 import ai.dataeng.sqml.logical4.LogicalPlan.Table;
 import ai.dataeng.sqml.tree.name.Name;
 
-public class UberTranslator {
+public class NameTranslator {
 
   public void registerTable(LogicalPlan.Table table, String jdbcTable) {
 

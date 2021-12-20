@@ -44,7 +44,6 @@ import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNamedInputType;
 import graphql.schema.GraphQLNamedOutputType;
-import graphql.schema.GraphQLNamedSchemaElement;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
@@ -76,17 +75,19 @@ public class LogicalGraphqlSchemaBuilder {
   private final Vertx vertx;
   private final GraphqlTypeCatalog typeCatalog;
   GraphQLSchema.Builder schemaBuilder = GraphQLSchema.newSchema();
-  UberTranslator uberTranslator;
+  NameTranslator nameTranslator;
   Map<String, H2Table> tableMap;
+  private final Pool client;
 
   public LogicalGraphqlSchemaBuilder(Map<Class<? extends Type>, GraphQLOutputType> types, ShadowingContainer<DatasetOrTable> schema,
-      Vertx vertx, UberTranslator uberTranslator,Map<String, H2Table> tableMap) {
+      Vertx vertx, NameTranslator nameTranslator,Map<String, H2Table> tableMap, Pool client) {
 
     this.types = types;
     this.schema = schema;
     this.vertx = vertx;
-    this.uberTranslator = uberTranslator;
+    this.nameTranslator = nameTranslator;
     this.tableMap = tableMap;
+    this.client = client;
     this.typeCatalog = new GraphqlTypeCatalog();
   }
 
@@ -139,29 +140,18 @@ public class LogicalGraphqlSchemaBuilder {
     }
 
     schemaBuilder.query(obj);
-    schemaBuilder.codeRegistry(buildCodeRegistry());
+    schemaBuilder.codeRegistry(buildCodeRegistry(client));
     return schemaBuilder.build();
   }
 
-  private GraphQLCodeRegistry buildCodeRegistry() {
+  private GraphQLCodeRegistry buildCodeRegistry(Pool client) {
 
-    //In memory pool, if connection times out then the data is erased
-    Pool client = JDBCPool.pool(
-        vertx,
-        // configure the connection
-        new JDBCConnectOptions()
-            .setJdbcUrl("jdbc:postgresql://localhost:5432/henneberger")
-        ,
-        // configure the pool
-        new PoolOptions()
-            .setMaxSize(1)
-    );
     JdbcPool pool = new JdbcPool(client);
     DataLoaderRegistry dataLoaderRegistry = new DataLoaderRegistry();
     GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
     for (DatasetOrTable ds : schema) {
       Table tbl = (Table) ds;
-      String gqlName = uberTranslator.getGraphqlName(tbl);
+      String gqlName = nameTranslator.getGraphqlName(tbl);
       codeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", gqlName),
           new DefaultDataFetcher(pool, new SystemPageProvider(), tableMap.get(tbl.getName().getDisplay())));
     }
@@ -185,11 +175,11 @@ public class LogicalGraphqlSchemaBuilder {
 
   private void resolveNestedFetchers(JdbcPool pool, Relationship field, Builder codeRegistry,
       Table parent) {
-    System.out.println(uberTranslator.getGraphqlTypeName(parent) + ":" +
-        uberTranslator.getGraphqlName(field.getToTable()));
+    System.out.println(nameTranslator.getGraphqlTypeName(parent) + ":" +
+        nameTranslator.getGraphqlName(field.getToTable()));
 
-    codeRegistry.dataFetcher(FieldCoordinates.coordinates(uberTranslator.getGraphqlTypeName(parent),
-            uberTranslator.getGraphqlName(field.getToTable())),
+    codeRegistry.dataFetcher(FieldCoordinates.coordinates(nameTranslator.getGraphqlTypeName(parent),
+            nameTranslator.getGraphqlName(field.getToTable())),
         new DefaultDataFetcher(/*dataLoaderRegistry, */pool, new NoPage(), tableMap.get(field.getToTable().getName().getDisplay())));
   }
 

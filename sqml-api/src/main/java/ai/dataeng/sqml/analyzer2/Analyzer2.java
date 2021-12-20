@@ -113,13 +113,16 @@ public class Analyzer2 {
       Table table = env.sqlQuery(query);
       SqrlEntity queryEntity = new SqrlEntity(node.getNamePath(), table);
 
-      FunctionCatalog functionCatalog = new FunctionCatalog();
-      StatementAnalysis2 analysis2 = new StatementAnalysis2();
-
       List<Name> pks = extractPrimaryKey(query);
       queryEntity.setPrimaryKey(pks);
       System.out.println("Primary keys:" + pks);
       tableManager.getTables().put(node.getNamePath(), queryEntity);
+
+      //Add relationship
+      if (node.getNamePath().getPrefix().isPresent()) {
+        SqrlEntity ent = tableManager.getTables().get(node.getNamePath().getPrefix().get());
+        ent.addRelationship(node.getNamePath().getLast(), queryEntity);
+      }
 
       return null;
     }
