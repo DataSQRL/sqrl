@@ -1,9 +1,8 @@
 package ai.dataeng.sqml.analyzer2;
 
 import static ai.dataeng.sqml.tree.name.NameCanonicalizer.AS_IS;
-import static ai.dataeng.sqml.tree.name.NameCanonicalizer.LOWERCASE_ENGLISH;
 
-import ai.dataeng.sqml.ViewQueryRewriter.RewriterContext;
+import ai.dataeng.sqml.analyzer2.TableManager.MaterializeTable;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AstVisitor;
@@ -36,15 +35,12 @@ import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.logical.LogicalAggregate;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
-import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
-import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.planner.operations.PlannerQueryOperation;
 
 @AllArgsConstructor
@@ -54,6 +50,8 @@ public class Analyzer2 {
   TableEnvironment env;
   TableManager tableManager;
   private final ConversionError.Bundle<ConversionError> errors = new ConversionError.Bundle<>();
+  ImportStub importStub;
+  boolean devMode;
 
   public void analyze() {
     Analyzer2.Visitor visitor = new Analyzer2.Visitor();
@@ -76,7 +74,14 @@ public class Analyzer2 {
     public Scope visitScript(Script node, Scope context) {
       List<Node> statements = node.getStatements();
       for (Node statement : statements) {
+        Preconditions.checkState(!(tableManager.isReadMode() && statement instanceof ImportDefinition),
+            "Read mode set before imports");
+        if (devMode && !(statement instanceof ImportDefinition)) {
+          tableManager.setReadMode();
+        }
+
         statement.accept(this, null);
+
       }
 
       return null;
@@ -84,7 +89,6 @@ public class Analyzer2 {
 
     @Override
     public Scope visitImportDefinition(ImportDefinition node, Scope scope) {
-      ImportStub importStub = new ImportStub(env, tableManager);
       importStub.importTable(node.getNamePath());
 
       return null;
@@ -92,21 +96,7 @@ public class Analyzer2 {
 
     @Override
     public Scope visitQueryAssignment(QueryAssignment node, Scope context) {
-      Node n = node.getQuery();
-
-      HasContextTable ctx = new HasContextTable();
-      n.accept(ctx, null);
-      if (ctx.isHasContext()) {
-        SqrlEntity ent = tableManager.getTables().get(node.getNamePath().getPrefix().get());
-
-        n = NodeTreeRewriter.rewriteWith(new DecontextualizerRewriter(),
-            node.getQuery(),
-            new RewriterContext(node.getNamePath().getPrefix().get(), ent));
-        System.out.println(n.accept(new NodeFormatter(), null));
-      }
-      n = NodeTreeRewriter.rewriteWith(new TableNameRewriter(), n, null);
-
-      String query = n.accept(new NodeFormatter(), null);
+      String query = rewriteQuery(node, context, false);
 
       System.out.println(query);
 
@@ -116,15 +106,41 @@ public class Analyzer2 {
       List<Name> pks = extractPrimaryKey(query);
       queryEntity.setPrimaryKey(pks);
       System.out.println("Primary keys:" + pks);
-      tableManager.getTables().put(node.getNamePath(), queryEntity);
+
+
+      String queryForMaterialize = tableManager.isReadMode()
+          ? rewriteQuery(node, context, true)
+          : query;
+
+      tableManager.setTable(node.getNamePath(), queryEntity, queryForMaterialize);
 
       //Add relationship
       if (node.getNamePath().getPrefix().isPresent()) {
-        SqrlEntity ent = tableManager.getTables().get(node.getNamePath().getPrefix().get());
+        SqrlEntity ent = tableManager.getTable(node.getNamePath().getPrefix().get());
         ent.addRelationship(node.getNamePath().getLast(), queryEntity);
       }
 
       return null;
+    }
+
+    private String rewriteQuery(QueryAssignment node, Scope context, boolean useViewDefinition) {
+      Node n = node.getQuery();
+
+      HasContextTable ctx = new HasContextTable();
+      n.accept(ctx, null);
+      if (ctx.isHasContext()) {
+        SqrlEntity ent = tableManager.getTable(node.getNamePath().getPrefix().get());
+
+        n = NodeTreeRewriter.rewriteWith(new DecontextualizerRewriter(),
+            node.getQuery(),
+            new RewriterContext(node.getNamePath().getPrefix().get(), ent));
+        System.out.println(n.accept(new NodeFormatter(), null));
+      }
+      n = NodeTreeRewriter.rewriteWith(new TableNameRewriter(useViewDefinition), n, null);
+
+      String query = n.accept(new NodeFormatter(), null);
+
+      return query;
     }
 
     private List<Name> extractPrimaryKey(String query) {
@@ -174,7 +190,7 @@ public class Analyzer2 {
 
     @Override
     public Scope visitExpressionAssignment(ExpressionAssignment node, Scope context) {
-      SqrlEntity ent = tableManager.getTables().get(node.getNamePath().getPrefix().get());
+      SqrlEntity ent = tableManager.getTable(node.getNamePath().getPrefix().get());
       String expr = node.getExpression().accept(new NodeFormatter(), null);
 
 
@@ -273,9 +289,9 @@ public class Analyzer2 {
     @Override
     public Node rewriteTable(ai.dataeng.sqml.tree.Table node, RewriterContext context,
         NodeTreeRewriter treeRewriter) {
-      SqrlEntity contextEntity = tableManager.getTables().get(context.getCurrentContext());
+      SqrlEntity contextEntity = tableManager.getTable(context.getCurrentContext());
       System.out.println(contextEntity);
-//      Name name = Name.of(tableManager.getTables().get(Name.system(node.getName().toString())).getTable().toString(), AS_IS);
+//      Name name = Name.of(tableManager.getTable(Name.system(node.getName().toString())).getTable().toString(), AS_IS);
       NamePath postfix = node.getNamePath().popFirst();
 
       return new ai.dataeng.sqml.tree.Table(context.getCurrentContext().resolve(postfix));
@@ -283,16 +299,22 @@ public class Analyzer2 {
   }
 
 
+  @AllArgsConstructor
   public class TableNameRewriter extends NodeRewriter {
-
+    boolean useViewDefinition;
     @Override
     public Node rewriteTable(ai.dataeng.sqml.tree.Table node, Object context,
         NodeTreeRewriter treeRewriter) {
-      SqrlEntity entity = tableManager.getTables().get(node.getNamePath());
-      Preconditions.checkNotNull(entity, node.getNamePath());
-      Table table = tableManager.getTables().get(node.getNamePath()).getTable();
+      MaterializeTable tbl = tableManager.getMatTable(node.getNamePath());
+      Preconditions.checkNotNull(tbl, node.getNamePath());
+      String name;
+      if (useViewDefinition) {
+        name = tableManager.getCurrentName(tbl.getEntity());
+      } else {
+        name = tbl.getEntity().getTable().toString();
+      }
 
-      return new ai.dataeng.sqml.tree.Table(NamePath.of(Name.of(table.toString(), AS_IS)));
+      return new ai.dataeng.sqml.tree.Table(NamePath.of(Name.of(name, AS_IS)));
     }
   }
 

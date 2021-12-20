@@ -3,7 +3,6 @@ package ai.dataeng.sqml.analyzer2;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +19,7 @@ public class SqrlEntity {
   SqrlEntity parent = null;
   Map<Name, SqrlEntity> relationships = new HashMap<>();
   List<Name> primaryKey = new ArrayList<>();
+
   public SqrlEntity(NamePath namePath, Table table) {
     this.namePath = namePath;
     this.table = table;

@@ -3,6 +3,7 @@ package ai.dataeng.sqml.servlet;
 import ai.dataeng.execution.table.H2Table;
 import ai.dataeng.sqml.analyzer2.Analyzer2;
 import ai.dataeng.sqml.analyzer2.GraphqlBuilder;
+import ai.dataeng.sqml.analyzer2.ImportStub;
 import ai.dataeng.sqml.analyzer2.LogicalGraphqlSchemaBuilder;
 import ai.dataeng.sqml.analyzer2.SqrlSchemaConverter;
 import ai.dataeng.sqml.analyzer2.SqrlSinkBuilder;
@@ -63,7 +64,7 @@ public class Servlet extends AbstractVerticle {
 
     TableManager tableManager = new TableManager();
     //Script processing
-    new Analyzer2(script, env, tableManager)
+    new Analyzer2(script, env, tableManager, new ImportStub(env, tableManager), false)
         .analyze();
 
     LogicalPlan plan = new SqrlSchemaConverter()

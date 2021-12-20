@@ -50,7 +50,7 @@ public class ImportStub {
     NamePath ordersName = Name.of("Orders", LOWERCASE_ENGLISH).toNamePath();
     SqrlEntity decoratedOrders = new SqrlEntity(ordersName, orders);
     decoratedOrders.setPrimaryKey(List.of(Name.of("id", LOWERCASE_ENGLISH)));
-    tableManager.getTables().put(ordersName, decoratedOrders);
+    tableManager.setTable(ordersName, decoratedOrders, "");
 
     Table entries = env.sqlQuery(
         "SELECT o.id AS `id`, o.`uuid` as `uuid`,  e.* FROM Orders o, UNNEST(o.`entries`) e");
@@ -62,7 +62,7 @@ public class ImportStub {
     SqrlEntity decoratedEntries = new SqrlEntity(entriesName, entries);
 
     decoratedOrders.addRelationship(Name.system("entries"), decoratedEntries);
-    tableManager.getTables().put(entriesName, decoratedEntries);
+    tableManager.setTable(entriesName, decoratedEntries, "");
 
   }
 }

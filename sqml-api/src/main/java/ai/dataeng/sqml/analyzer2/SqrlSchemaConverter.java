@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.analyzer2;
 
+import ai.dataeng.sqml.analyzer2.TableManager.MaterializeTable;
 import ai.dataeng.sqml.logical4.LogicalPlan;
 import ai.dataeng.sqml.logical4.LogicalPlan.Relationship;
 import ai.dataeng.sqml.logical4.LogicalPlan.Relationship.Multiplicity;
@@ -55,11 +56,11 @@ public class SqrlSchemaConverter {
     LogicalPlan logicalPlan = new LogicalPlan();
 
     Map<SqrlEntity, Table> entityTableMap = new HashMap<>();
-    for (Entry<NamePath, SqrlEntity> entry : tableManager.getTables().entrySet()) {
+    for (Entry<NamePath, MaterializeTable> entry : tableManager.getTables().entrySet()) {
       Table table = new Table(logicalPlan.getTableIdCounter().incrementAndGet(),
           entry.getKey().getLast(), false);
-      populateTable(table, entry.getValue());
-      entityTableMap.put(entry.getValue(), table);
+      populateTable(table, entry.getValue().getEntity());
+      entityTableMap.put(entry.getValue().getEntity(), table);
     }
 
     for (Map.Entry<SqrlEntity, Table> tbl : entityTableMap.entrySet()) {

@@ -117,8 +117,25 @@ public class SqrlTest {
         + "}");
   }
 
-  @SneakyThrows
+  @Test
+  public void testDevMode() {
+    String script = "IMPORT ecommerce-data.Orders;\n"
+        + "Orders.total := SELECT sum(quantity) AS quantity\n"
+        + "                FROM @.entries;";
+
+    GraphQL graphQL = run(script, true);
+
+    query(graphQL, "query {\n"
+        + "    orders { data { total { quantity }} }\n"
+        + "}");
+  }
+
   private static GraphQL run(String scriptStr) {
+    return run(scriptStr, false);
+  }
+
+  @SneakyThrows
+  private static GraphQL run(String scriptStr, boolean devMode) {
     final EnvironmentSettings settings =
         EnvironmentSettings.newInstance().inStreamingMode()
             .build();
@@ -130,7 +147,7 @@ public class SqrlTest {
 
     TableManager tableManager = new TableManager();
 
-    new Analyzer2(script, env, tableManager)
+    new Analyzer2(script, env, tableManager, new ImportStub(env, tableManager), devMode)
         .analyze();
 
     LogicalPlan plan = new SqrlSchemaConverter()

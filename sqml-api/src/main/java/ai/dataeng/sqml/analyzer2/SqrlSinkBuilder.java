@@ -1,8 +1,5 @@
 package ai.dataeng.sqml.analyzer2;
 
-import static org.apache.flink.table.api.Expressions.$;
-import static org.apache.flink.table.api.Expressions.e;
-
 import ai.dataeng.execution.criteria.Criteria;
 import ai.dataeng.execution.criteria.EqualsCriteria;
 import ai.dataeng.execution.table.H2Table;
@@ -12,8 +9,8 @@ import ai.dataeng.execution.table.column.FloatColumn;
 import ai.dataeng.execution.table.column.H2Column;
 import ai.dataeng.execution.table.column.IntegerColumn;
 import ai.dataeng.execution.table.column.StringColumn;
+import ai.dataeng.sqml.analyzer2.TableManager.MaterializeTable;
 import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.NamePath;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -27,9 +24,6 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
-import org.apache.flink.connector.jdbc.dialect.JdbcDialects;
-import org.apache.flink.table.api.ExplainDetail;
-import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.internal.StatementSetImpl;
@@ -77,12 +71,18 @@ public class SqrlSinkBuilder {
     System.out.println(jdbcUrl);
     Map<String, H2Table> tableMap = new HashMap<>();
 
+    JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+        .withUrl(jdbcUrl)
+        .withUsername("test")
+        .withPassword("test")
+        .build();
+    Connection conn = getConnection(jdbcOptions);
+
     StatementSetImpl set = (StatementSetImpl) env.createStatementSet();
 
-    for (Map.Entry<NamePath, SqrlEntity> entityEntry : tableManager.getTables().entrySet()) {
-      String name = entityEntry.getKey().toString();
-      Name tableName = Name.system(name.replaceAll("\\.", "_") + "_flink");
-      SqrlEntity entity = entityEntry.getValue();
+    for (MaterializeTable matTable : tableManager.getFinalFlinkTables()) {
+      String tableName = matTable.getFlinkName();
+      SqrlEntity entity = matTable.getEntity();
       String sql = "CREATE TABLE %s("
           + entity.getTable().getResolvedSchema()
           .getColumns()
@@ -97,39 +97,41 @@ public class SqrlSinkBuilder {
           + "'password'='test',"
           + "'table-name' = '%s'"
           + ")";
-      H2Table table = convertToH2Table(entity, tableName.getDisplay(), entity.getNamePath().getLength() != 1);
+      H2Table table = convertToH2Table(entity, tableName, entity.getNamePath().getLength() != 1);
       tableMap.put(entity.getNamePath().getLast().getDisplay(), table);
 
-      System.out.println(String.format(sql, tableName.getDisplay(), tableName.getDisplay()));
+      System.out.println(String.format(sql, tableName, tableName));
       env.executeSql(
-          String.format(sql, tableName.getDisplay(), tableName.getDisplay())
+          String.format(sql, tableName, tableName)
       );
 
-        String drop = "DROP TABLE IF EXISTS %s;";
-        String postgresSql = "CREATE TABLE %s(" +
-            entity.getTable().getResolvedSchema()
-                .getColumns()
-                .stream().map(
-                    c -> "\"" + c.getName() + "\"" + " " + getSqlType(c.getDataType().getLogicalType()))
-                .collect(Collectors.joining(", "))
-            + getPostgresPK(entity)
-            + ")";
+//      String drop = "DROP TABLE IF EXISTS %s;";
+      String postgresSql = "CREATE TABLE %s(" +
+          entity.getTable().getResolvedSchema()
+              .getColumns()
+              .stream().map(
+                  c -> "\"" + c.getName() + "\"" + " " + getSqlType(c.getDataType().getLogicalType()))
+              .collect(Collectors.joining(", "))
+          + getPostgresPK(entity)
+          + ")";
 
-      JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-          .withUrl(jdbcUrl)
-          .withUsername("test")
-          .withPassword("test")
-          .build();
-      Connection conn = getConnection(jdbcOptions);
       if (execute) {
-        conn.createStatement().execute(String.format(drop, tableName.getDisplay()));
-        conn.createStatement().execute(String.format(postgresSql, tableName.getDisplay()));
+//        conn.createStatement().execute(String.format(drop, tableName));
+        conn.createStatement().execute(String.format(postgresSql, tableName));
       }
 
-      set.addInsert(tableName.getDisplay(), entity.getTable());
+      set.addInsert(tableName, entity.getTable());
     }
 
     if (execute) {
+      for (MaterializeTable view : tableManager.getViews()) {
+        System.out.println(view.getQuery());
+        conn.createStatement().execute(view.getQuery());
+        //Todo: Fix copy paste
+        H2Table table = convertToH2Table(view.getEntity(), view.getViewName(), view.getEntity().getNamePath().getLength() != 1);
+        tableMap.put(view.getEntity().getNamePath().getLast().getDisplay(), table);
+      }
+
       //Can throw an exception if batch
       System.out.println(set.explain());
       TableResult result = set.execute();
