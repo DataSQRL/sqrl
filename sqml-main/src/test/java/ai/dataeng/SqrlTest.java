@@ -27,12 +27,18 @@ import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.CoreOptions;
+import org.apache.flink.configuration.PipelineOptions;
+import org.apache.flink.streaming.api.environment.ExecutionCheckpointingOptions;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.planner.plan.optimize.RelNodeBlockPlanBuilder;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -149,6 +155,11 @@ public class SqrlTest {
         EnvironmentSettings.newInstance().inStreamingMode()
             .build();
     final TableEnvironment env = TableEnvironment.create(settings);
+    env.getConfig().addConfiguration(
+        new Configuration()
+            .set(RelNodeBlockPlanBuilder.TABLE_OPTIMIZER_REUSE_OPTIMIZE_BLOCK_WITH_DIGEST_ENABLED(), true)
+    );
+
 
     SqmlParser parser = SqmlParser.newSqmlParser();
 
