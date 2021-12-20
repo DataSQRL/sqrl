@@ -29,17 +29,19 @@ import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 public class SqrlTest {
 
-  @ClassRule
-  public static PostgreSQLContainer postgres = new PostgreSQLContainer();
+  @Rule
+  public PostgreSQLContainer postgres = new PostgreSQLContainer();
 
   @Test
   public void testImport() {
@@ -130,12 +132,15 @@ public class SqrlTest {
         + "}");
   }
 
-  private static GraphQL run(String scriptStr) {
+  private GraphQL run(String scriptStr) {
     return run(scriptStr, false);
   }
 
   @SneakyThrows
-  private static GraphQL run(String scriptStr, boolean devMode) {
+  private GraphQL run(String scriptStr, boolean devMode) {
+    String jdbcUrl = postgres
+        .getJdbcUrl();
+
     final EnvironmentSettings settings =
         EnvironmentSettings.newInstance().inStreamingMode()
             .build();
@@ -156,7 +161,7 @@ public class SqrlTest {
     VertxOptions vertxOptions = new VertxOptions();
     VertxInternal vertx = (VertxInternal) Vertx.vertx(vertxOptions);
 
-    Map<String, H2Table> tableMap = new SqrlSinkBuilder(env, tableManager, postgres.getJdbcUrl())
+    Map<String, H2Table> tableMap = new SqrlSinkBuilder(env, tableManager, jdbcUrl)
         .build(true);
 
     NameTranslator nameTranslator = new NameTranslator();
@@ -166,7 +171,7 @@ public class SqrlTest {
         vertx,
         // configure the connection
         new JDBCConnectOptions()
-            .setJdbcUrl(postgres.getJdbcUrl())
+            .setJdbcUrl(jdbcUrl)
             .setUser("test")
             .setPassword("test"),
         // configure the pool
