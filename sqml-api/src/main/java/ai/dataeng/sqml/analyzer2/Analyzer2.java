@@ -3,6 +3,7 @@ package ai.dataeng.sqml.analyzer2;
 import static ai.dataeng.sqml.tree.name.NameCanonicalizer.AS_IS;
 import static ai.dataeng.sqml.tree.name.NameCanonicalizer.LOWERCASE_ENGLISH;
 
+import ai.dataeng.sqml.ViewQueryRewriter.RewriterContext;
 import ai.dataeng.sqml.schema2.basic.ConversionError;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AstVisitor;
@@ -32,11 +33,19 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.logical.LogicalAggregate;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelRecordType;
+import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.operations.Operation;
+import org.apache.flink.table.planner.operations.PlannerQueryOperation;
 
 @AllArgsConstructor
 public class Analyzer2 {
@@ -103,11 +112,61 @@ public class Analyzer2 {
 
       Table table = env.sqlQuery(query);
       SqrlEntity queryEntity = new SqrlEntity(node.getNamePath(), table);
-      //TODO: Discover primary keys
-      queryEntity.setPrimaryKey(List.of(Name.system("customerid")));
+
+      FunctionCatalog functionCatalog = new FunctionCatalog();
+      StatementAnalysis2 analysis2 = new StatementAnalysis2();
+
+      List<Name> pks = extractPrimaryKey(query);
+      queryEntity.setPrimaryKey(pks);
+      System.out.println("Primary keys:" + pks);
       tableManager.getTables().put(node.getNamePath(), queryEntity);
 
       return null;
+    }
+
+    private List<Name> extractPrimaryKey(String query) {
+      List<Name> keys = new ArrayList<>();
+
+      //TODO: instead of reparsing, get it from temp table
+      PlannerQueryOperation plannerQueryOperation = (PlannerQueryOperation)((TableEnvironmentImpl) env).getParser().parse(query).get(0);
+
+      //The top node may not be an aggregate
+      RelNode node = plannerQueryOperation.getCalciteTree();
+      while (node instanceof Project) {
+        node = ((Project)node).getInput();
+      }
+
+      if (node instanceof LogicalAggregate) { //TODO: This isn't always true, can we derive pk from tree at all?
+        LogicalAggregate logicalAggregate = (LogicalAggregate) node;
+        ImmutableBitSet groupingIndices = logicalAggregate.getGroupSet();
+        RelRecordType inputFields = (RelRecordType)logicalAggregate.getInput().getRowType();
+        //Get Data types of input project, then map them to the ouptut datatype
+        List<RelDataTypeField> inputGroupingProjections = new ArrayList<>();
+
+        for (Integer i : groupingIndices) {
+          RelDataTypeField field = inputFields.getFieldList().get(i);
+          inputGroupingProjections.add(field);
+        }
+
+        for (RelDataTypeField field : logicalAggregate.getRowType().getFieldList()) {
+          if (inputGroupingProjections.contains(field)) {
+            keys.add(Name.system(field.getName()));
+          }
+        }
+
+      } else {
+        //No grouping keys, use all output fields
+
+        RelRecordType inputFields = (RelRecordType)plannerQueryOperation.getCalciteTree().getRowType();
+        for (RelDataTypeField field : inputFields.getFieldList()) {
+          //TODO: The table generated shouldn't use these as their primary keys but nested queries should
+          // consider it to be its context keys.
+
+          // keys.add(Name.system(field.getName()));
+        }
+
+      }
+      return keys;
     }
 
     @Override
@@ -211,8 +270,6 @@ public class Analyzer2 {
     @Override
     public Node rewriteTable(ai.dataeng.sqml.tree.Table node, RewriterContext context,
         NodeTreeRewriter treeRewriter) {
-
-
       SqrlEntity contextEntity = tableManager.getTables().get(context.getCurrentContext());
       System.out.println(contextEntity);
 //      Name name = Name.of(tableManager.getTables().get(Name.system(node.getName().toString())).getTable().toString(), AS_IS);

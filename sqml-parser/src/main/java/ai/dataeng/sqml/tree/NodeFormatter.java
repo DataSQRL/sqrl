@@ -64,7 +64,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitSelect(Select node, Void context) {
-    return (node.isDistinct()? "DISTINCT" : "") +
+    return (node.isDistinct()? " DISTINCT " : "") +
         node.getDistinctOn().map(o->o.accept(this, null)).orElse("") +
         node.getSelectItems().stream()
         .map(s->s.accept(this, null))

@@ -70,7 +70,7 @@ import javax.annotation.Nullable;
 /**
  * Checks whether an expression is constant with respect to the group
  */
-class AggregationAnalyzer
+public class AggregationAnalyzer
 {
     // fields and expressions in the group by clause
     private final Set<FieldId> groupingFields;

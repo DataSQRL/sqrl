@@ -2,11 +2,7 @@ package ai.dataeng;
 
 import static ai.dataeng.sqml.physical.sql.SQLConfiguration.Dialect.H2;
 
-import ai.dataeng.execution.criteria.EqualsCriteria;
 import ai.dataeng.execution.table.H2Table;
-import ai.dataeng.execution.table.column.Columns;
-import ai.dataeng.execution.table.column.H2Column;
-import ai.dataeng.execution.table.column.IntegerColumn;
 import ai.dataeng.sqml.analyzer2.Analyzer2;
 import ai.dataeng.sqml.analyzer2.GraphqlBuilder;
 import ai.dataeng.sqml.analyzer2.LogicalGraphqlSchemaBuilder;
@@ -19,24 +15,19 @@ import ai.dataeng.sqml.flink.EnvironmentFactory;
 import ai.dataeng.sqml.logical4.LogicalPlan;
 import ai.dataeng.sqml.parser.SqmlParser;
 import ai.dataeng.sqml.physical.sql.SQLConfiguration;
-import ai.dataeng.sqml.servlet.Servlet;
 import ai.dataeng.sqml.tree.Script;
-import ai.dataeng.sqml.tree.name.Name;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.GraphQLError;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaPrinter;
-import io.vertx.core.Launcher;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.impl.VertxInternal;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -61,6 +52,7 @@ public class SqrlTest {
   public void testDistinct() {
     String script = "IMPORT ecommerce-data.Orders;\n"
         + "Customers := SELECT DISTINCT customerid FROM Orders;";
+    run(script);
   }
 
   @Test
@@ -70,8 +62,68 @@ public class SqrlTest {
         + "CustomerOrderStats := SELECT customerid, count(1) as num_orders\n"
         + "                      FROM Orders\n"
         + "                      GROUP BY customerid;";
-    run(script);
+    GraphQL graphQL = run(script);
+    testGroupBy(graphQL);
   }
+
+  private void testGroupBy(GraphQL graphQL) {
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(
+            "query Test {\n"
+                + "    customerorderstats { data {customerid, num_orders} }\n"
+                + "    orders(limit: 2) {"// {\n"
+                + "        data {"
+                + "           customerid, id\n"
+                + "           entries (filter: {total: {gt: 100}}, order: [{discount: DESC}]){"// {\n"
+//                + "            data {\n"
+                + "               total, discount\n"
+//                + "            } \n"
+//                + "            pageInfo { \n"
+//                + "                cursor\n"
+//                + "                hasNext\n"
+                + "               }\n"
+                + "        }\n"
+                + "    }\n"
+                + "}")
+//        .dataLoaderRegistry(dataLoaderRegistry)
+        .build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Object data = executionResult.getData();
+    System.out.println();
+    System.out.println(data);
+    List<GraphQLError> errors2 = executionResult.getErrors();
+    System.out.println(errors2);
+  }
+  @Test
+  public void testNoAgg() {
+    String script = "IMPORT ecommerce-data.Orders\n"
+        + "Customers := SELECT customerid\n"
+        + "             FROM Orders;";
+
+    GraphQL graphQL = run(script);
+
+    testNoaggQuery1(graphQL);
+  }
+
+  private void testNoaggQuery1(GraphQL graphQL) {
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(
+            "query Test {\n"
+                + "    customers { data { customerid } }\n"
+                + "}")
+//        .dataLoaderRegistry(dataLoaderRegistry)
+        .build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Object data = executionResult.getData();
+    System.out.println();
+    System.out.println(data);
+    List<GraphQLError> errors2 = executionResult.getErrors();
+    System.out.println(errors2);
+    if (!errors2.isEmpty()) {
+      throw new RuntimeException(errors2.toString());
+    }
+  }
+
   @Test
   public void testNestedRelation() {
     String script = "IMPORT ecommerce-data.Orders;\n"
@@ -112,7 +164,7 @@ public class SqrlTest {
 
 
   @SneakyThrows
-  private static void run(String scriptStr) {
+  private static GraphQL run(String scriptStr) {
     final EnvironmentSettings settings =
         EnvironmentSettings.newInstance().inStreamingMode()
             .build();
@@ -134,7 +186,7 @@ public class SqrlTest {
     VertxInternal vertx = (VertxInternal) Vertx.vertx(vertxOptions);
 
     Map<String, H2Table> tableMap = new SqrlSinkBuilder(env, tableManager)
-        .build(false);
+        .build(true);
 
     UberTranslator uberTranslator = new UberTranslator();
 
@@ -146,41 +198,6 @@ public class SqrlTest {
 //
     GraphQL graphQL = GraphqlBuilder.graphqlTest(vertx, schema);
 
-    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(
-            "query Test {\n"
-                + "    customerorderstats { data {customerid, num_orders} }\n"
-                + "    orders(limit: 2) {"// {\n"
-                + "        data {"
-                + "           customerid, id\n"
-                + "           entries (filter: {total: {gt: 100}}, order: [{discount: DESC}]){"// {\n"
-//                + "            data {\n"
-                + "               total, discount\n"
-//                + "            } \n"
-//                + "            pageInfo { \n"
-//                + "                cursor\n"
-//                + "                hasNext\n"
-            + "               }\n"
-                + "        }\n"
-                + "    }\n"
-                + "}")
-//        .dataLoaderRegistry(dataLoaderRegistry)
-        .build();
-    ExecutionResult executionResult = graphQL.execute(executionInput);
-
-    Object data = executionResult.getData();
-    System.out.println();
-    System.out.println(data);
-    List<GraphQLError> errors2 = executionResult.getErrors();
-    System.out.println(errors2);
-
-//    Launcher.executeCommand("run", Servlet.class.getName());
-//    vertx.deployVerticle(new Servlet(graphQL))
-//        .onFailure(e->e.printStackTrace())
-//        .onSuccess(e-> System.out.println(e));
-//    Servlet servlet = new Servlet(graphQL, vertx);
-//    servlet.start();
-//    vertx.close();
-
-//    while (true) Thread.sleep(100);
+    return graphQL;
   }
 }

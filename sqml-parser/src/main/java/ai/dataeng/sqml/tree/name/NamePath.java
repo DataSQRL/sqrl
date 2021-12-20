@@ -140,6 +140,10 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
         return NamePath.of(newNames);
     }
 
+    public Name getFirst() {
+        return names[0];
+    }
+
 //    public NamePath concat(NamePath namePath) {
 //        Name[] newNames = Arrays.copyOfRange(names, 0, names.length - 1);
 //        return Optional.of(NamePath.of(newNames));

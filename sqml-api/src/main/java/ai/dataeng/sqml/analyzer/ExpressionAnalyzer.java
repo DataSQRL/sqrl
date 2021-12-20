@@ -4,9 +4,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
 import ai.dataeng.sqml.OperatorType;
-import ai.dataeng.sqml.function.definition.FunctionDefinition;
-import ai.dataeng.sqml.function.definition.inference.TypeInference;
-import ai.dataeng.sqml.ingest.stats.TypeSignature;
+import ai.dataeng.sqml.analyzer2.FunctionCatalog;
 import ai.dataeng.sqml.logical3.LogicalPlan.Builder;
 import ai.dataeng.sqml.metadata.Metadata;
 import ai.dataeng.sqml.schema2.Field;
@@ -15,6 +13,7 @@ import ai.dataeng.sqml.schema2.Type;
 import ai.dataeng.sqml.schema2.TypedField;
 import ai.dataeng.sqml.schema2.basic.BooleanType;
 import ai.dataeng.sqml.schema2.basic.DateTimeType;
+import ai.dataeng.sqml.schema2.basic.IntegerType;
 import ai.dataeng.sqml.schema2.basic.NullType;
 import ai.dataeng.sqml.schema2.basic.NumberType;
 import ai.dataeng.sqml.schema2.basic.StringType;
@@ -43,28 +42,21 @@ import ai.dataeng.sqml.tree.NodeRef;
 import ai.dataeng.sqml.tree.NotExpression;
 import ai.dataeng.sqml.tree.NullLiteral;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.SimpleCaseExpression;
-import ai.dataeng.sqml.tree.StackableAstVisitor.StackableAstVisitorContext;
 import ai.dataeng.sqml.tree.StringLiteral;
-import ai.dataeng.sqml.tree.SubqueryExpression;
 import ai.dataeng.sqml.tree.TimestampLiteral;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 public class ExpressionAnalyzer {
-  private Logger log = Logger.getLogger(Expression.class.getName());
-  private final Metadata metadata;
-  private final Builder planBuilder;
+//  private Logger log = Logger.getLogger(Expression.class.getName());
+  private final FunctionCatalog functionCatalog;
+//  private final Builder planBuilder;
 
-  public ExpressionAnalyzer(Metadata metadata,
-      Builder planBuilder) {
-    this.metadata = metadata;
-    this.planBuilder = planBuilder;
+  public ExpressionAnalyzer(FunctionCatalog functionCatalog) {
+    this.functionCatalog = functionCatalog;
   }
 
   public ExpressionAnalysis analyze(Expression node, Scope scope) {
@@ -213,21 +205,21 @@ public class ExpressionAnalyzer {
     @Override
     public Type visitFunctionCall(FunctionCall node, Context context) {
       //Todo: Function calls can accept a relation
-      Optional<FunctionDefinition> function = metadata.getFunctionProvider().resolve(node.getName());
-      if (function.isEmpty()) {
-        throw new RuntimeException(String.format("Could not find function %s", node.getName()));
-      }
-      //analysis.qualifyFunction(node, function.get());
+//      Optional<FunctionDefinition> function = metadata.getFunctionProvider().resolve(node.getName());
+//      if (function.isEmpty()) {
+//        throw new RuntimeException(String.format("Could not find function %s", node.getName()));
+//      }
+//      //analysis.qualifyFunction(node, function.get());
+//
+//      TypeInference typeInference = function.get().getTypeInference();
+//      //Todo: extend this for implicit type casting
+//      Optional<Type> type = typeInference.getOutputTypeStrategy().inferType(null); //todo Call context
+//      Preconditions.checkNotNull(type, "Function's output type could not be found. (no inference yet)");
+//      for (Expression expression : node.getArguments()) {
+//        expression.accept(this, context);
+//      }
 
-      TypeInference typeInference = function.get().getTypeInference();
-      //Todo: extend this for implicit type casting
-      Optional<Type> type = typeInference.getOutputTypeStrategy().inferType(null); //todo Call context
-      Preconditions.checkNotNull(type, "Function's output type could not be found. (no inference yet)");
-      for (Expression expression : node.getArguments()) {
-        expression.accept(this, context);
-      }
-
-      return addType(node, type.get());
+      return addType(node, IntegerType.INSTANCE);//type.get());
     }
 
     @Override
