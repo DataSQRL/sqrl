@@ -123,12 +123,16 @@ public class SqrlTest {
   public void testDevMode() {
     String script = "IMPORT ecommerce-data.Orders;\n"
         + "Orders.total := SELECT sum(quantity) AS quantity\n"
-        + "                FROM @.entries;";
+        + "                FROM @.entries;"
+        + "Orders.total2 := SELECT DISTINCT quantity\n"
+        + "                FROM @.total;"
+        + "Orders.total3 := SELECT quantity\n"
+        + "                FROM @.total;";
 
     GraphQL graphQL = run(script, true);
 
     query(graphQL, "query {\n"
-        + "    orders { data { total { quantity }} }\n"
+        + "    orders { data { total { quantity } total2 { quantity } total2 { quantity } total3 { quantity }}  }\n"
         + "}");
   }
 
@@ -140,7 +144,7 @@ public class SqrlTest {
   private GraphQL run(String scriptStr, boolean devMode) {
     String jdbcUrl = postgres
         .getJdbcUrl();
-
+//    String jdbcUrl = "";
     final EnvironmentSettings settings =
         EnvironmentSettings.newInstance().inStreamingMode()
             .build();

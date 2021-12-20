@@ -15,6 +15,7 @@ import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeFormatter;
+import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
@@ -33,7 +34,6 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelRecordType;
@@ -131,8 +131,17 @@ public class Analyzer2 {
       if (ctx.isHasContext()) {
         SqrlEntity ent = tableManager.getTable(node.getNamePath().getPrefix().get());
 
-        n = NodeTreeRewriter.rewriteWith(new DecontextualizerRewriter(),
-            node.getQuery(),
+        if (!hasAggFunction(node.getQuery(), node.getNamePath(), ent)) {
+          n = NodeTreeRewriter.rewriteWith(new AddContextKeysToSelect(),
+              n,
+              new RewriterContext(node.getNamePath().getPrefix().get(), ent));
+        } else {
+          n = NodeTreeRewriter.rewriteWith(new AddGroupsToContextQuery(),
+              n,
+              new RewriterContext(node.getNamePath().getPrefix().get(), ent));
+        }
+        n = NodeTreeRewriter.rewriteWith(new DecontextualizeTableNames(),
+            n,
             new RewriterContext(node.getNamePath().getPrefix().get(), ent));
         System.out.println(n.accept(new NodeFormatter(), null));
       }
@@ -143,6 +152,34 @@ public class Analyzer2 {
       return query;
     }
 
+    private boolean hasAggFunction(Query query, NamePath namePath,
+        SqrlEntity ent) {
+      //Decontextualize current query and run it through parser
+      Node names = NodeTreeRewriter.rewriteWith(new DecontextualizeTableNames(),
+          query,
+          new RewriterContext(namePath.getPrefix().get(), ent));
+      names = NodeTreeRewriter.rewriteWith(new TableNameRewriter(false), names, null);
+
+      String queryStr = names.accept(new NodeFormatter(), null);
+      System.out.println(queryStr);
+      PlannerQueryOperation plannerQueryOperation = (PlannerQueryOperation)((TableEnvironmentImpl) env).getParser().parse(queryStr).get(0);
+
+      //The top node may not be an aggregate
+
+      RelNode node = plannerQueryOperation.getCalciteTree();
+      //TODO: We can't do this because we won't know if the calite tree is constrained
+      // to the current query.
+//      while (node instanceof Project) {
+//        node = ((Project)node).getInput();
+//      }
+      if (node instanceof LogicalAggregate) {
+        LogicalAggregate logicalAggregate = (LogicalAggregate) node;
+        return !logicalAggregate.getAggCallList().isEmpty();
+      }
+
+      return false;
+    }
+
     private List<Name> extractPrimaryKey(String query) {
       List<Name> keys = new ArrayList<>();
 
@@ -151,11 +188,11 @@ public class Analyzer2 {
 
       //The top node may not be an aggregate
       RelNode node = plannerQueryOperation.getCalciteTree();
-      while (node instanceof Project) {
-        node = ((Project)node).getInput();
-      }
+//      while (node instanceof Project) {
+//        node = ((Project)node).getInput();
+//      }
 
-      if (node instanceof LogicalAggregate) { //TODO: This isn't always true, can we derive pk from tree at all?
+      if (node instanceof LogicalAggregate) {
         LogicalAggregate logicalAggregate = (LogicalAggregate) node;
         ImmutableBitSet groupingIndices = logicalAggregate.getGroupSet();
         RelRecordType inputFields = (RelRecordType)logicalAggregate.getInput().getRowType();
@@ -202,9 +239,6 @@ public class Analyzer2 {
     }
   }
 
-
-
-
   @Value
   public class RewriterContext {
     NamePath currentContext;
@@ -227,7 +261,29 @@ public class Analyzer2 {
     }
   }
 
-  public class DecontextualizerRewriter extends NodeRewriter<RewriterContext> {
+
+  public class AddContextKeysToSelect extends NodeRewriter<RewriterContext> {
+
+    @Override
+    public Select rewriteSelect(Select node, RewriterContext context,
+        NodeTreeRewriter<RewriterContext> treeRewriter) {
+      List<SelectItem> selectItems = new ArrayList<>();
+      selectItems.addAll(getContextKeys(context).stream().map(e->new SingleColumn(e)).collect(
+          Collectors.toList()));
+      selectItems.addAll(node.getSelectItems());
+
+      return new Select(node.isDistinct(), selectItems);
+    }
+
+    public List<Identifier> getContextKeys(RewriterContext context) {
+      return context.getCurrentContextEntity().getContextKey()
+          .stream()
+          .map(e->new Identifier(e.getDisplay()))
+          .collect(Collectors.toList());
+    }
+  }
+
+  public class AddGroupsToContextQuery extends NodeRewriter<RewriterContext> {
 
     @Override
     public Select rewriteSelect(Select node, RewriterContext context,
@@ -284,8 +340,10 @@ public class Analyzer2 {
             node.getLimit()
         );
       }
+  }
 
-    //Todo: This should convert this to a ResolvedTable object
+  public class DecontextualizeTableNames extends NodeRewriter<RewriterContext> {
+
     @Override
     public Node rewriteTable(ai.dataeng.sqml.tree.Table node, RewriterContext context,
         NodeTreeRewriter treeRewriter) {
