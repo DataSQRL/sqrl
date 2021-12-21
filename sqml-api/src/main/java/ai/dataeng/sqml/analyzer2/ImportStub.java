@@ -45,7 +45,10 @@ public class ImportStub {
             + ")");
 
     Table orders = env.sqlQuery(
-        "SELECT id, customerid, `time`,  `uuid` FROM Orders");
+        "SELECT id, customerid, `time`, `uuid` FROM Orders");
+//
+//    Table orders2 = env.sqlQuery(
+//        "SELECT id, customerid, `time`, `uuid` FROM "+ orders);
 
     NamePath ordersName = Name.of("Orders", LOWERCASE_ENGLISH).toNamePath();
     SqrlEntity decoratedOrders = new SqrlEntity(ordersName, orders);

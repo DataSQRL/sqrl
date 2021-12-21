@@ -10,6 +10,18 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>sqml-api</artifactId>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>16</source>
+          <target>16</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
@@ -17,6 +29,7 @@
   </properties>
 
   <dependencies>
+
     <dependency>
       <groupId>org.example</groupId>
       <artifactId>sqrl-graphql</artifactId>
@@ -160,6 +173,12 @@
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <version>1.4.200</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.apache.calcite/calcite-core -->
+    <dependency>
+      <groupId>org.apache.calcite</groupId>
+      <artifactId>calcite-core</artifactId>
+      <version>1.14.0</version>
     </dependency>
 
 

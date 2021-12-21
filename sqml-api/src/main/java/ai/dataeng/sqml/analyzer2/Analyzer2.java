@@ -27,17 +27,32 @@ import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.apache.calcite.adapter.java.JavaTypeFactory;
+import org.apache.calcite.adapter.jdbc.JdbcTableScan;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalAggregate;
+import org.apache.calcite.rel.logical.LogicalProject;
+import org.apache.calcite.rel.logical.LogicalTableScan;
+import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
+import org.apache.calcite.rel.rel2sql.SqlImplementor.Result;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelRecordType;
+import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlWriterConfig;
+import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.util.ImmutableBitSet;
+import org.apache.calcite.util.Util;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
@@ -93,13 +108,43 @@ public class Analyzer2 {
 
       return null;
     }
+    class FlinkSqlImplementor extends RelToSqlConverter {
+      public FlinkSqlImplementor(SqlDialect dialect) {
+        super(dialect);
+//        Util.discard(typeFactory);
+      }
+
+      // CHECKSTYLE: IGNORE 1
+      /** @see #dispatch */
+      @SuppressWarnings("MissingSummary")
+      public Result visit(LogicalTableScan scan) {
+        return visit((TableScan) scan);
+//        return result(scan.getTable().tableName(),
+//            ImmutableList.of(Clause.FROM), scan, null);
+      }
+      // CHECKSTYLE: IGNORE 1
+      /** @see #dispatch */
+      @SuppressWarnings("MissingSummary")
+      public Result visit(LogicalProject scan) {
+        return visit((Project) scan);
+      }
+
+      public Result implement(RelNode node) {
+        return dispatch(node);
+      }
+    }
 
     @Override
     public Scope visitQueryAssignment(QueryAssignment node, Scope context) {
+//      String query = node.accept(new NodeFormatter(), null);
+
       String query = rewriteQuery(node, context, false);
 
       System.out.println(query);
 
+
+
+      //      ((PlannerQueryOperation)((TableEnvironmentImpl) env).getParser().parse(query).get(0)).getCalciteTree();
       Table table = env.sqlQuery(query);
       SqrlEntity queryEntity = new SqrlEntity(node.getNamePath(), table);
 
