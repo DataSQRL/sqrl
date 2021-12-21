@@ -13,10 +13,14 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
+import org.apache.flink.table.api.DataTypes;
+import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.util.OutputTag;
 import org.apache.flink.util.Preconditions;
 
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +30,7 @@ public class FlinkGenerator {
 
     private final FlinkConfiguration configuration;
     private final EnvironmentFactory envProvider;
+    final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>(SCHEMA_ERROR_OUTPUT){}; //TODO: can we use one for all or do they need to be unique?
 
     public FlinkGenerator(FlinkConfiguration configuration, EnvironmentFactory envProvider) {
         this.configuration = configuration;

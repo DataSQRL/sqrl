@@ -26,7 +26,7 @@ public class Identifier
 
   private final String value;
   private final boolean delimited;
-  private String typeHint;
+  private String alias;
 
   public Identifier(NodeLocation location, String value, boolean delimited) {
     this(Optional.of(location), value, delimited);
@@ -40,9 +40,9 @@ public class Identifier
     this(Optional.empty(), value, !NAME_PATTERN.matcher(value).matches());
   }
 
-  public Identifier(String value, String typeHint) {
+  public Identifier(String value, String alias) {
     this(Optional.empty(), value, !NAME_PATTERN.matcher(value).matches());
-    this.typeHint = typeHint;
+    this.alias = alias;
   }
 
   private Identifier(Optional<NodeLocation> location, String value, boolean delimited) {
@@ -55,8 +55,8 @@ public class Identifier
     return value;
   }
 
-  public String getTypeHint() {
-    return typeHint;
+  public String getAlias() {
+    return alias;
   }
 
   public boolean isDelimited() {

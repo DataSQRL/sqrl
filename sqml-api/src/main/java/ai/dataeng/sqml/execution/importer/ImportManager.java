@@ -77,7 +77,7 @@ public class ImportManager {
         return imports;
     }
 
-    public TableImport importTable(@NonNull Name datasetName,  @NonNull Name tableName,
+    public SourceTableImport importTable(@NonNull Name datasetName,  @NonNull Name tableName,
                                    ConversionError.Bundle<SchemaConversionError> errors) {
         if (scriptSchemas.containsKey(datasetName)) {
             throw new UnsupportedOperationException("Not yet implemented");

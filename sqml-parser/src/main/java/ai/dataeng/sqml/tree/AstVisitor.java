@@ -332,4 +332,12 @@ public abstract class AstVisitor<R, C> {
   public R visitDistinctOn(DistinctOn node, C context) {
     return visitNode(node, context);
   }
+
+  public R visitLimitNode(Limit node, C context) {
+    return visitNode(node, context);
+  }
+
+  public R visitJoinOn(JoinOn node, C context) {
+    return visitNode(node, context);
+  }
 }

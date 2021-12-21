@@ -30,7 +30,7 @@ public class QuerySpecification
   private final Optional<GroupBy> groupBy;
   private final Optional<Expression> having;
   private final Optional<OrderBy> orderBy;
-  private final Optional<String> limit;
+  private final Optional<Limit> limit;
 
   public QuerySpecification(
       NodeLocation location,
@@ -40,7 +40,7 @@ public class QuerySpecification
       Optional<GroupBy> groupBy,
       Optional<Expression> having,
       Optional<OrderBy> orderBy,
-      Optional<String> limit) {
+      Optional<Limit> limit) {
     this(Optional.of(location), select, from, where, groupBy, having, orderBy, limit);
   }
 
@@ -52,7 +52,7 @@ public class QuerySpecification
       Optional<GroupBy> groupBy,
       Optional<Expression> having,
       Optional<OrderBy> orderBy,
-      Optional<String> limit) {
+      Optional<Limit> limit) {
     super(location);
     requireNonNull(select, "select is null");
     requireNonNull(from, "from is null");
@@ -95,14 +95,14 @@ public class QuerySpecification
     return orderBy;
   }
 
-  public Optional<String> getLimit() {
+  public Optional<Limit> getLimit() {
     return limit;
   }
 
   public Optional<Long> parseLimit() {
     return getLimit()
-        .filter(l->l.equalsIgnoreCase("ALL"))
-        .map(l->Long.parseLong(l));
+        .filter(l->l.getValue().equalsIgnoreCase("ALL"))
+        .map(l->Long.parseLong(l.getValue()));
   }
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
@@ -118,6 +118,7 @@ public class QuerySpecification
     groupBy.ifPresent(nodes::add);
     having.ifPresent(nodes::add);
     orderBy.ifPresent(nodes::add);
+    limit.ifPresent(nodes::add);
     return nodes.build();
   }
 

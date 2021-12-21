@@ -15,6 +15,7 @@ package ai.dataeng.sqml.tree;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
@@ -23,22 +24,25 @@ import java.util.Optional;
 public class Table
     extends QueryBody {
 
-  private final QualifiedName name;
+  private final NamePath name;
 
-  public Table(QualifiedName name) {
+  public Table(NamePath name) {
     this(Optional.empty(), name);
   }
 
-  public Table(NodeLocation location, QualifiedName name) {
+  public Table(NodeLocation location, NamePath name) {
     this(Optional.of(location), name);
   }
 
-  private Table(Optional<NodeLocation> location, QualifiedName name) {
+  private Table(Optional<NodeLocation> location, NamePath name) {
     super(location);
     this.name = name;
   }
 
   public QualifiedName getName() {
+    return QualifiedName.of(name.toString());
+  }
+  public NamePath getNamePath() {
     return name;
   }
 

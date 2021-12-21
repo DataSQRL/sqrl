@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.analyzer;
 
 import ai.dataeng.sqml.OperatorType.QualifiedObjectName;
+import ai.dataeng.sqml.analyzer2.FunctionCatalog;
 import ai.dataeng.sqml.function.FunctionProvider;
 import ai.dataeng.sqml.logical3.LogicalPlan;
 import ai.dataeng.sqml.metadata.Metadata;
@@ -757,7 +758,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
-    ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata, planBuilder);
+    ExpressionAnalyzer analyzer = new ExpressionAnalyzer(new FunctionCatalog());
     ExpressionAnalysis exprAnalysis = analyzer.analyze(expression, scope);
 
     analysis.addCoercions(exprAnalysis.getExpressionCoercions(),

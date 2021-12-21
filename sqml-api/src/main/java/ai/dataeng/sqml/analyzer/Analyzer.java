@@ -2,6 +2,7 @@ package ai.dataeng.sqml.analyzer;
 
 import static ai.dataeng.sqml.logical3.LogicalPlan.Builder.unbox;
 
+import ai.dataeng.sqml.analyzer2.FunctionCatalog;
 import ai.dataeng.sqml.execution.importer.ImportManager;
 import ai.dataeng.sqml.execution.importer.ImportSchema;
 import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
@@ -265,7 +266,7 @@ public class Analyzer {
     }
 
     private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
-      ExpressionAnalyzer analyzer = new ExpressionAnalyzer(metadata, this.analysis.getPlanBuilder());
+      ExpressionAnalyzer analyzer = new ExpressionAnalyzer(new FunctionCatalog());
       ExpressionAnalysis analysis = analyzer.analyze(expression, scope);
 
       return analysis;

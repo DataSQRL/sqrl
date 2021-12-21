@@ -1,6 +1,6 @@
 package ai.dataeng.execution.query;
 
-import ai.dataeng.execution.ArgumentParser;
+import ai.dataeng.execution.JdbcArgumentParser;
 import ai.dataeng.execution.ArgumentContext;
 import ai.dataeng.execution.RowMapperBuilder;
 import ai.dataeng.execution.criteria.CriteriaBuilder;
@@ -23,6 +23,7 @@ import java.util.StringJoiner;
 import java.util.function.Function;
 import lombok.Value;
 
+//Todo: move to strategies
 @Value
 public class PreparedQueryBuilder {
   H2Table table;
@@ -38,9 +39,9 @@ public class PreparedQueryBuilder {
         new ColumnContext(environment)));
     builder.append(String.format(" FROM %s ", table.getName()));
 
-    ArgumentParser argumentParser = new ArgumentParser();
+    JdbcArgumentParser jdbcArgumentParser = new JdbcArgumentParser();
     ArgumentContext argumentContext = new ArgumentContext(environment);
-    table.getColumns().accept(argumentParser, argumentContext);
+    table.getColumns().accept(jdbcArgumentParser, argumentContext);
     List<String> clauseList = argumentContext.getClauseList();
 
     CriteriaBuilder criteriaBuilder = new CriteriaBuilder(environment);
@@ -78,6 +79,8 @@ public class PreparedQueryBuilder {
       builder.append(" OFFSET " + pageProvider.pageState(environment).get());
     }
 
+    System.out.println(builder.toString());
+    System.out.println(arguments);
     String query = builder.toString();
     RowMapperBuilder rowMapperBuilder = new RowMapperBuilder(pageProvider);
 

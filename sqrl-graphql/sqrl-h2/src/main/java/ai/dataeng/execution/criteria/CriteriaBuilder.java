@@ -1,6 +1,7 @@
 package ai.dataeng.execution.criteria;
 
 import ai.dataeng.execution.criteria.CriteriaBuilder.CriteriaResult;
+import com.google.common.base.Preconditions;
 import graphql.schema.DataFetchingEnvironment;
 import java.util.List;
 import java.util.Map;
@@ -12,8 +13,12 @@ public class CriteriaBuilder extends CriteriaVisitor<CriteriaResult, Object> {
 
   @Override
   public CriteriaResult visit(EqualsCriteria equalsCriteria, Object context) {
-    Map<String, Object> source = environment.getSource();
-    Object value = source.get(equalsCriteria.getEnvVar());
+    Object source = environment.getSource();
+
+    Preconditions.checkState(source instanceof Map, "Only map types expected");
+    Map<String, Object> sourceMap = (Map<String, Object>) source;
+    Object value = sourceMap.get(equalsCriteria.getEnvVar());
+    Preconditions.checkNotNull(value, "Missing criteria column");
 
     CriteriaResult result = new CriteriaResult(
         List.of(String.format(" %s = ? ", equalsCriteria.getColumnName())),

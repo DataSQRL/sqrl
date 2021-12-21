@@ -71,6 +71,9 @@ public interface Name extends Serializable, Comparable<Name> {
         return system(HIDDEN_PREFIX+name);
     }
 
+    public default NamePath toNamePath() {
+        return NamePath.of(this);
+    }
 
 
 }

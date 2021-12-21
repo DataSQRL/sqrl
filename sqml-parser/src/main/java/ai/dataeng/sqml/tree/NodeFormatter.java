@@ -49,7 +49,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
               .map(s->s.accept(this, null))
               .collect(Collectors.joining("\n")))
         .orElse("")
-        + node.getLimit().map(l -> " LIMIT " + l).orElse("");
+        + node.getLimit().map(l -> " LIMIT " + l.getValue()).orElse("");
   }
 
   @Override
@@ -64,7 +64,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitSelect(Select node, Void context) {
-    return (node.isDistinct()? "DISTINCT" : "") +
+    return (node.isDistinct()? " DISTINCT " : "") +
         node.getDistinctOn().map(o->o.accept(this, null)).orElse("") +
         node.getSelectItems().stream()
         .map(s->s.accept(this, null))
@@ -79,12 +79,12 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitQuerySpecification(QuerySpecification node, Void context) {
     return "SELECT " + node.getSelect().accept(this, null) +
-        node.getFrom().accept(this, null) +
+        " FROM " + node.getFrom().accept(this, null) +
         node.getWhere().map(w-> " WHERE " +w.accept(this, null)).orElse("") +
         node.getGroupBy().map(g-> " GROUP BY " +g.accept(this, null)).orElse("") +
         node.getHaving().map(h-> " HAVING " +h.accept(this, null)).orElse("") +
         node.getOrderBy().map(o-> " ORDER BY " +o.accept(this, null)).orElse("") +
-        node.getLimit().map(l-> " LIMIT " +l).orElse("");
+        node.getLimit().map(l-> " LIMIT " +l.getValue()).orElse("");
   }
 
   @Override
@@ -142,6 +142,13 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitFunctionCall(FunctionCall node, Void context) {
+    if (node.getName().equals(QualifiedName.of("="))) {
+      return String.format("%s %s %s",
+          node.getArguments().get(0).accept(this, null),
+          node.getName(),
+          node.getArguments().get(1).accept(this, null));
+    }
+
     return node.getName() + "(" + node.getArguments().stream().map(a->a.accept(this, null)).collect(
         Collectors.joining(", ")) + ")" + node.getOver().map(o->o.accept(this, context)).orElse("");
   }
@@ -244,7 +251,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitTable(Table node, Void context) {
-    return " FROM " + node.getName().toString();
+    return node.getNamePath().getDisplay();
   }
 
   @Override
@@ -261,17 +268,15 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitAliasedRelation(AliasedRelation node, Void context) {
     return node.getRelation().accept(this, null) +
-        " AS " + node.getAlias().accept(this, null) +
-        "("+node.getColumnNames().stream().map(c->c.accept(this, null))
-        .collect(Collectors.joining(","))+")";
+        " AS " + node.getAlias().accept(this, null);
   }
 
   @Override
   public String visitJoin(Join node, Void context) {
-    return node.getType() + " JOIN " +
-        node.getLeft().accept(this, null) + " " +
+    return  " " + node.getLeft().accept(this, null) + " " +
+        node.getType() + " JOIN " +
         node.getRight().accept(this, null) + " " +
-        node.getCriteria().map(c->c.accept(this, null))
+        node.getCriteria().map(c-> " ON " + c.accept(this, null))
         .orElse("");
   }
 
@@ -402,5 +407,10 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitFieldReference(FieldReference node, Void context) {
     return node.getFieldIndex() + "";
+  }
+
+  @Override
+  public String visitJoinOn(JoinOn node, Void context) {
+    return node.getExpression().accept(this, null);
   }
 }

@@ -11,6 +11,7 @@ import ai.dataeng.execution.table.column.FloatColumn;
 import ai.dataeng.execution.table.column.H2Column;
 import ai.dataeng.execution.table.column.IntegerColumn;
 import ai.dataeng.execution.table.column.ScalarArrayColumn;
+import ai.dataeng.execution.table.column.StringColumn;
 import ai.dataeng.execution.table.column.TimeColumn;
 import ai.dataeng.execution.table.column.UUIDColumn;
 import ai.dataeng.execution.table.column.ZonedDateTimeColumn;
@@ -123,6 +124,12 @@ public class RowMapperBuilder extends H2ColumnVisitor2<Object, ResultContext> {
     context.getMap().put(column.getName(),
         context.getRow().getOffsetTime(column.getPhysicalName()));
     return null;
+  }
+
+  @Override
+  public Object visitStringColumn(StringColumn column, ResultContext context) {
+    return  context.getMap().put(column.getName(),
+        context.getRow().getString(column.getPhysicalName()));
   }
 
   @Value

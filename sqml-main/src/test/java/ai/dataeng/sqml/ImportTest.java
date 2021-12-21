@@ -39,6 +39,9 @@ import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.Script;
 import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Preconditions;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.junit.jupiter.api.Test;
@@ -75,6 +78,7 @@ class ImportTest {
 
   private static final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
 //  private DataLoader<Integer, Object> characterDataLoader;
+
 
 
   @Test

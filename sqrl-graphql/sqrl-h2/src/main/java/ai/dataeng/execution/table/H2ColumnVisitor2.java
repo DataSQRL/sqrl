@@ -10,6 +10,7 @@ import ai.dataeng.execution.table.column.H2Column;
 import ai.dataeng.execution.table.column.IntegerColumn;
 import ai.dataeng.execution.table.column.PrimaryKeyColumn;
 import ai.dataeng.execution.table.column.ScalarArrayColumn;
+import ai.dataeng.execution.table.column.StringColumn;
 import ai.dataeng.execution.table.column.TimeColumn;
 import ai.dataeng.execution.table.column.UUIDColumn;
 import ai.dataeng.execution.table.column.ZonedDateTimeColumn;
@@ -67,6 +68,10 @@ public class H2ColumnVisitor2<R, C> {
     return visitH2Column(column, context);
   }
   public R visitPrimaryKeyColumn(PrimaryKeyColumn column, C context) {
+    return visitH2Column(column, context);
+  }
+
+  public R visitStringColumn(StringColumn column, C context) {
     return visitH2Column(column, context);
   }
 }

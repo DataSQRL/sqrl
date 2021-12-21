@@ -26,26 +26,23 @@ public class AliasedRelation
 
   private final Relation relation;
   private final Identifier alias;
-  private final List<Identifier> columnNames;
+//  private final List<Identifier> columnNames;
 
-  public AliasedRelation(Relation relation, Identifier alias, List<Identifier> columnNames) {
-    this(Optional.empty(), relation, alias, columnNames);
+  public AliasedRelation(Relation relation, Identifier alias) {
+    this(Optional.empty(), relation, alias);
   }
 
-  public AliasedRelation(NodeLocation location, Relation relation, Identifier alias,
-      List<Identifier> columnNames) {
-    this(Optional.of(location), relation, alias, columnNames);
+  public AliasedRelation(NodeLocation location, Relation relation, Identifier alias) {
+    this(Optional.of(location), relation, alias);
   }
 
-  private AliasedRelation(Optional<NodeLocation> location, Relation relation, Identifier alias,
-      List<Identifier> columnNames) {
+  private AliasedRelation(Optional<NodeLocation> location, Relation relation, Identifier alias) {
     super(location);
     requireNonNull(relation, "relation is null");
     requireNonNull(alias, " is null");
 
     this.relation = relation;
     this.alias = alias;
-    this.columnNames = columnNames == null ? List.of() : columnNames;
   }
 
   public Relation getRelation() {
@@ -54,11 +51,6 @@ public class AliasedRelation
 
   public Identifier getAlias() {
     return alias;
-  }
-
-  @Deprecated
-  public List<Identifier> getColumnNames() {
-    return columnNames;
   }
 
   @Override
@@ -76,7 +68,6 @@ public class AliasedRelation
     return toStringHelper(this)
         .add("relation", relation)
         .add("alias", alias)
-        .add("columnNames", columnNames)
         .omitNullValues()
         .toString();
   }
@@ -92,12 +83,11 @@ public class AliasedRelation
 
     AliasedRelation that = (AliasedRelation) o;
     return Objects.equals(relation, that.relation) &&
-        Objects.equals(alias, that.alias) &&
-        Objects.equals(columnNames, that.columnNames);
+        Objects.equals(alias, that.alias);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(relation, alias, columnNames);
+    return Objects.hash(relation, alias);
   }
 }

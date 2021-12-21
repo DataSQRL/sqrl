@@ -47,6 +47,11 @@ public class LogicalPlan {
         return schema.getByName(name);
     }
 
+    //TODO move
+    public AtomicInteger getTableIdCounter() {
+        return tableIdCounter;
+    }
+
     public static abstract class Node<I extends Node, C extends Node> {
 
         final protected List<C> consumers = new ArrayList<>();
@@ -199,7 +204,7 @@ public class LogicalPlan {
         RowNode currentNode;
 
 
-        private Table(int uniqueId, Name name, boolean isInternal) {
+        public Table(int uniqueId, Name name, boolean isInternal) {
             this.name = name;
             this.uniqueId = uniqueId;
             this.isInternal = isInternal;
@@ -246,6 +251,9 @@ public class LogicalPlan {
         return table;
     }
 
+    public ShadowingContainer<DatasetOrTable> getSchema() {
+        return schema;
+    }
 
     @Getter
     public static abstract class Field implements ShadowingContainer.Nameable {
