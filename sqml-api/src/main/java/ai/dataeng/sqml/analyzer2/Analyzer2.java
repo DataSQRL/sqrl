@@ -138,6 +138,9 @@ public class Analyzer2 {
     public Scope visitQueryAssignment(QueryAssignment node, Scope context) {
 //      String query = node.accept(new NodeFormatter(), null);
 
+
+
+
       String query = rewriteQuery(node, context, false);
 
       System.out.println(query);

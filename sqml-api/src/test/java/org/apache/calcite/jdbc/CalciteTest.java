@@ -5,29 +5,21 @@ import ai.dataeng.sqml.analyzer2.ImportStub;
 import ai.dataeng.sqml.analyzer2.TableManager;
 import ai.dataeng.sqml.parser.SqmlParser;
 import ai.dataeng.sqml.tree.Script;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import lombok.SneakyThrows;
-import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.adapter.enumerable.EnumerableRules;
 import org.apache.calcite.config.Lex;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.plan.ConventionTraitDef;
-import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.plan.hep.HepPlanner;
 import org.apache.calcite.plan.hep.HepProgram;
-import org.apache.calcite.plan.hep.HepProgramBuilder;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
-import org.apache.calcite.rel.logical.LogicalIntersect;
-import org.apache.calcite.rel.logical.LogicalUnion;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
-import org.apache.calcite.rel.rules.CoerceInputsRule;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -88,7 +80,7 @@ public class CalciteTest {
         EnumerableRules.ENUMERABLE_SORT_RULE,
         EnumerableRules.ENUMERABLE_TABLE_SCAN_RULE));
     Program program = Programs.ofRules(
-        new SortRemoveRule2(SortRemoveRule2.Config.DEFAULT)
+        new RemoveSortRule(RemoveSortRule.Config.DEFAULT)
         );
     FrameworkConfig config = Frameworks.newConfigBuilder()
         .defaultSchema(calciteSchema.plus())
@@ -111,7 +103,7 @@ public class CalciteTest {
 
     Planner planner = Frameworks.getPlanner(config);
     //TODO: Need to replace paths with ``.
-    SqlNode parse = planner.parse("SELECT a FROM `@.b` ORDER BY a");
+    SqlNode parse = planner.parse("SELECT sum(a) FROM `@.b`");
     //Extend this
 
     System.out.println(parse);
@@ -121,10 +113,10 @@ public class CalciteTest {
 
 
     HepProgram hep = HepProgram.builder()
-        .addRuleClass(SortRemoveRule2.class)
+        .addRuleClass(RemoveSortRule.class)
         .build();
     HepPlanner hepPlanner = new HepPlanner(hep);
-    hepPlanner.addRule(new SortRemoveRule2(SortRemoveRule2.Config.DEFAULT));
+    hepPlanner.addRule(new RemoveSortRule(RemoveSortRule.Config.DEFAULT));
     hepPlanner.setRoot(planRoot.rel);
 
     RelNode optimizedNode = hepPlanner.findBestExp();
