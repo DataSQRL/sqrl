@@ -35,7 +35,7 @@ public class RuleTest {
   public void testRuleRewriting() {
     String query = ""
         + "SELECT uuid, sum(quantity) total_quantity "
-        + "FROM `c360`.`orders_entries` "
+        + "FROM `default_schema`.`orders_entries` "
         + "GROUP BY uuid "
         + "ORDER BY uuid DESC";
 
@@ -52,7 +52,7 @@ public class RuleTest {
   public RelNode rewrite(String query, RelRule... rules) {
 
     SchemaPlus schema = Frameworks.createRootSchema(false);
-    schema.add("c360", new ReflectiveSchema(new C360()));
+    schema.add("default_schema", new ReflectiveSchema(new C360()));
 
     SqlConformance conformance = FlinkSqlConformance.DEFAULT;
 
