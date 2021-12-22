@@ -101,6 +101,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 class AstBuilder
@@ -987,18 +988,24 @@ class AstBuilder
 
   @Override
   public Node visitQueryAssign(QueryAssignContext ctx) {
-//    QualifiedName name = getQualifiedName(ctx.qualifiedName());
-
+    Interval interval = new Interval(
+        ctx.query().start.getStartIndex(),
+        ctx.query().stop.getStopIndex());
+    String query = ctx.query().start.getInputStream().getText(interval);
     return new QueryAssignment(Optional.of(getLocation(ctx)), getNamePath(ctx.qualifiedName()),
-        (Query)visitQuery(ctx.query()));
+        (Query)visitQuery(ctx.query()), query);
   }
 
   @Override
   public Node visitExpressionAssign(ExpressionAssignContext ctx) {
     QualifiedName name = getQualifiedName(ctx.qualifiedName());
+    Interval interval = new Interval(
+        ctx.expression().start.getStartIndex(),
+        ctx.expression().stop.getStopIndex());
+    String expression = ctx.expression().start.getInputStream().getText(interval);
 
     return new ExpressionAssignment(Optional.of(getLocation(ctx)), name,
-        (Expression)visitExpression(ctx.expression()));
+        (Expression)visitExpression(ctx.expression()), expression);
   }
 
   @Override

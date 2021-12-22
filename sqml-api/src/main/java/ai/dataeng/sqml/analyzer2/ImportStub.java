@@ -7,7 +7,6 @@ import ai.dataeng.sqml.tree.name.NamePath;
 import java.nio.file.Path;
 import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.Value;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
@@ -15,7 +14,7 @@ import org.apache.flink.table.api.TableResult;
 @AllArgsConstructor
 public class ImportStub {
   TableEnvironment env;
-  TableManager tableManager;
+  SqrlCatalogManager catalogManager;
 
   public void importTable(NamePath namePath) {
     Path RETAIL_DIR = Path.of("../sqml-examples/retail/");
@@ -51,9 +50,8 @@ public class ImportStub {
 //        "SELECT id, customerid, `time`, `uuid` FROM "+ orders);
 
     NamePath ordersName = Name.of("Orders", LOWERCASE_ENGLISH).toNamePath();
-    SqrlEntity decoratedOrders = new SqrlEntity(ordersName, orders);
-    decoratedOrders.setPrimaryKey(List.of(Name.of("id", LOWERCASE_ENGLISH)));
-    tableManager.setTable(ordersName, decoratedOrders, "");
+    SqrlTable decoratedOrders = new SqrlTable(ordersName, orders, "", List.of(Name.of("id", LOWERCASE_ENGLISH)));
+    catalogManager.addTable(ordersName, decoratedOrders);
 
     Table entries = env.sqlQuery(
         "SELECT o.id AS `id`, o.`uuid` as `uuid`,  e.* FROM Orders o, UNNEST(o.`entries`) e");
@@ -62,10 +60,10 @@ public class ImportStub {
         Name.of("Orders", LOWERCASE_ENGLISH),
         Name.of("entries", LOWERCASE_ENGLISH)
     );
-    SqrlEntity decoratedEntries = new SqrlEntity(entriesName, entries);
+    SqrlTable decoratedEntries = new SqrlTable(entriesName, entries, "", List.of());
 
-    decoratedOrders.addRelationship(Name.system("entries"), decoratedEntries);
-    tableManager.setTable(entriesName, decoratedEntries, "");
+    decoratedOrders.addRelColumn(Name.system("entries"), decoratedEntries);
+    catalogManager.addTable(entriesName, decoratedEntries);
 
   }
 }

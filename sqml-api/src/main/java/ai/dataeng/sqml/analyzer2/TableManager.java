@@ -15,12 +15,12 @@ public class TableManager {
   private List<MaterializeTable> views = new ArrayList<>();
 
   private Map<NamePath, MaterializeTable> tables = new HashMap<>();
-  private Map<SqrlEntity, String> curName = new HashMap<>();
+  private Map<SqrlTable, String> curName = new HashMap<>();
 
   int viewNum = 0;
   boolean readMode = false;
 
-  public void setTable(NamePath name, SqrlEntity entity, String query) {
+  public void setTable(NamePath name, SqrlTable entity, String query) {
     String sqlFriendlyName = name.toString().replaceAll("\\.", "_");
     String flinkName = sqlFriendlyName + "_flink";
     String viewName = sqlFriendlyName + "_" + (viewNum);
@@ -42,11 +42,11 @@ public class TableManager {
     }
   }
 
-  public String getCurrentName(SqrlEntity entity) {
+  public String getCurrentName(SqrlTable entity) {
     return curName.get(entity);
   }
 
-  public SqrlEntity getTable(NamePath name) {
+  public SqrlTable getTable(NamePath name) {
     return tables.get(name).entity;
   }
 
@@ -71,7 +71,7 @@ public class TableManager {
     String flinkName;
     String viewName;
     NamePath namePath;
-    SqrlEntity entity;
+    SqrlTable entity;
     String query;
     boolean isView;
   }

@@ -9,7 +9,6 @@ import ai.dataeng.execution.table.column.FloatColumn;
 import ai.dataeng.execution.table.column.H2Column;
 import ai.dataeng.execution.table.column.IntegerColumn;
 import ai.dataeng.execution.table.column.StringColumn;
-import ai.dataeng.sqml.analyzer2.TableManager.MaterializeTable;
 import ai.dataeng.sqml.tree.name.Name;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -63,11 +62,10 @@ import org.apache.flink.table.types.logical.ZonedTimestampType;
 public class SqrlSinkBuilder {
 
   private final TableEnvironment env;
-  private final TableManager tableManager;
   private final String jdbcUrl;
 
   @SneakyThrows
-  public Map<String, H2Table> build(boolean execute) {
+  public Map<String, H2Table> build(SqrlCatalogManager catalogManager, boolean execute) {
     System.out.println(jdbcUrl);
     Map<String, H2Table> tableMap = new HashMap<>();
 
@@ -80,9 +78,11 @@ public class SqrlSinkBuilder {
 
     StatementSetImpl set = (StatementSetImpl) env.createStatementSet();
 
-    for (MaterializeTable matTable : tableManager.getFinalFlinkTables()) {
-      String tableName = matTable.getFlinkName();
-      SqrlEntity entity = matTable.getEntity();
+    for (SqrlTable entity : catalogManager.getCurrentTables()) {
+      String sqlFriendlyName = entity.getNamePath().toString().replaceAll("\\.", "_");
+      String tableName = sqlFriendlyName + "_flink";
+
+//      String tableName = matTable.getFlinkName();
       String sql = "CREATE TABLE %s("
           + entity.getTable().getResolvedSchema()
           .getColumns()
@@ -97,6 +97,7 @@ public class SqrlSinkBuilder {
           + "'password'='test',"
           + "'table-name' = '%s'"
           + ")";
+
       H2Table table = convertToH2Table(entity, tableName, entity.getNamePath().getLength() != 1);
       tableMap.put(entity.getNamePath().getLast().getDisplay(), table);
 
@@ -124,13 +125,13 @@ public class SqrlSinkBuilder {
     }
 
     if (execute) {
-      for (MaterializeTable view : tableManager.getViews()) {
-        System.out.println(view.getQuery());
-        conn.createStatement().execute(view.getQuery());
-        //Todo: Fix copy paste
-        H2Table table = convertToH2Table(view.getEntity(), view.getViewName(), view.getEntity().getNamePath().getLength() != 1);
-        tableMap.put(view.getEntity().getNamePath().getLast().getDisplay(), table);
-      }
+//      for (MaterializeTable view : tableManager.getViews()) {
+//        System.out.println(view.getQuery());
+//        conn.createStatement().execute(view.getQuery());
+//        //Todo: Fix copy paste
+//        H2Table table = convertToH2Table(view.getEntity(), view.getViewName(), view.getEntity().getNamePath().getLength() != 1);
+//        tableMap.put(view.getEntity().getNamePath().getLast().getDisplay(), table);
+//      }
 
       //Can throw an exception if batch
       System.out.println(set.explain());
@@ -148,7 +149,7 @@ public class SqrlSinkBuilder {
     return tableMap;
   }
 
-  private H2Table convertToH2Table(SqrlEntity entity, String display, boolean isnested) {
+  private H2Table convertToH2Table(SqrlTable entity, String display, boolean isnested) {
 
     H2Table table = new H2Table(new Columns(
         convertColumns(entity)
@@ -157,7 +158,7 @@ public class SqrlSinkBuilder {
     return table;
   }
 
-  private Optional<Criteria> convertPk(SqrlEntity entity) {
+  private Optional<Criteria> convertPk(SqrlTable entity) {
 
     if (!entity.getContextKeyWoPk().isEmpty()) {
       return Optional.of(new EqualsCriteria(entity.getContextKeyWoPk().get(0).getCanonical(), entity.getContextKeyWoPk().get(0).getCanonical()));
@@ -166,7 +167,7 @@ public class SqrlSinkBuilder {
     return Optional.empty();
   }
 
-  private List<H2Column> convertColumns(SqrlEntity entity) {
+  private List<H2Column> convertColumns(SqrlTable entity) {
     List<H2Column> columns = new ArrayList<>();
     for (Column column : entity.getTable().getResolvedSchema().getColumns()) {
       H2TableConverter conv = new H2TableConverter(column.getName());
@@ -176,7 +177,7 @@ public class SqrlSinkBuilder {
     return columns;
   }
 
-  private String getPK(SqrlEntity entity1) {
+  private String getPK(SqrlTable entity1) {
     if (!entity1.getPrimaryKey().isEmpty()) {
 
       return ", PRIMARY KEY ("+
@@ -187,7 +188,7 @@ public class SqrlSinkBuilder {
     }
     return "";
   }
-  private String getPostgresPK(SqrlEntity entity1) {
+  private String getPostgresPK(SqrlTable entity1) {
     if (!entity1.getPrimaryKey().isEmpty()) {
 
       return ", PRIMARY KEY ("+

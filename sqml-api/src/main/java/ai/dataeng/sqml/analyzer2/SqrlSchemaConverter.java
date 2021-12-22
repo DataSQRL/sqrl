@@ -14,6 +14,7 @@ import ai.dataeng.sqml.schema2.basic.StringType;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.tree.name.NamePath;
+import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,19 +53,19 @@ import org.apache.flink.table.types.logical.ZonedTimestampType;
 
 public class SqrlSchemaConverter {
 
-  public LogicalPlan convert(TableManager tableManager) {
+  public LogicalPlan convert(SqrlCatalogManager tableManager) {
     LogicalPlan logicalPlan = new LogicalPlan();
 
-    Map<SqrlEntity, Table> entityTableMap = new HashMap<>();
-    for (Entry<NamePath, MaterializeTable> entry : tableManager.getTables().entrySet()) {
+    Map<SqrlTable, Table> entityTableMap = new HashMap<>();
+    for (SqrlTable entry : tableManager.getCurrentTables()) {
       Table table = new Table(logicalPlan.getTableIdCounter().incrementAndGet(),
-          entry.getKey().getLast(), false);
-      populateTable(table, entry.getValue().getEntity());
-      entityTableMap.put(entry.getValue().getEntity(), table);
+          entry.getNamePath().getLast(), false);
+      populateTable(table, entry);
+      entityTableMap.put(entry, table);
     }
 
-    for (Map.Entry<SqrlEntity, Table> tbl : entityTableMap.entrySet()) {
-      SqrlEntity entity = tbl.getKey();
+    for (Map.Entry<SqrlTable, Table> tbl : entityTableMap.entrySet()) {
+      SqrlTable entity = tbl.getKey();
       Table table = tbl.getValue();
       if (entity.getNamePath().getLength() == 1) {
         logicalPlan.getSchema().add(table);
@@ -79,17 +80,18 @@ public class SqrlSchemaConverter {
     return logicalPlan;
   }
 
-  private void populateRelationships(SqrlEntity entity, Table table,
-      Map<SqrlEntity, Table> entityTableMap) {
+  private void populateRelationships(SqrlTable entity, Table table,
+      Map<SqrlTable, Table> entityTableMap) {
 
-    for (Map.Entry<Name, SqrlEntity> relationship : entity.getRelationships().entrySet()) {
+    for (Map.Entry<Name, SqrlTable> relationship : entity.getRelationships().entrySet()) {
       Table rel = entityTableMap.get(relationship.getValue());
+      Preconditions.checkNotNull(rel, "Relationship table could not be found");
       table.addField(new Relationship(relationship.getKey(), table, rel, Type.CHILD, Multiplicity.MANY));
     }
 
   }
 
-  private void populateTable(Table table, SqrlEntity entity) {
+  private void populateTable(Table table, SqrlTable entity) {
     for (Column column : entity.getTable().getResolvedSchema().getColumns()) {
       table.addField(new LogicalPlan.Column(
           Name.of(column.getName(), NameCanonicalizer.LOWERCASE_ENGLISH),

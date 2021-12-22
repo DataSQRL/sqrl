@@ -6,5 +6,5 @@ import lombok.Value;
 @Value
 public class Scope {
   NamePath currentContext;
-  SqrlEntity entity;
+  SqrlTable entity;
 }
