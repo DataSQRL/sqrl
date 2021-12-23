@@ -34,23 +34,15 @@ public class SchemaTest {
 
     ContextAwareCalciteSchema nonCachingSchema = new ContextAwareCalciteSchema(null, new OrdersSchema(tableResolver), "");
 
-    SqlConformance conformance = FlinkSqlConformance.DEFAULT;
-
     Config parserConfig = SqlParser.config()
         .withParserFactory(SqlParser.config().parserFactory())
         .withLex(Lex.JAVA)
-
         .withIdentifierMaxLength(256);
 
     FrameworkConfig config = Frameworks.newConfigBuilder()
         .defaultSchema(nonCachingSchema.plus())
         .parserConfig(parserConfig)
-
         .traitDefs(ConventionTraitDef.INSTANCE, RelCollationTraitDef.INSTANCE)
-        .sqlToRelConverterConfig(SqlToRelConverter.config()
-            .withRelBuilderConfigTransform(e-> {
-              return RelBuilder.Config.DEFAULT.withBloat(-100);
-            }))
         .programs(Programs.ofRules())
         .build();
 
