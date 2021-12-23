@@ -33,7 +33,21 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
         return new NamePath(names.toArray(new Name[0]));
     }
 
-    public NamePath resolve(@NonNull Name name) {
+  public static NamePath parse(String path) {
+      return parse(path, NameCanonicalizer.LOWERCASE_ENGLISH);
+  }
+
+  public static NamePath parse(String path, NameCanonicalizer nameCanonicalizer) {
+      String[] arr = path.split("\\.");
+      Name[] names = new Name[arr.length];
+      int i = 0;
+      for (String n : arr) {
+        names[i++] = Name.of(n, nameCanonicalizer);
+      }
+      return NamePath.of(names);
+  }
+
+  public NamePath resolve(@NonNull Name name) {
         Name[] newnames = Arrays.copyOf(names,names.length+1);
         newnames[names.length] = name;
         return new NamePath(newnames);
@@ -144,9 +158,14 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
         return names[0];
     }
 
-//    public NamePath concat(NamePath namePath) {
-//        Name[] newNames = Arrays.copyOfRange(names, 0, names.length - 1);
-//        return Optional.of(NamePath.of(newNames));
-//        return null;
-//    }
+    public NamePath version(int version) {
+        Name[] newNames = Arrays.copyOfRange(names, 0, names.length);
+        names[names.length - 1] = new VersionedName(names[names.length - 1].getCanonical(),
+            names[names.length - 1].getDisplay(), version);
+        return null;
+    }
+
+  public boolean isEmpty() {
+    return names.length == 0;
+  }
 }

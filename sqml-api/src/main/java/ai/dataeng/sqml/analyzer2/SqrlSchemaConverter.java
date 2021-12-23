@@ -55,24 +55,24 @@ public class SqrlSchemaConverter {
 
   public LogicalPlan convert(SqrlCatalogManager tableManager) {
     LogicalPlan logicalPlan = new LogicalPlan();
-
-    Map<SqrlTable, Table> entityTableMap = new HashMap<>();
-    for (SqrlTable entry : tableManager.getCurrentTables()) {
-      Table table = new Table(logicalPlan.getTableIdCounter().incrementAndGet(),
-          entry.getNamePath().getLast(), false);
-      populateTable(table, entry);
-      entityTableMap.put(entry, table);
-    }
-
-    for (Map.Entry<SqrlTable, Table> tbl : entityTableMap.entrySet()) {
-      SqrlTable entity = tbl.getKey();
-      Table table = tbl.getValue();
-      if (entity.getNamePath().getLength() == 1) {
-        logicalPlan.getSchema().add(table);
-      }
-      populateRelationships(entity, table, entityTableMap);
-
-    }
+//
+//    Map<SqrlTable, Table> entityTableMap = new HashMap<>();
+//    for (SqrlTable entry : tableManager.getCurrentTables()) {
+//      Table table = new Table(logicalPlan.getTableIdCounter().incrementAndGet(),
+//          entry.getNamePath().getLast(), false);
+//      populateTable(table, entry);
+//      entityTableMap.put(entry, table);
+//    }
+//
+//    for (Map.Entry<SqrlTable, Table> tbl : entityTableMap.entrySet()) {
+//      SqrlTable entity = tbl.getKey();
+//      Table table = tbl.getValue();
+//      if (entity.getNamePath().getLength() == 1) {
+//        logicalPlan.getSchema().add(table);
+//      }
+//      populateRelationships(entity, table, entityTableMap);
+//
+//    }
 
 
 

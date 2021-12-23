@@ -66,87 +66,88 @@ public class SqrlSinkBuilder {
 
   @SneakyThrows
   public Map<String, H2Table> build(SqrlCatalogManager catalogManager, boolean execute) {
-    System.out.println(jdbcUrl);
-    Map<String, H2Table> tableMap = new HashMap<>();
-
-    JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-        .withUrl(jdbcUrl)
-        .withUsername("test")
-        .withPassword("test")
-        .build();
-    Connection conn = getConnection(jdbcOptions);
-
-    StatementSetImpl set = (StatementSetImpl) env.createStatementSet();
-
-    for (SqrlTable entity : catalogManager.getCurrentTables()) {
-      String sqlFriendlyName = entity.getNamePath().toString().replaceAll("\\.", "_");
-      String tableName = sqlFriendlyName + "_flink";
-
-//      String tableName = matTable.getFlinkName();
-      String sql = "CREATE TABLE %s("
-          + entity.getTable().getResolvedSchema()
-          .getColumns()
-          .stream()
-          .map(c -> "`" + c.getName() + "`" + " " + getType(c.getDataType().getLogicalType()))
-          .collect(Collectors.joining(", "))
-          + getPK(entity)
-          + ") WITH ( "
-          + "'connector' = 'jdbc',"
-          + "'url'='"+jdbcUrl+"',"
-          + "'username'='test',"
-          + "'password'='test',"
-          + "'table-name' = '%s'"
-          + ")";
-
-      H2Table table = convertToH2Table(entity, tableName, entity.getNamePath().getLength() != 1);
-      tableMap.put(entity.getNamePath().getLast().getDisplay(), table);
-
-      System.out.println(String.format(sql, tableName, tableName));
-      env.executeSql(
-          String.format(sql, tableName, tableName)
-      );
-
-//      String drop = "DROP TABLE IF EXISTS %s;";
-      String postgresSql = "CREATE TABLE %s(" +
-          entity.getTable().getResolvedSchema()
-              .getColumns()
-              .stream().map(
-                  c -> "\"" + c.getName() + "\"" + " " + getSqlType(c.getDataType().getLogicalType()))
-              .collect(Collectors.joining(", "))
-          + getPostgresPK(entity)
-          + ")";
-
-      if (execute) {
-//        conn.createStatement().execute(String.format(drop, tableName));
-        conn.createStatement().execute(String.format(postgresSql, tableName));
-      }
-
-      set.addInsert(tableName, entity.getTable());
-    }
-
-    if (execute) {
-//      for (MaterializeTable view : tableManager.getViews()) {
-//        System.out.println(view.getQuery());
-//        conn.createStatement().execute(view.getQuery());
-//        //Todo: Fix copy paste
-//        H2Table table = convertToH2Table(view.getEntity(), view.getViewName(), view.getEntity().getNamePath().getLength() != 1);
-//        tableMap.put(view.getEntity().getNamePath().getLast().getDisplay(), table);
+//    System.out.println(jdbcUrl);
+//    Map<String, H2Table> tableMap = new HashMap<>();
+//
+//    JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+//        .withUrl(jdbcUrl)
+//        .withUsername("test")
+//        .withPassword("test")
+//        .build();
+//    Connection conn = getConnection(jdbcOptions);
+//
+//    StatementSetImpl set = (StatementSetImpl) env.createStatementSet();
+//
+//    for (SqrlTable entity : catalogManager.getCurrentTables()) {
+//      String sqlFriendlyName = entity.getNamePath().toString().replaceAll("\\.", "_");
+//      String tableName = sqlFriendlyName + "_flink";
+//
+////      String tableName = matTable.getFlinkName();
+//      String sql = "CREATE TABLE %s("
+//          + entity.getTable().getResolvedSchema()
+//          .getColumns()
+//          .stream()
+//          .map(c -> "`" + c.getName() + "`" + " " + getType(c.getDataType().getLogicalType()))
+//          .collect(Collectors.joining(", "))
+//          + getPK(entity)
+//          + ") WITH ( "
+//          + "'connector' = 'jdbc',"
+//          + "'url'='"+jdbcUrl+"',"
+//          + "'username'='test',"
+//          + "'password'='test',"
+//          + "'table-name' = '%s'"
+//          + ")";
+//
+//      H2Table table = convertToH2Table(entity, tableName, entity.getNamePath().getLength() != 1);
+//      tableMap.put(entity.getNamePath().getLast().getDisplay(), table);
+//
+//      System.out.println(String.format(sql, tableName, tableName));
+//      env.executeSql(
+//          String.format(sql, tableName, tableName)
+//      );
+//
+////      String drop = "DROP TABLE IF EXISTS %s;";
+//      String postgresSql = "CREATE TABLE %s(" +
+//          entity.getTable().getResolvedSchema()
+//              .getColumns()
+//              .stream().map(
+//                  c -> "\"" + c.getName() + "\"" + " " + getSqlType(c.getDataType().getLogicalType()))
+//              .collect(Collectors.joining(", "))
+//          + getPostgresPK(entity)
+//          + ")";
+//
+//      if (execute) {
+////        conn.createStatement().execute(String.format(drop, tableName));
+//        conn.createStatement().execute(String.format(postgresSql, tableName));
 //      }
-
-      //Can throw an exception if batch
-      System.out.println(set.explain());
-      TableResult result = set.execute();
-      System.out.println(result);
-
-      try {
-        result.await();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      } catch (ExecutionException e) {
-        e.printStackTrace();
-      }
-    }
-    return tableMap;
+//
+//      set.addInsert(tableName, entity.getTable());
+//    }
+//
+//    if (execute) {
+////      for (MaterializeTable view : tableManager.getViews()) {
+////        System.out.println(view.getQuery());
+////        conn.createStatement().execute(view.getQuery());
+////        //Todo: Fix copy paste
+////        H2Table table = convertToH2Table(view.getEntity(), view.getViewName(), view.getEntity().getNamePath().getLength() != 1);
+////        tableMap.put(view.getEntity().getNamePath().getLast().getDisplay(), table);
+////      }
+//
+//      //Can throw an exception if batch
+//      System.out.println(set.explain());
+//      TableResult result = set.execute();
+//      System.out.println(result);
+//
+//      try {
+//        result.await();
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      } catch (ExecutionException e) {
+//        e.printStackTrace();
+//      }
+//    }
+//    return tableMap;
+    return null;
   }
 
   private H2Table convertToH2Table(SqrlTable entity, String display, boolean isnested) {

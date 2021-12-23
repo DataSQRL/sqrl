@@ -11,6 +11,7 @@ import ai.dataeng.sqml.analyzer2.ScriptProcessor;
 import ai.dataeng.sqml.analyzer2.SqrlCatalogManager;
 import ai.dataeng.sqml.analyzer2.SqrlEnvironment;
 import ai.dataeng.sqml.analyzer2.SqrlSchemaConverter;
+import ai.dataeng.sqml.analyzer2.SqrlSchemaResolver;
 import ai.dataeng.sqml.analyzer2.SqrlSinkBuilder;
 import ai.dataeng.sqml.analyzer2.TableManager;
 import ai.dataeng.sqml.logical4.LogicalPlan;
@@ -161,7 +162,7 @@ public class Sqrl2Test {
 
     ImportStub importStub = new ImportStub(env, sqrlCatalogManager);
 
-    SqrlEnvironment environment = new SqrlEnvironment(new ImportManager(importStub), env);
+    SqrlEnvironment environment = new SqrlEnvironment(new ImportManager(importStub), env, new SqrlSchemaResolver());
     ScriptProcessor scriptProcessor = new ScriptProcessor(sqrlCatalogManager, environment);
     scriptProcessor.process(script);
 

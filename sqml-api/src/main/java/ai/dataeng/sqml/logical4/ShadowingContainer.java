@@ -1,6 +1,8 @@
 package ai.dataeng.sqml.logical4;
 
+import ai.dataeng.sqml.logical4.LogicalPlan.DatasetOrTable;
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.Iterators;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -91,7 +93,11 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
         return elements;
     }
 
-    public interface Nameable {
+    public DatasetOrTable walk(NamePath resolved) {
+        return null;
+    }
+
+  public interface Nameable {
 
         Name getName();
 

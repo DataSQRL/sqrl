@@ -1,32 +1,28 @@
 package ai.dataeng.sqml.analyzer2;
 
 import ai.dataeng.sqml.tree.name.NamePath;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class SqrlCatalogManager {
-  Map<NamePath, SqrlTable> currentTables = new HashMap<>();
-  List<SqrlTable> allTables = new ArrayList<>();
-  /**
-   * Adds a table to the hierarchy
-   */
-  public void addTable(NamePath namePath, SqrlTable table) {
-    currentTables.put(namePath, table);
-    allTables.add(table);
+  Map<NamePath, SqrlTable2> currentTables = new HashMap<>();
+  Map<NamePath, SqrlTable2> versionedTables = new HashMap<>();
+
+  public void addTable(SqrlTable2 table) {
+    currentTables.put(table.getName(), table);
+    versionedTables.put(table.getVersionedName(), table);
   }
 
-  public SqrlTable getCurrentTable(NamePath namePath) {
+  public SqrlTable2 getCurrentTable(NamePath namePath) {
     return currentTables.get(namePath);
   }
 
-  public Collection<SqrlTable> getCurrentTables() {
+  public Collection<SqrlTable2> getCurrentTables() {
     return currentTables.values();
   }
 
-  public Map<NamePath, SqrlTable> getTableMap() {
+  public Map<NamePath, SqrlTable2> getTableMap() {
     return currentTables;
   }
 }
