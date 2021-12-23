@@ -9,20 +9,19 @@ import java.util.stream.Collectors;
 import org.apache.calcite.sql.type.SqlTypeExplicitPrecedenceList;
 import org.apache.calcite.sql.type.SqlTypeName;
 
-public class DynamicRecordTypeImpl2 extends DynamicRecordType {
+public class DynamicRecordTypeholder extends DynamicRecordType {
   private final RelDataTypeFactory typeFactory;
-  private final DynamicRecordTypeImpl2 parent;
-  private Map<String, RelDataTypeField> fieldMap = new HashMap<>();
-  private List<RelDataTypeField> fields = new ArrayList<>();
-  private boolean struct;
-
+  private List<RelDataTypeField> fields;
 
   /** Creates a DynamicRecordTypeImpl. */
-  public DynamicRecordTypeImpl2(RelDataTypeFactory typeFactory,
-      DynamicRecordTypeImpl2 parent) {
+  public DynamicRecordTypeholder(RelDataTypeFactory typeFactory,
+      List<RelDataTypeField> regFields) {
     this.typeFactory = typeFactory;
-    this.parent = parent;
+    this.fields = regFields;
     computeDigest();
+//    RelDataTypeFieldImpl f = new RelDataTypeFieldImpl("orders", 0, this.typeFactory.createSqlType(SqlTypeName.BOOLEAN));
+//    fieldMap.put("x", f);
+//    fields.add(f);
   }
 
   @Override public List<RelDataTypeField> getFieldList() {
@@ -35,35 +34,29 @@ public class DynamicRecordTypeImpl2 extends DynamicRecordType {
 
   @Override public RelDataTypeField getField(String fieldName,
       boolean caseSensitive, boolean elideRecord) {
-    if (fieldMap.containsKey(fieldName)) {
-      return fieldMap.get(fieldName);
+    for (RelDataTypeField f : fields) {
+      if (f.getName().equalsIgnoreCase(fieldName)) {
+        return f;
+      }
     }
+//    if (fields.contains(fieldName)) {
+//      return fieldMap.get(fieldName);
+//    }
 
     RelDataTypeField newField;
-    if (fieldName.equalsIgnoreCase("b")) {
-      newField = new RelDataTypeFieldImpl("b", 0, this.typeFactory.createSqlType(SqlTypeName.BOOLEAN));
+//    if (fieldName.equalsIgnoreCase("b")) {
+//      newField = new RelDataTypeFieldImpl("b", 0, this.typeFactory.createSqlType(SqlTypeName.BOOLEAN));
 //      setStruct(false);
-    } else {
+//    } else {
       //hierarchical
-      newField = new RelDataTypeFieldImpl(fieldName, this.fields.size(), new DynamicRecordTypeImpl2(typeFactory, this));
+      newField = new RelDataTypeFieldImpl(fieldName, this.fields.size(), typeFactory.createSqlType(SqlTypeName.BOOLEAN));
 
-    }
+//    }
     this.fields.add(newField);
-    this.fieldMap.put(fieldName, newField);
 
     // If a new field is added, we should re-compute the digest.
-    if (parent != null) {
-      parent.computeDigest();
-    }
     computeDigest();
     return newField;
-  }
-
-  private void setStruct(boolean b) {
-    if (parent != null) {
-      parent.setStruct(b);
-    }
-    this.struct = b;
   }
 
   @Override public List<String> getFieldNames() {
@@ -80,11 +73,6 @@ public class DynamicRecordTypeImpl2 extends DynamicRecordType {
 
   protected void generateTypeString(StringBuilder sb, boolean withDetail) {
     sb.append("(DynamicRecordRow").append(")");
-  }
-
-  public List<String> getFieldNamesRecursive() {
-//    List<String> str = new ArrayList<>(fields.stream().map(e->e.getName()).collect(Collectors.toList()));
-    return null;
   }
 
   @Override public boolean isStruct() {

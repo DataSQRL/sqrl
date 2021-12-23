@@ -86,7 +86,7 @@ public class RuleTest {
     return hepPlanner.findBestExp();
   }
 
-  private String convertToSql(RelNode optimizedNode) {
+  public static String convertToSql(RelNode optimizedNode) {
 
     RelToSqlConverter converter = new RelToSqlConverter(PostgresqlSqlDialect.DEFAULT);
     final SqlNode sqlNode = converter.visitRoot(optimizedNode).asStatement();

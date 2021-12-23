@@ -5,6 +5,7 @@ import ai.dataeng.sqml.tree.name.NamePath;
 import lombok.SneakyThrows;
 import org.apache.calcite.config.Lex;
 import org.apache.calcite.plan.ConventionTraitDef;
+import org.apache.calcite.prepare.PlannerImpl;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.OrdersSchema;
@@ -42,11 +43,16 @@ public class SchemaTest {
     FrameworkConfig config = Frameworks.newConfigBuilder()
         .defaultSchema(nonCachingSchema.plus())
         .parserConfig(parserConfig)
+        .sqlToRelConverterConfig(SqlToRelConverter.config()
+            .withRelBuilderConfigTransform(e-> {
+              return RelBuilder.Config.DEFAULT.withBloat(-100);
+            }))
         .traitDefs(ConventionTraitDef.INSTANCE, RelCollationTraitDef.INSTANCE)
         .programs(Programs.ofRules())
         .build();
 
-    Planner planner = Frameworks.getPlanner(config);
+    this.planner = new PlannerImpl(config);
+//    Planner planner = Frameworks.getPlanner(config);
     this.planner = planner;
   }
 
@@ -54,20 +60,21 @@ public class SchemaTest {
   @SneakyThrows
   public void testSchemaBuilding() {
     String query = ""
-        + "SELECT e.orders.parent.test.b as X, f.orders.parent.test.b as Y "
-        + "FROM `@.entries` AS e INNER JOIN `@.entries` AS f ON TRUE "
-        + "WHERE e.orders.parent.test.b = false";
+        + "SELECT e.`orders.parent.test.b` AS x, f.`orders.parent.test.b` AS y "
+        + "FROM `@.entries` AS e INNER JOIN `@.entries` AS f ON true";
 
 
     SqlNode parse = planner.parse(query);
 
     System.out.println();
     SqlNode validate = planner.validate(parse);
-
+//Todo: after validation, run a new parser w/ fields known apriori
     RelRoot planRoot = planner.rel(validate);
 
     System.out.println(validate);
     System.out.println(planRoot.project().getRowType());
     System.out.println();
+    System.out.println(RuleTest.convertToSql(planRoot.project()));
+
   }
 }
