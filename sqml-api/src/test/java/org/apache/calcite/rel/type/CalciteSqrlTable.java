@@ -18,67 +18,56 @@ import org.apache.calcite.util.Pair;
 public class CalciteSqrlTable extends AbstractTable {
 
   private final DatasetOrTable table;
+  private final String path;
+  private final List<RelDataTypeField> relDataTypeFields;
+  DynamicRecordTypeholder holder = null;
 
-  public CalciteSqrlTable(DatasetOrTable table) {
+  public CalciteSqrlTable(DatasetOrTable table, String path,
+      List<RelDataTypeField> relDataTypeFields) {
     this.table = table;
-    System.out.println("CALCITE TABLE " + table);
+    this.path = path;
+    this.relDataTypeFields = relDataTypeFields;
   }
-//    List<RelDataTypeField> regFields = new ArrayList<>();
-    DynamicRecordTypeholder holder = null;
 
-    @Override
-    public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory) {
-      if (holder == null) {
-        this.holder = new DynamicRecordTypeholder(relDataTypeFactory, new ArrayList<>(), table);
-        return holder;
-      }
+  @Override
+  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory) {
+    if (holder == null) {
+      this.holder = new DynamicRecordTypeholder(relDataTypeFactory, relDataTypeFields, table);
       return holder;
     }
-
-    @Override
-    public Statistic getStatistic() {
-      return Statistics.UNKNOWN;
-    }
-
-    @Override
-    public TableType getJdbcTableType() {
-      return TableType.TABLE;
-    }
-
-    @Override
-    public boolean isRolledUp(String s) {
-      return false;
-    }
-
-    @Override
-    public boolean rolledUpColumnValidInsideAgg(String s, SqlCall sqlCall, SqlNode sqlNode,
-        CalciteConnectionConfig calciteConnectionConfig) {
-      return false;
-    }
-//
-//    Map<List<String>, RelDataTypeField> map = new HashMap<>();
-////    @Override
-//    public List<Pair<RelDataTypeField, List<String>>> resolveColumn(RelDataType relDataType,
-//        RelDataTypeFactory relDataTypeFactory, List<String> list) {
-//      if (map.containsKey(list)) {
-//        return List.of(Pair.of(map.get(list), list.subList(1, list.size())));
-//      }
-//      RelDataTypeField f;
-//
-//      if (list.get(0).equalsIgnoreCase("parent.time")) {
-//        f = new RelDataTypeFieldImpl(list.get(0), 0,
-//            relDataTypeFactory.createSqlType(SqlTypeName.INTERVAL_DAY));
-//      } else if(list.get(0).equalsIgnoreCase("quantity")) {
-//        f = new RelDataTypeFieldImpl(list.get(0), 0,
-//            relDataTypeFactory.createSqlType(SqlTypeName.INTEGER));
-//      } else {
-//
-//        //todo: We must walk the path
-//        f = new RelDataTypeFieldImpl(list.get(0), 0,
-//            relDataTypeFactory.createSqlType(SqlTypeName.BOOLEAN));
-//      }
-//      map.put(list, f);
-////      regFields.add(f);
-//      return List.of(Pair.of(f, list.subList(1, list.size())));
-//    }
+    return holder;
   }
+
+  public String getPath() {
+    return path;
+  }
+
+  public DatasetOrTable getTable() {
+    return table;
+  }
+
+  public DynamicRecordTypeholder getHolder() {
+    return holder;
+  }
+
+  @Override
+  public Statistic getStatistic() {
+    return Statistics.UNKNOWN;
+  }
+
+  @Override
+  public TableType getJdbcTableType() {
+    return TableType.TABLE;
+  }
+
+  @Override
+  public boolean isRolledUp(String s) {
+    return false;
+  }
+
+  @Override
+  public boolean rolledUpColumnValidInsideAgg(String s, SqlCall sqlCall, SqlNode sqlNode,
+      CalciteConnectionConfig calciteConnectionConfig) {
+    return false;
+  }
+}

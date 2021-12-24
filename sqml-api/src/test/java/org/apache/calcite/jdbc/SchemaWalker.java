@@ -30,10 +30,8 @@ public class SchemaWalker implements TableResolver {
 //    }
 
     DatasetOrTable table = logicalPlan.getSchema().walk(namePath);
-    Table table2 = tableTranslator.translate(table);
+    Table table2 = tableTranslator.translate(table, path);
 
-    System.out.println(table + ":" + table.hashCode());
-    System.out.println(table2 + ":" + table2.hashCode());
     return table2;
   }
 }

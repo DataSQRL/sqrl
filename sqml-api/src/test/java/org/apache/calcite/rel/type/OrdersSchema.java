@@ -17,7 +17,7 @@ public class OrdersSchema implements Schema {
 
   @Override
   public Table getTable(String s) {
-    System.out.println("Table: " +s);
+//    System.out.println("Table: " +s);
     return tableResolver.resolve(s);
   }
 

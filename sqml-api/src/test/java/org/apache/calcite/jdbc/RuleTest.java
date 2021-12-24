@@ -44,7 +44,7 @@ public class RuleTest {
     RelNode optimizedNode = rewrite(query, rule);
     String sql = convertToSql(optimizedNode);
 
-    System.out.println(sql);
+//    System.out.println(sql);
   }
 
   @Test

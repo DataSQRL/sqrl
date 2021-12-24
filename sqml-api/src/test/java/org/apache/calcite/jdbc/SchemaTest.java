@@ -12,7 +12,7 @@ import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.OrdersSchema;
-import org.apache.calcite.rules.SqrlTableExpander;
+import org.apache.calcite.rules.SqrlTableExpanderRule;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParser.Config;
@@ -56,7 +56,14 @@ public class SchemaTest {
 //              }
 //            })
             .withRelBuilderConfigTransform(e-> {
-              return RelBuilder.Config.DEFAULT.withBloat(-100);
+              return RelBuilder.Config.DEFAULT.withBloat(-100)
+                  .withSimplify(true)
+                  .withSimplifyLimit(true)
+                  .withPruneInputOfAggregate(true)
+                  .withPushJoinCondition(true)
+                  .withAggregateUnique(true)
+                  .withDedupAggregateCalls(true)
+                  ;
             }))
         .traitDefs(ConventionTraitDef.INSTANCE, RelCollationTraitDef.INSTANCE)
         .programs(Programs.ofRules())
@@ -84,7 +91,7 @@ public class SchemaTest {
 
     SqlNode parse = planner.parse(query);
 
-    System.out.println();
+//    System.out.println();
     SqlNode validate = planner.validate(parse);
 //Todo: after validation, run a new parser w/ fields known apriori
     RelRoot planRoot = planner.rel(validate);
@@ -96,10 +103,10 @@ public class SchemaTest {
     System.out.println(planRoot.project().explain());
 
     HepProgram hep = HepProgram.builder()
-        .addRuleClass(SqrlTableExpander.class)
+        .addRuleClass(SqrlTableExpanderRule.class)
         .build();
     HepPlanner hepPlanner = new HepPlanner(hep);
-    hepPlanner.addRule(SqrlTableExpander.Config.DEFAULT.toRule());
+    hepPlanner.addRule(SqrlTableExpanderRule.Config.DEFAULT.toRule());
     hepPlanner.setRoot(planRoot.rel);
 
     RelNode rewritten = hepPlanner.findBestExp();
