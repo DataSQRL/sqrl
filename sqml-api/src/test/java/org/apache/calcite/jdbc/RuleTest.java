@@ -80,7 +80,7 @@ public class RuleTest {
         .addRuleClass(RemoveSortRule.class)
         .build();
     HepPlanner hepPlanner = new HepPlanner(hep);
-    hepPlanner.addRule(new RemoveSortRule(RemoveSortRule.Config.DEFAULT));
+    hepPlanner.addRule(RemoveSortRule.Config.DEFAULT.toRule());
     hepPlanner.setRoot(planRoot.rel);
 
     return hepPlanner.findBestExp();

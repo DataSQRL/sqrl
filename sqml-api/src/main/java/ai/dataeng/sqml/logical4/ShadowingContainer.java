@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.logical4;
 
 import ai.dataeng.sqml.logical4.LogicalPlan.DatasetOrTable;
+import ai.dataeng.sqml.logical4.LogicalPlan.Table;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.Iterators;
@@ -93,8 +94,15 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
         return elements;
     }
 
-    public DatasetOrTable walk(NamePath resolved) {
-        return null;
+    Map<NamePath, DatasetOrTable> tables = new HashMap<>();
+    public static int i = 0;
+    public DatasetOrTable walk(NamePath namePath) {
+        if (tables.containsKey(namePath)) {
+            return tables.get(namePath);
+        }
+        tables.put(namePath, new Table(++i, namePath.get(0), false));
+
+        return tables.get(namePath);
     }
 
   public interface Nameable {

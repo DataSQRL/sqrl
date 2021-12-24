@@ -55,7 +55,7 @@ import org.apache.calcite.util.Util;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.calcite.shaded.com.google.common.collect.UnmodifiableIterator;
 
-public class PlannerImpl implements Planner, ViewExpander {
+public class PlannerImpl2 implements Planner, ViewExpander {
   private final SqlOperatorTable operatorTable;
   private final ImmutableList<Program> programs;
   private final RelOptCostFactory costFactory;
@@ -66,7 +66,7 @@ public class PlannerImpl implements Planner, ViewExpander {
   private final org.apache.calcite.sql.validate.SqlValidator.Config sqlValidatorConfig;
   private final org.apache.calcite.sql2rel.SqlToRelConverter.Config sqlToRelConverterConfig;
   private final SqlRexConvertletTable convertletTable;
-  private PlannerImpl.State state;
+  private PlannerImpl2.State state;
   private boolean open;
   private SchemaPlus defaultSchema;
   private JavaTypeFactory typeFactory;
@@ -76,7 +76,7 @@ public class PlannerImpl implements Planner, ViewExpander {
   private SqlNode validatedSqlNode;
   private RelRoot root;
 
-  public PlannerImpl(FrameworkConfig config) {
+  public PlannerImpl2(FrameworkConfig config) {
     this.costFactory = config.getCostFactory();
     this.defaultSchema = config.getDefaultSchema();
     this.operatorTable = config.getOperatorTable();
@@ -84,7 +84,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     this.parserConfig = config.getParserConfig();
     this.sqlValidatorConfig = config.getSqlValidatorConfig();
     this.sqlToRelConverterConfig = config.getSqlToRelConverterConfig();
-    this.state = PlannerImpl.State.STATE_0_CLOSED;
+    this.state = PlannerImpl2.State.STATE_0_CLOSED;
     this.traitDefs = config.getTraitDefs();
     this.convertletTable = config.getConvertletTable();
     this.executor = config.getExecutor();
@@ -106,7 +106,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     return config;
   }
 
-  private void ensure(PlannerImpl.State state) {
+  private void ensure(PlannerImpl2.State state) {
     if (state != this.state) {
       if (state.ordinal() < this.state.ordinal()) {
         throw new IllegalArgumentException("cannot move to " + state + " from " + this.state);
@@ -123,13 +123,13 @@ public class PlannerImpl implements Planner, ViewExpander {
   public void close() {
     this.open = false;
     this.typeFactory = null;
-    this.state = PlannerImpl.State.STATE_0_CLOSED;
+    this.state = PlannerImpl2.State.STATE_0_CLOSED;
   }
 
   public void reset() {
-    this.ensure(PlannerImpl.State.STATE_0_CLOSED);
+    this.ensure(PlannerImpl2.State.STATE_0_CLOSED);
     this.open = true;
-    this.state = PlannerImpl.State.STATE_1_RESET;
+    this.state = PlannerImpl2.State.STATE_1_RESET;
   }
 
   private void ready() {
@@ -138,13 +138,13 @@ public class PlannerImpl implements Planner, ViewExpander {
       this.reset();
     }
 
-    this.ensure(PlannerImpl.State.STATE_1_RESET);
+    this.ensure(PlannerImpl2.State.STATE_1_RESET);
     RelDataTypeSystem typeSystem = (RelDataTypeSystem)this.connectionConfig.typeSystem(RelDataTypeSystem.class, RelDataTypeSystem.DEFAULT);
     this.typeFactory = new JavaTypeFactoryImpl(typeSystem);
     this.planner = new VolcanoPlanner(this.costFactory, this.context);
     RelOptUtil.registerDefaultRules(this.planner, this.connectionConfig.materializationsEnabled(), (Boolean)Hook.ENABLE_BINDABLE.get(false));
     this.planner.setExecutor(this.executor);
-    this.state = PlannerImpl.State.STATE_2_READY;
+    this.state = PlannerImpl2.State.STATE_2_READY;
     if (this.traitDefs == null) {
       this.planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
       if ((Boolean)CalciteSystemProperty.ENABLE_COLLATION_TRAIT.value()) {
@@ -167,16 +167,16 @@ public class PlannerImpl implements Planner, ViewExpander {
     case STATE_1_RESET:
       this.ready();
     default:
-      this.ensure(PlannerImpl.State.STATE_2_READY);
+      this.ensure(PlannerImpl2.State.STATE_2_READY);
       SqlParser parser = SqlParser.create(reader, this.parserConfig);
       SqlNode sqlNode = parser.parseStmt();
-      this.state = PlannerImpl.State.STATE_3_PARSED;
+      this.state = PlannerImpl2.State.STATE_3_PARSED;
       return sqlNode;
     }
   }
 
   public SqlNode validate(SqlNode sqlNode) throws ValidationException {
-    this.ensure(PlannerImpl.State.STATE_3_PARSED);
+    this.ensure(PlannerImpl2.State.STATE_3_PARSED);
     this.validator = this.createSqlValidator(this.createCatalogReader());
 
     try {
@@ -185,7 +185,7 @@ public class PlannerImpl implements Planner, ViewExpander {
       throw new ValidationException(var3);
     }
 
-    this.state = PlannerImpl.State.STATE_4_VALIDATED;
+    this.state = PlannerImpl2.State.STATE_4_VALIDATED;
     return this.validatedSqlNode;
   }
 
@@ -200,7 +200,7 @@ public class PlannerImpl implements Planner, ViewExpander {
   }
 
   public RelRoot rel(SqlNode sql) {
-    this.ensure(PlannerImpl.State.STATE_4_VALIDATED);
+    this.ensure(PlannerImpl2.State.STATE_4_VALIDATED);
 
     assert this.validatedSqlNode != null;
 
@@ -216,7 +216,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     );
     RelBuilder relBuilder = config.getRelBuilderFactory().create(cluster, (RelOptSchema)null);
     this.root = this.root.withRel(RelDecorrelator.decorrelateQuery(this.root.rel, relBuilder));
-    this.state = PlannerImpl.State.STATE_5_CONVERTED;
+    this.state = PlannerImpl2.State.STATE_5_CONVERTED;
     return this.root;
   }
 
@@ -273,7 +273,7 @@ public class PlannerImpl implements Planner, ViewExpander {
   }
 
   public RelNode transform(int ruleSetIndex, RelTraitSet requiredOutputTraits, RelNode rel) {
-    this.ensure(PlannerImpl.State.STATE_5_CONVERTED);
+    this.ensure(PlannerImpl2.State.STATE_5_CONVERTED);
     rel.getCluster().setMetadataProvider(new CachingRelMetadataProvider(rel.getCluster().getMetadataProvider(), rel.getCluster().getPlanner()));
     Program program = (Program)this.programs.get(ruleSetIndex);
     return program.run(this.planner, rel, requiredOutputTraits, ImmutableList.of(), ImmutableList.of());
@@ -281,18 +281,18 @@ public class PlannerImpl implements Planner, ViewExpander {
 
   private static enum State {
     STATE_0_CLOSED {
-      void from(PlannerImpl planner) {
+      void from(PlannerImpl2 planner) {
         planner.close();
       }
     },
     STATE_1_RESET {
-      void from(PlannerImpl planner) {
+      void from(PlannerImpl2 planner) {
         planner.ensure(STATE_0_CLOSED);
         planner.reset();
       }
     },
     STATE_2_READY {
-      void from(PlannerImpl planner) {
+      void from(PlannerImpl2 planner) {
         STATE_1_RESET.from(planner);
         planner.ready();
       }
@@ -304,7 +304,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     private State() {
     }
 
-    void from(PlannerImpl planner) {
+    void from(PlannerImpl2 planner) {
       throw new IllegalArgumentException("cannot move from " + planner.state + " to " + this);
     }
   }
@@ -316,7 +316,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     }
 
     public RelRoot expandView(RelDataType rowType, String queryString, List<String> schemaPath, List<String> viewPath) {
-      return PlannerImpl.this.expandView(rowType, queryString, schemaPath, viewPath);
+      return PlannerImpl2.this.expandView(rowType, queryString, schemaPath, viewPath);
     }
   }
 }

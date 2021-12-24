@@ -18,18 +18,22 @@ public class SchemaWalker implements TableResolver {
   @Override
   public Table resolve(String path) {
     NamePath namePath = NamePath.parse(path);
-    if (namePath.isEmpty()) {
-      return null;
-    }
+//    if (namePath.isEmpty()) {
+//      return null;
+//    }
+//
+//    NamePath resolved;
+//    if (namePath.get(0).getCanonical().equalsIgnoreCase("@")) {
+//      resolved = context.resolve(namePath.popFirst());
+//    } else {
+//      resolved = namePath;
+//    }
 
-    NamePath resolved;
-    if (namePath.get(0).getCanonical().equalsIgnoreCase("@")) {
-      resolved = context.resolve(namePath.popFirst());
-    } else {
-      resolved = namePath;
-    }
+    DatasetOrTable table = logicalPlan.getSchema().walk(namePath);
+    Table table2 = tableTranslator.translate(table);
 
-    DatasetOrTable table = logicalPlan.getSchema().walk(resolved);
-    return tableTranslator.translate(table);
+    System.out.println(table + ":" + table.hashCode());
+    System.out.println(table2 + ":" + table2.hashCode());
+    return table2;
   }
 }
