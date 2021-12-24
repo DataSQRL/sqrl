@@ -13,17 +13,16 @@ import org.apache.calcite.schema.Table;
  * Accepts a sqrl schema and translates it to a calcite schema.
  */
 public class SqrlToCalciteTableTranslator {
-//  Map<DatasetOrTable, CalciteSqrlTable> tables = new HashMap<>();
   Map<DatasetOrTable, List<RelDataTypeField>> fields = new HashMap<>();
 
+  /**
+   * We can arrive at a table though multiple paths. We need to keep track
+   * of the fields discovered on each unique logical table as well as the
+   * path so we can rewrite it later.
+   */
   public Table translate(DatasetOrTable table, String path) {
-    //If we can get to another table though path traversal, we want to know that.
-//    if (tables.containsKey(table)) {
-//      return tables.get(table);
-//    }
     fields.computeIfAbsent(table, e->new ArrayList<>());
     //TODO: Add all primary & fks
     return new CalciteSqrlTable(table, path, fields.get(table));
-//    return tables.get(table);
   }
 }
