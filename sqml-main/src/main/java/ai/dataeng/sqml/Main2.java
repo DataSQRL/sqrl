@@ -10,37 +10,42 @@ import ai.dataeng.execution.table.column.Columns;
 import ai.dataeng.execution.table.column.H2Column;
 import ai.dataeng.execution.table.column.IntegerColumn;
 import ai.dataeng.execution.table.column.UUIDColumn;
-import ai.dataeng.sqml.db.keyvalue.HierarchyKeyValueStore;
-import ai.dataeng.sqml.db.keyvalue.LocalFileHierarchyKeyValueStore;
-import ai.dataeng.sqml.execution.SQMLBundle;
-import ai.dataeng.sqml.execution.importer.ImportManager;
-import ai.dataeng.sqml.execution.importer.ImportSchema;
-import ai.dataeng.sqml.flink.DefaultEnvironmentFactory;
-import ai.dataeng.sqml.flink.EnvironmentFactory;
-import ai.dataeng.sqml.ingest.DataSourceRegistry;
-import ai.dataeng.sqml.ingest.DatasetRegistration;
-import ai.dataeng.sqml.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.ingest.schema.SchemaConversionError;
-import ai.dataeng.sqml.ingest.schema.external.SchemaDefinition;
-import ai.dataeng.sqml.ingest.schema.external.SchemaExport;
-import ai.dataeng.sqml.ingest.schema.external.SchemaImport;
-import ai.dataeng.sqml.ingest.source.SourceDataset;
-import ai.dataeng.sqml.ingest.stats.SchemaGenerator;
-import ai.dataeng.sqml.ingest.stats.SourceTableStatistics;
-import ai.dataeng.sqml.logical4.*;
-import ai.dataeng.sqml.optimizer.LogicalPlanOptimizer;
-import ai.dataeng.sqml.optimizer.SimpleOptimizer;
-import ai.dataeng.sqml.physical.flink.FlinkConfiguration;
-import ai.dataeng.sqml.physical.flink.FlinkGenerator;
-import ai.dataeng.sqml.physical.sql.SQLConfiguration;
-import ai.dataeng.sqml.physical.sql.SQLGenerator;
-import ai.dataeng.sqml.physical.sql.util.DatabaseUtil;
-import ai.dataeng.sqml.relation.ColumnReferenceExpression;
-import ai.dataeng.sqml.relation.RowExpression;
-import ai.dataeng.sqml.schema2.basic.BasicTypeManager;
-import ai.dataeng.sqml.schema2.basic.ConversionError;
-import ai.dataeng.sqml.schema2.constraint.Constraint;
-import ai.dataeng.sqml.source.simplefile.DirectoryDataset;
+import ai.dataeng.sqml.ScriptBundle.SqmlScript;
+import ai.dataeng.sqml.planner.operator.AggregateOperator;
+import ai.dataeng.sqml.planner.operator.FilterOperator;
+import ai.dataeng.sqml.planner.operator.ImportResolver;
+import ai.dataeng.sqml.planner.LogicalPlanImpl;
+import ai.dataeng.sqml.planner.operator.QueryAnalyzer;
+import ai.dataeng.sqml.catalog.persistence.keyvalue.HierarchyKeyValueStore;
+import ai.dataeng.sqml.catalog.persistence.keyvalue.LocalFileHierarchyKeyValueStore;
+import ai.dataeng.sqml.importer.ImportManager3;
+import ai.dataeng.sqml.importer.ImportSchema;
+import ai.dataeng.sqml.execution.flink.enviornment.DefaultEnvironmentFactory;
+import ai.dataeng.sqml.execution.flink.enviornment.EnvironmentFactory;
+import ai.dataeng.sqml.execution.flink.ingest.DataSourceRegistry;
+import ai.dataeng.sqml.execution.flink.ingest.DatasetRegistration;
+import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaConversionError;
+import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaDefinition;
+import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaExport;
+import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaImport;
+import ai.dataeng.sqml.execution.flink.ingest.source.SourceDataset;
+import ai.dataeng.sqml.execution.flink.ingest.stats.SchemaGenerator;
+import ai.dataeng.sqml.execution.flink.ingest.stats.SourceTableStatistics;
+import ai.dataeng.sqml.planner.optimize.LogicalPlanOptimizer;
+import ai.dataeng.sqml.planner.optimize.SimpleOptimizer;
+import ai.dataeng.sqml.execution.flink.process.FlinkConfiguration;
+import ai.dataeng.sqml.execution.flink.process.FlinkGenerator;
+import ai.dataeng.sqml.execution.sql.SQLConfiguration;
+import ai.dataeng.sqml.execution.sql.SQLGenerator;
+import ai.dataeng.sqml.execution.sql.util.DatabaseUtil;
+import ai.dataeng.sqml.planner.operator.relation.ColumnReferenceExpression;
+import ai.dataeng.sqml.planner.operator.relation.RowExpression;
+import ai.dataeng.sqml.type.basic.BasicTypeManager;
+import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.type.constraint.Constraint;
+import ai.dataeng.sqml.importer.source.simplefile.DirectoryDataset;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.tree.name.NamePath;
@@ -133,7 +138,7 @@ public class Main2 {
 
         Thread.sleep(1000);
 
-        SQMLBundle bundle = new SQMLBundle.Builder().createScript().setName(RETAIL_SCRIPT_NAME)
+        ScriptBundle bundle = new ScriptBundle.Builder().createScript().setName(RETAIL_SCRIPT_NAME)
                 .setScript(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION))
                 .setImportSchema(RETAIL_IMPORT_SCHEMA_FILE)
                 .asMain()
@@ -179,8 +184,8 @@ public class Main2 {
         flinkEnv.execute();
     }
 
-    public static void end2endExample(DataSourceRegistry ddRegistry, SQMLBundle bundle) throws Exception {
-        SQMLBundle.SQMLScript sqml = bundle.getMainScript();
+    public static void end2endExample(DataSourceRegistry ddRegistry, ScriptBundle bundle) throws Exception {
+        SqmlScript sqml = bundle.getMainScript();
 
         //Setup user schema and getting schema from statistics data
         SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
@@ -188,25 +193,25 @@ public class Main2 {
             sqml.parseSchema());
         Preconditions.checkArgument(!schemaImporter.getErrors().isFatal(),
             schemaImporter.getErrors());
-        ImportManager sqmlImporter = new ImportManager(ddRegistry);
+        ImportManager3 sqmlImporter = new ImportManager3(ddRegistry);
         sqmlImporter.registerUserSchema(userSchema);
 
-        ConversionError.Bundle<ConversionError> errors = new ConversionError.Bundle<>();
-        LogicalPlan logicalPlan = new LogicalPlan();
+        ProcessBundle<ProcessMessage> errors = new ProcessBundle<>();
+        LogicalPlanImpl logicalPlan = new LogicalPlanImpl();
         //1. Imports
         Name ordersName = toName(RETAIL_TABLE_NAMES[1]);
         ImportResolver importer = new ImportResolver(sqmlImporter, logicalPlan, errors);
         importer.resolveImport(ImportResolver.ImportMode.TABLE, toName(RETAIL_DATASET),
             Optional.of(ordersName), Optional.empty());
         //2. SQRL statements
-        LogicalPlan.Table orders = (LogicalPlan.Table) logicalPlan.getSchemaElement(ordersName);
-        LogicalPlan.Column ordersTime = (LogicalPlan.Column) orders.getField(toName("time"));
+        LogicalPlanImpl.Table orders = (LogicalPlanImpl.Table) logicalPlan.getSchemaElement(ordersName);
+        LogicalPlanImpl.Column ordersTime = (LogicalPlanImpl.Column) orders.getField(toName("time"));
         RowExpression predicate = null; //TODO: create expression
         FilterOperator filter = new FilterOperator(orders.getCurrentNode(), predicate);
         orders.getCurrentNode().addConsumer(filter);
-        LogicalPlan.Table customerNoOrders = logicalPlan.createTable(toName("CustomerOrderStats"),
+        LogicalPlanImpl.Table customerNoOrders = logicalPlan.createTable(toName("CustomerOrderStats"),
             false);
-        LogicalPlan.Column customerid = (LogicalPlan.Column) orders.getField(toName("customerid"));
+        LogicalPlanImpl.Column customerid = (LogicalPlanImpl.Column) orders.getField(toName("customerid"));
         AggregateOperator countAgg = AggregateOperator.createAggregateAndPopulateTable(filter,
             customerNoOrders,
             Map.of(customerid.getName(), new ColumnReferenceExpression(customerid)),
@@ -340,8 +345,8 @@ public class Main2 {
     }
 
 
-    public static void importSchema(DataSourceRegistry ddRegistry, SQMLBundle bundle) throws Exception {
-        SQMLBundle.SQMLScript sqml = bundle.getMainScript();
+    public static void importSchema(DataSourceRegistry ddRegistry, ScriptBundle bundle) throws Exception {
+        SqmlScript sqml = bundle.getMainScript();
 
         SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
         Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
@@ -354,12 +359,12 @@ public class Main2 {
         System.out.println("-------Import Schema-------");
         System.out.print(toString(userSchema));
 
-        ImportManager sqmlImporter = new ImportManager(ddRegistry);
+        ImportManager3 sqmlImporter = new ImportManager3(ddRegistry);
         sqmlImporter.registerUserSchema(userSchema);
 
         sqmlImporter.importAllTable(RETAIL_DATASET);
 
-        ConversionError.Bundle<SchemaConversionError> errors = new ConversionError.Bundle<>();
+        ProcessBundle<SchemaConversionError> errors = new ProcessBundle<>();
         ImportSchema schema = sqmlImporter.createImportSchema(errors);
 
         if (errors.hasErrors()) {

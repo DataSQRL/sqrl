@@ -32,7 +32,7 @@
   <dependencies>
     <dependency>
       <groupId>ai.dataeng.sqml</groupId>
-      <artifactId>sqml-api</artifactId>
+      <artifactId>sqml-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>

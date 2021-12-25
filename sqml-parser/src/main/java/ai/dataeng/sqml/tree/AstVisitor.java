@@ -288,7 +288,7 @@ public abstract class AstVisitor<R, C> {
     return visitExpression(node, context);
   }
 
-  public R visitScript(Script node, C context) {
+  public R visitScript(ScriptNode node, C context) {
     return visitNode(node, context);
   }
 

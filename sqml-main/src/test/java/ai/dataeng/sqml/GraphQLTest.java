@@ -6,13 +6,13 @@
 //import static org.mockito.Mockito.mock;
 //import static org.mockito.Mockito.when;
 //
-//import ai.dataeng.sqml.analyzer.Analysis;
-//import ai.dataeng.sqml.analyzer.Analyzer;
+//import ai.dataeng.sqml.parser.validator.script.analyzer.Analysis;
+//import ai.dataeng.sqml.parser.validator.script.analyzer.Analyzer;
 //import ai.dataeng.sqml.execution.importer.ImportManager;
-//import ai.dataeng.sqml.execution.importer.ImportManagerFactory;
-//import ai.dataeng.sqml.execution.importer.ImportSchema;
-//import ai.dataeng.sqml.execution.importer.ImportSchema.ImportType;
-//import ai.dataeng.sqml.execution.importer.ImportSchema.Mapping;
+//import ai.dataeng.sqml.imports.ImportManagerFactory;
+//import ai.dataeng.sqml.imports.ImportSchema;
+//import ai.dataeng.sqml.imports.ImportSchema.ImportType;
+//import ai.dataeng.sqml.imports.ImportSchema.Mapping;
 //import ai.dataeng.sqml.function.FunctionProvider;
 //import ai.dataeng.sqml.function.PostgresFunctions;
 //import ai.dataeng.sqml.graphql.LogicalGraphqlSchemaBuilder;

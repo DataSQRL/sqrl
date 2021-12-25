@@ -9,7 +9,7 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>sqml-api</module>
+        <module>sqml-core</module>
         <module>sqml-parser</module>
         <module>sqml-main</module>
 
@@ -65,7 +65,7 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqml-api</artifactId>
+                <artifactId>sqml-core</artifactId>
                 <groupId>ai.dataeng.sqml</groupId>
                 <version>${project.version}</version>
             </dependency>

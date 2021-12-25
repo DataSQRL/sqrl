@@ -31,7 +31,7 @@ public class TestExampleParse {
     for (Map.Entry<Path, String> entry : scripts.entrySet()) {
       try {
         System.out.println(entry.getValue());
-        Script script = parser.parse(entry.getValue());
+        Script scriptNode = parser.parse(entry.getValue());
         System.out.println(script);
         passed.add(entry.getKey());
       } catch (Exception e) {

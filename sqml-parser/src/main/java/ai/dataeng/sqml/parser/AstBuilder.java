@@ -71,7 +71,7 @@ import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Row;
-import ai.dataeng.sqml.tree.Script;
+import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.IsEmpty;
@@ -915,7 +915,7 @@ class AstBuilder
 
   @Override
   public Node visitScript(ScriptContext ctx) {
-    return new Script(
+    return new ScriptNode(
         getLocation(ctx),
         visit(ctx.statement(), Node.class));
   }

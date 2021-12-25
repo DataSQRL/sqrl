@@ -18,8 +18,8 @@ public abstract class DefaultTraversalVisitor<R, C>
 
 
   @Override
-  public R visitScript(Script script, C context) {
-    for (Node item : script.getStatements()) {
+  public R visitScript(ScriptNode scriptNode, C context) {
+    for (Node item : scriptNode.getStatements()) {
       process(item, context);
     }
     return null;
