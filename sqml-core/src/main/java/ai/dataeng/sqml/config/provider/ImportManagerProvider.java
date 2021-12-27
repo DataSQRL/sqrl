@@ -1,7 +1,8 @@
 package ai.dataeng.sqml.config.provider;
 
-import ai.dataeng.sqml.importer.DatasetManager;
+import ai.dataeng.sqml.execution.flink.ingest.DatasetLookup;
+import ai.dataeng.sqml.planner.operator.ImportResolver;
 
 public interface ImportManagerProvider {
-  DatasetManager createImportManager();
+  ImportResolver createImportManager(DatasetLookup datasetLookup);
 }

@@ -6,14 +6,23 @@ import ai.dataeng.sqml.config.EnvironmentSettings;
 import ai.dataeng.sqml.config.provider.ScriptParserProvider;
 import ai.dataeng.sqml.config.provider.ScriptProcessorProvider;
 import ai.dataeng.sqml.config.provider.ValidatorProvider;
-import ai.dataeng.sqml.importer.DatasetManager;
+import ai.dataeng.sqml.execution.flink.ingest.DatasetLookup;
+import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaDefinition;
+import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaImport;
+import ai.dataeng.sqml.execution.flink.ingest.source.SourceDataset;
 import ai.dataeng.sqml.parser.ScriptParser;
 import ai.dataeng.sqml.parser.processor.ScriptProcessor;
 import ai.dataeng.sqml.parser.validator.Validator;
 import ai.dataeng.sqml.planner.Script;
+import ai.dataeng.sqml.planner.operator.ImportResolver;
 import ai.dataeng.sqml.tree.ScriptNode;
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.type.constraint.Constraint;
+import com.google.common.base.Preconditions;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,16 +31,18 @@ import lombok.extern.slf4j.Slf4j;
 public class Environment {
 
   private final EnvironmentSettings settings;
-  private final DatasetManager datasetManager;
+  private final ImportResolver importResolver;
 
   private final ScriptParserProvider scriptParserProvider;
   private final ValidatorProvider validatorProvider;
   private final ScriptProcessorProvider scriptProcessorProvider;
 
   public static Environment create(EnvironmentSettings settings) {
-    DatasetManager datasetManager = settings.getImportManagerProvider().createImportManager();
+    ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(
+        settings.getDsLookup()
+    );
 
-    return new Environment(settings, datasetManager,
+    return new Environment(settings, importResolver,
         settings.getScriptParserProvider(), settings.getValidatorProvider(),
         settings.getScriptProcessorProvider());
   }
@@ -47,6 +58,8 @@ public class Environment {
   public Script compile(ScriptBundle bundle) throws Exception {
     SqmlScript mainScript = bundle.getMainScript();
 
+    registerUserSchema(mainScript.parseSchema());
+
     ScriptParser scriptParser = scriptParserProvider.createScriptParser();
     ScriptNode scriptNode = scriptParser.parse(mainScript);
 
@@ -56,7 +69,7 @@ public class Environment {
     }
 
     ScriptProcessor processor = scriptProcessorProvider.createScriptProcessor(
-        settings.getImportProcessorProvider().createImportProcessor(datasetManager,
+        settings.getImportProcessorProvider().createImportProcessor(importResolver,
             settings.getHeuristicPlannerProvider()),
         settings.getQueryProcessorProvider().createQueryProcessor(),
         settings.getExpressionProcessorProvider().createExpressionProcessor(),
@@ -83,5 +96,21 @@ public class Environment {
 //    streamExecutor.register(script.getExecutionPlan());
 
     return null;
+  }
+
+  public void registerUserSchema(
+      SchemaDefinition schemaDefinition) {
+    DatasetLookup dsLookup = importResolver.getImportManager().getDatasetLookup();
+    SchemaImport schemaImporter = new SchemaImport(dsLookup, Constraint.FACTORY_LOOKUP);
+    Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(
+        schemaDefinition);
+    Preconditions.checkArgument(!schemaImporter.getErrors().isFatal(),
+        schemaImporter.getErrors());
+
+    importResolver.getImportManager().registerUserSchema(userSchema);
+  }
+
+  public void registerDataset(SourceDataset sourceDataset) {
+    settings.getDsLookup().addDataset(sourceDataset);
   }
 }

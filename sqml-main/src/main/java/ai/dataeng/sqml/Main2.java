@@ -203,7 +203,7 @@ public class Main2 {
         Name ordersName = toName(RETAIL_TABLE_NAMES[1]);
         ImportResolver importer = new ImportResolver(sqmlImporter, logicalPlan, errors);
         importer.resolveImport(ImportResolver.ImportMode.TABLE, toName(RETAIL_DATASET),
-            Optional.of(ordersName), Optional.empty());
+            Optional.of(ordersName), Optional.empty(), null, null);
         //2. SQRL statements
         ai.dataeng.sqml.planner.Table orders = (ai.dataeng.sqml.planner.Table) logicalPlan.getSchemaElement(ordersName);
         Column ordersTime = (Column) orders.getField(toName("time"));

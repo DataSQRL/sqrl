@@ -38,6 +38,10 @@ public class ImportManager {
         this.datasetLookup = datasetLookup;
     }
 
+    public DatasetLookup getDatasetLookup() {
+        return datasetLookup;
+    }
+
     public ProcessBundle<SchemaConversionError> registerUserSchema(SchemaDefinition yamlSchema) {
         SchemaImport importer = new SchemaImport(datasetLookup, Constraint.FACTORY_LOOKUP);
         Map<Name, FlexibleDatasetSchema> result = importer.convertImportSchema(yamlSchema);

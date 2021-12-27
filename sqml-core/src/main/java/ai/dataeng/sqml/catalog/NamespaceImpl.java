@@ -3,12 +3,14 @@ package ai.dataeng.sqml.catalog;
 
 import ai.dataeng.sqml.planner.Dataset;
 import ai.dataeng.sqml.planner.Table;
+import ai.dataeng.sqml.planner.operator.DocumentSource;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.ToString;
 
 @ToString
@@ -16,6 +18,8 @@ public class NamespaceImpl implements Namespace {
 
   private final Map<Name, Dataset> rootDatasets;
   private final Map<Name, Dataset> scopedDatasets;
+
+  private final static AtomicInteger tableIdCounter = new AtomicInteger(0);
 
   public NamespaceImpl() {
     this.rootDatasets = new HashMap<>();
@@ -59,7 +63,7 @@ public class NamespaceImpl implements Namespace {
   }
 
   @Override
-  public void scope(Name name, Dataset dataset) {
+  public void scope(Dataset dataset) {
 
   }
 
@@ -70,5 +74,22 @@ public class NamespaceImpl implements Namespace {
     } else {
       this.rootDatasets.put(datasetName, dataset);
     }
+  }
+
+  @Override
+  public void addDataset(Dataset dataset) {
+    this.rootDatasets.put(dataset.getName(), dataset);
+  }
+
+  @Override
+  public void addSourceNode(DocumentSource source) {
+
+  }
+
+  @Override
+  public Table createTable(Name name, boolean isInternal) {
+    Table table = new Table(tableIdCounter.incrementAndGet(), name, isInternal);
+//    schema.add(table);
+    return table;
   }
 }

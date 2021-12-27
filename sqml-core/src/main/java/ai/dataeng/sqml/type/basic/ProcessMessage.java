@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 public interface ProcessMessage {
@@ -27,6 +28,7 @@ public interface ProcessMessage {
     }
 
     @Slf4j
+    @ToString
     public static class ProcessBundle<E extends ProcessMessage> implements Iterable<E> {
 
         private List<E> errors;
@@ -41,7 +43,7 @@ public interface ProcessMessage {
         }
 
         public boolean hasErrors() {
-            return errors==null || !errors.isEmpty();
+            return !(errors==null || errors.isEmpty());
         }
 
         public boolean isFatal() {

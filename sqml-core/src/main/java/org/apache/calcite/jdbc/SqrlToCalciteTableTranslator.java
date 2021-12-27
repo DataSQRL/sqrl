@@ -81,9 +81,13 @@ public class SqrlToCalciteTableTranslator {
         return SqlTypeName.BOOLEAN;
       case "STRING":
         return SqlTypeName.VARCHAR;
+      case "UUID":
+        return SqlTypeName.VARCHAR;
+      case "FLOAT":
+        return SqlTypeName.FLOAT;
       //todo: remaining
     }
     throw new RuntimeException(String.format(
-        "Unrecognized type ", column.getClass().getName()));
+        "Unrecognized type %s", column.getClass().getName()));
   }
 }

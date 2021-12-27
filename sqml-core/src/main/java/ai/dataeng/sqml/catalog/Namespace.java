@@ -2,6 +2,7 @@ package ai.dataeng.sqml.catalog;
 
 import ai.dataeng.sqml.planner.Dataset;
 import ai.dataeng.sqml.planner.Table;
+import ai.dataeng.sqml.planner.operator.DocumentSource;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.List;
@@ -33,9 +34,13 @@ public interface Namespace {
    *  but are not exported to outside the script. Examples are: Functions
    *  and dataset imports.
    */
-  public void scope(Name name, Dataset dataset);
+  public void scope(Dataset dataset);
 
-  public void addRootDataset(Dataset dataset, Name datasetName);
+  void addDataset(Dataset dataset);
+
+  void addSourceNode(DocumentSource source);
+
+  Table createTable(Name name, boolean isInternal);
 
   /**
    * The current schema
