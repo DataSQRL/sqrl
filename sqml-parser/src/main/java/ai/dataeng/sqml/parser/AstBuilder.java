@@ -71,7 +71,7 @@ import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Row;
-import ai.dataeng.sqml.tree.Script;
+import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.IsEmpty;
@@ -101,6 +101,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 class AstBuilder
@@ -914,7 +915,7 @@ class AstBuilder
 
   @Override
   public Node visitScript(ScriptContext ctx) {
-    return new Script(
+    return new ScriptNode(
         getLocation(ctx),
         visit(ctx.statement(), Node.class));
   }
@@ -964,7 +965,7 @@ class AstBuilder
         Optional.of(getLocation(ctx)),
         (InlineJoinBody)visit(ctx.inlineJoinBody()),
         ctx.inv == null ? Optional.empty() :
-            Optional.of((Identifier)visit(ctx.inv))
+            Optional.of(Name.system(((Identifier)visit(ctx.inv)).getValue()))
     );
   }
 
@@ -972,7 +973,7 @@ class AstBuilder
   public Node visitInlineJoinBody(InlineJoinBodyContext ctx) {
     return new InlineJoinBody(
           Optional.of(getLocation(ctx)),
-          getQualifiedName(ctx.table),
+          getNamePath(ctx.table),
           ctx.alias == null ? Optional.empty() :
               Optional.of((Identifier)visit(ctx.alias)),
         (ctx.expression() != null) ? (Expression)visit(ctx.expression()) : null,
@@ -987,18 +988,24 @@ class AstBuilder
 
   @Override
   public Node visitQueryAssign(QueryAssignContext ctx) {
-//    QualifiedName name = getQualifiedName(ctx.qualifiedName());
-
+    Interval interval = new Interval(
+        ctx.query().start.getStartIndex(),
+        ctx.query().stop.getStopIndex());
+    String query = ctx.query().start.getInputStream().getText(interval);
     return new QueryAssignment(Optional.of(getLocation(ctx)), getNamePath(ctx.qualifiedName()),
-        (Query)visitQuery(ctx.query()));
+        (Query)visitQuery(ctx.query()), query);
   }
 
   @Override
   public Node visitExpressionAssign(ExpressionAssignContext ctx) {
     QualifiedName name = getQualifiedName(ctx.qualifiedName());
+    Interval interval = new Interval(
+        ctx.expression().start.getStartIndex(),
+        ctx.expression().stop.getStopIndex());
+    String expression = ctx.expression().start.getInputStream().getText(interval);
 
     return new ExpressionAssignment(Optional.of(getLocation(ctx)), name,
-        (Expression)visitExpression(ctx.expression()));
+        (Expression)visitExpression(ctx.expression()), expression);
   }
 
   @Override

@@ -329,7 +329,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  public String visitScript(Script node, Void context) {
+  public String visitScript(ScriptNode node, Void context) {
     return node.getStatements()
         .stream().map(s->s.accept(this, null))
         .collect(Collectors.joining("\n"));
@@ -367,7 +367,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitInlineJoin(InlineJoin node, Void context) {
-    return node.getJoin().accept(this, context) + node.getInverse().map(i->" INVERSE " + i.getValue()).orElse("");
+    return node.getJoin().accept(this, context) + node.getInverse().map(i->" INVERSE " + i.getCanonical()).orElse("");
   }
 
   @Override

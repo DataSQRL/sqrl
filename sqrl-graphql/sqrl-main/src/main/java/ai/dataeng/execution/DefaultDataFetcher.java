@@ -16,7 +16,7 @@ import lombok.Value;
 public class DefaultDataFetcher implements DataFetcher {
   JdbcPool jdbcPool;
   PageProvider pageProvider;
-  @NonNull H2Table table;
+  H2Table table;
   @Override
   public Object get(DataFetchingEnvironment environment) throws Exception {
     PreparedQueryBuilder h2 = new PreparedQueryBuilder(table, pageProvider);

@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.parser;
 
 import ai.dataeng.sqml.parser.ParsingOptions.DecimalLiteralTreatment;
-import ai.dataeng.sqml.tree.Script;
+import ai.dataeng.sqml.tree.ScriptNode;
 
 public class SqmlParser {
 
@@ -15,7 +15,7 @@ public class SqmlParser {
         .build();
   }
 
-  public Script parse(String script) {
+  public ScriptNode parse(String script) {
     return parser.createScript(script, parsingOptions);
   }
 

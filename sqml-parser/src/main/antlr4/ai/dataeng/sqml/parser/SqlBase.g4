@@ -40,7 +40,7 @@ assignment
     : qualifiedName ':=' inlineJoin                                                    # joinAssignment
     | qualifiedName ':=' expression                                                    # expressionAssign
     | qualifiedName ':=' query                                                         # queryAssign
-    | qualifiedName ':=' DISTINCT table=identifier ON '(' identifier (',' identifier)* ')'
+    | qualifiedName ':=' DISTINCT table=identifier ON '('? identifier (',' identifier)* ')'?
       (ORDER BY sortItem (',' sortItem)*)?                          # distinctAssignment
     ;
 

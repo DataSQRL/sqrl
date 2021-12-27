@@ -8,12 +8,18 @@ public class QueryAssignment extends Assignment {
 
   private final Query query;
   private final NamePath namePath;
+  private final String sql;
 
   public QueryAssignment(Optional<NodeLocation> location, NamePath namePath,
-      Query query) {
+      Query query, String sql) {
     super(location, null);
     this.query = query;
     this.namePath = namePath;
+    this.sql = sql;
+  }
+
+  public String getSql() {
+    return sql;
   }
 
   @Override

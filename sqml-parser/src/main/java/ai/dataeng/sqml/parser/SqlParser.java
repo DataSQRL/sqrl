@@ -17,7 +17,7 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
 import ai.dataeng.sqml.tree.Node;
-import ai.dataeng.sqml.tree.Script;
+import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.tree.Statement;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -85,8 +85,8 @@ public class SqlParser {
     enhancedErrorHandlerEnabled = options.isEnhancedErrorHandlerEnabled();
   }
 
-  public Script createScript(String sql, ParsingOptions parsingOptions) {
-    return (Script) invokeParser("script", sql, ai.dataeng.sqml.parser.SqlBaseParser::script,
+  public ScriptNode createScript(String sql, ParsingOptions parsingOptions) {
+    return (ScriptNode) invokeParser("script", sql, ai.dataeng.sqml.parser.SqlBaseParser::script,
         parsingOptions);
   }
 

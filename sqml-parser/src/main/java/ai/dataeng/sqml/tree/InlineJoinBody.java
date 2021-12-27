@@ -13,6 +13,7 @@
  */
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
@@ -21,14 +22,14 @@ import java.util.Optional;
 public class InlineJoinBody
     extends Expression {
 
-  private final QualifiedName table;
+  private final NamePath table;
   private final Optional<Identifier> alias;
   private final Expression criteria;
   private final List<SortItem> sortItems;
   private final Optional<Integer> limit;
   private final Optional<InlineJoinBody> inlineJoinBody;
 
-  public InlineJoinBody(Optional<NodeLocation> location, QualifiedName table,
+  public InlineJoinBody(Optional<NodeLocation> location, NamePath table,
       Optional<Identifier> alias,Expression criteria, List<SortItem> sortItems,
       Optional<Integer> limit, Optional<InlineJoinBody> inlineJoinBody) {
     super(location);
@@ -40,7 +41,7 @@ public class InlineJoinBody
     this.inlineJoinBody = inlineJoinBody;
   }
 
-  public QualifiedName getTable() {
+  public NamePath getTable() {
     return table;
   }
 
