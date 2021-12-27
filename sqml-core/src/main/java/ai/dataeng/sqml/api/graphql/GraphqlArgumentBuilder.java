@@ -61,6 +61,7 @@ public class GraphqlArgumentBuilder {
   private Optional<GraphQLArgument> buildFilterArgument() {
     List<GraphQLInputObjectField> fields = table.getFields()
         .stream()
+        .filter(f->!f.getName().getCanonical().startsWith("_"))
         .filter(c->c instanceof Column)
         .map(c->(Column) c)
         .map(this::buildFilter)
@@ -137,6 +138,7 @@ public class GraphqlArgumentBuilder {
   private Optional<GraphQLInputType> buildOrderType() {
     List<GraphQLInputObjectField> fields = new ArrayList<>();
     for (Field field : table.getFields()) {
+      if (field.getName().getCanonical().startsWith("_")) continue;
       if (field instanceof Column) {
         Column column = (Column) field;
         if (column.getType().isOrderable()) {
@@ -218,25 +220,6 @@ public class GraphqlArgumentBuilder {
             .build())
         .build();
   }
-
-//    private GraphQLInputType getOrCreateBindType() {
-//      if (bind == null) {
-//        this.bind = GraphQLInputObjectType.newInputObject()
-//            .name("bind")
-//            .field(GraphQLInputObjectField.newInputObjectField()
-//                .name("name")
-//                .type(Scalars.GraphQLString))
-//            .field(GraphQLInputObjectField.newInputObjectField()
-//                .name("type")
-//                .type(Scalars.GraphQLString))
-//            .field(GraphQLInputObjectField.newInputObjectField()
-//                .name("intType")
-//                .type(Scalars.GraphQLInt)
-//            ).build();
-//        additionalTypes.add(bind);
-//      }
-//      return bind;
-//    }
 
   class FilterArgumentVisitor extends SqmlTypeVisitor<Optional<GraphQLInputObjectType>, Void> {
 

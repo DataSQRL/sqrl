@@ -1,8 +1,10 @@
 package ai.dataeng.sqml.catalog;
 
 import ai.dataeng.sqml.planner.Dataset;
+import ai.dataeng.sqml.planner.DatasetOrTable;
 import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.planner.operator.DocumentSource;
+import ai.dataeng.sqml.planner.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.List;
@@ -25,11 +27,6 @@ public interface Namespace {
   Optional<Table> lookup(NamePath name, int version);
 
   /**
-   * Returns all objects associated with
-   */
-  Optional<List<Table>> lookupAll(NamePath name);
-
-  /**
    * Local scoped objects are accessible through its fully qualified path
    *  but are not exported to outside the script. Examples are: Functions
    *  and dataset imports.
@@ -45,5 +42,5 @@ public interface Namespace {
   /**
    * The current schema
    */
-//  public Table getRootTable();
+  ShadowingContainer<DatasetOrTable> getSchema();
 }

@@ -84,6 +84,6 @@ public class HeuristicPlannerImpl implements Planner {
     RelNode optimizedNode = hepPlanner.findBestExp();
     System.out.println(optimizedNode);
 
-    return new PlannerResult(optimizedNode);
+    return new PlannerResult(optimizedNode, node);
   }
 }

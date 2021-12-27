@@ -35,10 +35,20 @@ public class QueryProcessorImpl implements QueryProcessor {
         namespace,
         statement.getSql());
 
+    List<Column> fieldList = RowToSchemaConverter.convert(result.getRoot().getRowType());
 
+    //If there is no alias & it is a single column then add it as a column to the parent table
+    if (fieldList.size() == 1 && fieldList.get(0).getName().getCanonical().contains("$")) { //todo hack
+      NamePath namePath = statement.getNamePath().getPrefix()
+          .orElseThrow(()->new RuntimeException("Unnamed queries cannot be assigned to root"));
+      Table table = namespace.lookup(namePath)
+          .orElseThrow(()->new RuntimeException("Could not find prefix table"));
+      fieldList.get(0).setName(statement.getNamePath().getLast());
+      table.addField(fieldList.get(0));
+      return;
+    }
 
     Table destination = namespace.createTable(statement.getNamePath().getLast(), false);
-    List<Column> fieldList = RowToSchemaConverter.convert(result.getRoot().getRowType());
     fieldList.forEach(destination::addField);
 
     //Assignment to root

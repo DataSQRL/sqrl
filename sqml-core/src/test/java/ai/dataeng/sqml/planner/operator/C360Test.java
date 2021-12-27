@@ -2,12 +2,19 @@ package ai.dataeng.sqml.planner.operator;
 
 import ai.dataeng.sqml.Environment;
 import ai.dataeng.sqml.ScriptBundle;
+import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
+import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.config.EnvironmentSettings;
 import ai.dataeng.sqml.execution.flink.ingest.DatasetRegistration;
 import ai.dataeng.sqml.importer.source.simplefile.DirectoryDataset;
+import ai.dataeng.sqml.planner.DatasetOrTable;
 import ai.dataeng.sqml.planner.Script;
+import ai.dataeng.sqml.planner.Table;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,10 +81,17 @@ public class C360Test {
         .add().build();
 
     Script script = env.compile(bundle);
-    System.out.println(script.getNamespace());
 
-    settings.getHeuristicPlannerProvider().createPlanner()
-        .plan(Optional.empty(), settings.getNamespace(), "SELECT * FROM `Customer`");
+    testGraphql(script.getNamespace());
+  }
+
+  private void testGraphql(Namespace namespace) {
+    ShadowingContainer<DatasetOrTable> schema = namespace.getSchema();
+
+    GraphQLSchema graphQLSchema = GraphqlSchemaBuilder.newGraphqlSchema()
+        .schema(schema)
+        .build();
+    System.out.println(new SchemaPrinter().print(graphQLSchema));
 
   }
 }

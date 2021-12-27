@@ -20,12 +20,12 @@ import ai.dataeng.sqml.type.basic.BooleanType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
 import ai.dataeng.sqml.type.basic.FloatType;
 import ai.dataeng.sqml.type.basic.IntegerType;
+import ai.dataeng.sqml.type.basic.IntervalType;
 import ai.dataeng.sqml.type.basic.NullType;
 import ai.dataeng.sqml.type.basic.NumberType;
 import ai.dataeng.sqml.type.basic.StringType;
 import ai.dataeng.sqml.type.basic.UuidType;
 import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import graphql.Scalars;
 import graphql.schema.Coercing;
@@ -35,10 +35,7 @@ import graphql.schema.CoercingSerializeException;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLCodeRegistry;
-import graphql.schema.GraphQLCodeRegistry.Builder;
 import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
 import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNamedInputType;
@@ -68,54 +65,52 @@ public class GraphqlSchemaBuilder {
   final ShadowingContainer<DatasetOrTable> schema;
   private final GraphqlTypeCatalog typeCatalog;
   GraphQLSchema.Builder schemaBuilder = GraphQLSchema.newSchema();
-  NameTranslator nameTranslator;
+  NameTranslator nameTranslator = new NameTranslator();
   Map<String, H2Table> tableMap;
   private final Pool client;
 
   public GraphqlSchemaBuilder(Map<Class<? extends Type>, GraphQLOutputType> types,
       ShadowingContainer<DatasetOrTable> schema,
-      NameTranslator nameTranslator, Map<String, H2Table> tableMap, Pool client) {
+      Map<String, H2Table> tableMap, Pool client) {
 
     this.types = types;
     this.schema = schema;
-    this.nameTranslator = nameTranslator;
-    this.tableMap = tableMap;
+    this.tableMap = new HashMap<>(); //todo
     this.client = client;
     this.typeCatalog = new GraphqlTypeCatalog();
   }
 
-//  public static Builder newGraphqlSchema() {
-//    return new Builder();
-//  }
-//
-//  public static class Builder {
-//    private ShadowingContainer<DatasetOrTable> schema;
-//    private GraphQLCodeRegistry codeRegistry;
-//    private Map<Class<? extends Type>, GraphQLOutputType> types = StandardScalars.getTypeMap();
-//
-//    public Builder schema(ShadowingContainer<DatasetOrTable> schema) {
-//      this.schema = schema;
-//      return this;
-//    }
-//
-//    public Builder additionalTypes(Map<Class<? extends Type>, GraphQLOutputType> types) {
-//      this.types = types;
-//      return this;
-//    }
-//
-//    public Builder setCodeRegistryBuilder(GraphQLCodeRegistry codeRegistry) {
-//      this.codeRegistry = codeRegistry;
-//      return this;
-//    }
-//
-//    public GraphQLSchema build() {
-//      LogicalGraphqlSchemaBuilder schemaBuilder = new LogicalGraphqlSchemaBuilder(types, schema);
-//
-//
-//      return schemaBuilder.build();
-//    }
-//
-//  }
+  public static Builder newGraphqlSchema() {
+    return new Builder();
+  }
+
+  public static class Builder {
+    private ShadowingContainer<DatasetOrTable> schema;
+    private GraphQLCodeRegistry codeRegistry;
+    private Map<Class<? extends Type>, GraphQLOutputType> types = StandardScalars.getTypeMap();
+
+    public Builder schema(ShadowingContainer<DatasetOrTable> schema) {
+      this.schema = schema;
+      return this;
+    }
+
+    public Builder additionalTypes(Map<Class<? extends Type>, GraphQLOutputType> types) {
+      this.types = types;
+      return this;
+    }
+
+    public Builder setCodeRegistryBuilder(GraphQLCodeRegistry codeRegistry) {
+      this.codeRegistry = codeRegistry;
+      return this;
+    }
+
+    public GraphQLSchema build() {
+      GraphqlSchemaBuilder schemaBuilder = new GraphqlSchemaBuilder(types, schema, null, null);
+
+      return schemaBuilder.build();
+    }
+
+  }
 
   public GraphQLSchema build() {
     GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
@@ -123,6 +118,7 @@ public class GraphqlSchemaBuilder {
 
     for (DatasetOrTable field : schema) {
       Table table = (Table)field;
+      if (table.getName().getCanonical().startsWith("_")) continue;
       GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
           .name(table.getName().getCanonical())
           //TODO: Create a graphql object wrapper to construct this
@@ -158,7 +154,7 @@ public class GraphqlSchemaBuilder {
 
   }
 
-  private void resolveNestedFetchers(JdbcPool pool, Table tbl, Builder codeRegistry) {
+  private void resolveNestedFetchers(JdbcPool pool, Table tbl, GraphQLCodeRegistry.Builder codeRegistry) {
     for (ai.dataeng.sqml.planner.Field field : tbl.getFields()) {
       if (field instanceof Relationship) {
         resolveNestedFetchers(pool, (Relationship)field, codeRegistry, tbl);
@@ -166,10 +162,8 @@ public class GraphqlSchemaBuilder {
     }
   }
 
-  private void resolveNestedFetchers(JdbcPool pool, Relationship field, Builder codeRegistry,
+  private void resolveNestedFetchers(JdbcPool pool, Relationship field, GraphQLCodeRegistry.Builder codeRegistry,
       Table parent) {
-    System.out.println(nameTranslator.getGraphqlTypeName(parent) + ":" +
-        nameTranslator.getGraphqlName(field.getToTable()));
 
     codeRegistry.dataFetcher(FieldCoordinates.coordinates(nameTranslator.getGraphqlTypeName(parent),
             nameTranslator.getGraphqlName(field.getToTable())),
@@ -208,8 +202,14 @@ public class GraphqlSchemaBuilder {
         .build();
   }
 
-
+  Set<Table> seen = new HashSet<>();
   public GraphQLNamedOutputType createOutputType(Table table) {
+    if (seen.contains(table)) {
+      return new GraphQLTypeReference(table.getName().getDisplay());
+    } else {
+      seen.add(table);
+    }
+
     GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
         .name(table.getName().getDisplay());
 
@@ -217,6 +217,7 @@ public class GraphqlSchemaBuilder {
       if (!field.isVisible()) {
         continue;
       }
+      if (field.getName().getCanonical().startsWith("_")) continue;
 
       GraphQLOutputType output;
       List<GraphQLArgument> argument;
@@ -231,7 +232,7 @@ public class GraphqlSchemaBuilder {
         Column col = (Column) field;
         Visitor sqmlTypeVisitor = new Visitor(Map.of());
         output = col.getType().accept(sqmlTypeVisitor, null)
-            .get();
+            .orElseThrow(()->new RuntimeException("Could not find type " + col.getType().getName()));
         argument = List.of();
       } else {
         throw new RuntimeException("");
@@ -363,7 +364,7 @@ public class GraphqlSchemaBuilder {
 
     @Override
     public Optional<GraphQLOutputType> visitDateTimeType(DateTimeType type, Context context) {
-      return super.visitDateTimeType(type, context);
+      return Optional.of(Scalars.GraphQLString); //todo: date?
     }
 
     @Override
@@ -407,53 +408,18 @@ public class GraphqlSchemaBuilder {
       return null;
     }
 
+    @Override
+    public Optional<GraphQLOutputType> visitUuidType(UuidType type, Context context) {
+      return Optional.of(Scalars.GraphQLString);
+    }
+
+    @Override
+    public Optional<GraphQLOutputType> visitIntervalType(IntervalType type, Context context) {
+      return Optional.of(Scalars.GraphQLInt); //Todo: interval type?
+    }
+
     public  String toGraphqlName(String name) {
       return name.replaceAll("[^A-Za-z0-9_]", "");
-    }
-
-    private List<GraphQLArgument> buildRelationArguments() {
-      GraphQLInputType bind = getOrCreateBindType();
-
-      GraphQLArgument filter = GraphQLArgument.newArgument().name("filter")
-          .type(Scalars.GraphQLString)
-          .build();
-
-      GraphQLArgument filterBind = GraphQLArgument.newArgument().name("filterBind")
-          .type(bind)
-          .build();
-
-      return List.of(filter, filterBind);
-    }
-
-    private GraphQLInputType getOrCreateBindType() {
-      if (bind == null) {
-        this.bind = GraphQLInputObjectType.newInputObject()
-            .name("bind")
-            .field(GraphQLInputObjectField.newInputObjectField()
-                .name("name")
-                .type(Scalars.GraphQLString))
-            .field(GraphQLInputObjectField.newInputObjectField()
-                .name("type")
-                .type(Scalars.GraphQLString))
-            .field(GraphQLInputObjectField.newInputObjectField()
-                .name("intType")
-                .type(Scalars.GraphQLInt)
-            ).build();
-        additionalTypes.add(bind);
-      }
-      return bind;
-    }
-
-    public String toName(QualifiedName name) {
-      return toGraphqlName(String.join("_", name.getParts()));
-    }
-
-    public String toName(Name name) {
-      return toGraphqlName(name.getDisplay());
-    }
-
-    public String toName(String name) {
-      return toGraphqlName(name);
     }
 
     private boolean containsHiddenField(QualifiedName name) {

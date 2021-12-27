@@ -2,12 +2,13 @@ package ai.dataeng.sqml.catalog;
 
 
 import ai.dataeng.sqml.planner.Dataset;
+import ai.dataeng.sqml.planner.DatasetOrTable;
 import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.planner.operator.DocumentSource;
+import ai.dataeng.sqml.planner.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -58,11 +59,6 @@ public class NamespaceImpl implements Namespace {
   }
 
   @Override
-  public Optional<List<Table>> lookupAll(NamePath name) {
-    return Optional.empty();
-  }
-
-  @Override
   public void scope(Dataset dataset) {
 
   }
@@ -96,5 +92,14 @@ public class NamespaceImpl implements Namespace {
     Table table = new Table(tableIdCounter.incrementAndGet(), name, isInternal);
 //    schema.add(table);
     return table;
+  }
+
+  @Override
+  public ShadowingContainer<DatasetOrTable> getSchema() {
+    ShadowingContainer<DatasetOrTable> shadowingContainer = new ShadowingContainer<>();
+    for (Dataset dataset : this.rootDatasets.values()) {
+      dataset.tables.forEach(shadowingContainer::add);
+    }
+    return shadowingContainer;
   }
 }
