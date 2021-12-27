@@ -9,11 +9,11 @@ import org.apache.calcite.sql.type.SqlTypeName;
 public class CalciteField implements RelDataTypeField, Serializable {
 
   private final RelDataType type;
-  private final Name name;
+  private final String name;
   private final int index;
   private final Column column;
 
-  public CalciteField(Name name, int index, RelDataType type, Column column) {
+  public CalciteField(String name, int index, RelDataType type, Column column) {
     assert name != null;
 
     assert type != null;
@@ -24,7 +24,7 @@ public class CalciteField implements RelDataTypeField, Serializable {
   }
 
   public int hashCode() {
-    return Objects.hash(new Object[]{this.index, this.name.getCanonical(), this.type});
+    return Objects.hash(new Object[]{this.index, this.name, this.type});
   }
 
   public boolean equals(Object obj) {
@@ -39,7 +39,7 @@ public class CalciteField implements RelDataTypeField, Serializable {
   }
 
   public String getName() {
-    return this.name.getCanonical();
+    return this.name;
   }
 
   public int getIndex() {

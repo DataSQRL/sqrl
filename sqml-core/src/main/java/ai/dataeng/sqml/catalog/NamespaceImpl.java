@@ -78,7 +78,12 @@ public class NamespaceImpl implements Namespace {
 
   @Override
   public void addDataset(Dataset dataset) {
-    this.rootDatasets.put(dataset.getName(), dataset);
+    Dataset datasetSchema = rootDatasets.get(dataset.getName());
+    if (datasetSchema != null) {
+      datasetSchema.merge(dataset);
+    } else {
+      this.rootDatasets.put(dataset.getName(), dataset);
+    }
   }
 
   @Override

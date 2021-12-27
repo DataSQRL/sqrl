@@ -1,12 +1,14 @@
 package org.apache.calcite.rel.type;
 
 import ai.dataeng.sqml.planner.DatasetOrTable;
+import ai.dataeng.sqml.planner.Field;
 import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.calcite.jdbc.SqrlToCalciteTableTranslator;
 import org.apache.calcite.sql.type.SqlTypeExplicitPrecedenceList;
 import org.apache.calcite.sql.type.SqlTypeName;
 
@@ -42,28 +44,31 @@ public class GrowableRecordType extends RelDataTypeImpl {
         return f;
       }
     }
-    RelDataTypeField newField;
 
-    //todo: lookup field
-    if (fieldName.equalsIgnoreCase("parent.time")) {
-      newField = new RelDataTypeFieldImpl(fieldName, this.fields.size(),
-          typeFactory.createSqlType(SqlTypeName.TIMESTAMP));
-    } else if(fieldName.equalsIgnoreCase("quantity")) {
-      newField = new RelDataTypeFieldImpl(fieldName, this.fields.size(),
-          typeFactory.createSqlType(SqlTypeName.INTEGER));
-    } else {
-      //todo: We must walk the path
-      newField = new RelDataTypeFieldImpl(fieldName, this.fields.size(),
-          typeFactory.createSqlType(SqlTypeName.BOOLEAN));
+    Table table = (Table)this.table;
+
+    NamePath namePath = NamePath.parse(fieldName);
+
+    if (namePath.getPrefix().isPresent()) {
+      table = table.walk(namePath.getPrefix().get())
+          .orElseThrow(()->new RuntimeException(String.format("Could not find table %s", namePath.getPrefix().get())));
+
     }
-//
 //    NamePath.parse();
-//    ((Table)table).walk()
-//    this.fields.add(newField);
+    Field field = table.getField(namePath.getLast());
+    RelDataTypeField calciteField = toCalciteField(fieldName, field);
+    this.fields.add(calciteField);
 
     // If a new field is added, we should re-compute the digest.
     computeDigest();
-    return newField;
+    return calciteField;
+  }
+
+  private RelDataTypeField toCalciteField(String fieldName, Field field) {
+      return SqrlToCalciteTableTranslator.toCalciteField(fieldName, field, this.fields.size())
+          .orElseThrow(
+              ()->
+                  new RuntimeException("Could not convert field."));
   }
 
   @Override public List<String> getFieldNames() {

@@ -54,6 +54,5 @@ public class ImportProcessorImpl implements ImportProcessor {
       throw new RuntimeException(String.format("Import errors: %s", errors));
     }
 
-    plannerProvider.createPlanner().plan(Optional.empty(), namespace, "SELECT * FROM `orders.entries`");
   }
 }

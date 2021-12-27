@@ -20,20 +20,20 @@ import org.apache.calcite.sql.type.BasicSqlType;
 @ExtensionMethod({java.util.Arrays.class, Extensions.class})
 public class RowToSchemaConverter {
 
-  public static List<Field> convert(RelDataType row) {
+  public static List<Column> convert(RelDataType row) {
     RowToSchemaConverter converter = new RowToSchemaConverter();
     return converter.convertRelDatatype(row);
   }
 
-  public List<Field> convertRelDatatype(RelDataType row) {
-    List<Field> fields = row.getFieldList().stream()
+  public List<Column> convertRelDatatype(RelDataType row) {
+    List<Column> fields = row.getFieldList().stream()
         .map(this::toField)
         .collect(Collectors.toList());
     
     return fields;
   }
 
-  private Field toField(RelDataTypeField relDataTypeField) {
+  private Column toField(RelDataTypeField relDataTypeField) {
     return new Column(Name.system(relDataTypeField.getName()), null, 0,
         toBasicType(relDataTypeField.getType()), 0, List.of(), 
         false, false);

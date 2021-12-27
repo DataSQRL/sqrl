@@ -3,9 +3,12 @@ package ai.dataeng.sqml;
 import ai.dataeng.sqml.ScriptBundle.SqmlScript;
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.config.EnvironmentSettings;
+import ai.dataeng.sqml.config.provider.HeuristicPlannerProvider;
 import ai.dataeng.sqml.config.provider.ScriptParserProvider;
 import ai.dataeng.sqml.config.provider.ScriptProcessorProvider;
 import ai.dataeng.sqml.config.provider.ValidatorProvider;
+import ai.dataeng.sqml.execution.flink.environment.DefaultEnvironmentFactory;
+import ai.dataeng.sqml.execution.flink.environment.EnvironmentFactory;
 import ai.dataeng.sqml.execution.flink.ingest.DatasetLookup;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaDefinition;
@@ -14,6 +17,8 @@ import ai.dataeng.sqml.execution.flink.ingest.source.SourceDataset;
 import ai.dataeng.sqml.parser.ScriptParser;
 import ai.dataeng.sqml.parser.processor.ScriptProcessor;
 import ai.dataeng.sqml.parser.validator.Validator;
+import ai.dataeng.sqml.planner.HeuristicPlannerImpl;
+import ai.dataeng.sqml.planner.Planner;
 import ai.dataeng.sqml.planner.Script;
 import ai.dataeng.sqml.planner.operator.ImportResolver;
 import ai.dataeng.sqml.tree.ScriptNode;
@@ -67,12 +72,12 @@ public class Environment {
     if (errors.isFatal()) {
       throw new Exception("Could not compile script.");
     }
-
+    HeuristicPlannerProvider planner =
+        settings.getHeuristicPlannerProvider();
     ScriptProcessor processor = scriptProcessorProvider.createScriptProcessor(
-        settings.getImportProcessorProvider().createImportProcessor(importResolver,
-            settings.getHeuristicPlannerProvider()),
+        settings.getImportProcessorProvider().createImportProcessor(importResolver, planner),
         settings.getQueryProcessorProvider().createQueryProcessor(),
-        settings.getExpressionProcessorProvider().createExpressionProcessor(),
+        settings.getExpressionProcessorProvider().createExpressionProcessor(planner),
         settings.getJoinProcessorProvider().createJoinProcessor(),
         settings.getDistinctProcessorProvider().createDistinctProcessor(),
         settings.getSubscriptionProcessorProvider().createSubscriptionProcessor(),
@@ -95,7 +100,7 @@ public class Environment {
 //
 //    streamExecutor.register(script.getExecutionPlan());
 
-    return null;
+    return new Script(namespace, null);
   }
 
   public void registerUserSchema(
@@ -112,5 +117,12 @@ public class Environment {
 
   public void registerDataset(SourceDataset sourceDataset) {
     settings.getDsLookup().addDataset(sourceDataset);
+  }
+
+  public void monitorDatasets() {
+    EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
+
+    settings.getDsLookup()
+        .monitorDatasets(envProvider);
   }
 }

@@ -8,6 +8,6 @@ public class JoinProcessorImpl implements JoinProcessor {
 
   @Override
   public void process(JoinAssignment statement, Namespace namespace) {
-
+    
   }
 }

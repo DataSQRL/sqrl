@@ -7,6 +7,7 @@ import ai.dataeng.sqml.execution.flink.ingest.DatasetRegistration;
 import ai.dataeng.sqml.importer.source.simplefile.DirectoryDataset;
 import ai.dataeng.sqml.planner.Script;
 import java.nio.file.Path;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,9 +24,10 @@ public class C360Test {
   public static final Path RETAIL_DATA_DIR = RETAIL_DIR.resolve(RETAIL_DATA_DIR_NAME);
 
   Environment env;
+  EnvironmentSettings settings;
   @BeforeEach
   public void setup() {
-    EnvironmentSettings settings = EnvironmentSettings.createDefault()
+    settings = EnvironmentSettings.createDefault()
         .build();
 
     env = Environment.create(settings);
@@ -59,5 +61,23 @@ public class C360Test {
   public void testImport() {
     String scriptStr = "IMPORT ecommerce-data.Orders;";
     Script script = run("c360", scriptStr);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testC360() {
+    ScriptBundle bundle = new ScriptBundle.Builder().createScript()
+        .setName(RETAIL_SCRIPT_NAME)
+        .setScript(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION))
+        .setImportSchema(RETAIL_IMPORT_SCHEMA_FILE)
+        .asMain()
+        .add().build();
+
+    Script script = env.compile(bundle);
+    System.out.println(script.getNamespace());
+
+    settings.getHeuristicPlannerProvider().createPlanner()
+        .plan(Optional.empty(), settings.getNamespace(), "SELECT * FROM `Customer`");
+
   }
 }

@@ -4,13 +4,14 @@ import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.Field;
 import ai.dataeng.sqml.planner.Relationship;
-import ai.dataeng.sqml.planner.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.basic.BasicType;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.CalciteTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -23,28 +24,51 @@ import org.apache.calcite.sql.type.SqlTypeName;
 /**
  * Accepts a sqrl schema and translates it to a calcite schema.
  */
-@AllArgsConstructor
 public class SqrlToCalciteTableTranslator {
   Optional<NamePath> context;
   Namespace namespace;
 
+  public SqrlToCalciteTableTranslator(Optional<NamePath> context,
+      Namespace namespace) {
+    this.context = context;
+    this.namespace = namespace;
+  }
+
+  Map<String, Table> tableMap = new HashMap<>();
   //TODO: May need to persist table
   public Table get(String table) {
-    NamePath path = NamePath.parse(table);
+    if (tableMap.containsKey(table)) {
+      return tableMap.get(table);
+    }
+
+    NamePath path;
+
+    if (table.startsWith("@")) {
+      if (context.isEmpty()) throw new RuntimeException(String.format("Could not find context for table: ", table));
+      path = context.get();
+    } else {
+      path = NamePath.parse(table);
+    }
+
     Optional<ai.dataeng.sqml.planner.Table> tableOptional = namespace.lookup(path);
     if (tableOptional.isEmpty()) {
       throw new RuntimeException(String.format("Could not find table %s", table));
     }
 
-    return new CalciteTable(tableOptional.get(), table,
-        toCalciteFields(tableOptional.get().getFields()));
+    CalciteTable calciteTable = new CalciteTable(tableOptional.get(), table,
+        toCalciteFields(tableOptional.get().getFields().visibleIterator()));
+
+    tableMap.put(table, calciteTable);
+    return calciteTable;
   }
 
-  private List<RelDataTypeField> toCalciteFields(ShadowingContainer<Field> fields) {
+  private List<RelDataTypeField> toCalciteFields(Iterator<Field> fields) {
     List<RelDataTypeField> calciteFields = new ArrayList<>();
     int i = 0;
-    for (Field field : fields) {
-      Optional<RelDataTypeField> calciteField = toCalciteField(field, i);
+    for (Iterator<Field> it = fields; it.hasNext(); ) {
+      Field field = it.next();
+      System.out.println(field.getName());
+      Optional<RelDataTypeField> calciteField = toCalciteField(field.getName().toString(), field, i);
       if (calciteField.isPresent()) {
         calciteFields.add(calciteField.get());
         i++;
@@ -54,26 +78,30 @@ public class SqrlToCalciteTableTranslator {
     return calciteFields;
   }
 
-  private Optional<RelDataTypeField> toCalciteField(Field field, int index) {
+  public static Optional<RelDataTypeField> toCalciteField(String fieldName, Field field,
+      int index) {
     if (field instanceof Relationship) {
-      return Optional.empty();
+      //Relationship types can happen, for example `expr.col := count(rel)`
+      // Just return an integer type
+      return Optional.of(new CalciteField(fieldName, index,
+          new BasicSqlType(PostgresqlSqlDialect.POSTGRESQL_TYPE_SYSTEM, SqlTypeName.INTEGER), null));
     } else if (!(field instanceof Column)) {
       throw new RuntimeException(String.format("Unknown column type", field.getClass().getName()));
     }
     Column column = (Column) field;
 
-    CalciteField calciteField = new CalciteField(field.getName(), index,
+    CalciteField calciteField = new CalciteField(fieldName, index,
         toDataType(column.getType()), column);
 
     return Optional.of(calciteField);
   }
 
-  private RelDataType toDataType(BasicType column) {
+  private static RelDataType toDataType(BasicType column) {
    return new BasicSqlType(PostgresqlSqlDialect.POSTGRESQL_TYPE_SYSTEM,
         toSqlTypeName(column));
   }
 
-  private SqlTypeName toSqlTypeName(BasicType column) {
+  private static SqlTypeName toSqlTypeName(BasicType column) {
     switch (column.getName()) {
       case "INTEGER":
         return SqlTypeName.INTEGER;

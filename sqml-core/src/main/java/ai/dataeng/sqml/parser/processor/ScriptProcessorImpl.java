@@ -2,6 +2,7 @@ package ai.dataeng.sqml.parser.processor;
 
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.tree.CreateSubscription;
+import ai.dataeng.sqml.tree.DistinctAssignment;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.JoinAssignment;
@@ -31,6 +32,8 @@ public class ScriptProcessorImpl implements ScriptProcessor {
         expressionProcessor.process((ExpressionAssignment) statement, namespace);
       } else if (statement instanceof JoinAssignment) {
         joinProcessor.process((JoinAssignment) statement, namespace);
+      } else if (statement instanceof DistinctAssignment) {
+        distinctProcessor.process((DistinctAssignment) statement, namespace);
       } else if (statement instanceof CreateSubscription) {
         subscriptionProcessor.process((CreateSubscription) statement, namespace);
       } else {

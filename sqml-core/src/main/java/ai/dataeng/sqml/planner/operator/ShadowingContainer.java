@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 public class ShadowingContainer<E extends ShadowingContainer.Nameable> implements Iterable<E> {
 
     private List<E> elements = new ArrayList<>();
-    private Map<Name,E> byName = new HashMap<>();
+    private Map<Name,E> byName = new LinkedHashMap<>();
 
     /**
      * Adds an element to this container

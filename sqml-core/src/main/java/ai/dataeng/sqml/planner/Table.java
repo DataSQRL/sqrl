@@ -12,7 +12,6 @@ import lombok.ToString;
 
 @Getter
 @Setter
-@ToString
 public class Table implements DatasetOrTable {
 
   public Name name;
