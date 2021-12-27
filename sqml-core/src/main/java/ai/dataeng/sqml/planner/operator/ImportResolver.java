@@ -65,7 +65,7 @@ public class ImportResolver {
                 tables.add(table);
             }
             Dataset ds = new Dataset(asName.orElse(datasetName), tables);
-            if (importMode == ImportMode.DATASET) {
+            if (importMode == ImportMode.ALLTABLE) {
                 namespace.addDataset(ds);
             } else {
                 namespace.scope(ds);

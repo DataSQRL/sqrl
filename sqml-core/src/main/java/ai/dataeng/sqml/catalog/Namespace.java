@@ -17,24 +17,24 @@ public interface Namespace {
    * Finds the schema objects associated with the name. This can qualify
    *  table lookups to find which dataset they originate from.
    */
-  public Optional<Table> lookup(NamePath name);
+  Optional<Table> lookup(NamePath name);
 
   /**
    * Finds a specific version of a schema object
    */
-  public Optional<Table> lookup(NamePath name, int version);
+  Optional<Table> lookup(NamePath name, int version);
 
   /**
    * Returns all objects associated with
    */
-  public Optional<List<Table>> lookupAll(NamePath name);
+  Optional<List<Table>> lookupAll(NamePath name);
 
   /**
    * Local scoped objects are accessible through its fully qualified path
    *  but are not exported to outside the script. Examples are: Functions
    *  and dataset imports.
    */
-  public void scope(Dataset dataset);
+  void scope(Dataset dataset);
 
   void addDataset(Dataset dataset);
 
