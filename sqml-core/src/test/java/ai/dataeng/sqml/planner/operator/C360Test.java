@@ -3,20 +3,14 @@ package ai.dataeng.sqml.planner.operator;
 import ai.dataeng.sqml.Environment;
 import ai.dataeng.sqml.ScriptBundle;
 import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
-import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.config.EnvironmentSettings;
 import ai.dataeng.sqml.execution.flink.ingest.DatasetRegistration;
 import ai.dataeng.sqml.importer.source.simplefile.DirectoryDataset;
-import ai.dataeng.sqml.planner.DatasetOrTable;
 import ai.dataeng.sqml.planner.Script;
-import ai.dataeng.sqml.planner.Table;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -43,33 +37,6 @@ public class C360Test {
     env.registerDataset(dd);
   }
 
-  @AfterEach
-  public void tearDown() {
-    try {
-//      env.stop();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  @SneakyThrows
-  public Script run(String name, String script) {
-    ScriptBundle bundle = new ScriptBundle.Builder().createScript()
-        .setName(name)
-        .setScript(script)
-        .setImportSchema(RETAIL_IMPORT_SCHEMA_FILE)
-        .asMain()
-        .add().build();
-
-    return env.compile(bundle);
-  }
-
-  @Test
-  public void testImport() {
-    String scriptStr = "IMPORT ecommerce-data.Orders;";
-    Script script = run("c360", scriptStr);
-  }
-
   @Test
   @SneakyThrows
   public void testC360() {
@@ -82,16 +49,9 @@ public class C360Test {
 
     Script script = env.compile(bundle);
 
-    testGraphql(script.getNamespace());
-  }
-
-  private void testGraphql(Namespace namespace) {
-    ShadowingContainer<DatasetOrTable> schema = namespace.getSchema();
-
     GraphQLSchema graphQLSchema = GraphqlSchemaBuilder.newGraphqlSchema()
-        .schema(schema)
+        .schema(script.getNamespace().getSchema())
         .build();
     System.out.println(new SchemaPrinter().print(graphQLSchema));
-
   }
 }
