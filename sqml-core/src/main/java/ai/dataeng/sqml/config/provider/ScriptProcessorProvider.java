@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.config.provider;
 
-import ai.dataeng.sqml.catalog.ScriptProcessor;
+import ai.dataeng.sqml.catalog.Namespace;
+import ai.dataeng.sqml.parser.processor.ScriptProcessor;
 import ai.dataeng.sqml.parser.processor.DistinctProcessor;
 import ai.dataeng.sqml.parser.processor.ExpressionProcessor;
 import ai.dataeng.sqml.parser.processor.ImportProcessor;
@@ -15,5 +16,6 @@ public interface ScriptProcessorProvider {
       ExpressionProcessor expressionProcessor,
       JoinProcessor joinProcessor,
       DistinctProcessor distinctProcessor,
-      SubscriptionProcessor subscriptionProcessor);
+      SubscriptionProcessor subscriptionProcessor,
+      Namespace namespace);
 }

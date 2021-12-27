@@ -1,12 +1,9 @@
 package ai.dataeng.sqml.planner.operator;
 
 import ai.dataeng.sqml.Environment;
-import ai.dataeng.sqml.catalog.Namespace;
-import ai.dataeng.sqml.config.EnvironmentSettings;
 import ai.dataeng.sqml.ScriptBundle;
-import ai.dataeng.sqml.config.provider.ImportProcessorProvider;
-import ai.dataeng.sqml.parser.processor.ImportProcessor;
-import ai.dataeng.sqml.tree.ImportDefinition;
+import ai.dataeng.sqml.config.EnvironmentSettings;
+import ai.dataeng.sqml.planner.Script;
 import java.nio.file.Path;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
@@ -21,11 +18,10 @@ public class C360Test {
   public static final Path RETAIL_IMPORT_SCHEMA_FILE = RETAIL_SCRIPT_DIR.resolve("pre-schema.yml");
 
   Environment env;
-
   @BeforeEach
   public void setup() {
     EnvironmentSettings settings = EnvironmentSettings.createDefault()
-        .importProcessorProvider((datasetManager -> new StubImportProcessor()))
+
         .build();
 
     env = Environment.create(settings);
@@ -34,14 +30,14 @@ public class C360Test {
   @AfterEach
   public void tearDown() {
     try {
-      env.stop();
+//      env.stop();
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
   @SneakyThrows
-  public void run(String name, String script) {
+  public Script run(String name, String script) {
     ScriptBundle bundle = new ScriptBundle.Builder().createScript()
         .setName(name)
         .setScript(script)
@@ -49,25 +45,13 @@ public class C360Test {
         .asMain()
         .add().build();
 
-    env.compile(bundle);
-
-    env.execute();
+    return env.compile(bundle);
   }
 
   @Test
   public void testImport() {
-    String script = "IMPORT ecommerce-data.Orders;";
-    run("c360", script);
-  }
-
-  class StubImportProcessor implements ImportProcessor {
-
-    @Override
-    public void process(ImportDefinition statement, Namespace namespace) {
-      //Return a Logical Plan DAG of logical correlate queries
-
-      
-
-    }
+    String scriptStr = "IMPORT ecommerce-data.Orders;";
+    Script script = run("c360", scriptStr);
+//    System.out.println(script.getPlan());
   }
 }

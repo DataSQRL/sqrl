@@ -2,6 +2,8 @@ package ai.dataeng.sqml.planner.operator;
 
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.LogicalPlanUtil;
+import ai.dataeng.sqml.planner.Relationship;
+import ai.dataeng.sqml.planner.Table;
 import com.google.common.base.Preconditions;
 
 import java.util.HashSet;
@@ -23,20 +25,20 @@ public class QueryAnalyzer {
      * @param logicalPlan
      */
     public static final void addDevModeQueries(LogicalPlanImpl logicalPlan) {
-        final Set<LogicalPlanImpl.Table> included = new HashSet<>();
-        final Set<LogicalPlanImpl.Table> toInclude = new HashSet<>();
+        final Set<Table> included = new HashSet<>();
+        final Set<Table> toInclude = new HashSet<>();
 
-        logicalPlan.schema.visibleStream().filter(t -> t instanceof LogicalPlanImpl.Table)
-                .map(t -> (LogicalPlanImpl.Table)t).forEach(t -> toInclude.add(t));
+        logicalPlan.schema.visibleStream().filter(t -> t instanceof Table)
+                .map(t -> (Table)t).forEach(t -> toInclude.add(t));
 
         while (!toInclude.isEmpty()) {
-            LogicalPlanImpl.Table next = toInclude.iterator().next();
+            Table next = toInclude.iterator().next();
             assert !included.contains(next);
             included.add(next);
             toInclude.remove(next);
             //Find all non-hidden related tables and add those
-            next.fields.visibleStream().filter(f -> f instanceof LogicalPlanImpl.Relationship && !f.name.isHidden())
-                    .map(f -> (LogicalPlanImpl.Relationship)f)
+            next.fields.visibleStream().filter(f -> f instanceof Relationship && !f.name.isHidden())
+                    .map(f -> (Relationship)f)
                     .forEach(r -> {
                         Preconditions.checkArgument(!r.toTable.name.isHidden(),"Hidden tables should not be reachable by non-hidden relationships");
                         if (!included.contains(r.toTable)) {
@@ -45,7 +47,7 @@ public class QueryAnalyzer {
                     });
         }
 
-        for (LogicalPlanImpl.Table queryTable : included) {
+        for (Table queryTable : included) {
             assert queryTable.currentNode!=null;
             AccessNode query = AccessNode.forEntireTable(queryTable, AccessNode.Type.QUERY);
             LogicalPlanUtil.appendOperatorForTable(queryTable, query);

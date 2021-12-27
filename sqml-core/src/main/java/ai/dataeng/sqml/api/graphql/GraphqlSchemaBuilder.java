@@ -5,11 +5,11 @@ import ai.dataeng.execution.connection.JdbcPool;
 import ai.dataeng.execution.page.NoPage;
 import ai.dataeng.execution.page.SystemPageProvider;
 import ai.dataeng.execution.table.H2Table;
-import ai.dataeng.sqml.planner.LogicalPlanImpl;
-import ai.dataeng.sqml.planner.LogicalPlanImpl.DatasetOrTable;
-import ai.dataeng.sqml.planner.LogicalPlanImpl.Relationship;
-import ai.dataeng.sqml.planner.LogicalPlanImpl.Relationship.Multiplicity;
-import ai.dataeng.sqml.planner.LogicalPlanImpl.Table;
+import ai.dataeng.sqml.planner.Column;
+import ai.dataeng.sqml.planner.DatasetOrTable;
+import ai.dataeng.sqml.planner.Relationship;
+import ai.dataeng.sqml.planner.Relationship.Multiplicity;
+import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
 import ai.dataeng.sqml.type.ArrayType;
 import ai.dataeng.sqml.type.Field;
@@ -159,9 +159,9 @@ public class GraphqlSchemaBuilder {
   }
 
   private void resolveNestedFetchers(JdbcPool pool, Table tbl, Builder codeRegistry) {
-    for (LogicalPlanImpl.Field field : tbl.getFields()) {
-      if (field instanceof LogicalPlanImpl.Relationship) {
-        resolveNestedFetchers(pool, (LogicalPlanImpl.Relationship)field, codeRegistry, tbl);
+    for (ai.dataeng.sqml.planner.Field field : tbl.getFields()) {
+      if (field instanceof Relationship) {
+        resolveNestedFetchers(pool, (Relationship)field, codeRegistry, tbl);
       }
     }
   }
@@ -213,22 +213,22 @@ public class GraphqlSchemaBuilder {
     GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
         .name(table.getName().getDisplay());
 
-    for (LogicalPlanImpl.Field field : table.getFields()) {
+    for (ai.dataeng.sqml.planner.Field field : table.getFields()) {
       if (!field.isVisible()) {
         continue;
       }
 
       GraphQLOutputType output;
       List<GraphQLArgument> argument;
-      if (field instanceof LogicalPlanImpl.Relationship) {
-        LogicalPlanImpl.Relationship rel = (LogicalPlanImpl.Relationship) field;
+      if (field instanceof Relationship) {
+        Relationship rel = (Relationship) field;
         output = createOutputType(rel.getToTable());
         if (rel.getMultiplicity() == Multiplicity.MANY) {
           output = GraphQLList.list(output);
         }
         argument = new GraphqlArgumentBuilder(rel.getMultiplicity(), rel.getToTable(), false, typeCatalog).build();
-      } else if (field instanceof LogicalPlanImpl.Column) {
-        LogicalPlanImpl.Column col = (LogicalPlanImpl.Column) field;
+      } else if (field instanceof Column) {
+        Column col = (Column) field;
         Visitor sqmlTypeVisitor = new Visitor(Map.of());
         output = col.getType().accept(sqmlTypeVisitor, null)
             .get();

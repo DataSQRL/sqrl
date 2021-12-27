@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.planner.operator;
 
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.operator.relation.ColumnReferenceExpression;
 import ai.dataeng.sqml.planner.operator.relation.RowExpression;
@@ -20,9 +21,9 @@ public class ProjectOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.Row
     }
 
     @Override
-    public LogicalPlanImpl.Column[][] getOutputSchema() {
-        return new LogicalPlanImpl.Column[][]{projections.keySet().stream().map(e->e.getColumn())
-            .collect(Collectors.toList()).toArray(new LogicalPlanImpl.Column[0])};
+    public Column[][] getOutputSchema() {
+        return new Column[][]{projections.keySet().stream().map(e->e.getColumn())
+            .collect(Collectors.toList()).toArray(new Column[0])};
 //        return new LogicalPlan.Column[][]{projections.keySet().toArray(new LogicalPlan.Column[0])};
     }
 

@@ -3,6 +3,7 @@ package ai.dataeng.sqml.planner.operator;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaAdjustmentSettings;
 import ai.dataeng.sqml.execution.flink.ingest.source.SourceTable;
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.tree.name.NamePath;
 import lombok.NonNull;
@@ -22,13 +23,13 @@ public class DocumentSource extends LogicalPlanImpl.DocumentNode<LogicalPlanImpl
     @NonNull
     final SourceTable table;
     @NonNull
-    final Map<NamePath, LogicalPlanImpl.Column[]> outputSchema;
+    final Map<NamePath, Column[]> outputSchema;
 
     //TODO: Users should be able to control this via global config or hints
     @NonNull
     final SchemaAdjustmentSettings settings = SchemaAdjustmentSettings.DEFAULT;
 
-    public DocumentSource(FlexibleDatasetSchema.TableField sourceSchema, @NonNull SourceTable table, @NonNull Map<NamePath, LogicalPlanImpl.Column[]> outputSchema) {
+    public DocumentSource(FlexibleDatasetSchema.TableField sourceSchema, @NonNull SourceTable table, @NonNull Map<NamePath, Column[]> outputSchema) {
         super(Collections.EMPTY_LIST);
         this.sourceSchema = sourceSchema;
         this.table = table;
@@ -36,7 +37,7 @@ public class DocumentSource extends LogicalPlanImpl.DocumentNode<LogicalPlanImpl
     }
 
     @Override
-    public Map<NamePath, LogicalPlanImpl.Column[]> getOutputSchema() {
+    public Map<NamePath, Column[]> getOutputSchema() {
         return outputSchema;
     }
 

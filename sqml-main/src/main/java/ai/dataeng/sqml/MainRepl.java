@@ -1,7 +1,7 @@
 package ai.dataeng.sqml;
 
-import ai.dataeng.sqml.execution.flink.enviornment.util.BufferedLatestSelector;
-import ai.dataeng.sqml.execution.flink.enviornment.util.FlinkUtilities;
+import ai.dataeng.sqml.execution.flink.environment.util.BufferedLatestSelector;
+import ai.dataeng.sqml.execution.flink.environment.util.FlinkUtilities;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.ReduceFunction;

@@ -5,7 +5,6 @@ import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.adapter.java.ReflectiveSchema;
 import org.apache.calcite.config.Lex;
-import org.apache.calcite.jdbc.RemoveSortRule;
 import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.plan.hep.HepPlanner;
@@ -40,7 +39,7 @@ public class RuleTest {
         + "GROUP BY uuid "
         + "ORDER BY uuid DESC";
 
-    RelRule rule = new RemoveSortRule(RemoveSortRule.Config.DEFAULT);
+    RelRule rule = new  RemoveSortRule(RemoveSortRule.Config.DEFAULT);
 
     RelNode optimizedNode = rewrite(query, rule);
     String sql = convertToSql(optimizedNode);

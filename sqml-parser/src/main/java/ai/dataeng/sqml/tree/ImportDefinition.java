@@ -13,6 +13,7 @@
  */
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.List;
 import java.util.Objects;
@@ -40,6 +41,10 @@ public class ImportDefinition extends Node {
 
   public Optional<Identifier> getAlias() {
     return alias;
+  }
+
+  public Optional<Name> getAliasName() {
+    return getAlias().map(a->Name.system(a.getValue()));
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {

@@ -8,18 +8,4 @@ public interface QueryProcessor {
 
   public void process(QueryAssignment statement, Namespace namespace);// {
 
-//        QueryAssignment query = (QueryAssignment) statement;
-//        SqrlTable2 table = env.addQuery(query.getNamePath(), query.getSql());
-//        catalogManager.addTable(table);
-//
-//        //Add a relationship column if present
-//        Optional<NamePath> prefix = query.getNamePath().getPrefix();
-//        if (prefix.isPresent()) {
-//          SqrlTable2 prefixTable = catalogManager.getCurrentTable(prefix.get());
-//          env.addRelationshipToSchema(prefixTable, query.getNamePath().getLast(), table);
-////          SqrlTable modifiedTable = prefixTable.addRelColumn();
-//          //TODO: add rel is in place, make immutable?
-////          catalogManager.addTable(prefix.get(), modifiedTable);
-//        }
-//  }
 }

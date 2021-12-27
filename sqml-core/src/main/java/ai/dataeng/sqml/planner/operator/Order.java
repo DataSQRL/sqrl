@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.planner.operator;
 
-import ai.dataeng.sqml.planner.LogicalPlanImpl;
+import ai.dataeng.sqml.planner.Column;
 import lombok.Value;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class Order {
     @Value
     public static class Entry {
 
-        final LogicalPlanImpl.Column column;
+        final Column column;
         final Direction direction;
 
     }

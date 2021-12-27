@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.planner.operator;
 
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.LogicalPlanImpl.RowNode;
 import ai.dataeng.sqml.planner.operator.relation.RowExpression;
@@ -19,7 +20,7 @@ public class FilterOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.RowN
     }
 
     @Override
-    public LogicalPlanImpl.Column[][] getOutputSchema() {
+    public Column[][] getOutputSchema() {
         //Filters do not change the records or their schema
         return getInput().getOutputSchema();
     }

@@ -1,8 +1,11 @@
 package ai.dataeng.sqml.planner.operator;
 
 import ai.dataeng.sqml.execution.flink.process.FieldProjection;
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.LogicalPlanUtil;
+import ai.dataeng.sqml.planner.Relationship;
+import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.ArrayList;
@@ -18,10 +21,10 @@ public class ShreddingOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.D
 
     final NamePath tableIdentifier;
     final FieldProjection[] projections;
-    final LogicalPlanImpl.Column[] outputSchema;
+    final Column[] outputSchema;
 
     public ShreddingOperator(LogicalPlanImpl.DocumentNode input, NamePath tableIdentifier,
-                             FieldProjection[] projections, LogicalPlanImpl.Column[] outputSchema) {
+                             FieldProjection[] projections, Column[] outputSchema) {
         super(input);
         assert projections.length == outputSchema.length;
         this.tableIdentifier = tableIdentifier;
@@ -34,29 +37,29 @@ public class ShreddingOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.D
     }
 
     @Override
-    public LogicalPlanImpl.Column[][] getOutputSchema() {
-        return new LogicalPlanImpl.Column[][]{outputSchema};
+    public Column[][] getOutputSchema() {
+        return new Column[][]{outputSchema};
     }
 
-    public static ShreddingOperator shredAtPath(DocumentSource source, NamePath tableIdentifier, LogicalPlanImpl.Table rootTable) {
+    public static ShreddingOperator shredAtPath(DocumentSource source, NamePath tableIdentifier, Table rootTable) {
         int maxdepth = tableIdentifier.getLength();
         List<FieldProjection> projections = new ArrayList<>();
-        List<LogicalPlanImpl.Column> outputSchema = new ArrayList<>();
+        List<Column> outputSchema = new ArrayList<>();
 
-        LogicalPlanImpl.Column[] inputSchema = source.getOutputSchema().get(tableIdentifier);
+        Column[] inputSchema = source.getOutputSchema().get(tableIdentifier);
         assert inputSchema!=null && inputSchema.length>0;
 
-        LogicalPlanImpl.Table targetTable = LogicalPlanUtil.getTable(inputSchema);
+        Table targetTable = LogicalPlanUtil.getTable(inputSchema);
 
-        LogicalPlanImpl.Table currentTable = rootTable;
+        Table currentTable = rootTable;
         for (int depth = 0; depth <= maxdepth; depth++) {
             FieldProjection.SpecialCase fp;
             if (depth==0) {
                 fp = FieldProjection.ROOT_UUID;
             } else {
                 Name child = tableIdentifier.get(depth-1);
-                LogicalPlanImpl.Relationship childRel = LogicalPlanUtil.getChildRelationship(currentTable,child);
-                if (childRel.multiplicity == LogicalPlanImpl.Relationship.Multiplicity.MANY) {
+                Relationship childRel = LogicalPlanUtil.getChildRelationship(currentTable,child);
+                if (childRel.multiplicity == Relationship.Multiplicity.MANY) {
                     fp = new FieldProjection.ArrayIndex(depth);
                 } else {
                     fp = null;
@@ -65,7 +68,7 @@ public class ShreddingOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.D
             }
             if (fp != null) {
                 projections.add(fp);
-                LogicalPlanImpl.Column addColumn = fp.createColumn(targetTable);
+                Column addColumn = fp.createColumn(targetTable);
                 if (targetTable.fields.add(addColumn))
                     throw new IllegalArgumentException(String.format("[%s] is a reserved keyword and should not be a data field", addColumn.name));
                 outputSchema.add(addColumn);
@@ -74,13 +77,13 @@ public class ShreddingOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.D
         assert targetTable.equals(currentTable);
 
         //Add all the column to output as per source
-        for (LogicalPlanImpl.Column col : inputSchema) {
+        for (Column col : inputSchema) {
             outputSchema.add(col);
             projections.add(new FieldProjection.NamePathProjection(NamePath.of(col.name),maxdepth));
         }
         ShreddingOperator shredder = new ShreddingOperator(source, tableIdentifier,
                 projections.toArray(new FieldProjection[0]),
-                outputSchema.toArray(new LogicalPlanImpl.Column[0]));
+                outputSchema.toArray(new Column[0]));
 
         //Connect with source node in the DAG
         source.addConsumer(shredder);

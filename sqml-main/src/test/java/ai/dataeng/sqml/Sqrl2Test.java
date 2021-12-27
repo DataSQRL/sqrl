@@ -5,7 +5,7 @@
 //import ai.dataeng.sqml.importer.ImportStub;
 //import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
 //import ai.dataeng.sqml.api.graphql.NameTranslator;
-//import ai.dataeng.sqml.catalog.ScriptProcessor;
+//import ai.dataeng.sqml.parser.processor.ScriptProcessor;
 //import ai.dataeng.sqml.catalog.SqrlCatalogManager;
 //import ai.dataeng.sqml.catalog.SqrlSchemaConverter;
 //import ai.dataeng.sqml.catalog.SqrlSchemaResolver;

@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.planner.operator;
 
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.operator.relation.RowExpression;
 
@@ -13,21 +14,21 @@ import java.util.List;
 public class JoinOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.RowNode> {
 
     final RowExpression joinPredicate;
-    final LogicalPlanImpl.Column[][] outputSchema;
+    final Column[][] outputSchema;
 
     public JoinOperator(LogicalPlanImpl.RowNode left, LogicalPlanImpl.RowNode right, RowExpression joinPredicate) {
         super(List.of(left, right));
         this.joinPredicate = joinPredicate;
 
         //Combine the schemas
-        LogicalPlanImpl.Column[][] leftSchema = left.getOutputSchema();
-        LogicalPlanImpl.Column[][] rightSchema = left.getOutputSchema();
+        Column[][] leftSchema = left.getOutputSchema();
+        Column[][] rightSchema = left.getOutputSchema();
         outputSchema = Arrays.copyOf(leftSchema, leftSchema.length + rightSchema.length);
         System.arraycopy(rightSchema,0,outputSchema,leftSchema.length,rightSchema.length);
     }
 
     @Override
-    public LogicalPlanImpl.Column[][] getOutputSchema() {
+    public Column[][] getOutputSchema() {
         return outputSchema;
     }
 

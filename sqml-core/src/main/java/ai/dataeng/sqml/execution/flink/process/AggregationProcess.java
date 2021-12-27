@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.execution.flink.process;
 
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.operator.AggregateOperator;
-import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.operator.StreamType;
 import ai.dataeng.sqml.execution.flink.process.aggregates.SimpleCount;
 import lombok.Value;
@@ -121,7 +121,7 @@ public class AggregationProcess extends KeyedProcessFunction<Row,RowUpdate,RowUp
 
     private static AggregatorDefinition convert(AggregateOperator.Aggregation agg,
                                                 AggregateOperator aggOp) {
-        LogicalPlanImpl.Column[][] schema = aggOp.getInput().getOutputSchema();
+        Column[][] schema = aggOp.getInput().getOutputSchema();
         int[] columnIndexes = new int[agg.getArguments().size()];
         for (int i = 0; i < columnIndexes.length; i++) {
             columnIndexes[i]=agg.getArguments().get(i).getRowOffset(schema);

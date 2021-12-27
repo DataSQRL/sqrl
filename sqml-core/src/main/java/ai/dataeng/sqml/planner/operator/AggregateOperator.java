@@ -1,7 +1,9 @@
 package ai.dataeng.sqml.planner.operator;
 
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.LogicalPlanUtil;
+import ai.dataeng.sqml.planner.Table;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,25 +28,25 @@ import lombok.Value;
 @Value
 public class AggregateOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.RowNode> {
 
-    final LinkedHashMap<LogicalPlanImpl.Column, ColumnReferenceExpression> groupByKeys;
-    final LinkedHashMap<LogicalPlanImpl.Column, Aggregation> aggregates;
-    final LogicalPlanImpl.Column[] schema;
+    final LinkedHashMap<Column, ColumnReferenceExpression> groupByKeys;
+    final LinkedHashMap<Column, Aggregation> aggregates;
+    final Column[] schema;
 
-    public AggregateOperator(LogicalPlanImpl.RowNode input, LinkedHashMap<LogicalPlanImpl.Column, ColumnReferenceExpression> groupByKeys,
-                             LinkedHashMap<LogicalPlanImpl.Column, Aggregation> aggregates) {
+    public AggregateOperator(LogicalPlanImpl.RowNode input, LinkedHashMap<Column, ColumnReferenceExpression> groupByKeys,
+                             LinkedHashMap<Column, Aggregation> aggregates) {
         super(input);
         this.groupByKeys = groupByKeys;
         this.aggregates = aggregates;
-        schema = new LogicalPlanImpl.Column[groupByKeys.size() + aggregates.size()];
+        schema = new Column[groupByKeys.size() + aggregates.size()];
         int offset = 0;
-        for (LogicalPlanImpl.Column col : Iterables.concat(groupByKeys.keySet(), aggregates.keySet())) {
+        for (Column col : Iterables.concat(groupByKeys.keySet(), aggregates.keySet())) {
             schema[offset++] = col;
         }
     }
 
     @Override
-    public LogicalPlanImpl.Column[][] getOutputSchema() {
-        return new LogicalPlanImpl.Column[][]{schema};
+    public Column[][] getOutputSchema() {
+        return new Column[][]{schema};
     }
 
     @Override
@@ -52,19 +54,19 @@ public class AggregateOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.R
         return StreamType.RETRACT;
     }
 
-    public static AggregateOperator createAggregateAndPopulateTable(LogicalPlanImpl.RowNode input, LogicalPlanImpl.Table table,
+    public static AggregateOperator createAggregateAndPopulateTable(LogicalPlanImpl.RowNode input, Table table,
                                                                     Map<Name, ColumnReferenceExpression> groupByKeys,
                                                                     Map<Name, Aggregation> aggregates) {
-        LinkedHashMap<LogicalPlanImpl.Column, ColumnReferenceExpression> keys = new LinkedHashMap<>(groupByKeys.size());
+        LinkedHashMap<Column, ColumnReferenceExpression> keys = new LinkedHashMap<>(groupByKeys.size());
         for (Map.Entry<Name,ColumnReferenceExpression> entry : groupByKeys.entrySet()) {
             ColumnReferenceExpression cre = entry.getValue();
             keys.put(LogicalPlanUtil.copyColumnToTable(cre.getColumn(),table,entry.getKey(),true),cre);
         }
-        LinkedHashMap<LogicalPlanImpl.Column, Aggregation> aggregations = new LinkedHashMap<>(aggregates.size());
+        LinkedHashMap<Column, Aggregation> aggregations = new LinkedHashMap<>(aggregates.size());
         for (Map.Entry<Name,Aggregation> entry : aggregates.entrySet()) {
             Name name = entry.getKey();
             Preconditions.checkArgument(table.getField(name)==null);
-            LogicalPlanImpl.Column col = new LogicalPlanImpl.Column(name, table, 0,
+            Column col = new Column(name, table, 0,
                     entry.getValue().functionHandle.getDataType(),
                     0,List.of(NotNull.INSTANCE),false, false);
             aggregations.put(col,entry.getValue());

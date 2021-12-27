@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.execution.flink.ingest;
 
 import ai.dataeng.sqml.catalog.persistence.keyvalue.HierarchyKeyValueStore;
-import ai.dataeng.sqml.execution.flink.enviornment.EnvironmentFactory;
+import ai.dataeng.sqml.execution.flink.environment.EnvironmentFactory;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.execution.flink.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.execution.flink.ingest.source.SourceDataset;

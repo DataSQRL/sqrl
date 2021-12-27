@@ -11,6 +11,7 @@ import ai.dataeng.execution.table.column.H2Column;
 import ai.dataeng.execution.table.column.IntegerColumn;
 import ai.dataeng.execution.table.column.UUIDColumn;
 import ai.dataeng.sqml.ScriptBundle.SqmlScript;
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.operator.AggregateOperator;
 import ai.dataeng.sqml.planner.operator.FilterOperator;
 import ai.dataeng.sqml.planner.operator.ImportResolver;
@@ -18,10 +19,10 @@ import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.operator.QueryAnalyzer;
 import ai.dataeng.sqml.catalog.persistence.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.catalog.persistence.keyvalue.LocalFileHierarchyKeyValueStore;
-import ai.dataeng.sqml.importer.ImportManager3;
+import ai.dataeng.sqml.importer.ImportManager;
 import ai.dataeng.sqml.importer.ImportSchema;
-import ai.dataeng.sqml.execution.flink.enviornment.DefaultEnvironmentFactory;
-import ai.dataeng.sqml.execution.flink.enviornment.EnvironmentFactory;
+import ai.dataeng.sqml.execution.flink.environment.DefaultEnvironmentFactory;
+import ai.dataeng.sqml.execution.flink.environment.EnvironmentFactory;
 import ai.dataeng.sqml.execution.flink.ingest.DataSourceRegistry;
 import ai.dataeng.sqml.execution.flink.ingest.DatasetRegistration;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
@@ -193,7 +194,7 @@ public class Main2 {
             sqml.parseSchema());
         Preconditions.checkArgument(!schemaImporter.getErrors().isFatal(),
             schemaImporter.getErrors());
-        ImportManager3 sqmlImporter = new ImportManager3(ddRegistry);
+        ImportManager sqmlImporter = new ImportManager(ddRegistry);
         sqmlImporter.registerUserSchema(userSchema);
 
         ProcessBundle<ProcessMessage> errors = new ProcessBundle<>();
@@ -204,14 +205,14 @@ public class Main2 {
         importer.resolveImport(ImportResolver.ImportMode.TABLE, toName(RETAIL_DATASET),
             Optional.of(ordersName), Optional.empty());
         //2. SQRL statements
-        LogicalPlanImpl.Table orders = (LogicalPlanImpl.Table) logicalPlan.getSchemaElement(ordersName);
-        LogicalPlanImpl.Column ordersTime = (LogicalPlanImpl.Column) orders.getField(toName("time"));
+        ai.dataeng.sqml.planner.Table orders = (ai.dataeng.sqml.planner.Table) logicalPlan.getSchemaElement(ordersName);
+        Column ordersTime = (Column) orders.getField(toName("time"));
         RowExpression predicate = null; //TODO: create expression
         FilterOperator filter = new FilterOperator(orders.getCurrentNode(), predicate);
         orders.getCurrentNode().addConsumer(filter);
-        LogicalPlanImpl.Table customerNoOrders = logicalPlan.createTable(toName("CustomerOrderStats"),
+        ai.dataeng.sqml.planner.Table customerNoOrders = logicalPlan.createTable(toName("CustomerOrderStats"),
             false);
-        LogicalPlanImpl.Column customerid = (LogicalPlanImpl.Column) orders.getField(toName("customerid"));
+        Column customerid = (Column) orders.getField(toName("customerid"));
         AggregateOperator countAgg = AggregateOperator.createAggregateAndPopulateTable(filter,
             customerNoOrders,
             Map.of(customerid.getName(), new ColumnReferenceExpression(customerid)),
@@ -359,7 +360,7 @@ public class Main2 {
         System.out.println("-------Import Schema-------");
         System.out.print(toString(userSchema));
 
-        ImportManager3 sqmlImporter = new ImportManager3(ddRegistry);
+        ImportManager sqmlImporter = new ImportManager(ddRegistry);
         sqmlImporter.registerUserSchema(userSchema);
 
         sqmlImporter.importAllTable(RETAIL_DATASET);

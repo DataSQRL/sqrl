@@ -7,6 +7,7 @@ import ai.dataeng.sqml.type.basic.BooleanType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
 import ai.dataeng.sqml.type.basic.FloatType;
 import ai.dataeng.sqml.type.basic.IntegerType;
+import ai.dataeng.sqml.type.basic.IntervalType;
 import ai.dataeng.sqml.type.basic.NullType;
 import ai.dataeng.sqml.type.basic.NumberType;
 import ai.dataeng.sqml.type.basic.StringType;
@@ -50,6 +51,10 @@ public class SqmlTypeVisitor<R, C> {
     return visitType(type, context);
   }
   public R visitBigIntegerType(BigIntegerType type, C context) {
+    return visitBasicType(type, context);
+  }
+
+  public R visitIntervalType(IntervalType type, C context) {
     return visitBasicType(type, context);
   }
 }

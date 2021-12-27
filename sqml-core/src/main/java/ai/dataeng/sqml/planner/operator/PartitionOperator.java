@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.planner.operator;
 
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import java.util.Arrays;
 
@@ -12,28 +13,28 @@ import java.util.Arrays;
  */
 public class PartitionOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.RowNode> {
 
-    final LogicalPlanImpl.Column[] groupByKeys;
+    final Column[] groupByKeys;
     final Order order;
     final int limit;
-    final LogicalPlanImpl.Column rank;
+    final Column rank;
 
-    final LogicalPlanImpl.Column[] outputSchema;
+    final Column[] outputSchema;
 
-    public PartitionOperator(LogicalPlanImpl.RowNode input, LogicalPlanImpl.Column[] groupByKeys, Order order, int limit, LogicalPlanImpl.Column rank) {
+    public PartitionOperator(LogicalPlanImpl.RowNode input, Column[] groupByKeys, Order order, int limit, Column rank) {
         super(input);
         this.groupByKeys = groupByKeys;
         this.order = order;
         this.limit = limit;
         this.rank = rank;
 
-        LogicalPlanImpl.Column[] inputSchema = getInput().getOutputSchema()[0];
+        Column[] inputSchema = getInput().getOutputSchema()[0];
         outputSchema = Arrays.copyOf(inputSchema,inputSchema.length+1);
         outputSchema[outputSchema.length-1]=rank;
     }
 
     @Override
-    public LogicalPlanImpl.Column[][] getOutputSchema() {
-        return new LogicalPlanImpl.Column[][]{outputSchema};
+    public Column[][] getOutputSchema() {
+        return new Column[][]{outputSchema};
     }
 
     @Override

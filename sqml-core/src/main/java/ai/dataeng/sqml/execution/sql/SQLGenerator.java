@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.execution.sql;
 
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.operator.AccessNode;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.LogicalPlanIterator;
@@ -42,7 +43,7 @@ public class SQLGenerator {
                 //Create table and build database sinks
                 MaterializeSource source = (MaterializeSource) node;
                 String tableName = source.getTable().getId();
-                LogicalPlanImpl.Column[] tableSchema = source.getTableSchema();
+                Column[] tableSchema = source.getTableSchema();
                 tableBuilder = new CreateTableBuilder(tableName,dmlQueries,dbUtil).addColumns(tableSchema);
                 sinkMapper.put(source, dbUtil.getSink(tableName, tableSchema));
             } else if (node instanceof AccessNode) {

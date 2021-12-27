@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.execution;
 
-import ai.dataeng.sqml.execution.flink.enviornment.DefaultEnvironmentFactory;
-import ai.dataeng.sqml.execution.flink.enviornment.EnvironmentFactory;
+import ai.dataeng.sqml.execution.flink.environment.DefaultEnvironmentFactory;
+import ai.dataeng.sqml.execution.flink.environment.EnvironmentFactory;
 import ai.dataeng.sqml.execution.flink.ingest.DataSourceRegistry;
 import java.nio.file.Path;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;

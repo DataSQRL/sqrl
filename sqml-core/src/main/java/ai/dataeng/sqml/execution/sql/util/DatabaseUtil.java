@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.execution.sql.util;
 
-import ai.dataeng.sqml.planner.LogicalPlanImpl;
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.execution.sql.DatabaseSink;
 import ai.dataeng.sqml.execution.sql.SQLConfiguration;
 import ai.dataeng.sqml.execution.sql.SQLJDBCQueryBuilder;
@@ -44,7 +44,7 @@ public class DatabaseUtil {
         }
     }
 
-    public SQLTypeMapping getSQLType(LogicalPlanImpl.Column column) {
+    public SQLTypeMapping getSQLType(Column column) {
         BasicType type = column.getType();
         SQLTypeMapping mapType;
         if (type instanceof StringType) mapType = new SQLTypeMapping("LONG VARCHAR",12);
@@ -67,7 +67,7 @@ public class DatabaseUtil {
     public static final SQLTypeMapping TIMESTAMP_COLUMN_SQL_TYPE = new SQLTypeMapping("TIMESTAMP WITH TIME ZONE",12);
 
 
-    public DatabaseSink getSink(String tableName, LogicalPlanImpl.Column[] schema) {
+    public DatabaseSink getSink(String tableName, Column[] schema) {
         //1) Upsert
         StringBuilder s = new StringBuilder();
         if (configuration.getDialect() == SQLConfiguration.Dialect.H2) {
@@ -100,15 +100,15 @@ public class DatabaseUtil {
         return "\"" + name + "\"";
     }
 
-    private static Stream<String> getPrimaryKeyNames(LogicalPlanImpl.Column[] schema) {
-        return Arrays.stream(schema).filter(LogicalPlanImpl.Column::isPrimaryKey).map(
-            LogicalPlanImpl.Column::getId);
+    private static Stream<String> getPrimaryKeyNames(Column[] schema) {
+        return Arrays.stream(schema).filter(Column::isPrimaryKey).map(
+            Column::getId);
     }
 
-    private LinkedHashMap<Integer, Integer> getPosition2Type(LogicalPlanImpl.Column[] schema, boolean primaryKeysOnly) {
+    private LinkedHashMap<Integer, Integer> getPosition2Type(Column[] schema, boolean primaryKeysOnly) {
         LinkedHashMap<Integer, Integer> pos2type = new LinkedHashMap<>(schema.length);
         int pos = 0;
-        for(LogicalPlanImpl.Column col :schema) {
+        for(Column col :schema) {
             if (!primaryKeysOnly || col.isPrimaryKey()) {
                 pos2type.put(pos,getSQLType(col).getTypeNo());
             }

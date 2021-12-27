@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.planner.operator;
 
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.tree.name.NamePath;
 import lombok.Value;
@@ -22,7 +23,7 @@ public class DocumentComputeOperator extends LogicalPlanImpl.DocumentNode<Logica
     }
 
     @Override
-    public Map<NamePath, LogicalPlanImpl.Column[]> getOutputSchema() {
+    public Map<NamePath, Column[]> getOutputSchema() {
         return null;
     }
 
@@ -30,7 +31,7 @@ public class DocumentComputeOperator extends LogicalPlanImpl.DocumentNode<Logica
     public static class Computation {
 
         final NamePath path;
-        LogicalPlanImpl.Column column;
+        Column column;
         //TODO: How should we capture document expressions? We only need to compute those in Flink
 
     }

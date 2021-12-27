@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.execution.flink.process;
 
-import ai.dataeng.sqml.execution.flink.enviornment.EnvironmentFactory;
+import ai.dataeng.sqml.execution.flink.environment.EnvironmentFactory;
 import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaValidationProcess;
 import ai.dataeng.sqml.execution.flink.ingest.source.SourceRecord;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;

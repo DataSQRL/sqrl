@@ -1,9 +1,9 @@
 package ai.dataeng.sqml.execution.flink.ingest;
 
 import ai.dataeng.sqml.catalog.persistence.keyvalue.HierarchyKeyValueStore;
-import ai.dataeng.sqml.execution.flink.enviornment.EnvironmentFactory;
-import ai.dataeng.sqml.execution.flink.enviornment.SaveToKeyValueStoreSink;
-import ai.dataeng.sqml.execution.flink.enviornment.util.FlinkUtilities;
+import ai.dataeng.sqml.execution.flink.environment.EnvironmentFactory;
+import ai.dataeng.sqml.execution.flink.environment.SaveToKeyValueStoreSink;
+import ai.dataeng.sqml.execution.flink.environment.util.FlinkUtilities;
 import ai.dataeng.sqml.execution.flink.ingest.source.SourceRecord;
 import ai.dataeng.sqml.execution.flink.ingest.source.SourceTable;
 import ai.dataeng.sqml.execution.flink.ingest.source.SourceTableListener;

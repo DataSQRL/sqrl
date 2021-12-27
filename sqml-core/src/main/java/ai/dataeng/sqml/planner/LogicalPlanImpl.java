@@ -3,13 +3,9 @@ package ai.dataeng.sqml.planner;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
 import ai.dataeng.sqml.planner.operator.StreamType;
 import ai.dataeng.sqml.planner.operator.relation.ColumnReferenceExpression;
-import ai.dataeng.sqml.type.basic.BasicType;
-import ai.dataeng.sqml.type.constraint.Constraint;
-import ai.dataeng.sqml.type.constraint.ConstraintHelper;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
-import lombok.Getter;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -169,84 +165,6 @@ public class LogicalPlanImpl implements LogicalPlan {
         }
     }
 
-    /**
-     * Tables can be imported directly into the root scope of a script or an entire
-     * dataset (with all tables) is imported and tables must be referenced through that dataset.
-     */
-    public interface DatasetOrTable extends ShadowingContainer.Nameable {
-
-    }
-
-    /**
-     * It is not possible to define new tables inside a dataset (only in the root scope of the script)
-     * so we don't have to consider shadowing of tables within a dataset.
-     */
-    public static class Dataset implements DatasetOrTable {
-
-        public final Name name;
-        public List<Table> tables = new ArrayList<>();
-
-        public Dataset(Name name) {
-            this.name = name;
-        }
-
-        @Override
-        public Name getName() {
-            return name;
-        }
-    }
-
-    @Getter
-    public static class Table implements DatasetOrTable {
-
-        public final Name name;
-        public final int uniqueId;
-        public final ShadowingContainer<Field> fields = new ShadowingContainer<>();
-        public final boolean isInternal;
-        public RowNode currentNode;
-
-
-        public Table(int uniqueId, Name name, boolean isInternal) {
-            this.name = name;
-            this.uniqueId = uniqueId;
-            this.isInternal = isInternal;
-        }
-
-        public void updateNode(RowNode node) {
-            currentNode = node;
-        }
-
-        public Field getField(Name name) {
-            return fields.getByName(name);
-        }
-
-        public boolean addField(Field field) {
-            return fields.add(field);
-        }
-
-        public String getId() {
-            return name.getCanonical() + ID_DELIMITER + Integer.toHexString(uniqueId);
-        }
-
-        @Override
-        public boolean isVisible() {
-            return !isInternal;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Table table = (Table) o;
-            return uniqueId == table.uniqueId;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(uniqueId);
-        }
-    }
-
     public Table createTable(Name name, boolean isInternal) {
         Table table = new Table(tableIdCounter.incrementAndGet(), name, isInternal);
         schema.add(table);
@@ -257,86 +175,5 @@ public class LogicalPlanImpl implements LogicalPlan {
         return schema;
     }
 
-    @Getter
-    public static abstract class Field implements ShadowingContainer.Nameable {
-
-        public final Name name;
-        public final Table table;
-
-        protected Field(Name name, Table table) {
-            this.name = name;
-            this.table = table;
-        }
-
-    }
-
-    @Getter
-    public static class Column extends Field {
-        //Identity of the column in addition to name
-        public final int version;
-
-        //Type definition
-        public final BasicType type;
-        public final int arrayDepth;
-        public final boolean nonNull;
-        public final List<Constraint> constraints;
-
-        //System information
-        public final boolean isPrimaryKey;
-        public final boolean isInternal;
-
-        public Column(Name name, Table table, int version,
-                      BasicType type, int arrayDepth, List<Constraint> constraints,
-                      boolean isPrimaryKey, boolean isInternal) {
-            super(name, table);
-            this.version = version;
-            this.type = type;
-            this.arrayDepth = arrayDepth;
-            this.constraints = constraints;
-            this.isPrimaryKey = isPrimaryKey;
-            this.isInternal = isInternal;
-            this.nonNull = ConstraintHelper.isNonNull(constraints);
-        }
-
-        public String getId() {
-            return name.getCanonical() + ID_DELIMITER +  Integer.toHexString(version);
-        }
-
-        @Override
-        public boolean isVisible() {
-            return !isInternal;
-        }
-
-    }
-
-
-
-    @Getter
-    public static class Relationship extends Field {
-
-        public final Table toTable;
-        public final Relationship.Type type;
-        public final Relationship.Multiplicity multiplicity;
-
-        public Relationship(Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity) {
-            super(name, fromTable);
-            this.toTable = toTable;
-            this.type = type;
-            this.multiplicity = multiplicity;
-        }
-
-        //captures the logical representation of the join that defines this relationship
-
-
-
-        public enum Type {
-            PARENT, CHILD, JOIN;
-        }
-
-        public enum Multiplicity {
-            ZERO_ONE, ONE, MANY;
-        }
-
-    }
 
 }

@@ -34,7 +34,7 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
     }
 
   public static NamePath parse(String path) {
-      return parse(path, NameCanonicalizer.LOWERCASE_ENGLISH);
+      return parse(path, NameCanonicalizer.SYSTEM);
   }
 
   public static NamePath parse(String path, NameCanonicalizer nameCanonicalizer) {

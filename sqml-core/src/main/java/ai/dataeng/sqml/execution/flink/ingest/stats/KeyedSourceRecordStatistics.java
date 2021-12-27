@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.execution.flink.ingest.stats;
 
-import ai.dataeng.sqml.execution.flink.enviornment.util.FlinkUtilities;
+import ai.dataeng.sqml.execution.flink.environment.util.FlinkUtilities;
 import ai.dataeng.sqml.execution.flink.ingest.DatasetRegistration;
 import ai.dataeng.sqml.execution.flink.ingest.source.SourceRecord;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;

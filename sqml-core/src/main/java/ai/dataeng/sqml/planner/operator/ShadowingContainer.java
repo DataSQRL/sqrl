@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.planner.operator;
 
-import ai.dataeng.sqml.planner.LogicalPlanImpl.DatasetOrTable;
-import ai.dataeng.sqml.planner.LogicalPlanImpl.Table;
+import ai.dataeng.sqml.planner.DatasetOrTable;
+import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.Iterators;
@@ -94,16 +94,16 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
         return elements;
     }
 
-    Map<NamePath, DatasetOrTable> tables = new HashMap<>();
-    public static int i = 0;
-    public DatasetOrTable walk(NamePath namePath) {
-        if (tables.containsKey(namePath)) {
-            return tables.get(namePath);
-        }
-        tables.put(namePath, new Table(++i, namePath.get(0), false));
-
-        return tables.get(namePath);
-    }
+//    Map<NamePath, DatasetOrTable> tables = new HashMap<>();
+//    public static int i = 0;
+//    public Table walk(NamePath namePath) {
+//
+//        if (tables.containsKey(namePath)) {
+//            return (Table)tables.get(namePath);
+//        }
+//
+//        return (Table)tables.get(namePath);
+//    }
 
   public interface Nameable {
 

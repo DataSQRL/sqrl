@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.execution.sql.util;
 
-import ai.dataeng.sqml.planner.LogicalPlanImpl;
+import ai.dataeng.sqml.planner.Column;
 import com.google.common.base.Preconditions;
 
 import static ai.dataeng.sqml.execution.sql.util.DatabaseUtil.sqlName;
@@ -19,12 +19,12 @@ public class CreateTableBuilder extends TableBuilder {
         sql.append("CREATE TABLE IF NOT EXISTS ").append(sqlName(tableName)).append(" (");
     }
 
-    public CreateTableBuilder addColumns(LogicalPlanImpl.Column[] columns) {
-        for (LogicalPlanImpl.Column col : columns) addColumn(col);
+    public CreateTableBuilder addColumns(Column[] columns) {
+        for (Column col : columns) addColumn(col);
         return this;
     }
 
-    public CreateTableBuilder addColumn(LogicalPlanImpl.Column column) {
+    public CreateTableBuilder addColumn(Column column) {
         addColumn(column.getId(), dbUtil.getSQLType(column).getTypeName(), column.isNonNull(), column.isPrimaryKey());
         return this;
     }

@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.execution.flink.process;
 
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.operator.relation.ColumnReferenceExpression;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -38,7 +39,7 @@ public class RowKeySelector implements KeySelector<RowUpdate, Row> {
     }
 
     public static RowKeySelector from(Collection<ColumnReferenceExpression> keys, LogicalPlanImpl.RowNode input) {
-        LogicalPlanImpl.Column[][] inputSchema = input.getOutputSchema();
+        Column[][] inputSchema = input.getOutputSchema();
         int[] indexes = new int[keys.size()];
         int offset = 0;
         for (ColumnReferenceExpression key : keys) {

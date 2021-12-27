@@ -13,7 +13,7 @@
  */
 package ai.dataeng.sqml.planner.operator.relation;
 
-import ai.dataeng.sqml.planner.LogicalPlanImpl;
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.type.Type;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
@@ -27,23 +27,23 @@ public class ColumnReferenceExpression
         extends RowExpression
         implements Comparable<ColumnReferenceExpression>
 {
-    LogicalPlanImpl.Column column;
+    Column column;
     int tableIndex;
 
-    public ColumnReferenceExpression(LogicalPlanImpl.Column column) {
+    public ColumnReferenceExpression(Column column) {
         this(column, 0);
     }
 
-    public ColumnReferenceExpression(LogicalPlanImpl.Column column, int tableIndex) {
+    public ColumnReferenceExpression(Column column, int tableIndex) {
         this.column = column;
         this.tableIndex = tableIndex;
     }
 
-    public static int findRowOffset(LogicalPlanImpl.Column column, int tableIndex, LogicalPlanImpl.Column[][] inputSchema) {
+    public static int findRowOffset(Column column, int tableIndex, Column[][] inputSchema) {
         Preconditions.checkArgument(inputSchema!=null && inputSchema.length>=tableIndex);
         int offset = 0;
         for (int tableno = 0; tableno < inputSchema.length; tableno++) {
-            LogicalPlanImpl.Column[] tableSchema = inputSchema[tableno];
+            Column[] tableSchema = inputSchema[tableno];
             for (int colno = 0; colno < tableSchema.length; colno++) {
                 //todo: fix hack
                 if (tableSchema[colno].getName().equals(column.getName())) {
@@ -60,7 +60,7 @@ public class ColumnReferenceExpression
         throw new NoSuchElementException(String.format("Column [%s @%s] could not be found in input schema", column, tableIndex));
     }
 
-    public int getRowOffset(LogicalPlanImpl.Column[][] inputSchema) {
+    public int getRowOffset(Column[][] inputSchema) {
         return findRowOffset(column,tableIndex,inputSchema);
     }
 

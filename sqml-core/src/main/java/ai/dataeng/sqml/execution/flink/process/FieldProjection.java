@@ -1,7 +1,8 @@
 package ai.dataeng.sqml.execution.flink.process;
 
 import ai.dataeng.sqml.execution.flink.ingest.source.SourceRecord;
-import ai.dataeng.sqml.planner.LogicalPlanImpl;
+import ai.dataeng.sqml.planner.Column;
+import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
 import ai.dataeng.sqml.type.basic.IntegerType;
@@ -47,8 +48,8 @@ public interface FieldProjection extends Serializable {
             return name;
         }
 
-        public LogicalPlanImpl.Column createColumn(LogicalPlanImpl.Table table) {
-            return new LogicalPlanImpl.Column(getName(),table,0,type,0,
+        public Column createColumn(Table table) {
+            return new Column(getName(),table,0,type,0,
                     Collections.singletonList(NotNull.INSTANCE),isPrimary, false);
         }
 

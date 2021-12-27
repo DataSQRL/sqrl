@@ -4,5 +4,5 @@ import ai.dataeng.sqml.importer.DatasetManager;
 import ai.dataeng.sqml.parser.processor.ImportProcessor;
 
 public interface ImportProcessorProvider {
-  ImportProcessor createImportProcessor(DatasetManager datasetManager);
+  ImportProcessor createImportProcessor(DatasetManager datasetManager, HeuristicPlannerProvider provider);
 }

@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.planner.operator;
 
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 
 /**
@@ -16,8 +17,8 @@ public class DistinctOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.Ro
 
 
     @Override
-    public LogicalPlanImpl.Column[][] getOutputSchema() {
-        return new LogicalPlanImpl.Column[0][];
+    public Column[][] getOutputSchema() {
+        return new Column[0][];
     }
 
     @Override

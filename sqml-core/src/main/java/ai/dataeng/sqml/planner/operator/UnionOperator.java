@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.planner.operator;
 
+import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class UnionOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.RowNo
     }
 
     @Override
-    public LogicalPlanImpl.Column[][] getOutputSchema() {
-        return new LogicalPlanImpl.Column[0][];
+    public Column[][] getOutputSchema() {
+        return new Column[0][];
     }
 }
