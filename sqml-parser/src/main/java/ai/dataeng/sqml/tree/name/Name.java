@@ -46,6 +46,9 @@ public interface Name extends Serializable, Comparable<Name> {
 //    }
 
     public static Name of(String name, NameCanonicalizer canonicalizer) {
+        if (!StringUtils.isNotEmpty(name)) {
+            System.out.println();
+        }
         Preconditions.checkArgument(StringUtils.isNotEmpty(name));
         name = name.trim();
         return new StandardName(canonicalizer.getCanonical(name),name);

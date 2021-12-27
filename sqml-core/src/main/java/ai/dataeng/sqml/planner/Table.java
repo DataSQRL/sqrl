@@ -66,6 +66,9 @@ public class Table implements DatasetOrTable {
   }
 
   public Optional<Table> walk(NamePath namePath) {
+    if (namePath.get(0).getCanonical().equalsIgnoreCase("parent")) {
+      System.out.println();
+    }
     Field field = getField(namePath.getFirst());
     if (field == null) {
       return Optional.empty();
@@ -81,7 +84,7 @@ public class Table implements DatasetOrTable {
 
     if (field instanceof Relationship) {
       Relationship relationship = (Relationship) field;
-      relationship.getToTable()
+      return relationship.getToTable()
           .walk(namePath.popFirst());
     }
 

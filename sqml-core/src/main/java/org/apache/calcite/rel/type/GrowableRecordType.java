@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.jdbc.SqrlToCalciteTableTranslator;
+import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
+import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeExplicitPrecedenceList;
 import org.apache.calcite.sql.type.SqlTypeName;
 
@@ -39,6 +41,12 @@ public class GrowableRecordType extends RelDataTypeImpl {
 
   @Override public RelDataTypeField getField(String fieldName,
       boolean caseSensitive, boolean elideRecord) {
+    //This comes in as a select star (*), not sure why
+    if (fieldName.isEmpty()) {
+      return new CalciteField(fieldName, this.fields.size(),
+          new BasicSqlType(PostgresqlSqlDialect.POSTGRESQL_TYPE_SYSTEM, SqlTypeName.INTEGER), null);
+    }
+
     for (RelDataTypeField f : fields) {
       if (f.getName().equalsIgnoreCase(fieldName)) {
         return f;
@@ -46,16 +54,21 @@ public class GrowableRecordType extends RelDataTypeImpl {
     }
 
     Table table = (Table)this.table;
-
+    if (fieldName.equalsIgnoreCase("product.category")) {
+      System.out.println();
+    }
     NamePath namePath = NamePath.parse(fieldName);
 
     if (namePath.getPrefix().isPresent()) {
       table = table.walk(namePath.getPrefix().get())
           .orElseThrow(()->new RuntimeException(String.format("Could not find table %s", namePath.getPrefix().get())));
-
     }
 //    NamePath.parse();
     Field field = table.getField(namePath.getLast());
+    if (field == null) {
+      throw new RuntimeException(String.format("Could not find field %s", namePath.getLast()));
+    }
+
     RelDataTypeField calciteField = toCalciteField(fieldName, field);
     this.fields.add(calciteField);
 

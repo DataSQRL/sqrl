@@ -29,6 +29,9 @@ public class Column extends Field {
       BasicType type, int arrayDepth, List<Constraint> constraints,
       boolean isPrimaryKey, boolean isInternal) {
     super(name, table);
+    if (name.getCanonical().startsWith("category")) {
+      System.out.println();
+    }
     this.version = version;
     this.type = type;
     this.arrayDepth = arrayDepth;

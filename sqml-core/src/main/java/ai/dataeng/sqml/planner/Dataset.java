@@ -12,6 +12,7 @@ import java.util.Optional;
  */
 public class Dataset implements DatasetOrTable {
 
+  public static final Name ROOT_NAMESPACE_NAME = Name.system("_root");
   public final Name name;
   public final List<Table> tables;
 
@@ -29,10 +30,12 @@ public class Dataset implements DatasetOrTable {
     return name;
   }
 
+  //TODO: Datasets could be renamed so this could allow older
+  // datasets to still be accessible
   public Optional<Table> get(Name name) {
     for (int i = tables.size() - 1; i >= 0; i--) {
       Table table = tables.get(i);
-      if (table.getName().equals(name)) {
+      if (table.getName().getCanonical().equals(name.getCanonical())) {
         return Optional.of(table);
       }
     }

@@ -23,7 +23,9 @@ public class FlexibleSchemaHelper {
         }
 
         if (!type.getVariantName().equals(SpecialName.SINGLETON)) {
-            name = Name.combine(field.getName(),type.getVariantName());
+            //TODO Temporarily skip variant naming
+//            name = Name.combine(field.getName(),type.getVariantName());
+            name = field.getName();
         }
         return name;
     }

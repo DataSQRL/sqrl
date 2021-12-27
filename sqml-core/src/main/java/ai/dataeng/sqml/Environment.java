@@ -76,7 +76,7 @@ public class Environment {
         settings.getHeuristicPlannerProvider();
     ScriptProcessor processor = scriptProcessorProvider.createScriptProcessor(
         settings.getImportProcessorProvider().createImportProcessor(importResolver, planner),
-        settings.getQueryProcessorProvider().createQueryProcessor(),
+        settings.getQueryProcessorProvider().createQueryProcessor(planner),
         settings.getExpressionProcessorProvider().createExpressionProcessor(planner),
         settings.getJoinProcessorProvider().createJoinProcessor(),
         settings.getDistinctProcessorProvider().createDistinctProcessor(),

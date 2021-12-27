@@ -965,7 +965,7 @@ class AstBuilder
         Optional.of(getLocation(ctx)),
         (InlineJoinBody)visit(ctx.inlineJoinBody()),
         ctx.inv == null ? Optional.empty() :
-            Optional.of((Identifier)visit(ctx.inv))
+            Optional.of(Name.system(((Identifier)visit(ctx.inv)).getValue()))
     );
   }
 
@@ -973,7 +973,7 @@ class AstBuilder
   public Node visitInlineJoinBody(InlineJoinBodyContext ctx) {
     return new InlineJoinBody(
           Optional.of(getLocation(ctx)),
-          getQualifiedName(ctx.table),
+          getNamePath(ctx.table),
           ctx.alias == null ? Optional.empty() :
               Optional.of((Identifier)visit(ctx.alias)),
         (ctx.expression() != null) ? (Expression)visit(ctx.expression()) : null,

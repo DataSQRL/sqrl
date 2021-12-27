@@ -45,7 +45,8 @@ public class SqrlToCalciteTableTranslator {
 
     if (table.startsWith("@")) {
       if (context.isEmpty()) throw new RuntimeException(String.format("Could not find context for table: ", table));
-      path = context.get();
+
+      path = context.get().resolve(NamePath.parse(table).popFirst());
     } else {
       path = NamePath.parse(table);
     }
@@ -67,7 +68,6 @@ public class SqrlToCalciteTableTranslator {
     int i = 0;
     for (Iterator<Field> it = fields; it.hasNext(); ) {
       Field field = it.next();
-      System.out.println(field.getName());
       Optional<RelDataTypeField> calciteField = toCalciteField(field.getName().toString(), field, i);
       if (calciteField.isPresent()) {
         calciteFields.add(calciteField.get());
@@ -113,6 +113,10 @@ public class SqrlToCalciteTableTranslator {
         return SqlTypeName.VARCHAR;
       case "FLOAT":
         return SqlTypeName.FLOAT;
+      case "TIMESTAMP":
+        return SqlTypeName.TIMESTAMP;
+      case "DATETIME":
+        return SqlTypeName.TIMESTAMP;
       //todo: remaining
     }
     throw new RuntimeException(String.format(

@@ -19,11 +19,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
   @Override
   public void process(ExpressionAssignment expr, Namespace namespace) {
     Optional<NamePath> tableName = expr.getNamePath().getPrefix();
-//    Preconditions.checkState(tableName.isPresent(), "Cannot assign expression to schema root");
-//    SqrlTable2 table = catalogManager.getCurrentTable(tableName.get());
-//    SqrlTable2 extendedTable = env.addColumn(table, expr.getNamePath().getLast(), expr.getSql());
-//    catalogManager.addTable(extendedTable);
-//
+
     String sql = String.format("SELECT %s AS %s FROM `@`",
         expr.getSql(), expr.getNamePath().getLast().toString());
 

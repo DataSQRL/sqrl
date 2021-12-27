@@ -58,7 +58,7 @@ public class EnvironmentSettings {
     return EnvironmentSettings.builder()
         .namespace(new NamespaceImpl())
         .importProcessorProvider((importResolver, planner)->new ImportProcessorImpl(importResolver, planner))
-        .queryProcessorProvider(()->new QueryProcessorImpl())
+        .queryProcessorProvider((planner)->new QueryProcessorImpl(planner))
         .expressionProcessorProvider((planner)->new ExpressionProcessorImpl(planner))
         .joinProcessorProvider(()->new JoinProcessorImpl())
         .distinctProcessorProvider(()->new DistinctProcessorImpl())

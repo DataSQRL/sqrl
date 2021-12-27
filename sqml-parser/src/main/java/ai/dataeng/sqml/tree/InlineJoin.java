@@ -13,6 +13,7 @@
  */
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
@@ -22,11 +23,11 @@ public class InlineJoin
     extends Declaration {
 
   private final InlineJoinBody join;
-  private final Optional<Identifier> inverse;
+  private final Optional<Name> inverse;
 
   public InlineJoin(Optional<NodeLocation> location,
       InlineJoinBody join,
-      Optional<Identifier> inverse) {
+      Optional<Name> inverse) {
     super(location);
 
     this.join = join;
@@ -37,7 +38,7 @@ public class InlineJoin
     return join;
   }
 
-  public Optional<Identifier> getInverse() {
+  public Optional<Name> getInverse() {
     return inverse;
   }
 

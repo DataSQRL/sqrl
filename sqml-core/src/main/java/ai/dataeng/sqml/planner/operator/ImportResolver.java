@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Resolve imports in SQRL scripts and produces the {@link LogicalPlanImpl.Node}s as sources.
  */
 public class ImportResolver {
-    private static final Name PARENT_RELATIONSHIP = Name.system("parent");
+    public static final Name PARENT_RELATIONSHIP = Name.system("parent");
 
     private final ImportManager importManager;
 //    private final LogicalPlanImpl logicalPlan;
