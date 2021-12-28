@@ -9,6 +9,7 @@ import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.JoinAssignment;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import java.util.Optional;
 
 public class JoinProcessorImpl implements JoinProcessor {
 
@@ -40,12 +41,12 @@ public class JoinProcessorImpl implements JoinProcessor {
                     statement.getInlineJoin().getJoin().getTable())));
 
     source.addField(new Relationship(statement.getNamePath().getLast(),
-        source, destination, Type.JOIN, Multiplicity.MANY));
+        source, destination, Type.JOIN, Multiplicity.MANY, Optional.of(statement.getInlineJoin())));
 
     if (statement.getInlineJoin().getInverse().isPresent()) {
       Name inverseName = statement.getInlineJoin().getInverse().get();
       destination.addField(new Relationship(inverseName,
-          destination, source, Type.JOIN, Multiplicity.MANY));
+          destination, source, Type.JOIN, Multiplicity.MANY, Optional.of(statement.getInlineJoin())));
     }
 
     //TODO: Inverse
