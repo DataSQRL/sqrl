@@ -1,12 +1,12 @@
 package org.apache.calcite.rules;
 
 import ai.dataeng.sqml.planner.DatasetOrTable;
+import ai.dataeng.sqml.planner.optimize2.SqrlLogicalTableScan;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.rules.TransformationRule;
-import org.apache.calcite.rel.type.CalciteTable;
+import org.apache.calcite.schema.SqrlCalciteTable;
 import org.apache.calcite.rules.RuleStub.Config;
 
 public class RuleStub
@@ -18,8 +18,8 @@ public class RuleStub
     }
 
     @Override public void onMatch(RelOptRuleCall call) {
-      LogicalTableScan tableScan = call.rel(0);
-      CalciteTable table = tableScan.getTable().unwrap(CalciteTable.class);
+      SqrlLogicalTableScan tableScan = call.rel(0);
+      SqrlCalciteTable table = tableScan.getTable().unwrap(SqrlCalciteTable.class);
       DatasetOrTable sqrlTable = table.getTable();
     }
 

@@ -14,11 +14,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.apache.calcite.rel.type.CalciteTable;
+import org.apache.calcite.schema.SqrlCalciteTable;
 import org.apache.calcite.rel.type.GrowableRecordType;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.CalciteField;
+import org.apache.calcite.rel.type.SqrlCalciteField;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.type.BasicSqlType;
@@ -59,11 +59,11 @@ public class SqrlToCalciteTableTranslator {
       throw new RuntimeException(String.format("Could not find table %s", table));
     }
 
-    CalciteTable calciteTable = new CalciteTable(tableOptional.get(), table,
+    SqrlCalciteTable sqrlCalciteTable = new SqrlCalciteTable(tableOptional.get(), table,
         toCalciteFields(tableOptional.get().getFields().visibleIterator()));
 
-    tableMap.put(table, calciteTable);
-    return calciteTable;
+    tableMap.put(table, sqrlCalciteTable);
+    return sqrlCalciteTable;
   }
 
   private List<RelDataTypeField> toCalciteFields(Iterator<Field> fields) {
@@ -85,17 +85,17 @@ public class SqrlToCalciteTableTranslator {
       int index) {
     if (field instanceof Relationship) {
       //struct for validation only
-      return Optional.of(new CalciteField(fieldName, index,
-          new GrowableRecordType(null, new ArrayList(), null), null));
+      return Optional.of(new SqrlCalciteField(fieldName, index,
+          new GrowableRecordType(new ArrayList(), null), null));
     } else if (!(field instanceof Column)) {
       throw new RuntimeException(String.format("Unknown column type", field.getClass().getName()));
     }
     Column column = (Column) field;
 
-    CalciteField calciteField = new CalciteField(fieldName, index,
+    SqrlCalciteField sqrlCalciteField = new SqrlCalciteField(fieldName, index,
         toDataType(column.getType()), column);
 
-    return Optional.of(calciteField);
+    return Optional.of(sqrlCalciteField);
   }
 
   private static RelDataType toDataType(BasicType column) {

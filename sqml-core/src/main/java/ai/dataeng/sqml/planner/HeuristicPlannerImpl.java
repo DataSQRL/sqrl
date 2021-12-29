@@ -5,7 +5,7 @@ import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.calcite.config.Lex;
-import org.apache.calcite.jdbc.ContextAwareCalciteSchema;
+import org.apache.calcite.jdbc.SimpleSqrlCalciteSchema;
 import org.apache.calcite.jdbc.SqrlToCalciteTableTranslator;
 import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.plan.hep.HepPlanner;
@@ -14,13 +14,10 @@ import org.apache.calcite.prepare.PlannerImpl;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
-import org.apache.calcite.rel.type.SCalciteSchema;
+import org.apache.calcite.schema.SqrlSchema;
 import org.apache.calcite.rules.RuleStub;
 import org.apache.calcite.sql.RewriteTableName;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlOrderBy;
-import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParser.Config;
@@ -40,8 +37,8 @@ public class HeuristicPlannerImpl implements Planner {
         context, namespace
     );
 
-    ContextAwareCalciteSchema nonCachingSchema = new ContextAwareCalciteSchema(null,
-        new SCalciteSchema(tableTranslator),
+    SimpleSqrlCalciteSchema schema = new SimpleSqrlCalciteSchema(null,
+        new SqrlSchema(tableTranslator),
         "");
 
     Config parserConfig = SqlParser.config()
@@ -51,7 +48,7 @@ public class HeuristicPlannerImpl implements Planner {
         .withIdentifierMaxLength(256);
 
     FrameworkConfig config = Frameworks.newConfigBuilder()
-        .defaultSchema(nonCachingSchema.plus())
+        .defaultSchema(schema.plus())
         .parserConfig(parserConfig)
         .sqlToRelConverterConfig(SqlToRelConverter.config()
             .withRelBuilderConfigTransform(e-> {
@@ -73,7 +70,6 @@ public class HeuristicPlannerImpl implements Planner {
     PlannerImpl planner = new PlannerImpl(config);
     SqlNode node = planner.parse(sql);
     RewriteTableName.rewrite(node);
-    System.out.println(node.getClass().getName());
     planner.validate(node);
     RelRoot root = planner.rel(node);
 

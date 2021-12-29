@@ -1,19 +1,18 @@
 package org.apache.calcite.rel.type;
 
 import ai.dataeng.sqml.planner.Column;
-import ai.dataeng.sqml.tree.name.Name;
 import java.io.Serializable;
 import java.util.Objects;
 import org.apache.calcite.sql.type.SqlTypeName;
 
-public class CalciteField implements RelDataTypeField, Serializable {
+public class SqrlCalciteField implements RelDataTypeField, Serializable {
 
   private final RelDataType type;
   private final String name;
   private final int index;
   private final Column column;
 
-  public CalciteField(String name, int index, RelDataType type, Column column) {
+  public SqrlCalciteField(String name, int index, RelDataType type, Column column) {
     assert name != null;
 
     assert type != null;
@@ -30,10 +29,10 @@ public class CalciteField implements RelDataTypeField, Serializable {
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (!(obj instanceof CalciteField)) {
+    } else if (!(obj instanceof SqrlCalciteField)) {
       return false;
     } else {
-      CalciteField that = (CalciteField) obj;
+      SqrlCalciteField that = (SqrlCalciteField) obj;
       return this.index == that.index && this.name.equals(that.name) && this.type.equals(that.type);
     }
   }

@@ -4,7 +4,6 @@ import ai.dataeng.sqml.planner.DatasetOrTable;
 import ai.dataeng.sqml.planner.Field;
 import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.tree.name.NamePath;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,20 +14,13 @@ import org.apache.calcite.sql.type.SqlTypeExplicitPrecedenceList;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 public class GrowableRecordType extends RelDataTypeImpl {
-  private RelDataTypeFactory typeFactory;
-  private List<RelDataTypeField> fields = new ArrayList<>();
+  private List<RelDataTypeField> fields;
   private final DatasetOrTable table;
 
-  /** Creates a DynamicRecordTypeImpl. */
-  public GrowableRecordType(RelDataTypeFactory typeFactory,
-      List<RelDataTypeField> regFields, DatasetOrTable table) {
-    this.typeFactory = typeFactory;
+  public GrowableRecordType(List<RelDataTypeField> regFields, DatasetOrTable table) {
     this.fields = regFields;
     this.table = table;
     computeDigest();
-//    RelDataTypeFieldImpl f = new RelDataTypeFieldImpl("orders", 0, this.typeFactory.createSqlType(SqlTypeName.BOOLEAN));
-//    fieldMap.put("x", f);
-//    fields.add(f);
   }
 
   @Override public List<RelDataTypeField> getFieldList() {
@@ -46,10 +38,11 @@ public class GrowableRecordType extends RelDataTypeImpl {
       boolean caseSensitive, boolean elideRecord) {
     //This comes in as a select star (*), not sure why
     if (fieldName.isEmpty()) {
-      return new CalciteField(fieldName, this.fields.size(),
+      return new SqrlCalciteField(fieldName, this.fields.size(),
           new BasicSqlType(PostgresqlSqlDialect.POSTGRESQL_TYPE_SYSTEM, SqlTypeName.INTEGER), null);
     }
 
+    //Look for field in cache, duplicate fields cause ambiguous column errors
     for (RelDataTypeField f : fields) {
       if (f.getName().equalsIgnoreCase(fieldName)) {
         return f;
@@ -57,9 +50,6 @@ public class GrowableRecordType extends RelDataTypeImpl {
     }
 
     Table table = (Table)this.table;
-    if (fieldName.equalsIgnoreCase("product.category")) {
-      System.out.println();
-    }
     NamePath namePath = NamePath.parse(fieldName);
 
     if (namePath.getPrefix().isPresent()) {
@@ -67,7 +57,7 @@ public class GrowableRecordType extends RelDataTypeImpl {
           .orElseThrow(()->
               new RuntimeException(String.format("Could not find table %s", namePath.getPrefix().get())));
     }
-//    NamePath.parse();
+
     Field field = table.getField(namePath.getLast());
     if (field == null) {
       throw new RuntimeException(String.format("Could not find field %s", namePath.getLast()));
@@ -115,9 +105,5 @@ public class GrowableRecordType extends RelDataTypeImpl {
 
   public StructKind getStructKind() {
     return StructKind.PEEK_FIELDS;
-  }
-
-  public void addField(RelDataTypeFieldImpl relDataTypeField) {
-    this.fields.add(relDataTypeField);
   }
 }
