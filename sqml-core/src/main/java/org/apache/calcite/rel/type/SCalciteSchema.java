@@ -1,10 +1,10 @@
 package org.apache.calcite.rel.type;
 
-import java.util.List;
-import org.apache.calcite.jdbc.SqrlToCalciteTableTranslator;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import org.apache.calcite.jdbc.SqrlToCalciteTableTranslator;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
@@ -16,7 +16,7 @@ import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 @AllArgsConstructor
-public class CalciteSchema implements Schema {
+public class SCalciteSchema implements Schema {
     SqrlToCalciteTableTranslator tableTranslator;
 
   @Override

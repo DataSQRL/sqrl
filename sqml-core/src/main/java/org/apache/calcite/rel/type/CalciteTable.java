@@ -3,17 +3,20 @@ package org.apache.calcite.rel.type;
 import ai.dataeng.sqml.planner.DatasetOrTable;
 import java.util.List;
 import org.apache.calcite.config.CalciteConnectionConfig;
+import org.apache.calcite.schema.CustomColumnResolvingTable;
 import org.apache.calcite.schema.Schema.TableType;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.schema.impl.AbstractTable;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.util.Pair;
 
 /**
  * A dynamically expanding table. This is a single use table.
  */
-public class CalciteTable extends AbstractTable {
+public class CalciteTable implements CustomColumnResolvingTable {
 
   private final DatasetOrTable table;
   /**
@@ -72,5 +75,22 @@ public class CalciteTable extends AbstractTable {
   public boolean rolledUpColumnValidInsideAgg(String s, SqlCall sqlCall, SqlNode sqlNode,
       CalciteConnectionConfig calciteConnectionConfig) {
     return false;
+  }
+
+  @Override
+  public List<Pair<RelDataTypeField, List<String>>> resolveColumn(RelDataType relDataType,
+      RelDataTypeFactory relDataTypeFactory, List<String> list) {
+
+    if (list.size() > 1) {
+      String path = String.join(".", list);
+      RelDataTypeField resolvedField = holder.getField(path, false, false);
+      return List.of(
+          Pair.of(resolvedField, List.of())
+      );
+    }
+
+    return List.of(
+        Pair.of(holder.getField(list.get(0), false, false), List.of())
+    );
   }
 }

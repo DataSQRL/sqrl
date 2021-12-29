@@ -14,7 +14,7 @@ import org.apache.calcite.prepare.PlannerImpl;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
-import org.apache.calcite.rel.type.CalciteSchema;
+import org.apache.calcite.rel.type.SCalciteSchema;
 import org.apache.calcite.rules.RuleStub;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
@@ -37,7 +37,7 @@ public class HeuristicPlannerImpl implements Planner {
     );
 
     ContextAwareCalciteSchema nonCachingSchema = new ContextAwareCalciteSchema(null,
-        new CalciteSchema(tableTranslator),
+        new SCalciteSchema(tableTranslator),
         "");
 
     Config parserConfig = SqlParser.config()

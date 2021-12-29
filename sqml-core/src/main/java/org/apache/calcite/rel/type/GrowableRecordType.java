@@ -39,6 +39,9 @@ public class GrowableRecordType extends RelDataTypeImpl {
     return fields.size();
   }
 
+  /**
+   * Creates field on get
+   */
   @Override public RelDataTypeField getField(String fieldName,
       boolean caseSensitive, boolean elideRecord) {
     //This comes in as a select star (*), not sure why
@@ -61,7 +64,8 @@ public class GrowableRecordType extends RelDataTypeImpl {
 
     if (namePath.getPrefix().isPresent()) {
       table = table.walk(namePath.getPrefix().get())
-          .orElseThrow(()->new RuntimeException(String.format("Could not find table %s", namePath.getPrefix().get())));
+          .orElseThrow(()->
+              new RuntimeException(String.format("Could not find table %s", namePath.getPrefix().get())));
     }
 //    NamePath.parse();
     Field field = table.getField(namePath.getLast());
@@ -113,4 +117,7 @@ public class GrowableRecordType extends RelDataTypeImpl {
     return StructKind.PEEK_FIELDS;
   }
 
+  public void addField(RelDataTypeFieldImpl relDataTypeField) {
+    this.fields.add(relDataTypeField);
+  }
 }

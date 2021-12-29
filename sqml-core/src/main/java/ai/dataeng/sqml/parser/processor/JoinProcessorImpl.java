@@ -1,5 +1,7 @@
 package ai.dataeng.sqml.parser.processor;
 
+import static ai.dataeng.sqml.parser.QueryParser.CONTEXT_TABLE;
+
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.planner.Relationship;
 import ai.dataeng.sqml.planner.Relationship.Multiplicity;
@@ -23,12 +25,12 @@ public class JoinProcessorImpl implements JoinProcessor {
 
     //TODO: Lookup with context
 
-    if (namePath.get(0).getCanonical().equalsIgnoreCase("@")) {
+    if (namePath.get(0).getCanonical().equalsIgnoreCase(CONTEXT_TABLE)) {
       throw new RuntimeException("next");
     }
     NamePath destinationPath = statement.getInlineJoin().getJoin().getTable();
 
-    if (destinationPath.get(0).getCanonical().startsWith("@")) {
+    if (destinationPath.get(0).getCanonical().startsWith(CONTEXT_TABLE)) {
       destinationPath = statement.getNamePath().getPrefix().get()
           .resolve(destinationPath.popFirst());
     }

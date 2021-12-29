@@ -1,5 +1,7 @@
 package ai.dataeng.sqml.execution.flink.process;
 
+import static ai.dataeng.sqml.parser.QueryParser.CONTEXT_TABLE;
+
 import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;
@@ -55,7 +57,7 @@ public interface RowUpdate extends Serializable {
             s.append(getType().prefix);
             if (hasAppend()) s.append(getAppend().toString());
             if (hasRetraction()) s.append(getRetraction().toString());
-            s.append("@").append(ingestTime);
+            s.append(CONTEXT_TABLE).append(ingestTime);
             return s.toString();
         }
 

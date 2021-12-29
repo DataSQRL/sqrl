@@ -1,5 +1,7 @@
 package org.apache.calcite.jdbc;
 
+import static ai.dataeng.sqml.parser.QueryParser.CONTEXT_TABLE;
+
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.Field;
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.calcite.rel.type.CalciteTable;
+import org.apache.calcite.rel.type.GrowableRecordType;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.CalciteField;
@@ -43,8 +46,8 @@ public class SqrlToCalciteTableTranslator {
 
     NamePath path;
 
-    if (table.startsWith("@")) {
-      if (context.isEmpty()) throw new RuntimeException(String.format("Could not find context for table: ", table));
+    if (table.startsWith(CONTEXT_TABLE)) {
+      if (context.isEmpty()) throw new RuntimeException(String.format("Could not find context for table: %s", table));
 
       path = context.get().resolve(NamePath.parse(table).popFirst());
     } else {
@@ -81,10 +84,9 @@ public class SqrlToCalciteTableTranslator {
   public static Optional<RelDataTypeField> toCalciteField(String fieldName, Field field,
       int index) {
     if (field instanceof Relationship) {
-      //Relationship types can happen, for example `expr.col := count(rel)`
-      // Just return an integer type
+      //struct for validation only
       return Optional.of(new CalciteField(fieldName, index,
-          new BasicSqlType(PostgresqlSqlDialect.POSTGRESQL_TYPE_SYSTEM, SqlTypeName.INTEGER), null));
+          new GrowableRecordType(null, new ArrayList(), null), null));
     } else if (!(field instanceof Column)) {
       throw new RuntimeException(String.format("Unknown column type", field.getClass().getName()));
     }

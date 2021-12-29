@@ -20,7 +20,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
   public void process(ExpressionAssignment expr, Namespace namespace) {
     Optional<NamePath> tableName = expr.getNamePath().getPrefix();
 
-    String sql = String.format("SELECT %s AS %s FROM `@`",
+    String sql = String.format("SELECT %s AS %s FROM _",
         expr.getSql(), expr.getNamePath().getLast().toString());
 
     System.out.println(sql);
