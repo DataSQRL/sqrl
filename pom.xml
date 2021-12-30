@@ -12,8 +12,6 @@
         <module>sqml-core</module>
         <module>sqml-parser</module>
         <module>sqml-main</module>
-
-
         <module>sqrl-graphql</module>
     </modules>
 
