@@ -165,8 +165,8 @@ public class LogicalPlanImpl implements LogicalPlan {
         }
     }
 
-    public Table createTable(Name name, boolean isInternal) {
-        Table table = new Table(tableIdCounter.incrementAndGet(), name, isInternal);
+    public Table createTable(Name name, NamePath path, boolean isInternal) {
+        Table table = new Table(tableIdCounter.incrementAndGet(), name, path, isInternal);
         schema.add(table);
         return table;
     }

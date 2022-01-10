@@ -1,0 +1,446 @@
+/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home/bin/java -ea -Didea.test.cyclic.buffer.size=1048576 -javaagent:/Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar=58007:/Applications/IntelliJ IDEA CE.app/Contents/bin -Dfile.encoding=UTF-8 -classpath /Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar:/Users/henneberger/.m2/repository/org/junit/platform/junit-platform-launcher/1.8.2/junit-platform-launcher-1.8.2.jar:/Applications/IntelliJ IDEA CE.app/Contents/plugins/junit/lib/junit5-rt.jar:/Applications/IntelliJ IDEA CE.app/Contents/plugins/junit/lib/junit-rt.jar:/Users/henneberger/Projects/sqml-official/sqml-core/target/test-classes:/Users/henneberger/Projects/sqml-official/sqml-core/target/classes:/Users/henneberger/Projects/sqml-official/sqrl-graphql/sqrl-h2/target/classes:/Users/henneberger/Projects/sqml-official/sqrl-graphql/sqrl-jdbc/target/classes:/Users/henneberger/Projects/sqml-official/sqrl-graphql/sqrl-db-api/target/classes:/Users/henneberger/.m2/repository/com/google/guava/guava/30.1.1-jre/guava-30.1.1-jre.jar:/Users/henneberger/.m2/repository/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar:/Users/henneberger/.m2/repository/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/Users/henneberger/.m2/repository/com/google/errorprone/error_prone_annotations/2.5.1/error_prone_annotations-2.5.1.jar:/Users/henneberger/.m2/repository/com/google/j2objc/j2objc-annotations/1.3/j2objc-annotations-1.3.jar:/Users/henneberger/Projects/sqml-official/sqml-parser/target/classes:/Users/henneberger/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar:/Users/henneberger/.m2/repository/io/airlift/slice/0.38/slice-0.38.jar:/Users/henneberger/.m2/repository/org/openjdk/jol/jol-core/0.2/jol-core-0.2.jar:/Users/henneberger/.m2/repository/org/antlr/antlr4-runtime/4.7.1/antlr4-runtime-4.7.1.jar:/Users/henneberger/.m2/repository/com/facebook/airlift/log/0.200/log-0.200.jar:/Users/henneberger/.m2/repository/io/vertx/vertx-web-graphql/4.1.0/vertx-web-graphql-4.1.0.jar:/Users/henneberger/.m2/repository/io/vertx/vertx-web/4.1.0/vertx-web-4.1.0.jar:/Users/henneberger/.m2/repository/io/vertx/vertx-web-common/4.1.0/vertx-web-common-4.1.0.jar:/Users/henneberger/.m2/repository/io/vertx/vertx-auth-common/4.1.0/vertx-auth-common-4.1.0.jar:/Users/henneberger/.m2/repository/io/vertx/vertx-bridge-common/4.1.0/vertx-bridge-common-4.1.0.jar:/Users/henneberger/.m2/repository/com/graphql-java/graphql-java/16.2/graphql-java-16.2.jar:/Users/henneberger/.m2/repository/com/graphql-java/java-dataloader/2.2.3/java-dataloader-2.2.3.jar:/Users/henneberger/.m2/repository/org/reactivestreams/reactive-streams/1.0.3/reactive-streams-1.0.3.jar:/Users/henneberger/.m2/repository/io/vertx/vertx-core/4.1.0/vertx-core-4.1.0.jar:/Users/henneberger/.m2/repository/io/netty/netty-common/4.1.65.Final/netty-common-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/netty/netty-buffer/4.1.65.Final/netty-buffer-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/netty/netty-transport/4.1.65.Final/netty-transport-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/netty/netty-handler/4.1.65.Final/netty-handler-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/netty/netty-codec/4.1.65.Final/netty-codec-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/netty/netty-handler-proxy/4.1.65.Final/netty-handler-proxy-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/netty/netty-codec-socks/4.1.65.Final/netty-codec-socks-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/netty/netty-codec-http/4.1.65.Final/netty-codec-http-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/netty/netty-codec-http2/4.1.65.Final/netty-codec-http2-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/netty/netty-resolver/4.1.65.Final/netty-resolver-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/netty/netty-resolver-dns/4.1.65.Final/netty-resolver-dns-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/netty/netty-codec-dns/4.1.65.Final/netty-codec-dns-4.1.65.Final.jar:/Users/henneberger/.m2/repository/io/vertx/vertx-pg-client/4.1.0/vertx-pg-client-4.1.0.jar:/Users/henneberger/.m2/repository/io/vertx/vertx-sql-client/4.1.0/vertx-sql-client-4.1.0.jar:/Users/henneberger/.m2/repository/io/vertx/vertx-jdbc-client/4.1.0/vertx-jdbc-client-4.1.0.jar:/Users/henneberger/.m2/repository/com/mchange/c3p0/0.9.5.4/c3p0-0.9.5.4.jar:/Users/henneberger/.m2/repository/com/mchange/mchange-commons-java/0.2.15/mchange-commons-java-0.2.15.jar:/Users/henneberger/.m2/repository/io/agroal/agroal-pool/1.11/agroal-pool-1.11.jar:/Users/henneberger/.m2/repository/io/agroal/agroal-api/1.11/agroal-api-1.11.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-streaming-java_2.12/1.14.0/flink-streaming-java_2.12-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-core/1.14.0/flink-core-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-annotations/1.14.0/flink-annotations-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-metrics-core/1.14.0/flink-metrics-core-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-shaded-asm-7/7.1-14.0/flink-shaded-asm-7-7.1-14.0.jar:/Users/henneberger/.m2/repository/com/esotericsoftware/kryo/kryo/2.24.0/kryo-2.24.0.jar:/Users/henneberger/.m2/repository/com/esotericsoftware/minlog/minlog/1.2/minlog-1.2.jar:/Users/henneberger/.m2/repository/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.jar:/Users/henneberger/.m2/repository/org/apache/commons/commons-compress/1.21/commons-compress-1.21.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-runtime/1.14.0/flink-runtime-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-rpc-core/1.14.0/flink-rpc-core-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-rpc-akka-loader/1.14.0/flink-rpc-akka-loader-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-queryable-state-client-java/1.14.0/flink-queryable-state-client-java-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-hadoop-fs/1.14.0/flink-hadoop-fs-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-shaded-netty/4.1.65.Final-14.0/flink-shaded-netty-4.1.65.Final-14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-shaded-jackson/2.12.4-14.0/flink-shaded-jackson-2.12.4-14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-shaded-zookeeper-3/3.4.14-14.0/flink-shaded-zookeeper-3-3.4.14-14.0.jar:/Users/henneberger/.m2/repository/org/javassist/javassist/3.24.0-GA/javassist-3.24.0-GA.jar:/Users/henneberger/.m2/repository/org/xerial/snappy/snappy-java/1.1.8.3/snappy-java-1.1.8.3.jar:/Users/henneberger/.m2/repository/org/lz4/lz4-java/1.8.0/lz4-java-1.8.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-scala_2.12/1.14.0/flink-scala_2.12-1.14.0.jar:/Users/henneberger/.m2/repository/org/scala-lang/scala-reflect/2.12.7/scala-reflect-2.12.7.jar:/Users/henneberger/.m2/repository/org/scala-lang/scala-library/2.12.7/scala-library-2.12.7.jar:/Users/henneberger/.m2/repository/org/scala-lang/scala-compiler/2.12.7/scala-compiler-2.12.7.jar:/Users/henneberger/.m2/repository/org/scala-lang/modules/scala-xml_2.12/1.0.6/scala-xml_2.12-1.0.6.jar:/Users/henneberger/.m2/repository/com/twitter/chill_2.12/0.7.6/chill_2.12-0.7.6.jar:/Users/henneberger/.m2/repository/com/twitter/chill-java/0.7.6/chill-java-0.7.6.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-java/1.14.0/flink-java-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-shaded-guava/30.1.1-jre-14.0/flink-shaded-guava-30.1.1-jre-14.0.jar:/Users/henneberger/.m2/repository/org/apache/commons/commons-math3/3.5/commons-math3-3.5.jar:/Users/henneberger/.m2/repository/org/slf4j/slf4j-api/1.7.15/slf4j-api-1.7.15.jar:/Users/henneberger/.m2/repository/com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-shaded-force-shading/14.0/flink-shaded-force-shading-14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-json/1.14.0/flink-json-1.14.0.jar:/Users/henneberger/.m2/repository/org/postgresql/postgresql/42.3.1/postgresql-42.3.1.jar:/Users/henneberger/.m2/repository/org/checkerframework/checker-qual/3.5.0/checker-qual-3.5.0.jar:/Users/henneberger/Projects/sqml-official/sqrl-graphql/sqrl-main/target/classes:/Users/henneberger/.m2/repository/org/apache/flink/flink-table-api-java-bridge_2.12/1.14.0/flink-table-api-java-bridge_2.12-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-table-api-java/1.14.0/flink-table-api-java-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-table-planner_2.12/1.14.0/flink-table-planner_2.12-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-table-common/1.14.0/flink-table-common-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-connector-files/1.14.0/flink-connector-files-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-connector-base/1.14.0/flink-connector-base-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-table-api-scala_2.12/1.14.0/flink-table-api-scala_2.12-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-table-api-scala-bridge_2.12/1.14.0/flink-table-api-scala-bridge_2.12-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-streaming-scala_2.12/1.14.0/flink-streaming-scala_2.12-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-table-runtime_2.12/1.14.0/flink-table-runtime_2.12-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-table-code-splitter/1.14.0/flink-table-code-splitter-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-clients_2.12/1.14.0/flink-clients_2.12-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-optimizer/1.14.0/flink-optimizer-1.14.0.jar:/Users/henneberger/.m2/repository/commons-cli/commons-cli/1.3.1/commons-cli-1.3.1.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-connector-jdbc_2.12/1.14.0/flink-connector-jdbc_2.12-1.14.0.jar:/Users/henneberger/.m2/repository/com/fasterxml/jackson/module/jackson-module-blackbird/2.12.4/jackson-module-blackbird-2.12.4.jar:/Users/henneberger/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.12.3/jackson-core-2.12.3.jar:/Users/henneberger/.m2/repository/org/apache/flink/flink-file-sink-common/1.13.0/flink-file-sink-common-1.13.0.jar:/Users/henneberger/.m2/repository/org/apache/flink/force-shading/1.13.0/force-shading-1.13.0.jar:/Users/henneberger/.m2/repository/org/mockito/mockito-core/3.12.4/mockito-core-3.12.4.jar:/Users/henneberger/.m2/repository/net/bytebuddy/byte-buddy/1.11.13/byte-buddy-1.11.13.jar:/Users/henneberger/.m2/repository/net/bytebuddy/byte-buddy-agent/1.11.13/byte-buddy-agent-1.11.13.jar:/Users/henneberger/.m2/repository/org/objenesis/objenesis/3.2/objenesis-3.2.jar:/Users/henneberger/.m2/repository/org/projectlombok/lombok/1.18.20/lombok-1.18.20.jar:/Users/henneberger/.m2/repository/org/junit/jupiter/junit-jupiter/5.8.2/junit-jupiter-5.8.2.jar:/Users/henneberger/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.8.2/junit-jupiter-api-5.8.2.jar:/Users/henneberger/.m2/repository/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar:/Users/henneberger/.m2/repository/org/junit/platform/junit-platform-commons/1.8.2/junit-platform-commons-1.8.2.jar:/Users/henneberger/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/Users/henneberger/.m2/repository/org/junit/jupiter/junit-jupiter-params/5.8.2/junit-jupiter-params-5.8.2.jar:/Users/henneberger/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.8.2/junit-jupiter-engine-5.8.2.jar:/Users/henneberger/.m2/repository/org/junit/platform/junit-platform-engine/1.8.2/junit-platform-engine-1.8.2.jar:/Users/henneberger/.m2/repository/commons-io/commons-io/2.11.0/commons-io-2.11.0.jar:/Users/henneberger/.m2/repository/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar:/Users/henneberger/.m2/repository/com/opencsv/opencsv/4.1/opencsv-4.1.jar:/Users/henneberger/.m2/repository/org/apache/commons/commons-text/1.1/commons-text-1.1.jar:/Users/henneberger/.m2/repository/commons-beanutils/commons-beanutils/1.9.3/commons-beanutils-1.9.3.jar:/Users/henneberger/.m2/repository/commons-logging/commons-logging/1.2/commons-logging-1.2.jar:/Users/henneberger/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.12.3/jackson-databind-2.12.3.jar:/Users/henneberger/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.12.3/jackson-annotations-2.12.3.jar:/Users/henneberger/.m2/repository/com/h2database/h2/1.4.200/h2-1.4.200.jar:/Users/henneberger/.m2/repository/org/apache/calcite/calcite-core/1.14.0/calcite-core-1.14.0.jar:/Users/henneberger/.m2/repository/org/apache/calcite/avatica/avatica-core/1.10.0/avatica-core-1.10.0.jar:/Users/henneberger/.m2/repository/org/apache/calcite/avatica/avatica-metrics/1.10.0/avatica-metrics-1.10.0.jar:/Users/henneberger/.m2/repository/com/google/protobuf/protobuf-java/3.1.0/protobuf-java-3.1.0.jar:/Users/henneberger/.m2/repository/org/apache/httpcomponents/httpclient/4.5.2/httpclient-4.5.2.jar:/Users/henneberger/.m2/repository/commons-codec/commons-codec/1.9/commons-codec-1.9.jar:/Users/henneberger/.m2/repository/org/apache/httpcomponents/httpcore/4.4.4/httpcore-4.4.4.jar:/Users/henneberger/.m2/repository/org/apache/calcite/calcite-linq4j/1.14.0/calcite-linq4j-1.14.0.jar:/Users/henneberger/.m2/repository/commons-dbcp/commons-dbcp/1.4/commons-dbcp-1.4.jar:/Users/henneberger/.m2/repository/commons-pool/commons-pool/1.5.4/commons-pool-1.5.4.jar:/Users/henneberger/.m2/repository/com/esri/geometry/esri-geometry-api/2.0.0/esri-geometry-api-2.0.0.jar:/Users/henneberger/.m2/repository/net/hydromatic/aggdesigner-algorithm/6.0/aggdesigner-algorithm-6.0.jar:/Users/henneberger/.m2/repository/commons-lang/commons-lang/2.4/commons-lang-2.4.jar:/Users/henneberger/.m2/repository/org/codehaus/janino/janino/2.7.6/janino-2.7.6.jar:/Users/henneberger/.m2/repository/org/codehaus/janino/commons-compiler/2.7.6/commons-compiler-2.7.6.jar com.intellij.rt.junit.JUnitStarter -ideVersion5 -junit5 ai.dataeng.sqml.planner.operator.C360Test,testC360
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+
+
+SELECT coalesce(discount, 0.0) AS discount FROM `@`
+RecordType(DOUBLE discount)
+SELECT CAST("discount" AS DOUBLE PRECISION) AS "discount"
+FROM "@"
+rel#7:LogicalProject.NONE.[](input=LogicalTableScan#3,exprs=[CAST($3):DOUBLE NOT NULL])
+LogicalProject(discount=[CAST($3):DOUBLE NOT NULL])
+  LogicalTableScan(table=[[@]])
+
+SELECT quantity * unit_price - discount AS total FROM `@`
+RecordType(FLOAT total)
+SELECT "quantity" * "unit_price" - "discount" AS "total"
+FROM "@"
+rel#16:LogicalProject.NONE.[](input=LogicalTableScan#12,exprs=[-(*($1, $2), $6)])
+LogicalProject(total=[-(*($1, $2), $6)])
+  LogicalTableScan(table=[[@]])
+
+SELECT sum(`entries.total`) AS total FROM `@`
+RecordType(FLOAT total)
+SELECT SUM("entries.total") AS "total"
+FROM "@"
+rel#29:LogicalAggregate.NONE.[](input=LogicalProject#27,group={},total=SUM($0))
+LogicalAggregate(group=[{}], total=[SUM($0)])
+  LogicalProject(entries.total=[$5])
+    LogicalTableScan(table=[[@]])
+
+SELECT sum(`entries.discount`) AS total_savings FROM `@`
+RecordType(FLOAT total_savings)
+SELECT SUM("entries.discount") AS "total_savings"
+FROM "@"
+rel#42:LogicalAggregate.NONE.[](input=LogicalProject#40,group={},total_savings=SUM($0))
+LogicalAggregate(group=[{}], total_savings=[SUM($0)])
+  LogicalProject(entries.discount=[$6])
+    LogicalTableScan(table=[[@]])
+
+SELECT count(entries) AS total_entries FROM `@`
+RecordType(BIGINT total_entries)
+SELECT COUNT(*) AS "total_entries"
+FROM "@"
+rel#52:LogicalAggregate.NONE.[](input=LogicalTableScan#48,group={},total_entries=COUNT())
+LogicalAggregate(group=[{}], total_entries=[COUNT()])
+  LogicalTableScan(table=[[@]])
+
+SELECT sum(`orders.total`) AS total_orders FROM `@`
+RecordType(FLOAT total_orders)
+SELECT SUM("orders.total") AS "total_orders"
+FROM "@"
+rel#65:LogicalAggregate.NONE.[](input=LogicalProject#63,group={},total_orders=SUM($0))
+LogicalAggregate(group=[{}], total_orders=[SUM($0)])
+  LogicalProject(orders.total=[$5])
+    LogicalTableScan(table=[[@]])
+
+
+
+RecordType(INTEGER productid, INTEGER category, INTEGER quantity, BIGINT num_orders)
+SELECT "productid", "product.category" AS "category", SUM("quantity") AS "quantity", COUNT(*) AS "num_orders"
+FROM "@.orders.entries"
+WHERE "parent.time" > ("now"() - 2 * INTERVAL '1' YEAR)
+GROUP BY "productid", "product.category"
+ORDER BY COUNT(*) DESC, SUM("quantity") DESC
+rel#86:LogicalSort.NONE.[3 DESC, 2 DESC](input=LogicalAggregate#84,sort0=$3,sort1=$2,dir0=DESC,dir1=DESC)
+
+LogicalSort(sort0=[$3], sort1=[$2], dir0=[DESC], dir1=[DESC])
+  LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()])
+    LogicalProject(productid=[$0], category=[$10], quantity=[$1])
+      LogicalFilter(condition=[>($9, -(now(), *(2, 12:INTERVAL YEAR)))])
+        LogicalTableScan(table=[[@.orders.entries]])
+
+RecordType(INTEGER category, BIGINT num_products)
+SELECT "category", COUNT(*) AS "num_products"
+FROM "@.recent_products"
+GROUP BY "category"
+ORDER BY COUNT(*)
+rel#103:LogicalSort.NONE.[1](input=LogicalAggregate#101,sort0=$1,dir0=ASC)
+
+LogicalSort(sort0=[$1], dir0=[ASC])
+  LogicalAggregate(group=[{0}], num_products=[COUNT()])
+    LogicalProject(category=[$1])
+      LogicalTableScan(table=[[@.recent_products]])
+
+
+
+
+RecordType(TIMESTAMP(0) month, INTEGER category, FLOAT total, FLOAT savings)
+SELECT "time_roundToMonth"("parent.time") AS "month", "product.category" AS "category", SUM("total") AS "total", SUM("discount") AS "savings"
+FROM "@.orders.entries"
+GROUP BY "time_roundToMonth"("parent.time"), "product.category"
+ORDER BY "time_roundToMonth"("parent.time") DESC
+rel#120:LogicalSort.NONE.[0 DESC](input=LogicalAggregate#118,sort0=$0,dir0=DESC)
+
+LogicalSort(sort0=[$0], dir0=[DESC])
+  LogicalAggregate(group=[{0, 1}], total=[SUM($2)], savings=[SUM($3)])
+    LogicalProject(month=[time_roundToMonth($10)], category=[$9], total=[$7], discount=[$6])
+      LogicalTableScan(table=[[@.orders.entries]])
+
+RecordType(TIMESTAMP month, FLOAT total, FLOAT savings)
+SELECT "month", SUM("total") AS "total", SUM("savings") AS "savings"
+FROM "@._spending_by_month_category"
+GROUP BY "month"
+ORDER BY "month" DESC
+rel#137:LogicalSort.NONE.[0 DESC](input=LogicalAggregate#135,sort0=$0,dir0=DESC)
+LogicalSort(sort0=[$0], dir0=[DESC])
+  LogicalAggregate(group=[{0}], total=[SUM($1)], savings=[SUM($2)])
+    LogicalProject(month=[$0], total=[$2], savings=[$3])
+      LogicalTableScan(table=[[@._spending_by_month_category]])
+
+
+
+RecordType(INTEGER EXPR$0)
+SELECT SUM("quantity")
+FROM "@.order_entries"
+WHERE "parent.time" > ("now"() - 7 * INTERVAL '1' DAY)
+rel#154:LogicalAggregate.NONE.[](input=LogicalProject#152,group={},EXPR$0=SUM($0))
+
+RecordType(INTEGER EXPR$0)
+SELECT SUM("quantity")
+FROM "@.order_entries"
+WHERE "parent.time" > ("now"() - 1 * INTERVAL '1' MONTH)
+rel#171:LogicalAggregate.NONE.[](input=LogicalProject#169,group={},EXPR$0=SUM($0))
+SELECT _sales_last_week * 4 / _sales_last_month AS _last_week_increase FROM `@`
+RecordType(INTEGER _last_week_increase)
+SELECT "_sales_last_week" * 4 / "_sales_last_month" AS "_last_week_increase"
+FROM "@"
+rel#180:LogicalProject.NONE.[](input=LogicalTableScan#176,exprs=[/(*($6, 4), $7)])
+LogicalProject(_last_week_increase=[/(*($6, 4), $7)])
+  LogicalTableScan(table=[[@]])
+
+RecordType(INTEGER name)
+SELECT "category" AS "name"
+FROM "Product"
+GROUP BY "category"
+rel#193:LogicalAggregate.NONE.[](input=LogicalProject#191,group={0})
+RecordType(INTEGER category_name, FLOAT total)
+SELECT "category" AS "category_name", SUM("total") AS "total"
+FROM "@._spending_by_month_category"
+WHERE "month" >= ("now"() - 1 * INTERVAL '1' YEAR)
+GROUP BY "category"
+ORDER BY SUM("total") DESC
+FETCH NEXT 5 ROWS ONLY
+rel#214:LogicalSort.NONE.[1 DESC](input=LogicalAggregate#212,sort0=$1,dir0=DESC,fetch=5)
+
+LogicalSort(sort0=[$1], dir0=[DESC], fetch=[5])
+  LogicalAggregate(group=[{0}], total=[SUM($1)])
+    LogicalProject(category_name=[$1], total=[$2])
+      LogicalFilter(condition=[>=($0, -(now(), *(1, 12:INTERVAL YEAR)))])
+        LogicalTableScan(table=[[@._spending_by_month_category]])
+
+"Directs the executor to include this field or fragment only when the `if` argument is true"
+directive @include(
+    "Included when true."
+    if: Boolean!
+  ) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Directs the executor to skip this field or fragment when the `if`'argument is true."
+directive @skip(
+    "Skipped when true."
+    if: Boolean!
+  ) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Marks the field or enum value as deprecated"
+directive @deprecated(
+    "The reason for the deprecation"
+    reason: String = "No longer supported"
+  ) on FIELD_DEFINITION | ENUM_VALUE
+
+"Exposes a URL that specifies the behaviour of this scalar."
+directive @specifiedBy(
+    "The URL that specifies the behaviour of this scalar."
+    url: String!
+  ) on SCALAR
+
+type Category {
+  name: Int
+  products(filter: productFilter, limit: Int, order: [productDirectionInput]): [product]
+  trending(filter: productFilter, limit: Int, order: [productDirectionInput]): [product]
+}
+
+type CategoryPage {
+  data: [Category]
+  pageInfo: PageInfo
+}
+
+type PageInfo {
+  cursor: String
+  hasNext: Boolean
+}
+
+type Query {
+  category(filter: CategoryFilter, limit: Int, order: [CategoryDirectionInput], page_size: Int, page_state: String): CategoryPage
+  customer(filter: customerFilter, limit: Int, order: [customerDirectionInput], page_size: Int, page_state: String): customerPage
+  orders(filter: ordersFilter, limit: Int, order: [ordersDirectionInput], page_size: Int, page_state: String): ordersPage
+  product(filter: productFilter, limit: Int, order: [productDirectionInput], page_size: Int, page_state: String): productPage
+}
+
+type _spending_by_month_category {
+  category: Int
+  month: String
+  parent(filter: customerFilter): customer
+  savings: Float
+  total: Float
+}
+
+type customer {
+  customerid: Int
+  email: String
+  favorite_categories(filter: favorite_categoriesFilter, limit: Int, order: [favorite_categoriesDirectionInput]): [favorite_categories]
+  name: String
+  orders(filter: ordersFilter, limit: Int, order: [ordersDirectionInput]): [orders]
+  recent_products(filter: recent_productsFilter, limit: Int, order: [recent_productsDirectionInput]): [recent_products]
+  recent_products_categories(filter: recent_products_categoriesFilter, limit: Int, order: [recent_products_categoriesDirectionInput]): [recent_products_categories]
+  spending_by_month(filter: spending_by_monthFilter, limit: Int, order: [spending_by_monthDirectionInput]): [spending_by_month]
+  total_orders: Float
+}
+
+type customerPage {
+  data: [customer]
+  pageInfo: PageInfo
+}
+
+type favorite_categories {
+  category(filter: CategoryFilter, limit: Int, order: [CategoryDirectionInput]): [Category]
+  category_name: Int
+  parent(filter: customerFilter): customer
+  total: Float
+}
+
+type orders {
+  customerid: Int
+  entries(filter: orders_entriesFilter, limit: Int, order: [orders_entriesDirectionInput]): [orders_entries]
+  id: Int
+  time: String
+  total: Float
+  total_entries: Int
+  total_savings: Float
+}
+
+type ordersPage {
+  data: [orders]
+  pageInfo: PageInfo
+}
+
+type orders_entries {
+  discount: Float
+  parent(filter: ordersFilter): orders
+  product(filter: productFilter, limit: Int, order: [productDirectionInput]): [product]
+  productid: Int
+  quantity: Int
+  total: Float
+  unit_price: Float
+}
+
+type product {
+  category: Int
+  description: String
+  name: String
+  order_entries(filter: orders_entriesFilter, limit: Int, order: [orders_entriesDirectionInput]): [orders_entries]
+  productid: Int
+}
+
+type productPage {
+  data: [product]
+  pageInfo: PageInfo
+}
+
+type recent_products {
+  category: Int
+  num_orders: Int
+  parent(filter: customerFilter): customer
+  productid: Int
+  quantity: Int
+}
+
+type recent_products_categories {
+  category: Int
+  num_products: Int
+  parent(filter: customerFilter): customer
+  products(filter: recent_productsFilter, limit: Int, order: [recent_productsDirectionInput]): [recent_products]
+}
+
+type spending_by_month {
+  categories(filter: _spending_by_month_categoryFilter, limit: Int, order: [_spending_by_month_categoryDirectionInput]): [_spending_by_month_category]
+  month: String
+  parent(filter: customerFilter): customer
+  savings: Float
+  total: Float
+}
+
+enum OrderDirection {
+  ASC
+  DESC
+}
+
+input CategoryDirectionInput {
+  name: OrderDirection
+}
+
+input CategoryFilter {
+  name: IntFilter
+}
+
+input FloatFilter {
+  equals: Float
+  gt: Float
+  gteq: Float
+  lt: Float
+  lteq: Float
+}
+
+input IntFilter {
+  equals: Int
+  gt: Int
+  gteq: Int
+  lt: Int
+  lteq: Int
+}
+
+input StringFilter {
+  equals: String
+}
+
+input _spending_by_month_categoryDirectionInput {
+  category: OrderDirection
+  month: OrderDirection
+  savings: OrderDirection
+  total: OrderDirection
+}
+
+input _spending_by_month_categoryFilter {
+  category: IntFilter
+  savings: FloatFilter
+  total: FloatFilter
+}
+
+input customerDirectionInput {
+  customerid: OrderDirection
+  email: OrderDirection
+  name: OrderDirection
+  total_orders: OrderDirection
+}
+
+input customerFilter {
+  customerid: IntFilter
+  email: StringFilter
+  name: StringFilter
+  total_orders: FloatFilter
+}
+
+input favorite_categoriesDirectionInput {
+  category_name: OrderDirection
+  total: OrderDirection
+}
+
+input favorite_categoriesFilter {
+  category_name: IntFilter
+  total: FloatFilter
+}
+
+input ordersDirectionInput {
+  customerid: OrderDirection
+  id: OrderDirection
+  time: OrderDirection
+  total: OrderDirection
+  total_entries: OrderDirection
+  total_savings: OrderDirection
+}
+
+input ordersFilter {
+  customerid: IntFilter
+  id: IntFilter
+  total: FloatFilter
+  total_entries: IntFilter
+  total_savings: FloatFilter
+}
+
+input orders_entriesDirectionInput {
+  discount: OrderDirection
+  productid: OrderDirection
+  quantity: OrderDirection
+  total: OrderDirection
+  unit_price: OrderDirection
+}
+
+input orders_entriesFilter {
+  discount: FloatFilter
+  productid: IntFilter
+  quantity: IntFilter
+  total: FloatFilter
+  unit_price: FloatFilter
+}
+
+input productDirectionInput {
+  category: OrderDirection
+  description: OrderDirection
+  name: OrderDirection
+  productid: OrderDirection
+}
+
+input productFilter {
+  category: IntFilter
+  description: StringFilter
+  name: StringFilter
+  productid: IntFilter
+}
+
+input recent_productsDirectionInput {
+  category: OrderDirection
+  num_orders: OrderDirection
+  productid: OrderDirection
+  quantity: OrderDirection
+}
+
+input recent_productsFilter {
+  category: IntFilter
+  num_orders: IntFilter
+  productid: IntFilter
+  quantity: IntFilter
+}
+
+input recent_products_categoriesDirectionInput {
+  category: OrderDirection
+  num_products: OrderDirection
+}
+
+input recent_products_categoriesFilter {
+  category: IntFilter
+  num_products: IntFilter
+}
+
+input spending_by_monthDirectionInput {
+  month: OrderDirection
+  savings: OrderDirection
+  total: OrderDirection
+}
+
+input spending_by_monthFilter {
+  savings: FloatFilter
+  total: FloatFilter
+}
+
+
+Process finished with exit code 0

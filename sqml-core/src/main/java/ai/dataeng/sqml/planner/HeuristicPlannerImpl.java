@@ -73,8 +73,8 @@ public class HeuristicPlannerImpl implements Planner {
     planner.validate(node);
     RelRoot root = planner.rel(node);
 
-    System.out.println(root.rel.getRowType());
-    System.out.println(RelToSql.convertToSql(root.rel));
+//    System.out.println(root.rel.getRowType());
+//    System.out.println(RelToSql.convertToSql(root.rel));
 
     HepProgram hep = HepProgram.builder()
         .addRuleClass(RuleStub.class)
@@ -84,7 +84,7 @@ public class HeuristicPlannerImpl implements Planner {
     hepPlanner.setRoot(root.rel);
 
     RelNode optimizedNode = hepPlanner.findBestExp();
-    System.out.println(optimizedNode);
+//    System.out.println(optimizedNode);
 
     return new PlannerResult(optimizedNode, node);
   }

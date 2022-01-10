@@ -68,7 +68,7 @@ public class AggregateOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.R
             Preconditions.checkArgument(table.getField(name)==null);
             Column col = new Column(name, table, 0,
                     entry.getValue().functionHandle.getDataType(),
-                    0,List.of(NotNull.INSTANCE),false, false);
+                    0,List.of(NotNull.INSTANCE),false, false, false);
             aggregations.put(col,entry.getValue());
         }
         AggregateOperator agg = new AggregateOperator(input, keys, aggregations);

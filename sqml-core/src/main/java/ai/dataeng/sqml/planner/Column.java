@@ -23,20 +23,19 @@ public class Column extends Field {
 
   //System information
   public final boolean isPrimaryKey;
+  public final boolean isForeignKey;
   public final boolean isInternal;
 
   public Column(Name name, Table table, int version,
       BasicType type, int arrayDepth, List<Constraint> constraints,
-      boolean isPrimaryKey, boolean isInternal) {
+      boolean isPrimaryKey, boolean isForeignKey, boolean isInternal) {
     super(name, table);
-    if (name.getCanonical().startsWith("category")) {
-      System.out.println();
-    }
     this.version = version;
     this.type = type;
     this.arrayDepth = arrayDepth;
     this.constraints = constraints;
     this.isPrimaryKey = isPrimaryKey;
+    this.isForeignKey = isForeignKey;
     this.isInternal = isInternal;
     this.nonNull = ConstraintHelper.isNonNull(constraints);
   }

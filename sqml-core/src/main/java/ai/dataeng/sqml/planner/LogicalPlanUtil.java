@@ -47,7 +47,7 @@ public class LogicalPlanUtil {
     public static Column copyColumnToTable(Column column, Table table, Name name, boolean isPrimary) {
         Column copy = new Column(name,table,getNextVersion(table, name),
                 column.type, column.arrayDepth,
-                List.copyOf(column.constraints),isPrimary,column.isInternal);
+                List.copyOf(column.constraints),isPrimary, false, column.isInternal);
         table.addField(copy);
         return copy;
     }

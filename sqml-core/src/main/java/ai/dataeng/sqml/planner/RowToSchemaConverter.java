@@ -36,7 +36,7 @@ public class RowToSchemaConverter {
   private Column toField(RelDataTypeField relDataTypeField) {
     return new Column(Name.system(relDataTypeField.getName()), null, 0,
         toBasicType(relDataTypeField.getType()), 0, List.of(), 
-        false, false);
+        false, false, false);
   }
 
   private BasicType toBasicType(RelDataType type) {

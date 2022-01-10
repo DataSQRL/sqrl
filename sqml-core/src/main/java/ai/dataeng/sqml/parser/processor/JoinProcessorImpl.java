@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.parser.processor;
 
-import static ai.dataeng.sqml.parser.QueryParser.CONTEXT_TABLE;
+import static ai.dataeng.sqml.tree.name.Name.SELF_IDENTIFIER;
 
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.planner.Relationship;
@@ -23,14 +23,9 @@ public class JoinProcessorImpl implements JoinProcessor {
     Table source = namespace.lookup(namePath)
         .orElseThrow(()->new RuntimeException(String.format("Could not find source table: %s", namePath)));
 
-    //TODO: Lookup with context
-
-    if (namePath.get(0).getCanonical().equalsIgnoreCase(CONTEXT_TABLE)) {
-      throw new RuntimeException("next");
-    }
     NamePath destinationPath = statement.getInlineJoin().getJoin().getTable();
 
-    if (destinationPath.get(0).getCanonical().startsWith(CONTEXT_TABLE)) {
+    if (destinationPath.get(0).equals(SELF_IDENTIFIER)) {
       destinationPath = statement.getNamePath().getPrefix().get()
           .resolve(destinationPath.popFirst());
     }

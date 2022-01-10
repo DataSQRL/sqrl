@@ -11,6 +11,10 @@ import java.io.Serializable;
 public interface Name extends Serializable, Comparable<Name> {
 
     public static final String HIDDEN_PREFIX = "_";
+    public static final Name SELF_IDENTIFIER = Name.system("_");
+    public static final Name PARENT_RELATIONSHIP = Name.system("parent");
+    public static final Name SIBLING_RELATIONSHIP = Name.system("sibling");
+
 
     /**
      * Returns the canonical version of the field name.

@@ -4,11 +4,12 @@ import ai.dataeng.sqml.planner.LogicalPlanImpl.RowNode;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
@@ -17,13 +18,14 @@ public class Table implements DatasetOrTable {
   public Name name;
   public final int uniqueId;
   public final ShadowingContainer<Field> fields = new ShadowingContainer<>();
+  private final NamePath path;
   public final boolean isInternal;
   public RowNode currentNode;
 
-
-  public Table(int uniqueId, Name name, boolean isInternal) {
+  public Table(int uniqueId, Name name, NamePath path, boolean isInternal) {
     this.name = name;
     this.uniqueId = uniqueId;
+    this.path = path;
     this.isInternal = isInternal;
   }
 
@@ -41,6 +43,14 @@ public class Table implements DatasetOrTable {
 
   public String getId() {
     return name.getCanonical() + LogicalPlanImpl.ID_DELIMITER + Integer.toHexString(uniqueId);
+  }
+
+  public List<Column> getPrimaryKeys() {
+    return this.fields.visibleStream()
+        .filter(f->f instanceof Column)
+        .map(f->(Column) f)
+        .filter(f->f.isPrimaryKey)
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -66,9 +76,6 @@ public class Table implements DatasetOrTable {
   }
 
   public Optional<Table> walk(NamePath namePath) {
-    if (namePath.get(0).getCanonical().equalsIgnoreCase("parent")) {
-      System.out.println();
-    }
     Field field = getField(namePath.getFirst());
     if (field == null) {
       return Optional.empty();
@@ -90,5 +97,4 @@ public class Table implements DatasetOrTable {
 
     return Optional.empty();
   }
-
 }

@@ -211,7 +211,7 @@ public class Main2 {
         FilterOperator filter = new FilterOperator(orders.getCurrentNode(), predicate);
         orders.getCurrentNode().addConsumer(filter);
         ai.dataeng.sqml.planner.Table customerNoOrders = logicalPlan.createTable(toName("CustomerOrderStats"),
-            false);
+            NamePath.of(toName("CustomerOrderStats")), false);
         Column customerid = (Column) orders.getField(toName("customerid"));
         AggregateOperator countAgg = AggregateOperator.createAggregateAndPopulateTable(filter,
             customerNoOrders,

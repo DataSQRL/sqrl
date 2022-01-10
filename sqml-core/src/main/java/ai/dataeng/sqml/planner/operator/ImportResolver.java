@@ -1,5 +1,7 @@
 package ai.dataeng.sqml.planner.operator;
 
+import static ai.dataeng.sqml.tree.name.Name.PARENT_RELATIONSHIP;
+
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.importer.ImportManager;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
@@ -21,7 +23,6 @@ import ai.dataeng.sqml.type.constraint.ConstraintHelper;
 import ai.dataeng.sqml.type.constraint.NotNull;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
-import lombok.AllArgsConstructor;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,8 +31,6 @@ import java.util.stream.Collectors;
  * Resolve imports in SQRL scripts and produces the {@link LogicalPlanImpl.Node}s as sources.
  */
 public class ImportResolver {
-    public static final Name PARENT_RELATIONSHIP = Name.system("parent");
-
     private final ImportManager importManager;
 //    private final LogicalPlanImpl logicalPlan;
     private final ProcessBundle<ProcessMessage> errors;
@@ -108,9 +107,17 @@ public class ImportResolver {
     private Table tableConversion(Namespace namespace, RelationType<FlexibleDatasetSchema.FlexibleField> relation,
                                               Map<NamePath, Column[]> outputSchema,
                                               Name name, NamePath path, Table parent) {
+        Name originalName = name;
         if (parent!=null) name = Name.combine(parent.getName(),name);
+        NamePath namePath;
+        if (parent!=null) {
+            namePath = parent.getPath().resolve(originalName);
+        } else {
+            namePath = NamePath.of(originalName);
+        }
+
         //Only the root table (i.e. without a parent) is visible in the schema
-        Table table = namespace.createTable(name, parent!=null);
+        Table table = namespace.createTable(name, namePath, parent!=null);
         List<Column> columns = new ArrayList<>();
         for (FlexibleDatasetSchema.FlexibleField field : relation) {
             for (Field f : fieldConversion(namespace, field, outputSchema, path, table)) {
@@ -164,7 +171,8 @@ public class ImportResolver {
                     Relationship.Type.CHILD, multiplicity);
         } else {
             assert ftype.getType() instanceof BasicType;
-            return new Column(name, parent,0,(BasicType)ftype.getType(),ftype.getArrayDepth(), constraints, false, false);
+            return new Column(name, parent,0,(BasicType)ftype.getType(),ftype.getArrayDepth(), constraints, false,
+                false, false);
         }
     }
 

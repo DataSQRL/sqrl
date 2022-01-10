@@ -20,7 +20,9 @@ import org.apache.calcite.util.Pair;
 /**
  * A dynamically expanding table.
  */
-public class SqrlCalciteTable implements CustomColumnResolvingTable, TranslatableTable {
+public class SqrlCalciteTable implements CustomColumnResolvingTable
+    , TranslatableTable
+{
 
   private final DatasetOrTable table;
   /**
@@ -97,6 +99,9 @@ public class SqrlCalciteTable implements CustomColumnResolvingTable, Translatabl
   public RelNode toRel(ToRelContext context, RelOptTable relOptTable) {
     RelOptCluster cluster = context.getCluster();
 
-    return new SqrlLogicalTableScan(cluster, cluster.traitSet(), List.of(), relOptTable);
+    SqrlLogicalTableScan scan = new SqrlLogicalTableScan(cluster, cluster.traitSet(), List.of(),
+        relOptTable, ((ai.dataeng.sqml.planner.Table)table).getPrimaryKeys());
+
+    return scan;
   }
 }

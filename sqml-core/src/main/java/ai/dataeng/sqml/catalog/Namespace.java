@@ -37,7 +37,7 @@ public interface Namespace {
 
   void addSourceNode(DocumentSource source);
 
-  Table createTable(Name name, boolean isInternal);
+  Table createTable(Name name, NamePath path, boolean isInternal);
 
   /**
    * The current schema

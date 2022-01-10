@@ -1,6 +1,6 @@
 package org.apache.calcite.jdbc;
 
-import static ai.dataeng.sqml.parser.QueryParser.CONTEXT_TABLE;
+import static ai.dataeng.sqml.tree.name.Name.SELF_IDENTIFIER;
 
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.planner.Column;
@@ -44,14 +44,15 @@ public class SqrlToCalciteTableTranslator {
       return tableMap.get(table);
     }
 
+    NamePath tableNamePath = NamePath.parse(table);
     NamePath path;
 
-    if (table.startsWith(CONTEXT_TABLE)) {
+    if (tableNamePath.getFirst().equals(SELF_IDENTIFIER)) {
       if (context.isEmpty()) throw new RuntimeException(String.format("Could not find context for table: %s", table));
 
-      path = context.get().resolve(NamePath.parse(table).popFirst());
+      path = context.get().resolve(tableNamePath.popFirst());
     } else {
-      path = NamePath.parse(table);
+      path = tableNamePath;
     }
 
     Optional<ai.dataeng.sqml.planner.Table> tableOptional = namespace.lookup(path);
