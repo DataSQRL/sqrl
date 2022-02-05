@@ -2,6 +2,8 @@ package ai.dataeng.sqml.catalog;
 
 import ai.dataeng.sqml.planner.Dataset;
 import ai.dataeng.sqml.planner.DatasetOrTable;
+import ai.dataeng.sqml.planner.LogicalPlan;
+import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.planner.operator.DocumentSource;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
@@ -37,10 +39,14 @@ public interface Namespace {
 
   void addSourceNode(DocumentSource source);
 
+  List<DocumentSource> getSources();
+
   Table createTable(Name name, NamePath path, boolean isInternal);
 
   /**
    * The current schema
    */
   ShadowingContainer<DatasetOrTable> getSchema();
+
+  LogicalPlanImpl getLogicalPlan();
 }

@@ -1,6 +1,5 @@
 package ai.dataeng.execution;
 
-import ai.dataeng.execution.connection.JdbcPool;
 import ai.dataeng.execution.page.PageProvider;
 import ai.dataeng.execution.query.BatchQueryBuilder;
 import ai.dataeng.execution.query.BoundSqlQuery;
@@ -18,7 +17,7 @@ import org.dataloader.DataLoaderRegistry;
 @Value
 public class BatchDataFetcher {
   DataLoaderRegistry dataLoaderRegistry;
-  JdbcPool jdbcPool;
+  SqlClientProvider sqlClientProvider;
   PageProvider pageProvider;
   H2Table table;
 
@@ -29,7 +28,7 @@ public class BatchDataFetcher {
       H2SingleQuery query = h2.build(environments);
 
       BoundSqlQuery boundSqlQuery = new BoundSqlQuery(
-          jdbcPool.getSqlClient(),
+          sqlClientProvider.get(),
           query,
           query.getArgs()
       );

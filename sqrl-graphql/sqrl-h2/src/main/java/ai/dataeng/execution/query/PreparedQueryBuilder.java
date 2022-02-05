@@ -3,6 +3,7 @@ package ai.dataeng.execution.query;
 import ai.dataeng.execution.JdbcArgumentParser;
 import ai.dataeng.execution.ArgumentContext;
 import ai.dataeng.execution.RowMapperBuilder;
+import ai.dataeng.execution.criteria.Criteria;
 import ai.dataeng.execution.criteria.CriteriaBuilder;
 import ai.dataeng.execution.criteria.CriteriaBuilder.CriteriaResult;
 import ai.dataeng.execution.orderby.H2OrderByProvider;
@@ -11,6 +12,7 @@ import ai.dataeng.execution.table.H2ColumnVisitor2;
 import ai.dataeng.execution.table.H2Table;
 import ai.dataeng.execution.table.column.Columns;
 import ai.dataeng.execution.table.column.H2Column;
+import com.google.common.base.Preconditions;
 import graphql.com.google.common.collect.ImmutableList;
 import graphql.com.google.common.collect.Iterables;
 import graphql.schema.DataFetchingEnvironment;
@@ -29,6 +31,7 @@ public class PreparedQueryBuilder {
   H2Table table;
   PageProvider pageProvider;
   H2OrderByProvider orderByProvider = new H2OrderByProvider();
+  Optional<Criteria> criteria;
 
   public H2SingleQuery build(DataFetchingEnvironment environment) {
     ColumnNameBuilder columnNameBuilder = new ColumnNameBuilder();
@@ -45,7 +48,8 @@ public class PreparedQueryBuilder {
     List<String> clauseList = argumentContext.getClauseList();
 
     CriteriaBuilder criteriaBuilder = new CriteriaBuilder(environment);
-    Optional<CriteriaResult> criteria = table.getCriteria().map(e->e.accept(criteriaBuilder, null));
+    //Criteria will be passed in via column of parent
+    Optional<CriteriaResult> criteria = this.criteria.map(e->e.accept(criteriaBuilder, null));
 
     //Should be same as tuples
     List<String> criteriaList = criteria.map(c->c.getClauseList()).orElse(List.of());
@@ -100,6 +104,7 @@ public class PreparedQueryBuilder {
     @Override
     public String visitColumns(Columns column, Object context) {
       for (H2Column c : column.getColumns()) {
+        Preconditions.checkNotNull(c, "Column should not be null");
         c.accept(this, context);
       }
 

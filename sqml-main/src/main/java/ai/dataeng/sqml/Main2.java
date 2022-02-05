@@ -1,11 +1,11 @@
 package ai.dataeng.sqml;
 
 import ai.dataeng.execution.DefaultDataFetcher;
-import ai.dataeng.execution.connection.JdbcPool;
 import ai.dataeng.execution.criteria.EqualsCriteria;
 import ai.dataeng.execution.page.NoPage;
 import ai.dataeng.execution.page.SystemPageProvider;
 import ai.dataeng.execution.table.H2Table;
+import ai.dataeng.execution.table.TableFieldFetcher;
 import ai.dataeng.execution.table.column.Columns;
 import ai.dataeng.execution.table.column.H2Column;
 import ai.dataeng.execution.table.column.IntegerColumn;
@@ -280,27 +280,28 @@ public class Main2 {
 
         H2Column ordersPk = new UUIDColumn("_uuid_0", "_uuid_0"); //todo: PK identifier
         H2Column columnC = new IntegerColumn("customerid", "customerid_0");
-        H2Table ordersTable = new H2Table(new Columns(List.of(columnC, ordersPk)), "orders_1", Optional.empty());
+        H2Table ordersTable = new H2Table(new Columns(List.of(columnC, ordersPk)), "orders_1");
 
         H2Column column = new IntegerColumn("discount", "discount_0");
-        H2Table entries = new H2Table(new Columns(List.of(column)), "orders_entries_2",
-            Optional.of(new EqualsCriteria("_uuid_0", "_uuid_0")));
+        H2Table entries = new H2Table(new Columns(List.of(column)), "orders_entries_2"
+        );
 
         H2Table customerOrderStats = new H2Table(new Columns(List.of(
             new IntegerColumn("customerid", "customerid_0"),
             new IntegerColumn("num_orders", "num_orders_0")
-        )), "customerorderstats_3",
-            Optional.empty());
+        )), "customerorderstats_3"
+        );
 
         DataLoaderRegistry dataLoaderRegistry = new DataLoaderRegistry();
         GraphQLSchema graphQLSchema = schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, RuntimeWiring.newRuntimeWiring()
             .codeRegistry(GraphQLCodeRegistry.newCodeRegistry()
                 .dataFetcher(FieldCoordinates.coordinates("Query", "orders"),
-                    new DefaultDataFetcher(new JdbcPool(client), new NoPage(), ordersTable))
+                    new DefaultDataFetcher(()->(client), new NoPage(), new TableFieldFetcher(ordersTable, Optional.empty())))
                 .dataFetcher(FieldCoordinates.coordinates("orders", "entries"),
-                    new DefaultDataFetcher(/*dataLoaderRegistry, */new JdbcPool(client), new SystemPageProvider(), entries))
+                    new DefaultDataFetcher(/*dataLoaderRegistry, */()->(client), new SystemPageProvider(), new TableFieldFetcher(entries,
+                        Optional.of(new EqualsCriteria("_uuid_0", "_uuid_0")))))
                 .dataFetcher(FieldCoordinates.coordinates("Query", "CustomerOrderStats"),
-                    new DefaultDataFetcher(new JdbcPool(client), new NoPage(), customerOrderStats))
+                    new DefaultDataFetcher(()->(client), new NoPage(), new TableFieldFetcher(customerOrderStats, Optional.empty())))
                 .build())
             .build());
 

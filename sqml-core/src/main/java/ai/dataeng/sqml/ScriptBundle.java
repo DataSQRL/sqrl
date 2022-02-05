@@ -155,8 +155,9 @@ public class ScriptBundle {
 
 
         public SchemaDefinition parseSchema() throws JsonProcessingException {
-            if (importSchemaYAML.isEmpty()) return SchemaDefinition.empty();
-            else {
+            if (importSchemaYAML.isEmpty()) {
+                return SchemaDefinition.empty();
+            } else {
                 ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
                 mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
                 SchemaDefinition importSchema = mapper.readValue(importSchemaYAML.get(),

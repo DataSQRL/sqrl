@@ -43,7 +43,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
     System.out.println("Plan After:\n" +added.explain());
 
 //    System.out.println(result.getRoot().explain());
-    List<Column> fieldList = RowToSchemaConverter.convert(result.getRoot().getRowType());
+    List<Column> fieldList = RowToSchemaConverter.convert(result.getRoot());
     table.addField(fieldList.get(0));
   }
 }

@@ -18,7 +18,7 @@ public class CriteriaBuilder extends CriteriaVisitor<CriteriaResult, Object> {
     Preconditions.checkState(source instanceof Map, "Only map types expected");
     Map<String, Object> sourceMap = (Map<String, Object>) source;
     Object value = sourceMap.get(equalsCriteria.getEnvVar());
-    Preconditions.checkNotNull(value, "Missing criteria column");
+    Preconditions.checkNotNull(value, "Missing criteria column. Looking for %s, found %s", equalsCriteria.getEnvVar(), sourceMap);
 
     CriteriaResult result = new CriteriaResult(
         List.of(String.format(" %s = ? ", equalsCriteria.getColumnName())),

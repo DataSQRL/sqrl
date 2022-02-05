@@ -1,54 +1,37 @@
-//package ai.dataeng.sqml.servlet;
-//
-//import ai.dataeng.execution.table.H2Table;
-//import ai.dataeng.sqml.analyzer2.Analyzer2;
-//import ai.dataeng.sqml.analyzer2.GraphqlBuilder;
-//import ai.dataeng.sqml.imports.ImportStub;
-//import ai.dataeng.sqml.analyzer2.LogicalGraphqlSchemaBuilder;
-//import ai.dataeng.sqml.catalog.SqrlSchemaConverter;
-//import ai.dataeng.sqml.physical.flink.process.SqrlSinkBuilder;
-//import ai.dataeng.sqml.catalog.TableManager;
-//import ai.dataeng.sqml.api.graphql.NameTranslator;
-//import ai.dataeng.sqml.plan.logical4.LogicalPlan;
-//import ai.dataeng.sqml.parser.SqmlParser;
-//import ai.dataeng.sqml.tree.Script;
-//import com.fasterxml.jackson.module.blackbird.BlackbirdModule;
-//import graphql.GraphQL;
-//import graphql.schema.GraphQLSchema;
-//import graphql.schema.idl.SchemaPrinter;
-//import io.vertx.core.AbstractVerticle;
-//import io.vertx.core.Vertx;
-//import io.vertx.core.json.jackson.DatabindCodec;
-//import io.vertx.ext.web.Router;
-//import io.vertx.ext.web.handler.BodyHandler;
-//import io.vertx.ext.web.handler.graphql.GraphQLHandler;
-//import java.util.Map;
-//import lombok.SneakyThrows;
-//import org.apache.flink.table.api.EnvironmentSettings;
-//import org.apache.flink.table.api.TableEnvironment;
-//
-//public class Servlet extends AbstractVerticle {
-////
-////  private final GraphQL graphQL;
-////
-////  public Servlet(GraphQL graphQL) {
-////    this.graphQL = graphQL;
-////  }
-//  static {
-//    DatabindCodec.mapper().registerModule(new BlackbirdModule());
-//    DatabindCodec.prettyMapper().registerModule(new BlackbirdModule());
-//  }
-//
-//  private static final String SERVER = "vertx-web";
-//  private String date;
-//
+package ai.dataeng.sqml.api;
+
+import com.fasterxml.jackson.module.blackbird.BlackbirdModule;
+import graphql.GraphQL;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.json.jackson.DatabindCodec;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.graphql.GraphQLHandler;
+import lombok.SneakyThrows;
+
+public class Servlet extends AbstractVerticle {
+
+  private final GraphQL graphQL;
+
+  public Servlet(GraphQL graphQL) {
+    this.graphQL = graphQL;
+  }
+
+  static {
+    DatabindCodec.mapper().registerModule(new BlackbirdModule());
+    DatabindCodec.prettyMapper().registerModule(new BlackbirdModule());
+  }
+
+  private static final String SERVER = "vertx-web";
+  private String date;
+
 //  public static void main(String[] args) {
 //    Vertx vertx = Vertx.vertx();
 //    vertx.deployVerticle(new Servlet());
 //  }
-//  @SneakyThrows
-//  @Override
-//  public void start() {
+  @SneakyThrows
+  @Override
+  public void start() {
 //    final EnvironmentSettings settings =
 //        EnvironmentSettings.newInstance().inStreamingMode()
 //            .build();
@@ -88,41 +71,41 @@
 ////
 //    GraphQL graphQL = GraphqlBuilder.graphqlTest(vertx, schema);
 //
+
+
+//    final Router router = Router.router(vertx);
+//    router.route("/graphql").handler(GraphQLHandler.create(graphQL));
+
 //
+//    router.get("/plaintext").handler(ctx -> {
+//      ctx.response()
+//          .putHeader(HttpHeaders.SERVER, SERVER)
+//          .putHeader(HttpHeaders.DATE, date)
+//          .putHeader(HttpHeaders.CONTENT_TYPE, "text/plain")
+//          .end("Hello, World!");
+//    });
+    Router router = Router.router(vertx);
+    router.route().handler(BodyHandler.create()); // (2)
+    router.route("/graphql").handler(GraphQLHandler.create(graphQL)); // (3)
+
+    vertx.createHttpServer()
+        .requestHandler(router)
+        .listen(8080);
 //
-////    final Router router = Router.router(vertx);
-////    router.route("/graphql").handler(GraphQLHandler.create(graphQL));
-//
-////
-////    router.get("/plaintext").handler(ctx -> {
-////      ctx.response()
-////          .putHeader(HttpHeaders.SERVER, SERVER)
-////          .putHeader(HttpHeaders.DATE, date)
-////          .putHeader(HttpHeaders.CONTENT_TYPE, "text/plain")
-////          .end("Hello, World!");
-////    });
-//    Router router = Router.router(vertx);
-//    router.route().handler(BodyHandler.create()); // (2)
-//    router.route("/graphql").handler(GraphQLHandler.create(graphQL)); // (3)
-//
-//    vertx.createHttpServer()
-//        .requestHandler(router)
-//        .listen(8080);
-////
-////    vertx.createHttpServer().requestHandler(router).listen(8080, listen -> {
-////      if (listen.failed()) {
-////        listen.cause().printStackTrace();
-////        System.exit(1);
-////      }
-////    });
-//  }
-//}
-//
-///*
-//curl -g \
-//    -X POST \
-//    -H "Content-Type: application/json" \
-//    -d '{"query":"query{orders{customerid}}"}' \
-//    http://localhost:8080/graphql
-//
-// */
+//    vertx.createHttpServer().requestHandler(router).listen(8080, listen -> {
+//      if (listen.failed()) {
+//        listen.cause().printStackTrace();
+//        System.exit(1);
+//      }
+//    });
+  }
+}
+
+/*
+curl -g \
+    -X POST \
+    -H "Content-Type: application/json" \
+    -d '{"query":"query{orders{customerid}}"}' \
+    http://localhost:8080/graphql
+
+ */

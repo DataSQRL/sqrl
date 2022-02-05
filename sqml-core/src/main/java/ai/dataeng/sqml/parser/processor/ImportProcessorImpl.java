@@ -50,7 +50,7 @@ public class ImportProcessorImpl implements ImportProcessor {
     }
 
     //TODO: Error manager
-    if (errors.hasErrors()) {
+    if (errors.isFatal()) {
       throw new RuntimeException(String.format("Import errors: %s", errors));
     }
 

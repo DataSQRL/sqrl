@@ -47,7 +47,7 @@ public class DatabaseUtil {
     public SQLTypeMapping getSQLType(Column column) {
         BasicType type = column.getType();
         SQLTypeMapping mapType;
-        if (type instanceof StringType) mapType = new SQLTypeMapping("LONG VARCHAR",12);
+        if (type instanceof StringType) mapType = new SQLTypeMapping("VARCHAR",12);
         else if (type instanceof IntegerType) mapType = new SQLTypeMapping("BIGINT",-5);
         else if (type instanceof FloatType) mapType = new SQLTypeMapping("DOUBLE",-5);
         else if (type instanceof NumberType) mapType = new SQLTypeMapping("DOUBLE",8);

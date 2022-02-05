@@ -1,6 +1,5 @@
 package ai.dataeng.execution.table;
 
-import ai.dataeng.execution.criteria.Criteria;
 import ai.dataeng.execution.table.column.Columns;
 import java.util.Optional;
 import lombok.Value;
@@ -9,5 +8,4 @@ import lombok.Value;
 public class H2Table implements Table {
   Columns columns;
   String name;
-  Optional<Criteria> criteria;
 }

@@ -3,12 +3,16 @@ package ai.dataeng.sqml.catalog;
 
 import ai.dataeng.sqml.planner.Dataset;
 import ai.dataeng.sqml.planner.DatasetOrTable;
+import ai.dataeng.sqml.planner.LogicalPlan;
+import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.planner.operator.DocumentSource;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,12 +23,16 @@ public class NamespaceImpl implements Namespace {
 
   private final Map<Name, Dataset> rootDatasets;
   private final Map<Name, Dataset> scopedDatasets;
+  private final List<DocumentSource> sources;
 
   private final static AtomicInteger tableIdCounter = new AtomicInteger(0);
+  private final LogicalPlanImpl logicalPlan;
 
   public NamespaceImpl() {
     this.rootDatasets = new HashMap<>();
     this.scopedDatasets = new HashMap<>();
+    this.sources = new ArrayList<>();
+    this.logicalPlan = new LogicalPlanImpl();
   }
 
   @Override
@@ -84,13 +92,18 @@ public class NamespaceImpl implements Namespace {
 
   @Override
   public void addSourceNode(DocumentSource source) {
+    logicalPlan.sourceNodes.add(source);
+  }
 
+  @Override
+  public List<DocumentSource> getSources() {
+    return sources;
   }
 
   @Override
   public Table createTable(Name name, NamePath path, boolean isInternal) {
     Table table = new Table(tableIdCounter.incrementAndGet(), name, path, isInternal);
-//    schema.add(table);
+    logicalPlan.schema.add(table);
     return table;
   }
 
@@ -101,5 +114,10 @@ public class NamespaceImpl implements Namespace {
       dataset.tables.forEach(shadowingContainer::add);
     }
     return shadowingContainer;
+  }
+
+  @Override
+  public LogicalPlanImpl getLogicalPlan() {
+    return this.logicalPlan;
   }
 }

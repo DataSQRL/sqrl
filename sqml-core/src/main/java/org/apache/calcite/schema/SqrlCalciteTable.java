@@ -100,7 +100,7 @@ public class SqrlCalciteTable implements CustomColumnResolvingTable
     RelOptCluster cluster = context.getCluster();
 
     SqrlLogicalTableScan scan = new SqrlLogicalTableScan(cluster, cluster.traitSet(), List.of(),
-        relOptTable, ((ai.dataeng.sqml.planner.Table)table).getPrimaryKeys());
+        relOptTable, (ai.dataeng.sqml.planner.Table)table);
 
     return scan;
   }

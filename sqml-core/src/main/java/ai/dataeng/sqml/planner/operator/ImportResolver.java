@@ -82,7 +82,7 @@ public class ImportResolver {
     }
 
     public enum ImportMode {
-        DATASET, TABLE, ALLTABLE;
+        DATASET, TABLE, ALLTABLE
     }
 
     private Table createTable(Namespace namespace, ImportManager.TableImport tblImport, Optional<Name> asName) {
@@ -92,12 +92,12 @@ public class ImportResolver {
             Map<NamePath, Column[]> outputSchema = new HashMap<>();
             Table rootTable = tableConversion(namespace, sourceImport.getSourceSchema().getFields(),outputSchema,
                     asName.orElse(tblImport.getTableName()), NamePath.ROOT, null);
-            DocumentSource source = new DocumentSource(sourceImport.getSourceSchema(), sourceImport.getTable(),outputSchema);
-            namespace.addSourceNode(source);
+            DocumentSource source = new DocumentSource(sourceImport.getSourceSchema(), sourceImport.getTable(), outputSchema);
             //Add shredder for each entry in outputSchema
             for (Map.Entry<NamePath, Column[]> entry : outputSchema.entrySet()) {
-                ShreddingOperator.shredAtPath(source, entry.getKey(), rootTable);
+                ShreddingOperator shred = ShreddingOperator.shredAtPath(source, entry.getKey(), rootTable);
             }
+            namespace.addSourceNode(source);
             return rootTable;
         } else {
             throw new UnsupportedOperationException("Not yet implemented");

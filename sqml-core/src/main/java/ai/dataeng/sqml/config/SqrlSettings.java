@@ -1,11 +1,13 @@
 package ai.dataeng.sqml.config;
 
+import ai.dataeng.execution.SqlClientProvider;
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.catalog.NamespaceImpl;
 import ai.dataeng.sqml.catalog.persistence.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.catalog.persistence.keyvalue.LocalFileHierarchyKeyValueStore;
 import ai.dataeng.sqml.config.provider.DistinctProcessorProvider;
 import ai.dataeng.sqml.config.provider.ExpressionProcessorProvider;
+import ai.dataeng.sqml.config.provider.FlinkGeneratorProvider;
 import ai.dataeng.sqml.config.provider.HeuristicPlannerProvider;
 import ai.dataeng.sqml.config.provider.ImportManagerProvider;
 import ai.dataeng.sqml.config.provider.ImportProcessorProvider;
@@ -13,6 +15,7 @@ import ai.dataeng.sqml.config.provider.JoinProcessorProvider;
 import ai.dataeng.sqml.config.provider.QueryProcessorProvider;
 import ai.dataeng.sqml.config.provider.ScriptParserProvider;
 import ai.dataeng.sqml.config.provider.ScriptProcessorProvider;
+import ai.dataeng.sqml.config.provider.SqlGeneratorProvider;
 import ai.dataeng.sqml.config.provider.SubscriptionProcessorProvider;
 import ai.dataeng.sqml.config.provider.ValidatorProvider;
 import ai.dataeng.sqml.execution.flink.ingest.DataSourceRegistry;
@@ -34,7 +37,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class EnvironmentSettings {
+public class SqrlSettings {
   ValidatorProvider validatorProvider;
   ScriptParserProvider scriptParserProvider;
   ImportManagerProvider importManagerProvider;
@@ -46,16 +49,19 @@ public class EnvironmentSettings {
   JoinProcessorProvider joinProcessorProvider;
   DistinctProcessorProvider distinctProcessorProvider;
   SubscriptionProcessorProvider subscriptionProcessorProvider;
+  SqlGeneratorProvider sqlGeneratorProvider;
+  FlinkGeneratorProvider flinkGeneratorProvider;
   Namespace namespace;
   DataSourceRegistry dsLookup;
+  SqlClientProvider sqlClientProvider;
 
-  public static EnvironmentSettingsBuilder createDefault() {
+  public static SqrlSettingsBuilder createDefault() {
     Path outputBase = Path.of("tmp","datasource");
 
     HierarchyKeyValueStore.Factory kvStoreFactory = new LocalFileHierarchyKeyValueStore.Factory(outputBase.toString());
     DataSourceRegistry dsLookup = new DataSourceRegistry(kvStoreFactory);
 
-    return EnvironmentSettings.builder()
+    return SqrlSettings.builder()
         .namespace(new NamespaceImpl())
         .importProcessorProvider((importResolver, planner)->new ImportProcessorImpl(importResolver, planner))
         .queryProcessorProvider((planner)->new QueryProcessorImpl(planner))

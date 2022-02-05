@@ -35,7 +35,7 @@ public enum FileType {
     },
     JSON("json") {
         @Override
-        List<Map<String,Object>> getRecords(Path file) {
+        public List<Map<String,Object>> getRecords(Path file) {
             ObjectMapper mapper = new ObjectMapper();
             try {
                 List<?> records =  mapper.readValue(file.toFile(), List.class);

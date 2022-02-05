@@ -6,6 +6,5 @@ import ai.dataeng.sqml.tree.QueryAssignment;
 
 public interface QueryProcessor {
 
-  public void process(QueryAssignment statement, Namespace namespace);// {
-
+  void process(QueryAssignment statement, Namespace namespace);
 }

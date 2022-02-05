@@ -40,7 +40,7 @@ public interface Constraint extends Serializable {
     }
 
     //TODO: Discover Factories
-    public static final Constraint.Factory[] FACTORIES = {new NotNull.Factory(), new Cardinality.Factory()};
+    public static final Constraint.Factory[] FACTORIES = {new NotNull.Factory(), new Cardinality.Factory(), new Unique.Factory()};
 
     public static final Lookup FACTORY_LOOKUP = new Lookup() {
 

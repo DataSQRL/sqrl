@@ -1,10 +1,10 @@
 package ai.dataeng.sqml.parser.processor;
 
+import ai.dataeng.sqml.parser.translator.RelColumnTranslator;
 import ai.dataeng.sqml.planner.optimize2.SqrlLogicalTableScan;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
@@ -68,7 +68,7 @@ public class ImplicitKeyPropagator {
           projects.add(RexInputRef.of(i, builder.peek().getRowType()));
         }
 
-        builder.project(projects);
+        builder.project(projects, project.getRowType().getFieldNames());
 
         List<Integer> newKeyIndex = IntStream.range(projects.size() - info.getKeyPositions().size(), projects.size()).boxed()
             .collect(Collectors.toList());
@@ -80,19 +80,14 @@ public class ImplicitKeyPropagator {
       return new GroupInformation(info.builder, List.of());
     } else if (node instanceof TableScan) {
       SqrlLogicalTableScan scan = (SqrlLogicalTableScan) node;
-
-      Set<String> implicitKeys = scan.getImplicitKeys().stream()
-          .map(k->k.getName().getCanonical())
-          .collect(Collectors.toSet());
       RelOptTable table = node.getTable();
 
-      List<Integer> keyIndex = new ArrayList<>();
-      for (int i = 0; i < table.getRowType().getFieldList().size(); i++) {
-        if (implicitKeys.contains(table.getRowType().getFieldList().get(i).getName())) {
-          keyIndex.add(i);
-        }
-      }
-      Preconditions.checkState(keyIndex.size() == implicitKeys.size(), "Could not find keys");
+      List<Integer> keyIndex = RelColumnTranslator.getColumnIndices(
+          scan.getPrimaryKeys(), table.getRowType());
+
+      Preconditions.checkState(scan.getPrimaryKeys().size() != 0, "There should be keys..");
+      Preconditions.checkState(keyIndex.size() == scan.getPrimaryKeys().size(), "Could not find keys");
+
       RelBuilder relBuilder = createOrGetBuilder(
           scan.getCluster(), table.getRelOptSchema());
 
@@ -141,6 +136,7 @@ public class ImplicitKeyPropagator {
         //Step 1: Add keys
         List<RexNode> newSort = new ArrayList<>();
         newSort.addAll(sort.getSortExps());
+        //TODO: Fix direction
         for (Integer i : info.getKeyPositions()) {
           newSort.add(RexInputRef.of(i, getBuilder().peek().getRowType()));
         }
@@ -150,10 +146,9 @@ public class ImplicitKeyPropagator {
         } else {
           getBuilder().sort(newSort);
         }
+        //todo: wrong
         List<Integer> newKeyIndex = IntStream.range(0, info.getKeyPositions().size() - 1).boxed()
             .collect(Collectors.toList());
-
-        //Step 2: Convert limit to window
 
 
         return new GroupInformation(info.builder, newKeyIndex);
@@ -175,7 +170,7 @@ public class ImplicitKeyPropagator {
       LogicalFilter filter = (LogicalFilter) node;
 
       GroupInformation info = propagate(filter.getInput(), context);
-      getBuilder().filter(filter.getVariablesSet());
+      getBuilder().filter(filter.getVariablesSet(), filter.getCondition());
       return info;
     }
 

@@ -11,20 +11,66 @@ import ai.dataeng.sqml.type.basic.NullType;
 import ai.dataeng.sqml.type.basic.StringType;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.experimental.ExtensionMethod;
-import org.apache.calcite.linq4j.Extensions;
+import lombok.Value;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.BasicSqlType;
 
-@ExtensionMethod({java.util.Arrays.class, Extensions.class})
 public class RowToSchemaConverter {
-
-  public static List<Column> convert(RelDataType row) {
+  public static List<Column> convert(RelNode relNode) {
     RowToSchemaConverter converter = new RowToSchemaConverter();
-    return converter.convertRelDatatype(row);
+    return converter.convertRelDatatype(relNode);
   }
 
+  @Value
+  static class Grouping {
+    List<Integer> keyColumns;
+  }
+//
+//  private static Grouping extractKeyColumns(RelNode node) {
+//    if (node instanceof TableScan) {
+//      /*Must be the _ or */
+//      SqrlLogicalTableScan tableScan = (SqrlLogicalTableScan) node;
+//      List<Integer> keyColumns = RelColumnTranslator.getColumnIndices(
+//          tableScan.getSqrlTable().getPrimaryKeys(),
+//          node.getRowType());
+//      Preconditions.checkState(!keyColumns.isEmpty());
+//
+//      return new Grouping(keyColumns);
+//    } else if (node instanceof Aggregate) {
+//      Aggregate agg = (Aggregate) node;
+//
+//      ImmutableBitSet groupSet = agg.getGroupSet();
+//      List<Integer> groups = groupSet.asList();
+//
+//      return new Grouping(groups);
+//    } else if (node instanceof Project) {
+//      Project project = (Project) node;
+//      Grouping grouping = extractKeyColumns(project.getInput());
+//
+//    } else if (node instanceof Sort) {
+//
+//    } else if (node instanceof Join) {
+//
+//    } else if (node instanceof LogicalFilter) {
+//
+//    }
+
+//    throw new RuntimeException("");
+//
+//
+//  }
+
+  private List<Column> convertRelDatatype(RelNode relNode) {
+    return convertRelDatatype(relNode.getRowType());
+  }
+
+  /**
+   * C
+   * @param row
+   * @return
+   */
   public List<Column> convertRelDatatype(RelDataType row) {
     List<Column> fields = row.getFieldList().stream()
         .map(this::toField)

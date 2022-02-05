@@ -46,7 +46,7 @@ public class QueryProcessorImpl implements QueryProcessor {
     System.out.println("Plan After:\n" +added.explain());
 
 //    ExpressionProcessorImpl.propagateGroupInformation(result.getRoot());
-    List<Column> fieldList = RowToSchemaConverter.convert(result.getRoot().getRowType());
+    List<Column> fieldList = RowToSchemaConverter.convert(added);
 
     //If there is no alias & it is a single column then add it as a column to the parent table
     //todo this is a hack. Unnamed columns in calcite have the form of expr$
@@ -80,6 +80,5 @@ public class QueryProcessorImpl implements QueryProcessor {
         source, destination, Type.JOIN, Multiplicity.MANY));
     destination.addField(new Relationship(PARENT_RELATIONSHIP, destination, source, Type.PARENT, Multiplicity.ONE));
 
-//    System.out.println(result.getRoot().explain());
   }
 }

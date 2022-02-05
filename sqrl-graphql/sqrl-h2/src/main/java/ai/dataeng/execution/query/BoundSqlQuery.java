@@ -26,6 +26,15 @@ public class BoundSqlQuery {
       result = preparedQuery.execute();
     }
 
+    try {
+      Object o = result
+          .map(query.getResultMapper())
+          .toCompletionStage().toCompletableFuture().get();
+      System.out.println(o);
+    } catch (Exception e){
+      e.printStackTrace();
+    }
+
     return result
         .map(query.getResultMapper())
         .toCompletionStage()

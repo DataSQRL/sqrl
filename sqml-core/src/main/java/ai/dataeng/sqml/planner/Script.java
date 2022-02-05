@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.catalog.Namespace;
+import graphql.schema.GraphQLCodeRegistry;
 import lombok.ToString;
 import lombok.Value;
 
@@ -8,5 +9,5 @@ import lombok.Value;
 @ToString
 public class Script {
   Namespace namespace;
-  LogicalPlan plan;
+  GraphQLCodeRegistry registry;
 }

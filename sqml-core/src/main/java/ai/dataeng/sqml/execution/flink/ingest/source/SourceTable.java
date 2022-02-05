@@ -1,9 +1,13 @@
 package ai.dataeng.sqml.execution.flink.ingest.source;
 
+import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema.FlexibleField;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import java.util.List;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.types.Row;
 
 /**
  * A {@link SourceTable} defines an input source to be imported into an SQML script. A {@link SourceTable} is comprised
@@ -37,7 +41,6 @@ public interface SourceTable {
      * @return
      */
     public DataStream<SourceRecord<String>> getDataStream(StreamExecutionEnvironment env);
-
-
-
+    public DataStream<Row> getDataStream2(StreamExecutionEnvironment env,
+        List<FlexibleField> fields);
 }
