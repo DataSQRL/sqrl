@@ -48,7 +48,7 @@ public class C360Test {
   @Test
   @SneakyThrows
   public void testC360() {
-    env.monitorDatasets();
+//    env.monitorDatasets();
 
     ScriptBundle bundle = new ScriptBundle.Builder().createScript()
         .setName(RETAIL_SCRIPT_NAME)
@@ -70,9 +70,9 @@ public class C360Test {
 
     ExecutionResult result = graphQL.execute(
         "{"
-            + "  orders(filter: {id: {eq: 10007140}}){data{id, customerid, entries {productid, quantity, unit_price, discount}}}"
-            + "  customer{data{customerid, email, name}}"
-            + "  product{data{productid, name, description, category}}"
+            + "  orders{data{id, customerid, entries {productid, quantity, unit_price, discount, product{name}}}}"
+//            + "  customer{data{customerid, email, name}}"
+//            + "  product{data{productid, name, description, category}}"
             + "}");
 
     System.out.println(result.getErrors());

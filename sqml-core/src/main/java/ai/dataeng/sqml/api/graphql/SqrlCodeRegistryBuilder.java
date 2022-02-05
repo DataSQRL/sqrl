@@ -73,6 +73,7 @@ public class SqrlCodeRegistryBuilder {
         Relationship rel = (Relationship) field;
         Criteria criteria = buildCriteria(rel);
 
+        System.out.println(getTypeName(table.getPath())+" : "+ field.getName().getCanonical());
         registry.dataFetcher(
             FieldCoordinates.coordinates(getTypeName(table.getPath()), field.getName().getCanonical()),
             new DefaultDataFetcher(pool, new NoPage(), toTable(rel.getToTable(), Optional.of(criteria))));
@@ -82,9 +83,7 @@ public class SqrlCodeRegistryBuilder {
   }
 
   private Criteria buildCriteria(Relationship rel) {
-    Column from = rel.table.getPrimaryKeys().get(0);
-    Column to = rel.toTable.getPrimaryKeys().get(0);
-    Criteria criteria = new EqualsCriteria(from.getName().getCanonical(), to.getId());
+    Criteria criteria = new EqualsCriteria(rel.getFrom().get(0).getName().getCanonical(), ((Column)rel.getTo().get(0)).getId());
     return criteria;
   }
 
