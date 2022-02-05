@@ -70,7 +70,7 @@ public class C360Test {
 
     ExecutionResult result = graphQL.execute(
         "{"
-            + "  orders{data{id, customerid, entries {productid, quantity, unit_price, discount}}}"
+            + "  orders(filter: {id: {eq: 10007140}}){data{id, customerid, entries {productid, quantity, unit_price, discount}}}"
             + "  customer{data{customerid, email, name}}"
             + "  product{data{productid, name, description, category}}"
             + "}");

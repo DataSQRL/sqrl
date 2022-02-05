@@ -113,7 +113,7 @@ public class JdbcArgumentParser extends
         String sql;
         switch (filter.getKey()) {
           default:
-          case "equals":
+          case "eq":
             sql = "%s = ?";
             break;
           case "lt":

@@ -189,7 +189,7 @@ public class GraphqlArgumentBuilder {
     return GraphQLInputObjectType.newInputObject()
         .name(name)
         .field(GraphQLInputObjectField.newInputObjectField()
-            .name("equals")
+            .name("eq")
             .type(scalar)
             .build())
         .build();
@@ -199,7 +199,7 @@ public class GraphqlArgumentBuilder {
     return GraphQLInputObjectType.newInputObject()
         .name(name)
         .field(GraphQLInputObjectField.newInputObjectField()
-            .name("equals")
+            .name("eq")
             .type(scalar)
             .build())
         .field(GraphQLInputObjectField.newInputObjectField()
