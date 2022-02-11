@@ -45,36 +45,32 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 public class Environment {
 
   private final SqrlSettings settings;
-  private final ImportResolver importResolver;
-
-  private final ScriptParserProvider scriptParserProvider;
-  private final ValidatorProvider validatorProvider;
-  private final ScriptProcessorProvider scriptProcessorProvider;
 
   public static Environment create(SqrlSettings settings) {
-    ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(
-        settings.getDsLookup()
-    );
-
-    return new Environment(settings, importResolver,
-        settings.getScriptParserProvider(), settings.getValidatorProvider(),
-        settings.getScriptProcessorProvider());
+    return new Environment(settings);
   }
 
   public ProcessBundle<ProcessMessage> validate(ScriptNode scriptNode) {
-    Validator validator = validatorProvider.getValidator();
+    Validator validator = settings.getValidatorProvider().getValidator();
     ProcessBundle<ProcessMessage> errors = validator.validate(scriptNode);
     ProcessBundle.logMessages(errors);
-
     return errors;
   }
 
   public Script compile(ScriptBundle bundle) throws Exception {
     SqmlScript mainScript = bundle.getMainScript();
 
-    registerUserSchema(mainScript.parseSchema());
+    //Instantiate import resolver and register user schema
+    DatasetLookup dsLookup = settings.getDsLookup();
+    ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(dsLookup);
+    SchemaImport schemaImporter = new SchemaImport(dsLookup, Constraint.FACTORY_LOOKUP);
+    Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(
+            mainScript.parseSchema());
+    Preconditions.checkArgument(!schemaImporter.getErrors().isFatal(),
+            schemaImporter.getErrors());
+    importResolver.getImportManager().registerUserSchema(userSchema);
 
-    ScriptParser scriptParser = scriptParserProvider.createScriptParser();
+    ScriptParser scriptParser = settings.getScriptParserProvider().createScriptParser();
     ScriptNode scriptNode = scriptParser.parse(mainScript);
 
     ProcessBundle<ProcessMessage> errors = validate(scriptNode);
@@ -83,7 +79,7 @@ public class Environment {
     }
     HeuristicPlannerProvider planner =
         settings.getHeuristicPlannerProvider();
-    ScriptProcessor processor = scriptProcessorProvider.createScriptProcessor(
+    ScriptProcessor processor = settings.getScriptProcessorProvider().createScriptProcessor(
         settings.getImportProcessorProvider().createImportProcessor(importResolver, planner),
         settings.getQueryProcessorProvider().createQueryProcessor(planner),
         settings.getExpressionProcessorProvider().createExpressionProcessor(planner),
@@ -122,17 +118,6 @@ public class Environment {
     return new Script(namespace, registry);
   }
 
-  public void registerUserSchema(
-      SchemaDefinition schemaDefinition) {
-    DatasetLookup dsLookup = importResolver.getImportManager().getDatasetLookup();
-    SchemaImport schemaImporter = new SchemaImport(dsLookup, Constraint.FACTORY_LOOKUP);
-    Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(
-        schemaDefinition);
-    Preconditions.checkArgument(!schemaImporter.getErrors().isFatal(),
-        schemaImporter.getErrors());
-
-    importResolver.getImportManager().registerUserSchema(userSchema);
-  }
 
   @SneakyThrows
   public void registerDataset(SourceDataset sourceDataset) {
