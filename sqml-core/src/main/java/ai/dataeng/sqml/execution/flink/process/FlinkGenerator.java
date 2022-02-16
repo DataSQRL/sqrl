@@ -1,8 +1,9 @@
 package ai.dataeng.sqml.execution.flink.process;
 
-import ai.dataeng.sqml.execution.flink.environment.EnvironmentFactory;
+import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
 import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaValidationProcess;
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceRecord;
+import ai.dataeng.sqml.execution.flink.ingest.source.DataStreamProvider;
+import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.LogicalPlanIterator;
 import ai.dataeng.sqml.planner.operator.AggregateOperator;
@@ -15,7 +16,6 @@ import ai.dataeng.sqml.planner.optimize.LogicalPlanOptimizer;
 import ai.dataeng.sqml.planner.optimize.MaterializeSink;
 import ai.dataeng.sqml.planner.optimize.MaterializeSource;
 import ai.dataeng.sqml.execution.sql.DatabaseSink;
-import ai.dataeng.sqml.tree.name.Name;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -31,10 +31,10 @@ public class FlinkGenerator {
     public static final String SCHEMA_ERROR_OUTPUT = "schema-error";
 
     private final FlinkConfiguration configuration;
-    private final EnvironmentFactory envProvider;
+    private final FlinkStreamEngine envProvider;
     final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>(SCHEMA_ERROR_OUTPUT){}; //TODO: can we use one for all or do they need to be unique?
 
-    public FlinkGenerator(FlinkConfiguration configuration, EnvironmentFactory envProvider) {
+    public FlinkGenerator(FlinkConfiguration configuration, FlinkStreamEngine envProvider) {
         this.configuration = configuration;
         this.envProvider = envProvider;
     }
@@ -54,9 +54,9 @@ public class FlinkGenerator {
             DataStream converted = null;
             if (node instanceof DocumentSource) {
                 DocumentSource source = (DocumentSource) node;
-                DataStream<SourceRecord<String>> stream = source.getTable().getDataStream(flinkEnv);
-                SingleOutputStreamOperator<SourceRecord<Name>> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, source.getSourceSchema(),
-                        source.getSettings(), source.getTable().getDataset().getRegistration()));
+                DataStream<SourceRecord.Raw> stream = new DataStreamProvider().getDataStream(source.getTable(),flinkEnv);
+                SingleOutputStreamOperator<SourceRecord.Named> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, source.getSourceSchema(),
+                        source.getSettings(), source.getTable().getDataset().getDigest()));
                 //validate.getSideOutput(schemaErrorTag).addSink(new PrintSinkFunction<>()); //TODO: handle errors
                 converted = validate;
             } else if (node instanceof ShreddingOperator) {

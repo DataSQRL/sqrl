@@ -18,8 +18,8 @@ import ai.dataeng.sqml.config.provider.ScriptProcessorProvider;
 import ai.dataeng.sqml.config.provider.SqlGeneratorProvider;
 import ai.dataeng.sqml.config.provider.SubscriptionProcessorProvider;
 import ai.dataeng.sqml.config.provider.ValidatorProvider;
-import ai.dataeng.sqml.execution.flink.ingest.DataSourceRegistry;
-import ai.dataeng.sqml.importer.ImportManager;
+import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
+import ai.dataeng.sqml.planner.operator.ImportManager;
 import ai.dataeng.sqml.parser.ScriptParserImpl;
 import ai.dataeng.sqml.parser.processor.DistinctProcessorImpl;
 import ai.dataeng.sqml.parser.processor.ExpressionProcessorImpl;
@@ -52,14 +52,15 @@ public class SqrlSettings {
   SqlGeneratorProvider sqlGeneratorProvider;
   FlinkGeneratorProvider flinkGeneratorProvider;
   Namespace namespace;
-  DataSourceRegistry dsLookup;
+  DatasetRegistry dsLookup;
   SqlClientProvider sqlClientProvider;
 
   public static SqrlSettingsBuilder createDefault() {
     Path outputBase = Path.of("tmp","datasource");
 
     HierarchyKeyValueStore.Factory kvStoreFactory = new LocalFileHierarchyKeyValueStore.Factory(outputBase.toString());
-    DataSourceRegistry dsLookup = new DataSourceRegistry(kvStoreFactory);
+
+    DatasetRegistry dsLookup = new DatasetRegistry(kvStoreFactory, tableMonitor);
 
     return SqrlSettings.builder()
         .namespace(new NamespaceImpl())

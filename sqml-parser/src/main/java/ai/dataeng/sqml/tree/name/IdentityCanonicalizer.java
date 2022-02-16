@@ -1,5 +1,10 @@
 package ai.dataeng.sqml.tree.name;
 
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+@EqualsAndHashCode
+@ToString
 public class IdentityCanonicalizer implements NameCanonicalizer {
 
     @Override

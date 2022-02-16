@@ -3,7 +3,6 @@ package ai.dataeng.sqml.planner.operator;
 import static ai.dataeng.sqml.tree.name.Name.PARENT_RELATIONSHIP;
 
 import ai.dataeng.sqml.catalog.Namespace;
-import ai.dataeng.sqml.importer.ImportManager;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleSchemaHelper;
 import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaConversionError;

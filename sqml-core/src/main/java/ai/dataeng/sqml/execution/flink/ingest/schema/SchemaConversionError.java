@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.execution.flink.ingest.schema;
 
-import ai.dataeng.sqml.execution.flink.ingest.LocationConversionError;
+import ai.dataeng.sqml.type.basic.LocationConversionError;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import ai.dataeng.sqml.tree.name.NamePath;
 import lombok.NonNull;

@@ -1,7 +1,9 @@
 package ai.dataeng.sqml.execution.flink.ingest.schema;
 
-import ai.dataeng.sqml.execution.flink.ingest.DatasetRegistration;
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceRecord;
+import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
+import ai.dataeng.sqml.io.sources.DatasetRegistration;
+import ai.dataeng.sqml.io.sources.SourceRecord;
+import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
 import ai.dataeng.sqml.tree.name.Name;
 import lombok.Value;
@@ -13,21 +15,21 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SchemaValidationProcess extends ProcessFunction<SourceRecord<String>, SourceRecord<Name>> {
+public class SchemaValidationProcess extends ProcessFunction<SourceRecord.Raw, SourceRecord.Named> {
 
     private final OutputTag<Error> errorTag;
     private final SchemaValidator validator;
 
     public SchemaValidationProcess(OutputTag<Error> error, FlexibleDatasetSchema.TableField schema,
-                                   SchemaAdjustmentSettings settings, DatasetRegistration dataset) {
+                                   SchemaAdjustmentSettings settings, SourceDataset.Digest dataset) {
         this.errorTag = error;
         this.validator = new SchemaValidator(schema, settings, dataset);
     }
 
     @Override
-    public void processElement(SourceRecord<String> sourceRecord, Context context, Collector<SourceRecord<Name>> out) {
+    public void processElement(SourceRecord.Raw sourceRecord, Context context, Collector<SourceRecord.Named> out) {
         ProcessBundle<SchemaConversionError> errors = new ProcessBundle<>();
-        SourceRecord<Name> result = validator.verifyAndAdjust(sourceRecord, errors);
+        SourceRecord.Named result = validator.verifyAndAdjust(sourceRecord, errors);
         if (errors.isFatal()) {
             context.output(errorTag, SchemaValidationProcess.Error.of(errors,sourceRecord));
         } else {

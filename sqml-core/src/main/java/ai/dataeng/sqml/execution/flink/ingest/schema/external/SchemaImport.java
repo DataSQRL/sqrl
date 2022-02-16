@@ -1,13 +1,13 @@
 package ai.dataeng.sqml.execution.flink.ingest.schema.external;
 
-import ai.dataeng.sqml.execution.flink.ingest.DatasetLookup;
-import ai.dataeng.sqml.execution.flink.ingest.DatasetRegistration;
+import ai.dataeng.sqml.io.sources.dataset.DatasetLookup;
+import ai.dataeng.sqml.io.sources.DatasetRegistration;
 import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaElementDescription;
 import ai.dataeng.sqml.execution.flink.ingest.schema.version.StringVersionId;
 import ai.dataeng.sqml.execution.flink.ingest.schema.version.VersionIdentifier;
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceDataset;
+import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
@@ -81,19 +81,18 @@ public class SchemaImport {
                 addError(SchemaConversionError.fatal(NamePath.ROOT, "Source dataset is unknown and has not been registered with system: %s", dataset.name));
                 continue;
             }
-            DatasetRegistration reg = sd.getRegistration();
-            if (result.containsKey(reg.getName())) {
+            if (result.containsKey(sd.getName())) {
                 addError(SchemaConversionError.warn(NamePath.ROOT, "Dataset [%s] is defined multiple times in schema and later definitions are ignored", dataset.name));
                 continue;
             }
-            NamePath location = NamePath.of(reg.getName());
-            FlexibleDatasetSchema ddschema = convert(location, dataset, reg);
-            result.put(reg.getName(), ddschema);
+            NamePath location = NamePath.of(sd.getName());
+            FlexibleDatasetSchema ddschema = convert(location, dataset, sd);
+            result.put(sd.getName(), ddschema);
         }
         return result;
     }
 
-    private FlexibleDatasetSchema convert(NamePath location, DatasetDefinition dataset, DatasetRegistration source) {
+    private FlexibleDatasetSchema convert(NamePath location, DatasetDefinition dataset, SourceDataset source) {
         FlexibleDatasetSchema.Builder builder = new FlexibleDatasetSchema.Builder();
         builder.setDescription(SchemaElementDescription.of(dataset.description));
         for (TableDefinition table : dataset.tables) {
@@ -103,7 +102,7 @@ public class SchemaImport {
         return builder.build();
     }
 
-    private Optional<FlexibleDatasetSchema.TableField> convert(NamePath location, TableDefinition table, DatasetRegistration source) {
+    private Optional<FlexibleDatasetSchema.TableField> convert(NamePath location, TableDefinition table, SourceDataset source) {
         FlexibleDatasetSchema.TableField.Builder builder = new FlexibleDatasetSchema.TableField.Builder();
         Optional<Name> nameOpt = convert(location,table,builder,source);
         if (nameOpt.isEmpty()) return Optional.empty();
@@ -120,7 +119,7 @@ public class SchemaImport {
         return Optional.of(builder.build());
     }
 
-    private RelationType<FlexibleDatasetSchema.FlexibleField> convert(NamePath location, List<FieldDefinition> columns, DatasetRegistration source) {
+    private RelationType<FlexibleDatasetSchema.FlexibleField> convert(NamePath location, List<FieldDefinition> columns, SourceDataset source) {
         RelationType.Builder<FlexibleDatasetSchema.FlexibleField> rbuilder = new RelationType.Builder();
         for (FieldDefinition fd : columns) {
             Optional<FlexibleDatasetSchema.FlexibleField> fieldConvert = convert(location, fd, source);
@@ -129,7 +128,7 @@ public class SchemaImport {
         return rbuilder.build();
     }
 
-    private Optional<FlexibleDatasetSchema.FlexibleField> convert(NamePath location, FieldDefinition field, DatasetRegistration source) {
+    private Optional<FlexibleDatasetSchema.FlexibleField> convert(NamePath location, FieldDefinition field, SourceDataset source) {
         FlexibleDatasetSchema.FlexibleField.Builder builder = new FlexibleDatasetSchema.FlexibleField.Builder();
         Optional<Name> nameOpt = convert(location,field,builder,source);
         if (nameOpt.isEmpty()) return Optional.empty();
@@ -164,7 +163,7 @@ public class SchemaImport {
         return Optional.of(builder.build());
     }
 
-    private Optional<FlexibleDatasetSchema.FieldType> convert(NamePath location, Name variant, FieldTypeDefinition ftd, DatasetRegistration source) {
+    private Optional<FlexibleDatasetSchema.FieldType> convert(NamePath location, Name variant, FieldTypeDefinition ftd, SourceDataset source) {
         location = location.resolve(variant);
         final Type type;
         final int arrayDepth;
@@ -190,7 +189,7 @@ public class SchemaImport {
         return Optional.of(new FlexibleDatasetSchema.FieldType(variant, type, arrayDepth, constraints));
     }
 
-    private List<Constraint> convertConstraints(NamePath location, List<String> tests, DatasetRegistration source) {
+    private List<Constraint> convertConstraints(NamePath location, List<String> tests, SourceDataset source) {
         if (tests==null) return Collections.EMPTY_LIST;
         List<Constraint> constraints = new ArrayList<>(tests.size());
         for (String testString : tests) {
@@ -207,7 +206,7 @@ public class SchemaImport {
         return constraints;
     }
 
-    private Optional<Name> convert(NamePath location, String sname, DatasetRegistration source) {
+    private Optional<Name> convert(NamePath location, String sname, SourceDataset source) {
         if (Strings.isNullOrEmpty(sname)) {
             addError(SchemaConversionError.fatal(location, "Missing or invalid field name: %s", sname));
             return Optional.empty();
@@ -218,7 +217,7 @@ public class SchemaImport {
     }
 
     private Optional<Name> convert(NamePath location, AbstractElementDefinition element, FlexibleDatasetSchema.AbstractField.Builder builder,
-            DatasetRegistration source) {
+                                   SourceDataset source) {
         final Optional<Name> name = convert(location, element.name, source);
         if (name.isPresent()) {
             builder.setName(name.get());

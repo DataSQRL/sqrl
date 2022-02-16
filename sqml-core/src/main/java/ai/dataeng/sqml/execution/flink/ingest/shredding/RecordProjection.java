@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.execution.flink.ingest.shredding;
 
 import ai.dataeng.sqml.catalog.persistence.DestinationTableSchema;
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceRecord;
+import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.type.basic.DateTimeType;
 import ai.dataeng.sqml.tree.name.Name;
 

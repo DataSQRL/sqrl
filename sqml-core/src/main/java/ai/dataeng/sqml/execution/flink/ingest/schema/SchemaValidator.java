@@ -1,10 +1,11 @@
 package ai.dataeng.sqml.execution.flink.ingest.schema;
 
-import ai.dataeng.sqml.execution.flink.ingest.DatasetRegistration;
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceRecord;
+import ai.dataeng.sqml.io.sources.DatasetRegistration;
+import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.execution.flink.ingest.stats.FieldStats;
 import ai.dataeng.sqml.execution.flink.ingest.stats.SchemaGenerator;
 import ai.dataeng.sqml.execution.flink.ingest.stats.TypeSignature;
+import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
@@ -33,7 +34,7 @@ public class SchemaValidator implements Serializable {
     private final NameCanonicalizer canonicalizer;
 
     public SchemaValidator(@NonNull FlexibleDatasetSchema.TableField tableSchema, @NonNull SchemaAdjustmentSettings settings,
-                           @NonNull DatasetRegistration dataset) {
+                           @NonNull SourceDataset.Digest dataset) {
         Preconditions.checkArgument(!tableSchema.isPartialSchema());
         this.settings = settings;
         this.tableSchema = tableSchema;
@@ -41,7 +42,7 @@ public class SchemaValidator implements Serializable {
     }
 
 
-    public SourceRecord<Name> verifyAndAdjust(SourceRecord<String> record, ProcessBundle<SchemaConversionError> errors) {
+    public SourceRecord.Named verifyAndAdjust(SourceRecord<String> record, ProcessBundle<SchemaConversionError> errors) {
         Map<Name,Object> result = verifyAndAdjust(record.getData(), tableSchema.getFields(), NamePath.ROOT, errors);
         return record.replaceData(result);
     }

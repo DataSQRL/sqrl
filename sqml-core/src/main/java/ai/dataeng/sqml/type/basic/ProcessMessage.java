@@ -61,7 +61,8 @@ public interface ProcessMessage {
             for (E err : other) add(err);
         }
 
-        public static void logMessages(ProcessBundle<ProcessMessage> messages) {
+        public static void logMessages(ProcessBundle<? extends ProcessMessage> messages) {
+            if (!messages.hasErrors()) return;
             for (ProcessMessage message : messages) {
                 if (message.isNotice()) {
                     log.info(message.toString());

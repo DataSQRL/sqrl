@@ -19,18 +19,16 @@ import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.operator.QueryAnalyzer;
 import ai.dataeng.sqml.catalog.persistence.keyvalue.HierarchyKeyValueStore;
 import ai.dataeng.sqml.catalog.persistence.keyvalue.LocalFileHierarchyKeyValueStore;
-import ai.dataeng.sqml.importer.ImportManager;
-import ai.dataeng.sqml.importer.ImportSchema;
-import ai.dataeng.sqml.execution.flink.environment.DefaultEnvironmentFactory;
-import ai.dataeng.sqml.execution.flink.environment.EnvironmentFactory;
-import ai.dataeng.sqml.execution.flink.ingest.DataSourceRegistry;
-import ai.dataeng.sqml.execution.flink.ingest.DatasetRegistration;
+import ai.dataeng.sqml.planner.operator.ImportManager;
+import ai.dataeng.sqml.execution.flink.environment.DefaultFlinkStreamEngine;
+import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
+import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
+import ai.dataeng.sqml.io.sources.DatasetRegistration;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaConversionError;
 import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaDefinition;
 import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaExport;
 import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaImport;
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceDataset;
+import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.execution.flink.ingest.stats.SchemaGenerator;
 import ai.dataeng.sqml.execution.flink.ingest.stats.SourceTableStatistics;
 import ai.dataeng.sqml.planner.optimize.LogicalPlanOptimizer;
@@ -46,7 +44,7 @@ import ai.dataeng.sqml.type.basic.BasicTypeManager;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
 import ai.dataeng.sqml.type.constraint.Constraint;
-import ai.dataeng.sqml.importer.source.simplefile.DirectoryDataset;
+import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.tree.name.NamePath;
@@ -112,7 +110,7 @@ public class Main2 {
     public static final Path outputBase = Path.of("tmp","datasource");
     public static final Path dbPath = Path.of("tmp","output");
 
-    private static final EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
+    private static final FlinkStreamEngine envProvider = new DefaultFlinkStreamEngine();
 
     static final String JDBC_URL = "jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false";
     private static final JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
@@ -131,8 +129,8 @@ public class Main2 {
         BasicTypeManager.detectType("test");
 
         HierarchyKeyValueStore.Factory kvStoreFactory = new LocalFileHierarchyKeyValueStore.Factory(outputBase.toString());
-        DataSourceRegistry ddRegistry = new DataSourceRegistry(kvStoreFactory);
-        DirectoryDataset dd = new DirectoryDataset(DatasetRegistration.of(RETAIL_DATASET), RETAIL_DATA_DIR);
+        DatasetRegistry ddRegistry = new DatasetRegistry(kvStoreFactory, tableMonitor);
+        FileSourceConfiguration dd = new FileSourceConfiguration(DatasetRegistration.of(RETAIL_DATASET), RETAIL_DATA_DIR);
         ddRegistry.addDataset(dd);
 
         ddRegistry.monitorDatasets(envProvider);
@@ -185,7 +183,7 @@ public class Main2 {
         flinkEnv.execute();
     }
 
-    public static void end2endExample(DataSourceRegistry ddRegistry, ScriptBundle bundle) throws Exception {
+    public static void end2endExample(DatasetRegistry ddRegistry, ScriptBundle bundle) throws Exception {
         SqmlScript sqml = bundle.getMainScript();
 
         //Setup user schema and getting schema from statistics data
@@ -347,45 +345,6 @@ public class Main2 {
     }
 
 
-    public static void importSchema(DataSourceRegistry ddRegistry, ScriptBundle bundle) throws Exception {
-        SqmlScript sqml = bundle.getMainScript();
-
-        SchemaImport schemaImporter = new SchemaImport(ddRegistry, Constraint.FACTORY_LOOKUP);
-        Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(sqml.parseSchema());
-
-        if (schemaImporter.hasErrors()) {
-            System.out.println("Import errors:");
-            schemaImporter.getErrors().forEach(e -> System.out.println(e));
-        }
-
-        System.out.println("-------Import Schema-------");
-        System.out.print(toString(userSchema));
-
-        ImportManager sqmlImporter = new ImportManager(ddRegistry);
-        sqmlImporter.registerUserSchema(userSchema);
-
-        sqmlImporter.importAllTable(RETAIL_DATASET);
-
-        ProcessBundle<SchemaConversionError> errors = new ProcessBundle<>();
-        ImportSchema schema = sqmlImporter.createImportSchema(errors);
-
-        if (errors.hasErrors()) {
-            System.out.println("-------Import Errors-------");
-            errors.forEach(e -> System.out.println(e));
-        }
-
-        System.out.println("-------Script Schema-------");
-        System.out.println(schema.getSchema());
-        System.out.println("-------Tables-------");
-        for (Map.Entry<Name, ImportSchema.Mapping> entry : schema.getMappings().entrySet()) {
-            Preconditions.checkArgument(entry.getValue().isTable() && entry.getValue().isSource());
-            ImportSchema.SourceTableImport tableImport = schema.getSourceTable(entry.getKey());
-            Preconditions.checkNotNull(tableImport);
-            System.out.println("Table name: " + entry.getKey());
-            System.out.print(toString(Name.system("local"),singleton(tableImport.getSourceSchema())));
-        }
-    }
-
     private static String toString(Name name, FlexibleDatasetSchema schema) {
         return toString(Collections.singletonMap(name,schema));
     }
@@ -406,7 +365,7 @@ public class Main2 {
         return s.toString();
     }
 
-    public static void collectStats(DataSourceRegistry ddRegistry) throws Exception {
+    public static void collectStats(DatasetRegistry ddRegistry) throws Exception {
         ddRegistry.monitorDatasets(envProvider);
 
         Thread.sleep(1000);

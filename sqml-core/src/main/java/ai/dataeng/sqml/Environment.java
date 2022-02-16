@@ -5,16 +5,11 @@ import ai.dataeng.sqml.api.graphql.SqrlCodeRegistryBuilder;
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.config.SqrlSettings;
 import ai.dataeng.sqml.config.provider.HeuristicPlannerProvider;
-import ai.dataeng.sqml.config.provider.ScriptParserProvider;
-import ai.dataeng.sqml.config.provider.ScriptProcessorProvider;
-import ai.dataeng.sqml.config.provider.ValidatorProvider;
-import ai.dataeng.sqml.execution.flink.environment.DefaultEnvironmentFactory;
-import ai.dataeng.sqml.execution.flink.environment.EnvironmentFactory;
-import ai.dataeng.sqml.execution.flink.ingest.DatasetLookup;
-import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaDefinition;
-import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaImport;
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceDataset;
+import ai.dataeng.sqml.execution.flink.environment.DefaultFlinkStreamEngine;
+import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
+import ai.dataeng.sqml.io.sources.dataset.DatasetLookup;
+import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaConversionError;
+import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.execution.sql.SQLGenerator;
 import ai.dataeng.sqml.parser.ScriptParser;
 import ai.dataeng.sqml.parser.processor.ScriptProcessor;
@@ -27,14 +22,12 @@ import ai.dataeng.sqml.planner.optimize.LogicalPlanOptimizer;
 import ai.dataeng.sqml.planner.optimize.MaterializeSource;
 import ai.dataeng.sqml.planner.optimize.SimpleOptimizer;
 import ai.dataeng.sqml.tree.ScriptNode;
-import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
-import ai.dataeng.sqml.type.constraint.Constraint;
 import com.google.common.base.Preconditions;
 import graphql.schema.GraphQLCodeRegistry;
 import java.util.List;
-import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -63,12 +56,10 @@ public class Environment {
     //Instantiate import resolver and register user schema
     DatasetLookup dsLookup = settings.getDsLookup();
     ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(dsLookup);
-    SchemaImport schemaImporter = new SchemaImport(dsLookup, Constraint.FACTORY_LOOKUP);
-    Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(
-            mainScript.parseSchema());
-    Preconditions.checkArgument(!schemaImporter.getErrors().isFatal(),
-            schemaImporter.getErrors());
-    importResolver.getImportManager().registerUserSchema(userSchema);
+    ProcessBundle<SchemaConversionError> importErrors = importResolver.getImportManager()
+            .registerUserSchema(mainScript.parseSchema());
+    Preconditions.checkArgument(!importErrors.isFatal(),
+            importErrors);
 
     ScriptParser scriptParser = settings.getScriptParserProvider().createScriptParser();
     ScriptNode scriptNode = scriptParser.parse(mainScript);
@@ -108,7 +99,7 @@ public class Environment {
     SqrlCodeRegistryBuilder codeRegistryBuilder = new SqrlCodeRegistryBuilder();
     GraphQLCodeRegistry registry = codeRegistryBuilder.build(settings.getSqlClientProvider(), sources);
 
-    EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
+    FlinkStreamEngine envProvider = new DefaultFlinkStreamEngine();
     StreamExecutionEnvironment flinkEnv = settings.getFlinkGeneratorProvider()
         .create(envProvider)
         .generateStream(optimized, sql.getSinkMapper());
@@ -125,7 +116,7 @@ public class Environment {
   }
 
   public void monitorDatasets() {
-    EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
+    FlinkStreamEngine envProvider = new DefaultFlinkStreamEngine();
 
     settings.getDsLookup()
         .monitorDatasets(envProvider);

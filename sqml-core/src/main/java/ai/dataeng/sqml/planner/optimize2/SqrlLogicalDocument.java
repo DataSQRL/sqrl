@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.planner.optimize2;
 
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceTable;
+import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import org.apache.calcite.rel.RelInput;
 import org.apache.calcite.rel.core.TableScan;
 

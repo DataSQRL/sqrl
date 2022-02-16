@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.execution.flink.process;
 
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceRecord;
+import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -9,7 +9,7 @@ import org.apache.flink.util.Collector;
 import java.util.List;
 import java.util.Map;
 
-public class RecordShredderFlatMap implements FlatMapFunction<SourceRecord<Name>, RowUpdate> {
+public class RecordShredderFlatMap implements FlatMapFunction<SourceRecord.Named, RowUpdate> {
 
     private final NamePath tableIdentifier;
     private final FieldProjection[] projections;
@@ -20,7 +20,7 @@ public class RecordShredderFlatMap implements FlatMapFunction<SourceRecord<Name>
     }
 
     @Override
-    public void flatMap(SourceRecord<Name> sourceRecord, Collector<RowUpdate> collector) throws Exception {
+    public void flatMap(SourceRecord.Named sourceRecord, Collector<RowUpdate> collector) throws Exception {
         Object[] cols = new Object[projections.length];
         int colno = 0;
         while (colno < projections.length && projections[colno].getDepth()==0) {

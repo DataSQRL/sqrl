@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.execution;
 
-import ai.dataeng.sqml.execution.flink.environment.DefaultEnvironmentFactory;
-import ai.dataeng.sqml.execution.flink.environment.EnvironmentFactory;
-import ai.dataeng.sqml.execution.flink.ingest.DataSourceRegistry;
+import ai.dataeng.sqml.execution.flink.environment.DefaultFlinkStreamEngine;
+import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
+import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import java.nio.file.Path;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.internal.connection.SimpleJdbcConnectionProvider;
@@ -14,7 +14,7 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
    */
 @Deprecated
 public class SqmlEnv {
-  private final DataSourceRegistry ddRegistry;
+  private final DatasetRegistry ddRegistry;
   private final SimpleJdbcConnectionProvider connectionProvider;
 
   //Todo make into a executor env
@@ -33,7 +33,7 @@ public class SqmlEnv {
       .withDriverName("org.h2.Driver")
       .build();
 
-    public SqmlEnv(DataSourceRegistry ddRegistry) {
+    public SqmlEnv(DatasetRegistry ddRegistry) {
       //    Long checkpointInterval = 1000L;
 //    Long checkpointTimeout = 15*1000L;
 //
@@ -49,14 +49,14 @@ public class SqmlEnv {
       SimpleJdbcConnectionProvider p = new SimpleJdbcConnectionProvider(jdbcOptions);
       this.connectionProvider = p;
 
-      EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
+      FlinkStreamEngine envProvider = new DefaultFlinkStreamEngine();
       StreamExecutionEnvironment flinkEnv = envProvider.create();
       StreamTableEnvironment tableEnv = StreamTableEnvironment.create(flinkEnv);
       this.flinkEnv = flinkEnv;
       this.tableEnv = tableEnv;
     }
 
-    public DataSourceRegistry getDdRegistry() {
+    public DatasetRegistry getDdRegistry() {
       return ddRegistry;
     }
 

@@ -1,8 +1,9 @@
 package ai.dataeng.sqml.execution.flink.ingest.stats;
 
 import ai.dataeng.sqml.execution.flink.environment.util.FlinkUtilities;
-import ai.dataeng.sqml.execution.flink.ingest.DatasetRegistration;
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceRecord;
+import ai.dataeng.sqml.io.sources.DatasetRegistration;
+import ai.dataeng.sqml.io.sources.SourceRecord;
+import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
@@ -15,25 +16,25 @@ import org.apache.flink.util.OutputTag;
 
 import java.util.concurrent.TimeUnit;
 
-public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, SourceRecord<String>, SourceRecord<String>> {
+public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, SourceRecord.Raw, SourceRecord.Raw> {
 
     public static final String STATE_NAME_SUFFIX = "-state";
 
     private int maxRecords = 100000;
     private int maxTimeInMin = 5;
     private final OutputTag<SourceTableStatistics> statsOutput;
-    private final DatasetRegistration datasetReg;
+    private final SourceDataset.Digest datasetReg;
 
     private transient ValueState<SourceTableStatistics> stats;
     private transient ValueState<Long> nextTimer;
 
-    public KeyedSourceRecordStatistics(OutputTag<SourceTableStatistics> tag, DatasetRegistration datasetReg) {
+    public KeyedSourceRecordStatistics(OutputTag<SourceTableStatistics> tag, SourceDataset.Digest datasetReg) {
         this.statsOutput = tag;
         this.datasetReg = datasetReg;
     }
 
     @Override
-    public void processElement(SourceRecord<String> sourceRecord, Context context, Collector<SourceRecord<String>> out) throws Exception {
+    public void processElement(SourceRecord.Raw sourceRecord, Context context, Collector<SourceRecord.Raw> out) throws Exception {
         SourceTableStatistics acc = stats.value();
         if (acc == null) {
             acc = new SourceTableStatistics();
@@ -60,7 +61,7 @@ public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, S
     }
 
     @Override
-    public void onTimer(long timestamp, OnTimerContext ctx, Collector<SourceRecord<String>> out) throws Exception {
+    public void onTimer(long timestamp, OnTimerContext ctx, Collector<SourceRecord.Raw> out) throws Exception {
         SourceTableStatistics acc = stats.value();
         if (acc != null) ctx.output(statsOutput, acc);
         stats.clear();
