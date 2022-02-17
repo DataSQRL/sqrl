@@ -17,21 +17,10 @@ public interface DataSourceConfiguration extends Serializable {
      *
      * @return true if successfully validated and initialized, else false
      */
-    ProcessMessage.ProcessBundle<ConfigurationError> validateAndInitialize();
+    boolean validate(ProcessMessage.ProcessBundle<ConfigurationError> errors);
 
-    /**
-     * The name of the dataset produced by this data source.
-     * The name must be unique within a server instance.
-     *
-     * @return name of dataset
-     */
-    @NonNull Name getDatasetName();
+    DataSource initialize();
 
-    @NonNull NameCanonicalizer getCanonicalizer();
-
-    Collection<? extends SourceTableConfiguration> pollTables(long maxWait, TimeUnit timeUnit) throws InterruptedException;
-
-    boolean isCompatible(@NonNull DataSourceConfiguration other);
 
 
 

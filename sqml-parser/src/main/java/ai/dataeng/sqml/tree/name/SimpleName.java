@@ -4,7 +4,7 @@ public class SimpleName extends AbstractName {
 
     private final String name;
 
-    public SimpleName(String name) {
+    SimpleName(String name) {
         this.name = validateName(name);
     }
 

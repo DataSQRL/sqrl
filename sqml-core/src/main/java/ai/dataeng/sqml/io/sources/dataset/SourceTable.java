@@ -1,14 +1,12 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
-import ai.dataeng.sqml.execution.flink.ingest.stats.SourceTableStatistics;
+import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.flink.streaming.api.datastream.DataStream;
-
-import static ai.dataeng.sqml.io.sources.dataset.DatasetRegistry.*;
 
 /**
  * A {@link SourceTable} defines an input source to be imported into an SQML script. A {@link SourceTable} is comprised
@@ -57,6 +55,10 @@ public class SourceTable {
      */
     public Name getName() {
         return config.getTableName();
+    }
+
+    public String qualifiedName() {
+        return getDataset().getName().getCanonical() + "." + getName().getCanonical();
     }
 
     public boolean hasSchema() {

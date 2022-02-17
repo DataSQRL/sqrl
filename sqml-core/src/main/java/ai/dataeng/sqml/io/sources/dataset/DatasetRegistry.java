@@ -1,7 +1,9 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
+import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 
@@ -40,18 +42,26 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
 
 
     public synchronized void addSource(@NonNull DataSourceConfiguration datasource) {
-        Preconditions.checkArgument(!datasets.containsKey(datasource.getDatasetName()),
-                "A data source with the name [%s] already exists",datasource.getDatasetName());
-        SourceDataset ds = new SourceDataset(this, datasource);
-        persistence.putDataset(datasource);
+        Preconditions.checkArgument(datasource.validate(new ProcessMessage.ProcessBundle<>()),
+                "Provided data source configuration is invalid: %s", datasource);
+        DataSource source = datasource.initialize();
+
+        Preconditions.checkArgument(!datasets.containsKey(source.getDatasetName()),
+                "A data source with the name [%s] already exists",source.getDatasetName());
+        SourceDataset ds = new SourceDataset(this, source);
+        persistence.putDataset(source.getDatasetName(),datasource);
         datasets.put(ds.getName(),ds);
         tableMonitors.scheduleWithFixedDelay(ds.polling, 0, pollTablesEveryMS, TimeUnit.MILLISECONDS);
     }
 
     public synchronized void updateSource(@NonNull DataSourceConfiguration datasource) {
-        SourceDataset existing = datasets.get(datasource.getDatasetName());
-        Preconditions.checkArgument(existing!=null,"Datasource has not yet been connected: [%s]",datasource.getDatasetName());
-        existing.updateConfiguration(datasource);
+        Preconditions.checkArgument(datasource.validate(new ProcessMessage.ProcessBundle<>()),
+                "Provided data source configuration is invalid: %s", datasource);
+        DataSource source = datasource.initialize();
+
+        SourceDataset existing = datasets.get(source.getDatasetName());
+        Preconditions.checkArgument(existing!=null,"Datasource has not yet been connected: [%s]", source.getDatasetName());
+        existing.updateConfiguration(source);
     }
 
     @Override

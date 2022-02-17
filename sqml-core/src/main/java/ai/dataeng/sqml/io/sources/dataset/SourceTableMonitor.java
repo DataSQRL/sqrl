@@ -5,9 +5,19 @@ package ai.dataeng.sqml.io.sources.dataset;
  * to compile statistics on the data.
  *
  */
-@FunctionalInterface
 public interface SourceTableMonitor {
 
-    void startTableMonitoring(SourceTable table);
+    /**
+     *
+     * @param table
+     * @return id that uniquely identifies the monitoring job
+     */
+    String startTableMonitoring(SourceTable table);
+
+    /**
+     *
+     * @param id of the monitoring job
+     */
+    void stopTableMonitoring(String id);
 
 }

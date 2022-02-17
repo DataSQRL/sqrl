@@ -2,7 +2,9 @@ package ai.dataeng.sqml.config;
 
 import ai.dataeng.sqml.config.engines.FlinkConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
-import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
+import ai.dataeng.sqml.io.sources.impl.file.FileSource;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,28 +15,41 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
+@Builder
+@Getter
 public class GlobalConfiguration {
 
-    public Engines engines;
-    public Sources sources;
+    EnvironmentConfiguration environment;
+    @NotNull Engines engines;
+    Sources sources;
 
+    public EnvironmentConfiguration getEnvironment() {
+        return environment!=null?environment: EnvironmentConfiguration.builder().build();
+    }
+
+    @Builder
+    @Getter
     public static class Engines {
 
-        public JDBCConfiguration jdbc;
-        public FlinkConfiguration flink;
+        @NotNull JDBCConfiguration jdbc;
+        FlinkConfiguration flink = FlinkConfiguration.builder().build();
+
 
 
     }
 
+    @Builder
+    @Getter
     public static class Sources {
 
-        public List<FileSourceConfiguration> directory;
+        List<FileSource> directory;
 
     }
 

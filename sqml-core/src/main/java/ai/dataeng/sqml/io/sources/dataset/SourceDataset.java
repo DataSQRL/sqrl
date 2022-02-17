@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
+import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
@@ -23,19 +24,19 @@ public class SourceDataset {
 
     final DatasetRegistry registry;
     final PollTablesTimer polling;
-    private DataSourceConfiguration config;
+    private DataSource source;
     private final Map<Name,SourceTable> tables = new HashMap<>();
 
-    public SourceDataset(DatasetRegistry registry, DataSourceConfiguration config) {
+    public SourceDataset(DatasetRegistry registry, DataSource source) {
         this.registry = registry;
-        this.config = config;
+        this.source = source;
         initializeTables();
         polling = new PollTablesTimer();
     }
 
     void initializeTables() {
         //Read existing tables within dataset from store
-        for (SourceTableConfiguration tblConfig : registry.persistence.getTables(config));
+        for (SourceTableConfiguration tblConfig : registry.persistence.getTables(source.getDatasetName()));
     }
 
     synchronized SourceTable initiateTable(SourceTableConfiguration tableConfig) {
@@ -50,29 +51,25 @@ public class SourceDataset {
         if (existingTbl == null) {
             //New table
             SourceTable tbl = initiateTable(tableConfig);
-            registry.persistence.putTable(config.getDatasetName(),tableConfig);
+            registry.persistence.putTable(source.getDatasetName(),tableConfig);
             registry.tableMonitor.startTableMonitoring(tbl);
         } else {
             existingTbl.updateConfiguration(tableConfig);
         }
     }
 
-    void updateConfiguration(DataSourceConfiguration dsConfig) {
-        Preconditions.checkArgument(config.getDatasetName().equals(dsConfig.getDatasetName()));
-        //No need to do anything if configurations haven't changed
-        if (!config.equals(dsConfig)) {
-            //Make sure the new table configuration is compatible and update
-            if (config.isCompatible(dsConfig)) {
-                config = dsConfig;
-                registry.persistence.putDataset(config);
-            } else {
-                throw new IllegalStateException(String.format("Updated source is incompatible with existing one: [%s]",dsConfig));
-            }
+    void updateConfiguration(DataSource update) {
+        Preconditions.checkArgument(source.getDatasetName().equals(update.getDatasetName()));
+        if (source.isCompatible(update)) {
+            source = update;
+            registry.persistence.putDataset(source.getDatasetName(),source.getConfiguration());
+        } else {
+            throw new IllegalStateException(String.format("Updated source is incompatible with existing one: [%s]",update));
         }
     }
 
-    public @NonNull DataSourceConfiguration getConfiguration() {
-        return config;
+    public @NonNull DataSource getConfiguration() {
+        return source;
     }
 
     /**
@@ -101,15 +98,15 @@ public class SourceDataset {
     }
 
     public Name getName() {
-        return config.getDatasetName();
+        return source.getDatasetName();
     }
 
     public NameCanonicalizer getCanonicalizer() {
-        return config.getCanonicalizer();
+        return source.getCanonicalizer();
     }
 
     public Name toName(String s) {
-        return Name.of(s, config.getCanonicalizer());
+        return Name.of(s, source.getCanonicalizer());
     }
 
     class PollTablesTimer extends TimerTask {
@@ -118,7 +115,7 @@ public class SourceDataset {
         public void run() {
             Collection<? extends SourceTableConfiguration> tables = Collections.EMPTY_SET;
             try {
-                tables = config.pollTables(registry.pollingWaitTimeMS, TimeUnit.MILLISECONDS);
+                tables = source.pollTables(registry.pollingWaitTimeMS, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 //Ignore and try again next time
             } catch (Throwable e) {

@@ -16,9 +16,9 @@ import java.util.EnumSet;
 
 public class DatabaseUtil {
 
-    private final FlinkConfiguration configuration;
+    private final FlinkDBConfiguration configuration;
 
-    DatabaseUtil(FlinkConfiguration configuration) {
+    DatabaseUtil(FlinkDBConfiguration configuration) {
         this.configuration = configuration;
     }
 

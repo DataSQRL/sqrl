@@ -3,9 +3,9 @@ package ai.dataeng.sqml.planner.operator;
 import static ai.dataeng.sqml.tree.name.Name.PARENT_RELATIONSHIP;
 
 import ai.dataeng.sqml.catalog.Namespace;
-import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleSchemaHelper;
-import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaConversionError;
+import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.type.schema.FlexibleSchemaHelper;
+import ai.dataeng.sqml.type.schema.SchemaConversionError;
 import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.Dataset;
 import ai.dataeng.sqml.planner.Field;

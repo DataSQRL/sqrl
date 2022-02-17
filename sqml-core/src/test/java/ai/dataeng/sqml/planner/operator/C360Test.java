@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import ai.dataeng.sqml.Environment;
 import ai.dataeng.sqml.ScriptBundle;
 import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
-import ai.dataeng.sqml.io.sources.DatasetRegistration;
+import ai.dataeng.sqml.io.sources.impl.file.FileSource;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.planner.Script;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,8 +41,10 @@ public class C360Test {
 
     env = Environment.create(DefaultTestSettings.create(vertx));
 
-    FileSourceConfiguration dd = new FileSourceConfiguration(DatasetRegistration.of(RETAIL_DATASET), RETAIL_DATA_DIR);
-    env.registerDataset(dd);
+
+    FileSourceConfiguration dd = FileSourceConfiguration.builder()
+            .name(RETAIL_DATASET).path(RETAIL_DATA_DIR.toAbsolutePath().toString()).build();
+    env.getDatasetRegistry().addSource(dd);
   }
 
   @Test

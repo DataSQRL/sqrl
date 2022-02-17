@@ -1,41 +1,45 @@
 package ai.dataeng.sqml.planner.operator;
 
+import ai.dataeng.sqml.config.EnvironmentConfiguration;
+import ai.dataeng.sqml.config.GlobalConfiguration;
 import ai.dataeng.sqml.config.SqrlSettings;
-import ai.dataeng.sqml.execution.flink.process.FlinkConfiguration;
-import ai.dataeng.sqml.execution.flink.process.FlinkGenerator;
-import ai.dataeng.sqml.execution.sql.SQLConfiguration;
-import ai.dataeng.sqml.execution.sql.SQLGenerator;
+import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
-import io.vertx.core.impl.VertxInternal;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.PoolOptions;
 import java.nio.file.Path;
-import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 
 public class DefaultTestSettings {
-  private static final Path dbPath = Path.of("tmp","output");
-  private static final String JDBC_URL = "jdbc:h2:"+dbPath.toAbsolutePath().toString()+";database_to_upper=false";
-  private static final JdbcConnectionOptions jdbcOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-      .withUrl(JDBC_URL)
-      .withDriverName("org.h2.Driver")
-      .build();
-  private static final FlinkConfiguration flinkConfig = new FlinkConfiguration(jdbcOptions);
-  private static final SQLConfiguration sqlConfig = new SQLConfiguration(SQLConfiguration.Dialect.H2,jdbcOptions);
+  private static final Path dbPath = Path.of("tmp");
+  private static final String jdbcURL = "jdbc:h2:"+dbPath.toAbsolutePath().toString();
+
+  public static GlobalConfiguration getGlobalConfigH2(boolean monitorSources) {
+    return GlobalConfiguration.builder()
+            .engines(GlobalConfiguration.Engines.builder()
+                    .jdbc(JDBCConfiguration.builder()
+                            .dbURL(jdbcURL)
+                            .driverName("org.h2.Driver")
+                            .dialect(JDBCConfiguration.Dialect.H2)
+                            .build())
+                    .build())
+            .environment(EnvironmentConfiguration.builder()
+                    .monitor_sources(monitorSources)
+                    .build())
+            .build();
+  }
 
   public static SqrlSettings create(Vertx vertx) {
+    //TODO: this is hardcoded for now and needs to be integrated into configuration
     JDBCPool pool = JDBCPool.pool(
         vertx,
         new JDBCConnectOptions()
-            .setJdbcUrl(JDBC_URL),
+            .setJdbcUrl("jdbc:h2:"+dbPath.toAbsolutePath().toString()+"/c360" + ";database_to_upper=false"),
         new PoolOptions()
             .setMaxSize(1)
     );
 
-    return SqrlSettings.createDefault()
-        .sqlGeneratorProvider(()->new SQLGenerator(sqlConfig))
-        .flinkGeneratorProvider((env)-> new FlinkGenerator(flinkConfig, env))
+    return SqrlSettings.builderFromConfiguration(getGlobalConfigH2(false))
         .sqlClientProvider(() -> pool)
         .build();
   }

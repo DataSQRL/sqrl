@@ -14,7 +14,7 @@ public class APITest {
     @Test
     public void testConfig() {
         GlobalConfiguration config = GlobalConfiguration.fromFile(configYml);
-        System.out.println("URL: "+config.engines.jdbc.dbURL);
+        System.out.println("URL: "+config.getEngines().getJdbc().getDbURL());
     }
 
 }

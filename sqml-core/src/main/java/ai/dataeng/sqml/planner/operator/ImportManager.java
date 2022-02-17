@@ -1,14 +1,14 @@
 package ai.dataeng.sqml.planner.operator;
 
 import ai.dataeng.sqml.io.sources.dataset.DatasetLookup;
-import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaConversionError;
-import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaDefinition;
-import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaImport;
+import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.type.schema.SchemaConversionError;
+import ai.dataeng.sqml.type.schema.external.SchemaDefinition;
+import ai.dataeng.sqml.type.schema.external.SchemaImport;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
-import ai.dataeng.sqml.execution.flink.ingest.stats.SchemaGenerator;
-import ai.dataeng.sqml.execution.flink.ingest.stats.SourceTableStatistics;
+import ai.dataeng.sqml.io.sources.stats.SchemaGenerator;
+import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.StandardField;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
@@ -146,7 +146,7 @@ public class ImportManager {
                                                          FlexibleDatasetSchema.TableField userSchema,
                                                          ProcessBundle<SchemaConversionError> errors) {
         SchemaGenerator generator = new SchemaGenerator();
-        SourceTableStatistics stats = datasetLookup.getTableStatistics(table);
+        SourceTableStatistics stats = table.getStatistics();
         if (userSchema==null) {
             if (stats.getCount()==0) {
                 errors.add(SchemaConversionError.fatal(NamePath.of(datasetname),"We cannot infer schema for table [%s] due to lack of data. Need to provide user schema.", table.getName()));

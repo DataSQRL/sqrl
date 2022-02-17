@@ -1,8 +1,10 @@
 package ai.dataeng.sqml.execution.flink.process;
 
+import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
+import ai.dataeng.sqml.execution.StreamEngine;
 import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
-import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaValidationProcess;
-import ai.dataeng.sqml.execution.flink.ingest.source.DataStreamProvider;
+import ai.dataeng.sqml.execution.flink.ingest.SchemaValidationProcess;
+import ai.dataeng.sqml.execution.flink.ingest.DataStreamProvider;
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.LogicalPlanIterator;
@@ -26,20 +28,21 @@ import org.apache.flink.util.Preconditions;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FlinkGenerator {
+public class FlinkGenerator implements StreamEngine.Generator {
 
     public static final String SCHEMA_ERROR_OUTPUT = "schema-error";
 
-    private final FlinkConfiguration configuration;
+    private final FlinkDBConfiguration configuration;
     private final FlinkStreamEngine envProvider;
+
     final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>(SCHEMA_ERROR_OUTPUT){}; //TODO: can we use one for all or do they need to be unique?
 
-    public FlinkGenerator(FlinkConfiguration configuration, FlinkStreamEngine envProvider) {
-        this.configuration = configuration;
+    public FlinkGenerator(JDBCConnectionProvider jdbc, FlinkStreamEngine envProvider) {
+        this.configuration = new FlinkDBConfiguration(FlinkStreamEngine.getFlinkJDBC(jdbc));
         this.envProvider = envProvider;
     }
 
-    public StreamExecutionEnvironment generateStream(LogicalPlanOptimizer.Result logical, Map<MaterializeSource, DatabaseSink> sinkMapper) {
+    public FlinkStreamEngine.Job generateStream(String scriptName, LogicalPlanOptimizer.Result logical, Map<MaterializeSource, DatabaseSink> sinkMapper) {
         StreamExecutionEnvironment flinkEnv = envProvider.create();
 
         final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>(SCHEMA_ERROR_OUTPUT){}; //TODO: can we use one for all or do they need to be unique?
@@ -102,7 +105,7 @@ public class FlinkGenerator {
             }
         }
 
-        return flinkEnv;
+        return new FlinkStreamEngine.Job(flinkEnv, FlinkStreamEngine.JobType.SCRIPT, scriptName);
     }
 
     private static<S extends DataStream> S getInput(Map<LogicalPlanImpl.Node, DataStream> lp2pp, LogicalPlanImpl.Node node) {
