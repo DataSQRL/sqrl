@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
+import java.util.regex.Pattern;
 
 /**
  * Represents the name of a field in the ingested data
@@ -27,6 +28,10 @@ public interface Name extends Serializable, Comparable<Name> {
      */
     String getCanonical();
 
+    default int length() {
+        return getCanonical().length();
+    }
+
     /**
      * Returns the name to use when displaying the field (e.g. in the API).
      * This is what the user expects the field to be labeled.
@@ -49,11 +54,12 @@ public interface Name extends Serializable, Comparable<Name> {
 //        throw new NotImplementedException("Needs to be overwritten");
 //    }
 
+    public static boolean validName(String name) {
+        return StringUtils.isNotEmpty(name) && name.indexOf(46)<0;
+    }
+
     public static Name of(String name, NameCanonicalizer canonicalizer) {
-        if (!StringUtils.isNotEmpty(name)) {
-            System.out.println();
-        }
-        Preconditions.checkArgument(StringUtils.isNotEmpty(name));
+        Preconditions.checkArgument(validName(name),"Invalid name: %s",name);
         name = name.trim();
         return new StandardName(canonicalizer.getCanonical(name),name);
     }

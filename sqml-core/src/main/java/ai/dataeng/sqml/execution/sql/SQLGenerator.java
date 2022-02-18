@@ -1,5 +1,7 @@
 package ai.dataeng.sqml.execution.sql;
 
+import ai.dataeng.sqml.config.engines.JDBCConfiguration;
+import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.operator.AccessNode;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
@@ -24,7 +26,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class SQLGenerator {
 
-    SQLConfiguration configuration;
+    JDBCConnectionProvider configuration;
     //TODO: generate CREATE TABLE and CREATE VIEW statements for QueryNodes and relationships
 
     public Result generateDatabase(LogicalPlanOptimizer.Result logical) {
@@ -62,7 +64,7 @@ public class SQLGenerator {
     @Value
     public static class Result {
 
-        SQLConfiguration configuration;
+        JDBCConnectionProvider configuration;
         List<String> dmlQueries;
 
         Map<MaterializeSource, DatabaseSink> sinkMapper;

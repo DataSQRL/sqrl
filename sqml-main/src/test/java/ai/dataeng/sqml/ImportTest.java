@@ -34,7 +34,7 @@
 //import ai.dataeng.sqml.schema2.basic.ErrorMessage;
 //import ai.dataeng.sqml.schema2.basic.ErrorMessage.ErrorBundle;
 //import ai.dataeng.sqml.schema2.constraint.Constraint;
-//import ai.dataeng.sqml.importer.source.simplefile.DirectoryDataset;
+//import ai.dataeng.sqml.io.sources.simplefile.DirectoryDataset;
 //import ai.dataeng.sqml.tree.QueryAssignment;
 //import ai.dataeng.sqml.tree.Script;
 //import ai.dataeng.sqml.tree.name.Name;

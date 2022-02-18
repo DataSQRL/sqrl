@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.planner.operator;
 
-import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.execution.flink.ingest.schema.SchemaAdjustmentSettings;
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceTable;
+import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.type.schema.SchemaAdjustmentSettings;
+import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.tree.name.NamePath;

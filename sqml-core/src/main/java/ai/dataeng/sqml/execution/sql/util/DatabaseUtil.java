@@ -1,8 +1,9 @@
 package ai.dataeng.sqml.execution.sql.util;
 
+import ai.dataeng.sqml.config.engines.JDBCConfiguration;
+import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.execution.sql.DatabaseSink;
-import ai.dataeng.sqml.execution.sql.SQLConfiguration;
 import ai.dataeng.sqml.execution.sql.SQLJDBCQueryBuilder;
 import ai.dataeng.sqml.type.basic.*;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,7 @@ import java.util.stream.Stream;
 public class DatabaseUtil {
 
     @NonNull
-    private final SQLConfiguration configuration;
+    private final JDBCConnectionProvider configuration;
 
 
     @Value
@@ -70,13 +71,13 @@ public class DatabaseUtil {
     public DatabaseSink getSink(String tableName, Column[] schema) {
         //1) Upsert
         StringBuilder s = new StringBuilder();
-        if (configuration.getDialect() == SQLConfiguration.Dialect.H2) {
+        if (configuration.getDialect() == JDBCConfiguration.Dialect.H2) {
             s.append("MERGE INTO ").append(sqlName(tableName)).append(" KEY (");
             s.append(getPrimaryKeyNames(schema).map(n -> sqlName(n)).collect(Collectors.joining(", ")));
             s.append(") VALUES (");
             s.append(Arrays.stream(new int[schema.length + 1]).mapToObj(i -> "?").collect(Collectors.joining(", ")));
             s.append(");");
-        } else if (configuration.getDialect() == SQLConfiguration.Dialect.POSTGRES) {
+        } else if (configuration.getDialect() == JDBCConfiguration.Dialect.POSTGRES) {
             throw new NotImplementedException("Not yet implemented");
         } else throw new UnsupportedOperationException();
         String upsertQuery = s.toString();

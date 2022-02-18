@@ -1,6 +1,6 @@
 package ai.dataeng.sqml;
 
-import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaDefinition;
+import ai.dataeng.sqml.type.schema.external.SchemaDefinition;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import com.google.common.base.Preconditions;

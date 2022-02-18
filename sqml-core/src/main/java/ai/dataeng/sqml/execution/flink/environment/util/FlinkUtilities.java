@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.execution.flink.environment.util;
 
-import ai.dataeng.sqml.catalog.persistence.DestinationTableSchema;
+import ai.dataeng.sqml.execution.flink.process.DestinationTableSchema;
 import ai.dataeng.sqml.type.basic.*;
 import org.apache.flink.api.common.typeinfo.BasicArrayTypeInfo;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;

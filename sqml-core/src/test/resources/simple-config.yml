@@ -1,0 +1,15 @@
+environment:
+  monitorSources: true
+  metastore:
+    database: "system"
+engines:
+  flink:
+      savepoint: false
+  jdbc:
+      dbURL: "jdbc:h2:tmp/output"
+      driverName: "org.h2.Driver"
+      dialect: H2
+sources:
+  directory:
+    - name: "ecommerce-data"
+      path: "../sqml-examples/retail/ecommerce-data"

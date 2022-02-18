@@ -4,18 +4,14 @@ import ai.dataeng.sqml.ScriptBundle.SqmlScript;
 import ai.dataeng.sqml.api.graphql.SqrlCodeRegistryBuilder;
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.config.SqrlSettings;
+import ai.dataeng.sqml.config.metadata.MetadataStore;
 import ai.dataeng.sqml.config.provider.HeuristicPlannerProvider;
-import ai.dataeng.sqml.config.provider.ScriptParserProvider;
-import ai.dataeng.sqml.config.provider.ScriptProcessorProvider;
-import ai.dataeng.sqml.config.provider.ValidatorProvider;
-import ai.dataeng.sqml.execution.flink.environment.DefaultEnvironmentFactory;
-import ai.dataeng.sqml.execution.flink.environment.EnvironmentFactory;
-import ai.dataeng.sqml.execution.flink.ingest.DatasetLookup;
-import ai.dataeng.sqml.execution.flink.ingest.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaDefinition;
-import ai.dataeng.sqml.execution.flink.ingest.schema.external.SchemaImport;
-import ai.dataeng.sqml.execution.flink.ingest.source.SourceDataset;
+import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
+import ai.dataeng.sqml.execution.StreamEngine;
+import ai.dataeng.sqml.type.schema.SchemaConversionError;
+import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.execution.sql.SQLGenerator;
+import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitor;
 import ai.dataeng.sqml.parser.ScriptParser;
 import ai.dataeng.sqml.parser.processor.ScriptProcessor;
 import ai.dataeng.sqml.parser.validator.Validator;
@@ -27,54 +23,65 @@ import ai.dataeng.sqml.planner.optimize.LogicalPlanOptimizer;
 import ai.dataeng.sqml.planner.optimize.MaterializeSource;
 import ai.dataeng.sqml.planner.optimize.SimpleOptimizer;
 import ai.dataeng.sqml.tree.ScriptNode;
-import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
-import ai.dataeng.sqml.type.constraint.Constraint;
 import com.google.common.base.Preconditions;
 import graphql.schema.GraphQLCodeRegistry;
+
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
+
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 @Slf4j
-@AllArgsConstructor
-public class Environment {
+public class Environment implements Closeable {
 
   private final SqrlSettings settings;
-  private final ImportResolver importResolver;
 
-  private final ScriptParserProvider scriptParserProvider;
-  private final ValidatorProvider validatorProvider;
-  private final ScriptProcessorProvider scriptProcessorProvider;
+  private final MetadataStore metadataStore;
+  private final StreamEngine streamEngine;
+
+  private final DatasetRegistry datasetRegistry;
+  //TODO: keep track of running scripts and sinks
+
+  private Environment(SqrlSettings settings) {
+    this.settings = settings;
+    JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(
+            settings.getEnvironmentConfiguration().getMetastore().getDatabase());
+    metadataStore = settings.getMetadataStoreProvider().openStore(jdbc);
+    streamEngine = settings.getStreamEngineProvider().create();
+
+    SourceTableMonitor monitor = settings.getSourceTableMonitorProvider().create(streamEngine,
+            settings.getStreamMonitorProvider().create(streamEngine,jdbc,
+                    settings.getMetadataStoreProvider(),settings.getDatasetRegistryPersistenceProvider()));
+    datasetRegistry = new DatasetRegistry(settings.getDatasetRegistryPersistenceProvider()
+            .createRegistryPersistence(metadataStore),monitor);
+  }
 
   public static Environment create(SqrlSettings settings) {
-    ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(
-        settings.getDsLookup()
-    );
-
-    return new Environment(settings, importResolver,
-        settings.getScriptParserProvider(), settings.getValidatorProvider(),
-        settings.getScriptProcessorProvider());
+    return new Environment(settings);
   }
 
   public ProcessBundle<ProcessMessage> validate(ScriptNode scriptNode) {
-    Validator validator = validatorProvider.getValidator();
+    Validator validator = settings.getValidatorProvider().getValidator();
     ProcessBundle<ProcessMessage> errors = validator.validate(scriptNode);
     ProcessBundle.logMessages(errors);
-
     return errors;
   }
 
   public Script compile(ScriptBundle bundle) throws Exception {
     SqmlScript mainScript = bundle.getMainScript();
+    String scriptId = mainScript.getName().getCanonical();
 
-    registerUserSchema(mainScript.parseSchema());
+    //Instantiate import resolver and register user schema
+    ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(datasetRegistry);
+    ProcessBundle<SchemaConversionError> importErrors = importResolver.getImportManager()
+            .registerUserSchema(mainScript.parseSchema());
+    Preconditions.checkArgument(!importErrors.isFatal(),
+            importErrors);
 
-    ScriptParser scriptParser = scriptParserProvider.createScriptParser();
+    ScriptParser scriptParser = settings.getScriptParserProvider().createScriptParser();
     ScriptNode scriptNode = scriptParser.parse(mainScript);
 
     ProcessBundle<ProcessMessage> errors = validate(scriptNode);
@@ -83,7 +90,7 @@ public class Environment {
     }
     HeuristicPlannerProvider planner =
         settings.getHeuristicPlannerProvider();
-    ScriptProcessor processor = scriptProcessorProvider.createScriptProcessor(
+    ScriptProcessor processor = settings.getScriptProcessorProvider().createScriptProcessor(
         settings.getImportProcessorProvider().createImportProcessor(importResolver, planner),
         settings.getQueryProcessorProvider().createQueryProcessor(planner),
         settings.getExpressionProcessorProvider().createExpressionProcessor(planner),
@@ -102,8 +109,9 @@ public class Environment {
     LogicalPlanOptimizer.Result optimized = new SimpleOptimizer()
         .optimize(logicalPlan);
 
+    JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(scriptId);
     SQLGenerator.Result sql = settings.getSqlGeneratorProvider()
-        .create()
+        .create(jdbc)
         .generateDatabase(optimized);
     sql.executeDMLs();
 
@@ -112,37 +120,22 @@ public class Environment {
     SqrlCodeRegistryBuilder codeRegistryBuilder = new SqrlCodeRegistryBuilder();
     GraphQLCodeRegistry registry = codeRegistryBuilder.build(settings.getSqlClientProvider(), sources);
 
-    EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
-    StreamExecutionEnvironment flinkEnv = settings.getFlinkGeneratorProvider()
-        .create(envProvider)
-        .generateStream(optimized, sql.getSinkMapper());
+    StreamEngine.Job job = settings.getStreamGeneratorProvider()
+        .create(streamEngine,jdbc)
+        .generateStream(scriptId, optimized, sql.getSinkMapper());
 
-    flinkEnv.execute();
+    job.execute();
 
     return new Script(namespace, registry);
   }
 
-  public void registerUserSchema(
-      SchemaDefinition schemaDefinition) {
-    DatasetLookup dsLookup = importResolver.getImportManager().getDatasetLookup();
-    SchemaImport schemaImporter = new SchemaImport(dsLookup, Constraint.FACTORY_LOOKUP);
-    Map<Name, FlexibleDatasetSchema> userSchema = schemaImporter.convertImportSchema(
-        schemaDefinition);
-    Preconditions.checkArgument(!schemaImporter.getErrors().isFatal(),
-        schemaImporter.getErrors());
-
-    importResolver.getImportManager().registerUserSchema(userSchema);
+  public DatasetRegistry getDatasetRegistry() {
+    return datasetRegistry;
   }
 
-  @SneakyThrows
-  public void registerDataset(SourceDataset sourceDataset) {
-    settings.getDsLookup().addDataset(sourceDataset);
-  }
-
-  public void monitorDatasets() {
-    EnvironmentFactory envProvider = new DefaultEnvironmentFactory();
-
-    settings.getDsLookup()
-        .monitorDatasets(envProvider);
+  @Override
+  public void close() {
+    //Clean up stuff
+    metadataStore.close();
   }
 }
