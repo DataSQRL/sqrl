@@ -1,8 +1,10 @@
 package ai.dataeng.sqml.planner.operator;
 
+import ai.dataeng.sqml.api.ConfigurationTest;
 import ai.dataeng.sqml.config.EnvironmentConfiguration;
 import ai.dataeng.sqml.config.GlobalConfiguration;
 import ai.dataeng.sqml.config.SqrlSettings;
+import ai.dataeng.sqml.config.engines.FlinkConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import io.vertx.core.Vertx;
 import io.vertx.jdbcclient.JDBCConnectOptions;
@@ -10,9 +12,13 @@ import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.PoolOptions;
 import java.nio.file.Path;
 
+/**
+ * TODO: Once we have vertx folded into settings and configuration,
+ * this class should be deleted in favor of {@link ConfigurationTest#getDefaultSettings()}
+ */
 public class DefaultTestSettings {
   private static final Path dbPath = Path.of("tmp");
-  private static final String jdbcURL = "jdbc:h2:"+dbPath.toAbsolutePath().toString();
+  private static final String jdbcURL = "jdbc:h2:"+dbPath.toAbsolutePath();
 
   public static GlobalConfiguration getGlobalConfigH2(boolean monitorSources) {
     return GlobalConfiguration.builder()
@@ -22,9 +28,10 @@ public class DefaultTestSettings {
                             .driverName("org.h2.Driver")
                             .dialect(JDBCConfiguration.Dialect.H2)
                             .build())
+                    .flink(new FlinkConfiguration())
                     .build())
             .environment(EnvironmentConfiguration.builder()
-                    .monitor_sources(monitorSources)
+                    .monitorSources(monitorSources)
                     .build())
             .build();
   }

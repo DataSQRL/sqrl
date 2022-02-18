@@ -13,20 +13,24 @@ import org.apache.commons.lang3.StringUtils;
 @Getter
 public class FileTableConfiguration implements SourceTableConfiguration {
 
-    @NonNull String filePrefix;
+    @NonNull Name filePrefix;
+    @NonNull String absoluteBasePath;
     @NonNull String extension;
-    @NonNull FileType fileType;
+    @NonNull FileFormat fileFormat;
              boolean multipleParts;
     @NonNull Name name;
 
-    public FileTableConfiguration(@NonNull String filePrefix, @NonNull String extension, @NonNull FileType fileType,
+    public FileTableConfiguration(@NonNull Name filePrefix, @NonNull String absoluteBasePath,
+                                  @NonNull String extension, @NonNull FileFormat fileFormat,
                                   boolean multipleParts, @NonNull Name name) {
-        Preconditions.checkArgument(StringUtils.isNotEmpty(filePrefix));
+        Preconditions.checkArgument(filePrefix!=null);
+        Preconditions.checkArgument(StringUtils.isNotEmpty(absoluteBasePath));
         Preconditions.checkArgument(StringUtils.isNotEmpty(extension));
         Preconditions.checkNotNull(extension);
         this.filePrefix = filePrefix;
+        this.absoluteBasePath = absoluteBasePath;
         this.extension = extension;
-        this.fileType = fileType;
+        this.fileFormat = fileFormat;
         this.multipleParts = multipleParts;
         this.name = name;
     }
@@ -43,8 +47,9 @@ public class FileTableConfiguration implements SourceTableConfiguration {
         Preconditions.checkArgument((otherConfig instanceof FileTableConfiguration) && otherConfig.getTableName().equals(name));
         FileTableConfiguration otherTbl = (FileTableConfiguration) otherConfig;
         if (!filePrefix.equals(otherTbl.filePrefix)) return false;
+        if (!absoluteBasePath.equals(otherTbl.absoluteBasePath)) return false;
         if (!extension.equals(otherTbl.extension)) return false;
-        if (!fileType.equals(otherTbl.fileType)) return false;
+        if (!fileFormat.equals(otherTbl.fileFormat)) return false;
         if (multipleParts!=otherTbl.multipleParts) return false;
 
         return true;

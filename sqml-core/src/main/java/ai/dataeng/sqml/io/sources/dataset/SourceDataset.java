@@ -7,9 +7,11 @@ import ai.dataeng.sqml.tree.name.Name;
 
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import com.google.common.base.Preconditions;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -31,7 +33,7 @@ public class SourceDataset {
         this.registry = registry;
         this.source = source;
         initializeTables();
-        polling = new PollTablesTimer();
+        polling = new PollTablesTimer(registry.pollingBackgroundWaitTimeMS);
     }
 
     void initializeTables() {
@@ -109,20 +111,26 @@ public class SourceDataset {
         return Name.of(s, source.getCanonicalizer());
     }
 
+    void refreshTables(long pollingWaitTimeMS) throws InterruptedException {
+        Collection<? extends SourceTableConfiguration> tables = Collections.EMPTY_SET;
+        tables = source.pollTables(pollingWaitTimeMS, TimeUnit.MILLISECONDS);
+        for (SourceTableConfiguration tblConfig: tables) addOrUpdateTable(tblConfig);
+        //TODO: Should we implement table removal if table hasn't been present for X amount of time?
+    }
+
+    @AllArgsConstructor
     class PollTablesTimer extends TimerTask {
+
+        private final long pollingWaitTimeMS;
 
         @Override
         public void run() {
-            Collection<? extends SourceTableConfiguration> tables = Collections.EMPTY_SET;
             try {
-                tables = source.pollTables(registry.pollingWaitTimeMS, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                //Ignore and try again next time
-            } catch (Throwable e) {
-                System.err.println("Encountered exception polling from source: " + e); //TODO: log this
+                refreshTables(pollingWaitTimeMS);
+            }  catch (InterruptedException e) {
+                //Ignore since we will poll again
+                return;
             }
-            for (SourceTableConfiguration tblConfig: tables) addOrUpdateTable(tblConfig);
-            //TODO: Should we implement table removal if table hasn't been present for X amount of time?
         }
     }
 
@@ -131,7 +139,7 @@ public class SourceDataset {
     }
 
     @Value
-    public static class Digest {
+    public static class Digest implements Serializable {
 
         private final Name name;
         private final NameCanonicalizer canonicalizer;

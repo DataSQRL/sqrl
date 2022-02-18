@@ -21,7 +21,8 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
     final DatasetRegistryPersistence persistence;
 
     private final ScheduledExecutorService tableMonitors = Executors.newSingleThreadScheduledExecutor();
-    final long pollingWaitTimeMS = 5000;
+    final long defaultInitialPollingWaitMS = 50;
+    final long pollingBackgroundWaitTimeMS = 5000;
     final long pollTablesEveryMS = 300000;
     final SourceTableMonitor tableMonitor;
 
@@ -40,8 +41,11 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         for (DataSourceConfiguration dsConfig : persistence.getDatasets()) addSource(dsConfig);
     }
 
-
     public synchronized void addSource(@NonNull DataSourceConfiguration datasource) {
+        addSource(datasource,defaultInitialPollingWaitMS);
+    }
+
+    public synchronized void addSource(@NonNull DataSourceConfiguration datasource, long sourceInitializationWaitTimeMS) {
         Preconditions.checkArgument(datasource.validate(new ProcessMessage.ProcessBundle<>()),
                 "Provided data source configuration is invalid: %s", datasource);
         DataSource source = datasource.initialize();
@@ -51,7 +55,14 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         SourceDataset ds = new SourceDataset(this, source);
         persistence.putDataset(source.getDatasetName(),datasource);
         datasets.put(ds.getName(),ds);
-        tableMonitors.scheduleWithFixedDelay(ds.polling, 0, pollTablesEveryMS, TimeUnit.MILLISECONDS);
+        long initialPollingDelayMS = pollTablesEveryMS;
+        try {
+            ds.refreshTables(sourceInitializationWaitTimeMS);
+        } catch (InterruptedException e) {
+            //Initial table polling is taking too long, let's do it again soon in the background
+            initialPollingDelayMS = 0;
+        }
+        tableMonitors.scheduleWithFixedDelay(ds.polling, initialPollingDelayMS, pollTablesEveryMS, TimeUnit.MILLISECONDS);
     }
 
     public synchronized void updateSource(@NonNull DataSourceConfiguration datasource) {

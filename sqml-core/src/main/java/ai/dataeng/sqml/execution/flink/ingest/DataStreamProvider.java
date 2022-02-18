@@ -4,9 +4,10 @@ import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.impl.file.FileSource;
 import ai.dataeng.sqml.io.sources.impl.file.FileTableConfiguration;
-import ai.dataeng.sqml.io.sources.impl.file.FileType;
+import ai.dataeng.sqml.io.sources.impl.file.FileFormat;
 import com.google.common.collect.Iterators;
 import lombok.AllArgsConstructor;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -31,18 +33,19 @@ public class DataStreamProvider {
             try {
                 input = Iterators.concat(
                         Iterators.transform(source.getTableFiles(fileTable, 0).iterator()
-                                , nf -> fileToRecordIterator(nf.getFile(), fileTable.getFileType())));
+                                , nf -> fileToRecordIterator(nf.getFile(), fileTable.getFileFormat())));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
-            DataStreamSource<SourceRecord.Raw> stream = env.fromCollection(input,SourceRecord.Raw.class);
+            List<SourceRecord.Raw> allItems = Lists.newArrayList(input);
+            DataStreamSource<SourceRecord.Raw> stream = env.fromCollection(allItems);
 //        stream.assignTimestampsAndWatermarks(WatermarkStrategy.<SourceRecord>forMonotonousTimestamps().withTimestampAssigner((event, timestamp) -> event.getSourceTime().toEpochSecond()));
             return stream;
         } else throw new UnsupportedOperationException("Unrecognized source table type: " + table);
     }
 
-    private Iterator<SourceRecord.Raw> fileToRecordIterator(Path file, FileType fileType) {
+    private Iterator<SourceRecord.Raw> fileToRecordIterator(Path file, FileFormat fileType) {
         final Instant fileTime;
         try {
             fileTime = Files.getLastModifiedTime(file).toInstant();

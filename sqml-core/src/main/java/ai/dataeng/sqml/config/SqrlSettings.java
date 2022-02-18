@@ -25,6 +25,7 @@ import ai.dataeng.sqml.parser.processor.SubscriptionProcessorImpl;
 import ai.dataeng.sqml.parser.validator.ScriptValidatorImpl;
 import ai.dataeng.sqml.planner.HeuristicPlannerImpl;
 import ai.dataeng.sqml.planner.operator.ImportResolver;
+import com.google.common.base.Preconditions;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -92,13 +93,14 @@ public class SqrlSettings {
                 joinProcessor, distinctProcessor, subscriptionProcessor, namespace));
 
     GlobalConfiguration.Engines engines = config.getEngines();
+    Preconditions.checkArgument(engines.getFlink()!=null,"Must configure Flink engine");
     FlinkConfiguration flinkConfig = engines.getFlink();
     builder.streamEngineProvider(flinkConfig);
     builder.streamGeneratorProvider((flink, jdbc) -> new FlinkGenerator(jdbc, (FlinkStreamEngine) flink));
     builder.streamMonitorProvider((flink, jdbc, meta, registry) ->
             new FlinkSourceMonitor((FlinkStreamEngine) flink,jdbc,meta, registry));
 
-    if (!config.getEnvironment().isMonitor_sources()) {
+    if (!config.getEnvironment().isMonitorSources()) {
       builder.sourceTableMonitorProvider(SourceTableMonitorProvider.NO_MONITORING);
     } else {
       builder.sourceTableMonitorProvider((engine,sourceMonitor) -> new SourceTableMonitorImpl(engine,sourceMonitor));

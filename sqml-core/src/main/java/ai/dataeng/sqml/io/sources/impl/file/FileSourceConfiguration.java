@@ -8,10 +8,7 @@ import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
 import org.h2.util.StringUtils;
 
 import java.nio.file.Files;
@@ -20,20 +17,22 @@ import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 @Builder
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class FileSourceConfiguration implements DataSourceConfiguration {
 
     public static final String DEFAULT_PATTERN = "_(\\d+)";
 
-    private String name;
-    private CanonicalizerConfiguration canonicalizer;
-    @NonNull
-    private String path;
-    private String pattern;
+    String name;
+    @Builder.Default
+    @NonNull CanonicalizerConfiguration canonicalizer = new CanonicalizerConfiguration();
+    @NonNull String path;
+    @Builder.Default
+    @NonNull String pattern = DEFAULT_PATTERN;
 
     private DataSource validateAndInitialize(ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        NameCanonicalizer canon = CanonicalizerConfiguration.get(canonicalizer);
+        NameCanonicalizer canon = canonicalizer.initialize();
 
         String locationName = name!=null?name:path;
         Path directoryPath;
@@ -54,7 +53,7 @@ public class FileSourceConfiguration implements DataSourceConfiguration {
 
         Name n = Name.of(StringUtils.isNullOrEmpty(name)?directoryPath.getFileName().toString():name,canon);
 
-        Pattern partPattern = Pattern.compile((pattern!=null?pattern:DEFAULT_PATTERN)+"$");
+        Pattern partPattern = Pattern.compile(pattern+"$");
         return new FileSource(n,canon,directoryPath,partPattern,this);
     }
 

@@ -29,7 +29,7 @@ public class LocationConversionError<L> extends SimpleConversionError {
 
     @Override
     public String toString() {
-        return super.toString() + ";location=" + location.toString();
+        return severity.name() + "@location=" + location.toString()  + "[" + msg + "]";
     }
 
 }

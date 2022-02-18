@@ -75,7 +75,7 @@ public class FileSource implements DataSource {
     @Override
     public Collection<? extends SourceTableConfiguration> pollTables(long maxWait, TimeUnit timeUnit) throws InterruptedException {
         ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
-        Map<Name, FileTableConfiguration> tablesByName = null;
+        Map<Name, FileTableConfiguration> tablesByName = new HashMap<>();
         try {
             Files.list(directoryPath).filter(this::supportedFile).forEach(p -> {
                 FileTableConfiguration table = getTable(p,errors);
@@ -102,15 +102,15 @@ public class FileSource implements DataSource {
     }
 
     private boolean supportedFile(Path p) {
-        return Files.isRegularFile(p) && FileType.validExtension(getExtension(p));
+        return Files.isRegularFile(p) && FileFormat.validExtension(getExtension(p));
     }
 
     private FileTableConfiguration getTable(Path p, ProcessMessage.ProcessBundle<ConfigurationError> errors) {
         Preconditions.checkArgument(supportedFile(p));
+        String absBasePath = p.getParent().toAbsolutePath().toString();
         String fileName = p.getFileName().toString();
         String extension = FilenameUtils.getExtension(fileName);
         fileName = FilenameUtils.removeExtension(fileName);
-        fileName = fileName.substring(0,FilenameUtils.indexOfExtension(fileName));
         //Match pattern
         boolean multipleParts = false;
         Matcher matcher = partPattern.matcher(fileName);
@@ -137,13 +137,14 @@ public class FileSource implements DataSource {
                     "File name [%s] is not valid after removing extension and part number",p));
             return null;
         }
-        FileType fileType = FileType.getFileTypeFromExtension(extension);
-        if (fileType==null) {
+        FileFormat fileFormat = FileFormat.getFileTypeFromExtension(extension);
+        if (fileFormat ==null) {
             errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE, name.toString(),
                     "File name [%s] does not have a valid extension",p));
             return null;
         }
-        return new FileTableConfiguration(fileName,extension,fileType,multipleParts,Name.of(fileName, canonicalizer));
+        Name tableName = Name.of(fileName, canonicalizer); //tableName and prefix are identical in this case
+        return new FileTableConfiguration(tableName, absBasePath, extension, fileFormat,multipleParts, tableName);
     }
 
 
@@ -169,9 +170,10 @@ public class FileSource implements DataSource {
             String filename = p.getFileName().toString();
             if (FilenameUtils.getExtension(filename).equals(table.extension)) {
                 filename = FilenameUtils.removeExtension(filename);
-                if (!table.multipleParts && filename.equals(table.filePrefix)) {
+                if (!table.multipleParts && Name.of(filename,canonicalizer).equals(table.filePrefix)) {
                     files.add(new NumberedFile(0,p));
-                } else if (table.multipleParts && filename.startsWith(table.filePrefix)) {
+                } else if (table.multipleParts &&
+                        Name.of(filename.substring(0,table.filePrefix.length()),canonicalizer).equals(table.filePrefix)) {
                     Matcher matcher = partPattern.matcher(filename);
                     if (matcher.find()) {
                         String number = matcher.group(1);

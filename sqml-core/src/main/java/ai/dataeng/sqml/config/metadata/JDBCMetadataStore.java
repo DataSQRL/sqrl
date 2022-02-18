@@ -12,9 +12,7 @@ import com.google.common.collect.ImmutableMap;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
@@ -77,7 +75,7 @@ public class JDBCMetadataStore implements MetadataStore {
 
     public static final String GET_VALUE = "SELECT value FROM `"+TABLE_NAME+"` WHERE key = ?";
 
-    public static final String KEY_PREFIX = "SELECT key FROM `"+TABLE_NAME+"` WHERE key LIKE '?'";
+    public static final String KEY_PREFIX = "SELECT key FROM `"+TABLE_NAME+"` WHERE key LIKE ?";
 
     @Override
     public void close() {
@@ -111,24 +109,25 @@ public class JDBCMetadataStore implements MetadataStore {
         String keyStr = getKeyString(firstKey,moreKeys);
         String query = UPSERT_QUERIES.get(dialect);
         Preconditions.checkArgument(query!=null,"Dialect not supported: %s", dialect);
-        Blob valueBlob;
-        try {
-            valueBlob= connection.createBlob();
-        } catch (SQLException e) {
-            throw new RuntimeException("Could not create blob",e);
-        }
-        try (PreparedStatement pstmt = connection.prepareStatement(query);
-             OutputStream outputStream = valueBlob.setBinaryStream(1);
-             Output out = new Output(outputStream)) {
 
-            kryo.writeObject(out, value);
+        byte[] data;
+        try {
+            ByteArrayOutputStream outstream = new ByteArrayOutputStream();
+            Output out = new Output(outstream);
+            kryo.writeClassAndObject(out, value);
+            out.close();
+            outstream.close();
+            data = outstream.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Exception serializing object",e);
+        }
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, keyStr);
-            pstmt.setBlob(2, valueBlob);
+            pstmt.setBinaryStream(2, new ByteArrayInputStream(data));
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Could not execute SQL query",e);
-        } catch (IOException e) {
-            throw new RuntimeException("Exception serializing object",e);
         }
     }
 
@@ -136,25 +135,15 @@ public class JDBCMetadataStore implements MetadataStore {
     public <T> T get(Class<T> clazz, String firstKey, String... moreKeys) {
         String keyStr = getKeyString(firstKey,moreKeys);
 
-        Blob valueBlob = null;
-
         try (PreparedStatement pstmt = connection.prepareStatement(GET_VALUE)) {
             pstmt.setString(1,keyStr);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                valueBlob = rs.getBlob(1);
-            }
+                InputStream input = rs.getBinaryStream(1);
+                return (T)kryo.readClassAndObject(new Input(input));
+            } else return null;
         } catch (SQLException e) {
             throw new RuntimeException("Could not execute SQL query",e);
-        }
-
-        if (valueBlob==null) return null;
-        else {
-            try (Input in = new Input(valueBlob.getBinaryStream())) {
-                return kryo.readObject(in, clazz);
-            } catch (SQLException e) {
-                throw new RuntimeException("Could not read blob",e);
-            }
         }
     }
 

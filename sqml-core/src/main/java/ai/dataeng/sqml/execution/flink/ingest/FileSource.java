@@ -2,7 +2,7 @@ package ai.dataeng.sqml.execution.flink.ingest;
 
 import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.io.sources.impl.file.FileTableConfiguration;
-import ai.dataeng.sqml.io.sources.impl.file.FileType;
+import ai.dataeng.sqml.io.sources.impl.file.FileFormat;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
@@ -29,7 +29,7 @@ public class FileSource {
                 continue;
             }
             names.add(field.getCanonicalName());
-            if (table.getFileType() == FileType.CSV) {
+            if (table.getFileFormat() == FileFormat.CSV) {
                 types.add(Types.STRING);//toType(field.getTypes().get(0).getType());
             } else {
                 types.add(toType(field.getTypes().get(0).getType()));

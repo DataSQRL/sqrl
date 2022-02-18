@@ -14,9 +14,11 @@ import java.util.regex.Pattern;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class JDBCConfiguration implements EngineConfiguration.Database {
 
-    @NotNull
+    @NonNull @NotNull
     String dbURL;
     @Nullable
     String user;
@@ -24,7 +26,7 @@ public class JDBCConfiguration implements EngineConfiguration.Database {
     String password;
     @Nullable
     String driverName;
-    @NotNull
+    @NonNull @NotNull
     Dialect dialect;
 
     public enum Dialect {
@@ -33,7 +35,7 @@ public class JDBCConfiguration implements EngineConfiguration.Database {
 
     }
 
-    public Pattern validDBName = Pattern.compile("^[a-z][_a-z0-9]{2,}$");
+    public static Pattern validDBName = Pattern.compile("^[a-z][_a-z0-9]{2,}$");
 
     public Database getDatabase(@NonNull String databaseName) {
         Preconditions.checkArgument(StringUtils.isNotEmpty(databaseName)
@@ -65,7 +67,7 @@ public class JDBCConfiguration implements EngineConfiguration.Database {
     @ToString
     public static class Database implements JDBCConnectionProvider {
 
-        @NotNull
+        @NonNull
         private String dbURL;
         @Nullable
         private String user;
@@ -73,9 +75,9 @@ public class JDBCConfiguration implements EngineConfiguration.Database {
         private String password;
         @Nullable
         private String driverName;
-        @NotNull
+        @NonNull
         private Dialect dialect;
-        @NotNull
+        @NonNull
         private String databaseName;
 
         @Override

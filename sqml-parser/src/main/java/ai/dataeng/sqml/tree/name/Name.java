@@ -28,6 +28,10 @@ public interface Name extends Serializable, Comparable<Name> {
      */
     String getCanonical();
 
+    default int length() {
+        return getCanonical().length();
+    }
+
     /**
      * Returns the name to use when displaying the field (e.g. in the API).
      * This is what the user expects the field to be labeled.

@@ -1,27 +1,27 @@
 package ai.dataeng.sqml.io.sources.impl;
 
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.io.Serializable;
 
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
+@Getter
 @EqualsAndHashCode
 public class CanonicalizerConfiguration implements Serializable {
 
-    private Type type = Type.DEFAULT;
+    @Builder.Default
+    @NonNull Type type = Type.DEFAULT;
 
     @Override
     public String toString() {
         return "CanonicalizerConfig{" + type + '}';
     }
 
-    public static NameCanonicalizer get(CanonicalizerConfiguration config) {
-        if (config==null || config.type==null) return Type.DEFAULT.canonicalizer;
-        else return config.type.canonicalizer;
+    public NameCanonicalizer initialize() {
+        return type.canonicalizer;
     }
 
     public enum Type {

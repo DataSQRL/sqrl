@@ -134,7 +134,7 @@ public class Environment implements Closeable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     //Clean up stuff
     metadataStore.close();
   }
