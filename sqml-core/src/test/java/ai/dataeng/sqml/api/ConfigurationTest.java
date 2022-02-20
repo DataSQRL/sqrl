@@ -35,7 +35,7 @@ public class ConfigurationTest {
     static final Path dbPath = Path.of("tmp");
     static final String jdbcURL = "jdbc:h2:"+dbPath.toAbsolutePath();
 
-    static final Path DATA_DIR = resourceDir.resolve("data");
+    public static final Path DATA_DIR = resourceDir.resolve("data");
 
     @BeforeEach
     public void deleteDatabase() throws IOException {
