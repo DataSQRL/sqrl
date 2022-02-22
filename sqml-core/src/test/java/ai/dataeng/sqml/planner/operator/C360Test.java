@@ -7,6 +7,7 @@ import ai.dataeng.sqml.ScriptBundle;
 import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.planner.Script;
+import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -43,7 +44,8 @@ public class C360Test {
 
     FileSourceConfiguration dd = FileSourceConfiguration.builder()
             .name(RETAIL_DATASET).uri(RETAIL_DATA_DIR.toAbsolutePath().toString()).build();
-    env.getDatasetRegistry().addSource(dd);
+
+    env.getDatasetRegistry().addOrUpdateSource(dd, new ProcessMessage.ProcessBundle<>());
   }
 
   @Test

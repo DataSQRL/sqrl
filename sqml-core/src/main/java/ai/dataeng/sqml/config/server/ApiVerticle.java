@@ -6,6 +6,8 @@ import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -21,16 +23,26 @@ import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class ApiVerticle extends AbstractVerticle {
 
+    private static final Map<Integer,String> ERROR2MESSAGE = ImmutableMap.of(
+            400, "Processing Error",
+            404, "Not Found",
+            405, "Validation Error"
+    );
+
+
     private HttpServer server;
 
     private final Environment environment;
+    private final int port = 8080;
 
     public ApiVerticle(Environment environment) {
         this.environment = environment;
@@ -42,6 +54,7 @@ public class ApiVerticle extends AbstractVerticle {
                 .onSuccess(routerBuilder -> {
                     // Add routes handlers
                     List<JsonObject> sources = environment.getDatasetRegistry().getDatasets().stream()
+                            .map(SourceDataset::getSource)
                             .map(ApiVerticle::source2Json).collect(Collectors.toList());
                     routerBuilder.operation("getSources").handler(routingContext ->
                             routingContext
@@ -50,16 +63,14 @@ public class ApiVerticle extends AbstractVerticle {
                                     .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                                     .end(new JsonArray(sources).encode())
                     );
-                    routerBuilder.operation("addFileSource").handler(new SourceOperationHandler<>(
-                            FileSourceConfiguration.class, Operation.ADD));
-                    routerBuilder.operation("updateFileSource").handler(new SourceOperationHandler<>(
-                            FileSourceConfiguration.class, Operation.UPDATE));
+                    routerBuilder.operation("addOrUpdateFileSource").handler(new SourceAddOrUpdateHandler<>(
+                            FileSourceConfiguration.class));
                     routerBuilder.operation("getSourceByName").handler(routingContext -> {
                         RequestParameters params = routingContext.get("parsedParameters");
                         String sourceName = params.pathParameter("sourceName").getString();
                         SourceDataset ds = environment.getDatasetRegistry().getDataset(sourceName);
                         if (ds!=null) {
-                            JsonObject result = source2Json(ds);
+                            JsonObject result = source2Json(ds.getSource());
                             routingContext
                                     .response()
                                     .setStatusCode(200)
@@ -82,62 +93,48 @@ public class ApiVerticle extends AbstractVerticle {
                             routingContext.fail(404, new Exception("Not yet implemented")); // <5>
                     });
 
-                    // Generate the router
-                    // tag::routerGen[]
                     Router router = routerBuilder.createRouter(); // <1>
-                    router.errorHandler(404, routingContext -> { // <2>
-                        JsonObject errorObject = new JsonObject() // <3>
-                                .put("code", 404)
-                                .put("message",
-                                        (routingContext.failure() != null) ?
-                                                routingContext.failure().getMessage() :
-                                                "Not Found"
-                                );
-                        routingContext
-                                .response()
-                                .setStatusCode(404)
-                                .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                                .end(errorObject.encode()); // <4>
-                    });
-                    router.errorHandler(400, routingContext -> {
-                        JsonObject errorObject = new JsonObject()
-                                .put("code", 400)
-                                .put("message",
-                                        (routingContext.failure() != null) ?
-                                                routingContext.failure().getMessage() :
-                                                "Validation Exception"
-                                );
-                        routingContext
-                                .response()
-                                .setStatusCode(400)
-                                .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                                .end(errorObject.encode());
-                    });
+                    //Generate error handlers
+                    for (Map.Entry<Integer,String> failure : ERROR2MESSAGE.entrySet()) {
+                        int errorCode = failure.getKey();
+                        Preconditions.checkArgument(errorCode>=400 && errorCode<410);
+                        String defaultMessage = failure.getValue();
+                        Preconditions.checkArgument(StringUtils.isNotEmpty(defaultMessage));
 
-                    server = vertx.createHttpServer(new HttpServerOptions().setPort(8080).setHost("localhost"));
+                        router.errorHandler(errorCode, routingContext -> {
+                            Throwable exception = routingContext.failure();
+                            JsonObject errorObject = new JsonObject()
+                                    .put("code", errorCode)
+                                    .put("message", exception!=null?exception.getMessage():defaultMessage
+                                    );
+                            routingContext
+                                    .response()
+                                    .setStatusCode(errorCode)
+                                    .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                                    .end(errorObject.encode());
+                        });
+                    }
+                    server = vertx.createHttpServer(new HttpServerOptions().setPort(port).setHost("localhost"));
                     server.requestHandler(router).listen();
                     startPromise.complete();
                 })
                 .onFailure(startPromise::fail);
     }
 
-    private static JsonObject source2Json(SourceDataset dataset) {
-        DataSourceConfiguration sourceConfig = dataset.getSource().getConfiguration();
+    private static JsonObject source2Json(DataSource source) {
+        DataSourceConfiguration sourceConfig = source.getConfiguration();
         JsonObject base = JsonObject.mapFrom(sourceConfig);
-        base.put("sourceName",dataset.getName().getDisplay());
+        base.put("sourceName", source.getDatasetName().getDisplay());
         if (sourceConfig instanceof FileSourceConfiguration) {
             base.put("objectType", "FileSourceConfig");
         } else throw new UnsupportedOperationException("Unexpected source config: " + sourceConfig.getClass());
         return base;
     }
 
-    private enum Operation { ADD, UPDATE }
-
     @AllArgsConstructor
-    private class SourceOperationHandler<S extends DataSourceConfiguration> implements Handler<RoutingContext> {
+    private class SourceAddOrUpdateHandler<S extends DataSourceConfiguration> implements Handler<RoutingContext> {
 
         private final Class<S> clazz;
-        private final Operation operation;
 
         @Override
         public void handle(RoutingContext routingContext) {
@@ -145,25 +142,17 @@ public class ApiVerticle extends AbstractVerticle {
             JsonObject source = params.body().getJsonObject();
             S sourceConfig = source.mapTo(clazz);
             ProcessMessage.ProcessBundle errors = new ProcessMessage.ProcessBundle<>();
-            sourceConfig.validate(errors);
-            if (errors.isFatal()) {
+            DataSource result = environment.getDatasetRegistry().addOrUpdateSource(sourceConfig, errors);
+            if (errors.isFatal() || result==null) {
                 routingContext.fail(405, new Exception(errors.combineMessages(ProcessMessage.Severity.FATAL,
                         "Provided configuration has the following validation errors:\n","\n" )));
             } else {
-                switch (operation) {
-                    case ADD:
-                        environment.getDatasetRegistry().addSource(sourceConfig);
-                        break;
-                    case UPDATE:
-                        environment.getDatasetRegistry().updateSource(sourceConfig);
-                        break;
-                    default: throw new UnsupportedOperationException();
-                }
-
+                JsonObject jsonResult = source2Json(result);
                 routingContext
                         .response()
                         .setStatusCode(200)
-                        .end();
+                        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                        .end(jsonResult.encode());
             }
         }
     }

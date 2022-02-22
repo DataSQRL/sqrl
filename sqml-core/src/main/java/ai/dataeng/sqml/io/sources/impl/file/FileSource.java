@@ -149,14 +149,13 @@ public class FileSource implements DataSource {
 
 
     @Override
-    public boolean isCompatible(@NonNull DataSource other) {
+    public boolean isCompatible(@NonNull DataSource other, @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
         Preconditions.checkArgument((other instanceof FileSource) && other.getDatasetName().equals(name));
         FileSource otherDir = (FileSource) other;
-
-        if (!directoryPath.equals(otherDir.directoryPath)) return false;
-        if (!canonicalizer.equals(otherDir.canonicalizer)) return false;
-
-        return true;
+        //TODO: support updates
+        errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.GLOBAL,"",
+                "File data sources currently do not support updates"));
+        return false;
     }
 
     @Override

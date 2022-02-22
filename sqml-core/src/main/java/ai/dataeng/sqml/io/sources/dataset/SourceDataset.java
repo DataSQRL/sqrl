@@ -62,12 +62,8 @@ public class SourceDataset {
 
     void updateConfiguration(DataSource update) {
         Preconditions.checkArgument(source.getDatasetName().equals(update.getDatasetName()));
-        if (source.isCompatible(update)) {
-            source = update;
-            registry.persistence.putDataset(source.getDatasetName(),source.getConfiguration());
-        } else {
-            throw new IllegalStateException(String.format("Updated source is incompatible with existing one: [%s]",update));
-        }
+        source = update;
+        registry.persistence.putDataset(source.getDatasetName(),source.getConfiguration());
     }
 
     public DataSource getSource() {

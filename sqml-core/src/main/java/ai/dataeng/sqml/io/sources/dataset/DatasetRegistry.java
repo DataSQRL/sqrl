@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
+import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
@@ -12,7 +13,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -39,43 +39,53 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
 
     void initializeDatasets() {
         //Read existing datasets from store
-        for (DataSourceConfiguration dsConfig : persistence.getDatasets()) addSource(dsConfig);
+        for (DataSourceConfiguration dsConfig : persistence.getDatasets()) {
+            ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
+            addOrUpdateSource(dsConfig, errors, 10);
+            if (errors.isFatal()) {
+                throw new RuntimeException(
+                        errors.combineMessages(ProcessMessage.Severity.FATAL,
+                                "Could not initialize dataset from stored config: \n","\n"));
+            }
+        }
     }
 
-    public synchronized DataSource addSource(@NonNull DataSourceConfiguration datasource) {
-        return addSource(datasource,defaultInitialPollingWaitMS);
+    public synchronized DataSource addOrUpdateSource
+            (@NonNull DataSourceConfiguration datasource,
+             @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+        return addOrUpdateSource(datasource,errors, defaultInitialPollingWaitMS);
     }
 
-    public synchronized DataSource addSource(@NonNull DataSourceConfiguration datasource, long sourceInitializationWaitTimeMS) {
-        Preconditions.checkArgument(datasource.validate(new ProcessMessage.ProcessBundle<>()),
-                "Provided data source configuration is invalid: %s", datasource);
+    public synchronized DataSource addOrUpdateSource
+            (@NonNull DataSourceConfiguration datasource,
+             @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors,
+             long sourceInitializationWaitTimeMS) {
+        datasource.validate(errors);
+        if (errors.isFatal()) return null;
         DataSource source = datasource.initialize();
+        SourceDataset dataset = datasets.get(source.getDatasetName());
+        if (dataset==null) {
+            dataset = new SourceDataset(this, source);
+            persistence.putDataset(source.getDatasetName(), datasource);
+            datasets.put(dataset.getName(), dataset);
 
-        Preconditions.checkArgument(!datasets.containsKey(source.getDatasetName()),
-                "A data source with the name [%s] already exists",source.getDatasetName());
-        SourceDataset ds = new SourceDataset(this, source);
-        persistence.putDataset(source.getDatasetName(),datasource);
-        datasets.put(ds.getName(),ds);
+        } else {
+            if (dataset.getSource().isCompatible(source, errors)) {
+                dataset.updateConfiguration(source);
+            } else {
+                return null;
+            }
+            source = dataset.getSource();
+        }
         long initialPollingDelayMS = pollTablesEveryMS;
         try {
-            ds.refreshTables(sourceInitializationWaitTimeMS);
+            dataset.refreshTables(sourceInitializationWaitTimeMS);
         } catch (InterruptedException e) {
             //Initial table polling is taking too long, let's do it again soon in the background
             initialPollingDelayMS = 0;
         }
-        tableMonitors.scheduleWithFixedDelay(ds.polling, initialPollingDelayMS, pollTablesEveryMS, TimeUnit.MILLISECONDS);
+        tableMonitors.scheduleWithFixedDelay(dataset.polling, initialPollingDelayMS, pollTablesEveryMS, TimeUnit.MILLISECONDS);
         return source;
-    }
-
-    public synchronized DataSource updateSource(@NonNull DataSourceConfiguration datasource) {
-        Preconditions.checkArgument(datasource.validate(new ProcessMessage.ProcessBundle<>()),
-                "Provided data source configuration is invalid: %s", datasource);
-        DataSource source = datasource.initialize();
-
-        SourceDataset existing = datasets.get(source.getDatasetName());
-        Preconditions.checkArgument(existing!=null,"Datasource has not yet been connected: [%s]", source.getDatasetName());
-        existing.updateConfiguration(source);
-        return existing.getSource();
     }
 
     @Override

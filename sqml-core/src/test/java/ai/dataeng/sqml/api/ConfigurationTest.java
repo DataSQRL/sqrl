@@ -71,9 +71,9 @@ public class ConfigurationTest {
                 .name(dsName)
                 .build();
 
-        assertTrue(fileConfig.validate(new ProcessMessage.ProcessBundle<>()));
-
-        registry.addSource(fileConfig);
+        ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
+        registry.addOrUpdateSource(fileConfig, errors);
+        assertFalse(errors.isFatal());
         SourceDataset ds = registry.getDataset(dsName);
         assertNotNull(ds);
         Set<String> tablenames = ds.getTables().stream().map(SourceTable::getName)
@@ -111,7 +111,9 @@ public class ConfigurationTest {
                 .name(dsName)
                 .build();
 
-        registry.addSource(fileConfig);
+        ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
+        registry.addOrUpdateSource(fileConfig, errors);
+        assertFalse(errors.isFatal());
 
         //Needs some time to wait for the flink pipeline to compile data
 

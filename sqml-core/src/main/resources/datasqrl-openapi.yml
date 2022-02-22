@@ -34,45 +34,37 @@ tags:
       url: http://datasqrl.com
 paths:
   /source/file:
-    put:
-      tags:
-        - source
-      summary: Update an existing source
-      operationId: updateFileSource
-      requestBody:
-        description: Source configuration for the source to be updated
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FileSourceConfig'
-        required: true
-      responses:
-        400:
-          description: Invalid Source name supplied
-          content: {}
-        404:
-          description: Source not found
-          content: {}
-        405:
-          description: Validation exception
-          content: {}
-      x-codegen-request-body-name: body
     post:
       tags:
         - source
-      summary: Connect a new source to the server
-      operationId: addFileSource
+      summary: Connect or update a data source
+      operationId: addOrUpdateFileSource
       requestBody:
-        description: Source configuration for the source to be connected
+        description: Source configuration for the source to be connected or updated
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FileSourceConfig'
         required: true
       responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileSource'
         405:
           description: Validation exception
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       x-codegen-request-body-name: body
   /source:
     get:
@@ -93,6 +85,12 @@ paths:
                     - $ref: '#/components/schemas/KafkaSource'
                   discriminator:
                     propertyName: objectType
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /source/{sourceName}:
     get:
       tags:
@@ -119,11 +117,17 @@ paths:
                 discriminator:
                   propertyName: objectType
         400:
-          description: Invalid Name supplied
-          content: {}
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         404:
           description: Source not found
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     delete:
       tags:
         - source
@@ -138,11 +142,17 @@ paths:
             type: string
       responses:
         400:
-          description: Invalid name supplied
-          content: {}
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         404:
           description: Source not found
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Source:
@@ -198,3 +208,13 @@ components:
         - lowercase
         - case_sensitive
         - system
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string

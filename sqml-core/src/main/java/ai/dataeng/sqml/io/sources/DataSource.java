@@ -1,7 +1,9 @@
 package ai.dataeng.sqml.io.sources;
 
+import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
+import ai.dataeng.sqml.type.basic.ProcessMessage;
 import lombok.NonNull;
 
 import java.util.Collection;
@@ -21,7 +23,7 @@ public interface DataSource {
 
     Collection<? extends SourceTableConfiguration> pollTables(long maxWait, TimeUnit timeUnit) throws InterruptedException;
 
-    boolean isCompatible(@NonNull DataSource other);
+    boolean isCompatible(@NonNull DataSource other, @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors);
 
     DataSourceConfiguration getConfiguration();
 
