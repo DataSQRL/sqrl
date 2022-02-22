@@ -1,9 +1,8 @@
 package ai.dataeng.sqml.type.basic;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,6 +58,20 @@ public interface ProcessMessage {
         public void merge(ProcessBundle<E> other) {
             if (other==null) return;
             for (E err : other) add(err);
+        }
+
+        public void throwExceptionIfFatal(String prefix) {
+            if (isFatal()) {
+                String message = errors.stream().filter(ProcessMessage::isFatal).map(ProcessMessage::toString)
+                        .collect(Collectors.joining("\n"));
+                 message = prefix + "\n" + message;
+                 throw new IllegalArgumentException(message);
+            }
+        }
+
+        public String combineMessages(Severity minSeverity, String prefix, String delimiter) {
+            return prefix + errors.stream().filter(m -> m.getSeverity().compareTo(minSeverity)>=0).map(ProcessMessage::toString)
+                    .collect(Collectors.joining("\n"));
         }
 
         public static void logMessages(ProcessBundle<? extends ProcessMessage> messages) {

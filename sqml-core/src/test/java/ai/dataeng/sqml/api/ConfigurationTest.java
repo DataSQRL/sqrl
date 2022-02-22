@@ -12,7 +12,6 @@ import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
-import ai.dataeng.sqml.planner.Dataset;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.google.common.collect.ImmutableSet;
@@ -68,7 +67,7 @@ public class ConfigurationTest {
         String dsName = "bookclub";
 
         FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
-                .path(DATA_DIR.toAbsolutePath().toString())
+                .uri(DATA_DIR.toAbsolutePath().toString())
                 .name(dsName)
                 .build();
 
@@ -108,7 +107,7 @@ public class ConfigurationTest {
         String dsName = "bookclub";
 
         FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
-                .path(DATA_DIR.toAbsolutePath().toString())
+                .uri(DATA_DIR.toAbsolutePath().toString())
                 .name(dsName)
                 .build();
 

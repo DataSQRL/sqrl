@@ -9,6 +9,7 @@ import lombok.NonNull;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimerTask;
@@ -41,11 +42,11 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         for (DataSourceConfiguration dsConfig : persistence.getDatasets()) addSource(dsConfig);
     }
 
-    public synchronized void addSource(@NonNull DataSourceConfiguration datasource) {
-        addSource(datasource,defaultInitialPollingWaitMS);
+    public synchronized DataSource addSource(@NonNull DataSourceConfiguration datasource) {
+        return addSource(datasource,defaultInitialPollingWaitMS);
     }
 
-    public synchronized void addSource(@NonNull DataSourceConfiguration datasource, long sourceInitializationWaitTimeMS) {
+    public synchronized DataSource addSource(@NonNull DataSourceConfiguration datasource, long sourceInitializationWaitTimeMS) {
         Preconditions.checkArgument(datasource.validate(new ProcessMessage.ProcessBundle<>()),
                 "Provided data source configuration is invalid: %s", datasource);
         DataSource source = datasource.initialize();
@@ -63,9 +64,10 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
             initialPollingDelayMS = 0;
         }
         tableMonitors.scheduleWithFixedDelay(ds.polling, initialPollingDelayMS, pollTablesEveryMS, TimeUnit.MILLISECONDS);
+        return source;
     }
 
-    public synchronized void updateSource(@NonNull DataSourceConfiguration datasource) {
+    public synchronized DataSource updateSource(@NonNull DataSourceConfiguration datasource) {
         Preconditions.checkArgument(datasource.validate(new ProcessMessage.ProcessBundle<>()),
                 "Provided data source configuration is invalid: %s", datasource);
         DataSource source = datasource.initialize();
@@ -73,6 +75,7 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         SourceDataset existing = datasets.get(source.getDatasetName());
         Preconditions.checkArgument(existing!=null,"Datasource has not yet been connected: [%s]", source.getDatasetName());
         existing.updateConfiguration(source);
+        return existing.getSource();
     }
 
     @Override
@@ -82,6 +85,10 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
 
     public SourceDataset getDataset(@NonNull String name) {
         return getDataset(Name.system(name));
+    }
+
+    public Collection<SourceDataset> getDatasets() {
+        return datasets.values();
     }
 
     @Override

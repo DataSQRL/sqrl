@@ -70,6 +70,10 @@ public class SourceDataset {
         }
     }
 
+    public DataSource getSource() {
+        return source;
+    }
+
     public @NonNull DataSource getConfiguration() {
         return source;
     }

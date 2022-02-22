@@ -26,28 +26,28 @@ public class FileSourceConfiguration implements DataSourceConfiguration {
 
     String name;
     @Builder.Default
-    @NonNull CanonicalizerConfiguration canonicalizer = new CanonicalizerConfiguration();
-    @NonNull String path;
+    @NonNull CanonicalizerConfiguration canonicalizer = CanonicalizerConfiguration.system;
+    @NonNull String uri;
     @Builder.Default
     @NonNull String pattern = DEFAULT_PATTERN;
 
     private DataSource validateAndInitialize(ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        NameCanonicalizer canon = canonicalizer.initialize();
+        NameCanonicalizer canon = canonicalizer.getCanonicalizer();
 
-        String locationName = name!=null?name:path;
+        String locationName = name!=null?name: uri;
         Path directoryPath;
         try {
-            directoryPath = Path.of(path);
+            directoryPath = Path.of(uri);
             if (!Files.exists(directoryPath) || !Files.isDirectory(directoryPath)) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,locationName,"Path is invalid: %s", path));
+                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,locationName,"Path is invalid: %s", uri));
                 return null;
             }
             if (!Files.isReadable(directoryPath)) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,locationName,"Directory cannot be read: %s", path));
+                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,locationName,"Directory cannot be read: %s", uri));
                 return null;
             }
         } catch (InvalidPathException e) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,locationName,"Path is invalid: %s", path));
+            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,locationName,"Path is invalid: %s", uri));
             return null;
         }
 

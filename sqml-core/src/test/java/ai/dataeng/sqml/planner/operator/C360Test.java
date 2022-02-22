@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import ai.dataeng.sqml.Environment;
 import ai.dataeng.sqml.ScriptBundle;
 import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
-import ai.dataeng.sqml.io.sources.impl.file.FileSource;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.planner.Script;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,7 +42,7 @@ public class C360Test {
 
 
     FileSourceConfiguration dd = FileSourceConfiguration.builder()
-            .name(RETAIL_DATASET).path(RETAIL_DATA_DIR.toAbsolutePath().toString()).build();
+            .name(RETAIL_DATASET).uri(RETAIL_DATA_DIR.toAbsolutePath().toString()).build();
     env.getDatasetRegistry().addSource(dd);
   }
 

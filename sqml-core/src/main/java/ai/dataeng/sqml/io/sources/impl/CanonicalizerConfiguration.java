@@ -4,38 +4,27 @@ import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import lombok.*;
 
 import java.io.Serializable;
+import java.util.Locale;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 @Getter
-@EqualsAndHashCode
-public class CanonicalizerConfiguration implements Serializable {
+public enum CanonicalizerConfiguration implements Serializable {
 
-    @Builder.Default
-    @NonNull Type type = Type.DEFAULT;
+    lowercase(NameCanonicalizer.LOWERCASE_ENGLISH),
+    case_sensitive(NameCanonicalizer.AS_IS),
+    system(NameCanonicalizer.SYSTEM)
+    ;
+
+    private final NameCanonicalizer canonicalizer;
+
+    CanonicalizerConfiguration(NameCanonicalizer canonicalizer) {
+        this.canonicalizer = canonicalizer;
+    }
+
+
 
     @Override
     public String toString() {
-        return "CanonicalizerConfig{" + type + '}';
-    }
-
-    public NameCanonicalizer initialize() {
-        return type.canonicalizer;
-    }
-
-    public enum Type {
-
-        LOWERCASE(NameCanonicalizer.LOWERCASE_ENGLISH),
-        CASE_SENSITIVE(NameCanonicalizer.AS_IS),
-        DEFAULT(NameCanonicalizer.SYSTEM)
-        ;
-
-        private final NameCanonicalizer canonicalizer;
-
-        Type(NameCanonicalizer canonicalizer) {
-            this.canonicalizer = canonicalizer;
-        }
+        return name().toLowerCase(Locale.ENGLISH);
     }
 
 }

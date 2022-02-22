@@ -1,0 +1,200 @@
+openapi: 3.0.1
+info:
+  title: DataSQRL API
+  description: Defines the API of DataSQRL server for submitting scripts, adding sources
+    & sinks, and configuring the environment.
+  termsOfService: http://dataeng.ai/terms
+  contact:
+    email: support@datasqrl.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.1.0
+externalDocs:
+  description: Learn more about DataSQRL
+  url: http://datasqrl.com
+servers:
+  - url: https://localhost:5070/v2
+  - url: http://localhost:5070/v2
+tags:
+  - name: script
+    description: Execute and manage scripts running on the server.
+    externalDocs:
+      description: Find out more
+      url: http://datasqrl.com
+  - name: source
+    description: Connect and manage sources on the server.
+    externalDocs:
+      description: Find out more
+      url: http://datasqrl.com
+  - name: sink
+    description: Connect and manage sinks on the server.
+    externalDocs:
+      description: Find out more about our store
+      url: http://datasqrl.com
+paths:
+  /source/file:
+    put:
+      tags:
+        - source
+      summary: Update an existing source
+      operationId: updateFileSource
+      requestBody:
+        description: Source configuration for the source to be updated
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileSourceConfig'
+        required: true
+      responses:
+        400:
+          description: Invalid Source name supplied
+          content: {}
+        404:
+          description: Source not found
+          content: {}
+        405:
+          description: Validation exception
+          content: {}
+      x-codegen-request-body-name: body
+    post:
+      tags:
+        - source
+      summary: Connect a new source to the server
+      operationId: addFileSource
+      requestBody:
+        description: Source configuration for the source to be connected
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileSourceConfig'
+        required: true
+      responses:
+        405:
+          description: Validation exception
+          content: {}
+      x-codegen-request-body-name: body
+  /source:
+    get:
+      tags:
+        - source
+      summary: Get connected sources
+      operationId: getSources
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/FileSource'
+                    - $ref: '#/components/schemas/KafkaSource'
+                  discriminator:
+                    propertyName: objectType
+  /source/{sourceName}:
+    get:
+      tags:
+        - source
+      summary: Find source by Name
+      description: Returns a single source
+      operationId: getSourceByName
+      parameters:
+        - name: sourceName
+          in: path
+          description: Name of the source to return
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/FileSource'
+                  - $ref: '#/components/schemas/KafkaSource'
+                discriminator:
+                  propertyName: objectType
+        400:
+          description: Invalid Name supplied
+          content: {}
+        404:
+          description: Source not found
+          content: {}
+    delete:
+      tags:
+        - source
+      summary: Disconnects a source
+      operationId: deleteSource
+      parameters:
+        - name: sourceName
+          in: path
+          description: Source name to delete
+          required: true
+          schema:
+            type: string
+      responses:
+        400:
+          description: Invalid name supplied
+          content: {}
+        404:
+          description: Source not found
+          content: {}
+components:
+  schemas:
+    Source:
+      type: object
+      required:
+        - objectType
+        - sourceName
+      properties:
+        objectType:
+          type: string
+        sourceName:
+          type: string
+          description: "The assigned name for this source"
+    FileSource:
+      allOf:
+        - $ref: '#/components/schemas/Source'
+        - $ref: '#/components/schemas/FileSourceConfig'
+    FileSourceConfig:
+      type: object
+      required:
+        - uri
+      properties:
+        uri:
+          type: string
+        canonicalizer:
+          $ref: '#/components/schemas/canonicalizerDef'
+        partPattern:
+          type: string
+        name:
+          type: string
+          description: "The configured name for this source"
+    KafkaSource:
+      allOf:
+        - $ref: '#/components/schemas/Source'
+        - $ref: '#/components/schemas/KafkaSourceConfig'
+    KafkaSourceConfig:
+      type: object
+      required:
+        - host
+        - name
+      properties:
+        host:
+          type: string
+        canonicalizer:
+          $ref: '#/components/schemas/canonicalizerDef'
+        name:
+          type: string
+          description: "The configured name for this source"
+    canonicalizerDef:
+      type: string
+      description: Name Canonicalizer
+      enum:
+        - lowercase
+        - case_sensitive
+        - system
