@@ -51,8 +51,7 @@ public class APIServerTest {
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
                             assertEquals(200, resp.statusCode());
-                            System.out.println("Body: " + resp.body());
-                            JsonArray arr = resp.bodyAsJsonArray();
+                            JsonArray arr = resp.body();
                             assertEquals(0, arr.size());
                             requestCheckpoint.flag();
                         });
