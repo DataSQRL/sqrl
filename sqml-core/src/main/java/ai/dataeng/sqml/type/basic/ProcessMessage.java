@@ -27,7 +27,6 @@ public interface ProcessMessage {
     }
 
     @Slf4j
-    @ToString
     public static class ProcessBundle<E extends ProcessMessage> implements Iterable<E> {
 
         private List<E> errors;
@@ -63,8 +62,15 @@ public interface ProcessMessage {
         }
 
         public String combineMessages(Severity minSeverity, String prefix, String delimiter) {
-            return prefix + errors.stream().filter(m -> m.getSeverity().compareTo(minSeverity)>=0).map(ProcessMessage::toString)
+            String suffix = "";
+            if (errors !=null) suffix = errors.stream().filter(m -> m.getSeverity().compareTo(minSeverity)>=0).map(ProcessMessage::toString)
                     .collect(Collectors.joining(delimiter));
+            return prefix + suffix;
+        }
+
+        @Override
+        public String toString() {
+            return combineMessages(Severity.NOTICE,"","\n");
         }
 
         public static void logMessages(ProcessBundle<? extends ProcessMessage> messages) {

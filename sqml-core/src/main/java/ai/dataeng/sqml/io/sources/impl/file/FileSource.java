@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.io.sources.impl.file;
 
 import ai.dataeng.sqml.config.ConfigurationError;
+import ai.dataeng.sqml.config.util.FileUtil;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
@@ -97,8 +98,8 @@ public class FileSource implements DataSource {
         return tablesByName.values();
     }
 
-    private static final String getExtension(Path p) {
-        return FilenameUtils.getExtension(p.getFileName().toString());
+    private static String getExtension(Path p) {
+        return FileUtil.getExtension(p);
     }
 
     private boolean supportedFile(Path p) {
@@ -108,9 +109,8 @@ public class FileSource implements DataSource {
     private FileTableConfiguration getTable(Path p, ProcessMessage.ProcessBundle<ConfigurationError> errors) {
         Preconditions.checkArgument(supportedFile(p));
         String absBasePath = p.getParent().toAbsolutePath().toString();
-        String fileName = p.getFileName().toString();
-        String extension = FilenameUtils.getExtension(fileName);
-        fileName = FilenameUtils.removeExtension(fileName);
+        String extension = FileUtil.getExtension(p);
+        String fileName = FileUtil.removeExtension(p);
         //Match pattern
         boolean multipleParts = false;
         Matcher matcher = partPattern.matcher(fileName);

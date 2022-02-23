@@ -5,7 +5,7 @@
 //import ai.dataeng.sqml.schema.db.keyvalue.HierarchyKeyValueStore;
 //import ai.dataeng.sqml.schema.db.keyvalue.LocalFileHierarchyKeyValueStore;
 //import ai.dataeng.sqml.physical.SqmlEnv;
-//import ai.dataeng.sqml.ScriptBundle;
+//import ai.dataeng.sqml.config.scripts.ScriptBundle;
 //import ai.dataeng.sqml.imports.DatasetImportManagerFactory;
 //import ai.dataeng.sqml.execution.importer.ImportManager;
 //import ai.dataeng.sqml.imports.ImportSchema;

@@ -58,15 +58,8 @@ public class FileSourceConfiguration implements DataSourceConfiguration {
     }
 
     @Override
-    public boolean validate(ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        validateAndInitialize(errors);
-        return !errors.isFatal();
-    }
-
-    @Override
-    public DataSource initialize() {
-        DataSource source = validateAndInitialize(new ProcessMessage.ProcessBundle<>());
-        Preconditions.checkArgument(source!=null,"Invalid configuration for source");
+    public DataSource initialize(ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+        DataSource source = validateAndInitialize(errors);
         return source;
     }
 }

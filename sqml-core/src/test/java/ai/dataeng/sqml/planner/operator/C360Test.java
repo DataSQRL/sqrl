@@ -3,12 +3,14 @@ package ai.dataeng.sqml.planner.operator;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ai.dataeng.sqml.Environment;
-import ai.dataeng.sqml.ScriptBundle;
+import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
+import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.planner.Script;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.schema.GraphQLSchema;
@@ -16,6 +18,8 @@ import graphql.schema.idl.SchemaPrinter;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.impl.VertxInternal;
+
+import java.nio.file.Files;
 import java.nio.file.Path;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,12 +57,17 @@ public class C360Test {
   public void testC360() {
 //    env.monitorDatasets();
 
-    ScriptBundle bundle = new ScriptBundle.Builder().createScript()
-        .setName(RETAIL_SCRIPT_NAME)
-        .setScript(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION))
-        .setImportSchema(RETAIL_IMPORT_SCHEMA_FILE)
-        .asMain()
-        .add().build();
+    ScriptBundle bundle = ScriptBundle.Config.builder()
+            .name(RETAIL_SCRIPT_NAME)
+            .scripts(ImmutableList.of(
+                    SqrlScript.Config.builder()
+                            .name(RETAIL_SCRIPT_NAME)
+                            .isMain(true)
+                            .scriptContent(Files.readString(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION)))
+                            .schemaYAML(Files.readString(RETAIL_IMPORT_SCHEMA_FILE))
+                            .build()
+            ))
+            .build().initialize(new ProcessMessage.ProcessBundle<>());
 
     Script script = env.compile(bundle);
 

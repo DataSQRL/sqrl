@@ -2,7 +2,8 @@ package ai.dataeng.sqml.config;
 
 import ai.dataeng.sqml.config.engines.FlinkConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
-import ai.dataeng.sqml.io.sources.impl.file.FileSource;
+import ai.dataeng.sqml.config.scripts.FileScriptConfiguration;
+import ai.dataeng.sqml.config.util.ConfigurationUtil;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import lombok.*;
@@ -11,7 +12,6 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessin
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import javax.annotation.Nullable;
 import javax.validation.*;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -19,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Builder
 @Getter
@@ -36,6 +35,9 @@ public class GlobalConfiguration {
     @Builder.Default @NonNull
     @NotNull @Valid
     Sources sources = new Sources();
+    @Builder.Default @NonNull
+    @NotNull @Valid
+    List<FileScriptConfiguration> scripts = new ArrayList<>();
 
     @Builder
     @Getter
@@ -46,7 +48,7 @@ public class GlobalConfiguration {
         @NonNull
         @NotNull @Valid
         JDBCConfiguration jdbc;
-        @Nullable @Valid
+        @Valid
         FlinkConfiguration flink;
 
 
@@ -81,15 +83,7 @@ public class GlobalConfiguration {
     }
 
     public ProcessMessage.ProcessBundle<ConfigurationError> validate() {
-        ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        Validator validator = factory.getValidator();
-        Set<ConstraintViolation<GlobalConfiguration>> violations = validator.validate(this);
-        for (ConstraintViolation<GlobalConfiguration> violation : violations) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.GLOBAL,
-                    violation.getPropertyPath().toString(),violation.getMessage() + ", but found: %s",violation.getInvalidValue()));
-        }
-        return errors;
+        return ConfigurationUtil.javaxValidate(this);
     }
 
 }

@@ -1,6 +1,7 @@
 package ai.dataeng.sqml;
 
-import ai.dataeng.sqml.ScriptBundle.SqmlScript;
+import ai.dataeng.sqml.config.scripts.ScriptBundle;
+import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.api.graphql.SqrlCodeRegistryBuilder;
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.config.SqrlSettings;
@@ -29,7 +30,6 @@ import com.google.common.base.Preconditions;
 import graphql.schema.GraphQLCodeRegistry;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
@@ -71,13 +71,13 @@ public class Environment implements Closeable {
   }
 
   public Script compile(ScriptBundle bundle) throws Exception {
-    SqmlScript mainScript = bundle.getMainScript();
+    SqrlScript mainScript = bundle.getMainScript();
     String scriptId = mainScript.getName().getCanonical();
 
     //Instantiate import resolver and register user schema
     ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(datasetRegistry);
     ProcessBundle<SchemaConversionError> importErrors = importResolver.getImportManager()
-            .registerUserSchema(mainScript.parseSchema());
+            .registerUserSchema(mainScript.getSchema());
     Preconditions.checkArgument(!importErrors.isFatal(),
             importErrors);
 

@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.config.engines;
 
+import ai.dataeng.sqml.config.constraints.OptionalMinString;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import com.google.common.base.Preconditions;
 import lombok.*;
@@ -20,11 +21,9 @@ public class JDBCConfiguration implements EngineConfiguration.Database {
 
     @NonNull @NotNull
     String dbURL;
-    @Nullable
     String user;
-    @Nullable
     String password;
-    @Nullable
+    @OptionalMinString
     String driverName;
     @NonNull @NotNull
     Dialect dialect;
@@ -69,15 +68,10 @@ public class JDBCConfiguration implements EngineConfiguration.Database {
 
         @NonNull
         private String dbURL;
-        @Nullable
         private String user;
-        @Nullable
         private String password;
-        @Nullable
         private String driverName;
-        @NonNull
         private Dialect dialect;
-        @NonNull
         private String databaseName;
 
         @Override

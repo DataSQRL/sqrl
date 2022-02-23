@@ -29,7 +29,7 @@ public class MetadataRegistryPersistence implements DatasetRegistryPersistence {
     public Set<DataSourceConfiguration> getDatasets() {
         return store.getSubKeys(STORE_DATASET_KEY).stream().map(dsName -> {
             DataSourceConfiguration config = store.get(DataSourceConfiguration.class,STORE_DATASET_KEY,dsName,STORE_SOURCE_CONFIG_KEY);
-            Preconditions.checkArgument(config!=null && config.validate(new ProcessMessage.ProcessBundle<>()),
+            Preconditions.checkArgument(config!=null,
                     "Persistence of configuration failed.");
             return config;
         }).collect(Collectors.toSet());

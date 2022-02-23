@@ -6,6 +6,7 @@ import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import lombok.NonNull;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Set;
@@ -14,14 +15,11 @@ import java.util.concurrent.TimeUnit;
 public interface DataSourceConfiguration extends Serializable {
 
     /**
+     * Validates the configuration and initializes the configured {@link DataSource}
      *
-     * @return true if successfully validated and initialized, else false
+     * @return the configured {@link DataSource} or null if invalid
      */
-    boolean validate(ProcessMessage.ProcessBundle<ConfigurationError> errors);
-
-    DataSource initialize();
-
-
+    @Nullable DataSource initialize(ProcessMessage.ProcessBundle<ConfigurationError> errors);
 
 
 }

@@ -60,9 +60,8 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
             (@NonNull DataSourceConfiguration datasource,
              @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors,
              long sourceInitializationWaitTimeMS) {
-        datasource.validate(errors);
-        if (errors.isFatal()) return null;
-        DataSource source = datasource.initialize();
+        DataSource source = datasource.initialize(errors);
+        if (source==null) return null;
         SourceDataset dataset = datasets.get(source.getDatasetName());
         if (dataset==null) {
             dataset = new SourceDataset(this, source);
