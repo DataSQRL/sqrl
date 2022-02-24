@@ -5,17 +5,23 @@ import java.util.Optional;
 
 public class JoinAssignment extends Assignment {
 
+  private final String query;
   private final InlineJoin inlineJoin;
 
   public JoinAssignment(Optional<NodeLocation> location,
-      QualifiedName name, InlineJoin inlineJoin) {
+      QualifiedName name, String query, InlineJoin inlineJoin) {
     super(location, name);
+    this.query = query;
 
     this.inlineJoin = inlineJoin;
   }
 
   public InlineJoin getInlineJoin() {
     return inlineJoin;
+  }
+
+  public String getQuery() {
+    return query;
   }
 
   @Override

@@ -77,8 +77,9 @@ public class QueryProcessorImpl implements QueryProcessor {
             .orElseThrow(()->new RuntimeException(String.format("Could not find table on field %s", statement.getNamePath())));
 
     source.addField(new Relationship(statement.getNamePath().getLast(),
-        source, destination, Type.JOIN, Multiplicity.MANY));
-    destination.addField(new Relationship(PARENT_RELATIONSHIP, destination, source, Type.PARENT, Multiplicity.ONE));
+        source, destination, Type.JOIN, Multiplicity.MANY, null));
+    destination.addField(new Relationship(PARENT_RELATIONSHIP, destination, source, Type.PARENT, Multiplicity.ONE,
+        null));
 
   }
 }

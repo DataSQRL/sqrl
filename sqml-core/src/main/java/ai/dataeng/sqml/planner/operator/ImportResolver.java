@@ -156,7 +156,7 @@ public class ImportResolver {
                     outputSchema, name, path.resolve(name), parent);
             //Add parent relationship
             table.fields.add(new Relationship(PARENT_RELATIONSHIP,table, parent,
-                    Relationship.Type.PARENT, Relationship.Multiplicity.ONE));
+                    Relationship.Type.PARENT, Relationship.Multiplicity.ONE, null));
             //Return child relationship
             Relationship.Multiplicity multiplicity = Relationship.Multiplicity.MANY;
             Cardinality cardinality = ConstraintHelper.getConstraint(constraints, Cardinality.class).orElse(Cardinality.UNCONSTRAINED);
@@ -167,7 +167,7 @@ public class ImportResolver {
                 }
             }
             return new Relationship(name, parent, table,
-                    Relationship.Type.CHILD, multiplicity);
+                    Relationship.Type.CHILD, multiplicity, null);
         } else {
             assert ftype.getType() instanceof BasicType;
             return new Column(name, parent,0,(BasicType)ftype.getType(),ftype.getArrayDepth(), constraints, false,

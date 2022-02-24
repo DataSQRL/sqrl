@@ -954,8 +954,13 @@ class AstBuilder
   @Override
   public Node visitJoinAssignment(JoinAssignmentContext ctx) {
     QualifiedName name = getQualifiedName(ctx.qualifiedName());
+    Interval interval = new Interval(
+        ctx.inlineJoin().start.getStartIndex(),
+        ctx.inlineJoin().stop.getStopIndex());
+    String query = ctx.inlineJoin().start.getInputStream().getText(interval);
 
     return new JoinAssignment(Optional.of(getLocation(ctx)), name,
+        query,
         (InlineJoin) visit(ctx.inlineJoin()));
   }
 
