@@ -68,22 +68,23 @@ public class SqrlCodeRegistryBuilder {
     }
 
     //Look for any relationship tables and build fetchers for them
-    for (Field field : table.getFields()) {
-      if (field instanceof Relationship) {
-        Relationship rel = (Relationship) field;
-        Criteria criteria = buildCriteria(rel);
-
-        System.out.println(getTypeName(table.getPath())+" : "+ field.getName().getCanonical());
-        registry.dataFetcher(
-            FieldCoordinates.coordinates(getTypeName(table.getPath()), field.getName().getCanonical()),
-            new DefaultDataFetcher(pool, new NoPage(), toTable(rel.getToTable(), Optional.of(criteria))));
-        registerFetcher(registry, pool, rel.getToTable(), seen);
-      }
-    }
+//    for (Field field : table.getFields()) {
+//      if (field instanceof Relationship) {
+//        Relationship rel = (Relationship) field;
+//        Criteria criteria = buildCriteria(rel);
+//
+//        System.out.println(getTypeName(table.getPath())+" : "+ field.getName().getCanonical());
+//        registry.dataFetcher(
+//            FieldCoordinates.coordinates(getTypeName(table.getPath()), field.getName().getCanonical()),
+//            new DefaultDataFetcher(pool, new NoPage(), toTable(rel.getToTable(), Optional.of(criteria))));
+//        registerFetcher(registry, pool, rel.getToTable(), seen);
+//      }
+//    }
   }
 
   private Criteria buildCriteria(Relationship rel) {
-    Criteria criteria = new EqualsCriteria(rel.getFrom().get(0).getName().getCanonical(), ((Column)rel.getTo().get(0)).getId());
+    Criteria criteria = new EqualsCriteria(rel.getFrom().get(0).getName().getCanonical(),
+        ((Column)rel.getTo().get(0)).getId());
     return criteria;
   }
 

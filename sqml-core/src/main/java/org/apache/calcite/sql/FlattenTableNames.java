@@ -2,7 +2,14 @@ package org.apache.calcite.sql;
 
 import java.util.List;
 
-public class RewriteTableName {
+/**
+ * Calcite handles arbitrarily nested table identifiers as nested schemas rather than
+ *  nested tables. This prevents sqrl from being able to extract the necessary logical plan.
+ *  This massages the identifier names as single identifier names rather than lists of identifiers.
+ *
+ * To be removed when we introduce our own parser.
+ */
+public class FlattenTableNames {
 
   public static void rewrite(SqlNode node) {
     if (node instanceof SqlOrderBy) {
@@ -19,13 +26,18 @@ public class RewriteTableName {
       rewrite(((SqlJoin)node).left);
       rewrite(((SqlJoin)node).right);
     } else if (node instanceof SqlBasicCall) {
-      for (SqlNode op : ((SqlBasicCall)node).operands) {
+      for (SqlNode op : ((SqlBasicCall)node).getOperandList()) {
         if (op instanceof SqlIdentifier) {
           rewriteIdentifier((SqlIdentifier)op);
         } else {
           rewrite(op);
         }
       }
+    } else if (node instanceof SqlIdentifier) {
+      SqlIdentifier identifier = (SqlIdentifier) node;
+      rewriteIdentifier(identifier);
+    } else {
+      System.out.println("SKipping: "+node + ":"+node.getClass().getName());
     }
   }
 

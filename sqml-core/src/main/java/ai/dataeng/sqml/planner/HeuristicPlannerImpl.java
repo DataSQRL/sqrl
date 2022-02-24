@@ -16,7 +16,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.schema.SqrlSchema;
 import org.apache.calcite.rules.RuleStub;
-import org.apache.calcite.sql.RewriteTableName;
+import org.apache.calcite.sql.FlattenTableNames;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.parser.SqlParser;
@@ -69,7 +69,7 @@ public class HeuristicPlannerImpl implements Planner {
 
     PlannerImpl planner = new PlannerImpl(config);
     SqlNode node = planner.parse(sql);
-    RewriteTableName.rewrite(node);
+    FlattenTableNames.rewrite(node);
     planner.validate(node);
     RelRoot root = planner.rel(node);
 
