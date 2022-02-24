@@ -9,9 +9,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 @Value
-public class SqrlQuery {
+public class SqrlQuery implements Serializable {
 
     private final Name name;
     private final String qraphQL;

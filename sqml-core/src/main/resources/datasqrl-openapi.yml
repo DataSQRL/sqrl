@@ -33,6 +33,93 @@ tags:
       description: Find out more about our store
       url: http://datasqrl.com
 paths:
+  /submission:
+    post:
+      tags:
+        - script
+      summary: Submit a script for execution
+      operationId: submitScript
+      requestBody:
+        description: Script bundle configuration
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScriptBundle'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitResult'
+        405:
+          description: Validation exception
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
+    get:
+      tags:
+        - script
+      summary: Get all active submissions
+      operationId: getSubmissions
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubmitResult'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /submission/{submitId}:
+    get:
+      tags:
+        - script
+      summary: Retrieve submissions by id
+      description: Returns a single source
+      operationId: getSubmissionById
+      parameters:
+        - name: submitId
+          in: path
+          description: Id of the submission
+          required: true
+          schema:
+            type: string
+            minLength: 16
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitResult'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Submission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /source/file:
     post:
       tags:
@@ -208,6 +295,85 @@ components:
         - lowercase
         - case_sensitive
         - system
+    ScriptBundle:
+      type: object
+      required:
+        - name
+        - scripts
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        scripts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScriptBundleScript'
+        queries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScriptBundleQuery'
+    ScriptBundleScript:
+      type: object
+      required:
+        - name
+        - script
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 128
+        script:
+          type: string
+          minLength: 10
+        inputSchema:
+          type: string
+        isMain:
+          type: boolean
+    ScriptBundleQuery:
+      type: object
+      required:
+        - name
+        - graphql
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 128
+        graphQL:
+          type: string
+          minLength: 10
+    SubmitResult:
+      type: object
+      required:
+        - id
+        - name
+        - version
+        - submissionTime
+        - status
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        executionId:
+          type: string
+        submissionTime:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/submissionStatus'
+    submissionStatus:
+      type: string
+      description: Status of a Submission
+      enum:
+        - submitted
+        - running
+        - deployed
+        - stopped
+        - failed
     Error:
       required:
         - code

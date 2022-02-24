@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.config;
 
 import ai.dataeng.execution.SqlClientProvider;
+import ai.dataeng.sqml.MetadataEnvironmentPersistence;
 import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.catalog.NamespaceImpl;
 import ai.dataeng.sqml.config.engines.FlinkConfiguration;
@@ -55,6 +56,7 @@ public class SqrlSettings {
   EnvironmentConfiguration environmentConfiguration;
   MetadataStoreProvider metadataStoreProvider;
   DatasetRegistryPersistenceProvider datasetRegistryPersistenceProvider;
+  EnvironmentPersistenceProvider environmentPersistenceProvider;
   SourceTableMonitorProvider sourceTableMonitorProvider;
 
   SqlClientProvider sqlClientProvider;
@@ -72,6 +74,7 @@ public class SqrlSettings {
         .environmentConfiguration(config.getEnvironment())
         .metadataStoreProvider(new JDBCMetadataStore.Provider())
         .datasetRegistryPersistenceProvider(new MetadataRegistryPersistence.Provider())
+        .environmentPersistenceProvider(new MetadataEnvironmentPersistence.Provider())
 
         .namespace(new NamespaceImpl())
         .importProcessorProvider((importResolver, planner)->new ImportProcessorImpl(importResolver, planner))

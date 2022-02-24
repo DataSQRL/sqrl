@@ -1,5 +1,6 @@
 package ai.dataeng.sqml;
 
+import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.api.graphql.SqrlCodeRegistryBuilder;
@@ -8,6 +9,7 @@ import ai.dataeng.sqml.config.SqrlSettings;
 import ai.dataeng.sqml.config.metadata.MetadataStore;
 import ai.dataeng.sqml.config.provider.HeuristicPlannerProvider;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
+import ai.dataeng.sqml.config.util.NamedIdentifier;
 import ai.dataeng.sqml.execution.StreamEngine;
 import ai.dataeng.sqml.type.schema.SchemaConversionError;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
@@ -31,8 +33,12 @@ import graphql.schema.GraphQLCodeRegistry;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import scala.tools.cmd.Opt;
 
 @Slf4j
 public class Environment implements Closeable {
@@ -43,8 +49,7 @@ public class Environment implements Closeable {
   private final StreamEngine streamEngine;
 
   private final DatasetRegistry datasetRegistry;
-  private final EnvironmentPersistence persistence = null;
-  //TODO: keep track of running scripts and sinks
+  private final EnvironmentPersistence persistence;
 
   private Environment(SqrlSettings settings) {
     this.settings = settings;
@@ -52,6 +57,7 @@ public class Environment implements Closeable {
             settings.getEnvironmentConfiguration().getMetastore().getDatabase());
     metadataStore = settings.getMetadataStoreProvider().openStore(jdbc);
     streamEngine = settings.getStreamEngineProvider().create();
+    persistence = settings.getEnvironmentPersistenceProvider().createEnvironmentPersistence(metadataStore);
 
     SourceTableMonitor monitor = settings.getSourceTableMonitorProvider().create(streamEngine,
             settings.getStreamMonitorProvider().create(streamEngine,jdbc,
@@ -64,16 +70,37 @@ public class Environment implements Closeable {
     return new Environment(settings);
   }
 
-  public ProcessBundle<ProcessMessage> validate(ScriptNode scriptNode) {
-    Validator validator = settings.getValidatorProvider().getValidator();
-    ProcessBundle<ProcessMessage> errors = validator.validate(scriptNode);
-    ProcessBundle.logMessages(errors);
-    return errors;
+  public ScriptSubmission.Result submitScript(@NonNull ScriptBundle.Config scriptConfig,
+                                              @NonNull ProcessBundle<ConfigurationError> errors) {
+    ScriptBundle bundle = scriptConfig.initialize(errors);
+    if (bundle==null) return null;
+    ScriptSubmission submission = ScriptSubmission.of(bundle);
+    //TODO: Need to collect errors from compile() and return them
+    try {
+      compile(submission);
+    } catch (Exception e) {
+      errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,bundle.getName().getDisplay(),
+              "Encountered error while compiling script: %s",e));
+      return null;
+    }
+    persistence.saveSubmission(submission);
+    return submission.getStatusResult(streamEngine);
   }
 
-  public Script compile(ScriptBundle bundle) throws Exception {
+  public Optional<ScriptSubmission.Result> getSubmission(@NonNull NamedIdentifier submissionId) {
+    ScriptSubmission submission = persistence.getSubmissionById(submissionId);
+    if (submission==null) return Optional.empty();
+    else return Optional.of(submission.getStatusResult(streamEngine));
+  }
+
+  public List<ScriptSubmission.Result> getActiveSubmissions() {
+    return persistence.getAllSubmissions().filter(ScriptSubmission::isActive)
+            .map(s -> s.getStatusResult(streamEngine)).collect(Collectors.toList());
+  }
+
+  public Script compile(ScriptSubmission submission) throws Exception {
+    ScriptBundle bundle = submission.getBundle();
     SqrlScript mainScript = bundle.getMainScript();
-    String scriptId = mainScript.getName().getCanonical();
 
     //Instantiate import resolver and register user schema
     ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(datasetRegistry);
@@ -85,7 +112,9 @@ public class Environment implements Closeable {
     ScriptParser scriptParser = settings.getScriptParserProvider().createScriptParser();
     ScriptNode scriptNode = scriptParser.parse(mainScript);
 
-    ProcessBundle<ProcessMessage> errors = validate(scriptNode);
+    Validator validator = settings.getValidatorProvider().getValidator();
+    ProcessBundle<ProcessMessage> errors = validator.validate(scriptNode);
+
     if (errors.isFatal()) {
       throw new Exception("Could not compile script.");
     }
@@ -110,7 +139,7 @@ public class Environment implements Closeable {
     LogicalPlanOptimizer.Result optimized = new SimpleOptimizer()
         .optimize(logicalPlan);
 
-    JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(scriptId);
+    JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(submission.getId().getId());
     SQLGenerator.Result sql = settings.getSqlGeneratorProvider()
         .create(jdbc)
         .generateDatabase(optimized);
@@ -125,7 +154,8 @@ public class Environment implements Closeable {
         .create(streamEngine,jdbc)
         .generateStream(optimized, sql.getSinkMapper());
 
-    job.execute(scriptId);
+    job.execute(submission.getId().getId());
+    submission.setExecutionId(job.getId());
 
     return new Script(namespace, registry);
   }

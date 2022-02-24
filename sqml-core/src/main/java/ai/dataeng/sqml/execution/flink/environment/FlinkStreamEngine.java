@@ -63,6 +63,7 @@ public interface FlinkStreamEngine extends StreamEngine {
     @Override
     public void execute(String name) {
       try {
+        //TODO: move to async execution
         JobExecutionResult result = execEnv.execute(getFlinkName(type.getName(),name));
         jobId = result.getJobID().toHexString();
       } catch (Exception e) {

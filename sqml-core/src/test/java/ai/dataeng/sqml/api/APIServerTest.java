@@ -104,6 +104,29 @@ public class APIServerTest {
     }
 
     @Test
+    public void testSubmissions(Vertx vertx, VertxTestContext testContext) throws Throwable {
+
+        Checkpoint requestCheckpoint = testContext.checkpoint(1);
+        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+            webClient.get(8080, "localhost", "/submission")
+                    .as(BodyCodec.jsonArray())
+                    .send(testContext.succeeding(resp -> {
+                        testContext.verify(() -> {
+                            assertEquals(200, resp.statusCode());
+                            JsonArray arr = resp.body();
+                            assertEquals(0, arr.size());
+                            requestCheckpoint.flag();
+                        });
+                    }));
+        }));
+
+        assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
+        if (testContext.failed()) {
+            throw testContext.causeOfFailure();
+        }
+    }
+
+    @Test
     public void testGettingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
         registry.addOrUpdateSource(fileConfig,new ProcessMessage.ProcessBundle<>());
         assertNotNull(registry.getDataset(dsName));

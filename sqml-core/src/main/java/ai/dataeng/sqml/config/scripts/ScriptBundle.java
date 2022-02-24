@@ -2,16 +2,20 @@ package ai.dataeng.sqml.config.scripts;
 
 import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.config.util.ConfigurationUtil;
+import ai.dataeng.sqml.config.util.StringNamedId;
+import ai.dataeng.sqml.config.util.NamedIdentifier;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -27,13 +31,15 @@ import java.util.stream.Collectors;
  */
 
 @Value
-public class ScriptBundle {
+public class ScriptBundle implements Serializable {
 
     public static final NameCanonicalizer CANONICALIZER = NameCanonicalizer.SYSTEM;
+    public static final NamedIdentifier DEFAULT_VERSION = StringNamedId.of("v1");
 
     private final Name name;
+    private final NamedIdentifier version;
     private final Map<Name, SqrlScript> scripts;
-    private final Map<Name,SqrlQuery> queries;
+    private final Map<Name, SqrlQuery> queries;
 
     public SqrlScript getMainScript() {
         if (scripts.size()==1) return scripts.values().iterator().next();
@@ -48,6 +54,7 @@ public class ScriptBundle {
 
         @NonNull @NotNull @Size(min = 3, max=128)
         private String name;
+        private String version;
         @NonNull @NotNull @NotEmpty @Valid
         private List<SqrlScript.Config> scripts;
         @NonNull @Builder.Default @NotNull @Valid
@@ -102,8 +109,15 @@ public class ScriptBundle {
                 }
             }
 
+            NamedIdentifier vid;
+            if (StringUtils.isNotEmpty(version)) {
+                vid = StringNamedId.of(version);
+            } else {
+                vid = DEFAULT_VERSION;
+            }
+
             if (isvalid) {
-                return new ScriptBundle(Name.of(name,CANONICALIZER),
+                return new ScriptBundle(Name.of(name,CANONICALIZER), vid,
                         validScripts.stream().collect(Collectors.toMap(SqrlScript::getName, Function.identity())),
                         validQueries.stream().collect(Collectors.toMap(SqrlQuery::getName, Function.identity()))
                 );

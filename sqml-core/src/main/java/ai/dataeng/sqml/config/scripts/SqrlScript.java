@@ -16,9 +16,10 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YA
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 @Value
-public class SqrlScript {
+public class SqrlScript implements Serializable {
 
     private final Name name;
     private final String scriptContent;
@@ -35,10 +36,10 @@ public class SqrlScript {
         @NonNull @NotNull @Size(min = 3, max = 128)
         private String name;
         @NonNull @NotNull @Size(min = 10)
-        private String scriptContent;
+        private String script;
 
         @OptionalMinString
-        private String schemaYAML;
+        private String inputSchema;
         @Builder.Default
         private boolean isMain = false;
 
@@ -54,16 +55,16 @@ public class SqrlScript {
                         "Parsing error for schemaYaml: [%s]", e));
                 return null;
             }
-            return new SqrlScript(Name.of(name,canonicalizer),scriptContent,schema,isMain);
+            return new SqrlScript(Name.of(name,canonicalizer), script,schema,isMain);
         }
 
         private SchemaDefinition parseSchema() throws JsonProcessingException {
-            if (StringUtils.isEmpty(schemaYAML)) {
+            if (StringUtils.isEmpty(inputSchema)) {
                 return SchemaDefinition.empty();
             } else {
                 ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
                 mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-                SchemaDefinition importSchema = mapper.readValue(schemaYAML,
+                SchemaDefinition importSchema = mapper.readValue(inputSchema,
                         SchemaDefinition.class);
                 return importSchema;
             }

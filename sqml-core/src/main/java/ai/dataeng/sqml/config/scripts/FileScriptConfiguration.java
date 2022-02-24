@@ -3,18 +3,14 @@ package ai.dataeng.sqml.config.scripts;
 import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.config.constraints.OptionalMinString;
 import ai.dataeng.sqml.config.util.FileUtil;
-import ai.dataeng.sqml.io.sources.impl.file.FileFormat;
-import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.google.common.collect.ImmutableList;
 import lombok.*;
-import org.apache.commons.compress.utils.FileNameUtils;
 import org.h2.util.StringUtils;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -38,6 +34,7 @@ public class FileScriptConfiguration {
     private String name;
     @NonNull @NotNull @Size(min=3)
     private String path;
+    private String version;
 
     /**
      * Builds a {@link ScriptBundle.Config} from a path on the local filesystem.
@@ -107,7 +104,7 @@ public class FileScriptConfiguration {
             return null;
         }
 
-        return ScriptBundle.Config.builder().name(resolvedName)
+        return ScriptBundle.Config.builder().name(resolvedName).version(version)
                 .scripts(scripts).queries(queries).build();
     }
 
@@ -128,8 +125,8 @@ public class FileScriptConfiguration {
 
         return SqrlScript.Config.builder().name(name)
                 .isMain(name.equalsIgnoreCase(bundleName))
-                .scriptContent(scriptContent)
-                .schemaYAML(schemaContent)
+                .script(scriptContent)
+                .inputSchema(schemaContent)
                 .build();
     }
 

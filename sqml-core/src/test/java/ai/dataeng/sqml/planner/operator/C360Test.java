@@ -3,6 +3,7 @@ package ai.dataeng.sqml.planner.operator;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ai.dataeng.sqml.Environment;
+import ai.dataeng.sqml.ScriptSubmission;
 import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
@@ -63,13 +64,13 @@ public class C360Test {
                     SqrlScript.Config.builder()
                             .name(RETAIL_SCRIPT_NAME)
                             .isMain(true)
-                            .scriptContent(Files.readString(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION)))
-                            .schemaYAML(Files.readString(RETAIL_IMPORT_SCHEMA_FILE))
+                            .script(Files.readString(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION)))
+                            .inputSchema(Files.readString(RETAIL_IMPORT_SCHEMA_FILE))
                             .build()
             ))
             .build().initialize(new ProcessMessage.ProcessBundle<>());
 
-    Script script = env.compile(bundle);
+    Script script = env.compile(ScriptSubmission.of(bundle));
 
     GraphQLSchema graphQLSchema = GraphqlSchemaBuilder.newGraphqlSchema()
         .schema(script.getNamespace().getSchema())

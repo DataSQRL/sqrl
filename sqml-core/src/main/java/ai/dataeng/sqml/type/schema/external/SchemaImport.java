@@ -4,8 +4,8 @@ import ai.dataeng.sqml.io.sources.dataset.DatasetLookup;
 import ai.dataeng.sqml.type.schema.SchemaConversionError;
 import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.type.schema.SchemaElementDescription;
-import ai.dataeng.sqml.type.schema.version.StringVersionId;
-import ai.dataeng.sqml.type.schema.version.VersionIdentifier;
+import ai.dataeng.sqml.config.util.StringNamedId;
+import ai.dataeng.sqml.config.util.NamedIdentifier;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
@@ -36,7 +36,7 @@ import java.util.*;
  */
 public class SchemaImport {
 
-    public static final VersionIdentifier VERSION = StringVersionId.of("1");
+    public static final NamedIdentifier VERSION = StringNamedId.of("1");
 
     private final DatasetLookup datasetLookup;
     private final Constraint.Lookup constraintLookup;
@@ -62,9 +62,9 @@ public class SchemaImport {
 
     public Map<Name, FlexibleDatasetSchema> convertImportSchema(SchemaDefinition schema) {
         errors = new ProcessBundle<>();
-        VersionIdentifier version;
+        NamedIdentifier version;
         if (Strings.isNullOrEmpty(schema.version)) version = VERSION;
-        else version = StringVersionId.of(schema.version);
+        else version = StringNamedId.of(schema.version);
         if (!version.equals(VERSION)) {
             addError(SchemaConversionError.fatal(NamePath.ROOT, "Unrecognized version: %s. Supported versions are: %s", version, VERSION));
             return Collections.EMPTY_MAP;
