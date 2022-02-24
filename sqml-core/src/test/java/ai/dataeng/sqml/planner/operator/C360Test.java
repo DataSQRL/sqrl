@@ -3,7 +3,7 @@ package ai.dataeng.sqml.planner.operator;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ai.dataeng.sqml.Environment;
-import ai.dataeng.sqml.ScriptSubmission;
+import ai.dataeng.sqml.ScriptDeployment;
 import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
@@ -70,7 +70,7 @@ public class C360Test {
             ))
             .build().initialize(new ProcessMessage.ProcessBundle<>());
 
-    Script script = env.compile(ScriptSubmission.of(bundle));
+    Script script = env.compile(ScriptDeployment.of(bundle));
 
     GraphQLSchema graphQLSchema = GraphqlSchemaBuilder.newGraphqlSchema()
         .schema(script.getNamespace().getSchema())

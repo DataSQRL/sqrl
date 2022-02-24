@@ -17,7 +17,7 @@ servers:
   - url: https://localhost:5070/v2
   - url: http://localhost:5070/v2
 tags:
-  - name: script
+  - name: deployment
     description: Execute and manage scripts running on the server.
     externalDocs:
       description: Find out more
@@ -33,12 +33,12 @@ tags:
       description: Find out more about our store
       url: http://datasqrl.com
 paths:
-  /submission:
+  /deployment:
     post:
       tags:
-        - script
-      summary: Submit a script for execution
-      operationId: submitScript
+        - deployment
+      summary: Deploy a script and execute it on the server
+      operationId: deployScript
       requestBody:
         description: Script bundle configuration
         content:
@@ -48,11 +48,11 @@ paths:
         required: true
       responses:
         200:
-          description: successful operation
+          description: successful deployment
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SubmitResult'
+                $ref: '#/components/schemas/DeployResult'
         405:
           description: Validation exception
           content:
@@ -68,9 +68,9 @@ paths:
       x-codegen-request-body-name: body
     get:
       tags:
-        - script
-      summary: Get all active submissions
-      operationId: getSubmissions
+        - deployment
+      summary: Get all active deployments
+      operationId: getDeployments
       responses:
         200:
           description: successful operation
@@ -79,24 +79,24 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/SubmitResult'
+                  $ref: '#/components/schemas/DeployResult'
         400:
           description: Processing error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /submission/{submitId}:
+  /deployment/{deployId}:
     get:
       tags:
-        - script
-      summary: Retrieve submissions by id
-      description: Returns a single source
-      operationId: getSubmissionById
+        - deployment
+      summary: Retrieve deployment by id
+      description: Returns a single deployment
+      operationId: getDeploymentById
       parameters:
-        - name: submitId
+        - name: deployId
           in: path
-          description: Id of the submission
+          description: Id of the deployment
           required: true
           schema:
             type: string
@@ -107,7 +107,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SubmitResult'
+                $ref: '#/components/schemas/DeployResult'
         400:
           description: Processing error
           content:
@@ -115,7 +115,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         404:
-          description: Submission not found
+          description: Deployment not found
           content:
             application/json:
               schema:
@@ -343,7 +343,7 @@ components:
         graphQL:
           type: string
           minLength: 10
-    SubmitResult:
+    DeployResult:
       type: object
       required:
         - id

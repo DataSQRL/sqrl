@@ -19,7 +19,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Getter
-public class ScriptSubmission implements Serializable {
+public class ScriptDeployment implements Serializable {
 
     private final UUID uuid;
     private final Instant submissionTime;
@@ -28,15 +28,15 @@ public class ScriptSubmission implements Serializable {
     private String executionId;
     private boolean archived = false;
 
-    public ScriptSubmission(@NonNull ScriptBundle scriptBundle) {
+    public ScriptDeployment(@NonNull ScriptBundle scriptBundle) {
         this(UUID.randomUUID(), Instant.now(), scriptBundle);
     }
 
-    public static ScriptSubmission of(ScriptBundle scriptBundle) {
-        return new ScriptSubmission(scriptBundle);
+    public static ScriptDeployment of(ScriptBundle scriptBundle) {
+        return new ScriptDeployment(scriptBundle);
     }
 
-    ScriptSubmission(@NonNull UUID uuid, @NonNull Instant submissionTime,@NonNull  ScriptBundle scriptBundle) {
+    ScriptDeployment(@NonNull UUID uuid, @NonNull Instant submissionTime, @NonNull  ScriptBundle scriptBundle) {
         this.uuid = uuid;
         this.submissionTime = submissionTime;
         this.bundle = scriptBundle;
@@ -82,14 +82,14 @@ public class ScriptSubmission implements Serializable {
         this.executionId = executionId;
     }
 
-    public static class Group implements Iterable<ScriptSubmission> {
+    public static class Group implements Iterable<ScriptDeployment> {
 
-        private final List<ScriptSubmission> submissions;
+        private final List<ScriptDeployment> submissions;
 
         public Group(List<ScriptBundle> bundleGroup) {
             UUID uid = UUID.randomUUID();
             Instant timeNow = Instant.now();
-            submissions = bundleGroup.stream().map(sb -> new ScriptSubmission(uid, timeNow, sb))
+            submissions = bundleGroup.stream().map(sb -> new ScriptDeployment(uid, timeNow, sb))
                     .collect(Collectors.toList());
         }
 
@@ -99,7 +99,7 @@ public class ScriptSubmission implements Serializable {
         }
 
         @Override
-        public Iterator<ScriptSubmission> iterator() {
+        public Iterator<ScriptDeployment> iterator() {
             return submissions.iterator();
         }
     }

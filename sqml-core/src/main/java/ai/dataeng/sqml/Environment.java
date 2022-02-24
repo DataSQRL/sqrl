@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import scala.tools.cmd.Opt;
 
 @Slf4j
 public class Environment implements Closeable {
@@ -70,11 +69,11 @@ public class Environment implements Closeable {
     return new Environment(settings);
   }
 
-  public ScriptSubmission.Result submitScript(@NonNull ScriptBundle.Config scriptConfig,
+  public ScriptDeployment.Result deployScript(@NonNull ScriptBundle.Config scriptConfig,
                                               @NonNull ProcessBundle<ConfigurationError> errors) {
     ScriptBundle bundle = scriptConfig.initialize(errors);
     if (bundle==null) return null;
-    ScriptSubmission submission = ScriptSubmission.of(bundle);
+    ScriptDeployment submission = ScriptDeployment.of(bundle);
     //TODO: Need to collect errors from compile() and return them
     try {
       compile(submission);
@@ -83,22 +82,22 @@ public class Environment implements Closeable {
               "Encountered error while compiling script: %s",e));
       return null;
     }
-    persistence.saveSubmission(submission);
+    persistence.saveDeployment(submission);
     return submission.getStatusResult(streamEngine);
   }
 
-  public Optional<ScriptSubmission.Result> getSubmission(@NonNull NamedIdentifier submissionId) {
-    ScriptSubmission submission = persistence.getSubmissionById(submissionId);
+  public Optional<ScriptDeployment.Result> getDeployment(@NonNull NamedIdentifier submissionId) {
+    ScriptDeployment submission = persistence.getSubmissionById(submissionId);
     if (submission==null) return Optional.empty();
     else return Optional.of(submission.getStatusResult(streamEngine));
   }
 
-  public List<ScriptSubmission.Result> getActiveSubmissions() {
-    return persistence.getAllSubmissions().filter(ScriptSubmission::isActive)
+  public List<ScriptDeployment.Result> getActiveDeployments() {
+    return persistence.getAllDeployments().filter(ScriptDeployment::isActive)
             .map(s -> s.getStatusResult(streamEngine)).collect(Collectors.toList());
   }
 
-  public Script compile(ScriptSubmission submission) throws Exception {
+  public Script compile(ScriptDeployment submission) throws Exception {
     ScriptBundle bundle = submission.getBundle();
     SqrlScript mainScript = bundle.getMainScript();
 

@@ -108,7 +108,7 @@ public class APIServerTest {
 
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.get(8080, "localhost", "/submission")
+            webClient.get(8080, "localhost", "/deployment")
                     .as(BodyCodec.jsonArray())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {

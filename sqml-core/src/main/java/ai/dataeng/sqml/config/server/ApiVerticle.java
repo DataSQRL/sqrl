@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.config.server;
 
 import ai.dataeng.sqml.Environment;
-import ai.dataeng.sqml.ScriptSubmission;
+import ai.dataeng.sqml.ScriptDeployment;
 import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.config.util.StringNamedId;
 import ai.dataeng.sqml.io.sources.DataSource;
@@ -56,7 +56,7 @@ public class ApiVerticle extends AbstractVerticle {
     public void start(Promise<Void> startPromise) {
         RouterBuilder.create(this.vertx, "datasqrl-openapi.yml")
                 .onSuccess(routerBuilder -> {
-                    // Source handlers
+                    // #### Source handlers
                     routerBuilder.operation("getSources").handler(routingContext -> {
                         List<JsonObject> sources = environment.getDatasetRegistry().getDatasets().stream()
                                 .map(SourceDataset::getSource)
@@ -96,29 +96,30 @@ public class ApiVerticle extends AbstractVerticle {
 //                        else
                             routingContext.fail(404, new Exception("Not yet implemented")); // <5>
                     });
-                    // Script Submission handlers
-                    routerBuilder.operation("getSubmissions").handler(routingContext -> {
-                        List<JsonObject> sources = environment.getActiveSubmissions().stream()
-                                .map(ApiVerticle::submissionResult2Json).collect(Collectors.toList());
+
+                    // #### Script Submission handlers
+                    routerBuilder.operation("getDeployments").handler(routingContext -> {
+                        List<JsonObject> sources = environment.getActiveDeployments().stream()
+                                .map(ApiVerticle::deploymentResult2Json).collect(Collectors.toList());
                         routingContext
                                 .response()
                                 .setStatusCode(200)
                                 .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                                 .end(new JsonArray(sources).encode());
                     });
-                    routerBuilder.operation("submitScript").handler(new SubmissionHandler());
-                    routerBuilder.operation("getSubmissionById").handler(routingContext -> {
+                    routerBuilder.operation("deployScript").handler(new DeploymentHandler());
+                    routerBuilder.operation("getDeploymentById").handler(routingContext -> {
                         RequestParameters params = routingContext.get("parsedParameters");
-                        String submitId = params.pathParameter("submitId").getString();
-                        Optional<ScriptSubmission.Result> result = environment.getSubmission(StringNamedId.of(submitId));
+                        String submitId = params.pathParameter("deployId").getString();
+                        Optional<ScriptDeployment.Result> result = environment.getDeployment(StringNamedId.of(submitId));
                         if (result.isPresent()) {
                             routingContext
                                     .response()
                                     .setStatusCode(200)
                                     .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                                    .end(submissionResult2Json(result.get()).encode());
+                                    .end(deploymentResult2Json(result.get()).encode());
                         } else {
-                            routingContext.fail(404, new Exception("Submission not found"));
+                            routingContext.fail(404, new Exception("Deployment not found"));
                         }
                     });
 
@@ -152,7 +153,7 @@ public class ApiVerticle extends AbstractVerticle {
                 .onFailure(startPromise::fail);
     }
 
-    private static JsonObject submissionResult2Json(ScriptSubmission.Result result) {
+    private static JsonObject deploymentResult2Json(ScriptDeployment.Result result) {
         JsonObject base = JsonObject.mapFrom(result);
         return base;
     }
@@ -194,7 +195,7 @@ public class ApiVerticle extends AbstractVerticle {
     }
 
 
-    private class SubmissionHandler implements Handler<RoutingContext> {
+    private class DeploymentHandler implements Handler<RoutingContext> {
 
         @Override
         public void handle(RoutingContext routingContext) {
@@ -202,12 +203,12 @@ public class ApiVerticle extends AbstractVerticle {
             JsonObject bundleJson = params.body().getJsonObject();
             ScriptBundle.Config bundleConfig = bundleJson.mapTo(ScriptBundle.Config.class);
             ProcessMessage.ProcessBundle errors = new ProcessMessage.ProcessBundle<>();
-            ScriptSubmission.Result result = environment.submitScript(bundleConfig,errors);
+            ScriptDeployment.Result result = environment.deployScript(bundleConfig,errors);
             if (errors.isFatal() || result==null) {
                 routingContext.fail(405, new Exception(errors.combineMessages(ProcessMessage.Severity.FATAL,
                         "Provided bundle has the following validation errors:\n","\n" )));
             } else {
-                JsonObject jsonResult = submissionResult2Json(result);
+                JsonObject jsonResult = deploymentResult2Json(result);
                 routingContext
                         .response()
                         .setStatusCode(200)
