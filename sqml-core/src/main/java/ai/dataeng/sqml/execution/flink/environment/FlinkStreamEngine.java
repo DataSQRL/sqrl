@@ -2,16 +2,19 @@ package ai.dataeng.sqml.execution.flink.environment;
 
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.execution.StreamEngine;
-import ai.dataeng.sqml.io.sources.dataset.SourceTable;
+import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 public interface FlinkStreamEngine extends StreamEngine {
 
-  StreamExecutionEnvironment create();
+  StreamExecutionEnvironment createStream();
+
+  FlinkJob createStreamJob(StreamExecutionEnvironment execEnv, JobType type);
 
   static JdbcConnectionOptions getFlinkJDBC(JDBCConnectionProvider jdbc) {
     return new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
@@ -37,28 +40,31 @@ public interface FlinkStreamEngine extends StreamEngine {
   }
 
   @Slf4j
-  public static class Job implements StreamEngine.Job {
+  abstract class FlinkJob implements StreamEngine.Job {
 
     private final StreamExecutionEnvironment execEnv;
     private final JobType type;
-    private final String name;
-    private Status status = Status.PREPARING;
+    protected Status status = Status.PREPARING;
+    private String jobId = null;
 
-    public Job(StreamExecutionEnvironment execEnv, JobType type, String identifier) {
+    protected FlinkJob(StreamExecutionEnvironment execEnv, JobType type) {
       this.execEnv = execEnv;
       this.type = type;
-      this.name = getFlinkName(type.getName(),identifier);
     }
 
     @Override
     public String getId() {
-      return name;
+      Preconditions.checkArgument(jobId!=null,
+              "Job id is only available once job has been submitted");
+      //TODO: need to replace by jobid.toHex
+      return jobId;
     }
 
     @Override
-    public void execute() {
+    public void execute(String name) {
       try {
-        execEnv.execute(name);
+        JobExecutionResult result = execEnv.execute(getFlinkName(type.getName(),name));
+        jobId = result.getJobID().toHexString();
       } catch (Exception e) {
         log.error("Failed to launch Flink job",e);
         status = Status.FAILED;

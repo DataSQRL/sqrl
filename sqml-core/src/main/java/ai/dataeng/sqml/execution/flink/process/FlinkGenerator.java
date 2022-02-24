@@ -42,8 +42,8 @@ public class FlinkGenerator implements StreamEngine.Generator {
         this.envProvider = envProvider;
     }
 
-    public FlinkStreamEngine.Job generateStream(String scriptName, LogicalPlanOptimizer.Result logical, Map<MaterializeSource, DatabaseSink> sinkMapper) {
-        StreamExecutionEnvironment flinkEnv = envProvider.create();
+    public FlinkStreamEngine.FlinkJob generateStream(LogicalPlanOptimizer.Result logical, Map<MaterializeSource, DatabaseSink> sinkMapper) {
+        StreamExecutionEnvironment flinkEnv = envProvider.createStream();
 
         final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>(SCHEMA_ERROR_OUTPUT){}; //TODO: can we use one for all or do they need to be unique?
 
@@ -105,7 +105,7 @@ public class FlinkGenerator implements StreamEngine.Generator {
             }
         }
 
-        return new FlinkStreamEngine.Job(flinkEnv, FlinkStreamEngine.JobType.SCRIPT, scriptName);
+        return envProvider.createStreamJob(flinkEnv, FlinkStreamEngine.JobType.SCRIPT);
     }
 
     private static<S extends DataStream> S getInput(Map<LogicalPlanImpl.Node, DataStream> lp2pp, LogicalPlanImpl.Node node) {

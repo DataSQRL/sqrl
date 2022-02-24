@@ -20,7 +20,7 @@ public interface StreamEngine extends Closeable {
 
         String getId();
 
-        void execute();
+        void execute(String name);
 
         void cancel();
 
@@ -32,7 +32,7 @@ public interface StreamEngine extends Closeable {
 
     interface Generator {
 
-        public Job generateStream(String scriptName, LogicalPlanOptimizer.Result logical, Map<MaterializeSource, DatabaseSink> sinkMapper);
+        public Job generateStream(LogicalPlanOptimizer.Result logical, Map<MaterializeSource, DatabaseSink> sinkMapper);
 
     }
 

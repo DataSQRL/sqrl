@@ -1,10 +1,8 @@
 package ai.dataeng.sqml.config.engines;
 
 import ai.dataeng.sqml.execution.StreamEngine;
-import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngineImpl;
+import ai.dataeng.sqml.execution.flink.environment.LocalFlinkStreamEngineImpl;
 import lombok.*;
-
-import javax.validation.constraints.NotNull;
 
 @Builder
 @Getter
@@ -17,6 +15,6 @@ public class FlinkConfiguration implements EngineConfiguration.Stream {
 
     @Override
     public StreamEngine create() {
-        return new FlinkStreamEngineImpl();
+        return new LocalFlinkStreamEngineImpl();
     }
 }

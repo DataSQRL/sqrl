@@ -12,7 +12,7 @@ public class SourceTableMonitorImpl implements SourceTableMonitor {
     @Override
     public String startTableMonitoring(SourceTable table) {
         StreamEngine.Job job = monitor.monitorTable(table);
-        job.execute();
+        job.execute(table.qualifiedName());
         return job.getId();
     }
 

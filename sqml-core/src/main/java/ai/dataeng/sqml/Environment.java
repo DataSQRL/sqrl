@@ -43,6 +43,7 @@ public class Environment implements Closeable {
   private final StreamEngine streamEngine;
 
   private final DatasetRegistry datasetRegistry;
+  private final EnvironmentPersistence persistence = null;
   //TODO: keep track of running scripts and sinks
 
   private Environment(SqrlSettings settings) {
@@ -122,9 +123,9 @@ public class Environment implements Closeable {
 
     StreamEngine.Job job = settings.getStreamGeneratorProvider()
         .create(streamEngine,jdbc)
-        .generateStream(scriptId, optimized, sql.getSinkMapper());
+        .generateStream(optimized, sql.getSinkMapper());
 
-    job.execute();
+    job.execute(scriptId);
 
     return new Script(namespace, registry);
   }

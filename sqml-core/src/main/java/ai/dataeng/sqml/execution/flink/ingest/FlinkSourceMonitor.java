@@ -41,8 +41,8 @@ public class FlinkSourceMonitor implements StreamEngine.SourceMonitor {
     }
 
     @Override
-    public FlinkStreamEngine.Job monitorTable(SourceTable sourceTable) {
-        StreamExecutionEnvironment flinkEnv = envProvider.create();
+    public FlinkStreamEngine.FlinkJob monitorTable(SourceTable sourceTable) {
+        StreamExecutionEnvironment flinkEnv = envProvider.createStream();
 
         DataStream<SourceRecord.Raw> data = null;
         data = streamProvider.getDataStream(sourceTable, flinkEnv);
@@ -76,7 +76,7 @@ public class FlinkSourceMonitor implements StreamEngine.SourceMonitor {
 //                        500, SourceTableStatistics.Accumulator.class), TypeInformation.of(SourceTableStatistics.Accumulator.class))
                 .addSink(new SaveTableStatistics(jdbc, metaProvider, registryProvider,
                                                  sourceTable.getDataset().getName(),sourceTable.getName()));
-        return new FlinkStreamEngine.Job(flinkEnv, FlinkStreamEngine.JobType.MONITOR, sourceTable.qualifiedName());
+        return envProvider.createStreamJob(flinkEnv, FlinkStreamEngine.JobType.MONITOR);
     }
 
 
