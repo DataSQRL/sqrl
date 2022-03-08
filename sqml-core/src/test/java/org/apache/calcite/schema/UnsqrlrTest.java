@@ -1,6 +1,7 @@
 package org.apache.calcite.schema;
 
 import ai.dataeng.sqml.Environment;
+import ai.dataeng.sqml.ScriptDeployment;
 import ai.dataeng.sqml.config.SqrlSettings;
 import ai.dataeng.sqml.planner.Planner;
 import ai.dataeng.sqml.planner.Script;
@@ -31,7 +32,7 @@ public class UnsqrlrTest {
 
     env.getDatasetRegistry().addOrUpdateSource(C360Test.dd, new ProcessMessage.ProcessBundle<>());
     planner = sqrlSettings.getHeuristicPlannerProvider().createPlanner();
-    script = env.compile(C360Test.bundle);
+    script = env.compile(ScriptDeployment.of(C360Test.bundle));
   }
 
   @Test
