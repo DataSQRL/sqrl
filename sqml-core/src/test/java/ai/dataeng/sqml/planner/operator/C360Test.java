@@ -38,6 +38,25 @@ public class C360Test {
 
   Environment env;
   private VertxInternal vertx;
+  public static ScriptBundle bundle = createBundle();
+  public static FileSourceConfiguration dd = FileSourceConfiguration.builder()
+      .name(RETAIL_DATASET).uri(RETAIL_DATA_DIR.toAbsolutePath().toString()).build();
+
+  @SneakyThrows
+  private static ScriptBundle createBundle() {
+    return ScriptBundle.Config.builder()
+        .name(RETAIL_SCRIPT_NAME)
+        .scripts(ImmutableList.of(
+            SqrlScript.Config.builder()
+                .name(RETAIL_SCRIPT_NAME)
+                .isMain(true)
+                .script(Files.readString(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION)))
+                .inputSchema(Files.readString(RETAIL_IMPORT_SCHEMA_FILE))
+                .build()
+        ))
+        .build().initialize(new ProcessMessage.ProcessBundle<>());
+  }
+
 
   @BeforeEach
   public void setup() {
@@ -46,11 +65,8 @@ public class C360Test {
 
     env = Environment.create(DefaultTestSettings.create(vertx));
 
-
-    FileSourceConfiguration dd = FileSourceConfiguration.builder()
-            .name(RETAIL_DATASET).uri(RETAIL_DATA_DIR.toAbsolutePath().toString()).build();
-
     env.getDatasetRegistry().addOrUpdateSource(dd, new ProcessMessage.ProcessBundle<>());
+
   }
 
   @Test

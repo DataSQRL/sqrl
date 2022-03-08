@@ -10,6 +10,7 @@ import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import lombok.Value;
 
 /**
@@ -55,12 +56,26 @@ public class ShreddingOperator extends LogicalPlanImpl.RowNode<LogicalPlanImpl.D
         for (int depth = 0; depth <= maxdepth; depth++) {
             FieldProjection.SpecialCase fp;
             if (depth==0) {
-                fp = FieldProjection.ROOT_UUID;
+                if (targetTable != rootTable) {
+                    fp = FieldProjection.foreignKey(rootTable.getPrimaryKeys().get(0));
+                } else {
+                    fp = FieldProjection.ROOT_UUID;
+                }
             } else {
                 Name child = tableIdentifier.get(depth-1);
                 Relationship childRel = LogicalPlanUtil.getChildRelationship(currentTable,child);
                 if (childRel.multiplicity == Relationship.Multiplicity.MANY) {
-                    fp = new FieldProjection.ArrayIndex(depth);
+                    if (depth > 1) {
+                        Table table = currentTable;
+                        int i = depth;
+                        while (i-- != 0) {
+                            table = table.getParent().get();
+                        }
+
+                        fp = new FieldProjection.ArrayIndex(depth, Optional.of((Column) table.getField(Name.system("idx"+depth))));
+                    } else {
+                        fp = new FieldProjection.ArrayIndex(depth, Optional.empty());
+                    }
                 } else {
                     fp = null;
                 }

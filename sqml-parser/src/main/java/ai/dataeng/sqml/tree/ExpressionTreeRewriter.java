@@ -469,7 +469,7 @@ public final class ExpressionTreeRewriter<C> {
         Expression sortKey = rewrite(sortItem.getSortKey(), context.get());
         if (sortItem.getSortKey() != sortKey) {
           rewrittenSortItems
-              .add(new SortItem(sortKey, sortItem.getOrdering()));
+              .add(new SortItem(sortKey, sortItem.getOrdering().get()));
         } else {
           rewrittenSortItems.add(sortItem);
         }

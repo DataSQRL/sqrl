@@ -1,65 +1,145 @@
 package org.apache.calcite.schema;
 
-import ai.dataeng.sqml.planner.DatasetOrTable;
-import ai.dataeng.sqml.planner.optimize2.SqrlLogicalTableScan;
+import ai.dataeng.sqml.planner.FieldPath;
+import ai.dataeng.sqml.planner.RelDataTypeFieldFactory;
+import ai.dataeng.sqml.planner.Relationship;
+import ai.dataeng.sqml.planner.Table;
+import ai.dataeng.sqml.planner.operator2.SqrlTableScan;
+import ai.dataeng.sqml.tree.name.NamePath;
+import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
-import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelOptTable.ToRelContext;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.type.GrowableRecordType;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeFamily;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelDataTypeImpl;
+import org.apache.calcite.rel.type.RelDataTypePrecedenceList;
+import org.apache.calcite.rel.type.SqrlRelDataTypeField;
+import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.schema.Schema.TableType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.type.SqlTypeExplicitPrecedenceList;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Pair;
 
 /**
- * A dynamically expanding table.
+ * A dynamically expanding table. All paths that can be specified as columns are resolved as they
+ * are referenced.
+ *
+ * This table must maintain state between two phases of the calcite process. Expanded columns gets
+ * constructed during Validation and then must maintain the same positions
  */
-public class SqrlCalciteTable implements CustomColumnResolvingTable
-    , TranslatableTable
-{
+@Getter
+public class SqrlCalciteTable
+    extends RelDataTypeImpl
+    implements CustomColumnResolvingTable, TranslatableTable {
 
-  private final DatasetOrTable table;
-  /**
-   * We can arrive at a table though multiple paths. We need to keep track
-   * of the fields discovered on each unique logical table as well as the
-   * path so we can rewrite it later.
-   */
-  private final String originalTableName;
-  private final List<RelDataTypeField> relDataTypeFields;
-  GrowableRecordType holder = null;
+  private final Table sqrlTable;
+  private final Table baseTable;
+  private final Optional<FieldPath> fieldPath;
+  private final List<FieldPath> addedFields = new ArrayList();
 
-  public SqrlCalciteTable(DatasetOrTable table, String originalTableName,
-      List<RelDataTypeField> relDataTypeFields) {
-    this.table = table;
-    this.originalTableName = originalTableName;
-    this.relDataTypeFields = relDataTypeFields;
+  private final boolean isContext;
+  private final List<RelDataTypeField> fields;
+  private final String name;
+  private final boolean isPath;
+  Relationship relationship;
+
+  private final RelDataTypeFieldFactory fieldFactory;
+
+  public SqrlCalciteTable(Table sqrlTable, Table baseTable,
+      Optional<FieldPath> fieldPath, RelDataTypeFieldFactory fieldFactory, boolean isContext,
+      List<RelDataTypeField> fields, String name,
+      boolean isPath, Relationship relationship) {
+    this.sqrlTable = sqrlTable;
+    this.baseTable = baseTable;
+    this.fieldPath = fieldPath;
+    this.fieldFactory = fieldFactory;
+    this.isContext = isContext;
+    this.fields = fields;
+    this.name = name;
+    this.isPath = isPath;
+    this.relationship = relationship;
+    computeDigest();
   }
 
+
+  /**
+   * This only gets call once in the validation process. We need to be able to modify
+   * its digest when new columns are discovered and added.
+   */
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory) {
-    if (holder == null) {
-      this.holder = new GrowableRecordType(relDataTypeFields, table);
-      return holder;
+    return this;
+  }
+
+  /**
+   * This -attempts- to resolve a column, empty list if it is not found. Empty list indicates
+   * if the column does not exist.
+   *
+   * Calcite will look sometimes look for aliased columns.
+   * For pathed relations, the order is that it will look for the first field
+   * in the path to determine if it is a field or a struct. If it is a struct,
+   *
+   */
+  @Override
+  public List<Pair<RelDataTypeField, List<String>>> resolveColumn(RelDataType relDataType,
+      RelDataTypeFactory relDataTypeFactory, List<String> list) {
+    //TODO: investigate why the fieldname may be empty
+    if (list.size() == 0) {
+      throw new RuntimeException("?");
     }
-    return holder;
+
+    String fieldName = String.join(".", list);
+    String[] versioned = fieldName.split("\\$");
+    fieldName = versioned[0];
+
+    NamePath namePath = NamePath.parse(fieldName);
+
+    Optional<FieldPath> fieldPath;
+    //check if resolvable by this table
+    if (versioned.length > 1) {
+      fieldPath = sqrlTable.getField(namePath, Integer.parseInt(versioned[1]));
+    } else {
+      fieldPath = sqrlTable.getField(namePath);
+    }
+    if (fieldPath.isEmpty()) {
+      return List.of();
+    }
+
+    //Check for fields already defined
+    Optional<RelDataTypeField> existingField = getField(fieldPath.get());
+    if (existingField.isPresent()) {
+      return List.of(
+          Pair.of(existingField.get(), List.of())
+      );
+    }
+
+    //Consume the entire field
+    RelDataTypeField resolvedField = addField(fieldPath.get());
+    Preconditions.checkNotNull(resolvedField, "Field should not be null %s", namePath);
+    return List.of(
+        Pair.of(resolvedField, List.of())
+    );
   }
 
-  public String getOriginalTableName() {
-    return originalTableName;
-  }
-
-  public DatasetOrTable getTable() {
-    return table;
-  }
-
-  public GrowableRecordType getHolder() {
-    return holder;
+  /**
+   * Called if this class type is 'TranslatableTable'. We have full visibility on the relation
+   *  structure and fields at this point. We can unsqrl the table when we resolve the relation.
+   */
+  @Override
+  public RelNode toRel(ToRelContext context, RelOptTable calciteOptTable) {
+    return SqrlTableScan.create(context.getCluster(), calciteOptTable, context.getTableHints());
   }
 
   @Override
@@ -80,28 +160,84 @@ public class SqrlCalciteTable implements CustomColumnResolvingTable
   @Override
   public boolean rolledUpColumnValidInsideAgg(String s, SqlCall sqlCall, SqlNode sqlNode,
       CalciteConnectionConfig calciteConnectionConfig) {
-    return false;
+    return true;
   }
 
   @Override
-  public List<Pair<RelDataTypeField, List<String>>> resolveColumn(RelDataType relDataType,
-      RelDataTypeFactory relDataTypeFactory, List<String> list) {
-
-    //Consume the entire field
-    String path = String.join(".", list);
-    RelDataTypeField resolvedField = holder.getField(path, false, false);
-    return List.of(
-        Pair.of(resolvedField, List.of())
-    );
+  public int getFieldCount() {
+    return fields.size();
   }
 
   @Override
-  public RelNode toRel(ToRelContext context, RelOptTable relOptTable) {
-    RelOptCluster cluster = context.getCluster();
+  public RelDataTypeField getField(String fieldName,
+      boolean caseSensitive, boolean elideRecord) {
 
-    SqrlLogicalTableScan scan = new SqrlLogicalTableScan(cluster, cluster.traitSet(), List.of(),
-        relOptTable, (ai.dataeng.sqml.planner.Table)table);
+    return fields.stream()
+        .filter(f->f.getName().equalsIgnoreCase(fieldName))
+        .findFirst()
+        .orElse(null);
+  }
 
-    return scan;
+  public RelDataTypeField addField(FieldPath fieldPath) {
+    RelDataTypeField field = fieldFactory.create(fieldPath, this.fields.size());
+    this.fields.add(field);
+    this.addedFields.add(fieldPath);
+    computeDigest();
+
+    return field;
+  }
+
+  public Optional<RelDataTypeField> getField(FieldPath fieldPath) {
+    return fields.stream()
+        .filter(f->((SqrlRelDataTypeField)f).getPath().getName().equalsIgnoreCase(fieldPath.getName()))
+        .findFirst();
+  }
+  @Override
+  public List<RelDataTypeField> getFieldList() {
+    return fields;
+  }
+
+  @Override
+  public List<String> getFieldNames() {
+//    System.out.println(this.root.getRowType().getFieldNames());
+    return fields.stream().map(e->((SqrlRelDataTypeField)e).getPath().getLastField().getId()).collect(Collectors.toList());
+  }
+
+  @Override
+  public SqlTypeName getSqlTypeName() {
+    return SqlTypeName.ROW;
+  }
+
+  @Override
+  public RelDataTypePrecedenceList getPrecedenceList() {
+    return new SqlTypeExplicitPrecedenceList(Collections.<SqlTypeName>emptyList());
+  }
+
+  /**
+   * Called when computing the digest
+   */
+  @Override
+  protected void generateTypeString(StringBuilder sb, boolean withDetail) {
+    sb.append("(DynamicRecordRow")
+        .append(getFieldNames())
+        .append(")");
+  }
+
+  @Override
+  public boolean isStruct() {
+    return true;
+  }
+
+  @Override public RelDataTypeFamily getFamily() {
+    return getSqlTypeName().getFamily();
+  }
+
+  @Override
+  public StructKind getStructKind() {
+    return StructKind.PEEK_FIELDS;
+  }
+
+  public Relationship getRelationship() {
+    return this.relationship;
   }
 }

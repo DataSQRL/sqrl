@@ -37,7 +37,7 @@ public class FlattenTableNames {
       SqlIdentifier identifier = (SqlIdentifier) node;
       rewriteIdentifier(identifier);
     } else {
-      System.out.println("SKipping: "+node + ":"+node.getClass().getName());
+      System.out.println("Skipping: " + node);
     }
   }
 

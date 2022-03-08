@@ -29,6 +29,13 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
     public static NamePath of(@NonNull Name... names) {
         return new NamePath(names);
     }
+  public static NamePath of(@NonNull String... names) {
+      Name[] n = Arrays.stream(names)
+          .map(Name::system)
+          .toArray(Name[]::new);
+
+    return new NamePath(n);
+  }
     public static NamePath of(@NonNull List<Name> names) {
         return new NamePath(names.toArray(new Name[0]));
     }
@@ -130,9 +137,6 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
         return Arrays.compare(names,o.names);
     }
 
-    public Name toName() {
-        return null;
-    }
     public Optional<NamePath> getPrefix() {
 
         if (names.length <= 1) {

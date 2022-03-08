@@ -1,28 +1,29 @@
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.name.Name;
 import java.util.List;
 import java.util.Optional;
 
 public class DistinctAssignment extends Assignment {
 
-  private final Identifier table;
-  private final List<Identifier> fields;
+  private final Name table;
+  private final List<Name> partitionKeys;
   private final List<SortItem> order;
 
   public DistinctAssignment(Optional<NodeLocation> location,
-      QualifiedName name, Identifier table, List<Identifier> fields, List<SortItem> order) {
+      QualifiedName name, Name table, List<Name> fields, List<SortItem> order) {
     super(location, name);
     this.table = table;
-    this.fields = fields;
+    this.partitionKeys = fields;
     this.order = order;
   }
 
-  public Identifier getTable() {
+  public Name getTable() {
     return table;
   }
 
-  public List<Identifier> getFields() {
-    return fields;
+  public List<Name> getPartitionKeys() {
+    return partitionKeys;
   }
 
   public List<SortItem> getOrder() {

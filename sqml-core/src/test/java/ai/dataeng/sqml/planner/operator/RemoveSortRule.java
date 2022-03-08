@@ -10,23 +10,23 @@ public class RemoveSortRule
       extends RelRule<Config>
       implements TransformationRule {
 
-    public RemoveSortRule(Config config) {
-      super(config);
-    }
+  public RemoveSortRule(Config config) {
+    super(config);
+  }
 
-    @Override public void onMatch(RelOptRuleCall call) {
-      call.transformTo(call.rel(0).getInput(0));
-    }
+  @Override public void onMatch(RelOptRuleCall call) {
+    call.transformTo(call.rel(0).getInput(0));
+  }
 
-    /** Rule configuration. */
-    public interface Config extends RelRule.Config {
-      RemoveSortRule.Config DEFAULT = EMPTY
-          .withOperandSupplier(b ->
-              b.operand(LogicalSort.class).anyInputs())
-          .as(RemoveSortRule.Config.class);
+  /** Rule configuration. */
+  public interface Config extends RelRule.Config {
+    RemoveSortRule.Config DEFAULT = EMPTY
+        .withOperandSupplier(b ->
+            b.operand(LogicalSort.class).anyInputs())
+        .as(RemoveSortRule.Config.class);
 
-      @Override default RemoveSortRule toRule() {
-        return new RemoveSortRule(this);
-      }
+    @Override default RemoveSortRule toRule() {
+      return new RemoveSortRule(this);
     }
   }
+}

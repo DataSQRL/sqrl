@@ -20,4 +20,6 @@ public abstract class Field implements ShadowingContainer.Nameable {
   }
 
   public abstract Field copy();
+
+  public abstract String getId();
 }

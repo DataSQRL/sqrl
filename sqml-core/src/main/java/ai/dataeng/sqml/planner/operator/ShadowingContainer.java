@@ -5,6 +5,7 @@ import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.Iterators;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -19,7 +20,7 @@ import java.util.stream.Stream;
  *
  * @param <E>
  */
-public class ShadowingContainer<E extends ShadowingContainer.Nameable> implements Iterable<E> {
+public class ShadowingContainer<E extends ShadowingContainer.Nameable> implements Collection<E> {
 
     private List<E> elements = new ArrayList<>();
     private Map<Name,E> byName = new LinkedHashMap<>();
@@ -33,6 +34,39 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
         elements.add(e);
         if (e.isVisible()) return (byName.put(e.getName(),e)!=null);
         else return false;
+    }
+
+    @Override
+    public boolean remove(Object o) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public boolean containsAll(Collection<?> c) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public boolean addAll(Collection<? extends E> c) {
+        for (E ele : c) {
+            add(ele);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public void clear() {
+        throw new RuntimeException("Not implemented");
     }
 
     /**
@@ -61,8 +95,33 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
     }
 
     @Override
+    public int size() {
+        return this.elements.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return this.elements.isEmpty();
+    }
+
+    @Override
+    public boolean contains(Object o) {
+        return this.elements.contains(o);
+    }
+
+    @Override
     public Iterator<E> iterator() {
         return elements.iterator();
+    }
+
+    @Override
+    public Object[] toArray() {
+        return this.elements.toArray();
+    }
+
+    @Override
+    public <T> T[] toArray(T[] a) {
+        return this.elements.toArray(a);
     }
 
     /**
@@ -89,9 +148,36 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
     public Stream<E> visibleStream() {
         return elements.stream().filter(e -> e.equals(byName.get(e.getName())));
     }
+    public List<E> visibleList() {
+        return elements.stream().filter(e -> e.equals(byName.get(e.getName()))).collect(Collectors.toList());
+    }
 
     public List<E> getElements() {
         return elements;
+    }
+
+    public int indexOf(Name name) {
+        int lastIndex = -1;
+        for (int i = 0; i < elements.size(); i++) {
+            E element = elements.get(i);
+            if (element.getName().equals(name)) {
+                lastIndex = i;
+            }
+        }
+        return lastIndex;
+    }
+
+    public E get(int i) {
+        return this.elements.get(i);
+    }
+
+    public E getByName(Name name, int version) {
+        for (E f : this.elements) {
+            if (f.getName().equals(name) && f.getVersion() == version) {
+                return f;
+            }
+        }
+        return null;
     }
 
 //    Map<NamePath, DatasetOrTable> tables = new HashMap<>();
@@ -112,6 +198,8 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
         default boolean isVisible() {
             return true;
         }
+
+        int getVersion();
 
     }
 

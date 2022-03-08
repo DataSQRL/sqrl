@@ -246,7 +246,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitSortItem(SortItem node, Void context) {
     return node.getSortKey().accept(this, null) + " " +
-        (node.getOrdering() == Ordering.ASCENDING ? "ASC" : "DESC");
+        (node.getOrdering().get() == Ordering.ASCENDING ? "ASC" : "DESC");
   }
 
   @Override
@@ -412,5 +412,11 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitJoinOn(JoinOn node, Void context) {
     return node.getExpression().accept(this, null);
+  }
+
+  @Override
+  public String visitDistinctAssignment(DistinctAssignment node, Void context) {
+    return String.format("DISTINCT %s ON %s %s;", node.getTable(), node.getPartitionKeys(),
+        node.getOrder() != null ? String.format("ORDER BY %s", node.getOrder()) : "");
   }
 }

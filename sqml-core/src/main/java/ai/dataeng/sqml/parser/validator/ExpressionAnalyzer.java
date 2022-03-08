@@ -41,9 +41,9 @@ import ai.dataeng.sqml.tree.TimestampLiteral;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class ExpressionAnalyzer {
-//  private Logger log = Logger.getLogger(Expression.class.getName());
 
   public ExpressionAnalyzer() {
   }

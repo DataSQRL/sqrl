@@ -7,24 +7,30 @@ import ai.dataeng.sqml.catalog.NamespaceImpl;
 import ai.dataeng.sqml.config.engines.FlinkConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.config.metadata.JDBCMetadataStore;
-import ai.dataeng.sqml.config.provider.*;
+import ai.dataeng.sqml.config.provider.DatasetRegistryPersistenceProvider;
+import ai.dataeng.sqml.config.provider.EnvironmentPersistenceProvider;
+import ai.dataeng.sqml.config.provider.HeuristicPlannerProvider;
+import ai.dataeng.sqml.config.provider.ImportManagerProvider;
+import ai.dataeng.sqml.config.provider.MetadataStoreProvider;
+import ai.dataeng.sqml.config.provider.ScriptParserProvider;
+import ai.dataeng.sqml.config.provider.ScriptProcessorProvider;
+import ai.dataeng.sqml.config.provider.SourceTableMonitorProvider;
+import ai.dataeng.sqml.config.provider.SqlGeneratorProvider;
+import ai.dataeng.sqml.config.provider.StreamEngineProvider;
+import ai.dataeng.sqml.config.provider.StreamGeneratorProvider;
+import ai.dataeng.sqml.config.provider.StreamMonitorProvider;
+import ai.dataeng.sqml.config.provider.ValidatorProvider;
 import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
 import ai.dataeng.sqml.execution.flink.ingest.FlinkSourceMonitor;
 import ai.dataeng.sqml.execution.flink.process.FlinkGenerator;
 import ai.dataeng.sqml.execution.sql.SQLGenerator;
 import ai.dataeng.sqml.io.sources.dataset.MetadataRegistryPersistence;
 import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitorImpl;
-import ai.dataeng.sqml.planner.operator.ImportManager;
 import ai.dataeng.sqml.parser.ScriptParserImpl;
-import ai.dataeng.sqml.parser.processor.DistinctProcessorImpl;
-import ai.dataeng.sqml.parser.processor.ExpressionProcessorImpl;
-import ai.dataeng.sqml.parser.processor.ImportProcessorImpl;
-import ai.dataeng.sqml.parser.processor.JoinProcessorImpl;
-import ai.dataeng.sqml.parser.processor.QueryProcessorImpl;
 import ai.dataeng.sqml.parser.processor.ScriptProcessorImpl;
-import ai.dataeng.sqml.parser.processor.SubscriptionProcessorImpl;
 import ai.dataeng.sqml.parser.validator.ScriptValidatorImpl;
 import ai.dataeng.sqml.planner.HeuristicPlannerImpl;
+import ai.dataeng.sqml.planner.operator.ImportManager;
 import ai.dataeng.sqml.planner.operator.ImportResolver;
 import com.google.common.base.Preconditions;
 import lombok.Builder;
@@ -39,12 +45,6 @@ public class SqrlSettings {
   ImportManagerProvider importManagerProvider;
   ScriptProcessorProvider scriptProcessorProvider;
   HeuristicPlannerProvider heuristicPlannerProvider;
-  ImportProcessorProvider importProcessorProvider;
-  QueryProcessorProvider queryProcessorProvider;
-  ExpressionProcessorProvider expressionProcessorProvider;
-  JoinProcessorProvider joinProcessorProvider;
-  DistinctProcessorProvider distinctProcessorProvider;
-  SubscriptionProcessorProvider subscriptionProcessorProvider;
 
   JDBCConfiguration jdbcConfiguration;
   StreamEngineProvider streamEngineProvider;
@@ -77,23 +77,14 @@ public class SqrlSettings {
         .environmentPersistenceProvider(new MetadataEnvironmentPersistence.Provider())
 
         .namespace(new NamespaceImpl())
-        .importProcessorProvider((importResolver, planner)->new ImportProcessorImpl(importResolver, planner))
-        .queryProcessorProvider((planner)->new QueryProcessorImpl(planner))
-        .expressionProcessorProvider((planner)->new ExpressionProcessorImpl(planner))
-        .joinProcessorProvider(()->new JoinProcessorImpl())
-        .distinctProcessorProvider(()->new DistinctProcessorImpl())
-        .subscriptionProcessorProvider(()->new SubscriptionProcessorImpl())
         .validatorProvider(()->new ScriptValidatorImpl())
         .scriptParserProvider(()->new ScriptParserImpl())
-        .importManagerProvider((datasetLookup)-> {
+        .importManagerProvider((datasetLookup, planner)-> {
           ImportManager manager = new ImportManager(datasetLookup);
-          return new ImportResolver(manager);
+          return new ImportResolver(manager, planner);
         })
         .heuristicPlannerProvider(()->new HeuristicPlannerImpl())
-        .scriptProcessorProvider((importProcessor, queryProcessor, expressionProcessor,
-            joinProcessor, distinctProcessor, subscriptionProcessor, namespace)->
-            new ScriptProcessorImpl(importProcessor, queryProcessor, expressionProcessor,
-                joinProcessor, distinctProcessor, subscriptionProcessor, namespace));
+        .scriptProcessorProvider(ScriptProcessorImpl::new);
 
     GlobalConfiguration.Engines engines = config.getEngines();
     Preconditions.checkArgument(engines.getFlink()!=null,"Must configure Flink engine");

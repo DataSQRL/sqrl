@@ -4,14 +4,13 @@ import ai.dataeng.sqml.config.constraints.OptionalMinString;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import com.google.common.base.Preconditions;
 import lombok.*;
-import org.apache.commons.lang.StringUtils;
 
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @Builder

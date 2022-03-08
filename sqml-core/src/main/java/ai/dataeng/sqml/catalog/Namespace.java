@@ -2,11 +2,11 @@ package ai.dataeng.sqml.catalog;
 
 import ai.dataeng.sqml.planner.Dataset;
 import ai.dataeng.sqml.planner.DatasetOrTable;
-import ai.dataeng.sqml.planner.LogicalPlan;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.planner.operator.DocumentSource;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
+import ai.dataeng.sqml.planner.operator2.SqrlRelNode;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.List;
@@ -49,4 +49,6 @@ public interface Namespace {
   ShadowingContainer<DatasetOrTable> getSchema();
 
   LogicalPlanImpl getLogicalPlan();
+
+  Table createTable(Name last, NamePath namePath, SqrlRelNode node, boolean isInternal);
 }

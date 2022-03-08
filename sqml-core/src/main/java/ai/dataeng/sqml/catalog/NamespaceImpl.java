@@ -3,11 +3,11 @@ package ai.dataeng.sqml.catalog;
 
 import ai.dataeng.sqml.planner.Dataset;
 import ai.dataeng.sqml.planner.DatasetOrTable;
-import ai.dataeng.sqml.planner.LogicalPlan;
 import ai.dataeng.sqml.planner.LogicalPlanImpl;
 import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.planner.operator.DocumentSource;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
+import ai.dataeng.sqml.planner.operator2.SqrlRelNode;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.ArrayList;
@@ -38,6 +38,17 @@ public class NamespaceImpl implements Namespace {
   @Override
   public Optional<Table> lookup(NamePath namePath) {
     if (namePath.isEmpty()) return Optional.empty();
+
+    //Hack due to order or adding dataset
+    //Always look in schema first to discover
+    Table schemaTable = (Table)this.logicalPlan.schema.getByName(namePath.getFirst());
+    if (schemaTable != null) {
+      if (namePath.getLength() == 1) {
+        return Optional.of(schemaTable);
+      }
+
+      return schemaTable.walk(namePath.popFirst());
+    }
 
     //Check if path is qualified
     Dataset dataset = this.rootDatasets.get(namePath.getFirst());
@@ -104,6 +115,15 @@ public class NamespaceImpl implements Namespace {
   public Table createTable(Name name, NamePath path, boolean isInternal) {
     Table table = new Table(tableIdCounter.incrementAndGet(), name, path, isInternal);
     logicalPlan.schema.add(table);
+    return table;
+  }
+
+  @Override
+  public Table createTable(Name name, NamePath path, SqrlRelNode node, boolean isInternal) {
+    Table table = new Table(tableIdCounter.incrementAndGet(), name, path,isInternal);
+    logicalPlan.schema.add(table);
+    node.getFields().forEach(table::addField);
+
     return table;
   }
 
