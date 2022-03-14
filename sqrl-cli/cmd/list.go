@@ -8,25 +8,25 @@ import (
 
 func init() {
   rootCmd.AddCommand(listCmd)
-  listCmd.AddCommand(listScriptsCmd)
+  listCmd.AddCommand(listDeployCmd)
   listCmd.AddCommand(listSourcesCmd)
   listCmd.AddCommand(listSinksCmd)
 }
 
 var listCmd = &cobra.Command{
-  Use:   "list (scripts|sources|sinks)",
+  Use:   "list",
   Short: "List all scripts, sources, or sinks on the DataSQLR server",
   Long:  `Prints a list of all the scripts, sources, or sinks that are running or
 connected to a DataSQRL server instance`,
 }
 
-var listScriptsCmd = &cobra.Command{
-  Use:   "scripts",
-  Short: "List all scripts running on the DataSQLR server",
-  Long:  `Prints a list of all the scripts that are running on a DataSQRL server instance`,
+var listDeployCmd = &cobra.Command{
+  Use:   "deployments",
+  Short: "List all deployments running on the DataSQLR server",
+  Long:  `Prints a list of all the deployments that are running on a DataSQRL server instance`,
   Args: cobra.NoArgs,
   Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("List scripts")
+    fmt.Println("List deployments")
   },
 }
 
