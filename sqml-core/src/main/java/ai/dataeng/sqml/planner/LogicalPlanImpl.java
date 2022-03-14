@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class LogicalPlanImpl implements LogicalPlan {
 
-    public static final String ID_DELIMITER = "_";
+    public static final String ID_DELIMITER = "$";
 
     /**
      * The {@link LogicalPlanImpl#schema} represents the schema of the tables defined in an SQRL script.
@@ -163,12 +163,6 @@ public class LogicalPlanImpl implements LogicalPlan {
         public ColumnReferenceExpression[] getOutputVariables() {
             return new ColumnReferenceExpression[0];
         }
-    }
-
-    public Table createTable(Name name, NamePath path, boolean isInternal) {
-        Table table = new Table(tableIdCounter.incrementAndGet(), name, path, isInternal);
-        schema.add(table);
-        return table;
     }
 
     public ShadowingContainer<DatasetOrTable> getSchema() {

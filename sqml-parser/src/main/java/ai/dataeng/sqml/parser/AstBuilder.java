@@ -942,9 +942,11 @@ class AstBuilder
     return new DistinctAssignment(
         Optional.of(getLocation(ctx)),
         name,
-        (Identifier)visit(ctx.table),
-        ctx.identifier() == null ? List.of() : ctx.identifier().stream().skip(1)
-            .map(s->(Identifier) visit(s)).collect(toList()),
+        Name.system(((Identifier) visit(ctx.table)).toString()),
+        ctx.identifier() == null ? List.of() :
+            ctx.identifier().stream().skip(1)
+            .map(s->Name.system(((Identifier) visit(s)).toString()))
+            .collect(toList()),
         ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
             .map(s->(SortItem) s.accept(this)).collect(toList())
 
@@ -955,8 +957,8 @@ class AstBuilder
   public Node visitJoinAssignment(JoinAssignmentContext ctx) {
     QualifiedName name = getQualifiedName(ctx.qualifiedName());
     Interval interval = new Interval(
-        ctx.inlineJoin().start.getStartIndex(),
-        ctx.inlineJoin().stop.getStopIndex());
+        ctx.inlineJoin().inlineJoinBody().start.getStartIndex(),
+        ctx.inlineJoin().inlineJoinBody().stop.getStopIndex());
     String query = ctx.inlineJoin().start.getInputStream().getText(interval);
 
     return new JoinAssignment(Optional.of(getLocation(ctx)), name,

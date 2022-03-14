@@ -7,7 +7,7 @@ public class StandardName extends AbstractName {
     private String canonicalName;
     private String displayName;
 
-    StandardName() {} //For Kryo
+    public StandardName() {} //For Kryo
 
     StandardName(@NonNull String canonicalName, @NonNull String displayName) {
         this.canonicalName = validateName(canonicalName);

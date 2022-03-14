@@ -40,7 +40,7 @@ public class QueryAnalyzer {
             next.fields.visibleStream().filter(f -> f instanceof Relationship && !f.name.isHidden())
                     .map(f -> (Relationship)f)
                     .forEach(r -> {
-                        Preconditions.checkArgument(!r.toTable.name.isHidden(),"Hidden tables should not be reachable by non-hidden relationships");
+                        Preconditions.checkArgument(!r.toTable.name.isHidden(),"Hidden tables should not be reachable by non-hidden relationships: " + r.toTable.name);
                         if (!included.contains(r.toTable)) {
                             toInclude.add(r.toTable);
                         }

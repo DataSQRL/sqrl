@@ -30,6 +30,11 @@ public class Dataset implements DatasetOrTable {
     return name;
   }
 
+  @Override
+  public int getVersion() {
+    return 0;
+  }
+
   //TODO: Datasets could be renamed so this could allow older
   // datasets to still be accessible
   public Optional<Table> get(Name name) {

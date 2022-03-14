@@ -38,12 +38,14 @@ public class SortItem
     this.sortKey = sortKey;
   }
 
+  //todo: migrate to identifier
   public Expression getSortKey() {
     return sortKey;
   }
 
-  public Ordering getOrdering() {
-    return ordering;
+  //todo make optional
+  public Optional<Ordering> getOrdering() {
+    return Optional.of(ordering);
   }
 
   @Override

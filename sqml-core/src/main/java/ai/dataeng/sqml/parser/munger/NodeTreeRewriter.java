@@ -517,7 +517,7 @@ public class NodeTreeRewriter<C> {
         Expression sortKey = rewrite(sortItem.getSortKey(), context.get());
         if (sortItem.getSortKey() != sortKey) {
           rewrittenSortItems
-              .add(new SortItem(sortKey, sortItem.getOrdering()));
+              .add(new SortItem(sortKey, sortItem.getOrdering().get()));
         } else {
           rewrittenSortItems.add(sortItem);
         }
@@ -859,7 +859,7 @@ public class NodeTreeRewriter<C> {
 
     @Override
     public Node visitSortItem(SortItem node, Context<C> context) {
-      return new SortItem(rewrite(node.getSortKey(), context.get()), node.getOrdering());
+      return new SortItem(rewrite(node.getSortKey(), context.get()), node.getOrdering().get());
     }
 
     @Override

@@ -1,9 +1,12 @@
 package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.planner.LogicalPlanImpl.RowNode;
+import ai.dataeng.sqml.planner.Relationship.Type;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
+import ai.dataeng.sqml.planner.operator2.SqrlRelNode;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -17,10 +20,11 @@ public class Table implements DatasetOrTable {
 
   public Name name;
   public final int uniqueId;
-  public final ShadowingContainer<Field> fields = new ShadowingContainer<>();
+  public ShadowingContainer<Field> fields = new ShadowingContainer<>();
   private final NamePath path;
   public final boolean isInternal;
   public RowNode currentNode;
+  private SqrlRelNode node;
 
   public Table(int uniqueId, Name name, NamePath path, boolean isInternal) {
     this.name = name;
@@ -34,7 +38,31 @@ public class Table implements DatasetOrTable {
   }
 
   public Field getField(Name name) {
-    return fields.getByName(name);
+    Field field = fields.getByName(name);
+    return field;
+  }
+
+  public Optional<FieldPath> getField(NamePath path, int version) {
+    return getField(path);//todo: include version
+  }
+
+  public Optional<FieldPath> getField(NamePath path) {
+    List<Field> fields = new ArrayList<>();
+    Table table = this;
+    for (int i = 0; i < path.getLength() - 1; i++) {
+      Field field = table.getField(path.get(i));
+      if (!(field instanceof Relationship)) {
+        return Optional.empty();
+      }
+      table = ((Relationship) field).getToTable();
+      fields.add(field);
+    }
+    Field field = table.getField(path.get(path.getLength() - 1));
+    if (field == null) {
+      return Optional.empty();
+    }
+    fields.add(field);
+    return Optional.of(new FieldPath(fields));
   }
 
   public boolean addField(Field field) {
@@ -53,9 +81,22 @@ public class Table implements DatasetOrTable {
         .collect(Collectors.toList());
   }
 
+  public List<Column> getForeignKeys() {
+    return this.fields.visibleStream()
+        .filter(f->f instanceof Column)
+        .map(f->(Column) f)
+        .filter(f->f.isForeignKey)
+        .collect(Collectors.toList());
+  }
+
   @Override
   public boolean isVisible() {
     return !isInternal;
+  }
+
+  @Override
+  public int getVersion() {
+    return uniqueId;
   }
 
   @Override
@@ -96,5 +137,28 @@ public class Table implements DatasetOrTable {
     }
 
     return Optional.empty();
+  }
+
+  public Optional<Table> getParent() {
+    for (Field field : fields) {
+      if (field instanceof Relationship && ((Relationship)field).getType() == Type.PARENT) {
+        return Optional.of(((Relationship)field).getToTable());
+      }
+    }
+    return Optional.empty();
+  }
+
+  @Override
+  public String toString() {
+    return "Table{" +
+        "name=" + name +
+        ", pk=" + getPrimaryKeys().stream().map(e->e.getName().toString()).collect(Collectors.toList()) +
+        ", fk=" + getForeignKeys().stream().map(e->e.getName().toString()).collect(Collectors.toList()) +
+        ", fields=" + getFields().stream().map(e->e.getName().toString()).collect(Collectors.toList()) +
+        '}';
+  }
+
+  public void setRelNode(SqrlRelNode node) {
+    this.node = node;
   }
 }

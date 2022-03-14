@@ -102,7 +102,9 @@ public class Environment implements Closeable {
     SqrlScript mainScript = bundle.getMainScript();
 
     //Instantiate import resolver and register user schema
-    ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(datasetRegistry);
+    ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(
+        datasetRegistry,
+        settings.getHeuristicPlannerProvider().createPlanner());
     ProcessBundle<SchemaConversionError> importErrors = importResolver.getImportManager()
             .registerUserSchema(mainScript.getSchema());
     Preconditions.checkArgument(!importErrors.isFatal(),
@@ -120,14 +122,7 @@ public class Environment implements Closeable {
     HeuristicPlannerProvider planner =
         settings.getHeuristicPlannerProvider();
     ScriptProcessor processor = settings.getScriptProcessorProvider().createScriptProcessor(
-        settings.getImportProcessorProvider().createImportProcessor(importResolver, planner),
-        settings.getQueryProcessorProvider().createQueryProcessor(planner),
-        settings.getExpressionProcessorProvider().createExpressionProcessor(planner),
-        settings.getJoinProcessorProvider().createJoinProcessor(),
-        settings.getDistinctProcessorProvider().createDistinctProcessor(),
-        settings.getSubscriptionProcessorProvider().createSubscriptionProcessor(),
-        settings.getNamespace());
-
+        importResolver, planner, settings.getNamespace());
     Namespace namespace = processor.process(scriptNode);
 
     LogicalPlanImpl logicalPlan = namespace.getLogicalPlan();

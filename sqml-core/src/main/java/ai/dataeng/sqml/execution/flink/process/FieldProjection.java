@@ -11,6 +11,7 @@ import ai.dataeng.sqml.type.constraint.NotNull;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
+import java.util.Optional;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -32,11 +33,14 @@ public interface FieldProjection extends Serializable {
         private final Name name;
         private final BasicType type;
         private final boolean isPrimary;
+        private final Optional<Column> parent;
 
-        protected SpecialCase(String name, BasicType type, boolean isPrimary) {
+        protected SpecialCase(String name, BasicType type, boolean isPrimary,
+            Optional<Column> parent) {
             this.name = Name.hidden(name);
             this.type = type;
             this.isPrimary = isPrimary;
+            this.parent = parent;
         }
 
         @Override
@@ -50,7 +54,7 @@ public interface FieldProjection extends Serializable {
 
         public Column createColumn(Table table) {
             return new Column(getName(),table,0,type,0,
-                    Collections.singletonList(NotNull.INSTANCE),isPrimary, false, false);
+                    Collections.singletonList(NotNull.INSTANCE),isPrimary, parent.isPresent(), parent, false);
         }
 
         @Override
@@ -62,21 +66,32 @@ public interface FieldProjection extends Serializable {
         }
     }
 
-    SpecialCase ROOT_UUID = new SpecialCase("uuid", UuidType.INSTANCE, true) {
+    public static SpecialCase foreignKey(Column parent) {
+        return new SpecialCase("uuid", UuidType.INSTANCE, true, Optional.of(parent)){
+            @Override
+            public Object getData(SourceRecord<Name> record) {
+                return record.getUuid().toString();
+            }
+        };
+    }
+
+    SpecialCase ROOT_UUID = new SpecialCase("uuid", UuidType.INSTANCE, true, Optional.empty()) {
         @Override
         public Object getData(SourceRecord<Name> record) {
             return record.getUuid().toString();
         }
     };
 
-    SpecialCase INGEST_TIMESTAMP = new SpecialCase("ingest_time", DateTimeType.INSTANCE, false) {
+    SpecialCase INGEST_TIMESTAMP = new SpecialCase("ingest_time", DateTimeType.INSTANCE, false,
+        Optional.empty()) {
         @Override
         public Object getData(SourceRecord<Name> record) {
             return record.getIngestTime();
         }
     };
 
-    SpecialCase SOURCE_TIMESTAMP = new SpecialCase("source_time", DateTimeType.INSTANCE, false) {
+    SpecialCase SOURCE_TIMESTAMP = new SpecialCase("source_time", DateTimeType.INSTANCE, false,
+        Optional.empty()) {
         @Override
         public Object getData(SourceRecord<Name> record) {
             return record.getSourceTime();
@@ -88,8 +103,8 @@ public interface FieldProjection extends Serializable {
 
         private final int depth;
 
-        public ArrayIndex(int depth) {
-            super("idx"+depth, IntegerType.INSTANCE, true);
+        public ArrayIndex(int depth, Optional<Column> parent) {
+            super("idx"+depth, IntegerType.INSTANCE, true, parent);
             this.depth = depth;
         }
 

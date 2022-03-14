@@ -1,114 +1,27 @@
 package org.apache.calcite.schema;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import ai.dataeng.sqml.planner.CalciteTableFactory;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.jdbc.SqrlToCalciteTableTranslator;
-import org.apache.calcite.linq4j.tree.Expression;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelProtoDataType;
-import org.apache.calcite.sql.type.SqlTypeName;
+import lombok.Getter;
 
+/**
+ * The calcite schema that resolves arbitrary table paths and functions
+ */
 @AllArgsConstructor
-public class SqrlSchema implements Schema {
-    SqrlToCalciteTableTranslator tableTranslator;
+public class SqrlSchema extends AbstractSqrlSchema {
+
+  @Getter
+  private final CalciteTableFactory tableFactory;
 
   @Override
   public Table getTable(String table) {
-    return tableTranslator.get(table);
+    return tableFactory.create(table).orElse(null);
   }
 
-  @Override
-  public Set<String> getTableNames() {
-    return Set.of();
-  }
-
-  @Override
-  public RelProtoDataType getType(String s) {
-    return null;
-  }
-
-  @Override
-  public Set<String> getTypeNames() {
-    return Set.of();
-  }
-
-  @Override
-  public Collection<Function> getFunctions(String s) {
-    return List.of(new ScalarFunction() {
-      @Override
-      public RelDataType getReturnType(RelDataTypeFactory relDataTypeFactory) {
-        return relDataTypeFactory.createSqlType(SqlTypeName.TIMESTAMP);
-      }
-
-      @Override
-      public List<FunctionParameter> getParameters() {
-        return List.of();
-      }
-    },
-        new ScalarFunction() {
-      @Override
-      public RelDataType getReturnType(RelDataTypeFactory relDataTypeFactory) {
-        return relDataTypeFactory.createSqlType(SqlTypeName.TIMESTAMP);
-      }
-
-      @Override
-      public List<FunctionParameter> getParameters() {
-        return List.of(new FunctionParameter() {
-          @Override
-          public int getOrdinal() {
-            return 0;
-          }
-
-          @Override
-          public String getName() {
-            return "time";
-          }
-
-          @Override
-          public RelDataType getType(RelDataTypeFactory relDataTypeFactory) {
-            return relDataTypeFactory.createSqlType(SqlTypeName.TIMESTAMP);
-          }
-
-          @Override
-          public boolean isOptional() {
-            return false;
-          }
-        });
-      }
-    }
-        );
-  }
-
-  @Override
-  public Set<String> getFunctionNames() {
-    return Set.of("now", "time_roundToMonth");
-  }
-
-  @Override
-  public Schema getSubSchema(String s) {
-    return null;
-  }
-
-  @Override
-  public Set<String> getSubSchemaNames() {
-    return Set.of();
-  }
-
-  @Override
-  public Expression getExpression(SchemaPlus schemaPlus, String s) {
-    return null;
-  }
-
-  @Override
-  public boolean isMutable() {
-    return false;
-  }
-
-  @Override
-  public Schema snapshot(SchemaVersion schemaVersion) {
-    return null;
+  /**
+   * Todo: verify that the table path is in fact a table
+   */
+  public Table getDagTable(String table) {
+    return tableFactory.create(table).orElse(null);
   }
 }

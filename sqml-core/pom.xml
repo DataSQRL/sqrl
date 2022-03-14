@@ -91,6 +91,11 @@
       <artifactId>flink-json</artifactId>
       <version>1.14.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-runtime_2.12</artifactId>
+      <version>1.14.0</version>
+    </dependency>
     <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
     <dependency>
       <groupId>org.postgresql</groupId>
@@ -108,12 +113,6 @@
       <artifactId>flink-table-api-java-bridge_2.12</artifactId>
       <version>1.14.0</version>
 <!--      <scope>provided</scope>-->
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/org.apache.flink/flink-table-planner -->
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-table-planner_2.12</artifactId>
-      <version>1.14.0</version>
     </dependency>
 
     <dependency>
@@ -205,10 +204,8 @@
     <dependency>
       <groupId>org.apache.calcite</groupId>
       <artifactId>calcite-core</artifactId>
-      <version>1.14.0</version>
+      <version>1.27.0</version>
     </dependency>
-
-
   </dependencies>
 
 </project>

@@ -45,13 +45,7 @@ public class ColumnReferenceExpression
         for (int tableno = 0; tableno < inputSchema.length; tableno++) {
             Column[] tableSchema = inputSchema[tableno];
             for (int colno = 0; colno < tableSchema.length; colno++) {
-                //todo: fix hack
-                if (tableSchema[colno].getName().equals(column.getName())) {
-                    System.out.println("!!!" + column.getName() + " " + offset);
-                    return 2;
-                }
                 if (tableno==tableIndex && tableSchema[colno].equals(column)) {
-                    System.out.println("!!!" + column.getName() + " " + offset);
                     return offset;
                 }
                 offset++;

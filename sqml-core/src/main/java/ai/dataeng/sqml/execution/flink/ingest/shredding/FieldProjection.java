@@ -3,6 +3,7 @@ package ai.dataeng.sqml.execution.flink.ingest.shredding;
 import ai.dataeng.sqml.execution.flink.process.DestinationTableSchema;
 import ai.dataeng.sqml.type.*;
 import ai.dataeng.sqml.type.basic.BasicType;
+import ai.dataeng.sqml.type.basic.DateTimeType;
 import ai.dataeng.sqml.type.basic.IntegerType;
 import ai.dataeng.sqml.type.basic.UuidType;
 import ai.dataeng.sqml.tree.name.Name;
@@ -37,6 +38,7 @@ public interface FieldProjection extends Serializable {
     }
 
     FieldProjection ROOT_UUID = new SpecialCase("_uuid", UuidType.INSTANCE);
+    FieldProjection INGEST_TIME = new SpecialCase("_ingest_time", DateTimeType.INSTANCE);
 
     FieldProjection ARRAY_INDEX = new SpecialCase("_idx", IntegerType.INSTANCE);
 
