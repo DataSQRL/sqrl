@@ -73,6 +73,11 @@ nbactions.xml
 nb-configuration.xml
 
 ##############################
+## Go
+##############################
+sqrl-cli/datasqrl
+
+##############################
 ## Visual Studio Code
 ##############################
 .vscode/

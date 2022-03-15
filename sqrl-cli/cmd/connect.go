@@ -4,6 +4,9 @@ import (
   "fmt"
 
   "github.com/spf13/cobra"
+  "github.com/spf13/viper"
+
+  "github.com/DataSQRL/datasqrl/cli/pkg/api"
 )
 
 func init() {
@@ -37,7 +40,20 @@ var connectSourceFolderCmd = &cobra.Command{
   Example: "datasqrl connect source folder /some/folder",
   Args: cobra.ExactArgs(1),
   Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("Connect source folder")
+    payload := api.Payload {
+      "uri": args[0],
+    }
+    name := viper.GetString("name")
+    if len(name)>0 {
+      payload["name"]=name
+    }
+
+    result, err := api.Post2API(serverConfig, "/source/file", payload)
+    if err != nil {
+      cmd.PrintErrln(err)
+    } else {
+      cmd.Println(result)
+    }
   },
 }
 

@@ -4,6 +4,8 @@ import (
   "fmt"
 
   "github.com/spf13/cobra"
+
+  "github.com/DataSQRL/datasqrl/cli/pkg/api"
 )
 
 func init() {
@@ -36,7 +38,14 @@ var listSourcesCmd = &cobra.Command{
   Long:  `Prints a list of all the data sources that are connected to a DataSQRL server instance`,
   Args: cobra.NoArgs,
   Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("List sources")
+    results, err := api.GetMultipleFromAPI(serverConfig, "/source")
+    if err != nil {
+      cmd.PrintErrln(err)
+    }
+    for idx, result := range results {
+      cmd.Printf("Source #%d:", idx)
+      cmd.Println(result)
+    }
   },
 }
 
