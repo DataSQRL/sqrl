@@ -7,7 +7,9 @@ import ai.dataeng.sqml.config.util.StringNamedId;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
+import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -59,7 +61,6 @@ public class ApiVerticle extends AbstractVerticle {
                     // #### Source handlers
                     routerBuilder.operation("getSources").handler(routingContext -> {
                         List<JsonObject> sources = environment.getDatasetRegistry().getDatasets().stream()
-                                .map(SourceDataset::getSource)
                                 .map(ApiVerticle::source2Json).collect(Collectors.toList());
                         routingContext
                                 .response()
@@ -74,7 +75,7 @@ public class ApiVerticle extends AbstractVerticle {
                         String sourceName = params.pathParameter("sourceName").getString();
                         SourceDataset ds = environment.getDatasetRegistry().getDataset(sourceName);
                         if (ds!=null) {
-                            JsonObject result = source2Json(ds.getSource());
+                            JsonObject result = source2Json(ds);
                             routingContext
                                     .response()
                                     .setStatusCode(200)
@@ -158,13 +159,17 @@ public class ApiVerticle extends AbstractVerticle {
         return base;
     }
 
-    private static JsonObject source2Json(DataSource source) {
+    private static JsonObject source2Json(SourceDataset dataset) {
+        DataSource source = dataset.getSource();
         DataSourceConfiguration sourceConfig = source.getConfiguration();
         JsonObject base = JsonObject.mapFrom(sourceConfig);
         base.put("sourceName", source.getDatasetName().getDisplay());
         if (sourceConfig instanceof FileSourceConfiguration) {
             base.put("objectType", "FileSourceConfig");
         } else throw new UnsupportedOperationException("Unexpected source config: " + sourceConfig.getClass());
+        List<String> tableNames = dataset.getTables().stream().map(SourceTable::getName).map(Name::getDisplay)
+                .collect(Collectors.toList());
+        base.put("tables",tableNames);
         return base;
     }
 
@@ -179,7 +184,7 @@ public class ApiVerticle extends AbstractVerticle {
             JsonObject source = params.body().getJsonObject();
             S sourceConfig = source.mapTo(clazz);
             ProcessMessage.ProcessBundle errors = new ProcessMessage.ProcessBundle<>();
-            DataSource result = environment.getDatasetRegistry().addOrUpdateSource(sourceConfig, errors);
+            SourceDataset result = environment.getDatasetRegistry().addOrUpdateSource(sourceConfig, errors);
             if (errors.isFatal() || result==null) {
                 routingContext.fail(405, new Exception(errors.combineMessages(ProcessMessage.Severity.FATAL,
                         "Provided configuration has the following validation errors:\n","\n" )));

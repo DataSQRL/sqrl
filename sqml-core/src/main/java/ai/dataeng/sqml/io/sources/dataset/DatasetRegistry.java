@@ -50,13 +50,13 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         }
     }
 
-    public synchronized DataSource addOrUpdateSource
+    public synchronized SourceDataset addOrUpdateSource
             (@NonNull DataSourceConfiguration datasource,
              @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
         return addOrUpdateSource(datasource,errors, defaultInitialPollingWaitMS);
     }
 
-    public synchronized DataSource addOrUpdateSource
+    public synchronized SourceDataset addOrUpdateSource
             (@NonNull DataSourceConfiguration datasource,
              @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors,
              long sourceInitializationWaitTimeMS) {
@@ -84,7 +84,7 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
             initialPollingDelayMS = 0;
         }
         tableMonitors.scheduleWithFixedDelay(dataset.polling, initialPollingDelayMS, pollTablesEveryMS, TimeUnit.MILLISECONDS);
-        return source;
+        return dataset;
     }
 
     @Override

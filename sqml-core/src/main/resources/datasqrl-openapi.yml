@@ -253,6 +253,10 @@ components:
         sourceName:
           type: string
           description: "The assigned name for this source"
+        tables:
+          type: array
+          items:
+            type: string
     FileSource:
       allOf:
         - $ref: '#/components/schemas/Source'
