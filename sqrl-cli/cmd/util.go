@@ -1,10 +1,13 @@
 package cmd
 
 import (
+  "fmt"
   "strings"
   "errors"
   "path/filepath"
   "io/ioutil"
+
+  "github.com/DataSQRL/datasqrl/cli/pkg/api"
 )
 
 func fileNameWithoutExtension(fileName string) string {
@@ -17,7 +20,43 @@ func readFileContent(fileName string) (string, error) {
     return "", err
   }
   if content == nil || len(content)==0 {
-    return "", errors.New("File is empty")
+    return "", errors.New("File ["+fileName+"] is empty")
   }
   return string(content), nil
+}
+
+func containsIgnoreCase(items []string, item string) bool {
+  for _, i := range items {
+    if strings.EqualFold(item,i) {
+      return true
+    }
+  }
+  return false
+}
+
+func get2StringFctByKeys(keys []string) func (payload api.Payload) string {
+  return func(payload api.Payload) string {
+    return payload2StringByKeys(payload, keys)
+  }
+}
+
+func payload2StringByKeys(payload api.Payload, keys []string) string {
+  result := ""
+  for _, key := range keys {
+    result += key + ": " + fmt.Sprint(payload[key]) + "\n"
+  }
+  return result
+}
+
+func payload2StringTopLevel(payload api.Payload) string {
+  var keys []string
+  for key, v := range payload {
+    switch v.(type) {
+    case api.Payload:
+      continue
+    default:
+      keys = append(keys,key)
+    }
+  }
+  return payload2StringByKeys(payload, keys)
 }

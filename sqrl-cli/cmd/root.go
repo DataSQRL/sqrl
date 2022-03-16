@@ -16,9 +16,12 @@ var rootCmd = &cobra.Command{
   Long: `Build data services quickly with DataSQRL -
 check out https://datasqrl.com for more information`,
   PersistentPreRun: func(cmd *cobra.Command, args []string) {
-    serverConfig = &api.ClientConfig{
+    clientConfig = &api.ClientConfig{
       URL: viper.GetString(globalFlags["server"].name),
       Insecure : viper.GetBool(globalFlags["insecure"].name),
+    }
+    if verbose {
+      cmd.Printf("Client connection configuration: %v+ \n",clientConfig)
     }
   },
 }
@@ -64,7 +67,7 @@ const defaultConfigFileName = "datasqrl-cfg"
 
 var cfgFile string
 var verbose bool
-var serverConfig *api.ClientConfig
+var clientConfig *api.ClientConfig
 
 func init() {
   cobra.OnInitialize(initConfig)

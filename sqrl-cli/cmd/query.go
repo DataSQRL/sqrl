@@ -1,8 +1,6 @@
 package cmd
 
 import (
-  "fmt"
-
   "github.com/spf13/cobra"
 )
 
@@ -17,6 +15,6 @@ var queryCmd = &cobra.Command{
   Args: cobra.MinimumNArgs(1),
   Example: "datasqrl query product.gql 50",
   Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("Query: " + args[0])
+    cmd.Printf("Execute query [%s] with arguments: %s",args[0],args[1:len(args)])
   },
 }

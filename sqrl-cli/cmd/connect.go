@@ -47,8 +47,11 @@ var connectSourceFolderCmd = &cobra.Command{
     if len(name)>0 {
       payload["name"]=name
     }
-
-    result, err := api.Post2API(serverConfig, "/source/file", payload)
+    resource := "/source/file"
+    if verbose {
+      cmd.Printf("Posting payload [%s] to resource [%s]",payload, resource)
+    }
+    result, err := api.Post2API(clientConfig, resource, payload)
     if err != nil {
       cmd.PrintErrln(err)
     } else {

@@ -120,6 +120,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /compile:
+    post:
+      tags:
+        - deployment
+      summary: Compile and validate a script on the server
+      operationId: compileScript
+      requestBody:
+        description: Script bundle configuration
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScriptBundle'
+        required: true
+      responses:
+        200:
+          description: successful deployment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Compilation'
+        405:
+          description: Validation exception
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: body
   /source/file:
     post:
       tags:
@@ -369,6 +402,8 @@ components:
           format: date-time
         status:
           $ref: '#/components/schemas/submissionStatus'
+        compilation:
+          $ref: '#/components/schemas/Compilation'
     submissionStatus:
       type: string
       description: Status of a Submission
@@ -377,6 +412,36 @@ components:
         - running
         - deployed
         - stopped
+        - failed
+    Compilation:
+      type: object
+      required:
+        - pre-schema
+      properties:
+        pre-schema:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        informations:
+          type: array
+          items:
+            type: string
+        compilationTime:
+          type: integer
+          format: int32
+        status:
+          $ref: '#/components/schemas/compilationStatus'
+    compilationStatus:
+      type: string
+      description: Compilation result
+      enum:
+        - success
         - failed
     Error:
       required:

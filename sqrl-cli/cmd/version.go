@@ -1,8 +1,6 @@
 package cmd
 
 import (
-  "fmt"
-
   "github.com/spf13/cobra"
 )
 
@@ -16,6 +14,6 @@ var versionCmd = &cobra.Command{
   Long:  `Print the version number of DataSQRL CLI`,
   Args: cobra.NoArgs,
   Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("DataSQRL Command Line Utility v0.1 -- ALPHA")
+    cmd.Println("DataSQRL Command Line Utility v0.1 -- ALPHA")
   },
 }

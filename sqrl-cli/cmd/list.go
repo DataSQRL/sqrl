@@ -22,32 +22,43 @@ var listCmd = &cobra.Command{
 connected to a DataSQRL server instance`,
 }
 
+var deployment2StringFct = get2StringFctByKeys([]string{"name","version","id","submissionTime","status"})
+
 var listDeployCmd = &cobra.Command{
   Use:   "deployments",
   Short: "List all deployments running on the DataSQLR server",
   Long:  `Prints a list of all the deployments that are running on a DataSQRL server instance`,
   Args: cobra.NoArgs,
   Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("List deployments")
+    if verbose {
+      cmd.Println("Getting deployments from resource [/deployment]")
+    }
+    results, err := api.GetMultipleFromAPI(clientConfig, "/deployment")
+    if err != nil {
+      cmd.PrintErrln(err)
+    }
+    displayResults(results, args, cmd, getNameFunction("name"), deployment2StringFct)
   },
 }
 
 var listSourcesCmd = &cobra.Command{
-  Use:   "sources",
+  Use:   "sources [names]",
   Short: "List all data sources connected to the DataSQLR server",
-  Long:  `Prints a list of all the data sources that are connected to a DataSQRL server instance`,
-  Args: cobra.NoArgs,
+  Long:  `Prints a list of all the data sources that are connected to a DataSQRL server instance.
+If additional argument names are provided, only sources with those names are shown.`,
+  Args: cobra.ArbitraryArgs,
   Run: func(cmd *cobra.Command, args []string) {
-    results, err := api.GetMultipleFromAPI(serverConfig, "/source")
+    if verbose {
+      cmd.Println("Getting sources from resource [/source]")
+    }
+    results, err := api.GetMultipleFromAPI(clientConfig, "/source")
     if err != nil {
       cmd.PrintErrln(err)
     }
-    for idx, result := range results {
-      cmd.Printf("Source #%d:", idx)
-      cmd.Println(result)
-    }
+    displayResults(results, args, cmd, getNameFunction("sourceName"), payload2StringTopLevel)
   },
 }
+
 
 var listSinksCmd = &cobra.Command{
   Use:   "sinks",
@@ -57,4 +68,25 @@ var listSinksCmd = &cobra.Command{
   Run: func(cmd *cobra.Command, args []string) {
     fmt.Println("List sinks")
   },
+}
+
+
+func displayResults(results []api.Payload, nameFilter []string, cmd *cobra.Command,
+                    nameFct func(payload api.Payload) string, toStringFct func(result api.Payload) string) {
+  filterSources := len(nameFilter)>0
+  if verbose && filterSources {
+    cmd.Println("Only showing sources with names in: ", nameFilter)
+  }
+  for _, result := range results {
+    if !filterSources || containsIgnoreCase(nameFilter, nameFct(result)) {
+      cmd.Println(toStringFct(result))
+      cmd.Println("---")
+    }
+  }
+}
+
+func getNameFunction(nameKey string) func(payload api.Payload) string {
+  return func(payload api.Payload) string {
+    return payload[nameKey].(string)
+  }
 }
