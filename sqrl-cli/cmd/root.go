@@ -3,6 +3,7 @@ package cmd
 import (
   "fmt"
   "os"
+  "strings"
 
   homedir "github.com/mitchellh/go-homedir"
   "github.com/spf13/cobra"
@@ -16,9 +17,17 @@ var rootCmd = &cobra.Command{
   Long: `Build data services quickly with DataSQRL -
 check out https://datasqrl.com for more information`,
   PersistentPreRun: func(cmd *cobra.Command, args []string) {
+    apiURL := viper.GetString("server")
+    queryURL := viper.GetString("api")
+    if queryURL == globalFlags["api"].defaultValue &&
+        apiURL != globalFlags["server"].defaultValue {
+      //Use the base of the server URL with default query api port
+      queryURL = strings.Split(apiURL, ":")[0] + ":" + defaultQueryAPIPort
+    }
     clientConfig = &api.ClientConfig{
-      URL: viper.GetString(globalFlags["server"].name),
-      Insecure : viper.GetBool(globalFlags["insecure"].name),
+      AdminUrl: apiURL,
+      QueryUrl: queryURL,
+      Insecure : viper.GetBool("insecure"),
     }
     if verbose {
       cmd.Printf("Client connection configuration: %v+ \n",clientConfig)
@@ -45,6 +54,10 @@ var globalFlags = map[string]*globalFlag {
     name: "server", shortForm: true, defaultValue: "localhost:5070",
     description: "IP or URL of DataSQRL server to connect to",
   },
+  "api": &globalFlag{
+    name: "api", shortForm: true, defaultValue: "localhost:8080",
+    description: "IP or URL of the generated DataSQRL query API",
+  },
   "insecure": &globalFlag{
     name: "insecure", shortForm: false, defaultValue: false,
     description: "disables SSL validation - only use in secure development environments",
@@ -63,6 +76,7 @@ var globalFlags = map[string]*globalFlag {
   },
 }
 
+const defaultQueryAPIPort = "8080"
 const defaultConfigFileName = "datasqrl-cfg"
 
 var cfgFile string

@@ -12,13 +12,20 @@ import (
   "github.com/DataSQRL/datasqrl/cli/pkg/api"
 )
 
-var prepopulateFlag = "initialize"
+const developmentVersion = "v1"
+
+const prepopulateFlag = "initialize"
+const openBrowserFlag = "open"
 
 func init() {
   rootCmd.AddCommand(watchCmd)
   watchCmd.PersistentFlags().BoolP(prepopulateFlag, prepopulateFlag[0:1], true, "initialize script with imports of all tables connected to server")
   viper.BindPFlag(prepopulateFlag, watchCmd.PersistentFlags().Lookup(prepopulateFlag))
   viper.SetDefault(prepopulateFlag, true)
+
+  watchCmd.PersistentFlags().BoolP(openBrowserFlag, openBrowserFlag[0:1], true, "open default web browser to query API")
+  viper.BindPFlag(openBrowserFlag, watchCmd.PersistentFlags().Lookup(openBrowserFlag))
+  viper.SetDefault(openBrowserFlag, true)
 }
 
 var watchCmd = &cobra.Command{
@@ -75,6 +82,10 @@ server for execution. Creates SQRL script if it does not exist.`,
 		terminate := make(chan bool)
 
 		go scriptUpdate(cmd, fileName, watcher)
+
+    if viper.GetBool(openBrowserFlag) {
+      openURL(clientConfig.QueryUrl + "/" + getDeploymentName(fileName) + "/" + developmentVersion)
+    }
 
 		err = watcher.Add(fileName)
 		if err != nil {

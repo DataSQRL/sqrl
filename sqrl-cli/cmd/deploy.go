@@ -108,6 +108,13 @@ func saveCompiledSchema(compilation api.Payload, cmd *cobra.Command) error {
   }
 }
 
+func getDeploymentName(fileName string) string {
+  name := viper.GetString("name")
+  if len(name)<1 {
+    name = fileNameWithoutExtension(fileName)
+  }
+  return name
+}
 
 var graphQLExtensions = map[string]bool{"gql":true, "graphql":true}
 
@@ -120,10 +127,7 @@ func assembleScriptBundle(fileName string, version string, includeSchema bool,
   }
 
   //Set Version
-  name := viper.GetString("name")
-  if len(name)<1 {
-    name = fileNameWithoutExtension(fileName)
-  }
+  name := getDeploymentName(fileName)
 
   if verbose {
     cmd.Printf("Deploying script [%s] with version [%s]\n",name,version)

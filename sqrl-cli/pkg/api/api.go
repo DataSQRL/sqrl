@@ -15,7 +15,8 @@ import (
 type Payload map[string]interface{}
 
 type ClientConfig struct {
-  URL string
+  AdminUrl string
+	QueryUrl string
   Insecure bool
 }
 
@@ -36,18 +37,18 @@ func GetMultipleFromAPI(cfg *ClientConfig, resource string) ([]Payload, error) {
 }
 
 func getCall(cfg *ClientConfig, resource string) (*http.Response, error) {
-  url, err := purell.NormalizeURLString(cfg.URL + resource, purell.FlagsUsuallySafeGreedy)
+  apiURL, err := purell.NormalizeURLString(cfg.AdminUrl + resource, purell.FlagsUsuallySafeGreedy)
   if err != nil {
     return nil, err
   }
-  request, err := http.NewRequest("GET", url, nil)
+  request, err := http.NewRequest("GET", apiURL, nil)
   request.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
   return executeRequest(cfg, request)
 }
 
 func Post2API(cfg *ClientConfig, resource string, payload Payload) (Payload, error) {
-  url, err := purell.NormalizeURLString(cfg.URL + resource, purell.FlagsUsuallySafeGreedy)
+  apiURL, err := purell.NormalizeURLString(cfg.AdminUrl + resource, purell.FlagsUsuallySafeGreedy)
   if err != nil {
     return nil, err
   }
@@ -55,7 +56,7 @@ func Post2API(cfg *ClientConfig, resource string, payload Payload) (Payload, err
   if err != nil {
     return nil, err
   }
-  request, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+  request, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
 	request.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
   response, err := executeRequest(cfg, request)
