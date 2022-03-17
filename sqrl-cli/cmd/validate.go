@@ -1,8 +1,6 @@
 package cmd
 
 import (
-  "strings"
-
   "github.com/spf13/cobra"
 
   "github.com/DataSQRL/datasqrl/cli/pkg/api"
@@ -28,23 +26,15 @@ on the DataSQRL server`,
     }
 
     if verbose {
-      cmd.Println("Posting script bundle to resource [/deployment/compile]")
+      cmd.Println("Posting script bundle to resource [/compile]")
     }
-    compilation, err := api.Post2API(clientConfig, "/deployment/compile", payload)
+    compilationResult, err := api.Post2API(clientConfig, "/compile", payload)
     if err != nil {
       cmd.PrintErrln(err)
     } else {
-      success := strings.EqualFold("success",compilation["status"].(string))
-      compiletime := compilation["compilationTime"].(int)
-      if success {
-        cmd.Printf("Successful compilation took %d ms\n", compiletime)
-      } else {
-        cmd.PrintErrf("Failed compilation took %d ms\n", compiletime)
-      }
-      printCompilationMessages(compilation, cmd)
-
-      if !hasSchema && success {
-        err := saveCompiledSchema(compilation, cmd)
+      printCompilationResult(compilationResult, cmd)
+      if !hasSchema {
+        err := saveCompiledSchemas(compilationResult, cmd)
         if err != nil {
           cmd.PrintErrln("Could not write pre-schema to file", err)
         }

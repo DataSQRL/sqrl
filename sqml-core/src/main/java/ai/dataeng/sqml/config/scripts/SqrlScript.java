@@ -22,7 +22,8 @@ import java.io.Serializable;
 public class SqrlScript implements Serializable {
 
     private final Name name;
-    private final String scriptContent;
+    private final String filename;
+    private final String content;
     private final SchemaDefinition schema;
     private boolean isMain;
 
@@ -35,8 +36,9 @@ public class SqrlScript implements Serializable {
 
         @NonNull @NotNull @Size(min = 3, max = 128)
         private String name;
+        private String filename;
         @NonNull @NotNull @Size(min = 10)
-        private String script;
+        private String content;
 
         @OptionalMinString
         private String inputSchema;
@@ -55,7 +57,9 @@ public class SqrlScript implements Serializable {
                         "Parsing error for schemaYaml: [%s]", e));
                 return null;
             }
-            return new SqrlScript(Name.of(name,canonicalizer), script,schema,isMain);
+            return new SqrlScript(Name.of(name,canonicalizer),
+                    StringUtils.isNotEmpty(filename)?filename:name,
+                    content,schema,isMain);
         }
 
         private SchemaDefinition parseSchema() throws JsonProcessingException {

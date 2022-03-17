@@ -11,10 +11,12 @@ import lombok.NonNull;
 import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -53,7 +55,7 @@ public class ScriptDeployment implements Serializable {
         return StringNamedId.of(s.toString());
     }
 
-    public Result getStatusResult(StreamEngine streamEngine) {
+    public Result getStatusResult(StreamEngine streamEngine, Optional<CompilationResult> compileResult) {
         Status status = Status.submitted;
         if (executionId!=null) {
             StreamEngine.Job job = streamEngine.getJob(executionId);
@@ -63,14 +65,15 @@ public class ScriptDeployment implements Serializable {
                 case STOPPED: status = Status.stopped; break;
             }
         }
-        return Result.builder()
+        Result.ResultBuilder builder = Result.builder()
                 .id(getId().getId())
                 .name(bundle.getName().getDisplay())
                 .version(bundle.getVersion().getId())
                 .submissionTime(submissionTime)
                 .executionId(executionId)
-                .status(status)
-                .build();
+                .status(status);
+        if (compileResult.isPresent()) builder.compilation(compileResult.get());
+        return builder.build();
     }
 
     public void archive() {
@@ -115,6 +118,7 @@ public class ScriptDeployment implements Serializable {
         private final String executionId;
         private final Instant submissionTime;
         private final Status status;
+        private final CompilationResult compilation;
 
     }
 

@@ -15,6 +15,7 @@ import java.io.Serializable;
 public class SqrlQuery implements Serializable {
 
     private final Name name;
+    private final String filename;
     private final String qraphQL;
 
     @Builder
@@ -25,12 +26,15 @@ public class SqrlQuery implements Serializable {
 
         @NonNull @NotNull @Size(min = 3, max = 128)
         private String name;
+        private String filename;
         @NonNull @NotNull @Size(min = 10)
         private String qraphQL;
 
         public SqrlQuery initialize(ProcessMessage.ProcessBundle<ConfigurationError> errors,
                                     String bundleName, NameCanonicalizer canonicalizer) {
-            return new SqrlQuery(Name.of(name,canonicalizer),qraphQL);
+            return new SqrlQuery(Name.of(name,canonicalizer),
+                    StringUtils.isNotEmpty(filename)?filename:name,
+                    qraphQL);
         }
 
     }

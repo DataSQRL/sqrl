@@ -109,13 +109,10 @@ func deployScript(cmd *cobra.Command, fileName string) (time.Time) {
     cmd.PrintErrln(err)
     return time.Time{}
   } else {
-    success := printDeploymentResult(deployment, cmd)
-    if success {
-      //Extract schema from compilation and store locally
-      err := saveCompiledSchema(deployment["compilation"].(api.Payload), cmd)
-      if err != nil {
-        cmd.PrintErrln("Could not write pre-schema to file", err)
-      }
+    printDeploymentResult(deployment, cmd)
+    err := saveCompiledSchema(deployment["compilation"].(api.Payload), cmd)
+    if err != nil {
+      cmd.PrintErrln("Could not write pre-schema to file", err)
     }
     return deployTime
   }

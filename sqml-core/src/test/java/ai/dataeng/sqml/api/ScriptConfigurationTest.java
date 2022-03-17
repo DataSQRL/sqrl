@@ -42,7 +42,7 @@ public class ScriptConfigurationTest {
         assertEquals("customer360",main.getName().getCanonical());
         assertTrue(main.getSchema().datasets.isEmpty());
         assertTrue(main.isMain());
-        assertTrue(main.getScriptContent().length()> 500);
+        assertTrue(main.getContent().length()> 500);
     }
 
     @Test

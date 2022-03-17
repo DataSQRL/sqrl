@@ -67,8 +67,8 @@ var globalFlags = map[string]*globalFlag {
     description: "folder containing the query templates for the deployment",
   },
   "schema": &globalFlag{
-    name: "schema", shortForm: false, defaultValue: "pre-schema",
-    description: "filename of the pre-schema yaml file for the deployment",
+    name: "schema", shortForm: false, defaultValue: "pre-schema.yaml",
+    description: "extension used by pre-schema files",
   },
   "name": &globalFlag{
     name: "name", shortForm: true, defaultValue: "",
@@ -78,6 +78,7 @@ var globalFlags = map[string]*globalFlag {
 
 const defaultQueryAPIPort = "8080"
 const defaultConfigFileName = "datasqrl-cfg"
+const sqrlExtension = "sqrl"
 
 var cfgFile string
 var verbose bool

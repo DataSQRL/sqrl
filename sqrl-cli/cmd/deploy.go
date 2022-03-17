@@ -5,6 +5,7 @@ import (
   "path/filepath"
   "os"
   "strings"
+  "fmt"
 
   "github.com/spf13/cobra"
   "github.com/spf13/viper"
@@ -16,7 +17,6 @@ func init() {
   rootCmd.AddCommand(deployCmd)
 }
 
-//TODO: read queries and schema (if exist)
 var deployCmd = &cobra.Command{
   Use:   "deploy [script] [version]",
   Short: "Deploy SQRL script for execution on DataSQRL server",
@@ -46,10 +46,10 @@ to DataSQRL server for execution`,
     if err != nil {
       cmd.PrintErrln(err)
     } else {
-      success := printDeploymentResult(deployment, cmd)
-      if !hasSchema && success {
+      printDeploymentResult(deployment, cmd)
+      if !hasSchema {
         //Extract schema from compilation and store locally
-        err := saveCompiledSchema(deployment["compilation"].(api.Payload), cmd)
+        err := saveCompiledSchemas(deployment["compilation"].(api.Payload), cmd)
         if err != nil {
           cmd.PrintErrln("Could not write pre-schema to file", err)
         }
@@ -58,10 +58,10 @@ to DataSQRL server for execution`,
   },
 }
 
-func printDeploymentResult(deployment api.Payload, cmd *cobra.Command) bool {
+func printDeploymentResult(deployment api.Payload, cmd *cobra.Command) {
   status := deployment["status"].(string)
   deployId := deployment["id"].(string)
-  compilation := deployment["compilation"].(api.Payload)
+  compilationResult := deployment["compilation"].(api.Payload)
 
   failure := strings.EqualFold(status, "failed")
   if failure {
@@ -69,16 +69,50 @@ func printDeploymentResult(deployment api.Payload, cmd *cobra.Command) bool {
   } else {
     cmd.Printf("Successful deployment with id=%s and status=%s\n", deployId, status)
   }
-  printCompilationMessages(compilation, cmd)
-  return !failure
+  printCompilationResult(compilationResult, cmd)
 }
 
-func printCompilationMessages(deployment api.Payload, cmd *cobra.Command) {
-  printMessages("ERROR", deployment["errors"].([]string), cmd)
-  printMessages("WARN", deployment["warnings"].([]string), cmd)
-  if verbose {
-    printMessages("INFO", deployment["informations"].([]string), cmd)
+func printCompilationResult(compilationResult api.Payload, cmd *cobra.Command) {
+  success := statusEqualsSuccess(compilationResult)
+  compiletime := compilationResult["compileTime"].(int)
+  if success {
+    cmd.Printf("Successful compilation took %d ms\n", compiletime)
+  } else {
+    cmd.PrintErrf("Failed compilation took %d ms - see below for compilation errors\n", compiletime)
   }
+  for _, compilation := range compilationResult["compilations"].([]api.Payload) {
+    printCompilation(compilation, cmd)
+  }
+}
+
+func printCompilation(compilation api.Payload, cmd *cobra.Command) {
+  // success := statusEqualsSuccess(compilation)
+  fileName := compilation["filename"].(string)
+  messages := compilation["messages"].([]api.Payload)
+
+  errorMsgs, errorCount := messages2String(messages, "error", "[ERROR]")
+  warnMsgs, warnCount := messages2String(messages, "warning", "[WARN]")
+  infoMsgs, infoCount := messages2String(messages, "information", "[INFO]")
+
+  cmd.Printf("#%s - %d errors, %d warnings, %d informations \n",fileName, errorCount, warnCount, infoCount)
+  cmd.Print(errorMsgs)
+  cmd.Print(warnMsgs)
+  if verbose {
+    cmd.Print(infoMsgs)
+  }
+}
+
+func messages2String(compileMsgs []api.Payload, filterType string, prefix string) (string, int) {
+  result := ""
+  count := 0
+  for _, msg := range compileMsgs {
+    typeName := msg["type"].(string)
+    if strings.EqualFold(typeName, filterType) {
+      result += prefix + " " + fmt.Sprint(msg["location"]) + ": " + fmt.Sprint(msg["message"]) + "\n"
+      count++
+    }
+  }
+  return result, count
 }
 
 func printMessages(prefix string, messages []string, cmd *cobra.Command) {
@@ -87,23 +121,47 @@ func printMessages(prefix string, messages []string, cmd *cobra.Command) {
   }
 }
 
-const defaultPreSchemaExt = ".yaml"
+func saveCompiledSchemas(compilationResult api.Payload, cmd *cobra.Command) error {
+  success := statusEqualsSuccess(compilationResult)
+  if !success {
+    if verbose {
+      cmd.Println("Compilation failed - not saving compiled schemas")
+    }
+    return nil
+  }
+  for _, compilation := range compilationResult["compilations"].([]api.Payload) {
+    err := saveCompiledSchema(compilation, cmd)
+    if err != nil {
+      return err
+    }
+  }
+  return nil
+}
 
 func saveCompiledSchema(compilation api.Payload, cmd *cobra.Command) error {
-  schemaFileName := viper.GetString("schema")
-  if (schemaFileName == globalFlags["schema"].defaultValue) {
-    schemaFileName += defaultPreSchemaExt
+  //only script artifacts return a compiled schema
+  artifactType := compilation["type"].(string)
+  if !strings.EqualFold(artifactType, "script") {
+    return nil
   }
-  schema := compilation["pre-schema"].(string)
+  
+  success := statusEqualsSuccess(compilation)
+  fileName := compilation["filename"].(string)
+  if !success {
+    if verbose {
+      cmd.Println("No pre-schema was returned due to failed compilation: ", fileName)
+    }
+    return nil
+  }
+  schemaFileName := getSchemaFileName(fileName)
+  schema := compilation["preschema"].(string)
   if len(schema)>0 {
     if verbose {
-        cmd.Println("Writing compiled pre-schema to file: ", schemaFileName)
+        cmd.Println("Writing compiled pre-schema for [",fileName,"] to file: ", schemaFileName)
     }
     return ioutil.WriteFile(schemaFileName, []byte(schema), 0644)
   } else {
-    if verbose {
-        cmd.Println("No pre-schema was returned due to failed compilation")
-    }
+    cmd.PrintErrln("No pre-schema returned for: ", fileName)
     return nil
   }
 }
@@ -111,70 +169,51 @@ func saveCompiledSchema(compilation api.Payload, cmd *cobra.Command) error {
 func getDeploymentName(fileName string) string {
   name := viper.GetString("name")
   if len(name)<1 {
-    name = fileNameWithoutExtension(fileName)
+    name = fileNameWithoutExtension(filepath.Base(fileName))
   }
   return name
+}
+
+func getSchemaFileName(fileName string) string {
+  schemaExtension := viper.GetString("schema")
+  return fileNameWithoutExtension(fileName) + "." + schemaExtension
 }
 
 var graphQLExtensions = map[string]bool{"gql":true, "graphql":true}
 
 func assembleScriptBundle(fileName string, version string, includeSchema bool,
                           cmd *cobra.Command) (api.Payload, bool, error) {
-  //Read script content
-  scriptContent, err := readFileContent(fileName)
-  if err != nil {
-    return nil, false, err
-  }
 
-  //Set Version
+  //Get deployment name and base
   name := getDeploymentName(fileName)
+  scriptDir := filepath.Dir(fileName)
 
   if verbose {
     cmd.Printf("Deploying script [%s] with version [%s]\n",name,version)
   }
 
-  baseDir := filepath.Dir(fileName)
-
-  //Read pre-schema content (if any)
-  schemaContent := ""
-  hasSchema := false
-  if (includeSchema) {
-    schemaFileName := viper.GetString("schema")
-    schemaContent, err = readFileContent(schemaFileName)
-    if os.IsNotExist(err) {
-      //Not a direct filename, try searching for it in script directory
-      files, err := ioutil.ReadDir(baseDir)
-      if err != nil {
-        return nil, false, err
-      }
-      err = nil
-      for _, file := range files {
-        if !file.IsDir() && strings.EqualFold(fileNameWithoutExtension(file.Name()),schemaFileName) {
-          schemaFileName = filepath.Join(baseDir,file.Name())
-          schemaContent, err = readFileContent(schemaFileName)
-          break
-        }
-      }
-    }
-    if (err != nil) {
-      return nil, false, err
-    }
-    hasSchema = len(schemaContent)>0
-    if verbose {
-      if !hasSchema {
-        cmd.Println("INFO: Did not find pre-schema file - submitting without")
-      } else {
-        cmd.Println("Reading pre-schema from file: ", schemaFileName)
-      }
+  //Read scripts
+  //Currently, we are only putting the main script in the bundle
+  //In the future, we want to add all .sqrl scripts in the directory scriptDir
+  var scripts = []api.Payload{}
+  script, hasSchema, err := assembleScript(fileName, true, includeSchema)
+  if verbose {
+    cmd.Printf("Adding main script [%s]",fileName)
+    if !hasSchema {
+      cmd.Println(" without schema")
+    } else {
+      cmd.Println(" with schema: ", getSchemaFileName(fileName))
     }
   }
+  scripts = append(scripts,script)
+
 
   //Read queries (if any)
   var queries = []api.Payload{}
   queryDir := viper.GetString("queries")
   files, err := ioutil.ReadDir(queryDir)
   if (err != nil) {
-    queryDir = filepath.Join(baseDir, queryDir)
+    queryDir = filepath.Join(scriptDir, queryDir)
     files, err = ioutil.ReadDir(queryDir)
   }
   if err == nil {
@@ -196,20 +235,47 @@ func assembleScriptBundle(fileName string, version string, includeSchema bool,
     }
   }
 
-
-  script := api.Payload {
-    "name": name,
-    "script": scriptContent,
-    "inputSchema": schemaContent,
-    "isMain": true,
-  }
   payload := api.Payload {
     "name": name,
     "version": version,
-    "scripts": []api.Payload{script},
+    "scripts": scripts,
     "queries": queries,
   }
   return payload, hasSchema, nil
+}
+
+func assembleScript(scriptFile string, isMain bool, includeSchema bool) (api.Payload, bool, error) {
+  //Read script content
+  scriptContent, err := readFileContent(scriptFile)
+  if err != nil {
+    return nil, false, err
+  }
+  name := fileNameWithoutExtension(filepath.Base(scriptFile))
+
+  //Read pre-schema content (if any)
+  schemaContent := ""
+  hasSchema := false
+  if (includeSchema) {
+    schemaFileName := getSchemaFileName(scriptFile)
+    schemaContent, err = readFileContent(schemaFileName)
+    if err != nil {
+      if os.IsNotExist(err) {
+        schemaContent = ""
+      } else {
+        return nil, false, err
+      }
+    }
+    hasSchema = len(schemaContent)>0
+  }
+
+  script := api.Payload {
+    "name": name,
+    "filename": scriptFile,
+    "content": scriptContent,
+    "inputSchema": schemaContent,
+    "isMain": isMain,
+  }
+  return script, hasSchema, nil
 }
 
 func assembleQuery(queryFile string) (api.Payload, error) {
@@ -217,9 +283,10 @@ func assembleQuery(queryFile string) (api.Payload, error) {
   if err != nil {
     return nil, err
   }
-  name := fileNameWithoutExtension(queryFile)
+  name := fileNameWithoutExtension(filepath.Base(queryFile))
   return api.Payload {
     "name": name,
+    "filename": queryFile,
     "graphQL": queryContent,
   }, nil
 }

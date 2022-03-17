@@ -79,3 +79,7 @@ func openURL(url string) error {
     args = append(args, url)
     return exec.Command(cmd, args...).Start()
 }
+
+func statusEqualsSuccess(payload api.Payload) bool {
+  return strings.EqualFold("success",payload["status"].(string))
+}

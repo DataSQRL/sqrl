@@ -139,7 +139,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Compilation'
+                $ref: '#/components/schemas/CompilationResult'
         405:
           description: Validation exception
           content:
@@ -354,15 +354,17 @@ components:
       type: object
       required:
         - name
-        - script
+        - content
       properties:
         name:
           type: string
           minLength: 3
           maxLength: 128
-        script:
+        content:
           type: string
           minLength: 10
+        filename:
+          type: string
         inputSchema:
           type: string
         isMain:
@@ -377,6 +379,8 @@ components:
           type: string
           minLength: 3
           maxLength: 128
+        filename:
+          type: string
         graphQL:
           type: string
           minLength: 10
@@ -403,7 +407,7 @@ components:
         status:
           $ref: '#/components/schemas/submissionStatus'
         compilation:
-          $ref: '#/components/schemas/Compilation'
+          $ref: '#/components/schemas/CompilationResult'
     submissionStatus:
       type: string
       description: Status of a Submission
@@ -413,36 +417,71 @@ components:
         - deployed
         - stopped
         - failed
-    Compilation:
+    CompilationResult:
       type: object
       required:
-        - pre-schema
+        - status
       properties:
-        pre-schema:
-          type: string
-        errors:
+        compilations:
           type: array
           items:
-            type: string
-        warnings:
-          type: array
-          items:
-            type: string
-        informations:
-          type: array
-          items:
-            type: string
-        compilationTime:
+            $ref: '#/components/schemas/Compilation'
+        compileTime:
           type: integer
           format: int32
         status:
           $ref: '#/components/schemas/compilationStatus'
+    Compilation:
+      type: object
+      required:
+        - name
+        - filename
+        - status
+      properties:
+        name:
+          type: String
+        filename:
+          type: String
+        preschema:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompilationMessage'
+        status:
+          $ref: '#/components/schemas/compilationStatus'
+        type:
+          $ref: '#/components/schemas/compilationType'
+    CompilationMessage:
+      type: object
+      required:
+        - message
+      properties:
+        location:
+          type: string
+        message:
+          type: string
+        type:
+          $ref: '#/components/schemas/compilationMsgType'
     compilationStatus:
       type: string
-      description: Compilation result
+      description: Whether compilation was successful or not
       enum:
         - success
         - failed
+    compilationType:
+      type: string
+      description: Type of artifact that was compiled
+      enum:
+        - script
+        - query
+    compilationMsgType:
+      type: string
+      description: Type of compilation message
+      enum:
+        - error
+        - warning
+        - information
     Error:
       required:
         - code

@@ -32,6 +32,8 @@ import com.google.common.base.Preconditions;
 import graphql.schema.GraphQLCodeRegistry;
 
 import java.io.Closeable;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -73,28 +75,32 @@ public class Environment implements Closeable {
                                               @NonNull ProcessBundle<ConfigurationError> errors) {
     ScriptBundle bundle = scriptConfig.initialize(errors);
     if (bundle==null) return null;
-    ScriptDeployment submission = ScriptDeployment.of(bundle);
-    //TODO: Need to collect errors from compile() and return them
+    ScriptDeployment deployment = ScriptDeployment.of(bundle);
+    //TODO: Need to collect errors from compile() and return them in compilation object
+    Instant compileStart = Instant.now();
     try {
-      compile(submission);
+      compile(deployment);
     } catch (Exception e) {
       errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,bundle.getName().getDisplay(),
               "Encountered error while compiling script: %s",e));
       return null;
     }
-    persistence.saveDeployment(submission);
-    return submission.getStatusResult(streamEngine);
+    //TODO: Need to put the actual compilation results in here
+    CompilationResult compilationResult = CompilationResult.generateDefault(bundle,
+            Duration.between(compileStart,Instant.now()).toMillis());
+    persistence.saveDeployment(deployment);
+    return deployment.getStatusResult(streamEngine, Optional.of(compilationResult));
   }
 
   public Optional<ScriptDeployment.Result> getDeployment(@NonNull NamedIdentifier submissionId) {
     ScriptDeployment submission = persistence.getSubmissionById(submissionId);
     if (submission==null) return Optional.empty();
-    else return Optional.of(submission.getStatusResult(streamEngine));
+    else return Optional.of(submission.getStatusResult(streamEngine, Optional.empty()));
   }
 
   public List<ScriptDeployment.Result> getActiveDeployments() {
     return persistence.getAllDeployments().filter(ScriptDeployment::isActive)
-            .map(s -> s.getStatusResult(streamEngine)).collect(Collectors.toList());
+            .map(s -> s.getStatusResult(streamEngine, Optional.empty())).collect(Collectors.toList());
   }
 
   public Script compile(ScriptDeployment submission) throws Exception {
