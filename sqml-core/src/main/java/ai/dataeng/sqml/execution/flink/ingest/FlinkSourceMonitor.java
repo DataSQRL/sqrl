@@ -3,6 +3,7 @@ package ai.dataeng.sqml.execution.flink.ingest;
 import ai.dataeng.sqml.config.provider.DatasetRegistryPersistenceProvider;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.config.provider.MetadataStoreProvider;
+import ai.dataeng.sqml.config.provider.SerializerProvider;
 import ai.dataeng.sqml.execution.StreamEngine;
 import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
 import ai.dataeng.sqml.execution.flink.environment.util.FlinkUtilities;
@@ -29,13 +30,15 @@ public class FlinkSourceMonitor implements StreamEngine.SourceMonitor {
     private final JDBCConnectionProvider jdbc;
     private final DataStreamProvider streamProvider;
     private final MetadataStoreProvider metaProvider;
+    private final SerializerProvider serializerProvider;
     private final DatasetRegistryPersistenceProvider registryProvider;
 
     public FlinkSourceMonitor(FlinkStreamEngine envProvider, JDBCConnectionProvider jdbc, MetadataStoreProvider metaProvider,
-                              DatasetRegistryPersistenceProvider registryProvider) {
+                              SerializerProvider serializerProvider, DatasetRegistryPersistenceProvider registryProvider) {
         this.envProvider = envProvider;
         this.jdbc = jdbc;
         this.metaProvider = metaProvider;
+        this.serializerProvider = serializerProvider;
         this.registryProvider = registryProvider;
         this.streamProvider = new DataStreamProvider();
     }
@@ -74,7 +77,7 @@ public class FlinkSourceMonitor implements StreamEngine.SourceMonitor {
                 .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
 //                .process(new BufferedLatestSelector(getFlinkName(STATS_NAME_PREFIX, sourceTable),
 //                        500, SourceTableStatistics.Accumulator.class), TypeInformation.of(SourceTableStatistics.Accumulator.class))
-                .addSink(new SaveTableStatistics(jdbc, metaProvider, registryProvider,
+                .addSink(new SaveTableStatistics(jdbc, metaProvider, serializerProvider, registryProvider,
                                                  sourceTable.getDataset().getName(),sourceTable.getName()));
         return envProvider.createStreamJob(flinkEnv, FlinkStreamEngine.JobType.MONITOR);
     }

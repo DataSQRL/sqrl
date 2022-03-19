@@ -3,6 +3,8 @@ package ai.dataeng.sqml.io.sources.dataset;
 import ai.dataeng.sqml.execution.StreamEngine;
 import lombok.AllArgsConstructor;
 
+import java.util.Optional;
+
 @AllArgsConstructor
 public class SourceTableMonitorImpl implements SourceTableMonitor {
 
@@ -18,7 +20,7 @@ public class SourceTableMonitorImpl implements SourceTableMonitor {
 
     @Override
     public void stopTableMonitoring(String id) {
-        StreamEngine.Job job = stream.getJob(id);
-        job.cancel();
+        Optional<? extends StreamEngine.Job> job = stream.getJob(id);
+        if (job.isPresent()) job.get().cancel();
     }
 }

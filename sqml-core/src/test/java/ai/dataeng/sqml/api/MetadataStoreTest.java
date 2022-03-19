@@ -3,6 +3,7 @@ package ai.dataeng.sqml.api;
 import ai.dataeng.sqml.config.SqrlSettings;
 import ai.dataeng.sqml.config.metadata.MetadataStore;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
+import ai.dataeng.sqml.config.serializer.KryoProvider;
 import com.google.common.collect.ImmutableSet;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -49,7 +50,7 @@ public class MetadataStoreTest {
     public static MetadataStore getStore(SqrlSettings settings) {
         JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(
                 settings.getEnvironmentConfiguration().getMetastore().getDatabase());
-        return settings.getMetadataStoreProvider().openStore(jdbc);
+        return settings.getMetadataStoreProvider().openStore(jdbc, new KryoProvider());
     }
 
     @NoArgsConstructor

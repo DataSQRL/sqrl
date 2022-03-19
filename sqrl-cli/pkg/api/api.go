@@ -21,22 +21,22 @@ type ClientConfig struct {
 }
 
 func GetFromAPI(cfg *ClientConfig, resource string) (Payload, error) {
-  response, err := getCall(cfg, resource)
+  body, err := getCall(cfg, resource)
   if err != nil {
     return nil, err
   }
-  return response2JsonObject(response)
+  return response2JsonObject(body)
 }
 
 func GetMultipleFromAPI(cfg *ClientConfig, resource string) ([]Payload, error) {
-  response, err := getCall(cfg, resource)
+  body, err := getCall(cfg, resource)
   if err != nil {
     return nil, err
   }
-  return response2JsonArray(response)
+  return response2JsonArray(body)
 }
 
-func getCall(cfg *ClientConfig, resource string) (*http.Response, error) {
+func getCall(cfg *ClientConfig, resource string) ([]byte, error) {
   apiURL, err := purell.NormalizeURLString(cfg.AdminUrl + resource, purell.FlagsUsuallySafeGreedy)
   if err != nil {
     return nil, err
@@ -59,16 +59,16 @@ func Post2API(cfg *ClientConfig, resource string, payload Payload) (Payload, err
   request, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
 	request.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
-  response, err := executeRequest(cfg, request)
+  body, err := executeRequest(cfg, request)
   if err != nil {
     return nil, err
   }
-  return response2JsonObject(response)
+  return response2JsonObject(body)
 }
 
-func response2JsonObject(response *http.Response) (Payload, error) {
+func response2JsonObject(body []byte) (Payload, error) {
   var result Payload
-  err := json.NewDecoder(response.Body).Decode(result)
+  err := json.Unmarshal(body, &result)
 
   switch {
   case err == io.EOF:
@@ -79,9 +79,9 @@ func response2JsonObject(response *http.Response) (Payload, error) {
   return result, nil
 }
 
-func response2JsonArray(response *http.Response) ([]Payload, error) {
+func response2JsonArray(body []byte) ([]Payload, error) {
   var result []Payload
-  err := json.NewDecoder(response.Body).Decode(result)
+  err := json.Unmarshal(body, &result)
 
   switch {
   case err == io.EOF:
@@ -92,7 +92,7 @@ func response2JsonArray(response *http.Response) ([]Payload, error) {
   return result, nil
 }
 
-func executeRequest(cfg *ClientConfig, request *http.Request) (*http.Response, error) {
+func executeRequest(cfg *ClientConfig, request *http.Request) ([]byte, error) {
   var client *http.Client
   if cfg.Insecure {
     tlsConfig := &tls.Config{InsecureSkipVerify: true}
@@ -115,5 +115,9 @@ func executeRequest(cfg *ClientConfig, request *http.Request) (*http.Response, e
     }
     return nil, errors.New("Error Calling Server API:\n" + string(message))
   }
-  return response, nil;
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+  return body, nil;
 }

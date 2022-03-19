@@ -1,19 +1,17 @@
 package ai.dataeng.sqml.api;
 
 import ai.dataeng.sqml.Environment;
-import ai.dataeng.sqml.config.GlobalConfiguration;
+import ai.dataeng.sqml.ScriptDeployment;
 import ai.dataeng.sqml.config.SqrlSettings;
+import ai.dataeng.sqml.config.scripts.ScriptBundle;
+import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.config.server.ApiVerticle;
+import ai.dataeng.sqml.config.util.StringNamedId;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
@@ -28,7 +26,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,6 +40,7 @@ public class APIServerTest {
     Environment env = null;
     DatasetRegistry registry = null;
     WebClient webClient = null;
+    int port = ApiVerticle.DEFAULT_PORT;
 
 
     @BeforeEach
@@ -65,6 +67,20 @@ public class APIServerTest {
             .name(dsName)
             .build();
     final JsonObject fileObj = JsonObject.mapFrom(fileConfig);
+    final String deployName = "test";
+    final String deployVersion = "v2";
+    final ScriptBundle.Config deployConfig = ScriptBundle.Config.builder()
+            .name(deployName)
+            .scripts(List.of(SqrlScript.Config.builder()
+                            .name(deployName)
+                            .content("IMPORT data.book;\nIMPORT data.person;\n")
+                            .filename(deployName+".sqrl")
+                            .inputSchema("")
+                            .main(true)
+                            .build()))
+            .version(deployVersion)
+            .build();
+    final JsonObject deploymentObj = JsonObject.mapFrom(deployConfig);
 
 
     @Test
@@ -77,7 +93,7 @@ public class APIServerTest {
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             deploymentCheckpoint.flag();
 
-            webClient.post(8080, "localhost", "/source/file")
+            webClient.post(port, "localhost", "/source/file")
                     .as(BodyCodec.jsonObject())
                     .sendJsonObject(fileObj, testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -104,17 +120,24 @@ public class APIServerTest {
     }
 
     @Test
-    public void testSubmissions(Vertx vertx, VertxTestContext testContext) throws Throwable {
+    public void testReadDeployment(Vertx vertx, VertxTestContext testContext) throws Throwable {
+        ProcessMessage.ProcessBundle errors = new ProcessMessage.ProcessBundle<>();
+        ScriptDeployment.Result result = env.deployScript(deployConfig,errors);
+        assertNotNull(result);
+
 
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.get(8080, "localhost", "/deployment")
+            webClient.get(port, "localhost", "/deployment")
                     .as(BodyCodec.jsonArray())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
                             assertEquals(200, resp.statusCode());
                             JsonArray arr = resp.body();
-                            assertEquals(0, arr.size());
+                            assertEquals(1, arr.size());
+                            JsonObject fileRes = arr.getJsonObject(0);
+                            assertEquals(deployName,fileRes.getString("name"));
+                            assertEquals(deployVersion,fileRes.getString("version"));
                             requestCheckpoint.flag();
                         });
                     }));
@@ -127,6 +150,45 @@ public class APIServerTest {
     }
 
     @Test
+    public void testAddingDeployment(Vertx vertx, VertxTestContext testContext) throws Throwable {
+        Checkpoint requestCheckpoint = testContext.checkpoint(1);
+        assertEquals(0,env.getActiveDeployments().size());
+
+        AtomicReference<String> submissionId = new AtomicReference<>("");
+
+        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+
+            webClient.post(port, "localhost", "/deployment")
+                    .as(BodyCodec.jsonObject())
+                    .sendJsonObject(deploymentObj, testContext.succeeding(resp -> {
+                        testContext.verify(() -> {
+                            assertEquals(200, resp.statusCode());
+                            JsonObject fileRes = resp.body();
+                            assertEquals(deployName,fileRes.getString("name"));
+                            assertEquals(deployVersion,fileRes.getString("version"));
+                            String submitId = fileRes.getString("id");
+                            assertNotNull(submitId);
+                            submissionId.set(submitId);
+                            requestCheckpoint.flag();
+                        });
+                    }));
+
+        }));
+
+        assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
+        if (testContext.failed()) {
+            throw testContext.causeOfFailure();
+        }
+
+        assertEquals(1,env.getActiveDeployments().size());
+        Optional<ScriptDeployment.Result> deploy = env.getDeployment(StringNamedId.of(submissionId.get()));
+        assertTrue(deploy.isPresent());
+        assertEquals(deployName,deploy.get().getName());
+        assertEquals(deployVersion,deploy.get().getVersion());
+    }
+
+
+    @Test
     public void testGettingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
         registry.addOrUpdateSource(fileConfig,new ProcessMessage.ProcessBundle<>());
         assertNotNull(registry.getDataset(dsName));
@@ -134,7 +196,7 @@ public class APIServerTest {
         Checkpoint requestCheckpoint = testContext.checkpoint(3);
 
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.get(8080, "localhost", "/source")
+            webClient.get(port, "localhost", "/source")
                     .as(BodyCodec.jsonArray())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -148,7 +210,7 @@ public class APIServerTest {
                         });
                     }));
 
-            webClient.get(8080, "localhost", "/source/"+dsName)
+            webClient.get(port, "localhost", "/source/"+dsName)
                     .as(BodyCodec.jsonObject())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -160,7 +222,7 @@ public class APIServerTest {
                         });
                     }));
 
-            webClient.post(8080, "localhost", "/source/file")
+            webClient.post(port, "localhost", "/source/file")
                     .as(BodyCodec.jsonObject())
                     .sendJsonObject(fileObj, testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -188,6 +250,22 @@ public class APIServerTest {
     public void testDeleteSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
         //TODO: implement
         testContext.completeNow();
+    }
+
+    @Test
+    /**
+     * This runs the server for external testing from command line. Do not include in normal
+     * test suite since this test runs for a long time.
+     */
+    public void runServer(Vertx vertx, VertxTestContext testContext) throws Throwable {
+//        registry.addOrUpdateSource(fileConfig,new ProcessMessage.ProcessBundle<>());
+//        assertNotNull(registry.getDataset(dsName));
+
+        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+            System.out.println("Ready to accept requests");
+        }));
+
+        testContext.awaitCompletion(120, TimeUnit.SECONDS);
     }
 
 }

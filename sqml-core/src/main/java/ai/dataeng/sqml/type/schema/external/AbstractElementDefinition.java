@@ -1,6 +1,8 @@
 package ai.dataeng.sqml.type.schema.external;
 
-public class AbstractElementDefinition {
+import java.io.Serializable;
+
+public class AbstractElementDefinition implements Serializable {
 
     public String name;
     public String description;

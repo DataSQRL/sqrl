@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ApiVerticle extends AbstractVerticle {
 
+    public static final int DEFAULT_PORT = 5070;
+
     private static final Map<Integer,String> ERROR2MESSAGE = ImmutableMap.of(
             400, "Processing Error",
             404, "Not Found",
@@ -48,7 +50,7 @@ public class ApiVerticle extends AbstractVerticle {
     private HttpServer server;
 
     private final Environment environment;
-    private final int port = 8080;
+    private final int port = DEFAULT_PORT;
 
     public ApiVerticle(Environment environment) {
         this.environment = environment;

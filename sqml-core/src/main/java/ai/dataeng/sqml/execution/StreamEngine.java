@@ -11,10 +11,11 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import java.io.Closeable;
 import java.util.Map;
+import java.util.Optional;
 
 public interface StreamEngine extends Closeable {
 
-    Job getJob(String id);
+    Optional<? extends Job> getJob(String id);
 
     interface Job {
 

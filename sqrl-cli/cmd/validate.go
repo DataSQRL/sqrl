@@ -17,12 +17,12 @@ var validateCmd = &cobra.Command{
 on the DataSQRL server`,
   Args: cobra.ExactArgs(1),
   Example: "datasqrl validate example.sqrl",
-  Run: func(cmd *cobra.Command, args []string) {
+  RunE: func(cmd *cobra.Command, args []string) error {
     fileName := args[0]
 
     payload, hasSchema, err := assembleScriptBundle(fileName, "", true, cmd)
     if err != nil {
-      cmd.PrintErrln(err)
+      return err
     }
 
     if verbose {
@@ -30,15 +30,16 @@ on the DataSQRL server`,
     }
     compilationResult, err := api.Post2API(clientConfig, "/compile", payload)
     if err != nil {
-      cmd.PrintErrln(err)
+      return err
     } else {
       printCompilationResult(compilationResult, cmd)
       if !hasSchema {
         err := saveCompiledSchemas(compilationResult, cmd)
         if err != nil {
-          cmd.PrintErrln("Could not write pre-schema to file", err)
+          return err
         }
       }
+      return nil
     }
 
   },

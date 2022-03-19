@@ -30,14 +30,14 @@ check out https://datasqrl.com for more information`,
       Insecure : viper.GetBool("insecure"),
     }
     if verbose {
-      cmd.Printf("Client connection configuration: %v+ \n",clientConfig)
+      cmd.Printf("Client connection configuration: %+v \n",clientConfig)
     }
   },
 }
 
 func Execute() {
   if err := rootCmd.Execute(); err != nil {
-    fmt.Println(err)
+    fmt.Println("Encountered error", err)
     os.Exit(1)
   }
 }
@@ -51,11 +51,11 @@ type globalFlag struct {
 
 var globalFlags = map[string]*globalFlag {
   "server": &globalFlag{
-    name: "server", shortForm: true, defaultValue: "localhost:5070",
+    name: "server", shortForm: true, defaultValue: "http://localhost:5070",
     description: "IP or URL of DataSQRL server to connect to",
   },
   "api": &globalFlag{
-    name: "api", shortForm: true, defaultValue: "localhost:8080",
+    name: "api", shortForm: true, defaultValue: "http://localhost:8080",
     description: "IP or URL of the generated DataSQRL query API",
   },
   "insecure": &globalFlag{

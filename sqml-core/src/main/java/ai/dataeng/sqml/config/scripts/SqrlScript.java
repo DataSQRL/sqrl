@@ -25,7 +25,7 @@ public class SqrlScript implements Serializable {
     private final String filename;
     private final String content;
     private final SchemaDefinition schema;
-    private boolean isMain;
+    private boolean main;
 
 
     @Builder
@@ -43,7 +43,7 @@ public class SqrlScript implements Serializable {
         @OptionalMinString
         private String inputSchema;
         @Builder.Default
-        private boolean isMain = false;
+        private boolean main = false;
 
         SqrlScript initialize(ProcessMessage.ProcessBundle<ConfigurationError> errors,
                               String bundleName, NameCanonicalizer canonicalizer) {
@@ -59,7 +59,7 @@ public class SqrlScript implements Serializable {
             }
             return new SqrlScript(Name.of(name,canonicalizer),
                     StringUtils.isNotEmpty(filename)?filename:name,
-                    content,schema,isMain);
+                    content,schema, main);
         }
 
         private SchemaDefinition parseSchema() throws JsonProcessingException {

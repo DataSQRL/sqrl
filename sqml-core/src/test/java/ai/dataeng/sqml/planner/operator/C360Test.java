@@ -49,7 +49,7 @@ public class C360Test {
         .scripts(ImmutableList.of(
             SqrlScript.Config.builder()
                 .name(RETAIL_SCRIPT_NAME)
-                .isMain(true)
+                .main(true)
                 .content(Files.readString(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION)))
                 .inputSchema(Files.readString(RETAIL_IMPORT_SCHEMA_FILE))
                 .build()
@@ -79,7 +79,7 @@ public class C360Test {
             .scripts(ImmutableList.of(
                     SqrlScript.Config.builder()
                             .name(RETAIL_SCRIPT_NAME)
-                            .isMain(true)
+                            .main(true)
                             .content(Files.readString(RETAIL_SCRIPT_DIR.resolve(RETAIL_SCRIPT_NAME + SQML_SCRIPT_EXTENSION)))
                             .inputSchema(Files.readString(RETAIL_IMPORT_SCHEMA_FILE))
                             .build()

@@ -58,11 +58,20 @@ public class ScriptDeployment implements Serializable {
     public Result getStatusResult(StreamEngine streamEngine, Optional<CompilationResult> compileResult) {
         Status status = Status.submitted;
         if (executionId!=null) {
-            StreamEngine.Job job = streamEngine.getJob(executionId);
-            switch (job.getStatus()) {
-                case FAILED: status = Status.failed; break;
-                case RUNNING: status = Status.running; break;
-                case STOPPED: status = Status.stopped; break;
+            Optional<? extends StreamEngine.Job> job = streamEngine.getJob(executionId);
+            if (job.isEmpty()) status = Status.stopped;
+            else {
+                switch (job.get().getStatus()) {
+                    case FAILED:
+                        status = Status.failed;
+                        break;
+                    case RUNNING:
+                        status = Status.running;
+                        break;
+                    case STOPPED:
+                        status = Status.stopped;
+                        break;
+                }
             }
         }
         Result.ResultBuilder builder = Result.builder()

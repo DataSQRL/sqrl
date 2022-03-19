@@ -24,7 +24,7 @@ var deployCmd = &cobra.Command{
 to DataSQRL server for execution`,
   Args: cobra.RangeArgs(1,2),
   Example: "datasqrl deploy example.sqrl v1",
-  Run: func(cmd *cobra.Command, args []string) {
+  RunE: func(cmd *cobra.Command, args []string) error {
     fileName := args[0]
 
     version := ""
@@ -36,7 +36,7 @@ to DataSQRL server for execution`,
 
     payload, hasSchema, err := assembleScriptBundle(fileName, version, true, cmd)
     if err != nil {
-      cmd.PrintErrln(err)
+      return err
     }
 
     if verbose {
@@ -44,16 +44,17 @@ to DataSQRL server for execution`,
     }
     deployment, err := api.Post2API(clientConfig, "/deployment", payload)
     if err != nil {
-      cmd.PrintErrln(err)
+      return err
     } else {
       printDeploymentResult(deployment, cmd)
       if !hasSchema {
         //Extract schema from compilation and store locally
-        err := saveCompiledSchemas(deployment["compilation"].(api.Payload), cmd)
+        err := saveCompiledSchemas(deployment["compilation"].(map[string]interface{}), cmd)
         if err != nil {
-          cmd.PrintErrln("Could not write pre-schema to file", err)
+          return err
         }
       }
+      return nil
     }
   },
 }
@@ -61,7 +62,7 @@ to DataSQRL server for execution`,
 func printDeploymentResult(deployment api.Payload, cmd *cobra.Command) {
   status := deployment["status"].(string)
   deployId := deployment["id"].(string)
-  compilationResult := deployment["compilation"].(api.Payload)
+  compilationResult := deployment["compilation"].(map[string]interface{})
 
   failure := strings.EqualFold(status, "failed")
   if failure {
@@ -72,23 +73,23 @@ func printDeploymentResult(deployment api.Payload, cmd *cobra.Command) {
   printCompilationResult(compilationResult, cmd)
 }
 
-func printCompilationResult(compilationResult api.Payload, cmd *cobra.Command) {
+func printCompilationResult(compilationResult map[string]interface{}, cmd *cobra.Command) {
   success := statusEqualsSuccess(compilationResult)
-  compiletime := compilationResult["compileTime"].(int)
+  compiletime := compilationResult["compileTime"].(float64)
   if success {
-    cmd.Printf("Successful compilation took %d ms\n", compiletime)
+    cmd.Printf("Successful compilation took %6.0f ms\n", compiletime)
   } else {
-    cmd.PrintErrf("Failed compilation took %d ms - see below for compilation errors\n", compiletime)
+    cmd.PrintErrf("Failed compilation took %6.0f ms - see below for compilation errors\n", compiletime)
   }
-  for _, compilation := range compilationResult["compilations"].([]api.Payload) {
-    printCompilation(compilation, cmd)
+  for _, compilation := range compilationResult["compilations"].([]interface{}) {
+    printCompilation(compilation.(map[string]interface{}), cmd)
   }
 }
 
-func printCompilation(compilation api.Payload, cmd *cobra.Command) {
+func printCompilation(compilation map[string]interface{}, cmd *cobra.Command) {
   // success := statusEqualsSuccess(compilation)
   fileName := compilation["filename"].(string)
-  messages := compilation["messages"].([]api.Payload)
+  messages := compilation["messages"].([]interface{})
 
   errorMsgs, errorCount := messages2String(messages, "error", "[ERROR]")
   warnMsgs, warnCount := messages2String(messages, "warning", "[WARN]")
@@ -102,10 +103,11 @@ func printCompilation(compilation api.Payload, cmd *cobra.Command) {
   }
 }
 
-func messages2String(compileMsgs []api.Payload, filterType string, prefix string) (string, int) {
+func messages2String(compileMsgs []interface{}, filterType string, prefix string) (string, int) {
   result := ""
   count := 0
-  for _, msg := range compileMsgs {
+  for _, m := range compileMsgs {
+    msg := m.(map[string]interface{})
     typeName := msg["type"].(string)
     if strings.EqualFold(typeName, filterType) {
       result += prefix + " " + fmt.Sprint(msg["location"]) + ": " + fmt.Sprint(msg["message"]) + "\n"
@@ -121,7 +123,7 @@ func printMessages(prefix string, messages []string, cmd *cobra.Command) {
   }
 }
 
-func saveCompiledSchemas(compilationResult api.Payload, cmd *cobra.Command) error {
+func saveCompiledSchemas(compilationResult map[string]interface{}, cmd *cobra.Command) error {
   success := statusEqualsSuccess(compilationResult)
   if !success {
     if verbose {
@@ -129,8 +131,8 @@ func saveCompiledSchemas(compilationResult api.Payload, cmd *cobra.Command) erro
     }
     return nil
   }
-  for _, compilation := range compilationResult["compilations"].([]api.Payload) {
-    err := saveCompiledSchema(compilation, cmd)
+  for _, compilation := range compilationResult["compilations"].([]interface{}) {
+    err := saveCompiledSchema(compilation.(map[string]interface{}), cmd)
     if err != nil {
       return err
     }
@@ -138,13 +140,13 @@ func saveCompiledSchemas(compilationResult api.Payload, cmd *cobra.Command) erro
   return nil
 }
 
-func saveCompiledSchema(compilation api.Payload, cmd *cobra.Command) error {
+func saveCompiledSchema(compilation map[string]interface{}, cmd *cobra.Command) error {
   //only script artifacts return a compiled schema
   artifactType := compilation["type"].(string)
   if !strings.EqualFold(artifactType, "script") {
     return nil
   }
-  
+
   success := statusEqualsSuccess(compilation)
   fileName := compilation["filename"].(string)
   if !success {
@@ -273,7 +275,7 @@ func assembleScript(scriptFile string, isMain bool, includeSchema bool) (api.Pay
     "filename": scriptFile,
     "content": scriptContent,
     "inputSchema": schemaContent,
-    "isMain": isMain,
+    "main": isMain,
   }
   return script, hasSchema, nil
 }

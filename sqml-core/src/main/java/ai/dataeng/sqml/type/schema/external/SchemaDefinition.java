@@ -1,9 +1,10 @@
 package ai.dataeng.sqml.type.schema.external;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-public class SchemaDefinition {
+public class SchemaDefinition implements Serializable {
 
     public String version;
     public List<DatasetDefinition> datasets;

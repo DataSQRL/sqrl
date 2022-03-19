@@ -4,6 +4,7 @@ import ai.dataeng.sqml.config.metadata.MetadataStore;
 import ai.dataeng.sqml.config.provider.DatasetRegistryPersistenceProvider;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.config.provider.MetadataStoreProvider;
+import ai.dataeng.sqml.config.provider.SerializerProvider;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistryPersistence;
 import ai.dataeng.sqml.tree.name.Name;
@@ -15,6 +16,7 @@ public class SaveTableStatistics extends RichSinkFunction<SourceTableStatistics>
 
     private JDBCConnectionProvider jdbc;
     private MetadataStoreProvider metaProvider;
+    private SerializerProvider serializer;
     private DatasetRegistryPersistenceProvider registryProvider;
     private Name dataset;
     private Name table;
@@ -22,10 +24,11 @@ public class SaveTableStatistics extends RichSinkFunction<SourceTableStatistics>
     private transient MetadataStore store;
     private transient DatasetRegistryPersistence persistence;
 
-    public SaveTableStatistics(JDBCConnectionProvider jdbc, MetadataStoreProvider metaProvider,
+    public SaveTableStatistics(JDBCConnectionProvider jdbc, MetadataStoreProvider metaProvider, SerializerProvider serializer,
                                DatasetRegistryPersistenceProvider registryProvider, Name dataset, Name table) {
         this.jdbc = jdbc;
         this.metaProvider = metaProvider;
+        this.serializer = serializer;
         this.registryProvider = registryProvider;
         this.dataset = dataset;
         this.table = table;
@@ -33,7 +36,7 @@ public class SaveTableStatistics extends RichSinkFunction<SourceTableStatistics>
 
     @Override
     public void open(Configuration parameters) throws Exception {
-        store = metaProvider.openStore(jdbc);
+        store = metaProvider.openStore(jdbc, serializer);
         persistence = registryProvider.createRegistryPersistence(store);
     }
 

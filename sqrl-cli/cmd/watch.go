@@ -4,6 +4,7 @@ import (
   "io/ioutil"
 	"os"
   "time"
+  "fmt"
 
 	"github.com/fsnotify/fsnotify"
   "github.com/spf13/cobra"
@@ -35,11 +36,10 @@ var watchCmd = &cobra.Command{
 server for execution. Creates SQRL script if it does not exist.`,
   Args: cobra.ExactArgs(1),
   Example: "datasqrl watch example.sqrl",
-  Run: func(cmd *cobra.Command, args []string) {
+  RunE: func(cmd *cobra.Command, args []string) error {
     watcher, err := fsnotify.NewWatcher()
 		if err != nil {
-			cmd.PrintErrln(err)
-      os.Exit(1)
+			return nil
 		}
 		defer watcher.Close()
 
@@ -55,17 +55,16 @@ server for execution. Creates SQRL script if it does not exist.`,
       if viper.GetBool(prepopulateFlag) {
         sources, err := api.GetMultipleFromAPI(clientConfig, "/source")
         if err != nil {
-          cmd.PrintErrln(err)
-          os.Exit(1)
+          return err
         }
         numSources := 0
         numTables := 0
         for _, source := range sources {
           sourceName := source["sourceName"].(string)
           numSources++
-          tables := source["tables"].([]string)
+          tables := source["tables"].([]interface{})
           for _, table := range tables {
-            imports = imports + "IMPORT " + sourceName + "." + table + ";\n"
+            imports = imports + "IMPORT " + sourceName + "." + fmt.Sprint(table) + ";\n"
             numTables++
           }
         }
@@ -75,7 +74,7 @@ server for execution. Creates SQRL script if it does not exist.`,
       }
 			err := ioutil.WriteFile(fileName, []byte(imports), 0644)
       if err != nil {
-        cmd.PrintErrln("Could not write to file", fileName, err)
+        return err
       }
 		}
 
@@ -89,10 +88,10 @@ server for execution. Creates SQRL script if it does not exist.`,
 
 		err = watcher.Add(fileName)
 		if err != nil {
-			cmd.PrintErrln(err)
-			os.Exit(1)
+			return err
 		}
 		<-terminate
+    return nil
   },
 }
 
@@ -110,7 +109,7 @@ func deployScript(cmd *cobra.Command, fileName string) (time.Time) {
     return time.Time{}
   } else {
     printDeploymentResult(deployment, cmd)
-    err := saveCompiledSchema(deployment["compilation"].(api.Payload), cmd)
+    err := saveCompiledSchemas(deployment["compilation"].(map[string]interface{}), cmd)
     if err != nil {
       cmd.PrintErrln("Could not write pre-schema to file", err)
     }
@@ -130,6 +129,7 @@ func scriptUpdate(cmd *cobra.Command, fileName string, watcher *fsnotify.Watcher
         cmd.PrintErrln("Could not retrieve filesystem notifications")
         return
       }
+      cmd.Println("Received file event:",event)
 			if event.Op & fsnotify.Write == fsnotify.Write {
         file, err := os.Stat(fileName)
         if err != nil {
@@ -137,6 +137,7 @@ func scriptUpdate(cmd *cobra.Command, fileName string, watcher *fsnotify.Watcher
           return
         }
         lastModTime := file.ModTime()
+        cmd.Println("Times",lastModTime, lastDeployTime)
         if lastDeployTime.Before(lastModTime) {
           lastDeployTime = deployScript(cmd, fileName)
         }

@@ -124,7 +124,7 @@ public class FileScriptConfiguration {
         }
 
         return SqrlScript.Config.builder().name(name)
-                .isMain(name.equalsIgnoreCase(bundleName))
+                .main(name.equalsIgnoreCase(bundleName))
                 .content(scriptContent)
                 .inputSchema(schemaContent)
                 .build();

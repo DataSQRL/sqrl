@@ -1,8 +1,9 @@
 package cmd
 
 import (
-  "fmt"
-
+  "os"
+  // "fmt"
+  "path/filepath"
   "github.com/spf13/cobra"
   "github.com/spf13/viper"
 
@@ -39,9 +40,21 @@ var connectSourceFolderCmd = &cobra.Command{
   Long:  `Connect a folder as a data source to DataSQRL server`,
   Example: "datasqrl connect source folder /some/folder",
   Args: cobra.ExactArgs(1),
-  Run: func(cmd *cobra.Command, args []string) {
+  RunE: func(cmd *cobra.Command, args []string) error {
+    uri := args[0]
+
+    //See if this is a local file or directory and if so, make it absolute
+    info, err := os.Stat(uri)
+    if err==nil && info.IsDir() {
+      absPath, err := filepath.Abs(uri)
+      if err != nil {
+        return err
+      }
+      uri = absPath //need to turn into uri: "file://"+
+    }
+
     payload := api.Payload {
-      "uri": args[0],
+      "uri": uri,
     }
     name := viper.GetString("name")
     if len(name)>0 {
@@ -53,9 +66,10 @@ var connectSourceFolderCmd = &cobra.Command{
     }
     result, err := api.Post2API(clientConfig, resource, payload)
     if err != nil {
-      cmd.PrintErrln(err)
+      return err
     } else {
       cmd.Println(result)
+      return nil
     }
   },
 }
@@ -66,8 +80,9 @@ var connectSourceKafkaCmd = &cobra.Command{
   Long:  `Connect a Kafka log as a data source to DataSQRL server`,
   Example: "datasqrl connect source kafka 10.20.20.10",
   Args: cobra.ExactArgs(1),
-  Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("Connect source kafka")
+  RunE: func(cmd *cobra.Command, args []string) error {
+    cmd.Println("Connect source kafka")
+    return nil
   },
 }
 
@@ -83,8 +98,9 @@ var connectSinkFolderCmd = &cobra.Command{
   Long:  `Connect a folder as a data sink to DataSQRL server`,
   Example: "datasqrl connect sink folder /some/folder",
   Args: cobra.ExactArgs(1),
-  Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("Connect sink folder")
+  RunE: func(cmd *cobra.Command, args []string) error {
+    cmd.Println("Connect sink folder")
+    return nil
   },
 }
 
@@ -94,7 +110,8 @@ var connectSinkKafkaCmd = &cobra.Command{
   Long:  `Connect a Kafka log as a data sink to DataSQRL server`,
   Example: "datasqrl connect sink kafka 10.20.20.10",
   Args: cobra.ExactArgs(1),
-  Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("Connect sink kafka")
+  RunE: func(cmd *cobra.Command, args []string) error {
+    cmd.Println("Connect sink kafka")
+    return nil
   },
 }

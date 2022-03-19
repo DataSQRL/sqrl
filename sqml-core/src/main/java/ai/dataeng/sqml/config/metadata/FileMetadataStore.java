@@ -3,6 +3,7 @@ package ai.dataeng.sqml.config.metadata;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.config.provider.MetadataStoreProvider;
+import ai.dataeng.sqml.config.provider.SerializerProvider;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -24,12 +25,13 @@ public class FileMetadataStore implements MetadataStore {
 
     private final Path basePath;
     private final String fileExtension = DEFAULT_EXTENSION;
-    private final Kryo kryo = new Kryo();
+    private final Kryo kryo;
 
 
-    public FileMetadataStore(Path basePath) {
+    public FileMetadataStore(Path basePath, Kryo kryo) {
         Preconditions.checkArgument(Files.isDirectory(basePath) && Files.isWritable(basePath));
         this.basePath = basePath;
+        this.kryo = kryo;
     }
 
     @Override
@@ -124,7 +126,7 @@ public class FileMetadataStore implements MetadataStore {
         }
 
         @Override
-        public MetadataStore openStore(JDBCConnectionProvider jdbc) {
+        public MetadataStore openStore(JDBCConnectionProvider jdbc, SerializerProvider serializer) {
             Path basePath = Path.of(baseDir);
             if (Files.notExists(basePath)) {
                 try {
@@ -133,7 +135,7 @@ public class FileMetadataStore implements MetadataStore {
                     throw new RuntimeException(e);
                 }
             }
-            return new FileMetadataStore(basePath);
+            return new FileMetadataStore(basePath, serializer.getSerializer());
         }
 
     }

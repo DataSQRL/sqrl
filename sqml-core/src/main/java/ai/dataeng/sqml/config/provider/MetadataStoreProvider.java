@@ -7,6 +7,6 @@ import java.io.Serializable;
 
 public interface MetadataStoreProvider extends Serializable {
 
-    MetadataStore openStore(JDBCConnectionProvider jdbc);
+    MetadataStore openStore(JDBCConnectionProvider jdbc, SerializerProvider serializer);
 
 }

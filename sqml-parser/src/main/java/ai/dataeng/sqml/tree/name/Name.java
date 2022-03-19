@@ -55,7 +55,7 @@ public interface Name extends Serializable, Comparable<Name> {
 //    }
 
     public static boolean validName(String name) {
-        return StringUtils.isNotEmpty(name) && name.indexOf(46)<0;
+        return StringUtils.isNotEmpty(name) && name.indexOf(46)<0 && name.indexOf(47)<0;
     }
 
     public static Name of(String name, NameCanonicalizer canonicalizer) {

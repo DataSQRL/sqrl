@@ -12,4 +12,4 @@ engines:
 sources:
   directory:
     - name: "ecommerce-data"
-      path: "../sqml-examples/retail/ecommerce-data"
+      uri: "../sqml-examples/retail/ecommerce-data"

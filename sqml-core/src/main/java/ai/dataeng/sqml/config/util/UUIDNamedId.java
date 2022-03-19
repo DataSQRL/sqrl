@@ -15,6 +15,10 @@ public class UUIDNamedId  implements NamedIdentifier {
         return new UUIDNamedId(id);
     }
 
+    public static UUIDNamedId of(@NonNull String id) {
+        return new UUIDNamedId(UUID.fromString(id));
+    }
+
     public UUID getIdInternal() {
         return id;
     }

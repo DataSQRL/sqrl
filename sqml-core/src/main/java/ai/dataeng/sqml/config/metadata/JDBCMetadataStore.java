@@ -3,6 +3,7 @@ package ai.dataeng.sqml.config.metadata;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.config.provider.MetadataStoreProvider;
+import ai.dataeng.sqml.config.provider.SerializerProvider;
 import ai.dataeng.sqml.tree.name.Name;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -30,17 +31,18 @@ import java.util.Set;
 public class JDBCMetadataStore implements MetadataStore {
 
     public static final int MAX_KEY_LENGTH = 2*256+128;
-    public static final int DELIMITER_CODEPOINT = 46;
+    public static final int DELIMITER_CODEPOINT = 47;
     private static final String DELIMITER_STRING = Character.toString(DELIMITER_CODEPOINT);
 
     public static final String TABLE_NAME = "metadata";
 
     private final Connection connection;
     private final JDBCConfiguration.Dialect dialect;
-    private final Kryo kryo = new Kryo();
+    private final Kryo kryo;
 
 
-    public JDBCMetadataStore(JDBCConnectionProvider jdbcProvider) {
+    public JDBCMetadataStore(JDBCConnectionProvider jdbcProvider, Kryo kryo) {
+        this.kryo = kryo;
         try {
             this.connection = jdbcProvider.getConnection();
         } catch (SQLException e) {
@@ -95,7 +97,7 @@ public class JDBCMetadataStore implements MetadataStore {
 
     private String getKeyString(String... keys) {
         for (String key : keys) {
-            Preconditions.checkArgument(Name.validName(key),"Invalid key: %s",key);
+            Preconditions.checkArgument(StringUtils.isNotEmpty(key) && key.indexOf(DELIMITER_CODEPOINT)<0,"Invalid key: %s",key);
         }
         String keyStr = String.join(DELIMITER_STRING,keys);
         Preconditions.checkArgument(keyStr.length()<MAX_KEY_LENGTH,"Key string is too long: %s",keyStr);
@@ -173,8 +175,8 @@ public class JDBCMetadataStore implements MetadataStore {
     public static class Provider implements MetadataStoreProvider {
 
         @Override
-        public MetadataStore openStore(JDBCConnectionProvider jdbc) {
-            return new JDBCMetadataStore(jdbc);
+        public MetadataStore openStore(JDBCConnectionProvider jdbc, SerializerProvider serializer) {
+            return new JDBCMetadataStore(jdbc, serializer.getSerializer());
         }
 
     }

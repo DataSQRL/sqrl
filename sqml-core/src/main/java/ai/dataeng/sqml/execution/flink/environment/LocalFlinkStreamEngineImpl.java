@@ -6,6 +6,7 @@ import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
@@ -26,8 +27,9 @@ public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
     }
 
     @Override
-    public StreamEngine.Job getJob(String id) {
-        return jobs.get(id);
+    public Optional<StreamEngine.Job> getJob(String id) {
+        StreamEngine.Job job = jobs.get(id);
+        return Optional.ofNullable(job);
     }
 
     @Override

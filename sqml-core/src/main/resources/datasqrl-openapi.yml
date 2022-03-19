@@ -14,8 +14,8 @@ externalDocs:
   description: Learn more about DataSQRL
   url: http://datasqrl.com
 servers:
-  - url: https://localhost:5070/v2
-  - url: http://localhost:5070/v2
+  - url: https://localhost:5070
+  - url: http://localhost:5070
 tags:
   - name: deployment
     description: Execute and manage scripts running on the server.
@@ -367,7 +367,7 @@ components:
           type: string
         inputSchema:
           type: string
-        isMain:
+        main:
           type: boolean
     ScriptBundleQuery:
       type: object
@@ -439,9 +439,9 @@ components:
         - status
       properties:
         name:
-          type: String
+          type: string
         filename:
-          type: String
+          type: string
         preschema:
           type: string
         messages:

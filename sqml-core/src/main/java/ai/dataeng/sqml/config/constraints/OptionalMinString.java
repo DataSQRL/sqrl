@@ -18,6 +18,7 @@ import static org.hibernate.validator.constraints.CompositionType.OR;
 
 @ConstraintComposition(OR)
 @Null
+@Size(max = 0)
 @Size(min = 3)
 @ReportAsSingleViolation
 @Target({ METHOD, FIELD })
@@ -25,7 +26,7 @@ import static org.hibernate.validator.constraints.CompositionType.OR;
 @Constraint(validatedBy = { })
 public @interface OptionalMinString {
 
-    String message() default "Must be either null or string value";
+    String message() default "Must be either null or length>3 string value";
 
     Class<?>[] groups() default { };
 

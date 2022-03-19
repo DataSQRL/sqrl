@@ -56,13 +56,14 @@ public class Environment implements Closeable {
     this.settings = settings;
     JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(
             settings.getEnvironmentConfiguration().getMetastore().getDatabase());
-    metadataStore = settings.getMetadataStoreProvider().openStore(jdbc);
+    metadataStore = settings.getMetadataStoreProvider().openStore(jdbc, settings.getSerializerProvider());
     streamEngine = settings.getStreamEngineProvider().create();
     persistence = settings.getEnvironmentPersistenceProvider().createEnvironmentPersistence(metadataStore);
 
     SourceTableMonitor monitor = settings.getSourceTableMonitorProvider().create(streamEngine,
             settings.getStreamMonitorProvider().create(streamEngine,jdbc,
-                    settings.getMetadataStoreProvider(),settings.getDatasetRegistryPersistenceProvider()));
+                    settings.getMetadataStoreProvider(), settings.getSerializerProvider(),
+                    settings.getDatasetRegistryPersistenceProvider()));
     datasetRegistry = new DatasetRegistry(settings.getDatasetRegistryPersistenceProvider()
             .createRegistryPersistence(metadataStore),monitor);
   }
@@ -78,13 +79,13 @@ public class Environment implements Closeable {
     ScriptDeployment deployment = ScriptDeployment.of(bundle);
     //TODO: Need to collect errors from compile() and return them in compilation object
     Instant compileStart = Instant.now();
-    try {
-      compile(deployment);
-    } catch (Exception e) {
-      errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,bundle.getName().getDisplay(),
-              "Encountered error while compiling script: %s",e));
-      return null;
-    }
+//    try {
+//      compile(deployment);
+//    } catch (Exception e) {
+//      errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,bundle.getName().getDisplay(),
+//              "Encountered error while compiling script: %s",e));
+//      return null;
+//    }
     //TODO: Need to put the actual compilation results in here
     CompilationResult compilationResult = CompilationResult.generateDefault(bundle,
             Duration.between(compileStart,Instant.now()).toMillis());
