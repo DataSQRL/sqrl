@@ -2,15 +2,17 @@ package ai.dataeng.sqml.execution.sql.util;
 
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
-import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.execution.sql.DatabaseSink;
 import ai.dataeng.sqml.execution.sql.SQLJDBCQueryBuilder;
-import ai.dataeng.sqml.type.basic.*;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.Value;
-import org.apache.commons.lang3.NotImplementedException;
-
+import ai.dataeng.sqml.planner.Column;
+import ai.dataeng.sqml.type.basic.BasicType;
+import ai.dataeng.sqml.type.basic.BooleanType;
+import ai.dataeng.sqml.type.basic.DateTimeType;
+import ai.dataeng.sqml.type.basic.FloatType;
+import ai.dataeng.sqml.type.basic.IntegerType;
+import ai.dataeng.sqml.type.basic.NumberType;
+import ai.dataeng.sqml.type.basic.StringType;
+import ai.dataeng.sqml.type.basic.UuidType;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -18,6 +20,10 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
+import org.apache.commons.lang3.NotImplementedException;
 
 @AllArgsConstructor
 public class DatabaseUtil {

@@ -5,12 +5,6 @@ import ai.dataeng.sqml.config.constraints.OptionalMinString;
 import ai.dataeng.sqml.config.util.FileUtil;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.google.common.collect.ImmutableList;
-import lombok.*;
-import org.h2.util.StringUtils;
-
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -18,6 +12,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import org.h2.util.StringUtils;
 
 @Builder
 @Getter

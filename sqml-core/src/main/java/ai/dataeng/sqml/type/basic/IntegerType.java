@@ -2,7 +2,6 @@ package ai.dataeng.sqml.type.basic;
 
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import com.google.common.collect.ImmutableSet;
-
 import java.util.Set;
 
 public class IntegerType extends AbstractBasicType<Long> {

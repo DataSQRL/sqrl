@@ -1,10 +1,9 @@
 package ai.dataeng.sqml.io.sources.impl;
 
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import lombok.*;
-
 import java.io.Serializable;
 import java.util.Locale;
+import lombok.Getter;
 
 @Getter
 public enum CanonicalizerConfiguration implements Serializable {

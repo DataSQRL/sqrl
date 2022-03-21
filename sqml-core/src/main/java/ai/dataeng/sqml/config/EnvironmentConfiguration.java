@@ -1,10 +1,12 @@
 package ai.dataeng.sqml.config;
 
-import lombok.*;
-import org.apache.commons.lang3.StringUtils;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Builder
 @Getter

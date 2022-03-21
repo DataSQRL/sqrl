@@ -4,11 +4,16 @@ import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import com.google.common.base.Preconditions;
-import lombok.NonNull;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.NonNull;
 
 public class RelationType<F extends Field> implements Type, Iterable<F> {
 

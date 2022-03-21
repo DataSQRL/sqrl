@@ -1,16 +1,12 @@
 package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.tree.name.Name;
-import java.util.Collection;
-import java.util.List;
+import com.google.common.base.Preconditions;
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.commons.math3.util.Pair;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 /**
  *
@@ -32,55 +28,39 @@ public class Relationship extends Field {
   public final Type type;
 
   public final Multiplicity multiplicity;
+
   @Setter
-  private Relationship inverse;
-  @Setter
-  public RelNode node;
+  private Map<Column, String> pkNameMapping;
 
   @Setter
   public SqlNode sqlNode;
-  private List<Pair<String, String>> keys;
 
   public Relationship(
       Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity,
-      Relationship inverse,
-      RelNode relNode) {
+      Map<Column, String> aliasMapping) {
     super(name, fromTable);
     this.toTable = toTable;
     this.type = type;
     this.multiplicity = multiplicity;
-    this.inverse = inverse;
-    this.node = relNode;
+    this.pkNameMapping = aliasMapping;
   }
 
-
-  public SqlNode getCondition() {
-    SqlJoin join = (SqlJoin)sqlNode;
-    return join.getCondition();
-  }
-
-  public SqlNode getRight() {
-    SqlJoin join = (SqlJoin)sqlNode;
-    return join.getRight();
-  }
-
-  @Override
-  public Field copy() {
-    throw new RuntimeException("Cannot copy relationship");
+  public SqlNode getSqlNode() {
+    if (sqlNode == null) {
+      System.out.println();
+    }
+    Preconditions.checkNotNull(sqlNode, "Sql node should not be null");
+    return sqlNode.clone(SqlParserPos.ZERO);
   }
 
   @Override
   public String getId() {
-    return name.getCanonical() + LogicalPlanImpl.ID_DELIMITER + Integer.toHexString(0);
+    return name.getCanonical() + SchemaImpl.ID_DELIMITER + Integer.toHexString(0);
   }
 
   @Override
   public int getVersion() {
     return 0;
-  }
-
-  public void setJoinKeys(List<Pair<String, String>> keys) {
-    this.keys = keys;
   }
 
   public enum Type {

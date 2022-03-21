@@ -1,10 +1,9 @@
 package ai.dataeng.sqml.type.constraint;
 
-import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
-import ai.dataeng.sqml.type.basic.ConversionResult;
 import ai.dataeng.sqml.tree.name.Name;
-
+import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.type.basic.ConversionResult;
+import ai.dataeng.sqml.type.basic.ProcessMessage;
 import java.util.Map;
 
 public class NotNull implements Constraint {

@@ -1,7 +1,6 @@
 package ai.dataeng.sqml.type.basic;
 
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
-
 import java.util.Collections;
 import java.util.Set;
 

@@ -7,5 +7,5 @@ import ai.dataeng.sqml.planner.operator.ShadowingContainer;
  * tables) is imported and tables must be referenced through that dataset.
  */
 public interface DatasetOrTable extends ShadowingContainer.Nameable {
-
+  String getId();
 }

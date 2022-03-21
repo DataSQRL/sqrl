@@ -1,18 +1,20 @@
 package ai.dataeng.sqml.execution.flink.ingest.shredding;
 
 import ai.dataeng.sqml.execution.flink.process.DestinationTableSchema;
-import ai.dataeng.sqml.type.*;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
+import ai.dataeng.sqml.type.RelationType;
+import ai.dataeng.sqml.type.StandardField;
+import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.type.TypeHelper;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
 import ai.dataeng.sqml.type.basic.IntegerType;
 import ai.dataeng.sqml.type.basic.UuidType;
-import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
-import lombok.Value;
-
 import java.io.Serializable;
 import java.util.Map;
+import lombok.Value;
 
 public interface FieldProjection extends Serializable {
 

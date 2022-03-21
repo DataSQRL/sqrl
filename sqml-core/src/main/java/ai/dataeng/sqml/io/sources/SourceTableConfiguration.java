@@ -1,9 +1,8 @@
 package ai.dataeng.sqml.io.sources;
 
 import ai.dataeng.sqml.tree.name.Name;
-import lombok.NonNull;
-
 import java.io.Serializable;
+import lombok.NonNull;
 
 public interface SourceTableConfiguration extends Serializable {
 

@@ -56,17 +56,11 @@ public class Column extends Field {
   }
 
   public String getId() {
-    return name.getCanonical() + LogicalPlanImpl.ID_DELIMITER + Integer.toHexString(version);
+    return name.getCanonical() + SchemaImpl.ID_DELIMITER + Integer.toHexString(version);
   }
 
   @Override
   public boolean isVisible() {
     return !isInternal;
-  }
-
-  @Override
-  public Field copy() {
-    return new Column(this.name, this.table, this.version, this.type, this.arrayDepth, this.constraints,
-        this.isPrimaryKey, this.isForeignKey, this.fkReferences, this.isInternal);
   }
 }

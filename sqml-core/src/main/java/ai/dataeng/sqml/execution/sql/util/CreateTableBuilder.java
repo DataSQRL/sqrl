@@ -1,10 +1,9 @@
 package ai.dataeng.sqml.execution.sql.util;
 
-import ai.dataeng.sqml.planner.Column;
-import com.google.common.base.Preconditions;
-
 import static ai.dataeng.sqml.execution.sql.util.DatabaseUtil.sqlName;
 
+import ai.dataeng.sqml.planner.Column;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

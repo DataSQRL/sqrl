@@ -1,10 +1,9 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
-import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
+import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.tree.name.Name;
-
 import java.util.Set;
 
 public interface DatasetRegistryPersistence {

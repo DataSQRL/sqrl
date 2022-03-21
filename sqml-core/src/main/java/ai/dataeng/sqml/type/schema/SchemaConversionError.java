@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.type.schema;
 
+import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.basic.LocationConversionError;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
-import ai.dataeng.sqml.tree.name.NamePath;
 import lombok.NonNull;
 
 public class SchemaConversionError extends LocationConversionError<NamePath> {

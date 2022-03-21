@@ -2,23 +2,29 @@ package ai.dataeng.sqml.config.scripts;
 
 import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.config.util.ConfigurationUtil;
-import ai.dataeng.sqml.config.util.StringNamedId;
 import ai.dataeng.sqml.config.util.NamedIdentifier;
+import ai.dataeng.sqml.config.util.StringNamedId;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
-
-import lombok.*;
-import org.apache.commons.lang3.StringUtils;
-
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * An {@link ScriptBundle} contains the main SQML script that defines the dataset to be exposed as an API as well

@@ -61,4 +61,9 @@ public class Dataset implements DatasetOrTable {
   public void merge(Dataset dataset) {
     this.tables.addAll(dataset.tables);
   }
+
+  @Override
+  public String getId() {
+      return name.getCanonical() + SchemaImpl.ID_DELIMITER + Integer.toHexString(getVersion());
+  }
 }

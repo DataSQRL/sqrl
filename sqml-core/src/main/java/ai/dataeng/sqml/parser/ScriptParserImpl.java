@@ -7,7 +7,7 @@ public class ScriptParserImpl implements ScriptParser {
 
   @Override
   public ScriptNode parse(SqrlScript script) {
-    SqmlParser sqmlParser = SqmlParser.newSqmlParser();
+    SqrlParser sqmlParser = SqrlParser.newParser();
     return sqmlParser.parse(script.getContent());
   }
 }

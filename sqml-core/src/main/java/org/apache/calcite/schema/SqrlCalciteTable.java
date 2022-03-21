@@ -4,7 +4,6 @@ import ai.dataeng.sqml.planner.FieldPath;
 import ai.dataeng.sqml.planner.RelDataTypeFieldFactory;
 import ai.dataeng.sqml.planner.Relationship;
 import ai.dataeng.sqml.planner.Table;
-import ai.dataeng.sqml.planner.operator2.SqrlTableScan;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -14,9 +13,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
-import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.plan.RelOptTable.ToRelContext;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeFamily;
@@ -42,11 +38,11 @@ import org.apache.calcite.util.Pair;
 @Getter
 public class SqrlCalciteTable
     extends RelDataTypeImpl
-    implements CustomColumnResolvingTable, TranslatableTable {
+    implements CustomColumnResolvingTable {
 
   private final Table sqrlTable;
   private final Table baseTable;
-  private final Optional<FieldPath> fieldPath;
+  private final FieldPath fieldPath;
   private final List<FieldPath> addedFields = new ArrayList();
 
   private final boolean isContext;
@@ -58,7 +54,7 @@ public class SqrlCalciteTable
   private final RelDataTypeFieldFactory fieldFactory;
 
   public SqrlCalciteTable(Table sqrlTable, Table baseTable,
-      Optional<FieldPath> fieldPath, RelDataTypeFieldFactory fieldFactory, boolean isContext,
+      FieldPath fieldPath, RelDataTypeFieldFactory fieldFactory, boolean isContext,
       List<RelDataTypeField> fields, String name,
       boolean isPath, Relationship relationship) {
     this.sqrlTable = sqrlTable;
@@ -101,18 +97,11 @@ public class SqrlCalciteTable
     }
 
     String fieldName = String.join(".", list);
-    String[] versioned = fieldName.split("\\$");
-    fieldName = versioned[0];
-
     NamePath namePath = NamePath.parse(fieldName);
 
     Optional<FieldPath> fieldPath;
     //check if resolvable by this table
-    if (versioned.length > 1) {
-      fieldPath = sqrlTable.getField(namePath, Integer.parseInt(versioned[1]));
-    } else {
-      fieldPath = sqrlTable.getField(namePath);
-    }
+    fieldPath = sqrlTable.getField(namePath);
     if (fieldPath.isEmpty()) {
       return List.of();
     }
@@ -131,15 +120,6 @@ public class SqrlCalciteTable
     return List.of(
         Pair.of(resolvedField, List.of())
     );
-  }
-
-  /**
-   * Called if this class type is 'TranslatableTable'. We have full visibility on the relation
-   *  structure and fields at this point. We can unsqrl the table when we resolve the relation.
-   */
-  @Override
-  public RelNode toRel(ToRelContext context, RelOptTable calciteOptTable) {
-    return SqrlTableScan.create(context.getCluster(), calciteOptTable, context.getTableHints());
   }
 
   @Override
@@ -199,8 +179,7 @@ public class SqrlCalciteTable
 
   @Override
   public List<String> getFieldNames() {
-//    System.out.println(this.root.getRowType().getFieldNames());
-    return fields.stream().map(e->((SqrlRelDataTypeField)e).getPath().getLastField().getId()).collect(Collectors.toList());
+    return fields.stream().map(e->((SqrlRelDataTypeField)e).getPath().getName()).collect(Collectors.toList());
   }
 
   @Override

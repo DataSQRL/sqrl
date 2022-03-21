@@ -7,10 +7,11 @@ import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.constraint.ConstraintHelper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
-import lombok.Value;
-
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import lombok.Value;
 
 @Value
 public class DestinationTableSchema implements Serializable, Iterable<DestinationTableSchema.Field> {

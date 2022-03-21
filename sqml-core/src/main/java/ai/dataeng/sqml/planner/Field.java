@@ -19,7 +19,5 @@ public abstract class Field implements ShadowingContainer.Nameable {
     this.table = table;
   }
 
-  public abstract Field copy();
-
   public abstract String getId();
 }

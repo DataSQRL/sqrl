@@ -1,9 +1,7 @@
 package ai.dataeng.sqml.planner;
 
-import ai.dataeng.sqml.planner.LogicalPlanImpl.RowNode;
 import ai.dataeng.sqml.planner.Relationship.Type;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
-import ai.dataeng.sqml.planner.operator2.SqrlRelNode;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.ArrayList;
@@ -23,8 +21,6 @@ public class Table implements DatasetOrTable {
   public ShadowingContainer<Field> fields = new ShadowingContainer<>();
   private final NamePath path;
   public final boolean isInternal;
-  public RowNode currentNode;
-  private SqrlRelNode node;
 
   public Table(int uniqueId, Name name, NamePath path, boolean isInternal) {
     this.name = name;
@@ -33,11 +29,8 @@ public class Table implements DatasetOrTable {
     this.isInternal = isInternal;
   }
 
-  public void updateNode(RowNode node) {
-    currentNode = node;
-  }
-
   public Field getField(Name name) {
+    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
     Field field = fields.getByName(name);
     return field;
   }
@@ -70,7 +63,7 @@ public class Table implements DatasetOrTable {
   }
 
   public String getId() {
-    return name.getCanonical() + LogicalPlanImpl.ID_DELIMITER + Integer.toHexString(uniqueId);
+    return name.getCanonical() + SchemaImpl.ID_DELIMITER + Integer.toHexString(uniqueId);
   }
 
   public List<Column> getPrimaryKeys() {
@@ -156,9 +149,5 @@ public class Table implements DatasetOrTable {
         ", fk=" + getForeignKeys().stream().map(e->e.getName().toString()).collect(Collectors.toList()) +
         ", fields=" + getFields().stream().map(e->e.getName().toString()).collect(Collectors.toList()) +
         '}';
-  }
-
-  public void setRelNode(SqrlRelNode node) {
-    this.node = node;
   }
 }

@@ -24,14 +24,16 @@ public class InlineJoin
 
   private final InlineJoinBody join;
   private final Optional<Name> inverse;
+  private final List<SortItem> sortItems;
+  private final Optional<Integer> limit;
 
-  public InlineJoin(Optional<NodeLocation> location,
-      InlineJoinBody join,
-      Optional<Name> inverse) {
+  public InlineJoin(Optional<NodeLocation> location, InlineJoinBody join, List<SortItem> sortItems,
+      Optional<Integer> limit, Optional<Name> inverse) {
     super(location);
-
     this.join = join;
     this.inverse = inverse;
+    this.sortItems = sortItems;
+    this.limit = limit;
   }
 
   public InlineJoinBody getJoin() {
@@ -40,6 +42,14 @@ public class InlineJoin
 
   public Optional<Name> getInverse() {
     return inverse;
+  }
+
+  public List<SortItem> getSortItems() {
+    return sortItems;
+  }
+
+  public Optional<Integer> getLimit() {
+    return limit;
   }
 
   @Override

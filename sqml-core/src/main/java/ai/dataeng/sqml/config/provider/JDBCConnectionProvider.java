@@ -1,14 +1,11 @@
 package ai.dataeng.sqml.config.provider;
 
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
-import lombok.NonNull;
-
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
+import javax.validation.constraints.NotNull;
+import lombok.NonNull;
 
 public interface JDBCConnectionProvider extends Serializable {
 

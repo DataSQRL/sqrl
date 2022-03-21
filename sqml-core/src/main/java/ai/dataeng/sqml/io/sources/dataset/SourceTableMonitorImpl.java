@@ -1,9 +1,8 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
 import ai.dataeng.sqml.execution.StreamEngine;
-import lombok.AllArgsConstructor;
-
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class SourceTableMonitorImpl implements SourceTableMonitor {

@@ -1,18 +1,17 @@
 package ai.dataeng.sqml.execution.flink.process;
 
-import ai.dataeng.sqml.planner.operator.StreamType;
+import ai.dataeng.sqml.execution.flink.StreamType;
 import ai.dataeng.sqml.execution.sql.DatabaseSink;
+import java.io.Serializable;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.EnumSet;
 import lombok.AllArgsConstructor;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
 import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.connector.jdbc.JdbcStatementBuilder;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-
-import java.io.Serializable;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.EnumSet;
 
 public class DatabaseUtil {
 

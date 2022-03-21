@@ -2,13 +2,12 @@ package ai.dataeng.sqml.execution.sql;
 
 import ai.dataeng.sqml.execution.flink.process.Row;
 import ai.dataeng.sqml.execution.sql.util.DatabaseUtil;
-import lombok.AllArgsConstructor;
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class SQLJDBCQueryBuilder implements DatabaseSink.JDBCQueryBuilder {

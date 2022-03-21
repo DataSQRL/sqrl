@@ -1,27 +1,28 @@
 package ai.dataeng.sqml.execution.flink.ingest.shredding;
 
+import static ai.dataeng.sqml.type.TypeHelper.getNestedRelation;
+import static ai.dataeng.sqml.type.TypeHelper.getNestedType;
+
 import ai.dataeng.sqml.execution.flink.process.DestinationTableSchema;
 import ai.dataeng.sqml.io.sources.SourceRecord;
-import ai.dataeng.sqml.type.*;
-import ai.dataeng.sqml.type.basic.BasicType;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.ArrayType;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.StandardField;
-import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.NamePath;
-import static ai.dataeng.sqml.type.TypeHelper.*;
+import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.type.TypeHelper;
+import ai.dataeng.sqml.type.basic.BasicType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import lombok.Value;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.Preconditions;
-
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 @Value
 public class RecordShredder {

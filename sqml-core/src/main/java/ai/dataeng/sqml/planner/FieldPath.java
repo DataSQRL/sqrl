@@ -9,12 +9,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Value;
 
+/**
+ * Defines a
+ */
 @Value
 public class FieldPath {
-  List<Field> fields;
+  private List<Field> fields;
 
-  public static FieldPath of(Field field) {
-    return new FieldPath(List.of(field));
+  public static FieldPath of(Field... fields) {
+    return new FieldPath(List.of(fields));
   }
 
   public static Optional<FieldPath> walkPath(Table table, NamePath path) {

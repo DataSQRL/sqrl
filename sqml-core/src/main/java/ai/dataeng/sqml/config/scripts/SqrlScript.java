@@ -1,22 +1,26 @@
 package ai.dataeng.sqml.config.scripts;
 
 import ai.dataeng.sqml.config.ConfigurationError;
-import ai.dataeng.sqml.config.util.ConfigurationUtil;
 import ai.dataeng.sqml.config.constraints.OptionalMinString;
+import ai.dataeng.sqml.config.util.ConfigurationUtil;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import ai.dataeng.sqml.type.schema.external.SchemaDefinition;
-import lombok.*;
+import java.io.Serializable;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import java.io.Serializable;
 
 @Value
 public class SqrlScript implements Serializable {

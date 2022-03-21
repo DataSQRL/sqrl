@@ -1,7 +1,17 @@
 package ai.dataeng.sqml.execution.flink.environment.util;
 
 import ai.dataeng.sqml.execution.flink.process.DestinationTableSchema;
-import ai.dataeng.sqml.type.basic.*;
+import ai.dataeng.sqml.type.basic.BasicType;
+import ai.dataeng.sqml.type.basic.BooleanType;
+import ai.dataeng.sqml.type.basic.DateTimeType;
+import ai.dataeng.sqml.type.basic.FloatType;
+import ai.dataeng.sqml.type.basic.IntegerType;
+import ai.dataeng.sqml.type.basic.NumberType;
+import ai.dataeng.sqml.type.basic.StringType;
+import ai.dataeng.sqml.type.basic.UuidType;
+import java.time.Instant;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import org.apache.flink.api.common.typeinfo.BasicArrayTypeInfo;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -10,10 +20,6 @@ import org.apache.flink.api.java.typeutils.ObjectArrayTypeInfo;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-
-import java.time.Instant;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 public class FlinkUtilities {
 

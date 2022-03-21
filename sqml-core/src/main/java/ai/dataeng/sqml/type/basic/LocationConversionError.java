@@ -1,7 +1,5 @@
 package ai.dataeng.sqml.type.basic;
 
-import ai.dataeng.sqml.type.basic.ProcessMessage;
-import ai.dataeng.sqml.type.basic.SimpleConversionError;
 import lombok.NonNull;
 
 public class LocationConversionError<L> extends SimpleConversionError {

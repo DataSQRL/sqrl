@@ -1,17 +1,22 @@
 package ai.dataeng.sqml.type.schema;
 
+import ai.dataeng.sqml.tree.QualifiedName;
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.Field;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.constraint.Constraint;
-import ai.dataeng.sqml.tree.QualifiedName;
-import ai.dataeng.sqml.tree.name.Name;
-import java.util.Optional;
-import lombok.*;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.TableField> {

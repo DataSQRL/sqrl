@@ -1,12 +1,10 @@
 package ai.dataeng.sqml.api.graphql;
 
-import static ai.dataeng.sqml.planner.LogicalPlanImpl.ID_DELIMITER;
+import static ai.dataeng.sqml.planner.SchemaImpl.ID_DELIMITER;
 
 import ai.dataeng.execution.DefaultDataFetcher;
 import ai.dataeng.execution.SqlClientProvider;
 import ai.dataeng.execution.criteria.Criteria;
-import ai.dataeng.execution.criteria.EqualsCriteria;
-import ai.dataeng.execution.page.NoPage;
 import ai.dataeng.execution.page.SystemPageProvider;
 import ai.dataeng.execution.table.H2Table;
 import ai.dataeng.execution.table.TableFieldFetcher;
@@ -19,9 +17,7 @@ import ai.dataeng.execution.table.column.StringColumn;
 import ai.dataeng.execution.table.column.UUIDColumn;
 import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.Field;
-import ai.dataeng.sqml.planner.Relationship;
 import ai.dataeng.sqml.planner.Table;
-import ai.dataeng.sqml.planner.optimize.MaterializeSource;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
@@ -42,13 +38,13 @@ import java.util.stream.Collectors;
 
 public class SqrlCodeRegistryBuilder {
 
-  public GraphQLCodeRegistry build(SqlClientProvider sqlClientProvider, List<MaterializeSource> sources) {
+  public GraphQLCodeRegistry build(SqlClientProvider sqlClientProvider) {
     GraphQLCodeRegistry.Builder registry = GraphQLCodeRegistry.newCodeRegistry();
 
     HashSet<Table> seen = new HashSet<>();
-    for (MaterializeSource source : sources) {
-      registerFetcher(registry, sqlClientProvider, source.getTable(), seen);
-    }
+//    for (MaterializeSource source : sources) {
+//      registerFetcher(registry, sqlClientProvider, source.getTable(), seen);
+//    }
 
     return registry.build();
   }

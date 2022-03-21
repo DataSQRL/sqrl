@@ -1,13 +1,12 @@
 package ai.dataeng.sqml.type;
 
-import ai.dataeng.sqml.type.constraint.Constraint;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.type.constraint.Constraint;
+import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.List;
 
 @AllArgsConstructor
 @Getter

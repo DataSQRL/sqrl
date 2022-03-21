@@ -1,19 +1,23 @@
 package ai.dataeng.sqml.execution.flink.ingest;
 
-import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.io.sources.impl.file.FileTableConfiguration;
 import ai.dataeng.sqml.io.sources.impl.file.FileFormat;
+import ai.dataeng.sqml.io.sources.impl.file.FileTableConfiguration;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.basic.*;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.common.typeinfo.Types;
-import org.apache.flink.types.Row;
-
+import ai.dataeng.sqml.type.basic.BooleanType;
+import ai.dataeng.sqml.type.basic.DateTimeType;
+import ai.dataeng.sqml.type.basic.FloatType;
+import ai.dataeng.sqml.type.basic.IntegerType;
+import ai.dataeng.sqml.type.basic.StringType;
+import ai.dataeng.sqml.type.basic.UuidType;
+import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.types.Row;
 
 /**
  * TODO: Is this still needed?

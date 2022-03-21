@@ -1,27 +1,33 @@
 package ai.dataeng.sqml.type.schema;
 
 import ai.dataeng.sqml.io.sources.SourceRecord;
+import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.stats.FieldStats;
 import ai.dataeng.sqml.io.sources.stats.SchemaGenerator;
 import ai.dataeng.sqml.io.sources.stats.TypeSignature;
-import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NameCanonicalizer;
+import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.ConversionResult;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
 import ai.dataeng.sqml.type.basic.StringType;
-import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiPredicate;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-
-import java.io.Serializable;
-import java.util.*;
-import java.util.function.BiPredicate;
 
 /**
  * Follows {@link ai.dataeng.sqml.io.sources.stats.SchemaGenerator} in structure and semantics.

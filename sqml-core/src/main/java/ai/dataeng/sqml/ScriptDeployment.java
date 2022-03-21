@@ -5,13 +5,6 @@ import ai.dataeng.sqml.config.util.NamedIdentifier;
 import ai.dataeng.sqml.config.util.StringNamedId;
 import ai.dataeng.sqml.execution.StreamEngine;
 import com.google.common.base.Preconditions;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Value;
-import org.apache.commons.lang3.StringUtils;
-
-import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Iterator;
@@ -19,6 +12,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Value;
+import org.apache.commons.lang3.StringUtils;
 
 @Getter
 public class ScriptDeployment implements Serializable {

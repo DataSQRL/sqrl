@@ -3,7 +3,6 @@ package ai.dataeng.sqml.io.sources;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-
 import java.io.Serializable;
 
 public class DatasetRegistration implements Serializable {

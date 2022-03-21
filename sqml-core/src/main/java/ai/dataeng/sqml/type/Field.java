@@ -2,9 +2,9 @@ package ai.dataeng.sqml.type;
 
 
 import ai.dataeng.sqml.tree.QualifiedName;
+import ai.dataeng.sqml.tree.name.Name;
 import java.io.Serializable;
 import java.util.Optional;
-import ai.dataeng.sqml.tree.name.Name;
 
 public interface Field extends Serializable {
     public Name getName();

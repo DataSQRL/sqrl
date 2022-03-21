@@ -3,17 +3,18 @@ package org.apache.calcite.sql.validate;
 import static org.apache.calcite.util.Static.RESOURCE;
 
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map.Entry;
 import org.apache.calcite.prepare.SqrlCalciteCatalogReader;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.schema.SqrlCalciteTable;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperatorTable;
-import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.util.Util;
 
 /**
@@ -44,7 +45,7 @@ public class SqrlValidator extends SqlValidatorImpl {
    *  - Allows JOIN without ON
    */
   @Override
-  protected void validateJoin(SqlJoin join, SqlValidatorScope scope) {
+  public void validateJoin(SqlJoin join, SqlValidatorScope scope) {
     SqlNode left = join.getLeft();
     SqlNode right = join.getRight();
     SqlNode condition = join.getCondition();
@@ -102,5 +103,25 @@ public class SqrlValidator extends SqlValidatorImpl {
       default:
         throw Util.unexpected(joinType);
     }
+  }
+
+  public SqrlCalciteTable getTable(String table) {
+    for (Entry<SqlNode, SqlValidatorNamespace> entry : this.namespaces.entrySet()) {
+      if (entry.getKey() instanceof SqlIdentifier &&
+          ((SqlIdentifier) entry.getKey()).names.get(0).equalsIgnoreCase(table)) {
+        RelDataType type = entry.getValue().getRowType();
+        if (type instanceof SqrlCalciteTable) {
+          return (SqrlCalciteTable) type;
+        } else {
+          throw new RuntimeException("Unknown type for table: " + table);
+        }
+      }
+    }
+    return null;
+  }
+
+  public boolean hasAgg(SqlNodeList selectList) {
+    return new AggFinder(this.getOperatorTable(), false, true, true, null, this.catalogReader.nameMatcher())
+        .findAgg(selectList) != null;
   }
 }

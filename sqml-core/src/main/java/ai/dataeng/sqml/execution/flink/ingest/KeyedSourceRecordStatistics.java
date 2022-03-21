@@ -1,11 +1,12 @@
 package ai.dataeng.sqml.execution.flink.ingest;
 
 import ai.dataeng.sqml.execution.flink.environment.util.FlinkUtilities;
-import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
-import ai.dataeng.sqml.io.sources.stats.StatsIngestError;
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
+import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
+import ai.dataeng.sqml.io.sources.stats.StatsIngestError;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import java.util.concurrent.TimeUnit;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
@@ -14,8 +15,6 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
-
-import java.util.concurrent.TimeUnit;
 
 public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, SourceRecord.Raw, SourceRecord.Raw> {
 

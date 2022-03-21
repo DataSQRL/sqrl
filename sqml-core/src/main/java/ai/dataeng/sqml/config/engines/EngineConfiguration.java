@@ -1,7 +1,6 @@
 package ai.dataeng.sqml.config.engines;
 
 import ai.dataeng.sqml.config.provider.StreamEngineProvider;
-
 import java.io.Serializable;
 
 public interface EngineConfiguration {

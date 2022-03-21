@@ -1,27 +1,29 @@
 package ai.dataeng.sqml.planner.operator;
 
 import ai.dataeng.sqml.io.sources.dataset.DatasetLookup;
-import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.type.schema.SchemaConversionError;
-import ai.dataeng.sqml.type.schema.external.SchemaDefinition;
-import ai.dataeng.sqml.type.schema.external.SchemaImport;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.stats.SchemaGenerator;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NameCanonicalizer;
+import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.StandardField;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
 import ai.dataeng.sqml.type.constraint.Constraint;
-import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.tree.name.NamePath;
+import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.type.schema.SchemaConversionError;
+import ai.dataeng.sqml.type.schema.external.SchemaDefinition;
+import ai.dataeng.sqml.type.schema.external.SchemaImport;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.NonNull;
 import lombok.Value;
-
-
-import java.util.*;
 
 public class ImportManager {
 

@@ -1,8 +1,10 @@
 package ai.dataeng.sqml.config.util;
 
-import lombok.*;
-
 import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @NoArgsConstructor
 @AllArgsConstructor
