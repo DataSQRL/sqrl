@@ -4,10 +4,9 @@ import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
-import lombok.NonNull;
-
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+import lombok.NonNull;
 
 public interface DataSource {
 

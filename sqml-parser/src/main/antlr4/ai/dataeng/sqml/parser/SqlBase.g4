@@ -50,14 +50,14 @@ subscriptionType
 
 inlineJoin
     : inlineJoinBody
+      (ORDER BY sortItem (',' sortItem)*)?
+      (LIMIT limit=INTEGER_VALUE)?
       (INVERSE inv=identifier)?
     ;
 
 inlineJoinBody
-    : JOIN table=qualifiedName (AS? alias=identifier)?
+    : (LEFT)? JOIN table=qualifiedName (AS? alias=identifier)?
       (ON expression)?
-      (ORDER BY sortItem (',' sortItem)*)?
-      (LIMIT limit=INTEGER_VALUE)?
       inlineJoinBody?
     ;
 

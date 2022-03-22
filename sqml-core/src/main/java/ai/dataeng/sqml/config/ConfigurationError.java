@@ -1,9 +1,7 @@
 package ai.dataeng.sqml.config;
 
 import ai.dataeng.sqml.type.basic.LocationConversionError;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
 import lombok.NonNull;
-import lombok.ToString;
 import lombok.Value;
 
 public class ConfigurationError extends LocationConversionError<ConfigurationError.Location> {

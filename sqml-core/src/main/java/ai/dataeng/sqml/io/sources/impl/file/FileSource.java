@@ -5,25 +5,30 @@ import ai.dataeng.sqml.config.util.FileUtil;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
-import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.h2.util.StringUtils;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * A {@link SourceDataset} that treats all files matching a certain set of extensions in a given directory as {@link SourceTable}.

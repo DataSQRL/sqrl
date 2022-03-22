@@ -7,7 +7,6 @@ import ai.dataeng.sqml.config.scripts.SqrlQuery;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.serializers.JavaSerializer;
-
 import java.io.Serializable;
 
 public class KryoProvider implements SerializerProvider, Serializable {

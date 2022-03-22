@@ -1,8 +1,3 @@
-import ai.dataeng.execution.table.column.H2Column;
-import org.apache.flink.table.types.logical.RawType;
-import org.apache.flink.table.types.logical.StructuredType;
-import org.apache.flink.table.types.logical.SymbolType;
-
 //package ai.dataeng.sqml.execution.flink.process;
 //
 //import ai.dataeng.execution.criteria.Criteria;

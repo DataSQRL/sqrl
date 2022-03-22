@@ -7,14 +7,13 @@ import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.type.schema.SchemaAdjustmentSettings;
 import ai.dataeng.sqml.type.schema.SchemaConversionError;
 import ai.dataeng.sqml.type.schema.SchemaValidator;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Value;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SchemaValidationProcess extends ProcessFunction<SourceRecord.Raw, SourceRecord.Named> {
 

@@ -1,11 +1,10 @@
 package ai.dataeng.sqml.io.sources.stats.accumulator;
 
 import com.google.common.base.Preconditions;
-import lombok.ToString;
-import lombok.Value;
-
 import java.io.Serializable;
 import java.util.Arrays;
+import lombok.ToString;
+import lombok.Value;
 
 @Value
 public class LogarithmicHistogram implements Serializable {

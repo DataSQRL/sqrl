@@ -17,11 +17,4 @@ public class SqrlSchema extends AbstractSqrlSchema {
   public Table getTable(String table) {
     return tableFactory.create(table).orElse(null);
   }
-
-  /**
-   * Todo: verify that the table path is in fact a table
-   */
-  public Table getDagTable(String table) {
-    return tableFactory.create(table).orElse(null);
-  }
 }

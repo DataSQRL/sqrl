@@ -1,15 +1,16 @@
 package ai.dataeng.sqml.planner.operator;
 
-import ai.dataeng.sqml.planner.DatasetOrTable;
-import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.Iterators;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.*;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * A container that keeps any type of object that implements the {@link ShadowingContainer.Nameable} interface which
@@ -179,17 +180,6 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
         }
         return null;
     }
-
-//    Map<NamePath, DatasetOrTable> tables = new HashMap<>();
-//    public static int i = 0;
-//    public Table walk(NamePath namePath) {
-//
-//        if (tables.containsKey(namePath)) {
-//            return (Table)tables.get(namePath);
-//        }
-//
-//        return (Table)tables.get(namePath);
-//    }
 
   public interface Nameable {
 

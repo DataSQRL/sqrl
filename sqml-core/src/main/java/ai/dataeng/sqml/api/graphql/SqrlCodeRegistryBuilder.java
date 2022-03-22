@@ -1,12 +1,8 @@
 package ai.dataeng.sqml.api.graphql;
 
-import static ai.dataeng.sqml.planner.LogicalPlanImpl.ID_DELIMITER;
-
 import ai.dataeng.execution.DefaultDataFetcher;
 import ai.dataeng.execution.SqlClientProvider;
 import ai.dataeng.execution.criteria.Criteria;
-import ai.dataeng.execution.criteria.EqualsCriteria;
-import ai.dataeng.execution.page.NoPage;
 import ai.dataeng.execution.page.SystemPageProvider;
 import ai.dataeng.execution.table.H2Table;
 import ai.dataeng.execution.table.TableFieldFetcher;
@@ -19,9 +15,7 @@ import ai.dataeng.execution.table.column.StringColumn;
 import ai.dataeng.execution.table.column.UUIDColumn;
 import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.Field;
-import ai.dataeng.sqml.planner.Relationship;
 import ai.dataeng.sqml.planner.Table;
-import ai.dataeng.sqml.planner.optimize.MaterializeSource;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
@@ -42,13 +36,13 @@ import java.util.stream.Collectors;
 
 public class SqrlCodeRegistryBuilder {
 
-  public GraphQLCodeRegistry build(SqlClientProvider sqlClientProvider, List<MaterializeSource> sources) {
+  public GraphQLCodeRegistry build(SqlClientProvider sqlClientProvider) {
     GraphQLCodeRegistry.Builder registry = GraphQLCodeRegistry.newCodeRegistry();
 
     HashSet<Table> seen = new HashSet<>();
-    for (MaterializeSource source : sources) {
-      registerFetcher(registry, sqlClientProvider, source.getTable(), seen);
-    }
+//    for (MaterializeSource source : sources) {
+//      registerFetcher(registry, sqlClientProvider, source.getTable(), seen);
+//    }
 
     return registry.build();
   }
@@ -87,13 +81,13 @@ public class SqrlCodeRegistryBuilder {
 //        ((Column)rel.getTo().get(0)).getId());
 //    return criteria;
 //  }
-
-  private String getTypeName(NamePath path) {
-    return String.join(ID_DELIMITER,
-        Arrays.stream(path.getNames())
-            .map(e->e.getDisplay())
-            .collect(Collectors.toList()));
-  }
+//
+//  private String getTypeName(NamePath path) {
+//    return String.join(ID_DELIMITER,
+//        Arrays.stream(path.getNames())
+//            .map(e->e.getDisplay())
+//            .collect(Collectors.toList()));
+//  }
 //
 //  private Criteria buildCriteria(Relationship rel) {
 //    Criteria criteria = new EqualsCriteria(rel.getFrom().get(0).getName().getCanonical(),
@@ -109,7 +103,7 @@ public class SqrlCodeRegistryBuilder {
 //  }
 
   private TableFieldFetcher toTable(Table table, Optional<Criteria> criteria) {
-    return new TableFieldFetcher(new H2Table(new Columns(toColumns(table)), table.getId()),
+    return new TableFieldFetcher(new H2Table(new Columns(toColumns(table)), table.getId().toString()),
         criteria);
   }
 
@@ -128,27 +122,27 @@ public class SqrlCodeRegistryBuilder {
     return column.getType().accept(new SqmlTypeVisitor<>(){
       @Override
       public H2Column visitIntegerType(IntegerType type, Column context) {
-        return new IntegerColumn(column.getName().getDisplay(), column.getId());
+        return new IntegerColumn(column.getName().getDisplay(), column.getId().toString());
       }
 
       @Override
       public H2Column visitStringType(StringType type, Column context) {
-        return new StringColumn(column.getName().getDisplay(), column.getId());
+        return new StringColumn(column.getName().getDisplay(), column.getId().toString());
       }
 
       @Override
       public H2Column visitUuidType(UuidType type, Column context) {
-        return new UUIDColumn(column.getName().getDisplay(), column.getId());
+        return new UUIDColumn(column.getName().getDisplay(), column.getId().toString());
       }
 
       @Override
       public H2Column visitFloatType(FloatType type, Column context) {
-        return new FloatColumn(column.getName().getDisplay(), column.getId());
+        return new FloatColumn(column.getName().getDisplay(), column.getId().toString());
       }
 
       @Override
       public H2Column visitDateTimeType(DateTimeType type, Column context) {
-        return new DateTimeColumn(column.getName().getDisplay(), column.getId());
+        return new DateTimeColumn(column.getName().getDisplay(), column.getId().toString());
       }
 
       @Override

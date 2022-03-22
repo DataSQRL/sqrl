@@ -1,21 +1,21 @@
 package ai.dataeng.sqml.io.sources.impl.file;
 
 import ai.dataeng.sqml.io.sources.util.SourceRecordCreator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonMappingException;
-
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 public enum FileFormat {
 

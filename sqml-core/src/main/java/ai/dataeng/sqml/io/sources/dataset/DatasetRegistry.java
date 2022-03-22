@@ -5,9 +5,6 @@ import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
-import com.google.common.base.Preconditions;
-import lombok.NonNull;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
@@ -16,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import lombok.NonNull;
 
 public class DatasetRegistry implements DatasetLookup, Closeable {
 

@@ -52,7 +52,7 @@ public class SqrlTypeFactory extends SqlTypeFactoryImpl {
       return new SqrlBasicSqlType(toSqlTypeName(((Column)field.getLastField()).getType()), false,
           Multiplicity.ONE);
     } else {
-      return super.createStructType(StructKind.PEEK_FIELDS_DEFAULT, List.of(), List.of());
+      return super.createStructType(StructKind.PEEK_FIELDS_NO_EXPAND, List.of(), List.of());
     }
   }
 

@@ -1,22 +1,26 @@
 package ai.dataeng.sqml.io.sources.stats;
 
+import ai.dataeng.sqml.tree.name.NameCanonicalizer;
+import ai.dataeng.sqml.type.RelationType;
+import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.BasicTypeManager;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
-import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.RelationType;
 import com.google.common.base.Preconditions;
-import lombok.NonNull;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.io.Serializable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import lombok.NonNull;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class FieldStats implements Serializable {
 

@@ -1,13 +1,12 @@
 package ai.dataeng.sqml.io.sources.stats;
 
 import ai.dataeng.sqml.io.sources.stats.accumulator.LogarithmicHistogram;
-import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import lombok.*;
-
+import ai.dataeng.sqml.type.Type;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
+import lombok.NonNull;
 
 public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
 

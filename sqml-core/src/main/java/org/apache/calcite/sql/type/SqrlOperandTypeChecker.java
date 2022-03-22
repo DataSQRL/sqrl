@@ -10,11 +10,6 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperandCountRange;
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.type.BasicSqlType;
-import org.apache.calcite.sql.type.SqlOperandTypeChecker;
-import org.apache.calcite.sql.type.SqlOperandTypeInference;
-import org.apache.calcite.sql.type.SqlTypeUtil;
-import org.apache.calcite.sql.type.SqrlBasicSqlType;
 import org.apache.calcite.util.Util;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -82,10 +77,5 @@ public class SqrlOperandTypeChecker implements SqlOperandTypeChecker {
   @Override
   public boolean isFixedParameters() {
     return delegate.isFixedParameters();
-  }
-
-  @Override
-  public @Nullable SqlOperandTypeInference typeInference() {
-    return delegate.typeInference();
   }
 }

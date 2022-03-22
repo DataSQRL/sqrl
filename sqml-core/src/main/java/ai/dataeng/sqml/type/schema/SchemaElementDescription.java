@@ -1,9 +1,12 @@
 package ai.dataeng.sqml.type.schema;
 
 import com.google.common.base.Strings;
-import lombok.*;
-
 import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Getter
 @NoArgsConstructor

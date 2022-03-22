@@ -4,12 +4,16 @@ import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
-import lombok.*;
-import org.apache.commons.lang3.StringUtils;
-
+import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
+import org.apache.commons.lang3.StringUtils;
 
 @Value
 public class SqrlQuery implements Serializable {

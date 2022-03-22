@@ -3,7 +3,7 @@ package ai.dataeng.sqml.planner;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.schema.SqrlCalciteTable;
-import org.apache.calcite.sql.OperatorTable;
+import org.apache.calcite.sql.SqrlOperatorTable;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -28,7 +28,7 @@ public class FindAliasedTable extends SqlBasicVisitor {
 
   @Override
   public Object visit(SqlCall call) {
-    if (call.getOperator() == OperatorTable.AS) {
+    if (call.getOperator() == SqrlOperatorTable.AS) {
       SqlIdentifier alias = (SqlIdentifier)call.getOperandList().get(1);
       if (alias.names.get(0).equals(this.alias)) {
         SqlValidatorNamespace namespace = validator.getNamespace(call.getOperandList().get(0));

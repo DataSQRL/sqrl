@@ -50,7 +50,7 @@ import ai.dataeng.sqml.tree.IntervalLiteral;
 import ai.dataeng.sqml.tree.IsNotNullPredicate;
 import ai.dataeng.sqml.tree.IsNullPredicate;
 import ai.dataeng.sqml.tree.Join;
-import ai.dataeng.sqml.tree.JoinAssignment;
+import ai.dataeng.sqml.tree.JoinDeclaration;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.LikePredicate;
@@ -89,7 +89,6 @@ import ai.dataeng.sqml.tree.TimestampLiteral;
 import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.tree.WhenClause;
-import ai.dataeng.sqml.tree.name.LowercaseEnglishCanonicalizer;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
@@ -961,7 +960,7 @@ class AstBuilder
         ctx.inlineJoin().inlineJoinBody().stop.getStopIndex());
     String query = ctx.inlineJoin().start.getInputStream().getText(interval);
 
-    return new JoinAssignment(Optional.of(getLocation(ctx)), name,
+    return new JoinDeclaration(Optional.of(getLocation(ctx)), name,
         query,
         (InlineJoin) visit(ctx.inlineJoin()));
   }
@@ -971,6 +970,10 @@ class AstBuilder
     return new InlineJoin(
         Optional.of(getLocation(ctx)),
         (InlineJoinBody)visit(ctx.inlineJoinBody()),
+        ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
+            .map(s->(SortItem) s.accept(this)).collect(toList()),
+        ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
+            Optional.of(Integer.parseInt(ctx.limit.getText())),
         ctx.inv == null ? Optional.empty() :
             Optional.of(Name.system(((Identifier)visit(ctx.inv)).getValue()))
     );
@@ -984,10 +987,6 @@ class AstBuilder
           ctx.alias == null ? Optional.empty() :
               Optional.of((Identifier)visit(ctx.alias)),
         (ctx.expression() != null) ? (Expression)visit(ctx.expression()) : null,
-          ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
-          .map(s->(SortItem) s.accept(this)).collect(toList()),
-          ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
-              Optional.of(Integer.parseInt(ctx.limit.getText())),
         ctx.inlineJoinBody() != null ? Optional.of((InlineJoinBody) visit(ctx.inlineJoinBody()))
             : Optional.empty()
       );

@@ -2,8 +2,9 @@ package ai.dataeng.sqml.planner;
 
 import static ai.dataeng.sqml.tree.name.Name.SELF_IDENTIFIER;
 
-import ai.dataeng.sqml.catalog.Namespace;
+import ai.dataeng.sqml.schema.Namespace;
 import ai.dataeng.sqml.tree.name.NamePath;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +19,7 @@ public class CalciteTableFactory {
   private final RelDataTypeFieldFactory fieldFactory;
 
   public Optional<org.apache.calcite.schema.Table> create(String name) {
-    NamePath tablePath = NamePath.parse(name);
+    NamePath tablePath = NamePath.parse(name.split("\\$")[0]);
 
     boolean hasContextPath = tablePath.getFirst().equals(SELF_IDENTIFIER);
 
@@ -35,16 +36,29 @@ public class CalciteTableFactory {
       Table destinationTable = fieldPath
           .map(f->((Relationship)f.getLastField()).getToTable())
           .orElse(self.get());
+      SelfField selfField = new SelfField(self.get());
 
-      return create(self.get(), fieldPath, destinationTable, true, name,
+
+      return create(self.get(), addFieldPath(selfField, fieldPath), destinationTable, true, name,
           false, fieldPath
               .map(f->((Relationship)f.getFields().get(0))).orElse(null));
     } else {
       // E.g:
       // Orders
       // Orders.entries
+      // entries$4
 
-      Optional<Table> table = namespace.lookup(tablePath.getFirst().toNamePath());
+      Optional<Table> table;
+      if (name.contains("$")) {
+        VersionedName versionedName = VersionedName.parse(name);
+        table = namespace.lookup(versionedName);
+        if (table.isEmpty()) {
+          throw new RuntimeException();
+        }
+      } else {
+        table = namespace.lookup(tablePath.getFirst().toNamePath());
+      }
+
       if (table.isEmpty()) {
         return Optional.empty();
       }
@@ -52,10 +66,21 @@ public class CalciteTableFactory {
       Table destinationTable = fieldPath
           .map(f->((Relationship)f.getLastField()).getToTable())
           .orElse(table.get());
+      TableField tableField = new TableField(table.get());
 
-      return create(table.get(), fieldPath, destinationTable, false, name,
+
+      return create(table.get(), addFieldPath(tableField, fieldPath), destinationTable, false, name,
           false, null);
     }
+  }
+
+  private FieldPath addFieldPath(Field field, Optional<FieldPath> fieldPath) {
+    List<Field> fieldPath2 = fieldPath.map(FieldPath::getFields).orElse(List.of());
+    List<Field> newFields = new ArrayList<>();
+    newFields.add(field);
+    newFields.addAll(fieldPath2);
+
+    return new FieldPath(newFields);
   }
 
   /**
@@ -73,17 +98,13 @@ public class CalciteTableFactory {
         .map(f->((Relationship)f.getLastField()).getToTable())
         .orElseThrow(() -> new RuntimeException("Could not walk table"));
 
-    Optional<FieldPath> additionalFields = fieldPath
-        .filter(f->f.getFields().size() > 1)
-        .map(f->new FieldPath(f.getFields().subList(1, f.getFields().size())));
-
-    return create(table, additionalFields, destinationTable, false, name,
+    return create(table, fieldPath.get(), destinationTable, false, name,
         true, fieldPath
             .map(f->((Relationship)f.getFields().get(0))).orElse(null));
   }
 
   private Optional<org.apache.calcite.schema.Table> create(Table baseTable,
-      Optional<FieldPath> fieldPath,
+      FieldPath fieldPath,
       Table destinationTable, boolean isContext, String name,
       boolean isPath, Relationship relationship) {
     List<RelDataTypeField> fields = new ArrayList<>();

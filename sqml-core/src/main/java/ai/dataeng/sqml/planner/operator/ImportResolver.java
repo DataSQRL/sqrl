@@ -1,20 +1,18 @@
 package ai.dataeng.sqml.planner.operator;
 
+import static ai.dataeng.sqml.planner.macros.SqlNodeUtils.childParentJoin;
+import static ai.dataeng.sqml.planner.macros.SqlNodeUtils.parentChildJoin;
+import static ai.dataeng.sqml.planner.macros.SqlNodeUtils.toCall;
 import static ai.dataeng.sqml.tree.name.Name.PARENT_RELATIONSHIP;
 
-import ai.dataeng.sqml.catalog.Namespace;
-import ai.dataeng.sqml.planner.AliasGenerator;
 import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.Dataset;
 import ai.dataeng.sqml.planner.Field;
-import ai.dataeng.sqml.planner.LogicalPlanImpl;
-import ai.dataeng.sqml.planner.LogicalPlanUtil;
 import ai.dataeng.sqml.planner.Planner;
-import ai.dataeng.sqml.planner.RelToSql;
 import ai.dataeng.sqml.planner.Relationship;
 import ai.dataeng.sqml.planner.Relationship.Type;
 import ai.dataeng.sqml.planner.Table;
-import ai.dataeng.sqml.planner.operator2.SqrlRelNode;
+import ai.dataeng.sqml.schema.Namespace;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.RelationType;
@@ -35,28 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.JoinRelType;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.JoinConditionType;
-import org.apache.calcite.sql.JoinType;
-import org.apache.calcite.sql.OperatorTable;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.tools.SqrlRelBuilder;
-import org.apache.commons.math3.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
- * Resolve imports in SQRL scripts and produces the {@link LogicalPlanImpl.Node}s as sources.
+ * Resolve imports in SQRL scripts
  */
 public class ImportResolver {
     private final ImportManager importManager;
@@ -119,29 +100,16 @@ public class ImportResolver {
             Map<NamePath, Column[]> outputSchema = new HashMap<>();
             Table rootTable = tableConversion(namespace, sourceImport.getSourceSchema().getFields(),outputSchema,
                     asName.orElse(tblImport.getTableName()), NamePath.ROOT, null);
-            DocumentSource source = new DocumentSource(sourceImport.getSourceSchema(), sourceImport.getTable(), outputSchema);
+//            DocumentSource source = new DocumentSource(sourceImport.getSourceSchema(), sourceImport.getTable(), outputSchema);
             //Add shredder for each entry in outputSchema
             for (Map.Entry<NamePath, Column[]> entry : outputSchema.entrySet()) {
-                ShreddingOperator shred = ShreddingOperator.shredAtPath(source, entry.getKey(), rootTable);
+                Shredder.shredAtPath(outputSchema.get(entry.getKey()), entry.getKey(), rootTable);
             }
-
-
-            namespace.addSourceNode(source);
 
             //Set relational nodes
             for (Map.Entry<NamePath, Column[]> entry : outputSchema.entrySet()) {
-                Column[] inputSchema = source.getOutputSchema().get(entry.getKey());
+                Column[] inputSchema = outputSchema.get(entry.getKey());
                 assert inputSchema!=null && inputSchema.length>0;
-
-                Table targetTable = LogicalPlanUtil.getTable(inputSchema);
-
-                SqrlRelNode node = (SqrlRelNode) planner.getRelBuilder(Optional.empty(), namespace)
-                    .scan_base(targetTable.getPath().toString())
-                    .build();
-                targetTable.setRelNode(node);
-                ShadowingContainer<Field> fields = new ShadowingContainer<>();
-                fields.addAll(node.getFields());
-                targetTable.fields = fields;
             }
             setParentChildRelation(rootTable, namespace);
 
@@ -165,7 +133,7 @@ public class ImportResolver {
                 if (f instanceof Column) columns.add((Column) f);
             }
         }
-        Column ingestTime = Column.createTemp("_ingest_time", DateTimeType.INSTANCE, table);
+        Column ingestTime = Column.createTemp("_ingest_time", DateTimeType.INSTANCE, table, 0);
         columns.add(ingestTime);
         table.fields.add(ingestTime);
         outputSchema.put(path,columns.toArray(new Column[columns.size()]));
@@ -177,101 +145,18 @@ public class ImportResolver {
             //RelNode added after added to table
             if (field instanceof Relationship) {
                 Relationship col = (Relationship) field;
-                //When adding a direct child reference, create parent reference as if it
-                //was it's inverse.
-
-                AliasGenerator gen = new AliasGenerator();
                 if (col.getType() == Type.CHILD) {
-                    SqlIdentifier left = new SqlIdentifier(col.getTable().getPath().toString(), SqlParserPos.ZERO);
-                    String la = gen.nextAlias();
-                    SqlIdentifier left_alias = new SqlIdentifier(la, SqlParserPos.ZERO);
-                    SqlIdentifier right = new SqlIdentifier(col.getToTable().getPath().toString(), SqlParserPos.ZERO);
-                    String ra = gen.nextAlias();
-                    SqlIdentifier right_alias = new SqlIdentifier(ra, SqlParserPos.ZERO);
-
-                    SqlIdentifier[] l = new SqlIdentifier[]{left, left_alias};
-                    SqlIdentifier[] r = new SqlIdentifier[]{right, right_alias};
-//                    SqlNode[] condition = new SqlNode[col.getToTable().getForeignKeys().size()];
-                    List<Column> foreignKeys = col.getToTable().getForeignKeys();
-                    SqlBasicCall[] conditions = new SqlBasicCall[foreignKeys.size()];
-                    for (int i = 0; i < foreignKeys.size(); i++) {
-                        Column column = foreignKeys.get(i);
-                        SqlNode[] condition = {
-                            new SqlIdentifier(List.of(la, column.getFkReferences().get().getId()), SqlParserPos.ZERO),
-                            new SqlIdentifier(List.of(ra, column.getId()), SqlParserPos.ZERO),
-                        };
-                        SqlBasicCall call = new SqlBasicCall(OperatorTable.EQUALS, condition, SqlParserPos.ZERO);
-                        conditions[i] = call;
-                    }
-                    SqlNode condition;
-                    if (foreignKeys.size() == 1) {
-                        condition = conditions[0];
-                    } else {
-                        condition = new SqlBasicCall(OperatorTable.AND, conditions, SqlParserPos.ZERO);
-                    }
-
-                    SqlJoin join = new SqlJoin(SqlParserPos.ZERO,
-                        new SqlBasicCall(OperatorTable.AS, l, SqlParserPos.ZERO),
-                        SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-                        SqlLiteral.createSymbol(JoinType.INNER, SqlParserPos.ZERO),
-                        new SqlBasicCall(OperatorTable.AS, r, SqlParserPos.ZERO),
-                        SqlLiteral.createSymbol(JoinConditionType.ON, SqlParserPos.ZERO),
-                        condition
-                    );
-                    SqlValidator validator = planner.getValidator(namespace);
-                    SqlSelect select = new SqlSelect(SqlParserPos.ZERO,
-                        new SqlNodeList(SqlParserPos.ZERO),
-                        new SqlNodeList(List.of(new SqlIdentifier(List.of(la), SqlParserPos.ZERO).plusStar()), SqlParserPos.ZERO),
-                        join, null, null, null, null, null, null, null, null
-                        );
-
-                    validator.validate(select);
-
-                    List<Pair<String, String>> keys = new ArrayList();
-                    for (Column column : foreignKeys) {
-                        keys.add(Pair.create(column.getId(), column.getFkReferences().get().getId()));
-                    }
-
-                    col.setSqlNode(join);
-
+                    Pair<Map<Column, String>, SqlNode> child = parentChildJoin(col);
+                    col.setSqlNode(child.getRight());
+                    col.setPkNameMapping(child.getLeft());
                     setParentChildRelation(col.toTable, namespace);
                 } else if (col.getType() == Type.PARENT) {
-                    SqrlRelBuilder relBuilder = planner.getRelBuilder(Optional.empty(), namespace);
-                    relBuilder.scan_base(col.table.getPath().toString());
-                    relBuilder.scan_base(col.toTable.getPath().toString());
-                    List<RexNode> conditions = buildParentChildConditions(col.table, relBuilder);
-                    relBuilder.join(JoinRelType.INNER, conditions);
-                    RelNode node = relBuilder.build();
-                    System.out.println(RelToSql.convertToSql(node));
-                    System.out.println(node.explain());
-                    col.setNode(node);
+                    Pair<Map<Column, String>, SqlNode> child = childParentJoin(col);
+                    col.setSqlNode(child.getRight());
+                    col.setPkNameMapping(child.getLeft());
                 }
-
-                //TODO: Parent relations
-//                else if (col.getType() == Type.PARENT) {
-//                    RelNode node = buildParentChildRel(col.getToTable(), col.getTable(), namespace);
-//                    col.setNode(node);
-//                }
             }
         }
-    }
-
-    private List<RexNode> buildParentChildConditions(Table toTable, RelBuilder relBuilder) {
-        List<RexNode> conditions = new ArrayList<>();
-        for (Column column : toTable.getForeignKeys()) {
-            if (column.isForeignKey) {
-                RexInputRef leftRef = relBuilder.field(2, 0,
-                    column.getFkReferences().get().getId());
-                RexInputRef rightRef = relBuilder.field(2, 1,
-                    column.getId());
-                conditions.add(relBuilder.equals(leftRef, rightRef));
-            }
-        }
-        if (conditions.isEmpty()) {
-            throw new RuntimeException("Could not find primary keys when joining parent/child");
-        }
-        return conditions;
-
     }
 
     private NamePath getNamePath(Name name, Optional<Table> parent) {
@@ -312,7 +197,8 @@ public class ImportResolver {
                     outputSchema, name, path.resolve(name), parent);
             //Add parent relationship
             Relationship parentField = new Relationship(PARENT_RELATIONSHIP, table, parent,
-                Relationship.Type.PARENT, Relationship.Multiplicity.ONE, null, null);
+                Relationship.Type.PARENT, Relationship.Multiplicity.ONE, null
+            );
             table.fields.add(parentField);
             //Return child relationship
             Relationship.Multiplicity multiplicity = Relationship.Multiplicity.MANY;
@@ -324,8 +210,7 @@ public class ImportResolver {
                 }
             }
             Relationship child = new Relationship(name, parent, table,
-                Relationship.Type.CHILD, multiplicity, parentField, null);
-            parentField.setInverse(child);
+                Relationship.Type.CHILD, multiplicity, null);
             return child;
         } else {
             assert ftype.getType() instanceof BasicType;

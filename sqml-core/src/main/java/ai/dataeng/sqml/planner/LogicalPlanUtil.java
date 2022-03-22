@@ -1,16 +1,12 @@
 package ai.dataeng.sqml.planner;
 
-import ai.dataeng.sqml.planner.operator.DocumentSource;
 import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Preconditions;
-import ai.dataeng.sqml.planner.LogicalPlanImpl.*;
-
 import java.util.Arrays;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
- * Utility methods for handling and modifying {@link LogicalPlanImpl}
+ * Utility methods for handling and modifying {@link SchemaImpl}
  */
 public class LogicalPlanUtil {
 
@@ -27,16 +23,6 @@ public class LogicalPlanUtil {
         return r;
     }
 
-    public static void appendOperatorForTable(Table table, RowNode addedNode) {
-        table.currentNode.addConsumer(addedNode);
-        table.updateNode(addedNode);
-    }
-
-
-    public static boolean isSource(Node node) {
-        return node instanceof DocumentSource;
-    }
-
     public static Table getTable(Column[] inputs) {
         Preconditions.checkArgument(inputs!=null && inputs.length>0);
         final Table table = inputs[0].getTable();
@@ -44,14 +30,6 @@ public class LogicalPlanUtil {
         return table;
     }
 
-    public static Column copyColumnToTable(Column column, Table table, Name name, boolean isPrimary) {
-        Column copy = new Column(name,table,getNextVersion(table, name),
-                column.type, column.arrayDepth,
-                List.copyOf(column.constraints),isPrimary, false, null, column.isInternal);
-        table.addField(copy);
-        return copy;
-    }
-    
     public static int getNextVersion(Table table, Name fieldName) {
         Field f = table.getField(fieldName);
         int oldVersion = -1;

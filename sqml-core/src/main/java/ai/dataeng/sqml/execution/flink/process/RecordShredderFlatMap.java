@@ -3,11 +3,10 @@ package ai.dataeng.sqml.execution.flink.process;
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
-import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.util.Collector;
-
 import java.util.List;
 import java.util.Map;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.util.Collector;
 
 public class RecordShredderFlatMap implements FlatMapFunction<SourceRecord.Named, RowUpdate> {
 

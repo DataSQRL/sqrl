@@ -1,43 +1,34 @@
 package ai.dataeng.sqml;
 
 import ai.dataeng.sqml.config.ConfigurationError;
-import ai.dataeng.sqml.config.scripts.ScriptBundle;
-import ai.dataeng.sqml.config.scripts.SqrlScript;
-import ai.dataeng.sqml.api.graphql.SqrlCodeRegistryBuilder;
-import ai.dataeng.sqml.catalog.Namespace;
 import ai.dataeng.sqml.config.SqrlSettings;
 import ai.dataeng.sqml.config.metadata.MetadataStore;
 import ai.dataeng.sqml.config.provider.HeuristicPlannerProvider;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
+import ai.dataeng.sqml.config.scripts.ScriptBundle;
+import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.config.util.NamedIdentifier;
 import ai.dataeng.sqml.execution.StreamEngine;
-import ai.dataeng.sqml.type.schema.SchemaConversionError;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
-import ai.dataeng.sqml.execution.sql.SQLGenerator;
 import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitor;
 import ai.dataeng.sqml.parser.ScriptParser;
-import ai.dataeng.sqml.parser.processor.ScriptProcessor;
+import ai.dataeng.sqml.parser.ScriptProcessor;
 import ai.dataeng.sqml.parser.validator.Validator;
-import ai.dataeng.sqml.planner.LogicalPlanImpl;
+import ai.dataeng.sqml.planner.SchemaImpl;
 import ai.dataeng.sqml.planner.Script;
 import ai.dataeng.sqml.planner.operator.ImportResolver;
-import ai.dataeng.sqml.planner.operator.QueryAnalyzer;
-import ai.dataeng.sqml.planner.optimize.LogicalPlanOptimizer;
-import ai.dataeng.sqml.planner.optimize.MaterializeSource;
-import ai.dataeng.sqml.planner.optimize.SimpleOptimizer;
+import ai.dataeng.sqml.schema.Namespace;
 import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.type.schema.SchemaConversionError;
 import com.google.common.base.Preconditions;
-import graphql.schema.GraphQLCodeRegistry;
-
 import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -132,33 +123,33 @@ public class Environment implements Closeable {
         importResolver, planner, settings.getNamespace());
     Namespace namespace = processor.process(scriptNode);
 
-    LogicalPlanImpl logicalPlan = namespace.getLogicalPlan();
+    SchemaImpl logicalPlan = namespace.getSchemaContainer();
 
-    QueryAnalyzer.addDevModeQueries(logicalPlan);
+//    QueryAnalyzer.addDevModeQueries(logicalPlan);
     Preconditions.checkArgument(!errors.isFatal());
 
-    LogicalPlanOptimizer.Result optimized = new SimpleOptimizer()
-        .optimize(logicalPlan);
+//    LogicalPlanOptimizer.Result optimized = new SimpleOptimizer()
+//        .optimize(logicalPlan);
 
     JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(submission.getId().getId());
-    SQLGenerator.Result sql = settings.getSqlGeneratorProvider()
-        .create(jdbc)
-        .generateDatabase(optimized);
-    sql.executeDMLs();
+//    SQLGenerator.Result sql = settings.getSqlGeneratorProvider()
+//        .create(jdbc)
+//        .generateDatabase(optimized);
+//    sql.executeDMLs();
 
-    List<MaterializeSource> sources = optimized.getReadLogicalPlan();
+//    List<MaterializeSource> sources = optimized.getReadLogicalPlan();
+//
+//    SqrlCodeRegistryBuilder codeRegistryBuilder = new SqrlCodeRegistryBuilder();
+//    GraphQLCodeRegistry registry = codeRegistryBuilder.build(settings.getSqlClientProvider(), sources);
+//
+//    StreamEngine.Job job = settings.getStreamGeneratorProvider()
+//        .create(streamEngine,jdbc)
+//        .generateStream(optimized, sql.getSinkMapper());
+//
+//    job.execute(submission.getId().getId());
+//    submission.setExecutionId(job.getId());
 
-    SqrlCodeRegistryBuilder codeRegistryBuilder = new SqrlCodeRegistryBuilder();
-    GraphQLCodeRegistry registry = codeRegistryBuilder.build(settings.getSqlClientProvider(), sources);
-
-    StreamEngine.Job job = settings.getStreamGeneratorProvider()
-        .create(streamEngine,jdbc)
-        .generateStream(optimized, sql.getSinkMapper());
-
-    job.execute(submission.getId().getId());
-    submission.setExecutionId(job.getId());
-
-    return new Script(namespace, registry);
+    return new Script(namespace, null);
   }
 
   public DatasetRegistry getDatasetRegistry() {

@@ -1,14 +1,13 @@
 package ai.dataeng.sqml.type.schema.external;
 
-import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.SpecialName;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.constraint.Constraint;
-import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.SpecialName;
+import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
 import com.google.common.base.Preconditions;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

@@ -1,12 +1,15 @@
 package ai.dataeng.sqml.io.sources.stats;
 
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
+import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class RelationStats implements Accumulator<Map<String,Object>,RelationStats, NameCanonicalizer> {
 

@@ -7,14 +7,16 @@ import ai.dataeng.sqml.io.sources.impl.CanonicalizerConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
-import com.google.common.base.Preconditions;
-import lombok.*;
-import org.h2.util.StringUtils;
-
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import org.h2.util.StringUtils;
 
 @Builder
 @Getter

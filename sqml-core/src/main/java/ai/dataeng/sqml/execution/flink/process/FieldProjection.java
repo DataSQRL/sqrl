@@ -3,20 +3,19 @@ package ai.dataeng.sqml.execution.flink.process;
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.Table;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
 import ai.dataeng.sqml.type.basic.IntegerType;
 import ai.dataeng.sqml.type.basic.UuidType;
 import ai.dataeng.sqml.type.constraint.NotNull;
-import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
-import java.util.Optional;
-import lombok.Getter;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
+import lombok.Getter;
 
 public interface FieldProjection extends Serializable {
 

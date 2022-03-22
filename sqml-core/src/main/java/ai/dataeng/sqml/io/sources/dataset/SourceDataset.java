@@ -1,19 +1,20 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
 import ai.dataeng.sqml.io.sources.DataSource;
-import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
-
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import com.google.common.base.Preconditions;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
-
-import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link SourceDataset} defines a group of {@link SourceTable} that comprise one semantically coherent dataset.

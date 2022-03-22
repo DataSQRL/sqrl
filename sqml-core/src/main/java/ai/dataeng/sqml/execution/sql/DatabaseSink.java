@@ -1,12 +1,11 @@
 package ai.dataeng.sqml.execution.sql;
 
 import ai.dataeng.sqml.execution.flink.process.Row;
-import lombok.Value;
-
 import java.io.Serializable;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.Instant;
+import lombok.Value;
 
 @Value
 public class DatabaseSink {

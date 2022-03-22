@@ -2,13 +2,12 @@ package ai.dataeng.sqml.io.sources;
 
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.tree.name.Name;
-import lombok.NonNull;
-
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import lombok.NonNull;
 
 /**
  * Raw records of a {@link SourceTable} are represented as {@link SourceRecord}

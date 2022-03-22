@@ -1,7 +1,8 @@
 package ai.dataeng.sqml.io.sources.stats;
 
-import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.type.schema.SchemaConversionError;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
+import ai.dataeng.sqml.tree.name.SpecialName;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
@@ -10,16 +11,22 @@ import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
 import ai.dataeng.sqml.type.basic.StringType;
 import ai.dataeng.sqml.type.constraint.Cardinality;
 import ai.dataeng.sqml.type.constraint.Constraint;
-import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.NamePath;
-import ai.dataeng.sqml.tree.name.SpecialName;
+import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.type.schema.SchemaConversionError;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-
-import java.util.*;
 
 public class SchemaGenerator {
 

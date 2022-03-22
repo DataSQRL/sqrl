@@ -3,8 +3,11 @@ package ai.dataeng.sqml.io.sources.impl.file;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Preconditions;
-
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 
 @NoArgsConstructor

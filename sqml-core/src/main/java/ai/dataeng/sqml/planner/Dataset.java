@@ -2,6 +2,7 @@ package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -60,5 +61,10 @@ public class Dataset implements DatasetOrTable {
 
   public void merge(Dataset dataset) {
     this.tables.addAll(dataset.tables);
+  }
+
+  @Override
+  public VersionedName getId() {
+      return VersionedName.of(name, getVersion());
   }
 }

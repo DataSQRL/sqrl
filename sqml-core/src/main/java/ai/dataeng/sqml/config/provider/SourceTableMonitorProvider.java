@@ -3,7 +3,6 @@ package ai.dataeng.sqml.config.provider;
 import ai.dataeng.sqml.execution.StreamEngine;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitor;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 public interface SourceTableMonitorProvider {

@@ -1,9 +1,10 @@
 package ai.dataeng.sqml.type.basic;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Collectors;
-
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 public interface ProcessMessage {

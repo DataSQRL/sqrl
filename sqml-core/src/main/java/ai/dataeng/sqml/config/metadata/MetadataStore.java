@@ -1,10 +1,8 @@
 package ai.dataeng.sqml.config.metadata;
 
-import lombok.NonNull;
-
 import java.io.Closeable;
-import java.io.Serializable;
 import java.util.Set;
+import lombok.NonNull;
 
 public interface MetadataStore extends Closeable {
 

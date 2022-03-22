@@ -1,11 +1,10 @@
 package ai.dataeng.sqml.type.basic;
 
-import lombok.NonNull;
-
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Set;
 import java.util.function.Function;
+import lombok.NonNull;
 
 public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
 

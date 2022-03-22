@@ -3,10 +3,9 @@ package ai.dataeng.sqml.execution.flink.process;
 import static ai.dataeng.sqml.tree.name.Name.SELF_IDENTIFIER;
 
 import com.google.common.base.Preconditions;
-
-import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.time.Instant;
+import javax.annotation.Nullable;
 
 public interface RowUpdate extends Serializable {
 

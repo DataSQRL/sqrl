@@ -1,30 +1,34 @@
 package ai.dataeng.sqml.type.schema.external;
 
-import ai.dataeng.sqml.io.sources.dataset.DatasetLookup;
-import ai.dataeng.sqml.type.schema.SchemaConversionError;
-import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.type.schema.SchemaElementDescription;
-import ai.dataeng.sqml.config.util.StringNamedId;
 import ai.dataeng.sqml.config.util.NamedIdentifier;
+import ai.dataeng.sqml.config.util.StringNamedId;
+import ai.dataeng.sqml.io.sources.dataset.DatasetLookup;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
+import ai.dataeng.sqml.tree.name.SpecialName;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.BasicTypeManager;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
 import ai.dataeng.sqml.type.basic.ConversionResult;
+import ai.dataeng.sqml.type.basic.ProcessMessage;
 import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
 import ai.dataeng.sqml.type.constraint.Cardinality;
 import ai.dataeng.sqml.type.constraint.Constraint;
 import ai.dataeng.sqml.type.constraint.ConstraintHelper;
-import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.NamePath;
-import ai.dataeng.sqml.tree.name.SpecialName;
+import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
+import ai.dataeng.sqml.type.schema.SchemaConversionError;
+import ai.dataeng.sqml.type.schema.SchemaElementDescription;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.Value;
-
-import java.util.*;
 
 /**
  * Converts a {@link SchemaDefinition} that is parsed out of a YAML file into a {@link FlexibleDatasetSchema}

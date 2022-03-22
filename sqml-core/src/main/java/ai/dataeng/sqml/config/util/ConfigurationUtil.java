@@ -2,12 +2,11 @@ package ai.dataeng.sqml.config.util;
 
 import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
-
+import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
-import java.util.Set;
 
 public class ConfigurationUtil {
 

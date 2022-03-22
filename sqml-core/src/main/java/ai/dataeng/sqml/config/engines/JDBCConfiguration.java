@@ -3,13 +3,18 @@ package ai.dataeng.sqml.config.engines;
 import ai.dataeng.sqml.config.constraints.OptionalMinString;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import com.google.common.base.Preconditions;
-import lombok.*;
-
-import javax.validation.constraints.NotNull;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.regex.Pattern;
+import javax.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 
 @Getter

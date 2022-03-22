@@ -314,7 +314,7 @@ public abstract class AstVisitor<R, C> {
     return visitAssignment(node, context);
   }
 
-  public R visitJoinAssignment(JoinAssignment node, C context) {
+  public R visitJoinAssignment(JoinDeclaration node, C context) {
     return visitAssignment(node, context);
   }
   public R visitInlineJoin(InlineJoin node, C context) {

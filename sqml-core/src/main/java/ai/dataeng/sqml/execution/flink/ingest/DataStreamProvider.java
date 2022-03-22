@@ -2,24 +2,22 @@ package ai.dataeng.sqml.execution.flink.ingest;
 
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
+import ai.dataeng.sqml.io.sources.impl.file.FileFormat;
 import ai.dataeng.sqml.io.sources.impl.file.FileSource;
 import ai.dataeng.sqml.io.sources.impl.file.FileTableConfiguration;
-import ai.dataeng.sqml.io.sources.impl.file.FileFormat;
 import com.google.common.collect.Iterators;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 @AllArgsConstructor
 public class DataStreamProvider {
