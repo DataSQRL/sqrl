@@ -1,15 +1,16 @@
 package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
+import java.util.HashSet;
+import java.util.Set;
+import lombok.Getter;
 
 /**
  * The {@link SchemaImpl} is a logical representation of the data flow that produces the tables and fields as defined
  * in an SQRL script.
  */
+@Getter
 public class SchemaImpl implements SqrlSchema {
-
-    public static final String ID_DELIMITER = "$";
-
     /**
      * The {@link SchemaImpl#schema} represents the schema of the tables defined in an SQRL script.
      * The model is built incrementally and accounts for shadowing, i.e. adding elements to the schema with the same
@@ -20,7 +21,5 @@ public class SchemaImpl implements SqrlSchema {
      * to resolve table and field references within the script.
      */
     public ShadowingContainer<DatasetOrTable> schema = new ShadowingContainer<>();
-    public ShadowingContainer<DatasetOrTable> getSchema() {
-        return schema;
-    }
+    public Set<Table> qualifiedTables = new HashSet<>();
 }

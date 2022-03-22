@@ -1,7 +1,9 @@
 package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import com.google.common.base.Preconditions;
+import java.lang.Runtime.Version;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,6 +37,8 @@ public class Relationship extends Field {
   @Setter
   public SqlNode sqlNode;
 
+  public int version = 0;
+
   public Relationship(
       Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity,
       Map<Column, String> aliasMapping) {
@@ -46,21 +50,18 @@ public class Relationship extends Field {
   }
 
   public SqlNode getSqlNode() {
-    if (sqlNode == null) {
-      System.out.println();
-    }
     Preconditions.checkNotNull(sqlNode, "Sql node should not be null");
     return sqlNode.clone(SqlParserPos.ZERO);
   }
 
   @Override
-  public String getId() {
-    return name.getCanonical() + SchemaImpl.ID_DELIMITER + Integer.toHexString(0);
+  public VersionedName getId() {
+    return VersionedName.of(name, version);
   }
 
   @Override
   public int getVersion() {
-    return 0;
+    return version;
   }
 
   public enum Type {

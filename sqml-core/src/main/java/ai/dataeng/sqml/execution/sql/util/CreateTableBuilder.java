@@ -24,7 +24,7 @@ public class CreateTableBuilder extends TableBuilder {
     }
 
     public CreateTableBuilder addColumn(Column column) {
-        addColumn(column.getId(), dbUtil.getSQLType(column).getTypeName(), column.isNonNull(), column.isPrimaryKey());
+        addColumn(column.getId().toString(), dbUtil.getSQLType(column).getTypeName(), column.isNonNull(), column.isPrimaryKey());
         return this;
     }
 

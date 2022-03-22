@@ -4,6 +4,7 @@ import ai.dataeng.sqml.planner.Relationship.Type;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +36,12 @@ public class Table implements DatasetOrTable {
     return field;
   }
 
+  public Optional<Field> getFieldOpt(Name name) {
+    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
+    Field field = fields.getByName(name);
+    return Optional.ofNullable(field);
+  }
+
   public Optional<FieldPath> getField(NamePath path, int version) {
     return getField(path);//todo: include version
   }
@@ -62,8 +69,8 @@ public class Table implements DatasetOrTable {
     return fields.add(field);
   }
 
-  public String getId() {
-    return name.getCanonical() + SchemaImpl.ID_DELIMITER + Integer.toHexString(uniqueId);
+  public VersionedName getId() {
+    return VersionedName.of(name, uniqueId);
   }
 
   public List<Column> getPrimaryKeys() {

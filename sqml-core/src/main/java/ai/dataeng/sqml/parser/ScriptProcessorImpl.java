@@ -15,7 +15,9 @@ import ai.dataeng.sqml.planner.Relationship;
 import ai.dataeng.sqml.planner.Relationship.Multiplicity;
 import ai.dataeng.sqml.planner.Relationship.Type;
 import ai.dataeng.sqml.planner.Table;
+import ai.dataeng.sqml.planner.macros.FieldFactory;
 import ai.dataeng.sqml.planner.macros.SqrlTranslator;
+import ai.dataeng.sqml.planner.macros.SqrlTranslator.Scope;
 import ai.dataeng.sqml.planner.macros.ValidatorProvider;
 import ai.dataeng.sqml.planner.operator.ImportResolver;
 import ai.dataeng.sqml.planner.operator.ImportResolver.ImportMode;
@@ -149,8 +151,10 @@ public class ScriptProcessorImpl implements ScriptProcessor {
     SqlNode sqlNode = planner.parse(query);
     validator.validate(sqlNode);
     SqrlTranslator translator = new SqrlTranslator(validator,validatorProvider, planner, Optional.empty());
-    List<Field> fields = translator.visitQuery((SqlSelect) sqlNode, null);
-
+    Scope scope = translator.visitQuery((SqlSelect) sqlNode, null);
+    List<Field> fields = FieldFactory.createFields(translator.getValidator(),
+        ((SqlSelect)scope.getNode()).getSelectList(),  ((SqlSelect)scope.getNode()).getGroup(),
+        this.namespace.lookup(statement.getTable().toNamePath()));
     Table table = namespace.createTable(
         statement.getNamePath().getLast(),
         statement.getNamePath(),
@@ -210,7 +214,10 @@ public class ScriptProcessorImpl implements ScriptProcessor {
     ValidatorProvider provider = new ValidatorProvider(planner, tableName, namespace);
 
     SqrlTranslator translator = new SqrlTranslator(validator, provider, planner, Optional.of(table));
-    List<Field> fields = translator.visitQuery((SqlSelect) sqlNode, null);
+    Scope scope = translator.visitQuery((SqlSelect) sqlNode, null);
+    List<Field> fields = FieldFactory.createFields(translator.getValidator(),
+        ((SqlSelect)scope.getNode()).getSelectList(),  ((SqlSelect)scope.getNode()).getGroup(),
+        Optional.of(table));
 
     Optional<Field> field = fields.stream()
         .filter(f->f.getName().getCanonical().equals(columnName.getCanonical()))
@@ -282,7 +289,7 @@ public class ScriptProcessorImpl implements ScriptProcessor {
 
     SqlSelect select = (SqlSelect) node;
     List<SqlNode> selectList = new ArrayList<>();
-    selectList.addAll(select.getSelectList().subList(0, table.getPrimaryKeys().size()));
+    selectList.addAll(select.getSelectList().getList().subList(0, table.getPrimaryKeys().size()));
     selectList.add(new SqlIdentifier(List.of(toTableName, ""), SqlParserPos.ZERO));
     select.setSelectList(new SqlNodeList(selectList, SqlParserPos.ZERO));
 
@@ -367,12 +374,12 @@ public class ScriptProcessorImpl implements ScriptProcessor {
   public void process(QueryAssignment statement, Namespace namespace) {
     System.out.println("Query: " + statement.getSql());
     Planner planner = plannerProvider.createPlanner();
-    Optional<Table> context = statement.getNamePath().getPrefix()
+    Optional<Table> table = statement.getNamePath().getPrefix()
         .flatMap(namespace::lookup);
 
     ValidatorProvider validatorProvider = new ValidatorProvider(planner, statement.getNamePath().getPrefix(), namespace);
     SqlValidator validator = validatorProvider.create();
-    SqrlTranslator translator = new SqrlTranslator(validator, validatorProvider, planner, context);
+    SqrlTranslator translator = new SqrlTranslator(validator, validatorProvider, planner, table);
 
     SqlNode node = planner.parse(statement.getSql());
     validator.validate(node);
@@ -382,7 +389,10 @@ public class ScriptProcessorImpl implements ScriptProcessor {
     }
 
 
-    List<Field> fields = translator.visit(node, null);
+    Scope scope = translator.visit(node, null);
+    List<Field> fields = FieldFactory.createFields(translator.getValidator(),
+        ((SqlSelect)scope.getNode()).getSelectList(),  ((SqlSelect)scope.getNode()).getGroup(),
+        table);
     //todo: internal fields
 
     Table destination = namespace.createTable(

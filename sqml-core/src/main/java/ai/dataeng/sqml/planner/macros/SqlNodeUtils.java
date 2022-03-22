@@ -37,18 +37,18 @@ public class SqlNodeUtils {
     for (Column column : col.getTable().getPrimaryKeys()) {
       Field fk = col.getToTable().getField(column.getName());
 
-      SqlNode condition = SqlNodeUtils.eq(SqlNodeUtils.ident(lhs, column.getId()),
-          SqlNodeUtils.ident(rhs, fk.getId()));
+      SqlNode condition = SqlNodeUtils.eq(SqlNodeUtils.ident(lhs, column.getId().toString()),
+          SqlNodeUtils.ident(rhs, fk.getId().toString()));
       conditions.add(condition);
-      map.put(column, column.getId());
-      map.put((Column)fk, fk.getId());
+      map.put(column, column.getId().toString());
+      map.put((Column)fk, fk.getId().toString());
     }
 
     SqlNode condition = SqlNodeUtils.and(conditions);
     //SELECT * FROM tableA AS lhs JOIN tableB AS rhs ON eq;
     SqlNode join = join(
-        JoinType.INNER, toCall(col.getTable().getId(), lhs),
-        toCall(col.getToTable().getId(), rhs), condition);
+        JoinType.INNER, toCall(col.getTable().getId().toString(), lhs),
+        toCall(col.getToTable().getId().toString(), rhs), condition);
     SqlSelect select = select(selectAllList(rhs), join);
 
     return Pair.of(map, select);
@@ -64,19 +64,19 @@ public class SqlNodeUtils {
     for (Column column : col.getToTable().getPrimaryKeys()) {
       Field fk = col.getTable().getField(column.getName());
 
-      SqlNode condition = SqlNodeUtils.eq(SqlNodeUtils.ident(lhs, column.getId()),
-          SqlNodeUtils.ident(rhs, fk.getId()));
+      SqlNode condition = SqlNodeUtils.eq(SqlNodeUtils.ident(lhs, column.getId().toString()),
+          SqlNodeUtils.ident(rhs, fk.getId().toString()));
       conditions.add(condition);
-      map.put(column, column.getId());
-      map.put((Column)fk, fk.getId());
+      map.put(column, column.getId().toString());
+      map.put((Column)fk, fk.getId().toString());
     }
     Preconditions.checkState(!conditions.isEmpty(), "Could not find FK");
 
     SqlNode condition = SqlNodeUtils.and(conditions);
     //SELECT * FROM tableA AS lhs JOIN tableB AS rhs ON eq;
     SqlNode join = join(
-        JoinType.INNER, toCall(col.getTable().getId(), lhs),
-        toCall(col.getToTable().getId(), rhs), condition);
+        JoinType.INNER, toCall(col.getTable().getId().toString(), lhs),
+        toCall(col.getToTable().getId().toString(), rhs), condition);
     SqlSelect select = select(selectAllList(rhs), join);
 
     return Pair.of(map, select);

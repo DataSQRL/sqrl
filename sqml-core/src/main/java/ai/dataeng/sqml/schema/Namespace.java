@@ -4,10 +4,10 @@ import ai.dataeng.sqml.planner.Dataset;
 import ai.dataeng.sqml.planner.DatasetOrTable;
 import ai.dataeng.sqml.planner.SchemaImpl;
 import ai.dataeng.sqml.planner.Table;
-import ai.dataeng.sqml.planner.VersionedName;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import java.util.Optional;
 import org.apache.calcite.sql.SqlNode;
 
@@ -39,7 +39,7 @@ public interface Namespace {
    */
   ShadowingContainer<DatasetOrTable> getSchema();
 
-  SchemaImpl getLogicalPlan();
+  SchemaImpl getSchemaContainer();
 
   void addToDag(SqlNode sqlNode);
 }

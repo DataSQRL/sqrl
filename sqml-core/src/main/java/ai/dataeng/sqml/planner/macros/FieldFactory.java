@@ -3,11 +3,14 @@ package ai.dataeng.sqml.planner.macros;
 import ai.dataeng.sqml.planner.AliasGenerator;
 import ai.dataeng.sqml.planner.Column;
 import ai.dataeng.sqml.planner.Field;
+import ai.dataeng.sqml.planner.Table;
 import ai.dataeng.sqml.planner.TypeFactory;
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.basic.BasicType;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
@@ -23,9 +26,9 @@ import org.apache.calcite.sql.validate.SqlValidator;
 public class FieldFactory {
   static AliasGenerator aliasGenerator = new AliasGenerator();
   public static List<Field> createFields(SqlValidator validator, SqlNodeList selectList,
-      SqlNodeList group) {
+      SqlNodeList group, Optional<Table> existingTable) {
     List<Field> fields = new ArrayList<>();
-    Set<String> groupOps = group == null ? new HashSet<>() : group.stream().map(e->e.toString()).collect(
+    Set<String> groupOps = group == null ? new HashSet<>() : group.getList().stream().map(e->e.toString()).collect(
         Collectors.toSet());
 
     for (SqlNode node : selectList.getList()) {
@@ -34,7 +37,8 @@ public class FieldFactory {
       BasicType basicType = TypeFactory.toBasicType(type);
 
       String ident = getColumnName(node);
-      Column column = Column.createTemp(ident.split("\\$")[0], basicType, null);
+
+      Column column = Column.createTemp(ident.split("\\$")[0], basicType, null, 0);
 
       if (group != null) {
         String name = node.toString();

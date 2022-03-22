@@ -133,23 +133,6 @@ public class SqrlRelOptTable extends AbstractPreparingTable {
   }
 
   @Override
-  @API(since = "1.27", status = Status.INTERNAL)
-  public <C> C unwrapOrThrow(Class<C> aClass) {
-    return relOptTable.unwrapOrThrow(aClass);
-  }
-
-  @Override
-  @API(since = "1.27", status = Status.INTERNAL)
-  public <C> Optional<C> maybeUnwrap(Class<C> aClass) {
-    return relOptTable.maybeUnwrap(aClass);
-  }
-
-  @Override
-  public Table table() {
-    return relOptTable.table();
-  }
-
-  @Override
   public String toString() {
     return relOptTable.toString();
   }

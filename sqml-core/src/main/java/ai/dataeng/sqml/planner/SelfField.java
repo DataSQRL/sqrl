@@ -1,5 +1,7 @@
 package ai.dataeng.sqml.planner;
 
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -11,8 +13,8 @@ public class SelfField extends Field {
     super(table.getName(), table);
   }
 
-  public String getId() {
-    return table.getId();
+  public VersionedName getId() {
+    return VersionedName.of(Name.system("_"), table.getVersion());
   }
 
   @Override

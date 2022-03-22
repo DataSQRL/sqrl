@@ -18,8 +18,6 @@
 
 package org.apache.calcite.sql;
 
-import static org.apache.calcite.linq4j.Nullness.castNonNull;
-
 import org.apache.calcite.sql.fun.SqlCountAggFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.InferTypes;
@@ -136,7 +134,7 @@ public class SqrlOperatorTable extends ReflectiveSqlOperatorTable {
 
     // AGGREGATE OPERATORS
     public static final SqlFunction SUM = SqlStdOperatorTable.SUM;
-    public static final SqlFunction SUM2 = function(new SqlSum2AggFunction(castNonNull(null)), SqlStdOperatorTable.SUM);
+    public static final SqlFunction SUM2 = function(new SqlSum2AggFunction(null), SqlStdOperatorTable.SUM);
 
     private static SqlFunction function(SqlAggFunction agg, SqlAggFunction function) {
         return new SpecialSqlFunction(

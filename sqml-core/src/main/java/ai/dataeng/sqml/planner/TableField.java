@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.planner;
 
+import ai.dataeng.sqml.tree.name.VersionedName;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -11,8 +12,8 @@ public class TableField extends Field {
     super(table.getName(), table);
   }
 
-  public String getId() {
-    return name.getCanonical() + SchemaImpl.ID_DELIMITER + Integer.toHexString(table.getVersion());
+  public VersionedName getId() {
+    return VersionedName.of(name, table.getVersion());
   }
 
   @Override

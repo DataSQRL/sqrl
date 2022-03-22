@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.constraint.Constraint;
 import ai.dataeng.sqml.type.constraint.ConstraintHelper;
@@ -49,14 +50,14 @@ public class Column extends Field {
     this.nonNull = ConstraintHelper.isNonNull(constraints);
   }
 
-  public static Column createTemp(String name, BasicType type, Table table) {
+  public static Column createTemp(String name, BasicType type, Table table, int version) {
     return new Column(Name.system(name),
-        table, 0, type, 0, List.of(), false, false, null, false
+        table, version, type, 0, List.of(), false, false, null, false
           );
   }
 
-  public String getId() {
-    return name.getCanonical() + SchemaImpl.ID_DELIMITER + Integer.toHexString(version);
+  public VersionedName getId() {
+    return VersionedName.of(name, version);
   }
 
   @Override

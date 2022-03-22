@@ -123,7 +123,7 @@ public class Environment implements Closeable {
         importResolver, planner, settings.getNamespace());
     Namespace namespace = processor.process(scriptNode);
 
-    SchemaImpl logicalPlan = namespace.getLogicalPlan();
+    SchemaImpl logicalPlan = namespace.getSchemaContainer();
 
 //    QueryAnalyzer.addDevModeQueries(logicalPlan);
     Preconditions.checkArgument(!errors.isFatal());

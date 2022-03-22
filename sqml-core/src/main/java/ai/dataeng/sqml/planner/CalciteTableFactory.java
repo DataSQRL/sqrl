@@ -4,6 +4,7 @@ import static ai.dataeng.sqml.tree.name.Name.SELF_IDENTIFIER;
 
 import ai.dataeng.sqml.schema.Namespace;
 import ai.dataeng.sqml.tree.name.NamePath;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +50,8 @@ public class CalciteTableFactory {
 
       Optional<Table> table;
       if (name.contains("$")) {
-        table = namespace.lookup(new VersionedName(name));
+        VersionedName versionedName = VersionedName.parse(name);
+        table = namespace.lookup(versionedName);
         if (table.isEmpty()) {
           throw new RuntimeException();
         }

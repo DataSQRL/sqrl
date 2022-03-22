@@ -2,6 +2,7 @@ package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -19,5 +20,5 @@ public abstract class Field implements ShadowingContainer.Nameable {
     this.table = table;
   }
 
-  public abstract String getId();
+  public abstract VersionedName getId();
 }

@@ -109,7 +109,7 @@ public class DatabaseUtil {
 
     private static Stream<String> getPrimaryKeyNames(Column[] schema) {
         return Arrays.stream(schema).filter(Column::isPrimaryKey).map(
-            Column::getId);
+            c->c.getId().toString());
     }
 
     private LinkedHashMap<Integer, Integer> getPosition2Type(Column[] schema, boolean primaryKeysOnly) {

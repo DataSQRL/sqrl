@@ -66,7 +66,7 @@ public class SqrlTranslator extends BaseSqrlTranslator {
   final AliasGenerator gen = new AliasGenerator();
   final AtomicBoolean hasContext = new AtomicBoolean();
 
-  public List<Field> visitQuery(SqlSelect query, Scope scope) {
+  public Scope visitQuery(SqlSelect query, Scope scope) {
     transformDistinct(query);
     scope = new Scope(query);
     this.aggs.putAll(analyzeToManyAggs(query));
@@ -95,9 +95,7 @@ public class SqrlTranslator extends BaseSqrlTranslator {
       throw e;
     }
 
-    List<Field> fields = FieldFactory.createFields(validator, query.getSelectList(), query.getGroup());
-
-    return fields;
+    return scopeOf(query);
   }
 
   private void transformDistinct(SqlSelect query) {
@@ -172,8 +170,8 @@ public class SqrlTranslator extends BaseSqrlTranslator {
       String lhs = rel.getPkNameMapping().get((Column) fk);
       String rhs = rel.getPkNameMapping().get(column);
       nodes.add(eq(
-          ident(currentAlias, lhs != null ? lhs : column.getId()),
-          ident(nextAlias, rhs != null ? rhs : column.getId())));
+          ident(currentAlias, lhs != null ? lhs : column.getId().toString()),
+          ident(nextAlias, rhs != null ? rhs : column.getId().toString())));
     }
 
 
@@ -245,14 +243,14 @@ public class SqrlTranslator extends BaseSqrlTranslator {
 
   private SqlNode getTable(Field field) {
     if (field instanceof SelfField) {
-      return new SqlIdentifier(List.of(field.getTable().getId()), SqlParserPos.ZERO);
+      return new SqlIdentifier(List.of(field.getTable().getId().toString()), SqlParserPos.ZERO);
     } else if (field instanceof Relationship) {
       if (((Relationship) field).getSqlNode() != null) {
         return validatorProvider.create().validate(((Relationship) field).getSqlNode());
       }
-      return new SqlIdentifier(List.of(((Relationship)field).getToTable().getId()), SqlParserPos.ZERO);
+      return new SqlIdentifier(List.of(((Relationship)field).getToTable().getId().toString()), SqlParserPos.ZERO);
     } else if (field instanceof TableField) {
-      return new SqlIdentifier(List.of(field.getTable().getId()), SqlParserPos.ZERO);
+      return new SqlIdentifier(List.of(field.getTable().getId().toString()), SqlParserPos.ZERO);
     }
     throw new RuntimeException("Not a table:" + field);
   }
@@ -293,7 +291,7 @@ public class SqrlTranslator extends BaseSqrlTranslator {
 
       //TODO NOT RIGHT: Should be bound to table
       for (SqlIdentifier id : toOneMapping.get(path)) {
-        mapper.put(id, new SqlIdentifier(List.of(tableAlias, fields.get(fields.size() - 1).getId()),
+        mapper.put(id, new SqlIdentifier(List.of(tableAlias, fields.get(fields.size() - 1).getId().toString()),
             SqlParserPos.ZERO));
       }
     }
@@ -314,7 +312,7 @@ public class SqrlTranslator extends BaseSqrlTranslator {
       fieldPath = checkForCountRel(fieldPath);
 
       String alias = "_";
-      SqlNode from = toCall(tbl.getSqrlTable().getId(), alias);
+      SqlNode from = toCall(tbl.getSqrlTable().getId().toString(), alias);
       for (Field field : fieldPath.getFields()) {
         if (field instanceof Relationship) {
           Relationship rel = (Relationship) field;
@@ -371,7 +369,7 @@ public class SqrlTranslator extends BaseSqrlTranslator {
 //    Map<Column, String> map = rel.getAliasMapping();
 //    List<SqlNode> nodes = new ArrayList<>();
 //    for (Column column : rel.getTable().getPrimaryKeys()) {
-//      nodes.add(eq(ident(alias, column.getId()), ident(nextAlias, map.get(column))));
+//      nodes.add(eq(ident(alias, column.getId().toString()), ident(nextAlias, map.get(column))));
 //    }
 //
 //    return and(nodes);
@@ -379,7 +377,7 @@ public class SqrlTranslator extends BaseSqrlTranslator {
 
   private SqlNode expandRel(Relationship rel) {
     if (rel.getSqlNode() == null) {
-      return new SqlIdentifier(rel.getToTable().getId(), SqlParserPos.ZERO);
+      return new SqlIdentifier(rel.getToTable().getId().toString(), SqlParserPos.ZERO);
     }
     return validatorProvider.create().validate(rel.getSqlNode());
   }
@@ -402,7 +400,7 @@ public class SqrlTranslator extends BaseSqrlTranslator {
 
   private SqlCall rewriteCall(SqlCall call, String alias, FieldPath fieldPath) {
     SqlNode[] operands = {
-        new SqlIdentifier(List.of(alias, fieldPath.getLastField().getId()), SqlParserPos.ZERO)
+        new SqlIdentifier(List.of(alias, fieldPath.getLastField().getId().toString()), SqlParserPos.ZERO)
     };
 
     SpecialSqlFunction fnc = (SpecialSqlFunction) call.getOperator();
@@ -429,12 +427,12 @@ public class SqrlTranslator extends BaseSqrlTranslator {
   private SqlNodeList rewriteOrderBy(SqlNodeList orderList, SqlSelect query,
       Scope fromScope) {
     if (orderList != null && ((SqrlValidator)validator).hasAgg(query.getSelectList())) {
-      List<SqlNode> nodes = new ArrayList<>(orderList);
+      List<SqlNode> nodes = new ArrayList<>(orderList.getList());
       //get parent primary key for context
       List<Column> primaryKeys = contextTable.get().getPrimaryKeys();
       for (int i = primaryKeys.size() - 1; i >= 0; i--) {
         Column pk = primaryKeys.get(i);
-        nodes.add(0, ident("_", pk.getId()));
+        nodes.add(0, ident("_", pk.getId().toString()));
       }
       return new SqlNodeList(nodes, SqlParserPos.ZERO);
     }
@@ -459,7 +457,7 @@ public class SqrlTranslator extends BaseSqrlTranslator {
       List<Column> primaryKeys = this.contextTable.get().getPrimaryKeys();
       for (int i = primaryKeys.size() - 1; i >= 0; i--) {
         Column column = primaryKeys.get(i);
-        nodes.add(0, ident("_", column.getId()));
+        nodes.add(0, ident("_", column.getId().toString()));
       }
       return (SqlNodeList)new SqlNodeList(nodes, SqlParserPos.ZERO).accept(new SqlNodeMapper(mapper));
     }
@@ -534,7 +532,7 @@ public class SqrlTranslator extends BaseSqrlTranslator {
       List<Column> primaryKeys = this.contextTable.get().getPrimaryKeys();
       for (int i = primaryKeys.size() - 1; i >= 0; i--) {
         Column column = primaryKeys.get(i);
-        nodes.add(ident("_", column.getId()));
+        nodes.add(ident("_", column.getId().toString()));
       }
     }
     return new SqlNodeList(nodes, SqlParserPos.ZERO);

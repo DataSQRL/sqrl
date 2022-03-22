@@ -78,9 +78,4 @@ public class SqrlOperandTypeChecker implements SqlOperandTypeChecker {
   public boolean isFixedParameters() {
     return delegate.isFixedParameters();
   }
-
-  @Override
-  public @Nullable SqlOperandTypeInference typeInference() {
-    return delegate.typeInference();
-  }
 }

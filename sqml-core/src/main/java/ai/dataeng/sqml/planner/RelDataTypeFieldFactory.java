@@ -22,7 +22,7 @@ public class RelDataTypeFieldFactory {
   public List<RelDataTypeField> create(Table table) {
     List<RelDataTypeField> fields = new ArrayList<>();
     for (Field field : table.getFields()) {
-      fields.add(create(FieldPath.of(field), field.getId(), fields.size()));
+      fields.add(create(FieldPath.of(field), field.getId().toString(), fields.size()));
     }
     return fields;
   }

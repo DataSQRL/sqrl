@@ -81,8 +81,4 @@ public class SqlSum2AggFunction extends SqlAggFunction {
     }
     return super.unwrap(clazz);
   }
-
-  @Override public SqlAggFunction getRollup() {
-    return this;
-  }
 }

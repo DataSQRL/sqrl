@@ -11,7 +11,7 @@ import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 
 public abstract class BaseSqrlTranslator {
-  public List<Field> visit(SqlNode node, Scope scope) {
+  public Scope visit(SqlNode node, Scope scope) {
     if (node instanceof SqlOrderBy) {
       return visitQuery((SqlSelect)((SqlOrderBy)node).query, null);
     } else if (node instanceof SqlSelect) {
@@ -33,7 +33,7 @@ public abstract class BaseSqrlTranslator {
     throw new RuntimeException("Unknown from clause: " + from);
   }
 
-  protected abstract List<Field> visitQuery(SqlSelect query, Scope scope);
+  protected abstract Scope visitQuery(SqlSelect query, Scope scope);
   protected abstract Scope visitJoin(SqlJoin join, Scope scope);
   protected abstract Scope visitTable(SqlBasicCall table, Scope scope);
   protected abstract Scope visitSubquery(SqlBasicCall table, Scope scope);

@@ -133,7 +133,7 @@ public class ImportResolver {
                 if (f instanceof Column) columns.add((Column) f);
             }
         }
-        Column ingestTime = Column.createTemp("_ingest_time", DateTimeType.INSTANCE, table);
+        Column ingestTime = Column.createTemp("_ingest_time", DateTimeType.INSTANCE, table, 0);
         columns.add(ingestTime);
         table.fields.add(ingestTime);
         outputSchema.put(path,columns.toArray(new Column[columns.size()]));

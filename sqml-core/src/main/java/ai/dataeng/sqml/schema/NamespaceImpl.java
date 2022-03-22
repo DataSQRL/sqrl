@@ -5,10 +5,10 @@ import ai.dataeng.sqml.planner.Dataset;
 import ai.dataeng.sqml.planner.DatasetOrTable;
 import ai.dataeng.sqml.planner.SchemaImpl;
 import ai.dataeng.sqml.planner.Table;
-import ai.dataeng.sqml.planner.VersionedName;
 import ai.dataeng.sqml.planner.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -23,12 +23,12 @@ public class NamespaceImpl implements Namespace {
   private final Map<Name, Dataset> scopedDatasets;
 
   private final static AtomicInteger tableIdCounter = new AtomicInteger(0);
-  private final SchemaImpl logicalPlan;
+  private final SchemaImpl schemaContainer;
 
   public NamespaceImpl() {
     this.rootDatasets = new HashMap<>();
     this.scopedDatasets = new HashMap<>();
-    this.logicalPlan = new SchemaImpl();
+    this.schemaContainer = new SchemaImpl();
   }
 
   @Override
@@ -37,7 +37,7 @@ public class NamespaceImpl implements Namespace {
 
     //Hack due to order or adding dataset
     //Always look in schema first to discover
-    Table schemaTable = (Table)this.logicalPlan.schema.getByName(namePath.getFirst());
+    Table schemaTable = (Table)this.schemaContainer.schema.getByName(namePath.getFirst());
     if (schemaTable != null) {
       if (namePath.getLength() == 1) {
         return Optional.of(schemaTable);
@@ -70,8 +70,8 @@ public class NamespaceImpl implements Namespace {
 
   @Override
   public Optional<Table> lookup(VersionedName name) {
-    for (DatasetOrTable table : this.logicalPlan.getSchema().getElements()) {
-      if (table.getId().equals(name.getId())) {
+    for (Table table : this.schemaContainer.qualifiedTables) {
+      if (table.getId().equals(name)) {
         return Optional.of((Table) table);
       }
     }
@@ -96,7 +96,8 @@ public class NamespaceImpl implements Namespace {
   @Override
   public Table createTable(Name name, NamePath path, boolean isInternal) {
     Table table = new Table(tableIdCounter.incrementAndGet(), name, path, isInternal);
-    logicalPlan.schema.add(table);
+    schemaContainer.schema.add(table);
+    schemaContainer.qualifiedTables.add(table);
     return table;
   }
 
@@ -114,8 +115,7 @@ public class NamespaceImpl implements Namespace {
     return shadowingContainer;
   }
 
-  @Override
-  public SchemaImpl getLogicalPlan() {
-    return this.logicalPlan;
+  public SchemaImpl getSchemaContainer() {
+    return this.schemaContainer;
   }
 }
