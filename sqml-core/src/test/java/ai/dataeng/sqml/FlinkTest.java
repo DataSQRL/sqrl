@@ -7,6 +7,7 @@ import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.core.execution.JobClient;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.FunctionHint;
@@ -73,23 +74,25 @@ public class FlinkTest {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
 
-
         DataType entriesArray = DataTypes.ARRAY(DataTypes.ROW(
                 DataTypes.FIELD("productid", DataTypes.INT()),
                 DataTypes.FIELD("quantity", DataTypes.INT())));
+        Schema schema = Schema.newBuilder()
+                .column("id", DataTypes.INT())
+                .column("customerid", DataTypes.INT())
+                .column("time", DataTypes.INT())
+                .column("entries", entriesArray)
+                .build();
+
 
         TableDescriptor jsonTable = TableDescriptor.forConnector("filesystem")
-                .schema(Schema.newBuilder()
-                        .column("id", DataTypes.INT())
-                        .column("customerid", DataTypes.INT())
-                        .column("time", DataTypes.INT())
-                        .column("entries", entriesArray)
-                        .build())
+                .schema(schema)
                 .option("path", C360Test.RETAIL_DATA_DIR.toAbsolutePath() + "/orders.json")
                 .format("json")
                 .build();
 
-
+//        DataStream<String> dataStream = env.fromElements("Alice", "Bob", "John");
+//        tEnv.fromDataStream(dataStream,schema);
 
         tEnv.createTable("Orders",jsonTable);
         Table orders = tEnv.from("Orders");

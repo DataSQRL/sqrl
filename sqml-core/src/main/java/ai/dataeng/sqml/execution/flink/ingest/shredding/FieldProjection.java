@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.execution.flink.ingest.shredding;
 
 import ai.dataeng.sqml.execution.flink.process.DestinationTableSchema;
+import ai.dataeng.sqml.tree.name.ReservedName;
 import ai.dataeng.sqml.type.*;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
@@ -23,12 +24,12 @@ public interface FieldProjection extends Serializable {
     @Value
     class SpecialCase implements FieldProjection {
 
-        private final String name;
+        private final ReservedName name;
         private final BasicType type;
 
         @Override
         public DestinationTableSchema.Field getField(RelationType<StandardField> table) {
-            return DestinationTableSchema.Field.primaryKey(name, type);
+            return DestinationTableSchema.Field.primaryKey(name.getCanonical(), type);
         }
 
         @Override
@@ -37,10 +38,10 @@ public interface FieldProjection extends Serializable {
         }
     }
 
-    FieldProjection ROOT_UUID = new SpecialCase("_uuid", UuidType.INSTANCE);
-    FieldProjection INGEST_TIME = new SpecialCase("_ingest_time", DateTimeType.INSTANCE);
+    FieldProjection ROOT_UUID = new SpecialCase(ReservedName.UUID, UuidType.INSTANCE);
+    FieldProjection INGEST_TIME = new SpecialCase(ReservedName.INGEST_TIME, DateTimeType.INSTANCE);
 
-    FieldProjection ARRAY_INDEX = new SpecialCase("_idx", IntegerType.INSTANCE);
+    FieldProjection ARRAY_INDEX = new SpecialCase(ReservedName.ARRAY_IDX, IntegerType.INSTANCE);
 
     @Value
     class NamePathProjection implements FieldProjection {

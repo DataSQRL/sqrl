@@ -316,7 +316,7 @@ public class ImportResolver {
             table.fields.add(parentField);
             //Return child relationship
             Relationship.Multiplicity multiplicity = Relationship.Multiplicity.MANY;
-            Cardinality cardinality = ConstraintHelper.getConstraint(constraints, Cardinality.class).orElse(Cardinality.UNCONSTRAINED);
+            Cardinality cardinality = ConstraintHelper.getCardinality(constraints);
             if (cardinality.isSingleton()) {
                 multiplicity = Relationship.Multiplicity.ZERO_ONE;
                 if (cardinality.isNonZero()) {
