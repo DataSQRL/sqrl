@@ -13,6 +13,7 @@ import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
+import ai.dataeng.sqml.planner.operator.C360Test;
 import ai.dataeng.sqml.planner.operator.ImportManager;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
@@ -39,6 +40,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 import static org.apache.flink.table.api.Expressions.$;
+import static org.apache.flink.table.api.Expressions.call;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -65,16 +67,24 @@ public class IngestAndSchemaTest {
     @SneakyThrows
     @Test
     public void testDatasetMonitoring() {
-        String dsName = "bookclub";
+        ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
 
+        String dsName = "bookclub";
         FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
                 .uri(ConfigurationTest.DATA_DIR.toAbsolutePath().toString())
                 .name(dsName)
                 .build();
-
-        ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
         registry.addOrUpdateSource(fileConfig, errors);
         assertFalse(errors.isFatal());
+
+        String ds2Name = "c360";
+        fileConfig = FileSourceConfiguration.builder()
+                .uri(C360Test.RETAIL_DATA_DIR.toAbsolutePath().toString())
+                .name(ds2Name)
+                .build();
+        registry.addOrUpdateSource(fileConfig, errors);
+        assertFalse(errors.isFatal());
+
 
         //Needs some time to wait for the flink pipeline to compile data
         Thread.sleep(2000);
@@ -89,30 +99,42 @@ public class IngestAndSchemaTest {
         assertEquals(5, person.getStatistics().getCount());
 
         ImportManager imports = new ImportManager(registry);
+        FlinkTableConverter tbConverter = new FlinkTableConverter();
+
         ProcessMessage.ProcessBundle<SchemaConversionError> schemaErrs = new ProcessMessage.ProcessBundle<>();
         ImportManager.SourceTableImport bookImp = imports.importTable(Name.system(dsName),Name.system("book"),schemaErrs);
-
-
-        FlinkTableConverter tbConverter = new FlinkTableConverter();
         Pair<Schema, TypeInformation> bookSchema = tbConverter.tableSchemaConversion(bookImp.getSourceSchema());
+        ImportManager.SourceTableImport ordersImp = imports.importTable(Name.system(ds2Name),Name.system("orders"),schemaErrs);
+        Pair<Schema, TypeInformation> ordersSchema = tbConverter.tableSchemaConversion(ordersImp.getSourceSchema());
 
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
-
         final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>("SCHEMA_ERROR"){};
-        DataStream<SourceRecord.Raw> stream = new DataStreamProvider().getDataStream(bookImp.getTable(),env);
-        SingleOutputStreamOperator<SourceRecord.Named> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, bookImp.getSourceSchema(),
-                SchemaAdjustmentSettings.DEFAULT, bookImp.getTable().getDataset().getDigest()));
 
-        SingleOutputStreamOperator<Row> rows = validate.map(tbConverter.getRowMapper(bookImp.getSourceSchema()),bookSchema.getRight());
+        ImportManager.SourceTableImport imp = ordersImp;
+        Pair<Schema, TypeInformation> schema = ordersSchema;
 
-        Table table = tEnv.fromDataStream(rows,bookSchema.getLeft());
+        DataStream<SourceRecord.Raw> stream = new DataStreamProvider().getDataStream(imp.getTable(),env);
+        SingleOutputStreamOperator<SourceRecord.Named> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, imp.getSourceSchema(),
+                SchemaAdjustmentSettings.DEFAULT, imp.getTable().getDataset().getDigest()));
+        SingleOutputStreamOperator<Row> rows = validate.map(tbConverter.getRowMapper(imp.getSourceSchema()),schema.getRight());
+
+        Table table = tEnv.fromDataStream(rows,schema.getLeft());
+        tEnv.createTemporaryView("TheTable", table);
         table.printSchema();
 
-        Table select = table.select($("id").sum().as("sum"));
+        Table sum = table.select($("id").sum().as("sum"));
+        tEnv.toChangelogStream(sum).print();
 
-        tEnv.toChangelogStream(select).print();
+        Table tableShredding = tEnv.sqlQuery("SELECT  o._uuid, items._idx, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
+                "FROM TheTable o CROSS JOIN UNNEST(o.entries) AS items");
+
+//        Table flattenEntries = table.joinLateral(call("UNNEST", $("entries")
+//                ))
+//                .select($("id"),$("productid"),$("quantity"),$("_idx"));
+        tEnv.toChangelogStream(tableShredding).print();
+
         env.execute();
 
     }

@@ -81,14 +81,14 @@ public class FlinkTableConverter {
                     });
             if (!isSingleton(ftype)) {
                 dtfs.add(DataTypes.FIELD(ReservedName.ARRAY_IDX.getCanonical(),toFlinkDataType(IntegerType.INSTANCE)));
-                tis.add(BasicTypeInfo.INT_TYPE_INFO);
+                tis.add(BasicTypeInfo.LONG_TYPE_INFO);
             }
             dt = DataTypes.ROW(dtfs.toArray(new DataTypes.Field[dtfs.size()]));
             ti = Types.ROW_NAMED(dtfs.stream().map(dtf -> dtf.getName()).toArray(i -> new String[i]),
                     tis.toArray(new TypeInformation[tis.size()]));
             if (!isSingleton(ftype)) {
                 dt = DataTypes.ARRAY(dt);
-                ti = Types.LIST(ti);
+                ti = Types.OBJECT_ARRAY(ti);
             }
         } else if (ftype.getType() instanceof ArrayType) {
             Pair<DataType,TypeInformation> p = wrapArraySchema((ArrayType) ftype.getType());
@@ -113,7 +113,7 @@ public class FlinkTableConverter {
             dt = toFlinkDataType((BasicType)subType);
             ti = FlinkUtilities.getFlinkTypeInfo((BasicType) subType, false);
         }
-        return Pair.of(DataTypes.ARRAY(dt), Types.LIST(ti));
+        return Pair.of(DataTypes.ARRAY(dt), Types.OBJECT_ARRAY(ti));
     }
 
     private static boolean isSingleton(FlexibleDatasetSchema.FieldType ftype) {
@@ -181,13 +181,14 @@ public class FlinkTableConverter {
                             } else {
                                 int idx = 0;
                                 List<Map<Name, Object>> nestedData = (List<Map<Name, Object>>)data.get(name);
-                                List<Row> result = new ArrayList<>();
+                                Row[] result = new Row[nestedData.size()];
                                 for (Map<Name, Object> item : nestedData) {
                                     Object[] cols = constructRows(item,subType);
                                     //Add index
                                     cols = Arrays.copyOf(cols,cols.length+1);
-                                    cols[cols.length-1] = idx++;
-                                    result.add(Row.of(cols));
+                                    cols[cols.length-1] = Long.valueOf(idx);
+                                    result[idx]=Row.of(cols);
+                                    idx++;
                                 }
                                 return result;
                             }
