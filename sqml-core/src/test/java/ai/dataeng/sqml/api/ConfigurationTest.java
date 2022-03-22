@@ -28,11 +28,11 @@ import java.util.stream.Collectors;
 
 public class ConfigurationTest {
 
-    static Path resourceDir = Paths.get("src","test","resources");
-    static Path configYml = resourceDir.resolve("simple-config.yml");
+    public static Path resourceDir = Paths.get("src","test","resources");
+    public static Path configYml = resourceDir.resolve("simple-config.yml");
 
-    static final Path dbPath = Path.of("tmp");
-    static final String jdbcURL = "jdbc:h2:"+dbPath.toAbsolutePath();
+    public static final Path dbPath = Path.of("tmp");
+    public static final String jdbcURL = "jdbc:h2:"+dbPath.toAbsolutePath();
 
     public static final Path DATA_DIR = resourceDir.resolve("data");
 

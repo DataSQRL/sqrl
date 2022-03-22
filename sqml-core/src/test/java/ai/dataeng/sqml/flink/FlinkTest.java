@@ -1,4 +1,4 @@
-package ai.dataeng.sqml;
+package ai.dataeng.sqml.flink;
 
 import ai.dataeng.sqml.api.ConfigurationTest;
 import ai.dataeng.sqml.planner.operator.C360Test;
