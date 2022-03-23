@@ -9,10 +9,12 @@ import ai.dataeng.sqml.type.ArrayType;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.*;
+import ai.dataeng.sqml.type.constraint.Cardinality;
 import ai.dataeng.sqml.type.constraint.ConstraintHelper;
 import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.type.schema.FlexibleSchemaHelper;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.PrimitiveArrayTypeInfo;
@@ -39,17 +41,17 @@ public class FlinkTableConverter {
         Schema.Builder schemaBuilder = Schema.newBuilder();
         List<String> rowNames = new ArrayList<>();
         List<TypeInformation> rowCols = new ArrayList<>();
-        getFields(table.getFields()).map(p -> fieldTypeSchemaConversion(p.getKey(),p.getRight(),path)).forEach(p -> {
+        getFields(table.getFields()).map(t -> fieldTypeSchemaConversion(t.getLeft(),t.getMiddle(),t.getRight(),path)).forEach(p -> {
             DataTypes.Field dtf = p.getLeft();
             schemaBuilder.column(dtf.getName(),dtf.getDataType());
             rowNames.add(dtf.getName());
             rowCols.add(p.getRight());
         });
-        schemaBuilder.column(ReservedName.UUID.getCanonical(), toFlinkDataType(UuidType.INSTANCE));
+        schemaBuilder.column(ReservedName.UUID.getCanonical(), toFlinkDataType(UuidType.INSTANCE).notNull());
         rowNames.add(ReservedName.UUID.getCanonical()); rowCols.add(FlinkUtilities.getFlinkTypeInfo(UuidType.INSTANCE,false));
-        schemaBuilder.column(ReservedName.INGEST_TIME.getCanonical(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+        schemaBuilder.column(ReservedName.INGEST_TIME.getCanonical(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3).notNull());
         rowNames.add(ReservedName.INGEST_TIME.getCanonical()); rowCols.add(FlinkUtilities.getFlinkTypeInfo(DateTimeType.INSTANCE,false));
-        schemaBuilder.column(ReservedName.SOURCE_TIME.getCanonical(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+        schemaBuilder.column(ReservedName.SOURCE_TIME.getCanonical(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3).notNull());
         rowNames.add(ReservedName.SOURCE_TIME.getCanonical()); rowCols.add(FlinkUtilities.getFlinkTypeInfo(DateTimeType.INSTANCE,false));
         //TODO: adjust based on configuration
 //        schemaBuilder.columnByExpression("__rowtime", "CAST(_ingest_time AS TIMESTAMP_LTZ(3))");
@@ -57,16 +59,17 @@ public class FlinkTableConverter {
         return Pair.of(schemaBuilder.build(),Types.ROW_NAMED(rowNames.toArray(new String[0]),rowCols.toArray(new TypeInformation[0])));
     }
 
-    private static Stream<Pair<Name, FlexibleDatasetSchema.FieldType>> getFields(RelationType<FlexibleDatasetSchema.FlexibleField> relation) {
+    private static Stream<Triple<Name, FlexibleDatasetSchema.FieldType, Boolean>> getFields(RelationType<FlexibleDatasetSchema.FlexibleField> relation) {
         return relation.getFields().stream().flatMap(field -> field.getTypes().stream().map( ftype -> {
             Name name = FlexibleSchemaHelper.getCombinedName(field,ftype);
-            return Pair.of(name,ftype);
+            boolean isMixedType = field.getTypes().size()>1;
+            return Triple.of(name, ftype, isMixedType);
         }));
     }
 
     private Pair<DataTypes.Field,TypeInformation> fieldTypeSchemaConversion(Name name, FlexibleDatasetSchema.FieldType ftype,
-                                                      NamePath path) {
-//        boolean notnull = !isMixedType && ConstraintHelper.isNonNull(ftype.getConstraints());
+                                                      boolean isMixedType, NamePath path) {
+        boolean notnull = !isMixedType && ConstraintHelper.isNonNull(ftype.getConstraints());
 
         DataType dt; TypeInformation ti;
         if (ftype.getType() instanceof RelationType) {
@@ -74,22 +77,23 @@ public class FlinkTableConverter {
             List<TypeInformation> tis = new ArrayList<>();
             final NamePath nestedpath = path.resolve(name);
             getFields((RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType())
-                    .map(p -> fieldTypeSchemaConversion(p.getKey(),p.getRight(),nestedpath))
+                    .map(t -> fieldTypeSchemaConversion(t.getLeft(),t.getMiddle(),t.getRight(),nestedpath))
                     .forEach(p -> {
                         dtfs.add(p.getLeft());
                         tis.add(p.getRight());
                     });
             if (!isSingleton(ftype)) {
-                dtfs.add(DataTypes.FIELD(ReservedName.ARRAY_IDX.getCanonical(),toFlinkDataType(IntegerType.INSTANCE)));
+                dtfs.add(DataTypes.FIELD(ReservedName.ARRAY_IDX.getCanonical(),toFlinkDataType(IntegerType.INSTANCE).notNull()));
                 tis.add(BasicTypeInfo.LONG_TYPE_INFO);
             }
             dt = DataTypes.ROW(dtfs.toArray(new DataTypes.Field[dtfs.size()]));
             ti = Types.ROW_NAMED(dtfs.stream().map(dtf -> dtf.getName()).toArray(i -> new String[i]),
                     tis.toArray(new TypeInformation[tis.size()]));
             if (!isSingleton(ftype)) {
-                dt = DataTypes.ARRAY(dt);
+                dt = DataTypes.ARRAY(dt.notNull());
                 ti = Types.OBJECT_ARRAY(ti);
             }
+            notnull = !isMixedType && !hasZeroOneMultiplicity(ftype);
         } else if (ftype.getType() instanceof ArrayType) {
             Pair<DataType,TypeInformation> p = wrapArraySchema((ArrayType) ftype.getType());
             dt = p.getLeft(); ti = p.getRight();
@@ -98,6 +102,8 @@ public class FlinkTableConverter {
             dt = toFlinkDataType((BasicType)ftype.getType());
             ti = FlinkUtilities.getFlinkTypeInfo((BasicType) ftype.getType(), false);
         }
+        if (notnull) dt = dt.notNull();
+        else dt = dt.nullable();
         return Pair.of(DataTypes.FIELD(name.getCanonical(),dt),ti);
     }
 
@@ -119,6 +125,13 @@ public class FlinkTableConverter {
     private static boolean isSingleton(FlexibleDatasetSchema.FieldType ftype) {
         return ConstraintHelper.getCardinality(ftype.getConstraints()).isSingleton();
     }
+
+    private static boolean hasZeroOneMultiplicity(FlexibleDatasetSchema.FieldType ftype) {
+        Cardinality card = ConstraintHelper.getCardinality(ftype.getConstraints());
+        return card.isSingleton() && card.getMin()==0;
+    }
+
+
 
     public DataType toFlinkDataType(BasicType type) {
         if (type instanceof StringType) {
@@ -171,9 +184,9 @@ public class FlinkTableConverter {
 
         private Object[] constructRows(Map<Name, Object> data, RelationType<FlexibleDatasetSchema.FlexibleField> schema) {
             return getFields(schema)
-                    .map(p -> {
-                        Name name = p.getKey();
-                        FlexibleDatasetSchema.FieldType ftype = p.getRight();
+                    .map(t -> {
+                        Name name = t.getLeft();
+                        FlexibleDatasetSchema.FieldType ftype = t.getMiddle();
                         if (ftype.getType() instanceof RelationType) {
                             RelationType<FlexibleDatasetSchema.FlexibleField> subType = (RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType();
                             if (isSingleton(ftype)) {
