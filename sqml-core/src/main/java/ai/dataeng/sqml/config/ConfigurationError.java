@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.config;
 
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.basic.LocationConversionError;
 import lombok.NonNull;
 import lombok.Value;
@@ -8,6 +9,10 @@ public class ConfigurationError extends LocationConversionError<ConfigurationErr
 
     public ConfigurationError(Severity severity, @NonNull ConfigurationError.Location location, String msg, Object... args) {
         super(severity, location, msg, args);
+    }
+
+    public static ConfigurationError fatal(LocationType type, Name location, String msg, Object... args) {
+        return new ConfigurationError(Severity.FATAL, new Location(type,location.getDisplay()), msg, args);
     }
 
     public static ConfigurationError fatal(LocationType type, String location, String msg, Object... args) {

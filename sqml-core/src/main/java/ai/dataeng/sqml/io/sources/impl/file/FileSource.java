@@ -1,33 +1,25 @@
 package ai.dataeng.sqml.io.sources.impl.file;
 
 import ai.dataeng.sqml.config.ConfigurationError;
-import ai.dataeng.sqml.config.util.FileUtil;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
+import ai.dataeng.sqml.io.sources.formats.FileFormat;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
+import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import com.google.common.base.Strings;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FilenameUtils;
 import org.h2.util.StringUtils;
 
 /**
@@ -40,8 +32,9 @@ public class FileSource implements DataSource {
 
     private final Name name;
     private final NameCanonicalizer canonicalizer;
-    private final Path directoryPath;
-    private final Pattern partPattern;
+    private final FilePath directoryPath;
+
+    private Pattern partPattern;
     private final FileSourceConfiguration configuration;
 
     @Override
@@ -79,128 +72,107 @@ public class FileSource implements DataSource {
     }
 
     @Override
-    public Collection<? extends SourceTableConfiguration> pollTables(long maxWait, TimeUnit timeUnit) throws InterruptedException {
-        ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
-        Map<Name, FileTableConfiguration> tablesByName = new HashMap<>();
-        try {
-            Files.list(directoryPath).filter(this::supportedFile).forEach(p -> {
-                FileTableConfiguration table = getTable(p,errors);
-                if (table!=null) {
-                    FileTableConfiguration rep = tablesByName.get(table.getTableName());
-                    if (rep==null) tablesByName.put(table.getTableName(),table);
-                    else if (rep.isCompatible(table)) {
-                        errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE, name.toString(),
-                                "Table file [%s] is incompatible with same-name table [%s]",p,rep));
-                    }
-                }
-            });
-        } catch (IOException e) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE, name.toString(),
-                    "Could not read directory [%s] during dataset refresh: %s",directoryPath,e));
-        }
-
-        ProcessMessage.ProcessBundle.logMessages(errors);
+    public Collection<SourceTableConfiguration> discoverTables(ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+        Map<Name, SourceTableConfiguration> tablesByName = new HashMap<>();
+        gatherTables(directoryPath,tablesByName,errors);
         return tablesByName.values();
     }
 
-    private static String getExtension(Path p) {
-        return FileUtil.getExtension(p);
-    }
+    private void gatherTables(FilePath directory, Map<Name, SourceTableConfiguration> tablesByName,
+                              ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+        try {
+            for (FilePath.Status fps : directory.listFiles()) {
+                FilePath p = fps.getPath();
+                if (fps.isDir()) {
+                    gatherTables(p,tablesByName,errors);
+                } else {
+                    FilePath.NameComponents components = p.getComponents(partPattern);
+                    if (FileFormat.validFormat(components.getFormat()) &&
+                        !Strings.isNullOrEmpty(components.getName())) {
+                        SourceTableConfiguration table = new SourceTableConfiguration(components.getName(),
+                                components.getFormat(), null);
+                        Name tblName = getCanonicalizer().name(table.getName());
+                        SourceTableConfiguration otherTbl = tablesByName.get(tblName);
+                        if (otherTbl==null) tablesByName.put(tblName,table);
+                        else if (!otherTbl.getFormat().equalsIgnoreCase(table.getFormat())) {
+                            errors.add(ConfigurationError.warn(ConfigurationError.LocationType.SOURCE, name.toString(),
+                                    "Table file [%s] does not have the same format as table [%s]. File will be ignored",p,otherTbl));
+                        }
 
-    private boolean supportedFile(Path p) {
-        return Files.isRegularFile(p) && FileFormat.validExtension(getExtension(p));
-    }
-
-    private FileTableConfiguration getTable(Path p, ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        Preconditions.checkArgument(supportedFile(p));
-        String absBasePath = p.getParent().toAbsolutePath().toString();
-        String extension = FileUtil.getExtension(p);
-        String fileName = FileUtil.removeExtension(p);
-        //Match pattern
-        boolean multipleParts = false;
-        Matcher matcher = partPattern.matcher(fileName);
-        if (matcher.find()) {
-            String part = matcher.group(0);
-            String number = matcher.group(1);
-            int partNo;
-            try {
-                partNo = Integer.parseInt(number);
-            } catch (NumberFormatException e) {
-                partNo = -1;
+                    }
+                }
             }
-            if (partNo<0) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE, name.toString(),
-                        "Identified part number [%s] of file [%s] is not a valid integer",number,p));
-                return null;
-            }
-            multipleParts = true;
-            //Remove part which is guaranteed to be at the end
-            fileName = fileName.substring(0,fileName.length()-part.length());
-        }
-        if (StringUtils.isNullOrEmpty(fileName.trim())) {
+        } catch (IOException e) {
             errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE, name.toString(),
-                    "File name [%s] is not valid after removing extension and part number",p));
-            return null;
+                    "Could not read directory [%s] during dataset refresh: %s",directory,e));
         }
-        FileFormat fileFormat = FileFormat.getFileTypeFromExtension(extension);
-        if (fileFormat ==null) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE, name.toString(),
-                    "File name [%s] does not have a valid extension",p));
-            return null;
-        }
-        Name tableName = Name.of(fileName, canonicalizer); //tableName and prefix are identical in this case
-        return new FileTableConfiguration(tableName, absBasePath, extension, fileFormat,multipleParts, tableName);
     }
 
+    public Collection<FilePath> getFilesForTable(SourceTableConfiguration tableConfig) throws IOException {
+        List<FilePath> files = new ArrayList<>();
+        gatherTableFiles(directoryPath,files,canonicalizer.name(tableConfig.getIdentifier()), tableConfig.getFormat());
+        return files;
+    }
+
+    private void gatherTableFiles(FilePath directory, List<FilePath> files, Name filePrefix, String format) throws IOException {
+        for (FilePath.Status fps : directory.listFiles()) {
+            FilePath p = fps.getPath();
+            if (fps.isDir()) {
+                gatherTableFiles(p,files,filePrefix,format);
+            } else {
+                FilePath.NameComponents components = p.getComponents(partPattern);
+                if (canonicalizer.name(components.getName()).equals(filePrefix) && components.getFormat().equalsIgnoreCase(format)) {
+                    files.add(p);
+                }
+            }
+        }
+    }
 
     @Override
-    public boolean isCompatible(@NonNull DataSource other, @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        Preconditions.checkArgument((other instanceof FileSource) && other.getDatasetName().equals(name));
-        FileSource otherDir = (FileSource) other;
-        //TODO: support updates
+    public boolean update(@NonNull DataSourceConfiguration config, @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
         errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.GLOBAL,"",
                 "File data sources currently do not support updates"));
         return false;
     }
 
     @Override
-    public DataSourceConfiguration getConfiguration() {
+    public FileSourceConfiguration getConfiguration() {
         return configuration;
     }
 
-    public List<NumberedFile> getTableFiles(FileTableConfiguration table, int partNoOffset) throws IOException {
-        List<NumberedFile> files = new ArrayList<>();
-        Files.list(directoryPath).filter(Files::isRegularFile).forEach(p -> {
-            String filename = p.getFileName().toString();
-            if (FilenameUtils.getExtension(filename).equals(table.extension)) {
-                filename = FilenameUtils.removeExtension(filename);
-                if (!table.multipleParts && Name.of(filename,canonicalizer).equals(table.filePrefix)) {
-                    files.add(new NumberedFile(0,p));
-                } else if (table.multipleParts &&
-                        Name.of(filename.substring(0,table.filePrefix.length()),canonicalizer).equals(table.filePrefix)) {
-                    Matcher matcher = partPattern.matcher(filename);
-                    if (matcher.find()) {
-                        String number = matcher.group(1);
-                        int partNo = Integer.parseInt(number);
-                        files.add(new NumberedFile(partNo,p));
-                    }
-                } //else ignore file
-            }
-
-        });
-        Collections.sort(files);
-        return files;
-    }
-
-    @Value
-    public static class NumberedFile implements Comparable<NumberedFile> {
-
-        private final int number;
-        private final Path file;
-
-        @Override
-        public int compareTo(NumberedFile o) {
-            return Integer.compare(number,o.number);
-        }
-    }
+//    public List<NumberedFile> getTableFiles(FileTableConfiguration table, int partNoOffset) throws IOException {
+//        List<NumberedFile> files = new ArrayList<>();
+//        Files.list(directoryPath).filter(Files::isRegularFile).forEach(p -> {
+//            String filename = p.getFileName().toString();
+//            if (FilenameUtils.getExtension(filename).equals(table.extension)) {
+//                filename = FilenameUtils.removeExtension(filename);
+//                if (!table.multipleParts && Name.of(filename,canonicalizer).equals(table.filePrefix)) {
+//                    files.add(new NumberedFile(0,p));
+//                } else if (table.multipleParts &&
+//                        Name.of(filename.substring(0,table.filePrefix.length()),canonicalizer).equals(table.filePrefix)) {
+//                    Matcher matcher = partPattern.matcher(filename);
+//                    if (matcher.find()) {
+//                        String number = matcher.group(1);
+//                        int partNo = Integer.parseInt(number);
+//                        files.add(new NumberedFile(partNo,p));
+//                    }
+//                } //else ignore file
+//            }
+//
+//        });
+//        Collections.sort(files);
+//        return files;
+//    }
+//
+//    @Value
+//    public static class NumberedFile implements Comparable<NumberedFile> {
+//
+//        private final int number;
+//        private final Path file;
+//
+//        @Override
+//        public int compareTo(NumberedFile o) {
+//            return Integer.compare(number,o.number);
+//        }
+//    }
 }

@@ -3,26 +3,21 @@ package ai.dataeng.sqml.io.sources.dataset;
 import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
+import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.basic.ProcessMessage;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import lombok.NonNull;
+import java.util.*;
 
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class DatasetRegistry implements DatasetLookup, Closeable {
 
     final DatasetRegistryPersistence persistence;
 
-    private final ScheduledExecutorService tableMonitors = Executors.newSingleThreadScheduledExecutor();
-    final long defaultInitialPollingWaitMS = 50;
-    final long pollingBackgroundWaitTimeMS = 5000;
-    final long pollTablesEveryMS = 300000;
     final SourceTableMonitor tableMonitor;
 
     private final Map<Name, SourceDataset> datasets;
@@ -39,49 +34,59 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         //Read existing datasets from store
         for (DataSourceConfiguration dsConfig : persistence.getDatasets()) {
             ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
-            addOrUpdateSource(dsConfig, errors, 10);
-            if (errors.isFatal()) {
-                throw new RuntimeException(
-                        errors.combineMessages(ProcessMessage.Severity.FATAL,
-                                "Could not initialize dataset from stored config: \n","\n"));
-            }
+            initializeSource(dsConfig,errors);
+            addOrUpdateSource(dsConfig, errors);
+            ProcessMessage.ProcessBundle.logMessages(errors);
         }
+    }
+
+    private SourceDataset initializeSource(DataSourceConfiguration datasource, ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+        DataSource source = datasource.initialize(errors);
+        if (source==null) return null;
+        SourceDataset dataset = new SourceDataset(this, source);
+        datasets.put(dataset.getName(), dataset);
+        return dataset;
     }
 
     public synchronized SourceDataset addOrUpdateSource
             (@NonNull DataSourceConfiguration datasource,
              @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        return addOrUpdateSource(datasource,errors, defaultInitialPollingWaitMS);
+        return addOrUpdateSource(datasource, Collections.EMPTY_LIST, errors);
     }
 
-    public synchronized SourceDataset addOrUpdateSource
-            (@NonNull DataSourceConfiguration datasource,
-             @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors,
-             long sourceInitializationWaitTimeMS) {
-        DataSource source = datasource.initialize(errors);
-        if (source==null) return null;
-        SourceDataset dataset = datasets.get(source.getDatasetName());
-        if (dataset==null) {
-            dataset = new SourceDataset(this, source);
-            persistence.putDataset(source.getDatasetName(), datasource);
-            datasets.put(dataset.getName(), dataset);
 
+    public synchronized SourceDataset addOrUpdateSource
+            (@NonNull DataSourceConfiguration datasource, @NonNull List<SourceTableConfiguration> tables,
+             @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+        SourceDataset dataset = datasets.get(datasource.getDatasetName());
+        DataSource source;
+        if (dataset==null) {
+            dataset = initializeSource(datasource,errors);
+            source = dataset.getSource();
         } else {
-            if (dataset.getSource().isCompatible(source, errors)) {
-                dataset.updateConfiguration(source);
-            } else {
+            source = dataset.getSource();
+            if (!source.update(datasource,errors)) {
                 return null;
             }
-            source = dataset.getSource();
         }
-        long initialPollingDelayMS = pollTablesEveryMS;
-        try {
-            dataset.refreshTables(sourceInitializationWaitTimeMS);
-        } catch (InterruptedException e) {
-            //Initial table polling is taking too long, let's do it again soon in the background
-            initialPollingDelayMS = 0;
+        persistence.putDataset(source.getDatasetName(), source.getConfiguration());
+
+        Map<Name,SourceTableConfiguration> tableByName = new HashMap<>();
+        for (SourceTableConfiguration tbl : tables) {
+            tableByName.put(dataset.getCanonicalizer().name(tbl.getName()), tbl);
         }
-        tableMonitors.scheduleWithFixedDelay(dataset.polling, initialPollingDelayMS, pollTablesEveryMS, TimeUnit.MILLISECONDS);
+
+        if (datasource.discoverTables()) {
+            for (SourceTableConfiguration tbl: source.discoverTables(errors)) {
+                Name tblName = dataset.getCanonicalizer().name(tbl.getName());
+                if (!tableByName.containsKey(tblName)) {
+                    tableByName.put(tblName, tbl);
+                }
+            }
+        }
+        for (SourceTableConfiguration tbl : tableByName.values()) {
+            dataset.addTable(tbl, errors);
+        }
         return dataset;
     }
 
@@ -100,7 +105,7 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
 
     @Override
     public void close() throws IOException {
-        tableMonitors.shutdown();
+
     }
 
 }

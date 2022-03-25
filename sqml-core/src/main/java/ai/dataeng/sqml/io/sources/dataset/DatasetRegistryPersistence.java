@@ -14,7 +14,7 @@ public interface DatasetRegistryPersistence {
 
     Set<SourceTableConfiguration> getTables(Name datasetName);
 
-    void putTable(Name dataset, SourceTableConfiguration table);
+    void putTable(Name dataset, Name tblName, SourceTableConfiguration table);
 
     SourceTableStatistics getTableStatistics(Name datasetName, Name tableName);
 

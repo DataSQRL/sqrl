@@ -48,14 +48,13 @@ public class MetadataRegistryPersistence implements DatasetRegistryPersistence {
             SourceTableConfiguration config = store.get(SourceTableConfiguration.class,
                     STORE_DATASET_KEY,name2Key(dataset),STORE_TABLE_KEY,tbName,STORE_TABLE_CONFIG_KEY);
             Preconditions.checkArgument(config!=null,"Persistence of configuration failed.");
-            Preconditions.checkArgument(name2Key(config.getTableName()).equals(tbName));
             return config;
         }).collect(Collectors.toSet());
     }
 
     @Override
-    public void putTable(Name dataset, SourceTableConfiguration table) {
-        store.put(table,STORE_DATASET_KEY,name2Key(dataset),STORE_TABLE_KEY,name2Key(table.getTableName()),STORE_TABLE_CONFIG_KEY);
+    public void putTable(Name dataset, Name tblName, SourceTableConfiguration table) {
+        store.put(table,STORE_DATASET_KEY,name2Key(dataset),STORE_TABLE_KEY,name2Key(tblName),STORE_TABLE_CONFIG_KEY);
     }
 
     @Override

@@ -4,20 +4,23 @@ package ai.dataeng.sqml.io.sources.dataset;
  * Call-back interface to inform the {@link ai.dataeng.sqml.Environment} to start monitoring a new {@link SourceTable}
  * to compile statistics on the data.
  *
+ * A {@link SourceTableMonitor} implementation keeps track of the status of the monitoring, continues monitoring in case
+ * of recoverable failure, and persists the job id to stop monitoring when needed.
+ *
  */
 public interface SourceTableMonitor {
 
     /**
+     * Monitors the given table. This call is a no-op if this table is already being monitored.
      *
-     * @param table
-     * @return id that uniquely identifies the monitoring job
+     * @param table the table to monitor
      */
-    String startTableMonitoring(SourceTable table);
+    void startTableMonitoring(SourceTable table);
 
     /**
      *
-     * @param id of the monitoring job
+     * @param table the table to stop monitoring
      */
-    void stopTableMonitoring(String id);
+    void stopTableMonitoring(SourceTable table);
 
 }

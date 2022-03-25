@@ -11,16 +11,14 @@ public interface SourceTableMonitorProvider {
 
     static SourceTableMonitorProvider NO_MONITORING = (e,m) -> {
 
-        final AtomicInteger counter = new AtomicInteger(0);
-
         return new SourceTableMonitor() {
             @Override
-            public String startTableMonitoring(SourceTable table) {
-                return String.valueOf(counter.incrementAndGet());
+            public void startTableMonitoring(SourceTable table) {
+                //Do nothing
             }
 
             @Override
-            public void stopTableMonitoring(String id) {
+            public void stopTableMonitoring(SourceTable table) {
                 //Do nothing;
             }
         };

@@ -15,25 +15,13 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 public class SourceTable {
 
     final SourceDataset dataset;
-    private SourceTableConfiguration config;
+    private final SourceTableConfiguration config;
+    private final Name name;
 
-    public SourceTable(SourceDataset dataset, SourceTableConfiguration config) {
+    public SourceTable(SourceDataset dataset, Name tableName, SourceTableConfiguration config) {
         this.dataset = dataset;
         this.config = config;
-    }
-
-    void updateConfiguration(SourceTableConfiguration tableConfig) {
-        Preconditions.checkArgument(tableConfig.getTableName().equals(config.getTableName()));
-        //No need to do anything if configurations haven't changed
-        if (!config.equals(tableConfig)) {
-            //Make sure the new table configuration is compatible and update
-            if (config.isCompatible(tableConfig)) {
-                config = tableConfig;
-                dataset.registry.persistence.putTable(dataset.getName(), tableConfig);
-            } else {
-                throw new IllegalStateException(String.format("Updated table is incompatible with existing one: [%s]",tableConfig));
-            }
-        }
+        this.name = tableName;
     }
 
     public @NonNull SourceTableConfiguration getConfiguration() {
@@ -54,7 +42,7 @@ public class SourceTable {
      * @return
      */
     public Name getName() {
-        return config.getTableName();
+        return name;
     }
 
     public String qualifiedName() {

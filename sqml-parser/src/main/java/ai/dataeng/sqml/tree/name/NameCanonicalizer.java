@@ -10,6 +10,10 @@ public interface NameCanonicalizer extends Serializable {
 
     String getCanonical(String name);
 
+    default Name name(String name) {
+        return Name.of(name,this);
+    }
+
     NameCanonicalizer LOWERCASE_ENGLISH = new LowercaseEnglishCanonicalizer();
 
     NameCanonicalizer AS_IS = new IdentityCanonicalizer();

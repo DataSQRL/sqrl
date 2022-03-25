@@ -1,9 +1,11 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
+import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
+import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import java.util.Collection;
@@ -12,6 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+
+import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -21,12 +25,10 @@ import lombok.Value;
  *
  * The role of a {@link SourceDataset} is to register all of its {@link SourceTable} within an execution environment.
  *
- * TODO: Run background thread to monitor
  */
 public class SourceDataset {
 
     final DatasetRegistry registry;
-    final PollTablesTimer polling;
     private DataSource source;
     private final Map<Name,SourceTable> tables = new HashMap<>();
 
@@ -34,37 +36,47 @@ public class SourceDataset {
         this.registry = registry;
         this.source = source;
         initializeTables();
-        polling = new PollTablesTimer(registry.pollingBackgroundWaitTimeMS);
     }
 
     void initializeTables() {
         //Read existing tables within dataset from store
-        for (SourceTableConfiguration tblConfig : registry.persistence.getTables(source.getDatasetName()));
-    }
-
-    synchronized SourceTable initiateTable(SourceTableConfiguration tableConfig) {
-        Preconditions.checkArgument(!tables.containsKey(tableConfig.getTableName()));
-        SourceTable tbl = new SourceTable(this,tableConfig);
-        tables.put(tbl.getName(),tbl);
-        return tbl;
-    }
-
-    synchronized void addOrUpdateTable(SourceTableConfiguration tableConfig) {
-        SourceTable existingTbl = tables.get(tableConfig.getTableName());
-        if (existingTbl == null) {
-            //New table
-            SourceTable tbl = initiateTable(tableConfig);
-            registry.persistence.putTable(source.getDatasetName(),tableConfig);
-            registry.tableMonitor.startTableMonitoring(tbl);
-        } else {
-            existingTbl.updateConfiguration(tableConfig);
+        for (SourceTableConfiguration tblConfig : registry.persistence.getTables(source.getDatasetName())) {
+            ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
+            SourceTable table = initiateTable(tblConfig, errors);
+            registry.tableMonitor.startTableMonitoring(table);
+            ProcessMessage.ProcessBundle.logMessages(errors);
         }
     }
 
-    void updateConfiguration(DataSource update) {
-        Preconditions.checkArgument(source.getDatasetName().equals(update.getDatasetName()));
-        source = update;
-        registry.persistence.putDataset(source.getDatasetName(),source.getConfiguration());
+    synchronized SourceTable initiateTable(SourceTableConfiguration tableConfig,
+                                           ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+        Name tblName = getCanonicalizer().name(tableConfig.getName());
+        Preconditions.checkArgument(!tables.containsKey(tblName));
+        SourceTable tbl = new SourceTable(this, tblName, tableConfig);
+        tables.put(tblName,tbl);
+        return tbl;
+    }
+
+    synchronized SourceTable addTable(SourceTableConfiguration tableConfig,
+                               ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.getName()));
+        Name tblName = Name.of(tableConfig.getName(),getCanonicalizer());
+        SourceTable table = tables.get(tblName);
+        if (table == null) {
+            //New table
+            if (tableConfig.validateAndInitialize(this.getSource(),errors)) {
+                table = initiateTable(tableConfig, errors);
+            } else {
+                return null;
+            }
+        } else {
+            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,getName(),
+                    "Table [%s] already exists. To update table, delete and re-add", tblName.getDisplay()));
+            return null;
+        }
+        registry.persistence.putTable(source.getDatasetName(), tblName, tableConfig);
+        registry.tableMonitor.startTableMonitoring(table);
+        return table;
     }
 
     public DataSource getSource() {
@@ -112,28 +124,6 @@ public class SourceDataset {
         return Name.of(s, source.getCanonicalizer());
     }
 
-    void refreshTables(long pollingWaitTimeMS) throws InterruptedException {
-        Collection<? extends SourceTableConfiguration> tables = Collections.EMPTY_SET;
-        tables = source.pollTables(pollingWaitTimeMS, TimeUnit.MILLISECONDS);
-        for (SourceTableConfiguration tblConfig: tables) addOrUpdateTable(tblConfig);
-        //TODO: Should we implement table removal if table hasn't been present for X amount of time?
-    }
-
-    @AllArgsConstructor
-    class PollTablesTimer extends TimerTask {
-
-        private final long pollingWaitTimeMS;
-
-        @Override
-        public void run() {
-            try {
-                refreshTables(pollingWaitTimeMS);
-            }  catch (InterruptedException e) {
-                //Ignore since we will poll again
-                return;
-            }
-        }
-    }
 
     public Digest getDigest() {
         return new Digest(getName(),getCanonicalizer());
