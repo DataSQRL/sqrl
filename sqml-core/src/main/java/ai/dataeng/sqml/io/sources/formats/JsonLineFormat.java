@@ -32,14 +32,8 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
 
         private transient ObjectMapper mapper;
 
-        public JsonLineParser() {}
-
-
-        private ObjectMapper getMapper() {
-            if (mapper==null) {
-                mapper = new ObjectMapper();
-            }
-            return mapper;
+        public JsonLineParser() {
+            mapper = new ObjectMapper();
         }
 
         @Override

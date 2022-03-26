@@ -75,6 +75,7 @@ public class IngestAndSchemaTest {
                 .name(dsName)
                 .build();
         registry.addOrUpdateSource(fileConfig, errors);
+        System.out.println(errors);
         assertFalse(errors.isFatal());
 
         String ds2Name = "c360";

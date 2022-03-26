@@ -39,7 +39,7 @@ public interface Format<C extends FormatConfiguration> {
                 return new Result(Type.SKIP,null,null,null);
             }
 
-            enum Type { ERROR, SKIP, SUCCESS }
+            public enum Type { ERROR, SKIP, SUCCESS }
 
         }
 

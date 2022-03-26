@@ -11,14 +11,6 @@ import javax.annotation.Nullable;
 public interface DataSourceConfiguration extends Serializable {
 
     /**
-     * The name of the dataset produced by this data source.
-     * The name must be unique within a server instance.
-     *
-     * @return name of dataset
-     */
-    @NonNull Name getDatasetName();
-
-    /**
      * Whether this datasource should automatically discover available tables
      * when the data source is added and register those tables with the source.
      *

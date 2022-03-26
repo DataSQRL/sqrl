@@ -9,6 +9,8 @@ import ai.dataeng.sqml.type.basic.ProcessMessage;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -34,14 +36,12 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         //Read existing datasets from store
         for (DataSourceConfiguration dsConfig : persistence.getDatasets()) {
             ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
-            initializeSource(dsConfig,errors);
-            addOrUpdateSource(dsConfig, errors);
+            initializeSource(dsConfig.initialize(errors));
             ProcessMessage.ProcessBundle.logMessages(errors);
         }
     }
 
-    private SourceDataset initializeSource(DataSourceConfiguration datasource, ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        DataSource source = datasource.initialize(errors);
+    private SourceDataset initializeSource(DataSource source) {
         if (source==null) return null;
         SourceDataset dataset = new SourceDataset(this, source);
         datasets.put(dataset.getName(), dataset);
@@ -58,10 +58,11 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
     public synchronized SourceDataset addOrUpdateSource
             (@NonNull DataSourceConfiguration datasource, @NonNull List<SourceTableConfiguration> tables,
              @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        SourceDataset dataset = datasets.get(datasource.getDatasetName());
-        DataSource source;
+        DataSource source = datasource.initialize(errors);
+        if (source == null) return null; //validation failed
+        SourceDataset dataset = datasets.get(source.getDatasetName());
         if (dataset==null) {
-            dataset = initializeSource(datasource,errors);
+            dataset = initializeSource(source);
             source = dataset.getSource();
         } else {
             source = dataset.getSource();
@@ -71,20 +72,23 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         }
         persistence.putDataset(source.getDatasetName(), source.getConfiguration());
 
-        Map<Name,SourceTableConfiguration> tableByName = new HashMap<>();
+        Set<Name> tableNames = new HashSet<>();
         for (SourceTableConfiguration tbl : tables) {
-            tableByName.put(dataset.getCanonicalizer().name(tbl.getName()), tbl);
+            if (Name.validName(tbl.getName())) {
+                tableNames.add(dataset.getCanonicalizer().name(tbl.getName()));
+            }
         }
 
+        List<SourceTableConfiguration> allTables = new ArrayList<>(tables);
         if (datasource.discoverTables()) {
             for (SourceTableConfiguration tbl: source.discoverTables(errors)) {
                 Name tblName = dataset.getCanonicalizer().name(tbl.getName());
-                if (!tableByName.containsKey(tblName)) {
-                    tableByName.put(tblName, tbl);
+                if (!tableNames.contains(tblName)) {
+                    allTables.add(tbl);
                 }
             }
         }
-        for (SourceTableConfiguration tbl : tableByName.values()) {
+        for (SourceTableConfiguration tbl : allTables) {
             dataset.addTable(tbl, errors);
         }
         return dataset;

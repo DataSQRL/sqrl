@@ -39,6 +39,7 @@ public class DataStreamProvider {
             TextLineFormat.Parser parser = (TextLineFormat.Parser)tblConfig.getFormatParser();
 
             List<SourceRecord.Raw> allItems = preview.getTextPreview().flatMap( br -> br.lines()).map(parser::parse)
+                    .filter(r -> r.getType() == Format.Parser.Result.Type.SUCCESS)
                     .map(r -> new SourceRecord.Raw(r.getRecord(), r.getSource_time())).collect(Collectors.toList());
             DataStreamSource<SourceRecord.Raw> stream = env.fromCollection(allItems);
 //        stream.assignTimestampsAndWatermarks(WatermarkStrategy.<SourceRecord>forMonotonousTimestamps().withTimestampAssigner((event, timestamp) -> event.getSourceTime().toEpochSecond()));

@@ -88,9 +88,9 @@ public class FileSource implements DataSource {
                 } else {
                     FilePath.NameComponents components = p.getComponents(partPattern);
                     if (FileFormat.validFormat(components.getFormat()) &&
-                        !Strings.isNullOrEmpty(components.getName())) {
+                        Name.validName(components.getName())) {
                         SourceTableConfiguration table = new SourceTableConfiguration(components.getName(),
-                                components.getFormat(), null);
+                                components.getFormat());
                         Name tblName = getCanonicalizer().name(table.getName());
                         SourceTableConfiguration otherTbl = tablesByName.get(tblName);
                         if (otherTbl==null) tablesByName.put(tblName,table);
@@ -110,18 +110,19 @@ public class FileSource implements DataSource {
 
     public Collection<FilePath> getFilesForTable(SourceTableConfiguration tableConfig) throws IOException {
         List<FilePath> files = new ArrayList<>();
-        gatherTableFiles(directoryPath,files,canonicalizer.name(tableConfig.getIdentifier()), tableConfig.getFormat());
+        gatherTableFiles(directoryPath,files,tableConfig);
         return files;
     }
 
-    private void gatherTableFiles(FilePath directory, List<FilePath> files, Name filePrefix, String format) throws IOException {
+    private void gatherTableFiles(FilePath directory, List<FilePath> files, SourceTableConfiguration tableConfig) throws IOException {
         for (FilePath.Status fps : directory.listFiles()) {
             FilePath p = fps.getPath();
             if (fps.isDir()) {
-                gatherTableFiles(p,files,filePrefix,format);
+                gatherTableFiles(p,files,tableConfig);
             } else {
                 FilePath.NameComponents components = p.getComponents(partPattern);
-                if (canonicalizer.name(components.getName()).equals(filePrefix) && components.getFormat().equalsIgnoreCase(format)) {
+                if (canonicalizer.getCanonical(components.getName()).equals(tableConfig.getIdentifier()) &&
+                        components.getFormat().equalsIgnoreCase(tableConfig.getFormat())) {
                     files.add(p);
                 }
             }

@@ -34,25 +34,26 @@ public class SourceTableConfiguration {
     @Valid FormatConfiguration formatConfig;
 
     public SourceTableConfiguration(@NonNull String name,
-                              @NonNull String format, @NonNull FormatConfiguration formatConfig) {
+                              @NonNull String format) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(format));
         Preconditions.checkNotNull(!Strings.isNullOrEmpty(name));
         this.name = name;
         this.identifier = name;
         this.format = format;
-        this.formatConfig = formatConfig;
+        this.formatConfig = null;
     }
 
     public boolean validateAndInitialize(DataSource source, ProcessMessage.ProcessBundle<ConfigurationError> errors) {
         Name dataset = source.getDatasetName();
-        if (Strings.isNullOrEmpty(name)) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,dataset,"Table needs to have valid name"));
+        if (!Name.validName(name)) {
+            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,dataset,"Table needs to have valid name: %s",name));
             return false;
         }
         if (Strings.isNullOrEmpty(identifier)) identifier = name;
+        identifier = source.getCanonicalizer().getCanonical(identifier);
         if (!Strings.isNullOrEmpty(format)) format = format.trim().toLowerCase();
-        if (FileFormat.validFormat(format)) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,dataset,"Table [%s] needs to have valid name",name));
+        if (!FileFormat.validFormat(format)) {
+            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,dataset,"Table [%s] has invalid format: %s",name, format));
             return false;
         }
         Format<FormatConfiguration> formatImpl = getFormatImpl();

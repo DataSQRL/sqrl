@@ -113,6 +113,7 @@ public class ConfigurationTest {
 
         ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
         registry.addOrUpdateSource(fileConfig, errors);
+        if (errors.isFatal()) System.out.println(errors);
         assertFalse(errors.isFatal());
 
         //Needs some time to wait for the flink pipeline to compile data

@@ -21,7 +21,7 @@ public class SourceRecord<K> implements Serializable {
     private final Instant ingestTime;
     private final UUID uuid;
 
-    public SourceRecord(@NonNull Map<K, Object> data, @NonNull Instant sourceTime, @NonNull Instant ingestTime, UUID uuid) {
+    public SourceRecord(@NonNull Map<K, Object> data, Instant sourceTime, @NonNull Instant ingestTime, UUID uuid) {
         this.data = data;
         this.sourceTime = sourceTime;
         this.ingestTime = ingestTime;
@@ -80,7 +80,7 @@ public class SourceRecord<K> implements Serializable {
 
     public static class Raw extends SourceRecord<String> {
 
-        public Raw(@NonNull Map<String, Object> data, @NonNull Instant sourceTime, @NonNull Instant ingestTime, UUID uuid) {
+        public Raw(@NonNull Map<String, Object> data, Instant sourceTime, @NonNull Instant ingestTime, UUID uuid) {
             super(data, sourceTime, ingestTime, uuid);
         }
 
@@ -91,7 +91,7 @@ public class SourceRecord<K> implements Serializable {
 
     public static class Named extends SourceRecord<Name> {
 
-        public Named(@NonNull Map<Name, Object> data, @NonNull Instant sourceTime, @NonNull Instant ingestTime, UUID uuid) {
+        public Named(@NonNull Map<Name, Object> data, Instant sourceTime, @NonNull Instant ingestTime, UUID uuid) {
             super(data, sourceTime, ingestTime, uuid);
         }
 

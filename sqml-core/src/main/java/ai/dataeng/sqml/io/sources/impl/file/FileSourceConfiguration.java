@@ -10,6 +10,8 @@ import ai.dataeng.sqml.type.basic.ProcessMessage;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
+
+import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -46,26 +48,29 @@ public class FileSourceConfiguration implements DataSourceConfiguration {
 
     private DataSource validateAndInitialize(ProcessMessage.ProcessBundle<ConfigurationError> errors) {
         NameCanonicalizer canon = canonicalizer.getCanonicalizer();
-        Name name = getDatasetName();
+        if (Strings.isNullOrEmpty(name)) {
+            name = (new FilePath(uri)).getFileName();
+        }
+        if (!Name.validName(name)) {
+            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,name,"Invalid name: %s", this.name));
+            return null;
+        }
+
+        Name nname = canonicalizer.getCanonicalizer().name(name);
         FilePath directoryPath = new FilePath(uri);
         try {
             FilePath.Status status = directoryPath.getStatus();
             if (!status.exists() || !status.isDir()) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,name.getDisplay(),"URI [%s] is not a directory", uri));
+                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,nname.getDisplay(),"URI [%s] is not a directory", uri));
                 return null;
             }
         } catch (IOException e) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,name.getDisplay(),"URI [%s] is invalid: %s", uri, e));
+            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,nname.getDisplay(),"URI [%s] is invalid: %s", uri, e));
             return null;
         }
 
         Pattern partPattern = Pattern.compile(pattern+"$");
-        return new FileSource(name,canon,directoryPath,partPattern,this);
-    }
-
-    @Override
-    public Name getDatasetName() {
-        return canonicalizer.getCanonicalizer().name(StringUtils.isNullOrEmpty(name)?(new FilePath(uri)).getFileName():name);
+        return new FileSource(nname,canon,directoryPath,partPattern,this);
     }
 
     @Override

@@ -59,16 +59,14 @@ public class SourceDataset {
 
     synchronized SourceTable addTable(SourceTableConfiguration tableConfig,
                                ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.getName()));
-        Name tblName = Name.of(tableConfig.getName(),getCanonicalizer());
+        if (!tableConfig.validateAndInitialize(this.getSource(),errors)) {
+            return null; //validation failed
+        }
+        Name tblName = getCanonicalizer().name(tableConfig.getName());
         SourceTable table = tables.get(tblName);
         if (table == null) {
             //New table
-            if (tableConfig.validateAndInitialize(this.getSource(),errors)) {
-                table = initiateTable(tableConfig, errors);
-            } else {
-                return null;
-            }
+            table = initiateTable(tableConfig, errors);
         } else {
             errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,getName(),
                     "Table [%s] already exists. To update table, delete and re-add", tblName.getDisplay()));
