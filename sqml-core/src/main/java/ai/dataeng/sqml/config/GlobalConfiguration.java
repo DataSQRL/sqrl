@@ -5,7 +5,8 @@ import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.config.scripts.FileScriptConfiguration;
 import ai.dataeng.sqml.config.util.ConfigurationUtil;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -85,7 +86,7 @@ public class GlobalConfiguration {
         return config;
     }
 
-    public ProcessMessage.ProcessBundle<ConfigurationError> validate() {
+    public ErrorCollector validate() {
         return ConfigurationUtil.javaxValidate(this);
     }
 

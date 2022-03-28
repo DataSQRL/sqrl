@@ -10,7 +10,7 @@ import ai.dataeng.sqml.config.util.StringNamedId;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -121,7 +121,7 @@ public class APIServerTest {
 
     @Test
     public void testReadDeployment(Vertx vertx, VertxTestContext testContext) throws Throwable {
-        ProcessMessage.ProcessBundle errors = new ProcessMessage.ProcessBundle<>();
+        ErrorCollector errors = ErrorCollector.root();
         ScriptDeployment.Result result = env.deployScript(deployConfig,errors);
         assertNotNull(result);
 
@@ -190,7 +190,7 @@ public class APIServerTest {
 
     @Test
     public void testGettingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
-        registry.addOrUpdateSource(fileConfig,new ProcessMessage.ProcessBundle<>());
+        registry.addOrUpdateSource(fileConfig,ErrorCollector.root());
         assertNotNull(registry.getDataset(dsName));
 
         Checkpoint requestCheckpoint = testContext.checkpoint(3);

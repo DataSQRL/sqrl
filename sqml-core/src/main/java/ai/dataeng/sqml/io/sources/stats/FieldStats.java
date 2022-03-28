@@ -5,7 +5,7 @@ import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.BasicTypeManager;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import java.util.Arrays;
@@ -32,7 +32,7 @@ public class FieldStats implements Serializable {
     public FieldStats() {
     }
 
-    public static void validate(Object o, DocumentPath path, ProcessBundle<StatsIngestError> errors,
+    public static void validate(Object o, ErrorCollector errors,
                                 NameCanonicalizer canonicalizer) {
         if (isArray(o)) {
             Type type = null;
@@ -45,12 +45,12 @@ public class FieldStats implements Serializable {
                 if (next instanceof Map) {
                     elementType = RelationType.EMPTY;
                     if (array.getRight()!=1) {
-                        errors.add(StatsIngestError.fatal(path,"Nested arrays of objects are not supported: [%s]", o));
+                        errors.fatal("Nested arrays of objects are not supported: [%s]", o);
                     }
-                    RelationStats.validate((Map)next,path,errors, canonicalizer);
+                    RelationStats.validate((Map)next, errors, canonicalizer);
                 } else {
                     //since we flatmapped, this must be a scalar
-                    elementType = getBasicType(next, errors, path);
+                    elementType = getBasicType(next, errors);
                     if (elementType == null) return;
                 }
                 if (type == null) type = elementType;
@@ -58,17 +58,17 @@ public class FieldStats implements Serializable {
                     if (type instanceof BasicType && elementType instanceof BasicType) {
                         type = BasicTypeManager.combine((BasicType)type,(BasicType)elementType, true);
                     } else {
-                        errors.add(StatsIngestError.fatal(path,"Array contains elements with incompatible types: [%s]. Found [%s] and [%s]", o, type, elementType));
+                        errors.fatal("Array contains elements with incompatible types: [%s]. Found [%s] and [%s]", o, type, elementType);
                     }
                 }
             }
         } else if (o != null) {
             //Single element
             if (o instanceof Map) {
-                RelationStats.validate((Map)o,path,errors, canonicalizer);
+                RelationStats.validate((Map)o, errors, canonicalizer);
             } else {
                 //not an array or map => must be scalar
-                getBasicType(o, errors, path);
+                getBasicType(o, errors);
             }
         }
     }
@@ -164,14 +164,14 @@ public class FieldStats implements Serializable {
     }
 
     public static BasicType getBasicType(@NonNull Object o) {
-        return getBasicType(o, null,null);
+        return getBasicType(o, null);
     }
 
-    public static BasicType getBasicType(@NonNull Object o, ProcessBundle<StatsIngestError> errors, DocumentPath path) {
+    public static BasicType getBasicType(@NonNull Object o, ErrorCollector errors) {
         BasicType elementType = BasicTypeManager.getTypeByJavaClass(o.getClass());
         if (elementType == null) {
             if (errors != null) {
-                errors.add(StatsIngestError.fatal(path, "Unsupported data type for value: %s [%s]", o, o.getClass()));
+                errors.fatal("Unsupported data type for value: %s [%s]", o, o.getClass());
             } else {
                 throw new IllegalArgumentException("Unsupported data type: " + o.getClass());
             }

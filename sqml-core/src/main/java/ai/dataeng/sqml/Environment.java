@@ -1,6 +1,5 @@
 package ai.dataeng.sqml;
 
-import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.config.SqrlSettings;
 import ai.dataeng.sqml.config.metadata.MetadataStore;
 import ai.dataeng.sqml.config.provider.HeuristicPlannerProvider;
@@ -19,9 +18,8 @@ import ai.dataeng.sqml.planner.Script;
 import ai.dataeng.sqml.planner.operator.ImportResolver;
 import ai.dataeng.sqml.schema.Namespace;
 import ai.dataeng.sqml.tree.ScriptNode;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
-import ai.dataeng.sqml.type.schema.SchemaConversionError;
+import ai.dataeng.sqml.config.error.ErrorMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
 import java.time.Duration;
@@ -64,7 +62,7 @@ public class Environment implements Closeable {
   }
 
   public ScriptDeployment.Result deployScript(@NonNull ScriptBundle.Config scriptConfig,
-                                              @NonNull ProcessBundle<ConfigurationError> errors) {
+                                              @NonNull ErrorCollector errors) {
     ScriptBundle bundle = scriptConfig.initialize(errors);
     if (bundle==null) return null;
     ScriptDeployment deployment = ScriptDeployment.of(bundle);
@@ -103,7 +101,7 @@ public class Environment implements Closeable {
     ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(
         datasetRegistry,
         settings.getHeuristicPlannerProvider().createPlanner());
-    ProcessBundle<SchemaConversionError> importErrors = importResolver.getImportManager()
+    ErrorCollector importErrors = importResolver.getImportManager()
             .registerUserSchema(mainScript.getSchema());
     Preconditions.checkArgument(!importErrors.isFatal(),
             importErrors);
@@ -112,7 +110,7 @@ public class Environment implements Closeable {
     ScriptNode scriptNode = scriptParser.parse(mainScript);
 
     Validator validator = settings.getValidatorProvider().getValidator();
-    ProcessBundle<ProcessMessage> errors = validator.validate(scriptNode);
+    ErrorCollector errors = validator.validate(scriptNode);
 
     if (errors.isFatal()) {
       throw new Exception("Could not compile script.");

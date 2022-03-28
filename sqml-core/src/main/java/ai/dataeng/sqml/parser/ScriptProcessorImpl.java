@@ -34,8 +34,8 @@ import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.tree.SortItem.Ordering;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.config.error.ErrorMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -89,7 +89,7 @@ public class ScriptProcessorImpl implements ScriptProcessor {
   @SneakyThrows
   public void process(ImportDefinition statement, Namespace namespace) {
     NamePath name = statement.getNamePath();
-    ProcessBundle<ProcessMessage> errors = new ProcessBundle<ProcessMessage> ();
+    ErrorCollector errors = ErrorCollector.root();
 
     if (name.getLength() > 2) {
       throw new RuntimeException(String.format("Cannot import identifier: %s", name));

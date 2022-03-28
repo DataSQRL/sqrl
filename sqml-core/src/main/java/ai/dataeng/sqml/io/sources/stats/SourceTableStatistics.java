@@ -2,7 +2,7 @@ package ai.dataeng.sqml.io.sources.stats;
 
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import lombok.ToString;
 
 @ToString
@@ -15,9 +15,9 @@ public class SourceTableStatistics implements Accumulator<SourceRecord<String>, 
         this.relation = new RelationStats();
     }
 
-    public ProcessBundle<StatsIngestError> validate(SourceRecord<String> sourceRecord, SourceDataset.Digest dataset) {
-        ProcessBundle<StatsIngestError> errors = new ProcessBundle<>();
-        RelationStats.validate(sourceRecord.getData(),DocumentPath.ROOT,errors, dataset.getCanonicalizer());
+    public ErrorCollector validate(SourceRecord<String> sourceRecord, SourceDataset.Digest dataset) {
+        ErrorCollector errors = ErrorCollector.root();
+        RelationStats.validate(sourceRecord.getData(),errors, dataset.getCanonicalizer());
         return errors;
     }
 

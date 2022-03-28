@@ -2,8 +2,12 @@ package ai.dataeng.sqml.type.basic;
 
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+
+import ai.dataeng.sqml.config.error.ErrorCollector;
+import ai.dataeng.sqml.config.error.ErrorMessage;
 import lombok.NonNull;
 
 public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
@@ -43,18 +47,20 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
             }
         }
 
-        public ConversionResult<J, ProcessMessage> parseDetected(Object original) {
+        public Optional<J> parseDetected(Object original, ErrorCollector errors) {
             if (original instanceof String) {
                 try {
                     J result = stringParser.apply((String) original);
-                    return ConversionResult.of(result);
+                    return Optional.of(result);
                 } catch (IllegalArgumentException e) {
-                    return ConversionResult.fatal("Could not parse value [%s] to data type [%s]", original, clazz);
+                    errors.fatal("Could not parse value [%s] to data type [%s]", original, clazz);
                 } catch (DateTimeParseException e) {
-                    return ConversionResult.fatal("Could not parse value [%s] to data type [%s]", original, clazz);
+                    errors.fatal("Could not parse value [%s] to data type [%s]", original, clazz);
                 }
+                return Optional.empty();
             }
-            return ConversionResult.fatal("Cannot convert [%s]", original);
+            errors.fatal("Cannot convert [%s]", original);
+            return Optional.empty();
         }
 
     }

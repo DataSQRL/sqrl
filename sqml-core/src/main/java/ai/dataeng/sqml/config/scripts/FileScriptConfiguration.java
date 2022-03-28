@@ -1,9 +1,9 @@
 package ai.dataeng.sqml.config.scripts;
 
-import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.config.constraints.OptionalMinString;
 import ai.dataeng.sqml.config.util.FileUtil;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -53,18 +53,18 @@ public class FileScriptConfiguration {
      * @param errors
      * @return
      */
-    public @Nullable ScriptBundle.Config getBundle(ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        String tempName = name!=null?name:"";
+    public @Nullable ScriptBundle.Config getBundle(ErrorCollector errors) {
+        ErrorCollector tempErrors = errors;
+        if (!Strings.isNullOrEmpty(name)) tempErrors = errors.resolve(name);
         Path bundlePath;
         try {
             bundlePath = Path.of(path);
             if (!Files.exists(bundlePath) || !Files.isReadable(bundlePath)) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,tempName,
-                        "Path does not exist or cannot be read: %s", path));
+                errors.fatal("Path does not exist or cannot be read: %s", path);
                 return null;
             }
         } catch (InvalidPathException e) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,tempName,"Path is invalid: %s", path));
+            errors.fatal("Path is invalid: %s", path);
             return null;
         }
 
@@ -73,32 +73,33 @@ public class FileScriptConfiguration {
         List<SqrlScript.Config> scripts;
         if (Files.isDirectory(bundlePath)) {
             resolvedName = StringUtils.isNullOrEmpty(name)?bundlePath.getFileName().toString():name;
+            ErrorCollector subErrors = errors.resolve(resolvedName);
             scripts = FileUtil.executeFileRead(bundlePath,
                     path -> {
                         return Files.list(bundlePath).filter(this::supportedScriptFile)
-                                .map(p -> getScript(p,resolvedName,errors)).collect(Collectors.toList());
-                    }, ConfigurationError.LocationType.SCRIPT,name,errors);
+                                .map(p -> getScript(p,resolvedName,subErrors)).collect(Collectors.toList());
+                    }, subErrors);
         } else if (Files.isRegularFile(bundlePath)) {
             if (!FileUtil.getExtension(bundlePath).equalsIgnoreCase(SCRIPT_FILE_EXTENSION)) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,tempName,"Expected path to be an .SQRL file but got: %s", path));
+                tempErrors.fatal("Expected path to be an .SQRL file but got: %s", path);
                 return null;
             }
             resolvedName = StringUtils.isNullOrEmpty(name)?FileUtil.removeExtension(bundlePath):name;
-            scripts = ImmutableList.of(getScript(bundlePath,resolvedName,errors));
+            scripts = ImmutableList.of(getScript(bundlePath,resolvedName,errors.resolve(resolvedName)));
         } else {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,tempName,"Expected a file or directory for path: %s", path));
+            tempErrors.fatal("Expected a file or directory for path: %s", path);
             return null;
         }
 
+        ErrorCollector queryErrors = errors.resolve(resolvedName);
         List<SqrlQuery.Config> queries = new ArrayList<>();
         Path queryPath = bundlePath.resolve(QUERY_FOLDER_NAME);
         if (Files.isDirectory(queryPath)) {
             queries = FileUtil.executeFileRead(queryPath,
                     path -> {
                 return Files.list(path).filter(this::supportedQueryFile)
-                    .map(p -> getQuery(p, resolvedName, errors)).collect(Collectors.toList());
-                },
-                    ConfigurationError.LocationType.SCRIPT,name,errors);
+                    .map(p -> getQuery(p, queryErrors)).collect(Collectors.toList());
+                }, queryErrors);
         }
 
 
@@ -112,18 +113,16 @@ public class FileScriptConfiguration {
     }
 
     private SqrlScript.Config getScript(Path scriptPath, String bundleName,
-                                        ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+                                        ErrorCollector errors) {
         String name = FileUtil.removeExtension(scriptPath);
 
-        String scriptContent = FileUtil.executeFileRead(scriptPath, Files::readString,
-                                ConfigurationError.LocationType.SCRIPT,bundleName,errors);
+        String scriptContent = FileUtil.executeFileRead(scriptPath, Files::readString, errors);
 
         String schemaContent = null;
         Path directory = scriptPath.getParent();
         Path schemaFile = directory.resolve(name + INPUT_SCHEMA_FILE_SUFFIX);
         if (Files.exists(schemaFile) && Files.isRegularFile(schemaFile)) {
-            schemaContent = FileUtil.executeFileRead(schemaFile, Files::readString,
-                    ConfigurationError.LocationType.SCRIPT,bundleName,errors);
+            schemaContent = FileUtil.executeFileRead(schemaFile, Files::readString, errors);
         }
 
         return SqrlScript.Config.builder().name(name)
@@ -137,11 +136,10 @@ public class FileScriptConfiguration {
         return Files.isRegularFile(p) && FileUtil.getExtension(p).equalsIgnoreCase(SCRIPT_FILE_EXTENSION);
     }
 
-    private SqrlQuery.Config getQuery(Path queryPath, String bundleName, ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+    private SqrlQuery.Config getQuery(Path queryPath, ErrorCollector errors) {
         String name = FileUtil.removeExtension(queryPath);
 
-        String queryContent = FileUtil.executeFileRead(queryPath, Files::readString,
-                ConfigurationError.LocationType.SCRIPT,bundleName,errors);
+        String queryContent = FileUtil.executeFileRead(queryPath, Files::readString, errors);
 
         return SqrlQuery.Config.builder().name(name)
                 .qraphQL(queryContent)

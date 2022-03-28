@@ -1,11 +1,10 @@
 package ai.dataeng.sqml.api;
 
-import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.config.scripts.FileScriptConfiguration;
 import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.config.scripts.SqrlQuery;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.type.schema.external.DatasetDefinition;
 import ai.dataeng.sqml.type.schema.external.TableDefinition;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,7 @@ public class ScriptConfigurationTest {
                 .path(NUTSHOP_BASIC.toAbsolutePath().toString())
                 .build();
 
-        ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
+        ErrorCollector errors = ErrorCollector.root();
         ScriptBundle.Config bundleConfig = fileConfig.getBundle(errors);
         assertNotNull(bundleConfig, errors.toString());
         ScriptBundle bundle = bundleConfig.initialize(errors);
@@ -75,7 +74,7 @@ public class ScriptConfigurationTest {
                 .path(path.toAbsolutePath().toString())
                 .build();
 
-        ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
+        ErrorCollector errors = ErrorCollector.root();
         ScriptBundle.Config bundleConfig = fileConfig.getBundle(errors);
         assertNotNull(bundleConfig, errors.toString());
         ScriptBundle bundle = bundleConfig.initialize(errors);

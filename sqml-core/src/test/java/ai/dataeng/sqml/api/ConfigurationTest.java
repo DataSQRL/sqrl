@@ -1,7 +1,6 @@
 package ai.dataeng.sqml.api;
 
 import ai.dataeng.sqml.Environment;
-import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.config.EnvironmentConfiguration;
 import ai.dataeng.sqml.config.GlobalConfiguration;
 import ai.dataeng.sqml.config.SqrlSettings;
@@ -13,7 +12,7 @@ import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,7 +70,7 @@ public class ConfigurationTest {
                 .name(dsName)
                 .build();
 
-        ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
+        ErrorCollector errors = ErrorCollector.root();
         registry.addOrUpdateSource(fileConfig, errors);
         assertFalse(errors.isFatal());
         SourceDataset ds = registry.getDataset(dsName);
@@ -111,7 +110,7 @@ public class ConfigurationTest {
                 .name(dsName)
                 .build();
 
-        ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
+        ErrorCollector errors = ErrorCollector.root();
         registry.addOrUpdateSource(fileConfig, errors);
         if (errors.isFatal()) System.out.println(errors);
         assertFalse(errors.isFatal());
@@ -129,9 +128,10 @@ public class ConfigurationTest {
     }
 
     public static void validateConfig(GlobalConfiguration config) {
-        ProcessMessage.ProcessBundle<ConfigurationError> errors = config.validate();
-        for (ConfigurationError error : errors) {
-            System.err.println(error);
+        ErrorCollector errors = config.validate();
+
+        if (errors.hasErrors()) {
+            System.err.println(errors.toString());
         }
         if (errors.isFatal()) throw new IllegalArgumentException("Encountered fatal configuration errors");
     }

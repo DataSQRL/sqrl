@@ -1,25 +1,18 @@
 package ai.dataeng.sqml.io.sources.formats;
 
-import ai.dataeng.sqml.config.ConfigurationError;
-import ai.dataeng.sqml.io.sources.impl.file.FilePath;
-import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import lombok.*;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
 
@@ -148,13 +141,13 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
         }
 
         @Override
-        public boolean validate(ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+        public boolean validate(ErrorCollector errors) {
             if (Strings.isNullOrEmpty(delimiter)) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,"","Need to specify valid delimiter, given: %s",delimiter));
+                errors.fatal("Need to specify valid delimiter, given: %s",delimiter);
                 return false;
             }
             if (header == null || header.length==0) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,"","Need to specify a header"));
+                errors.fatal("Need to specify a header");
                 return false;
             }
             return true;

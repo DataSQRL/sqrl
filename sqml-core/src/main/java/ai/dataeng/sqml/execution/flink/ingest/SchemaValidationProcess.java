@@ -2,10 +2,9 @@ package ai.dataeng.sqml.execution.flink.ingest;
 
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.type.schema.SchemaAdjustmentSettings;
-import ai.dataeng.sqml.type.schema.SchemaConversionError;
 import ai.dataeng.sqml.type.schema.SchemaValidator;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -28,7 +27,7 @@ public class SchemaValidationProcess extends ProcessFunction<SourceRecord.Raw, S
 
     @Override
     public void processElement(SourceRecord.Raw sourceRecord, Context context, Collector<SourceRecord.Named> out) {
-        ProcessBundle<SchemaConversionError> errors = new ProcessBundle<>();
+        ErrorCollector errors = ErrorCollector.root();
         SourceRecord.Named result = validator.verifyAndAdjust(sourceRecord, errors);
         if (errors.isFatal()) {
             context.output(errorTag, SchemaValidationProcess.Error.of(errors,sourceRecord));
@@ -43,7 +42,7 @@ public class SchemaValidationProcess extends ProcessFunction<SourceRecord.Raw, S
         private List<String> errors;
         private SourceRecord<String> sourceRecord;
 
-        public static Error of(ProcessBundle<SchemaConversionError> errors, SourceRecord<String> sourceRecord) {
+        public static Error of(ErrorCollector errors, SourceRecord<String> sourceRecord) {
             List<String> errorMsgs = new ArrayList<>();
             errors.forEach(e -> errorMsgs.add(e.toString()));
             return new Error(errorMsgs, sourceRecord);

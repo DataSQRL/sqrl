@@ -1,16 +1,15 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
-import ai.dataeng.sqml.config.ConfigurationError;
+import ai.dataeng.sqml.config.error.ErrorPrefix;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -35,9 +34,9 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
     void initializeDatasets() {
         //Read existing datasets from store
         for (DataSourceConfiguration dsConfig : persistence.getDatasets()) {
-            ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
+            ErrorCollector errors = ErrorCollector.fromPrefix(ErrorPrefix.INITIALIZE);
             initializeSource(dsConfig.initialize(errors));
-            ProcessMessage.ProcessBundle.logMessages(errors);
+            errors.log();
         }
     }
 
@@ -50,14 +49,14 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
 
     public synchronized SourceDataset addOrUpdateSource
             (@NonNull DataSourceConfiguration datasource,
-             @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+             @NonNull ErrorCollector errors) {
         return addOrUpdateSource(datasource, Collections.EMPTY_LIST, errors);
     }
 
 
     public synchronized SourceDataset addOrUpdateSource
             (@NonNull DataSourceConfiguration datasource, @NonNull List<SourceTableConfiguration> tables,
-             @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+             @NonNull ErrorCollector errors) {
         DataSource source = datasource.initialize(errors);
         if (source == null) return null; //validation failed
         SourceDataset dataset = datasets.get(source.getDatasetName());
@@ -88,6 +87,8 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
                 }
             }
         }
+
+        errors = errors.resolve(source.getDatasetName());
         for (SourceTableConfiguration tbl : allTables) {
             dataset.addTable(tbl, errors);
         }

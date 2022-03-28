@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.config.util;
 
 
-import ai.dataeng.sqml.config.ConfigurationError;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import org.apache.commons.io.FilenameUtils;
@@ -17,13 +17,11 @@ public class FileUtil {
         return FilenameUtils.removeExtension(p.getFileName().toString());
     }
 
-    public static<T> T executeFileRead(Path p, ExecuteFileRead<T> exec, ConfigurationError.LocationType locationType,
-                                       String location, ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+    public static<T> T executeFileRead(Path p, ExecuteFileRead<T> exec, ErrorCollector errors) {
         try {
             return exec.execute(p);
         } catch (IOException e) {
-            errors.add(ConfigurationError.fatal(locationType,location,
-                    "Could not read file or directory [%s]: [%s]",p,e));
+            errors.fatal("Could not read file or directory [%s]: [%s]",p,e);
             return null;
         }
     }

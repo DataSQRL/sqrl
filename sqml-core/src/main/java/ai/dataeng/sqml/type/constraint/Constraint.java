@@ -1,12 +1,13 @@
 package ai.dataeng.sqml.type.constraint;
 
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.basic.ConversionResult;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,7 @@ public interface Constraint extends Serializable {
 
         Name getName();
 
-        ConversionResult<Constraint, ProcessMessage> create(Map<String,Object> parameters);
+        Optional<Constraint> create(Map<String,Object> parameters, ErrorCollector errors);
 
     }
 

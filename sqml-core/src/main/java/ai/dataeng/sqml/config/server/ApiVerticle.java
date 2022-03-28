@@ -10,7 +10,8 @@ import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
+import ai.dataeng.sqml.config.error.ErrorMessage;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.vertx.core.AbstractVerticle;
@@ -184,10 +185,10 @@ public class ApiVerticle extends AbstractVerticle {
             RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
             JsonObject source = params.body().getJsonObject();
             S sourceConfig = source.mapTo(clazz);
-            ProcessMessage.ProcessBundle errors = new ProcessMessage.ProcessBundle<>();
+            ErrorCollector errors = ErrorCollector.root();
             SourceDataset result = environment.getDatasetRegistry().addOrUpdateSource(sourceConfig, errors);
             if (errors.isFatal() || result==null) {
-                routingContext.fail(405, new Exception(errors.combineMessages(ProcessMessage.Severity.FATAL,
+                routingContext.fail(405, new Exception(errors.combineMessages(ErrorMessage.Severity.FATAL,
                         "Provided configuration has the following validation errors:\n","\n" )));
             } else {
                 JsonObject jsonResult = source2Json(result);
@@ -208,10 +209,10 @@ public class ApiVerticle extends AbstractVerticle {
             RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
             JsonObject bundleJson = params.body().getJsonObject();
             ScriptBundle.Config bundleConfig = bundleJson.mapTo(ScriptBundle.Config.class);
-            ProcessMessage.ProcessBundle errors = new ProcessMessage.ProcessBundle<>();
+            ErrorCollector errors = ErrorCollector.root();
             ScriptDeployment.Result result = environment.deployScript(bundleConfig,errors);
             if (errors.isFatal() || result==null) {
-                routingContext.fail(405, new Exception(errors.combineMessages(ProcessMessage.Severity.FATAL,
+                routingContext.fail(405, new Exception(errors.combineMessages(ErrorMessage.Severity.FATAL,
                         "Provided bundle has the following validation errors:\n","\n" )));
             } else {
                 JsonObject jsonResult = deploymentResult2Json(result);

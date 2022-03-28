@@ -1,11 +1,10 @@
 package ai.dataeng.sqml.config.scripts;
 
-import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.config.constraints.OptionalMinString;
 import ai.dataeng.sqml.config.util.ConfigurationUtil;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.type.schema.external.SchemaDefinition;
 import java.io.Serializable;
 import javax.validation.constraints.NotNull;
@@ -49,19 +48,17 @@ public class SqrlScript implements Serializable {
         @Builder.Default
         private boolean main = false;
 
-        SqrlScript initialize(ProcessMessage.ProcessBundle<ConfigurationError> errors,
-                              String bundleName, NameCanonicalizer canonicalizer) {
+        SqrlScript initialize(ErrorCollector errors, NameCanonicalizer canonicalizer) {
             if (!ConfigurationUtil.javaxValidate(this, errors)) return null;
+            errors = errors.resolve(name);
             SchemaDefinition schema;
             try {
                  schema = parseSchema();
             } catch (JsonProcessingException e) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,
-                        String.join(".",bundleName,name),
-                        "Parsing error for schemaYaml: [%s]", e));
+                errors.fatal("Parsing error for schemaYaml: [%s]", e);
                 return null;
             }
-            return new SqrlScript(Name.of(name,canonicalizer),
+            return new SqrlScript(canonicalizer.name(name),
                     StringUtils.isNotEmpty(filename)?filename:name,
                     content,schema, main);
         }

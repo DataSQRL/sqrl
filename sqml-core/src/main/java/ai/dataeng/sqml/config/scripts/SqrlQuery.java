@@ -1,9 +1,10 @@
 package ai.dataeng.sqml.config.scripts;
 
-import ai.dataeng.sqml.config.ConfigurationError;
+import ai.dataeng.sqml.config.util.ConfigurationUtil;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
+
 import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -34,8 +35,9 @@ public class SqrlQuery implements Serializable {
         @NonNull @NotNull @Size(min = 10)
         private String qraphQL;
 
-        public SqrlQuery initialize(ProcessMessage.ProcessBundle<ConfigurationError> errors,
-                                    String bundleName, NameCanonicalizer canonicalizer) {
+        public SqrlQuery initialize(ErrorCollector errors, NameCanonicalizer canonicalizer) {
+            if (!ConfigurationUtil.javaxValidate(this, errors)) return null;
+
             return new SqrlQuery(Name.of(name,canonicalizer),
                     StringUtils.isNotEmpty(filename)?filename:name,
                     qraphQL);

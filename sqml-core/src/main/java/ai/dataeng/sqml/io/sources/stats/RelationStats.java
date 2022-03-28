@@ -2,7 +2,7 @@ package ai.dataeng.sqml.io.sources.stats;
 
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.Collections;
@@ -39,15 +39,15 @@ public class RelationStats implements Accumulator<Map<String,Object>,RelationSta
         return count;
     }
 
-    public static void validate(Map<String, Object> value, DocumentPath path, ProcessBundle<StatsIngestError> errors,
+    public static void validate(Map<String, Object> value, ErrorCollector errors,
                                 NameCanonicalizer canonicalizer) {
-        if (value==null || value.isEmpty()) errors.add(StatsIngestError.fatal(path,"Invalid value: %s", value));
+        if (value==null || value.isEmpty()) errors.fatal("Invalid value: %s", value);
         Set<Name> names = new HashSet<>(value.size());
         for (Map.Entry<String,Object> entry : value.entrySet()) {
             String name = entry.getKey();
-            if (Strings.isNullOrEmpty(name)) errors.add(StatsIngestError.fatal(path,"Invalid name: %s", name));
-            if (!names.add(Name.of(name,canonicalizer))) errors.add(StatsIngestError.fatal(path,"Duplicate name: %s", name));
-            FieldStats.validate(entry.getValue(), path.resolve(name), errors, canonicalizer);
+            if (Strings.isNullOrEmpty(name)) errors.fatal("Invalid name: %s", name);
+            if (!names.add(Name.of(name,canonicalizer))) errors.fatal("Duplicate name: %s", name);
+            FieldStats.validate(entry.getValue(), errors.resolve(name), canonicalizer);
         }
     }
 

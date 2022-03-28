@@ -2,7 +2,6 @@ package ai.dataeng.sqml.flink;
 
 import ai.dataeng.sqml.Environment;
 import ai.dataeng.sqml.api.ConfigurationTest;
-import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.config.SqrlSettings;
 import ai.dataeng.sqml.execution.flink.ingest.DataStreamProvider;
 import ai.dataeng.sqml.execution.flink.ingest.SchemaValidationProcess;
@@ -16,11 +15,8 @@ import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.planner.operator.C360Test;
 import ai.dataeng.sqml.planner.operator.ImportManager;
 import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.type.schema.SchemaAdjustmentSettings;
-import ai.dataeng.sqml.type.schema.SchemaConversionError;
-import io.vertx.core.Vertx;
-import io.vertx.ext.web.client.WebClient;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -67,7 +63,7 @@ public class IngestAndSchemaTest {
     @SneakyThrows
     @Test
     public void testDatasetMonitoring() {
-        ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
+        ErrorCollector errors = ErrorCollector.root();
 
         String dsName = "bookclub";
         FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
@@ -102,7 +98,7 @@ public class IngestAndSchemaTest {
         ImportManager imports = new ImportManager(registry);
         FlinkTableConverter tbConverter = new FlinkTableConverter();
 
-        ProcessMessage.ProcessBundle<SchemaConversionError> schemaErrs = new ProcessMessage.ProcessBundle<>();
+        ErrorCollector schemaErrs = ErrorCollector.root();
         ImportManager.SourceTableImport bookImp = imports.importTable(Name.system(dsName),Name.system("book"),schemaErrs);
         Pair<Schema, TypeInformation> bookSchema = tbConverter.tableSchemaConversion(bookImp.getSourceSchema());
         ImportManager.SourceTableImport ordersImp = imports.importTable(Name.system(ds2Name),Name.system("orders"),schemaErrs);

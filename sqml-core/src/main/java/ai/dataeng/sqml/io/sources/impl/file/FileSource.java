@@ -1,6 +1,5 @@
 package ai.dataeng.sqml.io.sources.impl.file;
 
-import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
@@ -9,18 +8,15 @@ import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.formats.FileFormat;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import com.google.common.base.Strings;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.h2.util.StringUtils;
 
 /**
  * A {@link SourceDataset} that treats all files matching a certain set of extensions in a given directory as {@link SourceTable}.
@@ -72,14 +68,15 @@ public class FileSource implements DataSource {
     }
 
     @Override
-    public Collection<SourceTableConfiguration> discoverTables(ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+    public Collection<SourceTableConfiguration> discoverTables(ErrorCollector errors) {
         Map<Name, SourceTableConfiguration> tablesByName = new HashMap<>();
+        errors = errors.resolve(getDatasetName());
         gatherTables(directoryPath,tablesByName,errors);
         return tablesByName.values();
     }
 
     private void gatherTables(FilePath directory, Map<Name, SourceTableConfiguration> tablesByName,
-                              ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+                              ErrorCollector errors) {
         try {
             for (FilePath.Status fps : directory.listFiles()) {
                 FilePath p = fps.getPath();
@@ -95,16 +92,14 @@ public class FileSource implements DataSource {
                         SourceTableConfiguration otherTbl = tablesByName.get(tblName);
                         if (otherTbl==null) tablesByName.put(tblName,table);
                         else if (!otherTbl.getFormat().equalsIgnoreCase(table.getFormat())) {
-                            errors.add(ConfigurationError.warn(ConfigurationError.LocationType.SOURCE, name.toString(),
-                                    "Table file [%s] does not have the same format as table [%s]. File will be ignored",p,otherTbl));
+                            errors.warn("Table file [%s] does not have the same format as table [%s]. File will be ignored",p,otherTbl);
                         }
 
                     }
                 }
             }
         } catch (IOException e) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE, name.toString(),
-                    "Could not read directory [%s] during dataset refresh: %s",directory,e));
+            errors.fatal("Could not read directory [%s] during dataset refresh: %s",directory,e);
         }
     }
 
@@ -130,9 +125,8 @@ public class FileSource implements DataSource {
     }
 
     @Override
-    public boolean update(@NonNull DataSourceConfiguration config, @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.GLOBAL,"",
-                "File data sources currently do not support updates"));
+    public boolean update(@NonNull DataSourceConfiguration config, @NonNull ErrorCollector errors) {
+        errors.fatal("File data sources currently do not support updates");
         return false;
     }
 

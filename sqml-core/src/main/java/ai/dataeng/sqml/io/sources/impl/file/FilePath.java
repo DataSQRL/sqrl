@@ -1,9 +1,5 @@
 package ai.dataeng.sqml.io.sources.impl.file;
 
-import ai.dataeng.sqml.config.ConfigurationError;
-import ai.dataeng.sqml.config.util.FileUtil;
-import ai.dataeng.sqml.tree.name.Name;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;

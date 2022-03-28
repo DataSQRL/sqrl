@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.type.schema;
 
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.stats.FieldStats;
@@ -7,27 +8,18 @@ import ai.dataeng.sqml.io.sources.stats.SchemaGenerator;
 import ai.dataeng.sqml.io.sources.stats.TypeSignature;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
-import ai.dataeng.sqml.type.basic.ConversionResult;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
 import ai.dataeng.sqml.type.basic.StringType;
 import com.google.common.base.Preconditions;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.BiPredicate;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+
+import java.io.Serializable;
+import java.util.*;
+import java.util.function.BiPredicate;
 
 /**
  * Follows {@link ai.dataeng.sqml.io.sources.stats.SchemaGenerator} in structure and semantics.
@@ -47,13 +39,13 @@ public class SchemaValidator implements Serializable {
     }
 
 
-    public SourceRecord.Named verifyAndAdjust(SourceRecord<String> record, ProcessBundle<SchemaConversionError> errors) {
-        Map<Name,Object> result = verifyAndAdjust(record.getData(), tableSchema.getFields(), NamePath.ROOT, errors);
+    public SourceRecord.Named verifyAndAdjust(SourceRecord<String> record, ErrorCollector errors) {
+        Map<Name,Object> result = verifyAndAdjust(record.getData(), tableSchema.getFields(), errors);
         return record.replaceData(result);
     }
 
     private Map<Name,Object> verifyAndAdjust(Map<String, Object> relationData, RelationType<FlexibleDatasetSchema.FlexibleField> relationSchema,
-                                             NamePath location, ProcessBundle<SchemaConversionError> errors) {
+                                             ErrorCollector errors) {
         Map<Name,Object> result = new HashMap<>(relationData.size());
         Set<Name> visitedFields = new HashSet<>();
         for (Map.Entry<String,Object> entry : relationData.entrySet()) {
@@ -62,15 +54,15 @@ public class SchemaValidator implements Serializable {
             FlexibleDatasetSchema.FlexibleField field = relationSchema.getFieldByName(name);
             if (field==null) {
                 if (!settings.dropFields()) {
-                    errors.add(SchemaConversionError.fatal(location,"Field is not defined in schema: %s", field));
+                    errors.fatal("Field is not defined in schema: %s", field);
                 }
             } else {
                 Pair<Name,Object> fieldResult = null;
                 if (data != null) {
-                    fieldResult = verifyAndAdjust(data, field, location.resolve(name), errors);
+                    fieldResult = verifyAndAdjust(data, field, errors.resolve(name));
                 }
                 if (fieldResult == null && isNonNull(field)) {
-                    fieldResult = handleNull(field, location, errors);
+                    fieldResult = handleNull(field, errors);
                 }
                 if (fieldResult!=null) result.put(fieldResult.getKey(),fieldResult.getValue());
             }
@@ -80,7 +72,7 @@ public class SchemaValidator implements Serializable {
         //See if we missed any non-null fields
         for (FlexibleDatasetSchema.FlexibleField field : relationSchema.getFields()) {
             if (!visitedFields.contains(field.getName()) && isNonNull(field)) {
-                Pair<Name,Object> fieldResult = handleNull(field, location, errors);
+                Pair<Name,Object> fieldResult = handleNull(field, errors);
                 if (fieldResult!=null) result.put(fieldResult.getKey(),fieldResult.getValue());
             }
         }
@@ -92,8 +84,8 @@ public class SchemaValidator implements Serializable {
         return FlexibleSchemaHelper.isNonNull(field);
     }
 
-    private Pair<Name,Object> handleNull(FlexibleDatasetSchema.FlexibleField field, NamePath location,
-                                         ProcessBundle<SchemaConversionError> errors) {
+    private Pair<Name,Object> handleNull(FlexibleDatasetSchema.FlexibleField field,
+                                         ErrorCollector errors) {
         //See if we can map this onto any field type
         for (FlexibleDatasetSchema.FieldType ft : field.getTypes()) {
             if (ft.getArrayDepth()>0 && settings.null2EmptyArray()) {
@@ -101,7 +93,7 @@ public class SchemaValidator implements Serializable {
                         deepenArray(Collections.EMPTY_LIST, ft.getArrayDepth()-1));
             }
         }
-        errors.add(SchemaConversionError.fatal(location,"Field [%s] has non-null constraint but record contains null value", field));
+        errors.fatal("Field [%s] has non-null constraint but record contains null value", field);
         return null;
     }
 
@@ -119,58 +111,57 @@ public class SchemaValidator implements Serializable {
     }
 
     private Pair<Name,Object> verifyAndAdjust(Object data, FlexibleDatasetSchema.FlexibleField field,
-                                              NamePath location, ProcessBundle<SchemaConversionError> errors) {
+                                              ErrorCollector errors) {
         List<FlexibleDatasetSchema.FieldType> types = field.getTypes();
         TypeSignature.Simple typeSignature = FieldStats.detectTypeSignature(data, s -> detectType(s,types),
                 m -> detectType(m,types));
         FlexibleDatasetSchema.FieldType match = SchemaGenerator.matchType(typeSignature, types);
         if (match != null) {
-            Object converted = verifyAndAdjust(data, match, field, typeSignature.getArrayDepth(), location, errors);
+            Object converted = verifyAndAdjust(data, match, field, typeSignature.getArrayDepth(), errors);
             return ImmutablePair.of(FlexibleSchemaHelper.getCombinedName(field,match),converted);
         } else {
-            errors.add(SchemaConversionError.notice(location, "Cannot match field data [%s] onto schema field [%s], hence field is ignored", data, field));
+            errors.notice("Cannot match field data [%s] onto schema field [%s], hence field is ignored", data, field);
             return null;
         }
     }
 
     private Object convertDataToMatchedType(Object data, Type type, FlexibleDatasetSchema.FlexibleField field,
-                                            NamePath location, ProcessBundle<SchemaConversionError> errors) {
+                                            ErrorCollector errors) {
         if (FieldStats.isArray(data)) {
             Collection<Object> col =  FieldStats.array2Collection(data);
             List<Object> result = new ArrayList<>(col.size());
             for (Object o : col) {
                 if (o == null) {
                     if (!settings.removeListNulls()) {
-                        errors.add(SchemaConversionError.fatal(location,"Array contains null values: [%s]", col));
+                        errors.fatal("Array contains null values: [%s]", col);
                     }
                 } else {
-                    result.add(convertDataToMatchedType(o, type, field, location, errors));
+                    result.add(convertDataToMatchedType(o, type, field, errors));
                 }
             }
             return result;
         } else {
             if (type instanceof RelationType) {
                 if (data instanceof Map) {
-                    return verifyAndAdjust((Map)data,(RelationType)type,location, errors);
+                    return verifyAndAdjust((Map)data,(RelationType)type, errors);
                 } else {
-                    errors.add(SchemaConversionError.fatal(location,"Expected composite object [%s]", data));
+                    errors.fatal("Expected composite object [%s]", data);
                     return null;
                 }
             } else {
                 assert type instanceof BasicType;
-                return cast2BasicType(data, (BasicType) type,location,errors);
+                return cast2BasicType(data, (BasicType) type,errors);
             }
         }
     }
 
-    private Object cast2BasicType(Object data, BasicType type,
-                                         NamePath location, ProcessBundle<SchemaConversionError> errors) {
+    private Object cast2BasicType(Object data, BasicType type, ErrorCollector errors) {
         if (type instanceof StringType) {
             if (data instanceof String) {
                 return data;
             } else { //Cast to string
                 if (!settings.castDataType()) {
-                    errors.add(SchemaConversionError.fatal(location,"Expected string but got: %s",data));
+                    errors.fatal("Expected string but got: %s",data);
                 }
                 return data.toString();
             }
@@ -178,20 +169,20 @@ public class SchemaValidator implements Serializable {
         if (data instanceof String || data instanceof Map) {
             //The datatype was detected
             if (!settings.castDataType()) {
-                errors.add(SchemaConversionError.fatal(location,"Encountered [%s] but expected [%s]", data, type));
+                errors.fatal("Encountered [%s] but expected [%s]", data, type);
             }
-            ConversionResult conversionResult = type.conversion().parseDetected(data);
-            if (conversionResult.hasError()) {
-                errors.add(SchemaConversionError.fatal(location,"Could not parse [%s] for type [%s]", data, type));
+            Optional<Object> result = type.conversion().parseDetected(data, errors);
+            if (result.isEmpty()) {
+                errors.fatal("Could not parse [%s] for type [%s]", data, type);
                 return null;
             } else {
-                data = conversionResult.getResult();
+                data = result.get();
             }
         }
         try {
             return type.conversion().convert(data);
         } catch (IllegalArgumentException e) {
-            errors.add(SchemaConversionError.fatal(location,"Could not convert [%s] to type [%s]", data, type));
+            errors.fatal("Could not convert [%s] to type [%s]", data, type);
             return null;
         }
     }
@@ -206,9 +197,8 @@ public class SchemaValidator implements Serializable {
     }
 
     private Object verifyAndAdjust(Object data, FlexibleDatasetSchema.FieldType type, FlexibleDatasetSchema.FlexibleField field,
-                                   int detectedArrayDepth,
-                                   NamePath location, ProcessBundle<SchemaConversionError> errors) {
-        data = convertDataToMatchedType(data,type.getType(),field,location,errors);
+                                   int detectedArrayDepth, ErrorCollector errors) {
+        data = convertDataToMatchedType(data,type.getType(),field,errors);
 
         assert detectedArrayDepth<=type.getArrayDepth();
         if (detectedArrayDepth<type.getArrayDepth()) {
@@ -216,7 +206,7 @@ public class SchemaValidator implements Serializable {
                 //Need to nest array to match depth
                 data = deepenArray(data, type.getArrayDepth() - detectedArrayDepth);
             } else {
-                errors.add(SchemaConversionError.fatal(location, "Array [%s] does not same dimension as schema [%s]", data, type));
+                errors.fatal("Array [%s] does not same dimension as schema [%s]", data, type);
             }
         }
         return data;

@@ -9,7 +9,7 @@ import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.planner.Script;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import graphql.ExecutionResult;
@@ -54,7 +54,7 @@ public class C360Test {
                 .inputSchema(Files.readString(RETAIL_IMPORT_SCHEMA_FILE))
                 .build()
         ))
-        .build().initialize(new ProcessMessage.ProcessBundle<>());
+        .build().initialize(ErrorCollector.root());
   }
 
 
@@ -65,7 +65,7 @@ public class C360Test {
 
     env = Environment.create(DefaultTestSettings.create(vertx));
 
-    env.getDatasetRegistry().addOrUpdateSource(dd, new ProcessMessage.ProcessBundle<>());
+    env.getDatasetRegistry().addOrUpdateSource(dd, ErrorCollector.root());
 
   }
 
@@ -84,7 +84,7 @@ public class C360Test {
                             .inputSchema(Files.readString(RETAIL_IMPORT_SCHEMA_FILE))
                             .build()
             ))
-            .build().initialize(new ProcessMessage.ProcessBundle<>());
+            .build().initialize(ErrorCollector.root());
 
     Script script = env.compile(ScriptDeployment.of(bundle));
 

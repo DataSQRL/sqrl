@@ -1,10 +1,9 @@
 package ai.dataeng.sqml.type.constraint;
 
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.ArrayType;
 import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.basic.ConversionResult;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
 import com.google.common.base.Preconditions;
 import java.util.Map;
 import java.util.Optional;
@@ -74,18 +73,22 @@ public class Cardinality implements Constraint {
         }
 
         @Override
-        public ConversionResult<Constraint, ProcessMessage> create(Map<String, Object> parameters) {
+        public Optional<Constraint> create(Map<String, Object> parameters, ErrorCollector errors) {
             long[] minmax = new long[2];
             for (int i = 0; i < minmax.length; i++) {
                 Object value = parameters.get(KEYS[i]);
                 Optional<Long> v = getInt(value);
-                if (v.isEmpty()) return ConversionResult.fatal("Invalid integer value [%s] for key [%s]",value, KEYS[i]);
+                if (v.isEmpty()) {
+                    errors.fatal("Invalid integer value [%s] for key [%s]",value, KEYS[i]);
+                    return Optional.empty();
+                }
                 else minmax[i]=v.get();
             }
             if (minmax[0]<0 || minmax[1]<1 || minmax[0]>minmax[1]) {
-                return ConversionResult.fatal("Invalid min [%s] and max [%s] values",minmax[0],minmax[1]);
+                errors.fatal("Invalid min [%s] and max [%s] values",minmax[0],minmax[1]);
+                return Optional.empty();
             }
-            return ConversionResult.of(new Cardinality(minmax[0],minmax[1]));
+            return Optional.of(new Cardinality(minmax[0],minmax[1]));
         }
 
         public static Optional<Long> getInt(Object value) {

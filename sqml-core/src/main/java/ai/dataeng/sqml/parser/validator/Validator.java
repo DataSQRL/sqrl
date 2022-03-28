@@ -1,10 +1,10 @@
 package ai.dataeng.sqml.parser.validator;
 
 import ai.dataeng.sqml.tree.ScriptNode;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.config.error.ErrorMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 
 public interface Validator {
 
-  ProcessBundle<ProcessMessage> validate(ScriptNode scriptNode);
+  ErrorCollector validate(ScriptNode scriptNode);
 }

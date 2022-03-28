@@ -1,9 +1,6 @@
 package ai.dataeng.sqml.io.sources.formats;
 
-import ai.dataeng.sqml.config.ConfigurationError;
-import ai.dataeng.sqml.io.sources.impl.file.FilePath;
-import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
 
@@ -55,7 +52,7 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
     public static class Configuration implements FormatConfiguration {
 
         @Override
-        public boolean validate(ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+        public boolean validate(ErrorCollector errors) {
             return true;
         }
     }

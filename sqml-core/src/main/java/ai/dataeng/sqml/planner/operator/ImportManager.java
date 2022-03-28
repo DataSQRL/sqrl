@@ -7,13 +7,11 @@ import ai.dataeng.sqml.io.sources.stats.SchemaGenerator;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.StandardField;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.type.constraint.Constraint;
 import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.type.schema.SchemaConversionError;
 import ai.dataeng.sqml.type.schema.external.SchemaDefinition;
 import ai.dataeng.sqml.type.schema.external.SchemaImport;
 import com.google.common.base.Preconditions;
@@ -41,13 +39,14 @@ public class ImportManager {
         return datasetLookup;
     }
 
-    public ProcessBundle<SchemaConversionError> registerUserSchema(SchemaDefinition yamlSchema) {
+    public ErrorCollector registerUserSchema(SchemaDefinition yamlSchema) {
+        ErrorCollector errors = ErrorCollector.root();
         SchemaImport importer = new SchemaImport(datasetLookup, Constraint.FACTORY_LOOKUP);
-        Map<Name, FlexibleDatasetSchema> result = importer.convertImportSchema(yamlSchema);
-        if (!importer.getErrors().isFatal()) {
+        Map<Name, FlexibleDatasetSchema> result = importer.convertImportSchema(yamlSchema, errors);
+        if (!errors.isFatal()) {
             registerUserSchema(result);
         }
-        return importer.getErrors();
+        return errors;
     }
 
     public void registerUserSchema(Map<Name, FlexibleDatasetSchema> schema) {
@@ -61,14 +60,14 @@ public class ImportManager {
     }
 
     public List<TableImport> importAllTables(@NonNull Name datasetName,
-                                             ProcessBundle<SchemaConversionError> errors) {
+                                             ErrorCollector errors) {
         List<TableImport> imports = new ArrayList<>();
         if (scriptSchemas.containsKey(datasetName)) {
             throw new UnsupportedOperationException("Not yet implemented");
         } else {
             SourceDataset dsDef = datasetLookup.getDataset(datasetName);
             if (dsDef == null) {
-                errors.add(SchemaConversionError.fatal(NamePath.ROOT, "Unknown dataset: %s", datasetName));
+                errors.fatal( "Unknown dataset: %s", datasetName);
                 return imports; //abort
             }
             for (SourceTable table : dsDef.getTables()) {
@@ -80,18 +79,19 @@ public class ImportManager {
     }
 
     public SourceTableImport importTable(@NonNull Name datasetName,  @NonNull Name tableName,
-                                   ProcessBundle<SchemaConversionError> errors) {
+                                   ErrorCollector errors) {
         if (scriptSchemas.containsKey(datasetName)) {
             throw new UnsupportedOperationException("Not yet implemented");
         } else {
             SourceDataset dsDef = datasetLookup.getDataset(datasetName);
             if (dsDef == null) {
-                errors.add(SchemaConversionError.fatal(NamePath.ROOT, "Unknown dataset: %s", datasetName));
+                errors.fatal("Unknown dataset: %s", datasetName);
                 return null; //abort
             }
+            errors = errors.resolve(datasetName);
             SourceTable table = dsDef.getTable(tableName);
             if (table == null) {
-                errors.add(SchemaConversionError.fatal(NamePath.of(datasetName), "Unknown table: %s", tableName));
+                errors.fatal("Unknown table: %s", tableName);
                 return null;
             }
             FlexibleDatasetSchema userDSSchema = userSchema.get(datasetName);
@@ -146,18 +146,18 @@ public class ImportManager {
 
     private FlexibleDatasetSchema.TableField createTable(SourceTable table, Name datasetname,
                                                          FlexibleDatasetSchema.TableField userSchema,
-                                                         ProcessBundle<SchemaConversionError> errors) {
+                                                         ErrorCollector errors) {
         SchemaGenerator generator = new SchemaGenerator();
         SourceTableStatistics stats = table.getStatistics();
+        errors = errors.resolve(datasetname);
         if (userSchema==null) {
             if (stats.getCount()==0) {
-                errors.add(SchemaConversionError.fatal(NamePath.of(datasetname),"We cannot infer schema for table [%s] due to lack of data. Need to provide user schema.", table.getName()));
+                errors.fatal("We cannot infer schema for table [%s] due to lack of data. Need to provide user schema.", table.getName());
             }
             userSchema = FlexibleDatasetSchema.TableField.empty(table.getName());
         }
         FlexibleDatasetSchema.TableField result = generator.mergeSchema(stats, userSchema,
-                NamePath.of(datasetname, table.getName()));
-        errors.merge(generator.getErrors());
+                errors.resolve(table.getName()));
         return result;
     }
 

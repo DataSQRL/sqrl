@@ -1,7 +1,10 @@
 package ai.dataeng.sqml.type.basic;
 
+import ai.dataeng.sqml.config.error.ErrorCollector;
+import ai.dataeng.sqml.config.error.ErrorMessage;
 import com.google.common.base.Preconditions;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public interface TypeConversion<T> {
@@ -32,9 +35,10 @@ public interface TypeConversion<T> {
      * @param original
      * @return
      */
-    public default ConversionResult<T, ProcessMessage> parseDetected(Object original) {
+    public default Optional<T> parseDetected(Object original, ErrorCollector errors) {
         Preconditions.checkArgument(original instanceof String || original instanceof Map);
-        return ConversionResult.fatal("Cannot convert [%s]", original);
+        errors.fatal("Cannot convert [%s]", original);
+        return Optional.empty();
     }
 
     /**

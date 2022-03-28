@@ -1,12 +1,18 @@
 package ai.dataeng.sqml.config.scripts;
 
-import ai.dataeng.sqml.config.ConfigurationError;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.config.util.ConfigurationUtil;
 import ai.dataeng.sqml.config.util.NamedIdentifier;
 import ai.dataeng.sqml.config.util.StringNamedId;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import lombok.*;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,17 +20,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Value;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * An {@link ScriptBundle} contains the main SQML script that defines the dataset to be exposed as an API as well
@@ -66,21 +61,23 @@ public class ScriptBundle implements Serializable {
         @NonNull @Builder.Default @NotNull @Valid
         private List<SqrlQuery.Config> queries = new ArrayList<>();
 
-        public ScriptBundle initialize(ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+        public ScriptBundle initialize(ErrorCollector errors) {
             if (!ConfigurationUtil.javaxValidate(this, errors)) return null;
 
-            List<SqrlScript> validScripts = scripts.stream().map(s -> s.initialize(errors, name, CANONICALIZER))
+            errors = errors.resolve(name);
+            ErrorCollector scriptErrors = errors.resolve("scripts");
+            List<SqrlScript> validScripts = scripts.stream().map(s -> s.initialize(scriptErrors, CANONICALIZER))
                     .filter(Objects::nonNull).collect(Collectors.toList());
 
-            List<SqrlQuery> validQueries = queries.stream().map(s -> s.initialize(errors, name, CANONICALIZER))
+            ErrorCollector queryErrors = errors.resolve("queries");
+            List<SqrlQuery> validQueries = queries.stream().map(s -> s.initialize(queryErrors, CANONICALIZER))
                     .filter(Objects::nonNull).collect(Collectors.toList());
 
             //See if we encountered any errors
             if (validScripts.size()!=scripts.size() || validQueries.size()!=queries.size()) return null;
 
             if (validScripts.isEmpty()) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,name,
-                        "Need to define at least one script in bundle"));
+                errors.fatal("Need to define at least one script in bundle");
             }
 
             boolean isvalid = true;
@@ -88,8 +85,7 @@ public class ScriptBundle implements Serializable {
             validScripts.stream().collect(Collectors.groupingBy(SqrlScript::getName, Collectors.counting()))
                             .entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toList());
             if (!duplicates.isEmpty()) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT, name,
-                        "Script names must be unique within a bundle, but found the following duplicates: [%s]",duplicates));
+                errors.fatal("Script names must be unique within a bundle, but found the following duplicates: [%s]",duplicates);
                 isvalid = false;
             }
 
@@ -97,20 +93,17 @@ public class ScriptBundle implements Serializable {
                     validQueries.stream().collect(Collectors.groupingBy(SqrlQuery::getName, Collectors.counting()))
                             .entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toList());
             if (!duplicates.isEmpty()) {
-                errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT, name,
-                        "Query names must be unique within a bundle, but found the following duplicates: [%s]",duplicates));
+                errors.fatal("Query names must be unique within a bundle, but found the following duplicates: [%s]",duplicates);
                 isvalid = false;
             }
 
             if (validScripts.size()>1) {
                 List<Name> mainScripts = validScripts.stream().filter(SqrlScript::isMain).map(SqrlScript::getName).collect(Collectors.toList());
                 if (mainScripts.isEmpty()) {
-                    errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT, name,
-                            "Need to set one script as `main` when there are multiple scripts in the bundle"));
+                    errors.fatal("Need to set one script as `main` when there are multiple scripts in the bundle");
                     isvalid = false;
                 } else if (mainScripts.size()>1) {
-                    errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT, name,
-                            "Only one script can be set as `main`, but found the following main scripts: [%s]", mainScripts));
+                    errors.fatal("Only one script can be set as `main`, but found the following main scripts: [%s]", mainScripts);
                     isvalid = false;
                 }
             }

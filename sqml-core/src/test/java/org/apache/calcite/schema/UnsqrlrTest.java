@@ -7,7 +7,7 @@ import ai.dataeng.sqml.planner.Planner;
 import ai.dataeng.sqml.planner.Script;
 import ai.dataeng.sqml.planner.operator.C360Test;
 import ai.dataeng.sqml.planner.operator.DefaultTestSettings;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.impl.VertxInternal;
@@ -30,7 +30,7 @@ public class UnsqrlrTest {
     sqrlSettings = DefaultTestSettings.create(vertx);
     env = Environment.create(sqrlSettings);
 
-    env.getDatasetRegistry().addOrUpdateSource(C360Test.dd, new ProcessMessage.ProcessBundle<>());
+    env.getDatasetRegistry().addOrUpdateSource(C360Test.dd, ErrorCollector.root());
     planner = sqrlSettings.getHeuristicPlannerProvider().createPlanner();
     script = env.compile(ScriptDeployment.of(C360Test.bundle));
   }

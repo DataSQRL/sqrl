@@ -1,10 +1,12 @@
 package ai.dataeng.sqml.type.constraint;
 
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.Type;
-import ai.dataeng.sqml.type.basic.ConversionResult;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+
 import java.util.Map;
+import java.util.Optional;
+
 import lombok.Getter;
 
 @Getter
@@ -49,8 +51,8 @@ public class Unique implements Constraint {
         }
 
         @Override
-        public ConversionResult<Constraint, ProcessMessage> create(Map<String, Object> parameters) {
-            return ConversionResult.of(new Unique());
+        public Optional<Constraint> create(Map<String, Object> parameters, ErrorCollector errors) {
+            return Optional.of(new Unique());
         }
     }
 }

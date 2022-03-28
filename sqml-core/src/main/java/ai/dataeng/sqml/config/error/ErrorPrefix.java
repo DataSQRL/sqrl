@@ -1,0 +1,51 @@
+package ai.dataeng.sqml.config.error;
+
+import lombok.NonNull;
+
+import java.util.Locale;
+
+public enum ErrorPrefix implements ErrorLocation {
+
+    ROOT, SOURCE, SINK, ENGINE, SCRIPT, INITIALIZE;
+
+    @Override
+    public String getPrefix() {
+        if (this==ROOT) return null;
+        return name().toLowerCase();
+    }
+
+    private static final String[] EMPTY_PATH = new String[0];
+
+    @Override
+    public @NonNull String[] getPath() {
+        return EMPTY_PATH;
+    }
+
+    @Override
+    public File getFile() {
+        return null;
+    }
+
+    @Override
+    public ErrorLocation append(@NonNull ErrorLocation other) {
+        return ErrorLocationImpl.of(getPrefix(),other);
+    }
+
+    @Override
+    public ErrorLocation resolve(@NonNull String location) {
+        return ErrorLocationImpl.of(getPrefix(),location);
+    }
+
+    @Override
+    public ErrorLocation atFile(@NonNull File file) {
+        return ErrorLocationImpl.of(getPrefix(),file);
+    }
+
+    @Override
+    public String toString() {
+        String res = getPrefix();
+        if (res==null) return "";
+        else return res;
+    }
+
+}

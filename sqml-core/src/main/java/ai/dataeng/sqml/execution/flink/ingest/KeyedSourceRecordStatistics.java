@@ -4,8 +4,7 @@ import ai.dataeng.sqml.execution.flink.environment.util.FlinkUtilities;
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
-import ai.dataeng.sqml.io.sources.stats.StatsIngestError;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import java.util.concurrent.TimeUnit;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
@@ -44,7 +43,7 @@ public class KeyedSourceRecordStatistics extends KeyedProcessFunction<Integer, S
             //Register an event timer into the far future to trigger when the stream ends
             context.timerService().registerEventTimeTimer(Long.MAX_VALUE);
         }
-        ProcessBundle<StatsIngestError> errors = acc.validate(sourceRecord, datasetReg);
+        ErrorCollector errors = acc.validate(sourceRecord, datasetReg);
         if (errors.isFatal()) {
             //TODO: Record is flawed, put it in sideoutput and issue warning
         } else {

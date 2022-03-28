@@ -18,15 +18,15 @@ import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.config.error.ErrorMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.type.constraint.Cardinality;
 import ai.dataeng.sqml.type.constraint.Constraint;
 import ai.dataeng.sqml.type.constraint.ConstraintHelper;
 import ai.dataeng.sqml.type.constraint.NotNull;
 import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.type.schema.FlexibleSchemaHelper;
-import ai.dataeng.sqml.type.schema.SchemaConversionError;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,14 +41,14 @@ import org.apache.commons.lang3.tuple.Pair;
  */
 public class ImportResolver {
     private final ImportManager importManager;
-    private final ProcessBundle<ProcessMessage> errors;
+    private final ErrorCollector errors;
     private final Planner planner;
 
     public ImportResolver(ImportManager importManager, Planner planner) {
         this(importManager, null, planner);
     }
     public ImportResolver(ImportManager importManager,
-        ProcessBundle<ProcessMessage> errors, Planner planner) {
+                          ErrorCollector errors, Planner planner) {
         this.importManager = importManager;
         this.errors = errors;
         this.planner = planner;
@@ -60,9 +60,9 @@ public class ImportResolver {
 
     public void resolveImport(ImportMode importMode, Name datasetName,
         Optional<Name> tableName, Optional<Name> asName,
-        Namespace namespace, ProcessBundle<ProcessMessage> errors) {
+        Namespace namespace, ErrorCollector errors) {
 
-        ProcessBundle<SchemaConversionError> schemaErrors = new ProcessBundle<>();
+        ErrorCollector schemaErrors = ErrorCollector.root();
         if (importMode==ImportMode.DATASET || importMode==ImportMode.ALLTABLE) {
             List<ImportManager.TableImport> tblimports = importManager.importAllTables(datasetName, schemaErrors);
 

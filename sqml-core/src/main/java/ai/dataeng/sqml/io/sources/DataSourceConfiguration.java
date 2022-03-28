@@ -1,9 +1,6 @@
 package ai.dataeng.sqml.io.sources;
 
-import ai.dataeng.sqml.config.ConfigurationError;
-import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
-import lombok.NonNull;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 
 import java.io.Serializable;
 import javax.annotation.Nullable;
@@ -25,7 +22,7 @@ public interface DataSourceConfiguration extends Serializable {
      *
      * @return the configured {@link DataSource} or null if invalid
      */
-    @Nullable DataSource initialize(ProcessMessage.ProcessBundle<ConfigurationError> errors);
+    @Nullable DataSource initialize(ErrorCollector errors);
 
 
 }

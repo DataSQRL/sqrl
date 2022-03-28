@@ -1,22 +1,17 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
-import ai.dataeng.sqml.config.ConfigurationError;
+import ai.dataeng.sqml.config.error.ErrorPrefix;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Strings;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -41,15 +36,15 @@ public class SourceDataset {
     void initializeTables() {
         //Read existing tables within dataset from store
         for (SourceTableConfiguration tblConfig : registry.persistence.getTables(source.getDatasetName())) {
-            ProcessMessage.ProcessBundle<ConfigurationError> errors = new ProcessMessage.ProcessBundle<>();
+            ErrorCollector errors = ErrorCollector.fromPrefix(ErrorPrefix.INITIALIZE);
             SourceTable table = initiateTable(tblConfig, errors);
             registry.tableMonitor.startTableMonitoring(table);
-            ProcessMessage.ProcessBundle.logMessages(errors);
+            errors.log();
         }
     }
 
     synchronized SourceTable initiateTable(SourceTableConfiguration tableConfig,
-                                           ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+                                           ErrorCollector errors) {
         Name tblName = getCanonicalizer().name(tableConfig.getName());
         Preconditions.checkArgument(!tables.containsKey(tblName));
         SourceTable tbl = new SourceTable(this, tblName, tableConfig);
@@ -58,7 +53,7 @@ public class SourceDataset {
     }
 
     synchronized SourceTable addTable(SourceTableConfiguration tableConfig,
-                               ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+                               ErrorCollector errors) {
         if (!tableConfig.validateAndInitialize(this.getSource(),errors)) {
             return null; //validation failed
         }
@@ -68,8 +63,7 @@ public class SourceDataset {
             //New table
             table = initiateTable(tableConfig, errors);
         } else {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,getName(),
-                    "Table [%s] already exists. To update table, delete and re-add", tblName.getDisplay()));
+            errors.fatal("Table [%s] already exists. To update table, delete and re-add", tblName.getDisplay());
             return null;
         }
         registry.persistence.putTable(source.getDatasetName(), tblName, tableConfig);

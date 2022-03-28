@@ -1,18 +1,16 @@
 package ai.dataeng.sqml.io.sources.stats;
 
 import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.tree.name.SpecialName;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.BasicTypeManager;
-import ai.dataeng.sqml.type.basic.ProcessMessage.ProcessBundle;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.type.basic.StringType;
 import ai.dataeng.sqml.type.constraint.Cardinality;
 import ai.dataeng.sqml.type.constraint.Constraint;
 import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
-import ai.dataeng.sqml.type.schema.SchemaConversionError;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -30,54 +28,54 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 
 public class SchemaGenerator {
 
-    private ProcessBundle<SchemaConversionError> errors = new ProcessBundle<>();
     private boolean isComplete;
 
-    public FlexibleDatasetSchema.TableField mergeSchema(@NonNull SourceTableStatistics tableStats, @NonNull FlexibleDatasetSchema.TableField tableDef, @NonNull NamePath location) {
+    public FlexibleDatasetSchema.TableField mergeSchema(@NonNull SourceTableStatistics tableStats, @NonNull FlexibleDatasetSchema.TableField tableDef, @NonNull ErrorCollector errors) {
         isComplete = !tableDef.isPartialSchema();
         FlexibleDatasetSchema.TableField.Builder builder = new FlexibleDatasetSchema.TableField.Builder();
         builder.copyFrom(tableDef);
         builder.setPartialSchema(false);
-        builder.setFields(merge(tableStats.relation, tableDef.getFields(), location));
+        builder.setFields(merge(tableStats.relation, tableDef.getFields(), errors));
         return builder.build();
     }
 
-    public FlexibleDatasetSchema.TableField mergeSchema(@NonNull SourceTableStatistics tableStats, @NonNull Name tableName, @NonNull NamePath location) {
-        return mergeSchema(tableStats, FlexibleDatasetSchema.TableField.empty(tableName), location);
+    public FlexibleDatasetSchema.TableField mergeSchema(@NonNull SourceTableStatistics tableStats, @NonNull Name tableName, @NonNull ErrorCollector errors) {
+        return mergeSchema(tableStats, FlexibleDatasetSchema.TableField.empty(tableName), errors);
     }
 
-    RelationType<FlexibleDatasetSchema.FlexibleField> merge(@NonNull RelationStats relation, @NonNull RelationType<FlexibleDatasetSchema.FlexibleField> fields, @NonNull NamePath location) {
+    RelationType<FlexibleDatasetSchema.FlexibleField> merge(@NonNull RelationStats relation, @NonNull RelationType<FlexibleDatasetSchema.FlexibleField> fields, @NonNull ErrorCollector errors) {
         Set<Name> coveredNames = new HashSet<>();
         RelationType.Builder<FlexibleDatasetSchema.FlexibleField> builder = RelationType.<FlexibleDatasetSchema.FlexibleField>build();
         for (FlexibleDatasetSchema.FlexibleField f : fields) {
-            builder.add(merge(relation.fieldStats.get(f.getName()), f, location.resolve(f.getName())));
+            builder.add(merge(relation.fieldStats.get(f.getName()), f, f.getName(), errors.resolve(f.getName())));
             coveredNames.add(f.getName());
         }
         if (!isComplete) {
             for (Map.Entry<Name, FieldStats> e : relation.fieldStats.entrySet()) {
                 if (!coveredNames.contains(e.getKey())) {
-                    builder.add(merge(e.getValue(), null, location.resolve(e.getKey())));
+                    builder.add(merge(e.getValue(), null, e.getKey(), errors.resolve(e.getKey())));
                 }
             }
         }
         return builder.build();
     }
 
-    FlexibleDatasetSchema.FlexibleField merge(FieldStats fieldStats, FlexibleDatasetSchema.FlexibleField fieldDef, @NonNull NamePath location) {
+    FlexibleDatasetSchema.FlexibleField merge(FieldStats fieldStats, FlexibleDatasetSchema.FlexibleField fieldDef,
+                                              @NonNull Name fieldName, @NonNull ErrorCollector errors) {
         Preconditions.checkArgument(fieldDef != null || !isComplete);
         FlexibleDatasetSchema.FlexibleField.Builder builder = new FlexibleDatasetSchema.FlexibleField.Builder();
         if (fieldDef != null) builder.copyFrom(fieldDef);
         else {
-            builder.setName(Name.changeDisplayName(location.getLast(), fieldStats.getDisplayName()));
+            builder.setName(Name.changeDisplayName(fieldName, fieldStats.getDisplayName()));
         }
         List<FlexibleDatasetSchema.FieldType> types = merge(
                 fieldStats != null ? fieldStats.types.keySet() : Collections.EMPTY_SET,
-                fieldDef != null ? fieldDef.getTypes() : Collections.EMPTY_LIST, location);
+                fieldDef != null ? fieldDef.getTypes() : Collections.EMPTY_LIST, errors);
         builder.setTypes(types);
         return builder.build();
     }
 
-    List<FlexibleDatasetSchema.FieldType> merge(@NonNull Set<FieldTypeStats> statTypes, @NonNull List<FlexibleDatasetSchema.FieldType> fieldTypes, @NonNull NamePath location) {
+    List<FlexibleDatasetSchema.FieldType> merge(@NonNull Set<FieldTypeStats> statTypes, @NonNull List<FlexibleDatasetSchema.FieldType> fieldTypes, @NonNull ErrorCollector errors) {
         if (fieldTypes.isEmpty()) {
             /* Need to generate single type from statistics. First, we check if there is one family of detected types.
                If not (or if there is ambiguity), we combine all of the raw types.
@@ -125,7 +123,7 @@ public class SchemaGenerator {
                     result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth, Collections.EMPTY_LIST);
                 }
                 if (nested != null) {
-                    RelationType<FlexibleDatasetSchema.FlexibleField> nestedType = merge(nested, RelationType.EMPTY, location);
+                    RelationType<FlexibleDatasetSchema.FlexibleField> nestedType = merge(nested, RelationType.EMPTY, errors);
                     if (result != null) {
                         //Need to embed basictype into nested relation as value
                         FlexibleDatasetSchema.FlexibleField.Builder b = new FlexibleDatasetSchema.FlexibleField.Builder();
@@ -161,21 +159,21 @@ public class SchemaGenerator {
                 FlexibleDatasetSchema.FieldType match = matchType(fts, fieldTypes);
                 if (match != null) {
                     if (!match.getType().getClass().equals(fts.getRaw().getClass()) || match.getArrayDepth()!=fts.getArrayDepth()) {
-                        addError(SchemaConversionError.notice(location, "Matched field type [%s] onto [%s]", fts, match));
+                        errors.notice("Matched field type [%s] onto [%s]", fts, match);
                     }
                     typePairing.put(match, fts);
                 } else {
-                    addError(SchemaConversionError.warn(location, "Cannot match field type [%s] onto defined schema. Such records will be ignored.", fts.raw));
+                    errors.warn("Cannot match field type [%s] onto defined schema. Such records will be ignored.", fts.raw);
                 }
             }
             for (FlexibleDatasetSchema.FieldType ft : fieldTypes) {
-                result.add(merge(typePairing.get(ft), ft, location));
+                result.add(merge(typePairing.get(ft), ft, errors));
             }
             return result;
         }
     }
 
-    FlexibleDatasetSchema.FieldType merge(@NonNull Collection<FieldTypeStats> ftstats, @NonNull FlexibleDatasetSchema.FieldType ftdef, @NonNull NamePath location) {
+    FlexibleDatasetSchema.FieldType merge(@NonNull Collection<FieldTypeStats> ftstats, @NonNull FlexibleDatasetSchema.FieldType ftdef, @NonNull ErrorCollector errors) {
         if (ftdef.getType() instanceof BasicType) return ftdef; //It's an immutable object, no need to copy
         else {
             RelationStats nested = null;
@@ -184,7 +182,7 @@ public class SchemaGenerator {
                 else nested.merge(fts.nestedRelationStats);
             }
             return new FlexibleDatasetSchema.FieldType(ftdef.getVariantName(),
-                    merge(nested == null ? RelationStats.EMPTY : nested, (RelationType) ftdef.getType(), location),
+                    merge(nested == null ? RelationStats.EMPTY : nested, (RelationType) ftdef.getType(), errors),
                     ftdef.getArrayDepth(), ftdef.getConstraints());
         }
     }
@@ -258,16 +256,4 @@ public class SchemaGenerator {
         }
     }
 
-
-    public boolean hasErrors() {
-        return errors.hasErrors();
-    }
-
-    public ProcessBundle<SchemaConversionError> getErrors() {
-        return errors;
-    }
-
-    private void addError(SchemaConversionError error) {
-        errors.add(error);
-    }
 }

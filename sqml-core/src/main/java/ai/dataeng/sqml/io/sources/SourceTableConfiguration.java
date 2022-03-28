@@ -1,21 +1,17 @@
 package ai.dataeng.sqml.io.sources;
 
-import ai.dataeng.sqml.config.ConfigurationError;
 import ai.dataeng.sqml.config.constraints.OptionalMinString;
 import ai.dataeng.sqml.io.sources.impl.InputPreview;
 import ai.dataeng.sqml.tree.name.Name;
-import java.io.Serializable;
-import java.util.Optional;
 
 import ai.dataeng.sqml.io.sources.formats.*;
 
-import ai.dataeng.sqml.type.basic.ProcessMessage;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -43,17 +39,17 @@ public class SourceTableConfiguration {
         this.formatConfig = null;
     }
 
-    public boolean validateAndInitialize(DataSource source, ProcessMessage.ProcessBundle<ConfigurationError> errors) {
-        Name dataset = source.getDatasetName();
+    public boolean validateAndInitialize(DataSource source, ErrorCollector errors) {
         if (!Name.validName(name)) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,dataset,"Table needs to have valid name: %s",name));
+            errors.fatal("Table needs to have valid name: %s",name);
             return false;
         }
+        errors = errors.resolve(name);
         if (Strings.isNullOrEmpty(identifier)) identifier = name;
         identifier = source.getCanonicalizer().getCanonical(identifier);
         if (!Strings.isNullOrEmpty(format)) format = format.trim().toLowerCase();
         if (!FileFormat.validFormat(format)) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,dataset,"Table [%s] has invalid format: %s",name, format));
+            errors.fatal("Table has invalid format: %s", format);
             return false;
         }
         Format<FormatConfiguration> formatImpl = getFormatImpl();
@@ -71,11 +67,10 @@ public class SourceTableConfiguration {
             formatConfig = formatImpl.getDefaultConfiguration().orElse(null);
         }
         if (formatConfig == null) {
-            errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SOURCE,dataset,
-                    "Table [%s] does not have format configuration and it cannot be inferred", name));
+            errors.fatal("Table does not have format configuration and it cannot be inferred");
             return false;
         } else {
-            if (formatConfig.validate(errors)) {
+            if (formatConfig.validate(errors.resolve("format"))) {
                 return true;
             } else {
                 return false;
@@ -92,7 +87,7 @@ public class SourceTableConfiguration {
         return formatImpl.getParser(formatConfig);
     }
 
-    public boolean update(@NonNull SourceTableConfiguration config, @NonNull ProcessMessage.ProcessBundle<ConfigurationError> errors) {
+    public boolean update(@NonNull SourceTableConfiguration config, @NonNull ErrorCollector errors) {
         //TODO: implement
         return false;
     }
