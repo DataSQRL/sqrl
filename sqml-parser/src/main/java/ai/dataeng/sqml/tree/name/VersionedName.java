@@ -8,6 +8,7 @@ public class VersionedName extends SimpleName {
   private final String displayName;
   private final int version;
 
+  public static final String ID_DELIMITER_REGEX = "\\$";
   public static final String ID_DELIMITER = "$";
 
   public VersionedName(String canonicalName, String displayName, int version) {

@@ -88,15 +88,6 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
         return Optional.ofNullable(getFieldByName(Name.of(value, NameCanonicalizer.SYSTEM)));
     }
 
-    public RelationType withAlias(String alias) {
-        RelationType rel = new RelationType();
-        for (Field f : fields) {
-            rel.add(f.withAlias(QualifiedName.of(alias)));
-        }
-
-        return rel;
-    }
-
     public int getAllFieldCount() {
         return getScalarFields().size();
     }

@@ -12,21 +12,33 @@ import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
-import ai.dataeng.sqml.planner.operator.C360Test;
-import ai.dataeng.sqml.planner.operator.ImportManager;
+import ai.dataeng.sqml.parser.operator.C360Test;
+import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.type.schema.SchemaAdjustmentSettings;
+import java.util.List;
 import lombok.SneakyThrows;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rex.RexInputRef;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.ExplainDetail;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
+import org.apache.flink.table.api.internal.TableImpl;
+import org.apache.flink.table.operations.Operation;
+import org.apache.flink.table.operations.ddl.CreateOperation;
+import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
+import org.apache.flink.table.planner.operations.PlannerQueryOperation;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.OutputTag;
 import org.junit.jupiter.api.AfterEach;
@@ -106,7 +118,7 @@ public class IngestAndSchemaTest {
 
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
+        StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)StreamTableEnvironment.create(env);
         final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>("SCHEMA_ERROR"){};
 
         ImportManager.SourceTableImport imp = ordersImp;
@@ -118,14 +130,55 @@ public class IngestAndSchemaTest {
         SingleOutputStreamOperator<Row> rows = validate.map(tbConverter.getRowMapper(imp.getSourceSchema()),schema.getRight());
 
         Table table = tEnv.fromDataStream(rows,schema.getLeft());
+
         tEnv.createTemporaryView("TheTable", table);
         table.printSchema();
 
-        Table sum = table.select($("id").sum().as("sum"));
-        tEnv.toChangelogStream(sum).print();
+//        Table sum = table.select($("id").sum().as("sum"));
+//        tEnv.toChangelogStream(sum).print();
 
         Table tableShredding = tEnv.sqlQuery("SELECT  o._uuid, items._idx, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
                 "FROM TheTable o CROSS JOIN UNNEST(o.entries) AS items");
+
+        RelNode node = ((PlannerQueryOperation)((TableImpl)tableShredding).getQueryOperation()).getCalciteTree();
+        System.out.println(node.explain());
+        PlannerQueryOperation plannerQueryOperation = new PlannerQueryOperation(
+            FlinkRelBuilder.of(node.getCluster(), null)
+            .push(node)
+            .project(RexInputRef.of(3, node.getRowType()))
+            .build()
+        );
+
+//        Table logicalPlanTable = CreateOperation.create(tEnv, plannerQueryOperation);
+
+        List<Operation> create = tEnv.getParser().parse("CREATE TABLE MyUserTable (\n"
+            + "  discount DOUBLE"
+            + ") WITH (\n"
+            + "   'connector' = 'jdbc',\n"
+            + "   'url' = 'jdbc:mysql://localhost:3306/mydatabase',\n"
+            + "   'table-name' = 'users'\n"
+            + ")\n");
+
+        System.out.println(create);
+
+        tEnv.executeSql("CREATE TABLE MyUserTable (\n"
+            + "  discount DOUBLE\n"
+            + ") WITH (\n"
+            + "   'connector' = 'jdbc',\n"
+            + "   'url' = 'jdbc:postgresql://localhost/henneberger',\n"
+            + "   'table-name' = 'users'\n"
+            + ")\n");
+
+        System.out.println( "Insert " +tEnv.getParser().parse("INSERT INTO MyUserTable\n"
+            + "SELECT discount FROM "+tableShredding+""));
+
+        StatementSet stmtSet = tEnv.createStatementSet();
+        stmtSet.addInsertSql("INSERT INTO MyUserTable\n"
+            + "SELECT discount FROM "+tableShredding+"");
+
+        System.out.println(stmtSet.explain(ExplainDetail.JSON_EXECUTION_PLAN));
+
+        TableResult tableResult2 = stmtSet.execute();
 
 //        Table flattenEntries = table.joinLateral(call("UNNEST", $("entries")
 //                ))

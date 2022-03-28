@@ -1,11 +1,13 @@
 package ai.dataeng.sqml.schema;
 
 
-import ai.dataeng.sqml.planner.Dataset;
-import ai.dataeng.sqml.planner.DatasetOrTable;
-import ai.dataeng.sqml.planner.SchemaImpl;
-import ai.dataeng.sqml.planner.Table;
-import ai.dataeng.sqml.planner.operator.ShadowingContainer;
+import ai.dataeng.sqml.parser.Dataset;
+import ai.dataeng.sqml.parser.DatasetOrTable;
+import ai.dataeng.sqml.parser.SchemaImpl;
+import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.parser.operator.ShadowingContainer;
+import ai.dataeng.sqml.parser.operator.ShadowingContainer.Nameable;
+import ai.dataeng.sqml.planner.LogicalPlanDag;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.tree.name.VersionedName;
@@ -13,22 +15,28 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.Getter;
 import lombok.ToString;
 import org.apache.calcite.sql.SqlNode;
 
+@Getter
 @ToString
 public class NamespaceImpl implements Namespace {
 
   private final Map<Name, Dataset> rootDatasets;
   private final Map<Name, Dataset> scopedDatasets;
 
-  private final static AtomicInteger tableIdCounter = new AtomicInteger(0);
+  public final static AtomicInteger tableIdCounter = new AtomicInteger(0);
   private final SchemaImpl schemaContainer;
+  private final LogicalPlanDag logicalPlanDag;
+  private final ShadowingContainer<Table> container;
 
   public NamespaceImpl() {
     this.rootDatasets = new HashMap<>();
     this.scopedDatasets = new HashMap<>();
     this.schemaContainer = new SchemaImpl();
+    this.container = new ShadowingContainer<>();
+    this.logicalPlanDag = new LogicalPlanDag(container);
   }
 
   @Override
@@ -107,8 +115,8 @@ public class NamespaceImpl implements Namespace {
   }
 
   @Override
-  public ShadowingContainer<DatasetOrTable> getSchema() {
-    ShadowingContainer<DatasetOrTable> shadowingContainer = new ShadowingContainer<>();
+  public ShadowingContainer<Table> populate() {
+    ShadowingContainer<Table> shadowingContainer = this.logicalPlanDag.getSchema();
     for (Dataset dataset : this.rootDatasets.values()) {
       dataset.tables.forEach(shadowingContainer::add);
     }

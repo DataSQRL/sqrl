@@ -72,11 +72,6 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
             }
 
         }
-
-        @Override
-        public Field withAlias(QualifiedName alias) {
-            return null;
-        }
     }
 
     @Getter
@@ -96,11 +91,6 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
             this.isPartialSchema = isPartialSchema;
             this.fields = fields;
             this.constraints = constraints;
-        }
-
-        @Override
-        public Optional<QualifiedName> getAlias() {
-            return Optional.empty();
         }
 
         @Setter
@@ -143,11 +133,6 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
                              List<FieldType> types) {
             super(name, description, default_value);
             this.types = types;
-        }
-
-        @Override
-        public Optional<QualifiedName> getAlias() {
-            return Optional.empty();
         }
 
         @Setter

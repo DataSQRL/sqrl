@@ -1,6 +1,6 @@
 package org.apache.calcite.rel.type;
 
-import ai.dataeng.sqml.planner.FieldPath;
+import ai.dataeng.sqml.parser.FieldPath;
 import lombok.Getter;
 
 @Getter

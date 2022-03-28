@@ -13,12 +13,15 @@ import ai.dataeng.execution.table.column.H2Column;
 import ai.dataeng.execution.table.column.IntegerColumn;
 import ai.dataeng.execution.table.column.StringColumn;
 import ai.dataeng.execution.table.column.UUIDColumn;
-import ai.dataeng.sqml.planner.Column;
-import ai.dataeng.sqml.planner.Field;
-import ai.dataeng.sqml.planner.Table;
+import ai.dataeng.sqml.parser.Column;
+import ai.dataeng.sqml.parser.Field;
+import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.planner.nodes.LogicalFlinkSink;
 import ai.dataeng.sqml.tree.name.NamePath;
+import ai.dataeng.sqml.type.CalciteDelegatingField;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
 import ai.dataeng.sqml.type.basic.FloatType;
 import ai.dataeng.sqml.type.basic.IntegerType;
@@ -28,18 +31,26 @@ import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLCodeRegistry.Builder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import org.apache.flink.table.api.TableDescriptor;
 
 public class SqrlCodeRegistryBuilder {
+  GraphQLCodeRegistry.Builder registry = GraphQLCodeRegistry.newCodeRegistry();
+  private Map<Table, TableDescriptor> physicalDescriptors;
 
-  public GraphQLCodeRegistry build(SqlClientProvider sqlClientProvider) {
-    GraphQLCodeRegistry.Builder registry = GraphQLCodeRegistry.newCodeRegistry();
+  public GraphQLCodeRegistry build(SqlClientProvider sqlClientProvider,
+      Map<Table, LogicalFlinkSink> sinks,
+      Map<Table, TableDescriptor> physicalDescriptors) {
+    this.physicalDescriptors = physicalDescriptors;
 
-    HashSet<Table> seen = new HashSet<>();
+    for (Map.Entry<Table, LogicalFlinkSink> sink : sinks.entrySet()) {
+      registerFetcher(registry, sqlClientProvider, sink.getKey(), sink.getValue());
+    }
+
+
 //    for (MaterializeSource source : sources) {
 //      registerFetcher(registry, sqlClientProvider, source.getTable(), seen);
 //    }
@@ -47,19 +58,15 @@ public class SqrlCodeRegistryBuilder {
     return registry.build();
   }
 
-  private void registerFetcher(Builder registry, SqlClientProvider pool, Table table, HashSet<Table> seen) {
-    if (seen.contains(table)) {
-      return;
-    }
-    seen.add(table);
-
+  private void registerFetcher(Builder registry, SqlClientProvider pool, Table table, LogicalFlinkSink flinkSink) {
     NamePath path = table.getPath();
 
     if (path.getLength() == 1) {//register a special fetcher
       registry.dataFetcher(
           FieldCoordinates.coordinates("Query", table.name.getDisplay()),
-          new DefaultDataFetcher(pool, new SystemPageProvider(), toTable(table, Optional.empty())));
+          new DefaultDataFetcher(pool, new SystemPageProvider(), toTable(table, Optional.empty(), flinkSink.getPhysicalName())));
     }
+
 
     //Look for any relationship tables and build fetchers for them
 //    for (Field field : table.getFields()) {
@@ -102,8 +109,8 @@ public class SqrlCodeRegistryBuilder {
 //            .collect(Collectors.toList()));
 //  }
 
-  private TableFieldFetcher toTable(Table table, Optional<Criteria> criteria) {
-    return new TableFieldFetcher(new H2Table(new Columns(toColumns(table)), table.getId().toString()),
+  private TableFieldFetcher toTable(Table table, Optional<Criteria> criteria, String tableName) {
+    return new TableFieldFetcher(new H2Table(new Columns(toColumns(table)), tableName),
         criteria);
   }
 
@@ -111,6 +118,7 @@ public class SqrlCodeRegistryBuilder {
     List<H2Column> list = new ArrayList<>();
     for (Field field : table.getFields()) {
       if (field instanceof Column) {
+        if (field.getName().getCanonical().startsWith("_ingest")) continue;
         list.add(toH2Column((Column)field));
       }
     }
@@ -119,30 +127,32 @@ public class SqrlCodeRegistryBuilder {
   }
 
   private H2Column toH2Column(Column column) {
-    return column.getType().accept(new SqmlTypeVisitor<>(){
+    BasicType basicType = column.getType();
+
+    return basicType.accept(new SqmlTypeVisitor<>(){
       @Override
       public H2Column visitIntegerType(IntegerType type, Column context) {
-        return new IntegerColumn(column.getName().getDisplay(), column.getId().toString());
+        return new IntegerColumn(context.getName().getDisplay(), context.getId().toString());
       }
 
       @Override
       public H2Column visitStringType(StringType type, Column context) {
-        return new StringColumn(column.getName().getDisplay(), column.getId().toString());
+        return new StringColumn(context.getName().getDisplay(), context.getId().toString());
       }
 
       @Override
       public H2Column visitUuidType(UuidType type, Column context) {
-        return new UUIDColumn(column.getName().getDisplay(), column.getId().toString());
+        return new UUIDColumn(context.getName().getDisplay(), context.getId().toString());
       }
 
       @Override
       public H2Column visitFloatType(FloatType type, Column context) {
-        return new FloatColumn(column.getName().getDisplay(), column.getId().toString());
+        return new FloatColumn(context.getName().getDisplay(), context.getId().toString());
       }
 
       @Override
       public H2Column visitDateTimeType(DateTimeType type, Column context) {
-        return new DateTimeColumn(column.getName().getDisplay(), column.getId().toString());
+        return new DateTimeColumn(context.getName().getDisplay(), context.getId().toString());
       }
 
       @Override

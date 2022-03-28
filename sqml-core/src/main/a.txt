@@ -1,0 +1,2 @@
+create table orders_Sink("customerid" BIGINT, "id" BIGINT, "time" BIGINT, "_uuid" varchar(255),
+"_ingest_time" timestamp with time zone , "_source_time" timestamp with time zone );;

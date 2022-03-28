@@ -1,10 +1,10 @@
 package ai.dataeng.sqml.schema;
 
-import ai.dataeng.sqml.planner.Dataset;
-import ai.dataeng.sqml.planner.DatasetOrTable;
-import ai.dataeng.sqml.planner.SchemaImpl;
-import ai.dataeng.sqml.planner.Table;
-import ai.dataeng.sqml.planner.operator.ShadowingContainer;
+import ai.dataeng.sqml.parser.Dataset;
+import ai.dataeng.sqml.parser.DatasetOrTable;
+import ai.dataeng.sqml.parser.SchemaImpl;
+import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.parser.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.tree.name.VersionedName;
@@ -37,7 +37,7 @@ public interface Namespace {
   /**
    * The current schema
    */
-  ShadowingContainer<DatasetOrTable> getSchema();
+  ShadowingContainer populate();
 
   SchemaImpl getSchemaContainer();
 

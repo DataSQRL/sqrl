@@ -1,8 +1,8 @@
 //package ai.dataeng.sqml.execution.sql;
 //
 //import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
-//import ai.dataeng.sqml.planner.Column;
-//import ai.dataeng.sqml.planner.operator.AccessNode;
+//import ai.dataeng.sqml.parser.Column;
+//import ai.dataeng.sqml.parser.operator.AccessNode;
 //import ai.dataeng.sqml.planner.LogicalPlanImpl;
 //import ai.dataeng.sqml.planner.LogicalPlanIterator;
 //import ai.dataeng.sqml.planner.optimize.LogicalPlanResult;

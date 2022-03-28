@@ -1,6 +1,6 @@
 package org.apache.calcite.sql.type;
 
-import ai.dataeng.sqml.planner.Relationship.Multiplicity;
+import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
 /**
