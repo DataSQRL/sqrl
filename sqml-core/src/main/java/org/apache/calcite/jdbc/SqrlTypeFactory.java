@@ -1,9 +1,10 @@
 package org.apache.calcite.jdbc;
 
-import ai.dataeng.sqml.planner.Column;
-import ai.dataeng.sqml.planner.FieldPath;
-import ai.dataeng.sqml.planner.Relationship.Multiplicity;
+import ai.dataeng.sqml.parser.Column;
+import ai.dataeng.sqml.parser.FieldPath;
+import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import ai.dataeng.sqml.type.basic.BasicType;
+import ai.dataeng.sqml.type.basic.BigIntegerType;
 import java.util.List;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
@@ -74,6 +75,8 @@ public class SqrlTypeFactory extends SqlTypeFactoryImpl {
         return SqlTypeName.TIMESTAMP;
       case "DATETIME":
         return SqlTypeName.TIMESTAMP;
+      case BigIntegerType.NAME:
+        return SqlTypeName.BIGINT;
       //todo: remaining
     }
     throw new RuntimeException(String.format(

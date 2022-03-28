@@ -14,11 +14,10 @@ import ai.dataeng.sqml.io.sinks.registry.MetadataSinkRegistryPersistence;
 import ai.dataeng.sqml.io.sources.dataset.MetadataSourceRegistryPersistence;
 import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitorImpl;
 import ai.dataeng.sqml.parser.ScriptParserImpl;
-import ai.dataeng.sqml.parser.ScriptProcessorImpl;
 import ai.dataeng.sqml.parser.validator.ScriptValidatorImpl;
 import ai.dataeng.sqml.planner.HeuristicPlannerImpl;
-import ai.dataeng.sqml.planner.operator.ImportManager;
-import ai.dataeng.sqml.planner.operator.ImportResolver;
+import ai.dataeng.sqml.parser.operator.ImportManager;
+import ai.dataeng.sqml.parser.operator.ImportResolver;
 import ai.dataeng.sqml.schema.Namespace;
 import ai.dataeng.sqml.schema.NamespaceImpl;
 import com.google.common.base.Preconditions;
@@ -72,12 +71,12 @@ public class SqrlSettings {
         .namespace(new NamespaceImpl())
         .validatorProvider(()->new ScriptValidatorImpl())
         .scriptParserProvider(()->new ScriptParserImpl())
-        .importManagerProvider((datasetLookup, planner)-> {
+        .importManagerProvider((datasetLookup)-> {
           ImportManager manager = new ImportManager(datasetLookup);
-          return new ImportResolver(manager, planner);
+          return new ImportResolver(manager);
         })
-        .heuristicPlannerProvider(()->new HeuristicPlannerImpl())
-        .scriptProcessorProvider(ScriptProcessorImpl::new);
+        .heuristicPlannerProvider(()->new HeuristicPlannerImpl());
+//        .scriptProcessorProvider(ScriptProcessorImpl::new);
 
     GlobalConfiguration.Engines engines = config.getEngines();
     Preconditions.checkArgument(engines.getFlink()!=null,"Must configure Flink engine");

@@ -222,6 +222,12 @@
       <artifactId>calcite-core</artifactId>
       <version>1.26.0</version>
     </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.1</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>

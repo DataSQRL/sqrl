@@ -1,10 +1,10 @@
 package ai.dataeng.sqml.api.graphql;
 
 import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder.GraphqlTypeCatalog;
-import ai.dataeng.sqml.planner.Column;
-import ai.dataeng.sqml.planner.Field;
-import ai.dataeng.sqml.planner.Relationship.Multiplicity;
-import ai.dataeng.sqml.planner.Table;
+import ai.dataeng.sqml.parser.Column;
+import ai.dataeng.sqml.parser.Field;
+import ai.dataeng.sqml.parser.Relationship.Multiplicity;
+import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BooleanType;

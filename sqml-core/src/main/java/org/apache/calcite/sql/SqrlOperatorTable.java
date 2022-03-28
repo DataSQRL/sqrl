@@ -68,7 +68,7 @@ public class SqrlOperatorTable extends ReflectiveSqlOperatorTable {
     public static final SqlOperator time_roundToMonth = new SqrlFunctionOperator(new SqlFunction(
         "time_roundToMonth",
         SqlKind.OTHER_FUNCTION,
-        (opBinding)->opBinding.getTypeFactory().createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
+        (opBinding)->opBinding.getTypeFactory().createSqlType(SqlTypeName.TIMESTAMP),
         InferTypes.FIRST_KNOWN,
         OperandTypes.VARIADIC,
         SqlFunctionCategory.TIMEDATE));

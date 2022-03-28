@@ -49,9 +49,9 @@ public class FlinkTableConverter {
         });
         schemaBuilder.column(ReservedName.UUID.getCanonical(), toFlinkDataType(UuidType.INSTANCE).notNull());
         rowNames.add(ReservedName.UUID.getCanonical()); rowCols.add(FlinkUtilities.getFlinkTypeInfo(UuidType.INSTANCE,false));
-        schemaBuilder.column(ReservedName.INGEST_TIME.getCanonical(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3).notNull());
+        schemaBuilder.column(ReservedName.INGEST_TIME.getCanonical(), DataTypes.TIMESTAMP().notNull());
         rowNames.add(ReservedName.INGEST_TIME.getCanonical()); rowCols.add(FlinkUtilities.getFlinkTypeInfo(DateTimeType.INSTANCE,false));
-        schemaBuilder.column(ReservedName.SOURCE_TIME.getCanonical(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3).nullable());
+        schemaBuilder.column(ReservedName.SOURCE_TIME.getCanonical(), DataTypes.TIMESTAMP().notNull());
         rowNames.add(ReservedName.SOURCE_TIME.getCanonical()); rowCols.add(FlinkUtilities.getFlinkTypeInfo(DateTimeType.INSTANCE,false));
         //TODO: adjust based on configuration
 //        schemaBuilder.columnByExpression("__rowtime", "CAST(_ingest_time AS TIMESTAMP_LTZ(3))");

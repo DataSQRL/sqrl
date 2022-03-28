@@ -2,16 +2,13 @@ package org.apache.calcite.sql.type;
 
 import static org.apache.calcite.util.Static.RESOURCE;
 
-import ai.dataeng.sqml.planner.Relationship.Multiplicity;
+import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import java.util.List;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlCallBinding;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperandCountRange;
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.util.Util;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Determines if an operand can support a to-many column

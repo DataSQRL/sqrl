@@ -1,5 +1,7 @@
 package ai.dataeng.sqml.planner;
 
+import ai.dataeng.sqml.parser.CalciteTableFactory;
+import ai.dataeng.sqml.parser.RelDataTypeFieldFactory;
 import ai.dataeng.sqml.schema.Namespace;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.Collections;
@@ -71,7 +73,7 @@ public class HeuristicPlannerImpl implements Planner {
 
   private SqrlCalciteCatalogReader getCalciteCatalogReader(Optional<NamePath> context,
       Namespace namespace, SqrlTypeFactory typeFactory) {
-    CalciteTableFactory calciteTableFactory = new CalciteTableFactory(context, namespace, new RelDataTypeFieldFactory(typeFactory));
+    CalciteTableFactory calciteTableFactory = new CalciteTableFactory(context, namespace, new RelDataTypeFieldFactory(typeFactory), true);
     CachingSqrlSchema schema = new CachingSqrlSchema(new SqrlSchema(calciteTableFactory));
 
     // Configure and instantiate validator

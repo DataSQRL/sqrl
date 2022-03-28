@@ -1,14 +1,15 @@
 package ai.dataeng.sqml.api.graphql;
 
 import ai.dataeng.execution.table.H2Table;
-import ai.dataeng.sqml.planner.Column;
-import ai.dataeng.sqml.planner.DatasetOrTable;
-import ai.dataeng.sqml.planner.Relationship;
-import ai.dataeng.sqml.planner.Relationship.Multiplicity;
-import ai.dataeng.sqml.planner.Table;
-import ai.dataeng.sqml.planner.operator.ShadowingContainer;
+import ai.dataeng.sqml.parser.Column;
+import ai.dataeng.sqml.parser.DatasetOrTable;
+import ai.dataeng.sqml.parser.Relationship;
+import ai.dataeng.sqml.parser.Relationship.Multiplicity;
+import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.parser.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.ArrayType;
+import ai.dataeng.sqml.type.CalciteDelegatingField;
 import ai.dataeng.sqml.type.Field;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
@@ -56,7 +57,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GraphqlSchemaBuilder {
   final Map<Class<? extends Type>, GraphQLOutputType> types;
-  final ShadowingContainer<DatasetOrTable> schema;
+  final ShadowingContainer<Table> schema;
   private final GraphQLCodeRegistry codeRegistry;
   private final GraphqlTypeCatalog typeCatalog;
   GraphQLSchema.Builder schemaBuilder = GraphQLSchema.newSchema();
@@ -65,7 +66,7 @@ public class GraphqlSchemaBuilder {
   private final Pool client;
 
   public GraphqlSchemaBuilder(Map<Class<? extends Type>, GraphQLOutputType> types,
-      ShadowingContainer<DatasetOrTable> schema,
+      ShadowingContainer<Table> schema,
       Map<String, H2Table> tableMap, Pool client, GraphQLCodeRegistry codeRegistry) {
 
     this.types = types;
@@ -81,11 +82,11 @@ public class GraphqlSchemaBuilder {
   }
 
   public static class Builder {
-    private ShadowingContainer<DatasetOrTable> schema;
+    private ShadowingContainer<Table> schema;
     private GraphQLCodeRegistry codeRegistry;
     private Map<Class<? extends Type>, GraphQLOutputType> types = StandardScalars.getTypeMap();
 
-    public Builder schema(ShadowingContainer<DatasetOrTable> schema) {
+    public Builder schema(ShadowingContainer<Table> schema) {
       this.schema = schema;
       return this;
     }
@@ -151,7 +152,7 @@ public class GraphqlSchemaBuilder {
 //  }
 //
 //  private void resolveNestedFetchers(JdbcPool pool, Table tbl, GraphQLCodeRegistry.Builder codeRegistry) {
-//    for (ai.dataeng.sqml.planner.Field field : tbl.getFields()) {
+//    for (ai.dataeng.sqml.parser.Field field : tbl.getFields()) {
 //      if (field instanceof Relationship) {
 //        resolveNestedFetchers(pool, (Relationship)field, codeRegistry, tbl);
 //      }
@@ -209,7 +210,7 @@ public class GraphqlSchemaBuilder {
     GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
         .name(table.getName().getDisplay());
 
-    for (ai.dataeng.sqml.planner.Field field : table.getFields()) {
+    for (ai.dataeng.sqml.parser.Field field : table.getFields()) {
       if (!field.isVisible()) {
         continue;
       }
@@ -226,6 +227,12 @@ public class GraphqlSchemaBuilder {
         argument = new GraphqlArgumentBuilder(rel.getMultiplicity(), rel.getToTable(), false, typeCatalog).build();
       } else if (field instanceof Column) {
         Column col = (Column) field;
+        Visitor sqmlTypeVisitor = new Visitor(Map.of());
+        output = col.getType().accept(sqmlTypeVisitor, null)
+            .orElseThrow(()->new RuntimeException("Could not find type " + col.getType().getName()));
+        argument = List.of();
+      } else if (field instanceof CalciteDelegatingField) {
+        CalciteDelegatingField col = (CalciteDelegatingField) field;
         Visitor sqmlTypeVisitor = new Visitor(Map.of());
         output = col.getType().accept(sqmlTypeVisitor, null)
             .orElseThrow(()->new RuntimeException("Could not find type " + col.getType().getName()));
@@ -337,10 +344,6 @@ public class GraphqlSchemaBuilder {
     public GraphQLSchema.Builder getBuilder() {
       return schemaBuilder;
     }
-//
-//    public Optional<GraphQLOutputType> visit(LogicalPlan logicalPlan, Context context) {
-//
-//    }
 
     @Override
     public Optional<GraphQLOutputType> visitArrayType(ArrayType type, Context context) {

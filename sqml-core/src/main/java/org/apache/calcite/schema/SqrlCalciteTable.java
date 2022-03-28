@@ -1,9 +1,9 @@
 package org.apache.calcite.schema;
 
-import ai.dataeng.sqml.planner.FieldPath;
-import ai.dataeng.sqml.planner.RelDataTypeFieldFactory;
-import ai.dataeng.sqml.planner.Relationship;
-import ai.dataeng.sqml.planner.Table;
+import ai.dataeng.sqml.parser.FieldPath;
+import ai.dataeng.sqml.parser.RelDataTypeFieldFactory;
+import ai.dataeng.sqml.parser.Relationship;
+import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;

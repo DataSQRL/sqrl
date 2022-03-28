@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class ImportDefinition extends Node {
+public class ImportDefinition extends SqrlStatement {
 
   protected final NodeLocation location;
   protected final QualifiedName qualifiedName;

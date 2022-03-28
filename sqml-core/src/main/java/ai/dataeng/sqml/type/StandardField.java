@@ -21,9 +21,4 @@ public class StandardField implements TypedField {
     public String toString() {
         return name.getDisplay() + ":" + type.toString();
     }
-
-    @Override
-    public Field withAlias(QualifiedName alias) {
-        return new StandardField(name, type, constraints, Optional.of(alias));
-    }
 }

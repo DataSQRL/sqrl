@@ -1,6 +1,6 @@
 package org.apache.calcite.schema;
 
-import ai.dataeng.sqml.planner.CalciteTableFactory;
+import ai.dataeng.sqml.parser.CalciteTableFactory;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

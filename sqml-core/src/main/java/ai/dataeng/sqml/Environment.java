@@ -15,12 +15,11 @@ import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitor;
 import ai.dataeng.sqml.parser.ScriptParser;
 import ai.dataeng.sqml.parser.ScriptProcessor;
 import ai.dataeng.sqml.parser.validator.Validator;
-import ai.dataeng.sqml.planner.SchemaImpl;
-import ai.dataeng.sqml.planner.Script;
-import ai.dataeng.sqml.planner.operator.ImportResolver;
 import ai.dataeng.sqml.schema.Namespace;
+import ai.dataeng.sqml.parser.Script;
+import ai.dataeng.sqml.parser.operator.ImportResolver;
+import ai.dataeng.sqml.planner.Planner3;
 import ai.dataeng.sqml.tree.ScriptNode;
-import ai.dataeng.sqml.config.error.ErrorMessage;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
@@ -103,8 +102,7 @@ public class Environment implements Closeable {
 
     //Instantiate import resolver and register user schema
     ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(
-        datasetRegistry,
-        settings.getHeuristicPlannerProvider().createPlanner());
+        datasetRegistry);
     ErrorCollector importErrors = importResolver.getImportManager()
             .registerUserSchema(mainScript.getSchema());
     Preconditions.checkArgument(!importErrors.isFatal(),
@@ -125,8 +123,6 @@ public class Environment implements Closeable {
         importResolver, planner, settings.getNamespace());
     Namespace namespace = processor.process(scriptNode);
 
-    SchemaImpl logicalPlan = namespace.getSchemaContainer();
-
 //    QueryAnalyzer.addDevModeQueries(logicalPlan);
     Preconditions.checkArgument(!errors.isFatal());
 
@@ -134,6 +130,8 @@ public class Environment implements Closeable {
 //        .optimize(logicalPlan);
 
     JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(submission.getId().getId());
+
+
 //    SQLGenerator.Result sql = settings.getSqlGeneratorProvider()
 //        .create(jdbc)
 //        .generateDatabase(optimized);

@@ -1,10 +1,12 @@
 package ai.dataeng.sqml.execution.sql.util;
 
+import static ai.dataeng.sqml.config.engines.JDBCConfiguration.Dialect.POSTGRES;
+
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.execution.sql.DatabaseSink;
 import ai.dataeng.sqml.execution.sql.SQLJDBCQueryBuilder;
-import ai.dataeng.sqml.planner.Column;
+import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.BooleanType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
@@ -40,8 +42,8 @@ public class DatabaseUtil {
 
     }
 
-    private String makeArrayDataType(String dataType) {
-        switch(configuration.getDialect()) {
+    private static String makeArrayDataType(String dataType, JDBCConfiguration.Dialect dialect) {
+        switch(dialect) {
             case POSTGRES:
                 return dataType + "[]";
             case H2:
@@ -51,7 +53,7 @@ public class DatabaseUtil {
         }
     }
 
-    public SQLTypeMapping getSQLType(Column column) {
+    public static SQLTypeMapping getSQLType(Column column) {
         BasicType type = column.getType();
         SQLTypeMapping mapType;
         if (type instanceof StringType) mapType = new SQLTypeMapping("VARCHAR",12);
@@ -59,12 +61,12 @@ public class DatabaseUtil {
         else if (type instanceof FloatType) mapType = new SQLTypeMapping("DOUBLE",-5);
         else if (type instanceof NumberType) mapType = new SQLTypeMapping("DOUBLE",8);
         else if (type instanceof BooleanType) mapType = new SQLTypeMapping("BIT",16);
-        else if (type instanceof UuidType) mapType = new SQLTypeMapping("CHAR(36)",12);
+        else if (type instanceof UuidType) mapType = new SQLTypeMapping("VARCHAR(36)",12);
         else if (type instanceof DateTimeType) mapType = new SQLTypeMapping("TIMESTAMP WITH TIME ZONE",12);
         else throw new UnsupportedOperationException("Unexpected datatype:" + type);
 
         if (column.getArrayDepth() > 0) {
-            mapType = new SQLTypeMapping(makeArrayDataType(mapType.getTypeName()),2003);
+            mapType = new SQLTypeMapping(makeArrayDataType(mapType.getTypeName(), POSTGRES),2003);
         }
         return mapType;
     }
@@ -83,7 +85,7 @@ public class DatabaseUtil {
             s.append(") VALUES (");
             s.append(Arrays.stream(new int[schema.length + 1]).mapToObj(i -> "?").collect(Collectors.joining(", ")));
             s.append(");");
-        } else if (configuration.getDialect() == JDBCConfiguration.Dialect.POSTGRES) {
+        } else if (configuration.getDialect() == POSTGRES) {
             throw new NotImplementedException("Not yet implemented");
         } else throw new UnsupportedOperationException();
         String upsertQuery = s.toString();

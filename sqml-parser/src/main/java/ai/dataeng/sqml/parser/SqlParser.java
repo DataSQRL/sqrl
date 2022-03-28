@@ -18,6 +18,7 @@ import static java.util.Objects.requireNonNull;
 
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.ScriptNode;
+import ai.dataeng.sqml.tree.SqrlStatement;
 import ai.dataeng.sqml.tree.Statement;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -90,16 +91,8 @@ public class SqlParser {
         parsingOptions);
   }
 
-  /**
-   * Consider using {@link #createStatement(String, ParsingOptions)}
-   */
-  @Deprecated
-  public Statement createStatement(String sql) {
-    return createStatement(sql, new ParsingOptions());
-  }
-
-  public Statement createStatement(String sql, ParsingOptions parsingOptions) {
-    return (Statement) invokeParser("statement", sql, ai.dataeng.sqml.parser.SqlBaseParser::singleStatement,
+  public SqrlStatement createStatement(String sql, ParsingOptions parsingOptions) {
+    return (SqrlStatement) invokeParser("statement", sql, ai.dataeng.sqml.parser.SqlBaseParser::singleStatement,
         parsingOptions);
   }
 

@@ -8,11 +8,11 @@
 //import ai.dataeng.sqml.io.sources.SourceRecord;
 //import ai.dataeng.sqml.planner.LogicalPlanImpl;
 //import ai.dataeng.sqml.planner.LogicalPlanIterator;
-//import ai.dataeng.sqml.planner.operator.AggregateOperator;
-//import ai.dataeng.sqml.planner.operator.DocumentSource;
-//import ai.dataeng.sqml.planner.operator.FilterOperator;
-//import ai.dataeng.sqml.planner.operator.ProjectOperator;
-//import ai.dataeng.sqml.planner.operator.ShreddingOperator;
+//import ai.dataeng.sqml.parser.operator.AggregateOperator;
+//import ai.dataeng.sqml.parser.operator.DocumentSource;
+//import ai.dataeng.sqml.parser.operator.FilterOperator;
+//import ai.dataeng.sqml.parser.operator.ProjectOperator;
+//import ai.dataeng.sqml.parser.operator.ShreddingOperator;
 //import ai.dataeng.sqml.execution.flink.StreamType;
 //import ai.dataeng.sqml.planner.optimize.LogicalPlanOptimizer;
 //import ai.dataeng.sqml.planner.optimize.MaterializeSink;

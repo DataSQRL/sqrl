@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.execution.flink.process;
 
 import ai.dataeng.sqml.io.sources.SourceRecord;
-import ai.dataeng.sqml.planner.Column;
-import ai.dataeng.sqml.planner.Table;
+import ai.dataeng.sqml.parser.Column;
+import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.basic.BasicType;

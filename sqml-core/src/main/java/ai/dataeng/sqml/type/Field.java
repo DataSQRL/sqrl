@@ -21,10 +21,6 @@ public interface Field extends Serializable {
         return false;
     }
 
-    public Optional<QualifiedName> getAlias();
-
-    Field withAlias(QualifiedName alias);
-
     default QualifiedName getQualifiedName() {
         if (unbox(getType()) instanceof RelationType) {
             Optional<Field> field = ((RelationType) unbox(getType())).getField("parent");

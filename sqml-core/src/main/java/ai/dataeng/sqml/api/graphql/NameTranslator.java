@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.api.graphql;
 
-import ai.dataeng.sqml.planner.Table;
+import ai.dataeng.sqml.parser.Table;
 
 public class NameTranslator {
   public String getGraphqlName(Table tbl) {
