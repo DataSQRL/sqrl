@@ -232,7 +232,7 @@ public abstract class AstVisitor<R, C> {
     return visitNode(node, context);
   }
 
-  public R visitTable(Table node, C context) {
+  public R visitTable(TableNode node, C context) {
     return visitQueryBody(node, context);
   }
 
@@ -288,6 +288,8 @@ public abstract class AstVisitor<R, C> {
     return visitExpression(node, context);
   }
 
+  //SQRL specific nodes
+
   public R visitScript(ScriptNode node, C context) {
     return visitNode(node, context);
   }
@@ -314,7 +316,7 @@ public abstract class AstVisitor<R, C> {
     return visitAssignment(node, context);
   }
 
-  public R visitJoinAssignment(JoinDeclaration node, C context) {
+  public R visitJoinDeclaration(JoinDeclaration node, C context) {
     return visitAssignment(node, context);
   }
   public R visitInlineJoin(InlineJoin node, C context) {

@@ -51,7 +51,7 @@ public class DereferenceExpression
    */
   public static QualifiedName getQualifiedName(DereferenceExpression expression) {
     List<String> parts = tryParseParts(expression.base,
-        expression.field.getValue().toLowerCase(Locale.ENGLISH));
+        expression.field.getNamePath().toLowerCase(Locale.ENGLISH));
     return parts == null ? null : QualifiedName.of(parts);
   }
 
@@ -71,7 +71,7 @@ public class DereferenceExpression
 
   private static List<String> tryParseParts(Expression base, String fieldName) {
     if (base instanceof Identifier) {
-      return ImmutableList.of(((Identifier) base).getValue(), fieldName);
+      return ImmutableList.of(((Identifier) base).getNamePath(), fieldName);
     } else if (base instanceof DereferenceExpression) {
       QualifiedName baseQualifiedName = getQualifiedName((DereferenceExpression) base);
       if (baseQualifiedName != null) {

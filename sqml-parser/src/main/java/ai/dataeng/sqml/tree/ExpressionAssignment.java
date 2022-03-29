@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,7 +10,7 @@ public class ExpressionAssignment extends Assignment {
   private final String sql;
 
   public ExpressionAssignment(Optional<NodeLocation> location,
-      QualifiedName name, Expression expression, String sql) {
+      NamePath name, Expression expression, String sql) {
     super(location, name);
     this.expression = expression;
     this.sql = sql;

@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,7 +10,7 @@ public class JoinDeclaration extends Assignment {
   private final InlineJoin inlineJoin;
 
   public JoinDeclaration(Optional<NodeLocation> location,
-      QualifiedName name, String query, InlineJoin inlineJoin) {
+      NamePath name, String query, InlineJoin inlineJoin) {
     super(location, name);
     this.query = query;
 
@@ -40,6 +41,6 @@ public class JoinDeclaration extends Assignment {
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
-    return visitor.visitJoinAssignment(this, context);
+    return visitor.visitJoinDeclaration(this, context);
   }
 }

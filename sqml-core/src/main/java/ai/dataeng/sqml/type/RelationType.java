@@ -1,21 +1,20 @@
 package ai.dataeng.sqml.type;
 
-import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.tree.name.NameCanonicalizer;
+import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema.AbstractField;
+import ai.dataeng.sqml.type.schema.SchemaField;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 
-public class RelationType<F extends Field> implements Type, Iterable<F> {
+public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
 
     public static final RelationType EMPTY = new RelationType();
 
@@ -50,10 +49,6 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
         return fieldsByName.get(name);
     }
 
-    public Optional<F> getFieldByNameOptional(Name name) {
-        return Optional.ofNullable(getFieldByName(name));
-    }
-
     public void add(F field) {
         fields.add(field);
         //Need to reset fieldsByName so this new field can be found
@@ -65,7 +60,7 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
         return "{" + fields.stream().map(f -> f.toString()).collect(Collectors.joining("; ")) + "}";
     }
 
-    public static<F extends Field> Builder<F> build() {
+    public static<F extends AbstractField> Builder<F> build() {
         return new Builder<>();
     }
 
@@ -73,26 +68,12 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
         return fields;
     }
 
-    public List<F> getScalarFields() {
-        return fields.stream()
-            .filter(e->!(e.getType() instanceof ArrayType))
-            .collect(Collectors.toList());
-    }
-
     @Override
     public Iterator<F> iterator() {
         return fields.iterator();
     }
 
-    public Optional<Field> getField(String value) {
-        return Optional.ofNullable(getFieldByName(Name.of(value, NameCanonicalizer.SYSTEM)));
-    }
-
-    public int getAllFieldCount() {
-        return getScalarFields().size();
-    }
-
-  public static class Builder<F extends Field> extends AbstractBuilder<F,Builder<F>> {
+  public static class Builder<F extends AbstractField> extends AbstractBuilder<F,Builder<F>> {
 
         public Builder() {
             super(true);
@@ -103,7 +84,7 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
         }
     }
 
-    protected static class AbstractBuilder<F extends Field, B extends AbstractBuilder<F,B>> {
+    protected static class AbstractBuilder<F extends AbstractField, B extends AbstractBuilder<F,B>> {
 
         protected final List<F> fields = new ArrayList<>();
         protected final Set<Name> fieldNames;
@@ -130,9 +111,5 @@ public class RelationType<F extends Field> implements Type, Iterable<F> {
             return (B)this;
         }
 
-    }
-
-    public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
-        return visitor.visitRelation(this, context);
     }
 }

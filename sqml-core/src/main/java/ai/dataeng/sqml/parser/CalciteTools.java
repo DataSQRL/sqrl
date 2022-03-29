@@ -1,6 +1,8 @@
 package ai.dataeng.sqml.parser;
 
+import ai.dataeng.sqml.parser.sqrl.LogicalDag;
 import ai.dataeng.sqml.planner.DagAssembler;
+import ai.dataeng.sqml.planner.LogicalPlanDag;
 import ai.dataeng.sqml.schema.Namespace;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.tree.name.VersionedName;
@@ -87,7 +89,19 @@ public class CalciteTools {
 //      return super.visit(scan);
 //    }
 //  };
-
+public static SqrlCalciteCatalogReader getCalciteCatalogReader(LogicalDag dag) {
+//  CalciteTableFactory calciteTableFactory = new CalciteTableFactory(context, namespace, new RelDataTypeFieldFactory(typeFactory), false);
+//  CachingSqrlSchema schema = new CachingSqrlSchema(new SqrlSchema(calciteTableFactory));
+//
+//  // Configure and instantiate validator
+//  Properties props = new Properties();
+//  props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
+//  CalciteConnectionConfig config = new CalciteConnectionConfigImpl(props);
+//  SqrlCalciteCatalogReader catalogReader = new SqrlCalciteCatalogReader(schema,
+//      Collections.singletonList(""),
+//      typeFactory, config);
+  return null;
+}
   public static SqrlCalciteCatalogReader getCalciteCatalogReader(Optional<NamePath> context,
       Namespace namespace, SqrlTypeFactory typeFactory) {
     CalciteTableFactory calciteTableFactory = new CalciteTableFactory(context, namespace, new RelDataTypeFieldFactory(typeFactory), false);

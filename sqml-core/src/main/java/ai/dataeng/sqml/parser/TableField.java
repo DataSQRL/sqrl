@@ -8,8 +8,11 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class TableField extends Field {
 
+  private final Table table;
+
   public TableField(Table table) {
-    super(table.getName(), table);
+    super(table.getName());
+    this.table = table;
   }
 
   public VersionedName getId() {

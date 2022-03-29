@@ -34,13 +34,13 @@ public class Table implements DatasetOrTable {
 
   public Field getField(Name name) {
     name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
-    Field field = fields.getByName(name);
+    Field field = fields.getByName(name).get();
     return field;
   }
 
   public Optional<Field> getFieldOpt(Name name) {
     name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
-    Field field = fields.getByName(name);
+    Field field = fields.getByName(name).get();
     return Optional.ofNullable(field);
   }
 
@@ -68,7 +68,7 @@ public class Table implements DatasetOrTable {
   }
 
   public boolean addField(Field field) {
-    field.setTable(this);
+//    field.setTable(this);
     return fields.add(field);
   }
 

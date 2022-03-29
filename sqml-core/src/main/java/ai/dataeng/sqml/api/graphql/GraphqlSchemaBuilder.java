@@ -10,7 +10,6 @@ import ai.dataeng.sqml.parser.operator.ShadowingContainer;
 import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.ArrayType;
 import ai.dataeng.sqml.type.CalciteDelegatingField;
-import ai.dataeng.sqml.type.Field;
 import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
@@ -402,12 +401,6 @@ public class GraphqlSchemaBuilder {
     }
 
     @Override
-    public <F extends Field> Optional<GraphQLOutputType> visitRelation(RelationType<F> relationType,
-        Context context) {
-      return null;
-    }
-
-    @Override
     public Optional<GraphQLOutputType> visitUuidType(UuidType type, Context context) {
       return Optional.of(Scalars.GraphQLString);
     }
@@ -435,7 +428,6 @@ public class GraphqlSchemaBuilder {
   @Value
   static class Context {
     private final String parentType;
-    private final Field field;
   }
 
   public static class GraphqlTypeCatalog {
