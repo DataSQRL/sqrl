@@ -9,8 +9,11 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class SelfField extends Field {
 
+  private final Table table;
+
   public SelfField(Table table) {
-    super(table.getName(), table);
+    super(table.getName());
+    this.table = table;
   }
 
   public VersionedName getId() {

@@ -40,7 +40,7 @@ public class Select
     this(Optional.of(location), distinct, Optional.empty(), selectItems);
   }
 
-  private Select(Optional<NodeLocation> location, boolean distinct, Optional<DistinctOn> distinctOn,
+  public Select(Optional<NodeLocation> location, boolean distinct, Optional<DistinctOn> distinctOn,
       List<SelectItem> selectItems) {
     super(location);
     this.distinct = distinct;

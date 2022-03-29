@@ -15,35 +15,36 @@ package ai.dataeng.sqml.tree;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class Table
+public class TableNode
     extends QueryBody {
 
   private final NamePath name;
+  private final Optional<Name> alias;
 
-  public Table(NamePath name) {
-    this(Optional.empty(), name);
+  public TableNode(NodeLocation location, NamePath name,
+      Optional<Name> alias) {
+    this(Optional.of(location), name, alias);
   }
 
-  public Table(NodeLocation location, NamePath name) {
-    this(Optional.of(location), name);
-  }
-
-  private Table(Optional<NodeLocation> location, NamePath name) {
+  public TableNode(Optional<NodeLocation> location, NamePath name, Optional<Name> alias) {
     super(location);
     this.name = name;
+    this.alias = Optional.empty();
   }
 
-  public QualifiedName getName() {
-    return QualifiedName.of(name.toString());
-  }
   public NamePath getNamePath() {
     return name;
+  }
+
+  public Optional<Name> getAlias() {
+    return alias;
   }
 
   @Override
@@ -72,8 +73,8 @@ public class Table
       return false;
     }
 
-    Table table = (Table) o;
-    return Objects.equals(name, table.name);
+    TableNode tableNode = (TableNode) o;
+    return Objects.equals(name, tableNode.name);
   }
 
   @Override

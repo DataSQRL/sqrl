@@ -25,6 +25,8 @@ import org.apache.calcite.sql.parser.SqlParserPos;
  */
 @Getter
 public class Relationship extends Field {
+
+  private final Table fromTable;
   public final Table toTable;
   public final Type type;
 
@@ -41,7 +43,8 @@ public class Relationship extends Field {
   public Relationship(
       Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity,
       Map<Column, String> aliasMapping) {
-    super(name, fromTable);
+    super(name);
+    this.fromTable = fromTable;
     this.toTable = toTable;
     this.type = type;
     this.multiplicity = multiplicity;

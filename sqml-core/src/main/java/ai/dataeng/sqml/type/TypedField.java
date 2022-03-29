@@ -1,6 +1,8 @@
 package ai.dataeng.sqml.type;
 
-public interface TypedField extends Field {
+import ai.dataeng.sqml.type.schema.SchemaField;
+
+public interface TypedField extends SchemaField {
 
   public Type getType();
 }

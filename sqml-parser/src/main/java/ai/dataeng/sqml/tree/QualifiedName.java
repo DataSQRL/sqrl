@@ -14,14 +14,11 @@
 package ai.dataeng.sqml.tree;
 
 import static com.google.common.collect.Iterables.transform;
-import static java.util.Locale.ENGLISH;
 import static java.util.Objects.requireNonNull;
 
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -65,7 +62,7 @@ public class QualifiedName {
   }
 
   public static QualifiedName of(Identifier node) {
-    String[] parts = node.getValue().split("\\.");
+    String[] parts = node.getNamePath().split("\\.");
     return of(Arrays.asList(parts));
   }
 

@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import java.util.List;
@@ -9,10 +10,10 @@ import java.util.Optional;
 public class CreateSubscription extends Node {
 
   private final SubscriptionType subscriptionType;
-  private final QualifiedName name;
+  private final NamePath name;
   private final Query query;
 
-  public CreateSubscription(Optional<NodeLocation> location, SubscriptionType subscriptionType, QualifiedName name, Query query) {
+  public CreateSubscription(Optional<NodeLocation> location, SubscriptionType subscriptionType, NamePath name, Query query) {
     super(location);
     this.subscriptionType = subscriptionType;
     this.name = name;
@@ -23,7 +24,7 @@ public class CreateSubscription extends Node {
     return subscriptionType;
   }
 
-  public QualifiedName getName() {
+  public NamePath getName() {
     return name;
   }
 

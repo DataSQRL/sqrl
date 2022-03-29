@@ -16,7 +16,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitImportDefinition(ImportDefinition node, Void context) {
-    return "IMPORT " + node.getQualifiedName() + ";";
+    return "IMPORT " + node.getNamePath() + ";";
   }
 
   @Override
@@ -250,7 +250,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  public String visitTable(Table node, Void context) {
+  public String visitTable(TableNode node, Void context) {
     return node.getNamePath().getDisplay();
   }
 
@@ -362,7 +362,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitIdentifier(Identifier node, Void context) {
-    return node.getValue();
+    return node.getNamePath();
   }
 
   @Override
@@ -402,7 +402,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitDistinctOn(DistinctOn node, Void context) {
     return String.format(" ON (%s) ", node.getOn().stream()
-        .map(e->e.getValue()).collect(Collectors.joining(",")));
+        .map(e->e.getNamePath()).collect(Collectors.joining(",")));
   }
 
   @Override

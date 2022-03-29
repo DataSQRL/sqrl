@@ -19,10 +19,11 @@ public class SqrlRelBuilder extends RelBuilder {
     super(context, cluster, relOptSchema);
   }
 
-  public void scanStream(SourceTableImport ordersImp) {
+  public SqrlRelBuilder scanStream(SourceTableImport ordersImp) {
     RelOptTable table = relOptSchema.getTableForMember(List.of(ordersImp.getTableName().getCanonical()));
     StreamTableScan scan = new StreamTableScan(this.cluster, RelTraitSet.createEmpty(), List.of(), table, ordersImp);
 
     this.push(scan);
+    return this;
   }
 }

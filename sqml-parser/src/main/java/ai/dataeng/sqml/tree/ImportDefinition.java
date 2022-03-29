@@ -22,16 +22,14 @@ import java.util.Optional;
 public class ImportDefinition extends SqrlStatement {
 
   protected final NodeLocation location;
-  protected final QualifiedName qualifiedName;
   protected final NamePath namePath;
   private final Optional<Identifier> alias;
 
   public ImportDefinition(NodeLocation location,
-      QualifiedName qualifiedName, Optional<Identifier> alias) {
+      NamePath namePath, Optional<Identifier> alias) {
     super(Optional.ofNullable(location));
     this.location = location;
-    this.qualifiedName = qualifiedName;
-    this.namePath = qualifiedName.toNamePath();
+    this.namePath = namePath;
     this.alias = alias;
   }
 
@@ -44,7 +42,7 @@ public class ImportDefinition extends SqrlStatement {
   }
 
   public Optional<Name> getAliasName() {
-    return getAlias().map(a->Name.system(a.getValue()));
+    return getAlias().map(a->Name.system(a.getNamePath()));
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
@@ -65,23 +63,19 @@ public class ImportDefinition extends SqrlStatement {
     }
     ImportDefinition anImport = (ImportDefinition) o;
     return Objects.equals(location, anImport.location) && Objects
-        .equals(qualifiedName, anImport.qualifiedName);
+        .equals(namePath, anImport.namePath);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(location, qualifiedName);
+    return Objects.hash(location, namePath);
   }
 
   @Override
   public String toString() {
     return "Import{" +
         "location=" + location +
-        ", qualifiedName=" + qualifiedName +
+        ", namePath=" + namePath +
         '}';
-  }
-
-  public QualifiedName getQualifiedName() {
-    return qualifiedName;
   }
 }

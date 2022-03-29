@@ -13,14 +13,16 @@ import lombok.ToString;
 public abstract class Field implements ShadowingContainer.Nameable {
 
   public Name name;
-  public Table table;
 
-  protected Field(Name name, Table table) {
+  protected Field(Name name) {
     this.name = name;
-    this.table = table;
   }
 
   public VersionedName getId() {
     return new VersionedName(this.getName().getCanonical(), this.getName().getDisplay(), getVersion());
+  }
+
+  public Table getTable() {
+    return null;
   }
 }
