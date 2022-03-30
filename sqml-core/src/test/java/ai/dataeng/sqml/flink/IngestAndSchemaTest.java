@@ -68,18 +68,16 @@ public class IngestAndSchemaTest {
         String dsName = "bookclub";
         FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
                 .uri(ConfigurationTest.DATA_DIR.toAbsolutePath().toString())
-                .name(dsName)
                 .build();
-        registry.addOrUpdateSource(fileConfig, errors);
+        registry.addOrUpdateSource(dsName, fileConfig, errors);
         System.out.println(errors);
         assertFalse(errors.isFatal());
 
         String ds2Name = "c360";
         fileConfig = FileSourceConfiguration.builder()
                 .uri(C360Test.RETAIL_DATA_DIR.toAbsolutePath().toString())
-                .name(ds2Name)
                 .build();
-        registry.addOrUpdateSource(fileConfig, errors);
+        registry.addOrUpdateSource(ds2Name, fileConfig, errors);
         assertFalse(errors.isFatal());
 
 

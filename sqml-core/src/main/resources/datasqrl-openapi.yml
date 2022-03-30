@@ -58,13 +58,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorMessages'
         400:
           description: Processing error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/GenericError'
       x-codegen-request-body-name: body
     get:
       tags:
@@ -85,7 +85,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/GenericError'
   /deployment/{deployId}:
     get:
       tags:
@@ -113,13 +113,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/GenericError'
         404:
           description: Deployment not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/GenericError'
   /compile:
     post:
       tags:
@@ -145,26 +145,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorMessages'
         400:
           description: Processing error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/GenericError'
       x-codegen-request-body-name: body
-  /source/file:
+  /source:
     post:
       tags:
         - source
       summary: Connect or update a data source
-      operationId: addOrUpdateFileSource
+      operationId: addOrUpdateSource
       requestBody:
         description: Source configuration for the source to be connected or updated
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FileSourceConfig'
+              $ref: '#/components/schemas/Source'
         required: true
       responses:
         200:
@@ -172,21 +172,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileSource'
+                $ref: '#/components/schemas/SourceWithErrors'
         405:
           description: Validation exception
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorMessages'
         400:
           description: Processing error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/GenericError'
       x-codegen-request-body-name: body
-  /source:
     get:
       tags:
         - source
@@ -200,17 +199,13 @@ paths:
               schema:
                 type: array
                 items:
-                  oneOf:
-                    - $ref: '#/components/schemas/FileSource'
-                    - $ref: '#/components/schemas/KafkaSource'
-                  discriminator:
-                    propertyName: objectType
+                  $ref: '#/components/schemas/Source'
         400:
           description: Processing error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/GenericError'
   /source/{sourceName}:
     get:
       tags:
@@ -231,23 +226,19 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/FileSource'
-                  - $ref: '#/components/schemas/KafkaSource'
-                discriminator:
-                  propertyName: objectType
+                $ref: '#/components/schemas/Source'
         400:
           description: Processing error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/GenericError'
         404:
           description: Source not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/GenericError'
     delete:
       tags:
         - source
@@ -261,70 +252,399 @@ paths:
           schema:
             type: string
       responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
         400:
           description: Processing error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/GenericError'
         404:
           description: Source not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/GenericError'
+  /source/{sourceName}/tables:
+    get:
+      tags:
+        - source
+      summary: Get connected tables for a source
+      description: Returns all tables that are connected for the given source
+      operationId: getSourceTables
+      parameters:
+        - name: sourceName
+          in: path
+          description: Name of the source
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SourceTable'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        404:
+          description: Source not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+    post:
+      tags:
+        - source
+      summary: Adds or updates table on source
+      operationId: updateSourceTable
+      parameters:
+        - name: sourceName
+          in: path
+          description: Name of source
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Source table configuration for table to be added or updated
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceTableWithErrors'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceTable'
+        405:
+          description: Validation exception
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessages'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+      x-codegen-request-body-name: body
+  /source/{sourceName}/tables/{tableName}:
+    get:
+      tags:
+        - source
+      summary: Find source table by name
+      description: Returns a single source table
+      operationId: getSourceTableByName
+      parameters:
+        - name: sourceName
+          in: path
+          description: Name of the source
+          required: true
+          schema:
+            type: string
+        - name: tableName
+          in: path
+          description: Name of the table
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        404:
+          description: Source not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+    delete:
+      tags:
+        - source
+      summary: Disconnects table from source
+      operationId: deleteSourceTable
+      parameters:
+        - name: sourceName
+          in: path
+          description: Name of the source
+          required: true
+          schema:
+            type: string
+        - name: tableName
+          in: path
+          description: Name of the table
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceTable'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        404:
+          description: Source not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+  /sink:
+    post:
+      tags:
+        - sink
+      summary: Connect or update a data sink
+      operationId: addOrUpdateSink
+      requestBody:
+        description: Sink configuration for the sink to be connected or updated
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SinkWithErrors'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sink'
+        405:
+          description: Validation exception
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessages'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+      x-codegen-request-body-name: body
+    get:
+      tags:
+        - sink
+      summary: Get connected sinks
+      operationId: getSinks
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sink'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+  /sink/{sinkName}:
+    get:
+      tags:
+        - sink
+      summary: Find sink by Name
+      description: Returns a single sink
+      operationId: getSinkByName
+      parameters:
+        - name: sinkName
+          in: path
+          description: Name of the sink
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sink'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        404:
+          description: Source not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+    delete:
+      tags:
+        - sink
+      summary: Disconnects a sink
+      operationId: deleteSink
+      parameters:
+        - name: sinkName
+          in: path
+          description: Name of the sink
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sink'
+        400:
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        404:
+          description: Source not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+
 components:
   schemas:
     Source:
       type: object
       required:
-        - objectType
-        - sourceName
+        - config
       properties:
-        objectType:
-          type: string
-        sourceName:
+        name:
           type: string
           description: "The assigned name for this source"
+        config:
+          oneOf:
+            - $ref: '#/components/schemas/FileSourceConfig'
+            - $ref: '#/components/schemas/KafkaSourceConfig'
+          discriminator:
+            propertyName: sourceType
+            mapping:
+              file: '#/components/schemas/FileSourceConfig'
+              kafka: '#/components/schemas/KafkaSourceConfig'
+        discoverTables:
+          type: boolean
+          default: true
         tables:
           type: array
           items:
-            type: string
-    FileSource:
+            $ref: '#/components/schemas/SourceTable'
+    SourceWithErrors:
       allOf:
         - $ref: '#/components/schemas/Source'
-        - $ref: '#/components/schemas/FileSourceConfig'
+        - type: object
+          properties:
+            messages:
+              $ref: '#/components/schemas/ErrorMessages'
+    SourceTable:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: "The assigned name for this source"
+        identifier:
+          type: string
+        format:
+          $ref: '#/components/schemas/formatDef'
+        formatConfig:
+          $ref: '#/components/schemas/formatConfig'
+    SourceTableWithErrors:
+      allOf:
+        - $ref: '#/components/schemas/SourceTable'
+        - type: object
+          properties:
+            messages:
+              $ref: '#/components/schemas/ErrorMessages'
     FileSourceConfig:
       type: object
       required:
         - uri
+        - sourceType
       properties:
+        sourceType:
+          type: string
+          description: "The type of this source"
         uri:
           type: string
         canonicalizer:
           $ref: '#/components/schemas/canonicalizerDef'
         partPattern:
           type: string
-        name:
+        charset:
           type: string
-          description: "The configured name for this source"
-    KafkaSource:
-      allOf:
-        - $ref: '#/components/schemas/Source'
-        - $ref: '#/components/schemas/KafkaSourceConfig'
+        discoverFiles:
+          type: boolean
     KafkaSourceConfig:
       type: object
       required:
         - host
-        - name
+        - sourceType
       properties:
+        sourceType:
+          type: string
+          description: "The type of this source"
         host:
           type: string
         canonicalizer:
           $ref: '#/components/schemas/canonicalizerDef'
-        name:
+    CSVFormatConfig:
+      type: object
+      required:
+        - header
+      properties:
+        delimiter:
           type: string
-          description: "The configured name for this source"
+        header:
+          type: array
+          items:
+            type: string
+        commentPrefix:
+          type: string
+          description: "String to recognize a comment in the csv file"
+    JSONFormatConfig:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
     canonicalizerDef:
       type: string
       description: Name Canonicalizer
@@ -332,6 +652,68 @@ components:
         - lowercase
         - case_sensitive
         - system
+    formatDef:
+      type: string
+      description: Name of format
+      enum:
+        - csv
+        - json
+        - avro
+    formatConfig:
+      oneOf:
+        - $ref: '#/components/schemas/CSVFormatConfig'
+        - $ref: '#/components/schemas/JSONFormatConfig'
+      discriminator:
+        propertyName: type
+        mapping:
+          csv: '#/components/schemas/CSVFormatConfig'
+          json: '#/components/schemas/JSONFormatConfig'
+    Sink:
+      type: object
+      required:
+        - config
+        - sinkType
+      properties:
+        name:
+          type: string
+          description: "The assigned name for this sink"
+        sinkType:
+          type: string
+          description: "The type of sink defined by this payload"
+        config:
+          oneOf:
+            - $ref: '#/components/schemas/FileSinkConfig'
+          discriminator:
+            propertyName: sinkType
+            mapping:
+              file: '#/components/schemas/FileSourceConfig'
+        format:
+          $ref: '#/components/schemas/formatDef'
+        formatConfig:
+          $ref: '#/components/schemas/formatConfig'
+    SinkWithErrors:
+      allOf:
+        - $ref: '#/components/schemas/Sink'
+        - type: object
+          properties:
+            messages:
+              $ref: '#/components/schemas/ErrorMessages'
+    FileSinkConfig:
+      type: object
+      required:
+        - uri
+        - sinkType
+      properties:
+        sinkType:
+          type: string
+        uri:
+          type: string
+        canonicalizer:
+          $ref: '#/components/schemas/canonicalizerDef'
+        partPattern:
+          type: string
+        charset:
+          type: string
     ScriptBundle:
       type: object
       required:
@@ -425,18 +807,26 @@ components:
         compilations:
           type: array
           items:
-            $ref: '#/components/schemas/Compilation'
+            $ref: '#/components/schemas/ScriptCompilation'
         compileTime:
           type: integer
           format: int32
         status:
           $ref: '#/components/schemas/compilationStatus'
-    Compilation:
+        messages:
+          $ref: '#/components/schemas/ErrorMessages'
+    compilationStatus:
+      type: string
+      description: Whether compilation was successful or not
+      enum:
+        - success
+        - failed
+    ScriptCompilation:
       type: object
       required:
         - name
         - filename
-        - status
+        - preschema
       properties:
         name:
           type: string
@@ -444,45 +834,44 @@ components:
           type: string
         preschema:
           type: string
-        messages:
-          type: array
-          items:
-            $ref: '#/components/schemas/CompilationMessage'
-        status:
-          $ref: '#/components/schemas/compilationStatus'
-        type:
-          $ref: '#/components/schemas/compilationType'
-    CompilationMessage:
+    ErrorMessage:
       type: object
       required:
         - message
+        - severity
       properties:
         location:
-          type: string
+          $ref: '#/components/schemas/ErrorLocation'
         message:
           type: string
-        type:
-          $ref: '#/components/schemas/compilationMsgType'
-    compilationStatus:
+        severity:
+          $ref: '#/components/schemas/errorSeverity'
+    ErrorLocation:
+      type: object
+      properties:
+        prefix:
+          type: string
+        path:
+          type: string
+        file:
+          type: object
+          properties:
+            line:
+              type: integer
+            offset:
+              type: integer
+    ErrorMessages:
+      type: array
+      items:
+        $ref: '#/components/schemas/ErrorMessage'
+    errorSeverity:
       type: string
-      description: Whether compilation was successful or not
+      description: Severity of the error
       enum:
-        - success
-        - failed
-    compilationType:
-      type: string
-      description: Type of artifact that was compiled
-      enum:
-        - script
-        - query
-    compilationMsgType:
-      type: string
-      description: Type of compilation message
-      enum:
-        - error
+        - fatal
         - warning
         - information
-    Error:
+    GenericError:
       required:
         - code
         - message

@@ -1,6 +1,6 @@
 package ai.dataeng.sqml.config.error;
 
-import ai.dataeng.sqml.tree.name.Name;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
@@ -9,6 +9,7 @@ import lombok.Value;
 import java.util.Arrays;
 
 @Value
+@JsonSerialize(as = ErrorLocation.class)
 class ErrorLocationImpl implements ErrorLocation {
 
     private final String prefix;
@@ -28,7 +29,7 @@ class ErrorLocationImpl implements ErrorLocation {
 
     public static ErrorLocation of(String prefix, @NonNull ErrorLocation other) {
         Preconditions.checkArgument(!other.hasPrefix());
-        return new ErrorLocationImpl(prefix,other.getFile(),other.getPath());
+        return new ErrorLocationImpl(prefix,other.getFile(),other.getPathArray());
     }
 
     public static ErrorLocation of(String prefix, @NonNull File file) {
@@ -38,14 +39,14 @@ class ErrorLocationImpl implements ErrorLocation {
     @Override
     public ErrorLocation append(@NonNull ErrorLocation other) {
         Preconditions.checkArgument(!other.hasPrefix() && !this.hasFile());
-        String[] othNames = other.getPath();
+        String[] othNames = other.getPathArray();
         String[] newnames = Arrays.copyOf(names, names.length + othNames.length);
         System.arraycopy(othNames,0,newnames,names.length,othNames.length);
         return new ErrorLocationImpl(this.prefix,other.getFile(),newnames);
     }
 
     @Override
-    public @NonNull String[] getPath() {
+    public @NonNull String[] getPathArray() {
         return names;
     }
 
@@ -64,8 +65,14 @@ class ErrorLocationImpl implements ErrorLocation {
     }
 
     @Override
+    public String getPath() {
+        if (names==null || names.length == 0) return "";
+        return String.join("/",names);
+    }
+
+    @Override
     public String toString() {
-        String result = String.join("/",names);
+        String result = getPath();
         if (prefix!=null) {
             if (Strings.isNullOrEmpty(result)) result = prefix;
             else result = prefix + "/" + result;

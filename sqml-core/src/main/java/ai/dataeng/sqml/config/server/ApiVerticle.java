@@ -2,16 +2,7 @@ package ai.dataeng.sqml.config.server;
 
 import ai.dataeng.sqml.Environment;
 import ai.dataeng.sqml.ScriptDeployment;
-import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.config.util.StringNamedId;
-import ai.dataeng.sqml.io.sources.DataSource;
-import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
-import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
-import ai.dataeng.sqml.io.sources.dataset.SourceTable;
-import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
-import ai.dataeng.sqml.tree.name.Name;
-import ai.dataeng.sqml.config.error.ErrorCollector;
-import ai.dataeng.sqml.config.error.ErrorMessage;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.vertx.core.AbstractVerticle;
@@ -26,12 +17,12 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.ext.web.validation.RequestParameters;
-import io.vertx.ext.web.validation.ValidationHandler;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -42,10 +33,10 @@ public class ApiVerticle extends AbstractVerticle {
 
     private static final Map<Integer,String> ERROR2MESSAGE = ImmutableMap.of(
             400, "Processing Error",
-            404, "Not Found",
-            405, "Validation Error"
+            404, "Not Found"
     );
 
+    static final int VALIDATION_ERR_CODE = 405;
 
     private HttpServer server;
 
@@ -58,78 +49,28 @@ public class ApiVerticle extends AbstractVerticle {
 
     @Override
     public void start(Promise<Void> startPromise) {
+        SourceHandler sourceHandler = new SourceHandler(environment.getDatasetRegistry());
+        DeploymentHandler deployHandler = new DeploymentHandler(environment);
         RouterBuilder.create(this.vertx, "datasqrl-openapi.yml")
                 .onSuccess(routerBuilder -> {
                     // #### Source handlers
-                    routerBuilder.operation("getSources").handler(routingContext -> {
-                        List<JsonObject> sources = environment.getDatasetRegistry().getDatasets().stream()
-                                .map(ApiVerticle::source2Json).collect(Collectors.toList());
-                        routingContext
-                                .response()
-                                .setStatusCode(200)
-                                .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                                .end(new JsonArray(sources).encode());
-                    });
-                    routerBuilder.operation("addOrUpdateFileSource").handler(new SourceAddOrUpdateHandler<>(
-                            FileSourceConfiguration.class));
-                    routerBuilder.operation("getSourceByName").handler(routingContext -> {
-                        RequestParameters params = routingContext.get("parsedParameters");
-                        String sourceName = params.pathParameter("sourceName").getString();
-                        SourceDataset ds = environment.getDatasetRegistry().getDataset(sourceName);
-                        if (ds!=null) {
-                            JsonObject result = source2Json(ds);
-                            routingContext
-                                    .response()
-                                    .setStatusCode(200)
-                                    .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                                    .end(result.encode());
-                        } else {
-                            routingContext.fail(404, new Exception("Source not found"));
-                        }
-                    });
-                    routerBuilder.operation("deleteSource").handler(routingContext -> {
-                        RequestParameters params = routingContext.get("parsedParameters");
-                        String sourceName = params.pathParameter("sourceName").getString();
-//                        if (source.isPresent())
-//                            routingContext
-//                                    .response()
-//                                    .setStatusCode(200)
-//                                    .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-//                                    .end();
-//                        else
-                            routingContext.fail(404, new Exception("Not yet implemented")); // <5>
-                    });
+                    routerBuilder.operation("addOrUpdateSource").handler(handleException(sourceHandler.update()));
+                    routerBuilder.operation("getSources").handler(sourceHandler.get());
+                    routerBuilder.operation("getSourceByName").handler(sourceHandler.getSourceByName());
+                    routerBuilder.operation("deleteSource").handler(sourceHandler.deleteSource());
+//                    routerBuilder.operation("updateSourceTable").handler();
+//                    routerBuilder.operation("getSourceTables").handler();
+//                    routerBuilder.operation("getSourceTableByName").handler();
+//                    routerBuilder.operation("deleteSourceTable").handler();
+//                    routerBuilder.operation("getSourceTables").handler();
 
                     // #### Script Submission handlers
-                    routerBuilder.operation("getDeployments").handler(routingContext -> {
-                        List<JsonObject> sources = environment.getActiveDeployments().stream()
-                                .map(ApiVerticle::deploymentResult2Json).collect(Collectors.toList());
-                        routingContext
-                                .response()
-                                .setStatusCode(200)
-                                .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                                .end(new JsonArray(sources).encode());
-                    });
-                    routerBuilder.operation("deployScript").handler(new DeploymentHandler());
-                    routerBuilder.operation("getDeploymentById").handler(routingContext -> {
-                        RequestParameters params = routingContext.get("parsedParameters");
-                        String submitId = params.pathParameter("deployId").getString();
-                        Optional<ScriptDeployment.Result> result = environment.getDeployment(StringNamedId.of(submitId));
-                        if (result.isPresent()) {
-                            routingContext
-                                    .response()
-                                    .setStatusCode(200)
-                                    .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                                    .end(deploymentResult2Json(result.get()).encode());
-                        } else {
-                            routingContext.fail(404, new Exception("Deployment not found"));
-                        }
-                    });
-
-
+                    routerBuilder.operation("getDeployments").handler(deployHandler.getDeployments());
+                    routerBuilder.operation("deployScript").handler(handleException(deployHandler.deploy()));
+                    routerBuilder.operation("getDeploymentById").handler(deployHandler.getDeploymentById());
 
                     Router router = routerBuilder.createRouter(); // <1>
-                    //Generate error handlers
+                    //Generate generic error handlers
                     for (Map.Entry<Integer,String> failure : ERROR2MESSAGE.entrySet()) {
                         int errorCode = failure.getKey();
                         Preconditions.checkArgument(errorCode>=400 && errorCode<410);
@@ -156,76 +97,15 @@ public class ApiVerticle extends AbstractVerticle {
                 .onFailure(startPromise::fail);
     }
 
-    private static JsonObject deploymentResult2Json(ScriptDeployment.Result result) {
-        JsonObject base = JsonObject.mapFrom(result);
-        return base;
-    }
-
-    private static JsonObject source2Json(SourceDataset dataset) {
-        DataSource source = dataset.getSource();
-        DataSourceConfiguration sourceConfig = source.getConfiguration();
-        JsonObject base = JsonObject.mapFrom(sourceConfig);
-        base.put("sourceName", source.getDatasetName().getDisplay());
-        if (sourceConfig instanceof FileSourceConfiguration) {
-            base.put("objectType", "FileSourceConfig");
-        } else throw new UnsupportedOperationException("Unexpected source config: " + sourceConfig.getClass());
-        List<String> tableNames = dataset.getTables().stream().map(SourceTable::getName).map(Name::getDisplay)
-                .collect(Collectors.toList());
-        base.put("tables",tableNames);
-        return base;
-    }
-
-    @AllArgsConstructor
-    private class SourceAddOrUpdateHandler<S extends DataSourceConfiguration> implements Handler<RoutingContext> {
-
-        private final Class<S> clazz;
-
-        @Override
-        public void handle(RoutingContext routingContext) {
-            RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-            JsonObject source = params.body().getJsonObject();
-            S sourceConfig = source.mapTo(clazz);
-            ErrorCollector errors = ErrorCollector.root();
-            SourceDataset result = environment.getDatasetRegistry().addOrUpdateSource(sourceConfig, errors);
-            if (errors.isFatal() || result==null) {
-                routingContext.fail(405, new Exception(errors.combineMessages(ErrorMessage.Severity.FATAL,
-                        "Provided configuration has the following validation errors:\n","\n" )));
-            } else {
-                JsonObject jsonResult = source2Json(result);
-                routingContext
-                        .response()
-                        .setStatusCode(200)
-                        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                        .end(jsonResult.encode());
+    static Handler<RoutingContext> handleException(Handler<RoutingContext> handler) {
+        return routingContext -> {
+            try {
+                handler.handle(routingContext);
+            } catch (Throwable ex) {
+                routingContext.fail(400, ex);
             }
-        }
+        };
     }
-
-
-    private class DeploymentHandler implements Handler<RoutingContext> {
-
-        @Override
-        public void handle(RoutingContext routingContext) {
-            RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-            JsonObject bundleJson = params.body().getJsonObject();
-            ScriptBundle.Config bundleConfig = bundleJson.mapTo(ScriptBundle.Config.class);
-            ErrorCollector errors = ErrorCollector.root();
-            ScriptDeployment.Result result = environment.deployScript(bundleConfig,errors);
-            if (errors.isFatal() || result==null) {
-                routingContext.fail(405, new Exception(errors.combineMessages(ErrorMessage.Severity.FATAL,
-                        "Provided bundle has the following validation errors:\n","\n" )));
-            } else {
-                JsonObject jsonResult = deploymentResult2Json(result);
-                routingContext
-                        .response()
-                        .setStatusCode(200)
-                        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                        .end(jsonResult.encode());
-            }
-        }
-    }
-
-
 
     @Override
     public void stop(){

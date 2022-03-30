@@ -1,12 +1,14 @@
 package ai.dataeng.sqml.io.sources;
 
 import ai.dataeng.sqml.config.constraints.OptionalMinString;
+import ai.dataeng.sqml.config.util.ConfigurationUtil;
 import ai.dataeng.sqml.io.sources.impl.InputPreview;
 import ai.dataeng.sqml.tree.name.Name;
 
 import ai.dataeng.sqml.io.sources.formats.*;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.*;
@@ -16,7 +18,9 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 @NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode
+@Builder
 @ToString
 @Getter
 public class SourceTableConfiguration {
@@ -25,7 +29,7 @@ public class SourceTableConfiguration {
     String name;
     @OptionalMinString
     String identifier;
-    @NonNull @NotNull @Size(min=2)
+    @OptionalMinString
     String format;
     @Valid FormatConfiguration formatConfig;
 
@@ -40,6 +44,7 @@ public class SourceTableConfiguration {
     }
 
     public boolean validateAndInitialize(DataSource source, ErrorCollector errors) {
+        if (!ConfigurationUtil.javaxValidate(this, errors)) return false;
         if (!Name.validName(name)) {
             errors.fatal("Table needs to have valid name: %s",name);
             return false;
@@ -47,24 +52,27 @@ public class SourceTableConfiguration {
         errors = errors.resolve(name);
         if (Strings.isNullOrEmpty(identifier)) identifier = name;
         identifier = source.getCanonicalizer().getCanonical(identifier);
-        if (!Strings.isNullOrEmpty(format)) format = format.trim().toLowerCase();
-        if (!FileFormat.validFormat(format)) {
-            errors.fatal("Table has invalid format: %s", format);
-            return false;
-        }
-        Format<FormatConfiguration> formatImpl = getFormatImpl();
         if (formatConfig == null) {
-            //Try to infer it
+            //Try to infer it using the specified format
+            if (Strings.isNullOrEmpty(format)) {
+                errors.fatal("Need to specify a table format: %s", format);
+                return false;
+            }
+            format = format.trim().toLowerCase();
+            if (!FileFormat.validFormat(format)) {
+                errors.fatal("Table has invalid format: %s", format);
+                return false;
+            }
+            Format<FormatConfiguration> formatImpl = getFormatImpl();
             Format.ConfigurationInference<FormatConfiguration> inferer = formatImpl.getConfigInferer().orElse(null);
             if (inferer != null) {
                 InputPreview preview = new InputPreview(source,this);
                 FormatConfigInferer<FormatConfiguration> fci = new FormatConfigInferer<>(inferer,preview);
                 formatConfig = fci.inferConfig().orElse(null);
+            } else {
+                //See if we can use default
+                formatConfig = formatImpl.getDefaultConfiguration().orElse(null);
             }
-        }
-        if (formatConfig == null) {
-            //Try default
-            formatConfig = formatImpl.getDefaultConfiguration().orElse(null);
         }
         if (formatConfig == null) {
             errors.fatal("Table does not have format configuration and it cannot be inferred");
@@ -82,6 +90,7 @@ public class SourceTableConfiguration {
         return FileFormat.getFormat(format).getImplementation();
     }
 
+    @JsonIgnore
     public Format.Parser getFormatParser() {
         Format<FormatConfiguration> formatImpl = getFormatImpl();
         return formatImpl.getParser(formatConfig);

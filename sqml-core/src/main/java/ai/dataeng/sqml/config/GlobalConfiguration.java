@@ -4,6 +4,7 @@ import ai.dataeng.sqml.config.engines.FlinkConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.config.scripts.FileScriptConfiguration;
 import ai.dataeng.sqml.config.util.ConfigurationUtil;
+import ai.dataeng.sqml.io.sources.DataSourceUpdate;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 
@@ -19,10 +20,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInclude;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 @Builder
 @Getter
@@ -38,7 +39,7 @@ public class GlobalConfiguration {
     Engines engines;
     @Builder.Default @NonNull
     @NotNull @Valid
-    Sources sources = new Sources();
+    List<DataSourceUpdate> sources;
     @Builder.Default @NonNull
     @NotNull @Valid
     List<FileScriptConfiguration> scripts = new ArrayList<>();
@@ -56,18 +57,6 @@ public class GlobalConfiguration {
         FlinkConfiguration flink;
 
 
-
-    }
-
-    @Builder
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Sources {
-
-        @Builder.Default @NonNull
-        @NotNull
-        List<FileSourceConfiguration> directory = new ArrayList<>();
 
     }
 

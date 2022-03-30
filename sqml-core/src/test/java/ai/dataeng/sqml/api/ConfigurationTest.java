@@ -64,14 +64,12 @@ public class ConfigurationTest {
         assertNotNull(registry);
 
         String dsName = "bookclub";
-
         FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
                 .uri(DATA_DIR.toAbsolutePath().toString())
-                .name(dsName)
                 .build();
 
         ErrorCollector errors = ErrorCollector.root();
-        registry.addOrUpdateSource(fileConfig, errors);
+        registry.addOrUpdateSource(dsName, fileConfig, errors);
         assertFalse(errors.isFatal());
         SourceDataset ds = registry.getDataset(dsName);
         assertNotNull(ds);
@@ -104,14 +102,12 @@ public class ConfigurationTest {
         DatasetRegistry registry = env.getDatasetRegistry();
 
         String dsName = "bookclub";
-
         FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
                 .uri(DATA_DIR.toAbsolutePath().toString())
-                .name(dsName)
                 .build();
 
         ErrorCollector errors = ErrorCollector.root();
-        registry.addOrUpdateSource(fileConfig, errors);
+        registry.addOrUpdateSource(dsName, fileConfig, errors);
         if (errors.isFatal()) System.out.println(errors);
         assertFalse(errors.isFatal());
 

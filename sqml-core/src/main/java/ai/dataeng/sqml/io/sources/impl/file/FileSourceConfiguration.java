@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.io.sources.impl.file;
 
+import ai.dataeng.sqml.config.util.ConfigurationUtil;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.impl.CanonicalizerConfiguration;
@@ -29,7 +30,7 @@ public class FileSourceConfiguration implements DataSourceConfiguration {
     public static final String DEFAULT_PATTERN = "_(\\d+)";
     public static final String DEFAULT_CHARSET = "UTF-8";
 
-    String name;
+
     @Builder.Default @NonNull @NotNull
     CanonicalizerConfiguration canonicalizer = CanonicalizerConfiguration.system;
     @NonNull @NotNull @Size(min=3)
@@ -39,18 +40,17 @@ public class FileSourceConfiguration implements DataSourceConfiguration {
     @Builder.Default @NonNull @NotNull
     String charset = DEFAULT_CHARSET;
     @Builder.Default
-    boolean discoverTables = true;
-    @Builder.Default
     boolean discoverFiles = true;
 
 
-    private DataSource validateAndInitialize(ErrorCollector errors) {
+    private DataSource validateAndInitialize(String name, ErrorCollector errors) {
+        if (!ConfigurationUtil.javaxValidate(this, errors)) return null;
         NameCanonicalizer canon = canonicalizer.getCanonicalizer();
         if (Strings.isNullOrEmpty(name)) {
             name = (new FilePath(uri)).getFileName();
         }
         if (!Name.validName(name)) {
-            errors.fatal("Invalid data source name: %s", this.name);
+            errors.fatal("Invalid data source name: %s", name);
             return null;
         }
 
@@ -73,13 +73,8 @@ public class FileSourceConfiguration implements DataSourceConfiguration {
     }
 
     @Override
-    public boolean discoverTables() {
-        return discoverTables;
-    }
-
-    @Override
-    public DataSource initialize(ErrorCollector errors) {
-        DataSource source = validateAndInitialize(errors);
+    public DataSource initialize(String name, ErrorCollector errors) {
+        DataSource source = validateAndInitialize(name, errors);
         return source;
     }
 }

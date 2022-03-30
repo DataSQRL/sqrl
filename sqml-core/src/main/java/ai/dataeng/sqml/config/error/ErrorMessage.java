@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Strings;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -18,23 +20,27 @@ public interface ErrorMessage {
 
     ErrorLocation getLocation();
 
+    @JsonIgnore
     default boolean isFatal() {
         return getSeverity() == Severity.FATAL;
     }
 
+    @JsonIgnore
     default boolean isWarning() {
         return getSeverity() == Severity.WARN;
     }
 
+    @JsonIgnore
     default boolean isNotice() { return getSeverity() == Severity.NOTICE; }
 
+    @JsonIgnore
     default String toStringNoSeverity() {
         String loc = getLocation().toString();
         if (!Strings.isNullOrEmpty(loc)) loc += ": ";
         return loc + getMessage();
     }
 
-    public enum Severity {
+    enum Severity {
         NOTICE, WARN, FATAL;
     }
 

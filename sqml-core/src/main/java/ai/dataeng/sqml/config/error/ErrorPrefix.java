@@ -1,9 +1,11 @@
 package ai.dataeng.sqml.config.error;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.NonNull;
 
 import java.util.Locale;
 
+@JsonSerialize(as = ErrorLocation.class)
 public enum ErrorPrefix implements ErrorLocation {
 
     ROOT, SOURCE, SINK, ENGINE, SCRIPT, INITIALIZE;
@@ -17,8 +19,13 @@ public enum ErrorPrefix implements ErrorLocation {
     private static final String[] EMPTY_PATH = new String[0];
 
     @Override
-    public @NonNull String[] getPath() {
+    public @NonNull String[] getPathArray() {
         return EMPTY_PATH;
+    }
+
+    @Override
+    public String getPath() {
+        return "";
     }
 
     @Override

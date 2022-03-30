@@ -30,7 +30,7 @@ public class UnsqrlrTest {
     sqrlSettings = DefaultTestSettings.create(vertx);
     env = Environment.create(sqrlSettings);
 
-    env.getDatasetRegistry().addOrUpdateSource(C360Test.dd, ErrorCollector.root());
+    env.getDatasetRegistry().addOrUpdateSource(C360Test.RETAIL_DATASET, C360Test.dd, ErrorCollector.root());
     planner = sqrlSettings.getHeuristicPlannerProvider().createPlanner();
     script = env.compile(ScriptDeployment.of(C360Test.bundle));
   }

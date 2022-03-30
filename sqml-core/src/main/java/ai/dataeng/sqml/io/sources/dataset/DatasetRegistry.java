@@ -3,6 +3,7 @@ package ai.dataeng.sqml.io.sources.dataset;
 import ai.dataeng.sqml.config.error.ErrorPrefix;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
+import ai.dataeng.sqml.io.sources.DataSourceUpdate;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.config.error.ErrorCollector;
@@ -13,6 +14,7 @@ import java.util.*;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 
 @Slf4j
 public class DatasetRegistry implements DatasetLookup, Closeable {
@@ -33,9 +35,9 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
 
     void initializeDatasets() {
         //Read existing datasets from store
-        for (DataSourceConfiguration dsConfig : persistence.getDatasets()) {
+        for (DatasetRegistryPersistence.DataSourceStorage configEntry : persistence.getDatasets()) {
             ErrorCollector errors = ErrorCollector.fromPrefix(ErrorPrefix.INITIALIZE);
-            initializeSource(dsConfig.initialize(errors));
+            initializeSource(configEntry.getConfig().initialize(configEntry.getName(), errors));
             errors.log();
         }
     }
@@ -48,16 +50,16 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
     }
 
     public synchronized SourceDataset addOrUpdateSource
-            (@NonNull DataSourceConfiguration datasource,
+            (@NonNull String name, @NonNull DataSourceConfiguration datasource,
              @NonNull ErrorCollector errors) {
-        return addOrUpdateSource(datasource, Collections.EMPTY_LIST, errors);
+        return addOrUpdateSource(DataSourceUpdate.builder().name(name).config(datasource).build(), errors);
     }
 
 
     public synchronized SourceDataset addOrUpdateSource
-            (@NonNull DataSourceConfiguration datasource, @NonNull List<SourceTableConfiguration> tables,
+            (@NonNull DataSourceUpdate update,
              @NonNull ErrorCollector errors) {
-        DataSource source = datasource.initialize(errors);
+        DataSource source = update.getConfig().initialize(update.getName(), errors);
         if (source == null) return null; //validation failed
         SourceDataset dataset = datasets.get(source.getDatasetName());
         if (dataset==null) {
@@ -65,21 +67,21 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
             source = dataset.getSource();
         } else {
             source = dataset.getSource();
-            if (!source.update(datasource,errors)) {
+            if (!source.update(update.getConfig(),errors)) {
                 return null;
             }
         }
         persistence.putDataset(source.getDatasetName(), source.getConfiguration());
 
         Set<Name> tableNames = new HashSet<>();
-        for (SourceTableConfiguration tbl : tables) {
+        for (SourceTableConfiguration tbl : update.getTables()) {
             if (Name.validName(tbl.getName())) {
                 tableNames.add(dataset.getCanonicalizer().name(tbl.getName()));
             }
         }
 
-        List<SourceTableConfiguration> allTables = new ArrayList<>(tables);
-        if (datasource.discoverTables()) {
+        List<SourceTableConfiguration> allTables = new ArrayList<>(update.getTables());
+        if (update.isDiscoverTables()) {
             for (SourceTableConfiguration tbl: source.discoverTables(errors)) {
                 Name tblName = dataset.getCanonicalizer().name(tbl.getName());
                 if (!tableNames.contains(tblName)) {

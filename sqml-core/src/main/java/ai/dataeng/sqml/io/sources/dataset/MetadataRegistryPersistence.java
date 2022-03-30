@@ -7,6 +7,8 @@ import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Preconditions;
+
+import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -24,13 +26,13 @@ public class MetadataRegistryPersistence implements DatasetRegistryPersistence {
 
 
     @Override
-    public Set<DataSourceConfiguration> getDatasets() {
+    public Collection<DataSourceStorage> getDatasets() {
         return store.getSubKeys(STORE_DATASET_KEY).stream().map(dsName -> {
-            DataSourceConfiguration config = store.get(DataSourceConfiguration.class,STORE_DATASET_KEY,dsName,STORE_SOURCE_CONFIG_KEY);
+            DataSourceStorage config = store.get(DataSourceStorage.class,STORE_DATASET_KEY,dsName,STORE_SOURCE_CONFIG_KEY);
             Preconditions.checkArgument(config!=null,
                     "Persistence of configuration failed.");
             return config;
-        }).collect(Collectors.toSet());
+        }).collect(Collectors.toList());
     }
 
     static String name2Key(Name name) {
@@ -39,7 +41,7 @@ public class MetadataRegistryPersistence implements DatasetRegistryPersistence {
 
     @Override
     public void putDataset(Name dataset, DataSourceConfiguration datasource) {
-        store.put(datasource,STORE_DATASET_KEY,name2Key(dataset),STORE_SOURCE_CONFIG_KEY);
+        store.put(new DataSourceStorage(dataset.getDisplay(), datasource),STORE_DATASET_KEY,name2Key(dataset),STORE_SOURCE_CONFIG_KEY);
     }
 
     @Override
@@ -76,4 +78,6 @@ public class MetadataRegistryPersistence implements DatasetRegistryPersistence {
             return new MetadataRegistryPersistence(metaStore);
         }
     }
+
+
 }

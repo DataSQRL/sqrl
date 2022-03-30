@@ -120,6 +120,9 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
         return combineMessages(ErrorMessage.Severity.NOTICE, "", "\n");
     }
 
+    public List<ErrorMessage> getAll() {
+        return new ArrayList<>(errors);
+    }
 
     public void log() {
         for (ErrorMessage message : errors) {

@@ -40,7 +40,7 @@ public class C360Test {
   private VertxInternal vertx;
   public static ScriptBundle bundle = createBundle();
   public static FileSourceConfiguration dd = FileSourceConfiguration.builder()
-      .name(RETAIL_DATASET).uri(RETAIL_DATA_DIR.toAbsolutePath().toString()).build();
+      .uri(RETAIL_DATA_DIR.toAbsolutePath().toString()).build();
 
   @SneakyThrows
   private static ScriptBundle createBundle() {
@@ -65,7 +65,7 @@ public class C360Test {
 
     env = Environment.create(DefaultTestSettings.create(vertx));
 
-    env.getDatasetRegistry().addOrUpdateSource(dd, ErrorCollector.root());
+    env.getDatasetRegistry().addOrUpdateSource(RETAIL_DATASET, dd, ErrorCollector.root());
 
   }
 

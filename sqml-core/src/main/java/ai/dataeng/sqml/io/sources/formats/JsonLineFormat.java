@@ -2,6 +2,7 @@ package ai.dataeng.sqml.io.sources.formats;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.*;
 
 import java.io.IOException;
@@ -49,7 +50,10 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
     @ToString
     @Builder
     @Getter
+    @JsonSerialize
     public static class Configuration implements FormatConfiguration {
+
+
 
         @Override
         public boolean validate(ErrorCollector errors) {

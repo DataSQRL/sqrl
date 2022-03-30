@@ -4,15 +4,22 @@ import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.tree.name.Name;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.io.Serializable;
+import java.util.Collection;
 import java.util.Set;
 
 public interface DatasetRegistryPersistence {
 
-    Set<DataSourceConfiguration> getDatasets();
+    Collection<DataSourceStorage> getDatasets();
 
     void putDataset(Name dataset, DataSourceConfiguration datasource);
 
-    Set<SourceTableConfiguration> getTables(Name datasetName);
+    Collection<SourceTableConfiguration> getTables(Name datasetName);
 
     void putTable(Name dataset, Name tblName, SourceTableConfiguration table);
 
@@ -20,5 +27,14 @@ public interface DatasetRegistryPersistence {
 
     void putTableStatistics(Name datasetName, Name tableName, SourceTableStatistics stats);
 
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    class DataSourceStorage implements Serializable {
+
+        String name;
+        DataSourceConfiguration config;
+
+    }
 
 }

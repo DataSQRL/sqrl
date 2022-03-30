@@ -6,12 +6,15 @@ import ai.dataeng.sqml.config.SqrlSettings;
 import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.config.server.ApiVerticle;
+import ai.dataeng.sqml.config.server.SourceHandler;
 import ai.dataeng.sqml.config.util.StringNamedId;
+import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
@@ -26,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -64,9 +68,8 @@ public class APIServerTest {
     final String dsName = "bookclub";
     final FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
             .uri(ConfigurationTest.DATA_DIR.toAbsolutePath().toString())
-            .name(dsName)
             .build();
-    final JsonObject fileObj = JsonObject.mapFrom(fileConfig);
+    final JsonObject fileObj = SourceHandler.source2Json(dsName, fileConfig, Collections.EMPTY_LIST);
     final String deployName = "test";
     final String deployVersion = "v2";
     final ScriptBundle.Config deployConfig = ScriptBundle.Config.builder()
@@ -82,6 +85,16 @@ public class APIServerTest {
             .build();
     final JsonObject deploymentObj = JsonObject.mapFrom(deployConfig);
 
+    public static JsonObject sourceToJson(String name, DataSourceConfiguration config) {
+        JsonObject res = new JsonObject();
+        res.put("name",name);
+        String sourceType;
+        if (config instanceof FileSourceConfiguration) sourceType = "file";
+        else throw new UnsupportedOperationException();
+        res.put("sourceType",sourceType);
+        res.put("config",JsonObject.mapFrom(config));
+        return res;
+    }
 
     @Test
     public void testAddingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
@@ -93,14 +106,14 @@ public class APIServerTest {
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             deploymentCheckpoint.flag();
 
-            webClient.post(port, "localhost", "/source/file")
+            webClient.post(port, "localhost", "/source")
                     .as(BodyCodec.jsonObject())
                     .sendJsonObject(fileObj, testContext.succeeding(resp -> {
                         testContext.verify(() -> {
                             assertEquals(200, resp.statusCode());
                             JsonObject fileRes = resp.body();
-                            assertEquals("FileSourceConfig",fileRes.getString("objectType"));
-                            assertEquals(dsName,fileRes.getString("sourceName"));
+                            assertEquals("file",fileRes.getString("sourceType"));
+                            assertEquals(dsName,fileRes.getString("name"));
                             requestCheckpoint.flag();
                         });
                     }));
@@ -190,7 +203,7 @@ public class APIServerTest {
 
     @Test
     public void testGettingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
-        registry.addOrUpdateSource(fileConfig,ErrorCollector.root());
+        registry.addOrUpdateSource(dsName, fileConfig,ErrorCollector.root());
         assertNotNull(registry.getDataset(dsName));
 
         Checkpoint requestCheckpoint = testContext.checkpoint(3);
@@ -204,8 +217,8 @@ public class APIServerTest {
                             JsonArray arr = resp.body();
                             assertEquals(1, arr.size());
                             JsonObject fileRes = arr.getJsonObject(0);
-                            assertEquals("FileSourceConfig",fileRes.getString("objectType"));
-                            assertEquals(dsName,fileRes.getString("sourceName"));
+                            assertEquals("file",fileRes.getString("sourceType"));
+                            assertEquals(dsName,fileRes.getString("name"));
                             requestCheckpoint.flag();
                         });
                     }));
@@ -216,19 +229,19 @@ public class APIServerTest {
                         testContext.verify(() -> {
                             assertEquals(200, resp.statusCode());
                             JsonObject fileRes = resp.body();
-                            assertEquals("FileSourceConfig",fileRes.getString("objectType"));
-                            assertEquals(dsName,fileRes.getString("sourceName"));
+                            assertEquals("file",fileRes.getString("sourceType"));
+                            assertEquals(dsName,fileRes.getString("name"));
                             requestCheckpoint.flag();
                         });
                     }));
 
-            webClient.post(port, "localhost", "/source/file")
-                    .as(BodyCodec.jsonObject())
+            webClient.post(port, "localhost", "/source")
+                    .as(BodyCodec.jsonArray())
                     .sendJsonObject(fileObj, testContext.succeeding(resp -> {
                         testContext.verify(() -> {
                             assertEquals(405, resp.statusCode());
-                            JsonObject error = resp.body();
-                            assertEquals(405, error.getInteger("code"));
+                            JsonArray error = resp.body();
+                            assertEquals(1, error.size());
 //                            System.out.println("Error msg: " + error.getString("message"));
                             requestCheckpoint.flag();
                         });
