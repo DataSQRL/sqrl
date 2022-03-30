@@ -9,6 +9,7 @@ import ai.dataeng.sqml.config.server.ApiVerticle;
 import ai.dataeng.sqml.config.server.SourceHandler;
 import ai.dataeng.sqml.config.util.StringNamedId;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
+import ai.dataeng.sqml.io.sources.DataSourceUpdate;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
@@ -69,7 +70,8 @@ public class APIServerTest {
     final FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
             .uri(ConfigurationTest.DATA_DIR.toAbsolutePath().toString())
             .build();
-    final JsonObject fileObj = SourceHandler.source2Json(dsName, fileConfig, Collections.EMPTY_LIST);
+    final DataSourceUpdate dsUpdate = DataSourceUpdate.builder().name(dsName).config(fileConfig).build();
+    final JsonObject fileObj = JsonObject.mapFrom(dsUpdate);
     final String deployName = "test";
     final String deployVersion = "v2";
     final ScriptBundle.Config deployConfig = ScriptBundle.Config.builder()
@@ -112,7 +114,7 @@ public class APIServerTest {
                         testContext.verify(() -> {
                             assertEquals(200, resp.statusCode());
                             JsonObject fileRes = resp.body();
-                            assertEquals("file",fileRes.getString("sourceType"));
+                            assertEquals("file",fileRes.getJsonObject("config").getString("sourceType"));
                             assertEquals(dsName,fileRes.getString("name"));
                             requestCheckpoint.flag();
                         });
@@ -217,7 +219,7 @@ public class APIServerTest {
                             JsonArray arr = resp.body();
                             assertEquals(1, arr.size());
                             JsonObject fileRes = arr.getJsonObject(0);
-                            assertEquals("file",fileRes.getString("sourceType"));
+                            assertEquals("file",fileRes.getJsonObject("config").getString("sourceType"));
                             assertEquals(dsName,fileRes.getString("name"));
                             requestCheckpoint.flag();
                         });
@@ -229,8 +231,10 @@ public class APIServerTest {
                         testContext.verify(() -> {
                             assertEquals(200, resp.statusCode());
                             JsonObject fileRes = resp.body();
-                            assertEquals("file",fileRes.getString("sourceType"));
+                            assertEquals("file",fileRes.getJsonObject("config").getString("sourceType"));
                             assertEquals(dsName,fileRes.getString("name"));
+                            JsonArray tables = fileRes.getJsonArray("tables");
+                            assertEquals(2, tables.size());
                             requestCheckpoint.flag();
                         });
                     }));

@@ -10,6 +10,7 @@ engines:
       driverName: "org.h2.Driver"
       dialect: H2
 sources:
-  directory:
-    - name: "ecommerce-data"
+  - name: "ecommerce-data"
+    config:
+      sourceType: "file"
       uri: "../sqml-examples/retail/ecommerce-data"

@@ -1,8 +1,6 @@
 package ai.dataeng.sqml.io.sources;
 
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -10,7 +8,9 @@ import java.util.Collections;
 import java.util.List;
 
 @Builder
-@Value
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class DataSourceUpdate {
 
     String name;

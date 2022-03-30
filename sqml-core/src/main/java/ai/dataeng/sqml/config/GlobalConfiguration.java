@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -39,10 +40,10 @@ public class GlobalConfiguration {
     Engines engines;
     @Builder.Default @NonNull
     @NotNull @Valid
-    List<DataSourceUpdate> sources;
+    List<DataSourceUpdate> sources = Collections.EMPTY_LIST;
     @Builder.Default @NonNull
     @NotNull @Valid
-    List<FileScriptConfiguration> scripts = new ArrayList<>();
+    List<FileScriptConfiguration> scripts = Collections.EMPTY_LIST;
 
     @Builder
     @Getter

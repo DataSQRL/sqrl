@@ -47,6 +47,8 @@ public class ConfigurationTest {
         assertEquals(config.getEngines().getJdbc().getDbURL(),"jdbc:h2:tmp/output");
         assertNotNull(config.getEngines().getFlink());
         assertEquals(config.getEnvironment().getMetastore().getDatabase(),"system");
+        assertEquals(1, config.getSources().size());
+        assertTrue(config.getSources().get(0).getConfig() instanceof FileSourceConfiguration);
     }
 
     @Test
