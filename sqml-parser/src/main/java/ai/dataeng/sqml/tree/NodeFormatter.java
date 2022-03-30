@@ -142,13 +142,6 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitFunctionCall(FunctionCall node, Void context) {
-    if (node.getName().equals(QualifiedName.of("="))) {
-      return String.format("%s %s %s",
-          node.getArguments().get(0).accept(this, null),
-          node.getName(),
-          node.getArguments().get(1).accept(this, null));
-    }
-
     return node.getName() + "(" + node.getArguments().stream().map(a->a.accept(this, null)).collect(
         Collectors.joining(", ")) + ")" + node.getOver().map(o->o.accept(this, context)).orElse("");
   }
@@ -362,7 +355,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitIdentifier(Identifier node, Void context) {
-    return node.getNamePath();
+    return node.getNamePath().toString();
   }
 
   @Override
@@ -402,7 +395,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitDistinctOn(DistinctOn node, Void context) {
     return String.format(" ON (%s) ", node.getOn().stream()
-        .map(e->e.getNamePath()).collect(Collectors.joining(",")));
+        .map(e->e.getNamePath().toString()).collect(Collectors.joining(",")));
   }
 
   @Override

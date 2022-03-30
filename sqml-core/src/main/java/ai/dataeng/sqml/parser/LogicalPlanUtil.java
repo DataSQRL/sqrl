@@ -11,7 +11,7 @@ import java.util.NoSuchElementException;
 public class LogicalPlanUtil {
 
     public static <F extends Field> F getField(Table table, Name name) {
-        Field f = table.fields.getByName(name);
+        Field f = table.fields.getByName(name).get();
         if (f == null) throw new NoSuchElementException("Could not find: " + name);
         return (F) f;
     }

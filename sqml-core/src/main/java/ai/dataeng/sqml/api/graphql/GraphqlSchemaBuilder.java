@@ -7,10 +7,8 @@ import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ShadowingContainer;
-import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.type.ArrayType;
 import ai.dataeng.sqml.type.CalciteDelegatingField;
-import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BigIntegerType;
@@ -329,7 +327,6 @@ public class GraphqlSchemaBuilder {
 
   class Visitor extends SqmlTypeVisitor<Optional<GraphQLOutputType>, Context> {
     private GraphQLSchema.Builder schemaBuilder;
-    private Map<QualifiedName, GraphQLObjectType.Builder> gqlTypes = new HashMap<>();
     private Set<GraphQLType> additionalTypes = new HashSet<>();
 
     private GraphQLInputType bind;
@@ -409,20 +406,6 @@ public class GraphqlSchemaBuilder {
     public Optional<GraphQLOutputType> visitIntervalType(IntervalType type, Context context) {
       return Optional.of(Scalars.GraphQLInt); //Todo: interval type?
     }
-
-    public  String toGraphqlName(String name) {
-      return name.replaceAll("[^A-Za-z0-9_]", "");
-    }
-
-    private boolean containsHiddenField(QualifiedName name) {
-      for (String part : name.getParts()) {
-        if (part.startsWith("_")) {
-          return true;
-        }
-      }
-      return false;
-    }
-
   }
 
   @Value

@@ -45,7 +45,7 @@ public class NamespaceImpl implements Namespace {
 
     //Hack due to order or adding dataset
     //Always look in schema first to discover
-    Table schemaTable = (Table)this.schemaContainer.schema.getByName(namePath.getFirst());
+    Table schemaTable = (Table)this.schemaContainer.schema.getByName(namePath.getFirst()).get();
     if (schemaTable != null) {
       if (namePath.getLength() == 1) {
         return Optional.of(schemaTable);

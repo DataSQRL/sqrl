@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.sql.SqlNode;
 
 @Slf4j
 @AllArgsConstructor
@@ -103,13 +104,14 @@ public class Analyzer {
 
     @Override
     public Void visitQueryAssignment(QueryAssignment queryAssignment, Void context) {
-//      QualifiedName name = queryAssignment.getName();
-//      Query query = queryAssignment.getQuery();
-//
-//      StatementAnalyzer statementAnalyzer = new StatementAnalyzer();
-//      Scope scope = new Scope();
-//      Scope newScope = query.accept(statementAnalyzer, scope);
-//      Node rewrittenNode = newScope.getNode();
+      NamePath name = queryAssignment.getNamePath();
+      Query query = queryAssignment.getQuery();
+
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
+      Scope scope = null;//new Scope();
+      Scope newScope = query.accept(statementAnalyzer, scope);
+      Node rewrittenNode = newScope.getNode();
+
       //0. rewritten node is unsqrled node
       //1. translate node to calcite sql node
       //2. convert sql node to rel, locally optimize, attach to plan dag
@@ -130,14 +132,12 @@ public class Analyzer {
 
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
       Query query = createExpressionQuery(expression);
-      Scope queryScope = new Scope(table, null, table.get().getFields().getElements());
-      Scope newScope = query.accept(statementAnalyzer, queryScope);
+//      Scope queryScope = new Scope(table, null, null);
+      Scope newScope = query.accept(statementAnalyzer, null);
 
       //Add a Field to the logical dag
       Field field = FieldFactory.createTypeless(table.get(), name.getLast());
       table.get().addField(field);
-
-      //Create logical plan
 
       return null;
     }

@@ -1,19 +1,16 @@
 package ai.dataeng.sqml.tree.name;
 
-import ai.dataeng.sqml.tree.QualifiedName;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
-import java.util.ArrayList;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
-
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Iterator;
 
 @Value
 public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePath> {

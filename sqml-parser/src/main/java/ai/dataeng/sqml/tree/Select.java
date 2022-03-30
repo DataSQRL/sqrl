@@ -24,9 +24,9 @@ import java.util.Optional;
 public class Select
     extends Node {
 
-  private final boolean distinct;
-  private final Optional<DistinctOn> distinctOn;
-  private final List<SelectItem> selectItems;
+  private boolean distinct;
+  private Optional<DistinctOn> distinctOn;
+  private List<SelectItem> selectItems;
 
   public Select(boolean distinct, List<SelectItem> selectItems) {
     this(Optional.empty(), distinct, Optional.empty(), selectItems);
@@ -58,6 +58,18 @@ public class Select
 
   public Optional<DistinctOn> getDistinctOn() {
     return distinctOn;
+  }
+
+  public void setDistinct(boolean distinct) {
+    this.distinct = distinct;
+  }
+
+  public void setDistinctOn(Optional<DistinctOn> distinctOn) {
+    this.distinctOn = distinctOn;
+  }
+
+  public void setSelectItems(List<SelectItem> selectItems) {
+    this.selectItems = selectItems;
   }
 
   @Override

@@ -20,7 +20,7 @@ public class CalciteDelegatingField extends Field {
 
   public CalciteDelegatingField(Name name, boolean isHidden, boolean isInternal, boolean primaryKey,
       boolean parentPrimaryKey, RelDataTypeField field) {
-    super(name, null);
+    super(name);
 
     this.isHidden = isHidden;
     this.isInternal = isInternal;
