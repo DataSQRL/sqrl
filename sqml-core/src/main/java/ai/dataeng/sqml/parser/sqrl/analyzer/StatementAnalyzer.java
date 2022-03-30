@@ -332,8 +332,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         Field fk = rel.getToTable().getField(column.getName());
         String lhs = rel.getPkNameMapping().get((Column) fk);
         String rhs = rel.getPkNameMapping().get(column);
-        Identifier l = new Identifier(null, NamePath.parse(lhs));
-        Identifier r = new Identifier(null, NamePath.parse(rhs));
+        Identifier l = new Identifier(null, NamePath.of(currentAlias, Name.system(lhs)));
+        Identifier r = new Identifier(null, NamePath.of(nextAlias, Name.system(rhs)));
 
         expressions.add(eq(l, r));
 //        nodes.add(eq(

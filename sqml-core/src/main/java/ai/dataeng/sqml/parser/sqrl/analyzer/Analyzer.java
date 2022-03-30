@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
 
 @Slf4j
@@ -112,6 +113,8 @@ public class Analyzer {
       Scope newScope = query.accept(statementAnalyzer, scope);
       Node rewrittenNode = newScope.getNode();
 
+
+      RelNode plan = planner.plan(rewrittenNode);
       //0. rewritten node is unsqrled node
       //1. translate node to calcite sql node
       //2. convert sql node to rel, locally optimize, attach to plan dag

@@ -22,6 +22,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
+@Deprecated
 public class DereferenceExpression
     extends Expression {
 

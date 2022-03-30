@@ -44,6 +44,14 @@ public class Limit
     return value;
   }
 
+  public Optional<Integer> getIntValue() {
+    try {
+      return Optional.of(Integer.parseInt(value));
+    } catch (Exception e) {
+      return Optional.empty();
+    }
+  }
+
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitLimitNode(this, context);

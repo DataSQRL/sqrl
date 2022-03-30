@@ -159,9 +159,9 @@ predicate[ParserRuleContext value]
     | NOT? IN qualifiedName                                               #inRelation
     | NOT? IN '(' expression (',' expression)* ')'                        #inList
     | NOT? IN '(' query ')'                                               #inSubquery
-    | NOT? LIKE pattern=valueExpression                                   #like
+   // | NOT? LIKE pattern=valueExpression                                   #like
     | IS NOT? NULL                                                        #nullPredicate
-    | IS NOT? DISTINCT FROM right=valueExpression                         #distinctFrom
+//    | IS NOT? DISTINCT FROM right=valueExpression                         #distinctFrom
     ;
 
 valueExpression
