@@ -8,7 +8,11 @@ import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.sqrl.FieldFactory;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
+import ai.dataeng.sqml.parser.sqrl.SqrlRexUtil;
 import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
+import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
+import ai.dataeng.sqml.parser.sqrl.function.SqlNativeFunction;
+import ai.dataeng.sqml.parser.sqrl.function.SqrlFunction;
 import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
 import ai.dataeng.sqml.parser.sqrl.transformers.ExpressionToQueryTransformer;
 import ai.dataeng.sqml.tree.AllColumns;
@@ -17,6 +21,7 @@ import ai.dataeng.sqml.tree.CreateSubscription;
 import ai.dataeng.sqml.tree.DistinctAssignment;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
+import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.Join;
@@ -43,6 +48,9 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.sql.SqrlRelBuilder;
 
 @Slf4j
 @AllArgsConstructor
@@ -111,6 +119,7 @@ public class Analyzer {
         throw new RuntimeException(String.format("Cannot import identifier: %s", node.getNamePath()));
       }
 
+      importManager.setTableFactory(new TableFactory(planner));
       Table table = importManager.resolveTable(node.getNamePath().get(0), node.getNamePath().get(1),
           node.getAliasName(), errors);
       logicalDag.getSchema().add(table);
@@ -122,44 +131,81 @@ public class Analyzer {
       NamePath name = queryAssignment.getNamePath();
       Query query = queryAssignment.getQuery();
 
+      analyzeQuery(name, query);
+      return null;
+    }
+
+    public void analyzeQuery(NamePath namePath, Query query) {
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
       Scope scope = null;//new Scope();
       Scope newScope = query.accept(statementAnalyzer, scope);
       Node rewrittenNode = newScope.getNode();
-
-      //Create 'Table'
       RelNode plan = planner.plan(rewrittenNode);
 
-      Table table = tableFactory.create(name, (Query)rewrittenNode);
-      table.setRelNode(plan);
+      //For single unnamed columns in tables, treat as an expression
+      if (hasOneUnnamedColumn(rewrittenNode) && namePath.getPrefix().isPresent()) {
+        Table table = lookup(namePath.getPrefix().get()).get();
 
-      //Todo: create parent field
-      return null;
+        SqrlRelBuilder relBuilder = planner.createRelBuilder();
+        RexBuilder rexBuilder = relBuilder.getRexBuilder();
+        RelNode newPlan = relBuilder
+            .push(plan)
+            .push(table.getRelNode())
+            .join(JoinRelType.LEFT,
+                SqrlRexUtil.createPkCondition(table))
+            //todo: project all left + the new column, shadow if necessary
+            .build();
+
+        table.setRelNode(newPlan);
+      } else {
+
+
+//      Scope newScope = query.accept(statementAnalyzer, new Scope(table, query, null));
+//
+//      Node rewrittenNode = newScope.getNode();
+//      RelNode plan = planner.plan(rewrittenNode);
+//
+//      table.get().setRelNode(plan);
+//
+//      //Add a Field to the logical dag
+//      Field field = FieldFactory.createTypeless(table.get(), name.getLast());
+//      table.get().addField(field);
+      }
+
+
+      //Create Schema elements
+
+      Table table = tableFactory.create(null, (Query)rewrittenNode);
+      table.setRelNode(plan);
+    }
+
+    private boolean hasOneUnnamedColumn(Node node) {
+      return false;
     }
 
     @Override
     public Void visitExpressionAssignment(ExpressionAssignment assignment, Void context) {
-      NamePath name = assignment.getNamePath();
+      NamePath namePath = assignment.getNamePath();
       Expression expression = assignment.getExpression();
 
-      Optional<Table> table = logicalDag.getSchema().getByName(name.getFirst());
+      Optional<Table> table = logicalDag.getSchema().getByName(namePath.getFirst());
       Preconditions.checkState(table.isPresent(), "Expression cannot be assigned to root");
+      Preconditions.checkState(!hasNamedColumn(expression), "Expressions cannot be named");
 
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
       Query query = createExpressionQuery(expression);
-
-      Scope newScope = query.accept(statementAnalyzer, new Scope(table, query, null));
-
-      Node rewrittenNode = newScope.getNode();
-      RelNode plan = planner.plan(rewrittenNode);
-
-      table.get().setRelNode(plan);
-
-      //Add a Field to the logical dag
-      Field field = FieldFactory.createTypeless(table.get(), name.getLast());
-      table.get().addField(field);
+      analyzeQuery(namePath, query);
 
       return null;
+    }
+
+    /**
+     * Checks if an expression has an AS function as its column
+     */
+    private boolean hasNamedColumn(Expression expression) {
+      if(expression instanceof FunctionCall) {
+        return ((FunctionCall) expression).getName().equals(Name.system("AS").toNamePath());
+      }
+      return false;
     }
 
     private Query createExpressionQuery(Expression expression) {
@@ -175,8 +221,16 @@ public class Analyzer {
     @Override
     public Void visitDistinctAssignment(DistinctAssignment node, Void context) {
       Table table = tableFactory.create(node.getNamePath(), node.getTable());
-      Scope scope = new Scope(Optional.empty(), node, new LinkedHashMap<>());
+//      Scope scope = new Scope(Optional.empty(), node, new LinkedHashMap<>());
       Optional<Table> oldTable = lookup(node.getTable().toNamePath());
+
+      //Distinct table rules:
+      //1. New fields are created for table
+      //2. The table may be shadowed
+      //3. A rel node to distinct is attached to table
+      // https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/sql/queries/deduplication/
+      //4. No unsqrling mechanics
+      //5.
 
       oldTable.get().getFields().getElements()
           .forEach(table::addField);
@@ -187,6 +241,7 @@ public class Analyzer {
               .map(e->table.getFieldOpt(e)
                   .orElseThrow(()->new RuntimeException("Could not find primary key " + e)))
               .collect(Collectors.toList());
+
       table.addUniqueConstraint(fields);
 
       return null;

@@ -17,35 +17,15 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
  * This is only valid per-query
  */
 @Slf4j
-public class SqrlCalciteCatalogReader extends CalciteCatalogReader {
+public class SqrlCalciteCatalogReader2 extends CalciteCatalogReader {
 
   private final CalciteSchema rootSqrlSchema;
 
-  public SqrlCalciteCatalogReader(CalciteSchema rootSchema,
+  public SqrlCalciteCatalogReader2(CalciteSchema rootSchema,
       List<String> defaultSchema,
       RelDataTypeFactory typeFactory,
       CalciteConnectionConfig config) {
     super(rootSchema, defaultSchema, typeFactory, config);
     this.rootSqrlSchema = rootSchema;
-  }
-
-  @Override
-  public PreparingTable getTable(List<String> names) {
-    CalciteSchema.TableEntry entry = SqlValidatorUtil.getTableEntry(this, names);
-    if (entry != null) {
-      final Table table = entry.getTable();
-      return new SqrlRelOptTable(RelOptTableImpl.create(this,
-          table.getRowType(typeFactory), entry, null));
-    }
-    return null;
-  }
-
-  //todo: remove
-  /**
-   * A workaround for calcite to expand JOIN paths. Provides the scope
-   * of the current query to lookup aliases.
-   */
-  public void setScope(ListScope scope) {
-    ((CachingSqrlSchema)rootSqrlSchema).setScope(scope);
   }
 }

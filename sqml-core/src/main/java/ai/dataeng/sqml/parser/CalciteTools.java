@@ -16,13 +16,16 @@ import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.jdbc.CachingSqrlSchema;
+import org.apache.calcite.jdbc.CachingSqrlSchema2;
 import org.apache.calcite.jdbc.SqrlTypeFactory;
 import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.hep.HepPlanner;
 import org.apache.calcite.plan.hep.HepProgram;
+import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.prepare.SqrlCalciteCatalogReader;
+import org.apache.calcite.prepare.SqrlCalciteCatalogReader2;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
@@ -32,6 +35,7 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.SqrlSchema;
+import org.apache.calcite.schema.SqrlSchema2;
 import org.apache.calcite.sql.util.ReflectiveSqlOperatorTable;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -89,19 +93,24 @@ public class CalciteTools {
 //      return super.visit(scan);
 //    }
 //  };
-public static SqrlCalciteCatalogReader getCalciteCatalogReader(LogicalDag dag) {
-//  CalciteTableFactory calciteTableFactory = new CalciteTableFactory(context, namespace, new RelDataTypeFieldFactory(typeFactory), false);
-//  CachingSqrlSchema schema = new CachingSqrlSchema(new SqrlSchema(calciteTableFactory));
-//
-//  // Configure and instantiate validator
-//  Properties props = new Properties();
-//  props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
-//  CalciteConnectionConfig config = new CalciteConnectionConfigImpl(props);
-//  SqrlCalciteCatalogReader catalogReader = new SqrlCalciteCatalogReader(schema,
-//      Collections.singletonList(""),
-//      typeFactory, config);
-  return null;
-}
+  public static CalciteCatalogReader getCalciteCatalogReader(LogicalDag dag, CachingSqrlSchema2 schema) {
+    //TODO:
+    // 1. Need to resolve the calcite schema from somewhere
+    // 2. Use the flink schema since we don't need to infer types
+    // 3.
+
+
+    SqrlTypeFactory typeFactory = new SqrlTypeFactory();
+
+    // Configure and instantiate validator
+    Properties props = new Properties();
+    props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
+    CalciteConnectionConfig config = new CalciteConnectionConfigImpl(props);
+    SqrlCalciteCatalogReader2 catalogReader = new SqrlCalciteCatalogReader2(schema,
+        Collections.singletonList(""),
+        typeFactory, config);
+    return catalogReader;
+  }
   public static SqrlCalciteCatalogReader getCalciteCatalogReader(Optional<NamePath> context,
       Namespace namespace, SqrlTypeFactory typeFactory) {
     CalciteTableFactory calciteTableFactory = new CalciteTableFactory(context, namespace, new RelDataTypeFieldFactory(typeFactory), false);

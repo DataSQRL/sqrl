@@ -173,4 +173,8 @@ public class ImportManager {
         return result;
     }
 
+    //temp, move to constructor on cleanup
+    public void setTableFactory(TableFactory tableFactory) {
+        this.tableFactory = tableFactory;
+    }
 }

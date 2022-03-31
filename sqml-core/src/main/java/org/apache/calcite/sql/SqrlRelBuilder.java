@@ -1,6 +1,5 @@
 package org.apache.calcite.sql;
 
-import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.operator.ImportManager.SourceTableImport;
 import ai.dataeng.sqml.planner.nodes.StreamTableScan;
 import java.util.List;
@@ -17,6 +16,14 @@ public class SqrlRelBuilder extends RelBuilder {
       RelOptCluster cluster,
       RelOptSchema relOptSchema) {
     super(context, cluster, relOptSchema);
+  }
+
+  public SqrlRelBuilder scanStream(String name,SourceTableImport sourceTable) {
+    RelOptTable table = relOptSchema.getTableForMember(List.of(name));
+    StreamTableScan scan = new StreamTableScan(this.cluster, RelTraitSet.createEmpty(), List.of(), table, sourceTable);
+
+    this.push(scan);
+    return this;
   }
 
   public SqrlRelBuilder scanStream(SourceTableImport ordersImp) {

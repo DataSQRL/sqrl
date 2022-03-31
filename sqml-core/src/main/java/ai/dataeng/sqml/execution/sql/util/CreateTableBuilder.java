@@ -62,12 +62,38 @@ public class CreateTableBuilder extends TableBuilder {
 
     private String getSQLType(AtomicDataType type) {
         switch (type.getLogicalType().getTypeRoot()) {
+            case BOOLEAN:
+            case BINARY:
+            case VARBINARY:
+            case DECIMAL:
+            case TINYINT:
+            case SMALLINT:
             case BIGINT:
             case INTEGER:
                 return "BIGINT";
             case CHAR:
             case VARCHAR:
                 return "VARCHAR";
+            case FLOAT:
+            case DOUBLE:
+                return "NUMBER";
+            case DATE:
+                return "DATE";
+            case TIME_WITHOUT_TIME_ZONE:
+                return "TIME";
+            case TIMESTAMP_WITHOUT_TIME_ZONE:
+                return "TIMESTAMP";
+            case TIMESTAMP_WITH_TIME_ZONE:
+                return "TIMESTAMPTZ";
+            case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+                return "TIMESTAMPTZ";
+            case INTERVAL_YEAR_MONTH:
+            case INTERVAL_DAY_TIME:
+            case DISTINCT_TYPE:
+            case STRUCTURED_TYPE:
+            case NULL:
+            case SYMBOL:
+            case UNRESOLVED:
             case ARRAY:
             case MAP:
             case MULTISET:

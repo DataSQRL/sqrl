@@ -12,12 +12,10 @@ public class SqlGenerator {
   private final Map<Table, TableDescriptor> tables;
 
   public SqlGenerator(Map<Table, TableDescriptor> tables) {
-
     this.tables = tables;
   }
 
   public List<String> generate() {
-    //1. Generate DML strings
     List<String> dml = new ArrayList<>();
 
     for (Map.Entry<Table, TableDescriptor> entry : tables.entrySet()) {
@@ -29,22 +27,4 @@ public class SqlGenerator {
 
     return dml;
   }
-
-//
-//    @Value
-//    public static class Result {
-//        List<String> dmlQueries;
-//
-//        public void executeDMLs(JDBCConnectionProvider configuration) {
-//            String dmls = dmlQueries.stream().collect(Collectors.joining("\n"));
-//            System.out.println(dmls);
-//            try (Connection conn = configuration.getConnection(); Statement stmt = conn.createStatement()) {
-//                stmt.executeUpdate(dmls);
-//            } catch (SQLException e) {
-//                throw new RuntimeException("Could not execute SQL query",e);
-//            } catch (ClassNotFoundException e) {
-//                throw new RuntimeException("Could not load database driver",e);
-//            }
-//        }
-//    }
 }

@@ -4,20 +4,15 @@ import static ai.dataeng.sqml.parser.macros.SqlNodeUtils.childParentJoin;
 import static ai.dataeng.sqml.parser.macros.SqlNodeUtils.parentChildJoin;
 import static ai.dataeng.sqml.tree.name.Name.PARENT_RELATIONSHIP;
 
-import ai.dataeng.sqml.parser.CalciteTools;
+import ai.dataeng.sqml.execution.flink.ingest.schema.FlinkTableConverter;
 import ai.dataeng.sqml.parser.Column;
-import ai.dataeng.sqml.parser.Dataset;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Relationship.Type;
 import ai.dataeng.sqml.parser.Table;
-import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.operator.ImportManager.SourceTableImport;
 import ai.dataeng.sqml.parser.operator.Shredder;
 import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
-import ai.dataeng.sqml.planner.nodes.StreamTableScan;
-import ai.dataeng.sqml.schema.Namespace;
-import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
@@ -38,14 +33,13 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.jdbc.SqrlTypeFactory;
-import org.apache.calcite.plan.RelOptCluster;
-import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.plan.RelTraitSet;
-import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.api.Schema.UnresolvedColumn;
+import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;
 
 @AllArgsConstructor
 public class TableFactory {
@@ -55,7 +49,12 @@ public class TableFactory {
   public Table create(SourceTableImport sourceTableImport, Optional<Name> alias) {
     Table table = createTable(sourceTableImport, alias);
 
-    RelNode node = planner.createRelBuilder().scanStream(sourceTableImport).build();
+    FlinkTableConverter tbConverter = new FlinkTableConverter();
+    Pair<Schema, TypeInformation> ordersSchema = tbConverter.tableSchemaConversion(sourceTableImport.getSourceSchema());
+
+    planner.addTable(table.getId().toString(), new StreamTable(ordersSchema.getKey()));
+
+    RelNode node = planner.createRelBuilder().scanStream(table.getId().toString(), sourceTableImport).build();
     table.setRelNode(node);
     return table;
   }
@@ -75,12 +74,12 @@ public class TableFactory {
       Column[] inputSchema = outputSchema.get(entry.getKey());
       assert inputSchema!=null && inputSchema.length>0;
     }
-    setParentChildRelation(rootTable);
+//    setParentChildRelation(rootTable);
 
     return rootTable;
   }
 
-  private Table tableConversion( RelationType<FlexibleDatasetSchema.FlexibleField> relation,
+  private Table tableConversion(RelationType<FlexibleDatasetSchema.FlexibleField> relation,
       Map<NamePath, Column[]> outputSchema,
       Name name, NamePath path, Table parent) {
     NamePath namePath = getNamePath(name, Optional.ofNullable(parent));
@@ -185,6 +184,8 @@ public class TableFactory {
   }
 
   public Table create(NamePath namePath, Name table) {
+    //Check if this is in the logical dag
+
     return null;
   }
 }

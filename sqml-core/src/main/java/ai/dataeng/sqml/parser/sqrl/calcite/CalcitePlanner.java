@@ -6,10 +6,12 @@ import ai.dataeng.sqml.parser.sqrl.NodeToSqlNodeConverter;
 import ai.dataeng.sqml.tree.Node;
 import java.util.Properties;
 import org.apache.calcite.config.CalciteConnectionProperty;
+import org.apache.calcite.jdbc.CachingSqrlSchema2;
 import org.apache.calcite.jdbc.SqrlTypeFactory;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.schema.SqrlSchema2;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlRelBuilder;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
@@ -24,12 +26,21 @@ public class CalcitePlanner {
   private final RelOptCluster cluster;
   private final CalciteCatalogReader catalogReader;
   private final LogicalDag logicalDag;
+  private final SqrlSchema2 sqrlSchema;
+  private final CachingSqrlSchema2 calciteSchema;
 
   public CalcitePlanner(LogicalDag logicalDag) {
     SqrlTypeFactory typeFactory = new SqrlTypeFactory();
     this.cluster = CalciteTools.createHepCluster(typeFactory);
-    this.catalogReader = CalciteTools.getCalciteCatalogReader(logicalDag);
+    this.sqrlSchema = new SqrlSchema2();
+    this.calciteSchema = new CachingSqrlSchema2(sqrlSchema);
+    this.catalogReader = CalciteTools.getCalciteCatalogReader(logicalDag, calciteSchema);
     this.logicalDag = logicalDag;
+
+  }
+
+  public void addTable(String name, org.apache.calcite.schema.Table table) {
+    calciteSchema.add(name, table);
   }
 
   public SqrlRelBuilder createRelBuilder() {

@@ -70,19 +70,12 @@ public class FlinkPipelineGenerator {
                 ordersSchema.getRight());
 
             List<String> tbls = List.of(tEnv.listTables());
-            if (!(tbls.contains("orders"))) {
-              String fields = ordersSchema.getKey().getColumns().stream()
-                  .map(c->(UnresolvedPhysicalColumn) c)
-                  .filter(c->c.getDataType() instanceof AtomicDataType)
-                  .filter(c->!c.getName().equals(ReservedName.INGEST_TIME.getCanonical()) &&!c.getName().equals(ReservedName.SOURCE_TIME.getCanonical()))
-                  .map(c->String.format("`"+c.getName()+"` AS `%s`", c.getName() + VersionedName.ID_DELIMITER + "0"))
-                  .collect(Collectors.joining(", "));
 
-              tEnv.registerDataStream("orders_stream", rows);
+              tEnv.registerDataStream(scan.getTable().getQualifiedName().get(0) + "_stream", rows);
 //              PlannerQueryOperation op = (PlannerQueryOperation)tEnv.getParser().parse(" + orders_stream).get(0);
 
-              tEnv.sqlUpdate("CREATE TEMPORARY VIEW orders AS SELECT "+fields+" FROM orders_stream");
-            }
+              tEnv.sqlUpdate("CREATE TEMPORARY VIEW "+scan.getTable().getQualifiedName().get(0)+" AS SELECT * FROM " + scan.getTable().getQualifiedName().get(0)+ "_stream");
+//            }
           }
           return super.visit(scan);
         }

@@ -25,6 +25,8 @@ public class Table implements DatasetOrTable {
   public final boolean isInternal;
   private RelNode relNode;
 
+  private List<Field> partitionKeys;
+
   public Table(int uniqueId, Name name, NamePath path, boolean isInternal) {
     this.name = name;
     this.uniqueId = uniqueId;
@@ -33,13 +35,13 @@ public class Table implements DatasetOrTable {
   }
 
   public Field getField(Name name) {
-    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
+//    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
     Field field = fields.getByName(name).get();
     return field;
   }
 
   public Optional<Field> getFieldOpt(Name name) {
-    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
+//    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
     Field field = fields.getByName(name).get();
     return Optional.ofNullable(field);
   }
@@ -173,6 +175,6 @@ public class Table implements DatasetOrTable {
   }
 
   public void addUniqueConstraint(List<Field> partitionKeys) {
-
+    this.partitionKeys = partitionKeys;
   }
 }

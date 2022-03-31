@@ -10,6 +10,7 @@ import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration.Dialect;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
+import ai.dataeng.sqml.execution.FlinkPipelineGenerator;
 import ai.dataeng.sqml.execution.SqlGenerator;
 import ai.dataeng.sqml.execution.flink.ingest.DataStreamProvider;
 import ai.dataeng.sqml.execution.flink.ingest.SchemaValidationProcess;
@@ -181,7 +182,6 @@ public class ImportToNamespaceTest {
   @Test
   public void testImport() {
     importProcessor.process(sqrlParser.parseStatement(("IMPORT ecommerce-data.Orders")));
-    queryProcessor.process(sqrlParser.parseStatement(("o2 := SELECT _uuid as uid FROM Orders")));
 
     namespace.populate();
     LogicalPlanDag dag = namespace.getLogicalPlanDag();
@@ -190,8 +190,12 @@ public class ImportToNamespaceTest {
 
     Pair<List<LogicalFlinkSink>, List<LogicalPgSink>> flinkSinks = optimize(dag);
 
+    FlinkPipelineGenerator pipelineGenerator = new FlinkPipelineGenerator();
     Pair<StreamStatementSet, Map<ai.dataeng.sqml.parser.Table, TableDescriptor>> result =
-        createFlinkPipeline(flinkSinks.getKey());
+        pipelineGenerator.createFlinkPipeline(flinkSinks.getKey());
+
+//    Pair<StreamStatementSet, Map<ai.dataeng.sqml.parser.Table, TableDescriptor>> result =
+//        createFlinkPipeline(flinkSinks.getKey());
 
     SqlGenerator sqlGenerator = new SqlGenerator(result.getRight());
     List<String> db = sqlGenerator.generate();
@@ -262,6 +266,7 @@ public class ImportToNamespaceTest {
                   .collect(Collectors.joining(", "));
 
               tEnv.registerDataStream("orders_stream", rows);
+
 //              PlannerQueryOperation op = (PlannerQueryOperation)tEnv.getParser().parse(" + orders_stream).get(0);
 
               tEnv.sqlUpdate("CREATE TEMPORARY VIEW orders AS SELECT "+fields+" FROM orders_stream");
