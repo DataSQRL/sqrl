@@ -13,6 +13,7 @@
  */
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.Join.Type;
 import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -22,33 +23,40 @@ import java.util.Optional;
 public class InlineJoin
     extends Declaration {
 
-  private final InlineJoinBody join;
-  private final Optional<Name> inverse;
-  private final List<SortItem> sortItems;
-  private final Optional<Integer> limit;
+  private final Type joinType;
+  private final Relation relation;
 
-  public InlineJoin(Optional<NodeLocation> location, InlineJoinBody join, List<SortItem> sortItems,
-      Optional<Integer> limit, Optional<Name> inverse) {
+  private final Optional<Name> inverse;
+  private final Optional<OrderBy> orderBy;
+  private final Optional<Limit> limit;
+
+  public InlineJoin(Optional<NodeLocation> location, Type joinType, Relation relation, Optional<OrderBy> orderBy,
+      Optional<Limit> limit, Optional<Name> inverse) {
     super(location);
-    this.join = join;
+    this.joinType = joinType;
+    this.relation = relation;
     this.inverse = inverse;
-    this.sortItems = sortItems;
+    this.orderBy = orderBy;
     this.limit = limit;
   }
 
-  public InlineJoinBody getJoin() {
-    return join;
+  public Type getJoinType() {
+    return joinType;
+  }
+
+  public Relation getRelation() {
+    return relation;
   }
 
   public Optional<Name> getInverse() {
     return inverse;
   }
 
-  public List<SortItem> getSortItems() {
-    return sortItems;
+  public Optional<OrderBy> getOrderBy() {
+    return orderBy;
   }
 
-  public Optional<Integer> getLimit() {
+  public Optional<Limit> getLimit() {
     return limit;
   }
 
@@ -72,12 +80,13 @@ public class InlineJoin
       return false;
     }
     InlineJoin that = (InlineJoin) o;
-    return Objects.equals(join, that.join) && Objects
-        .equals(inverse, that.inverse);
+    return joinType == that.joinType && Objects.equals(relation, that.relation)
+        && Objects.equals(inverse, that.inverse) && Objects.equals(orderBy,
+        that.orderBy) && Objects.equals(limit, that.limit);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(join, inverse);
+    return Objects.hash(joinType, relation, inverse, orderBy, limit);
   }
 }

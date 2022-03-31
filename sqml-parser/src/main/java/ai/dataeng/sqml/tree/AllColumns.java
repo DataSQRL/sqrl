@@ -50,7 +50,7 @@ public class AllColumns
     this(Optional.of(location), prefix);
   }
 
-  private AllColumns(Optional<NodeLocation> location, NamePath prefix) {
+  public AllColumns(Optional<NodeLocation> location, NamePath prefix) {
     super(location);
     requireNonNull(prefix, "prefix is null");
     this.prefix = Optional.of(prefix);

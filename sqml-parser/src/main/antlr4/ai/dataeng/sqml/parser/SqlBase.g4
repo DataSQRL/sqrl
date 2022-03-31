@@ -49,16 +49,10 @@ subscriptionType
     ;
 
 inlineJoin
-    : inlineJoinBody
+    : joinType JOIN relation
       (ORDER BY sortItem (',' sortItem)*)?
       (LIMIT limit=INTEGER_VALUE)?
       (INVERSE inv=identifier)?
-    ;
-
-inlineJoinBody
-    : (LEFT)? JOIN table=qualifiedName (AS? alias=identifier)?
-      (ON expression)?
-      inlineJoinBody?
     ;
 
 query
@@ -173,7 +167,6 @@ valueExpression
 
 primaryExpression
     : NULL                                                                                #nullLiteral
-    //| inlineJoinBody                                                                      #inlineJoinExpr
     | interval                                                                            #intervalLiteral
     | number                                                                              #numericLiteral
     | booleanValue                                                                        #booleanLiteral

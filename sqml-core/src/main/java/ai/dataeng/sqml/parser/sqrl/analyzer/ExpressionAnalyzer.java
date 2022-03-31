@@ -1,5 +1,10 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
+import ai.dataeng.sqml.parser.FieldPath;
+import ai.dataeng.sqml.parser.sqrl.PathUtil;
+import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
+import ai.dataeng.sqml.parser.sqrl.function.RewritingFunction;
+import ai.dataeng.sqml.parser.sqrl.function.SqrlFunction;
 import ai.dataeng.sqml.tree.ArithmeticBinaryExpression;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.BetweenPredicate;
@@ -23,9 +28,18 @@ import ai.dataeng.sqml.tree.SimpleCaseExpression;
 import ai.dataeng.sqml.tree.StringLiteral;
 import ai.dataeng.sqml.tree.TimestampLiteral;
 import ai.dataeng.sqml.type.Type;
+import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class ExpressionAnalyzer {
-
+  FunctionLookup functionLookup = new FunctionLookup();
+  private Map<FunctionCall, RewritingFunction> rewriteFunction = new HashMap<>();
+  private List<FunctionCall> toMany = new ArrayList<>();
+  private List<FunctionCall> toOne = new ArrayList<>();
   public ExpressionAnalyzer() {
   }
 
@@ -52,7 +66,7 @@ public class ExpressionAnalyzer {
     }
   }
 
-  class Visitor extends AstVisitor<Type, Context> {
+  class Visitor extends AstVisitor<Void, Context> {
     private final ExpressionAnalysis analysis;
 
     public Visitor(ExpressionAnalysis analysis) {
@@ -60,22 +74,26 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    public Type visitNode(Node node, Context context) {
+    public Void visitNode(Node node, Context context) {
       throw new RuntimeException(String.format("Could not visit node: %s %s",
           node.getClass().getName(), node));
     }
 
     @Override
-    public Type visitExpression(Expression node, Context context) {
+    public Void visitExpression(Expression node, Context context) {
       throw new RuntimeException(String.format("Unknown expression node: %s %s",
           node.getClass().getName(), node));
     }
 
     @Override
-    public Type visitIdentifier(Identifier node, Context context) {
-      //1. Lookup identifier in current scope, throw if ambiguous
-      //2. Resolve to a FieldPath
-      //3. Add fieldpath to scope
+    public Void visitIdentifier(Identifier node, Context context) {
+      List<FieldPath> fieldPaths = context.getScope()
+          .resolve(node.getNamePath());
+
+      Preconditions.checkState(fieldPaths.size() != 1,
+        "Could not resolve field (ambiguous or non-existent: " + node);
+
+      node.setResolved(fieldPaths.get(0));
 
       return null;
     }
@@ -84,13 +102,13 @@ public class ExpressionAnalyzer {
     // We need to check if the returning context contains a to-many and fail if it does
     // These are not to-many compatible functions
     @Override
-    public Type visitIsNotNullPredicate(IsNotNullPredicate node, Context context) {
+    public Void visitIsNotNullPredicate(IsNotNullPredicate node, Context context) {
       node.getValue().accept(this, context);
       return null;
     }
 
     @Override
-    public Type visitBetweenPredicate(BetweenPredicate node, Context context) {
+    public Void visitBetweenPredicate(BetweenPredicate node, Context context) {
       node.getValue().accept(this, context);
       node.getMin().accept(this, context);
       node.getMax().accept(this, context);
@@ -98,22 +116,14 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    public Type visitLogicalBinaryExpression(LogicalBinaryExpression node, Context context) {
+    public Void visitLogicalBinaryExpression(LogicalBinaryExpression node, Context context) {
       node.getLeft().accept(this, context);
       node.getRight().accept(this, context);
       return null;
     }
 
     @Override
-    public Type visitComparisonExpression(ComparisonExpression node, Context context) {
-      node.getLeft().accept(this, context);
-      node.getRight().accept(this, context);
-
-      return null;
-    }
-
-    @Override
-    public Type visitArithmeticBinary(ArithmeticBinaryExpression node, Context context) {
+    public Void visitComparisonExpression(ComparisonExpression node, Context context) {
       node.getLeft().accept(this, context);
       node.getRight().accept(this, context);
 
@@ -121,16 +131,35 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    public Type visitFunctionCall(FunctionCall node, Context context) {
-      //Get operators from Sqrl operators. they need to be sql &| flink compatible
+    public Void visitArithmeticBinary(ArithmeticBinaryExpression node, Context context) {
+      node.getLeft().accept(this, context);
+      node.getRight().accept(this, context);
 
-      //Check if function call exists in the AST transformer, if it does, transform it immediately
-      //If function is aggregate
-      //  if it has a to-many: Register to-many to expand later
-      //  if it is a to-one: Register to-one
-      //If function is not an aggregate:
-      //  if to-many, add to errors
-      //  if to-one: register to-one
+      return null;
+    }
+
+    @Override
+    public Void visitFunctionCall(FunctionCall node, Context context) {
+      SqrlFunction function = functionLookup.lookup(node.getName());
+      if (function instanceof RewritingFunction) {
+        rewriteFunction.put(node, (RewritingFunction) function);
+      }
+
+      for (Expression arg : node.getArguments()) {
+        arg.accept(this, null);
+      }
+
+      //Todo: allow expanding aggregates more than a single argument
+      if (function.isAggregate() && node.getArguments().size() == 1 &&
+          node.getArguments().get(0) instanceof Identifier) {
+        Identifier identifier = (Identifier)node.getArguments().get(0);
+        FieldPath fieldPath = identifier.getResolved();
+        if (PathUtil.isToMany(fieldPath)) {
+          toMany.add(node);
+        } else if (PathUtil.isToOne(fieldPath)) {
+          toOne.add(node);
+        }
+      }
 
       return null;
     }
@@ -140,7 +169,7 @@ public class ExpressionAnalyzer {
      * CASE WHEN condition1 THEN result1 (WHEN condition2 THEN result2)* (ELSE result_z) END
      */
     @Override
-    public Type visitSimpleCaseExpression(SimpleCaseExpression node, Context context) {
+    public Void visitSimpleCaseExpression(SimpleCaseExpression node, Context context) {
       node.getWhenClauses().forEach(e->e.accept(this, context));
       node.getDefaultValue().map(e->e.accept(this, context));
 
@@ -148,28 +177,28 @@ public class ExpressionAnalyzer {
     }
 
     @Override
-    public Type visitNotExpression(NotExpression node, Context context) {
+    public Void visitNotExpression(NotExpression node, Context context) {
       node.getValue().accept(this, context);
       return null;
     }
 
     @Override
-    public Type visitDoubleLiteral(DoubleLiteral node, Context context) {
+    public Void visitDoubleLiteral(DoubleLiteral node, Context context) {
       return null;
     }
 
     @Override
-    public Type visitDecimalLiteral(DecimalLiteral node, Context context) {
+    public Void visitDecimalLiteral(DecimalLiteral node, Context context) {
       return null;
     }
 
     @Override
-    public Type visitGenericLiteral(GenericLiteral node, Context context) {
+    public Void visitGenericLiteral(GenericLiteral node, Context context) {
       throw new RuntimeException("Generic literal not supported yet.");
     }
 
     @Override
-    public Type visitTimestampLiteral(TimestampLiteral node, Context context) {
+    public Void visitTimestampLiteral(TimestampLiteral node, Context context) {
       return null;
     }
 
@@ -177,33 +206,33 @@ public class ExpressionAnalyzer {
      * TODO: We need to rewrite some intervals to match sql syntax
      */
     @Override
-    public Type visitIntervalLiteral(IntervalLiteral node, Context context) {
+    public Void visitIntervalLiteral(IntervalLiteral node, Context context) {
       node.getExpression().accept(this, context);
       return null;
     }
 
     @Override
-    public Type visitStringLiteral(StringLiteral node, Context context) {
+    public Void visitStringLiteral(StringLiteral node, Context context) {
       return null;
     }
 
     @Override
-    public Type visitBooleanLiteral(BooleanLiteral node, Context context) {
+    public Void visitBooleanLiteral(BooleanLiteral node, Context context) {
       return null;
     }
 
     @Override
-    public Type visitEnumLiteral(EnumLiteral node, Context context) {
+    public Void visitEnumLiteral(EnumLiteral node, Context context) {
       throw new RuntimeException("Enum literal not supported yet.");
     }
 
     @Override
-    public Type visitNullLiteral(NullLiteral node, Context context) {
+    public Void visitNullLiteral(NullLiteral node, Context context) {
       return null;
     }
 
     @Override
-    public Type visitLongLiteral(LongLiteral node, Context context) {
+    public Void visitLongLiteral(LongLiteral node, Context context) {
       return null;
     }
   }

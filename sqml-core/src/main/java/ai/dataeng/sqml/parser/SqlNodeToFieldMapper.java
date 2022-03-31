@@ -58,10 +58,10 @@ public class SqlNodeToFieldMapper {
 
     Multiplicity multiplicity = Multiplicity.MANY;
     //TODO:
-    if (assignment.getInlineJoin().getLimit().isPresent() &&
-        assignment.getInlineJoin().getLimit().get() == 1) {
-      multiplicity = Multiplicity.ONE;
-    }
+//    if (assignment.getInlineJoin().getLimit().isPresent() &&
+//        assignment.getInlineJoin().getLimit().get() == 1) {
+//      multiplicity = Multiplicity.ONE;
+//    }
 
     Table table = namespace.lookup(assignment.getNamePath().getPrefix().get()).get();
     Relationship rel = new Relationship(assignment.getNamePath().getLast(),

@@ -17,6 +17,8 @@ import ai.dataeng.sqml.parser.operator.Shredder;
 import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
 import ai.dataeng.sqml.planner.nodes.StreamTableScan;
 import ai.dataeng.sqml.schema.Namespace;
+import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.RelationType;
@@ -176,5 +178,13 @@ public class TableFactory {
       return new Column(name, parent,0,(BasicType)ftype.getType(),ftype.getArrayDepth(), constraints, false,
           false, null, false);
     }
+  }
+
+  public Table create(NamePath name, Query node) {
+    return null;
+  }
+
+  public Table create(NamePath namePath, Name table) {
+    return null;
   }
 }

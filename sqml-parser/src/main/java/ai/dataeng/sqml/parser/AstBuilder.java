@@ -27,9 +27,9 @@ import ai.dataeng.sqml.parser.SqlBaseParser.ExpressionContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.ImportDefinitionContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.ImportStatementContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.InRelationContext;
-import ai.dataeng.sqml.parser.SqlBaseParser.InlineJoinBodyContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.InlineJoinContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.JoinAssignmentContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.JoinTypeContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.QualifiedNameContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.QueryAssignContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.ScriptContext;
@@ -56,7 +56,6 @@ import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.InListExpression;
 import ai.dataeng.sqml.tree.InPredicate;
 import ai.dataeng.sqml.tree.InlineJoin;
-import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.IntervalLiteral;
 import ai.dataeng.sqml.tree.IsNotNullPredicate;
@@ -65,7 +64,6 @@ import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.JoinDeclaration;
 import ai.dataeng.sqml.tree.JoinOn;
-import ai.dataeng.sqml.tree.LikePredicate;
 import ai.dataeng.sqml.tree.Limit;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
@@ -561,18 +559,23 @@ class AstBuilder
       criteria = new JoinOn(getLocation(context), (Expression) visit(context.joinCriteria().booleanExpression()));
     }
 
+    return new Join(getLocation(context), toJoinType(context.joinType()), left, right, Optional.ofNullable(criteria));
+  }
+
+  public Join.Type toJoinType(JoinTypeContext joinTypeContext) {
+
     Join.Type joinType;
-    if (context.joinType().LEFT() != null) {
+    if (joinTypeContext.LEFT() != null) {
       joinType = Join.Type.LEFT;
-    } else if (context.joinType().RIGHT() != null) {
+    } else if (joinTypeContext.RIGHT() != null) {
       joinType = Join.Type.RIGHT;
-    } else if (context.joinType().FULL() != null) {
+    } else if (joinTypeContext.FULL() != null) {
       joinType = Join.Type.FULL;
     } else {
       joinType = Join.Type.INNER;
     }
 
-    return new Join(getLocation(context), joinType, left, right, Optional.ofNullable(criteria));
+    return joinType;
   }
 
   @Override
@@ -615,21 +618,6 @@ class AstBuilder
   }
 
   @Override
-  public Node visitDistinctFrom(SqlBaseParser.DistinctFromContext context) {
-    Expression expression = new ComparisonExpression(
-        getLocation(context),
-        ComparisonExpression.Operator.IS_DISTINCT_FROM,
-        (Expression) visit(context.value),
-        (Expression) visit(context.right));
-
-    if (context.NOT() != null) {
-      expression = new NotExpression(getLocation(context), expression);
-    }
-
-    return expression;
-  }
-
-  @Override
   public Node visitBetween(SqlBaseParser.BetweenContext context) {
     Expression expression = new BetweenPredicate(
         getLocation(context),
@@ -653,20 +641,6 @@ class AstBuilder
     }
 
     return new IsNotNullPredicate(getLocation(context), child);
-  }
-
-  @Override
-  public Node visitLike(SqlBaseParser.LikeContext context) {
-    Expression result = new LikePredicate(
-        getLocation(context),
-        (Expression) visit(context.value),
-        (Expression) visit(context.pattern));
-
-    if (context.NOT() != null) {
-      result = new NotExpression(getLocation(context), result);
-    }
-
-    return result;
   }
 
   @Override
@@ -900,10 +874,7 @@ class AstBuilder
   @Override
   public Node visitJoinAssignment(JoinAssignmentContext ctx) {
     NamePath name = getNamePath(ctx.qualifiedName());
-    Interval interval = new Interval(
-        ctx.inlineJoin().inlineJoinBody().start.getStartIndex(),
-        ctx.inlineJoin().inlineJoinBody().stop.getStopIndex());
-    String query = ctx.inlineJoin().start.getInputStream().getText(interval);
+    String query = "";
 
     return new JoinDeclaration(Optional.of(getLocation(ctx)), name,
         query,
@@ -912,29 +883,22 @@ class AstBuilder
 
   @Override
   public Node visitInlineJoin(InlineJoinContext ctx) {
+    Optional<OrderBy> orderBy = Optional.empty();
+    if (ctx.ORDER() != null) {
+      orderBy = Optional
+          .of(new OrderBy(getLocation(ctx.ORDER()), visit(ctx.sortItem(), SortItem.class)));
+    }
+
     return new InlineJoin(
         Optional.of(getLocation(ctx)),
-        (InlineJoinBody)visit(ctx.inlineJoinBody()),
-        ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
-            .map(s->(SortItem) s.accept(this)).collect(toList()),
+        toJoinType(ctx.joinType()),
+        (Relation)visit(ctx.relation()),
+        orderBy,
         ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
-            Optional.of(Integer.parseInt(ctx.limit.getText())),
+            Optional.of(new Limit(ctx.limit.getText())),
         ctx.inv == null ? Optional.empty() :
             Optional.of(((Identifier)visit(ctx.inv)).getNamePath().getFirst())
     );
-  }
-
-  @Override
-  public Node visitInlineJoinBody(InlineJoinBodyContext ctx) {
-    return new InlineJoinBody(
-          Optional.of(getLocation(ctx)),
-          getNamePath(ctx.table),
-          ctx.alias == null ? Optional.empty() :
-              Optional.of((Identifier)visit(ctx.alias)),
-        (ctx.expression() != null) ? (Expression)visit(ctx.expression()) : null,
-        ctx.inlineJoinBody() != null ? Optional.of((InlineJoinBody) visit(ctx.inlineJoinBody()))
-            : Optional.empty()
-      );
   }
 
   @Override

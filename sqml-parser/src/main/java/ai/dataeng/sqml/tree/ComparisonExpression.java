@@ -123,8 +123,6 @@ public class ComparisonExpression
           return LESS_THAN;
         case GREATER_THAN_OR_EQUAL:
           return LESS_THAN_OR_EQUAL;
-        case IS_DISTINCT_FROM:
-          return IS_DISTINCT_FROM;
         default:
           throw new IllegalArgumentException("Unsupported comparison: " + this);
       }

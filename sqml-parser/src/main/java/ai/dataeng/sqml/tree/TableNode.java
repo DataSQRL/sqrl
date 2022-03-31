@@ -27,6 +27,7 @@ public class TableNode
 
   private final NamePath name;
   private final Optional<Name> alias;
+  private Object resolved;
 
   public TableNode(NodeLocation location, NamePath name,
       Optional<Name> alias) {
@@ -47,6 +48,13 @@ public class TableNode
     return alias;
   }
 
+  public <T> T getResolved() {
+    return (T)resolved;
+  }
+
+  public void setResolved(Object resolved) {
+    this.resolved = resolved;
+  }
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitTable(this, context);

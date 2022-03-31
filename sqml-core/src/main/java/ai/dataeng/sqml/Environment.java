@@ -1,33 +1,54 @@
 package ai.dataeng.sqml;
 
+import ai.dataeng.execution.SqlClientProvider;
 import ai.dataeng.sqml.config.SqrlSettings;
+import ai.dataeng.sqml.config.engines.JDBCConfiguration;
+import ai.dataeng.sqml.config.engines.JDBCConfiguration.Dialect;
 import ai.dataeng.sqml.config.metadata.MetadataStore;
-import ai.dataeng.sqml.config.provider.HeuristicPlannerProvider;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.config.util.NamedIdentifier;
+import ai.dataeng.sqml.execution.FlinkPipelineGenerator;
+import ai.dataeng.sqml.execution.GraphqlGenerator;
+import ai.dataeng.sqml.execution.SqlGenerator;
+import ai.dataeng.sqml.execution.SqrlExecutor;
 import ai.dataeng.sqml.execution.StreamEngine;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitor;
 import ai.dataeng.sqml.parser.ScriptParser;
-import ai.dataeng.sqml.parser.ScriptProcessor;
-import ai.dataeng.sqml.parser.validator.Validator;
-import ai.dataeng.sqml.schema.Namespace;
+import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.parser.operator.ShadowingContainer;
+import ai.dataeng.sqml.parser.sqrl.LogicalDag;
+import ai.dataeng.sqml.parser.sqrl.analyzer.Analyzer;
+import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
+import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
+import ai.dataeng.sqml.planner.SqrlPlanner;
+import ai.dataeng.sqml.planner.nodes.LogicalFlinkSink;
+import ai.dataeng.sqml.planner.nodes.LogicalPgSink;
 import ai.dataeng.sqml.parser.Script;
 import ai.dataeng.sqml.parser.operator.ImportResolver;
-import ai.dataeng.sqml.planner.Planner3;
 import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
+import graphql.GraphQL;
+import io.vertx.core.Vertx;
+import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.sqlclient.PoolOptions;
 import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.table.api.TableDescriptor;
+import org.apache.flink.table.api.TableResult;
+import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 
 @Slf4j
 public class Environment implements Closeable {
@@ -107,47 +128,57 @@ public class Environment implements Closeable {
     ScriptParser scriptParser = settings.getScriptParserProvider().createScriptParser();
     ScriptNode scriptNode = scriptParser.parse(mainScript);
 
-    Validator validator = settings.getValidatorProvider().getValidator();
-    ErrorCollector errors = validator.validate(scriptNode);
+    LogicalDag dag = new LogicalDag(new ShadowingContainer<>());
+    CalcitePlanner calcitePlanner = new CalcitePlanner(dag);
+    Analyzer analyzer = new Analyzer(importResolver.getImportManager(), calcitePlanner, new TableFactory(calcitePlanner),
+        dag);
+    analyzer.analyze(scriptNode);
 
-    if (errors.isFatal()) {
-      throw new Exception("Could not compile script.");
-    }
-    HeuristicPlannerProvider planner =
-        settings.getHeuristicPlannerProvider();
-    ScriptProcessor processor = settings.getScriptProcessorProvider().createScriptProcessor(
-        importResolver, planner, settings.getNamespace());
-    Namespace namespace = processor.process(scriptNode);
 
-//    QueryAnalyzer.addDevModeQueries(logicalPlan);
-    Preconditions.checkArgument(!errors.isFatal());
+    SqrlPlanner planner = new SqrlPlanner();
+    planner.setDevQueries(dag);
 
-//    LogicalPlanOptimizer.Result optimized = new SimpleOptimizer()
-//        .optimize(logicalPlan);
+    Pair<List<LogicalFlinkSink>, List<LogicalPgSink>> flinkSinks = planner.optimize(dag);
+
+    FlinkPipelineGenerator pipelineGenerator = new FlinkPipelineGenerator();
+    Pair<StreamStatementSet, Map<Table, TableDescriptor>> result =
+        pipelineGenerator.createFlinkPipeline(flinkSinks.getKey());
+
+    SqlGenerator sqlGenerator = new SqlGenerator(result.getRight());
+    List<String> db = sqlGenerator.generate();
+
+    JDBCConnectionProvider config = new JDBCConfiguration.Database(
+        "jdbc:postgresql://localhost/henneberger",
+        null, null, null, Dialect.POSTGRES, "henneberger"
+    );
+
+    SqrlExecutor executor = new SqrlExecutor();
+    executor.executeDml(config, db);
+    executor.executeFlink(result.getLeft());
+
+    GraphqlGenerator graphqlGenerator = new GraphqlGenerator();
+    GraphQL graphql = graphqlGenerator.graphql(dag, flinkSinks, result.getRight(), getPostgresClient());
+
+    System.out.println(graphql.execute("query { orders { data { id } } }"));
+
 
     JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(submission.getId().getId());
 
-
-//    SQLGenerator.Result sql = settings.getSqlGeneratorProvider()
-//        .create(jdbc)
-//        .generateDatabase(optimized);
-//    sql.executeDMLs();
-
-//    List<MaterializeSource> sources = optimized.getReadLogicalPlan();
-//
-//    SqrlCodeRegistryBuilder codeRegistryBuilder = new SqrlCodeRegistryBuilder();
-//    GraphQLCodeRegistry registry = codeRegistryBuilder.build(settings.getSqlClientProvider(), sources);
-//
-//    StreamEngine.Job job = settings.getStreamGeneratorProvider()
-//        .create(streamEngine,jdbc)
-//        .generateStream(optimized, sql.getSinkMapper());
-//
-//    job.execute(submission.getId().getId());
-//    submission.setExecutionId(job.getId());
-
-    return new Script(namespace, null);
+    return new Script(null, null);
   }
 
+  private SqlClientProvider getPostgresClient() {
+    //TODO: this is hardcoded for now and needs to be integrated into configuration
+    JDBCPool pool = JDBCPool.pool(
+        Vertx.vertx(),
+        new JDBCConnectOptions()
+            .setJdbcUrl("jdbc:postgresql://localhost/henneberger"),
+        new PoolOptions()
+            .setMaxSize(1)
+    );
+
+    return () -> pool;
+  }
   public DatasetRegistry getDatasetRegistry() {
     return datasetRegistry;
   }

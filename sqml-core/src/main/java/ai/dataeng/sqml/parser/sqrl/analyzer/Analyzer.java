@@ -2,43 +2,57 @@ package ai.dataeng.sqml.parser.sqrl.analyzer;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.parser.Field;
+import ai.dataeng.sqml.parser.Relationship;
+import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager;
-import ai.dataeng.sqml.parser.operator.ShadowingContainer;
 import ai.dataeng.sqml.parser.sqrl.FieldFactory;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
 import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
+import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
 import ai.dataeng.sqml.parser.sqrl.transformers.ExpressionToQueryTransformer;
+import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.CreateSubscription;
 import ai.dataeng.sqml.tree.DistinctAssignment;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
+import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.ImportDefinition;
-import ai.dataeng.sqml.tree.InlineJoin;
+import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinDeclaration;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
+import ai.dataeng.sqml.tree.QuerySpecification;
+import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.ScriptNode;
+import ai.dataeng.sqml.tree.Select;
+import ai.dataeng.sqml.tree.TableNode;
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.SqlNode;
 
 @Slf4j
 @AllArgsConstructor
 public class Analyzer {
   private ImportManager importManager;
   private CalcitePlanner planner;
+  private TableFactory tableFactory;
+  private LogicalDag logicalDag;
 
   //Keep namespace here
-  protected final LogicalDag logicalDag = new LogicalDag(new ShadowingContainer<>());
   protected final ErrorCollector errors = ErrorCollector.root();
 
   public Analysis analyze(ScriptNode script) {
@@ -113,16 +127,13 @@ public class Analyzer {
       Scope newScope = query.accept(statementAnalyzer, scope);
       Node rewrittenNode = newScope.getNode();
 
-
+      //Create 'Table'
       RelNode plan = planner.plan(rewrittenNode);
-      //0. rewritten node is unsqrled node
-      //1. translate node to calcite sql node
-      //2. convert sql node to rel, locally optimize, attach to plan dag
-      //3. attach rel to create table
-      //4. attach table to logical plan
-      //5. add parent field to logical plan
 
+      Table table = tableFactory.create(name, (Query)rewrittenNode);
+      table.setRelNode(plan);
 
+      //Todo: create parent field
       return null;
     }
 
@@ -132,11 +143,17 @@ public class Analyzer {
       Expression expression = assignment.getExpression();
 
       Optional<Table> table = logicalDag.getSchema().getByName(name.getFirst());
+      Preconditions.checkState(table.isPresent(), "Expression cannot be assigned to root");
 
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
       Query query = createExpressionQuery(expression);
-//      Scope queryScope = new Scope(table, null, null);
-      Scope newScope = query.accept(statementAnalyzer, null);
+
+      Scope newScope = query.accept(statementAnalyzer, new Scope(table, query, null));
+
+      Node rewrittenNode = newScope.getNode();
+      RelNode plan = planner.plan(rewrittenNode);
+
+      table.get().setRelNode(plan);
 
       //Add a Field to the logical dag
       Field field = FieldFactory.createTypeless(table.get(), name.getLast());
@@ -152,63 +169,96 @@ public class Analyzer {
 
     @Override
     public Void visitCreateSubscription(CreateSubscription subscription, Void context) {
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
-//      Scope queryScope = subscription.getQuery().accept(statementAnalyzer, scope);
-
       return null;
     }
 
     @Override
     public Void visitDistinctAssignment(DistinctAssignment node, Void context) {
+      Table table = tableFactory.create(node.getNamePath(), node.getTable());
+      Scope scope = new Scope(Optional.empty(), node, new LinkedHashMap<>());
+      Optional<Table> oldTable = lookup(node.getTable().toNamePath());
+
+      oldTable.get().getFields().getElements()
+          .forEach(table::addField);
+
+      logicalDag.getSchema().add(table);
+
+      List<Field> fields = node.getPartitionKeys().stream()
+              .map(e->table.getFieldOpt(e)
+                  .orElseThrow(()->new RuntimeException("Could not find primary key " + e)))
+              .collect(Collectors.toList());
+      table.addUniqueConstraint(fields);
 
       return null;
     }
 
     @Override
     public Void visitJoinDeclaration(JoinDeclaration node, Void context) {
-      NamePath table = node.getInlineJoin().getJoin().getTable();
+      NamePath namePath = node.getNamePath();
+
+      StatementAnalyzer sAnalyzer = new StatementAnalyzer(analyzer);
+
+      Select select = new Select(Optional.empty(), false, Optional.empty(), List.of(new AllColumns()));
+      Relation from = new Join(node.getLocation(), node.getInlineJoin().getJoinType(),
+          new TableNode(Optional.empty(), NamePath.parse("_"), Optional.empty()),
+          node.getInlineJoin().getRelation(),
+          Optional.empty());
+      Query querySpec = new Query(new QuerySpecification(node.getLocation(),
+          select,
+          from,
+          Optional.<Expression>empty(),
+          Optional.<GroupBy>empty(),
+          Optional.<Expression>empty(),
+          node.getInlineJoin().getOrderBy(),
+          node.getInlineJoin().getLimit()),
+          Optional.empty(),
+          Optional.empty()
+      );
+
+      Scope scope = querySpec.accept(sAnalyzer, null);
+
+      Map<Name, Table> joinScope = scope.getJoinScope();
+      Node rewritten = scope.getNode();
+      if (node.getInlineJoin().getLimit().isEmpty()) {
+        Join join = (Join)((QuerySpecification)((Query)rewritten).getQueryBody()).getFrom();
+        rewritten = join.getRight();
+      }
+
+      Table table = lookup(namePath).get();
+      List<Table> tables = new ArrayList(joinScope.values());
+      Table lastTable = tables.get(joinScope.values().size());
+      Relationship joinField = new Relationship(namePath.getLast(), table, lastTable,
+          null, Multiplicity.MANY, null);
+      joinField.setNode(rewritten);
+
+      table.addField(joinField);
 
       return null;
-    }
-
-    @Override
-    public Void visitInlineJoin(InlineJoin node, Void context) {
-
-      return context;
     }
   }
 
   public Optional<Table> lookup(NamePath namePath) {
-    if (namePath.isEmpty()) return Optional.empty();
-
-    Table schemaTable = (Table)this.logicalDag.getSchema().getByName(namePath.getFirst()).get();
-    if (schemaTable != null) {
-      if (namePath.getLength() == 1) {
-        return Optional.of(schemaTable);
-      }
-
-      return schemaTable.walk(namePath.popFirst());
-    }
-//
-//    //Check if path is qualified
-//    Dataset dataset = this.rootDatasets.get(namePath.getFirst());
-//    if (dataset != null) {
-//      return dataset.walk(namePath.popFirst());
-//    }
-//
-//    //look for table in all root datasets
-//    for (Map.Entry<Name, Dataset> rootDataset : rootDatasets.entrySet()) {
-//      Optional<Table> ds = rootDataset.getValue().walk(namePath);
-//      if (ds.isPresent()) {
-//        return ds;
+    //Get w/context in path
+//    if (namePath.getFirst().equals(Name.SELF_IDENTIFIER)) {
+//      Table table = scope.getContextTable().get();
+//      if (namePath.getLength() > 1) {
+//        table = table.walk(namePath.popFirst())
+//            .get();
 //      }
-//    }
-//
-//    Dataset localDs = scopedDatasets.get(namePath.getFirst());
-//    if (localDs != null) {
-//      return localDs.walk(namePath.popFirst());
-//    }
+//      return Optional.of(table);
+//    } else {
+      Optional<Table> schemaTable = this.logicalDag.getSchema().getByName(namePath.getFirst());
+      if (schemaTable.isPresent()) {
+        if (namePath.getLength() == 1) {
+          return schemaTable;
+        }
 
-    return Optional.empty();
+        return schemaTable.flatMap(t-> t.walk(namePath.popFirst()));
+      }
+      return Optional.empty();
+//    }
+  }
+  public LogicalDag getDag() {
+    return this.logicalDag;
   }
 }

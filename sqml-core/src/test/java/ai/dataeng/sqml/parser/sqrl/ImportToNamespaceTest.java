@@ -10,6 +10,7 @@ import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration.Dialect;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
+import ai.dataeng.sqml.execution.SqlGenerator;
 import ai.dataeng.sqml.execution.flink.ingest.DataStreamProvider;
 import ai.dataeng.sqml.execution.flink.ingest.SchemaValidationProcess;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlinkTableConverter;

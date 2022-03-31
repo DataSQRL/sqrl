@@ -1,19 +1,10 @@
-package ai.dataeng.sqml.parser.sqrl;
+package ai.dataeng.sqml.execution;
 
-import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
-import ai.dataeng.sqml.execution.sql.DatabaseSink;
 import ai.dataeng.sqml.execution.sql.util.CreateTableBuilder;
-import ai.dataeng.sqml.execution.sql.util.DatabaseUtil;
 import ai.dataeng.sqml.parser.Table;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import lombok.Value;
 import org.apache.flink.table.api.TableDescriptor;
 
 public class SqlGenerator {

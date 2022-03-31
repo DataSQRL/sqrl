@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.parser;
 
+import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.VersionedName;
 import com.google.common.base.Preconditions;
@@ -29,6 +30,8 @@ public class Relationship extends Field {
   private final Table fromTable;
   public final Table toTable;
   public final Type type;
+  @Setter
+  public Node node;
 
   public final Multiplicity multiplicity;
 

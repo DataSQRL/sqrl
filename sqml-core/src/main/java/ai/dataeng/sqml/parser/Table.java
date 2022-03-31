@@ -171,4 +171,8 @@ public class Table implements DatasetOrTable {
   public void setRelNode(RelNode relNode) {
     this.relNode = relNode;
   }
+
+  public void addUniqueConstraint(List<Field> partitionKeys) {
+
+  }
 }

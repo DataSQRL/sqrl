@@ -25,13 +25,27 @@ public class Identifier
 
   private final NamePath namePath;
 
+  private Object resolved;
+
   public Identifier(NodeLocation location, NamePath namePath) {
     super(Optional.of(location));
+    this.namePath = namePath;
+  }
+  public Identifier(Optional<NodeLocation> location, NamePath namePath) {
+    super(location);
     this.namePath = namePath;
   }
 
   public NamePath getNamePath() {
     return namePath;
+  }
+
+  public <T> T getResolved() {
+    return (T)resolved;
+  }
+
+  public void setResolved(Object resolved) {
+    this.resolved = resolved;
   }
 
   @Override

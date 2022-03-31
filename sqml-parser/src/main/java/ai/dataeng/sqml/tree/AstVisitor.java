@@ -61,10 +61,6 @@ public abstract class AstVisitor<R, C> {
     return visitExpression(node, context);
   }
 
-  public R visitInlineJoinBody(InlineJoinBody node, C context) {
-    return visitExpression(node, context);
-  }
-
   public R visitCreateSubscription(CreateSubscription node, C context) {
     return visitNode(node, context);
   }
