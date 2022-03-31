@@ -16,18 +16,23 @@ import java.util.Optional;
 
 public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
 
+    public static final FileFormat FORMAT = FileFormat.CSV;
+    public static final String NAME = "csv";
+
     @Override
     public Parser getParser(Configuration config) {
         return new CSVFormatParser(config);
     }
 
 
+    @NoArgsConstructor
     public static class CSVFormatParser implements TextLineFormat.Parser {
 
         private String[] header;
         private String delimiter;
         private String commentPrefix;
-        private Splitter splitter;
+
+        private transient Splitter splitter;
 
         public CSVFormatParser(Configuration config) {
             Preconditions.checkArgument(config.header!=null && config.header.length>0);
@@ -35,13 +40,13 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
             this.header = config.header;
             this.delimiter = config.delimiter;
             this.commentPrefix = config.commentPrefix;
-            this.splitter = getSplitter(delimiter);
         }
 
 
         @Override
         public Result parse(@NonNull String line) {
             if (isComment(line,commentPrefix)) return Result.skip();
+            if (splitter == null) splitter = getSplitter(delimiter);
             List<String> parts = splitter.splitToList(line);
             if (parts.size()>header.length) return Result.error(String.format("Expected %d items per row but found %d",header.length,parts.size()));
             //Skip if line is equal to header
@@ -151,6 +156,16 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
                 return false;
             }
             return true;
+        }
+
+        @Override
+        public FileFormat getFileFormat() {
+            return FORMAT;
+        }
+
+        @Override
+        public String getName() {
+            return NAME;
         }
     }
 

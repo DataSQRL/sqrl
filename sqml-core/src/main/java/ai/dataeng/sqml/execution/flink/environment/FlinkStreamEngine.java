@@ -67,8 +67,9 @@ public interface FlinkStreamEngine extends StreamEngine {
         JobExecutionResult result = execEnv.execute(getFlinkName(type.getName(),name));
         jobId = result.getJobID().toHexString();
       } catch (Exception e) {
-        log.error("Failed to launch Flink job",e);
         status = Status.FAILED;
+        throw new RuntimeException(e);
+//        log.error("Failed to launch Flink job",e);
       }
       status = Status.RUNNING;
     }

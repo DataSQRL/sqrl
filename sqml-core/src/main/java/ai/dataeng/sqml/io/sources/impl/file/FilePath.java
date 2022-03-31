@@ -13,6 +13,7 @@ import org.apache.flink.core.fs.Path;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
  *
  * This is implemented as a wrapper around Flink's {@link org.apache.flink.core.fs.FileSystem}.
  */
-public class FilePath {
+public class FilePath implements Serializable {
 
     private static final Set<String> COMPRESSION_EXTENSIONS = StandardDeCompressors.getCommonSuffixes().stream()
             .map(String::toLowerCase).collect(Collectors.toSet());
@@ -122,6 +123,15 @@ public class FilePath {
     public String toString() {
         return flinkPath.toString();
     }
+
+    public static Path toFlinkPath(FilePath path) {
+        return path.flinkPath;
+    }
+
+    public static FilePath fromFlinkPath(Path path) {
+        return new FilePath(path);
+    }
+
 
     @Value
     public static class NameComponents {

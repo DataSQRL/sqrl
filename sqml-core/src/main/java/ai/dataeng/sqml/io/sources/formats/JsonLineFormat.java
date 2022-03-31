@@ -11,6 +11,9 @@ import java.util.Optional;
 
 public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configuration> {
 
+    public static final FileFormat FORMAT = FileFormat.JSON;
+    public static final String NAME = "json";
+
     @Override
     public Parser getParser(Configuration config) {
         return new JsonLineParser();
@@ -26,16 +29,14 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
         return Optional.empty();
     }
 
+    @NoArgsConstructor
     public static class JsonLineParser implements TextLineFormat.Parser {
 
         private transient ObjectMapper mapper;
 
-        public JsonLineParser() {
-            mapper = new ObjectMapper();
-        }
-
         @Override
         public Result parse(@NonNull String line) {
+            if (mapper == null) mapper = new ObjectMapper();
             try {
                 Map<String,Object> record = mapper.readValue(line,Map.class);
                 return Result.success(record);
@@ -53,11 +54,19 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
     @JsonSerialize
     public static class Configuration implements FormatConfiguration {
 
-
-
         @Override
         public boolean validate(ErrorCollector errors) {
             return true;
+        }
+
+        @Override
+        public FileFormat getFileFormat() {
+            return FORMAT;
+        }
+
+        @Override
+        public String getName() {
+            return NAME;
         }
     }
 

@@ -16,6 +16,7 @@ import lombok.*;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,7 +24,7 @@ import javax.validation.constraints.Size;
 @Builder
 @ToString
 @Getter
-public class SourceTableConfiguration {
+public class SourceTableConfiguration implements Serializable {
 
     @NonNull @NotNull @Size(min=3)
     String name;
@@ -79,6 +80,7 @@ public class SourceTableConfiguration {
             return false;
         } else {
             if (formatConfig.validate(errors.resolve("format"))) {
+                format = formatConfig.getName();
                 return true;
             } else {
                 return false;
@@ -94,6 +96,12 @@ public class SourceTableConfiguration {
     public Format.Parser getFormatParser() {
         Format<FormatConfiguration> formatImpl = getFormatImpl();
         return formatImpl.getParser(formatConfig);
+    }
+
+    @JsonIgnore
+    public FileFormat getFileFormat() {
+        if (formatConfig!=null) return formatConfig.getFileFormat();
+        return FileFormat.getFormat(format);
     }
 
     public boolean update(@NonNull SourceTableConfiguration config, @NonNull ErrorCollector errors) {

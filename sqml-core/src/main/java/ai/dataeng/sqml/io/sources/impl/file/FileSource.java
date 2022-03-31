@@ -11,6 +11,7 @@ import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -24,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Value
 @Slf4j
-public class FileSource implements DataSource {
+public class FileSource implements DataSource, Serializable {
 
     private final Name name;
     private final NameCanonicalizer canonicalizer;
@@ -114,14 +115,16 @@ public class FileSource implements DataSource {
             FilePath p = fps.getPath();
             if (fps.isDir()) {
                 gatherTableFiles(p,files,tableConfig);
-            } else {
-                FilePath.NameComponents components = p.getComponents(partPattern);
-                if (canonicalizer.getCanonical(components.getName()).equals(tableConfig.getIdentifier()) &&
-                        components.getFormat().equalsIgnoreCase(tableConfig.getFormat())) {
-                    files.add(p);
-                }
+            } else if (isTableFile(p,tableConfig)) {
+                files.add(p);
             }
         }
+    }
+
+    public boolean isTableFile(FilePath file, SourceTableConfiguration tableConfig) {
+        FilePath.NameComponents components = file.getComponents(partPattern);
+        return canonicalizer.getCanonical(components.getName()).equals(tableConfig.getIdentifier()) &&
+                tableConfig.getFileFormat().matches(components.getFormat());
     }
 
     @Override

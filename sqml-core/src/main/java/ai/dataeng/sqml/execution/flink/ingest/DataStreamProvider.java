@@ -13,38 +13,97 @@ import ai.dataeng.sqml.io.sources.impl.file.FileSource;
 import com.google.common.collect.Iterators;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.connector.file.src.enumerate.FileEnumerator;
+import org.apache.flink.connector.file.src.enumerate.NonSplittingRecursiveEnumerator;
+import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
+
 @AllArgsConstructor
 public class DataStreamProvider {
 
+    /*
+    TODO: Rework to use Flink's FileSource and FileEnumerator based on SourceTableConfig
+     */
 
     public DataStream<SourceRecord.Raw> getDataStream(SourceTable table, StreamExecutionEnvironment env) {
         DataSource source = table.getDataset().getSource();
+        SourceTableConfiguration tblConfig = table.getConfiguration();
+        String flinkSourceName = String.join("-",table.getDataset().getName().getDisplay(),tblConfig.getIdentifier(),"input");
         if (source instanceof FileSource) {
             FileSource filesource = (FileSource)source;
-            SourceTableConfiguration tblConfig = table.getConfiguration();
             InputPreview preview = new InputPreview(filesource,tblConfig);
-            TextLineFormat.Parser parser = (TextLineFormat.Parser)tblConfig.getFormatParser();
 
-            List<SourceRecord.Raw> allItems = preview.getTextPreview().flatMap( br -> br.lines()).map(parser::parse)
-                    .filter(r -> r.getType() == Format.Parser.Result.Type.SUCCESS)
-                    .map(r -> new SourceRecord.Raw(r.getRecord(), r.getSource_time())).collect(Collectors.toList());
-            DataStreamSource<SourceRecord.Raw> stream = env.fromCollection(allItems);
-//        stream.assignTimestampsAndWatermarks(WatermarkStrategy.<SourceRecord>forMonotonousTimestamps().withTimestampAssigner((event, timestamp) -> event.getSourceTime().toEpochSecond()));
+            //TODO: distinguish between text and byte input formats once we have AVRO,etc support
+            Format.Parser parser = tblConfig.getFormatParser();
+            DataStream<Format.Parser.Result> parsedStream;
+
+            Duration monitorDuration = null;
+//            if (filesource.getConfiguration().isDiscoverFiles()) monitorDuration = Duration.ofSeconds(10);
+            FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(filesource,tblConfig);
+
+            if (parser instanceof TextLineFormat.Parser) {
+                TextLineFormat.Parser textparser = (TextLineFormat.Parser) tblConfig.getFormatParser();
+
+                org.apache.flink.connector.file.src.FileSource.FileSourceBuilder<String> builder =
+                        org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
+                                new org.apache.flink.connector.file.src.reader.TextLineFormat(), FilePath.toFlinkPath(filesource.getDirectoryPath()));
+
+                builder.setFileEnumerator(fileEnumerator);
+                if (monitorDuration!=null) builder.monitorContinuously(Duration.ofSeconds(10));
+
+                //TODO: set watermarks
+//              stream.assignTimestampsAndWatermarks(WatermarkStrategy.<SourceRecord>forMonotonousTimestamps().withTimestampAssigner((event, timestamp) -> event.getSourceTime().toEpochSecond()));
+
+                DataStreamSource<String> textSource = env.fromSource(builder.build(), WatermarkStrategy.noWatermarks(), flinkSourceName);
+                parsedStream = textSource.map(s -> textparser.parse(s)).filter(r -> r.getType() == Format.Parser.Result.Type.SUCCESS);
+            } else throw new UnsupportedOperationException("Unrecognized format: " + parser);
+
+            DataStream<SourceRecord.Raw> stream = parsedStream.map(r -> new SourceRecord.Raw(r.getRecord(), r.getSource_time()));
             return stream;
         } else throw new UnsupportedOperationException("Unrecognized source table type: " + table);
     }
+
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    private static class FileEnumeratorProvider implements org.apache.flink.connector.file.src.enumerate.FileEnumerator.Provider {
+
+        FileSource fileSource;
+        SourceTableConfiguration table;
+
+        @Override
+        public org.apache.flink.connector.file.src.enumerate.FileEnumerator create() {
+            return new NonSplittingRecursiveEnumerator(new FileNameMatcher());
+        }
+
+        private class FileNameMatcher implements Predicate<Path> {
+
+            @Override
+            public boolean test(Path path) {
+                try {
+                    if (path.getFileSystem().getFileStatus(path).isDir()) return true;
+                } catch (IOException e) {
+                    return false;
+                }
+                return fileSource.isTableFile(FilePath.fromFlinkPath(path),table);
+            }
+        }
+    }
+
 
 }

@@ -7,6 +7,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -17,7 +18,7 @@ public interface Format<C extends FormatConfiguration> {
 
     Optional<C> getDefaultConfiguration();
 
-    interface Parser {
+    interface Parser extends Serializable {
 
         @Value
         class Result {
