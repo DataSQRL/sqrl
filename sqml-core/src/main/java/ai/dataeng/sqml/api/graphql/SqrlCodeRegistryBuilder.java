@@ -50,11 +50,6 @@ public class SqrlCodeRegistryBuilder {
       registerFetcher(registry, sqlClientProvider, sink.getKey(), sink.getValue());
     }
 
-
-//    for (MaterializeSource source : sources) {
-//      registerFetcher(registry, sqlClientProvider, source.getTable(), seen);
-//    }
-
     return registry.build();
   }
 
@@ -62,8 +57,10 @@ public class SqrlCodeRegistryBuilder {
     NamePath path = table.getPath();
 
     if (path.getLength() == 1) {//register a special fetcher
+      System.out.println("Registering df on :" + table.name.getDisplay() + " with :" + flinkSink.getPhysicalName());
+
       registry.dataFetcher(
-          FieldCoordinates.coordinates("Query", table.name.getDisplay()),
+          FieldCoordinates.coordinates("Query", table.name.getCanonical()),
           new DefaultDataFetcher(pool, new SystemPageProvider(), toTable(table, Optional.empty(), flinkSink.getPhysicalName())));
     }
 
@@ -118,7 +115,6 @@ public class SqrlCodeRegistryBuilder {
     List<H2Column> list = new ArrayList<>();
     for (Field field : table.getFields()) {
       if (field instanceof Column) {
-        if (field.getName().getCanonical().startsWith("_ingest")) continue;
         list.add(toH2Column((Column)field));
       }
     }

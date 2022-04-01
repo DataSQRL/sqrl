@@ -159,12 +159,9 @@ public class Environment implements Closeable {
     GraphqlGenerator graphqlGenerator = new GraphqlGenerator();
     GraphQL graphql = graphqlGenerator.graphql(dag, flinkSinks, result.getRight(), getPostgresClient());
 
-    System.out.println(graphql.execute("query { orders { data { id } } }"));
+//    JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(submission.getId().getId());
 
-
-    JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(submission.getId().getId());
-
-    return new Script(null, null);
+    return new Script(graphql);
   }
 
   private SqlClientProvider getPostgresClient() {

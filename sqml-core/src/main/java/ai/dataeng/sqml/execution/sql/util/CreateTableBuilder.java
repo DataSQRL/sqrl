@@ -25,6 +25,7 @@ import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Schema.UnresolvedColumn;
 import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;
 import org.apache.flink.table.types.AtomicDataType;
+import org.apache.flink.table.types.CollectionDataType;
 import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.TimestampType;
 
@@ -46,7 +47,9 @@ public class CreateTableBuilder extends TableBuilder {
         List<String> columns = new ArrayList<>();
         for (UnresolvedColumn col : schema.getColumns()) {
             String column = addColumn((UnresolvedPhysicalColumn)col);
-            columns.add(column);
+            if (column != null) {
+                columns.add(column);
+            }
         }
 
         sql.append(String.join(", ", columns));
@@ -55,6 +58,11 @@ public class CreateTableBuilder extends TableBuilder {
     }
 
     public String addColumn(UnresolvedPhysicalColumn column) {
+        if (column.getDataType() instanceof CollectionDataType) {
+
+            return null;
+        }
+
         AtomicDataType type = (AtomicDataType)column.getDataType();
 
         return addColumn(column.getName().toString(), getSQLType(type), !type.getLogicalType().isNullable());
@@ -76,7 +84,7 @@ public class CreateTableBuilder extends TableBuilder {
                 return "VARCHAR";
             case FLOAT:
             case DOUBLE:
-                return "NUMBER";
+                return "FLOAT";
             case DATE:
                 return "DATE";
             case TIME_WITHOUT_TIME_ZONE:

@@ -19,13 +19,16 @@ public class VersionedName extends SimpleName {
   }
 
   public static VersionedName parse(String name) {
-    String[] parts = name.split("\\$");
+    String[] parts = name.split(ID_DELIMITER_REGEX);
     return new VersionedName(parts[0], parts[0], Integer.parseInt(parts[1]));
   }
 
   @Override
   public String getCanonical() {
-    return canonicalName + "$" + version;
+    if (version == 0) {
+      return canonicalName;
+    }
+    return canonicalName + ID_DELIMITER + version;
   }
 
   @Override
@@ -59,7 +62,7 @@ public class VersionedName extends SimpleName {
 
   @Override
   public String toString() {
-    return canonicalName + ID_DELIMITER + version;
+    return getCanonical();
   }
 
   public int getVersion() {

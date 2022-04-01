@@ -90,7 +90,7 @@ public class C360Test {
 
     GraphQLSchema graphQLSchema = GraphqlSchemaBuilder.newGraphqlSchema()
 //        .schema(script.getNamespace().getSchema())
-        .setCodeRegistryBuilder(script.getRegistry())
+//        .setCodeRegistryBuilder(script.getRegistry())
         .build();
 
     System.out.println(new SchemaPrinter().print(graphQLSchema));
