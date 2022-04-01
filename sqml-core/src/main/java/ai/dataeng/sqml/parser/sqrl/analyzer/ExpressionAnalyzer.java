@@ -90,8 +90,8 @@ public class ExpressionAnalyzer {
       List<FieldPath> fieldPaths = context.getScope()
           .resolve(node.getNamePath());
 
-      Preconditions.checkState(fieldPaths.size() != 1,
-        "Could not resolve field (ambiguous or non-existent: " + node);
+      Preconditions.checkState(fieldPaths.size() == 1,
+        "Could not resolve field (ambiguous or non-existent: " + node + " : " + fieldPaths);
 
       node.setResolved(fieldPaths.get(0));
 
@@ -146,7 +146,7 @@ public class ExpressionAnalyzer {
       }
 
       for (Expression arg : node.getArguments()) {
-        arg.accept(this, null);
+        arg.accept(this, context);
       }
 
       //Todo: allow expanding aggregates more than a single argument

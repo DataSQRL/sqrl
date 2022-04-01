@@ -1,18 +1,17 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
+import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager;
-import ai.dataeng.sqml.parser.sqrl.FieldFactory;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
 import ai.dataeng.sqml.parser.sqrl.SqrlRexUtil;
 import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
-import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
-import ai.dataeng.sqml.parser.sqrl.function.SqlNativeFunction;
-import ai.dataeng.sqml.parser.sqrl.function.SqrlFunction;
+import ai.dataeng.sqml.parser.sqrl.schema.SqrlViewTable;
+import ai.dataeng.sqml.parser.sqrl.schema.StreamTable.StreamDataType;
 import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
 import ai.dataeng.sqml.parser.sqrl.transformers.ExpressionToQueryTransformer;
 import ai.dataeng.sqml.tree.AllColumns;
@@ -38,19 +37,25 @@ import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlRelBuilder;
+import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql2rel.SqlToRelConverter;
 
 @Slf4j
 @AllArgsConstructor
@@ -137,28 +142,53 @@ public class Analyzer {
 
     public void analyzeQuery(NamePath namePath, Query query) {
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
-      Scope scope = null;//new Scope();
-      Scope newScope = query.accept(statementAnalyzer, scope);
-      Node rewrittenNode = newScope.getNode();
-      RelNode plan = planner.plan(rewrittenNode);
 
       //For single unnamed columns in tables, treat as an expression
-      if (hasOneUnnamedColumn(rewrittenNode) && namePath.getPrefix().isPresent()) {
-        Table table = lookup(namePath.getPrefix().get()).get();
+      if (hasOneUnnamedColumn(query) && namePath.getPrefix().isPresent()) {
+        Optional<Table> tableOpt = lookup(namePath.getPrefix().get());
+        Table table = tableOpt.get();
+        query.accept(statementAnalyzer, new Scope(tableOpt, query, new HashMap<>()));
+
+        //Unsqrl node
+        TableUnsqrlVisitor unsqrl = new TableUnsqrlVisitor(statementAnalyzer);
+        Node rewritten = query.accept(unsqrl, null);
+
+        RelNode plan = planner.plan(rewritten);
+
+        RelNode expanded = plan.accept(new RelShuttleImpl(){
+          @Override
+          public RelNode visit(TableScan scan) {
+            StreamDataType dataType = (StreamDataType)scan.getRowType();
+            if (dataType.getTable() != null) {
+              return dataType.getTable().getRelNode();
+            }
+            return scan;
+          }
+        });
 
         SqrlRelBuilder relBuilder = planner.createRelBuilder();
         RexBuilder rexBuilder = relBuilder.getRexBuilder();
+
         RelNode newPlan = relBuilder
-            .push(plan)
+            .push(expanded)
             .push(table.getRelNode())
             .join(JoinRelType.LEFT,
-                SqrlRexUtil.createPkCondition(table))
+                SqrlRexUtil.createPkCondition(table, rexBuilder))
             //todo: project all left + the new column, shadow if necessary
             .build();
 
         table.setRelNode(newPlan);
+        table.addField(new Column(namePath.getLast(), table, 0, null, 0, List.of(),
+            false, false, Optional.empty(), false));
       } else {
+        Scope scope = null; //todo
+        Scope newScope = query.accept(statementAnalyzer, null);
+        Node rewrittenNode = newScope.getNode();
+        RelNode plan = planner.plan(rewrittenNode);
 
+        Table table = tableFactory.create(null, (Query)rewrittenNode);
+        table.setRelNode(plan);
+      }
 
 //      Scope newScope = query.accept(statementAnalyzer, new Scope(table, query, null));
 //
@@ -170,17 +200,14 @@ public class Analyzer {
 //      //Add a Field to the logical dag
 //      Field field = FieldFactory.createTypeless(table.get(), name.getLast());
 //      table.get().addField(field);
-      }
 
 
       //Create Schema elements
 
-      Table table = tableFactory.create(null, (Query)rewrittenNode);
-      table.setRelNode(plan);
     }
 
     private boolean hasOneUnnamedColumn(Node node) {
-      return false;
+      return true;
     }
 
     @Override
@@ -218,31 +245,52 @@ public class Analyzer {
       return null;
     }
 
+    @SneakyThrows
     @Override
     public Void visitDistinctAssignment(DistinctAssignment node, Void context) {
       Table table = tableFactory.create(node.getNamePath(), node.getTable());
 //      Scope scope = new Scope(Optional.empty(), node, new LinkedHashMap<>());
       Optional<Table> oldTable = lookup(node.getTable().toNamePath());
 
-      //Distinct table rules:
-      //1. New fields are created for table
-      //2. The table may be shadowed
-      //3. A rel node to distinct is attached to table
       // https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/sql/queries/deduplication/
-      //4. No unsqrling mechanics
-      //5.
 
-      oldTable.get().getFields().getElements()
-          .forEach(table::addField);
+      SqlParser parser = SqlParser.create("SELECT _uuid, _ingest_time, customerid, email, name\n"
+          + "FROM (\n"
+          + "   SELECT _uuid, _ingest_time, customerid, email, name,\n"
+          + "     ROW_NUMBER() OVER (PARTITION BY customerid\n"
+          + "       ORDER BY _ingest_time DESC) AS rownum\n"
+          + "   FROM "+oldTable.get().getId().toString()+")\n"
+          + "WHERE rownum = 1");
+
+      SqlNode sqlNode = parser.parseQuery();
+      SqlValidator validator = planner.getValidator();
+      validator.validate(sqlNode);
+      SqlToRelConverter sqlToRelConverter = planner.getSqlToRelConverter(validator);
+      RelNode relNode = sqlToRelConverter.convertQuery(sqlNode, false, true).rel;
+
+      for (Field field : oldTable.get().getFields()) {
+        if (field instanceof Column) {
+          Column f = new Column(field.getName(), table, field.getVersion(), null, 0, List.of(), false, false, Optional.empty(), false);
+          if (node.getPartitionKeys().contains(field.getName())) {
+            f.setPrimaryKey(true);
+          }
+          table.addField(f);
+        }
+      }
+
+      RelNode expanded = relNode.accept(new RelShuttleImpl(){
+        @Override
+        public RelNode visit(TableScan scan) {
+          return oldTable.get().getRelNode();
+        }
+      });
+
+      table.setRelNode(expanded);
+      StreamDataType streamDataType = new StreamDataType(table, expanded.getRowType().getFieldList());
+
+      planner.getSchema().add(table.getId().toString(), new SqrlViewTable(streamDataType));
 
       logicalDag.getSchema().add(table);
-
-      List<Field> fields = node.getPartitionKeys().stream()
-              .map(e->table.getFieldOpt(e)
-                  .orElseThrow(()->new RuntimeException("Could not find primary key " + e)))
-              .collect(Collectors.toList());
-
-      table.addUniqueConstraint(fields);
 
       return null;
     }

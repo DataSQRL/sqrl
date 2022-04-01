@@ -53,14 +53,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   public final Analyzer analyzer;
-  public final Multimap<AnalyzerTable, FunctionCall> toManyFields = ArrayListMultimap.create();
-  public final Multimap<AnalyzerTable, FieldPath> toOneFields = HashMultimap.create();
+  public final Multimap<TableNode, FunctionCall> toManyFields = ArrayListMultimap.create();
+  public final Multimap<TableNode, FieldPath> toOneFields = HashMultimap.create();
   public final Multimap<FieldPath, Identifier> toOneMapping = HashMultimap.create();
 
   public final Map<Node, Node> nodeMapper = new HashMap<>();
   public final AliasGenerator gen = new AliasGenerator();
   public final AtomicBoolean hasContext = new AtomicBoolean();
-  public Map<TableNode, AnalyzerTable> analyzerTableMap = new HashMap<>();
 
   public StatementAnalyzer(Analyzer analyzer) {
     this.analyzer = analyzer;
@@ -109,18 +108,12 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return null;
   }
 
-  @Value
-  public class AnalyzerTable {
-    //The table path
-    FieldPath fieldPath;
-    Table table;
-  }
-
   @Override
   public Scope visitTable(TableNode tableNode, Scope scope) {
     NamePath tableName = tableNode.getNamePath();
 
     FieldPath resolvedTable = lookupTable(tableName, scope);
+    tableNode.setResolved(resolvedTable);
 
     Name alias = tableNode.getAlias()
         .orElse(Name.system(tableNode.getNamePath().toString()));

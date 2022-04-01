@@ -7,21 +7,26 @@ import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.SelfField;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.TableField;
-import ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.AnalyzerTable;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.ComparisonExpression;
 import ai.dataeng.sqml.tree.ComparisonExpression.Operator;
 import ai.dataeng.sqml.tree.Expression;
+import ai.dataeng.sqml.tree.ExpressionRewriter;
+import ai.dataeng.sqml.tree.ExpressionTreeRewriter;
 import ai.dataeng.sqml.tree.FunctionCall;
+import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Join.Type;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.JoinOn;
+import ai.dataeng.sqml.tree.Limit;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeLocation;
+import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.Query;
+import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Select;
@@ -35,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class TableUnsqrlVisitor extends AstVisitor<TableRewriteScope, TableRewriteScope> {
+public class TableUnsqrlVisitor extends AstVisitor<Node, TableRewriteScope> {
 
   private final StatementAnalyzer statementAnalyzer;
 
@@ -44,21 +49,52 @@ public class TableUnsqrlVisitor extends AstVisitor<TableRewriteScope, TableRewri
   }
 
   @Override
-  public TableRewriteScope visitNode(Node node, TableRewriteScope context) {
+  public Node visitNode(Node node, TableRewriteScope context) {
     throw new RuntimeException("Table type not implemented to unsqrl");
   }
 
   @Override
-  public TableRewriteScope visitTable(TableNode node, TableRewriteScope context) {
-    AnalyzerTable table = getAnalyzerTable(node);
-    List<Field> fieldPath = table.getFieldPath().getFields();
+  public Node visitQuery(Query node, TableRewriteScope context) {
+    Query query = new Query(
+        node.getLocation(),
+        (QueryBody) node.getQueryBody().accept(this, new TableRewriteScope(Optional.empty())),
+        Optional.empty(),
+        Optional.empty()
+    );
+
+    return query;
+  }
+
+  @Override
+  public Node visitQuerySpecification(QuerySpecification node,
+      TableRewriteScope context) {
+    QuerySpecification querySpecification = new QuerySpecification(
+        node.getLocation(),
+        node.getSelect(),
+        (Relation)node.getFrom().accept(this, context),
+        node.getWhere(),
+        node.getGroupBy(),
+        node.getHaving(),
+        node.getOrderBy(),
+        node.getLimit()
+    );
+
+    return querySpecification;
+  }
+
+  @Override
+  public Node visitTable(TableNode node, TableRewriteScope context) {
+    FieldPath path = node.getResolved();
+
+    List<Field> fieldPath = path.getFields();
     Name currentAlias = null;
 
     Relation current;
     if (context.getCurrent().isPresent()) {
       current = context.getCurrent().get();
     } else if (fieldPath.size() == 1) {
-      current = node;
+      Table table = fieldPath.get(0).getTable();
+      current = new TableNode(node.getLocation(), NamePath.of(table.getId()), Optional.empty());
     } else {
       currentAlias = Name.system(statementAnalyzer.gen.nextTableAlias());
       current = new TableNode(Optional.empty(), fieldPath.get(0).name.toNamePath(),
@@ -80,18 +116,18 @@ public class TableUnsqrlVisitor extends AstVisitor<TableRewriteScope, TableRewri
       currentAlias = nextAlias;
     }
 
-    Relation expanded = expandFieldPaths(table, currentAlias, current);
+    Relation expanded = expandFieldPaths(node, currentAlias, current);
 
-    return new TableRewriteScope(Optional.of(expanded));
+    return expanded;
   }
 
-  private Relation expandFieldPaths(AnalyzerTable table, Name baseAlias, Relation current) {
+  private Relation expandFieldPaths(TableNode table, Name baseAlias, Relation current) {
     Relation toOne = expandToOne(table, baseAlias, current);
     Relation toMany = expandToMany(table, baseAlias, toOne);
     return toMany;
   }
 
-  private Relation expandToOne(AnalyzerTable tbl, Name baseAlias, Relation current) {
+  private Relation expandToOne(TableNode tbl, Name baseAlias, Relation current) {
     for (FieldPath path : statementAnalyzer.toOneFields.get(tbl)) {
       List<Field> fields = path.getFields();
 
@@ -118,19 +154,20 @@ public class TableUnsqrlVisitor extends AstVisitor<TableRewriteScope, TableRewri
     return current;
   }
 
-  private Relation expandToMany(AnalyzerTable tbl, Name baseAlias, Relation current) {
+  private Relation expandToMany(TableNode tbl, Name baseAlias, Relation current) {
     for (FunctionCall call : statementAnalyzer.toManyFields.get(tbl)) {
 
       Name tableAlias = Name.system(statementAnalyzer.gen.nextTableAlias());
       Name fieldAlias = Name.system(statementAnalyzer.gen.nextAlias());
 
       NamePath fieldName = ((Identifier) call.getArguments().get(0)).getNamePath();
-      FieldPath fieldPath = tbl.getTable().getField(fieldName).get();
+      tbl.getResolved();
+      FieldPath fieldPath = tbl.getResolved();
 
       fieldPath = expandToManyField(fieldPath);
 
       Name alias = Name.system("_");
-      Relation from = toTable(new TableField(tbl.getTable()), alias);
+      Relation from = toTable(new TableField(fieldPath.getFields().get(0).getTable()), alias);
       for (Field field : fieldPath.getFields()) {
         if (field instanceof Relationship) {
           Relationship rel = (Relationship) field;
@@ -151,13 +188,14 @@ public class TableUnsqrlVisitor extends AstVisitor<TableRewriteScope, TableRewri
 
       List<SelectItem> pks = new ArrayList<>();
       List<Expression> conditionList = new ArrayList<>();
-      for (Column column : tbl.getTable().getPrimaryKeys()) {
-        Name name = column.getName();
-        Identifier identifier = new Identifier(Optional.empty(), NamePath.of(baseAlias, name));
-        Identifier parentTable = new Identifier(Optional.empty(), NamePath.of(tableAlias, name));
-        pks.add(new SingleColumn(identifier));
-        conditionList.add(eq(identifier, parentTable));
-      }
+//      todo
+//      for (Column column : tbl.getTable().getPrimaryKeys()) {
+//        Name name = column.getName();
+//        Identifier identifier = new Identifier(Optional.empty(), NamePath.of(baseAlias, name));
+//        Identifier parentTable = new Identifier(Optional.empty(), NamePath.of(tableAlias, name));
+//        pks.add(new SingleColumn(identifier));
+//        conditionList.add(eq(identifier, parentTable));
+//      }
 
       Expression condition = and(conditionList);
 
@@ -285,17 +323,64 @@ public class TableUnsqrlVisitor extends AstVisitor<TableRewriteScope, TableRewri
   }
 
   @Override
-  public TableRewriteScope visitJoin(Join node, TableRewriteScope context) {
-    TableRewriteScope leftContext = node.getLeft().accept(this, context);
+  public Node visitJoin(Join node, TableRewriteScope context) {
+    Node leftNode = node.getLeft().accept(this, context);
 
-    leftContext.setPushdownCondition(node.getType(), node.getCriteria());
+    context.setPushdownCondition(node.getType(), node.getCriteria());
 
-    TableRewriteScope rightContext = node.getRight().accept(this, leftContext);
+    Node right = node.getRight().accept(this, new TableRewriteScope(Optional.of((Relation) leftNode)));
 
-    return rightContext;
+    return right;
   }
 
-  private AnalyzerTable getAnalyzerTable(TableNode node) {
-    return statementAnalyzer.analyzerTableMap.get(node);
+  private Select rewriteSelect(Select select) {
+    return select;
+  }
+  private Optional<Expression> rewriteWhere(Optional<Expression> where) {
+    return where.map( w -> ExpressionTreeRewriter.rewriteWith(new AliasRewriter(), w));
+  }
+  private Optional<GroupBy> rewriteGroupBy(Optional<GroupBy> groupBy) {
+//    if (((SqrlValidator)validator).hasAgg(query.getSelectList())) {
+//      List<SqlNode> nodes = new ArrayList<>();
+//      if (group != null) {
+//        nodes.addAll(group.getList());
+//      }
+//      List<Column> primaryKeys = this.contextTable.get().getPrimaryKeys();
+//      for (int i = primaryKeys.size() - 1; i >= 0; i--) {
+//        Column column = primaryKeys.get(i);
+//        nodes.add(0, ident("_", column.getId().toString()));
+//      }
+//      return (SqlNodeList)new SqlNodeList(nodes, SqlParserPos.ZERO).accept(new ai.dataeng.sqml.parser.macros.AliasRewriter(mapper));
+//    }
+//
+//    if (group != null) {
+//      return (SqlNodeList)group.accept(new ai.dataeng.sqml.parser.macros.AliasRewriter(mapper));
+//    }
+//    return group;
+    return groupBy;
+  }
+  private Optional<Expression> rewriteHaving(Optional<Expression> having) {
+    return having.map( h -> ExpressionTreeRewriter.rewriteWith(new AliasRewriter(), h));
+  }
+  private Optional<OrderBy> rewriteOrderBy(Optional<OrderBy> orderBy) {
+//    if (orderList != null && ((SqrlValidator)validator).hasAgg(query.getSelectList())) {
+//      List<SqlNode> nodes = new ArrayList<>(orderList.getList());
+//      //get parent primary key for context
+//      List<Column> primaryKeys = contextTable.get().getPrimaryKeys();
+//      for (int i = primaryKeys.size() - 1; i >= 0; i--) {
+//        Column pk = primaryKeys.get(i);
+//        nodes.add(0, ident("_", pk.getId().toString()));
+//      }
+//      return new SqlNodeList(nodes, SqlParserPos.ZERO);
+//    }
+//
+//    return orderList;
+    return orderBy;
+  }
+  private Optional<Limit> rewriteLimit(Optional<Limit> limit) {
+    return limit;
+  }
+  public class AliasRewriter extends ExpressionRewriter {
+
   }
 }

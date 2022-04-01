@@ -40,9 +40,9 @@ public class CreateTableBuilder extends TableBuilder {
     }
 
     public CreateTableBuilder addColumns(Schema schema, Table table) {
-//        for (Column pk : table.getPrimaryKeys()) {
-//            primaryKeys.add(pk.getId().toString());
-//        }
+        for (Column pk : table.getPrimaryKeys()) {
+            primaryKeys.add(pk.getId().toString());
+        }
 
         List<String> columns = new ArrayList<>();
         for (UnresolvedColumn col : schema.getColumns()) {
@@ -126,11 +126,11 @@ public class CreateTableBuilder extends TableBuilder {
 //        checkUpdate();
 //        addColumn(DatabaseUtil.TIMESTAMP_COLUMN_NAME, DatabaseUtil.TIMESTAMP_COLUMN_SQL_TYPE.getTypeName(), true);
 //        Preconditions.checkArgument(!primaryKeys.isEmpty());
-//        if (!primaryKeys.isEmpty()) {
-//            sql.append("PRIMARY KEY (");
-//            sql.append(primaryKeys.stream().collect(Collectors.joining(", ")));
-//            sql.append(")");
-//        }
+        if (!primaryKeys.isEmpty()) {
+            sql.append(", PRIMARY KEY (");
+            sql.append(primaryKeys.stream().collect(Collectors.joining(", ")));
+            sql.append(")");
+        }
         sql.append(" );");
         System.out.println(sql.toString());
         return sql.toString();

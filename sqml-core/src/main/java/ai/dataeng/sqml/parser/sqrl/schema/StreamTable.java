@@ -1,6 +1,9 @@
 package ai.dataeng.sqml.parser.sqrl.schema;
 
+import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.tree.name.Name;
 import java.util.List;
+import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -21,14 +24,22 @@ public class StreamTable extends AbstractTable {
 
 
   public static class StreamDataType extends RelDataTypeImpl {
+
+    @Getter
+    private final Table table;
+
     public StreamDataType(
-        List<? extends RelDataTypeField> fieldList) {
+        Table table, List<? extends RelDataTypeField> fieldList) {
       super(fieldList);
+      this.table = table;
+      computeDigest();
     }
 
     @Override
-    protected void generateTypeString(StringBuilder stringBuilder, boolean b) {
-
+    protected void generateTypeString(StringBuilder sb, boolean b) {
+      sb.append("(DynamicRecordRow")
+          .append(getFieldNames())
+          .append(")");
     }
   }
 }

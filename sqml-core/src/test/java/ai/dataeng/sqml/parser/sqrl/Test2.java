@@ -65,9 +65,11 @@ public class Test2 {
   @Test
   public void test() {
     //c360, test import all the way through to query
-    Script script = run("IMPORT ecommerce-data.Orders;"
-        + "IMPORT ecommerce-data.Customer;"
-        + "IMPORT ecommerce-data.Product;");
+    Script script = run(
+        "IMPORT ecommerce-data.Customer;"
+        + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;"
+            + "Customer.total := SUM(customerid);"
+    );
 
 
     System.out.println(script.getGraphQL().execute("query { customer { data { customerid, email, name } } }"));

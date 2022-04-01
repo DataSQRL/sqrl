@@ -28,7 +28,6 @@ import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.type.schema.FlexibleSchemaHelper;
 import graphql.com.google.common.collect.Maps;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,6 @@ import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlRelBuilder;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.Schema;
@@ -77,7 +75,7 @@ public class TableFactory {
         .build();
     table.setRelNode(node);
 
-//    setShredRelNodes(table, ordersSchema);
+    setShredRelNodes(table, ordersSchema);
     return table;
   }
 
@@ -105,7 +103,7 @@ public class TableFactory {
       fields.add(new RelDataTypeFieldImpl(column.getName(), fields.size(), factory.createFieldTypeFromLogicalType(((DataType)column.getDataType()).getLogicalType())));
     }
 
-    return new StreamDataType(fields);
+    return new StreamDataType(null, fields);
   }
 
   private void setShredRelNodes(Table table,
@@ -141,7 +139,7 @@ public class TableFactory {
       fields.add(new RelDataTypeFieldImpl(column.getName(), fields.size(), factory.createFieldTypeFromLogicalType(column.getType())));
     }
 
-    return new StreamDataType(fields);
+    return new StreamDataType(null, fields);
   }
 
   private RowType unboxArray(UnresolvedColumn col) {
@@ -279,8 +277,7 @@ public class TableFactory {
   }
 
   public Table create(NamePath namePath, Name table) {
-    //Check if this is in the logical dag
 
-    return null;
+    return new Table(tableIdCounter.incrementAndGet(), namePath.getLast(), namePath, false);
   }
 }

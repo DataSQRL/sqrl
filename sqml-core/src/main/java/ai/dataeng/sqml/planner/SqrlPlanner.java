@@ -20,10 +20,13 @@ public class SqrlPlanner {
     final Set<Table> included = new HashSet<>();
     final Set<ai.dataeng.sqml.parser.Table> toInclude = new HashSet<>();
 
-    dag.getSchema().visibleList().stream()
-        .filter(t -> t instanceof ai.dataeng.sqml.parser.Table)
-        .map(t -> (ai.dataeng.sqml.parser.Table)t)
-        .forEach(t -> toInclude.add(t));
+//    dag.getSchema().visibleList().stream()
+//        .filter(t -> t instanceof ai.dataeng.sqml.parser.Table)
+//        .map(t -> (ai.dataeng.sqml.parser.Table)t)
+//        .forEach(t -> toInclude.add(t));
+    for (Table table : dag.getSchema().visibleList()) {
+      toInclude.add(table);
+    }
 
     while (!toInclude.isEmpty()) {
       ai.dataeng.sqml.parser.Table next = toInclude.iterator().next();

@@ -68,8 +68,11 @@ import ai.dataeng.sqml.tree.WhenClause;
 import ai.dataeng.sqml.tree.Window;
 import ai.dataeng.sqml.tree.name.Name;
 import com.google.common.base.Preconditions;
+import graphql.com.google.common.collect.ImmutableListMultimap;
 import graphql.com.google.common.collect.ImmutableMap;
 import graphql.com.google.common.collect.Maps;
+import graphql.com.google.common.collect.Multimaps;
+import io.vertx.core.MultiMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -99,11 +102,11 @@ import org.apache.calcite.util.TimestampString;
 
 public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
 
-  private final ImmutableMap<String, SqlOperator> opMap;
+  private final ImmutableListMultimap<String, SqlOperator> opMap;
   SqlParserPosFactory pos = new SqlParserPosFactory();
 
   public NodeToSqlNodeConverter() {
-    this.opMap = Maps.uniqueIndex(
+    this.opMap = Multimaps.index(
         SqlStdOperatorTable.instance().getOperatorList(), e->e.getName());
   }
 
@@ -387,9 +390,9 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
   @Override
   public SqlNode visitFunctionCall(FunctionCall node, Void context) {
     String opName = node.getName().get(0).getCanonical();
-    SqlOperator op = opMap.get(opName);
-    Preconditions.checkNotNull(op, "Operation could not be found: %s", opName);
-    return new SqlBasicCall(op, toOperand(node.getArguments()), pos.getPos(node.getLocation()));
+    List<SqlOperator> op = opMap.get(opName.toUpperCase());
+    Preconditions.checkState(!op.isEmpty(), "Operation could not be found: %s", opName);
+    return new SqlBasicCall(op.get(0), toOperand(node.getArguments()), pos.getPos(node.getLocation()));
   }
 
   @Override

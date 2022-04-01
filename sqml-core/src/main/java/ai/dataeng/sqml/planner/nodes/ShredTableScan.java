@@ -1,7 +1,6 @@
 package ai.dataeng.sqml.planner.nodes;
 
 import ai.dataeng.sqml.parser.Table;
-import ai.dataeng.sqml.parser.operator.ImportManager.SourceTableImport;
 import java.util.List;
 import lombok.Getter;
 import org.apache.calcite.plan.RelOptCluster;
