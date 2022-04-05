@@ -1,15 +1,12 @@
-package ai.dataeng.sqml.io.sources.formats;
+package ai.dataeng.sqml.io.formats;
 
-import ai.dataeng.sqml.io.sources.DataSource;
-import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
-import ai.dataeng.sqml.io.sources.impl.InputPreview;
+import ai.dataeng.sqml.io.impl.InputPreview;
 import lombok.AllArgsConstructor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @AllArgsConstructor
 public class FormatConfigInferer<C extends FormatConfiguration> {

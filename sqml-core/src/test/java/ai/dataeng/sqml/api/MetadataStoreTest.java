@@ -44,6 +44,10 @@ public class MetadataStoreTest {
         assertEquals(meta.getSubKeys("key2"), ImmutableSet.of("sub1"));
         assertEquals(meta.getSubKeys("key2","sub1"), ImmutableSet.of("leaf1","leaf2"));
 
+        meta.remove("key2","sub1","leaf2");
+        assertEquals(meta.getSubKeys("key2","sub1"), ImmutableSet.of("leaf1"));
+        assertEquals(null, meta.get(Value.class,"key2","sub1","leaf2"));
+
         meta.close();
     }
 

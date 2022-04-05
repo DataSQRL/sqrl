@@ -8,6 +8,8 @@ import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.config.util.NamedIdentifier;
 import ai.dataeng.sqml.execution.StreamEngine;
+import ai.dataeng.sqml.io.sinks.DataSinkRegistration;
+import ai.dataeng.sqml.io.sinks.registry.DataSinkRegistry;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitor;
 import ai.dataeng.sqml.parser.ScriptParser;
@@ -39,6 +41,7 @@ public class Environment implements Closeable {
   private final StreamEngine streamEngine;
 
   private final DatasetRegistry datasetRegistry;
+  private final DataSinkRegistry dataSinkRegistry;
   private final EnvironmentPersistence persistence;
 
   private Environment(SqrlSettings settings) {
@@ -55,6 +58,7 @@ public class Environment implements Closeable {
                     settings.getDatasetRegistryPersistenceProvider()));
     datasetRegistry = new DatasetRegistry(settings.getDatasetRegistryPersistenceProvider()
             .createRegistryPersistence(metadataStore),monitor);
+    dataSinkRegistry = new DataSinkRegistry(settings.getDataSinkRegistryPersistenceProvider().createRegistryPersistence(metadataStore));
   }
 
   public static Environment create(SqrlSettings settings) {
@@ -152,6 +156,10 @@ public class Environment implements Closeable {
 
   public DatasetRegistry getDatasetRegistry() {
     return datasetRegistry;
+  }
+
+  public DataSinkRegistry getDataSinkRegistry() {
+    return dataSinkRegistry;
   }
 
   @Override

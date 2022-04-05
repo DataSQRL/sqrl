@@ -52,7 +52,7 @@ public class SourceDataset {
         return tbl;
     }
 
-    synchronized SourceTable addTable(SourceTableConfiguration tableConfig,
+    public synchronized SourceTable addTable(SourceTableConfiguration tableConfig,
                                ErrorCollector errors) {
         if (!tableConfig.validateAndInitialize(this.getSource(),errors)) {
             return null; //validation failed
@@ -68,6 +68,15 @@ public class SourceDataset {
         }
         registry.persistence.putTable(source.getDatasetName(), tblName, tableConfig);
         registry.tableMonitor.startTableMonitoring(table);
+        return table;
+    }
+
+    public synchronized SourceTable removeTable(@NonNull Name tblName) {
+        SourceTable table = tables.remove(tblName);
+        if (table==null) return null;
+        registry.tableMonitor.stopTableMonitoring(table);
+        registry.persistence.removeTable(source.getDatasetName(), table.getName());
+        registry.persistence.removeTableStatistics(source.getDatasetName(), table.getName());
         return table;
     }
 

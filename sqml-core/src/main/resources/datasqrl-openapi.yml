@@ -431,7 +431,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SinkWithErrors'
+              $ref: '#/components/schemas/Sink'
         required: true
       responses:
         200:
@@ -439,7 +439,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Sink'
+                $ref: '#/components/schemas/SinkWithErrors'
         405:
           description: Validation exception
           content:
@@ -677,9 +677,6 @@ components:
         name:
           type: string
           description: "The assigned name for this sink"
-        sinkType:
-          type: string
-          description: "The type of sink defined by this payload"
         config:
           oneOf:
             - $ref: '#/components/schemas/FileSinkConfig'
@@ -708,9 +705,7 @@ components:
           type: string
         uri:
           type: string
-        canonicalizer:
-          $ref: '#/components/schemas/canonicalizerDef'
-        partPattern:
+        partDelimiter:
           type: string
         charset:
           type: string

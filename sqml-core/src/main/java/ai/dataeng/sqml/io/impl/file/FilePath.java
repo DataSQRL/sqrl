@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.io.sources.impl.file;
+package ai.dataeng.sqml.io.impl.file;
 
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;

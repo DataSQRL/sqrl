@@ -2,10 +2,10 @@ package ai.dataeng.sqml.io.sources;
 
 import ai.dataeng.sqml.config.constraints.OptionalMinString;
 import ai.dataeng.sqml.config.util.ConfigurationUtil;
-import ai.dataeng.sqml.io.sources.impl.InputPreview;
+import ai.dataeng.sqml.io.impl.InputPreview;
 import ai.dataeng.sqml.tree.name.Name;
 
-import ai.dataeng.sqml.io.sources.formats.*;
+import ai.dataeng.sqml.io.formats.*;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -53,6 +53,7 @@ public class SourceTableConfiguration implements Serializable {
         errors = errors.resolve(name);
         if (Strings.isNullOrEmpty(identifier)) identifier = name;
         identifier = source.getCanonicalizer().getCanonical(identifier);
+
         if (formatConfig == null) {
             //Try to infer it using the specified format
             if (Strings.isNullOrEmpty(format)) {
@@ -64,7 +65,7 @@ public class SourceTableConfiguration implements Serializable {
                 errors.fatal("Table has invalid format: %s", format);
                 return false;
             }
-            Format<FormatConfiguration> formatImpl = getFormatImpl();
+            Format<FormatConfiguration> formatImpl = FileFormat.getFormat(format).getImplementation();
             Format.ConfigurationInference<FormatConfiguration> inferer = formatImpl.getConfigInferer().orElse(null);
             if (inferer != null) {
                 InputPreview preview = new InputPreview(source,this);
@@ -88,14 +89,9 @@ public class SourceTableConfiguration implements Serializable {
         }
     }
 
-    private Format<FormatConfiguration> getFormatImpl() {
-        return FileFormat.getFormat(format).getImplementation();
-    }
-
     @JsonIgnore
     public Format.Parser getFormatParser() {
-        Format<FormatConfiguration> formatImpl = getFormatImpl();
-        return formatImpl.getParser(formatConfig);
+        return formatConfig.getImplementation().getParser(formatConfig);
     }
 
     @JsonIgnore
@@ -107,14 +103,6 @@ public class SourceTableConfiguration implements Serializable {
     public boolean update(@NonNull SourceTableConfiguration config, @NonNull ErrorCollector errors) {
         //TODO: implement
         return false;
-    }
-
-    @Value
-    public static class Named {
-
-        private final Name name;
-        private final SourceTableConfiguration tableConfig;
-
     }
 
 }

@@ -1,11 +1,11 @@
-package ai.dataeng.sqml.io.sources.impl.file;
+package ai.dataeng.sqml.io.impl.file;
 
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
-import ai.dataeng.sqml.io.sources.formats.FileFormat;
+import ai.dataeng.sqml.io.formats.FileFormat;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.config.error.ErrorCollector;

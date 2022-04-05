@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.io.sources.formats;
+package ai.dataeng.sqml.io.formats;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
@@ -82,6 +82,15 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
         return Optional.of(new Inferer());
     }
 
+    @Override
+    public Writer getWriter(Configuration configuration) {
+        return new CSVWriter();
+    }
+
+    public static class CSVWriter implements TextLineFormat.Writer {
+
+    }
+
     public static class Inferer implements TextLineFormat.ConfigurationInference<Configuration> {
 
         private Splitter splitter;
@@ -161,6 +170,11 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
         @Override
         public FileFormat getFileFormat() {
             return FORMAT;
+        }
+
+        @Override
+        public Format getImplementation() {
+            return new CSVFormat();
         }
 
         @Override

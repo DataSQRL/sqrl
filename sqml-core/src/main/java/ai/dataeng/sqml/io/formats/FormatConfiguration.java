@@ -1,11 +1,9 @@
-package ai.dataeng.sqml.io.sources.formats;
+package ai.dataeng.sqml.io.formats;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
-import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.vertx.core.json.Json;
 
 import java.io.Serializable;
 
@@ -18,6 +16,9 @@ public interface FormatConfiguration extends Serializable {
 
     @JsonIgnore
     FileFormat getFileFormat();
+
+    @JsonIgnore
+    Format getImplementation();
 
     @JsonIgnore
     String getName();

@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.io.sources.impl;
+package ai.dataeng.sqml.io.impl;
 
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import java.io.Serializable;

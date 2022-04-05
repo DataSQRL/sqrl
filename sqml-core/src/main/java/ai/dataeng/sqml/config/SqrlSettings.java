@@ -5,24 +5,13 @@ import ai.dataeng.sqml.MetadataEnvironmentPersistence;
 import ai.dataeng.sqml.config.engines.FlinkConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.config.metadata.JDBCMetadataStore;
-import ai.dataeng.sqml.config.provider.DatasetRegistryPersistenceProvider;
-import ai.dataeng.sqml.config.provider.EnvironmentPersistenceProvider;
-import ai.dataeng.sqml.config.provider.HeuristicPlannerProvider;
-import ai.dataeng.sqml.config.provider.ImportManagerProvider;
-import ai.dataeng.sqml.config.provider.MetadataStoreProvider;
-import ai.dataeng.sqml.config.provider.ScriptParserProvider;
-import ai.dataeng.sqml.config.provider.ScriptProcessorProvider;
-import ai.dataeng.sqml.config.provider.SerializerProvider;
-import ai.dataeng.sqml.config.provider.SourceTableMonitorProvider;
-import ai.dataeng.sqml.config.provider.SqlGeneratorProvider;
-import ai.dataeng.sqml.config.provider.StreamEngineProvider;
-import ai.dataeng.sqml.config.provider.StreamGeneratorProvider;
-import ai.dataeng.sqml.config.provider.StreamMonitorProvider;
-import ai.dataeng.sqml.config.provider.ValidatorProvider;
+import ai.dataeng.sqml.config.provider.*;
 import ai.dataeng.sqml.config.serializer.KryoProvider;
 import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
 import ai.dataeng.sqml.execution.flink.ingest.FlinkSourceMonitor;
-import ai.dataeng.sqml.io.sources.dataset.MetadataRegistryPersistence;
+import ai.dataeng.sqml.io.sinks.registry.DataSinkRegistryPersistence;
+import ai.dataeng.sqml.io.sinks.registry.MetadataSinkRegistryPersistence;
+import ai.dataeng.sqml.io.sources.dataset.MetadataSourceRegistryPersistence;
 import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitorImpl;
 import ai.dataeng.sqml.parser.ScriptParserImpl;
 import ai.dataeng.sqml.parser.ScriptProcessorImpl;
@@ -57,6 +46,7 @@ public class SqrlSettings {
   MetadataStoreProvider metadataStoreProvider;
   SerializerProvider serializerProvider;
   DatasetRegistryPersistenceProvider datasetRegistryPersistenceProvider;
+  DataSinkRegistryPersistenceProvider dataSinkRegistryPersistenceProvider;
   EnvironmentPersistenceProvider environmentPersistenceProvider;
   SourceTableMonitorProvider sourceTableMonitorProvider;
 
@@ -75,7 +65,8 @@ public class SqrlSettings {
         .environmentConfiguration(config.getEnvironment())
         .serializerProvider(new KryoProvider())
         .metadataStoreProvider(new JDBCMetadataStore.Provider())
-        .datasetRegistryPersistenceProvider(new MetadataRegistryPersistence.Provider())
+        .datasetRegistryPersistenceProvider(new MetadataSourceRegistryPersistence.Provider())
+        .dataSinkRegistryPersistenceProvider(new MetadataSinkRegistryPersistence.Provider())
         .environmentPersistenceProvider(new MetadataEnvironmentPersistence.Provider())
 
         .namespace(new NamespaceImpl())

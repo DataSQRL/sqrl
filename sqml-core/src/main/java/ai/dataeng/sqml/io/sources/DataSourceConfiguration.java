@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.io.sources;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
-import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
+import ai.dataeng.sqml.io.impl.file.FileSourceConfiguration;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 

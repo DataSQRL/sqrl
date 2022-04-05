@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
 import ai.dataeng.sqml.config.error.ErrorPrefix;
+import ai.dataeng.sqml.io.sinks.DataSink;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.DataSourceUpdate;
@@ -33,7 +34,7 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         initializeDatasets();
     }
 
-    void initializeDatasets() {
+    private void initializeDatasets() {
         //Read existing datasets from store
         for (DatasetRegistryPersistence.DataSourceStorage configEntry : persistence.getDatasets()) {
             ErrorCollector errors = ErrorCollector.fromPrefix(ErrorPrefix.INITIALIZE);
@@ -97,13 +98,21 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         return dataset;
     }
 
+    public synchronized SourceDataset removeSource(@NonNull Name name) {
+        SourceDataset source = datasets.remove(name);
+        if (source != null) {
+            persistence.removeDataset(name);
+            List<SourceTable> tables = new ArrayList<>(source.getTables());
+            for (SourceTable tbl : tables) {
+                source.removeTable(tbl.getName());
+            }
+        }
+        return source;
+    }
+
     @Override
     public SourceDataset getDataset(@NonNull Name name) {
         return datasets.get(name);
-    }
-
-    public SourceDataset getDataset(@NonNull String name) {
-        return getDataset(Name.system(name));
     }
 
     public Collection<SourceDataset> getDatasets() {

@@ -1,14 +1,10 @@
-package ai.dataeng.sqml.io.sources.formats;
-
-import ai.dataeng.sqml.io.sources.impl.file.FilePath;
-import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
+package ai.dataeng.sqml.io.formats;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Strings;
-import lombok.NonNull;
 import org.apache.commons.lang3.tuple.Pair;
 
 public enum FileFormat {
@@ -30,10 +26,6 @@ public enum FileFormat {
 
     FileFormat(String... identifiers) {
         this.identifiers = identifiers;
-    }
-
-    public String[] getIdentifiers() {
-        return identifiers;
     }
 
     public abstract Format getImplementation();

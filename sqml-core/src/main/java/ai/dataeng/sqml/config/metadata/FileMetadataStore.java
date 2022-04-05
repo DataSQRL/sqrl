@@ -7,6 +7,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.google.common.base.Preconditions;
+import lombok.NonNull;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,7 +44,7 @@ public class FileMetadataStore implements MetadataStore {
     @Override
     public <T> void put(T value, String firstKey, String... moreKeys) {
         Path file = getFile(firstKey, moreKeys);
-        System.out.println("Writing to: " + file.toString());
+//        System.out.println("Writing to: " + file.toString());
         if (Files.notExists(file.getParent())) {
             try {
                 Files.createDirectories(file.getParent());
@@ -69,6 +71,16 @@ public class FileMetadataStore implements MetadataStore {
         try (InputStream instream = Files.newInputStream(file);
              Input in = new Input(instream)) {
             return kryo.readObject(in, clazz);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public boolean remove(@NonNull String firstKey, String... moreKeys) {
+        Path file = getFile(firstKey, moreKeys);
+        try {
+            return Files.deleteIfExists(file);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

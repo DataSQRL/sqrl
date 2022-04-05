@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-public class MetadataRegistryPersistence implements DatasetRegistryPersistence {
+public class MetadataSourceRegistryPersistence implements DatasetRegistryPersistence {
 
     public static final String STORE_TABLE_STATS_KEY = "stats";
     public static final String STORE_DATASET_KEY = "datasets";
@@ -35,20 +35,21 @@ public class MetadataRegistryPersistence implements DatasetRegistryPersistence {
         }).collect(Collectors.toList());
     }
 
-    static String name2Key(Name name) {
-        return name.getCanonical();
+    @Override
+    public void putDataset(Name dataset, DataSourceConfiguration datasource) {
+        store.put(new DataSourceStorage(dataset.getDisplay(), datasource),STORE_DATASET_KEY, store.name2Key(dataset),STORE_SOURCE_CONFIG_KEY);
     }
 
     @Override
-    public void putDataset(Name dataset, DataSourceConfiguration datasource) {
-        store.put(new DataSourceStorage(dataset.getDisplay(), datasource),STORE_DATASET_KEY,name2Key(dataset),STORE_SOURCE_CONFIG_KEY);
+    public boolean removeDataset(Name dataset) {
+        return store.remove(STORE_DATASET_KEY, store.name2Key(dataset),STORE_SOURCE_CONFIG_KEY);
     }
 
     @Override
     public Set<SourceTableConfiguration> getTables(Name dataset) {
-        return store.getSubKeys(STORE_DATASET_KEY,name2Key(dataset),STORE_TABLE_KEY).stream().map(tbName -> {
+        return store.getSubKeys(STORE_DATASET_KEY,store.name2Key(dataset),STORE_TABLE_KEY).stream().map(tbName -> {
             SourceTableConfiguration config = store.get(SourceTableConfiguration.class,
-                    STORE_DATASET_KEY,name2Key(dataset),STORE_TABLE_KEY,tbName,STORE_TABLE_CONFIG_KEY);
+                    STORE_DATASET_KEY,store.name2Key(dataset),STORE_TABLE_KEY,tbName,STORE_TABLE_CONFIG_KEY);
             Preconditions.checkArgument(config!=null,"Persistence of configuration failed.");
             return config;
         }).collect(Collectors.toSet());
@@ -56,26 +57,36 @@ public class MetadataRegistryPersistence implements DatasetRegistryPersistence {
 
     @Override
     public void putTable(Name dataset, Name tblName, SourceTableConfiguration table) {
-        store.put(table,STORE_DATASET_KEY,name2Key(dataset),STORE_TABLE_KEY,name2Key(tblName),STORE_TABLE_CONFIG_KEY);
+        store.put(table,STORE_DATASET_KEY,store.name2Key(dataset),STORE_TABLE_KEY,store.name2Key(tblName),STORE_TABLE_CONFIG_KEY);
+    }
+
+    @Override
+    public boolean removeTable(Name dataset, Name tblName) {
+        return store.remove(STORE_DATASET_KEY,store.name2Key(dataset),STORE_TABLE_KEY,store.name2Key(tblName),STORE_TABLE_CONFIG_KEY);
     }
 
     @Override
     public SourceTableStatistics getTableStatistics(Name datasetName, Name tableName) {
         return store.get(SourceTableStatistics.class,
-                STORE_DATASET_KEY,name2Key(datasetName),STORE_TABLE_KEY,name2Key(tableName),STORE_TABLE_STATS_KEY);
+                STORE_DATASET_KEY,store.name2Key(datasetName),STORE_TABLE_KEY,store.name2Key(tableName),STORE_TABLE_STATS_KEY);
     }
 
     @Override
     public void putTableStatistics(Name datasetName, Name tableName, SourceTableStatistics stats) {
         store.put(stats,
-                STORE_DATASET_KEY,name2Key(datasetName),STORE_TABLE_KEY,name2Key(tableName),STORE_TABLE_STATS_KEY);
+                STORE_DATASET_KEY,store.name2Key(datasetName),STORE_TABLE_KEY,store.name2Key(tableName),STORE_TABLE_STATS_KEY);
+    }
+
+    @Override
+    public boolean removeTableStatistics(Name datasetName, Name tableName) {
+        return store.remove(STORE_DATASET_KEY,store.name2Key(datasetName),STORE_TABLE_KEY,store.name2Key(tableName),STORE_TABLE_STATS_KEY);
     }
 
     public static class Provider implements DatasetRegistryPersistenceProvider {
 
         @Override
         public DatasetRegistryPersistence createRegistryPersistence(MetadataStore metaStore) {
-            return new MetadataRegistryPersistence(metaStore);
+            return new MetadataSourceRegistryPersistence(metaStore);
         }
     }
 

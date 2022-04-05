@@ -1,12 +1,7 @@
-package ai.dataeng.sqml.io.sources.formats;
+package ai.dataeng.sqml.io.formats;
 
-import ai.dataeng.sqml.io.sources.impl.InputPreview;
-import ai.dataeng.sqml.io.sources.impl.file.FilePath;
-import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
-import lombok.NonNull;
 import lombok.Value;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Map;
@@ -55,6 +50,8 @@ public interface Format<C extends FormatConfiguration> {
         Optional<C> getConfiguration();
 
     }
+
+    Writer getWriter(C configuration);
 
     interface Writer {}
 

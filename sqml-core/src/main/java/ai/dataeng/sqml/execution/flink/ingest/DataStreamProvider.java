@@ -4,28 +4,18 @@ import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
-import ai.dataeng.sqml.io.sources.formats.FileFormat;
-import ai.dataeng.sqml.io.sources.formats.Format;
-import ai.dataeng.sqml.io.sources.formats.TextLineFormat;
-import ai.dataeng.sqml.io.sources.impl.InputPreview;
-import ai.dataeng.sqml.io.sources.impl.file.FilePath;
-import ai.dataeng.sqml.io.sources.impl.file.FileSource;
-import com.google.common.collect.Iterators;
+import ai.dataeng.sqml.io.formats.Format;
+import ai.dataeng.sqml.io.formats.TextLineFormat;
+import ai.dataeng.sqml.io.impl.file.FilePath;
+import ai.dataeng.sqml.io.impl.file.FileSource;
+
 import java.io.IOException;
-import java.nio.file.Files;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.apache.commons.compress.utils.Lists;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.connector.file.src.enumerate.FileEnumerator;
 import org.apache.flink.connector.file.src.enumerate.NonSplittingRecursiveEnumerator;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -46,7 +36,6 @@ public class DataStreamProvider {
         String flinkSourceName = String.join("-",table.getDataset().getName().getDisplay(),tblConfig.getIdentifier(),"input");
         if (source instanceof FileSource) {
             FileSource filesource = (FileSource)source;
-            InputPreview preview = new InputPreview(filesource,tblConfig);
 
             //TODO: distinguish between text and byte input formats once we have AVRO,etc support
             Format.Parser parser = tblConfig.getFormatParser();
@@ -57,7 +46,7 @@ public class DataStreamProvider {
             FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(filesource,tblConfig);
 
             if (parser instanceof TextLineFormat.Parser) {
-                TextLineFormat.Parser textparser = (TextLineFormat.Parser) tblConfig.getFormatParser();
+                TextLineFormat.Parser textparser = (TextLineFormat.Parser)parser;
 
                 org.apache.flink.connector.file.src.FileSource.FileSourceBuilder<String> builder =
                         org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(

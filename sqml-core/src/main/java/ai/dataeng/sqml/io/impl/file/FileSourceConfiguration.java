@@ -1,9 +1,9 @@
-package ai.dataeng.sqml.io.sources.impl.file;
+package ai.dataeng.sqml.io.impl.file;
 
 import ai.dataeng.sqml.config.util.ConfigurationUtil;
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
-import ai.dataeng.sqml.io.sources.impl.CanonicalizerConfiguration;
+import ai.dataeng.sqml.io.impl.CanonicalizerConfiguration;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.config.error.ErrorCollector;
@@ -36,7 +36,7 @@ public class FileSourceConfiguration implements DataSourceConfiguration {
     @NonNull @NotNull @Size(min=3)
     String uri;
     @Builder.Default @NonNull @NotNull
-    String pattern = DEFAULT_PATTERN;
+    String partPattern = DEFAULT_PATTERN;
     @Builder.Default @NonNull @NotNull
     String charset = DEFAULT_CHARSET;
     @Builder.Default
@@ -68,7 +68,7 @@ public class FileSourceConfiguration implements DataSourceConfiguration {
             return null;
         }
 
-        Pattern partPattern = Pattern.compile(pattern+"$");
+        Pattern partPattern = Pattern.compile(this.partPattern +"$");
         return new FileSource(nname,canon,directoryPath,partPattern,this);
     }
 

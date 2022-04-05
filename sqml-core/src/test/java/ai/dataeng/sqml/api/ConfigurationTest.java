@@ -9,7 +9,7 @@ import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
-import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
+import ai.dataeng.sqml.io.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.config.error.ErrorCollector;

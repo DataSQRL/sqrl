@@ -1,11 +1,10 @@
-package ai.dataeng.sqml.io.sources.impl;
+package ai.dataeng.sqml.io.impl;
 
 import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
-import ai.dataeng.sqml.io.sources.impl.file.FilePath;
-import ai.dataeng.sqml.io.sources.impl.file.FileSource;
+import ai.dataeng.sqml.io.impl.file.FilePath;
+import ai.dataeng.sqml.io.impl.file.FileSource;
 import lombok.AllArgsConstructor;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
@@ -14,7 +13,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 @AllArgsConstructor

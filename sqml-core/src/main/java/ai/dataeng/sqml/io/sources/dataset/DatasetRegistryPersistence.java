@@ -19,13 +19,19 @@ public interface DatasetRegistryPersistence {
 
     void putDataset(Name dataset, DataSourceConfiguration datasource);
 
+    boolean removeDataset(Name dataset);
+
     Collection<SourceTableConfiguration> getTables(Name datasetName);
 
     void putTable(Name dataset, Name tblName, SourceTableConfiguration table);
 
+    boolean removeTable(Name dataset, Name tblName);
+
     SourceTableStatistics getTableStatistics(Name datasetName, Name tableName);
 
     void putTableStatistics(Name datasetName, Name tableName, SourceTableStatistics stats);
+
+    boolean removeTableStatistics(Name datasetName, Name tableName);
 
     @Getter
     @AllArgsConstructor

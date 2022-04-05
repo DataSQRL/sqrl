@@ -10,7 +10,7 @@ import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
-import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
+import ai.dataeng.sqml.io.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.planner.operator.C360Test;
 import ai.dataeng.sqml.planner.operator.ImportManager;

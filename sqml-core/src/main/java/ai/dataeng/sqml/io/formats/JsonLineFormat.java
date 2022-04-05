@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.io.sources.formats;
+package ai.dataeng.sqml.io.formats;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +29,11 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
         return Optional.empty();
     }
 
+    @Override
+    public Writer getWriter(Configuration configuration) {
+        return new JsonLineWriter();
+    }
+
     @NoArgsConstructor
     public static class JsonLineParser implements TextLineFormat.Parser {
 
@@ -44,6 +49,14 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
                 return Result.error(e.getMessage());
             }
         }
+    }
+
+    @NoArgsConstructor
+    public static class JsonLineWriter implements TextLineFormat.Writer {
+
+        private transient ObjectMapper mapper;
+
+
     }
 
 
@@ -62,6 +75,11 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
         @Override
         public FileFormat getFileFormat() {
             return FORMAT;
+        }
+
+        @Override
+        public Format getImplementation() {
+            return new JsonLineFormat();
         }
 
         @Override

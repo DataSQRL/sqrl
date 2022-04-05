@@ -7,7 +7,7 @@ import ai.dataeng.sqml.ScriptDeployment;
 import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
-import ai.dataeng.sqml.io.sources.impl.file.FileSourceConfiguration;
+import ai.dataeng.sqml.io.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.planner.Script;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.fasterxml.jackson.databind.ObjectMapper;

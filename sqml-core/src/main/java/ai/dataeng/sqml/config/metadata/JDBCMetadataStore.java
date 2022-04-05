@@ -80,6 +80,8 @@ public class JDBCMetadataStore implements MetadataStore {
 
     public static final String GET_VALUE = "SELECT value FROM `"+TABLE_NAME+"` WHERE key = ?";
 
+    public static final String DELETE_VALUE = "DELETE FROM `"+TABLE_NAME+"` WHERE key = ?";
+
     public static final String KEY_PREFIX = "SELECT key FROM `"+TABLE_NAME+"` WHERE key LIKE ?";
 
     @Override
@@ -131,6 +133,19 @@ public class JDBCMetadataStore implements MetadataStore {
             pstmt.setString(1, keyStr);
             pstmt.setBinaryStream(2, new ByteArrayInputStream(data));
             pstmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Could not execute SQL query",e);
+        }
+    }
+
+    @Override
+    public boolean remove(String firstKey, String... moreKeys) {
+        String keyStr = getKeyString(firstKey,moreKeys);
+
+        try (PreparedStatement pstmt = connection.prepareStatement(DELETE_VALUE)) {
+            pstmt.setString(1,keyStr);
+            int number = pstmt.executeUpdate();
+            return number>0;
         } catch (SQLException e) {
             throw new RuntimeException("Could not execute SQL query",e);
         }

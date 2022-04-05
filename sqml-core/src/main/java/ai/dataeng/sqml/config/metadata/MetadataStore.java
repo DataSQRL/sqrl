@@ -2,6 +2,8 @@ package ai.dataeng.sqml.config.metadata;
 
 import java.io.Closeable;
 import java.util.Set;
+
+import ai.dataeng.sqml.tree.name.Name;
 import lombok.NonNull;
 
 public interface MetadataStore extends Closeable {
@@ -12,6 +14,12 @@ public interface MetadataStore extends Closeable {
 
     public<T> T get(@NonNull Class<T> clazz, @NonNull String firstKey, String... moreKeys);
 
+    public boolean remove(@NonNull String firstKey, String... moreKeys);
+
     public Set<String> getSubKeys(String... keys);
+
+    default String name2Key(Name name) {
+        return name.getCanonical();
+    }
 
 }
