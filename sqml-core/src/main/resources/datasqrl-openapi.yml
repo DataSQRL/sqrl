@@ -308,8 +308,8 @@ paths:
     post:
       tags:
         - source
-      summary: Adds or updates table on source
-      operationId: updateSourceTable
+      summary: Adds table on source
+      operationId: addSourceTable
       parameters:
         - name: sourceName
           in: path
@@ -322,7 +322,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SourceTableWithErrors'
+              $ref: '#/components/schemas/SourceTable'
         required: true
       responses:
         200:
@@ -330,7 +330,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SourceTable'
+                $ref: '#/components/schemas/SourceTableWithErrors'
         405:
           description: Validation exception
           content:
@@ -339,6 +339,12 @@ paths:
                 $ref: '#/components/schemas/ErrorMessages'
         400:
           description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        404:
+          description: Source not found
           content:
             application/json:
               schema:
@@ -378,7 +384,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GenericError'
         404:
-          description: Source not found
+          description: Source or table not found
           content:
             application/json:
               schema:
@@ -415,7 +421,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GenericError'
         404:
-          description: Source not found
+          description: Source or table not found
           content:
             application/json:
               schema:
@@ -424,10 +430,10 @@ paths:
     post:
       tags:
         - sink
-      summary: Connect or update a data sink
+      summary: Connect or replace a data sink
       operationId: addOrUpdateSink
       requestBody:
-        description: Sink configuration for the sink to be connected or updated
+        description: Sink configuration for the sink to be connected or replaced
         content:
           application/json:
             schema:

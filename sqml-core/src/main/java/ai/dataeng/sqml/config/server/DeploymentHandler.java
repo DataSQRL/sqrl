@@ -45,6 +45,10 @@ class DeploymentHandler {
         };
     }
 
+    public Handler<RoutingContext> compile() {
+        return null; //TODO: implement
+    }
+
     public Handler<RoutingContext> getDeployments() {
         return routingContext -> {
             List<JsonObject> sources = environment.getActiveDeployments().stream()

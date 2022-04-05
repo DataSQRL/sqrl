@@ -4,6 +4,7 @@ import ai.dataeng.sqml.config.engines.FlinkConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
 import ai.dataeng.sqml.config.scripts.FileScriptConfiguration;
 import ai.dataeng.sqml.config.util.ConfigurationUtil;
+import ai.dataeng.sqml.io.sinks.DataSinkRegistration;
 import ai.dataeng.sqml.io.sources.DataSourceUpdate;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 
@@ -39,6 +40,9 @@ public class GlobalConfiguration {
     @Builder.Default @NonNull
     @NotNull @Valid
     List<DataSourceUpdate> sources = Collections.EMPTY_LIST;
+    @Builder.Default @NonNull
+    @NotNull @Valid
+    List<DataSinkRegistration> sinks = Collections.EMPTY_LIST;
     @Builder.Default @NonNull
     @NotNull @Valid
     List<FileScriptConfiguration> scripts = Collections.EMPTY_LIST;

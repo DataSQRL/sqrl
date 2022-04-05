@@ -6,6 +6,7 @@ import ai.dataeng.sqml.config.GlobalConfiguration;
 import ai.dataeng.sqml.config.SqrlSettings;
 import ai.dataeng.sqml.config.engines.FlinkConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
+import ai.dataeng.sqml.io.impl.file.FileSinkConfiguration;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
@@ -49,6 +50,9 @@ public class ConfigurationTest {
         assertEquals(config.getEnvironment().getMetastore().getDatabase(),"system");
         assertEquals(1, config.getSources().size());
         assertTrue(config.getSources().get(0).getConfig() instanceof FileSourceConfiguration);
+        assertEquals(1, config.getSinks().size());
+        assertTrue(config.getSinks().get(0).getConfig() instanceof FileSinkConfiguration);
+        assertEquals("local",config.getSinks().get(0).getName());
     }
 
     @Test

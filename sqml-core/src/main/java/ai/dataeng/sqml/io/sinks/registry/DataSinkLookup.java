@@ -8,7 +8,7 @@ public interface DataSinkLookup {
     DataSink getSink(Name name);
 
     default DataSink getSink(String name) {
-        return getSink(Name.system(name));
+        return Name.getIfValidSystemName(name,this::getSink);
     }
 
 }

@@ -110,6 +110,10 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         return source;
     }
 
+    public SourceDataset removeSource(@NonNull String name) {
+        return Name.getIfValidSystemName(name,this::removeSource);
+    }
+
     @Override
     public SourceDataset getDataset(@NonNull Name name) {
         return datasets.get(name);

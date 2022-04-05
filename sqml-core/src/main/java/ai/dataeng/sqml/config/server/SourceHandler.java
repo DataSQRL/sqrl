@@ -8,7 +8,9 @@ import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
+import ai.dataeng.sqml.tree.name.Name;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.validation.RequestParameters;
@@ -52,30 +54,34 @@ public class SourceHandler {
 
     Handler<RoutingContext> getSourceByName() {
         return routingContext -> {
-            RequestParameters params = routingContext.get("parsedParameters");
-            String sourceName = params.pathParameter("sourceName").getString();
-            SourceDataset ds = registry.getDataset(sourceName);
+            SourceDataset ds = getDataset(routingContext);
             if (ds!=null) {
                 HandlerUtil.returnResult(routingContext, source2Json(ds));
-            } else {
-                routingContext.fail(404, new Exception("Source not found"));
             }
         };
     }
 
+    private SourceDataset getDataset(RoutingContext routingContext) {
+        RequestParameters params = routingContext.get("parsedParameters");
+        String sourceName = params.pathParameter("sourceName").getString();
+        SourceDataset ds = registry.getDataset(sourceName);
+        if (ds == null) {
+            routingContext.fail(404, new Exception("Source not found"));
+            return null;
+        }
+        return ds;
+    }
 
     Handler<RoutingContext> deleteSource() {
         return routingContext -> {
             RequestParameters params = routingContext.get("parsedParameters");
             String sourceName = params.pathParameter("sourceName").getString();
-//                        if (source.isPresent())
-//                            routingContext
-//                                    .response()
-//                                    .setStatusCode(200)
-//                                    .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-//                                    .end();
-//                        else
-            routingContext.fail(404, new Exception("Not yet implemented")); // <5>
+            SourceDataset dataset = registry.removeSource(sourceName);
+            if (dataset != null) {
+                HandlerUtil.returnResult(routingContext, source2Json(dataset));
+            } else {
+                routingContext.fail(404, new Exception("Source not found"));
+            }
         };
     }
 
@@ -83,13 +89,84 @@ public class SourceHandler {
         return source2Json(source,null);
     }
 
-
     static JsonObject source2Json(@NonNull SourceDataset source, ErrorCollector errors) {
         return JsonObject.mapFrom(new DataSourceResult(source, errors));
     }
 
+    Handler<RoutingContext> addTable() {
+        return routingContext -> {
+            SourceDataset dataset = getDataset(routingContext);
+            if (dataset!= null) {
+                RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+                JsonObject tbl = params.body().getJsonObject();
+
+                ErrorCollector errors = ErrorCollector.root();
+
+                SourceTableConfiguration tblConfig = tbl.mapTo(SourceTableConfiguration.class);
+                SourceTable table = dataset.addTable(tblConfig, errors);
+                if (table == null) {
+                    HandlerUtil.returnError(routingContext, errors);
+                } else {
+                    HandlerUtil.returnResult(routingContext, table2Json(table, errors));
+                }
+            }
+        };
+    }
+
+    Handler<RoutingContext> getTables() {
+        return routingContext -> {
+            SourceDataset dataset = getDataset(routingContext);
+            if (dataset!= null) {
+                HandlerUtil.returnResult(routingContext, HandlerUtil.getJsonArray(dataset.getTables(), SourceHandler::table2Json));
+            }
+        };
+    }
+
+    Handler<RoutingContext> getTableByName() {
+        return routingContext -> {
+            SourceDataset dataset = getDataset(routingContext);
+            if (dataset!= null) {
+                RequestParameters params = routingContext.get("parsedParameters");
+                String tableName = params.pathParameter("tableName").getString();
+                SourceTable table = dataset.getTable(tableName);
+                if (table != null) {
+                    HandlerUtil.returnResult(routingContext, table2Json(table));
+                } else {
+                    routingContext.fail(404, new Exception("Table not found"));
+                }
+            }
+        };
+    }
+
+    Handler<RoutingContext> deleteTable() {
+        return routingContext -> {
+            SourceDataset dataset = getDataset(routingContext);
+            if (dataset!= null) {
+                RequestParameters params = routingContext.get("parsedParameters");
+                String tableName = params.pathParameter("tableName").getString();
+                SourceTable table = dataset.removeTable(tableName);
+                if (table != null) {
+                    HandlerUtil.returnResult(routingContext, table2Json(table));
+                } else {
+                    routingContext.fail(404, new Exception("Table not found"));
+                }
+            }
+        };
+    }
 
 
+    static JsonObject table2Json(@NonNull SourceTable table) {
+        return table2Json(table,null);
+    }
+
+    static JsonObject table2Json(@NonNull SourceTable source, ErrorCollector errors) {
+        JsonObject table = JsonObject.mapFrom(source.getConfiguration());
+        if (errors != null) {
+            JsonArray msgs = HandlerUtil.getJsonArray(errors.getAll(), JsonObject::mapFrom);
+            table.put("messages",msgs);
+        }
+        return table;
+    }
 
     @Value
     @AllArgsConstructor

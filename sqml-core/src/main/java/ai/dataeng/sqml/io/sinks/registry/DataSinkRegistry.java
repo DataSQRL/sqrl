@@ -12,6 +12,7 @@ import ai.dataeng.sqml.tree.name.Name;
 import lombok.NonNull;
 
 import java.io.Closeable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,11 +56,18 @@ public class DataSinkRegistry implements DataSinkLookup {
         return sink;
     }
 
+    public DataSink removeSink(@NonNull String name) {
+        return Name.getIfValidSystemName(name,this::removeSink);
+    }
+
 
     @Override
     public DataSink getSink(Name name) {
         return dataSinks.get(name);
     }
 
+    public Collection<DataSink> getSinks() {
+        return dataSinks.values();
+    }
 
 }

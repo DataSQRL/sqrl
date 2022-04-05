@@ -2,9 +2,11 @@ package ai.dataeng.sqml.tree.name;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
@@ -57,6 +59,15 @@ public interface Name extends Serializable, Comparable<Name> {
 
     public static boolean validName(String name) {
         return !Strings.isNullOrEmpty(name) && name.indexOf(46)<0 && name.indexOf(47)<0;
+    }
+
+    public static<T> T getIfValidName(@NonNull String name, @NonNull NameCanonicalizer canonicalizer, @NonNull Function<Name,T> getter) {
+        if (!validName(name)) return null;
+        return getter.apply(canonicalizer.name(name));
+    }
+
+    public static<T> T getIfValidSystemName(String name, Function<Name,T> getter) {
+        return getIfValidName(name, NameCanonicalizer.SYSTEM, getter);
     }
 
     public static Name of(String name, NameCanonicalizer canonicalizer) {

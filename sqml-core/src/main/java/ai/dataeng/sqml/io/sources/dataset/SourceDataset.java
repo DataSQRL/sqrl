@@ -80,6 +80,10 @@ public class SourceDataset {
         return table;
     }
 
+    public SourceTable removeTable(@NonNull String name) {
+        return Name.getIfValidName(name, getCanonicalizer(), this::removeTable);
+    }
+
     public DataSource getSource() {
         return source;
     }

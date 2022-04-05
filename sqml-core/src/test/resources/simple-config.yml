@@ -14,3 +14,9 @@ sources:
     config:
       sourceType: "file"
       uri: "../sqml-examples/retail/ecommerce-data"
+sinks:
+  - name: "local"
+    config:
+      sinkType: "file"
+      uri: "../sqml-examples/retail/ecommerce-output"
+    format: "json"

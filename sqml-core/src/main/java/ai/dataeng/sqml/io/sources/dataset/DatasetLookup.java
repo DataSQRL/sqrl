@@ -8,7 +8,7 @@ public interface DatasetLookup {
     public SourceDataset getDataset(@NonNull Name name);
 
     default SourceDataset getDataset(@NonNull String name) {
-        return getDataset(Name.system(name));
+        return Name.getIfValidSystemName(name,this::getDataset);
     }
 
 }
