@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.parser;
 
+import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.VersionedName;
@@ -27,7 +28,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 @Getter
 public class Relationship extends Field {
 
-  private final Table fromTable;
+  private final Table table;
   public final Table toTable;
   public final Type type;
   @Setter
@@ -47,7 +48,7 @@ public class Relationship extends Field {
       Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity,
       Map<Column, String> aliasMapping) {
     super(name);
-    this.fromTable = fromTable;
+    this.table = fromTable;
     this.toTable = toTable;
     this.type = type;
     this.multiplicity = multiplicity;
@@ -67,6 +68,14 @@ public class Relationship extends Field {
   @Override
   public int getVersion() {
     return version;
+  }
+
+  public Name getInverseName() {
+    return Name.system("parent");
+  }
+
+  public JoinOn getCondition() {
+    return null;
   }
 
   public enum Type {

@@ -39,12 +39,14 @@ import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
+import scala.annotation.meta.field;
 
-public class TableUnsqrlVisitor extends AstVisitor<Node, TableRewriteScope> {
+public class UnsqrlProcessor extends AstVisitor<Node, TableRewriteScope> {
 
   private final StatementAnalyzer statementAnalyzer;
 
-  public TableUnsqrlVisitor(StatementAnalyzer statementAnalyzer) {
+  public UnsqrlProcessor(StatementAnalyzer statementAnalyzer) {
     this.statementAnalyzer = statementAnalyzer;
   }
 
@@ -70,7 +72,7 @@ public class TableUnsqrlVisitor extends AstVisitor<Node, TableRewriteScope> {
       TableRewriteScope context) {
     QuerySpecification querySpecification = new QuerySpecification(
         node.getLocation(),
-        node.getSelect(),
+        (Select)node.getSelect().accept(this, context),
         (Relation)node.getFrom().accept(this, context),
         node.getWhere(),
         node.getGroupBy(),
@@ -83,42 +85,112 @@ public class TableUnsqrlVisitor extends AstVisitor<Node, TableRewriteScope> {
   }
 
   @Override
+  public Node visitSelect(Select node, TableRewriteScope context) {
+    List<SelectItem> selectItems = new ArrayList<>();
+    for (SelectItem item : selectItems) {
+      selectItems.add((SelectItem) item.accept(this, context));
+    }
+
+    //Parent primary keys, e.g. `_._uuid`
+    for (Identifier expression : context.getParentPrimaryKeys()) {
+      selectItems.add(new SingleColumn(expression));
+    }
+
+    return new Select(node.getLocation(), node.isDistinct(), node.getSelectItems());
+  }
+
+  @Override
+  public Node visitSingleColumn(SingleColumn node, TableRewriteScope context) {
+    Expression expression = rewriteExpression(node.getExpression());
+
+    return new SingleColumn(node.getLocation(), expression, rewriteAlias(node));
+  }
+
+  private Optional<Identifier> rewriteAlias(Node node) {
+    return Optional.empty();
+  }
+
+  private Expression rewriteExpression(Expression expression) {
+    return null;
+  }
+
+  /**
+   * Expands a table path. We preserve aliases and expand parents
+   * deterministically. If we walked a relationship, we use the inverse
+   * as the alias.
+   *
+   * FROM _.orders.entries e
+   *  =>
+   * FROM `Orders.entries` AS `e`
+   * INNER JOIN `Orders` AS `e.parent`
+   *   ON `e`._uuid = `e.parent`._uuid
+   * INNER JOIN `Customer$1` AS `e.parent._customer_orders_inv$0`
+   *   ON `e.parent._customer_orders_inv$0`._uuid = `e.parent`._uuid
+   *
+   *
+   * @param node
+   * @param context
+   * @return
+   */
+  @Override
   public Node visitTable(TableNode node, TableRewriteScope context) {
     FieldPath path = node.getResolved();
 
-    List<Field> fieldPath = path.getFields();
-    Name currentAlias = null;
+    //check context for a push down
+    // If has pushdown, we want to do joins on current
+    // if no pushdown, we start as a root table
 
-    Relation current;
-    if (context.getCurrent().isPresent()) {
-      current = context.getCurrent().get();
-    } else if (fieldPath.size() == 1) {
-      Table table = fieldPath.get(0).getTable();
-      current = new TableNode(node.getLocation(), NamePath.of(table.getId()), Optional.empty());
-    } else {
-      currentAlias = Name.system(statementAnalyzer.gen.nextTableAlias());
-      current = new TableNode(Optional.empty(), fieldPath.get(0).name.toNamePath(),
-          Optional.of(currentAlias));
+    //Aliases are fully deterministic, all fields are qualified
+
+    StringJoiner tableAlias = new StringJoiner(".");
+
+    List<Field> fields = path.getFields();
+    for (int i = fields.size() - 1; i >= 0; i--) {
+      Field field = fields.get(i);
+      Relationship rel = (Relationship) field;
+
+
     }
 
-    for (int i = 1; i < fieldPath.size(); i++) {
-      Field field = fieldPath.get(i);
 
-      Name nextAlias = (i == fieldPath.size() - 1)
-          ? node.getAlias().get()
-          : Name.system(statementAnalyzer.gen.nextTableAlias());
 
-      Relation lhs = current;
-      Relation rhs = toTable(field, nextAlias);
-      Optional<Expression> condition = getCondition(field, currentAlias, nextAlias);
-      current = join(node.getLocation().get(), Type.INNER, lhs, rhs, condition);
 
-      currentAlias = nextAlias;
-    }
-
-    Relation expanded = expandFieldPaths(node, currentAlias, current);
-
-    return expanded;
+    return null;
+//
+//
+//    List<Field> fieldPath = path.getFields();
+//    Name currentAlias = null;
+//
+//    Relation current;
+//    if (context.getCurrent().isPresent()) {
+//      current = context.getCurrent().get();
+//    } else if (fieldPath.size() == 1) {
+//      Table table = fieldPath.get(0).getTable();
+//      current = new TableNode(node.getLocation(), NamePath.of(table.getId()), Optional.empty());
+//    } else {
+//      currentAlias = Name.system(statementAnalyzer.gen.nextTableAlias());
+//      current = new TableNode(Optional.empty(), fieldPath.get(0).name.toNamePath(),
+//          Optional.of(currentAlias));
+//    }
+//
+//    for (int i = 1; i < fieldPath.size(); i++) {
+//      Field field = fieldPath.get(i);
+//
+//      Name nextAlias = (i == fieldPath.size() - 1)
+//          ? node.getAlias().get()
+//          : Name.system(statementAnalyzer.gen.nextTableAlias());
+//
+//      Relation lhs = current;
+//      Relation rhs = toTable(field, nextAlias);
+//      Optional<Expression> condition = getCondition(field, currentAlias, nextAlias);
+//      current = join(node.getLocation().get(), Type.INNER, lhs, rhs, condition);
+//
+//      currentAlias = nextAlias;
+//    }
+//
+//    Relation expanded = expandFieldPaths(node, currentAlias, current);
+//
+//    return expanded;
   }
 
   private Relation expandFieldPaths(TableNode table, Name baseAlias, Relation current) {
@@ -283,7 +355,7 @@ public class TableUnsqrlVisitor extends AstVisitor<Node, TableRewriteScope> {
     return new ComparisonExpression(Operator.EQUAL, l, r);
   }
 
-  private Expression and(List<Expression> expressions) {
+  public static Expression and(List<Expression> expressions) {
     if (expressions.size() == 0) {
       return null;
     } else if (expressions.size() == 1) {
@@ -326,7 +398,7 @@ public class TableUnsqrlVisitor extends AstVisitor<Node, TableRewriteScope> {
   public Node visitJoin(Join node, TableRewriteScope context) {
     Node leftNode = node.getLeft().accept(this, context);
 
-    context.setPushdownCondition(node.getType(), node.getCriteria());
+//    context.setPushdownCondition(node.getType(), node.getCriteria());
 
     Node right = node.getRight().accept(this, new TableRewriteScope(Optional.of((Relation) leftNode)));
 

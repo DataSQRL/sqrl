@@ -122,7 +122,7 @@ public class TableFactory {
         planner.addTable(toTable.getId().toString(), new StreamTable(toDataTypeField(row.getFields())));
 
         RelNode node = planner.createRelBuilder()
-            .scanShred(rel.getFromTable(), toTable.getId().toString())
+            .scanShred(rel.getTable(), toTable.getId().toString())
             //Project only scalars, shred remaining
             .build();
         toTable.setRelNode(node);
@@ -215,7 +215,7 @@ public class TableFactory {
   private NamePath getNamePath(Name name, Optional<Table> parent) {
     NamePath namePath;
     if (parent.isPresent()) {
-      namePath = parent.get().getPath().resolve(name);
+      namePath = parent.get().getPath().concat(name);
     } else {
       namePath = NamePath.of(name);
     }
@@ -247,7 +247,7 @@ public class TableFactory {
 
     if (ftype.getType() instanceof RelationType) {
       Table table = tableConversion((RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType(),
-          outputSchema, name, path.resolve(name), parent);
+          outputSchema, name, path.concat(name), parent);
       //Add parent relationship
       Relationship parentField = new Relationship(PARENT_RELATIONSHIP, table, parent,
           Relationship.Type.PARENT, Relationship.Multiplicity.ONE, null

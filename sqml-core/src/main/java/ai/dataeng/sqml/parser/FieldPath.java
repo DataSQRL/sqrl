@@ -48,4 +48,10 @@ public class FieldPath {
     }
     return fields.get(fields.size() - 1);
   }
+
+  public NamePath qualify() {
+    return NamePath.of(this.fields.stream()
+        .map(e->e.getId())
+        .collect(Collectors.toList()));
+  }
 }

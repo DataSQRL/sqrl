@@ -17,7 +17,7 @@ public class SelfField extends Field {
   }
 
   public VersionedName getId() {
-    return VersionedName.of(Name.system("_"), table.getVersion());
+    return table.getId();
   }
 
   @Override

@@ -36,7 +36,7 @@ public class AliasedRelation
     this(Optional.of(location), relation, alias);
   }
 
-  private AliasedRelation(Optional<NodeLocation> location, Relation relation, Identifier alias) {
+  public AliasedRelation(Optional<NodeLocation> location, Relation relation, Identifier alias) {
     super(location);
     requireNonNull(relation, "relation is null");
     requireNonNull(alias, " is null");

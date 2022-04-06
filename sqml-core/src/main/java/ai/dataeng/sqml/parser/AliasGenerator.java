@@ -10,7 +10,9 @@ public class AliasGenerator {
   public String nextAlias() {
     return "__f" + cur.getAndIncrement();
   }
-
+  public Name nextAliasName() {
+    return Name.system("__f" + cur.getAndIncrement());
+  }
   public String nextTableAlias() {
     return "__t" + cur.getAndIncrement();
   }

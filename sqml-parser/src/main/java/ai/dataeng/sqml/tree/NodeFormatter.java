@@ -227,7 +227,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitLogicalBinaryExpression(LogicalBinaryExpression node, Void context) {
     return node.getLeft().accept(this, null) +
-        node.getOperator().name() +
+        " " + node.getOperator().name() + " " +
         node.getRight().accept(this, null);
   }
 
@@ -244,7 +244,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitTable(TableNode node, Void context) {
-    return node.getNamePath().getDisplay();
+    return node.getNamePath().getDisplay() + node.getAlias().map(a-> " AS " + a).orElse("");
   }
 
   @Override

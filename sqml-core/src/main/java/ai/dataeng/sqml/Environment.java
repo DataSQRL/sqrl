@@ -133,35 +133,36 @@ public class Environment implements Closeable {
     Analyzer analyzer = new Analyzer(importResolver.getImportManager(), calcitePlanner, new TableFactory(calcitePlanner),
         dag);
     analyzer.analyze(scriptNode);
-
-
-    SqrlPlanner planner = new SqrlPlanner();
-    planner.setDevQueries(dag);
-
-    Pair<List<LogicalFlinkSink>, List<LogicalPgSink>> flinkSinks = planner.optimize(dag);
-
-    FlinkPipelineGenerator pipelineGenerator = new FlinkPipelineGenerator();
-    Pair<StreamStatementSet, Map<Table, TableDescriptor>> result =
-        pipelineGenerator.createFlinkPipeline(flinkSinks.getKey());
-
-    SqlGenerator sqlGenerator = new SqlGenerator(result.getRight());
-    List<String> db = sqlGenerator.generate();
-
-    JDBCConnectionProvider config = new JDBCConfiguration.Database(
-        "jdbc:postgresql://localhost/henneberger",
-        null, null, null, Dialect.POSTGRES, "henneberger"
-    );
-
-    SqrlExecutor executor = new SqrlExecutor();
-    executor.executeDml(config, db);
-    executor.executeFlink(result.getLeft());
-
-    GraphqlGenerator graphqlGenerator = new GraphqlGenerator();
-    GraphQL graphql = graphqlGenerator.graphql(dag, flinkSinks, result.getRight(), getPostgresClient());
+//
+//
+//    SqrlPlanner planner = new SqrlPlanner();
+//    planner.setDevQueries(dag);
+//
+//    Pair<List<LogicalFlinkSink>, List<LogicalPgSink>> flinkSinks = planner.optimize(dag);
+//
+//    FlinkPipelineGenerator pipelineGenerator = new FlinkPipelineGenerator();
+//    Pair<StreamStatementSet, Map<Table, TableDescriptor>> result =
+//        pipelineGenerator.createFlinkPipeline(flinkSinks.getKey());
+//
+//    SqlGenerator sqlGenerator = new SqlGenerator(result.getRight());
+//    List<String> db = sqlGenerator.generate();
+//
+//    JDBCConnectionProvider config = new JDBCConfiguration.Database(
+//        "jdbc:postgresql://localhost/henneberger",
+//        null, null, null, Dialect.POSTGRES, "henneberger"
+//    );
+//
+//    SqrlExecutor executor = new SqrlExecutor();
+//    executor.executeDml(config, db);
+//    executor.executeFlink(result.getLeft());
+//
+//    GraphqlGenerator graphqlGenerator = new GraphqlGenerator();
+//    GraphQL graphql = graphqlGenerator.graphql(dag, flinkSinks, result.getRight(), getPostgresClient());
 
 //    JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(submission.getId().getId());
 
-    return new Script(graphql);
+//    return new Script(graphql);
+    return null;
   }
 
   private SqlClientProvider getPostgresClient() {

@@ -29,18 +29,18 @@ public class Select
   private List<SelectItem> selectItems;
 
   public Select(boolean distinct, List<SelectItem> selectItems) {
-    this(Optional.empty(), distinct, Optional.empty(), selectItems);
+    this(Optional.empty(), distinct, selectItems);
   }
 
-  public Select(DistinctOn distinctOn, List<SelectItem> selectItems) {
-    this(Optional.empty(), true, Optional.of(distinctOn), selectItems);
+  public Select(List<SelectItem> selectItems) {
+    this(Optional.empty(), true, selectItems);
   }
 
   public Select(NodeLocation location, boolean distinct, List<SelectItem> selectItems) {
-    this(Optional.of(location), distinct, Optional.empty(), selectItems);
+    this(Optional.of(location), distinct, selectItems);
   }
 
-  public Select(Optional<NodeLocation> location, boolean distinct, Optional<DistinctOn> distinctOn,
+  public Select(Optional<NodeLocation> location, boolean distinct,
       List<SelectItem> selectItems) {
     super(location);
     this.distinct = distinct;

@@ -17,17 +17,14 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
-import org.apache.flink.api.common.typeinfo.PrimitiveArrayTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
-import org.apache.flink.api.java.typeutils.ListTypeInfo;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -75,7 +72,7 @@ public class FlinkTableConverter {
         if (ftype.getType() instanceof RelationType) {
             List<DataTypes.Field> dtfs = new ArrayList<>();
             List<TypeInformation> tis = new ArrayList<>();
-            final NamePath nestedpath = path.resolve(name);
+            final NamePath nestedpath = path.concat(name);
             getFields((RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType())
                     .map(t -> fieldTypeSchemaConversion(t.getLeft(),t.getMiddle(),t.getRight(),nestedpath))
                     .forEach(p -> {

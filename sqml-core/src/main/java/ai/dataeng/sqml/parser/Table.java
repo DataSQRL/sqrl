@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.rel.RelNode;
+import org.apache.commons.lang3.tuple.Pair;
 
 @Getter
 @Setter
@@ -38,12 +39,6 @@ public class Table implements DatasetOrTable {
 //    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
     Field field = fields.getByName(name).get();
     return field;
-  }
-
-  public Optional<Field> getFieldOpt(Name name) {
-//    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
-    Field field = fields.getByName(name).get();
-    return Optional.ofNullable(field);
   }
 
   public Optional<FieldPath> getField(NamePath path, int version) {
@@ -176,5 +171,10 @@ public class Table implements DatasetOrTable {
 
   public void addUniqueConstraint(List<Field> partitionKeys) {
     this.partitionKeys = partitionKeys;
+  }
+
+  public List<Pair<Column, Column>> getParentPrimaryKeys() {
+    //the parent columns
+    return null;
   }
 }

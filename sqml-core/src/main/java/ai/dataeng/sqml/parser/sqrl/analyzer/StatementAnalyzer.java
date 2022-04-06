@@ -1,39 +1,43 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
+import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.FieldPath;
 import ai.dataeng.sqml.parser.SelfField;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.TableField;
-import ai.dataeng.sqml.parser.sqrl.LogicalDag;
-import ai.dataeng.sqml.parser.sqrl.analyzer.ExpressionAnalyzer.ExpressionAnalysis;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
+import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.Join;
+import ai.dataeng.sqml.tree.Join.Type;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.NodeLocation;
 import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.Query;
+import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
+import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SetOperation;
+import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
-import ai.dataeng.sqml.type.TypedField;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
@@ -47,7 +51,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -60,6 +63,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   public final Map<Node, Node> nodeMapper = new HashMap<>();
   public final AliasGenerator gen = new AliasGenerator();
   public final AtomicBoolean hasContext = new AtomicBoolean();
+
+  public JoinBuilder joinBuilder = new JoinBuilder();
 
   public StatementAnalyzer(Analyzer analyzer) {
     this.analyzer = analyzer;
@@ -75,9 +80,12 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     Scope queryBodyScope = node.getQueryBody().accept(this, scope);
 
     //TODO: order & limit for Set operations
-    return queryBodyScope;
+    return createScope(new Query(node.getLocation(), (QueryBody) queryBodyScope.getNode(),
+        node.getOrderBy(), node.getLimit()), scope);
   }
 
+  //SELECT coalesce(discount, 0.0) FROM _
+  //SELECT sum(entries.total) FROM _
   @Override
   public Scope visitQuerySpecification(QuerySpecification node, Scope scope) {
     //TODO: Q: this create fields
@@ -105,15 +113,41 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     Optional<Long> limit = node.parseLimit();
 
-    return null;
+    //todo: check if there is a context query
+    Optional<GroupBy> groupBy = Optional.of(new GroupBy(Optional.empty(), new SimpleGroupBy(Optional.empty(), groupByExpressions)));
+
+    QuerySpecification querySpecification = new QuerySpecification(
+        node.getLocation(),
+        toSelect(node.getSelect(), outputExpressions),
+        joinBuilder.build(),
+        Optional.empty(),
+        groupBy,
+        Optional.empty(),
+        Optional.empty(),
+        Optional.empty()
+    );
+
+    return createScope(querySpecification, scope);
   }
 
+  private Select toSelect(Select select, List<Expression> outputExpressions) {
+    List<SelectItem> items = outputExpressions.stream()
+        .map(e->new SingleColumn(Optional.empty(), e, Optional.empty()))
+        .collect(Collectors.toList());
+
+    return new Select(Optional.empty(), select.isDistinct(), items);
+  }
+
+  /**
+   * Visits and expands a table
+   */
   @Override
   public Scope visitTable(TableNode tableNode, Scope scope) {
     NamePath tableName = tableNode.getNamePath();
 
     FieldPath resolvedTable = lookupTable(tableName, scope);
-    tableNode.setResolved(resolvedTable);
+
+    expandJoins(tableNode, scope);
 
     Name alias = tableNode.getAlias()
         .orElse(Name.system(tableNode.getNamePath().toString()));
@@ -122,6 +156,68 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         resolvedTable.getLastField().getTable());
 
     return createScope(tableNode, scope);
+  }
+
+  /**
+   * Expands a table path. We preserve aliases and expand parents
+   * deterministically. If we walked a relationship, we use the inverse
+   * as the alias.
+   */
+  private void expandJoins(TableNode tableNode, Scope scope) {
+    FieldPath tablePath = lookupTable(tableNode.getNamePath(), scope);
+
+    Field first = tablePath.getLastField();
+
+    NamePath alias = tableNode.getAlias()
+        .map(e->e.toNamePath())
+        .orElse(tableNode.getNamePath());
+
+    joinBuilder.add(scope.getJoinType(), scope.getAdditionalJoinCondition(), first, alias, null);
+
+    //Inner join to root
+    for (int i = tablePath.getFields().size() - 2; i >= 0; i--) {
+      Field field = tablePath.getFields().get(i);
+      alias = alias.concat(field.getId());
+
+      joinBuilder.add(Type.INNER, Optional.empty(), field, alias, null);
+    }
+  }
+
+  public static class JoinBuilder {
+    List<Type> types = new ArrayList<>();
+    List<Optional<JoinCriteria>> additional = new ArrayList<>();
+    List<Field> fields = new ArrayList<>();
+    List<NamePath> aliases = new ArrayList<>();
+    List<Relation> relations = new ArrayList<>();
+
+    public void add(Type joinType,
+        Optional<JoinCriteria> additionalJoinCondition, Field field,
+        NamePath alias, Relation relation) {
+      types.add(joinType);
+      additional.add(additionalJoinCondition);
+      fields.add(field);
+      aliases.add(alias);
+      relations.add(relation);
+    }
+
+    public Relation build() {
+
+      Relation current = new TableNode(Optional.empty(), fields.get(0).getId().toNamePath(),
+          Optional.of(Name.system(aliases.get(0).toString())));
+
+      for (int i = 1; i < fields.size(); i++) {
+        current = new Join(Optional.empty(), types.get(i), current, relations.get(i), additional.get(i));
+      }
+
+      return current;
+    }
+
+    public Join join(NodeLocation location, Type joinType, Relation left, Relation right,
+        Optional<Expression> condition) {
+      Optional<JoinCriteria> joinCondition = condition.map(c -> new JoinOn(location, c));
+
+      return new Join(location, joinType, left, right, joinCondition);
+    }
   }
 
   private FieldPath lookupTable(NamePath tableName, Scope scope) {
@@ -164,7 +260,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     JoinCriteria criteria = node.getCriteria().get();
     if (criteria instanceof JoinOn) {
       Expression expression = ((JoinOn) criteria).getExpression();
-      analyzeExpression(expression, right);
+      rewriteExpression(expression, right);
     } else {
       throw new RuntimeException("Unsupported join");
     }
@@ -293,7 +389,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   public void analyzeWhere(Node node, Scope scope, Expression predicate) {
-    analyzeExpression(predicate, scope);
+    rewriteExpression(predicate, scope);
   }
 
 
@@ -305,7 +401,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     for (SortItem item : orderBy.get().getSortItems()) {
       Expression expression = item.getSortKey();
-      analyzeExpression(expression, scope);
+      rewriteExpression(expression, scope);
       orderByFieldsBuilder.add(expression);
     }
 
@@ -379,7 +475,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   private void analyzeHaving(QuerySpecification node, Scope scope) {
     if (node.getHaving().isPresent()) {
       Expression predicate = node.getHaving().get();
-      ExpressionAnalysis expressionAnalysis = analyzeExpression(predicate, scope);
+      Expression rewritten = rewriteExpression(predicate, scope);
     }
   }
 
@@ -399,9 +495,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         }
       } else if (item instanceof SingleColumn) {
         SingleColumn column = (SingleColumn) item;
-        analyzeExpression(column.getExpression(), scope);
-
-        outputExpressions.add(column.getExpression());
+        outputExpressions.add(rewriteExpression(column.getExpression(), scope));
+//        outputExpressions.add(column.getExpression());
       }
       else {
         throw new IllegalArgumentException(String.format("Unsupported SelectItem type: %s", item.getClass().getName()));
@@ -412,25 +507,30 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   private List<Expression> analyzeGroupBy(QuerySpecification node, Scope scope, List<Expression> outputExpressions) {
-    if (node.getGroupBy().isEmpty()) {
-      return List.of();
+    List<Expression> groupingExpressions = new ArrayList<>();
+
+    //Add grouping keys
+    Table table = scope.getJoinScope().get(Name.SELF_IDENTIFIER);
+    for (Column column : table.getPrimaryKeys()) {
+      groupingExpressions.add(new Identifier(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath().concat(column.getId())));
     }
 
-    List<Expression> groupingExpressions = new ArrayList();
+    if (node.getGroupBy().isEmpty()) {
+      return groupingExpressions;
+    }
+
     GroupingElement groupingElement = node.getGroupBy().get().getGroupingElement();
     for (Expression column : groupingElement.getExpressions()) {
       if (column instanceof LongLiteral) {
         throw new RuntimeException("Ordinals not supported in group by statements");
       }
 
-      analyzeExpression(column, scope);
-
       //Group by statement must be one of the select fields
       if (!(column instanceof Identifier)) {
         log.info(
             String.format("GROUP BY statement should use column aliases instead of expressions. %s",
                 column));
-        analyzeExpression(column, scope);
+        rewriteExpression(column, scope);
         outputExpressions.stream()
             .filter(e -> e.equals(column))
             .findAny()
@@ -440,13 +540,13 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       }
     }
 
-    return null;
+    return groupingExpressions;
   }
 
-  private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
-    ExpressionAnalyzer analyzer = new ExpressionAnalyzer();
-    ExpressionAnalysis exprAnalysis = analyzer.analyze(expression, scope);
+  private Expression rewriteExpression(Expression expression, Scope scope) {
+    ExpressionAnalyzer analyzer = new ExpressionAnalyzer(joinBuilder);
+    Expression expr = analyzer.analyze(expression, scope);
 
-    return exprAnalysis;
+    return expr;
   }
 }

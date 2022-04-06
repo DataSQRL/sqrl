@@ -3,6 +3,8 @@ package ai.dataeng.sqml.parser.sqrl.analyzer;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.FieldPath;
 import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.tree.Join;
+import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
@@ -59,5 +61,37 @@ public class Scope {
     }
 
     return fieldPaths;
+  }
+
+  public NamePath qualify(NamePath namePath) {
+    for (Map.Entry<Name, Table> entry : joinScope.entrySet()) {
+      Name alias = entry.getKey();
+      Table table = entry.getValue();
+
+      if (namePath.getFirst().equals(alias) && namePath.getLength() > 1) {
+        Optional<FieldPath> path = table.getField(namePath.popFirst());
+        if (path.isPresent()) {
+          return path.get().qualify();
+        }
+      }
+      Optional<FieldPath> path = table.getField(namePath);
+      if (path.isPresent()) {
+        return NamePath.of(alias).concat(path.get().qualify());
+      }
+    }
+
+    throw new RuntimeException("Cannot qualify");
+  }
+
+  public Optional<JoinCriteria> getCriteria() {
+    return null;
+  }
+
+  public Join.Type getJoinType() {
+    return null;
+  }
+
+  public Optional<JoinCriteria> getAdditionalJoinCondition() {
+    return null;
   }
 }

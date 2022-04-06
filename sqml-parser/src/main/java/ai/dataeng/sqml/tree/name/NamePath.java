@@ -51,13 +51,13 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
       return NamePath.of(names);
   }
 
-  public NamePath resolve(@NonNull Name name) {
+  public NamePath concat(@NonNull Name name) {
         Name[] newnames = Arrays.copyOf(names,names.length+1);
         newnames[names.length] = name;
         return new NamePath(newnames);
     }
 
-    public NamePath resolve(@NonNull NamePath sub) {
+    public NamePath concat(@NonNull NamePath sub) {
         Name[] newnames = Arrays.copyOf(names,names.length+sub.names.length);
         System.arraycopy(sub.names, 0, newnames, names.length, sub.names.length);
         return new NamePath(newnames);
@@ -169,4 +169,11 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
   public boolean isEmpty() {
     return names.length == 0;
   }
+
+  public NamePath subList(int from, int to) {
+    Name[] newNames = Arrays.copyOfRange(names, from, to);
+
+    return new NamePath(newNames);
+  }
+
 }

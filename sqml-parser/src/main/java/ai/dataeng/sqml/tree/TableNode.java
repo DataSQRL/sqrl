@@ -37,7 +37,7 @@ public class TableNode
   public TableNode(Optional<NodeLocation> location, NamePath name, Optional<Name> alias) {
     super(location);
     this.name = name;
-    this.alias = Optional.empty();
+    this.alias = alias;
   }
 
   public NamePath getNamePath() {

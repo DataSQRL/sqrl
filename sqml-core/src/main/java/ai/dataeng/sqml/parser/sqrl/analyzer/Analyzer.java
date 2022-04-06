@@ -8,7 +8,6 @@ import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
-import ai.dataeng.sqml.parser.sqrl.SqrlRexUtil;
 import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
 import ai.dataeng.sqml.parser.sqrl.schema.SqrlViewTable;
 import ai.dataeng.sqml.parser.sqrl.schema.StreamTable.StreamDataType;
@@ -26,6 +25,7 @@ import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinDeclaration;
 import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QuerySpecification;
@@ -48,11 +48,8 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqrlRelBuilder;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -147,38 +144,49 @@ public class Analyzer {
       if (hasOneUnnamedColumn(query) && namePath.getPrefix().isPresent()) {
         Optional<Table> tableOpt = lookup(namePath.getPrefix().get());
         Table table = tableOpt.get();
-        query.accept(statementAnalyzer, new Scope(tableOpt, query, new HashMap<>()));
+        Scope scope = query.accept(statementAnalyzer, new Scope(tableOpt, query, new HashMap<>()));
+
+        System.out.println(NodeFormatter.accept(scope.getNode()));
+
+        SqlNode plan = planner.parse(scope.getNode());
+        System.out.println(plan);
+        System.out.println();
 
         //Unsqrl node
-        TableUnsqrlVisitor unsqrl = new TableUnsqrlVisitor(statementAnalyzer);
-        Node rewritten = query.accept(unsqrl, null);
-
-        RelNode plan = planner.plan(rewritten);
-
-        RelNode expanded = plan.accept(new RelShuttleImpl(){
-          @Override
-          public RelNode visit(TableScan scan) {
-            StreamDataType dataType = (StreamDataType)scan.getRowType();
-            if (dataType.getTable() != null) {
-              return dataType.getTable().getRelNode();
-            }
-            return scan;
-          }
-        });
-
-        SqrlRelBuilder relBuilder = planner.createRelBuilder();
-        RexBuilder rexBuilder = relBuilder.getRexBuilder();
-
-        RelNode newPlan = relBuilder
-            .push(expanded)
-            .push(table.getRelNode())
-            .join(JoinRelType.LEFT,
-                SqrlRexUtil.createPkCondition(table, rexBuilder))
-            //todo: project all left + the new column, shadow if necessary
-            .build();
-
-        table.setRelNode(newPlan);
-        table.addField(new Column(namePath.getLast(), table, 0, null, 0, List.of(),
+//        UnsqrlProcessor unsqrl = new UnsqrlProcessor(statementAnalyzer);
+//        Node rewritten = query.accept(unsqrl, null);
+//
+//        RelNode plan = planner.plan(null);
+//
+//        RelNode expanded = plan.accept(new RelShuttleImpl(){
+//          @Override
+//          public RelNode visit(TableScan scan) {
+//            StreamDataType dataType = (StreamDataType)scan.getRowType();
+//            if (dataType.getTable() != null) {
+//              return dataType.getTable().getRelNode();
+//            }
+//            return scan;
+//          }
+//        });
+//
+//        SqrlRelBuilder relBuilder = planner.createRelBuilder();
+//        RexBuilder rexBuilder = relBuilder.getRexBuilder();
+//
+//        RelNode newPlan = relBuilder
+//            .push(expanded)
+//            .push(table.getRelNode())
+//            .join(JoinRelType.LEFT,
+//                SqrlRexUtil.createPkCondition(table, rexBuilder))
+//            //todo: project all left + the new column, shadow if necessary
+//            .build();
+//
+//        table.setRelNode(newPlan);
+        int version = 0;
+        Optional<Field> existingField = table.getFields().getByName(namePath.getLast());
+        if (existingField.isPresent()) {
+          version = existingField.get().getVersion() + 1;
+        }
+        table.addField(new Column(namePath.getLast(), table, version, null, 0, List.of(),
             false, false, Optional.empty(), false));
       } else {
         Scope scope = null; //todo
@@ -301,7 +309,7 @@ public class Analyzer {
 
       StatementAnalyzer sAnalyzer = new StatementAnalyzer(analyzer);
 
-      Select select = new Select(Optional.empty(), false, Optional.empty(), List.of(new AllColumns()));
+      Select select = new Select(Optional.empty(), false, List.of(new AllColumns()));
       Relation from = new Join(node.getLocation(), node.getInlineJoin().getJoinType(),
           new TableNode(Optional.empty(), NamePath.parse("_"), Optional.empty()),
           node.getInlineJoin().getRelation(),

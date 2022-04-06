@@ -66,9 +66,16 @@ public class Test2 {
   public void test() {
     //c360, test import all the way through to query
     Script script = run(
-        "IMPORT ecommerce-data.Customer;"
-        + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;"
-            + "Customer.total := SUM(customerid);"
+        "IMPORT ecommerce-data.Customer;\n"
+            + "IMPORT ecommerce-data.Product;\n"
+            + "IMPORT ecommerce-data.Orders;\n"
+            + "\n"
+            + "-- Compute useful statistics on orders\n"
+            + "Orders.entries.discount := coalesce(discount, 0.0);\n"
+            + "Orders.entries.total := quantity * unit_price - discount;\n"
+            + "Orders.total := sum(entries.total);\n"
+            + "Orders.total_savings := sum(entries.discount);\n"
+            + "Orders.total_entries := count(entries);\n"
     );
 
 

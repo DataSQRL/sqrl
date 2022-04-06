@@ -35,7 +35,7 @@ public class GroupBy
     this(Optional.of(location), groupingElement);
   }
 
-  private GroupBy(Optional<NodeLocation> location,
+  public GroupBy(Optional<NodeLocation> location,
       GroupingElement groupingElement) {
     super(location);
     this.groupingElement = requireNonNull(groupingElement);

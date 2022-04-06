@@ -16,7 +16,7 @@ public class ExpressionToQueryTransformer {
   public Query transform(Expression expression) {
     Optional<NodeLocation> location = expression.getLocation();
 
-    Select select = new Select(expression.getLocation(), false, Optional.empty(),
+    Select select = new Select(expression.getLocation(), false,
         List.of(new SingleColumn(expression)));
 
     TableNode tableNode = new TableNode(location, NamePath.of("_"), Optional.empty());

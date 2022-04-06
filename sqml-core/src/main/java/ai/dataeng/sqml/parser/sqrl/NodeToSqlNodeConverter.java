@@ -83,6 +83,7 @@ import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlLiteral;
@@ -220,8 +221,12 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
   @Override
   public SqlNode visitTable(TableNode node, Void context) {
     if (node.getAlias().isPresent()) {
-      return new SqlIdentifier(List.of(node.getNamePath().toString(),
-          node.getAlias().get().getCanonical()), pos.getPos(node.getLocation()));
+      SqlIdentifier table = new SqlIdentifier(List.of(node.getNamePath().toString()), pos.getPos(node.getLocation()));
+      SqlNode[] operands = {
+          table,
+          new SqlIdentifier(node.getAlias().get().toString(), SqlParserPos.ZERO)
+      };
+      return new SqlBasicCall(SqlStdOperatorTable.AS, operands, pos.getPos(node.getLocation()));
     }
 
     return new SqlIdentifier(List.of(node.getNamePath().toString()), pos.getPos(node.getLocation()));
