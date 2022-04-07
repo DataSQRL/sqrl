@@ -37,10 +37,10 @@ public class CalciteTableFactory {
       Table destinationTable = fieldPath
           .map(f->((Relationship)f.getLastField()).getToTable())
           .orElse(self.get());
-      SelfField selfField = new SelfField(self.get());
+//      SelfField selfField = new SelfField(self.get());
 
 
-      return create(self.get(), addFieldPath(selfField, fieldPath), destinationTable, true, name,
+      return create(self.get(), addFieldPath(null, fieldPath), destinationTable, true, name,
           false, fieldPath
               .map(f->((Relationship)f.getFields().get(0))).orElse(null));
     } else {

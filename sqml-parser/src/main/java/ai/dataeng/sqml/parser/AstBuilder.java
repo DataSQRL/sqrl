@@ -27,6 +27,7 @@ import ai.dataeng.sqml.parser.SqlBaseParser.ExpressionContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.ImportDefinitionContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.ImportStatementContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.InRelationContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.InlineJoinBodyContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.InlineJoinContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.JoinAssignmentContext;
 import ai.dataeng.sqml.parser.SqlBaseParser.JoinTypeContext;
@@ -589,6 +590,11 @@ class AstBuilder
   }
 
   @Override
+  public Node visitInlineJoinBody(InlineJoinBodyContext ctx) {
+    return visit(ctx);
+  }
+
+  @Override
   public Node visitExpression(ExpressionContext ctx) {
     return visit(ctx.booleanExpression());
   }
@@ -889,10 +895,27 @@ class AstBuilder
           .of(new OrderBy(getLocation(ctx.ORDER()), visit(ctx.sortItem(), SortItem.class)));
     }
 
+    Relation current = new TableNode(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath(), Optional.empty());
+    for (InlineJoinBodyContext inline : ctx.inlineJoinBody()) {
+      JoinCriteria criteria = null;
+      if (inline.joinCriteria() != null && inline.joinCriteria().ON() != null) {
+        criteria = new JoinOn(getLocation(inline),
+            (Expression) visit(inline.joinCriteria().booleanExpression()));
+      }
+
+      current = new Join(
+          Optional.of(getLocation(inline)),
+          toJoinType(inline.joinType()),
+          current,
+          (Relation) visit(inline.relationPrimary()),
+          (Optional<JoinCriteria>) Optional.ofNullable(criteria)
+      );
+    }
+
+
     return new InlineJoin(
         Optional.of(getLocation(ctx)),
-        toJoinType(ctx.joinType()),
-        (Relation)visit(ctx.relation()),
+        current,
         orderBy,
         ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
             Optional.of(new Limit(ctx.limit.getText())),
@@ -936,7 +959,7 @@ class AstBuilder
   @Override
   protected Node aggregateResult(Node aggregate, Node nextResult) {
     if (nextResult == null) {
-      throw new UnsupportedOperationException("not yet implemented");
+      throw new UnsupportedOperationException("not yet implemented:" + aggregate);
     }
 
     if (aggregate == null) {

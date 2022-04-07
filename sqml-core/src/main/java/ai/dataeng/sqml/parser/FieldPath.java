@@ -54,4 +54,9 @@ public class FieldPath {
         .map(e->e.getId())
         .collect(Collectors.toList()));
   }
+
+  public FieldPath prefix() {
+
+    return new FieldPath(fields.subList(0, fields.size() - 1));
+  }
 }

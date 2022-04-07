@@ -33,7 +33,7 @@ public class Select
   }
 
   public Select(List<SelectItem> selectItems) {
-    this(Optional.empty(), true, selectItems);
+    this(Optional.empty(), false, selectItems);
   }
 
   public Select(NodeLocation location, boolean distinct, List<SelectItem> selectItems) {

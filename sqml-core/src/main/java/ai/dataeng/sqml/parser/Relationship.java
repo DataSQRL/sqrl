@@ -1,11 +1,20 @@
 package ai.dataeng.sqml.parser;
 
+import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.Query;
+import ai.dataeng.sqml.tree.QuerySpecification;
+import ai.dataeng.sqml.tree.Select;
+import ai.dataeng.sqml.tree.SelectItem;
+import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.VersionedName;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.sql.SqlNode;
@@ -43,6 +52,7 @@ public class Relationship extends Field {
   public SqlNode sqlNode;
 
   public int version = 0;
+  private Name alias;
 
   public Relationship(
       Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity,
@@ -76,6 +86,32 @@ public class Relationship extends Field {
 
   public JoinOn getCondition() {
     return null;
+  }
+
+  public Node getNode() {
+    Query query = (Query) node;
+    QuerySpecification spec = (QuerySpecification)query.getQueryBody();
+    spec.setSelect(new Select(Optional.empty(), false, refreshSelect(spec.getSelect().getSelectItems())));
+    return node;
+  }
+
+  private List<SelectItem> refreshSelect(
+      List<SelectItem> groupingColumns) {
+    List<SelectItem> selectItems = new ArrayList<>();
+    selectItems.addAll(groupingColumns);
+    for (Field field : this.toTable.getFields().getElements()) {
+      if (field instanceof Relationship) continue;
+      selectItems.add(new SingleColumn(new Identifier(Optional.empty(), this.alias.toNamePath().concat(((Column)field).getId()))));
+    }
+    return selectItems;
+  }
+
+  public void setAlias(Name alias) {
+    this.alias = alias;
+  }
+
+  public Name getAlias() {
+    return alias;
   }
 
   public enum Type {

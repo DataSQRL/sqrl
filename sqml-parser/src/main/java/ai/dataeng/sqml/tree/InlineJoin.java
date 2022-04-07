@@ -23,25 +23,19 @@ import java.util.Optional;
 public class InlineJoin
     extends Declaration {
 
-  private final Type joinType;
   private final Relation relation;
 
   private final Optional<Name> inverse;
   private final Optional<OrderBy> orderBy;
   private final Optional<Limit> limit;
 
-  public InlineJoin(Optional<NodeLocation> location, Type joinType, Relation relation, Optional<OrderBy> orderBy,
+  public InlineJoin(Optional<NodeLocation> location, Relation relation, Optional<OrderBy> orderBy,
       Optional<Limit> limit, Optional<Name> inverse) {
     super(location);
-    this.joinType = joinType;
     this.relation = relation;
     this.inverse = inverse;
     this.orderBy = orderBy;
     this.limit = limit;
-  }
-
-  public Type getJoinType() {
-    return joinType;
   }
 
   public Relation getRelation() {
@@ -80,13 +74,13 @@ public class InlineJoin
       return false;
     }
     InlineJoin that = (InlineJoin) o;
-    return joinType == that.joinType && Objects.equals(relation, that.relation)
+    return Objects.equals(relation, that.relation)
         && Objects.equals(inverse, that.inverse) && Objects.equals(orderBy,
         that.orderBy) && Objects.equals(limit, that.limit);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(joinType, relation, inverse, orderBy, limit);
+    return Objects.hash(relation, inverse, orderBy, limit);
   }
 }

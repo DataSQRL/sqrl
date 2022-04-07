@@ -69,13 +69,13 @@ public class Test2 {
         "IMPORT ecommerce-data.Customer;\n"
             + "IMPORT ecommerce-data.Product;\n"
             + "IMPORT ecommerce-data.Orders;\n"
-            + "\n"
-            + "-- Compute useful statistics on orders\n"
-            + "Orders.entries.discount := coalesce(discount, 0.0);\n"
-            + "Orders.entries.total := quantity * unit_price - discount;\n"
-            + "Orders.total := sum(entries.total);\n"
-            + "Orders.total_savings := sum(entries.discount);\n"
-            + "Orders.total_entries := count(entries);\n"
+            + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
+            + "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1 INVERSE order_entries;\n"
+            + "Customer.recent_products := SELECT productid, product.category AS category,\n"
+            + "                                   sum(quantity) AS quantity, count(*) AS num_orders\n"
+            + "                            FROM _.orders.entries\n"
+            + "                            GROUP BY productid, category\n"
+            + "                            ORDER BY num_orders DESC, quantity DESC;"
     );
 
 

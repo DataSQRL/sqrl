@@ -1,6 +1,9 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
-import static ai.dataeng.sqml.parser.sqrl.analyzer.UnsqrlProcessor.and;
+
+import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.and;
+import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.getCriteria;
+import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.getRelation;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.parser.Column;
@@ -29,6 +32,7 @@ import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
+import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
@@ -104,7 +108,7 @@ public class ExpressionAnalyzer {
       if (function.isAggregate() && node.getArguments().size() == 1 &&
           node.getArguments().get(0) instanceof Identifier) {
         Identifier identifier = (Identifier)node.getArguments().get(0);
-        FieldPath fieldPath = context.getScope().resolve(identifier.getNamePath())
+        FieldPath fieldPath = context.getScope().resolveField(identifier.getNamePath())
             .get(0);
         if (PathUtil.isToMany(fieldPath)) {
           String tableAlias = gen.nextTableAlias();
@@ -222,17 +226,31 @@ public class ExpressionAnalyzer {
     public Expression rewriteIdentifier(Identifier node, Context context,
         ExpressionTreeRewriter<Context> treeRewriter) {
       List<FieldPath> resolved = context.getScope()
-          .resolve(node.getNamePath());
+          .resolveField(node.getNamePath());
 
       Preconditions.checkState(resolved.size() == 1,
           "Could not resolve field (ambiguous or non-existent: " + node + " : " + resolved);
 
       if (PathUtil.isToOne(resolved.get(0))) {
-        toOne.add(node);
+        Name fieldName = resolved.get(0).getLastField().getId();
+        Name tableAlias = gen.nextTableAliasName();
+        Name sourceTableAlias = context.getScope().qualify(node.getNamePath()).get(0);
+        addLeftJoin(node, resolved.get(0), tableAlias, sourceTableAlias);
+        return new Identifier(node.getLocation(), tableAlias.toNamePath().concat(fieldName));
       }
 
       NamePath qualifiedName = context.getScope().qualify(node.getNamePath());
       return new Identifier(node.getLocation(), qualifiedName);
+    }
+
+    private void addLeftJoin(Identifier node, FieldPath fieldPath,
+        Name tableAlias, Name sourceTableAlias) {
+
+      Relationship rel = (Relationship) fieldPath.getFields().get(0);
+
+      joinBuilder.add(Type.LEFT, getCriteria(rel, sourceTableAlias, tableAlias, Optional.empty()),
+          fieldPath.getFields().get(0), tableAlias.toNamePath(),
+          getRelation(rel, tableAlias));
     }
   }
 }

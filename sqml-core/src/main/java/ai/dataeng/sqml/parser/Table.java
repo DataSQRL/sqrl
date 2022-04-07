@@ -37,8 +37,8 @@ public class Table implements DatasetOrTable {
 
   public Field getField(Name name) {
 //    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
-    Field field = fields.getByName(name).get();
-    return field;
+    Optional<Field> field = fields.getByName(name);
+    return field.isEmpty() ? null : field.get();
   }
 
   public Optional<FieldPath> getField(NamePath path, int version) {
@@ -49,12 +49,13 @@ public class Table implements DatasetOrTable {
     List<Field> fields = new ArrayList<>();
     Table table = this;
     for (int i = 0; i < path.getLength() - 1; i++) {
-      Field field = table.getField(path.get(i));
-      if (!(field instanceof Relationship)) {
+      Optional<Field> field = table.getFields().getByName(path.get(i));
+      if (field.isEmpty()) return Optional.empty();
+      if (!(field.get() instanceof Relationship)) {
         return Optional.empty();
       }
-      table = ((Relationship) field).getToTable();
-      fields.add(field);
+      table = ((Relationship) field.get()).getToTable();
+      fields.add(field.get());
     }
     Field field = table.getField(path.get(path.getLength() - 1));
     if (field == null) {

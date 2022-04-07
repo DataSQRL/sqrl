@@ -36,7 +36,7 @@ public class ComparisonExpression
     this(Optional.of(location), operator, left, right);
   }
 
-  private ComparisonExpression(Optional<NodeLocation> location, Operator operator, Expression left,
+  public ComparisonExpression(Optional<NodeLocation> location, Operator operator, Expression left,
       Expression right) {
     super(location);
     requireNonNull(operator, "type is null");

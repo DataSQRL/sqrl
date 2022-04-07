@@ -49,10 +49,14 @@ subscriptionType
     ;
 
 inlineJoin
-    : joinType JOIN relation
+    : inlineJoinBody+
       (ORDER BY sortItem (',' sortItem)*)?
       (LIMIT limit=INTEGER_VALUE)?
       (INVERSE inv=identifier)?
+    ;
+
+inlineJoinBody
+    : joinType JOIN relationPrimary (joinCriteria)?
     ;
 
 query

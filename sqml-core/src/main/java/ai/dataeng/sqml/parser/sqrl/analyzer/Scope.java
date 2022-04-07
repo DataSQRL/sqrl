@@ -46,7 +46,7 @@ public class Scope {
     return joinScope;
   }
 
-  public List<FieldPath> resolve(NamePath namePath) {
+  public List<FieldPath> resolveField(NamePath namePath) {
     List<FieldPath> fieldPaths = new ArrayList<>();
     for (Map.Entry<Name, Table> entry : joinScope.entrySet()) {
       Name alias = entry.getKey();
@@ -57,6 +57,14 @@ public class Scope {
         path.ifPresent(fieldPaths::add);
       }
       Optional<FieldPath> path = table.getField(namePath);
+      path.ifPresent(fieldPaths::add);
+    }
+
+    //Special case for self identifier
+    // If we haven't scoped '_' then treat it as the context table.
+    if (fieldPaths.isEmpty() && namePath.getFirst().equals(Name.SELF_IDENTIFIER)
+      && joinScope.get(Name.SELF_IDENTIFIER) == null) {
+      Optional<FieldPath> path = contextTable.get().getField(namePath.popFirst());
       path.ifPresent(fieldPaths::add);
     }
 
@@ -71,7 +79,7 @@ public class Scope {
       if (namePath.getFirst().equals(alias) && namePath.getLength() > 1) {
         Optional<FieldPath> path = table.getField(namePath.popFirst());
         if (path.isPresent()) {
-          return path.get().qualify();
+          return alias.toNamePath().concat(path.get().qualify());
         }
       }
       Optional<FieldPath> path = table.getField(namePath);

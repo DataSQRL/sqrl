@@ -5,9 +5,11 @@ import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Relationship.Multiplicity;
+import ai.dataeng.sqml.parser.Relationship.Type;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
+import ai.dataeng.sqml.parser.sqrl.SqrlRexUtil;
 import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
 import ai.dataeng.sqml.parser.sqrl.schema.SqrlViewTable;
 import ai.dataeng.sqml.parser.sqrl.schema.StreamTable.StreamDataType;
@@ -29,14 +31,11 @@ import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QuerySpecification;
-import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.tree.Select;
-import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +47,11 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqrlRelBuilder;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -130,92 +132,8 @@ public class Analyzer {
 
     @Override
     public Void visitQueryAssignment(QueryAssignment queryAssignment, Void context) {
-      NamePath name = queryAssignment.getNamePath();
-      Query query = queryAssignment.getQuery();
-
-      analyzeQuery(name, query);
+      analyzeQuery(queryAssignment.getNamePath(), queryAssignment.getQuery());
       return null;
-    }
-
-    public void analyzeQuery(NamePath namePath, Query query) {
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
-
-      //For single unnamed columns in tables, treat as an expression
-      if (hasOneUnnamedColumn(query) && namePath.getPrefix().isPresent()) {
-        Optional<Table> tableOpt = lookup(namePath.getPrefix().get());
-        Table table = tableOpt.get();
-        Scope scope = query.accept(statementAnalyzer, new Scope(tableOpt, query, new HashMap<>()));
-
-        System.out.println(NodeFormatter.accept(scope.getNode()));
-
-        SqlNode plan = planner.parse(scope.getNode());
-        System.out.println(plan);
-        System.out.println();
-
-        //Unsqrl node
-//        UnsqrlProcessor unsqrl = new UnsqrlProcessor(statementAnalyzer);
-//        Node rewritten = query.accept(unsqrl, null);
-//
-//        RelNode plan = planner.plan(null);
-//
-//        RelNode expanded = plan.accept(new RelShuttleImpl(){
-//          @Override
-//          public RelNode visit(TableScan scan) {
-//            StreamDataType dataType = (StreamDataType)scan.getRowType();
-//            if (dataType.getTable() != null) {
-//              return dataType.getTable().getRelNode();
-//            }
-//            return scan;
-//          }
-//        });
-//
-//        SqrlRelBuilder relBuilder = planner.createRelBuilder();
-//        RexBuilder rexBuilder = relBuilder.getRexBuilder();
-//
-//        RelNode newPlan = relBuilder
-//            .push(expanded)
-//            .push(table.getRelNode())
-//            .join(JoinRelType.LEFT,
-//                SqrlRexUtil.createPkCondition(table, rexBuilder))
-//            //todo: project all left + the new column, shadow if necessary
-//            .build();
-//
-//        table.setRelNode(newPlan);
-        int version = 0;
-        Optional<Field> existingField = table.getFields().getByName(namePath.getLast());
-        if (existingField.isPresent()) {
-          version = existingField.get().getVersion() + 1;
-        }
-        table.addField(new Column(namePath.getLast(), table, version, null, 0, List.of(),
-            false, false, Optional.empty(), false));
-      } else {
-        Scope scope = null; //todo
-        Scope newScope = query.accept(statementAnalyzer, null);
-        Node rewrittenNode = newScope.getNode();
-        RelNode plan = planner.plan(rewrittenNode);
-
-        Table table = tableFactory.create(null, (Query)rewrittenNode);
-        table.setRelNode(plan);
-      }
-
-//      Scope newScope = query.accept(statementAnalyzer, new Scope(table, query, null));
-//
-//      Node rewrittenNode = newScope.getNode();
-//      RelNode plan = planner.plan(rewrittenNode);
-//
-//      table.get().setRelNode(plan);
-//
-//      //Add a Field to the logical dag
-//      Field field = FieldFactory.createTypeless(table.get(), name.getLast());
-//      table.get().addField(field);
-
-
-      //Create Schema elements
-
-    }
-
-    private boolean hasOneUnnamedColumn(Node node) {
-      return true;
     }
 
     @Override
@@ -231,6 +149,63 @@ public class Analyzer {
       analyzeQuery(namePath, query);
 
       return null;
+    }
+
+    public void analyzeQuery(NamePath namePath, Query query) {
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
+
+      //For single unnamed columns in tables, treat as an expression
+//      if (hasOneUnnamedColumn(query) && namePath.getPrefix().isPresent()) {
+      if (true) {
+        Optional<Table> tableOpt = lookup(namePath.getPrefix().get());
+        Table table = tableOpt.get();
+        Scope scope = query.accept(statementAnalyzer, new Scope(tableOpt, query, new HashMap<>()));
+
+        System.out.println(NodeFormatter.accept(scope.getNode()));
+
+        SqlNode plan = planner.parse(scope.getNode());
+        System.out.println(plan);
+        System.out.println();
+
+        //todo after sqlizing
+        if (false) {
+          RelNode plan2 = planner.plan(null);
+
+          RelNode expanded = plan2.accept(new RelShuttleImpl() {
+            @Override
+            public RelNode visit(TableScan scan) {
+              StreamDataType dataType = (StreamDataType) scan.getRowType();
+              if (dataType.getTable() != null) {
+                return dataType.getTable().getRelNode();
+              }
+              return scan;
+            }
+          });
+
+          SqrlRelBuilder relBuilder = planner.createRelBuilder();
+          RexBuilder rexBuilder = relBuilder.getRexBuilder();
+
+          RelNode newPlan = relBuilder
+              .push(expanded)
+              .push(table.getRelNode())
+              .join(JoinRelType.LEFT,
+                  SqrlRexUtil.createPkCondition(table, rexBuilder))
+              //todo: project all left + the new column, shadow if necessary
+              .build();
+
+          table.setRelNode(newPlan);
+        }
+
+        int version = 0;
+        Optional<Field> existingField = table.getFields().getByName(namePath.getLast());
+        if (existingField.isPresent()) {
+          version = existingField.get().getVersion() + 1;
+        }
+        table.addField(new Column(namePath.getLast(), table, version, null, 0, List.of(),
+            false, false, Optional.empty(), false));
+      } else {
+       throw new RuntimeException("");
+      }
     }
 
     /**
@@ -310,13 +285,9 @@ public class Analyzer {
       StatementAnalyzer sAnalyzer = new StatementAnalyzer(analyzer);
 
       Select select = new Select(Optional.empty(), false, List.of(new AllColumns()));
-      Relation from = new Join(node.getLocation(), node.getInlineJoin().getJoinType(),
-          new TableNode(Optional.empty(), NamePath.parse("_"), Optional.empty()),
-          node.getInlineJoin().getRelation(),
-          Optional.empty());
       Query querySpec = new Query(new QuerySpecification(node.getLocation(),
           select,
-          from,
+          node.getInlineJoin().getRelation(),
           Optional.<Expression>empty(),
           Optional.<GroupBy>empty(),
           Optional.<Expression>empty(),
@@ -326,21 +297,28 @@ public class Analyzer {
           Optional.empty()
       );
 
-      Scope scope = querySpec.accept(sAnalyzer, null);
+      System.out.println(NodeFormatter.accept(querySpec));
+
+      Optional<Table> ctxTable = lookup(namePath.getPrefix().get());
+      Scope scope = querySpec.accept(sAnalyzer, new Scope(ctxTable, querySpec, new HashMap<>()));
 
       Map<Name, Table> joinScope = scope.getJoinScope();
       Node rewritten = scope.getNode();
       if (node.getInlineJoin().getLimit().isEmpty()) {
-        Join join = (Join)((QuerySpecification)((Query)rewritten).getQueryBody()).getFrom();
-        rewritten = join.getRight();
+//        rewritten = (Join)((QuerySpecification)((Query)rewritten).getQueryBody()).getFrom();
       }
 
-      Table table = lookup(namePath).get();
-      List<Table> tables = new ArrayList(joinScope.values());
-      Table lastTable = tables.get(joinScope.values().size());
-      Relationship joinField = new Relationship(namePath.getLast(), table, lastTable,
-          null, Multiplicity.MANY, null);
+      Table table = ctxTable.get();
+      Map.Entry<Name, Table> lastTable = joinScope.entrySet().stream().findFirst().get();
+      Multiplicity multiplicity = Multiplicity.MANY;
+      if (node.getInlineJoin().getLimit().isPresent() && node.getInlineJoin().getLimit().get().getIntValue().get() == 1) {
+        multiplicity = Multiplicity.ONE;
+      }
+
+      Relationship joinField = new Relationship(namePath.getLast(), table, lastTable.getValue(),
+          Type.JOIN, multiplicity, null);
       joinField.setNode(rewritten);
+      joinField.setAlias(lastTable.getKey());
 
       table.addField(joinField);
 

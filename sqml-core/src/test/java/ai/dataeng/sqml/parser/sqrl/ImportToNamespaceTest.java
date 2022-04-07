@@ -23,7 +23,6 @@ import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.SchemaUpdaterImpl;
 import ai.dataeng.sqml.parser.SqlNodeToFieldMapper;
 import ai.dataeng.sqml.parser.SqrlParser;
-import ai.dataeng.sqml.parser.SqrlToSqlParser;
 import ai.dataeng.sqml.parser.operator.C360Test;
 import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.operator.ImportResolver;
@@ -143,7 +142,7 @@ public class ImportToNamespaceTest {
     setCalcite();
 
     importProcessor = new ImportProcessor(namespace, new ImportResolver(new ImportManager(registry)));
-    queryProcessor = new QueryProcessor(namespace, new SqrlToSqlParser(namespace), new SchemaUpdaterImpl(namespace), new SqlNodeToFieldMapper(namespace));
+//    queryProcessor = new QueryProcessor(namespace, new SqrlToSqlParser(namespace), new SchemaUpdaterImpl(namespace), new SqlNodeToFieldMapper(namespace));
 
     imports = new ImportManager(registry);
     tbConverter = new FlinkTableConverter();
