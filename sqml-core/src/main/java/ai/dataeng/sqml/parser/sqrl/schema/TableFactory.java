@@ -250,7 +250,7 @@ public class TableFactory {
           outputSchema, name, path.concat(name), parent);
       //Add parent relationship
       Relationship parentField = new Relationship(PARENT_RELATIONSHIP, table, parent,
-          Relationship.Type.PARENT, Relationship.Multiplicity.ONE, null
+          Relationship.Type.PARENT, Relationship.Multiplicity.ONE
       );
       table.fields.add(parentField);
       //Return child relationship
@@ -263,7 +263,7 @@ public class TableFactory {
         }
       }
       Relationship child = new Relationship(name, parent, table,
-          Relationship.Type.CHILD, multiplicity, null);
+          Relationship.Type.CHILD, multiplicity);
       return child;
     } else {
       assert ftype.getType() instanceof BasicType;

@@ -25,7 +25,6 @@ import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.ImportDefinition;
-import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinDeclaration;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeFormatter;
@@ -322,7 +321,7 @@ public class Analyzer {
       }
 
       Relationship joinField = new Relationship(namePath.getLast(), table, lastTable.getValue(),
-          Type.JOIN, multiplicity, null);
+          Type.JOIN, multiplicity);
       joinField.setNode(rewritten);
       joinField.setAlias(lastTable.getKey());
 

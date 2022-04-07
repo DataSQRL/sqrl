@@ -13,7 +13,6 @@ import ai.dataeng.sqml.tree.name.VersionedName;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
@@ -45,30 +44,18 @@ public class Relationship extends Field {
 
   public final Multiplicity multiplicity;
 
-  @Setter
-  private Map<Column, String> pkNameMapping;
-
-  @Setter
-  public SqlNode sqlNode;
-
   public int version = 0;
   private Name alias;
 
   public Relationship(
-      Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity,
-      Map<Column, String> aliasMapping) {
+      Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity) {
     super(name);
     this.table = fromTable;
     this.toTable = toTable;
     this.type = type;
     this.multiplicity = multiplicity;
-    this.pkNameMapping = aliasMapping;
   }
 
-  public SqlNode getSqlNode() {
-    Preconditions.checkNotNull(sqlNode, "Sql node should not be null");
-    return sqlNode.clone(SqlParserPos.ZERO);
-  }
 
   @Override
   public VersionedName getId() {
@@ -78,14 +65,6 @@ public class Relationship extends Field {
   @Override
   public int getVersion() {
     return version;
-  }
-
-  public Name getInverseName() {
-    return Name.system("parent");
-  }
-
-  public JoinOn getCondition() {
-    return null;
   }
 
   public Node getNode() {
