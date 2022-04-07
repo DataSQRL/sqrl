@@ -7,10 +7,14 @@ import ai.dataeng.sqml.tree.NodeLocation;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Select;
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Converts an expression from an expression assignment to a query node
+ */
 public class ExpressionToQueryTransformer {
 
   public Query transform(Expression expression) {
@@ -19,7 +23,7 @@ public class ExpressionToQueryTransformer {
     Select select = new Select(expression.getLocation(), false,
         List.of(new SingleColumn(expression)));
 
-    TableNode tableNode = new TableNode(location, NamePath.of("_"), Optional.empty());
+    TableNode tableNode = new TableNode(location, Name.SELF_IDENTIFIER.toNamePath(), Optional.empty());
 
     QuerySpecification queryBody = new QuerySpecification(location, select,
         tableNode, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),

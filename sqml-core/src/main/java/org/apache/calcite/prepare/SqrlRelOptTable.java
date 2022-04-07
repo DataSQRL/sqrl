@@ -1,7 +1,6 @@
 package org.apache.calcite.prepare;
 
 import java.util.List;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.plan.RelOptSchema;
@@ -13,15 +12,12 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelReferentialConstraint;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.ColumnStrategy;
-import org.apache.calcite.schema.SqrlCalciteTable;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlAccessType;
 import org.apache.calcite.sql.validate.SqlModality;
 import org.apache.calcite.sql.validate.SqlMonotonicity;
 import org.apache.calcite.sql2rel.InitializerContext;
 import org.apache.calcite.util.ImmutableBitSet;
-import org.apiguardian.api.API;
-import org.apiguardian.api.API.Status;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**

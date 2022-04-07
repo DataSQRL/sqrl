@@ -29,18 +29,15 @@ public class CalcitePlanner {
 
   private final RelOptCluster cluster;
   private final CalciteCatalogReader catalogReader;
-  private final LogicalDag logicalDag;
   private final SqrlSchema2 sqrlSchema;
   private final CachingSqrlSchema2 calciteSchema;
 
-  public CalcitePlanner(LogicalDag logicalDag) {
+  public CalcitePlanner() {
     SqrlTypeFactory typeFactory = new SqrlTypeFactory();
     this.cluster = CalciteTools.createHepCluster(typeFactory);
     this.sqrlSchema = new SqrlSchema2();
     this.calciteSchema = new CachingSqrlSchema2(sqrlSchema);
-    this.catalogReader = CalciteTools.getCalciteCatalogReader(logicalDag, calciteSchema);
-    this.logicalDag = logicalDag;
-
+    this.catalogReader = CalciteTools.getCalciteCatalogReader(calciteSchema);
   }
 
   public CachingSqrlSchema2 getSchema() {

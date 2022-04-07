@@ -9,20 +9,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.calcite.schema.SqrlCalciteTable;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqrlOperatorTable;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.IdentifierNamespace;
-import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class SqlNodeUtils {
@@ -99,7 +96,7 @@ public class SqlNodeUtils {
 
   public static SqlNode eq(SqlNode ident, SqlNode ident1) {
     SqlNode[] condition = new SqlNode[]{ident, ident1};
-    return new SqlBasicCall(SqrlOperatorTable.EQUALS, condition, SqlParserPos.ZERO);
+    return new SqlBasicCall(SqlStdOperatorTable.EQUALS, condition, SqlParserPos.ZERO);
   }
 
   public static SqlNode and(List<SqlNode> conditions) {
@@ -109,39 +106,18 @@ public class SqlNodeUtils {
     }
 
     SqlNode[] condition = conditions.toArray(SqlNode[]::new);
-    return new SqlBasicCall(SqrlOperatorTable.AND, condition, SqlParserPos.ZERO);
+    return new SqlBasicCall(SqlStdOperatorTable.AND, condition, SqlParserPos.ZERO);
   }
 
 
-  public static SqrlCalciteTable getTableForCall(SqlValidator validator, SqlBasicCall call) {
-    SqlNode tableIdent = call.getOperandList().get(0);
-    Preconditions.checkState(tableIdent instanceof SqlIdentifier);
-    IdentifierNamespace ns = (IdentifierNamespace) validator.getNamespace(tableIdent);
-    Preconditions.checkNotNull(ns);
-    Preconditions.checkState(ns.getRowType() instanceof SqrlCalciteTable);
-    return (SqrlCalciteTable) ns.getRowType();
-  }
 
   public static SqlNode toCall(String table, String alias) {
-    return new SqlBasicCall(SqrlOperatorTable.AS,
+    return new SqlBasicCall(SqlStdOperatorTable.AS,
         createIdent(table, alias),
         SqlParserPos.ZERO
     );
   }
-  public static SqlBasicCall toCall(SqlNode table, String alias) {
-    return new SqlBasicCall(SqrlOperatorTable.AS,
-        createIdent(table, alias),
-        SqlParserPos.ZERO
-    );
-  }
-
-  public static SqlNode[] createIdent(SqlNode node, String alias) {
-    return new SqlNode[]{
-        node,
-        new SqlIdentifier(alias, SqlParserPos.ZERO)
-    };
-  }
-
+  
   public static SqlNode[] createIdent(String table, String alias) {
     return new SqlIdentifier[]{
         new SqlIdentifier(table, SqlParserPos.ZERO),
@@ -172,7 +148,7 @@ public class SqlNodeUtils {
   public static SqlBasicCall unwrapCall(SqlNode node) {
     Preconditions.checkState(node instanceof SqlBasicCall);
     SqlBasicCall call = (SqlBasicCall) node;
-    Preconditions.checkState(call.getOperator() == SqrlOperatorTable.AS);
+    Preconditions.checkState(call.getOperator() == SqlStdOperatorTable.AS);
     return call;
   }
 

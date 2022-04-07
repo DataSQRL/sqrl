@@ -32,7 +32,6 @@ import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
-import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
@@ -45,24 +44,17 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ExpressionAnalyzer {
-
   private final JoinBuilder joinBuilder;
   FunctionLookup functionLookup = new FunctionLookup();
-  private List<FunctionCall> toMany = new ArrayList<>();
-  private List<Expression> toOne = new ArrayList<>();
   AliasGenerator gen = new AliasGenerator();
+
   public ExpressionAnalyzer(
       JoinBuilder joinBuilder) {
     this.joinBuilder = joinBuilder;
   }
 
-  public static class ExpressionAnalysis {
-
-  }
-
   public Expression analyze(Expression node, Scope scope) {
-    ExpressionAnalysis analysis = new ExpressionAnalysis();
-    Visitor visitor = new Visitor(analysis);
+    Visitor visitor = new Visitor();
     Expression newExpression =
         ExpressionTreeRewriter.rewriteWith(visitor, node, new Context(scope));
 
@@ -82,12 +74,6 @@ public class ExpressionAnalyzer {
   }
 
   class Visitor extends ExpressionRewriter<Context> {
-    private final ExpressionAnalysis analysis;
-
-    public Visitor(ExpressionAnalysis analysis) {
-      this.analysis = analysis;
-    }
-
     @Override
     public Expression rewriteFunctionCall(FunctionCall node, Context context,
         ExpressionTreeRewriter<Context> treeRewriter) {

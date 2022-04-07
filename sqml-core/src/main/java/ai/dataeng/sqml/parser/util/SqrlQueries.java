@@ -19,7 +19,7 @@ public class SqrlQueries {
     String partitionStr = String.join(", ", partition);
 
     List<String> order = statement.getOrder().stream()
-        .map(o->"`" + o.getSortKey().toString() +"`" + o.getOrdering().map(dir->" " + ((dir == Ordering.DESCENDING) ? "DESC" : "ASC")).orElse(""))
+        .map(o->o.getSortKey().toString() + o.getOrdering().map(dir->" " + ((dir == Ordering.DESCENDING) ? "DESC" : "ASC")).orElse(""))
         .collect(Collectors.toList());
     String orderStr = order.isEmpty() ? " " : " ORDER BY " + String.join(", ", order);
 

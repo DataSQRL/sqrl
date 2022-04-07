@@ -15,6 +15,7 @@ import ai.dataeng.sqml.parser.sqrl.schema.SqrlViewTable;
 import ai.dataeng.sqml.parser.sqrl.schema.StreamTable.StreamDataType;
 import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
 import ai.dataeng.sqml.parser.sqrl.transformers.ExpressionToQueryTransformer;
+import ai.dataeng.sqml.parser.util.SqrlQueries;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.CreateSubscription;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -236,14 +238,18 @@ public class Analyzer {
       Optional<Table> oldTable = lookup(node.getTable().toNamePath());
 
       // https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/sql/queries/deduplication/
-
-      SqlParser parser = SqlParser.create("SELECT _uuid, _ingest_time, customerid, email, name\n"
-          + "FROM (\n"
-          + "   SELECT _uuid, _ingest_time, customerid, email, name,\n"
-          + "     ROW_NUMBER() OVER (PARTITION BY customerid\n"
-          + "       ORDER BY _ingest_time DESC) AS rownum\n"
-          + "   FROM "+oldTable.get().getId().toString()+")\n"
-          + "WHERE rownum = 1");
+      String sql = SqrlQueries.generateDistinct(node,
+          node.getPartitionKeys().stream().map(e->e.getCanonical()).collect(
+          Collectors.toList()));
+      System.out.println(sql);
+      SqlParser parser = SqlParser.create(sql);
+//          "SELECT _uuid, _ingest_time, customerid, email, name\n"
+//          + "FROM (\n"
+//          + "   SELECT _uuid, _ingest_time, customerid, email, name,\n"
+//          + "     ROW_NUMBER() OVER (PARTITION BY customerid\n"
+//          + "       ORDER BY _ingest_time DESC) AS rownum\n"
+//          + "   FROM "+oldTable.get().getId().toString()+")\n"
+//          + "WHERE rownum = 1");
 
       SqlNode sqlNode = parser.parseQuery();
       SqlValidator validator = planner.getValidator();
@@ -327,15 +333,6 @@ public class Analyzer {
   }
 
   public Optional<Table> lookup(NamePath namePath) {
-    //Get w/context in path
-//    if (namePath.getFirst().equals(Name.SELF_IDENTIFIER)) {
-//      Table table = scope.getContextTable().get();
-//      if (namePath.getLength() > 1) {
-//        table = table.walk(namePath.popFirst())
-//            .get();
-//      }
-//      return Optional.of(table);
-//    } else {
       Optional<Table> schemaTable = this.logicalDag.getSchema().getByName(namePath.getFirst());
       if (schemaTable.isPresent()) {
         if (namePath.getLength() == 1) {

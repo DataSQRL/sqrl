@@ -2,36 +2,25 @@ package ai.dataeng.sqml;
 
 import ai.dataeng.execution.SqlClientProvider;
 import ai.dataeng.sqml.config.SqrlSettings;
-import ai.dataeng.sqml.config.engines.JDBCConfiguration;
-import ai.dataeng.sqml.config.engines.JDBCConfiguration.Dialect;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.config.metadata.MetadataStore;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.config.util.NamedIdentifier;
-import ai.dataeng.sqml.execution.FlinkPipelineGenerator;
-import ai.dataeng.sqml.execution.GraphqlGenerator;
-import ai.dataeng.sqml.execution.SqlGenerator;
-import ai.dataeng.sqml.execution.SqrlExecutor;
 import ai.dataeng.sqml.execution.StreamEngine;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitor;
+import ai.dataeng.sqml.parser.Script;
 import ai.dataeng.sqml.parser.ScriptParser;
-import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.operator.ShadowingContainer;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
 import ai.dataeng.sqml.parser.sqrl.analyzer.Analyzer;
 import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
 import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
-import ai.dataeng.sqml.planner.SqrlPlanner;
-import ai.dataeng.sqml.planner.nodes.LogicalFlinkSink;
-import ai.dataeng.sqml.planner.nodes.LogicalPgSink;
-import ai.dataeng.sqml.parser.Script;
-import ai.dataeng.sqml.parser.operator.ImportResolver;
 import ai.dataeng.sqml.tree.ScriptNode;
-import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
-import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
@@ -40,15 +29,10 @@ import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.table.api.TableDescriptor;
-import org.apache.flink.table.api.TableResult;
-import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 
 @Slf4j
 public class Environment implements Closeable {
@@ -118,9 +102,9 @@ public class Environment implements Closeable {
     SqrlScript mainScript = bundle.getMainScript();
 
     //Instantiate import resolver and register user schema
-    ImportResolver importResolver = settings.getImportManagerProvider().createImportManager(
+    ImportManager importManager = settings.getImportManagerProvider().createImportManager(
         datasetRegistry);
-    ErrorCollector importErrors = importResolver.getImportManager()
+    ErrorCollector importErrors = importManager
             .registerUserSchema(mainScript.getSchema());
     Preconditions.checkArgument(!importErrors.isFatal(),
             importErrors);
@@ -129,8 +113,8 @@ public class Environment implements Closeable {
     ScriptNode scriptNode = scriptParser.parse(mainScript);
 
     LogicalDag dag = new LogicalDag(new ShadowingContainer<>());
-    CalcitePlanner calcitePlanner = new CalcitePlanner(dag);
-    Analyzer analyzer = new Analyzer(importResolver.getImportManager(), calcitePlanner, new TableFactory(calcitePlanner),
+    CalcitePlanner calcitePlanner = new CalcitePlanner();
+    Analyzer analyzer = new Analyzer(importManager, calcitePlanner, new TableFactory(calcitePlanner),
         dag);
     analyzer.analyze(scriptNode);
 //

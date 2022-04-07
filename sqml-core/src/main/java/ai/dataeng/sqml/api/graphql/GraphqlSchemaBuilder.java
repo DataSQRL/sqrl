@@ -8,7 +8,6 @@ import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ShadowingContainer;
 import ai.dataeng.sqml.type.ArrayType;
-import ai.dataeng.sqml.type.CalciteDelegatingField;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BigIntegerType;
@@ -224,12 +223,6 @@ public class GraphqlSchemaBuilder {
         argument = new GraphqlArgumentBuilder(rel.getMultiplicity(), rel.getToTable(), false, typeCatalog).build();
       } else if (field instanceof Column) {
         Column col = (Column) field;
-        Visitor sqmlTypeVisitor = new Visitor(Map.of());
-        output = col.getType().accept(sqmlTypeVisitor, null)
-            .orElseThrow(()->new RuntimeException("Could not find type " + col.getType().getName()));
-        argument = List.of();
-      } else if (field instanceof CalciteDelegatingField) {
-        CalciteDelegatingField col = (CalciteDelegatingField) field;
         Visitor sqmlTypeVisitor = new Visitor(Map.of());
         output = col.getType().accept(sqmlTypeVisitor, null)
             .orElseThrow(()->new RuntimeException("Could not find type " + col.getType().getName()));

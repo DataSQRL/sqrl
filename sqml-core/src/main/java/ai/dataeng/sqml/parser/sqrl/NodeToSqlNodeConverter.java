@@ -101,6 +101,9 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.TimeString;
 import org.apache.calcite.util.TimestampString;
 
+/**
+ * Converts sqrl's ast to calcite's ast
+ */
 public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
 
   private final ImmutableListMultimap<String, SqlOperator> opMap;

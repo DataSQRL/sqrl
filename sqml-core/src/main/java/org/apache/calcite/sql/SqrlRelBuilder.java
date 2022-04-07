@@ -28,14 +28,6 @@ public class SqrlRelBuilder extends RelBuilder {
     return this;
   }
 
-  public SqrlRelBuilder scanStream(SourceTableImport ordersImp) {
-    RelOptTable table = relOptSchema.getTableForMember(List.of(ordersImp.getTableName().getCanonical()));
-    StreamTableScan scan = new StreamTableScan(this.cluster, RelTraitSet.createEmpty(), List.of(), table, ordersImp);
-
-    this.push(scan);
-    return this;
-  }
-
   public SqrlRelBuilder scanShred(Table fromTable, String name) {
     RelOptTable table = relOptSchema.getTableForMember(List.of(name));
     ShredTableScan scan = new ShredTableScan(this.cluster, RelTraitSet.createEmpty(), List.of(), table, fromTable);

@@ -91,15 +91,7 @@ public class Scope {
     throw new RuntimeException("Cannot qualify");
   }
 
-  public Optional<JoinCriteria> getCriteria() {
-    return null;
-  }
-
-  public Join.Type getJoinType() {
-    return null;
-  }
-
   public Optional<JoinCriteria> getAdditionalJoinCondition() {
-    return null;
+    return Optional.empty();
   }
 }

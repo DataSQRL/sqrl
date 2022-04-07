@@ -354,65 +354,6 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope());
   }
 
-  private Scope computeAndAssignOutputScope(QuerySpecification node, Scope scope,
-      Scope sourceScope) {
-//    Builder<StandardField> outputFields = ImmutableList.builder();
-
-    for (SelectItem item : node.getSelect().getSelectItems()) {
-      if (item instanceof AllColumns) {
-        Optional<NamePath> starPrefix = ((AllColumns) item).getPrefix();
-
-        //Get all fields
-
-//        for (Field field : sourceScope.resolveFieldsWithPrefix(starPrefix)) {
-//          outputFields.add(new StandardField(field.getName(), field.getType(), List.of(), Optional.empty()));
-//        }
-      } else if (item instanceof SingleColumn) {
-        SingleColumn column = (SingleColumn) item;
-
-        Expression expression = column.getExpression();
-        Optional<Identifier> field = column.getAlias();
-//
-//        Optional<QualifiedObjectName> originTable = Optional.empty();
-//        Optional<String> originColumn = Optional.empty();
-        NamePath name = null;
-
-        if (expression instanceof Identifier) {
-          name = ((Identifier) expression).getNamePath();
-        }
-
-        //Need to track the origin table (the sql-node table)
-        if (name != null) {
-//            List<AnalyzerField> matchingFields = sourceScope.resolveFields(name);
-//            if (!matchingFields.isEmpty()) {
-//              originTable = matchingFields.get(0).getOriginTable();
-//              originColumn = matchingFields.get(0).getOriginColumnName();
-//            }
-        }
-
-        if (field.isEmpty()) {
-          if (name != null) {
-//            field = Optional.of(new Identifier(getLast(name.getOriginalParts())));
-          }
-        }
-//
-//        String identifierName = field.map(Identifier::getValue)
-//            .orElse("VAR");
-
-//        outputFields.add(
-//            new StandardField(Name.of(identifierName, NameCanonicalizer.SYSTEM),
-//            analysis.getType(expression), List.of(), Optional.empty())
-//            column.getAlias().isPresent())
-//        );
-      }
-      else {
-        throw new IllegalArgumentException("Unsupported SelectItem type: " + item.getClass().getName());
-      }
-    }
-
-    return createScope(node, scope);
-  }
-
   private void analyzeHaving(QuerySpecification node, Scope scope) {
     if (node.getHaving().isPresent()) {
       Expression predicate = node.getHaving().get();
