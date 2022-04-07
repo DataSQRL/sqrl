@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.io.formats;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
+import ai.dataeng.sqml.io.impl.InputPreview;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.*;
@@ -20,13 +21,8 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
     }
 
     @Override
-    public Optional<Configuration> getDefaultConfiguration() {
-        return Optional.of(new Configuration());
-    }
-
-    @Override
-    public Optional<ConfigurationInference<Configuration>> getConfigInferer() {
-        return Optional.empty();
+    public Configuration getDefaultConfiguration() {
+        return new Configuration();
     }
 
     @Override
@@ -68,7 +64,7 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
     public static class Configuration implements FormatConfiguration {
 
         @Override
-        public boolean validate(ErrorCollector errors) {
+        public boolean initialize(InputPreview preview, ErrorCollector errors) {
             return true;
         }
 

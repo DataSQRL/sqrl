@@ -2,28 +2,38 @@ package ai.dataeng.sqml.io.sources;
 
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
-import ai.dataeng.sqml.config.error.ErrorCollector;
+import lombok.*;
 
-import java.util.Collection;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 
-import lombok.NonNull;
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString
+public class DataSource implements Serializable {
 
-public interface DataSource {
+    String name;
+    DataSourceImplementation implementation;
+    DataSourceConfiguration config;
 
-    /**
-     * The name of the dataset produced by this data source.
-     * The name must be unique within a server instance.
-     *
-     * @return name of dataset
-     */
-    @NonNull Name getDatasetName();
+    public DataSource(DataSourceUpdate update) {
+        this(update.getName(),update.getSource(), update.getConfig());
+    }
 
-    @NonNull NameCanonicalizer getCanonicalizer();
+    public NameCanonicalizer getCanonicalizer() {
+        return config.getNameCanonicalizer();
+    }
 
-    Collection<SourceTableConfiguration> discoverTables(ErrorCollector errors);
+    public Name getName() {
+        return Name.system(name);
+    }
 
-    boolean update(@NonNull DataSourceConfiguration config, @NonNull ErrorCollector errors);
+    public DataSourceImplementation getImplementation() {
+        return implementation;
+    }
 
-    DataSourceConfiguration getConfiguration();
-
+    public DataSourceConfiguration getConfig() {
+        return config;
+    }
 }

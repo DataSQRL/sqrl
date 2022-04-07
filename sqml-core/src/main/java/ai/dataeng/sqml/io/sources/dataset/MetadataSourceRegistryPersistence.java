@@ -2,6 +2,7 @@ package ai.dataeng.sqml.io.sources.dataset;
 
 import ai.dataeng.sqml.config.metadata.MetadataStore;
 import ai.dataeng.sqml.config.provider.DatasetRegistryPersistenceProvider;
+import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
@@ -26,9 +27,9 @@ public class MetadataSourceRegistryPersistence implements DatasetRegistryPersist
 
 
     @Override
-    public Collection<DataSourceStorage> getDatasets() {
+    public Collection<DataSource> getDatasets() {
         return store.getSubKeys(STORE_DATASET_KEY).stream().map(dsName -> {
-            DataSourceStorage config = store.get(DataSourceStorage.class,STORE_DATASET_KEY,dsName,STORE_SOURCE_CONFIG_KEY);
+            DataSource config = store.get(DataSource.class,STORE_DATASET_KEY,dsName,STORE_SOURCE_CONFIG_KEY);
             Preconditions.checkArgument(config!=null,
                     "Persistence of configuration failed.");
             return config;
@@ -36,8 +37,8 @@ public class MetadataSourceRegistryPersistence implements DatasetRegistryPersist
     }
 
     @Override
-    public void putDataset(Name dataset, DataSourceConfiguration datasource) {
-        store.put(new DataSourceStorage(dataset.getDisplay(), datasource),STORE_DATASET_KEY, store.name2Key(dataset),STORE_SOURCE_CONFIG_KEY);
+    public void putDataset(Name dataset, DataSource datasource) {
+        store.put(datasource,STORE_DATASET_KEY, store.name2Key(dataset),STORE_SOURCE_CONFIG_KEY);
     }
 
     @Override

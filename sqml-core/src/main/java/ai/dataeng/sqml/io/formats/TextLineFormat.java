@@ -17,9 +17,6 @@ public interface TextLineFormat<C extends FormatConfiguration> extends Format<C>
 
     }
 
-    @Override
-    Optional<ConfigurationInference<C>> getConfigInferer();
-
     interface ConfigurationInference<C extends FormatConfiguration> extends Format.ConfigurationInference<C> {
 
         void nextSegment(@NonNull BufferedReader textInput) throws IOException;

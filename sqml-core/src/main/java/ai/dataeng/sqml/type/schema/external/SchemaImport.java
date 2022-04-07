@@ -196,7 +196,7 @@ public class SchemaImport {
             errors.fatal( "Missing or invalid field name: %s", sname);
             return Optional.empty();
         } else {
-            Name name = source.toName(sname);
+            Name name = source.getCanonicalizer().name(sname);
             return Optional.of(name);
         }
     }

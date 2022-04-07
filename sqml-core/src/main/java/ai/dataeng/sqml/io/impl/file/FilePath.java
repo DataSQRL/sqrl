@@ -35,6 +35,8 @@ public class FilePath implements Serializable {
     private static final Set<String> COMPRESSION_EXTENSIONS = StandardDeCompressors.getCommonSuffixes().stream()
             .map(String::toLowerCase).collect(Collectors.toSet());
 
+    private static final int DELIMITER_CHAR = 46;
+
     private final Path flinkPath;
 
     public FilePath(@NonNull String uri) {
@@ -156,9 +158,9 @@ public class FilePath implements Serializable {
 
     }
 
-    private static Pair<String,String> separateExtension(String fileName) {
+    public static Pair<String,String> separateExtension(String fileName) {
         if (Strings.isNullOrEmpty(fileName)) return null;
-        int offset = fileName.lastIndexOf(46);
+        int offset = fileName.lastIndexOf(DELIMITER_CHAR);
         if (offset == -1) {
             return Pair.of(fileName,"");
         } else {

@@ -1,17 +1,11 @@
 package ai.dataeng.sqml.io.sinks.registry;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
-import ai.dataeng.sqml.config.error.ErrorPrefix;
 import ai.dataeng.sqml.io.sinks.DataSink;
 import ai.dataeng.sqml.io.sinks.DataSinkRegistration;
-import ai.dataeng.sqml.io.sources.DataSource;
-import ai.dataeng.sqml.io.sources.DataSourceUpdate;
-import ai.dataeng.sqml.io.sources.dataset.DatasetRegistryPersistence;
-import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.tree.name.Name;
 import lombok.NonNull;
 
-import java.io.Closeable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,7 +33,7 @@ public class DataSinkRegistry implements DataSinkLookup {
     public synchronized DataSink addOrUpdateSink
             (@NonNull DataSinkRegistration sinkReg,
              @NonNull ErrorCollector errors) {
-        if (!sinkReg.validateAndInitialize(errors)) return null;
+        if (!sinkReg.initialize(errors)) return null;
         DataSink sink = new DataSink(sinkReg);
         if (dataSinks.containsKey(sink.getName())) {
             errors.notice("Replacing sink with name: %s", sinkReg.getName());

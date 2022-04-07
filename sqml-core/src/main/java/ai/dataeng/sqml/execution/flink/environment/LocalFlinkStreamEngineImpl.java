@@ -4,6 +4,8 @@ import ai.dataeng.sqml.execution.StreamEngine;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import lombok.NonNull;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -12,15 +14,15 @@ public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
     private final ConcurrentHashMap<String,LocalJob> jobs = new ConcurrentHashMap<>();
 
     @Override
-    public StreamExecutionEnvironment createStream() {
+    public FlinkStreamBuilder createStream() {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
 //        FlinkUtilities.enableCheckpointing(env);
-        return env;
+        return new FlinkStreamBuilder(this,env);
     }
 
     @Override
-    public FlinkJob createStreamJob(StreamExecutionEnvironment execEnv, JobType type) {
+    public FlinkJob createStreamJob(@NonNull StreamExecutionEnvironment execEnv, @NonNull JobType type) {
         return new LocalJob(execEnv,type);
     }
 

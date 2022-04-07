@@ -6,11 +6,12 @@ import ai.dataeng.sqml.config.GlobalConfiguration;
 import ai.dataeng.sqml.config.SqrlSettings;
 import ai.dataeng.sqml.config.engines.FlinkConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
-import ai.dataeng.sqml.io.impl.file.FileSinkConfiguration;
+import ai.dataeng.sqml.io.formats.JsonLineFormat;
+import ai.dataeng.sqml.io.impl.file.DirectorySinkImplementation;
+import ai.dataeng.sqml.io.impl.file.DirectorySourceImplementation;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
-import ai.dataeng.sqml.io.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.config.error.ErrorCollector;
@@ -49,9 +50,10 @@ public class ConfigurationTest {
         assertNotNull(config.getEngines().getFlink());
         assertEquals(config.getEnvironment().getMetastore().getDatabase(),"system");
         assertEquals(1, config.getSources().size());
-        assertTrue(config.getSources().get(0).getConfig() instanceof FileSourceConfiguration);
+        assertTrue(config.getSources().get(0).getSource() instanceof DirectorySourceImplementation);
         assertEquals(1, config.getSinks().size());
-        assertTrue(config.getSinks().get(0).getConfig() instanceof FileSinkConfiguration);
+        assertTrue(config.getSinks().get(0).getSink() instanceof DirectorySinkImplementation);
+        assertTrue(config.getSinks().get(0).getConfig().getFormat() instanceof JsonLineFormat.Configuration);
         assertEquals("local",config.getSinks().get(0).getName());
     }
 
@@ -60,6 +62,7 @@ public class ConfigurationTest {
         SqrlSettings settings = getDefaultSettings();
         Environment env = Environment.create(settings);
         assertNotNull(env.getDatasetRegistry());
+        env.close();
     }
 
     @Test
@@ -70,7 +73,7 @@ public class ConfigurationTest {
         assertNotNull(registry);
 
         String dsName = "bookclub";
-        FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
+        DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
                 .uri(DATA_DIR.toAbsolutePath().toString())
                 .build();
 
@@ -98,7 +101,7 @@ public class ConfigurationTest {
         tablenames = ds.getTables().stream().map(SourceTable::getName)
                 .map(Name::getCanonical).collect(Collectors.toSet());
         assertEquals(ImmutableSet.of("book","person"), tablenames);
-
+        env.close();
     }
 
     @Test
@@ -108,7 +111,7 @@ public class ConfigurationTest {
         DatasetRegistry registry = env.getDatasetRegistry();
 
         String dsName = "bookclub";
-        FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
+        DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
                 .uri(DATA_DIR.toAbsolutePath().toString())
                 .build();
 
@@ -127,6 +130,7 @@ public class ConfigurationTest {
         assertNotNull(stats);
         assertEquals(4,stats.getCount());
         assertEquals(5, person.getStatistics().getCount());
+        env.close();
     }
 
     public static void validateConfig(GlobalConfiguration config) {

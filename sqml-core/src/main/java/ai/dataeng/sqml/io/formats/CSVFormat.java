@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.io.formats;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
+import ai.dataeng.sqml.io.impl.InputPreview;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -22,6 +23,11 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
     @Override
     public Parser getParser(Configuration config) {
         return new CSVFormatParser(config);
+    }
+
+    @Override
+    public Configuration getDefaultConfiguration() {
+        return new Configuration();
     }
 
 
@@ -73,16 +79,6 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
     }
 
     @Override
-    public Optional<Configuration> getDefaultConfiguration() {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<ConfigurationInference<CSVFormat.Configuration>> getConfigInferer() {
-        return Optional.of(new Inferer());
-    }
-
-    @Override
     public Writer getWriter(Configuration configuration) {
         return new CSVWriter();
     }
@@ -96,21 +92,17 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
         private Splitter splitter;
         private String[] header;
 
-        public Inferer() {
-            this.splitter = getSplitter(DEFAULT_DELIMITER);
+        public Inferer(String delimiter) {
+            this.splitter = getSplitter(delimiter);
         }
 
         @Override
         public double getConfidence() {
-            return header==null?0:0.97;
+            return header==null?0:0.98;
         }
 
-
-        @Override
-        public Optional<Configuration> getConfiguration() {
-            if (header==null || header.length==0) return Optional.empty();
-            return Optional.of(Configuration.builder()
-                    .header(header).build());
+        boolean foundHeader() {
+            return header!=null && header.length>0;
         }
 
         @Override
@@ -144,10 +136,9 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
     @Getter
     public static class Configuration implements FormatConfiguration {
 
-        @NonNull @Builder.Default @NotNull @NotEmpty
+        @Builder.Default
         private String delimiter = DEFAULT_DELIMITER;
         private String commentPrefix;
-        @NonNull @NotNull @NotEmpty
         private String[] header;
 
         public static Configuration getDefault() {
@@ -155,13 +146,22 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
         }
 
         @Override
-        public boolean validate(ErrorCollector errors) {
+        public boolean initialize(InputPreview preview, @NonNull ErrorCollector errors) {
             if (Strings.isNullOrEmpty(delimiter)) {
                 errors.fatal("Need to specify valid delimiter, given: %s",delimiter);
                 return false;
             }
             if (header == null || header.length==0) {
-                errors.fatal("Need to specify a header");
+                if (preview != null) {
+                    //Try to infer
+                    FormatConfigInferer fci = new FormatConfigInferer();
+                    Inferer inferer = new Inferer(delimiter);
+                    fci.inferConfig(preview, inferer);
+                    if (inferer.foundHeader()) header = inferer.header;
+                }
+            }
+            if (header == null || header.length==0) {
+                errors.fatal("Need to specify a header (could not be inferred)");
                 return false;
             }
             return true;

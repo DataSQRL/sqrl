@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
+import ai.dataeng.sqml.io.sources.DataSource;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
@@ -15,9 +16,9 @@ import java.util.Set;
 
 public interface DatasetRegistryPersistence {
 
-    Collection<DataSourceStorage> getDatasets();
+    Collection<DataSource> getDatasets();
 
-    void putDataset(Name dataset, DataSourceConfiguration datasource);
+    void putDataset(Name dataset, DataSource datasource);
 
     boolean removeDataset(Name dataset);
 
@@ -32,15 +33,5 @@ public interface DatasetRegistryPersistence {
     void putTableStatistics(Name datasetName, Name tableName, SourceTableStatistics stats);
 
     boolean removeTableStatistics(Name datasetName, Name tableName);
-
-    @Getter
-    @AllArgsConstructor
-    @NoArgsConstructor
-    class DataSourceStorage implements Serializable {
-
-        String name;
-        DataSourceConfiguration config;
-
-    }
 
 }

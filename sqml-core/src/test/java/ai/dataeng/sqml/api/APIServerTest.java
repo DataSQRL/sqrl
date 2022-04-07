@@ -7,11 +7,10 @@ import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.config.server.ApiVerticle;
 import ai.dataeng.sqml.config.util.StringNamedId;
-import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
+import ai.dataeng.sqml.io.impl.file.DirectorySourceImplementation;
 import ai.dataeng.sqml.io.sources.DataSourceUpdate;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
-import ai.dataeng.sqml.io.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -64,10 +63,10 @@ public class APIServerTest {
     }
 
     final String dsName = "bookclub";
-    final FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
+    final DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
             .uri(ConfigurationTest.DATA_DIR.toAbsolutePath().toString())
             .build();
-    final DataSourceUpdate dsUpdate = DataSourceUpdate.builder().name(dsName).config(fileConfig).build();
+    final DataSourceUpdate dsUpdate = DataSourceUpdate.builder().name(dsName).source(fileConfig).build();
     final JsonObject fileObj = JsonObject.mapFrom(dsUpdate);
     final String deployName = "test";
     final String deployVersion = "v2";
@@ -83,17 +82,6 @@ public class APIServerTest {
             .version(deployVersion)
             .build();
     final JsonObject deploymentObj = JsonObject.mapFrom(deployConfig);
-
-    public static JsonObject sourceToJson(String name, DataSourceConfiguration config) {
-        JsonObject res = new JsonObject();
-        res.put("name",name);
-        String sourceType;
-        if (config instanceof FileSourceConfiguration) sourceType = "file";
-        else throw new UnsupportedOperationException();
-        res.put("sourceType",sourceType);
-        res.put("config",JsonObject.mapFrom(config));
-        return res;
-    }
 
     @Test
     public void testAddingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {

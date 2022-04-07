@@ -7,7 +7,7 @@ import ai.dataeng.sqml.ScriptDeployment;
 import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
-import ai.dataeng.sqml.io.impl.file.FileSourceConfiguration;
+import ai.dataeng.sqml.io.impl.file.DirectorySourceImplementation;
 import ai.dataeng.sqml.planner.Script;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,7 +39,7 @@ public class C360Test {
   Environment env;
   private VertxInternal vertx;
   public static ScriptBundle bundle = createBundle();
-  public static FileSourceConfiguration dd = FileSourceConfiguration.builder()
+  public static DirectorySourceImplementation dd = DirectorySourceImplementation.builder()
       .uri(RETAIL_DATA_DIR.toAbsolutePath().toString()).build();
 
   @SneakyThrows

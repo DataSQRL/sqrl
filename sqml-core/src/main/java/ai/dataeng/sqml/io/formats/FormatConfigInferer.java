@@ -2,34 +2,34 @@ package ai.dataeng.sqml.io.formats;
 
 import ai.dataeng.sqml.io.impl.InputPreview;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Optional;
 
 @AllArgsConstructor
-public class FormatConfigInferer<C extends FormatConfiguration> {
+@NoArgsConstructor
+public class FormatConfigInferer {
 
-    final Format.ConfigurationInference<C> inferer;
-    final InputPreview preview;
+    public static double DEFAULT_CONFIDENCE = 0.95;
+    public static long DEFAULT_MAX_TIME_MILLIS = 500;
 
-    public Optional<C> inferConfig() {
-        if (inferer instanceof TextLineFormat.ConfigurationInference) {
-            TextLineFormat.ConfigurationInference<C> textInferer = (TextLineFormat.ConfigurationInference)inferer;
-            Iterator<BufferedReader> inputs = preview.getTextPreview().iterator();
-            while (inferer.getConfidence()<0.95 && inputs.hasNext()) {
-                try (BufferedReader r = inputs.next()) {
-                    textInferer.nextSegment(r);
-                } catch (IOException e) {
-                    //Ignore and continue
-                }
+    private double confidenceThreshold = DEFAULT_CONFIDENCE;
+    private long maxTimeMillis = DEFAULT_MAX_TIME_MILLIS;
+
+    public boolean inferConfig(InputPreview preview, TextLineFormat.ConfigurationInference inferer) {
+        Iterator<BufferedReader> inputs = preview.getTextPreview().iterator();
+        long startTime = System.currentTimeMillis();
+        while (inferer.getConfidence()<confidenceThreshold && inputs.hasNext() &&
+                (System.currentTimeMillis()-startTime < maxTimeMillis)) {
+            try (BufferedReader r = inputs.next()) {
+                inferer.nextSegment(r);
+            } catch (IOException e) {
+                //Ignore and continue
             }
-            return inferer.getConfiguration();
-        } else {
-            //We currently do not support inferring formats from non-text formats
-            return Optional.empty();
         }
+        return true;
     }
 
 

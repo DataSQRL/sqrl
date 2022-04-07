@@ -3,6 +3,7 @@ package ai.dataeng.sqml.config.server;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.config.error.ErrorMessage;
 import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
+import ai.dataeng.sqml.io.sources.DataSourceImplementation;
 import ai.dataeng.sqml.io.sources.DataSourceUpdate;
 import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
@@ -172,10 +173,9 @@ public class SourceHandler {
     @AllArgsConstructor
     static class DataSourceResult {
 
-        private String name;
-
-        private DataSourceConfiguration config;
-
+        String name;
+        DataSourceImplementation source;
+        DataSourceConfiguration config;
         List<SourceTableConfiguration> tables;
 
         List<ErrorMessage> messages;
@@ -186,7 +186,8 @@ public class SourceHandler {
 
         DataSourceResult(@NonNull SourceDataset dataset, ErrorCollector errors) {
             this(dataset.getName().getDisplay(),
-                    dataset.getSource().getConfiguration(),
+                    dataset.getSource().getImplementation(),
+                    dataset.getSource().getConfig(),
                     dataset.getTables().stream().map(SourceTable::getConfiguration).collect(Collectors.toList()),
                     errors==null?null:errors.getAll());
 

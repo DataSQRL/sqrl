@@ -68,6 +68,7 @@ public class ApiVerticle extends AbstractVerticle {
                     routerBuilder.operation("deployScript").handler(handleException(deployHandler.deploy()));
                     routerBuilder.operation("getDeploymentById").handler(deployHandler.getDeploymentById());
                     routerBuilder.operation("compileScript").handler(deployHandler.compile());
+                    //Get and delete individual deployment
 
                     Router router = routerBuilder.createRouter(); // <1>
                     //Generate generic error handlers

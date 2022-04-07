@@ -3,14 +3,16 @@ package ai.dataeng.sqml.flink;
 import ai.dataeng.sqml.Environment;
 import ai.dataeng.sqml.api.ConfigurationTest;
 import ai.dataeng.sqml.config.SqrlSettings;
+import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
+import ai.dataeng.sqml.execution.flink.environment.LocalFlinkStreamEngineImpl;
 import ai.dataeng.sqml.execution.flink.ingest.DataStreamProvider;
 import ai.dataeng.sqml.execution.flink.ingest.SchemaValidationProcess;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlinkTableConverter;
+import ai.dataeng.sqml.io.impl.file.DirectorySourceImplementation;
 import ai.dataeng.sqml.io.sources.SourceRecord;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
-import ai.dataeng.sqml.io.impl.file.FileSourceConfiguration;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.planner.operator.C360Test;
 import ai.dataeng.sqml.planner.operator.ImportManager;
@@ -66,7 +68,7 @@ public class IngestAndSchemaTest {
         ErrorCollector errors = ErrorCollector.root();
 
         String dsName = "bookclub";
-        FileSourceConfiguration fileConfig = FileSourceConfiguration.builder()
+        DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
                 .uri(ConfigurationTest.DATA_DIR.toAbsolutePath().toString())
                 .build();
         registry.addOrUpdateSource(dsName, fileConfig, errors);
@@ -74,7 +76,7 @@ public class IngestAndSchemaTest {
         assertFalse(errors.isFatal());
 
         String ds2Name = "c360";
-        fileConfig = FileSourceConfiguration.builder()
+        fileConfig = DirectorySourceImplementation.builder()
                 .uri(C360Test.RETAIL_DATA_DIR.toAbsolutePath().toString())
                 .build();
         registry.addOrUpdateSource(ds2Name, fileConfig, errors);
@@ -102,15 +104,16 @@ public class IngestAndSchemaTest {
         ImportManager.SourceTableImport ordersImp = imports.importTable(Name.system(ds2Name),Name.system("orders"),schemaErrs);
         Pair<Schema, TypeInformation> ordersSchema = tbConverter.tableSchemaConversion(ordersImp.getSourceSchema());
 
-
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        LocalFlinkStreamEngineImpl flink = new LocalFlinkStreamEngineImpl();
+        FlinkStreamEngine.Builder streamBuilder = flink.createStream();
+        StreamExecutionEnvironment env = streamBuilder.getEnvironment();
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
         final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>("SCHEMA_ERROR"){};
 
         ImportManager.SourceTableImport imp = ordersImp;
         Pair<Schema, TypeInformation> schema = ordersSchema;
 
-        DataStream<SourceRecord.Raw> stream = new DataStreamProvider().getDataStream(imp.getTable(),env);
+        DataStream<SourceRecord.Raw> stream = new DataStreamProvider().getDataStream(imp.getTable(),streamBuilder);
         SingleOutputStreamOperator<SourceRecord.Named> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, imp.getSourceSchema(),
                 SchemaAdjustmentSettings.DEFAULT, imp.getTable().getDataset().getDigest()));
         SingleOutputStreamOperator<Row> rows = validate.map(tbConverter.getRowMapper(imp.getSourceSchema()),schema.getRight());

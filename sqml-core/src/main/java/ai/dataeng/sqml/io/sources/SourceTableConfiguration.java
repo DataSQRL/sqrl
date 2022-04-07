@@ -9,7 +9,6 @@ import ai.dataeng.sqml.io.formats.*;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.*;
 
@@ -30,18 +29,14 @@ public class SourceTableConfiguration implements Serializable {
     String name;
     @OptionalMinString
     String identifier;
-    @OptionalMinString
-    String format;
-    @Valid FormatConfiguration formatConfig;
+    @Valid @NonNull @NotNull
+    FormatConfiguration format;
 
     public SourceTableConfiguration(@NonNull String name,
-                              @NonNull String format) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(format));
-        Preconditions.checkNotNull(!Strings.isNullOrEmpty(name));
+                              @NonNull FormatConfiguration format) {
         this.name = name;
         this.identifier = name;
         this.format = format;
-        this.formatConfig = null;
     }
 
     public boolean validateAndInitialize(DataSource source, ErrorCollector errors) {
@@ -54,50 +49,17 @@ public class SourceTableConfiguration implements Serializable {
         if (Strings.isNullOrEmpty(identifier)) identifier = name;
         identifier = source.getCanonicalizer().getCanonical(identifier);
 
-        if (formatConfig == null) {
-            //Try to infer it using the specified format
-            if (Strings.isNullOrEmpty(format)) {
-                errors.fatal("Need to specify a table format: %s", format);
-                return false;
-            }
-            format = format.trim().toLowerCase();
-            if (!FileFormat.validFormat(format)) {
-                errors.fatal("Table has invalid format: %s", format);
-                return false;
-            }
-            Format<FormatConfiguration> formatImpl = FileFormat.getFormat(format).getImplementation();
-            Format.ConfigurationInference<FormatConfiguration> inferer = formatImpl.getConfigInferer().orElse(null);
-            if (inferer != null) {
-                InputPreview preview = new InputPreview(source,this);
-                FormatConfigInferer<FormatConfiguration> fci = new FormatConfigInferer<>(inferer,preview);
-                formatConfig = fci.inferConfig().orElse(null);
-            } else {
-                //See if we can use default
-                formatConfig = formatImpl.getDefaultConfiguration().orElse(null);
-            }
-        }
-        if (formatConfig == null) {
-            errors.fatal("Table does not have format configuration and it cannot be inferred");
-            return false;
-        } else {
-            if (formatConfig.validate(errors.resolve("format"))) {
-                format = formatConfig.getName();
-                return true;
-            } else {
-                return false;
-            }
-        }
+        return format.initialize(new InputPreview(source,this), errors.resolve("format"));
     }
 
     @JsonIgnore
     public Format.Parser getFormatParser() {
-        return formatConfig.getImplementation().getParser(formatConfig);
+        return format.getImplementation().getParser(format);
     }
 
     @JsonIgnore
     public FileFormat getFileFormat() {
-        if (formatConfig!=null) return formatConfig.getFileFormat();
-        return FileFormat.getFormat(format);
+        return format.getFileFormat();
     }
 
     public boolean update(@NonNull SourceTableConfiguration config, @NonNull ErrorCollector errors) {

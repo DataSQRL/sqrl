@@ -6,7 +6,6 @@ import ai.dataeng.sqml.tree.name.Name;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import lombok.Value;
 
 @AllArgsConstructor
 @ToString
@@ -14,29 +13,30 @@ import lombok.Value;
 public class DataSink {
 
     private final Name name;
+    private final DataSinkImplementation implementation;
     private final DataSinkConfiguration configuration;
-    private final FormatConfiguration format;
 
     public DataSink(DataSinkRegistration reg) {
         name = Name.system(reg.getName());
+        implementation = reg.getSink();
         configuration = reg.getConfig();
-        format = reg.getFormatConfig();
     }
 
     public Name getName() {
         return name;
     }
 
-    public DataSinkConfiguration getConfiguration() {
-        return configuration;
+    public DataSinkImplementation getImplementation() {
+        return implementation;
     }
 
     public DataSinkRegistration getRegistration() {
-        return new DataSinkRegistration(name.getDisplay(),configuration,format.getName(),format);
+        return new DataSinkRegistration(name.getDisplay(), implementation, configuration);
     }
 
     public Format.Writer getWriter() {
-        return format.getImplementation().getWriter(format);
+        FormatConfiguration formatConfig = configuration.getFormat();
+        return formatConfig.getImplementation().getWriter(formatConfig);
     }
 
     public TableSink getTableSink(Name name) {

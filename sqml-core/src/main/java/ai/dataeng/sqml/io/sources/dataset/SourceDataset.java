@@ -35,7 +35,7 @@ public class SourceDataset {
 
     void initializeTables() {
         //Read existing tables within dataset from store
-        for (SourceTableConfiguration tblConfig : registry.persistence.getTables(source.getDatasetName())) {
+        for (SourceTableConfiguration tblConfig : registry.persistence.getTables(getName())) {
             ErrorCollector errors = ErrorCollector.fromPrefix(ErrorPrefix.INITIALIZE);
             SourceTable table = initiateTable(tblConfig, errors);
             registry.tableMonitor.startTableMonitoring(table);
@@ -66,7 +66,7 @@ public class SourceDataset {
             errors.fatal("Table [%s] already exists. To update table, delete and re-add", tblName.getDisplay());
             return null;
         }
-        registry.persistence.putTable(source.getDatasetName(), tblName, tableConfig);
+        registry.persistence.putTable(getName(), tblName, tableConfig);
         registry.tableMonitor.startTableMonitoring(table);
         return table;
     }
@@ -75,8 +75,8 @@ public class SourceDataset {
         SourceTable table = tables.remove(tblName);
         if (table==null) return null;
         registry.tableMonitor.stopTableMonitoring(table);
-        registry.persistence.removeTable(source.getDatasetName(), table.getName());
-        registry.persistence.removeTableStatistics(source.getDatasetName(), table.getName());
+        registry.persistence.removeTable(getName(), table.getName());
+        registry.persistence.removeTableStatistics(getName(), table.getName());
         return table;
     }
 
@@ -85,10 +85,6 @@ public class SourceDataset {
     }
 
     public DataSource getSource() {
-        return source;
-    }
-
-    public @NonNull DataSource getConfiguration() {
         return source;
     }
 
@@ -110,7 +106,7 @@ public class SourceDataset {
     }
 
     public SourceTable getTable(String name) {
-        return getTable(toName(name));
+        return Name.getIfValidName(name,getCanonicalizer(),this::getTable);
     }
 
     public boolean containsTable(String name) {
@@ -118,17 +114,12 @@ public class SourceDataset {
     }
 
     public Name getName() {
-        return source.getDatasetName();
+        return source.getName();
     }
 
     public NameCanonicalizer getCanonicalizer() {
         return source.getCanonicalizer();
     }
-
-    public Name toName(String s) {
-        return Name.of(s, source.getCanonicalizer());
-    }
-
 
     public Digest getDigest() {
         return new Digest(getName(),getCanonicalizer());

@@ -10,9 +10,24 @@ import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
+import java.util.UUID;
+
 public interface FlinkStreamEngine extends StreamEngine {
 
-  StreamExecutionEnvironment createStream();
+  Builder createStream();
+
+  interface Builder extends StreamEngine.Builder {
+
+    UUID getUuid();
+
+    StreamExecutionEnvironment getEnvironment();
+
+    void setJobType(JobType jobType);
+
+    @Override
+    FlinkJob build();
+
+  }
 
   FlinkJob createStreamJob(StreamExecutionEnvironment execEnv, JobType type);
 

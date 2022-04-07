@@ -3,8 +3,17 @@ package ai.dataeng.sqml.execution;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import java.io.Closeable;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface StreamEngine extends Closeable {
+
+    Builder createStream();
+
+    interface Builder {
+
+        Job build();
+
+    }
 
     Optional<? extends Job> getJob(String id);
 

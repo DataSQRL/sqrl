@@ -2,23 +2,19 @@ package ai.dataeng.sqml.io.impl.file;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.config.util.ConfigurationUtil;
-import ai.dataeng.sqml.io.sinks.DataSinkConfiguration;
-import ai.dataeng.sqml.io.impl.file.FilePath;
-import ai.dataeng.sqml.io.impl.file.FileSourceConfiguration;
+import ai.dataeng.sqml.io.sinks.DataSinkImplementation;
 import com.google.common.base.Strings;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.IOException;
 
 @Builder
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class FileSinkConfiguration implements DataSinkConfiguration {
+public class DirectorySinkImplementation implements DataSinkImplementation {
 
     public static final String DEFAULT_PART_DELIMITER = "_p";
 
@@ -26,14 +22,10 @@ public class FileSinkConfiguration implements DataSinkConfiguration {
     String uri;
     @Builder.Default @NonNull @NotNull @Size(min=1)
     String partDelimiter = DEFAULT_PART_DELIMITER;
-    @Builder.Default @NonNull @NotNull
-    String charset = FileSourceConfiguration.DEFAULT_CHARSET;
 
 
     @Override
-    public boolean validateAndInitialize(ErrorCollector errors) {
-        if (!ConfigurationUtil.javaxValidate(this, errors)) return false;
-
+    public boolean initialize(ErrorCollector errors) {
         FilePath directoryPath = new FilePath(uri);
         try {
             FilePath.Status status = directoryPath.getStatus();

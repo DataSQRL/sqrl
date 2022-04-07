@@ -5,6 +5,7 @@ import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.config.provider.MetadataStoreProvider;
 import ai.dataeng.sqml.config.provider.SerializerProvider;
 import ai.dataeng.sqml.execution.StreamEngine;
+import ai.dataeng.sqml.execution.flink.environment.FlinkStreamBuilder;
 import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
 import ai.dataeng.sqml.execution.flink.environment.util.FlinkUtilities;
 import ai.dataeng.sqml.io.sources.SourceRecord;
@@ -45,10 +46,11 @@ public class FlinkSourceMonitor implements StreamEngine.SourceMonitor {
 
     @Override
     public FlinkStreamEngine.FlinkJob monitorTable(SourceTable sourceTable) {
-        StreamExecutionEnvironment flinkEnv = envProvider.createStream();
+        FlinkStreamEngine.Builder streamBuilder = envProvider.createStream();
+        streamBuilder.setJobType(FlinkStreamEngine.JobType.MONITOR);
 
         DataStream<SourceRecord.Raw> data = null;
-        data = streamProvider.getDataStream(sourceTable, flinkEnv);
+        data = streamProvider.getDataStream(sourceTable, streamBuilder);
         if (sourceTable.hasSchema()) {
             /* data = filter out all SourceRecords that don't match schema and put into side output for error reporting.
                schema is broadcast via Broadcst State (https://ci.apache.org/projects/flink/flink-docs-release-1.13/docs/dev/datastream/fault-tolerance/state/#broadcast-state)
@@ -79,7 +81,7 @@ public class FlinkSourceMonitor implements StreamEngine.SourceMonitor {
 //                        500, SourceTableStatistics.Accumulator.class), TypeInformation.of(SourceTableStatistics.Accumulator.class))
                 .addSink(new SaveTableStatistics(jdbc, metaProvider, serializerProvider, registryProvider,
                                                  sourceTable.getDataset().getName(),sourceTable.getName()));
-        return envProvider.createStreamJob(flinkEnv, FlinkStreamEngine.JobType.MONITOR);
+        return streamBuilder.build();
     }
 
 

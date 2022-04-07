@@ -11,12 +11,14 @@ engines:
       dialect: H2
 sources:
   - name: "ecommerce-data"
-    config:
-      sourceType: "file"
+    source:
+      sourceType: "dir"
       uri: "../sqml-examples/retail/ecommerce-data"
 sinks:
   - name: "local"
-    config:
-      sinkType: "file"
+    sink:
+      sinkType: "dir"
       uri: "../sqml-examples/retail/ecommerce-output"
-    format: "json"
+    config:
+      format:
+        type: "json"
