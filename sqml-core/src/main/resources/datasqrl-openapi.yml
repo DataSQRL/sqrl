@@ -549,20 +549,22 @@ components:
     Source:
       type: object
       required:
-        - config
+        - source
       properties:
         name:
           type: string
           description: "The assigned name for this source"
-        config:
+        source:
           oneOf:
-            - $ref: '#/components/schemas/FileSourceConfig'
+            - $ref: '#/components/schemas/DirectorySourceConfig'
             - $ref: '#/components/schemas/KafkaSourceConfig'
           discriminator:
             propertyName: sourceType
             mapping:
-              file: '#/components/schemas/FileSourceConfig'
+              dir: '#/components/schemas/DirectorySourceConfig'
               kafka: '#/components/schemas/KafkaSourceConfig'
+        config:
+          $ref: '#/components/schemas/SourceConfig'
         discoverTables:
           type: boolean
           default: true
@@ -588,8 +590,6 @@ components:
         identifier:
           type: string
         format:
-          $ref: '#/components/schemas/formatDef'
-        formatConfig:
           $ref: '#/components/schemas/formatConfig'
     SourceTableWithErrors:
       allOf:
@@ -598,22 +598,29 @@ components:
           properties:
             messages:
               $ref: '#/components/schemas/ErrorMessages'
-    FileSourceConfig:
+    SourceConfig:
+      allOf:
+        - $ref: '#/components/schemas/SharedConfig'
+    SharedConfig:
+      type: object
+      properties:
+        canonicalizer:
+          $ref: '#/components/schemas/canonicalizerDef'
+        charset:
+          type: string
+        format:
+          $ref: '#/components/schemas/formatConfig'
+    DirectorySourceConfig:
       type: object
       required:
         - uri
         - sourceType
       properties:
         sourceType:
-          type: string
-          description: "The type of this source"
+          $ref: '#/components/schemas/sourceSinkTypes'
         uri:
           type: string
-        canonicalizer:
-          $ref: '#/components/schemas/canonicalizerDef'
         partPattern:
-          type: string
-        charset:
           type: string
         discoverFiles:
           type: boolean
@@ -624,17 +631,26 @@ components:
         - sourceType
       properties:
         sourceType:
+          $ref: '#/components/schemas/sourceSinkTypes'
+        servers:
+          type: array
+          items:
+            type: string
+        topicPrefix:
           type: string
-          description: "The type of this source"
-        host:
-          type: string
-        canonicalizer:
-          $ref: '#/components/schemas/canonicalizerDef'
+    sourceSinkTypes:
+      type: string
+      description: "Type of source or sink"
+      enum:
+        - dir
+        - kafka
     CSVFormatConfig:
       type: object
       required:
-        - header
+        - type
       properties:
+        type:
+          $ref: '#/components/schemas/formatDef'
         delimiter:
           type: string
         header:
@@ -650,7 +666,7 @@ components:
         - type
       properties:
         type:
-          type: string
+          $ref: '#/components/schemas/formatDef'
     canonicalizerDef:
       type: string
       description: Name Canonicalizer
@@ -677,23 +693,22 @@ components:
     Sink:
       type: object
       required:
-        - config
-        - sinkType
+        - sink
       properties:
         name:
           type: string
           description: "The assigned name for this sink"
-        config:
+        sink:
           oneOf:
-            - $ref: '#/components/schemas/FileSinkConfig'
+            - $ref: '#/components/schemas/DirectorySinkConfig'
+            - $ref: '#/components/schemas/KafkaSourceConfig'
           discriminator:
             propertyName: sinkType
             mapping:
-              file: '#/components/schemas/FileSourceConfig'
-        format:
-          $ref: '#/components/schemas/formatDef'
-        formatConfig:
-          $ref: '#/components/schemas/formatConfig'
+              dir: '#/components/schemas/DirectorySinkConfig'
+              kafka: '#/components/schemas/KafkaSourceConfig'
+        config:
+          $ref: '#/components/schemas/SinkConfig'
     SinkWithErrors:
       allOf:
         - $ref: '#/components/schemas/Sink'
@@ -701,19 +716,20 @@ components:
           properties:
             messages:
               $ref: '#/components/schemas/ErrorMessages'
-    FileSinkConfig:
+    SinkConfig:
+      allOf:
+        - $ref: '#/components/schemas/SharedConfig'
+    DirectorySinkConfig:
       type: object
       required:
         - uri
         - sinkType
       properties:
         sinkType:
-          type: string
+          $ref: '#/components/schemas/sourceSinkTypes'
         uri:
           type: string
         partDelimiter:
-          type: string
-        charset:
           type: string
     ScriptBundle:
       type: object

@@ -37,6 +37,7 @@ public abstract class SharedConfiguration implements Serializable {
         return canonicalizer.getCanonicalizer();
     }
 
+    @JsonIgnore
     protected abstract boolean formatRequired();
 
     public boolean initialize(ErrorCollector errors) {
@@ -57,6 +58,7 @@ public abstract class SharedConfiguration implements Serializable {
         }
     }
 
+    @JsonIgnore
     public Charset getCharsetObject() {
         return Charset.forName(charset);
     }

@@ -80,6 +80,7 @@ public class DirectorySourceImplementation implements DataSourceImplementation, 
     }
 
     @Override
+    @JsonIgnore
     public @NonNull Optional<String> getDefaultName() {
         //This method can be called prior to initialize, hence need to be defensive
         if (Strings.isNullOrEmpty(uri) || uri.length()<3) return Optional.empty();

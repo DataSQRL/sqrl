@@ -8,6 +8,7 @@ import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.config.server.ApiVerticle;
 import ai.dataeng.sqml.config.util.StringNamedId;
 import ai.dataeng.sqml.io.impl.file.DirectorySourceImplementation;
+import ai.dataeng.sqml.io.sources.DataSourceImplementation;
 import ai.dataeng.sqml.io.sources.DataSourceUpdate;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
@@ -66,8 +67,7 @@ public class APIServerTest {
     final DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
             .uri(ConfigurationTest.DATA_DIR.toAbsolutePath().toString())
             .build();
-    final DataSourceUpdate dsUpdate = DataSourceUpdate.builder().name(dsName).source(fileConfig).build();
-    final JsonObject fileObj = JsonObject.mapFrom(dsUpdate);
+    final JsonObject fileObj = getDataSourcePayload(dsName,fileConfig);
     final String deployName = "test";
     final String deployVersion = "v2";
     final ScriptBundle.Config deployConfig = ScriptBundle.Config.builder()
@@ -83,10 +83,19 @@ public class APIServerTest {
             .build();
     final JsonObject deploymentObj = JsonObject.mapFrom(deployConfig);
 
+    public static JsonObject getDataSourcePayload(String name, DataSourceImplementation source) {
+        JsonObject res = new JsonObject();
+        res.put("name",name);
+        res.put("source",JsonObject.mapFrom(source));
+        return res;
+    }
+
     @Test
     public void testAddingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
         Checkpoint deploymentCheckpoint = testContext.checkpoint();
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
+
+        System.out.println(fileObj);
 
         assertEquals(0,registry.getDatasets().size());
 
@@ -99,7 +108,7 @@ public class APIServerTest {
                         testContext.verify(() -> {
                             assertEquals(200, resp.statusCode());
                             JsonObject fileRes = resp.body();
-                            assertEquals("file",fileRes.getJsonObject("config").getString("sourceType"));
+                            assertEquals("dir",fileRes.getJsonObject("source").getString("sourceType"));
                             assertEquals(dsName,fileRes.getString("name"));
                             requestCheckpoint.flag();
                         });
@@ -117,6 +126,73 @@ public class APIServerTest {
         assertNotNull(ds);
         assertEquals(dsName,ds.getName().getCanonical());
 
+    }
+
+
+    @Test
+    public void testGettingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
+        registry.addOrUpdateSource(dsName, fileConfig,ErrorCollector.root());
+        assertNotNull(registry.getDataset(dsName));
+
+        Checkpoint requestCheckpoint = testContext.checkpoint(3);
+
+        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+            webClient.get(port, "localhost", "/source")
+                    .as(BodyCodec.jsonArray())
+                    .send(testContext.succeeding(resp -> {
+                        testContext.verify(() -> {
+                            assertEquals(200, resp.statusCode());
+                            JsonArray arr = resp.body();
+                            assertEquals(1, arr.size());
+                            JsonObject fileRes = arr.getJsonObject(0);
+                            assertEquals("dir",fileRes.getJsonObject("source").getString("sourceType"));
+                            assertEquals(dsName,fileRes.getString("name"));
+                            requestCheckpoint.flag();
+                        });
+                    }));
+
+            webClient.get(port, "localhost", "/source/"+dsName)
+                    .as(BodyCodec.jsonObject())
+                    .send(testContext.succeeding(resp -> {
+                        testContext.verify(() -> {
+                            assertEquals(200, resp.statusCode());
+                            JsonObject fileRes = resp.body();
+                            assertEquals("dir",fileRes.getJsonObject("source").getString("sourceType"));
+                            assertEquals(dsName,fileRes.getString("name"));
+                            JsonArray tables = fileRes.getJsonArray("tables");
+                            assertEquals(2, tables.size());
+                            requestCheckpoint.flag();
+                        });
+                    }));
+
+            webClient.post(port, "localhost", "/source")
+                    .as(BodyCodec.jsonArray())
+                    .sendJsonObject(fileObj, testContext.succeeding(resp -> {
+                        testContext.verify(() -> {
+                            assertEquals(405, resp.statusCode());
+                            JsonArray error = resp.body();
+                            assertEquals(1, error.size());
+//                            System.out.println("Error msg: " + error.getString("message"));
+                            requestCheckpoint.flag();
+                        });
+                    }));
+
+
+        }));
+
+        assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
+        if (testContext.failed()) {
+            throw testContext.causeOfFailure();
+        }
+
+        DatasetRegistry registry = env.getDatasetRegistry();
+        assertEquals(1,registry.getDatasets().size());
+    }
+
+    @Test
+    public void testDeleteSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
+        //TODO: implement
+        testContext.completeNow();
     }
 
     @Test
@@ -187,72 +263,6 @@ public class APIServerTest {
         assertEquals(deployVersion,deploy.get().getVersion());
     }
 
-
-    @Test
-    public void testGettingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
-        registry.addOrUpdateSource(dsName, fileConfig,ErrorCollector.root());
-        assertNotNull(registry.getDataset(dsName));
-
-        Checkpoint requestCheckpoint = testContext.checkpoint(3);
-
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.get(port, "localhost", "/source")
-                    .as(BodyCodec.jsonArray())
-                    .send(testContext.succeeding(resp -> {
-                        testContext.verify(() -> {
-                            assertEquals(200, resp.statusCode());
-                            JsonArray arr = resp.body();
-                            assertEquals(1, arr.size());
-                            JsonObject fileRes = arr.getJsonObject(0);
-                            assertEquals("file",fileRes.getJsonObject("config").getString("sourceType"));
-                            assertEquals(dsName,fileRes.getString("name"));
-                            requestCheckpoint.flag();
-                        });
-                    }));
-
-            webClient.get(port, "localhost", "/source/"+dsName)
-                    .as(BodyCodec.jsonObject())
-                    .send(testContext.succeeding(resp -> {
-                        testContext.verify(() -> {
-                            assertEquals(200, resp.statusCode());
-                            JsonObject fileRes = resp.body();
-                            assertEquals("file",fileRes.getJsonObject("config").getString("sourceType"));
-                            assertEquals(dsName,fileRes.getString("name"));
-                            JsonArray tables = fileRes.getJsonArray("tables");
-                            assertEquals(2, tables.size());
-                            requestCheckpoint.flag();
-                        });
-                    }));
-
-            webClient.post(port, "localhost", "/source")
-                    .as(BodyCodec.jsonArray())
-                    .sendJsonObject(fileObj, testContext.succeeding(resp -> {
-                        testContext.verify(() -> {
-                            assertEquals(405, resp.statusCode());
-                            JsonArray error = resp.body();
-                            assertEquals(1, error.size());
-//                            System.out.println("Error msg: " + error.getString("message"));
-                            requestCheckpoint.flag();
-                        });
-                    }));
-
-
-        }));
-
-        assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
-        if (testContext.failed()) {
-            throw testContext.causeOfFailure();
-        }
-
-        DatasetRegistry registry = env.getDatasetRegistry();
-        assertEquals(1,registry.getDatasets().size());
-    }
-
-    @Test
-    public void testDeleteSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
-        //TODO: implement
-        testContext.completeNow();
-    }
 
 //    @Test
     /**
