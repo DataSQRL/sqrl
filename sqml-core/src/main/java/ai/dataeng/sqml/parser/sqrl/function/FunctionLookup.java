@@ -22,6 +22,7 @@ public class FunctionLookup {
         SqlStdOperatorTable.instance().getOperatorList(), e -> e.getName());
     this.rewritingFunctionMap = new HashMap<>();
     this.rewritingFunctionMap.put(Name.system("roundToMonth"), new RoundToMonth());
+    this.rewritingFunctionMap.put(Name.system("now"), new Now());
   }
 
   public SqrlFunction lookup(NamePath name) {

@@ -193,25 +193,6 @@ public class TableFactory {
     return table;
   }
 
-  private void setParentChildRelation(Table table) {
-    for (Field field : table.getFields()) {
-      //RelNode added after added to table
-      if (field instanceof Relationship) {
-        Relationship col = (Relationship) field;
-        if (col.getType() == Type.CHILD) {
-          Pair<Map<Column, String>, SqlNode> child = parentChildJoin(col);
-          col.setSqlNode(child.getRight());
-          col.setPkNameMapping(child.getLeft());
-          setParentChildRelation(col.toTable);
-        } else if (col.getType() == Type.PARENT) {
-          Pair<Map<Column, String>, SqlNode> child = childParentJoin(col);
-          col.setSqlNode(child.getRight());
-          col.setPkNameMapping(child.getLeft());
-        }
-      }
-    }
-  }
-
   private NamePath getNamePath(Name name, Optional<Table> parent) {
     NamePath namePath;
     if (parent.isPresent()) {

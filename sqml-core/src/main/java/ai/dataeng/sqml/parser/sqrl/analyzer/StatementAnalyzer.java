@@ -9,11 +9,11 @@ import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
+import ai.dataeng.sqml.tree.BooleanLiteral;
 import ai.dataeng.sqml.tree.ComparisonExpression;
 import ai.dataeng.sqml.tree.ComparisonExpression.Operator;
 import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
-import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Intersect;
@@ -24,7 +24,6 @@ import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
-import ai.dataeng.sqml.tree.NodeLocation;
 import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryBody;
@@ -33,7 +32,6 @@ import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SetOperation;
-import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.TableNode;
@@ -44,11 +42,11 @@ import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.util.Pair;
 
@@ -83,7 +81,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     Scope sourceScope = node.getFrom().accept(this, scope);
 
 //    node.getWhere().ifPresent(where -> analyzeWhere(node, sourceScope, where));
-    List<Expression> outputExpressions = analyzeSelect(node, sourceScope);
+    Pair<List<SelectItem>, List<Expression>> outputExpressions = analyzeSelect(node, sourceScope);
 //    List<Expression> groupByExpressions = analyzeGroupBy(node, sourceScope, outputExpressions);
 //    analyzeHaving(node, sourceScope);
 
@@ -94,11 +92,14 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     QuerySpecification querySpecification = new QuerySpecification(
         node.getLocation(),
-        toSelect(node.getSelect(), outputExpressions, List.of()),
-        (Relation) joinFields((Relation) sourceScope.getNode()),
-        node.getWhere(),
+        new Select(outputExpressions.left),
+//        toSelect(node.getSelect(), outputExpressions.getValue(), List.of()),
+        joinBuilder.build((Relation) sourceScope.getNode()),
+//        node.getWhere(),
 //        groupBy,
-        node.getGroupBy(),
+//        node.getGroupBy(),
+        Optional.empty(),
+        Optional.empty(),
         Optional.empty(),
         Optional.empty(),
         Optional.empty()
@@ -107,102 +108,121 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return createScope(querySpecification, scope);
   }
 
-  private Relation joinFields(Relation node) {
-    for (int i = 0; i < joinBuilder.fields.size(); i++) {
-      node = new Join(Optional.empty(), joinBuilder.types.get(i), node, joinBuilder.relations.get(i), joinBuilder.additional.get(i));
-    }
-
-    return node;
-  }
-
-  private Select toSelect(Select select,
-      List<Expression> groupByExpressions,
-      List<Expression> outputExpressions) {
-    List<SelectItem> items = Streams.concat(groupByExpressions.stream(), outputExpressions.stream())
-        .map(e->new SingleColumn(Optional.empty(), e, Optional.empty()))
-        .collect(Collectors.toList());
-
-    return new Select(Optional.empty(), select.isDistinct(), items);
-  }
-
   /**
-   * Visits and expands a table
+   * Note: This node is not walked from the rhs of a join.
+   *
+   * Expand the path, if applicable. The first name will always be either a SELF or a base table.
+   * The remaining path are always relationships and are wrapped in a join. The final table
+   * is aliased by either a given alias or generated alias.
    */
   @Override
   public Scope visitTable(TableNode tableNode, Scope scope) {
+    NamePath namePath = tableNode.getNamePath();
+    Table table = (namePath.getFirst().equals(Name.SELF_IDENTIFIER)) ?
+        scope.getContextTable().get() :
+        analyzer.getDag().getSchema().getByName(namePath.getFirst()).get();
 
-    Pair<Table, Relation> rel = expandJoins(tableNode, scope);
+    //Special case: Self identifier is added to join scope
+    if (namePath.getFirst().equals(Name.SELF_IDENTIFIER)) {
+      scope.getJoinScope().put(Name.SELF_IDENTIFIER, scope.getContextTable().get());
+    }
 
-    Name alias = tableNode.getAlias()
-        .orElse(Name.system(tableNode.getNamePath().toString()));
+    Name currentAlias = getTableAlias(tableNode, 0);
+    Relation relation = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(currentAlias));
+    TableBookkeeping b = new TableBookkeeping(relation, currentAlias, table);
+    TableBookkeeping result = walkRemaining(tableNode, b, 1);
 
-    scope.getJoinScope().put(alias, rel.getKey());
+    scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
 
-    return createScope(rel.getValue(), scope);
+    return createScope(result.getCurrent(), scope);
+  }
+
+  @Value
+  private class TableBookkeeping {
+    Relation current;
+    Name alias;
+    Table currentTable;
+  }
+
+  private Name getTableAlias(TableNode tableNode, int i) {
+    if (tableNode.getNamePath().getLength() == 1 && i == 0) {
+      return tableNode.getAlias().orElse(tableNode.getNamePath().getFirst());
+    }
+
+    if (i == tableNode.getNamePath().getLength() - 1) {
+      return tableNode.getAlias().orElse(gen.nextTableAliasName());
+    }
+
+    return gen.nextTableAliasName();
   }
 
   /**
-   * Expands a table path
+   * Joins have the assumption that the rhs will always be a TableNode so the rhs will be
+   * unwrapped at this node, so it can provide additional criteria to the join.
+   *
+   * The rhs first table name will either be a join scoped alias or a base table. If it is
+   * a join scoped alias, we will use that alias information to construct additional criteria
+   * on the join, otherwise it'll be a cross join.
    */
-  private Pair<Table, Relation> expandJoins(TableNode tableNode, Scope scope) {
-    NamePath tableName = tableNode.getNamePath();
-    Table joinScope = scope.getJoinScope().get(tableName.getFirst());
-    Optional<Table> baseTable =
-        this.analyzer.getDag().getSchema().getByName(tableName.getFirst());
-    if((joinScope == null && baseTable.isEmpty()
-        || joinScope != null && baseTable.isPresent()) &&
-        !tableName.getFirst().equals(Name.SELF_IDENTIFIER)) {
-      throw new RuntimeException("Ambiguous table name: " + tableName);
-    }
+  @Override
+  public Scope visitJoin(Join node, Scope scope) {
+    Scope left = node.getLeft().accept(this, scope);
 
+    TableNode rhs = (TableNode)node.getRight();
+    if (scope.getJoinScope().containsKey(rhs.getNamePath().getFirst())) {
+      Name joinAlias = rhs.getNamePath().getFirst();
+      Table table = scope.getJoinScope(joinAlias).get();
 
-    Table table = null;
-    Relation node = null;
-    Name alias = null;
-    if (joinScope != null) {
-      //todo
-    } else if (baseTable.isPresent()) {
-      alias = tableNode.getNamePath().getLength() > 1
-          ? tableNode.getAlias().orElse(Name.system(tableName.toString()))
-          : baseTable.get().getName();
+      Relationship firstRel = (Relationship)table.getField(rhs.getNamePath().get(1));
+      Name firstRelAlias = getTableAlias(rhs, 1);
+      TableNode relation = new TableNode(Optional.empty(),
+          firstRel.getToTable().getId().toNamePath(),
+          Optional.of(firstRelAlias));
 
-      node = new TableNode(Optional.empty(), baseTable.get().getId().toNamePath(), Optional.of(alias));
-      table = baseTable.get();
-    } else if (tableName.getFirst().equals(Name.SELF_IDENTIFIER)){
-      alias = tableNode.getNamePath().getLength() == 1
-          ? tableNode.getAlias().orElse(Name.SELF_IDENTIFIER)
-          : Name.SELF_IDENTIFIER;
+      TableBookkeeping b = new TableBookkeeping(relation, joinAlias, firstRel.getToTable());
+      //Remaining
+      TableBookkeeping result = walkRemaining(rhs, b, 2);
 
-      node = new TableNode(Optional.empty(), scope.getContextTable().get().getId().toNamePath(), Optional.of(alias));
-      table = scope.getContextTable().get();
-    } else {
-      throw new RuntimeException("unknown field");
-    }
+      JoinOn criteria = (JoinOn) getCriteria(firstRel, joinAlias, firstRelAlias).get();
 
-    if (tableName.getLength() > 1) {
-      for (int i = 1; i < tableName.getNames().length; i++) {
-        Name name = tableName.getNames()[i];
-        //Inherit attributes for last element
-        Name nextAlias;
-        Optional<JoinCriteria> additionalCriteria;
-        if (i == tableName.getNames().length - 1) {
-          nextAlias = tableNode.getAlias().orElse(Name.system(tableName.toString()));
-          additionalCriteria = scope.getAdditionalJoinCondition();
-        } else {
-          nextAlias = gen.nextTableAliasName();
-          additionalCriteria = Optional.empty();
-        }
-
-        Relationship rel = (Relationship) table.getField(name);
-
-
-        node = new Join(Optional.empty(), Type.INNER, node, getRelation(rel, nextAlias), getCriteria(rel, alias, nextAlias, additionalCriteria));
-
-        table = rel.getToTable();
-        alias = nextAlias;
+      //Add criteria to join
+      if (node.getCriteria().isPresent()) {
+        List<Expression> newNodes = new ArrayList<>();
+        newNodes.add(((JoinOn)node.getCriteria().get()).getExpression());
+        newNodes.add(criteria.getExpression());
+        criteria = new JoinOn(Optional.empty(), and(newNodes));
       }
+
+      scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
+      return createScope(
+          new Join(node.getLocation(), node.getType(), (Relation) left.getNode(), (Relation) result.getCurrent(), Optional.of(criteria)),
+          scope);
+    } else {
+      Table table = analyzer.getDag().getSchema().getByName(rhs.getNamePath().get(0)).get();
+      Name joinAlias = getTableAlias(rhs, 0);
+      TableNode tableNode = new TableNode(Optional.empty(), table.getName().toNamePath(), Optional.of(joinAlias));
+
+      TableBookkeeping b = new TableBookkeeping(tableNode, joinAlias, table);
+      //Remaining
+      TableBookkeeping result = walkRemaining(rhs, b, 1);
+
+
+      scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
+      return createScope(
+          new Join(node.getLocation(), node.getType(), (Relation) left.getNode(), (Relation) result.getCurrent(), node.getCriteria()),
+          scope);
     }
-    return Pair.of(table, node);
+  }
+
+  private TableBookkeeping walkRemaining(TableNode node, TableBookkeeping b, int startAt) {
+    for (int i = startAt; i < node.getNamePath().getLength(); i++) {
+      Relationship rel = (Relationship)b.getCurrentTable().getField(node.getNamePath().get(i));
+      Name alias = getTableAlias(node, i);
+      Join join = new Join(Optional.empty(), Type.INNER, b.getCurrent(),
+          getRelation(rel, alias), getCriteria(rel, b.getAlias(), alias));
+      b = new TableBookkeeping(join, alias, rel.getToTable());
+    }
+    return b;
   }
 
   public static Relation getRelation(Relationship rel, Name nextAlias) {
@@ -215,8 +235,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     }
   }
 
-  public static Optional<JoinCriteria> getCriteria(Relationship rel, Name alias, Name nextAlias,
-      Optional<JoinCriteria> additionalCriteria) {
+  public static Optional<JoinCriteria> getCriteria(Relationship rel, Name alias, Name nextAlias) {
     List<Column> columns = rel.getTable().getPrimaryKeys();
     List<Expression> expr = columns.stream()
         .map(c->new ComparisonExpression(Optional.empty(), Operator.EQUAL, toIdentifier(c, alias), toIdentifier(c, nextAlias)))
@@ -246,7 +265,6 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     }
 
     public Relation build() {
-
       Relation current = new TableNode(Optional.empty(), fields.get(0).getId().toNamePath(),
           Optional.of(Name.system(aliases.get(0).toString())));
 
@@ -257,36 +275,14 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       return current;
     }
 
-    public Join join(NodeLocation location, Type joinType, Relation left, Relation right,
-        Optional<Expression> condition) {
-      Optional<JoinCriteria> joinCondition = condition.map(c -> new JoinOn(location, c));
+    public Relation build(Relation node) {
 
-      return new Join(location, joinType, left, right, joinCondition);
+      for (int i = 1; i < fields.size(); i++) {
+        node = new Join(Optional.empty(), types.get(i), node, relations.get(i), additional.get(i));
+      }
+
+      return node;
     }
-  }
-
-  @Override
-  public Scope visitJoin(Join node, Scope scope) {
-    Scope left = node.getLeft().accept(this, scope);
-    Scope right = node.getRight().accept(this, left);
-
-    if (node.getType() == Join.Type.CROSS || node.getType() == Join.Type.IMPLICIT || node.getCriteria().isEmpty()) {
-      //Add new scope to context for a context table and alias
-    }
-
-    JoinCriteria criteria = node.getCriteria().get();
-    JoinCriteria rewrittenCriteria;
-    if (criteria instanceof JoinOn) {
-      Expression expression = ((JoinOn) criteria).getExpression();
-      Expression rewriteExpression = rewriteExpression(expression, right);
-      rewrittenCriteria = new JoinOn(((JoinOn) criteria).getLocation(), rewriteExpression);
-    } else {
-      throw new RuntimeException("Unsupported join");
-    }
-
-    Join rewrittenJoin =
-        new Join(node.getLocation(), node.getType(), (Relation) left.getNode(), (Relation) right.getNode(), Optional.ofNullable(rewrittenCriteria));
-    return createScope(rewrittenJoin, scope);
   }
 
   @Override
@@ -351,7 +347,12 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   private Scope createScope(Node node, Scope parentScope) {
-    return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope());
+    return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope(), parentScope.getScopedRelation(),parentScope.getType(),parentScope.getCriteria());
+  }
+
+  private Scope createScope(Node node, Scope parentScope, Relation relation,
+      Type type, JoinCriteria rewrittenCriteria) {
+    return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope(), relation, type, rewrittenCriteria);
   }
 
   private void analyzeHaving(QuerySpecification node, Scope scope) {
@@ -361,9 +362,10 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     }
   }
 
-  private List<Expression> analyzeSelect(QuerySpecification node, Scope scope) {
+  private Pair<List<SelectItem>, List<Expression>> analyzeSelect(QuerySpecification node, Scope scope) {
     List<Expression> outputExpressions = new ArrayList<>();
 
+    List<SelectItem> selectItems = new ArrayList<>();
     for (SelectItem item : node.getSelect().getSelectItems()) {
       if (item instanceof AllColumns) {
         Optional<Name> starPrefix = ((AllColumns) item).getPrefix()
@@ -377,15 +379,26 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         }
       } else if (item instanceof SingleColumn) {
         SingleColumn column = (SingleColumn) item;
-        outputExpressions.add(rewriteExpression(column.getExpression(), scope));
-//        outputExpressions.add(column.getExpression());
+        Expression expression = rewriteExpression(column.getExpression(), scope);
+        outputExpressions.add(expression);
+
+        NamePath name;
+        if (column.getAlias().isPresent()) {
+          name = column.getAlias().get().getNamePath();
+        } else if(column.getExpression() instanceof Identifier) {
+          name = ((Identifier)column.getExpression()).getNamePath();
+        } else {
+          name = Name.system("expr$1").toNamePath();
+        }
+
+        selectItems.add( new SingleColumn(expression, new Identifier(Optional.empty(), name)));
       }
       else {
         throw new IllegalArgumentException(String.format("Unsupported SelectItem type: %s", item.getClass().getName()));
       }
     }
 
-    return outputExpressions;
+    return Pair.of(selectItems, outputExpressions);
   }
 
   private List<Expression> analyzeGroupBy(QuerySpecification node, Scope scope, List<Expression> outputExpressions) {

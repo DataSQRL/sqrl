@@ -213,9 +213,14 @@ public class ExpressionAnalyzer {
         ExpressionTreeRewriter<Context> treeRewriter) {
       List<FieldPath> resolved = context.getScope()
           .resolveField(node.getNamePath());
+      if (resolved.size() != 1) {
+        System.out.println();
+        context.getScope()
+            .resolveField(node.getNamePath());
+      }
 
       Preconditions.checkState(resolved.size() == 1,
-          "Could not resolve field (ambiguous or non-existent: " + node + " : " + resolved);
+          "Could not resolve field (ambiguous or non-existent: " + node + " : " + resolved + ")");
 
       if (PathUtil.isToOne(resolved.get(0))) {
         Name fieldName = resolved.get(0).getLastField().getId();
@@ -234,7 +239,7 @@ public class ExpressionAnalyzer {
 
       Relationship rel = (Relationship) fieldPath.getFields().get(0);
 
-      joinBuilder.add(Type.LEFT, getCriteria(rel, sourceTableAlias, tableAlias, Optional.empty()),
+      joinBuilder.add(Type.LEFT, getCriteria(rel, sourceTableAlias, tableAlias),
           fieldPath.getFields().get(0), tableAlias.toNamePath(),
           getRelation(rel, tableAlias));
     }

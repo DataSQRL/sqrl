@@ -81,8 +81,9 @@ public class Table implements DatasetOrTable {
         .filter(f->f.isPrimaryKey)
         .collect(Collectors.toList());
 
+    //Bad remove this
     if (pks.isEmpty()) {
-      return List.of((Column)this.fields.get(0));
+      return List.of((Column)this.fields.get(1));
     }
 
     return pks;
@@ -124,6 +125,9 @@ public class Table implements DatasetOrTable {
   }
 
   public Optional<Table> walk(NamePath namePath) {
+    if (namePath.isEmpty()) {
+      return Optional.of(this);
+    }
     Field field = getField(namePath.getFirst());
     if (field == null) {
       return Optional.empty();
@@ -159,10 +163,10 @@ public class Table implements DatasetOrTable {
   public String toString() {
     return "Table{" +
         "name=" + name +
-        ", pk=" + getPrimaryKeys().stream().map(e->e.getName().toString()).collect(Collectors.toList()) +
-        ", fk=" + getForeignKeys().stream().map(e->e.getName().toString()).collect(Collectors.toList()) +
-        ", fields=" + getFields().stream().map(e->e.getName().toString()).collect(Collectors.toList()) +
-        ", relNode=" + getRelNode().explain() +
+//        ", pk=" + getPrimaryKeys().stream().map(e->e.getName()).collect(Collectors.toList()) +
+//        ", fk=" + getForeignKeys().stream().map(e->e.getName()).collect(Collectors.toList()) +
+//        ", fields=" + getFields().stream().map(e->e.getName()).collect(Collectors.toList()) +
+//        ", relNode=" + getRelNode().explain() +
         '}';
   }
 

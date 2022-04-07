@@ -89,10 +89,6 @@ public class Relationship extends Field {
     this.alias = alias;
   }
 
-  public Name getAlias() {
-    return alias;
-  }
-
   public enum Type {
     PARENT, CHILD, JOIN
   }

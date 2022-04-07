@@ -1,5 +1,8 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.getSelectList;
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.hasOneUnnamedColumn;
+
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
@@ -25,18 +28,25 @@ import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.ImportDefinition;
+import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinDeclaration;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
+import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
+import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.tree.Select;
+import ai.dataeng.sqml.tree.SingleColumn;
+import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -154,49 +164,19 @@ public class Analyzer {
 
     public void analyzeQuery(NamePath namePath, Query query) {
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
+      Optional<Table> tableOpt = namePath.getPrefix().flatMap(p-> getTable(p));
+
+      Scope scope = query.accept(statementAnalyzer, new Scope(tableOpt, query, new HashMap<>(), null, null, null));
+
+      System.out.println(NodeFormatter.accept(scope.getNode()));
+
+      SqlNode plan = planner.parse(scope.getNode());
+      System.out.println(plan);
+      System.out.println();
 
       //For single unnamed columns in tables, treat as an expression
-//      if (hasOneUnnamedColumn(query) && namePath.getPrefix().isPresent()) {
-      if (true) {
-        Optional<Table> tableOpt = lookup(namePath.getPrefix().get());
+      if (hasOneUnnamedColumn(query) && namePath.getPrefix().isPresent()) {
         Table table = tableOpt.get();
-        Scope scope = query.accept(statementAnalyzer, new Scope(tableOpt, query, new HashMap<>()));
-
-        System.out.println(NodeFormatter.accept(scope.getNode()));
-
-        SqlNode plan = planner.parse(scope.getNode());
-        System.out.println(plan);
-        System.out.println();
-
-        //todo after sqlizing
-        if (false) {
-          RelNode plan2 = planner.plan(null);
-
-          RelNode expanded = plan2.accept(new RelShuttleImpl() {
-            @Override
-            public RelNode visit(TableScan scan) {
-              StreamDataType dataType = (StreamDataType) scan.getRowType();
-              if (dataType.getTable() != null) {
-                return dataType.getTable().getRelNode();
-              }
-              return scan;
-            }
-          });
-
-          SqrlRelBuilder relBuilder = planner.createRelBuilder();
-          RexBuilder rexBuilder = relBuilder.getRexBuilder();
-
-          RelNode newPlan = relBuilder
-              .push(expanded)
-              .push(table.getRelNode())
-              .join(JoinRelType.LEFT,
-                  SqrlRexUtil.createPkCondition(table, rexBuilder))
-              //todo: project all left + the new column, shadow if necessary
-              .build();
-
-          table.setRelNode(newPlan);
-        }
-
         int version = 0;
         Optional<Field> existingField = table.getFields().getByName(namePath.getLast());
         if (existingField.isPresent()) {
@@ -204,10 +184,66 @@ public class Analyzer {
         }
         table.addField(new Column(namePath.getLast(), table, version, null, 0, List.of(),
             false, false, Optional.empty(), false));
+//
+//        //todo after sqlizing
+//        if (false) {
+//          RelNode plan2 = planner.plan(null);
+//
+//          RelNode expanded = plan2.accept(new RelShuttleImpl() {
+//            @Override
+//            public RelNode visit(TableScan scan) {
+//              StreamDataType dataType = (StreamDataType) scan.getRowType();
+//              if (dataType.getTable() != null) {
+//                return dataType.getTable().getRelNode();
+//              }
+//              return scan;
+//            }
+//          });
+//
+//          SqrlRelBuilder relBuilder = planner.createRelBuilder();
+//          RexBuilder rexBuilder = relBuilder.getRexBuilder();
+//
+//          RelNode newPlan = relBuilder
+//              .push(expanded)
+//              .push(table.getRelNode())
+//              .join(JoinRelType.LEFT,
+//                  SqrlRexUtil.createPkCondition(table, rexBuilder))
+//              //todo: project all left + the new column, shadow if necessary
+//              .build();
+//
+//          table.setRelNode(newPlan);
+//        }
+      } else if (tableOpt.isEmpty()) {
+        Table newTable = new Table(TableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
+            namePath, false);
+        //Add select items. ppk, new primary keys from grouping statement, and internal/external select items
+        List<SingleColumn> columns = getSelectList((Query)scope.getNode());
+        columns.stream()
+            .map(c -> new Column(c.getAlias().get().getNamePath().getLast(), newTable, 0, null,
+                0, List.of(), false, false, Optional.empty(), false))
+            .forEach(newTable::addField);
+
+        logicalDag.getSchema().add(newTable);
       } else {
-       throw new RuntimeException("");
+        Table table = tableOpt.get();
+
+        Table newTable = new Table(TableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
+            namePath, false);
+        Relationship parent = new Relationship(Name.PARENT_RELATIONSHIP, newTable, table, Type.PARENT, Multiplicity.ONE);
+        newTable.addField(parent);
+
+        //Add select items. ppk, new primary keys from grouping statement, and internal/external select items
+        List<SingleColumn> columns = getSelectList((Query)scope.getNode());
+        columns.stream()
+            .map(c -> new Column(c.getAlias().get().getNamePath().getLast(), newTable, 0, null,
+                0, List.of(), false, false, Optional.empty(), false))
+            .forEach(newTable::addField);
+
+        Relationship relationship = new Relationship(namePath.getLast(), table, newTable, Type.CHILD, Multiplicity.MANY);
+        table.addField(relationship);
       }
     }
+
 
     /**
      * Checks if an expression has an AS function as its column
@@ -234,7 +270,7 @@ public class Analyzer {
     public Void visitDistinctAssignment(DistinctAssignment node, Void context) {
       Table table = tableFactory.create(node.getNamePath(), node.getTable());
 //      Scope scope = new Scope(Optional.empty(), node, new LinkedHashMap<>());
-      Optional<Table> oldTable = lookup(node.getTable().toNamePath());
+      Optional<Table> oldTable = getTable(node.getTable().toNamePath());
 
       // https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/sql/queries/deduplication/
       String sql = SqrlQueries.generateDistinct(node,
@@ -304,8 +340,8 @@ public class Analyzer {
 
       System.out.println(NodeFormatter.accept(querySpec));
 
-      Optional<Table> ctxTable = lookup(namePath.getPrefix().get());
-      Scope scope = querySpec.accept(sAnalyzer, new Scope(ctxTable, querySpec, new HashMap<>()));
+      Optional<Table> ctxTable = getTable(namePath.getPrefix().get());
+      Scope scope = querySpec.accept(sAnalyzer, new Scope(ctxTable, querySpec, new LinkedHashMap<>(), null, null, null));
 
       Map<Name, Table> joinScope = scope.getJoinScope();
       Node rewritten = scope.getNode();
@@ -314,24 +350,28 @@ public class Analyzer {
       }
 
       Table table = ctxTable.get();
-      Map.Entry<Name, Table> lastTable = joinScope.entrySet().stream().findFirst().get();
+
+      //TODO: fix me
+      List<Map.Entry<Name, Table>> list = new ArrayList(scope.getJoinScope().entrySet());
+
+      Table lastTable = list.get(list.size() - 1).getValue();
       Multiplicity multiplicity = Multiplicity.MANY;
       if (node.getInlineJoin().getLimit().isPresent() && node.getInlineJoin().getLimit().get().getIntValue().get() == 1) {
         multiplicity = Multiplicity.ONE;
       }
 
-      Relationship joinField = new Relationship(namePath.getLast(), table, lastTable.getValue(),
+      Relationship joinField = new Relationship(namePath.getLast(), table, lastTable,
           Type.JOIN, multiplicity);
       joinField.setNode(rewritten);
-      joinField.setAlias(lastTable.getKey());
 
+      joinField.setAlias(list.get(list.size() - 1).getKey());
       table.addField(joinField);
 
       return null;
     }
   }
 
-  public Optional<Table> lookup(NamePath namePath) {
+  public Optional<Table> getTable(NamePath namePath) {
       Optional<Table> schemaTable = this.logicalDag.getSchema().getByName(namePath.getFirst());
       if (schemaTable.isPresent()) {
         if (namePath.getLength() == 1) {

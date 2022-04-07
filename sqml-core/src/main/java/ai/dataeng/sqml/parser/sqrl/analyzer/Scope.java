@@ -2,10 +2,12 @@ package ai.dataeng.sqml.parser.sqrl.analyzer;
 
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.FieldPath;
+import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
@@ -28,6 +30,10 @@ public class Scope {
 
   //Alias mapping of tables
   private Map<Name, Table> joinScope;
+
+  private Relation relation;
+  private Join.Type type;
+  private JoinCriteria criteria;
 
   public List<Field> resolveFieldsWithPrefix(Optional<Name> alias) {
     if (alias.isPresent()) {
@@ -93,5 +99,13 @@ public class Scope {
 
   public Optional<JoinCriteria> getAdditionalJoinCondition() {
     return Optional.empty();
+  }
+
+  public Relation getScopedRelation() {
+    return this.relation;
+  }
+
+  public Optional<Table> getJoinScope(Name name) {
+    return Optional.ofNullable(joinScope.get(name));
   }
 }
