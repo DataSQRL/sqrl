@@ -185,15 +185,16 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
       JoinOn criteria = (JoinOn) getCriteria(firstRel, joinAlias, firstRelAlias).get();
 
+      scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
+
       //Add criteria to join
       if (node.getCriteria().isPresent()) {
         List<Expression> newNodes = new ArrayList<>();
-        newNodes.add(((JoinOn)node.getCriteria().get()).getExpression());
+        newNodes.add(rewriteExpression(((JoinOn)node.getCriteria().get()).getExpression(), scope));
         newNodes.add(criteria.getExpression());
         criteria = new JoinOn(Optional.empty(), and(newNodes));
       }
 
-      scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
       return createScope(
           new Join(node.getLocation(), node.getType(), (Relation) left.getNode(), (Relation) result.getCurrent(), Optional.of(criteria)),
           scope);
@@ -208,8 +209,15 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
 
       scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
+
+      Optional<JoinCriteria> criteria = node.getCriteria();
+      if (node.getCriteria().isPresent()) {
+        criteria = Optional.of(new JoinOn(Optional.empty(),
+            rewriteExpression(((JoinOn)node.getCriteria().get()).getExpression(), scope)));
+      }
+
       return createScope(
-          new Join(node.getLocation(), node.getType(), (Relation) left.getNode(), (Relation) result.getCurrent(), node.getCriteria()),
+          new Join(node.getLocation(), node.getType(), (Relation) left.getNode(), (Relation) result.getCurrent(), criteria),
           scope);
     }
   }
