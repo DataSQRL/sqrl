@@ -8,6 +8,7 @@ import ai.dataeng.execution.page.NoPage;
 import ai.dataeng.execution.page.SystemPageProvider;
 import ai.dataeng.execution.table.H2Table;
 import ai.dataeng.execution.table.TableFieldFetcher;
+import ai.dataeng.execution.table.column.BooleanColumn;
 import ai.dataeng.execution.table.column.Columns;
 import ai.dataeng.execution.table.column.DateTimeColumn;
 import ai.dataeng.execution.table.column.FloatColumn;
@@ -24,10 +25,13 @@ import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
+import ai.dataeng.sqml.type.basic.BigIntegerType;
+import ai.dataeng.sqml.type.basic.BooleanType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
 import ai.dataeng.sqml.type.basic.DoubleType;
 import ai.dataeng.sqml.type.basic.FloatType;
 import ai.dataeng.sqml.type.basic.IntegerType;
+import ai.dataeng.sqml.type.basic.IntervalType;
 import ai.dataeng.sqml.type.basic.StringType;
 import ai.dataeng.sqml.type.basic.UuidType;
 import graphql.schema.FieldCoordinates;
@@ -159,6 +163,16 @@ public class SqrlCodeRegistryBuilder {
       @Override
       public H2Column visitDateTimeType(DateTimeType type, Column context) {
         return new DateTimeColumn(context.getName().getDisplay(), context.getId().toString());
+      }
+
+      @Override
+      public H2Column visitBooleanType(BooleanType type, Column context) {
+        return new BooleanColumn(context.getName().getDisplay(), context.getId().toString());
+      }
+
+      @Override
+      public H2Column visitBigIntegerType(BigIntegerType type, Column context) {
+        return new IntegerColumn(context.getName().getDisplay(), context.getId().toString());
       }
 
       @Override

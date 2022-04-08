@@ -191,7 +191,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitAllColumns(AllColumns node, Void context) {
-    return "*";
+    return node.getPrefix().map(p->p.toString() + ".").orElse("") + "*";
   }
 
   @Override

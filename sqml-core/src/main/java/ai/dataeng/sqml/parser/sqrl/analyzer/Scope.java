@@ -1,9 +1,11 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
+import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.FieldPath;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.Node;
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,14 +38,22 @@ public class Scope {
   private boolean expression;
   private Name expressionName;
 
-  public List<Field> resolveFieldsWithPrefix(Optional<Name> alias) {
+  public List<Identifier> resolveFieldsWithPrefix(Optional<Name> alias) {
     if (alias.isPresent()) {
-      return joinScope.get(alias.get()).getFields().getElements();
+      List<Identifier> identifiers = joinScope.get(alias.get()).getFields().getElements().stream()
+          .filter(f->f instanceof Column)
+          .map(f->new Identifier(Optional.empty(), alias.get().toNamePath().concat(f.getName())))
+          .collect(Collectors.toList());
+      return identifiers;
     }
 
-    List<Field> allFields = new ArrayList<>();
-    for (Table table : joinScope.values()) {
-      allFields.addAll(table.getFields().getElements());
+    List<Identifier> allFields = new ArrayList<>();
+    for (Map.Entry<Name, Table> entry : joinScope.entrySet()) {
+      List<Identifier> identifiers = entry.getValue().getFields().getElements().stream()
+          .filter(f->f instanceof Column)
+          .map(f->new Identifier(Optional.empty(), entry.getKey().toNamePath().concat(f.getName())))
+          .collect(Collectors.toList());
+      allFields.addAll(identifiers);
     }
 
     return allFields;

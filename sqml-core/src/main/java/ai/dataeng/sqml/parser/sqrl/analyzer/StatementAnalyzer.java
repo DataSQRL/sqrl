@@ -98,50 +98,87 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       Select contextSelect = appendGroupKeys(select, table.get().getPrimaryKeys());
 
       GroupBy groupBy = null;
-      if (isAggregating(contextSelect)) {
-        int startIndex =
-            contextSelect.getSelectItems().size() - table.get().getPrimaryKeys().size();
-        IntStream groupIndex = IntStream.range(startIndex, contextSelect.getSelectItems().size());
-        groupBy = unqualifiedGroupBy
-            .map(group -> {
-              List<Expression> grouping = new ArrayList<>(
-                  group.getGroupingElement().getExpressions());
-              grouping.addAll(toGroupByExpression(groupIndex));
-              return new GroupBy(new SimpleGroupBy(grouping));
-            })
-            .orElse(toGroupBy(toGroupByExpression(groupIndex)));
-      }
-
       Relation from = (Relation)sourceScope.getNode();
       for (JoinResult result : additionalJoins) {
-        from = new Join(Optional.empty(), result.getType(), from, result.getSubquery(), result.getCriteria());
+        from = new Join(Optional.empty(), result.getType(), from, result.getRelation(), result.getCriteria());
       }
 
       if (scope.isExpression()) {
-        //rejoin column back to table
-        //If this is an aggregating expression then join, other add column
         Table contextTable = scope.getContextTable().get();
 
-        List<SelectItem> additionalColumns = contextTable.getFields().getElements().stream()
-            .filter(e-> e instanceof Column)
-            .map(e->new SingleColumn(new Identifier(Optional.empty(), e.getId().toNamePath())))
-            .collect(Collectors.toList());
-        List<SelectItem> list = new ArrayList<>(select.getSelectItems());
-        list.addAll(additionalColumns);
+        if (isAggregating(contextSelect)) {
+          //Generate or append group by, keep track of new grouping keys
+          int startIndex =
+              contextSelect.getSelectItems().size() - table.get().getPrimaryKeys().size();
+          IntStream groupIndex = IntStream.range(startIndex, contextSelect.getSelectItems().size());
+          groupBy = unqualifiedGroupBy
+              .map(group -> {
+                List<Expression> grouping = new ArrayList<>(
+                    group.getGroupingElement().getExpressions());
+                grouping.addAll(toGroupByExpression(groupIndex));
+                return new GroupBy(new SimpleGroupBy(grouping));
+              })
+              .orElse(toGroupBy(toGroupByExpression(IntStream.range(startIndex, contextSelect.getSelectItems().size()))));
 
-        QuerySpecification querySpecification = new QuerySpecification(
-            node.getLocation(),
-            new Select(select.isDistinct(), list),
-            from,
-            Optional.empty(),
-            Optional.ofNullable(groupBy),
-            having,
-            Optional.empty(),
-            Optional.empty()
-        );
+          QuerySpecification querySpecification = new QuerySpecification(
+              node.getLocation(),
+              contextSelect,
+              from,
+              Optional.empty(),
+              Optional.of(groupBy),
+              having,
+              Optional.empty(),
+              Optional.empty()
+          );
+          Query query = new Query(querySpecification, Optional.empty(), Optional.empty());
 
-        return createScope(querySpecification, scope);
+          //Join on contextQuery, using the generated fields and only project our fields
+          Name lhs = gen.nextTableAliasName();
+          Name rhs = gen.nextTableAliasName();
+          TableNode tableNode = new TableNode(Optional.empty(), contextTable.getId().toNamePath(), Optional.of(lhs));
+          Join join = new Join(Optional.empty(), Type.LEFT, tableNode,
+              new AliasedRelation(new TableSubquery(query), new Identifier(Optional.empty(), rhs.toNamePath())),
+              getCriteria(contextSelect, startIndex, contextSelect.getSelectItems().size(), contextTable, lhs, rhs));
+        } else {
+          //Non aggregating expression, we can just add the columns directly into the query
+          //SELECT coalesce(discount, 0.0) FROM entries => SELECT _uuid, quantity, discount, coalesce(discount, 0.0) AS discount$1 FROM entries
+          List<SelectItem> additionalColumns = contextTable.getFields().getElements().stream()
+              .filter(e -> e instanceof Column)
+              .map(e -> new SingleColumn(new Identifier(Optional.empty(),
+                  Name.SELF_IDENTIFIER.toNamePath().concat(e.getId().toNamePath())),
+                  Optional.of(new Identifier(Optional.empty(), e.getId().toNamePath()))))
+              .collect(Collectors.toList());
+          List<SelectItem> list = new ArrayList<>(select.getSelectItems());
+          list.addAll(additionalColumns);
+          QuerySpecification querySpecification = new QuerySpecification(
+              node.getLocation(),
+              new Select(select.isDistinct(), list),
+              from,
+              Optional.empty(),
+              Optional.empty(),
+              having,
+              Optional.empty(),
+              Optional.empty()
+          );
+
+          return createScope(querySpecification, scope);
+        }
       } else {
+        int startIndex =
+            contextSelect.getSelectItems().size() - table.get().getPrimaryKeys().size();
+
+        //Add grouping of context fields
+        if (node.getGroupBy().isPresent()) {
+          groupBy = unqualifiedGroupBy
+              .map(group -> {
+                List<Expression> grouping = new ArrayList<>(
+                    group.getGroupingElement().getExpressions());
+                grouping.addAll(toGroupByExpression(IntStream.range(startIndex, contextSelect.getSelectItems().size())));
+                return new GroupBy(new SimpleGroupBy(grouping));
+              })
+              .orElse(toGroupBy(toGroupByExpression(IntStream.range(startIndex, contextSelect.getSelectItems().size()))));
+        }
+
         QuerySpecification querySpecification = new QuerySpecification(
             node.getLocation(),
             contextSelect,
@@ -156,10 +193,25 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       }
 
     } else {
-
+      throw new RuntimeException("Base table wip");
     }
 
     return null;
+  }
+
+  private Optional<JoinCriteria> getCriteria(Select contextSelect, int startIndex, int endIndex,
+      Table contextTable, Name lhs, Name rhs) {
+    List<Expression> conditions = new ArrayList<>();
+    for (int i = startIndex; i < endIndex; i++) {
+      SingleColumn innerColumn = (SingleColumn)contextSelect.getSelectItems().get(i);
+      Identifier rhsColumn = new Identifier(Optional.empty(), rhs.toNamePath().concat(innerColumn.getAlias().get().getNamePath().getFirst()));
+
+      Column outerColumn = (Column)contextTable.getField(((Identifier)innerColumn.getExpression()).getNamePath().getFirst());
+      Identifier lhsColumn = new Identifier(Optional.empty(), lhs.toNamePath().concat(outerColumn.getId()));
+      conditions.add(new ComparisonExpression(Optional.empty(), Operator.EQUAL, lhsColumn, rhsColumn));
+    }
+
+    return Optional.of(new JoinOn(Optional.empty(), and(conditions)));
   }
 
   private Select appendGroupKeys(Select select, List<Column> keys) {
@@ -192,12 +244,11 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return new Select(select.getLocation(), select.isDistinct(), items);
   }
 
-
   private List<Expression> getOrdinal(Select select, GroupBy group) {
     Set<Integer> grouping = new HashSet<>();
     for (Expression expression : group.getGroupingElement().getExpressions()) {
       int index = IntStream.range(0, select.getSelectItems().size())
-          .filter(i -> ((SingleColumn)select.getSelectItems().get(i)).getExpression().equals(expression))
+          .filter(i -> ((SingleColumn)select.getSelectItems().get(i)).getAlias().get().equals(expression))
           .findFirst()
           .orElseThrow(()-> new RuntimeException("Cannot find grouping element " + expression));
 
@@ -223,10 +274,9 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         Optional<Name> starPrefix = ((AllColumns) item).getPrefix()
             .map(e->e.getFirst());
 
-        List<Field> fields = scope.resolveFieldsWithPrefix(starPrefix);
+        List<Identifier> fields = scope.resolveFieldsWithPrefix(starPrefix);
 
-        for (Field field : fields) {
-          Identifier identifier = new Identifier(item.getLocation(), field.getName().toNamePath());
+        for (Identifier identifier : fields) {
           rewritten.add(new SingleColumn(identifier,Optional.empty()));
         }
       } else if (item instanceof SingleColumn) {
@@ -282,7 +332,12 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       scope.getJoinScope().put(Name.SELF_IDENTIFIER, scope.getContextTable().get());
     }
 
-    Name currentAlias = getTableAlias(tableNode, 0);
+    Name currentAlias;
+    if (namePath.getFirst().equals(Name.SELF_IDENTIFIER)) {
+      currentAlias = Name.SELF_IDENTIFIER;
+    } else {
+      currentAlias = getTableAlias(tableNode, 0);
+    }
     Relation relation = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(currentAlias));
     TableBookkeeping b = new TableBookkeeping(relation, currentAlias, table);
     TableBookkeeping result = walkRemaining(tableNode, b, 1);
@@ -328,6 +383,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     Scope left = node.getLeft().accept(this, scope);
 
     TableNode rhs = (TableNode)node.getRight();
+    //A join traversal, e.g. FROM orders AS o JOIN o.entries
     if (scope.getJoinScope().containsKey(rhs.getNamePath().getFirst())) {
       Name joinAlias = rhs.getNamePath().getFirst();
       Table table = scope.getJoinScope(joinAlias).get();
@@ -339,7 +395,6 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           Optional.of(firstRelAlias));
 
       TableBookkeeping b = new TableBookkeeping(relation, joinAlias, firstRel.getToTable());
-      //Remaining
       TableBookkeeping result = walkRemaining(rhs, b, 2);
 
       JoinOn criteria = (JoinOn) getCriteria(firstRel, joinAlias, firstRelAlias).get();
@@ -357,10 +412,10 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       return createScope(
           new Join(node.getLocation(), node.getType(), (Relation) left.getNode(), (Relation) result.getCurrent(), Optional.of(criteria)),
           scope);
-    } else {
+    } else { //A regular join: FROM Orders JOIN entries
       Table table = analyzer.getDag().getSchema().getByName(rhs.getNamePath().get(0)).get();
       Name joinAlias = getTableAlias(rhs, 0);
-      TableNode tableNode = new TableNode(Optional.empty(), table.getName().toNamePath(), Optional.of(joinAlias));
+      TableNode tableNode = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(joinAlias));
 
       TableBookkeeping b = new TableBookkeeping(tableNode, joinAlias, table);
       //Remaining
@@ -402,12 +457,36 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     }
   }
 
-  public static Optional<JoinCriteria> getCriteria(Relationship rel, Name alias, Name nextAlias) {
-    List<Column> columns = rel.getTable().getPrimaryKeys();
+  public static Optional<JoinCriteria> getCriteria(List<Column> columns, Name alias, Name nextAlias) {
     List<Expression> expr = columns.stream()
-        .map(c->new ComparisonExpression(Optional.empty(), Operator.EQUAL, toIdentifier(c, alias), toIdentifier(c, nextAlias)))
+        .map(c -> new ComparisonExpression(Optional.empty(), Operator.EQUAL,
+            toIdentifier(c, alias), toIdentifier(c, nextAlias)))
         .collect(Collectors.toList());
     return Optional.of(new JoinOn(Optional.empty(), and(expr)));
+  }
+  public static Optional<JoinCriteria> getCriteria(Relationship rel, Name alias, Name nextAlias) {
+    if (rel.type == Relationship.Type.JOIN){
+      //Join expansion uses the context table as its join
+      //these can be renamed, just use pk1, pk2, etc for now
+      List<Column> columns = rel.getTable().getPrimaryKeys();
+      List<Expression> expr = new ArrayList<>();
+      for (int i = 0; i < columns.size(); i++) {
+        Column c = columns.get(i);
+        ComparisonExpression comparisonExpression = new ComparisonExpression(Optional.empty(),
+            Operator.EQUAL,
+           toIdentifier(c, alias),
+            new Identifier(Optional.empty(),
+                nextAlias.toNamePath().concat(Name.system("_pk" + i).toNamePath()))
+            );
+        expr.add(comparisonExpression);
+      }
+      return Optional.of(new JoinOn(Optional.empty(), and(expr)));
+
+
+    } else {
+      List<Column> columns = rel.getTable().getPrimaryKeys();
+      return getCriteria(columns, alias, nextAlias);
+    }
   }
 
   private static Identifier toIdentifier(Column c, Name alias) {

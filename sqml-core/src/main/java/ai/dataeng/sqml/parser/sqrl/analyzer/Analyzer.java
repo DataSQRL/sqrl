@@ -29,14 +29,17 @@ import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.ImportDefinition;
+import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinDeclaration;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QuerySpecification;
+import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.tree.Select;
+import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
@@ -203,9 +206,10 @@ public class Analyzer {
         public RelNode visit(TableScan scan) {
           org.apache.calcite.schema.Table table = planner.getSchema().getTable(scan.getTable().getQualifiedName().get(0), false).getTable();
 
-          if (table instanceof StreamTable) {
-          } else if (table instanceof SqrlViewTable) {
+          if (table instanceof SqrlViewTable) {
             return ((SqrlViewTable)table).getRelNode();
+          } else {
+
           }
           return scan;
         }
@@ -252,7 +256,21 @@ public class Analyzer {
 //      }
     }
 
+    //We are creating a new table but analyzing it in a similar way
     private void analyzeQuery(NamePath namePath, Query query) {
+      //Could be a base table
+      Optional<Table> contextTable = namePath.getPrefix().flatMap(p-> getTable(p));
+
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
+      Scope scope = query.accept(statementAnalyzer, new Scope(contextTable, query, new HashMap<>(),
+          false, namePath.getLast()));
+
+      SqlNode sqlNode = planner.parse(scope.getNode());
+      log.info("Calcite Query: {}", sqlNode);
+
+      RelNode plan = planner.plan(sqlNode);
+
+
       throw new RuntimeException("");
     }
 
@@ -335,9 +353,10 @@ public class Analyzer {
     public Void visitJoinDeclaration(JoinDeclaration node, Void context) {
       NamePath namePath = node.getNamePath();
 
-      StatementAnalyzer sAnalyzer = new StatementAnalyzer(analyzer);
+      Name name = getLastTableName(node);
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
 
-      Select select = new Select(Optional.empty(), false, List.of(new AllColumns()));
+      Select select = new Select(Optional.empty(), false, List.of(new AllColumns(name.toNamePath())));
       Query querySpec = new Query(new QuerySpecification(node.getLocation(),
           select,
           node.getInlineJoin().getRelation(),
@@ -349,18 +368,15 @@ public class Analyzer {
           Optional.empty(),
           Optional.empty()
       );
-
       System.out.println(NodeFormatter.accept(querySpec));
 
       Optional<Table> ctxTable = getTable(namePath.getPrefix().get());
-      Scope scope = querySpec.accept(sAnalyzer, new Scope(ctxTable, querySpec, new LinkedHashMap<>(),
+      Scope scope = querySpec.accept(statementAnalyzer, new Scope(ctxTable, querySpec, new LinkedHashMap<>(),
           false, null));
 
-      Map<Name, Table> joinScope = scope.getJoinScope();
+      System.out.println(NodeFormatter.accept(scope.getNode()));
+
       Node rewritten = scope.getNode();
-      if (node.getInlineJoin().getLimit().isEmpty()) {
-//        rewritten = (Join)((QuerySpecification)((Query)rewritten).getQueryBody()).getFrom();
-      }
 
       Table table = ctxTable.get();
 
@@ -381,6 +397,16 @@ public class Analyzer {
       table.addField(joinField);
 
       return null;
+    }
+
+    private Name getLastTableName(JoinDeclaration node) {
+      Relation rel = node.getInlineJoin().getRelation();
+      while (rel instanceof Join) {
+        rel = ((Join) rel).getRight();
+      }
+      TableNode table = (TableNode) rel;
+
+      return table.getAlias().orElse(table.getNamePath().getFirst());
     }
   }
 

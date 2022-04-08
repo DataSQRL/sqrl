@@ -71,10 +71,25 @@ public class Test2 {
             + "IMPORT ecommerce-data.Orders;\n"
             + "\n"
             + "Orders.entries.discount := coalesce(discount, 0.0);\n"
-            + "Orders.entries.total := quantity * unit_price - discount;"
+            + "Orders.entries.total := quantity * unit_price - discount;\n"
+            + "Orders.total := sum(entries.total);\n"
+            + "Orders.total_savings := sum(entries.discount);\n"
+            + "Orders.total_entries := count(entries);"
+            + ""
+            + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
+            + "Customer.total_orders := sum(orders.total);"
+            + "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
+            + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
+            + "\n"
+            + "Customer.recent_products := SELECT productid, product.category AS category,\n"
+            + "                                   sum(quantity) AS quantity, count(*) AS num_orders\n"
+            + "                            FROM _.orders.entries\n"
+            + "                            WHERE parent.time > now() - INTERVAL 2 YEAR\n"
+            + "                            GROUP BY productid, category\n"
+            + "                            ORDER BY num_orders DESC, quantity DESC;"
     );
 
-    System.out.println(script.getGraphQL().execute("query { orders { data { entries { discount, total } } } }"));
+    System.out.println(script.getGraphQL().execute("query {orders { data { total, total_savings, total_entries } } }"));
 
   }
 

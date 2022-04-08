@@ -139,7 +139,7 @@ public class Environment implements Closeable {
 
     FlinkPipelineGenerator pipelineGenerator = new FlinkPipelineGenerator();
     Pair<StreamStatementSet, Map<Table, TableDescriptor>> result =
-        pipelineGenerator.createFlinkPipeline(flinkSinks.getKey());
+        pipelineGenerator.createFlinkPipeline(flinkSinks.getKey(), calcitePlanner);
 
     SqlGenerator sqlGenerator = new SqlGenerator(result.getRight());
     List<String> db = sqlGenerator.generate();
@@ -153,12 +153,12 @@ public class Environment implements Closeable {
     executor.executeDml(config, db);
     executor.executeFlink(result.getLeft());
 
-    GraphqlGenerator graphqlGenerator = new GraphqlGenerator();
-    GraphQL graphql = graphqlGenerator.graphql(dag, flinkSinks, result.getRight(), getPostgresClient());
+//    GraphqlGenerator graphqlGenerator = new GraphqlGenerator();
+//    GraphQL graphql = graphqlGenerator.graphql(dag, flinkSinks, result.getRight(), getPostgresClient());
 
 //    JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(submission.getId().getId());
 
-    return new Script(graphql);
+    return new Script(null);
   }
 
   private SqlClientProvider getPostgresClient() {

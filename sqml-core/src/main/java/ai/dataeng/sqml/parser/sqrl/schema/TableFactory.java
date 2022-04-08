@@ -1,14 +1,11 @@
 package ai.dataeng.sqml.parser.sqrl.schema;
 
-import static ai.dataeng.sqml.parser.macros.SqlNodeUtils.childParentJoin;
-import static ai.dataeng.sqml.parser.macros.SqlNodeUtils.parentChildJoin;
 import static ai.dataeng.sqml.tree.name.Name.PARENT_RELATIONSHIP;
 
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlinkTableConverter;
 import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Relationship;
-import ai.dataeng.sqml.parser.Relationship.Type;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager.SourceTableImport;
 import ai.dataeng.sqml.parser.operator.Shredder;
@@ -28,7 +25,6 @@ import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.type.schema.FlexibleSchemaHelper;
 import graphql.com.google.common.collect.Maps;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +36,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlRelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -54,7 +49,6 @@ import org.apache.flink.table.types.CollectionDataType;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.FieldsDataType;
 import org.apache.flink.table.types.logical.IntType;
-import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.RowType.RowField;
 
@@ -69,7 +63,10 @@ public class TableFactory {
     FlinkTableConverter tbConverter = new FlinkTableConverter();
     Pair<Schema, TypeInformation> ordersSchema = tbConverter.tableSchemaConversion(sourceTableImport.getSourceSchema());
 
-    planner.addTable(table.getId().toString(), new StreamTable(toDataType(ordersSchema.getKey().getColumns())));
+    planner.addTable(table.getId().toString(), new StreamTable(toDataType(ordersSchema.getKey().getColumns()),
+        sourceTableImport));
+    //todo hack in identifier for later recall.
+    planner.addTable(table.getId().toString() + "_stream", new StreamTable(toDataType(ordersSchema.getKey().getColumns()), sourceTableImport));
     SqrlRelBuilder builder = planner.createRelBuilder();
     RelNode node = builder
         .scanStream(table.getId().toString(), sourceTableImport, table)
@@ -124,7 +121,8 @@ public class TableFactory {
             .map(e-> fieldMap.get(e.getName().getCanonical()))
             .collect(Collectors.toList());
 
-        planner.addTable(toTable.getId().toString(), new StreamTable(toDataTypeField(row.getFields(), toPk(pks, row.getFields().size()))));
+        planner.addTable(toTable.getId().toString(), new StreamTable(toDataTypeField(row.getFields(), toPk(pks, row.getFields().size())),
+            null));
 
         RelNode node = planner.createRelBuilder()
             .scanShred(rel.getTable(), toTable.getId().toString())

@@ -21,6 +21,7 @@ import ai.dataeng.sqml.parser.sqrl.analyzer.Scope.ResolveResult;
 import ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.TableBookkeeping;
 import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
 import ai.dataeng.sqml.parser.sqrl.function.RewritingFunction;
+import ai.dataeng.sqml.parser.sqrl.function.SqlNativeFunction;
 import ai.dataeng.sqml.parser.sqrl.function.SqrlFunction;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.Expression;
@@ -31,6 +32,7 @@ import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Join.Type;
 import ai.dataeng.sqml.tree.JoinCriteria;
+import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.TableNode;
@@ -78,6 +80,18 @@ public class ExpressionAnalyzer {
     public Expression rewriteFunctionCall(FunctionCall node, Context context,
         ExpressionTreeRewriter<Context> treeRewriter) {
       SqrlFunction function = functionLookup.lookup(node.getName());
+      //Special case for count
+      //TODO Replace this bit of code
+      if (function instanceof SqlNativeFunction) {
+        SqlNativeFunction nativeFunction = (SqlNativeFunction) function;
+        if (nativeFunction.getOp().getName().equalsIgnoreCase("COUNT") &&
+         node.getArguments().size() == 0
+        ) {
+          return new FunctionCall(NamePath.of("COUNT"), List.of(new LongLiteral("1")), false);
+        }
+      }
+
+
       if (function instanceof RewritingFunction) {
         //rewrite function immediately
         RewritingFunction rewritingFunction = (RewritingFunction) function;
@@ -136,7 +150,7 @@ public class ExpressionAnalyzer {
           );
           AliasedRelation subquery = new AliasedRelation(new TableSubquery(query), ident(tableAlias));
 
-          joinResults.add(new JoinResult(Type.LEFT, subquery, getCriteria((Relationship) result.getFirstField(), result.getAlias(), tableAlias)));
+          joinResults.add(new JoinResult(Type.LEFT, subquery, getCriteria(result.getTable().getPrimaryKeys(), result.getAlias(), tableAlias)));
           return new Identifier(Optional.empty(), NamePath.of(tableAlias, fieldAlias));
         }
       }
@@ -148,18 +162,28 @@ public class ExpressionAnalyzer {
     @Override
     public Expression rewriteIdentifier(Identifier node, Context context,
         ExpressionTreeRewriter<Context> treeRewriter) {
-      List<FieldPath> resolved = context.getScope()
-          .resolveField(node.getNamePath());
+//      List<FieldPath> resolved = context.getScope()
+//          .resolveField(node.getNamePath());
+      List<Scope.ResolveResult> results = context.getScope().resolveFirst(node.getNamePath());
 
-      Preconditions.checkState(resolved.size() == 1,
-          "Could not resolve field (ambiguous or non-existent: " + node + " : " + resolved + ")");
+      Preconditions.checkState(results.size() == 1,
+          "Could not resolve field (ambiguous or non-existent: " + node + " : " + results + ")");
 
-      if (PathUtil.isToOne(resolved.get(0))) {
-        Name fieldName = resolved.get(0).getLastField().getId();
-        Name tableAlias = gen.nextTableAliasName();
-        Name sourceTableAlias = context.getScope().qualify(node.getNamePath()).get(0);
-        //addLeftJoin(node, resolved.get(0), tableAlias, sourceTableAlias);
-        return new Identifier(node.getLocation(), tableAlias.toNamePath().concat(fieldName));
+      if (PathUtil.isToOne(results.get(0))) {
+        ResolveResult result = results.get(0);
+        /*
+         * Replace current token with an Identifier and expand the path into a subquery. This
+         * subquery is joined to the table it was resolved from.
+         */
+        Name baseTableAlias = gen.nextTableAliasName();
+        Relation relation = getRelation((Relationship)result.getFirstField(), baseTableAlias);
+
+        joinResults.add(new JoinResult(
+            Type.LEFT, relation,
+            getCriteria((Relationship) result.getFirstField(), result.getAlias(), baseTableAlias)
+        ));
+        return new Identifier(node.getLocation(), baseTableAlias.toNamePath().concat(
+            result.getRemaining().get().getLast()));
       }
 
       NamePath qualifiedName = context.getScope().qualify(node.getNamePath());
@@ -170,7 +194,7 @@ public class ExpressionAnalyzer {
   @Value
   public static class JoinResult {
     Type type;
-    AliasedRelation subquery;
+    Relation relation;
     Optional<JoinCriteria> criteria;
   }
 }

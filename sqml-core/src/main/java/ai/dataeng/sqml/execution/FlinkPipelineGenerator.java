@@ -9,6 +9,8 @@ import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.RelToSql;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager;
+import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
+import ai.dataeng.sqml.parser.sqrl.schema.StreamTable;
 import ai.dataeng.sqml.planner.nodes.LogicalFlinkSink;
 import ai.dataeng.sqml.planner.nodes.ShredTableScan;
 import ai.dataeng.sqml.planner.nodes.StreamTableScan;
@@ -41,7 +43,8 @@ import org.apache.flink.util.OutputTag;
 public class FlinkPipelineGenerator {
 
   public Pair<StreamStatementSet, Map<Table, TableDescriptor>> createFlinkPipeline(
-      List<LogicalFlinkSink> sinks) {
+      List<LogicalFlinkSink> sinks,
+      CalcitePlanner calcitePlanner) {
     FlinkTableConverter tbConverter = new FlinkTableConverter();
 
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -63,10 +66,11 @@ public class FlinkPipelineGenerator {
           if ((List.of(tEnv.listTables()).contains(streamName))) {
             return super.visit(scan);
           }
+          org.apache.calcite.schema.Table table = calcitePlanner.getSchema().getTable(streamName + "_stream", false).getTable();
 
-          if (scan instanceof StreamTableScan) {
+          if (table instanceof StreamTable) {
           //1. construct to stream, register it with tenv
-          StreamTableScan streamTableScan = (StreamTableScan) scan;
+          StreamTable streamTableScan = (StreamTable) table;
           ImportManager.SourceTableImport imp = streamTableScan.getTableImport();
           Pair<Schema, TypeInformation> ordersSchema = tbConverter.tableSchemaConversion(imp.getSourceSchema());
 
@@ -112,7 +116,7 @@ public class FlinkPipelineGenerator {
       String sql = RelToSql.convertToSql(sink.getInput(0)).replaceAll("\"", "`");
       System.out.println(sql);
       org.apache.flink.table.api.Table tbl = tEnv.sqlQuery(sql);
-      tbl.execute().print();
+//      tbl.execute().print();
 
       String name = sink.getSqrlTable().name.getDisplay().toString();
       sink.setPhysicalName(name);

@@ -30,27 +30,7 @@ public class PathUtil {
     return false;
   }
 
-  public static boolean isToMany(FieldPath path) {
-    for (Field field : path.getFields()) {
-      if (field instanceof Relationship) {
-        Relationship rel = (Relationship) field;
-        if (rel.multiplicity == Multiplicity.MANY) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  public static boolean isToOne(FieldPath path) {
-    for (Field field : path.getFields()) {
-      if (field instanceof Relationship) {
-        Relationship rel = (Relationship) field;
-        if (rel.multiplicity == Multiplicity.ONE) {
-          return true;
-        }
-      }
-    }
-    return false;
+  public static boolean isToOne(ResolveResult result) {
+    return !isToMany(result) && result.getFirstField() instanceof Relationship;
   }
 }

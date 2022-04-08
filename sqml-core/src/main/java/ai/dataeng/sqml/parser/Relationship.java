@@ -70,18 +70,23 @@ public class Relationship extends Field {
   public Node getNode() {
     Query query = (Query) node;
     QuerySpecification spec = (QuerySpecification)query.getQueryBody();
-    spec.setSelect(new Select(Optional.empty(), false, refreshSelect(spec.getSelect().getSelectItems())));
+    spec.setSelect(new Select(Optional.empty(), false, refreshSelect()));
     return node;
   }
 
-  private List<SelectItem> refreshSelect(
-      List<SelectItem> groupingColumns) {
+  private List<SelectItem> refreshSelect() {
     List<SelectItem> selectItems = new ArrayList<>();
-    selectItems.addAll(groupingColumns);
     for (Field field : this.toTable.getFields().getElements()) {
       if (field instanceof Relationship) continue;
-      selectItems.add(new SingleColumn(new Identifier(Optional.empty(), this.alias.toNamePath().concat(((Column)field).getId()))));
+      selectItems.add(new SingleColumn(new Identifier(Optional.empty(), this.alias.toNamePath().concat(field.getId()))));
     }
+
+    for (int i = 0; i < this.table.getPrimaryKeys().size(); i++) {
+      Column field = this.table.getPrimaryKeys().get(i);
+      selectItems.add(new SingleColumn(new Identifier(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath().concat(
+          field.getId())), Optional.of(new Identifier(Optional.empty(), Name.system("_pk"+i).toNamePath()))));
+    }
+
     return selectItems;
   }
 
