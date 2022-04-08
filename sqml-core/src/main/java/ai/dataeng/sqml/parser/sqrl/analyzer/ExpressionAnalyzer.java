@@ -150,11 +150,6 @@ public class ExpressionAnalyzer {
         ExpressionTreeRewriter<Context> treeRewriter) {
       List<FieldPath> resolved = context.getScope()
           .resolveField(node.getNamePath());
-      if (resolved.size() != 1) {
-        System.out.println();
-        context.getScope()
-            .resolveField(node.getNamePath());
-      }
 
       Preconditions.checkState(resolved.size() == 1,
           "Could not resolve field (ambiguous or non-existent: " + node + " : " + resolved + ")");
