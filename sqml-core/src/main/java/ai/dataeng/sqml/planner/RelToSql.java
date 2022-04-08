@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.parser;
+package ai.dataeng.sqml.planner;
 
 import java.util.function.UnaryOperator;
 import org.apache.calcite.rel.RelNode;

@@ -5,9 +5,6 @@ import com.google.common.base.Preconditions;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
-/**
- * Utility methods for handling and modifying {@link SchemaImpl}
- */
 public class LogicalPlanUtil {
 
     public static <F extends Field> F getField(Table table, Name name) {

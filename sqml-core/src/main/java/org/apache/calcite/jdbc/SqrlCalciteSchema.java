@@ -22,9 +22,9 @@ import org.apache.calcite.schema.Table;
 /**
  * A no-op wrapper for SimpleCalciteSchema
  */
-public class SqrlSchema2 extends SimpleCalciteSchema {
+public class SqrlCalciteSchema extends SimpleCalciteSchema {
 
-  public SqrlSchema2(Schema schema) {
+  public SqrlCalciteSchema(Schema schema) {
     super(null, schema, "");
   }
 }

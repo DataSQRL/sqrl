@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.parser.util;
+package ai.dataeng.sqml.parser;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.tree.DistinctAssignment;
@@ -26,7 +26,7 @@ public class SqrlQueries {
     String query = String.format(template,
         partitionStr, orderStr,
         statement.getTable().getCanonical(),
-        gen.nextTableAlias()
+        gen.nextTableAliasName().toString()
     );
     return query;
   }

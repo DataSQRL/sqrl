@@ -58,19 +58,12 @@ public class GraphqlSchemaBuilder {
   private final GraphQLCodeRegistry codeRegistry;
   private final GraphqlTypeCatalog typeCatalog;
   GraphQLSchema.Builder schemaBuilder = GraphQLSchema.newSchema();
-  NameTranslator nameTranslator = new NameTranslator();
-  Map<String, H2Table> tableMap;
-  private final Pool client;
 
   public GraphqlSchemaBuilder(Map<Class<? extends Type>, GraphQLOutputType> types,
-      ShadowingContainer<Table> schema,
-      Map<String, H2Table> tableMap, Pool client, GraphQLCodeRegistry codeRegistry) {
-
+      ShadowingContainer<Table> schema, GraphQLCodeRegistry codeRegistry) {
     this.types = types;
     this.schema = schema;
     this.codeRegistry = codeRegistry;
-    this.tableMap = new HashMap<>(); //todo
-    this.client = client;
     this.typeCatalog = new GraphqlTypeCatalog();
   }
 
@@ -99,8 +92,7 @@ public class GraphqlSchemaBuilder {
     }
 
     public GraphQLSchema build() {
-      GraphqlSchemaBuilder schemaBuilder = new GraphqlSchemaBuilder(types, schema, null, null, codeRegistry);
-
+      GraphqlSchemaBuilder schemaBuilder = new GraphqlSchemaBuilder(types, schema, codeRegistry);
       return schemaBuilder.build();
     }
 
@@ -126,43 +118,6 @@ public class GraphqlSchemaBuilder {
     schemaBuilder.codeRegistry(codeRegistry);//buildCodeRegistry(client));
     return schemaBuilder.build();
   }
-//
-//  private GraphQLCodeRegistry buildCodeRegistry(Pool client) {
-//
-//    JdbcPool pool = new JdbcPool(client);
-//    DataLoaderRegistry dataLoaderRegistry = new DataLoaderRegistry();
-//    GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
-//    for (DatasetOrTable ds : schema) {
-//      Table tbl = (Table) ds;
-//      String gqlName = nameTranslator.getGraphqlName(tbl);
-//      codeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", gqlName),
-//          new DefaultDataFetcher(pool, new SystemPageProvider(), tableMap.get(tbl.getName().getDisplay())));
-//    }
-//
-//    for (DatasetOrTable ds : schema) {
-//      Table tbl = (Table) ds;
-//      resolveNestedFetchers(pool, tbl, codeRegistry);
-//    }
-//
-//    return codeRegistry.build();
-//
-//  }
-//
-//  private void resolveNestedFetchers(JdbcPool pool, Table tbl, GraphQLCodeRegistry.Builder codeRegistry) {
-//    for (ai.dataeng.sqml.parser.Field field : tbl.getFields()) {
-//      if (field instanceof Relationship) {
-//        resolveNestedFetchers(pool, (Relationship)field, codeRegistry, tbl);
-//      }
-//    }
-//  }
-//
-//  private void resolveNestedFetchers(JdbcPool pool, Relationship field, GraphQLCodeRegistry.Builder codeRegistry,
-//      Table parent) {
-//
-//    codeRegistry.dataFetcher(FieldCoordinates.coordinates(nameTranslator.getGraphqlTypeName(parent),
-//            nameTranslator.getGraphqlName(field.getToTable())),
-//        new DefaultDataFetcher(/*dataLoaderRegistry, */pool, new NoPage(), tableMap.get(field.getToTable().getName().getDisplay())));
-//  }
 
   //TODO: let page wrapper be informed by page strategy
   //TODO: Assure types are only defined once

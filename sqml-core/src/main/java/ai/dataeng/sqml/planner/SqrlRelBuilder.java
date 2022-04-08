@@ -1,4 +1,4 @@
-package org.apache.calcite.sql;
+package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager.SourceTableImport;

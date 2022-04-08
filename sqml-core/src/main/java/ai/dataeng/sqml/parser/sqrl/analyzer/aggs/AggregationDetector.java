@@ -1,10 +1,10 @@
-package ai.dataeng.sqml.parser.sqrl.analyzer;
+package ai.dataeng.sqml.parser.sqrl.analyzer.aggs;
 
 import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.FunctionCall;
 
-public class AggregationVisitor extends AstVisitor {
+public class AggregationDetector extends AstVisitor {
   FunctionLookup functionLookup = new FunctionLookup();
   boolean agg = false;
   public boolean hasAgg() {

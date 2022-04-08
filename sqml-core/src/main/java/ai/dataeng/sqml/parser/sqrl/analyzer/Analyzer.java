@@ -6,20 +6,20 @@ import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.RelDataTypeConverter;
-import ai.dataeng.sqml.parser.RelToSql;
+import ai.dataeng.sqml.planner.RelToSql;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import ai.dataeng.sqml.parser.Relationship.Type;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
-import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
+import ai.dataeng.sqml.planner.CalcitePlanner;
 import ai.dataeng.sqml.parser.sqrl.schema.SqrlViewTable;
-import ai.dataeng.sqml.parser.sqrl.schema.StreamTable;
 import ai.dataeng.sqml.parser.sqrl.schema.StreamTable.StreamDataType;
 import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
 import ai.dataeng.sqml.parser.sqrl.transformers.ExpressionToQueryTransformer;
-import ai.dataeng.sqml.parser.util.SqrlQueries;
+import ai.dataeng.sqml.parser.SqrlQueries;
+import ai.dataeng.sqml.planner.ViewFactory;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.CreateSubscription;
@@ -55,7 +55,6 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.CalciteSchema.TableEntry;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -63,7 +62,6 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqrlRelBuilder;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -227,38 +225,6 @@ public class Analyzer {
       //Update the calcite schema so new columns are visible
       ViewFactory viewFactory = new ViewFactory();
       planner.setView(contextTable.getId().toString(), viewFactory.create(expanded));
-
-
-//
-//      } else if (contextTable.isEmpty()) {
-//        Table newTable = new Table(TableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
-//            namePath, false);
-//        //Add select items. ppk, new primary keys from grouping statement, and internal/external select items
-//        List<SingleColumn> columns = getSelectList((Query)scope.getNode());
-//        columns.stream()
-//            .map(c -> new Column(c.getAlias().get().getNamePath().getLast(), newTable, 0, null,
-//                0, List.of(), false, false, Optional.empty(), false))
-//            .forEach(newTable::addField);
-//
-//        logicalDag.getSchema().add(newTable);
-//      } else {
-//        Table table = contextTable.get();
-//
-//        Table newTable = new Table(TableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
-//            namePath, false);
-//        Relationship parent = new Relationship(Name.PARENT_RELATIONSHIP, newTable, table, Type.PARENT, Multiplicity.ONE);
-//        newTable.addField(parent);
-//
-//        //Add select items. ppk, new primary keys from grouping statement, and internal/external select items
-//        List<SingleColumn> columns = getSelectList((Query)scope.getNode());
-//        columns.stream()
-//            .map(c -> new Column(c.getAlias().get().getNamePath().getLast(), newTable, 0, null,
-//                0, List.of(), false, false, Optional.empty(), false))
-//            .forEach(newTable::addField);
-//
-//        Relationship relationship = new Relationship(namePath.getLast(), table, newTable, Type.CHILD, Multiplicity.MANY);
-//        table.addField(relationship);
-//      }
     }
 
     //We are creating a new table but analyzing it in a similar way

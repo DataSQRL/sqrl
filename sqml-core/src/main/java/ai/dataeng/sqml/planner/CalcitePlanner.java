@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.parser.sqrl.calcite;
+package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.parser.CalciteTools;
 import ai.dataeng.sqml.parser.sqrl.NodeToSqlNodeConverter;
@@ -6,17 +6,19 @@ import ai.dataeng.sqml.tree.Node;
 import java.util.List;
 import java.util.Properties;
 import org.apache.calcite.config.CalciteConnectionProperty;
-import org.apache.calcite.jdbc.SqrlSchema2;
-import org.apache.calcite.jdbc.SqrlTypeFactory;
+import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable.ViewExpander;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.schema.SqrlSchema;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqrlRelBuilder;
+import ai.dataeng.sqml.planner.SqrlRelBuilder;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -28,18 +30,18 @@ public class CalcitePlanner {
 
   private final RelOptCluster cluster;
   private final CalciteCatalogReader catalogReader;
-  private final org.apache.calcite.schema.SqrlSchema2 sqrlSchema;
-  private final SqrlSchema2 calciteSchema;
+  private final SqrlSchema sqrlSchema;
+  private final SqrlCalciteSchema calciteSchema;
 
   public CalcitePlanner() {
-    SqrlTypeFactory typeFactory = new SqrlTypeFactory();
+    RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl();
     this.cluster = CalciteTools.createHepCluster(typeFactory);
-    this.sqrlSchema = new org.apache.calcite.schema.SqrlSchema2();
-    this.calciteSchema = new SqrlSchema2(sqrlSchema);
+    this.sqrlSchema = new SqrlSchema();
+    this.calciteSchema = new SqrlCalciteSchema(sqrlSchema);
     this.catalogReader = CalciteTools.getCalciteCatalogReader(calciteSchema);
   }
 
-  public SqrlSchema2 getSchema() {
+  public SqrlCalciteSchema getSchema() {
     return calciteSchema;
   }
 
@@ -60,7 +62,7 @@ public class CalcitePlanner {
   }
 
     public RelNode plan(SqlNode sqlNode) {
-    SqrlTypeFactory typeFactory = new SqrlTypeFactory();
+    RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl();
     Properties props = new Properties();
     props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
 
@@ -91,7 +93,7 @@ public class CalcitePlanner {
   }
 
   public SqlValidator getValidator() {
-    SqrlTypeFactory typeFactory = new SqrlTypeFactory();
+    RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl();
     Properties props = new Properties();
     props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
 
@@ -105,7 +107,7 @@ public class CalcitePlanner {
 
     SqlValidator validator = SqlValidatorUtil.newValidator(SqlStdOperatorTable.instance(),
         catalogReader, typeFactory,
-        SqlValidator.Config.DEFAULT);
+        validatorConfig);
 
     return validator;
   }

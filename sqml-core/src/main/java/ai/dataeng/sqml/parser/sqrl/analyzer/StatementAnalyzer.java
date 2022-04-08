@@ -4,10 +4,10 @@ import static ai.dataeng.sqml.parser.SqrlNodeUtil.selectAlias;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.parser.Column;
-import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.sqrl.analyzer.ExpressionAnalyzer.JoinResult;
+import ai.dataeng.sqml.parser.sqrl.analyzer.aggs.AggregationDetector;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
@@ -543,9 +543,9 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   private boolean isAggregating(Node rewritten) {
-    AggregationVisitor aggregationVisitor = new AggregationVisitor();
-    rewritten.accept(aggregationVisitor, null);
-    return aggregationVisitor.hasAgg();
+    AggregationDetector aggregationDetector = new AggregationDetector();
+    rewritten.accept(aggregationDetector, null);
+    return aggregationDetector.hasAgg();
   }
 
   private Expression rewriteExpression(Expression expression, Scope scope) {

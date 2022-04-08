@@ -9,7 +9,6 @@ import ai.dataeng.sqml.config.provider.DatasetRegistryPersistenceProvider;
 import ai.dataeng.sqml.config.provider.EnvironmentPersistenceProvider;
 import ai.dataeng.sqml.config.provider.ImportManagerProvider;
 import ai.dataeng.sqml.config.provider.MetadataStoreProvider;
-import ai.dataeng.sqml.config.provider.ScriptParserProvider;
 import ai.dataeng.sqml.config.provider.SerializerProvider;
 import ai.dataeng.sqml.config.provider.SourceTableMonitorProvider;
 import ai.dataeng.sqml.config.provider.SqlGeneratorProvider;
@@ -21,7 +20,6 @@ import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
 import ai.dataeng.sqml.execution.flink.ingest.FlinkSourceMonitor;
 import ai.dataeng.sqml.io.sources.dataset.MetadataRegistryPersistence;
 import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitorImpl;
-import ai.dataeng.sqml.parser.ScriptParserImpl;
 import ai.dataeng.sqml.parser.operator.ImportManager;
 import com.google.common.base.Preconditions;
 import lombok.Builder;
@@ -30,7 +28,6 @@ import lombok.Getter;
 @Builder
 @Getter
 public class SqrlSettings {
-  ScriptParserProvider scriptParserProvider;
   ImportManagerProvider importManagerProvider;
 
   JDBCConfiguration jdbcConfiguration;
@@ -64,7 +61,6 @@ public class SqrlSettings {
         .metadataStoreProvider(new JDBCMetadataStore.Provider())
         .datasetRegistryPersistenceProvider(new MetadataRegistryPersistence.Provider())
         .environmentPersistenceProvider(new MetadataEnvironmentPersistence.Provider())
-        .scriptParserProvider(()->new ScriptParserImpl())
         .importManagerProvider((datasetLookup)-> {
           ImportManager manager = new ImportManager(datasetLookup);
           return manager;

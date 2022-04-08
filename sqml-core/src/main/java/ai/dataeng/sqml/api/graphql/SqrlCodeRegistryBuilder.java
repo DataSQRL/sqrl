@@ -102,19 +102,6 @@ public class SqrlCodeRegistryBuilder {
             .map(e->e.getDisplay())
             .collect(Collectors.toList()));
   }
-//
-//  private Criteria buildCriteria(Relationship rel) {
-//    Criteria criteria = new EqualsCriteria(rel.getFrom().get(0).getName().getCanonical(),
-//        ((Column)rel.getTo().get(0)).getId());
-//    return criteria;
-//  }
-//
-//  private String getTypeName(NamePath path) {
-//    return String.join(ID_DELIMITER,
-//        Arrays.stream(path.getNames())
-//            .map(e->e.getDisplay())
-//            .collect(Collectors.toList()));
-//  }
 
   private TableFieldFetcher toTable(Table table, Optional<Criteria> criteria, String tableName) {
     return new TableFieldFetcher(new H2Table(new Columns(toColumns(table)), tableName),

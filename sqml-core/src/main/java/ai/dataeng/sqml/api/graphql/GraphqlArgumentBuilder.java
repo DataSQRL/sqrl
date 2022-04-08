@@ -27,15 +27,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 
-//Todo name mapping
-//Todo: Move these builders to a better object model
-//Todo: Pattern for incomplete but expandable category mapper
 @AllArgsConstructor
 public class GraphqlArgumentBuilder {
-  Multiplicity multiplicity;
-  Table table;
-  boolean supportsPaging;
-  GraphqlTypeCatalog catalog;
+  private Multiplicity multiplicity;
+  private Table table;
+  private boolean supportsPaging;
+  private GraphqlTypeCatalog catalog;
 
   private static final GraphQLEnumType direction = GraphQLEnumType.newEnum()
       .name("OrderDirection")

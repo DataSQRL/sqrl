@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.parser.sqrl.analyzer;
+package ai.dataeng.sqml.planner;
 
 import ai.dataeng.sqml.parser.sqrl.schema.SqrlViewTable;
 import org.apache.calcite.rel.RelNode;

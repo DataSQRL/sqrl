@@ -11,7 +11,6 @@ import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 
 public class SqrlExecutor {
 
-
   public void executeDml(JDBCConnectionProvider configuration, List<String> dmlQueries) {
     String dmls = dmlQueries.stream().collect(Collectors.joining("\n"));
     try (Connection conn = configuration.getConnection(); Statement stmt = conn.createStatement()) {
