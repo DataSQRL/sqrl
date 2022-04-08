@@ -25,9 +25,9 @@ public class VersionedName extends SimpleName {
 
   @Override
   public String getCanonical() {
-//    if (version == 0) {
-//      return canonicalName;
-//    }
+    if (version == 0) {
+      return canonicalName;
+    }
     return canonicalName + ID_DELIMITER + version;
   }
 

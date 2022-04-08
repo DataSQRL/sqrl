@@ -22,7 +22,8 @@ public class SqlGenerator {
 
       CreateTableBuilder tableBuilder = new CreateTableBuilder(entry.getValue().getOptions().get("table-name"))
           .addColumns(entry.getValue().getSchema().get(), entry.getKey());
-      dml.add(tableBuilder.getSQL());
+      String sql = tableBuilder.getSQL();
+      dml.add(sql);
     }
 
     return dml;

@@ -1,17 +1,24 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
 
-import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.and;
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.alias;
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.aliasMany;
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.function;
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.group;
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.ident;
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.query;
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.select;
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.selectAlias;
 import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.getCriteria;
 import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.getRelation;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
-import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.FieldPath;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.sqrl.PathUtil;
-import ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.JoinBuilder;
+import ai.dataeng.sqml.parser.sqrl.analyzer.Scope.ResolveResult;
+import ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.TableBookkeeping;
 import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
 import ai.dataeng.sqml.parser.sqrl.function.RewritingFunction;
 import ai.dataeng.sqml.parser.sqrl.function.SqrlFunction;
@@ -20,38 +27,31 @@ import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionRewriter;
 import ai.dataeng.sqml.tree.ExpressionTreeRewriter;
 import ai.dataeng.sqml.tree.FunctionCall;
-import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.Identifier;
+import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Join.Type;
-import ai.dataeng.sqml.tree.JoinOn;
-import ai.dataeng.sqml.tree.LogicalBinaryExpression;
+import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.Query;
-import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
-import ai.dataeng.sqml.tree.Select;
-import ai.dataeng.sqml.tree.SelectItem;
-import ai.dataeng.sqml.tree.SimpleGroupBy;
-import ai.dataeng.sqml.tree.SingleColumn;
+import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import lombok.Value;
+import org.apache.commons.collections.ListUtils;
 
 public class ExpressionAnalyzer {
-  private final JoinBuilder joinBuilder;
   FunctionLookup functionLookup = new FunctionLookup();
   AliasGenerator gen = new AliasGenerator();
+  public List<JoinResult> joinResults = new ArrayList<>();
 
-  public ExpressionAnalyzer(
-      JoinBuilder joinBuilder) {
-    this.joinBuilder = joinBuilder;
+  public ExpressionAnalyzer() {
   }
+
 
   public Expression analyze(Expression node, Scope scope) {
     Visitor visitor = new Visitor();
@@ -94,118 +94,55 @@ public class ExpressionAnalyzer {
       if (function.isAggregate() && node.getArguments().size() == 1 &&
           node.getArguments().get(0) instanceof Identifier) {
         Identifier identifier = (Identifier)node.getArguments().get(0);
-        FieldPath fieldPath = context.getScope().resolveField(identifier.getNamePath())
-            .get(0);
-        if (PathUtil.isToMany(fieldPath)) {
-          String tableAlias = gen.nextTableAlias();
-          String fieldAlias = gen.nextAlias();
-          //For cases like COUNT(rel), expand to reference primary key
-          if (fieldPath.getLastField() instanceof Relationship) {
-            List<Field> fields = new ArrayList<>(fieldPath.getFields());
-            fields.add(((Relationship) fieldPath.getLastField()).getToTable().getPrimaryKeys().get(0));
-            fieldPath = new FieldPath(fields);
+        /*
+         * The first token is either the join scope or a column in any join scope
+         */
+        List<ResolveResult> resolve = context.getScope().resolveFirst(identifier.getNamePath());
+        Preconditions.checkState(resolve.size() == 1,
+            "Column ambiguous or missing: %s %s", identifier.getNamePath(), resolve);
+        if(PathUtil.isToMany(resolve.get(0))) {
+          ResolveResult result = resolve.get(0);
+          /*
+           * Replace current token with an Identifier and expand the path into a subquery. This
+           * subquery is joined to the table it was resolved from.
+           */
+          Name baseTableAlias = gen.nextTableAliasName();
+          Relation relation = new TableNode(Optional.empty(), result.getTable().getId().toNamePath(), Optional.of(baseTableAlias));
+          TableBookkeeping b = new TableBookkeeping(relation, baseTableAlias, result.getTable());
+          NamePath remaining = result.getRemaining().get();
+          Field lastField = null;
+          for (int i = 0; i < remaining.getLength(); i++) {
+            lastField = b.getCurrentTable().getField(remaining.get(i));
+            if (!(lastField instanceof Relationship)) break;
+            Relationship rel = (Relationship)lastField;
+            Name alias = gen.nextTableAliasName();
+            Join join = new Join(Optional.empty(), Type.INNER, b.getCurrent(),
+                getRelation(rel, alias), getCriteria(rel, b.getAlias(), alias));
+            b = new TableBookkeeping(join, alias, rel.getToTable());
           }
 
-          Name sourceTableAlias = context.getScope().qualify(identifier.getNamePath()).get(0);
-          extractFunctionToSubquery(node, fieldPath, tableAlias, fieldAlias, sourceTableAlias, context);
+          Name tableAlias = gen.nextTableAliasName();
+          Name fieldAlias = gen.nextAliasName();
+          Query query = query(
+              select(ListUtils.union(
+                  selectAlias(result.getTable().getPrimaryKeys(), baseTableAlias),
+                  List.of(selectAlias(
+                      function(node.getName(), alias(b.getAlias(),
+                        lastField instanceof Relationship ? ((Relationship) lastField).getToTable().getPrimaryKeys().get(0).getId() : lastField.getId())),
+                      fieldAlias.toNamePath()
+                  )))),
+              b.getCurrent(),
+              group(aliasMany(result.getTable().getPrimaryKeys(), baseTableAlias))
+          );
+          AliasedRelation subquery = new AliasedRelation(new TableSubquery(query), ident(tableAlias));
+
+          joinResults.add(new JoinResult(Type.LEFT, subquery, getCriteria((Relationship) result.getFirstField(), result.getAlias(), tableAlias)));
           return new Identifier(Optional.empty(), NamePath.of(tableAlias, fieldAlias));
         }
       }
 
       return new FunctionCall(node.getLocation(), node.getName(), arguments,
           node.isDistinct(), node.getOver());
-    }
-
-    /**
-     * Moves a to-many aggregate function into a subquery
-     *
-     * SELECT __t4.__f5 FROM  Orders AS _
-     * LEFT JOIN (SELECT _uuid, count(entries) AS __f5 FROM Orders GROUP BY _uuid) AS __t4
-     * 1. need to alias first field
-     *
-     */
-    private Relation extractFunctionToSubquery(FunctionCall node, final FieldPath fieldPath,
-        String tableAlias, String fieldAlias, Name sourceTableAlias,
-        Context context) {
-      NamePath tableAliasName = NamePath.of(tableAlias);
-
-      //We extract the primary keys of the table we came from
-      Field first = fieldPath.getFields().get(0);
-      Preconditions.checkState(first instanceof Relationship, "Pathed identifiers must be columns");
-      Relationship rel = (Relationship) first;
-      Name currentAlias = gen.nextTableAliasName();
-
-      List<SelectItem> columns = new ArrayList<>();
-      List<Expression> keys = toExpression(currentAlias, rel.getTable().getPrimaryKeys());
-
-      //Create grouping keys, alias for joining on outer query
-      Map<Name, Column> criteriaMap = new LinkedHashMap<>();
-      for (int i = 0; i < keys.size(); i++) {
-        Expression ex = keys.get(i);
-        Name alias = gen.nextAliasName();
-        columns.add(new SingleColumn(ex, new Identifier(Optional.empty(), alias.toNamePath())));
-        criteriaMap.put(alias, rel.getTable().getPrimaryKeys().get(i));
-      }
-
-      //Construct inner query relations
-      JoinBuilder subqueryJoinBuilder = new JoinBuilder();
-      subqueryJoinBuilder.add(Type.INNER, Optional.empty(), rel, NamePath.of(currentAlias), null);
-
-      for (int i = 1; i < fieldPath.getFields().size() - 1; i++) {
-        Relationship joinRel = (Relationship)  fieldPath.getFields().get(i);
-        currentAlias = gen.nextTableAliasName();
-
-        subqueryJoinBuilder.add(Type.INNER, Optional.empty(), joinRel, NamePath.of(currentAlias), null);
-      }
-
-      //Rewrite aggregate and add node to select list
-      Expression rewrittenNode = ExpressionTreeRewriter.rewriteWith(new ExpressionRewriter<>() {
-        @Override
-        public Expression rewriteIdentifier(Identifier node, Name context,
-            ExpressionTreeRewriter<Name> treeRewriter) {
-
-          return new Identifier(Optional.empty(),
-              NamePath.of(context).concat(fieldPath.getLastField().getId()));
-        }
-      }, node, currentAlias);
-      columns.add(new SingleColumn(Optional.empty(), rewrittenNode, Optional.of(new Identifier(Optional.empty(), NamePath.of(fieldAlias)))));
-
-      //Build subquery tokens
-      QuerySpecification spec = new QuerySpecification(
-          Optional.empty(),
-          new Select(Optional.empty(), false, columns),
-          subqueryJoinBuilder.build(),
-          Optional.empty(),
-          Optional.of(new GroupBy(new SimpleGroupBy(keys))),
-          Optional.empty(),
-          Optional.empty(),
-          Optional.empty()
-      );
-      Query query = new Query(spec, Optional.empty(), Optional.empty());
-      AliasedRelation aliasedRelation = new AliasedRelation(Optional.empty(), new TableSubquery(Optional.empty(), query),
-          new Identifier(Optional.empty(), tableAliasName));
-
-
-      //Build criteria
-      List<Expression> expressions = new ArrayList<>();
-      for (Map.Entry<Name, Column> entry : criteriaMap.entrySet()) {
-          Identifier lhs = new Identifier(Optional.empty(), tableAliasName.concat(entry.getValue().getId()));
-          //We assume that the column names are the same
-          Identifier rhs = new Identifier(Optional.empty(), sourceTableAlias.toNamePath().concat(entry.getValue().getId()));
-          expressions.add(new LogicalBinaryExpression(LogicalBinaryExpression.Operator.AND, lhs, rhs));
-      }
-      Expression criteria = and(expressions);
-      JoinOn join = new JoinOn(Optional.empty(), criteria);
-      //Assemble outer join to subquery
-      joinBuilder.add(Type.LEFT, Optional.of(join), fieldPath.getLastField(), tableAliasName, aliasedRelation);
-
-      return aliasedRelation;
-    }
-
-    private List<Expression> toExpression(Name tableAlias, List<Column> columns) {
-      return columns.stream()
-          .map(e->new Identifier(Optional.empty(), NamePath.of(tableAlias, e.getName())))
-          .collect(Collectors.toList());
     }
 
     @Override
@@ -226,22 +163,19 @@ public class ExpressionAnalyzer {
         Name fieldName = resolved.get(0).getLastField().getId();
         Name tableAlias = gen.nextTableAliasName();
         Name sourceTableAlias = context.getScope().qualify(node.getNamePath()).get(0);
-        addLeftJoin(node, resolved.get(0), tableAlias, sourceTableAlias);
+        //addLeftJoin(node, resolved.get(0), tableAlias, sourceTableAlias);
         return new Identifier(node.getLocation(), tableAlias.toNamePath().concat(fieldName));
       }
 
       NamePath qualifiedName = context.getScope().qualify(node.getNamePath());
       return new Identifier(node.getLocation(), qualifiedName);
     }
+  }
 
-    private void addLeftJoin(Identifier node, FieldPath fieldPath,
-        Name tableAlias, Name sourceTableAlias) {
-
-      Relationship rel = (Relationship) fieldPath.getFields().get(0);
-
-      joinBuilder.add(Type.LEFT, getCriteria(rel, sourceTableAlias, tableAlias),
-          fieldPath.getFields().get(0), tableAlias.toNamePath(),
-          getRelation(rel, tableAlias));
-    }
+  @Value
+  public static class JoinResult {
+    Type type;
+    AliasedRelation subquery;
+    Optional<JoinCriteria> criteria;
   }
 }

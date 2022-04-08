@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.Value;
 
 @AllArgsConstructor
 @Builder
@@ -107,5 +108,33 @@ public class Scope {
 
   public Optional<Table> getJoinScope(Name name) {
     return Optional.ofNullable(joinScope.get(name));
+  }
+
+  public List<ResolveResult> resolveFirst(NamePath namePath) {
+    List<ResolveResult> fields = new ArrayList<>();
+    for (Map.Entry<Name, Table> entry : joinScope.entrySet()) {
+      Name alias = entry.getKey();
+      Table table = entry.getValue();
+
+      if (namePath.getFirst().equals(alias) && namePath.getLength() > 1) {
+        Field field = table.getField(namePath.get(1));
+        if (field != null) {
+          fields.add(new ResolveResult(field, namePath.subList(1, namePath.getLength()), alias, table));
+        }
+      }
+      Field field = table.getField(namePath.getFirst());
+      if (field != null) {
+        fields.add(new ResolveResult(field, namePath.subList(0, namePath.getLength()), alias, table));
+      }
+    }
+
+    return fields;
+  }
+  @Value
+  public static class ResolveResult {
+    Field firstField;
+    Optional<NamePath> remaining;
+    Name alias;
+    Table table;
   }
 }

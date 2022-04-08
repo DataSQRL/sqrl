@@ -75,7 +75,7 @@ public class CalcitePlanner {
     return sqlNode;
   }
 
-    public RelNode plan(Node node) {
+    public RelNode plan(SqlNode sqlNode) {
     SqrlTypeFactory typeFactory = new SqrlTypeFactory();
     Properties props = new Properties();
     props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
@@ -88,8 +88,6 @@ public class CalcitePlanner {
         .withSqlConformance(SqlConformanceEnum.LENIENT)
         ;
 
-    NodeToSqlNodeConverter converter = new NodeToSqlNodeConverter();
-    SqlNode sqlNode = node.accept(converter, null);
     SqlValidator validator = SqlValidatorUtil.newValidator(SqlStdOperatorTable.instance(),
         catalogReader, typeFactory,
         SqlValidator.Config.DEFAULT);

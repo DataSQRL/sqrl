@@ -170,8 +170,8 @@ public class Analyzer {
 
       System.out.println(NodeFormatter.accept(scope.getNode()));
 
-      SqlNode plan = planner.parse(scope.getNode());
-      System.out.println(plan);
+      SqlNode sqlNode = planner.parse(scope.getNode());
+      System.out.println(sqlNode);
       System.out.println();
 
       //For single unnamed columns in tables, treat as an expression
@@ -184,35 +184,32 @@ public class Analyzer {
         }
         table.addField(new Column(namePath.getLast(), table, version, null, 0, List.of(),
             false, false, Optional.empty(), false));
+
+        RelNode plan2 = planner.plan(sqlNode);
+
+        RelNode expanded = plan2.accept(new RelShuttleImpl() {
+          @Override
+          public RelNode visit(TableScan scan) {
+            StreamDataType dataType = (StreamDataType) scan.getRowType();
+            if (dataType.getTable() != null) {
+              return dataType.getTable().getRelNode();
+            }
+            return scan;
+          }
+        });
+
+        SqrlRelBuilder relBuilder = planner.createRelBuilder();
+        RexBuilder rexBuilder = relBuilder.getRexBuilder();
 //
-//        //todo after sqlizing
-//        if (false) {
-//          RelNode plan2 = planner.plan(null);
-//
-//          RelNode expanded = plan2.accept(new RelShuttleImpl() {
-//            @Override
-//            public RelNode visit(TableScan scan) {
-//              StreamDataType dataType = (StreamDataType) scan.getRowType();
-//              if (dataType.getTable() != null) {
-//                return dataType.getTable().getRelNode();
-//              }
-//              return scan;
-//            }
-//          });
-//
-//          SqrlRelBuilder relBuilder = planner.createRelBuilder();
-//          RexBuilder rexBuilder = relBuilder.getRexBuilder();
-//
-//          RelNode newPlan = relBuilder
-//              .push(expanded)
-//              .push(table.getRelNode())
-//              .join(JoinRelType.LEFT,
-//                  SqrlRexUtil.createPkCondition(table, rexBuilder))
-//              //todo: project all left + the new column, shadow if necessary
-//              .build();
-//
-//          table.setRelNode(newPlan);
-//        }
+//        RelNode newPlan = relBuilder
+//            .push(expanded)
+//            .push(table.getRelNode())
+//            .join(JoinRelType.LEFT,
+//                SqrlRexUtil.createPkCondition(table, rexBuilder))
+//            //todo: project all left + the new column, shadow if necessary
+//            .build();
+
+        table.setRelNode(expanded);
       } else if (tableOpt.isEmpty()) {
         Table newTable = new Table(TableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
             namePath, false);

@@ -14,13 +14,11 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 @Slf4j
 public class SqrlCalciteCatalogReader2 extends CalciteCatalogReader {
 
-  private final CalciteSchema rootSqrlSchema;
 
   public SqrlCalciteCatalogReader2(CalciteSchema rootSchema,
       List<String> defaultSchema,
       RelDataTypeFactory typeFactory,
       CalciteConnectionConfig config) {
     super(rootSchema, defaultSchema, typeFactory, config);
-    this.rootSqrlSchema = rootSchema;
   }
 }

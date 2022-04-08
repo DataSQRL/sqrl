@@ -170,10 +170,14 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
     return names.length == 0;
   }
 
-  public NamePath subList(int from, int to) {
+  public Optional<NamePath> subList(int from, int to) {
+    if (from > names.length || to > names.length) {
+      return Optional.empty();
+    }
+
     Name[] newNames = Arrays.copyOfRange(names, from, to);
 
-    return new NamePath(newNames);
+    return Optional.of(new NamePath(newNames));
   }
 
 }

@@ -22,7 +22,6 @@ public class SqrlSchema2 extends AbstractSqrlSchema {
 
   @Override
   public Table getTable(String table) {
-
     return new SqrlTable2();
   }
 

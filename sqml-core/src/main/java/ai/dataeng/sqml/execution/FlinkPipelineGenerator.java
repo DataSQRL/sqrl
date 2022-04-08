@@ -4,12 +4,15 @@ import ai.dataeng.sqml.execution.flink.ingest.DataStreamProvider;
 import ai.dataeng.sqml.execution.flink.ingest.SchemaValidationProcess;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlinkTableConverter;
 import ai.dataeng.sqml.io.sources.SourceRecord;
+import ai.dataeng.sqml.parser.Column;
+import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.RelToSql;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.planner.nodes.LogicalFlinkSink;
 import ai.dataeng.sqml.planner.nodes.ShredTableScan;
 import ai.dataeng.sqml.planner.nodes.StreamTableScan;
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.type.schema.SchemaAdjustmentSettings;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,8 +23,6 @@ import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.connector.jdbc.internal.options.JdbcDmlOptions;
-import org.apache.flink.connector.jdbc.internal.options.JdbcDmlOptions.JdbcDmlOptionsBuilder;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -65,7 +66,8 @@ public class FlinkPipelineGenerator {
 
           if (scan instanceof StreamTableScan) {
           //1. construct to stream, register it with tenv
-          ImportManager.SourceTableImport imp = ((StreamTableScan)scan).getTableImport();
+          StreamTableScan streamTableScan = (StreamTableScan) scan;
+          ImportManager.SourceTableImport imp = streamTableScan.getTableImport();
           Pair<Schema, TypeInformation> ordersSchema = tbConverter.tableSchemaConversion(imp.getSourceSchema());
 
           DataStream<SourceRecord.Raw> stream = new DataStreamProvider().getDataStream(imp.getTable(),env);
@@ -82,30 +84,43 @@ public class FlinkPipelineGenerator {
 
             tEnv.sqlUpdate("CREATE TEMPORARY VIEW " + streamName + " AS"
                 + " SELECT * FROM " + streamName + "_stream");
+
+            if (streamName.equalsIgnoreCase("orders$3")) {
+              org.apache.flink.table.api.Table tableShredding = tEnv.sqlQuery(
+                  "SELECT o._uuid, items._idx as _idx1, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
+                      "FROM orders$3 o CROSS JOIN UNNEST(o.entries) AS items");
+
+              tEnv.createTemporaryView("entries$4", tableShredding);
+            }
+
           } else if (scan instanceof ShredTableScan) {
             ShredTableScan ts = (ShredTableScan) scan;
 
+            System.out.println("Shredding");
             org.apache.flink.table.api.Table tableShredding = tEnv.sqlQuery(
-                "SELECT o._uuid, items._idx, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
-                "FROM orders$1 o CROSS JOIN UNNEST(o.entries) AS items");
-            tEnv.createTemporaryView("entries$2", tableShredding);
+                "SELECT o._uuid, items._idx as _idx1, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
+                "FROM orders$3 o CROSS JOIN UNNEST(o.entries) AS items");
+
+            tEnv.createTemporaryView("entries$4", tableShredding);
           }
           return super.visit(scan);
         }
 
       });
 
+
       String sql = RelToSql.convertToSql(sink.getInput(0)).replaceAll("\"", "`");
       System.out.println(sql);
       org.apache.flink.table.api.Table tbl = tEnv.sqlQuery(sql);
+      tbl.execute().print();
 
-      String name = sink.getQueryTable().name.getDisplay().toString();
+      String name = sink.getSqrlTable().name.getDisplay().toString();
       sink.setPhysicalName(name);
       List<String> tbls = List.of(tEnv.listTables());
 //      JdbcDmlOptions options = new JdbcDmlOptionsBuilder().build();
 
       if (!(tbls.contains(name))) {
-        Schema schema = addPrimaryKey(tbl.getSchema().toSchema());
+        Schema schema = addPrimaryKey(tbl.getSchema().toSchema(), sink.getSqrlTable());
 
         TableDescriptor descriptor = TableDescriptor.forConnector("jdbc")
             .schema(schema)
@@ -114,7 +129,7 @@ public class FlinkPipelineGenerator {
             .build();
 
         tEnv.createTable(name, descriptor);
-        ddl.put(sink.getQueryTable(), descriptor);
+        ddl.put(sink.getSqrlTable(), descriptor);
       } else {
         throw new RuntimeException(name + " T:" + tbls);
       }
@@ -129,19 +144,22 @@ public class FlinkPipelineGenerator {
     return Pair.of(stmtSet, ddl);
   }
 
-  private Schema addPrimaryKey(Schema toSchema) {
+  private Schema addPrimaryKey(Schema toSchema, Table sqrlTable) {
     Schema.Builder builder = Schema.newBuilder();
+    List<String> pks = new ArrayList<>();
     for (UnresolvedColumn column : toSchema.getColumns()) {
-      if (column.getName().equalsIgnoreCase("CUSTOMERID")) {
-        builder.column(column.getName(),  ((UnresolvedPhysicalColumn) column).getDataType().notNull());
+      Field field = sqrlTable.getField(Name.system(column.getName()));
+      if (field instanceof Column && ((Column) field).isPrimaryKey) {
+        builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType().notNull());
+        pks.add(column.getName());
       } else {
-        builder.column(column.getName(),  ((UnresolvedPhysicalColumn) column).getDataType());
+        builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
       }
     }
 
     return builder
 //        .watermark(toSchema.getWatermarkSpecs().get(0).getColumnName(), toSchema.getWatermarkSpecs().get(0).getWatermarkExpression())
-        .primaryKey("CUSTOMERID")
+        .primaryKey(pks)
         .build();
   }
 }

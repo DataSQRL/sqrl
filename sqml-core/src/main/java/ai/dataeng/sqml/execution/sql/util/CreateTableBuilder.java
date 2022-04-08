@@ -1,23 +1,8 @@
 package ai.dataeng.sqml.execution.sql.util;
 
-import static ai.dataeng.sqml.execution.sql.util.DatabaseUtil.sqlName;
-
-import ai.dataeng.sqml.execution.sql.util.DatabaseUtil.SQLTypeMapping;
 import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Table;
-import ai.dataeng.sqml.type.basic.BooleanType;
-import ai.dataeng.sqml.type.basic.DateTimeType;
-import ai.dataeng.sqml.type.basic.FloatType;
-import ai.dataeng.sqml.type.basic.IntegerType;
-import ai.dataeng.sqml.type.basic.NumberType;
-import ai.dataeng.sqml.type.basic.StringType;
-import ai.dataeng.sqml.type.basic.UuidType;
 import com.google.common.base.Preconditions;
-import java.lang.reflect.Type;
-import java.sql.Date;
-import java.sql.Time;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,8 +11,6 @@ import org.apache.flink.table.api.Schema.UnresolvedColumn;
 import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;
 import org.apache.flink.table.types.AtomicDataType;
 import org.apache.flink.table.types.CollectionDataType;
-import org.apache.flink.table.types.logical.DecimalType;
-import org.apache.flink.table.types.logical.TimestampType;
 
 public class CreateTableBuilder extends TableBuilder {
 
@@ -125,12 +108,10 @@ public class CreateTableBuilder extends TableBuilder {
     public String getSQL() {
 //        checkUpdate();
 //        addColumn(DatabaseUtil.TIMESTAMP_COLUMN_NAME, DatabaseUtil.TIMESTAMP_COLUMN_SQL_TYPE.getTypeName(), true);
-//        Preconditions.checkArgument(!primaryKeys.isEmpty());
-        if (!primaryKeys.isEmpty()) {
-            sql.append(", PRIMARY KEY (");
-            sql.append(primaryKeys.stream().collect(Collectors.joining(", ")));
-            sql.append(")");
-        }
+        Preconditions.checkArgument(!primaryKeys.isEmpty());
+        sql.append(", PRIMARY KEY (");
+        sql.append(primaryKeys.stream().collect(Collectors.joining(", ")));
+        sql.append(")");
         sql.append(" );");
         System.out.println(sql.toString());
         return sql.toString();

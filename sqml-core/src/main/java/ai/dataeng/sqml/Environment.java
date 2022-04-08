@@ -2,25 +2,36 @@ package ai.dataeng.sqml;
 
 import ai.dataeng.execution.SqlClientProvider;
 import ai.dataeng.sqml.config.SqrlSettings;
+import ai.dataeng.sqml.config.engines.JDBCConfiguration;
+import ai.dataeng.sqml.config.engines.JDBCConfiguration.Dialect;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.config.metadata.MetadataStore;
 import ai.dataeng.sqml.config.provider.JDBCConnectionProvider;
 import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.config.util.NamedIdentifier;
+import ai.dataeng.sqml.execution.FlinkPipelineGenerator;
+import ai.dataeng.sqml.execution.GraphqlGenerator;
+import ai.dataeng.sqml.execution.SqlGenerator;
+import ai.dataeng.sqml.execution.SqrlExecutor;
 import ai.dataeng.sqml.execution.StreamEngine;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitor;
 import ai.dataeng.sqml.parser.Script;
 import ai.dataeng.sqml.parser.ScriptParser;
+import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.operator.ShadowingContainer;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
 import ai.dataeng.sqml.parser.sqrl.analyzer.Analyzer;
 import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
 import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
+import ai.dataeng.sqml.planner.SqrlPlanner;
+import ai.dataeng.sqml.planner.nodes.LogicalFlinkSink;
+import ai.dataeng.sqml.planner.nodes.LogicalPgSink;
 import ai.dataeng.sqml.tree.ScriptNode;
 import com.google.common.base.Preconditions;
+import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
@@ -29,10 +40,14 @@ import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.table.api.TableDescriptor;
+import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 
 @Slf4j
 public class Environment implements Closeable {
@@ -117,36 +132,33 @@ public class Environment implements Closeable {
     Analyzer analyzer = new Analyzer(importManager, calcitePlanner, new TableFactory(calcitePlanner),
         dag);
     analyzer.analyze(scriptNode);
-//
-//
-//    SqrlPlanner planner = new SqrlPlanner();
-//    planner.setDevQueries(dag);
-//
-//    Pair<List<LogicalFlinkSink>, List<LogicalPgSink>> flinkSinks = planner.optimize(dag);
-//
-//    FlinkPipelineGenerator pipelineGenerator = new FlinkPipelineGenerator();
-//    Pair<StreamStatementSet, Map<Table, TableDescriptor>> result =
-//        pipelineGenerator.createFlinkPipeline(flinkSinks.getKey());
-//
-//    SqlGenerator sqlGenerator = new SqlGenerator(result.getRight());
-//    List<String> db = sqlGenerator.generate();
-//
-//    JDBCConnectionProvider config = new JDBCConfiguration.Database(
-//        "jdbc:postgresql://localhost/henneberger",
-//        null, null, null, Dialect.POSTGRES, "henneberger"
-//    );
-//
-//    SqrlExecutor executor = new SqrlExecutor();
-//    executor.executeDml(config, db);
-//    executor.executeFlink(result.getLeft());
-//
-//    GraphqlGenerator graphqlGenerator = new GraphqlGenerator();
-//    GraphQL graphql = graphqlGenerator.graphql(dag, flinkSinks, result.getRight(), getPostgresClient());
+    SqrlPlanner planner = new SqrlPlanner();
+    planner.setDevQueries(dag);
+
+    Pair<List<LogicalFlinkSink>, List<LogicalPgSink>> flinkSinks = planner.optimize(dag);
+
+    FlinkPipelineGenerator pipelineGenerator = new FlinkPipelineGenerator();
+    Pair<StreamStatementSet, Map<Table, TableDescriptor>> result =
+        pipelineGenerator.createFlinkPipeline(flinkSinks.getKey());
+
+    SqlGenerator sqlGenerator = new SqlGenerator(result.getRight());
+    List<String> db = sqlGenerator.generate();
+
+    JDBCConnectionProvider config = new JDBCConfiguration.Database(
+        "jdbc:postgresql://localhost/henneberger",
+        null, null, null, Dialect.POSTGRES, "henneberger"
+    );
+
+    SqrlExecutor executor = new SqrlExecutor();
+    executor.executeDml(config, db);
+    executor.executeFlink(result.getLeft());
+
+    GraphqlGenerator graphqlGenerator = new GraphqlGenerator();
+    GraphQL graphql = graphqlGenerator.graphql(dag, flinkSinks, result.getRight(), getPostgresClient());
 
 //    JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(submission.getId().getId());
 
-//    return new Script(graphql);
-    return null;
+    return new Script(graphql);
   }
 
   private SqlClientProvider getPostgresClient() {

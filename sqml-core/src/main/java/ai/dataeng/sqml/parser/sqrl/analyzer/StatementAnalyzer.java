@@ -1,19 +1,23 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.ident;
+import static ai.dataeng.sqml.parser.SqrlNodeUtil.selectAlias;
+
 import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.FieldPath;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.parser.sqrl.analyzer.ExpressionAnalyzer.JoinResult;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
-import ai.dataeng.sqml.tree.BooleanLiteral;
 import ai.dataeng.sqml.tree.ComparisonExpression;
 import ai.dataeng.sqml.tree.ComparisonExpression.Operator;
 import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
+import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Intersect;
@@ -32,6 +36,7 @@ import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SetOperation;
+import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.TableNode;
@@ -43,9 +48,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.util.Pair;
@@ -54,9 +62,9 @@ import org.apache.calcite.util.Pair;
 public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   public final Analyzer analyzer;
 
-  public final AliasGenerator gen = new AliasGenerator();
+  public static final AliasGenerator gen = new AliasGenerator();
 
-  public JoinBuilder joinBuilder = new JoinBuilder();
+  private List<JoinResult> additionalJoins = new ArrayList<>();
 
   public StatementAnalyzer(Analyzer analyzer) {
     this.analyzer = analyzer;
@@ -80,32 +88,164 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   public Scope visitQuerySpecification(QuerySpecification node, Scope scope) {
     Scope sourceScope = node.getFrom().accept(this, scope);
 
-//    node.getWhere().ifPresent(where -> analyzeWhere(node, sourceScope, where));
-    Pair<List<SelectItem>, List<Expression>> outputExpressions = analyzeSelect(node, sourceScope);
+    // Expand select items
+    Select unqualifiedSelect = expand(node.getSelect(), scope);
+
+    // We're doing a lot of transformations so convert grouping conditions to ordinals.
+    Optional<GroupBy> unqualifiedGroupBy = node.getGroupBy().map(group->groupByOrdinal(unqualifiedSelect, group));
+
+    // Qualify other expressions
+    Select select = rewriteSelect(unqualifiedSelect, scope);
+    Optional<Expression> having = rewriteHaving(node.getHaving(), scope);
+
+    // If we're in a nested context, append context keys
+    if (scope.getContextTable().isPresent()) {
+      Optional<Table> table = scope.getJoinScope(Name.SELF_IDENTIFIER);
+      Select contextSelect = appendGroupKeys(select, table.get().getPrimaryKeys());
+
+      GroupBy groupBy = null;
+      if (isAggregating(contextSelect)) {
+        int startIndex =
+            contextSelect.getSelectItems().size() - table.get().getPrimaryKeys().size();
+        IntStream groupIndex = IntStream.range(startIndex, contextSelect.getSelectItems().size());
+        groupBy = unqualifiedGroupBy
+            .map(group -> {
+              List<Expression> grouping = new ArrayList<>(
+                  group.getGroupingElement().getExpressions());
+              grouping.addAll(toGroupByExpression(groupIndex));
+              return new GroupBy(new SimpleGroupBy(grouping));
+            })
+            .orElse(toGroupBy(toGroupByExpression(groupIndex)));
+      }
+
+      Relation from = (Relation)sourceScope.getNode();
+      for (JoinResult result : additionalJoins) {
+        from = new Join(Optional.empty(), result.getType(), from, result.getSubquery(), result.getCriteria());
+      }
+
+      QuerySpecification querySpecification = new QuerySpecification(
+          node.getLocation(),
+          contextSelect,
+          from,
+          Optional.empty(),
+          Optional.ofNullable(groupBy),
+          having,
+          Optional.empty(),
+          Optional.empty()
+      );
+
+      return createScope(querySpecification, scope);
+    } else {
+
+    }
+
+
+
+
+//    Pair<List<SelectItem>, List<Expression>> outputExpressions = analyzeSelect(node, sourceScope);
+//    List<Expression> groupByExpressions = analyzeGroupBy(node, sourceScope.getNode(), sourceScope, outputExpressions);
 //    List<Expression> groupByExpressions = analyzeGroupBy(node, sourceScope, outputExpressions);
 //    analyzeHaving(node, sourceScope);
 
     //analyzeOrderBy(node.getOrderBy(), sourceScope);
+//
+//    //todo: check if there is a context query
+//    Optional<GroupBy> groupBy = groupByExpressions != null && groupByExpressions.size() > 0 ?
+//      Optional.of(new GroupBy(Optional.empty(), new SimpleGroupBy(Optional.empty(), groupByExpressions)))
+//      :Optional.empty();
 
-    //todo: check if there is a context query
-//    Optional<GroupBy> groupBy = Optional.of(new GroupBy(Optional.empty(), new SimpleGroupBy(Optional.empty(), List.of())));
 
-    QuerySpecification querySpecification = new QuerySpecification(
-        node.getLocation(),
-        new Select(outputExpressions.left),
-//        toSelect(node.getSelect(), outputExpressions.getValue(), List.of()),
-        joinBuilder.build((Relation) sourceScope.getNode()),
-//        node.getWhere(),
-//        groupBy,
-//        node.getGroupBy(),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty()
-    );
+    return null;
 
-    return createScope(querySpecification, scope);
+//    return createScope(querySpecification, scope);
+  }
+
+  private Select appendGroupKeys(Select select, List<Column> keys) {
+    List<SelectItem> items = new ArrayList<>(select.getSelectItems());
+    items
+        .addAll(selectAlias(keys, Name.SELF_IDENTIFIER, gen));
+    return new Select(items);
+  }
+
+  private List<Expression> toGroupByExpression(IntStream range) {
+    return range
+        .mapToObj(i->new LongLiteral(Integer.toString(i)))
+        .collect(Collectors.toList());
+  }
+  private GroupBy toGroupBy(List<Expression> expr) {
+    return new GroupBy(new SimpleGroupBy(expr));
+  }
+
+  private Optional<Expression> rewriteHaving(Optional<Expression> having, Scope scope) {
+    return having.map(h->rewriteExpression(h, scope));
+  }
+
+  private Select rewriteSelect(Select select, Scope scope) {
+    List<SelectItem> items = select.getSelectItems()
+        .stream()
+        .map(s->(SingleColumn)s)
+        .map(s->new SingleColumn(rewriteExpression(s.getExpression(), scope), s.getAlias()))
+        .collect(Collectors.toList());
+
+    return new Select(select.getLocation(), select.isDistinct(), items);
+  }
+
+
+  private List<Expression> getOrdinal(Select select, GroupBy group) {
+    Set<Integer> grouping = new HashSet<>();
+    for (Expression expression : group.getGroupingElement().getExpressions()) {
+      int index = IntStream.range(0, select.getSelectItems().size())
+          .filter(i -> ((SingleColumn)select.getSelectItems().get(i)).getExpression().equals(expression))
+          .findFirst()
+          .orElseThrow(()-> new RuntimeException("Cannot find grouping element " + expression));
+
+      grouping.add(index);
+    }
+
+    return grouping.stream()
+        .map(i->(Expression)new LongLiteral(i.toString()))
+        .collect(Collectors.toList());
+  }
+
+  private GroupBy groupByOrdinal(Select select, GroupBy group) {
+    return new GroupBy(new SimpleGroupBy(getOrdinal(select, group)));
+  }
+
+  /**
+   * Expands STAR alias
+   */
+  private Select expand(Select select, Scope scope) {
+    List<SelectItem> rewritten = new ArrayList<>();
+    for (SelectItem item : select.getSelectItems()) {
+      if (item instanceof AllColumns) {
+        Optional<Name> starPrefix = ((AllColumns) item).getPrefix()
+            .map(e->e.getFirst());
+
+        List<Field> fields = scope.resolveFieldsWithPrefix(starPrefix);
+
+        for (Field field : fields) {
+          Identifier identifier = new Identifier(item.getLocation(), field.getName().toNamePath());
+          rewritten.add(new SingleColumn(identifier,Optional.empty()));
+        }
+      } else if (item instanceof SingleColumn) {
+        SingleColumn column = (SingleColumn) item;
+
+        NamePath name;
+        if (column.getAlias().isPresent()) {
+          name = column.getAlias().get().getNamePath();
+        } else if(column.getExpression() instanceof Identifier) {
+          name = ((Identifier)column.getExpression()).getNamePath();
+        } else {
+          name = gen.nextAliasName().toNamePath();
+        }
+
+        rewritten.add( new SingleColumn(column.getExpression(), new Identifier(Optional.empty(), name)));
+      }
+      else {
+        throw new IllegalArgumentException(String.format("Unsupported SelectItem type: %s", item.getClass().getName()));
+      }
+    }
+    return new Select(rewritten);
   }
 
   /**
@@ -138,13 +278,13 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   @Value
-  private class TableBookkeeping {
+  public static class TableBookkeeping {
     Relation current;
     Name alias;
     Table currentTable;
   }
 
-  private Name getTableAlias(TableNode tableNode, int i) {
+  private static Name getTableAlias(TableNode tableNode, int i) {
     if (tableNode.getNamePath().getLength() == 1 && i == 0) {
       return tableNode.getAlias().orElse(tableNode.getNamePath().getFirst());
     }
@@ -222,7 +362,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     }
   }
 
-  private TableBookkeeping walkRemaining(TableNode node, TableBookkeeping b, int startAt) {
+  public static TableBookkeeping walkRemaining(TableNode node, TableBookkeeping b, int startAt) {
     for (int i = startAt; i < node.getNamePath().getLength(); i++) {
       Relationship rel = (Relationship)b.getCurrentTable().getField(node.getNamePath().get(i));
       Name alias = getTableAlias(node, i);
@@ -285,7 +425,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     public Relation build(Relation node) {
 
-      for (int i = 1; i < fields.size(); i++) {
+      for (int i = 0; i < fields.size(); i++) {
         node = new Join(Optional.empty(), types.get(i), node, relations.get(i), additional.get(i));
       }
 
@@ -374,6 +514,14 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     List<Expression> outputExpressions = new ArrayList<>();
 
     List<SelectItem> selectItems = new ArrayList<>();
+
+    //Add context keys
+    if (scope.getContextTable().isPresent()) {
+      Table table = scope.getJoinScope().get(Name.SELF_IDENTIFIER);
+      List<Column> keys = table.getPrimaryKeys();
+      selectItems.addAll(selectAlias(keys, Name.SELF_IDENTIFIER));
+    }
+
     for (SelectItem item : node.getSelect().getSelectItems()) {
       if (item instanceof AllColumns) {
         Optional<Name> starPrefix = ((AllColumns) item).getPrefix()
@@ -388,7 +536,6 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       } else if (item instanceof SingleColumn) {
         SingleColumn column = (SingleColumn) item;
         Expression expression = rewriteExpression(column.getExpression(), scope);
-        outputExpressions.add(expression);
 
         NamePath name;
         if (column.getAlias().isPresent()) {
@@ -409,17 +556,29 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return Pair.of(selectItems, outputExpressions);
   }
 
-  private List<Expression> analyzeGroupBy(QuerySpecification node, Scope scope, List<Expression> outputExpressions) {
+  private List<Expression> analyzeGroupBy(QuerySpecification node,
+      Node rewritten, Scope scope,
+      Pair<List<SelectItem>, List<Expression>> outputExpressions) {
     List<Expression> groupingExpressions = new ArrayList<>();
 
-    //Add grouping keys
-    Table table = scope.getContextTable().get();
-    for (Column column : table.getPrimaryKeys()) {
-      groupingExpressions.add(new Identifier(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath().concat(column.getId())));
-    }
+//
+//
+//    /*
+//     * Adds context grouping keys
+//     */
+//    if (node.getGroupBy().isPresent() || isAggregating(rewritten)) {
+//      Table table = scope.getContextTable().get();
+//      for (Column column : table.getPrimaryKeys()) {
+////        groupingExpressions.add(ident(Name.SELF_IDENTIFIER.toNamePath().concat(column.getId())));
+//        groupingExpressions.add(new LongLiteral("0"));
+//      }
+//    }
 
-    if (node.getGroupBy().isEmpty()) {
+    if (true) {
       return groupingExpressions;
+    }
+    if (node.getGroupBy().isEmpty()) {
+      return null;
     }
 
     GroupingElement groupingElement = node.getGroupBy().get().getGroupingElement();
@@ -428,28 +587,39 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         throw new RuntimeException("Ordinals not supported in group by statements");
       }
 
+      //if its an identifier: qualify identifier
+
+      //if its not an identifier, find the column name and resolve it by ordinal
+
       //Group by statement must be one of the select fields
-      if (!(column instanceof Identifier)) {
-        log.info(
-            String.format("GROUP BY statement should use column aliases instead of expressions. %s",
-                column));
-        rewriteExpression(column, scope);
-        outputExpressions.stream()
-            .filter(e -> e.equals(column))
-            .findAny()
-            .orElseThrow(() -> new RuntimeException(
-                String.format("SELECT should contain GROUP BY expression %s", column)));
-        groupingExpressions.add(column);
-      }
+//      if (!(column instanceof Identifier)) {
+//        log.info(
+//            String.format("GROUP BY statement should use column aliases instead of expressions. %s",
+//                column));
+//        rewriteExpression(column, scope);
+//        outputExpressions.stream()
+//            .filter(e -> e.equals(column))
+//            .findAny()
+//            .orElseThrow(() -> new RuntimeException(
+//                String.format("SELECT should contain GROUP BY expression %s", column)));
+//        groupingExpressions.add(column);
+//      }
     }
 
     return groupingExpressions;
   }
 
+  private boolean isAggregating(Node rewritten) {
+    AggregationVisitor aggregationVisitor = new AggregationVisitor();
+    rewritten.accept(aggregationVisitor, null);
+    return aggregationVisitor.hasAgg();
+  }
+
   private Expression rewriteExpression(Expression expression, Scope scope) {
-    ExpressionAnalyzer analyzer = new ExpressionAnalyzer(joinBuilder);
+    ExpressionAnalyzer analyzer = new ExpressionAnalyzer();
     Expression expr = analyzer.analyze(expression, scope);
 
+    this.additionalJoins.addAll(analyzer.joinResults);
     return expr;
   }
 

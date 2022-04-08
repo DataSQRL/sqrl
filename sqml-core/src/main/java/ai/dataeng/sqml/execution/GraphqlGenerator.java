@@ -5,7 +5,6 @@ import ai.dataeng.sqml.api.graphql.GraphqlSchemaBuilder;
 import ai.dataeng.sqml.api.graphql.SqrlCodeRegistryBuilder;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
-import ai.dataeng.sqml.planner.LogicalPlanDag;
 import ai.dataeng.sqml.planner.nodes.LogicalFlinkSink;
 import ai.dataeng.sqml.planner.nodes.LogicalPgSink;
 import graphql.GraphQL;
@@ -27,7 +26,7 @@ public class GraphqlGenerator {
   public GraphQL graphql(LogicalDag dag,
       Pair<List<LogicalFlinkSink>, List<LogicalPgSink>> flinkSinks,
       Map<Table, TableDescriptor> right, SqlClientProvider postgresClient) {
-    Map<ai.dataeng.sqml.parser.Table, LogicalFlinkSink> sinks = Maps.uniqueIndex(flinkSinks.getLeft(), e->e.getQueryTable());
+    Map<ai.dataeng.sqml.parser.Table, LogicalFlinkSink> sinks = Maps.uniqueIndex(flinkSinks.getLeft(), e->e.getSqrlTable());
     GraphQLCodeRegistry codeRegistryBuilder = new SqrlCodeRegistryBuilder()
         .build(postgresClient, sinks, right);
 

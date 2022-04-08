@@ -69,12 +69,6 @@ public class CalciteTools {
 //    }
 //  };
   public static CalciteCatalogReader getCalciteCatalogReader(CachingSqrlSchema2 schema) {
-    //TODO:
-    // 1. Need to resolve the calcite schema from somewhere
-    // 2. Use the flink schema since we don't need to infer types
-    // 3.
-
-
     SqrlTypeFactory typeFactory = new SqrlTypeFactory();
 
     // Configure and instantiate validator

@@ -28,6 +28,7 @@ import ai.dataeng.sqml.type.schema.FlexibleDatasetSchema;
 import ai.dataeng.sqml.type.schema.FlexibleSchemaHelper;
 import graphql.com.google.common.collect.Maps;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,8 @@ import org.apache.flink.table.types.AtomicDataType;
 import org.apache.flink.table.types.CollectionDataType;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.FieldsDataType;
+import org.apache.flink.table.types.logical.IntType;
+import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.RowType.RowField;
 
@@ -69,7 +72,7 @@ public class TableFactory {
     planner.addTable(table.getId().toString(), new StreamTable(toDataType(ordersSchema.getKey().getColumns())));
     SqrlRelBuilder builder = planner.createRelBuilder();
     RelNode node = builder
-        .scanStream(table.getId().toString(), sourceTableImport)
+        .scanStream(table.getId().toString(), sourceTableImport, table)
         .project(projectScalars(ordersSchema.getKey(), builder))
         //Project only scalars, shred remaining
         .build();
@@ -117,9 +120,11 @@ public class TableFactory {
 //        planner.addTable(table.getId().toString(), new StreamTable(ordersSchema.getKey()));
         UnresolvedColumn col = fieldMap.get(field.getName().getCanonical());
         RowType row = unboxArray(col);
+        List<UnresolvedColumn> pks = rel.getTable().getPrimaryKeys().stream()
+            .map(e-> fieldMap.get(e.getName().getCanonical()))
+            .collect(Collectors.toList());
 
-//        toTable.setRelNode(createShredRelNode());
-        planner.addTable(toTable.getId().toString(), new StreamTable(toDataTypeField(row.getFields())));
+        planner.addTable(toTable.getId().toString(), new StreamTable(toDataTypeField(row.getFields(), toPk(pks, row.getFields().size()))));
 
         RelNode node = planner.createRelBuilder()
             .scanShred(rel.getTable(), toTable.getId().toString())
@@ -130,7 +135,25 @@ public class TableFactory {
     }
   }
 
-  private StreamDataType toDataTypeField(List<RowField> c) {
+  private List<RelDataTypeFieldImpl> toPk(List<UnresolvedColumn> list, int size) {
+    FlinkTypeFactory factory = new FlinkTypeFactory(new FlinkTypeSystem());
+
+    List<RelDataTypeFieldImpl> result = new ArrayList<>();
+    for (UnresolvedColumn col : list) {
+      UnresolvedPhysicalColumn column = (UnresolvedPhysicalColumn) col;
+      RelDataTypeFieldImpl relDataTypeField = new RelDataTypeFieldImpl(column.getName(), size++,
+          factory.createFieldTypeFromLogicalType(((AtomicDataType)column.getDataType()).getLogicalType()));
+      result.add(relDataTypeField);
+    }
+
+    RelDataTypeFieldImpl relDataTypeField = new RelDataTypeFieldImpl("_idx1", size++,
+        factory.createFieldTypeFromLogicalType(new IntType(false)));
+    result.add(relDataTypeField);
+    return result;
+
+  }
+
+  private StreamDataType toDataTypeField(List<RowField> c, List<RelDataTypeFieldImpl> additional) {
     FlinkTypeFactory factory = new FlinkTypeFactory(new FlinkTypeSystem());
 
     List<RelDataTypeField> fields = new ArrayList<>();
@@ -138,6 +161,7 @@ public class TableFactory {
     for (RowField column : c) {
       fields.add(new RelDataTypeFieldImpl(column.getName(), fields.size(), factory.createFieldTypeFromLogicalType(column.getType())));
     }
+    fields.addAll(additional);
 
     return new StreamDataType(null, fields);
   }
