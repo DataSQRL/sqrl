@@ -123,6 +123,8 @@ public class TableFactory {
 
         planner.addTable(toTable.getId().toString(), new StreamTable(toDataTypeField(row.getFields(), toPk(pks, row.getFields().size())),
             null));
+        planner.addTable(toTable.getId().toString() + "_stream", new StreamTable(toDataTypeField(row.getFields(), toPk(pks, row.getFields().size())),
+            null));
 
         RelNode node = planner.createRelBuilder()
             .scanShred(rel.getTable(), toTable.getId().toString())

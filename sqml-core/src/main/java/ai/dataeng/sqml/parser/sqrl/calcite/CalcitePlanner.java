@@ -53,24 +53,9 @@ public class CalcitePlanner {
 
 
   public SqlNode parse(Node node) {
-    SqrlTypeFactory typeFactory = new SqrlTypeFactory();
-    Properties props = new Properties();
-    props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
-
-    SqlValidator.Config validatorConfig = SqlValidator.Config.DEFAULT
-        .withCallRewrite(true)
-        .withIdentifierExpansion(true)
-        .withColumnReferenceExpansion(true)
-        .withLenientOperatorLookup(true)
-        .withSqlConformance(SqlConformanceEnum.LENIENT);
-
     NodeToSqlNodeConverter converter = new NodeToSqlNodeConverter();
     SqlNode sqlNode = node.accept(converter, null);
-//    SqlValidator validator = SqlValidatorUtil.newValidator(SqlStdOperatorTable.instance(),
-//        catalogReader, typeFactory,
-//        SqlValidator.Config.DEFAULT);
-//
-//    SqlNode validated = validator.validate(sqlNode);
+
     return sqlNode;
   }
 
@@ -89,7 +74,7 @@ public class CalcitePlanner {
 
     SqlValidator validator = SqlValidatorUtil.newValidator(SqlStdOperatorTable.instance(),
         catalogReader, typeFactory,
-        SqlValidator.Config.DEFAULT);
+        validatorConfig);
 
     SqlNode validated = validator.validate(sqlNode);
 

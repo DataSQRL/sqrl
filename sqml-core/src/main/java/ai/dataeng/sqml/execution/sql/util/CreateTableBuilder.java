@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.execution.sql.util;
 
 import ai.dataeng.sqml.parser.Column;
+import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Table;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Schema.UnresolvedColumn;
 import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;
+import org.apache.flink.table.api.Schema.UnresolvedPrimaryKey;
 import org.apache.flink.table.types.AtomicDataType;
 import org.apache.flink.table.types.CollectionDataType;
 
@@ -16,6 +18,7 @@ public class CreateTableBuilder extends TableBuilder {
 
     private final StringBuilder sql = new StringBuilder();
     private List<String> primaryKeys = new ArrayList<>();
+    private Schema schema = null;
 
     public CreateTableBuilder(String tableName) {
         super(tableName);
@@ -23,8 +26,14 @@ public class CreateTableBuilder extends TableBuilder {
     }
 
     public CreateTableBuilder addColumns(Schema schema, Table table) {
-        for (Column pk : table.getPrimaryKeys()) {
-            primaryKeys.add(pk.getId().toString());
+        this.schema = schema;
+        if (schema.getPrimaryKey().isPresent()) {
+            UnresolvedPrimaryKey key = schema.getPrimaryKey().get();
+            primaryKeys = key.getColumnNames();
+        } else { //todo bag logic
+            for (Column pk : table.getPrimaryKeys()) {
+                primaryKeys.add(pk.getId().toString());
+            }
         }
 
         List<String> columns = new ArrayList<>();
@@ -108,6 +117,7 @@ public class CreateTableBuilder extends TableBuilder {
     public String getSQL() {
 //        checkUpdate();
 //        addColumn(DatabaseUtil.TIMESTAMP_COLUMN_NAME, DatabaseUtil.TIMESTAMP_COLUMN_SQL_TYPE.getTypeName(), true);
+
         Preconditions.checkArgument(!primaryKeys.isEmpty());
         sql.append(", PRIMARY KEY (");
         sql.append(primaryKeys.stream().collect(Collectors.joining(", ")));

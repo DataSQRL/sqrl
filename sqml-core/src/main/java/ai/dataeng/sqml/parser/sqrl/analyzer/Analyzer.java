@@ -55,12 +55,15 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.CalciteSchema.TableEntry;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.schema.impl.ViewTable;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqrlRelBuilder;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -209,9 +212,11 @@ public class Analyzer {
           if (table instanceof SqrlViewTable) {
             return ((SqrlViewTable)table).getRelNode();
           } else {
-
+            //Replace with stream data type so calcite doesn't include columns that don't exist yet.
+            RelOptTable table2 =
+                planner.createRelBuilder().getRelOptSchema().getTableForMember(List.of(scan.getTable().getQualifiedName().get(0) + "_stream"));
+            return new LogicalTableScan(scan.getCluster(), scan.getTraitSet(), scan.getHints(), table2);
           }
-          return scan;
         }
       });
 
@@ -269,9 +274,44 @@ public class Analyzer {
       log.info("Calcite Query: {}", sqlNode);
 
       RelNode plan = planner.plan(sqlNode);
+      RelNode expanded = plan.accept(new RelShuttleImpl() {
+        @Override
+        public RelNode visit(TableScan scan) {
+          org.apache.calcite.schema.Table table = planner.getSchema().getTable(scan.getTable().getQualifiedName().get(0), false).getTable();
+
+          if (table instanceof SqrlViewTable) {
+            return ((SqrlViewTable)table).getRelNode();
+          } else {
+            //Replace with stream data type so calcite doesn't include columns that don't exist yet.
+            RelOptTable table2 =
+                planner.createRelBuilder().getRelOptSchema().getTableForMember(List.of(scan.getTable().getQualifiedName().get(0) + "_stream"));
+            return new LogicalTableScan(scan.getCluster(), scan.getTraitSet(), scan.getHints(), table2);
+          }
+        }
+      });
+      log.info(RelToSql.convertToSql(expanded));
+      Table table = contextTable.get();
+
+      Table newTable = new Table(TableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
+          namePath, false);
+
+      List<Column> createdColumns = statementAnalyzer.getColumns();
+      Preconditions.checkState(createdColumns.size() > 0, "Unknown columns returned");
+      createdColumns.forEach(newTable::addField);
+      for (int i = 0; i < createdColumns.size(); i++) {
+        Column column = createdColumns.get(i);
+        RelDataTypeField field = expanded.getRowType().getFieldList().get(i);
+        column.setType(RelDataTypeConverter.toBasicType(field.getType()));
+      }
+
+      Relationship parent = new Relationship(Name.PARENT_RELATIONSHIP, newTable, table, Type.PARENT, Multiplicity.ONE);
+      newTable.addField(parent);
 
 
-      throw new RuntimeException("");
+      Relationship relationship = new Relationship(namePath.getLast(), table, newTable, Type.CHILD, Multiplicity.MANY);
+      table.addField(relationship);
+
+      newTable.setRelNode(expanded);
     }
 
     /**

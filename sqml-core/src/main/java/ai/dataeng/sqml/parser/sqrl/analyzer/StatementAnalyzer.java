@@ -177,6 +177,16 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
                 return new GroupBy(new SimpleGroupBy(grouping));
               })
               .orElse(toGroupBy(toGroupByExpression(IntStream.range(startIndex, contextSelect.getSelectItems().size()))));
+
+          //set primary keys
+          for (Column column : scope.getContextTable().get().getPrimaryKeys()) {
+            this.columns.add(new Column(column.getName(), null, 0, null, 0, List.of(), false, false, Optional.empty(), false));
+          }
+
+          for (Expression expr : groupBy.getGroupingElement().getExpressions()) {
+            LongLiteral l = (LongLiteral) expr;
+            this.columns.get((int)l.getValue() - 1).setPrimaryKey(true);
+          }
         }
 
         QuerySpecification querySpecification = new QuerySpecification(
@@ -223,7 +233,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
   private List<Expression> toGroupByExpression(IntStream range) {
     return range
-        .mapToObj(i->new LongLiteral(Integer.toString(i)))
+        .mapToObj(i->new LongLiteral(Integer.toString(i + 1)))
         .collect(Collectors.toList());
   }
   private GroupBy toGroupBy(List<Expression> expr) {
@@ -238,7 +248,18 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     List<SelectItem> items = select.getSelectItems()
         .stream()
         .map(s->(SingleColumn)s)
-        .map(s->new SingleColumn(rewriteExpression(s.getExpression(), scope), s.getAlias()))
+        .map(s->{
+          Optional<Identifier> alias;
+          if (s.getAlias().isPresent()) {
+            alias = Optional.of(s.getAlias().get());
+          } else if (s.getExpression() instanceof Identifier) {
+            alias = Optional.of(new Identifier(Optional.empty(),
+                ((Identifier) s.getExpression()).getNamePath().getLast().toNamePath()));
+          } else {
+            alias = Optional.empty();
+          }
+          return new SingleColumn(rewriteExpression(s.getExpression(), scope), alias);
+        })
         .collect(Collectors.toList());
 
     return new Select(select.getLocation(), select.isDistinct(), items);
@@ -256,7 +277,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     }
 
     return grouping.stream()
-        .map(i->(Expression)new LongLiteral(i.toString()))
+        .map(i->(Expression)new LongLiteral(Long.toString(i + 1)))
         .collect(Collectors.toList());
   }
 
@@ -302,6 +323,9 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           } else {
             name = gen.nextAliasName().toNamePath();
           }
+          Column column1 = new Column(name.getLast(), null, 0, null, 0, List.of(),
+              false, false, Optional.empty(), false);
+          this.columns.add(column1);
         }
 
         rewritten.add(new SingleColumn(column.getExpression(), new Identifier(Optional.empty(), name)));

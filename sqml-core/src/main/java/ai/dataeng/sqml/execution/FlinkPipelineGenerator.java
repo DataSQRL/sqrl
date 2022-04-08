@@ -4,6 +4,7 @@ import ai.dataeng.sqml.execution.flink.ingest.DataStreamProvider;
 import ai.dataeng.sqml.execution.flink.ingest.SchemaValidationProcess;
 import ai.dataeng.sqml.execution.flink.ingest.schema.FlinkTableConverter;
 import ai.dataeng.sqml.io.sources.SourceRecord;
+import ai.dataeng.sqml.io.sources.formats.CSVFormat.Configuration;
 import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.RelToSql;
@@ -25,6 +26,7 @@ import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -35,6 +37,8 @@ import org.apache.flink.table.api.TableDescriptor;
 import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
+import org.apache.flink.table.api.config.ExecutionConfigOptions;
+import org.apache.flink.table.api.config.ExecutionConfigOptions.NotNullEnforcer;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.delegation.StreamPlanner;
 import org.apache.flink.types.Row;
@@ -47,11 +51,17 @@ public class FlinkPipelineGenerator {
       CalcitePlanner calcitePlanner) {
     FlinkTableConverter tbConverter = new FlinkTableConverter();
 
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(
+        org.apache.flink.configuration.Configuration.fromMap(Map.of(
+            "taskmanager.memory.network.fraction", "0.4",
+            "taskmanager.memory.network.max", "2gb"
+        )));
     StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(env);
-    StreamPlanner streamPlanner = (StreamPlanner) tEnv.getPlanner();
-    FlinkRelBuilder builder = streamPlanner.getRelBuilder();
-    builder.getCluster();
+
+    tEnv.getConfig()
+        .getConfiguration()
+        .set(ExecutionConfigOptions.TABLE_EXEC_SINK_NOT_NULL_ENFORCER, NotNullEnforcer.DROP);
+
     final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>("SCHEMA_ERROR"){};
 
     StreamStatementSet stmtSet = tEnv.createStatementSet();
@@ -66,12 +76,15 @@ public class FlinkPipelineGenerator {
           if ((List.of(tEnv.listTables()).contains(streamName))) {
             return super.visit(scan);
           }
-          org.apache.calcite.schema.Table table = calcitePlanner.getSchema().getTable(streamName + "_stream", false).getTable();
+          org.apache.calcite.schema.Table table = calcitePlanner.getSchema().getTable(streamName, false).getTable();
 
           if (table instanceof StreamTable) {
           //1. construct to stream, register it with tenv
           StreamTable streamTableScan = (StreamTable) table;
           ImportManager.SourceTableImport imp = streamTableScan.getTableImport();
+          if (imp == null) {
+            System.out.println();
+          }
           Pair<Schema, TypeInformation> ordersSchema = tbConverter.tableSchemaConversion(imp.getSourceSchema());
 
           DataStream<SourceRecord.Raw> stream = new DataStreamProvider().getDataStream(imp.getTable(),env);
@@ -83,18 +96,18 @@ public class FlinkPipelineGenerator {
               ordersSchema.getRight());
 //            String streamName = scan.getTable().getQualifiedName().get(0).substring(0, 4);
 
-            tEnv.registerDataStream(streamName + "_stream", rows);
+            tEnv.registerDataStream(streamName, rows);
 //              PlannerQueryOperation op = (PlannerQueryOperation)tEnv.getParser().parse(" + orders_stream).get(0);
 
-            tEnv.sqlUpdate("CREATE TEMPORARY VIEW " + streamName + " AS"
-                + " SELECT * FROM " + streamName + "_stream");
+//            tEnv.sqlUpdate("CREATE TEMPORARY VIEW " + streamName + " AS"
+//                + " SELECT * FROM " + streamName);
 
-            if (streamName.equalsIgnoreCase("orders$3")) {
+            if (streamName.equalsIgnoreCase("orders$3_stream")) {
               org.apache.flink.table.api.Table tableShredding = tEnv.sqlQuery(
                   "SELECT o._uuid, items._idx as _idx1, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
-                      "FROM orders$3 o CROSS JOIN UNNEST(o.entries) AS items");
+                      "FROM orders$3_stream o CROSS JOIN UNNEST(o.entries) AS items");
 
-              tEnv.createTemporaryView("entries$4", tableShredding);
+              tEnv.createTemporaryView("entries$4_stream", tableShredding);
             }
 
           } else if (scan instanceof ShredTableScan) {
@@ -156,9 +169,22 @@ public class FlinkPipelineGenerator {
       if (field instanceof Column && ((Column) field).isPrimaryKey) {
         builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType().notNull());
         pks.add(column.getName());
-      } else {
+      } else if (field == null) {
+        if (column.getName().equalsIgnoreCase("productid")) {
+          pks.add(column.getName());
+          builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType().notNull());
+
+        } else {
+          builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
+        }
+
+      } else{
         builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
       }
+    }
+
+    if (pks.isEmpty()) {
+      System.out.println();
     }
 
     return builder
