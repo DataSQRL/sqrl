@@ -15,20 +15,35 @@ import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.tree.name.VersionedName;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SqrlNodeUtil {
 
+  /**
+   * Unnamed columns are treated as expressions. It must not be an identifier
+   */
   public static boolean hasOneUnnamedColumn(Query query) {
     QueryBody body = query.getQueryBody();
     if (body instanceof QuerySpecification) {
       Select select = ((QuerySpecification)body).getSelect();
+      if (select.getSelectItems().size() != 1) {
+        return false;
+      }
+      //SELECT *
+      if (!(select.getSelectItems().get(0) instanceof SingleColumn)) {
+        return false;
+      }
+      SingleColumn column = (SingleColumn) select.getSelectItems().get(0);
+      if (column.getAlias().isPresent()) {
+        return false;
+      }
+      if (column.getExpression() instanceof Identifier) {
+        return false;
+      }
 
-      return select.getSelectItems().size() == 1 && select.getSelectItems().get(0) instanceof SingleColumn
-          && ((SingleColumn) select.getSelectItems().get(0)).getAlias().isEmpty();
+      return true;
     }
     throw new RuntimeException("not yet implemented");
   }

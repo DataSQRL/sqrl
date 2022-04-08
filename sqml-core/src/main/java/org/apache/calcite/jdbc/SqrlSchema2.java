@@ -17,17 +17,14 @@
 package org.apache.calcite.jdbc;
 
 import org.apache.calcite.schema.Schema;
+import org.apache.calcite.schema.Table;
 
 /**
  * A no-op wrapper for SimpleCalciteSchema
- *
- * Note: It -could- be possible to treat table paths as arbitrarily nested schemas here except we
- *  cannot deduce the last element of a path to return a table. Alternatively, it -could- be
- *  possible to treat the DOT operator in a table name as a function.
  */
-public class CachingSqrlSchema2 extends SimpleCalciteSchema {
+public class SqrlSchema2 extends SimpleCalciteSchema {
 
-  public CachingSqrlSchema2(Schema schema) {
+  public SqrlSchema2(Schema schema) {
     super(null, schema, "");
   }
 }

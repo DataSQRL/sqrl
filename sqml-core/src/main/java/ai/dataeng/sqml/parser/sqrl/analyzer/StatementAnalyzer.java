@@ -25,6 +25,7 @@ import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
@@ -70,10 +71,12 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   @Override
   public Scope visitQuery(Query node, Scope scope) {
     Scope queryBodyScope = node.getQueryBody().accept(this, scope);
+    Query query = new Query(node.getLocation(), (QueryBody) queryBodyScope.getNode(),
+        node.getOrderBy(), node.getLimit());
+    log.info("Generated Query: {}", NodeFormatter.accept(query));
 
     //TODO: order & limit for Set operations
-    return createScope(new Query(node.getLocation(), (QueryBody) queryBodyScope.getNode(),
-        node.getOrderBy(), node.getLimit()), scope);
+    return createScope(query, scope);
   }
 
   @Override
@@ -432,7 +435,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   private Scope createScope(Node node, Scope parentScope) {
-    return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope(), parentScope.getScopedRelation(),parentScope.getType(),parentScope.getCriteria(),
+    return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope(),
         parentScope.isExpression(), parentScope.getExpressionName());
   }
 

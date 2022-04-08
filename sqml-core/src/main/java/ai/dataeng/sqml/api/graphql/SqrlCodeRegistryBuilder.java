@@ -25,6 +25,7 @@ import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
+import ai.dataeng.sqml.type.basic.DoubleType;
 import ai.dataeng.sqml.type.basic.FloatType;
 import ai.dataeng.sqml.type.basic.IntegerType;
 import ai.dataeng.sqml.type.basic.StringType;
@@ -134,6 +135,10 @@ public class SqrlCodeRegistryBuilder {
       @Override
       public H2Column visitIntegerType(IntegerType type, Column context) {
         return new IntegerColumn(context.getName().getDisplay(), context.getId().toString());
+      }
+      @Override
+      public H2Column visitDoubleType(DoubleType type, Column context) {
+        return new FloatColumn(context.getName().getDisplay(), context.getId().toString());
       }
 
       @Override

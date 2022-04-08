@@ -13,6 +13,7 @@ import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BigIntegerType;
 import ai.dataeng.sqml.type.basic.BooleanType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
+import ai.dataeng.sqml.type.basic.DoubleType;
 import ai.dataeng.sqml.type.basic.FloatType;
 import ai.dataeng.sqml.type.basic.IntegerType;
 import ai.dataeng.sqml.type.basic.IntervalType;
@@ -348,6 +349,11 @@ public class GraphqlSchemaBuilder {
       Optional<GraphQLOutputType> outputType = Optional.ofNullable(typeMap.get(type.getClass()));
 
       return outputType;
+    }
+
+    @Override
+    public Optional<GraphQLOutputType> visitDoubleType(DoubleType type, Context context) {
+      return Optional.of(Scalars.GraphQLFloat);
     }
 
     @Override

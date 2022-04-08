@@ -6,7 +6,7 @@ import java.util.Properties;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.config.CalciteConnectionProperty;
-import org.apache.calcite.jdbc.CachingSqrlSchema2;
+import org.apache.calcite.jdbc.SqrlSchema2;
 import org.apache.calcite.jdbc.SqrlTypeFactory;
 import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.plan.RelOptCluster;
@@ -68,7 +68,7 @@ public class CalciteTools {
 //      return super.visit(scan);
 //    }
 //  };
-  public static CalciteCatalogReader getCalciteCatalogReader(CachingSqrlSchema2 schema) {
+  public static CalciteCatalogReader getCalciteCatalogReader(SqrlSchema2 schema) {
     SqrlTypeFactory typeFactory = new SqrlTypeFactory();
 
     // Configure and instantiate validator

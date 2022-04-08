@@ -1,13 +1,12 @@
 package ai.dataeng.sqml.parser.sqrl.calcite;
 
 import ai.dataeng.sqml.parser.CalciteTools;
-import ai.dataeng.sqml.parser.sqrl.LogicalDag;
 import ai.dataeng.sqml.parser.sqrl.NodeToSqlNodeConverter;
 import ai.dataeng.sqml.tree.Node;
 import java.util.List;
 import java.util.Properties;
 import org.apache.calcite.config.CalciteConnectionProperty;
-import org.apache.calcite.jdbc.CachingSqrlSchema2;
+import org.apache.calcite.jdbc.SqrlSchema2;
 import org.apache.calcite.jdbc.SqrlTypeFactory;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable.ViewExpander;
@@ -15,7 +14,7 @@ import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.schema.SqrlSchema2;
+import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlRelBuilder;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
@@ -29,18 +28,18 @@ public class CalcitePlanner {
 
   private final RelOptCluster cluster;
   private final CalciteCatalogReader catalogReader;
-  private final SqrlSchema2 sqrlSchema;
-  private final CachingSqrlSchema2 calciteSchema;
+  private final org.apache.calcite.schema.SqrlSchema2 sqrlSchema;
+  private final SqrlSchema2 calciteSchema;
 
   public CalcitePlanner() {
     SqrlTypeFactory typeFactory = new SqrlTypeFactory();
     this.cluster = CalciteTools.createHepCluster(typeFactory);
-    this.sqrlSchema = new SqrlSchema2();
-    this.calciteSchema = new CachingSqrlSchema2(sqrlSchema);
+    this.sqrlSchema = new org.apache.calcite.schema.SqrlSchema2();
+    this.calciteSchema = new SqrlSchema2(sqrlSchema);
     this.catalogReader = CalciteTools.getCalciteCatalogReader(calciteSchema);
   }
 
-  public CachingSqrlSchema2 getSchema() {
+  public SqrlSchema2 getSchema() {
     return calciteSchema;
   }
 
@@ -135,6 +134,10 @@ public class CalcitePlanner {
         StandardConvertletTable.INSTANCE,
         SqlToRelConverter.config());
     return relConverter;
+  }
+
+  public void setView(String name, Table table) {
+    this.calciteSchema.add(name, table);
   }
 
   public class SqrlViewExpander implements ViewExpander {

@@ -32,9 +32,6 @@ public class Scope {
   //Alias mapping of tables
   private Map<Name, Table> joinScope;
 
-  private Relation relation;
-  private Join.Type type;
-  private JoinCriteria criteria;
   private boolean expression;
   private Name expressionName;
 
@@ -98,14 +95,6 @@ public class Scope {
     }
 
     throw new RuntimeException("Cannot qualify");
-  }
-
-  public Optional<JoinCriteria> getAdditionalJoinCondition() {
-    return Optional.empty();
-  }
-
-  public Relation getScopedRelation() {
-    return this.relation;
   }
 
   public Optional<Table> getJoinScope(Name name) {
