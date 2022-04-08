@@ -70,10 +70,11 @@ public class Test2 {
             + "IMPORT ecommerce-data.Product;\n"
             + "IMPORT ecommerce-data.Orders;\n"
             + "\n"
-            + "Orders.entries.discount := discount + 1;\n"
+            + "Orders.entries.discount := coalesce(discount, 0.0);\n"
+            + "Orders.entries.total := quantity * unit_price - discount;"
     );
 
-    System.out.println(script.getGraphQL().execute("query { orders { data { entries { discount } } } }"));
+    System.out.println(script.getGraphQL().execute("query { orders { data { entries { discount, total } } } }"));
 
   }
 

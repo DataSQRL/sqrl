@@ -6,13 +6,13 @@ import static ai.dataeng.sqml.parser.SqrlNodeUtil.hasOneUnnamedColumn;
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
+import ai.dataeng.sqml.parser.RelDataTypeConverter;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import ai.dataeng.sqml.parser.Relationship.Type;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
-import ai.dataeng.sqml.parser.sqrl.SqrlRexUtil;
 import ai.dataeng.sqml.parser.sqrl.calcite.CalcitePlanner;
 import ai.dataeng.sqml.parser.sqrl.schema.SqrlViewTable;
 import ai.dataeng.sqml.parser.sqrl.schema.StreamTable.StreamDataType;
@@ -28,19 +28,15 @@ import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.ImportDefinition;
-import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinDeclaration;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
-import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
-import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SingleColumn;
-import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
@@ -58,8 +54,8 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlRelBuilder;
@@ -166,7 +162,10 @@ public class Analyzer {
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
       Optional<Table> tableOpt = namePath.getPrefix().flatMap(p-> getTable(p));
 
-      Scope scope = query.accept(statementAnalyzer, new Scope(tableOpt, query, new HashMap<>(), null, null, null));
+      boolean hasOneUnnamedColumn = hasOneUnnamedColumn(query);
+      Scope scope = query.accept(statementAnalyzer, new Scope(tableOpt, query, new HashMap<>(), null, null, null,
+          hasOneUnnamedColumn, namePath.getLast()));
+      List<Column> columns2 = statementAnalyzer.getColumns();
 
       System.out.println(NodeFormatter.accept(scope.getNode()));
 
@@ -177,15 +176,17 @@ public class Analyzer {
       //For single unnamed columns in tables, treat as an expression
       if (hasOneUnnamedColumn(query) && namePath.getPrefix().isPresent()) {
         Table table = tableOpt.get();
-        int version = 0;
-        Optional<Field> existingField = table.getFields().getByName(namePath.getLast());
-        if (existingField.isPresent()) {
-          version = existingField.get().getVersion() + 1;
-        }
-        table.addField(new Column(namePath.getLast(), table, version, null, 0, List.of(),
-            false, false, Optional.empty(), false));
+        columns2.forEach(table::addField);
 
         RelNode plan2 = planner.plan(sqlNode);
+        /*
+         * Associate the derived type with the column. SQRL types are not used in the query
+         * analysis, but they are used at graphql query time.
+         */
+        for (Column column : columns2) {
+          RelDataTypeField field = plan2.getRowType().getField(column.getId().toString(), false, false);
+          column.setType(RelDataTypeConverter.toBasicType(field.getType()));
+        }
 
         RelNode expanded = plan2.accept(new RelShuttleImpl() {
           @Override
@@ -198,18 +199,12 @@ public class Analyzer {
           }
         });
 
-        SqrlRelBuilder relBuilder = planner.createRelBuilder();
-        RexBuilder rexBuilder = relBuilder.getRexBuilder();
-//
-//        RelNode newPlan = relBuilder
-//            .push(expanded)
-//            .push(table.getRelNode())
-//            .join(JoinRelType.LEFT,
-//                SqrlRexUtil.createPkCondition(table, rexBuilder))
-//            //todo: project all left + the new column, shadow if necessary
-//            .build();
-
         table.setRelNode(expanded);
+
+        //Add unnamed view to planner,
+        // Update planner to retrieve new view when called
+
+
       } else if (tableOpt.isEmpty()) {
         Table newTable = new Table(TableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
             namePath, false);
@@ -289,6 +284,7 @@ public class Analyzer {
       SqlToRelConverter sqlToRelConverter = planner.getSqlToRelConverter(validator);
       RelNode relNode = sqlToRelConverter.convertQuery(sqlNode, false, true).rel;
 
+
       for (Field field : oldTable.get().getFields()) {
         if (field instanceof Column) {
           Column f = new Column(field.getName(), table, field.getVersion(), null, 0, List.of(), false, false, Optional.empty(), false);
@@ -338,7 +334,7 @@ public class Analyzer {
       System.out.println(NodeFormatter.accept(querySpec));
 
       Optional<Table> ctxTable = getTable(namePath.getPrefix().get());
-      Scope scope = querySpec.accept(sAnalyzer, new Scope(ctxTable, querySpec, new LinkedHashMap<>(), null, null, null));
+      Scope scope = querySpec.accept(sAnalyzer, new Scope(ctxTable, querySpec, new LinkedHashMap<>(), null, null, null, false, null));
 
       Map<Name, Table> joinScope = scope.getJoinScope();
       Node rewritten = scope.getNode();

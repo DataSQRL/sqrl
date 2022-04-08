@@ -46,6 +46,7 @@ import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableMultimap.Builder;
 import com.google.common.collect.Multimap;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -65,6 +66,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   public static final AliasGenerator gen = new AliasGenerator();
 
   private List<JoinResult> additionalJoins = new ArrayList<>();
+  private List<Column> columns = new ArrayList<>();
 
   public StatementAnalyzer(Analyzer analyzer) {
     this.analyzer = analyzer;
@@ -123,18 +125,44 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         from = new Join(Optional.empty(), result.getType(), from, result.getSubquery(), result.getCriteria());
       }
 
-      QuerySpecification querySpecification = new QuerySpecification(
-          node.getLocation(),
-          contextSelect,
-          from,
-          Optional.empty(),
-          Optional.ofNullable(groupBy),
-          having,
-          Optional.empty(),
-          Optional.empty()
-      );
+      if (scope.isExpression()) {
+        //rejoin column back to table
+        //If this is an aggregating expression then join, other add column
+        Table contextTable = scope.getContextTable().get();
 
-      return createScope(querySpecification, scope);
+        List<SelectItem> additionalColumns = contextTable.getFields().getElements().stream()
+            .filter(e-> e instanceof Column)
+            .map(e->new SingleColumn(new Identifier(Optional.empty(), e.getId().toNamePath())))
+            .collect(Collectors.toList());
+        List<SelectItem> list = new ArrayList<>(select.getSelectItems());
+        list.addAll(additionalColumns);
+
+        QuerySpecification querySpecification = new QuerySpecification(
+            node.getLocation(),
+            new Select(select.isDistinct(), list),
+            from,
+            Optional.empty(),
+            Optional.ofNullable(groupBy),
+            having,
+            Optional.empty(),
+            Optional.empty()
+        );
+
+        return createScope(querySpecification, scope);
+      } else {
+        QuerySpecification querySpecification = new QuerySpecification(
+            node.getLocation(),
+            contextSelect,
+            from,
+            Optional.empty(),
+            Optional.ofNullable(groupBy),
+            having,
+            Optional.empty(),
+            Optional.empty()
+        );
+        return createScope(querySpecification, scope);
+      }
+
     } else {
 
     }
@@ -230,16 +258,29 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       } else if (item instanceof SingleColumn) {
         SingleColumn column = (SingleColumn) item;
 
+        // We want to preserve the names of the columns
+
         NamePath name;
-        if (column.getAlias().isPresent()) {
-          name = column.getAlias().get().getNamePath();
-        } else if(column.getExpression() instanceof Identifier) {
-          name = ((Identifier)column.getExpression()).getNamePath();
+
+        if (scope.isExpression()) {
+          Table table = scope.getContextTable().get();
+          /*
+           * Expression scoped queries only create a single column
+           */
+          Column column1 = table.fieldFactory(scope.getExpressionName());
+          this.columns.add(column1);
+          name = column1.getId().toNamePath();
         } else {
-          name = gen.nextAliasName().toNamePath();
+          if (column.getAlias().isPresent()) {
+            name = column.getAlias().get().getNamePath();
+          } else if(column.getExpression() instanceof Identifier) {
+            name = ((Identifier)column.getExpression()).getNamePath();
+          } else {
+            name = gen.nextAliasName().toNamePath();
+          }
         }
 
-        rewritten.add( new SingleColumn(column.getExpression(), new Identifier(Optional.empty(), name)));
+        rewritten.add(new SingleColumn(column.getExpression(), new Identifier(Optional.empty(), name)));
       }
       else {
         throw new IllegalArgumentException(String.format("Unsupported SelectItem type: %s", item.getClass().getName()));
@@ -275,6 +316,10 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
 
     return createScope(result.getCurrent(), scope);
+  }
+
+  public List<Column> getColumns() {
+    return columns;
   }
 
   @Value
@@ -456,7 +501,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   private Multimap<NamePath, Expression> extractNamedOutputExpressions(Select node)
   {
     // Compute aliased output terms so we can resolve order by expressions against them first
-    ImmutableMultimap.Builder<NamePath, Expression> assignments = ImmutableMultimap.builder();
+    Builder<NamePath, Expression> assignments = ImmutableMultimap.builder();
     for (SelectItem item : node.getSelectItems()) {
       if (item instanceof SingleColumn) {
         SingleColumn column = (SingleColumn) item;
@@ -495,12 +540,14 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   private Scope createScope(Node node, Scope parentScope) {
-    return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope(), parentScope.getScopedRelation(),parentScope.getType(),parentScope.getCriteria());
+    return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope(), parentScope.getScopedRelation(),parentScope.getType(),parentScope.getCriteria(),
+        parentScope.isExpression(), parentScope.getExpressionName());
   }
 
   private Scope createScope(Node node, Scope parentScope, Relation relation,
       Type type, JoinCriteria rewrittenCriteria) {
-    return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope(), relation, type, rewrittenCriteria);
+    return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope(), relation, type, rewrittenCriteria,
+        parentScope.isExpression(), parentScope.getExpressionName());
   }
 
   private void analyzeHaving(QuerySpecification node, Scope scope) {

@@ -21,7 +21,8 @@ public class Column extends Field {
   public int version;
 
   //Type definition
-  public final BasicType type;
+  @Setter
+  public BasicType type;
   public final int arrayDepth;
   public final boolean nonNull;
   public final List<Constraint> constraints;

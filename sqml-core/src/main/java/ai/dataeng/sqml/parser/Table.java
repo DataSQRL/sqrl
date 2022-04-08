@@ -182,4 +182,16 @@ public class Table implements DatasetOrTable {
     //the parent columns
     return null;
   }
+
+  /**
+   * Creates a field but does not bind it to this table
+   */
+  public Column fieldFactory(Name name) {
+    int version = 0;
+    if (getField(name) != null) {
+      version = getField(name).getVersion() + 1;
+    }
+
+    return new Column(name, this, version, null, 0, List.of(), false, false, Optional.empty(), false);
+  }
 }

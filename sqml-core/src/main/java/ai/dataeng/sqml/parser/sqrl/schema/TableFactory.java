@@ -148,7 +148,10 @@ public class TableFactory {
 
     RelDataTypeFieldImpl relDataTypeField = new RelDataTypeFieldImpl("_idx1", size++,
         factory.createFieldTypeFromLogicalType(new IntType(false)));
+    RelDataTypeFieldImpl relDataTypeField2 = new RelDataTypeFieldImpl("_ingest_time", size++,
+        factory.createFieldTypeFromLogicalType(new IntType(false)));
     result.add(relDataTypeField);
+    result.add(relDataTypeField2);
     return result;
 
   }

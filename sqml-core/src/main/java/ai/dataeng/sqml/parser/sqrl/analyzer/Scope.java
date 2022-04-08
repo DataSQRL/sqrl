@@ -35,6 +35,8 @@ public class Scope {
   private Relation relation;
   private Join.Type type;
   private JoinCriteria criteria;
+  private boolean expression;
+  private Name expressionName;
 
   public List<Field> resolveFieldsWithPrefix(Optional<Name> alias) {
     if (alias.isPresent()) {
