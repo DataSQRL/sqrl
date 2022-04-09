@@ -1,9 +1,12 @@
-package ai.dataeng.sqml.parser;
+package ai.dataeng.sqml.util;
 
+import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.Identifier;
+import ai.dataeng.sqml.tree.LogicalBinaryExpression;
+import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
@@ -12,15 +15,21 @@ import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
+import ai.dataeng.sqml.tree.TableNode;
+import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import ai.dataeng.sqml.tree.name.VersionedName;
+import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class SqrlNodeUtil {
-
   /**
    * Unnamed columns are treated as expressions. It must not be an identifier
    */
@@ -60,22 +69,54 @@ public class SqrlNodeUtil {
   }
 
 
+  public static GroupBy mapToOrdinal(Select select, GroupBy group) {
+    Set<Integer> grouping = new HashSet<>();
+    for (Expression expression : group.getGroupingElement().getExpressions()) {
+      int index = IntStream.range(0, select.getSelectItems().size())
+          .filter(i -> {
+            SingleColumn column = ((SingleColumn)select.getSelectItems().get(i));
+            return
+                column.getExpression().equals(expression) ||
+                    (column.getAlias().isPresent() && column.getAlias().get().equals(expression));
+          })
+          .findFirst()
+          .orElseThrow(()-> new RuntimeException("Cannot find grouping element " + expression));
+
+      grouping.add(index);
+    }
+
+    List<Expression> ordinals = grouping.stream()
+        .map(i->(Expression)new LongLiteral(Long.toString(i + 1)))
+        .collect(Collectors.toList());
+    return new GroupBy(new SimpleGroupBy(ordinals));
+  }
+
   public static Identifier ident(Name name) {
     return ident(name.toNamePath());
+  }
+  public static SingleColumn singleColumn(NamePath name, Name alias) {
+    return new SingleColumn(ident(name), ident(alias));
   }
 
   public static Identifier ident(NamePath name) {
     return new Identifier(Optional.empty(), name);
   }
 
-  public static List<Expression> aliasMany(List<Column> list, Name baseTableAlias) {
-    return list.stream()
-        .map(e->new Identifier(Optional.empty(), baseTableAlias.toNamePath().concat(e.getId())))
-        .collect(Collectors.toList());
-  }
-
   public static SelectItem selectAlias(Expression expression, NamePath alias) {
     return new SingleColumn(expression, new Identifier(Optional.empty(), alias));
+  }
+
+  public static Relation toSubquery(QuerySpecification spec, Name alias) {
+    return
+        new AliasedRelation(
+            new TableSubquery(Optional.empty(),
+                new Query(Optional.empty(), spec, Optional.empty(), Optional.empty())),
+            ident(alias.toNamePath()));
+
+  }
+
+  public static GroupBy groupBy(List<Expression> grouping) {
+    return new GroupBy(new SimpleGroupBy(grouping));
   }
 
   public static Query query(Select select, Relation relation, GroupBy group) {
@@ -97,25 +138,6 @@ public class SqrlNodeUtil {
     return new Select(items);
   }
 
-  public static List<SelectItem> selectAlias(List<Column> list,
-      Name baseTableAlias, AliasGenerator gen) {
-    return toIdentifier(list, baseTableAlias).stream()
-        .map(e->new SingleColumn(e, new Identifier(Optional.empty(), gen.nextAliasName().toNamePath())))
-        .collect(Collectors.toList());
-  }
-  public static List<SelectItem> selectAlias(List<Column> list,
-      Name baseTableAlias) {
-    return toIdentifier(list, baseTableAlias).stream()
-        .map(e->new SingleColumn(e))
-        .collect(Collectors.toList());
-  }
-
-  private static List<Expression> toIdentifier(List<Column> list, Name baseTableAlias) {
-    return list.stream()
-        .map(c->new Identifier(Optional.empty(), baseTableAlias.toNamePath().concat(c.getId())))
-        .collect(Collectors.toList());
-  }
-
   public static GroupBy group(List<Expression> identifiers) {
     return new GroupBy(new SimpleGroupBy(identifiers));
   }
@@ -124,5 +146,20 @@ public class SqrlNodeUtil {
   }
   public static FunctionCall function(NamePath name, Identifier alias) {
     return new FunctionCall(name, List.of(alias), false);
+  }
+
+  public static Expression and(List<Expression> expressions) {
+    if (expressions.size() == 0) {
+      return null;
+    } else if (expressions.size() == 1) {
+      return expressions.get(0);
+    } else if (expressions.size() == 2) {
+      return new LogicalBinaryExpression(LogicalBinaryExpression.Operator.AND,
+          expressions.get(0),
+          expressions.get(1));
+    }
+
+    return new LogicalBinaryExpression(LogicalBinaryExpression.Operator.AND,
+        expressions.get(0), and(expressions.subList(1, expressions.size())));
   }
 }

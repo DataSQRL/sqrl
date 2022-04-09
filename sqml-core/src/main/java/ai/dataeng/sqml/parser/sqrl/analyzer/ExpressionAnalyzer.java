@@ -1,24 +1,23 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
 
-import static ai.dataeng.sqml.parser.SqrlNodeUtil.alias;
-import static ai.dataeng.sqml.parser.SqrlNodeUtil.aliasMany;
-import static ai.dataeng.sqml.parser.SqrlNodeUtil.function;
-import static ai.dataeng.sqml.parser.SqrlNodeUtil.group;
-import static ai.dataeng.sqml.parser.SqrlNodeUtil.ident;
-import static ai.dataeng.sqml.parser.SqrlNodeUtil.query;
-import static ai.dataeng.sqml.parser.SqrlNodeUtil.select;
-import static ai.dataeng.sqml.parser.SqrlNodeUtil.selectAlias;
+import static ai.dataeng.sqml.parser.sqrl.AliasUtil.aliasMany;
+import static ai.dataeng.sqml.parser.sqrl.AliasUtil.selectAliasItem;
 import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.getCriteria;
 import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.getRelation;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.alias;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.function;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.group;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.ident;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.query;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.select;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.selectAlias;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.parser.Field;
-import ai.dataeng.sqml.parser.FieldPath;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.sqrl.PathUtil;
 import ai.dataeng.sqml.parser.sqrl.analyzer.Scope.ResolveResult;
-import ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.TableBookkeeping;
 import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
 import ai.dataeng.sqml.parser.sqrl.function.RewritingFunction;
 import ai.dataeng.sqml.parser.sqrl.function.SqlNativeFunction;
@@ -139,7 +138,7 @@ public class ExpressionAnalyzer {
           Name fieldAlias = gen.nextAliasName();
           Query query = query(
               select(ListUtils.union(
-                  selectAlias(result.getTable().getPrimaryKeys(), baseTableAlias),
+                  selectAliasItem(result.getTable().getPrimaryKeys(), baseTableAlias),
                   List.of(selectAlias(
                       function(node.getName(), alias(b.getAlias(),
                         lastField instanceof Relationship ? ((Relationship) lastField).getToTable().getPrimaryKeys().get(0).getId() : lastField.getId())),

@@ -18,7 +18,16 @@ import java.util.Optional;
 public abstract class SelectItem
     extends Node {
 
+  private Object resolved;
+
   protected SelectItem(Optional<NodeLocation> location) {
     super(location);
   }
+
+  public void setResolved(Object resolved) {
+    this.resolved = resolved;
+  }
+  public <T> T getResolved() {
+    return (T)resolved;
+  };
 }

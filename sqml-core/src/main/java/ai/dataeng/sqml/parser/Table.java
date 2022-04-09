@@ -187,6 +187,9 @@ public class Table implements DatasetOrTable {
    * Creates a field but does not bind it to this table
    */
   public Column fieldFactory(Name name) {
+    if (name instanceof VersionedName) {
+      name = ((VersionedName)name).toName();
+    }
     int version = 0;
     if (getField(name) != null) {
       version = getField(name).getVersion() + 1;

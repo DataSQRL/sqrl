@@ -25,6 +25,8 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.calcite.sql2rel.StandardConvertletTable;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 
 public class CalcitePlanner {
 
@@ -32,9 +34,20 @@ public class CalcitePlanner {
   private final CalciteCatalogReader catalogReader;
   private final SqrlSchema sqrlSchema;
   private final SqrlCalciteSchema calciteSchema;
+  private final JavaTypeFactoryImpl typeFactory;
+
+  SqlValidator.Config validatorConfig = SqlValidator.Config.DEFAULT
+      .withCallRewrite(true)
+      .withIdentifierExpansion(true)
+      .withColumnReferenceExpansion(true)
+      .withTypeCoercionEnabled(false)
+      .withLenientOperatorLookup(true)
+      .withSqlConformance(SqlConformanceEnum.LENIENT)
+      ;
 
   public CalcitePlanner() {
-    RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl();
+    this.typeFactory = new FlinkTypeFactory(new FlinkTypeSystem());
+//    this.typeFactory = new JavaTypeFactoryImpl();
     this.cluster = CalciteTools.createHepCluster(typeFactory);
     this.sqrlSchema = new SqrlSchema();
     this.calciteSchema = new SqrlCalciteSchema(sqrlSchema);
@@ -61,18 +74,9 @@ public class CalcitePlanner {
     return sqlNode;
   }
 
-    public RelNode plan(SqlNode sqlNode) {
-    RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl();
+  public RelNode plan(SqlNode sqlNode) {
     Properties props = new Properties();
     props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
-
-    SqlValidator.Config validatorConfig = SqlValidator.Config.DEFAULT
-        .withCallRewrite(true)
-        .withIdentifierExpansion(true)
-        .withColumnReferenceExpansion(true)
-        .withLenientOperatorLookup(true)
-        .withSqlConformance(SqlConformanceEnum.LENIENT)
-        ;
 
     SqlValidator validator = SqlValidatorUtil.newValidator(SqlStdOperatorTable.instance(),
         catalogReader, typeFactory,
@@ -87,23 +91,14 @@ public class CalcitePlanner {
         catalogReader,
         cluster,
         StandardConvertletTable.INSTANCE,
-        SqlToRelConverter.config());
+        SqlToRelConverter.config().withExpand(false).withTrimUnusedFields(true).withCreateValuesRel(false));
 
     return relConverter.convertQuery(validated, false, true).rel;
   }
 
   public SqlValidator getValidator() {
-    RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl();
     Properties props = new Properties();
     props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
-
-    SqlValidator.Config validatorConfig = SqlValidator.Config.DEFAULT
-        .withCallRewrite(true)
-        .withIdentifierExpansion(true)
-        .withColumnReferenceExpansion(true)
-        .withLenientOperatorLookup(true)
-        .withSqlConformance(SqlConformanceEnum.LENIENT)
-        ;
 
     SqlValidator validator = SqlValidatorUtil.newValidator(SqlStdOperatorTable.instance(),
         catalogReader, typeFactory,
@@ -119,7 +114,8 @@ public class CalcitePlanner {
         catalogReader,
         cluster,
         StandardConvertletTable.INSTANCE,
-        SqlToRelConverter.config());
+        SqlToRelConverter.config()
+            .withTrimUnusedFields(true));
     return relConverter;
   }
 

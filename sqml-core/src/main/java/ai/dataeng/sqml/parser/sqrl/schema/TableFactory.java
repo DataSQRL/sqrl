@@ -100,7 +100,8 @@ public class TableFactory {
 
     List<RelDataTypeField> fields = new ArrayList<>();
     for (UnresolvedPhysicalColumn column : columns) {
-      fields.add(new RelDataTypeFieldImpl(column.getName(), fields.size(), factory.createFieldTypeFromLogicalType(((DataType)column.getDataType()).getLogicalType())));
+      fields.add(new RelDataTypeFieldImpl(column.getName(), fields.size(),
+          factory.createFieldTypeFromLogicalType(((DataType)column.getDataType()).getLogicalType())));
     }
 
     return new StreamDataType(null, fields);

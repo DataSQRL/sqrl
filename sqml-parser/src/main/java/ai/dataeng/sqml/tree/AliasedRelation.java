@@ -26,7 +26,6 @@ public class AliasedRelation
 
   private final Relation relation;
   private final Identifier alias;
-//  private final List<Identifier> columnNames;
 
   public AliasedRelation(Relation relation, Identifier alias) {
     this(Optional.empty(), relation, alias);
@@ -43,6 +42,10 @@ public class AliasedRelation
 
     this.relation = relation;
     this.alias = alias;
+  }
+
+  public <T> T getResolved() {
+    return relation.getResolved();
   }
 
   public Relation getRelation() {

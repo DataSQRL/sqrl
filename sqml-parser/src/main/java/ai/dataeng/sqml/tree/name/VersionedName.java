@@ -40,6 +40,10 @@ public class VersionedName extends SimpleName {
     return new VersionedName(name.getCanonical(), name.getDisplay(), version);
   }
 
+  public Name toName() {
+    return new StandardName(this.canonicalName, this.displayName);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

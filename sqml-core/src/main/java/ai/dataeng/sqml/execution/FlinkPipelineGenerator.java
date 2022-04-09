@@ -110,7 +110,7 @@ public class FlinkPipelineGenerator {
 
             System.out.println("Shredding");
             org.apache.flink.table.api.Table tableShredding = tEnv.sqlQuery(
-                "SELECT o._uuid, items._idx as _idx1, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
+                "SELECT o._uuid, items._idx as _idx1,items._idx as _idx, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
                 "FROM orders$3 o CROSS JOIN UNNEST(o.entries) AS items");
 
             tEnv.createTemporaryView("entries$4", tableShredding);
@@ -159,28 +159,18 @@ public class FlinkPipelineGenerator {
   private Schema addPrimaryKey(Schema toSchema, Table sqrlTable) {
     Schema.Builder builder = Schema.newBuilder();
     List<String> pks = new ArrayList<>();
-    for (UnresolvedColumn column : toSchema.getColumns()) {
-      Field field = sqrlTable.getField(Name.system(column.getName()));
-      if (field instanceof Column && ((Column) field).isPrimaryKey) {
-        builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType().notNull());
+    List<UnresolvedColumn> columns = toSchema.getColumns();
+    for (int i = 0; i < columns.size(); i++) {
+      UnresolvedColumn column = columns.get(i);
+      if (i == 1) {
+        builder.column(column.getName(),
+            ((UnresolvedPhysicalColumn) column).getDataType().notNull());
         pks.add(column.getName());
-      } else if (field == null) {
-        if (column.getName().equalsIgnoreCase("productid")) {
-          pks.add(column.getName());
-          builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType().notNull());
-
-        } else {
-          builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
-        }
-
-      } else{
+      } else {
         builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
       }
     }
 
-    if (pks.isEmpty()) {
-      System.out.println();
-    }
 
     return builder
 //        .watermark(toSchema.getWatermarkSpecs().get(0).getColumnName(), toSchema.getWatermarkSpecs().get(0).getWatermarkExpression())

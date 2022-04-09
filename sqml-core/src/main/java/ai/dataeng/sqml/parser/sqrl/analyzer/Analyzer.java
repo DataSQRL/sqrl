@@ -1,24 +1,26 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
-import static ai.dataeng.sqml.parser.SqrlNodeUtil.hasOneUnnamedColumn;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.hasOneUnnamedColumn;
 
 import ai.dataeng.sqml.config.error.ErrorCollector;
 import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.RelDataTypeConverter;
-import ai.dataeng.sqml.planner.RelToSql;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import ai.dataeng.sqml.parser.Relationship.Type;
+import ai.dataeng.sqml.parser.SqrlQueries;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
-import ai.dataeng.sqml.planner.CalcitePlanner;
 import ai.dataeng.sqml.parser.sqrl.schema.SqrlViewTable;
 import ai.dataeng.sqml.parser.sqrl.schema.StreamTable.StreamDataType;
 import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
 import ai.dataeng.sqml.parser.sqrl.transformers.ExpressionToQueryTransformer;
-import ai.dataeng.sqml.parser.SqrlQueries;
+import ai.dataeng.sqml.parser.sqrl.transformers.Transformers;
+import ai.dataeng.sqml.planner.CalcitePlanner;
+import ai.dataeng.sqml.planner.DagExpander;
+import ai.dataeng.sqml.planner.RelToSql;
 import ai.dataeng.sqml.planner.ViewFactory;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
@@ -28,6 +30,7 @@ import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupBy;
+import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinDeclaration;
@@ -39,6 +42,8 @@ import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.tree.Select;
+import ai.dataeng.sqml.tree.SelectItem;
+import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
@@ -55,11 +60,9 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParser;
@@ -73,6 +76,7 @@ public class Analyzer {
   private CalcitePlanner planner;
   private TableFactory tableFactory;
   private LogicalDag logicalDag;
+  private DagExpander dagExpander;
 
   //Keep namespace here
   protected final ErrorCollector errors = ErrorCollector.root();
@@ -175,15 +179,16 @@ public class Analyzer {
      */
     public void analyzeExpression(NamePath namePath, Query query) {
       Table contextTable = namePath.getPrefix().flatMap(p-> getTable(p)).get();
-
+      Query aliasedQuery = Transformers.aliasFirstColumn.transform(query, namePath.getLast());
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
-      Scope scope = query.accept(statementAnalyzer, new Scope(Optional.of(contextTable), query, new HashMap<>(),
+      Scope scope = aliasedQuery.accept(statementAnalyzer, new Scope(Optional.of(contextTable), aliasedQuery, new HashMap<>(),
           true, namePath.getLast()));
 
       SqlNode sqlNode = planner.parse(scope.getNode());
       log.info("Calcite Query: {}", sqlNode);
 
       RelNode plan = planner.plan(sqlNode);
+//      log.info("Logical Plan Query: " +RelToSql.convertToSql(plan));
 
       /*
        * Add columns to schema.
@@ -191,36 +196,20 @@ public class Analyzer {
        * Associate the derived type with the column. SQRL types are not used in the query
        * analysis, but they are used at graphql query time.
        */
-      List<Column> createdColumns = statementAnalyzer.getColumns();
-      Preconditions.checkState(createdColumns.size() == 1, "Unknown columns returned");
-      createdColumns.forEach(contextTable::addField);
-      for (Column column : createdColumns) {
-        RelDataTypeField field = plan.getRowType().getField(column.getId().toString(), false, false);
-        column.setType(RelDataTypeConverter.toBasicType(field.getType()));
-      }
+      Column column = contextTable.fieldFactory(namePath.getLast());
+      RelDataTypeField field = plan.getRowType().getField(column.getId().toString(), false, false);
+      column.setType(RelDataTypeConverter.toBasicType(field.getType()));
+      contextTable.addField(column);
 
       /*
        * Expand dag
        */
-      RelNode expanded = plan.accept(new RelShuttleImpl() {
-        @Override
-        public RelNode visit(TableScan scan) {
-          org.apache.calcite.schema.Table table = planner.getSchema().getTable(scan.getTable().getQualifiedName().get(0), false).getTable();
-
-          if (table instanceof SqrlViewTable) {
-            return ((SqrlViewTable)table).getRelNode();
-          } else {
-            //Replace with stream data type so calcite doesn't include columns that don't exist yet.
-            RelOptTable table2 =
-                planner.createRelBuilder().getRelOptSchema().getTableForMember(List.of(scan.getTable().getQualifiedName().get(0) + "_stream"));
-            return new LogicalTableScan(scan.getCluster(), scan.getTraitSet(), scan.getHints(), table2);
-          }
-        }
-      });
+      RelNode expanded = plan.accept(dagExpander);
+//      System.out.println(RelToSql.convertToSql(expanded));
+//      planner.getValidator().validate(RelToSql.convertToSqlNode(expanded));
 
       contextTable.setRelNode(expanded);
 
-      log.info(RelToSql.convertToSql(expanded));
 
       //Update the calcite schema so new columns are visible
       ViewFactory viewFactory = new ViewFactory();
@@ -240,44 +229,49 @@ public class Analyzer {
       log.info("Calcite Query: {}", sqlNode);
 
       RelNode plan = planner.plan(sqlNode);
-      RelNode expanded = plan.accept(new RelShuttleImpl() {
-        @Override
-        public RelNode visit(TableScan scan) {
-          org.apache.calcite.schema.Table table = planner.getSchema().getTable(scan.getTable().getQualifiedName().get(0), false).getTable();
+      RelNode expanded = plan.accept(dagExpander);
+      //Revalidate expanded
+      System.out.println(RelToSql.convertToSql(expanded));
+      planner.getValidator().validate(RelToSql.convertToSqlNode(expanded));
 
-          if (table instanceof SqrlViewTable) {
-            return ((SqrlViewTable)table).getRelNode();
-          } else {
-            //Replace with stream data type so calcite doesn't include columns that don't exist yet.
-            RelOptTable table2 =
-                planner.createRelBuilder().getRelOptSchema().getTableForMember(List.of(scan.getTable().getQualifiedName().get(0) + "_stream"));
-            return new LogicalTableScan(scan.getCluster(), scan.getTraitSet(), scan.getHints(), table2);
-          }
-        }
-      });
       log.info(RelToSql.convertToSql(expanded));
       Table table = contextTable.get();
 
       Table newTable = new Table(TableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
           namePath, false);
+      List<Column> columns = createFieldsFromSelect(newTable, (Query)scope.getNode(), plan);
 
-      List<Column> createdColumns = statementAnalyzer.getColumns();
-      Preconditions.checkState(createdColumns.size() > 0, "Unknown columns returned");
-      createdColumns.forEach(newTable::addField);
-      for (int i = 0; i < createdColumns.size(); i++) {
-        Column column = createdColumns.get(i);
-        RelDataTypeField field = expanded.getRowType().getFieldList().get(i);
-        column.setType(RelDataTypeConverter.toBasicType(field.getType()));
-      }
+      columns.forEach(newTable::addField);
 
       Relationship parent = new Relationship(Name.PARENT_RELATIONSHIP, newTable, table, Type.PARENT, Multiplicity.ONE);
       newTable.addField(parent);
-
 
       Relationship relationship = new Relationship(namePath.getLast(), table, newTable, Type.CHILD, Multiplicity.MANY);
       table.addField(relationship);
 
       newTable.setRelNode(expanded);
+      ViewFactory viewFactory = new ViewFactory();
+      planner.getSchema().add(newTable.getId().toString(), viewFactory.create(expanded));
+    }
+
+    private List<Column> createFieldsFromSelect(Table table, Query node, RelNode plan) {
+      List<Column> columns = new ArrayList<>();
+      if (node.getQueryBody() instanceof QuerySpecification) {
+        QuerySpecification spec = (QuerySpecification) node.getQueryBody();
+        for (SelectItem selectItem : spec.getSelect().getSelectItems()) {
+          SingleColumn singleColumn = (SingleColumn) selectItem;
+          Name name = singleColumn.getAlias().map(i->i.getNamePath().getLast())
+              .orElseGet(()->((Identifier) singleColumn.getExpression()).getNamePath().getLast());
+          Column column = table.fieldFactory(name);
+          RelDataTypeField relField = plan.getRowType().getField(name.getCanonical(), false, false);
+          column.setType(RelDataTypeConverter.toBasicType(relField.getType()));
+          columns.add(column);
+        }
+
+        return columns;
+      }
+
+      throw new RuntimeException("not implemented yet");
     }
 
     /**
