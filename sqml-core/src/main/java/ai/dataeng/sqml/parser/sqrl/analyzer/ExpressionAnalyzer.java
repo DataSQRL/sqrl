@@ -4,7 +4,7 @@ package ai.dataeng.sqml.parser.sqrl.analyzer;
 import static ai.dataeng.sqml.parser.sqrl.AliasUtil.aliasMany;
 import static ai.dataeng.sqml.parser.sqrl.AliasUtil.selectAliasItem;
 import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.getCriteria;
-import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.getRelation;
+import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.expandRelation;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.alias;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.function;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.group;
@@ -130,7 +130,7 @@ public class ExpressionAnalyzer {
             Relationship rel = (Relationship)lastField;
             Name alias = gen.nextTableAliasName();
             Join join = new Join(Optional.empty(), Type.INNER, b.getCurrent(),
-                getRelation(rel, alias), getCriteria(rel, b.getAlias(), alias));
+                expandRelation(rel, alias), getCriteria(rel, b.getAlias(), alias));
             b = new TableBookkeeping(join, alias, rel.getToTable());
           }
 
@@ -175,7 +175,7 @@ public class ExpressionAnalyzer {
          * subquery is joined to the table it was resolved from.
          */
         Name baseTableAlias = gen.nextTableAliasName();
-        Relation relation = getRelation((Relationship)result.getFirstField(), baseTableAlias);
+        Relation relation = expandRelation((Relationship)result.getFirstField(), baseTableAlias);
 
         joinResults.add(new JoinResult(
             Type.LEFT, relation,

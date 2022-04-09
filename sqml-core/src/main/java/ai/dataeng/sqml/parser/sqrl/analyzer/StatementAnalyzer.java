@@ -5,7 +5,6 @@ import static ai.dataeng.sqml.parser.sqrl.AliasUtil.toIdentifier;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.and;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.mapToOrdinal;
 
-import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
@@ -55,7 +54,6 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   private final AggregationDetector aggregationDetector = new AggregationDetector(new FunctionLookup());
 
   private List<JoinResult> additionalJoins = new ArrayList<>();
-  private List<Column> columns = new ArrayList<>();
 
   public StatementAnalyzer(Analyzer analyzer) {
     this.analyzer = analyzer;
@@ -81,7 +79,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   public Scope visitQuerySpecification(QuerySpecification node, Scope scope) {
     Scope sourceScope = node.getFrom().accept(this, scope);
 
-    Select expandedSelect = expand(node.getSelect(), scope);
+    Select expandedSelect = expandStar(node.getSelect(), scope);
 
     // We're doing a lot of transformations so convert grouping conditions to ordinals.
     Optional<GroupBy> groupBy = node.getGroupBy().map(group -> mapToOrdinal(expandedSelect, group));
@@ -163,7 +161,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     }
     Relation relation = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(currentAlias));
     TableBookkeeping b = new TableBookkeeping(relation, currentAlias, table);
-    TableBookkeeping result = walkRemaining(tableNode, b, 1);
+    TableBookkeeping result = walkJoin(tableNode, b, 1);
 
     scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
 
@@ -195,7 +193,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           Optional.of(firstRelAlias));
 
       TableBookkeeping b = new TableBookkeeping(relation, joinAlias, firstRel.getToTable());
-      TableBookkeeping result = walkRemaining(rhs, b, 2);
+      TableBookkeeping result = walkJoin(rhs, b, 2);
 
       JoinOn criteria = (JoinOn) getCriteria(firstRel, joinAlias, firstRelAlias).get();
 
@@ -219,7 +217,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
       TableBookkeeping b = new TableBookkeeping(tableNode, joinAlias, table);
       //Remaining
-      TableBookkeeping result = walkRemaining(rhs, b, 1);
+      TableBookkeeping result = walkJoin(rhs, b, 1);
 
       scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
 
@@ -265,14 +263,10 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return createScope(new Select(select.getLocation(), select.isDistinct(), items), scope);
   }
 
-  public List<Column> getColumns() {
-    return columns;
-  }
-
   /**
    * Expands STAR alias
    */
-  private Select expand(Select select, Scope scope) {
+  private Select expandStar(Select select, Scope scope) {
     List<SelectItem> expanded = new ArrayList<>();
     for (SelectItem item : select.getSelectItems()) {
       if (item instanceof AllColumns) {
@@ -289,18 +283,18 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return new Select(expanded);
   }
 
-  public static TableBookkeeping walkRemaining(TableNode node, TableBookkeeping b, int startAt) {
+  public static TableBookkeeping walkJoin(TableNode node, TableBookkeeping b, int startAt) {
     for (int i = startAt; i < node.getNamePath().getLength(); i++) {
       Relationship rel = (Relationship)b.getCurrentTable().getField(node.getNamePath().get(i));
       Name alias = getTableAlias(node, i);
       Join join = new Join(Optional.empty(), Type.INNER, b.getCurrent(),
-          getRelation(rel, alias), getCriteria(rel, b.getAlias(), alias));
+          expandRelation(rel, alias), getCriteria(rel, b.getAlias(), alias));
       b = new TableBookkeeping(join, alias, rel.getToTable());
     }
     return b;
   }
 
-  public static Relation getRelation(Relationship rel, Name nextAlias) {
+  public static Relation expandRelation(Relationship rel, Name nextAlias) {
     if (rel.getType() == Relationship.Type.JOIN) {
       return new AliasedRelation(Optional.empty(), new TableSubquery(Optional.empty(), (Query)rel.getNode()),
           new Identifier(Optional.empty(), nextAlias.toNamePath()));
