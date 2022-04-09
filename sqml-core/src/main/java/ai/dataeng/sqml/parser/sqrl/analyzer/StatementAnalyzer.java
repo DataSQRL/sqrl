@@ -190,17 +190,18 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       Table table = scope.getJoinScope(joinAlias).get();
 
       Relationship firstRel = (Relationship)table.getField(rhs.getNamePath().get(1));
-      Name firstRelAlias = getTableAlias(rhs, 1);
+      Name firstAlias = getTableAlias(rhs, 1);
+
       TableNode relation = new TableNode(Optional.empty(),
           firstRel.getToTable().getId().toNamePath(),
-          Optional.of(firstRelAlias));
+          Optional.of(firstAlias));
 
-      TableBookkeeping b = new TableBookkeeping(relation, joinAlias, firstRel.getToTable());
+      TableBookkeeping b = new TableBookkeeping(relation, firstAlias, firstRel.getToTable());
       TableBookkeeping result = walkJoin(rhs, b, 2);
 
-      JoinOn criteria = (JoinOn) getCriteria(firstRel, joinAlias, firstRelAlias).get();
-
       scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
+
+      JoinOn criteria = (JoinOn) getCriteria(firstRel, joinAlias, result.getAlias()).get();
 
       //Add criteria to join
       if (node.getCriteria().isPresent()) {

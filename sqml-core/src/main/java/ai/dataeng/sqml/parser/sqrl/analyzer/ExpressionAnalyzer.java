@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.sql.SqlAggFunction;
-import org.apache.calcite.sql.SqlKind;
 import org.apache.commons.collections.ListUtils;
 
 public class ExpressionAnalyzer {
@@ -188,10 +187,11 @@ public class ExpressionAnalyzer {
     @Override
     public Expression rewriteIdentifier(Identifier node, Context context,
         ExpressionTreeRewriter<Context> treeRewriter) {
-//      List<FieldPath> resolved = context.getScope()
-//          .resolveField(node.getNamePath());
       List<Scope.ResolveResult> results = context.getScope().resolveFirst(node.getNamePath());
 
+      if (results.size() != 1) {
+        System.out.println();
+      }
       Preconditions.checkState(results.size() == 1,
           "Could not resolve field (ambiguous or non-existent: " + node + " : " + results + ")");
 

@@ -19,6 +19,7 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.impl.VertxInternal;
 import java.io.IOException;
 import java.nio.file.Files;
+import org.apache.calcite.util.Bug;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,7 +73,7 @@ public class Test2 {
             + "\n"
             + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
             + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
-            //TODO: Flink requires order to be a timestamp and required for rank
+//            TODO: Flink requires order to be a timestamp and required for rank
 //            + "Orders.rank := rank();\n"
             + "-- Compute useful statistics on orders\n"
             + "Orders.entries.discount := coalesce(discount, 0.0);\n"
@@ -87,17 +88,17 @@ public class Test2 {
             + "Customer.total_orders := sum(orders.total);\n"
             + "\n"
             + "-- Aggregate all products the customer has ordered for the 'order again' feature\n"
-            + "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
-            + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
+//            TODO: Cannot convert limit to row_num due to _ingest_time not being a time column
+            + "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;"
             + "\n"
             + "Customer.recent_products := SELECT productid, product.category AS category,\n"
             + "                                   sum(quantity) AS quantity, count(*) AS num_orders\n"
             + "                            FROM _.orders.entries\n"
-            //TODO: Interval format not coercing
-            //+ "                            WHERE parent.time > now() - INTERVAL 2 YEAR\n"
+//            TODO: Interval format not coercing
+//            + "                            WHERE parent.time > now() - INTERVAL 2 YEAR\n"
             + "                            GROUP BY productid, category;\n"
-            //TODO: Order by non-timestmap
-           // + "                            ORDER BY num_orders DESC, quantity DESC;\n"
+//            TODO: Order by non-timestmap
+//            + "                            ORDER BY num_orders DESC, quantity DESC;\n"
             + "\n"
             + "Customer.recent_products_categories :=\n"
             + "                     SELECT category, count(*) AS num_products\n"
@@ -127,13 +128,14 @@ public class Test2 {
             + "\n"
             + "/* Compute w/w product sales volume increase average over a month\n"
             + "   These numbers are internal to determine trending products */\n"
-            //TODO: Aliasing bug creating invalid sql
+//            TODO: Bug with join traversals, need to add criteria
+//            + "Product.order_entries := JOIN Orders o JOIN o.entries e ON e.productid = _.productid;\n"
 //            + "Product._sales_last_week := SELECT SUM(e.quantity)\n"
-//            + "                          FROM _.order_entries e\n"
+//            + "                          FROM _.order_entries e;\n"
 //            + "                          WHERE e.parent.time > now() - INTERVAL 1 WEEK;\n"
 //            + "\n"
 //            + "Product._sales_last_month := SELECT SUM(e.quantity)\n"
-//            + "                          FROM _.order_entries e\n"
+//            + "                          FROM _.order_entries e;\n"
 //            + "                          WHERE e.parent.time > now() - INTERVAL 4 WEEK;\n"
 //            + "\n"
 //            + "Product._last_week_increase := _sales_last_week * 4 / _sales_last_month;\n"
@@ -143,7 +145,6 @@ public class Test2 {
             + "Category.products := JOIN Product ON _.name = Product.category;\n"
 //            + "Category.trending := JOIN Product p ON _.name = p.category AND p._last_week_increase > 0\n"
 //            + "                     ORDER BY p._last_week_increase DESC"
-            //TODO: Cannot convert limit to row_num due to _ingest_time not being a time column
 //            + "                     LIMIT 10;\n"
             + "\n"
             + "/* Determine customers favorite categories by total spent\n"
@@ -160,6 +161,9 @@ public class Test2 {
 //            + "\n"
 //            + "-- Create subscription for customer spending more than $100 so we can send them a coupon --\n"
             + "\n"
+//             TODO: Not yet implemented
+//            + "CREATE SUBSCRIPTION NewCustomerPromotion ON ADD AS\n"
+//            + "SELECT customerid, email, name, total_orders FROM Customer WHERE total_orders >= 100;"
     );
 
     System.out.println(script.getGraphQL().execute("query {orders { data { total, total_savings, total_entries } } }"));
