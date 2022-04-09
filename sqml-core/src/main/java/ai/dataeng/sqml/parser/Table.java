@@ -83,7 +83,7 @@ public class Table implements DatasetOrTable {
 
     //Bad remove this
     if (pks.isEmpty()) {
-      return List.of((Column)this.fields.get(1));
+      return List.of((Column)this.fields.get(0));
     }
 
     return pks;

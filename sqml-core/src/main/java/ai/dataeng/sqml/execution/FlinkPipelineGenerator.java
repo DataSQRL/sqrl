@@ -162,7 +162,7 @@ public class FlinkPipelineGenerator {
     List<UnresolvedColumn> columns = toSchema.getColumns();
     for (int i = 0; i < columns.size(); i++) {
       UnresolvedColumn column = columns.get(i);
-      if (i == 1) {
+      if (i == 0) { //bad remove this
         builder.column(column.getName(),
             ((UnresolvedPhysicalColumn) column).getDataType().notNull());
         pks.add(column.getName());

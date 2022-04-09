@@ -188,7 +188,7 @@ public class Analyzer {
       log.info("Calcite Query: {}", sqlNode);
 
       RelNode plan = planner.plan(sqlNode);
-//      log.info("Logical Plan Query: " +RelToSql.convertToSql(plan));
+      log.info("Logical Plan Query: " +RelToSql.convertToSql(plan));
 
       /*
        * Add columns to schema.
@@ -205,11 +205,11 @@ public class Analyzer {
        * Expand dag
        */
       RelNode expanded = plan.accept(dagExpander);
-//      System.out.println(RelToSql.convertToSql(expanded));
-//      planner.getValidator().validate(RelToSql.convertToSqlNode(expanded));
+      //Revalidate expanded
+      System.out.println(RelToSql.convertToSql(expanded));
+      planner.getValidator().validate(RelToSql.convertToSqlNode(expanded));
 
       contextTable.setRelNode(expanded);
-
 
       //Update the calcite schema so new columns are visible
       ViewFactory viewFactory = new ViewFactory();
@@ -231,27 +231,35 @@ public class Analyzer {
       RelNode plan = planner.plan(sqlNode);
       RelNode expanded = plan.accept(dagExpander);
       //Revalidate expanded
-      System.out.println(RelToSql.convertToSql(expanded));
       planner.getValidator().validate(RelToSql.convertToSqlNode(expanded));
-
       log.info(RelToSql.convertToSql(expanded));
-      Table table = contextTable.get();
 
       Table newTable = new Table(TableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
           namePath, false);
-      List<Column> columns = createFieldsFromSelect(newTable, (Query)scope.getNode(), plan);
+      newTable.setRelNode(expanded);
 
+      //Append columns
+      List<Column> columns = createFieldsFromSelect(newTable, (Query)scope.getNode(), plan);
       columns.forEach(newTable::addField);
 
-      Relationship parent = new Relationship(Name.PARENT_RELATIONSHIP, newTable, table, Type.PARENT, Multiplicity.ONE);
-      newTable.addField(parent);
-
-      Relationship relationship = new Relationship(namePath.getLast(), table, newTable, Type.CHILD, Multiplicity.MANY);
-      table.addField(relationship);
-
-      newTable.setRelNode(expanded);
+      //Update schema
       ViewFactory viewFactory = new ViewFactory();
       planner.getSchema().add(newTable.getId().toString(), viewFactory.create(expanded));
+
+      if (contextTable.isPresent()) {
+        Table ctxTable = contextTable.get();
+
+        Relationship parent = new Relationship(Name.PARENT_RELATIONSHIP, newTable, ctxTable,
+            Type.PARENT, Multiplicity.ONE);
+        newTable.addField(parent);
+
+        Relationship relationship = new Relationship(namePath.getLast(), ctxTable, newTable,
+            Type.CHILD, Multiplicity.MANY);
+        ctxTable.addField(relationship);
+      } else {
+        logicalDag.getSchema().add(newTable);
+      }
+
     }
 
     private List<Column> createFieldsFromSelect(Table table, Query node, RelNode plan) {
