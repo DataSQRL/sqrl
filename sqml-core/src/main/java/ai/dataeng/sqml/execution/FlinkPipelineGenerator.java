@@ -73,13 +73,20 @@ public class FlinkPipelineGenerator {
           }
           org.apache.calcite.schema.Table table = calcitePlanner.getSchema().getTable(streamName, false).getTable();
 
+          if (scan instanceof ShredTableScan) {
+            org.apache.flink.table.api.Table tableShredding = tEnv.sqlQuery(
+                "SELECT o._uuid, items._idx as _idx1, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
+                    "FROM orders$3_stream o CROSS JOIN UNNEST(o.entries) AS items");
+
+            tEnv.createTemporaryView("entries$4", tableShredding);
+            return super.visit(scan);
+          }
+
           if (table instanceof StreamTable) {
           //1. construct to stream, register it with tenv
           StreamTable streamTableScan = (StreamTable) table;
           ImportManager.SourceTableImport imp = streamTableScan.getTableImport();
-          if (imp == null) {
-            System.out.println();
-          }
+
           Pair<Schema, TypeInformation> ordersSchema = tbConverter.tableSchemaConversion(imp.getSourceSchema());
 
           DataStream<SourceRecord.Raw> stream = new DataStreamProvider().getDataStream(imp.getTable(),env);
@@ -89,31 +96,17 @@ public class FlinkPipelineGenerator {
 
           SingleOutputStreamOperator<Row> rows = validate.map(tbConverter.getRowMapper(imp.getSourceSchema()),
               ordersSchema.getRight());
-//            String streamName = scan.getTable().getQualifiedName().get(0).substring(0, 4);
 
-            tEnv.registerDataStream(streamName, rows);
-//              PlannerQueryOperation op = (PlannerQueryOperation)tEnv.getParser().parse(" + orders_stream).get(0);
+          tEnv.registerDataStream(streamName, rows);
 
-//            tEnv.sqlUpdate("CREATE TEMPORARY VIEW " + streamName + " AS"
-//                + " SELECT * FROM " + streamName);
-
-            if (streamName.equalsIgnoreCase("orders$3_stream")) {
-              org.apache.flink.table.api.Table tableShredding = tEnv.sqlQuery(
-                  "SELECT o._uuid, items._idx as _idx1, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
-                      "FROM orders$3_stream o CROSS JOIN UNNEST(o.entries) AS items");
-
-              tEnv.createTemporaryView("entries$4_stream", tableShredding);
-            }
-
-          } else if (scan instanceof ShredTableScan) {
-            ShredTableScan ts = (ShredTableScan) scan;
-
-            System.out.println("Shredding");
+          if (streamName.equalsIgnoreCase("orders$3_stream")) {
             org.apache.flink.table.api.Table tableShredding = tEnv.sqlQuery(
-                "SELECT o._uuid, items._idx as _idx1,items._idx as _idx, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
-                "FROM orders$3 o CROSS JOIN UNNEST(o.entries) AS items");
+                "SELECT o._uuid, items._idx as _idx1, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
+                    "FROM orders$3_stream o CROSS JOIN UNNEST(o.entries) AS items");
 
-            tEnv.createTemporaryView("entries$4", tableShredding);
+            tEnv.createTemporaryView("entries$4_stream", tableShredding);
+          }
+
           }
           return super.visit(scan);
         }

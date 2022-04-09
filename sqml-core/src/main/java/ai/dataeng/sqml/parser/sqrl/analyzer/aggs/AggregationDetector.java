@@ -1,10 +1,12 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer.aggs;
 
 import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
+import ai.dataeng.sqml.parser.sqrl.function.SqlNativeFunction;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.DefaultTraversalVisitor;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.Node;
+import org.apache.calcite.sql.SqlAggFunction;
 
 public class AggregationDetector extends DefaultTraversalVisitor<Void, Void> {
   private final FunctionLookup functionLookup;
@@ -22,6 +24,10 @@ public class AggregationDetector extends DefaultTraversalVisitor<Void, Void> {
 
   @Override
   public Void visitFunctionCall(FunctionCall node, Void context) {
+    if (node.getOver().isPresent()) {
+      return super.visitFunctionCall(node, context);
+    }
+
     if (functionLookup.lookup(node.getName()).isAggregate()) {
       this.agg = true;
     }

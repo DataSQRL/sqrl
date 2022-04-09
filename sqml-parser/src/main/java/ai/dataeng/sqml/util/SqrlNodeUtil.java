@@ -7,6 +7,7 @@ import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
+import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
@@ -15,6 +16,7 @@ import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
+import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.name.Name;
@@ -68,27 +70,44 @@ public class SqrlNodeUtil {
     throw new RuntimeException("not yet implemented");
   }
 
+  public static OrderBy mapToOrdinal(Select select, OrderBy orderBy) {
+    List<SortItem> ordinals = orderBy.getSortItems().stream()
+        .map(s->new SortItem(s.getLocation(), new LongLiteral(
+            Long.toString(mapToOrdinal(select, s.getSortKey()) + 1)),
+            s.getOrdering()))
+        .collect(Collectors.toList());
 
-  public static GroupBy mapToOrdinal(Select select, GroupBy group) {
+    return new OrderBy(orderBy.getLocation(), ordinals);
+  }
+  public static GroupBy mapToOrdinal(Select select, GroupBy groupBy) {
+    List<Expression> ordinals = mapToOrdinal(select, groupBy.getGroupingElement().getExpressions());
+    return new GroupBy(new SimpleGroupBy(ordinals));
+  }
+
+  public static int mapToOrdinal(Select select, Expression expression) {
+    int index = IntStream.range(0, select.getSelectItems().size())
+        .filter(i -> {
+          SingleColumn column = ((SingleColumn)select.getSelectItems().get(i));
+          return
+              column.getExpression().equals(expression) ||
+                  (column.getAlias().isPresent() && column.getAlias().get().equals(expression));
+        })
+        .findFirst()
+        .orElseThrow(()-> new RuntimeException("Cannot find grouping element " + expression));
+    return index;
+  }
+
+  public static List<Expression> mapToOrdinal(Select select, List<Expression> expressions) {
     Set<Integer> grouping = new HashSet<>();
-    for (Expression expression : group.getGroupingElement().getExpressions()) {
-      int index = IntStream.range(0, select.getSelectItems().size())
-          .filter(i -> {
-            SingleColumn column = ((SingleColumn)select.getSelectItems().get(i));
-            return
-                column.getExpression().equals(expression) ||
-                    (column.getAlias().isPresent() && column.getAlias().get().equals(expression));
-          })
-          .findFirst()
-          .orElseThrow(()-> new RuntimeException("Cannot find grouping element " + expression));
-
+    for (Expression expression : expressions) {
+      int index = mapToOrdinal(select, expression);
       grouping.add(index);
     }
 
     List<Expression> ordinals = grouping.stream()
         .map(i->(Expression)new LongLiteral(Long.toString(i + 1)))
         .collect(Collectors.toList());
-    return new GroupBy(new SimpleGroupBy(ordinals));
+    return ordinals;
   }
 
   public static Identifier ident(Name name) {

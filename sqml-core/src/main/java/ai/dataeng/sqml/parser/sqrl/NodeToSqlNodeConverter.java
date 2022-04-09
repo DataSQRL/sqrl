@@ -67,6 +67,7 @@ import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.tree.WhenClause;
 import ai.dataeng.sqml.tree.Window;
 import ai.dataeng.sqml.tree.name.Name;
+import com.fasterxml.jackson.databind.BeanProperty.Std;
 import com.google.common.base.Preconditions;
 import graphql.com.google.common.collect.ImmutableListMultimap;
 import graphql.com.google.common.collect.ImmutableMap;
@@ -78,6 +79,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelFieldCollation.Direction;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
@@ -85,6 +87,7 @@ import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlLiteral.SqlSymbol;
@@ -95,6 +98,7 @@ import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSelectKeyword;
 import org.apache.calcite.sql.SqlTimeLiteral;
+import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -137,7 +141,7 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
   @Override
   public SqlNode visitOrderBy(OrderBy node, Void context) {
     List<SqlNode> orderList = node.getSortItems().stream()
-        .flatMap(s->((SqlNodeList)s.accept(this, context)).getList().stream())
+        .map(s->((SqlNode)s.accept(this, context)))
         .collect(Collectors.toList());
 
     return new SqlNodeList(
@@ -210,15 +214,23 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
 
   @Override
   public SqlNode visitSortItem(SortItem node, Void context) {
-    SqlLiteral direction = SqlLiteral.createSymbol(
-        (node.getOrdering().isPresent() && node.getOrdering().get() == Ordering.ASCENDING) ?
-            Direction.ASCENDING :
-            Direction.DESCENDING
-        , pos.getPos(node.getLocation()));
+    SqlNode sortKey = node.getSortKey().accept(this, null);
+    if (node.getOrdering().isPresent() && node.getOrdering().get() == Ordering.DESCENDING) {
+      SqlNode[] sortOps = {sortKey};
+      return new SqlBasicCall(SqlStdOperatorTable.DESC, sortOps, SqlParserPos.ZERO);
+    } else {
+      return sortKey;
+    }
 
-    return new SqlNodeList(
-        List.of(node.getSortKey().accept(this, null), direction),
-        pos.getPos(node.getLocation()));
+//    SqlLiteral direction = SqlLiteral.createSymbol(
+//        (node.getOrdering().isPresent() && node.getOrdering().get() == Ordering.ASCENDING) ?
+//            Direction.ASCENDING :
+//            Direction.DESCENDING
+//        , pos.getPos(node.getLocation()));
+//
+//    return new SqlNodeList(
+//        List.of(node.getSortKey().accept(this, null), direction),
+//        pos.getPos(node.getLocation()));
   }
 
   @Override
@@ -400,7 +412,33 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
     String opName = node.getName().get(0).getCanonical();
     List<SqlOperator> op = opMap.get(opName.toUpperCase());
     Preconditions.checkState(!op.isEmpty(), "Operation could not be found: %s", opName);
-    return new SqlBasicCall(op.get(0), toOperand(node.getArguments()), pos.getPos(node.getLocation()));
+
+    SqlBasicCall call = new SqlBasicCall(op.get(0), toOperand(node.getArguments()), pos.getPos(node.getLocation()));
+
+    //Convert to OVER
+    if (op.get(0).requiresOver()) {
+      List<SqlNode> partition = node.getOver().get().getPartitionBy().stream().map(e->e.accept(this, null)).collect(Collectors.toList());
+      SqlNodeList orderList = SqlNodeList.EMPTY;
+      if (node.getOver().get().getOrderBy().isPresent()) {
+        OrderBy order = node.getOver().get().getOrderBy().get();
+        List<SqlNode> ol = new ArrayList<>();
+        for (SortItem sortItem : order.getSortItems()) {
+          ol.add(sortItem.accept(this, null));
+        }
+        orderList = new SqlNodeList(ol, SqlParserPos.ZERO);
+      }
+      SqlNodeList partitionList = new SqlNodeList(partition, SqlParserPos.ZERO);
+
+      SqlNode[] operands = {
+          call,
+          new SqlWindow(pos.getPos(node.getLocation()), null, null, partitionList, orderList,
+              SqlLiteral.createBoolean(false, pos.getPos(node.getLocation())), null, null, null)
+      };
+
+      return new SqlBasicCall(SqlStdOperatorTable.OVER, operands, pos.getPos(node.getLocation()));
+    }
+
+    return call;
   }
 
   @Override
@@ -527,8 +565,9 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
 
   @Override
   public SqlNode visitIntervalLiteral(IntervalLiteral node, Void context) {
-    //todo: need to rewrite interval
-    throw new RuntimeException("Interval not yet implemented");
+    //convert to sql compliant interval
+    return SqlTimeLiteral.createInterval(1, "10",
+        new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO), SqlParserPos.ZERO);
 //    SqlNode intervalExpr = node.getExpression().accept(this, null);
 //    return SqlLiteral.createInterval(node.getSign(), node.getStartField(),
 //        node.get(), pos.getPos(node.getLocation()));

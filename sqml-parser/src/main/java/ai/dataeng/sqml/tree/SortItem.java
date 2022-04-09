@@ -24,7 +24,7 @@ public class SortItem
     extends Node {
 
   private final Expression sortKey;
-  private final Ordering ordering;
+  private final Optional<Ordering> ordering;
   public SortItem(Expression sortKey, Ordering ordering) {
     this(Optional.empty(), sortKey, ordering);
   }
@@ -32,7 +32,13 @@ public class SortItem
     this(Optional.of(location), sortKey, ordering);
   }
 
-  private SortItem(Optional<NodeLocation> location, Expression sortKey, Ordering ordering) {
+  public SortItem(Optional<NodeLocation> location, Expression sortKey, Ordering ordering) {
+    super(location);
+    this.ordering = Optional.of(ordering);
+    this.sortKey = sortKey;
+  }
+
+  public SortItem(Optional<NodeLocation> location, Expression sortKey, Optional<Ordering> ordering) {
     super(location);
     this.ordering = ordering;
     this.sortKey = sortKey;
@@ -43,9 +49,8 @@ public class SortItem
     return sortKey;
   }
 
-  //todo make optional
   public Optional<Ordering> getOrdering() {
-    return Optional.of(ordering);
+    return ordering;
   }
 
   @Override

@@ -28,6 +28,7 @@ import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeFormatter;
+import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
@@ -83,19 +84,21 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     // We're doing a lot of transformations so convert grouping conditions to ordinals.
     Optional<GroupBy> groupBy = node.getGroupBy().map(group -> mapToOrdinal(expandedSelect, group));
+    Optional<OrderBy> orderBy = node.getOrderBy().map(order -> mapToOrdinal(expandedSelect, order));
 
     // Qualify other expressions
     Select select = (Select)expandedSelect.accept(this, scope).getNode();
-//    Optional<Expression> having = node.getHaving().map(h->(Expression) h.accept(this, scope).getNode());
+    Optional<Expression> where = node.getWhere().map(w->rewriteExpression(w, scope));
+    Optional<Expression> having = node.getHaving().map(h->rewriteExpression(h, scope));
     Relation from = appendAdditionalJoins((Relation)sourceScope.getNode());
     QuerySpecification spec = new QuerySpecification(
         node.getLocation(),
         select,
         from,
-        Optional.empty(),
+        where,
         groupBy,
-        Optional.empty(),
-        Optional.empty(),
+        having,
+        orderBy,
         Optional.empty()
     );
 

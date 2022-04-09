@@ -14,8 +14,10 @@ import static ai.dataeng.sqml.util.SqrlNodeUtil.select;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.selectAlias;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
+import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Relationship;
+import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.sqrl.PathUtil;
 import ai.dataeng.sqml.parser.sqrl.analyzer.Scope.ResolveResult;
 import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
@@ -32,10 +34,13 @@ import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Join.Type;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.LongLiteral;
+import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.Relation;
+import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.TableSubquery;
+import ai.dataeng.sqml.tree.Window;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
@@ -43,6 +48,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.Value;
+import org.apache.calcite.sql.SqlAggFunction;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.commons.collections.ListUtils;
 
 public class ExpressionAnalyzer {
@@ -90,7 +97,6 @@ public class ExpressionAnalyzer {
         }
       }
 
-
       if (function instanceof RewritingFunction) {
         //rewrite function immediately
         RewritingFunction rewritingFunction = (RewritingFunction) function;
@@ -101,6 +107,12 @@ public class ExpressionAnalyzer {
 
       for (Expression arg : node.getArguments()) {
         arguments.add(treeRewriter.rewrite(arg, context));
+      }
+
+      if (function instanceof SqlNativeFunction && ((SqlNativeFunction)function).getOp() instanceof SqlAggFunction &&
+          ((SqlAggFunction)((SqlNativeFunction)function).getOp()).requiresOver()) {
+        return new FunctionCall(node.getLocation(), node.getName(), arguments, node.isDistinct(),
+            createWindow(context.getScope()));
       }
 
       //Todo: allow expanding aggregates more than a single argument
@@ -156,6 +168,21 @@ public class ExpressionAnalyzer {
 
       return new FunctionCall(node.getLocation(), node.getName(), arguments,
           node.isDistinct(), node.getOver());
+    }
+
+    private Optional<Window> createWindow(Scope scope) {
+      Table table = scope.getJoinScope(Name.SELF_IDENTIFIER).get();
+      List<Expression> partition = new ArrayList<>();
+      for (Column column : table.getPrimaryKeys()) {
+        partition.add(new Identifier(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath().concat(column.getId().toNamePath())));
+      }
+
+      OrderBy orderBy = new OrderBy(List.of(
+          new SortItem(Optional.empty(),
+              new Identifier(Optional.empty(), Name.INGEST_TIME.toNamePath()),
+              Optional.empty())));
+
+      return Optional.of(new Window(partition, Optional.of(orderBy)));
     }
 
     @Override

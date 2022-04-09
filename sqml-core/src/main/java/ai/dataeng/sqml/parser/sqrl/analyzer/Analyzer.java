@@ -305,23 +305,22 @@ public class Analyzer {
     @SneakyThrows
     @Override
     public Void visitDistinctAssignment(DistinctAssignment node, Void context) {
-      Table table = tableFactory.create(node.getNamePath(), node.getTable());
-//      Scope scope = new Scope(Optional.empty(), node, new LinkedHashMap<>());
-      Optional<Table> oldTable = getTable(node.getTable().toNamePath());
+      Optional<Table> refTable = getTable(node.getTable().toNamePath());
 
+      Table table = tableFactory.create(node.getNamePath(), node.getTable());
+      List<Column> fields = refTable.get().getFields().visibleList().stream().filter(f->f instanceof Column)
+          .map(f->(Column)f).collect(
+          Collectors.toList());
       // https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/sql/queries/deduplication/
       String sql = SqrlQueries.generateDistinct(node,
-          node.getPartitionKeys().stream().map(e->e.getCanonical()).collect(
-          Collectors.toList()));
+          refTable.get(),
+          node.getPartitionKeys().stream()
+              .map(name->refTable.get().getField(name).getId().toString())
+              .collect(Collectors.toList()),
+          fields.stream().map(e->e.getId().toString()).collect(Collectors.toList())
+          );
       System.out.println(sql);
       SqlParser parser = SqlParser.create(sql);
-//          "SELECT _uuid, _ingest_time, customerid, email, name\n"
-//          + "FROM (\n"
-//          + "   SELECT _uuid, _ingest_time, customerid, email, name,\n"
-//          + "     ROW_NUMBER() OVER (PARTITION BY customerid\n"
-//          + "       ORDER BY _ingest_time DESC) AS rownum\n"
-//          + "   FROM "+oldTable.get().getId().toString()+")\n"
-//          + "WHERE rownum = 1");
 
       SqlNode sqlNode = parser.parseQuery();
       SqlValidator validator = planner.getValidator();
@@ -329,10 +328,10 @@ public class Analyzer {
       SqlToRelConverter sqlToRelConverter = planner.getSqlToRelConverter(validator);
       RelNode relNode = sqlToRelConverter.convertQuery(sqlNode, false, true).rel;
 
-
-      for (Field field : oldTable.get().getFields()) {
+      for (Field field : fields) {
         if (field instanceof Column) {
-          Column f = new Column(field.getName(), table, field.getVersion(), null, 0, List.of(), false, false, Optional.empty(), false);
+          Column f = new Column(field.getName(), table, field.getVersion(),
+              null, 0, List.of(), false, false, Optional.empty(), false);
           if (node.getPartitionKeys().contains(field.getName())) {
             f.setPrimaryKey(true);
           }
@@ -343,11 +342,11 @@ public class Analyzer {
       RelNode expanded = relNode.accept(new RelShuttleImpl(){
         @Override
         public RelNode visit(TableScan scan) {
-          return oldTable.get().getRelNode();
+          return refTable.get().getRelNode();
         }
       });
-
       table.setRelNode(expanded);
+
       StreamDataType streamDataType = new StreamDataType(table, expanded.getRowType().getFieldList());
 
       planner.getSchema().add(table.getId().toString(), new SqrlViewTable(streamDataType, relNode));

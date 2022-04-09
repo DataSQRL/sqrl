@@ -1,7 +1,6 @@
 package ai.dataeng.sqml.parser.sqrl.transformers;
 
 import static ai.dataeng.sqml.parser.sqrl.AliasUtil.primaryKeySelect;
-import static ai.dataeng.sqml.parser.sqrl.AliasUtil.selectAliasItem;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.groupBy;
 
 import ai.dataeng.sqml.parser.Table;
@@ -11,9 +10,11 @@ import ai.dataeng.sqml.parser.sqrl.node.PrimaryKeySelectItem;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.LongLiteral;
+import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
+import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.name.Name;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +39,11 @@ public class AddContextToQuery {
     Select select = new Select(spec.getSelect().getLocation(), spec.getSelect().isDistinct(), list);
 
     Optional<GroupBy> groupBy = spec.getGroupBy();
+    Optional<OrderBy> orderBy = spec.getOrderBy();
     if (aggregationDetector.isAggregating(spec.getSelect())) {
       groupBy = Optional.of(appendGroupBy(spec.getGroupBy(), select));
+      orderBy = appendOrderBy(spec.getOrderBy(), select);
+
     }
 
     QuerySpecification querySpecification = new QuerySpecification(
@@ -49,10 +53,28 @@ public class AddContextToQuery {
         spec.getWhere(),
         groupBy,
         spec.getHaving(),
-        spec.getOrderBy(),
+        orderBy,
         spec.getLimit()
     );
     return querySpecification;
+  }
+
+  private Optional<OrderBy> appendOrderBy(Optional<OrderBy> orderBy, Select select) {
+    if (orderBy.isEmpty()) return orderBy;
+    List<SortItem> sortItems = new ArrayList<>();
+
+    for (int i = 0; i < select.getSelectItems().size(); i++) {
+      SelectItem selectItem = select.getSelectItems().get(i);
+      if (selectItem instanceof PrimaryKeySelectItem) {
+        sortItems.add(new SortItem(Optional.empty(), new LongLiteral(Integer.toString(i + 1)), Optional.empty()));
+      }
+    }
+
+    if (orderBy.isPresent()) {
+      sortItems.addAll(orderBy.get().getSortItems());
+    }
+
+    return Optional.of(new OrderBy(Optional.empty(), sortItems));
   }
 
   /**
@@ -62,7 +84,7 @@ public class AddContextToQuery {
     List<Expression> grouping = new ArrayList<>(
         groupBy
             .map(g->g.getGroupingElement().getExpressions())
-            .orElse(List.of()));
+            .orElse(new ArrayList<>()));
 
     for (int i = 0; i < select.getSelectItems().size(); i++) {
       SelectItem selectItem = select.getSelectItems().get(i);

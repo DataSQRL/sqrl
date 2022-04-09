@@ -238,8 +238,8 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitSortItem(SortItem node, Void context) {
-    return node.getSortKey().accept(this, null) + " " +
-        (node.getOrdering().get() == Ordering.ASCENDING ? "ASC" : "DESC");
+    return node.getSortKey().accept(this, null) +
+        (node.getOrdering().map(o-> o == Ordering.ASCENDING ? " ASC" : " DESC").orElse(""));
   }
 
   @Override
