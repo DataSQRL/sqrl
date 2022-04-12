@@ -5,6 +5,7 @@ import static ai.dataeng.sqml.parser.sqrl.AliasUtil.toIdentifier;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.and;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.mapToOrdinal;
 
+import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
@@ -37,6 +38,7 @@ import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SetOperation;
 import ai.dataeng.sqml.tree.SingleColumn;
+import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.Union;
@@ -84,7 +86,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
     // We're doing a lot of transformations so convert grouping conditions to ordinals.
     Optional<GroupBy> groupBy = node.getGroupBy().map(group -> mapToOrdinal(expandedSelect, group));
-    Optional<OrderBy> orderBy = node.getOrderBy().map(order -> mapToOrdinal(expandedSelect, order));
+
+    Optional<OrderBy> orderBy = node.getOrderBy().map(order -> rewriteOrderBy(order, scope));
 
     // Qualify other expressions
     Select select = (Select)expandedSelect.accept(this, scope).getNode();
@@ -99,10 +102,17 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         groupBy,
         having,
         orderBy,
-        Optional.empty()
+        node.getLimit()
     );
 
     return createScope(rewriteQuerySpec(spec, scope), scope);
+  }
+
+  private OrderBy rewriteOrderBy(OrderBy order, Scope scope) {
+    List<SortItem> items = order.getSortItems().stream()
+        .map(s->new SortItem(s.getLocation(), rewriteExpression(s.getSortKey(), scope), s.getOrdering()))
+        .collect(Collectors.toList());
+    return new OrderBy(order.getLocation(), items);
   }
 
   /*
@@ -147,6 +157,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   @Override
   public Scope visitTable(TableNode tableNode, Scope scope) {
     NamePath namePath = tableNode.getNamePath();
+
     Table table = (namePath.getFirst().equals(Name.SELF_IDENTIFIER)) ?
         scope.getContextTable().get() :
         analyzer.getDag().getSchema().getByName(namePath.getFirst()).get();
@@ -156,17 +167,25 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       scope.getJoinScope().put(Name.SELF_IDENTIFIER, scope.getContextTable().get());
     }
 
-    Name currentAlias;
+    Name firstAlias;
     if (namePath.getFirst().equals(Name.SELF_IDENTIFIER)) {
-      currentAlias = Name.SELF_IDENTIFIER;
+      firstAlias = Name.SELF_IDENTIFIER;
     } else {
-      currentAlias = getTableAlias(tableNode, 0);
+      firstAlias = getTableAlias(tableNode, 0);
     }
-    Relation relation = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(currentAlias));
-    TableBookkeeping b = new TableBookkeeping(relation, currentAlias, table);
-    TableBookkeeping result = walkJoin(tableNode, b, 1);
+    AliasGenerator gen = new AliasGenerator();
 
-    scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
+    Name lastAlias = tableNode.getAlias().isPresent() ?
+        tableNode.getAlias().get() :
+        namePath.getLength() > 1 ? gen.nextTableAliasName() : namePath.getFirst();
+
+    Relation relation = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(firstAlias));
+    if (namePath.getLength() == 1) {
+      scope.getJoinScope().put(lastAlias, table);
+    }
+
+    TableBookkeeping b = new TableBookkeeping(relation, firstAlias, table);
+    TableBookkeeping result = walkJoin(tableNode, b, 1, firstAlias, lastAlias, Optional.empty(), scope);
 
     return createScope(result.getCurrent(), scope);
   }
@@ -184,6 +203,9 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     Scope left = node.getLeft().accept(this, scope);
 
     TableNode rhs = (TableNode)node.getRight();
+    Name lastAlias = rhs.getAlias().isPresent() ?
+        rhs.getAlias().get() :
+        rhs.getNamePath().getLength() > 1 ? gen.nextTableAliasName() : rhs.getNamePath().getFirst();
     //A join traversal, e.g. FROM orders AS o JOIN o.entries
     if (scope.getJoinScope().containsKey(rhs.getNamePath().getFirst())) {
       Name joinAlias = rhs.getNamePath().getFirst();
@@ -191,49 +213,25 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
 
       Relationship firstRel = (Relationship)table.getField(rhs.getNamePath().get(1));
       Name firstAlias = getTableAlias(rhs, 1);
-
-      TableNode relation = new TableNode(Optional.empty(),
-          firstRel.getToTable().getId().toNamePath(),
-          Optional.of(firstAlias));
-
-      TableBookkeeping b = new TableBookkeeping(relation, firstAlias, firstRel.getToTable());
-      TableBookkeeping result = walkJoin(rhs, b, 2);
-
-      scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
-
-      JoinOn criteria = (JoinOn) getCriteria(firstRel, joinAlias, result.getAlias()).get();
-
-      //Add criteria to join
-      if (node.getCriteria().isPresent()) {
-        List<Expression> newNodes = new ArrayList<>();
-        newNodes.add(rewriteExpression(((JoinOn)node.getCriteria().get()).getExpression(), scope));
-        newNodes.add(criteria.getExpression());
-        criteria = new JoinOn(Optional.empty(), and(newNodes));
+      if (rhs.getNamePath().getLength() == 1) {
+        scope.getJoinScope().put(lastAlias, table);
       }
+      TableBookkeeping b = new TableBookkeeping((Relation)left.getNode(), firstAlias, firstRel.getToTable());
+      TableBookkeeping result = walkJoin(rhs, b, 1, lastAlias, lastAlias, node.getCriteria(), scope);
 
-      return createScope(
-          new Join(node.getLocation(), node.getType(), (Relation) left.getNode(), (Relation) result.getCurrent(), Optional.of(criteria)),
-          scope);
+      return createScope(result.getCurrent(), scope);
     } else { //A regular join: FROM Orders JOIN entries
       Table table = analyzer.getDag().getSchema().getByName(rhs.getNamePath().get(0)).get();
       Name joinAlias = getTableAlias(rhs, 0);
       TableNode tableNode = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(joinAlias));
 
-      TableBookkeeping b = new TableBookkeeping(tableNode, joinAlias, table);
-      //Remaining
-      TableBookkeeping result = walkJoin(rhs, b, 1);
-
-      scope.getJoinScope().put(result.getAlias(), result.getCurrentTable());
-
-      Optional<JoinCriteria> criteria = node.getCriteria();
-      if (node.getCriteria().isPresent()) {
-        criteria = Optional.of(new JoinOn(Optional.empty(),
-            rewriteExpression(((JoinOn)node.getCriteria().get()).getExpression(), scope)));
+      if (rhs.getNamePath().getLength() == 1) {
+        scope.getJoinScope().put(lastAlias, table);
       }
+      TableBookkeeping b = new TableBookkeeping(tableNode, joinAlias, table);
+      TableBookkeeping result = walkJoin(rhs, b, 1, lastAlias, lastAlias, node.getCriteria(), scope);
 
-      return createScope(
-          new Join(node.getLocation(), node.getType(), (Relation) left.getNode(), (Relation) result.getCurrent(), criteria),
-          scope);
+      return createScope(result.getCurrent(), scope);
     }
   }
 
@@ -286,13 +284,20 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     }
     return new Select(expanded);
   }
-
-  public static TableBookkeeping walkJoin(TableNode node, TableBookkeeping b, int startAt) {
+  public static final AliasGenerator gen = new AliasGenerator();
+  public static TableBookkeeping walkJoin(TableNode node, TableBookkeeping b, int startAt,
+      Name firstAlias,
+      Name lastAlias,
+      Optional<JoinCriteria> lastCriteria,//needs rewritten
+      Scope scope) {
     for (int i = startAt; i < node.getNamePath().getLength(); i++) {
       Relationship rel = (Relationship)b.getCurrentTable().getField(node.getNamePath().get(i));
-      Name alias = getTableAlias(node, i);
+      Name alias = (i == node.getNamePath().getLength() - 1) ? lastAlias : (i == 0) ? firstAlias : gen.nextTableAliasName();
+      if (i == node.getNamePath().getLength() - 1) scope.getJoinScope().put(alias, rel.getToTable());
+      Optional<JoinCriteria> additional =
+          (i == node.getNamePath().getLength() - 1) ? lastCriteria : Optional.empty();
       Join join = new Join(Optional.empty(), Type.INNER, b.getCurrent(),
-          expandRelation(rel, alias), getCriteria(rel, b.getAlias(), alias));
+          expandRelation(rel, alias), getCriteria(rel, b.getAlias(), alias, additional));
       b = new TableBookkeeping(join, alias, rel.getToTable());
     }
     return b;
@@ -316,7 +321,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     return Optional.of(new JoinOn(Optional.empty(), and(expr)));
   }
 
-  public static Optional<JoinCriteria> getCriteria(Relationship rel, Name alias, Name nextAlias) {
+  public static Optional<JoinCriteria> getCriteria(Relationship rel, Name alias, Name nextAlias,
+      Optional<JoinCriteria> additional) {
     if (rel.type == Relationship.Type.JOIN){
       //Join expansion uses the context table as its join
       //these can be renamed, just use pk1, pk2, etc for now

@@ -73,7 +73,7 @@ public class FlinkPipelineGenerator {
           }
           org.apache.calcite.schema.Table table = calcitePlanner.getSchema().getTable(streamName, false).getTable();
 
-          if (scan instanceof ShredTableScan) {
+          if (scan instanceof ShredTableScan && List.of(tEnv.listTables()).contains("orders$3_stream")) {
             org.apache.flink.table.api.Table tableShredding = tEnv.sqlQuery(
                 "SELECT o._uuid, items._idx as _idx1, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
                     "FROM orders$3_stream o CROSS JOIN UNNEST(o.entries) AS items");
@@ -86,6 +86,10 @@ public class FlinkPipelineGenerator {
           //1. construct to stream, register it with tenv
           StreamTable streamTableScan = (StreamTable) table;
           ImportManager.SourceTableImport imp = streamTableScan.getTableImport();
+          if (imp == null) {
+            System.out.println(table);
+            return super.visit(scan);
+          }
 
           Pair<Schema, TypeInformation> ordersSchema = tbConverter.tableSchemaConversion(imp.getSourceSchema());
 
@@ -106,6 +110,18 @@ public class FlinkPipelineGenerator {
 
             tEnv.createTemporaryView("entries$4_stream", tableShredding);
           }
+            if (streamName.equalsIgnoreCase("orders$3")) {
+              tEnv.registerDataStream(streamName+"_stream", rows);
+
+              org.apache.flink.table.api.Table tableShredding = tEnv.sqlQuery(
+                  "SELECT o._uuid, items._idx as _idx1, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
+                      "FROM orders$3_stream o CROSS JOIN UNNEST(o.entries) AS items");
+
+              tEnv.createTemporaryView("entries$4", tableShredding);
+              tEnv.createTemporaryView("entries$4_stream", tableShredding);
+
+
+            }
 
           }
           return super.visit(scan);

@@ -62,6 +62,11 @@ public class Shredder {
                 Column addColumn = fp.createColumn(targetTable);
                 if (targetTable.fields.add(addColumn))
                     throw new IllegalArgumentException(String.format("[%s] is a reserved keyword and should not be a data field", addColumn.name));
+                if (rootTable != targetTable) {
+                    if (addColumn.getName().equals(Name.system("_uuid"))) {
+                        addColumn.setSource(rootTable.getField(Name.system("_uuid")));
+                    }
+                }
                 outputSchema.add(addColumn);
             }
         }

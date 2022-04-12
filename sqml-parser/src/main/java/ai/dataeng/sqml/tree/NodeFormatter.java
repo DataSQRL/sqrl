@@ -360,12 +360,10 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitInlineJoin(InlineJoin node, Void context) {
-    return "";
-//    node.getJoin().accept(this, context) +
-//            (node.getSortItems().isEmpty() ? "" :  " ORDER BY ") +
-//        node.getSortItems().stream().map(i-> i.accept(this, context)).collect(Collectors.joining(", ")) +
-//        node.getLimit().map(i->" LIMIT " + i).orElse("") +
-//        node.getInverse().map(i->" INVERSE " + i.getCanonical()).orElse("");
+    return node.getRelation().accept(this, context) +
+            (node.getOrderBy().isEmpty() ? "" :  " ORDER BY ") +
+        node.getLimit().map(i->" LIMIT " + i).orElse("") +
+        node.getInverse().map(i->" INVERSE " + i.getCanonical()).orElse("");
   }
 
   @Override
@@ -406,5 +404,10 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   public String visitDistinctAssignment(DistinctAssignment node, Void context) {
     return String.format("DISTINCT %s ON %s %s;", node.getTable(), node.getPartitionKeys(),
         node.getOrder() != null ? String.format("ORDER BY %s", node.getOrder()) : "");
+  }
+
+  @Override
+  public String visitLimitNode(Limit node, Void context) {
+    return node.getValue();
   }
 }

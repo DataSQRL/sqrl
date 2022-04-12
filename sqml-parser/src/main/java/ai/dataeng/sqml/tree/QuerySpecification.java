@@ -31,6 +31,8 @@ public class QuerySpecification
   private Optional<Expression> having;
   private Optional<OrderBy> orderBy;
   private Optional<Limit> limit;
+  private List<Integer> parentPrimaryKeys;
+  private List<Integer> primaryKeys;
 
   public QuerySpecification(
       NodeLocation location,
@@ -69,6 +71,13 @@ public class QuerySpecification
     this.having = having;
     this.orderBy = orderBy;
     this.limit = limit;
+  }
+
+  public QuerySpecification(QuerySpecification spec, Select select, Relation from,
+      Optional<Expression> where, Optional<GroupBy> groupBy, Optional<Expression> having,
+      Optional<OrderBy> orderBy, Optional<Limit> limit) {
+    this(spec.getLocation(), select, from, where, groupBy, having, orderBy, limit);
+    this.parentPrimaryKeys = spec.getParentPrimaryKeys();
   }
 
   public Select getSelect() {
@@ -185,5 +194,26 @@ public class QuerySpecification
   @Override
   public int hashCode() {
     return Objects.hash(select, from, where, groupBy, having, orderBy, limit);
+  }
+
+  /**
+   * Identifies the parent primary keys in the select list
+   */
+  public List<Integer> getParentPrimaryKeys() {
+    return this.parentPrimaryKeys;
+  }
+
+  public void setParentPrimaryKeys(List<Integer> parentPrimaryKeys) {
+    this.parentPrimaryKeys = parentPrimaryKeys;
+  }
+  /**
+   * Identifies the parent primary keys in the select list
+   */
+  public List<Integer> getPrimaryKeys() {
+    return this.parentPrimaryKeys;
+  }
+
+  public void setPrimaryKeys(List<Integer> primaryKeys) {
+    this.primaryKeys = primaryKeys;
   }
 }

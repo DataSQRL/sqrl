@@ -114,7 +114,6 @@ public class TableFactory {
       if (field instanceof Relationship) {
         Relationship rel = (Relationship)  field;
         Table toTable = rel.toTable;
-        System.out.println();
 //        planner.addTable(table.getId().toString(), new StreamTable(ordersSchema.getKey()));
         UnresolvedColumn col = fieldMap.get(field.getName().getCanonical());
         RowType row = unboxArray(col);

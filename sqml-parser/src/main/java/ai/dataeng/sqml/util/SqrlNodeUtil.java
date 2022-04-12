@@ -1,6 +1,8 @@
 package ai.dataeng.sqml.util;
 
 import ai.dataeng.sqml.tree.AliasedRelation;
+import ai.dataeng.sqml.tree.ComparisonExpression;
+import ai.dataeng.sqml.tree.ComparisonExpression.Operator;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupBy;
@@ -93,7 +95,8 @@ public class SqrlNodeUtil {
                   (column.getAlias().isPresent() && column.getAlias().get().equals(expression));
         })
         .findFirst()
-        .orElseThrow(()-> new RuntimeException("Cannot find grouping element " + expression));
+        .orElseThrow(()->
+            new RuntimeException("Cannot find element for ordinal: " + expression));
     return index;
   }
 
@@ -160,11 +163,14 @@ public class SqrlNodeUtil {
   public static GroupBy group(List<Expression> identifiers) {
     return new GroupBy(new SimpleGroupBy(identifiers));
   }
-  public static Identifier alias(Name alias, VersionedName id) {
+  public static Identifier alias(Name alias, Name id) {
     return new Identifier(Optional.empty(), alias.toNamePath().concat(id));
   }
   public static FunctionCall function(NamePath name, Identifier alias) {
     return new FunctionCall(name, List.of(alias), false);
+  }
+  public static Expression eq(Identifier ident, Identifier ident1) {
+    return new ComparisonExpression(Optional.empty(), Operator.EQUAL, ident, ident1);
   }
 
   public static Expression and(List<Expression> expressions) {
@@ -181,4 +187,13 @@ public class SqrlNodeUtil {
     return new LogicalBinaryExpression(LogicalBinaryExpression.Operator.AND,
         expressions.get(0), and(expressions.subList(1, expressions.size())));
   }
+
+  public static Expression and(Expression expression, Optional<Expression> optionalExpression) {
+    if (optionalExpression.isEmpty()) {
+      return expression;
+    }
+
+    return and(List.of(expression, optionalExpression.get()));
+  }
+
 }

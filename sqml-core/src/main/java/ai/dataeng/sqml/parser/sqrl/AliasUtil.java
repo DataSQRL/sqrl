@@ -60,6 +60,10 @@ public class AliasUtil {
   public static PrimaryKeySelectItem primaryKeySelect(NamePath name, NamePath alias, Column column) {
     Identifier identifier = new Identifier(Optional.empty(), name);
     Identifier aliasIdentifier = new Identifier(Optional.empty(), alias);
+    Column ppk = column.copy();
+    ppk.setParentPrimaryKey(true);
+    ppk.setSource(column);
+    identifier.setResolved(ppk);
     return new PrimaryKeySelectItem(identifier, aliasIdentifier, column);
   }
 }

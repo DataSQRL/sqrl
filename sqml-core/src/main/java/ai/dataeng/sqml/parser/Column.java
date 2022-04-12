@@ -12,7 +12,6 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Getter
-@ToString(callSuper = true)
 public class Column extends Field {
 
   private final Table table;
@@ -35,6 +34,8 @@ public class Column extends Field {
   @Setter
   public Optional<Column> fkReferences;
   public final boolean isInternal;
+  private Field source;
+  private boolean parentPrimaryKey;
 
   public Column(Name name, Table table, int version,
       BasicType type, int arrayDepth, List<Constraint> constraints,
@@ -66,5 +67,30 @@ public class Column extends Field {
   @Override
   public boolean isVisible() {
     return !isInternal;
+  }
+
+  public void setSource(Field source) {
+    this.source = source;
+  }
+
+  public Field getSource() {
+    if (source == null) {
+      return this;
+    }
+    Column s = (Column) this.source;
+    return s.getSource();
+  }
+
+  public Column copy() {
+    return new Column(this.name, this.table, this.version, this.type, this.arrayDepth, this.constraints,
+        this.isPrimaryKey, this.isForeignKey, this.fkReferences, this.isInternal);
+  }
+
+  public void setParentPrimaryKey(boolean parentPrimaryKey) {
+    this.parentPrimaryKey = parentPrimaryKey;
+  }
+
+  public boolean getParentPrimaryKey() {
+    return parentPrimaryKey;
   }
 }

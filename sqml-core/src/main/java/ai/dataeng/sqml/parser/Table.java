@@ -40,30 +40,30 @@ public class Table implements DatasetOrTable {
     Optional<Field> field = fields.getByName(name);
     return field.isEmpty() ? null : field.get();
   }
-
-  public Optional<FieldPath> getField(NamePath path, int version) {
-    return getField(path);//todo: include version
-  }
-
-  public Optional<FieldPath> getField(NamePath path) {
-    List<Field> fields = new ArrayList<>();
-    Table table = this;
-    for (int i = 0; i < path.getLength() - 1; i++) {
-      Optional<Field> field = table.getFields().getByName(path.get(i));
-      if (field.isEmpty()) return Optional.empty();
-      if (!(field.get() instanceof Relationship)) {
-        return Optional.empty();
-      }
-      table = ((Relationship) field.get()).getToTable();
-      fields.add(field.get());
-    }
-    Field field = table.getField(path.get(path.getLength() - 1));
-    if (field == null) {
-      return Optional.empty();
-    }
-    fields.add(field);
-    return Optional.of(new FieldPath(fields));
-  }
+//
+//  public Optional<FieldPath> getField(NamePath path, int version) {
+//    return getField(path);//todo: include version
+//  }
+//
+//  public Optional<FieldPath> getField(NamePath path) {
+//    List<Field> fields = new ArrayList<>();
+//    Table table = this;
+//    for (int i = 0; i < path.getLength() - 1; i++) {
+//      Optional<Field> field = table.getFields().getByName(path.get(i));
+//      if (field.isEmpty()) return Optional.empty();
+//      if (!(field.get() instanceof Relationship)) {
+//        return Optional.empty();
+//      }
+//      table = ((Relationship) field.get()).getToTable();
+//      fields.add(field.get());
+//    }
+//    Field field = table.getField(path.get(path.getLength() - 1));
+//    if (field == null) {
+//      return Optional.empty();
+//    }
+//    fields.add(field);
+//    return Optional.of(new FieldPath(fields));
+//  }
 
   public boolean addField(Field field) {
 //    field.setTable(this);
@@ -87,14 +87,6 @@ public class Table implements DatasetOrTable {
     }
 
     return pks;
-  }
-
-  public List<Column> getForeignKeys() {
-    return this.fields.visibleStream()
-        .filter(f->f instanceof Column)
-        .map(f->(Column) f)
-        .filter(f->f.isForeignKey)
-        .collect(Collectors.toList());
   }
 
   @Override
@@ -124,6 +116,27 @@ public class Table implements DatasetOrTable {
     return Objects.hash(uniqueId);
   }
 
+  public Optional<Field> walkField(NamePath namePath) {
+    if (namePath.isEmpty()) {
+      return Optional.empty();
+    }
+    Field field = getField(namePath.getFirst());
+    if (field == null) {
+      return Optional.empty();
+    }
+
+    if (namePath.getLength() == 1) {
+      return Optional.of(field);
+    }
+
+    if (field instanceof Relationship) {
+      Relationship relationship = (Relationship) field;
+      return relationship.getToTable()
+          .walkField(namePath.popFirst());
+    }
+
+    return Optional.of(field);
+  }
   public Optional<Table> walk(NamePath namePath) {
     if (namePath.isEmpty()) {
       return Optional.of(this);
@@ -196,5 +209,17 @@ public class Table implements DatasetOrTable {
     }
 
     return new Column(name, this, version, null, 0, List.of(), false, false, Optional.empty(), false);
+  }
+
+  public Optional<Column> getEquivalent(Column lhsColumn) {
+    for (Field field : this.getFields()) {
+      if (field instanceof Column) {
+        if (((Column)field).getSource() == lhsColumn.getSource()) {
+          return Optional.of((Column) field);
+        }
+      }
+    }
+
+    return Optional.empty();
   }
 }

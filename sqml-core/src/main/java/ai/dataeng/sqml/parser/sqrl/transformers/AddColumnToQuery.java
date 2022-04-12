@@ -49,12 +49,12 @@ public class AddColumnToQuery {
     TableNode tableNode = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(lAlias));
 
     Name rAlias = gen.nextTableAliasName();
-    Type joinType = isAggregating? Type.LEFT : Type.INNER;
+    Type joinType = Type.LEFT;//isAggregating? Type.LEFT : Type.INNER;
     Join join = new Join(joinType, tableNode, toSubquery(spec, rAlias), Optional.of(new JoinOn(Optional.empty(),
         toCriteria(lAlias, table.getPrimaryKeys(), rAlias, spec.getSelect()))));
 
     return new QuerySpecification(
-        spec.getLocation(),
+        spec,
         toSelectList(table, expressionName, lAlias, rAlias),
         join,
         Optional.empty(),

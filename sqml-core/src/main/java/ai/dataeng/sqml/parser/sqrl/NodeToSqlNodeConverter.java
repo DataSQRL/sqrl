@@ -239,7 +239,7 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
       SqlIdentifier table = new SqlIdentifier(List.of(node.getNamePath().toString()), pos.getPos(node.getLocation()));
       SqlNode[] operands = {
           table,
-          new SqlIdentifier(node.getAlias().get().toString(), SqlParserPos.ZERO)
+          new SqlIdentifier(node.getAlias().get().getCanonical(), SqlParserPos.ZERO)
       };
       return new SqlBasicCall(SqlStdOperatorTable.AS, operands, pos.getPos(node.getLocation()));
     }

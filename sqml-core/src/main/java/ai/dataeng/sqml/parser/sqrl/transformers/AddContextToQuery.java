@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class AddContextToQuery {
   AggregationDetector aggregationDetector = new AggregationDetector(new FunctionLookup());
@@ -28,13 +29,20 @@ public class AddContextToQuery {
    * Adds context keys to select. If aggregating, create or append to group by.
    */
   public QuerySpecification transform(QuerySpecification spec, Table table) {
+    return transform(spec, table, Name.SELF_IDENTIFIER);
+  }
+
+  public QuerySpecification transform(QuerySpecification spec, Table table, Name firstAlias) {
     List<SelectItem> additionalColumns = table.getPrimaryKeys().stream()
         .map(column -> primaryKeySelect(
-            Name.SELF_IDENTIFIER.toNamePath().concat(column.getId().toNamePath()),
+            firstAlias.toNamePath().concat(column.getId().toNamePath()),
             column.getId().toNamePath(), column))
         .collect(Collectors.toList());
     List<SelectItem> list = new ArrayList<>(spec.getSelect().getSelectItems());
     list.addAll(additionalColumns);
+    List<Integer> parentPrimaryKeys = IntStream.range(spec.getSelect().getSelectItems().size(),
+        list.size()).boxed().collect(Collectors.toList());
+    spec.setParentPrimaryKeys(parentPrimaryKeys);
 
     Select select = new Select(spec.getSelect().getLocation(), spec.getSelect().isDistinct(), list);
 
@@ -43,11 +51,10 @@ public class AddContextToQuery {
     if (aggregationDetector.isAggregating(spec.getSelect())) {
       groupBy = Optional.of(appendGroupBy(spec.getGroupBy(), select));
       orderBy = appendOrderBy(spec.getOrderBy(), select);
-
     }
 
     QuerySpecification querySpecification = new QuerySpecification(
-        spec.getLocation(),
+        spec,
         select,
         spec.getFrom(),
         spec.getWhere(),

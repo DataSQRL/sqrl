@@ -1,7 +1,6 @@
 package ai.dataeng.sqml.parser;
 
 import ai.dataeng.sqml.tree.Identifier;
-import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QuerySpecification;
@@ -10,14 +9,11 @@ import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.VersionedName;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 /**
  *
@@ -78,13 +74,16 @@ public class Relationship extends Field {
     List<SelectItem> selectItems = new ArrayList<>();
     for (Field field : this.toTable.getFields().getElements()) {
       if (field instanceof Relationship) continue;
-      selectItems.add(new SingleColumn(new Identifier(Optional.empty(), this.alias.toNamePath().concat(field.getId()))));
+      Identifier identifier = new Identifier(Optional.empty(), field.getId().toNamePath());
+      identifier.setResolved(field);
+      selectItems.add(new SingleColumn(identifier));
     }
 
     for (int i = 0; i < this.table.getPrimaryKeys().size(); i++) {
       Column field = this.table.getPrimaryKeys().get(i);
-      selectItems.add(new SingleColumn(new Identifier(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath().concat(
-          field.getId())), Optional.of(new Identifier(Optional.empty(), Name.system("_pk"+i).toNamePath()))));
+      Identifier key = new Identifier(Optional.empty(), field.getId().toNamePath());
+      key.setResolved(field);
+      selectItems.add(new SingleColumn(key, Optional.of(new Identifier(Optional.empty(), Name.system("_pk"+i).toNamePath()))));
     }
 
     return selectItems;
