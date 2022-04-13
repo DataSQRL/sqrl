@@ -11,6 +11,7 @@ import java.util.*;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 
 @Slf4j
 public class DatasetRegistry implements DatasetLookup, Closeable {
@@ -91,7 +92,7 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         return dataset;
     }
 
-    public synchronized SourceDataset removeSource(@NonNull Name name) {
+    public synchronized Pair<SourceDataset,Collection<SourceTable>> removeSource(@NonNull Name name) {
         SourceDataset source = datasets.remove(name);
         if (source != null) {
             persistence.removeDataset(name);
@@ -99,11 +100,11 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
             for (SourceTable tbl : tables) {
                 source.removeTable(tbl.getName());
             }
-        }
-        return source;
+            return Pair.of(source,tables);
+        } else return null;
     }
 
-    public SourceDataset removeSource(@NonNull String name) {
+    public Pair<SourceDataset,Collection<SourceTable>> removeSource(@NonNull String name) {
         return Name.getIfValidSystemName(name,this::removeSource);
     }
 

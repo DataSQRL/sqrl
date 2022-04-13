@@ -6,17 +6,29 @@ import ai.dataeng.sqml.config.GlobalConfiguration;
 import ai.dataeng.sqml.config.SqrlSettings;
 import ai.dataeng.sqml.config.engines.FlinkConfiguration;
 import ai.dataeng.sqml.config.engines.JDBCConfiguration;
+import ai.dataeng.sqml.io.formats.FileFormat;
+import ai.dataeng.sqml.io.formats.FormatConfiguration;
 import ai.dataeng.sqml.io.formats.JsonLineFormat;
 import ai.dataeng.sqml.io.impl.file.DirectorySinkImplementation;
 import ai.dataeng.sqml.io.impl.file.DirectorySourceImplementation;
+import ai.dataeng.sqml.io.impl.kafka.KafkaSourceImplementation;
+import ai.dataeng.sqml.io.sinks.DataSink;
+import ai.dataeng.sqml.io.sinks.DataSinkConfiguration;
+import ai.dataeng.sqml.io.sinks.DataSinkRegistration;
+import ai.dataeng.sqml.io.sinks.registry.DataSinkRegistry;
+import ai.dataeng.sqml.io.sources.DataSourceConfiguration;
+import ai.dataeng.sqml.io.sources.DataSourceUpdate;
+import ai.dataeng.sqml.io.sources.SourceTableConfiguration;
 import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.config.error.ErrorCollector;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,9 +49,16 @@ public class ConfigurationTest {
 
     public static final Path DATA_DIR = resourceDir.resolve("data");
 
+    private Environment env = null;
+
     @BeforeEach
     public void deleteDatabase() throws IOException {
         FileUtils.cleanDirectory(ConfigurationTest.dbPath.toFile());
+    }
+
+    @AfterEach
+    public void close() {
+        if (env!=null) env.close();
     }
 
     @Test
@@ -60,22 +79,24 @@ public class ConfigurationTest {
     @Test
     public void testSettings() {
         SqrlSettings settings = getDefaultSettings();
-        Environment env = Environment.create(settings);
+        env = Environment.create(settings);
         assertNotNull(env.getDatasetRegistry());
-        env.close();
     }
 
     @Test
     public void testDatasetRegistry() throws InterruptedException {
         SqrlSettings settings = getDefaultSettings(false);
-        Environment env = Environment.create(settings);
+        env = Environment.create(settings);
         DatasetRegistry registry = env.getDatasetRegistry();
         assertNotNull(registry);
 
+        //Directory
         String dsName = "bookclub";
         DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
                 .uri(DATA_DIR.toAbsolutePath().toString())
                 .build();
+
+
 
         ErrorCollector errors = ErrorCollector.root();
         registry.addOrUpdateSource(dsName, fileConfig, errors);
@@ -85,10 +106,37 @@ public class ConfigurationTest {
         Set<String> tablenames = ds.getTables().stream().map(SourceTable::getName)
                 .map(Name::getCanonical).collect(Collectors.toSet());
         assertEquals(ImmutableSet.of("book","person"), tablenames);
-        assertTrue(ds.containsTable("person"));
-        assertNotNull(ds.getTable("book"));
         assertNotNull(ds.getDigest().getCanonicalizer());
         assertEquals(dsName,ds.getDigest().getName().getCanonical());
+        assertTrue(ds.getSource().getImplementation() instanceof DirectorySourceImplementation);
+        assertNull(ds.getSource().getConfig().getFormat());
+
+        assertTrue(ds.containsTable("person"));
+        SourceTable table = ds.getTable("book");
+        assertNotNull(table);
+        assertEquals("book",table.getName().getCanonical());
+        assertEquals(ds,table.getDataset());
+        assertEquals("bookclub.book",table.qualifiedName());
+        assertEquals("book", table.getConfiguration().getIdentifier());
+        FormatConfiguration format = table.getConfiguration().getFormat();
+        assertNotNull(format);
+        assertEquals(FileFormat.JSON,format.getFileFormat());
+
+        //Without table discovery
+        String ds2Name = "anotherbook";
+        DataSourceUpdate update = DataSourceUpdate.builder().name(ds2Name).source(fileConfig)
+                .config(DataSourceConfiguration.builder().format(new JsonLineFormat.Configuration()).build())
+                .tables(ImmutableList.of(SourceTableConfiguration.builder().name("test").identifier("book").build()))
+                .discoverTables(false)
+                .build();
+
+
+        registry.addOrUpdateSource(update,errors);
+        assertFalse(errors.isFatal());
+        SourceDataset ds2 = registry.getDataset(ds2Name);
+        assertEquals(1,ds2.getTables().size());
+        assertNotNull(ds2.getTable("test"));
+        assertEquals(FileFormat.JSON,ds2.getTable("test").getConfiguration().getFileFormat());
 
         env.close();
 
@@ -101,13 +149,51 @@ public class ConfigurationTest {
         tablenames = ds.getTables().stream().map(SourceTable::getName)
                 .map(Name::getCanonical).collect(Collectors.toSet());
         assertEquals(ImmutableSet.of("book","person"), tablenames);
+        assertEquals(FileFormat.JSON,ds.getTable("book").getConfiguration().getFileFormat());
+
+        //Test deletions
+        assertNotNull(registry.getDataset(ds2Name));
+        ds2 = registry.getDataset(ds2Name);
+        assertEquals(1,ds2.getTables().size());
+        ds2.removeTable("test");
+        assertEquals(0,ds2.getTables().size());
+
+        registry.removeSource(ds2Name);
+        assertNull(registry.getDataset(ds2Name));
+        assertEquals(1,registry.getDatasets().size());
+
         env.close();
+        env = Environment.create(settings);
+        registry = env.getDatasetRegistry();
+        assertEquals(1,registry.getDatasets().size());
+
+    }
+
+    @Test
+    public void testDataSink() {
+        SqrlSettings settings = getDefaultSettings(false);
+        env = Environment.create(settings);
+        DataSinkRegistry registry = env.getDataSinkRegistry();
+        assertNotNull(registry);
+
+        DirectorySinkImplementation fileSink = DirectorySinkImplementation.builder().uri(DATA_DIR.toAbsolutePath().toString()).build();
+        DataSinkRegistration reg = DataSinkRegistration.builder().name("sink")
+                .sink(fileSink)
+                .config(DataSinkConfiguration.builder().format(new JsonLineFormat.Configuration()).build())
+                .build();
+
+        ErrorCollector errors = ErrorCollector.root();
+        registry.addOrUpdateSink(reg,errors);
+        assertFalse(errors.isFatal());
+
+        DataSink sink = registry.getSink("sink");
+        assertEquals(FileFormat.JSON,sink.getRegistration().getConfig().getFormat().getFileFormat());
     }
 
     @Test
     public void testDatasetMonitoring() throws InterruptedException {
         SqrlSettings settings = getDefaultSettings(true);
-        Environment env = Environment.create(settings);
+        env = Environment.create(settings);
         DatasetRegistry registry = env.getDatasetRegistry();
 
         String dsName = "bookclub";
@@ -130,7 +216,6 @@ public class ConfigurationTest {
         assertNotNull(stats);
         assertEquals(4,stats.getCount());
         assertEquals(5, person.getStatistics().getCount());
-        env.close();
     }
 
     public static void validateConfig(GlobalConfiguration config) {

@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.config.server;
 
 import ai.dataeng.sqml.Environment;
+import ai.dataeng.sqml.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.vertx.core.AbstractVerticle;
@@ -16,6 +17,8 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 
 import java.util.Map;
 
+import io.vertx.json.schema.ValidationException;
+import io.vertx.json.schema.common.ValidationExceptionImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -26,10 +29,11 @@ public class ApiVerticle extends AbstractVerticle {
 
     private static final Map<Integer,String> ERROR2MESSAGE = ImmutableMap.of(
             400, "Processing Error",
-            404, "Not Found"
+            404, "Not Found",
+            500, "Server Error"
     );
 
-    static final int VALIDATION_ERR_CODE = 405;
+    static final int VALIDATION_ERR_CODE = 400;
 
     private HttpServer server;
 
@@ -48,7 +52,7 @@ public class ApiVerticle extends AbstractVerticle {
         RouterBuilder.create(this.vertx, "datasqrl-openapi.yml")
                 .onSuccess(routerBuilder -> {
                     // #### Source handlers
-                    routerBuilder.operation("addOrUpdateSource").handler(handleException(sourceHandler.update()));
+                    routerBuilder.operation("addOrUpdateSource").handler(sourceHandler.update());
                     routerBuilder.operation("getSources").handler(sourceHandler.get());
                     routerBuilder.operation("getSourceByName").handler(sourceHandler.getSourceByName());
                     routerBuilder.operation("deleteSource").handler(sourceHandler.deleteSource());
@@ -74,21 +78,30 @@ public class ApiVerticle extends AbstractVerticle {
                     //Generate generic error handlers
                     for (Map.Entry<Integer,String> failure : ERROR2MESSAGE.entrySet()) {
                         int errorCode = failure.getKey();
-                        Preconditions.checkArgument(errorCode>=400 && errorCode<410);
+                        Preconditions.checkArgument(errorCode>=400 && errorCode<=500);
                         String defaultMessage = failure.getValue();
-                        Preconditions.checkArgument(StringUtils.isNotEmpty(defaultMessage));
 
                         router.errorHandler(errorCode, routingContext -> {
-                            Throwable exception = routingContext.failure();
-                            JsonObject errorObject = new JsonObject()
-                                    .put("code", errorCode)
-                                    .put("message", exception!=null?exception.getMessage():defaultMessage
-                                    );
-                            routingContext
-                                    .response()
-                                    .setStatusCode(errorCode)
-                                    .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                                    .end(errorObject.encode());
+                            Throwable ex = routingContext.failure();
+                            if (ex.getCause() != null && ex.getCause() instanceof ValidationException) {
+                                //Validation error
+                                ErrorCollector errors = ErrorCollector.root();
+                                errors.fatal((ValidationException) ex.getCause());
+                                HandlerUtil.returnError(routingContext,errors);
+                            } else {
+                                //Generic errors
+                                String msg = ex!=null?ex.getMessage():defaultMessage;
+                                //Re-map 400 errors to 500 since all 400 errors should be validation errors (i.e. handled above)
+                                int adjustedErrorCode = errorCode==400?500:errorCode;
+                                JsonObject errorObject = new JsonObject()
+                                        .put("code", adjustedErrorCode)
+                                        .put("message", msg);
+                                routingContext
+                                        .response()
+                                        .setStatusCode(adjustedErrorCode)
+                                        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                                        .end(errorObject.encode());
+                            }
                         });
                     }
                     server = vertx.createHttpServer(new HttpServerOptions().setPort(port).setHost("localhost"));
@@ -103,7 +116,13 @@ public class ApiVerticle extends AbstractVerticle {
             try {
                 handler.handle(routingContext);
             } catch (Throwable ex) {
-                routingContext.fail(400, ex);
+                if (ex.getCause() != null && ex.getCause() instanceof ValidationExceptionImpl) {
+                    ErrorCollector errors = ErrorCollector.root();
+                    errors.fatal((ValidationExceptionImpl) ex.getCause());
+                    HandlerUtil.returnError(routingContext,errors);
+                } else {
+                    routingContext.fail(400, ex);
+                }
             }
         };
     }

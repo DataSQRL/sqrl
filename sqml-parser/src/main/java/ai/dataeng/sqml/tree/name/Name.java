@@ -89,7 +89,7 @@ public interface Name extends Serializable, Comparable<Name> {
     }
 
     public static Name system(String name) {
-        return new SimpleName(NameCanonicalizer.SYSTEM.getCanonical(name));
+        return of(name,NameCanonicalizer.SYSTEM);
     }
 
     public static Name hidden(String name) {

@@ -53,13 +53,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeployResult'
-        405:
+        400:
           description: Validation exception
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessages'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -80,7 +80,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/DeployResult'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -108,7 +108,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeployResult'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -140,13 +140,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CompilationResult'
-        405:
+        400:
           description: Validation exception
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessages'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -173,13 +173,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SourceWithErrors'
-        405:
+        400:
           description: Validation exception
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessages'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -200,7 +200,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Source'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -227,7 +227,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Source'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -258,7 +258,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Source'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -293,7 +293,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SourceTable'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -331,13 +331,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SourceTableWithErrors'
-        405:
+        400:
           description: Validation exception
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessages'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -377,7 +377,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Source'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -414,7 +414,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SourceTable'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -446,13 +446,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SinkWithErrors'
-        405:
+        400:
           description: Validation exception
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessages'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -473,7 +473,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Sink'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -500,7 +500,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Sink'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -531,7 +531,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Sink'
-        400:
+        500:
           description: Processing error
           content:
             application/json:
@@ -550,6 +550,7 @@ components:
       type: object
       required:
         - source
+      additionalProperties: false
       properties:
         name:
           type: string
@@ -590,7 +591,7 @@ components:
         identifier:
           type: string
         format:
-          $ref: '#/components/schemas/formatConfig'
+          $ref: '#/components/schemas/FormatConfig'
     SourceTableWithErrors:
       allOf:
         - $ref: '#/components/schemas/SourceTable'
@@ -609,7 +610,7 @@ components:
         charset:
           type: string
         format:
-          $ref: '#/components/schemas/formatConfig'
+          $ref: '#/components/schemas/FormatConfig'
     DirectorySourceConfig:
       type: object
       required:
@@ -617,7 +618,8 @@ components:
         - sourceType
       properties:
         sourceType:
-          $ref: '#/components/schemas/sourceSinkTypes'
+          type: string
+          enum: ["dir"]
         uri:
           type: string
         partPattern:
@@ -631,26 +633,22 @@ components:
         - sourceType
       properties:
         sourceType:
-          $ref: '#/components/schemas/sourceSinkTypes'
+          type: string
+          enum: ["kafka"]
         servers:
           type: array
           items:
             type: string
         topicPrefix:
           type: string
-    sourceSinkTypes:
-      type: string
-      description: "Type of source or sink"
-      enum:
-        - dir
-        - kafka
     CSVFormatConfig:
       type: object
       required:
-        - type
+        - formatType
       properties:
-        type:
-          $ref: '#/components/schemas/formatDef'
+        formatType:
+          type: string
+          enum: ["csv"]
         delimiter:
           type: string
         header:
@@ -663,10 +661,11 @@ components:
     JSONFormatConfig:
       type: object
       required:
-        - type
+        - formatType
       properties:
-        type:
-          $ref: '#/components/schemas/formatDef'
+        formatType:
+          type: string
+          enum: ["json"]
     canonicalizerDef:
       type: string
       description: Name Canonicalizer
@@ -674,19 +673,12 @@ components:
         - lowercase
         - case_sensitive
         - system
-    formatDef:
-      type: string
-      description: Name of format
-      enum:
-        - csv
-        - json
-        - avro
-    formatConfig:
+    FormatConfig:
       oneOf:
         - $ref: '#/components/schemas/CSVFormatConfig'
         - $ref: '#/components/schemas/JSONFormatConfig'
       discriminator:
-        propertyName: type
+        propertyName: formatType
         mapping:
           csv: '#/components/schemas/CSVFormatConfig'
           json: '#/components/schemas/JSONFormatConfig'
@@ -701,12 +693,12 @@ components:
         sink:
           oneOf:
             - $ref: '#/components/schemas/DirectorySinkConfig'
-            - $ref: '#/components/schemas/KafkaSourceConfig'
+            - $ref: '#/components/schemas/KafkaSinkConfig'
           discriminator:
             propertyName: sinkType
             mapping:
               dir: '#/components/schemas/DirectorySinkConfig'
-              kafka: '#/components/schemas/KafkaSourceConfig'
+              kafka: '#/components/schemas/KafkaSinkConfig'
         config:
           $ref: '#/components/schemas/SinkConfig'
     SinkWithErrors:
@@ -726,10 +718,26 @@ components:
         - sinkType
       properties:
         sinkType:
-          $ref: '#/components/schemas/sourceSinkTypes'
+          type: string
+          enum: ["dir"]
         uri:
           type: string
         partDelimiter:
+          type: string
+    KafkaSinkConfig:
+      type: object
+      required:
+        - host
+        - sinkType
+      properties:
+        sinkType:
+          type: string
+          enum: ["kafka"]
+        servers:
+          type: array
+          items:
+            type: string
+        topicPrefix:
           type: string
     ScriptBundle:
       type: object

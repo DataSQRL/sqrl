@@ -24,10 +24,8 @@ public abstract class SharedConfiguration implements Serializable {
 
     @Builder.Default @NonNull @NotNull @Valid
     protected CanonicalizerConfiguration canonicalizer = CanonicalizerConfiguration.system;
-
     @Builder.Default @NonNull @NotNull
     protected String charset = DEFAULT_CHARSET;
-
     @Valid
     protected FormatConfiguration format;
 
@@ -39,6 +37,12 @@ public abstract class SharedConfiguration implements Serializable {
 
     @JsonIgnore
     protected abstract boolean formatRequired();
+
+    @JsonIgnore
+    public Charset getCharsetObject() {
+        return Charset.forName(charset);
+    }
+
 
     public boolean initialize(ErrorCollector errors) {
         try {
@@ -57,11 +61,5 @@ public abstract class SharedConfiguration implements Serializable {
             return format.initialize(null, errors.resolve("format"));
         }
     }
-
-    @JsonIgnore
-    public Charset getCharsetObject() {
-        return Charset.forName(charset);
-    }
-
 
 }

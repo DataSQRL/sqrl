@@ -21,4 +21,4 @@ sinks:
       uri: "../sqml-examples/retail/ecommerce-output"
     config:
       format:
-        type: "json"
+        formatType: "json"

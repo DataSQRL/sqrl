@@ -7,7 +7,9 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.json.schema.common.ValidationExceptionImpl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
@@ -20,6 +22,7 @@ public class HandlerUtil {
         List<ErrorMessage> msgs = errors.getAll();
         return getJsonArray(msgs,JsonObject::mapFrom);
     }
+
 
     static void returnError(RoutingContext routingContext, ErrorCollector errors) {
         JsonArray errorObject = errors2Json(errors);

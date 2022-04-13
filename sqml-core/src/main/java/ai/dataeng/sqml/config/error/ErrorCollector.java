@@ -1,8 +1,11 @@
 package ai.dataeng.sqml.config.error;
 
 import ai.dataeng.sqml.tree.name.Name;
+import io.vertx.json.schema.ValidationException;
+import io.vertx.json.schema.common.ValidationExceptionImpl;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -61,6 +64,7 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
         }
     }
 
+
     public boolean hasErrors() {
         return !errors.isEmpty();
     }
@@ -80,6 +84,20 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
     public void fatal(int line, int offset, String msg, Object... args) {
         addInternal(new ErrorMessage.Implementation(getMessage(msg,args),baseLocation.atFile(line,offset), ErrorMessage.Severity.FATAL));
     }
+
+    public void fatal(ValidationException exception) {
+        String msg = exception.getMessage() + " [ keyword = " + exception.keyword() + "]";
+        //Convert JSON location to error location. The only access we have to the JSONPointer path is through toString() and we need to parse
+        ErrorLocation loc = baseLocation;
+        if (exception.inputScope()!=null) {
+            String[] path = StringUtils.split(exception.inputScope().toString(), "/");
+            for (String p : path) {
+                if (!p.isBlank()) loc = loc.resolve(p);
+            }
+        }
+        addInternal(new ErrorMessage.Implementation(msg, loc, ErrorMessage.Severity.FATAL));
+    }
+
 
     public void warn(String msg, Object... args) {
         addInternal(new ErrorMessage.Implementation(getMessage(msg,args),baseLocation, ErrorMessage.Severity.WARN));

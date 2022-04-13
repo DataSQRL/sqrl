@@ -19,6 +19,7 @@ import io.vertx.ext.web.validation.ValidationHandler;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -77,9 +78,9 @@ public class SourceHandler {
         return routingContext -> {
             RequestParameters params = routingContext.get("parsedParameters");
             String sourceName = params.pathParameter("sourceName").getString();
-            SourceDataset dataset = registry.removeSource(sourceName);
-            if (dataset != null) {
-                HandlerUtil.returnResult(routingContext, source2Json(dataset));
+            Pair<SourceDataset,Collection<SourceTable>> removal = registry.removeSource(sourceName);
+            if (removal != null) {
+                HandlerUtil.returnResult(routingContext, source2Json(removal.getKey(),removal.getValue(),null));
             } else {
                 routingContext.fail(404, new Exception("Source not found"));
             }
@@ -91,7 +92,11 @@ public class SourceHandler {
     }
 
     static JsonObject source2Json(@NonNull SourceDataset source, ErrorCollector errors) {
-        return JsonObject.mapFrom(new DataSourceResult(source, errors));
+        return source2Json(source,source.getTables(),errors);
+    }
+
+    static JsonObject source2Json(@NonNull SourceDataset source, @NonNull Collection<SourceTable> tables, ErrorCollector errors) {
+        return JsonObject.mapFrom(new DataSourceResult(source, tables, errors));
     }
 
     Handler<RoutingContext> addTable() {
@@ -180,15 +185,11 @@ public class SourceHandler {
 
         List<ErrorMessage> messages;
 
-        DataSourceResult(@NonNull SourceDataset dataset) {
-            this(dataset,null);
-        }
-
-        DataSourceResult(@NonNull SourceDataset dataset, ErrorCollector errors) {
+        DataSourceResult(@NonNull SourceDataset dataset, Collection<SourceTable> tables, ErrorCollector errors) {
             this(dataset.getName().getDisplay(),
                     dataset.getSource().getImplementation(),
                     dataset.getSource().getConfig(),
-                    dataset.getTables().stream().map(SourceTable::getConfiguration).collect(Collectors.toList()),
+                    tables.stream().map(SourceTable::getConfiguration).collect(Collectors.toList()),
                     errors==null?null:errors.getAll());
 
         }

@@ -29,7 +29,7 @@ public class SourceTableConfiguration implements Serializable {
     String name;
     @OptionalMinString
     String identifier;
-    @Valid @NonNull @NotNull
+    @Valid
     FormatConfiguration format;
 
     public SourceTableConfiguration(@NonNull String name,
@@ -37,6 +37,10 @@ public class SourceTableConfiguration implements Serializable {
         this.name = name;
         this.identifier = name;
         this.format = format;
+    }
+
+    public SourceTableConfiguration(@NonNull String name) {
+
     }
 
     public boolean validateAndInitialize(DataSource source, ErrorCollector errors) {
@@ -48,6 +52,13 @@ public class SourceTableConfiguration implements Serializable {
         errors = errors.resolve(name);
         if (Strings.isNullOrEmpty(identifier)) identifier = name;
         identifier = source.getCanonicalizer().getCanonical(identifier);
+
+        if (format==null && source.config.getFormat() == null) {
+            errors.fatal("Need to specify a table format");
+            return false;
+        } else if (format == null) {
+            format = source.config.getFormat();
+        }
 
         return format.initialize(new InputPreview(source,this), errors.resolve("format"));
     }
