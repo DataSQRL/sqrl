@@ -20,7 +20,10 @@ public class VersionedName extends SimpleName {
 
   public static VersionedName parse(String name) {
     String[] parts = name.split(ID_DELIMITER_REGEX);
-    return new VersionedName(parts[0], parts[0], Integer.parseInt(parts[1]));
+    if (parts.length == 1) {
+      return new VersionedName(NameCanonicalizer.SYSTEM.getCanonical(parts[0]), parts[0], 0);
+    }
+    return new VersionedName(NameCanonicalizer.SYSTEM.getCanonical(parts[0]), parts[0], Integer.parseInt(parts[1]));
   }
 
   @Override

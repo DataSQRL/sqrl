@@ -143,8 +143,8 @@ public class JoinWalker {
       Map<Name, Table> joinScope,
       Relationship rel, Name nextAlias) {
     if (rel.getType() == Relationship.Type.JOIN) {
+      joinScope.put(nextAlias, new TableFactory().create((Query)rel.getNode()));
       TableSubquery tableSubquery = new TableSubquery(Optional.empty(), (Query)rel.getNode());
-      joinScope.put(nextAlias, new TableFactory().create(tableSubquery));
       return new AliasedRelation(
           Optional.empty(),
           tableSubquery,

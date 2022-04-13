@@ -164,11 +164,11 @@ public class ExpressionAnalyzer {
           QuerySpecification contextSubquery = Transformers.addContextToQuery.transform(subquerySpec, resolve.get(0).getTable(),
               first.getAlias());
 
-          TableSubquery tableSubquery = new TableSubquery(
-              new Query(Optional.empty(), contextSubquery, Optional.empty(), Optional.empty()));
+          Query query = new Query(Optional.empty(), contextSubquery, Optional.empty(), Optional.empty());
+          TableSubquery tableSubquery = new TableSubquery(query);
 
           TableFactory tableFactory = new TableFactory();
-          Table table = tableFactory.create(tableSubquery);
+          Table table = tableFactory.create(query);
 
           context.getScope().getJoinScope().put(tableAlias, table);
 

@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class AddContextToQuery {
   AggregationDetector aggregationDetector = new AggregationDetector(new FunctionLookup());
@@ -38,7 +37,6 @@ public class AddContextToQuery {
   }
 
   public QuerySpecification transform(QuerySpecification spec, Table table, Name firstAlias) {
-
     List<SelectItem> additionalColumns = table.getPrimaryKeys().stream()
         .map(column -> primaryKeySelect(
             firstAlias.toNamePath().concat(column.getId().toNamePath()),
@@ -46,9 +44,7 @@ public class AddContextToQuery {
         .collect(Collectors.toList());
     List<SelectItem> list = new ArrayList<>(spec.getSelect().getSelectItems());
     list.addAll(additionalColumns);
-    List<Integer> parentPrimaryKeys = IntStream.range(spec.getSelect().getSelectItems().size(),
-        list.size()).boxed().collect(Collectors.toList());
-    spec.setParentPrimaryKeys(parentPrimaryKeys);
+
     Select select = new Select(spec.getSelect().getLocation(), spec.getSelect().isDistinct(), list);
 
     Optional<GroupBy> groupBy = spec.getGroupBy();
@@ -59,7 +55,7 @@ public class AddContextToQuery {
     }
 
     QuerySpecification querySpecification = new QuerySpecification(
-        spec,
+        spec.getLocation(),
         select,
         spec.getFrom(),
         spec.getWhere(),

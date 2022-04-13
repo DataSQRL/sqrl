@@ -74,7 +74,8 @@ public class Relationship extends Field {
 
   private List<SelectItem> refreshSelect() {
     List<SelectItem> selectItems = new ArrayList<>();
-    Table table = new TableFactory().create(new TableSubquery(new Query(((Query)this.node).getQueryBody(), Optional.empty(), Optional.empty())));
+    Query query = new Query(((Query)this.node).getQueryBody(), Optional.empty(), Optional.empty());
+    Table table = new TableFactory().create(query);
     for (Field field : table.getFields()) {
       Identifier identifier = new Identifier(Optional.empty(), field.getName().toNamePath());
       identifier.setResolved(field);

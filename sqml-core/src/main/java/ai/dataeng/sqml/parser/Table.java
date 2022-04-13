@@ -10,10 +10,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.commons.lang3.tuple.Pair;
+import scala.annotation.meta.field;
 
 @Getter
 @Setter
@@ -40,6 +42,15 @@ public class Table implements ShadowingContainer.Nameable {
     return field.isEmpty() ? null : field.get();
   }
 
+  public Field getField(VersionedName name) {
+    for (Field field : this.fields.getElements()) {
+      if (field.getId().equals(name)) {
+        return field;
+      }
+    }
+    return null;
+  }
+
   public boolean addField(Field field) {
     return fields.add(field);
   }
@@ -49,7 +60,7 @@ public class Table implements ShadowingContainer.Nameable {
   }
 
   public List<Column> getPrimaryKeys() {
-    List<Column> pks =this.fields.visibleStream()
+    List<Column> pks = this.fields.visibleStream()
         .filter(f->f instanceof Column)
         .map(f->(Column) f)
         .filter(f->f.isPrimaryKey)
@@ -189,5 +200,17 @@ public class Table implements ShadowingContainer.Nameable {
     }
 
     return Optional.empty();
+  }
+
+  public List<Integer> getParentPrimaryKeys() {
+    List<Integer> pos = new ArrayList<>();
+    List<Field> elements = fields.getElements();
+    for (int i = 0; i < elements.size(); i++) {
+      Field field = elements.get(i);
+      if (field instanceof Column && ((Column) field).getParentPrimaryKey()) {
+        pos.add(i);
+      }
+    }
+    return pos;
   }
 }

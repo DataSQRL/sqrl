@@ -3,6 +3,7 @@ package ai.dataeng.sqml.parser;
 import ai.dataeng.sqml.parser.sqrl.schema.SourceTableFactory;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.Identifier;
+import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SingleColumn;
@@ -18,9 +19,9 @@ public class TableFactory {
   /**
    * Creates a table based on a subquery and derives its ppk and pk
    */
-  public Table create(TableSubquery tableSubquery) {
+  public Table create(Query query) {
     List<Column> columns = new ArrayList<>();
-    for (SelectItem selectItem : ((QuerySpecification)tableSubquery.getQuery().getQueryBody())
+    for (SelectItem selectItem : ((QuerySpecification)query.getQueryBody())
         .getSelect().getSelectItems()) {
       SingleColumn col = (SingleColumn) selectItem;
       Column column = getOrCreateColumn(col.getExpression(), col.getAlias());
@@ -30,6 +31,15 @@ public class TableFactory {
     for (Column column : columns) {
       table.addField(column);
     }
+
+    PrimaryKeyDeriver primaryKeyDeriver = new PrimaryKeyDeriver();
+    List<Integer> pos = primaryKeyDeriver.derive(query);
+
+    for (Integer index : pos) {
+      Column column = ((Column)table.getFields().get(index));
+      column.setPrimaryKey(true);
+    }
+
     return table;
   }
 

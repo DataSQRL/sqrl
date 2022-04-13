@@ -23,7 +23,7 @@ public class AliasFirstColumn {
       return new Query(
           query.getLocation(),
           new QuerySpecification(
-              spec,
+              spec.getLocation(),
               new Select(spec.getSelect().getLocation(), spec.getSelect().isDistinct(),
                   List.of(aliased)),
               spec.getFrom(),

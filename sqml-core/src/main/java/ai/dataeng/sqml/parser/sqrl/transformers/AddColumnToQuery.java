@@ -2,7 +2,6 @@ package ai.dataeng.sqml.parser.sqrl.transformers;
 
 import static ai.dataeng.sqml.util.SqrlNodeUtil.ident;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.singleColumn;
-import static ai.dataeng.sqml.util.SqrlNodeUtil.toSubquery;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.parser.Column;
@@ -13,6 +12,7 @@ import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Join.Type;
 import ai.dataeng.sqml.tree.JoinCriteria;
+import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
@@ -48,15 +48,20 @@ public class AddColumnToQuery {
     TableNode tableNode = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(lAlias));
 
     Name rAlias = gen.nextTableAliasName();
-    TableSubquery subquery = toSubquery(spec);
-    Table rhsTable = new TableFactory().create(subquery);
+
+    Query query = new Query(Optional.empty(), spec, Optional.empty(), Optional.empty());
+
+    Table rhsTable = new TableFactory().create(query);
     joinScope.put(rAlias, rhsTable);
     Type joinType = Type.LEFT;//isAggregating? Type.LEFT : Type.INNER;
     JoinCriteria criteria = JoinWalker.createTableCriteria(joinScope, lAlias, rAlias);
-    Join join = new Join(joinType, tableNode, new AliasedRelation(subquery, ident(rAlias.toNamePath())), Optional.of(criteria));
+
+    TableSubquery subquery = new TableSubquery(Optional.empty(), query);
+    AliasedRelation relation = new AliasedRelation(subquery, ident(rAlias.toNamePath()));
+    Join join = new Join(joinType, tableNode, relation, Optional.of(criteria));
 
     return new QuerySpecification(
-        spec,
+        spec.getLocation(),
         toSelectList(table, expressionName, lAlias, rAlias),
         join,
         Optional.empty(),

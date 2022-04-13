@@ -259,7 +259,7 @@ public class Analyzer {
     }
 
     private List<Field> createFieldsFromSelect(Table table, Query node, RelNode plan) {
-      return new ai.dataeng.sqml.parser.TableFactory().create(new TableSubquery(node))
+      return new ai.dataeng.sqml.parser.TableFactory().create(node)
           .getFields().getElements();
 //
 //      List<Column> columns = new ArrayList<>();

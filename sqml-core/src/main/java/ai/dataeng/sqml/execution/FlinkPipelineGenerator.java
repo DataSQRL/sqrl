@@ -14,6 +14,7 @@ import ai.dataeng.sqml.parser.sqrl.schema.StreamTable;
 import ai.dataeng.sqml.planner.nodes.LogicalFlinkSink;
 import ai.dataeng.sqml.planner.nodes.ShredTableScan;
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import ai.dataeng.sqml.type.schema.SchemaAdjustmentSettings;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -160,7 +161,7 @@ public class FlinkPipelineGenerator {
       stmtSet.addInsert(name, tbl);
     }
 
-    System.out.println(stmtSet.explain());
+//    System.out.println(stmtSet.explain());
 
     return Pair.of(stmtSet, ddl);
   }
@@ -171,12 +172,19 @@ public class FlinkPipelineGenerator {
     List<UnresolvedColumn> columns = toSchema.getColumns();
     for (int i = 0; i < columns.size(); i++) {
       UnresolvedColumn column = columns.get(i);
-      if (i == 0) { //bad remove this
-        builder.column(column.getName(),
-            ((UnresolvedPhysicalColumn) column).getDataType().notNull());
-        pks.add(column.getName());
+      VersionedName name = VersionedName.parse(column.getName());
+      if (sqrlTable.getField(name) != null) {
+        Field field = sqrlTable.getField(name);
+        if (field instanceof Column && ((Column)field).isPrimaryKey()) {
+          builder.column(column.getName(),
+              ((UnresolvedPhysicalColumn) column).getDataType().notNull());
+          pks.add(column.getName());
+
+        } else {
+          builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
+        }
       } else {
-        builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
+        throw new RuntimeException("?");
       }
     }
 
