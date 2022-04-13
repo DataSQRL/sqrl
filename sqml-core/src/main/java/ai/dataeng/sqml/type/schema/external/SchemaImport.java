@@ -2,7 +2,7 @@ package ai.dataeng.sqml.type.schema.external;
 
 import ai.dataeng.sqml.config.util.NamedIdentifier;
 import ai.dataeng.sqml.config.util.StringNamedId;
-import ai.dataeng.sqml.io.sources.dataset.DatasetLookup;
+import ai.dataeng.sqml.io.sources.dataset.DatasetRegistry;
 import ai.dataeng.sqml.io.sources.dataset.SourceDataset;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.SpecialName;
@@ -40,10 +40,10 @@ public class SchemaImport {
 
     public static final NamedIdentifier VERSION = StringNamedId.of("1");
 
-    private final DatasetLookup datasetLookup;
+    private final DatasetRegistry datasetLookup;
     private final Constraint.Lookup constraintLookup;
 
-    public SchemaImport(DatasetLookup datasetLookup, Constraint.Lookup constraintLookup) {
+    public SchemaImport(DatasetRegistry datasetLookup, Constraint.Lookup constraintLookup) {
         this.datasetLookup = datasetLookup;
         this.constraintLookup = constraintLookup;
     }
@@ -62,7 +62,7 @@ public class SchemaImport {
                 errors.fatal( "Missing or invalid dataset name: %s", dataset.name);
                 continue;
             }
-            SourceDataset sd = datasetLookup.getDataset(dataset.name);
+            SourceDataset sd = datasetLookup.getDataset(Name.system(dataset.name));
             if (sd==null) {
                 errors.fatal("Source dataset is unknown and has not been registered with system: %s", dataset.name);
                 continue;

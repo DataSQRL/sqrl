@@ -8,27 +8,13 @@ public abstract class TableBuilder {
     final String tableName;
     boolean isFinished;
 
-    final List<String> dmlQueries;
-    final DatabaseUtil dbUtil;
-
-    TableBuilder(String tableName, List<String> dmlQueries, DatabaseUtil dbUtil) {
+    TableBuilder(String tableName) {
         this.tableName = tableName;
-        this.dmlQueries = dmlQueries;
-        this.dbUtil = dbUtil;
     }
-
-    void checkUpdate() {
-        Preconditions.checkArgument(!isFinished);
-    }
+//
+//    void checkUpdate() {
+//        Preconditions.checkArgument(!isFinished);
+//    }
 
     abstract String getSQL();
-
-    public String finish() {
-        if (!isFinished) {
-            dmlQueries.add(getSQL());
-            isFinished = true;
-        }
-        return tableName;
-    }
-
 }

@@ -34,7 +34,7 @@ public final class SimpleGroupBy
     this(Optional.of(location), simpleGroupByExpressions);
   }
 
-  private SimpleGroupBy(Optional<NodeLocation> location,
+  public SimpleGroupBy(Optional<NodeLocation> location,
       List<Expression> simpleGroupByExpressions) {
     super(location);
     this.columns = ImmutableList

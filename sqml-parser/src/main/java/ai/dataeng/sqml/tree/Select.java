@@ -24,27 +24,25 @@ import java.util.Optional;
 public class Select
     extends Node {
 
-  private final boolean distinct;
-  private final Optional<DistinctOn> distinctOn;
-  private final List<SelectItem> selectItems;
+  private boolean distinct;
+  private List<SelectItem> selectItems;
 
   public Select(boolean distinct, List<SelectItem> selectItems) {
-    this(Optional.empty(), distinct, Optional.empty(), selectItems);
+    this(Optional.empty(), distinct, selectItems);
   }
 
-  public Select(DistinctOn distinctOn, List<SelectItem> selectItems) {
-    this(Optional.empty(), true, Optional.of(distinctOn), selectItems);
+  public Select(List<SelectItem> selectItems) {
+    this(Optional.empty(), false, selectItems);
   }
 
   public Select(NodeLocation location, boolean distinct, List<SelectItem> selectItems) {
-    this(Optional.of(location), distinct, Optional.empty(), selectItems);
+    this(Optional.of(location), distinct, selectItems);
   }
 
-  private Select(Optional<NodeLocation> location, boolean distinct, Optional<DistinctOn> distinctOn,
+  public Select(Optional<NodeLocation> location, boolean distinct,
       List<SelectItem> selectItems) {
     super(location);
     this.distinct = distinct;
-    this.distinctOn = distinctOn;
     this.selectItems = ImmutableList.copyOf(requireNonNull(selectItems, "selectItems"));
   }
 
@@ -54,10 +52,6 @@ public class Select
 
   public List<SelectItem> getSelectItems() {
     return selectItems;
-  }
-
-  public Optional<DistinctOn> getDistinctOn() {
-    return distinctOn;
   }
 
   @Override

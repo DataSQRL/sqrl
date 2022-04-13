@@ -13,6 +13,7 @@
  */
 package ai.dataeng.sqml.tree;
 
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
@@ -22,45 +23,29 @@ import java.util.regex.Pattern;
 public class Identifier
     extends Expression {
 
-  private static final Pattern NAME_PATTERN = Pattern.compile("[a-zA-Z_@]([a-zA-Z0-9_:@])*");
+  private final NamePath namePath;
 
-  private final String value;
-  private final boolean delimited;
-  private String alias;
+  private Object resolved;
 
-  public Identifier(NodeLocation location, String value, boolean delimited) {
-    this(Optional.of(location), value, delimited);
+  public Identifier(NodeLocation location, NamePath namePath) {
+    super(Optional.of(location));
+    this.namePath = namePath;
   }
-
-  public Identifier(String value, boolean delimited) {
-    this(Optional.empty(), value, delimited);
-  }
-
-  public Identifier(String value) {
-    this(Optional.empty(), value, !NAME_PATTERN.matcher(value).matches());
-  }
-
-  public Identifier(String value, String alias) {
-    this(Optional.empty(), value, !NAME_PATTERN.matcher(value).matches());
-    this.alias = alias;
-  }
-
-  private Identifier(Optional<NodeLocation> location, String value, boolean delimited) {
+  public Identifier(Optional<NodeLocation> location, NamePath namePath) {
     super(location);
-    this.value = value;
-    this.delimited = delimited;
+    this.namePath = namePath;
   }
 
-  public String getValue() {
-    return value;
+  public NamePath getNamePath() {
+    return namePath;
   }
 
-  public String getAlias() {
-    return alias;
+  public <T> T getResolved() {
+    return (T)resolved;
   }
 
-  public boolean isDelimited() {
-    return delimited;
+  public void setResolved(Object resolved) {
+    this.resolved = resolved;
   }
 
   @Override
@@ -81,13 +66,12 @@ public class Identifier
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     Identifier that = (Identifier) o;
-    return Objects.equals(value, that.value);
+    return Objects.equals(namePath, that.namePath);
   }
 
   @Override
   public int hashCode() {
-    return value.hashCode();
+    return Objects.hash(namePath);
   }
 }

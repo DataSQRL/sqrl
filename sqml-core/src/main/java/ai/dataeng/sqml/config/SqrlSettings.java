@@ -9,18 +9,10 @@ import ai.dataeng.sqml.config.provider.*;
 import ai.dataeng.sqml.config.serializer.KryoProvider;
 import ai.dataeng.sqml.execution.flink.environment.FlinkStreamEngine;
 import ai.dataeng.sqml.execution.flink.ingest.FlinkSourceMonitor;
-import ai.dataeng.sqml.io.sinks.registry.DataSinkRegistryPersistence;
 import ai.dataeng.sqml.io.sinks.registry.MetadataSinkRegistryPersistence;
 import ai.dataeng.sqml.io.sources.dataset.MetadataSourceRegistryPersistence;
 import ai.dataeng.sqml.io.sources.dataset.SourceTableMonitorImpl;
-import ai.dataeng.sqml.parser.ScriptParserImpl;
-import ai.dataeng.sqml.parser.ScriptProcessorImpl;
-import ai.dataeng.sqml.parser.validator.ScriptValidatorImpl;
-import ai.dataeng.sqml.planner.HeuristicPlannerImpl;
-import ai.dataeng.sqml.planner.operator.ImportManager;
-import ai.dataeng.sqml.planner.operator.ImportResolver;
-import ai.dataeng.sqml.schema.Namespace;
-import ai.dataeng.sqml.schema.NamespaceImpl;
+import ai.dataeng.sqml.parser.operator.ImportManager;
 import com.google.common.base.Preconditions;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,12 +20,7 @@ import lombok.Getter;
 @Builder
 @Getter
 public class SqrlSettings {
-  Namespace namespace;
-  ValidatorProvider validatorProvider;
-  ScriptParserProvider scriptParserProvider;
   ImportManagerProvider importManagerProvider;
-  ScriptProcessorProvider scriptProcessorProvider;
-  HeuristicPlannerProvider heuristicPlannerProvider;
 
   JDBCConfiguration jdbcConfiguration;
   StreamEngineProvider streamEngineProvider;
@@ -68,16 +55,10 @@ public class SqrlSettings {
         .datasetRegistryPersistenceProvider(new MetadataSourceRegistryPersistence.Provider())
         .dataSinkRegistryPersistenceProvider(new MetadataSinkRegistryPersistence.Provider())
         .environmentPersistenceProvider(new MetadataEnvironmentPersistence.Provider())
-
-        .namespace(new NamespaceImpl())
-        .validatorProvider(()->new ScriptValidatorImpl())
-        .scriptParserProvider(()->new ScriptParserImpl())
-        .importManagerProvider((datasetLookup, planner)-> {
+        .importManagerProvider((datasetLookup)-> {
           ImportManager manager = new ImportManager(datasetLookup);
-          return new ImportResolver(manager, planner);
-        })
-        .heuristicPlannerProvider(()->new HeuristicPlannerImpl())
-        .scriptProcessorProvider(ScriptProcessorImpl::new);
+          return manager;
+        });
 
     GlobalConfiguration.Engines engines = config.getEngines();
     Preconditions.checkArgument(engines.getFlink()!=null,"Must configure Flink engine");

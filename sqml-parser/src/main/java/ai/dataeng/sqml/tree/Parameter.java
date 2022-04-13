@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Deprecated
 public class Parameter
     extends Expression {
 

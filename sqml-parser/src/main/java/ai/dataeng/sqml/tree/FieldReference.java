@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+@Deprecated
 public class FieldReference
         extends Expression
 {

@@ -15,6 +15,7 @@ package ai.dataeng.sqml.tree;
 
 import static java.util.Objects.requireNonNull;
 
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
@@ -23,21 +24,21 @@ import java.util.Optional;
 public class FunctionCall
     extends Expression {
 
-  private final QualifiedName name;
+  private final NamePath name;
   private final List<Expression> arguments;
   private final boolean distinct;
   private final Optional<Window> over;
 
-  public FunctionCall(QualifiedName name, List<Expression> arguments,
+  public FunctionCall(NamePath name, List<Expression> arguments,
       boolean distinct) {
     this(Optional.empty(), name, arguments, distinct, Optional.empty());
   }
-  public FunctionCall(NodeLocation location, QualifiedName name, List<Expression> arguments,
+  public FunctionCall(NodeLocation location, NamePath name, List<Expression> arguments,
       boolean distinct) {
     this(Optional.of(location), name, arguments, distinct, Optional.empty());
   }
 
-  public FunctionCall(Optional<NodeLocation> location, QualifiedName name,
+  public FunctionCall(Optional<NodeLocation> location, NamePath name,
       List<Expression> arguments, boolean distinct, Optional<Window> over) {
     super(location);
     this.distinct = distinct;
@@ -49,7 +50,7 @@ public class FunctionCall
     this.arguments = arguments;
   }
 
-  public QualifiedName getName() {
+  public NamePath getName() {
     return name;
   }
 

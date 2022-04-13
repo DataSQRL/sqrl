@@ -19,6 +19,7 @@ import ai.dataeng.sqml.parser.ParsingException;
 import java.util.Objects;
 import java.util.Optional;
 
+@Deprecated
 public final class GenericLiteral
     extends Literal {
 

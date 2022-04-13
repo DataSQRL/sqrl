@@ -49,16 +49,14 @@ subscriptionType
     ;
 
 inlineJoin
-    : inlineJoinBody
+    : inlineJoinBody+
       (ORDER BY sortItem (',' sortItem)*)?
       (LIMIT limit=INTEGER_VALUE)?
       (INVERSE inv=identifier)?
     ;
 
 inlineJoinBody
-    : (LEFT)? JOIN table=qualifiedName (AS? alias=identifier)?
-      (ON expression)?
-      inlineJoinBody?
+    : joinType JOIN relationPrimary (joinCriteria)?
     ;
 
 query
@@ -120,11 +118,10 @@ selectItem
 
 relation
     : left=relation
-      ( CROSS JOIN right=aliasedRelation
+      ( CROSS JOIN right=relationPrimary
       | joinType JOIN rightRelation=relation (joinCriteria)?
-      | NATURAL joinType JOIN right=aliasedRelation
       )                                           #joinRelation
-    | aliasedRelation                             #relationDefault
+    | relationPrimary                             #relationDefault
     ;
 
 joinType
@@ -138,14 +135,8 @@ joinCriteria
     : ON booleanExpression
     ;
 
-aliasedRelation
-    : relationPrimary (AS? identifier)?
-    ;
-
 relationPrimary
-    : qualifiedName                                                   #tableName
-    | '(' query ')'                                                   #subqueryRelation
-    | '(' relation ')'                                                #parenthesizedRelation
+    : qualifiedName (AS? identifier)? #tableName
     ;
 
 expression
@@ -166,10 +157,9 @@ predicate[ParserRuleContext value]
     | NOT? IN qualifiedName                                               #inRelation
     | NOT? IN '(' expression (',' expression)* ')'                        #inList
     | NOT? IN '(' query ')'                                               #inSubquery
-    | NOT? LIKE pattern=valueExpression                                   #like
-    | IS NOT? EMPTY                                                       #isEmpty
+   // | NOT? LIKE pattern=valueExpression                                   #like
     | IS NOT? NULL                                                        #nullPredicate
-    | IS NOT? DISTINCT FROM right=valueExpression                         #distinctFrom
+//    | IS NOT? DISTINCT FROM right=valueExpression                         #distinctFrom
     ;
 
 valueExpression
@@ -181,23 +171,16 @@ valueExpression
 
 primaryExpression
     : NULL                                                                                #nullLiteral
-    | inlineJoinBody                                                                          #inlineJoinExpr
     | interval                                                                            #intervalLiteral
-    | identifier string                                                                   #typeConstructor
     | number                                                                              #numericLiteral
     | booleanValue                                                                        #booleanLiteral
     | string                                                                              #stringLiteral
-    | '?'                                                                                 #parameter
-    | '(' expression (',' expression)+ ')'                                                #rowConstructor
     | qualifiedName '(' ASTERISK ')'                                                      #functionCall
     | qualifiedName '(' (setQuantifier? expression (',' expression)*)? ')'                #functionCall
     | '(' query ')'                                                                       #subqueryExpression
-    // This is an extension to ANSI SQL, which considers EXISTS to be a <boolean expression>
-    | EXISTS '(' query ')'                                                                #exists
     | CASE whenClause+ (ELSE elseExpression=expression)? END                              #simpleCase
     | CAST '(' expression AS type ')'                                                     #cast
     | qualifiedName                                                                       #columnReference
-    | base=primaryExpression '.' fieldName=identifier                                     #dereference
     | '(' expression ')'                                                                 #parenthesizedExpression
     ;
 
@@ -223,11 +206,7 @@ intervalField
     ;
 
 type
-    : type ARRAY
-    | ARRAY '<' type '>'
-    | MAP '<' type ',' type '>'
-    | ROW '(' identifier type (',' identifier type)* ')'
-    | baseType ('(' typeParameter (',' typeParameter)* ')')?
+    :  baseType ('(' typeParameter (',' typeParameter)* ')')?
     | INTERVAL from=intervalField TO to=intervalField
     ;
 
@@ -392,7 +371,6 @@ MATERIALIZED: 'MATERIALIZED';
 MINUTE: 'MINUTE';
 MONTH: 'MONTH';
 NAME: 'NAME';
-NATURAL: 'NATURAL';
 NFC : 'NFC';
 NFD : 'NFD';
 NFKC : 'NFKC';

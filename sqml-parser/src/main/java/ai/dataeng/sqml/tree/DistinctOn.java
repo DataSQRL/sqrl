@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Deprecated
 public class DistinctOn extends Node {
 
   private final List<Identifier> on;

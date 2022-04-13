@@ -1,21 +1,17 @@
 package ai.dataeng.sqml.api.graphql;
 
-import ai.dataeng.execution.table.H2Table;
-import ai.dataeng.sqml.planner.Column;
-import ai.dataeng.sqml.planner.DatasetOrTable;
-import ai.dataeng.sqml.planner.Relationship;
-import ai.dataeng.sqml.planner.Relationship.Multiplicity;
-import ai.dataeng.sqml.planner.Table;
-import ai.dataeng.sqml.planner.operator.ShadowingContainer;
-import ai.dataeng.sqml.tree.QualifiedName;
+import ai.dataeng.sqml.parser.Column;
+import ai.dataeng.sqml.parser.Relationship;
+import ai.dataeng.sqml.parser.Relationship.Multiplicity;
+import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.parser.operator.ShadowingContainer;
 import ai.dataeng.sqml.type.ArrayType;
-import ai.dataeng.sqml.type.Field;
-import ai.dataeng.sqml.type.RelationType;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BigIntegerType;
 import ai.dataeng.sqml.type.basic.BooleanType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
+import ai.dataeng.sqml.type.basic.DoubleType;
 import ai.dataeng.sqml.type.basic.FloatType;
 import ai.dataeng.sqml.type.basic.IntegerType;
 import ai.dataeng.sqml.type.basic.IntervalType;
@@ -41,7 +37,6 @@ import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
-import io.vertx.sqlclient.Pool;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,23 +51,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GraphqlSchemaBuilder {
   final Map<Class<? extends Type>, GraphQLOutputType> types;
-  final ShadowingContainer<DatasetOrTable> schema;
+  final ShadowingContainer<Table> schema;
   private final GraphQLCodeRegistry codeRegistry;
   private final GraphqlTypeCatalog typeCatalog;
   GraphQLSchema.Builder schemaBuilder = GraphQLSchema.newSchema();
-  NameTranslator nameTranslator = new NameTranslator();
-  Map<String, H2Table> tableMap;
-  private final Pool client;
 
   public GraphqlSchemaBuilder(Map<Class<? extends Type>, GraphQLOutputType> types,
-      ShadowingContainer<DatasetOrTable> schema,
-      Map<String, H2Table> tableMap, Pool client, GraphQLCodeRegistry codeRegistry) {
-
+      ShadowingContainer<Table> schema, GraphQLCodeRegistry codeRegistry) {
     this.types = types;
     this.schema = schema;
     this.codeRegistry = codeRegistry;
-    this.tableMap = new HashMap<>(); //todo
-    this.client = client;
     this.typeCatalog = new GraphqlTypeCatalog();
   }
 
@@ -81,11 +69,11 @@ public class GraphqlSchemaBuilder {
   }
 
   public static class Builder {
-    private ShadowingContainer<DatasetOrTable> schema;
+    private ShadowingContainer<Table> schema;
     private GraphQLCodeRegistry codeRegistry;
     private Map<Class<? extends Type>, GraphQLOutputType> types = StandardScalars.getTypeMap();
 
-    public Builder schema(ShadowingContainer<DatasetOrTable> schema) {
+    public Builder schema(ShadowingContainer<Table> schema) {
       this.schema = schema;
       return this;
     }
@@ -101,8 +89,7 @@ public class GraphqlSchemaBuilder {
     }
 
     public GraphQLSchema build() {
-      GraphqlSchemaBuilder schemaBuilder = new GraphqlSchemaBuilder(types, schema, null, null, codeRegistry);
-
+      GraphqlSchemaBuilder schemaBuilder = new GraphqlSchemaBuilder(types, schema, codeRegistry);
       return schemaBuilder.build();
     }
 
@@ -112,7 +99,7 @@ public class GraphqlSchemaBuilder {
     GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
         .name("Query");
 
-    for (DatasetOrTable field : schema) {
+    for (Table field : schema) {
       Table table = (Table)field;
       if (table.getName().getCanonical().startsWith("_")) continue;
       GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()
@@ -128,43 +115,6 @@ public class GraphqlSchemaBuilder {
     schemaBuilder.codeRegistry(codeRegistry);//buildCodeRegistry(client));
     return schemaBuilder.build();
   }
-//
-//  private GraphQLCodeRegistry buildCodeRegistry(Pool client) {
-//
-//    JdbcPool pool = new JdbcPool(client);
-//    DataLoaderRegistry dataLoaderRegistry = new DataLoaderRegistry();
-//    GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
-//    for (DatasetOrTable ds : schema) {
-//      Table tbl = (Table) ds;
-//      String gqlName = nameTranslator.getGraphqlName(tbl);
-//      codeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", gqlName),
-//          new DefaultDataFetcher(pool, new SystemPageProvider(), tableMap.get(tbl.getName().getDisplay())));
-//    }
-//
-//    for (DatasetOrTable ds : schema) {
-//      Table tbl = (Table) ds;
-//      resolveNestedFetchers(pool, tbl, codeRegistry);
-//    }
-//
-//    return codeRegistry.build();
-//
-//  }
-//
-//  private void resolveNestedFetchers(JdbcPool pool, Table tbl, GraphQLCodeRegistry.Builder codeRegistry) {
-//    for (ai.dataeng.sqml.planner.Field field : tbl.getFields()) {
-//      if (field instanceof Relationship) {
-//        resolveNestedFetchers(pool, (Relationship)field, codeRegistry, tbl);
-//      }
-//    }
-//  }
-//
-//  private void resolveNestedFetchers(JdbcPool pool, Relationship field, GraphQLCodeRegistry.Builder codeRegistry,
-//      Table parent) {
-//
-//    codeRegistry.dataFetcher(FieldCoordinates.coordinates(nameTranslator.getGraphqlTypeName(parent),
-//            nameTranslator.getGraphqlName(field.getToTable())),
-//        new DefaultDataFetcher(/*dataLoaderRegistry, */pool, new NoPage(), tableMap.get(field.getToTable().getName().getDisplay())));
-//  }
 
   //TODO: let page wrapper be informed by page strategy
   //TODO: Assure types are only defined once
@@ -209,7 +159,7 @@ public class GraphqlSchemaBuilder {
     GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
         .name(table.getName().getDisplay());
 
-    for (ai.dataeng.sqml.planner.Field field : table.getFields()) {
+    for (ai.dataeng.sqml.parser.Field field : table.getFields()) {
       if (!field.isVisible()) {
         continue;
       }
@@ -323,7 +273,6 @@ public class GraphqlSchemaBuilder {
 
   class Visitor extends SqmlTypeVisitor<Optional<GraphQLOutputType>, Context> {
     private GraphQLSchema.Builder schemaBuilder;
-    private Map<QualifiedName, GraphQLObjectType.Builder> gqlTypes = new HashMap<>();
     private Set<GraphQLType> additionalTypes = new HashSet<>();
 
     private GraphQLInputType bind;
@@ -337,10 +286,6 @@ public class GraphqlSchemaBuilder {
     public GraphQLSchema.Builder getBuilder() {
       return schemaBuilder;
     }
-//
-//    public Optional<GraphQLOutputType> visit(LogicalPlan logicalPlan, Context context) {
-//
-//    }
 
     @Override
     public Optional<GraphQLOutputType> visitArrayType(ArrayType type, Context context) {
@@ -356,6 +301,11 @@ public class GraphqlSchemaBuilder {
       Optional<GraphQLOutputType> outputType = Optional.ofNullable(typeMap.get(type.getClass()));
 
       return outputType;
+    }
+
+    @Override
+    public Optional<GraphQLOutputType> visitDoubleType(DoubleType type, Context context) {
+      return Optional.of(Scalars.GraphQLFloat);
     }
 
     @Override
@@ -399,12 +349,6 @@ public class GraphqlSchemaBuilder {
     }
 
     @Override
-    public <F extends Field> Optional<GraphQLOutputType> visitRelation(RelationType<F> relationType,
-        Context context) {
-      return null;
-    }
-
-    @Override
     public Optional<GraphQLOutputType> visitUuidType(UuidType type, Context context) {
       return Optional.of(Scalars.GraphQLString);
     }
@@ -413,26 +357,11 @@ public class GraphqlSchemaBuilder {
     public Optional<GraphQLOutputType> visitIntervalType(IntervalType type, Context context) {
       return Optional.of(Scalars.GraphQLInt); //Todo: interval type?
     }
-
-    public  String toGraphqlName(String name) {
-      return name.replaceAll("[^A-Za-z0-9_]", "");
-    }
-
-    private boolean containsHiddenField(QualifiedName name) {
-      for (String part : name.getParts()) {
-        if (part.startsWith("_")) {
-          return true;
-        }
-      }
-      return false;
-    }
-
   }
 
   @Value
   static class Context {
     private final String parentType;
-    private final Field field;
   }
 
   public static class GraphqlTypeCatalog {

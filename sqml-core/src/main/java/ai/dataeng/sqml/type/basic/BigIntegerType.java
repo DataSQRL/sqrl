@@ -8,10 +8,10 @@ import java.util.Set;
 public class BigIntegerType extends AbstractBasicType<BigInteger> {
 
     public static final BigIntegerType INSTANCE = new BigIntegerType();
-
+    public static final String NAME = "BIGINTEGER";
     @Override
     public String getName() {
-        return "BIGINTEGER";
+        return NAME;
     }
 
     public BasicType parentType() {

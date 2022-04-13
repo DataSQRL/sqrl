@@ -27,7 +27,11 @@ public class JoinOn
   private final Expression expression;
 
   public JoinOn(NodeLocation location, Expression expression) {
-    super(Optional.ofNullable(location));
+    this(Optional.ofNullable(location), expression);
+  }
+
+  public JoinOn(Optional<NodeLocation> location, Expression expression) {
+    super(location);
     this.expression = requireNonNull(expression, "expression is null");
   }
 

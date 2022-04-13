@@ -1,7 +1,7 @@
 package ai.dataeng.sqml.flink;
 
 import ai.dataeng.sqml.api.ConfigurationTest;
-import ai.dataeng.sqml.planner.operator.C360Test;
+import ai.dataeng.sqml.parser.operator.C360Test;
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobExecutionResult;
@@ -9,15 +9,11 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.annotation.DataTypeHint;
-import org.apache.flink.table.annotation.FunctionHint;
-import org.apache.flink.table.annotation.FunctionHints;
 import org.apache.flink.table.api.*;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.data.ArrayData;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.expressions.Expression;
 import org.apache.flink.table.functions.TableFunction;
 import org.apache.flink.table.runtime.functions.SqlUnnestUtils;
 import org.apache.flink.table.types.DataType;
@@ -25,7 +21,6 @@ import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.RowType;
-import org.apache.flink.types.Row;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -33,7 +28,6 @@ import java.util.List;
 
 import static org.apache.flink.table.api.Expressions.$;
 import static org.apache.flink.table.api.Expressions.call;
-import static org.apache.flink.table.types.logical.utils.LogicalTypeChecks.getFieldCount;
 
 public class FlinkTest {
 
