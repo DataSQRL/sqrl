@@ -13,7 +13,7 @@ public class Now implements RewritingFunction {
 
   @Override
   public FunctionCall rewrite(FunctionCall node) {
-    return new FunctionCall(node.getLocation(), Name.system("CURRENT_DATE").toNamePath(), node.getArguments(), false,
+    return new FunctionCall(node.getLocation(), Name.system("LOCALTIMESTAMP").toNamePath(), node.getArguments(), false,
         Optional.empty());
   }
 }

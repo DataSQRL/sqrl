@@ -134,7 +134,7 @@ public class FlinkTableConverter {
         if (type instanceof StringType) {
             return DataTypes.STRING();
         } else if (type instanceof DateTimeType) {
-            return DataTypes.DATE();
+            return DataTypes.TIMESTAMP();
         } else if (type instanceof BooleanType) {
             return DataTypes.BOOLEAN();
         } else if (type instanceof BigIntegerType) {

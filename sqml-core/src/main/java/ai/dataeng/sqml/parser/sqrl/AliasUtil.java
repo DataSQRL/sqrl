@@ -63,9 +63,6 @@ public class AliasUtil {
   }
 
   public static PrimaryKeySelectItem primaryKeySelect(NamePath name, NamePath alias, Column column) {
-    if (alias.getFirst().equals(Name.system("__f51"))) {
-      System.out.println();
-    }
     Identifier identifier = new Identifier(Optional.empty(), name);
     Identifier aliasIdentifier = new Identifier(Optional.empty(), alias);
     Column ppk = column.copy();

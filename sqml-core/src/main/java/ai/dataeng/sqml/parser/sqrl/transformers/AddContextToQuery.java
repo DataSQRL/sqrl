@@ -47,7 +47,6 @@ public class AddContextToQuery {
     List<Integer> parentPrimaryKeys = IntStream.range(spec.getSelect().getSelectItems().size(),
         list.size()).boxed().collect(Collectors.toList());
     spec.setParentPrimaryKeys(parentPrimaryKeys);
-    System.out.println(additionalColumns);
     Select select = new Select(spec.getSelect().getLocation(), spec.getSelect().isDistinct(), list);
 
     Optional<GroupBy> groupBy = spec.getGroupBy();

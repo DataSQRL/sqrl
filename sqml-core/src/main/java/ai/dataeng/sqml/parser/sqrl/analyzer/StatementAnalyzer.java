@@ -4,7 +4,6 @@ import static ai.dataeng.sqml.parser.sqrl.AliasUtil.getTableAlias;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.mapToOrdinal;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
-import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.sqrl.JoinWalker;
 import ai.dataeng.sqml.parser.sqrl.JoinWalker.WalkResult;
@@ -22,6 +21,7 @@ import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Join.Type;
 import ai.dataeng.sqml.tree.JoinCriteria;
+import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.OrderBy;
@@ -38,7 +38,6 @@ import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -172,10 +171,10 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         ? tableNode.getAlias().get()
         : namePath.getLength() > 1 ? gen.nextTableAliasName() : namePath.getFirst();
 
-//    TableNode relation = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(firstAlias));
-//    TableBookkeeping b = new TableBookkeeping(relation, firstAlias, table);
     scope.getJoinScope().put(firstAlias, table);
-    WalkResult result = new JoinWalker().walk(firstAlias, Optional.of(lastAlias), namePath.popFirst(), Optional.empty(), scope.getJoinScope());
+    WalkResult result = new JoinWalker().walk(firstAlias, Optional.of(lastAlias), namePath.popFirst(), Optional.empty(),
+        ()->Optional.empty(),
+        scope.getJoinScope());
 
     scope.getFieldScope().put(lastAlias, table.walk(namePath.popFirst()).get());
     return createScope(result.getRelation(), scope);
@@ -203,24 +202,41 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     //A join traversal, e.g. FROM orders AS o JOIN o.entries
     if (scope.getJoinScope().containsKey(rhs.getNamePath().getFirst())) {
       Table baseTable = scope.getJoinScope().get(rhs.getNamePath().getFirst());
+      //Immediately register the field scope so the criteria can be resolved
+      scope.getFieldScope().put(lastAlias, baseTable.walk(rhs.getNamePath().popFirst()).get());
       JoinWalker joinWalker = new JoinWalker();
       WalkResult result = joinWalker.walk(
           rhs.getNamePath().getFirst(),
           Optional.of(lastAlias),
           rhs.getNamePath().popFirst(),
           Optional.of((Relation)left.getNode()),
+          ()->rewrite(node.getCriteria(), scope),
           scope.getJoinScope()
       );
 
-      scope.getFieldScope().put(lastAlias, baseTable.walk(rhs.getNamePath().popFirst()).get());
       return createScope(result.getRelation(), scope);
     } else { //A regular join: FROM Orders JOIN entries
       Table table = analyzer.getDag().getSchema().getByName(rhs.getNamePath().get(0)).get();
       Name firstAlias = getTableAlias(rhs, 0, gen::nextTableAliasName);
       scope.getJoinScope().put(firstAlias, table);
+      scope.getFieldScope().put(lastAlias, table.walk(rhs.getNamePath().popFirst()).get());
 
       TableNode tableNode = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(firstAlias));
-      Join join = new Join(Optional.empty(), Type.CROSS, (Relation)left.getNode(), tableNode, Optional.empty());
+      //If there is one entry in the path, do an inner join w/ the given criteria
+      Type type = rhs.getNamePath().getLength() > 1 || node.getCriteria().isEmpty()
+          ? Type.CROSS
+          : Type.INNER;
+      //Similar, we want to push in the first join criteria if possible
+      Optional<JoinCriteria> firstCriteria = rhs.getNamePath().getLength() > 1
+          ? Optional.empty()
+          : node.getCriteria();
+
+      Join join = new Join(Optional.empty(),
+          type,
+          (Relation)left.getNode(),
+          tableNode,
+          rewrite(firstCriteria, scope)
+      );
 
       JoinWalker joinWalker = new JoinWalker();
       WalkResult result = joinWalker.walk(
@@ -228,12 +244,17 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           Optional.of(lastAlias),
           rhs.getNamePath().popFirst(),
           Optional.of(join),
+          ()->rewrite(node.getCriteria(), scope),
           scope.getJoinScope()
       );
 
-      scope.getFieldScope().put(lastAlias, table.walk(rhs.getNamePath().popFirst()).get());
       return createScope(result.getRelation(), scope);
     }
+  }
+
+  private Optional<JoinCriteria> rewrite(Optional<JoinCriteria> criteria, Scope scope) {
+    return criteria.map(e->
+        new JoinOn(e.getLocation(), rewriteExpression(((JoinOn)e).getExpression(), scope)));
   }
 
   @Override

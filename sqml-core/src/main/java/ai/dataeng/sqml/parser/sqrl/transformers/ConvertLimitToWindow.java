@@ -78,17 +78,6 @@ public class ConvertLimitToWindow {
         Optional.empty()
     );
 
-    QuerySpecification outer2 = new QuerySpecification(
-        spec,
-        spec.getSelect(),
-        new TableSubquery(new Query(outer, Optional.empty(), Optional.empty())),
-        spec.getWhere(),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty()
-    );
-
     return outer;
   }
 
@@ -121,14 +110,6 @@ public class ConvertLimitToWindow {
     }
     throw new RuntimeException("Could not resolve identifier name");
   }
-
-  private List<SelectItem> randomAliasSelectList(List<SelectItem> selectItems) {
-    return selectItems.stream()
-        .map(s->new SingleColumn(s.getLocation(), ((SingleColumn)s).getExpression(),
-            Optional.of(ident(gen.nextAliasName()))))
-        .collect(Collectors.toList());
-  }
-
 
   private Expression limitToRowNumCondition(Optional<Limit> limit) {
     return new ComparisonExpression(Operator.LESS_THAN_OR_EQUAL, new Identifier(Optional.empty(),

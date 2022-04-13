@@ -113,7 +113,6 @@ public class ExpressionAnalyzer {
             createWindow(context.getScope()));
       }
 
-      //Todo: allow expanding aggregates more than a single argument
       if (function.isAggregate() && node.getArguments().size() == 1 &&
           node.getArguments().get(0) instanceof Identifier) {
         Identifier identifier = (Identifier)node.getArguments().get(0);
@@ -132,6 +131,7 @@ public class ExpressionAnalyzer {
               Optional.empty(), //Terminal alias specified
               result.getRemaining().get(), //The fields from the base that we should resolve
               Optional.empty(), //push in relation
+              ()->Optional.empty(),
               context.getScope().getJoinScope()
           );
           TableItem first = walkResult.getTableStack().get(0);
@@ -141,7 +141,7 @@ public class ExpressionAnalyzer {
           Field field = result.getTable().walkField(result.getRemaining().get()).get();
           Name fieldName = field instanceof Relationship ?
               ((Relationship) field).getToTable().getPrimaryKeys().get(0).getId()
-              : result.getRemaining().get().getLast();
+              : result.getTable().walkField(result.getRemaining().get()).get().getId();
 
           Name tableAlias = gen.nextTableAliasName();
           Name fieldAlias = gen.nextAliasName();
@@ -204,12 +204,9 @@ public class ExpressionAnalyzer {
         ExpressionTreeRewriter<Context> treeRewriter) {
       List<Scope.ResolveResult> results = context.getScope().resolveFirst(node.getNamePath());
 
-      if (results.size() != 1) {
-        System.out.println();
-      }
       Preconditions.checkState(results.size() == 1,
           "Could not resolve field (ambiguous or non-existent: " + node + " : " + results + ")");
-      System.out.println(results.get(0));
+
       if (PathUtil.isToOne(results.get(0))) {
         ResolveResult result = results.get(0);
         /*

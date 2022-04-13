@@ -10,8 +10,6 @@ import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.TableFactory;
-import ai.dataeng.sqml.parser.sqrl.analyzer.Scope;
-import ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer;
 import ai.dataeng.sqml.parser.sqrl.analyzer.TableBookkeeping;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.Expression;
@@ -31,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import lombok.Value;
 
 /**
@@ -42,8 +41,8 @@ public class JoinWalker {
    * Walks a join path
    */
   public WalkResult walk(Name baseTableAlias, Optional<Name> lastAlias, NamePath namePath, Optional<Relation> current,
+      Supplier<Optional<JoinCriteria>> lastCriteria, //Criteria is lazy because the join aliases don't exist yet to be evaluated
       Map<Name, Table> joinScope) {
-//    Name baseTableAlias = gen.nextTableAliasName();
 
     Table baseTable = joinScope.get(baseTableAlias);
     Relation relation = current.isPresent()
@@ -60,17 +59,24 @@ public class JoinWalker {
       Preconditions.checkNotNull(field);
       if (!(field instanceof Relationship)) break;
       Relationship rel = (Relationship)field;
+
       Name alias = i == namePath.getLength() - 1
           ? lastAlias.orElseGet(()->gen.nextTableAliasName())
           : gen.nextTableAliasName();
+
       Relation relation1 = expandRelation(joinScope, rel, alias);
-      JoinCriteria criteria = createRelCriteria(joinScope, b.getAlias(), alias, rel);
+      JoinOn criteria = createRelCriteria(joinScope, b.getAlias(), alias, rel);
+
+      Optional<JoinCriteria> additionalCriteria = i == namePath.getLength() - 1
+          ? lastCriteria.get()
+          : Optional.empty();
+
       Join join = new Join(
           Optional.empty(),
           Type.INNER,
           b.getCurrent(),
           relation1,
-          Optional.of(criteria)
+          Optional.of(merge(criteria, additionalCriteria))
       );
       b = new TableBookkeeping(join, alias, rel.getToTable());
       tableItems.add(new TableItem(alias));
@@ -78,7 +84,16 @@ public class JoinWalker {
     return new WalkResult(tableItems, b.getCurrent());
   }
 
-  public static JoinCriteria createRelCriteria(Map<Name, Table> joinScope, Name lhs, Name rhs, Relationship rel) {
+  private JoinCriteria merge(JoinOn criteria, Optional<JoinCriteria> additionalCriteria) {
+    if (additionalCriteria.isEmpty()) {
+      return criteria;
+    }
+
+    return new JoinOn(criteria.getLocation(), and(criteria.getExpression(),
+        additionalCriteria.map(e->((JoinOn)e).getExpression())));
+  }
+
+  public static JoinOn createRelCriteria(Map<Name, Table> joinScope, Name lhs, Name rhs, Relationship rel) {
     //Use the lhs primary keys to join on the rhs
     Table lhsTable = joinScope.get(lhs);
     Table rhsTable = joinScope.get(rhs);
@@ -96,13 +111,7 @@ public class JoinWalker {
 
     List<Expression> conditions = new ArrayList<>();
     for (Column column : joinColumns) {
-      if (lhsTable.getEquivalent(column).isEmpty()) {
-        System.out.println();
-      }
       Column lhsColumn = lhsTable.getEquivalent(column).orElseThrow();
-      if (rhsTable.getEquivalent(column).isEmpty()) {
-        System.out.println();
-      }
       Column rhsColumn = rhsTable.getEquivalent(column).orElseThrow();
       conditions.add(eq(
           ident(lhs.toNamePath().concat(lhsColumn.getName())),
@@ -131,13 +140,7 @@ public class JoinWalker {
   public static Relation expandRelation(
       Map<Name, Table> joinScope,
       Relationship rel, Name nextAlias) {
-    if (rel == null) {
-      System.out.println();
-    }
     if (rel.getType() == Relationship.Type.JOIN) {
-      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(null);
-//      rel.getNode().accept(statementAnalyzer, new Scope(Optional.empty(), null, joinScope, false, null))
-//          .getNode();
       TableSubquery tableSubquery = new TableSubquery(Optional.empty(), (Query)rel.getNode());
       joinScope.put(nextAlias, new TableFactory().create(tableSubquery));
       return new AliasedRelation(

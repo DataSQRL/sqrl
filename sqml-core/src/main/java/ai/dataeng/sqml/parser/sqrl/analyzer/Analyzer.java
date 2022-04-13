@@ -167,6 +167,7 @@ public class Analyzer {
     }
 
     public void analyzeStatement(NamePath namePath, Query query) {
+      log.info("Sqrl Query: {}", NodeFormatter.accept(query));
       if (hasOneUnnamedColumn(query)) {
         Preconditions.checkState(namePath.getPrefix().isPresent());
         analyzeExpression(namePath, query);
@@ -320,7 +321,6 @@ public class Analyzer {
               .collect(Collectors.toList()),
           fields.stream().map(e->e.getId().toString()).collect(Collectors.toList())
           );
-      System.out.println(sql);
       SqlParser parser = SqlParser.create(sql);
 
       SqlNode sqlNode = parser.parseQuery();
@@ -376,7 +376,6 @@ public class Analyzer {
           Optional.empty(),
           Optional.empty()
       );
-      System.out.println(NodeFormatter.accept(querySpec));
 
       Optional<Table> ctxTable = getTable(namePath.getPrefix().get());
       Scope scope = querySpec.accept(statementAnalyzer, new Scope(ctxTable, querySpec, new LinkedHashMap<>(),new LinkedHashMap<>(),

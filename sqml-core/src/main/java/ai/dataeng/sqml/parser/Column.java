@@ -41,7 +41,7 @@ public class Column extends Field {
       BasicType type, int arrayDepth, List<Constraint> constraints,
       boolean isPrimaryKey, boolean isForeignKey, Optional<Column> fkReferences,
       boolean isInternal) {
-    super(name);
+    super(unboxName(name));
     this.table = table;
     this.version = version;
     this.type = type;
@@ -52,6 +52,14 @@ public class Column extends Field {
     this.fkReferences = fkReferences;
     this.isInternal = isInternal;
     this.nonNull = ConstraintHelper.isNonNull(constraints);
+  }
+
+  private static Name unboxName(Name name) {
+    if (name instanceof VersionedName) {
+      return ((VersionedName)name).toName();
+    } else {
+      return name;
+    }
   }
 
   public static Column createTemp(String name, BasicType type, Table table, int version) {
