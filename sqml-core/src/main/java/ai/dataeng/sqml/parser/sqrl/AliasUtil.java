@@ -1,18 +1,14 @@
 package ai.dataeng.sqml.parser.sqrl;
 
-import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.parser.Column;
-import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 
 public class AliasUtil {
