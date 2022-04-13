@@ -10,13 +10,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.rel.RelNode;
+import org.apache.commons.lang3.tuple.Pair;
+import scala.annotation.meta.field;
 
 @Getter
 @Setter
-public class Table implements DatasetOrTable {
+public class Table implements ShadowingContainer.Nameable {
 
   public Name name;
   public final int uniqueId;
@@ -24,6 +27,8 @@ public class Table implements DatasetOrTable {
   private final NamePath path;
   public final boolean isInternal;
   private RelNode relNode;
+
+  private List<Field> partitionKeys;
 
   public Table(int uniqueId, Name name, NamePath path, boolean isInternal) {
     this.name = name;
@@ -33,42 +38,20 @@ public class Table implements DatasetOrTable {
   }
 
   public Field getField(Name name) {
-    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
-    Field field = fields.getByName(name).get();
-    return field;
+    Optional<Field> field = fields.getByName(name);
+    return field.isEmpty() ? null : field.get();
   }
 
-  public Optional<Field> getFieldOpt(Name name) {
-    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
-    Field field = fields.getByName(name).get();
-    return Optional.ofNullable(field);
-  }
-
-  public Optional<FieldPath> getField(NamePath path, int version) {
-    return getField(path);//todo: include version
-  }
-
-  public Optional<FieldPath> getField(NamePath path) {
-    List<Field> fields = new ArrayList<>();
-    Table table = this;
-    for (int i = 0; i < path.getLength() - 1; i++) {
-      Field field = table.getField(path.get(i));
-      if (!(field instanceof Relationship)) {
-        return Optional.empty();
+  public Field getField(VersionedName name) {
+    for (Field field : this.fields.getElements()) {
+      if (field.getId().equals(name)) {
+        return field;
       }
-      table = ((Relationship) field).getToTable();
-      fields.add(field);
     }
-    Field field = table.getField(path.get(path.getLength() - 1));
-    if (field == null) {
-      return Optional.empty();
-    }
-    fields.add(field);
-    return Optional.of(new FieldPath(fields));
+    return null;
   }
 
   public boolean addField(Field field) {
-//    field.setTable(this);
     return fields.add(field);
   }
 
@@ -77,12 +60,13 @@ public class Table implements DatasetOrTable {
   }
 
   public List<Column> getPrimaryKeys() {
-    List<Column> pks =this.fields.visibleStream()
+    List<Column> pks = this.fields.visibleStream()
         .filter(f->f instanceof Column)
         .map(f->(Column) f)
         .filter(f->f.isPrimaryKey)
         .collect(Collectors.toList());
 
+    //Bad remove this
     if (pks.isEmpty()) {
       return List.of((Column)this.fields.get(0));
     }
@@ -90,20 +74,10 @@ public class Table implements DatasetOrTable {
     return pks;
   }
 
-  public List<Column> getForeignKeys() {
-    return this.fields.visibleStream()
-        .filter(f->f instanceof Column)
-        .map(f->(Column) f)
-        .filter(f->f.isForeignKey)
-        .collect(Collectors.toList());
-  }
-
-  @Override
   public boolean isVisible() {
     return !isInternal;
   }
 
-  @Override
   public int getVersion() {
     return uniqueId;
   }
@@ -125,7 +99,32 @@ public class Table implements DatasetOrTable {
     return Objects.hash(uniqueId);
   }
 
+  public Optional<Field> walkField(NamePath namePath) {
+    if (namePath.isEmpty()) {
+      return Optional.empty();
+    }
+    Field field = getField(namePath.getFirst());
+    if (field == null) {
+      return Optional.empty();
+    }
+
+    if (namePath.getLength() == 1) {
+      return Optional.of(field);
+    }
+
+    if (field instanceof Relationship) {
+      Relationship relationship = (Relationship) field;
+      return relationship.getToTable()
+          .walkField(namePath.popFirst());
+    }
+
+    return Optional.of(field);
+  }
+
   public Optional<Table> walk(NamePath namePath) {
+    if (namePath.isEmpty()) {
+      return Optional.of(this);
+    }
     Field field = getField(namePath.getFirst());
     if (field == null) {
       return Optional.empty();
@@ -161,14 +160,57 @@ public class Table implements DatasetOrTable {
   public String toString() {
     return "Table{" +
         "name=" + name +
-        ", pk=" + getPrimaryKeys().stream().map(e->e.getName().toString()).collect(Collectors.toList()) +
-        ", fk=" + getForeignKeys().stream().map(e->e.getName().toString()).collect(Collectors.toList()) +
-        ", fields=" + getFields().stream().map(e->e.getName().toString()).collect(Collectors.toList()) +
-        ", relNode=" + getRelNode().explain() +
+//        ", pk=" + getPrimaryKeys().stream().map(e->e.getName()).collect(Collectors.toList()) +
+//        ", fk=" + getForeignKeys().stream().map(e->e.getName()).collect(Collectors.toList()) +
+//        ", fields=" + getFields().stream().map(e->e.getName()).collect(Collectors.toList()) +
+//        ", relNode=" + getRelNode().explain() +
         '}';
   }
 
   public void setRelNode(RelNode relNode) {
     this.relNode = relNode;
+  }
+
+  public void addUniqueConstraint(List<Field> partitionKeys) {
+    this.partitionKeys = partitionKeys;
+  }
+
+  /**
+   * Creates a field but does not bind it to this table
+   */
+  public Column fieldFactory(Name name) {
+    if (name instanceof VersionedName) {
+      name = ((VersionedName)name).toName();
+    }
+    int version = 0;
+    if (getField(name) != null) {
+      version = getField(name).getVersion() + 1;
+    }
+
+    return new Column(name, this, version, null, 0, List.of(), false, false, Optional.empty(), false);
+  }
+
+  public Optional<Column> getEquivalent(Column lhsColumn) {
+    for (Field field : this.getFields()) {
+      if (field instanceof Column) {
+        if (((Column)field).getSource() == lhsColumn.getSource()) {
+          return Optional.of((Column) field);
+        }
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  public List<Integer> getParentPrimaryKeys() {
+    List<Integer> pos = new ArrayList<>();
+    List<Field> elements = fields.getElements();
+    for (int i = 0; i < elements.size(); i++) {
+      Field field = elements.get(i);
+      if (field instanceof Column && ((Column) field).getParentPrimaryKey()) {
+        pos.add(i);
+      }
+    }
+    return pos;
   }
 }

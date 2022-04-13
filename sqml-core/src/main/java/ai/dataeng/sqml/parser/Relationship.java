@@ -1,13 +1,21 @@
 package ai.dataeng.sqml.parser;
 
+import ai.dataeng.sqml.tree.AllColumns;
+import ai.dataeng.sqml.tree.Identifier;
+import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.Query;
+import ai.dataeng.sqml.tree.QuerySpecification;
+import ai.dataeng.sqml.tree.Select;
+import ai.dataeng.sqml.tree.SelectItem;
+import ai.dataeng.sqml.tree.SingleColumn;
+import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.VersionedName;
-import com.google.common.base.Preconditions;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 /**
  *
@@ -26,35 +34,26 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 @Getter
 public class Relationship extends Field {
 
-  private final Table fromTable;
+  private final Table table;
   public final Table toTable;
   public final Type type;
+  @Setter
+  public Node node;
 
   public final Multiplicity multiplicity;
 
-  @Setter
-  private Map<Column, String> pkNameMapping;
-
-  @Setter
-  public SqlNode sqlNode;
-
   public int version = 0;
+  private Name alias;
 
   public Relationship(
-      Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity,
-      Map<Column, String> aliasMapping) {
+      Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity) {
     super(name);
-    this.fromTable = fromTable;
+    this.table = fromTable;
     this.toTable = toTable;
     this.type = type;
     this.multiplicity = multiplicity;
-    this.pkNameMapping = aliasMapping;
   }
 
-  public SqlNode getSqlNode() {
-    Preconditions.checkNotNull(sqlNode, "Sql node should not be null");
-    return sqlNode.clone(SqlParserPos.ZERO);
-  }
 
   @Override
   public VersionedName getId() {
@@ -64,6 +63,44 @@ public class Relationship extends Field {
   @Override
   public int getVersion() {
     return version;
+  }
+
+  public Node getNode() {
+//    Query query = (Query) node;
+//    QuerySpecification spec = (QuerySpecification)query.getQueryBody();
+//    spec.setSelect(new Select(Optional.empty(), false, spec.getSelect().getSelectItems()));
+    return node;
+  }
+
+  private List<SelectItem> refreshSelect() {
+    List<SelectItem> selectItems = new ArrayList<>();
+    Query query = new Query(((Query)this.node).getQueryBody(), Optional.empty(), Optional.empty());
+    Table table = new TableFactory().create(query);
+    for (Field field : table.getFields()) {
+      Identifier identifier = new Identifier(Optional.empty(), field.getName().toNamePath());
+      identifier.setResolved(field);
+      selectItems.add(new SingleColumn(Optional.empty(), identifier, Optional.empty()));
+    }
+
+//
+//    for (Field field : this.toTable.getFields().getElements()) {
+//      if (field instanceof Relationship) continue;
+//      Identifier identifier = new Identifier(Optional.empty(), field.getId().toNamePath());
+//      identifier.setResolved(field);
+//      selectItems.add(new SingleColumn(identifier));
+//    }
+//    for (int i = 0; i < this.table.getPrimaryKeys().size(); i++) {
+//      Column field = this.table.getPrimaryKeys().get(i);
+//      Identifier key = new Identifier(Optional.empty(), field.getId().toNamePath());
+//      key.setResolved(field);
+//      selectItems.add(new SingleColumn(key, Optional.of(new Identifier(Optional.empty(), Name.system("_pk"+(i+ 5)).toNamePath()))));
+//    }
+
+    return selectItems;
+  }
+
+  public void setAlias(Name alias) {
+    this.alias = alias;
   }
 
   public enum Type {

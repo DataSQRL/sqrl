@@ -42,7 +42,7 @@ public class ImportDefinition extends SqrlStatement {
   }
 
   public Optional<Name> getAliasName() {
-    return getAlias().map(a->Name.system(a.getNamePath()));
+    return getAlias().map(a->a.getNamePath().getFirst());
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {

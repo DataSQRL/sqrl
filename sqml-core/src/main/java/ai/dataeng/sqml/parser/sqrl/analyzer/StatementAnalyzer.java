@@ -1,23 +1,34 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
-import ai.dataeng.sqml.parser.Field;
+import static ai.dataeng.sqml.parser.sqrl.AliasUtil.getTableAlias;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.mapToOrdinal;
+
+import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.parser.Table;
-import ai.dataeng.sqml.parser.sqrl.analyzer.ExpressionAnalyzer.ExpressionAnalysis;
+import ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker;
+import ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker.WalkResult;
+import ai.dataeng.sqml.parser.sqrl.analyzer.ExpressionAnalyzer.JoinResult;
+import ai.dataeng.sqml.parser.sqrl.analyzer.aggs.AggregationDetector;
+import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
+import ai.dataeng.sqml.parser.sqrl.transformers.Transformers;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
 import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
-import ai.dataeng.sqml.tree.GroupingElement;
+import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.Join;
+import ai.dataeng.sqml.tree.Join.Type;
 import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.JoinOn;
-import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.Node;
+import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.Query;
+import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
+import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SetOperation;
@@ -25,19 +36,23 @@ import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.Union;
+import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
+  public final Analyzer analyzer;
 
-  private final Analyzer analyzer;
+  private final AggregationDetector aggregationDetector = new AggregationDetector(new FunctionLookup());
+
+  private List<JoinResult> additionalJoins = new ArrayList<>();
+
+  public static final AliasGenerator gen = new AliasGenerator();
 
   public StatementAnalyzer(Analyzer analyzer) {
     this.analyzer = analyzer;
@@ -51,114 +66,206 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   @Override
   public Scope visitQuery(Query node, Scope scope) {
     Scope queryBodyScope = node.getQueryBody().accept(this, scope);
+    Query query = new Query(node.getLocation(), (QueryBody) queryBodyScope.getNode(),
+        node.getOrderBy(), node.getLimit());
+    log.info("Generated Query: {}", NodeFormatter.accept(query));
 
-//    if (node.getOrderBy().isPresent()) {
-//      List<Expression> orderByExpressions = analyzeOrderBy(node, getSortItemsFromOrderBy(node.getOrderBy()), queryBodyScope);
-//    }
-
-    return createAndAssignScope(node, scope, (List<Field>)queryBodyScope.getFields());
-  }
-
-    @Override
-  public Scope visitQuerySpecification(QuerySpecification node, Scope scope) {
-    Scope sourceScope = node.getFrom().accept(this, scope);
-
-    node.getWhere().ifPresent(where -> analyzeWhere(node, sourceScope, where));
-    List<Expression> outputExpressions = analyzeSelect(node, sourceScope);
-    List<Expression> groupByExpressions = analyzeGroupBy(node, sourceScope, outputExpressions);
-    analyzeHaving(node, sourceScope);
-//    Scope outputScope = computeAndAssignOutputScope(node, scope, sourceScope);
-//
-//    List<Expression> orderByExpressions = new ArrayList<>();
-//    Optional<Scope> orderByScope = Optional.empty();
-//    if (node.getOrderBy().isPresent()) {
-//      if (node.getSelect().isDistinct()) {
-//        verifySelectDistinct(node, outputExpressions);
-//      }
-//
-//      OrderBy orderBy = node.getOrderBy().get();
-//      orderByScope = Optional.of(computeAndAssignOrderByScope(orderBy, sourceScope, outputScope, node));
-//
-    analyzeOrderBy(node.getOrderBy(), sourceScope);
-//    }
-//
-    Optional<Long> multiplicity = node.parseLimit();
-//
-    List<Expression> sourceExpressions = new ArrayList<>(outputExpressions);
-    node.getHaving().ifPresent(sourceExpressions::add);
-//
-//    analyzeGroupingOperations(node, sourceExpressions, orderByExpressions);
-//    List<FunctionCall> aggregates = analyzeAggregations(node, sourceExpressions, orderByExpressions);
-//
-//    if (!aggregates.isEmpty() && groupByExpressions.isEmpty()) {
-//      // Have Aggregation functions but no explicit GROUP BY clause
-////      analysis.setGroupByExpressions(node, ImmutableList.of());
-//    }
-//
-//    verifyAggregations(node, sourceScope, orderByScope, groupByExpressions, sourceExpressions, orderByExpressions);
-
-
-//    transformDistinct(query);
-//    scope = new SqrlTranslator.Scope(query);
-//    this.aggs.putAll(analyzeToManyAggs(query));
-//    analyzeToOneFields(query);
-//
-//    SqrlTranslator.Scope fromScope = visitFrom(query.getFrom(), scope);
-//    query.setFrom(fromScope.node);
-//
-//    query.setSelectList(rewriteSelectItems(query, fromScope));
-//
-//    query.setWhere(rewriteWhere(query.getWhere(), fromScope));
-//    query.setGroupBy(rewriteGroupBy(query.getGroup(), query, fromScope));
-//    query.setHaving(rewriteHaving(query.getHaving(), fromScope));
-//    query.setOrderBy(rewriteOrderBy(query.getOrderList(), query, fromScope));
-//    query.setFetch(rewriteFetch(query.getFetch(), fromScope));
-//    query.setOffset(rewriteOffset(query.getOffset(), fromScope));
-
-
-
-    return null;
+    //TODO: order & limit for Set operations
+    return createScope(query, scope);
   }
 
   @Override
-  public Scope visitTable(TableNode tableNode, Scope scope) {
-    NamePath tableName = tableNode.getNamePath();
+  public Scope visitQuerySpecification(QuerySpecification node, Scope scope) {
+    Scope sourceScope = node.getFrom().accept(this, scope);
 
-    //We don't expand the table on this pass. We need to detect the to-one and to-many identifiers first
-    Optional<Table> resolvedTable = analyzer.lookup(tableName);
+    Select expandedSelect = expandStar(node.getSelect(), scope);
 
-    //The table that gets resolved will need to be distinct so we can match up expanded identifiers
+    // We're doing a lot of transformations so convert grouping conditions to ordinals.
+    Optional<GroupBy> groupBy = node.getGroupBy().map(group -> mapToOrdinal(expandedSelect, group));
 
-    //Map aliases to fields
-    tableNode.getAlias();
-    resolvedTable.get().getFields().getElements();
+    Optional<OrderBy> orderBy = node.getOrderBy().map(order -> rewriteOrderBy(order, scope));
 
-    return createAndAssignScope(tableNode, scope, null);
+    // Qualify other expressions
+    Select select = (Select)expandedSelect.accept(this, scope).getNode();
+    Optional<Expression> where = node.getWhere().map(w->rewriteExpression(w, scope));
+    Optional<Expression> having = node.getHaving().map(h->rewriteExpression(h, scope)); //todo identify and replace having clause
+    Relation from = appendAdditionalJoins((Relation)sourceScope.getNode());
+    QuerySpecification spec = new QuerySpecification(
+        node.getLocation(),
+        select,
+        from,
+        where,
+        groupBy,
+        having,
+        orderBy,
+        node.getLimit()
+    );
+
+    return createScope(rewriteQuerySpec(spec, scope), scope);
   }
 
+  private OrderBy rewriteOrderBy(OrderBy order, Scope scope) {
+    List<SortItem> items = order.getSortItems().stream()
+        .map(s->new SortItem(s.getLocation(), rewriteExpression(s.getSortKey(), scope), s.getOrdering()))
+        .collect(Collectors.toList());
+    return new OrderBy(order.getLocation(), items);
+  }
 
+  /*
+   * Rewrites queries to form compliant sql
+   */
+  private Node rewriteQuerySpec(QuerySpecification spec,
+      Scope scope) {
+
+    Optional<Table> contextTable = scope.getContextTable();
+
+    QuerySpecification rewrittenNode = contextTable
+        .map(t->{
+          QuerySpecification rewritten = Transformers.addContextToQuery.transform(spec, t);
+          return spec.getLimit().map(l -> Transformers.convertLimitToWindow.transform(rewritten, t))
+              .orElse(rewritten);
+        })
+        .orElse(spec);
+
+    if (scope.isExpression() && contextTable.isPresent()) {
+      QuerySpecification query = Transformers.addColumnToQuery.transform(contextTable.get(), scope.getJoinScope(), scope.getExpressionName(),
+          aggregationDetector.isAggregating(spec.getSelect()), rewrittenNode);
+      return query;
+    }
+
+    return rewrittenNode;
+  }
+
+  private Relation appendAdditionalJoins(Relation from) {
+    for (JoinResult result : additionalJoins) {
+      from = new Join(Optional.empty(), result.getType(), from, result.getRelation(), result.getCriteria());
+    }
+    return from;
+  }
+
+  /**
+   * Note: This node is not walked from the rhs of a join.
+   *
+   * Expand the path, if applicable. The first name will always be either a SELF or a base table.
+   * The remaining path are always relationships and are wrapped in a join. The final table
+   * is aliased by either a given alias or generated alias.
+   */
+  @Override
+  public Scope visitTable(TableNode tableNode, Scope scope) {
+    NamePath namePath = tableNode.getNamePath();
+
+    Name tableNodeAlias = tableNode.getAlias().isPresent()
+        ? tableNode.getAlias().get()
+        : namePath.getLength() > 1 ? gen.nextTableAliasName() : namePath.getFirst();
+
+    if (tableNode.getNamePath().getFirst().equals(Name.SELF_IDENTIFIER)) {
+      Table table = scope.getContextTable().get();
+
+      scope.getFieldScope().put(tableNodeAlias, table.walk(namePath.popFirst()).get());
+      //Special case: Self identifier is added to join scope
+      scope.getJoinScope().put(Name.SELF_IDENTIFIER, scope.getContextTable().get());
+
+      WalkResult result = new JoinWalker().walk(Name.SELF_IDENTIFIER,
+          Optional.of(tableNodeAlias),
+          namePath.popFirst(),
+          Optional.empty(),
+          Optional.empty(),
+          scope.getJoinScope());
+      return createScope(result.getRelation(), scope);
+    } else { //Table is in the schema
+      Table table = analyzer.getDag().getSchema().getByName(namePath.getFirst()).get();
+      scope.getFieldScope().put(tableNodeAlias, table.walk(namePath.popFirst()).get());
+
+      Name firstAlias = getTableAlias(tableNode, 0, gen::nextTableAliasName);
+      scope.getJoinScope().put(firstAlias, table);
+
+      WalkResult result = new JoinWalker().walk(firstAlias,
+          Optional.of(tableNodeAlias),
+          namePath.popFirst(),
+          Optional.empty(),
+          Optional.empty(),
+          scope.getJoinScope());
+
+      return createScope(result.getRelation(), scope);
+    }
+  }
+
+  /**
+   * Joins have the assumption that the rhs will always be a TableNode so the rhs will be
+   * unwrapped at this node, so it can provide additional criteria to the join.
+   *
+   * The rhs first table name will either be a join scoped alias or a base table. If it is
+   * a join scoped alias, we will use that alias information to construct additional criteria
+   * on the join, otherwise it'll be a cross join.
+   */
   @Override
   public Scope visitJoin(Join node, Scope scope) {
     Scope left = node.getLeft().accept(this, scope);
 
-    if (node.getType() == Join.Type.CROSS || node.getType() == Join.Type.IMPLICIT || node.getCriteria().isEmpty()) {
-      //Add new scope to context for a context table and alias
+    TableNode rhs = (TableNode)node.getRight();
+    Name lastAlias = rhs.getAlias().isPresent()
+        ? rhs.getAlias().get()
+        : rhs.getNamePath().getLength() > 1
+            ? gen.nextTableAliasName()  //todo needs to be unique
+            : rhs.getNamePath().getFirst();
+
+    //A join traversal, e.g. FROM orders AS o JOIN o.entries
+    if (scope.getJoinScope().containsKey(rhs.getNamePath().getFirst())) {
+      Table baseTable = scope.getJoinScope().get(rhs.getNamePath().getFirst());
+      //Immediately register the field scope so the criteria can be resolved
+      scope.getFieldScope().put(lastAlias, baseTable.walk(rhs.getNamePath().popFirst()).get());
+
+      JoinWalker joinWalker = new JoinWalker();
+      WalkResult result = joinWalker.walk(
+          rhs.getNamePath().getFirst(),
+          Optional.of(lastAlias),
+          rhs.getNamePath().popFirst(),
+          Optional.of((Relation)left.getNode()),
+          rewrite(node.getCriteria(), scope),
+          scope.getJoinScope()
+      );
+
+      return createScope(result.getRelation(), scope);
+    } else { //A regular join: FROM Orders JOIN entries
+      Table table = analyzer.getDag().getSchema().getByName(rhs.getNamePath().get(0)).get();
+      Name firstAlias = getTableAlias(rhs, 0, gen::nextTableAliasName);
+      scope.getJoinScope().put(firstAlias, table);
+      scope.getFieldScope().put(lastAlias, table.walk(rhs.getNamePath().popFirst()).get());
+
+      TableNode tableNode = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(firstAlias));
+      //If there is one entry in the path, do an inner join w/ the given criteria
+      Type type = rhs.getNamePath().getLength() > 1 || node.getCriteria().isEmpty()
+          ? Type.CROSS
+          : Type.INNER;
+      //Similar, we want to push in the first join criteria if possible
+      Optional<JoinCriteria> firstCriteria = rhs.getNamePath().getLength() > 1
+          ? Optional.empty()
+          : node.getCriteria();
+
+      Join join = new Join(Optional.empty(),
+          type,
+          (Relation)left.getNode(),
+          tableNode,
+          rewrite(firstCriteria, scope)
+      );
+
+      JoinWalker joinWalker = new JoinWalker();
+      WalkResult result = joinWalker.walk(
+          firstAlias,
+          Optional.of(lastAlias),
+          rhs.getNamePath().popFirst(),
+          Optional.of(join),
+          rewrite(node.getCriteria(), scope),
+          scope.getJoinScope()
+      );
+
+      return createScope(result.getRelation(), scope);
     }
+  }
 
-    Scope right = node.getRight().accept(this, scope);
-    List<Field> fields = new ArrayList<>(left.getFields());
-    fields.addAll(right.getFields());
-    Scope result = createAndAssignScope(node, scope, fields);
-
-    JoinCriteria criteria = node.getCriteria().get();
-    if (criteria instanceof JoinOn) {
-      Expression expression = ((JoinOn) criteria).getExpression();
-      analyzeExpression(expression, result);
-    } else {
-      throw new RuntimeException("Unsupported join");
-    }
-
-    return result;
+  private Optional<JoinCriteria> rewrite(Optional<JoinCriteria> criteria, Scope scope) {
+    return criteria.map(e->
+        new JoinOn(e.getLocation(), rewriteExpression(((JoinOn)e).getExpression(), scope)));
   }
 
   @Override
@@ -177,284 +284,51 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   }
 
   @Override
-  public Scope visitSetOperation(SetOperation node, Scope scope)
-  {
-    //We loosen the rules of set operations and do the transfrom here.
-    //We rewrite the select but place null literals in there instead (does type matter?)
-
-
-//    checkState(node.getRelations().size() >= 2);
-//    List<Scope> relationScopes = node.getRelations().stream()
-//        .map(relation -> {
-//          Scope relationScope = process(relation, scope);
-//          return createAndAssignScope(relation, scope, relationScope.getRelation());
-//        })
-//        .collect(toImmutableList());
-//
-//    Type[] outputFieldTypes = relationScopes.get(0).getRelation().getFields().stream()
-//        .map(Field::getType)
-//        .toArray(Type[]::new);
-//    int outputFieldSize = outputFieldTypes.length;
-//
-//    for (Scope relationScope : relationScopes) {
-//      RelationType relationType = relationScope.getRelation();
-//      int descFieldSize = relationType.getFields().size();
-//      String setOperationName = node.getClass().getSimpleName().toUpperCase(ENGLISH);
-//      if (outputFieldSize != descFieldSize) {
-//        throw new RuntimeException(
-//            String.format(
-//            "%s query has different number of fields: %d, %d",
-//            setOperationName,
-//            outputFieldSize,
-//            descFieldSize));
-//      }
-//      for (int i = 0; i < descFieldSize; i++) {
-//        /*
-//        Type descFieldType = relationType.getFieldByIndex(i).getType();
-//        Optional<Type> commonSuperType = metadata.getTypeManager().getCommonSuperType(outputFieldTypes[i], descFieldType);
-//        if (!commonSuperType.isPresent()) {
-//          throw new SemanticException(
-//              TYPE_MISMATCH,
-//              node,
-//              "column %d in %s query has incompatible types: %s, %s",
-//              i + 1,
-//              setOperationName,
-//              outputFieldTypes[i].getDisplayName(),
-//              descFieldType.getDisplayName());
-//        }
-//        outputFieldTypes[i] = commonSuperType.get();
-//         */
-//        //Super types?
-//      }
-//    }
-//
-//    TypedField[] outputDescriptorFields = new TypedField[outputFieldTypes.length];
-//    RelationType firstDescriptor = relationScopes.get(0).getRelation();
-//    for (int i = 0; i < outputFieldTypes.length; i++) {
-//      Field oldField = (Field)firstDescriptor.getFields().get(i);
-////      outputDescriptorFields[i] = new Field(
-////          oldField.getRelationAlias(),
-////          oldField.getName(),
-////          outputFieldTypes[i],
-////          oldField.isHidden(),
-////          oldField.getOriginTable(),
-////          oldField.getOriginColumnName(),
-////          oldField.isAliased(), Optional.empty());
-//    }
-//
-//    for (int i = 0; i < node.getRelations().size(); i++) {
-//      Relation relation = node.getRelations().get(i);
-//      Scope relationScope = relationScopes.get(i);
-//      RelationType relationType = relationScope.getRelation();
-//      for (int j = 0; j < relationType.getFields().size(); j++) {
-//        Type outputFieldType = outputFieldTypes[j];
-//        Type descFieldType = ((Field)relationType.getFields().get(j)).getType();
-//        if (!outputFieldType.equals(descFieldType)) {
-////            analysis.addRelationCoercion(relation, outputFieldTypes);
-//          throw new RuntimeException(String.format("Mismatched types in set operation %s", relationType.getFields().get(j)));
-////            break;
-//        }
-//      }
-//    }
-//
-//    return createAndAssignScope(node, scope, new ArrayList<>(List.of(outputDescriptorFields)));
-//
+  public Scope visitSetOperation(SetOperation node, Scope scope) {
     return null;
   }
 
-  private Multimap<NamePath, Expression> extractNamedOutputExpressions(Select node)
-  {
-    // Compute aliased output terms so we can resolve order by expressions against them first
-    ImmutableMultimap.Builder<NamePath, Expression> assignments = ImmutableMultimap.builder();
-    for (SelectItem item : node.getSelectItems()) {
-      if (item instanceof SingleColumn) {
-        SingleColumn column = (SingleColumn) item;
-        Optional<Identifier> alias = column.getAlias();
-        if (alias.isPresent()) {
-          assignments.put(alias.get().getNamePath(), column.getExpression()); // TODO: need to know if alias was quoted
-        }
-        else if (column.getExpression() instanceof Identifier) {
-          assignments.put(((Identifier) column.getExpression()).getNamePath(), column.getExpression());
-        }
-      }
-    }
+  @Override
+  public Scope visitSelect(Select select, Scope scope) {
+    List<SelectItem> items = select.getSelectItems().stream()
+        .map(s->(SingleColumn)s)
+        .map(s-> new SingleColumn(rewriteExpression(s.getExpression(), scope), s.getAlias()))
+        .collect(Collectors.toList());
 
-    return assignments.build();
+    return createScope(new Select(select.getLocation(), select.isDistinct(), items), scope);
   }
 
-  public void analyzeWhere(Node node, Scope scope, Expression predicate) {
-    analyzeExpression(predicate, scope);
-  }
-
-
-  private List<Expression> analyzeOrderBy(Optional<OrderBy> orderBy,
-      Scope scope) {
-    if (orderBy.isEmpty()) return List.of();
-    ImmutableList.Builder<Expression> orderByFieldsBuilder = ImmutableList.builder();
-
-
-    for (SortItem item : orderBy.get().getSortItems()) {
-      Expression expression = item.getSortKey();
-      analyzeExpression(expression, scope);
-      orderByFieldsBuilder.add(expression);
-    }
-
-    List<Expression> orderByFields = orderByFieldsBuilder.build();
-    return orderByFields;
-  }
-
-  private Scope createAndAssignScope(Node node, Scope parentScope, List<Field> fields) {
-//    Scope scope = Scope.builder()
-//        .withParent(parentScope)
-//        .withRelationType(relationType)
-//        .build();
-
-//    analysis.setScope(node, scope);
-
-    return null;
-  }
-
-  private Scope computeAndAssignOutputScope(QuerySpecification node, Scope scope,
-      Scope sourceScope) {
-//    Builder<StandardField> outputFields = ImmutableList.builder();
-
-    for (SelectItem item : node.getSelect().getSelectItems()) {
+  /**
+   * Expands STAR alias
+   */
+  private Select expandStar(Select select, Scope scope) {
+    List<SelectItem> expanded = new ArrayList<>();
+    for (SelectItem item : select.getSelectItems()) {
       if (item instanceof AllColumns) {
-        Optional<NamePath> starPrefix = ((AllColumns) item).getPrefix();
-
-        //Get all fields
-
-//        for (Field field : sourceScope.resolveFieldsWithPrefix(starPrefix)) {
-//          outputFields.add(new StandardField(field.getName(), field.getType(), List.of(), Optional.empty()));
-//        }
-      } else if (item instanceof SingleColumn) {
-        SingleColumn column = (SingleColumn) item;
-
-        Expression expression = column.getExpression();
-        Optional<Identifier> field = column.getAlias();
-//
-//        Optional<QualifiedObjectName> originTable = Optional.empty();
-//        Optional<String> originColumn = Optional.empty();
-        NamePath name = null;
-
-        if (expression instanceof Identifier) {
-          name = ((Identifier) expression).getNamePath();
+        Optional<Name> starPrefix = ((AllColumns) item).getPrefix()
+            .map(e->e.getFirst());
+        List<Identifier> fields = scope.resolveFieldsWithPrefix(starPrefix);
+        for (Identifier identifier : fields) {
+          expanded.add(new SingleColumn(identifier,Optional.empty()));
         }
-
-        //Need to track the origin table (the sql-node table)
-        if (name != null) {
-//            List<Field> matchingFields = sourceScope.resolveFields(name);
-//            if (!matchingFields.isEmpty()) {
-//              originTable = matchingFields.get(0).getOriginTable();
-//              originColumn = matchingFields.get(0).getOriginColumnName();
-//            }
-        }
-
-        if (field.isEmpty()) {
-          if (name != null) {
-//            field = Optional.of(new Identifier(getLast(name.getOriginalParts())));
-          }
-        }
-//
-//        String identifierName = field.map(Identifier::getValue)
-//            .orElse("VAR");
-
-//        outputFields.add(
-//            new StandardField(Name.of(identifierName, NameCanonicalizer.SYSTEM),
-//            analysis.getType(expression), List.of(), Optional.empty())
-//            column.getAlias().isPresent())
-//        );
-      }
-      else {
-        throw new IllegalArgumentException("Unsupported SelectItem type: " + item.getClass().getName());
+      } else {
+        expanded.add(item);
       }
     }
-
-    return createAndAssignScope(node, scope, null);
+    return new Select(expanded);
   }
 
-  private void analyzeHaving(QuerySpecification node, Scope scope) {
-    if (node.getHaving().isPresent()) {
-      Expression predicate = node.getHaving().get();
-      ExpressionAnalysis expressionAnalysis = analyzeExpression(predicate, scope);
-    }
+  private Scope createScope(Node node, Scope parentScope) {
+    return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope(),
+        parentScope.getFieldScope(),
+        parentScope.isExpression(), parentScope.getExpressionName());
   }
 
-  private List<Expression> analyzeSelect(QuerySpecification node, Scope scope) {
-    List<Expression> outputExpressions = new ArrayList<>();
-
-    for (SelectItem item : node.getSelect().getSelectItems()) {
-      if (item instanceof AllColumns) {
-//        Optional<NamePath> starPrefix = ((AllColumns) item).getPrefix();
-//
-//        //E.g: SELECT alias.path.*
-//        List<TypedField> fields = scope.resolveFieldsWithPrefix(starPrefix);
-//        if (fields.isEmpty()) {
-//          if (starPrefix.isPresent()) {
-//            throw new RuntimeException(String.format("Table '%s' not found", starPrefix.get()));
-//          }
-//          throw new RuntimeException(String.format("SELECT * not allowed from relation that has no columns"));
-//        }
-//        for (Field field : fields) {
-////            int fieldIndex = scope.getRelation().indexOf(field);
-////            FieldReference expression = new FieldReference(fieldIndex);
-////            outputExpressions.add(expression);
-////            ExpressionAnalysis expressionAnalysis = analyzeExpression(expression, scope);
-//
-//          if (node.getSelect().isDistinct() && !field.getType().isComparable()) {
-//            throw new RuntimeException(String.format("DISTINCT can only be applied to comparable types (actual: %s)", field.getType()));
-//          }
-//        }
-      } else if (item instanceof SingleColumn) {
-        SingleColumn column = (SingleColumn) item;
-        analyzeExpression(column.getExpression(), scope);
-
-        outputExpressions.add(column.getExpression());
-      }
-      else {
-        throw new IllegalArgumentException(String.format("Unsupported SelectItem type: %s", item.getClass().getName()));
-      }
-    }
-
-    return outputExpressions;
-  }
-
-  private List<Expression> analyzeGroupBy(QuerySpecification node, Scope scope, List<Expression> outputExpressions) {
-    if (node.getGroupBy().isEmpty()) {
-      return List.of();
-    }
-
-    List<Expression> groupingExpressions = new ArrayList();
-    GroupingElement groupingElement = node.getGroupBy().get().getGroupingElement();
-    for (Expression column : groupingElement.getExpressions()) {
-      if (column instanceof LongLiteral) {
-        throw new RuntimeException("Ordinals not supported in group by statements");
-      }
-
-      analyzeExpression(column, scope);
-
-      //Group by statement must be one of the select fields
-      if (!(column instanceof Identifier)) {
-        log.info(
-            String.format("GROUP BY statement should use column aliases instead of expressions. %s",
-                column));
-        analyzeExpression(column, scope);
-        outputExpressions.stream()
-            .filter(e -> e.equals(column))
-            .findAny()
-            .orElseThrow(() -> new RuntimeException(
-                String.format("SELECT should contain GROUP BY expression %s", column)));
-        groupingExpressions.add(column);
-      }
-    }
-
-    return null;
-  }
-
-  private ExpressionAnalysis analyzeExpression(Expression expression, Scope scope) {
+  private Expression rewriteExpression(Expression expression, Scope scope) {
     ExpressionAnalyzer analyzer = new ExpressionAnalyzer();
-    ExpressionAnalysis exprAnalysis = analyzer.analyze(expression, scope);
+    Expression expr = analyzer.analyze(expression, scope);
 
-    return exprAnalysis;
+    this.additionalJoins.addAll(analyzer.joinResults);
+    return expr;
   }
 }

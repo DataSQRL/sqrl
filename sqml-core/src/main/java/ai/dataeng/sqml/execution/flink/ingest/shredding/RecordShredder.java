@@ -113,7 +113,7 @@ public class RecordShredder {
         for (StandardField field : nestedTableSchema) {
             Type type = TypeHelper.unfurlType(field.getType());
             if (type instanceof RelationType) {
-                findNestedTables(tableIdentifier.resolve(field.getName()), (RelationType)type, rootTableSchema, shredders);
+                findNestedTables(tableIdentifier.concat(field.getName()), (RelationType)type, rootTableSchema, shredders);
             }
         }
     }

@@ -12,7 +12,6 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Getter
-@ToString(callSuper = true)
 public class Column extends Field {
 
   private final Table table;
@@ -21,7 +20,8 @@ public class Column extends Field {
   public int version;
 
   //Type definition
-  public final BasicType type;
+  @Setter
+  public BasicType type;
   public final int arrayDepth;
   public final boolean nonNull;
   public final List<Constraint> constraints;
@@ -34,12 +34,14 @@ public class Column extends Field {
   @Setter
   public Optional<Column> fkReferences;
   public final boolean isInternal;
+  private Field source;
+  private boolean parentPrimaryKey;
 
   public Column(Name name, Table table, int version,
       BasicType type, int arrayDepth, List<Constraint> constraints,
       boolean isPrimaryKey, boolean isForeignKey, Optional<Column> fkReferences,
       boolean isInternal) {
-    super(name);
+    super(unboxName(name));
     this.table = table;
     this.version = version;
     this.type = type;
@@ -50,6 +52,14 @@ public class Column extends Field {
     this.fkReferences = fkReferences;
     this.isInternal = isInternal;
     this.nonNull = ConstraintHelper.isNonNull(constraints);
+  }
+
+  private static Name unboxName(Name name) {
+    if (name instanceof VersionedName) {
+      return ((VersionedName)name).toName();
+    } else {
+      return name;
+    }
   }
 
   public static Column createTemp(String name, BasicType type, Table table, int version) {
@@ -65,5 +75,30 @@ public class Column extends Field {
   @Override
   public boolean isVisible() {
     return !isInternal;
+  }
+
+  public void setSource(Field source) {
+    this.source = source;
+  }
+
+  public Field getSource() {
+    if (source == null) {
+      return this;
+    }
+    Column s = (Column) this.source;
+    return s.getSource();
+  }
+
+  public Column copy() {
+    return new Column(this.name, this.table, this.version, this.type, this.arrayDepth, this.constraints,
+        this.isPrimaryKey, this.isForeignKey, this.fkReferences, this.isInternal);
+  }
+
+  public void setParentPrimaryKey(boolean parentPrimaryKey) {
+    this.parentPrimaryKey = parentPrimaryKey;
+  }
+
+  public boolean getParentPrimaryKey() {
+    return parentPrimaryKey;
   }
 }

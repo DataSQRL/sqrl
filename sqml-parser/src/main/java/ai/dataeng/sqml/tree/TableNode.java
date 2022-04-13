@@ -18,6 +18,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,7 +37,12 @@ public class TableNode
   public TableNode(Optional<NodeLocation> location, NamePath name, Optional<Name> alias) {
     super(location);
     this.name = name;
-    this.alias = Optional.empty();
+    this.alias = alias;
+  }
+  public TableNode(Optional<NodeLocation> location, NamePath name, Optional<Name> alias, Object resolved) {
+    super(location, resolved);
+    this.name = name;
+    this.alias = alias;
   }
 
   public NamePath getNamePath() {

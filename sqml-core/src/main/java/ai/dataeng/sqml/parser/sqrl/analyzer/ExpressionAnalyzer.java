@@ -1,43 +1,70 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
-import ai.dataeng.sqml.tree.ArithmeticBinaryExpression;
-import ai.dataeng.sqml.tree.AstVisitor;
-import ai.dataeng.sqml.tree.BetweenPredicate;
-import ai.dataeng.sqml.tree.BooleanLiteral;
-import ai.dataeng.sqml.tree.ComparisonExpression;
-import ai.dataeng.sqml.tree.DecimalLiteral;
-import ai.dataeng.sqml.tree.DoubleLiteral;
-import ai.dataeng.sqml.tree.EnumLiteral;
+
+import static ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker.createTableCriteria;
+import static ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker.expandRelation;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.alias;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.function;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.ident;
+import static ai.dataeng.sqml.util.SqrlNodeUtil.selectAlias;
+
+import ai.dataeng.sqml.parser.AliasGenerator;
+import ai.dataeng.sqml.parser.Column;
+import ai.dataeng.sqml.parser.Field;
+import ai.dataeng.sqml.parser.Relationship;
+import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.parser.TableFactory;
+import ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker;
+import ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker.TableItem;
+import ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker.WalkResult;
+import ai.dataeng.sqml.parser.sqrl.PathUtil;
+import ai.dataeng.sqml.parser.sqrl.analyzer.Scope.ResolveResult;
+import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
+import ai.dataeng.sqml.parser.sqrl.function.RewritingFunction;
+import ai.dataeng.sqml.parser.sqrl.function.SqlNativeFunction;
+import ai.dataeng.sqml.parser.sqrl.function.SqrlFunction;
+import ai.dataeng.sqml.parser.sqrl.transformers.Transformers;
+import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.Expression;
+import ai.dataeng.sqml.tree.ExpressionRewriter;
+import ai.dataeng.sqml.tree.ExpressionTreeRewriter;
 import ai.dataeng.sqml.tree.FunctionCall;
-import ai.dataeng.sqml.tree.GenericLiteral;
 import ai.dataeng.sqml.tree.Identifier;
-import ai.dataeng.sqml.tree.IntervalLiteral;
-import ai.dataeng.sqml.tree.IsNotNullPredicate;
-import ai.dataeng.sqml.tree.LogicalBinaryExpression;
+import ai.dataeng.sqml.tree.Join.Type;
+import ai.dataeng.sqml.tree.JoinCriteria;
 import ai.dataeng.sqml.tree.LongLiteral;
-import ai.dataeng.sqml.tree.Node;
-import ai.dataeng.sqml.tree.NotExpression;
-import ai.dataeng.sqml.tree.NullLiteral;
-import ai.dataeng.sqml.tree.SimpleCaseExpression;
-import ai.dataeng.sqml.tree.StringLiteral;
-import ai.dataeng.sqml.tree.TimestampLiteral;
-import ai.dataeng.sqml.type.Type;
+import ai.dataeng.sqml.tree.OrderBy;
+import ai.dataeng.sqml.tree.Query;
+import ai.dataeng.sqml.tree.QuerySpecification;
+import ai.dataeng.sqml.tree.Relation;
+import ai.dataeng.sqml.tree.Select;
+import ai.dataeng.sqml.tree.SortItem;
+import ai.dataeng.sqml.tree.TableSubquery;
+import ai.dataeng.sqml.tree.Window;
+import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
+import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import lombok.Value;
+import org.apache.calcite.sql.SqlAggFunction;
 
 public class ExpressionAnalyzer {
+  FunctionLookup functionLookup = new FunctionLookup();
+  AliasGenerator gen = new AliasGenerator();
+  public List<JoinResult> joinResults = new ArrayList<>();
 
   public ExpressionAnalyzer() {
   }
 
-  public static class ExpressionAnalysis {
 
-  }
+  public Expression analyze(Expression node, Scope scope) {
+    Visitor visitor = new Visitor();
+    Expression newExpression =
+        ExpressionTreeRewriter.rewriteWith(visitor, node, new Context(scope));
 
-  public ExpressionAnalysis analyze(Expression node, Scope scope) {
-    ExpressionAnalysis analysis = new ExpressionAnalysis();
-    Visitor visitor = new Visitor(analysis);
-    node.accept(visitor, new Context(scope));
-    return analysis;
+    return newExpression;
   }
 
   public static class Context {
@@ -52,159 +79,163 @@ public class ExpressionAnalyzer {
     }
   }
 
-  class Visitor extends AstVisitor<Type, Context> {
-    private final ExpressionAnalysis analysis;
+  class Visitor extends ExpressionRewriter<Context> {
+    @Override
+    public Expression rewriteFunctionCall(FunctionCall node, Context context,
+        ExpressionTreeRewriter<Context> treeRewriter) {
+      SqrlFunction function = functionLookup.lookup(node.getName());
+      //Special case for count
+      //TODO Replace this bit of code
+      if (function instanceof SqlNativeFunction) {
+        SqlNativeFunction nativeFunction = (SqlNativeFunction) function;
+        if (nativeFunction.getOp().getName().equalsIgnoreCase("COUNT") &&
+         node.getArguments().size() == 0
+        ) {
+          return new FunctionCall(NamePath.of("COUNT"), List.of(new LongLiteral("1")), false);
+        }
+      }
 
-    public Visitor(ExpressionAnalysis analysis) {
-      this.analysis = analysis;
+      if (function instanceof RewritingFunction) {
+        //rewrite function immediately
+        RewritingFunction rewritingFunction = (RewritingFunction) function;
+        node = rewritingFunction.rewrite(node);
+      }
+
+      List<Expression> arguments = new ArrayList<>();
+
+      for (Expression arg : node.getArguments()) {
+        arguments.add(treeRewriter.rewrite(arg, context));
+      }
+
+      if (function instanceof SqlNativeFunction && ((SqlNativeFunction)function).getOp() instanceof SqlAggFunction &&
+          ((SqlAggFunction)((SqlNativeFunction)function).getOp()).requiresOver()) {
+        return new FunctionCall(node.getLocation(), node.getName(), arguments, node.isDistinct(),
+            createWindow(context.getScope()));
+      }
+
+      if (function.isAggregate() && node.getArguments().size() == 1 &&
+          node.getArguments().get(0) instanceof Identifier) {
+        Identifier identifier = (Identifier)node.getArguments().get(0);
+        /*
+         * The first token is either the join scope or a column in any join scope
+         */
+        List<ResolveResult> resolve = context.getScope().resolveFirst(identifier.getNamePath());
+        Preconditions.checkState(resolve.size() == 1,
+            "Column ambiguous or missing: %s %s", identifier.getNamePath(), resolve);
+        if(PathUtil.isToMany(resolve.get(0))) {
+          ResolveResult result = resolve.get(0);
+
+          JoinWalker joinWalker = new JoinWalker();
+          WalkResult walkResult = joinWalker.walk(
+              result.getAlias(), //The table alias that resolved the field
+              Optional.empty(), //Terminal alias specified
+              result.getRemaining().get(), //The fields from the base that we should resolve
+              Optional.empty(), //push in relation
+              Optional.empty(),
+              context.getScope().getJoinScope()
+          );
+          TableItem first = walkResult.getTableStack().get(0);
+          TableItem last = walkResult.getTableStack().get(walkResult.getTableStack().size() - 1);
+
+          //Special case: count(entries) => count(e._uuid) FROM entries
+          Field field = result.getTable().walkField(result.getRemaining().get()).get();
+          Name fieldName = field instanceof Relationship ?
+              ((Relationship) field).getToTable().getPrimaryKeys().get(0).getId()
+              : result.getTable().walkField(result.getRemaining().get()).get().getId();
+
+          Name tableAlias = gen.nextTableAliasName();
+          Name fieldAlias = gen.nextAliasName();
+
+          //Add context keys to query, rename field
+          QuerySpecification subquerySpec = new QuerySpecification(
+              Optional.empty(),
+              new Select(false, List.of(
+                  selectAlias(function(node.getName(), alias(last.getAlias(), fieldName)),
+                      fieldAlias.toNamePath()))),
+              walkResult.getRelation(),
+              Optional.empty(),
+              Optional.empty(),
+              Optional.empty(),
+              Optional.empty(),
+              Optional.empty()
+          );
+
+          //Add context keys to query so we can rejoin it in the subsequent step
+          QuerySpecification contextSubquery = Transformers.addContextToQuery.transform(subquerySpec, resolve.get(0).getTable(),
+              first.getAlias());
+
+          Query query = new Query(Optional.empty(), contextSubquery, Optional.empty(), Optional.empty());
+          TableSubquery tableSubquery = new TableSubquery(query);
+
+          TableFactory tableFactory = new TableFactory();
+          Table table = tableFactory.create(query);
+
+          context.getScope().getJoinScope().put(tableAlias, table);
+
+          AliasedRelation subquery = new AliasedRelation(tableSubquery, ident(tableAlias));
+
+          JoinCriteria criteria = createTableCriteria(context.getScope().getJoinScope(), result.getAlias(), tableAlias);
+          joinResults.add(new JoinResult(Type.LEFT, subquery, Optional.of(criteria)));
+          return new Identifier(Optional.empty(), NamePath.of(tableAlias, fieldAlias));
+        }
+      }
+
+      return new FunctionCall(node.getLocation(), node.getName(), arguments,
+          node.isDistinct(), node.getOver());
+    }
+
+    private Optional<Window> createWindow(Scope scope) {
+      Table table = scope.getFieldScope(Name.SELF_IDENTIFIER).get();
+      List<Expression> partition = new ArrayList<>();
+      for (Column column : table.getPrimaryKeys()) {
+        partition.add(new Identifier(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath().concat(column.getId().toNamePath())));
+      }
+
+      OrderBy orderBy = new OrderBy(List.of(
+          new SortItem(Optional.empty(),
+              new Identifier(Optional.empty(), Name.INGEST_TIME.toNamePath()),
+              Optional.empty())));
+
+      return Optional.of(new Window(partition, Optional.of(orderBy)));
     }
 
     @Override
-    public Type visitNode(Node node, Context context) {
-      throw new RuntimeException(String.format("Could not visit node: %s %s",
-          node.getClass().getName(), node));
+    public Expression rewriteIdentifier(Identifier node, Context context,
+        ExpressionTreeRewriter<Context> treeRewriter) {
+      List<Scope.ResolveResult> results = context.getScope().resolveFirst(node.getNamePath());
+
+      Preconditions.checkState(results.size() == 1,
+          "Could not resolve field (ambiguous or non-existent: " + node + " : " + results + ")");
+
+      if (PathUtil.isToOne(results.get(0))) {
+        ResolveResult result = results.get(0);
+        /*
+         * Replace current token with an Identifier and expand the path into a subquery. This
+         * subquery is joined to the table it was resolved from.
+         */
+        Name baseTableAlias = gen.nextTableAliasName();
+        Relation relation = expandRelation(context.getScope().getJoinScope(), (Relationship)result.getFirstField(), baseTableAlias);
+
+        joinResults.add(new JoinResult(
+            Type.LEFT, relation,
+            Optional.of(JoinWalker.createRelCriteria(context.getScope().getJoinScope(), result.getAlias(), baseTableAlias,
+                (Relationship) result.getFirstField()))
+        ));
+        return new Identifier(node.getLocation(), baseTableAlias.toNamePath().concat(
+            result.getRemaining().get().getLast()));
+      }
+
+      NamePath qualifiedName = context.getScope().qualify(node.getNamePath());
+      Identifier identifier = new Identifier(node.getLocation(), qualifiedName);
+      identifier.setResolved(results.get(0).getFirstField());
+      return identifier;
     }
+  }
 
-    @Override
-    public Type visitExpression(Expression node, Context context) {
-      throw new RuntimeException(String.format("Unknown expression node: %s %s",
-          node.getClass().getName(), node));
-    }
-
-    @Override
-    public Type visitIdentifier(Identifier node, Context context) {
-      //1. Lookup identifier in current scope, throw if ambiguous
-      //2. Resolve to a FieldPath
-      //3. Add fieldpath to scope
-
-      return null;
-    }
-
-    //For is not null, between, etc
-    // We need to check if the returning context contains a to-many and fail if it does
-    // These are not to-many compatible functions
-    @Override
-    public Type visitIsNotNullPredicate(IsNotNullPredicate node, Context context) {
-      node.getValue().accept(this, context);
-      return null;
-    }
-
-    @Override
-    public Type visitBetweenPredicate(BetweenPredicate node, Context context) {
-      node.getValue().accept(this, context);
-      node.getMin().accept(this, context);
-      node.getMax().accept(this, context);
-      return null;
-    }
-
-    @Override
-    public Type visitLogicalBinaryExpression(LogicalBinaryExpression node, Context context) {
-      node.getLeft().accept(this, context);
-      node.getRight().accept(this, context);
-      return null;
-    }
-
-    @Override
-    public Type visitComparisonExpression(ComparisonExpression node, Context context) {
-      node.getLeft().accept(this, context);
-      node.getRight().accept(this, context);
-
-      return null;
-    }
-
-    @Override
-    public Type visitArithmeticBinary(ArithmeticBinaryExpression node, Context context) {
-      node.getLeft().accept(this, context);
-      node.getRight().accept(this, context);
-
-      return null;
-    }
-
-    @Override
-    public Type visitFunctionCall(FunctionCall node, Context context) {
-      //Get operators from Sqrl operators. they need to be sql &| flink compatible
-
-      //Check if function call exists in the AST transformer, if it does, transform it immediately
-      //If function is aggregate
-      //  if it has a to-many: Register to-many to expand later
-      //  if it is a to-one: Register to-one
-      //If function is not an aggregate:
-      //  if to-many, add to errors
-      //  if to-one: register to-one
-
-      return null;
-    }
-
-    /**
-     * Allowable:
-     * CASE WHEN condition1 THEN result1 (WHEN condition2 THEN result2)* (ELSE result_z) END
-     */
-    @Override
-    public Type visitSimpleCaseExpression(SimpleCaseExpression node, Context context) {
-      node.getWhenClauses().forEach(e->e.accept(this, context));
-      node.getDefaultValue().map(e->e.accept(this, context));
-
-      return null;
-    }
-
-    @Override
-    public Type visitNotExpression(NotExpression node, Context context) {
-      node.getValue().accept(this, context);
-      return null;
-    }
-
-    @Override
-    public Type visitDoubleLiteral(DoubleLiteral node, Context context) {
-      return null;
-    }
-
-    @Override
-    public Type visitDecimalLiteral(DecimalLiteral node, Context context) {
-      return null;
-    }
-
-    @Override
-    public Type visitGenericLiteral(GenericLiteral node, Context context) {
-      throw new RuntimeException("Generic literal not supported yet.");
-    }
-
-    @Override
-    public Type visitTimestampLiteral(TimestampLiteral node, Context context) {
-      return null;
-    }
-
-    /**
-     * TODO: We need to rewrite some intervals to match sql syntax
-     */
-    @Override
-    public Type visitIntervalLiteral(IntervalLiteral node, Context context) {
-      node.getExpression().accept(this, context);
-      return null;
-    }
-
-    @Override
-    public Type visitStringLiteral(StringLiteral node, Context context) {
-      return null;
-    }
-
-    @Override
-    public Type visitBooleanLiteral(BooleanLiteral node, Context context) {
-      return null;
-    }
-
-    @Override
-    public Type visitEnumLiteral(EnumLiteral node, Context context) {
-      throw new RuntimeException("Enum literal not supported yet.");
-    }
-
-    @Override
-    public Type visitNullLiteral(NullLiteral node, Context context) {
-      return null;
-    }
-
-    @Override
-    public Type visitLongLiteral(LongLiteral node, Context context) {
-      return null;
-    }
+  @Value
+  public static class JoinResult {
+    Type type;
+    Relation relation;
+    Optional<JoinCriteria> criteria;
   }
 }

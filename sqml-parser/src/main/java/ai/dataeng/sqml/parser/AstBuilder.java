@@ -18,8 +18,23 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
-import ai.dataeng.sqml.parser.SqlBaseParser.*;
-import ai.dataeng.sqml.tree.AliasedRelation;
+import ai.dataeng.sqml.parser.SqlBaseParser.AssignContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.BackQuotedIdentifierContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.CreateSubscriptionContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.DistinctAssignmentContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.ExpressionAssignContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.ExpressionContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.ImportDefinitionContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.ImportStatementContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.InRelationContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.InlineJoinBodyContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.InlineJoinContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.JoinAssignmentContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.JoinTypeContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.QualifiedNameContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.QueryAssignContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.ScriptContext;
+import ai.dataeng.sqml.parser.SqlBaseParser.ValueExpressionDefaultContext;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.ArithmeticBinaryExpression;
 import ai.dataeng.sqml.tree.ArithmeticUnaryExpression;
@@ -29,15 +44,12 @@ import ai.dataeng.sqml.tree.Cast;
 import ai.dataeng.sqml.tree.ComparisonExpression;
 import ai.dataeng.sqml.tree.CreateSubscription;
 import ai.dataeng.sqml.tree.DecimalLiteral;
-import ai.dataeng.sqml.tree.DereferenceExpression;
 import ai.dataeng.sqml.tree.DistinctAssignment;
 import ai.dataeng.sqml.tree.DoubleLiteral;
 import ai.dataeng.sqml.tree.Except;
-import ai.dataeng.sqml.tree.ExistsPredicate;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.FunctionCall;
-import ai.dataeng.sqml.tree.GenericLiteral;
 import ai.dataeng.sqml.tree.GroupBy;
 import ai.dataeng.sqml.tree.GroupingElement;
 import ai.dataeng.sqml.tree.Identifier;
@@ -50,31 +62,25 @@ import ai.dataeng.sqml.tree.IntervalLiteral;
 import ai.dataeng.sqml.tree.IsNotNullPredicate;
 import ai.dataeng.sqml.tree.IsNullPredicate;
 import ai.dataeng.sqml.tree.Join;
-import ai.dataeng.sqml.tree.JoinDeclaration;
 import ai.dataeng.sqml.tree.JoinCriteria;
+import ai.dataeng.sqml.tree.JoinDeclaration;
 import ai.dataeng.sqml.tree.JoinOn;
-import ai.dataeng.sqml.tree.LikePredicate;
 import ai.dataeng.sqml.tree.Limit;
 import ai.dataeng.sqml.tree.LogicalBinaryExpression;
 import ai.dataeng.sqml.tree.LongLiteral;
-import ai.dataeng.sqml.tree.NaturalJoin;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeLocation;
 import ai.dataeng.sqml.tree.NotExpression;
 import ai.dataeng.sqml.tree.NullLiteral;
 import ai.dataeng.sqml.tree.OrderBy;
-import ai.dataeng.sqml.tree.Parameter;
-import ai.dataeng.sqml.tree.QualifiedName;
 import ai.dataeng.sqml.tree.Query;
 import ai.dataeng.sqml.tree.QueryAssignment;
 import ai.dataeng.sqml.tree.QueryBody;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
-import ai.dataeng.sqml.tree.Row;
 import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
-import ai.dataeng.sqml.tree.IsEmpty;
 import ai.dataeng.sqml.tree.SimpleCaseExpression;
 import ai.dataeng.sqml.tree.SimpleGroupBy;
 import ai.dataeng.sqml.tree.SingleColumn;
@@ -84,9 +90,6 @@ import ai.dataeng.sqml.tree.SubqueryExpression;
 import ai.dataeng.sqml.tree.SubscriptionType;
 import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.TableSubquery;
-import ai.dataeng.sqml.tree.TimeLiteral;
-import ai.dataeng.sqml.tree.TimestampLiteral;
-import ai.dataeng.sqml.tree.InlineJoinBody;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.tree.WhenClause;
 import ai.dataeng.sqml.tree.name.Name;
@@ -557,18 +560,23 @@ class AstBuilder
       criteria = new JoinOn(getLocation(context), (Expression) visit(context.joinCriteria().booleanExpression()));
     }
 
+    return new Join(getLocation(context), toJoinType(context.joinType()), left, right, Optional.ofNullable(criteria));
+  }
+
+  public Join.Type toJoinType(JoinTypeContext joinTypeContext) {
+
     Join.Type joinType;
-    if (context.joinType().LEFT() != null) {
+    if (joinTypeContext.LEFT() != null) {
       joinType = Join.Type.LEFT;
-    } else if (context.joinType().RIGHT() != null) {
+    } else if (joinTypeContext.RIGHT() != null) {
       joinType = Join.Type.RIGHT;
-    } else if (context.joinType().FULL() != null) {
+    } else if (joinTypeContext.FULL() != null) {
       joinType = Join.Type.FULL;
     } else {
       joinType = Join.Type.INNER;
     }
 
-    return new Join(getLocation(context), joinType, left, right, Optional.ofNullable(criteria));
+    return joinType;
   }
 
   @Override
@@ -579,6 +587,11 @@ class AstBuilder
     }
 
     return new TableNode(getLocation(context), getNamePath(context.qualifiedName()), alias);
+  }
+
+  @Override
+  public Node visitInlineJoinBody(InlineJoinBodyContext ctx) {
+    return visit(ctx);
   }
 
   @Override
@@ -611,21 +624,6 @@ class AstBuilder
   }
 
   @Override
-  public Node visitDistinctFrom(SqlBaseParser.DistinctFromContext context) {
-    Expression expression = new ComparisonExpression(
-        getLocation(context),
-        ComparisonExpression.Operator.IS_DISTINCT_FROM,
-        (Expression) visit(context.value),
-        (Expression) visit(context.right));
-
-    if (context.NOT() != null) {
-      expression = new NotExpression(getLocation(context), expression);
-    }
-
-    return expression;
-  }
-
-  @Override
   public Node visitBetween(SqlBaseParser.BetweenContext context) {
     Expression expression = new BetweenPredicate(
         getLocation(context),
@@ -649,20 +647,6 @@ class AstBuilder
     }
 
     return new IsNotNullPredicate(getLocation(context), child);
-  }
-
-  @Override
-  public Node visitLike(SqlBaseParser.LikeContext context) {
-    Expression result = new LikePredicate(
-        getLocation(context),
-        (Expression) visit(context.value),
-        (Expression) visit(context.pattern));
-
-    if (context.NOT() != null) {
-      result = new NotExpression(getLocation(context), result);
-    }
-
-    return result;
   }
 
   @Override
@@ -896,10 +880,7 @@ class AstBuilder
   @Override
   public Node visitJoinAssignment(JoinAssignmentContext ctx) {
     NamePath name = getNamePath(ctx.qualifiedName());
-    Interval interval = new Interval(
-        ctx.inlineJoin().inlineJoinBody().start.getStartIndex(),
-        ctx.inlineJoin().inlineJoinBody().stop.getStopIndex());
-    String query = ctx.inlineJoin().start.getInputStream().getText(interval);
+    String query = "";
 
     return new JoinDeclaration(Optional.of(getLocation(ctx)), name,
         query,
@@ -908,29 +889,39 @@ class AstBuilder
 
   @Override
   public Node visitInlineJoin(InlineJoinContext ctx) {
+    Optional<OrderBy> orderBy = Optional.empty();
+    if (ctx.ORDER() != null) {
+      orderBy = Optional
+          .of(new OrderBy(getLocation(ctx.ORDER()), visit(ctx.sortItem(), SortItem.class)));
+    }
+
+    Relation current = new TableNode(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath(), Optional.empty());
+    for (InlineJoinBodyContext inline : ctx.inlineJoinBody()) {
+      JoinCriteria criteria = null;
+      if (inline.joinCriteria() != null && inline.joinCriteria().ON() != null) {
+        criteria = new JoinOn(getLocation(inline),
+            (Expression) visit(inline.joinCriteria().booleanExpression()));
+      }
+
+      current = new Join(
+          Optional.of(getLocation(inline)),
+          toJoinType(inline.joinType()),
+          current,
+          (Relation) visit(inline.relationPrimary()),
+          (Optional<JoinCriteria>) Optional.ofNullable(criteria)
+      );
+    }
+
+
     return new InlineJoin(
         Optional.of(getLocation(ctx)),
-        (InlineJoinBody)visit(ctx.inlineJoinBody()),
-        ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
-            .map(s->(SortItem) s.accept(this)).collect(toList()),
+        current,
+        orderBy,
         ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
-            Optional.of(Integer.parseInt(ctx.limit.getText())),
+            Optional.of(new Limit(ctx.limit.getText())),
         ctx.inv == null ? Optional.empty() :
             Optional.of(((Identifier)visit(ctx.inv)).getNamePath().getFirst())
     );
-  }
-
-  @Override
-  public Node visitInlineJoinBody(InlineJoinBodyContext ctx) {
-    return new InlineJoinBody(
-          Optional.of(getLocation(ctx)),
-          getNamePath(ctx.table),
-          ctx.alias == null ? Optional.empty() :
-              Optional.of((Identifier)visit(ctx.alias)),
-        (ctx.expression() != null) ? (Expression)visit(ctx.expression()) : null,
-        ctx.inlineJoinBody() != null ? Optional.of((InlineJoinBody) visit(ctx.inlineJoinBody()))
-            : Optional.empty()
-      );
   }
 
   @Override
@@ -968,7 +959,7 @@ class AstBuilder
   @Override
   protected Node aggregateResult(Node aggregate, Node nextResult) {
     if (nextResult == null) {
-      throw new UnsupportedOperationException("not yet implemented");
+      throw new UnsupportedOperationException("not yet implemented:" + aggregate);
     }
 
     if (aggregate == null) {

@@ -1,37 +1,24 @@
 package ai.dataeng.sqml.execution.sql.util;
 
-import static ai.dataeng.sqml.execution.sql.util.DatabaseUtil.sqlName;
-
-import ai.dataeng.sqml.execution.sql.util.DatabaseUtil.SQLTypeMapping;
 import ai.dataeng.sqml.parser.Column;
+import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Table;
-import ai.dataeng.sqml.type.basic.BooleanType;
-import ai.dataeng.sqml.type.basic.DateTimeType;
-import ai.dataeng.sqml.type.basic.FloatType;
-import ai.dataeng.sqml.type.basic.IntegerType;
-import ai.dataeng.sqml.type.basic.NumberType;
-import ai.dataeng.sqml.type.basic.StringType;
-import ai.dataeng.sqml.type.basic.UuidType;
 import com.google.common.base.Preconditions;
-import java.lang.reflect.Type;
-import java.sql.Date;
-import java.sql.Time;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Schema.UnresolvedColumn;
 import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;
+import org.apache.flink.table.api.Schema.UnresolvedPrimaryKey;
 import org.apache.flink.table.types.AtomicDataType;
-import org.apache.flink.table.types.logical.DecimalType;
-import org.apache.flink.table.types.logical.TimestampType;
+import org.apache.flink.table.types.CollectionDataType;
 
 public class CreateTableBuilder extends TableBuilder {
 
     private final StringBuilder sql = new StringBuilder();
     private List<String> primaryKeys = new ArrayList<>();
+    private Schema schema = null;
 
     public CreateTableBuilder(String tableName) {
         super(tableName);
@@ -39,14 +26,22 @@ public class CreateTableBuilder extends TableBuilder {
     }
 
     public CreateTableBuilder addColumns(Schema schema, Table table) {
-//        for (Column pk : table.getPrimaryKeys()) {
-//            primaryKeys.add(pk.getId().toString());
-//        }
+        this.schema = schema;
+        if (schema.getPrimaryKey().isPresent()) {
+            UnresolvedPrimaryKey key = schema.getPrimaryKey().get();
+            primaryKeys = key.getColumnNames();
+        } else { //todo bag logic
+            for (Column pk : table.getPrimaryKeys()) {
+                primaryKeys.add(pk.getId().toString());
+            }
+        }
 
         List<String> columns = new ArrayList<>();
         for (UnresolvedColumn col : schema.getColumns()) {
             String column = addColumn((UnresolvedPhysicalColumn)col);
-            columns.add(column);
+            if (column != null) {
+                columns.add(column);
+            }
         }
 
         sql.append(String.join(", ", columns));
@@ -55,6 +50,11 @@ public class CreateTableBuilder extends TableBuilder {
     }
 
     public String addColumn(UnresolvedPhysicalColumn column) {
+        if (column.getDataType() instanceof CollectionDataType) {
+
+            return null;
+        }
+
         AtomicDataType type = (AtomicDataType)column.getDataType();
 
         return addColumn(column.getName().toString(), getSQLType(type), !type.getLogicalType().isNullable());
@@ -62,12 +62,38 @@ public class CreateTableBuilder extends TableBuilder {
 
     private String getSQLType(AtomicDataType type) {
         switch (type.getLogicalType().getTypeRoot()) {
+            case BOOLEAN:
+            case BINARY:
+            case VARBINARY:
+            case DECIMAL:
+            case TINYINT:
+            case SMALLINT:
             case BIGINT:
             case INTEGER:
                 return "BIGINT";
             case CHAR:
             case VARCHAR:
                 return "VARCHAR";
+            case FLOAT:
+            case DOUBLE:
+                return "FLOAT";
+            case DATE:
+                return "DATE";
+            case TIME_WITHOUT_TIME_ZONE:
+                return "TIME";
+            case TIMESTAMP_WITHOUT_TIME_ZONE:
+                return "TIMESTAMP";
+            case TIMESTAMP_WITH_TIME_ZONE:
+                return "TIMESTAMPTZ";
+            case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+                return "TIMESTAMPTZ";
+            case INTERVAL_YEAR_MONTH:
+            case INTERVAL_DAY_TIME:
+            case DISTINCT_TYPE:
+            case STRUCTURED_TYPE:
+            case NULL:
+            case SYMBOL:
+            case UNRESOLVED:
             case ARRAY:
             case MAP:
             case MULTISET:
@@ -91,12 +117,11 @@ public class CreateTableBuilder extends TableBuilder {
     public String getSQL() {
 //        checkUpdate();
 //        addColumn(DatabaseUtil.TIMESTAMP_COLUMN_NAME, DatabaseUtil.TIMESTAMP_COLUMN_SQL_TYPE.getTypeName(), true);
-//        Preconditions.checkArgument(!primaryKeys.isEmpty());
-//        if (!primaryKeys.isEmpty()) {
-//            sql.append("PRIMARY KEY (");
-//            sql.append(primaryKeys.stream().collect(Collectors.joining(", ")));
-//            sql.append(")");
-//        }
+
+        Preconditions.checkArgument(!primaryKeys.isEmpty());
+        sql.append(", PRIMARY KEY (");
+        sql.append(primaryKeys.stream().collect(Collectors.joining(", ")));
+        sql.append(")");
         sql.append(" );");
         System.out.println(sql.toString());
         return sql.toString();

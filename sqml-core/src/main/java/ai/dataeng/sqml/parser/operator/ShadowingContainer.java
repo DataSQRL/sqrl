@@ -1,6 +1,7 @@
 package ai.dataeng.sqml.parser.operator;
 
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.VersionedName;
 import com.google.common.collect.Iterators;
 import java.util.ArrayList;
 import java.util.Collection;

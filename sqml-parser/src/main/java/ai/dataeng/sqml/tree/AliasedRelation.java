@@ -26,7 +26,6 @@ public class AliasedRelation
 
   private final Relation relation;
   private final Identifier alias;
-//  private final List<Identifier> columnNames;
 
   public AliasedRelation(Relation relation, Identifier alias) {
     this(Optional.empty(), relation, alias);
@@ -36,13 +35,17 @@ public class AliasedRelation
     this(Optional.of(location), relation, alias);
   }
 
-  private AliasedRelation(Optional<NodeLocation> location, Relation relation, Identifier alias) {
+  public AliasedRelation(Optional<NodeLocation> location, Relation relation, Identifier alias) {
     super(location);
     requireNonNull(relation, "relation is null");
     requireNonNull(alias, " is null");
 
     this.relation = relation;
     this.alias = alias;
+  }
+
+  public <T> T getResolved() {
+    return relation.getResolved();
   }
 
   public Relation getRelation() {

@@ -110,6 +110,10 @@ public class DatasetRegistry implements Closeable {
         return datasets.get(name);
     }
 
+    public SourceDataset getDataset(@NonNull String name) {
+        return datasets.get(Name.system(name));
+    }
+
     public Collection<SourceDataset> getDatasets() {
         return datasets.values();
     }

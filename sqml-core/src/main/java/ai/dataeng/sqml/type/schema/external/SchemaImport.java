@@ -62,7 +62,7 @@ public class SchemaImport {
                 errors.fatal( "Missing or invalid dataset name: %s", dataset.name);
                 continue;
             }
-            SourceDataset sd = datasetLookup.getDataset(dataset.name);
+            SourceDataset sd = datasetLookup.getDataset(Name.system(dataset.name));
             if (sd==null) {
                 errors.fatal("Source dataset is unknown and has not been registered with system: %s", dataset.name);
                 continue;

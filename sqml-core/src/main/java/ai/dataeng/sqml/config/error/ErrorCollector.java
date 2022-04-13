@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.config.error;
 
+import ai.dataeng.sqml.tree.NodeLocation;
 import ai.dataeng.sqml.tree.name.Name;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -79,6 +80,10 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
 
     public void fatal(int line, int offset, String msg, Object... args) {
         addInternal(new ErrorMessage.Implementation(getMessage(msg,args),baseLocation.atFile(line,offset), ErrorMessage.Severity.FATAL));
+    }
+
+    public void fatal(NodeLocation location, String msg, Object... args) {
+        fatal(location.getLineNumber(),location.getColumnNumber(),msg,args);
     }
 
     public void warn(String msg, Object... args) {

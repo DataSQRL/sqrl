@@ -49,16 +49,14 @@ subscriptionType
     ;
 
 inlineJoin
-    : inlineJoinBody
+    : inlineJoinBody+
       (ORDER BY sortItem (',' sortItem)*)?
       (LIMIT limit=INTEGER_VALUE)?
       (INVERSE inv=identifier)?
     ;
 
 inlineJoinBody
-    : (LEFT)? JOIN table=qualifiedName (AS? alias=identifier)?
-      (ON expression)?
-      inlineJoinBody?
+    : joinType JOIN relationPrimary (joinCriteria)?
     ;
 
 query
@@ -159,9 +157,9 @@ predicate[ParserRuleContext value]
     | NOT? IN qualifiedName                                               #inRelation
     | NOT? IN '(' expression (',' expression)* ')'                        #inList
     | NOT? IN '(' query ')'                                               #inSubquery
-    | NOT? LIKE pattern=valueExpression                                   #like
+   // | NOT? LIKE pattern=valueExpression                                   #like
     | IS NOT? NULL                                                        #nullPredicate
-    | IS NOT? DISTINCT FROM right=valueExpression                         #distinctFrom
+//    | IS NOT? DISTINCT FROM right=valueExpression                         #distinctFrom
     ;
 
 valueExpression
@@ -173,7 +171,6 @@ valueExpression
 
 primaryExpression
     : NULL                                                                                #nullLiteral
-    //| inlineJoinBody                                                                      #inlineJoinExpr
     | interval                                                                            #intervalLiteral
     | number                                                                              #numericLiteral
     | booleanValue                                                                        #booleanLiteral

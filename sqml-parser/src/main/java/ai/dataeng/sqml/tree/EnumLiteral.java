@@ -18,6 +18,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.Objects;
 import java.util.Optional;
 
+@Deprecated
 public class EnumLiteral
     extends Literal {
 

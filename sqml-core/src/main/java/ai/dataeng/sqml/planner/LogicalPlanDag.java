@@ -10,10 +10,6 @@ import lombok.Getter;
 public class LogicalPlanDag {
   ShadowingContainer<Table> schema;
 
-  public void mergeSchema(ShadowingContainer<Table> toMerge) {
-    schema.addAll(toMerge);
-  }
-
   @Override
   public String toString() {
     return "LogicalPlanDag{" +

@@ -3,9 +3,12 @@ package ai.dataeng.sqml.api.graphql;
 import ai.dataeng.execution.DefaultDataFetcher;
 import ai.dataeng.execution.SqlClientProvider;
 import ai.dataeng.execution.criteria.Criteria;
+import ai.dataeng.execution.criteria.EqualsCriteria;
+import ai.dataeng.execution.page.NoPage;
 import ai.dataeng.execution.page.SystemPageProvider;
 import ai.dataeng.execution.table.H2Table;
 import ai.dataeng.execution.table.TableFieldFetcher;
+import ai.dataeng.execution.table.column.BooleanColumn;
 import ai.dataeng.execution.table.column.Columns;
 import ai.dataeng.execution.table.column.DateTimeColumn;
 import ai.dataeng.execution.table.column.FloatColumn;
@@ -15,26 +18,31 @@ import ai.dataeng.execution.table.column.StringColumn;
 import ai.dataeng.execution.table.column.UUIDColumn;
 import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
+import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.planner.nodes.LogicalFlinkSink;
 import ai.dataeng.sqml.tree.name.NamePath;
-import ai.dataeng.sqml.type.CalciteDelegatingField;
 import ai.dataeng.sqml.type.SqmlTypeVisitor;
 import ai.dataeng.sqml.type.Type;
 import ai.dataeng.sqml.type.basic.BasicType;
+import ai.dataeng.sqml.type.basic.BigIntegerType;
+import ai.dataeng.sqml.type.basic.BooleanType;
 import ai.dataeng.sqml.type.basic.DateTimeType;
+import ai.dataeng.sqml.type.basic.DoubleType;
 import ai.dataeng.sqml.type.basic.FloatType;
 import ai.dataeng.sqml.type.basic.IntegerType;
+import ai.dataeng.sqml.type.basic.IntervalType;
 import ai.dataeng.sqml.type.basic.StringType;
 import ai.dataeng.sqml.type.basic.UuidType;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLCodeRegistry.Builder;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.flink.table.api.TableDescriptor;
 
 public class SqrlCodeRegistryBuilder {
@@ -50,11 +58,6 @@ public class SqrlCodeRegistryBuilder {
       registerFetcher(registry, sqlClientProvider, sink.getKey(), sink.getValue());
     }
 
-
-//    for (MaterializeSource source : sources) {
-//      registerFetcher(registry, sqlClientProvider, source.getTable(), seen);
-//    }
-
     return registry.build();
   }
 
@@ -62,52 +65,43 @@ public class SqrlCodeRegistryBuilder {
     NamePath path = table.getPath();
 
     if (path.getLength() == 1) {//register a special fetcher
+      System.out.println("Registering df on :" + table.name.getDisplay() + " with :" + flinkSink.getPhysicalName());
+
       registry.dataFetcher(
-          FieldCoordinates.coordinates("Query", table.name.getDisplay()),
+          FieldCoordinates.coordinates("Query", table.name.getCanonical()),
           new DefaultDataFetcher(pool, new SystemPageProvider(), toTable(table, Optional.empty(), flinkSink.getPhysicalName())));
     }
 
-
     //Look for any relationship tables and build fetchers for them
-//    for (Field field : table.getFields()) {
-//      if (field instanceof Relationship) {
-//        Relationship rel = (Relationship) field;
-//        Criteria criteria = buildCriteria(rel);
-//
-//        System.out.println(getTypeName(table.getPath())+" : "+ field.getName().getCanonical());
-//        registry.dataFetcher(
-//            FieldCoordinates.coordinates(getTypeName(table.getPath()), field.getName().getCanonical()),
-//            new DefaultDataFetcher(pool, new NoPage(), toTable(rel.getToTable(), Optional.of(criteria))));
-//        registerFetcher(registry, pool, rel.getToTable(), seen);
-//      }
-//    }
+    for (Field field : table.getFields()) {
+      if (field instanceof Relationship) {
+        Relationship rel = (Relationship) field;
+        Criteria criteria = buildCriteria(rel);
+
+        System.out.println(getTypeName(table.getPath())+" : "+ field.getName().getCanonical());
+        registry.dataFetcher(
+            FieldCoordinates.coordinates(getTypeName(table.getPath()), field.getName().getCanonical()),
+            new DefaultDataFetcher(pool, new NoPage(), toTable(rel.getToTable(), Optional.of(criteria), rel.getToTable().getName()
+                .getDisplay().toString())));
+
+        //todo: more than one level deep
+        //registerFetcher(registry, pool, rel.getToTable(), seen);
+      }
+    }
   }
 
-//  private Criteria buildCriteria(Relationship rel) {
-//    Criteria criteria = new EqualsCriteria(rel.getFrom().get(0).getName().getCanonical(),
-//        ((Column)rel.getTo().get(0)).getId());
-//    return criteria;
-//  }
+  private Criteria buildCriteria(Relationship rel) {
+    Criteria criteria = new EqualsCriteria(rel.getTable().getPrimaryKeys().get(0).getId().toString(),
+        rel.getTable().getPrimaryKeys().get(0).getId().toString());
+    return criteria;
+  }
 //
-//  private String getTypeName(NamePath path) {
-//    return String.join(ID_DELIMITER,
-//        Arrays.stream(path.getNames())
-//            .map(e->e.getDisplay())
-//            .collect(Collectors.toList()));
-//  }
-//
-//  private Criteria buildCriteria(Relationship rel) {
-//    Criteria criteria = new EqualsCriteria(rel.getFrom().get(0).getName().getCanonical(),
-//        ((Column)rel.getTo().get(0)).getId());
-//    return criteria;
-//  }
-//
-//  private String getTypeName(NamePath path) {
-//    return String.join(ID_DELIMITER,
-//        Arrays.stream(path.getNames())
-//            .map(e->e.getDisplay())
-//            .collect(Collectors.toList()));
-//  }
+  private String getTypeName(NamePath path) {
+    return String.join("_",
+        Arrays.stream(path.getNames())
+            .map(e->e.getDisplay())
+            .collect(Collectors.toList()));
+  }
 
   private TableFieldFetcher toTable(Table table, Optional<Criteria> criteria, String tableName) {
     return new TableFieldFetcher(new H2Table(new Columns(toColumns(table)), tableName),
@@ -118,7 +112,6 @@ public class SqrlCodeRegistryBuilder {
     List<H2Column> list = new ArrayList<>();
     for (Field field : table.getFields()) {
       if (field instanceof Column) {
-        if (field.getName().getCanonical().startsWith("_ingest")) continue;
         list.add(toH2Column((Column)field));
       }
     }
@@ -133,6 +126,10 @@ public class SqrlCodeRegistryBuilder {
       @Override
       public H2Column visitIntegerType(IntegerType type, Column context) {
         return new IntegerColumn(context.getName().getDisplay(), context.getId().toString());
+      }
+      @Override
+      public H2Column visitDoubleType(DoubleType type, Column context) {
+        return new FloatColumn(context.getName().getDisplay(), context.getId().toString());
       }
 
       @Override
@@ -153,6 +150,16 @@ public class SqrlCodeRegistryBuilder {
       @Override
       public H2Column visitDateTimeType(DateTimeType type, Column context) {
         return new DateTimeColumn(context.getName().getDisplay(), context.getId().toString());
+      }
+
+      @Override
+      public H2Column visitBooleanType(BooleanType type, Column context) {
+        return new BooleanColumn(context.getName().getDisplay(), context.getId().toString());
+      }
+
+      @Override
+      public H2Column visitBigIntegerType(BigIntegerType type, Column context) {
+        return new IntegerColumn(context.getName().getDisplay(), context.getId().toString());
       }
 
       @Override

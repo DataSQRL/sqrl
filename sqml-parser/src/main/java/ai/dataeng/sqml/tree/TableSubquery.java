@@ -24,6 +24,7 @@ public class TableSubquery
     extends QueryBody {
 
   private final Query query;
+  private Object resolved;
 
   public TableSubquery(Query query) {
     this(Optional.empty(), query);
@@ -33,15 +34,23 @@ public class TableSubquery
     this(Optional.of(location), query);
   }
 
-  private TableSubquery(Optional<NodeLocation> location, Query query) {
+  public TableSubquery(Optional<NodeLocation> location, Query query) {
     super(location);
     this.query = query;
+  }
+
+  public TableSubquery(Optional<NodeLocation> location, Query query, Object resolved) {
+    super(location);
+    this.query = query;
+    this.resolved = resolved;
   }
 
   public Query getQuery() {
     return query;
   }
-
+  public <T> T getResolved() {
+    return (T)resolved;
+  }
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitTableSubquery(this, context);
