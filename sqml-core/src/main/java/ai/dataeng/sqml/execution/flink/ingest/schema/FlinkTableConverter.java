@@ -46,9 +46,9 @@ public class FlinkTableConverter {
         });
         schemaBuilder.column(ReservedName.UUID.getCanonical(), toFlinkDataType(UuidType.INSTANCE).notNull());
         rowNames.add(ReservedName.UUID.getCanonical()); rowCols.add(FlinkUtilities.getFlinkTypeInfo(UuidType.INSTANCE,false));
-        schemaBuilder.column(ReservedName.INGEST_TIME.getCanonical(), DataTypes.TIMESTAMP().notNull());
+        schemaBuilder.column(ReservedName.INGEST_TIME.getCanonical(), DataTypes.TIMESTAMP_LTZ(3).notNull());
         rowNames.add(ReservedName.INGEST_TIME.getCanonical()); rowCols.add(FlinkUtilities.getFlinkTypeInfo(DateTimeType.INSTANCE,false));
-        schemaBuilder.column(ReservedName.SOURCE_TIME.getCanonical(), DataTypes.TIMESTAMP().notNull());
+        schemaBuilder.column(ReservedName.SOURCE_TIME.getCanonical(), DataTypes.TIMESTAMP_LTZ(3).notNull());
         rowNames.add(ReservedName.SOURCE_TIME.getCanonical()); rowCols.add(FlinkUtilities.getFlinkTypeInfo(DateTimeType.INSTANCE,false));
         //TODO: adjust based on configuration
 //        schemaBuilder.columnByExpression("__rowtime", "CAST(_ingest_time AS TIMESTAMP_LTZ(3))");
@@ -134,7 +134,7 @@ public class FlinkTableConverter {
         if (type instanceof StringType) {
             return DataTypes.STRING();
         } else if (type instanceof DateTimeType) {
-            return DataTypes.TIMESTAMP();
+            return DataTypes.TIMESTAMP_LTZ(3);
         } else if (type instanceof BooleanType) {
             return DataTypes.BOOLEAN();
         } else if (type instanceof BigIntegerType) {

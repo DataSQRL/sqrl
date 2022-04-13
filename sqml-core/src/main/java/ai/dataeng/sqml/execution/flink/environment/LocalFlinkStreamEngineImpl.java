@@ -2,6 +2,7 @@ package ai.dataeng.sqml.execution.flink.environment;
 
 import ai.dataeng.sqml.execution.StreamEngine;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,7 +16,12 @@ public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
 
     @Override
     public FlinkStreamBuilder createStream() {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(
+            org.apache.flink.configuration.Configuration.fromMap(Map.of(
+                "taskmanager.memory.network.fraction", "0.4",
+                "taskmanager.memory.network.max", "2gb"
+            )
+        ));
         env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
 //        FlinkUtilities.enableCheckpointing(env);
         return new FlinkStreamBuilder(this,env);
