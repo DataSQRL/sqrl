@@ -1,4 +1,4 @@
-package ai.dataeng.sqml.parser.sqrl;
+package ai.dataeng.sqml.parser.sqrl.transformers;
 
 import static ai.dataeng.sqml.util.SqrlNodeUtil.and;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.eq;
@@ -41,7 +41,7 @@ public class JoinWalker {
    * Walks a join path
    */
   public WalkResult walk(Name baseTableAlias, Optional<Name> lastAlias, NamePath namePath, Optional<Relation> current,
-      Supplier<Optional<JoinCriteria>> lastCriteria, //Criteria is lazy because the join aliases don't exist yet to be evaluated
+      Optional<JoinCriteria> lastCriteria, //Criteria is lazy because the join aliases don't exist yet to be evaluated
       Map<Name, Table> joinScope) {
 
     Table baseTable = joinScope.get(baseTableAlias);
@@ -68,7 +68,7 @@ public class JoinWalker {
       JoinOn criteria = createRelCriteria(joinScope, b.getAlias(), alias, rel);
 
       Optional<JoinCriteria> additionalCriteria = i == namePath.getLength() - 1
-          ? lastCriteria.get()
+          ? lastCriteria
           : Optional.empty();
 
       Join join = new Join(

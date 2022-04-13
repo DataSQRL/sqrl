@@ -11,7 +11,6 @@ import ai.dataeng.sqml.config.scripts.ScriptBundle;
 import ai.dataeng.sqml.config.scripts.SqrlScript;
 import ai.dataeng.sqml.config.util.NamedIdentifier;
 import ai.dataeng.sqml.execution.FlinkPipelineGenerator;
-import ai.dataeng.sqml.execution.GraphqlGenerator;
 import ai.dataeng.sqml.execution.SqlGenerator;
 import ai.dataeng.sqml.execution.SqrlExecutor;
 import ai.dataeng.sqml.execution.StreamEngine;
@@ -25,14 +24,13 @@ import ai.dataeng.sqml.parser.operator.ShadowingContainer;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
 import ai.dataeng.sqml.parser.sqrl.analyzer.Analyzer;
 import ai.dataeng.sqml.planner.CalcitePlanner;
-import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
+import ai.dataeng.sqml.parser.sqrl.schema.SourceTableFactory;
 import ai.dataeng.sqml.planner.DagExpander;
 import ai.dataeng.sqml.planner.SqrlPlanner;
 import ai.dataeng.sqml.planner.nodes.LogicalFlinkSink;
 import ai.dataeng.sqml.planner.nodes.LogicalPgSink;
 import ai.dataeng.sqml.tree.ScriptNode;
 import com.google.common.base.Preconditions;
-import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
@@ -130,7 +128,7 @@ public class Environment implements Closeable {
 
     LogicalDag dag = new LogicalDag(new ShadowingContainer<>());
     CalcitePlanner calcitePlanner = new CalcitePlanner();
-    Analyzer analyzer = new Analyzer(importManager, calcitePlanner, new TableFactory(calcitePlanner),
+    Analyzer analyzer = new Analyzer(importManager, calcitePlanner,
         dag, new DagExpander(calcitePlanner));
     analyzer.analyze(scriptNode);
     SqrlPlanner planner = new SqrlPlanner();

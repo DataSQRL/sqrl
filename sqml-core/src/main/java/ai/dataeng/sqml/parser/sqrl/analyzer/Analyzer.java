@@ -11,11 +11,12 @@ import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import ai.dataeng.sqml.parser.Relationship.Type;
 import ai.dataeng.sqml.parser.SqrlQueries;
 import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.parser.TableFactory;
 import ai.dataeng.sqml.parser.operator.ImportManager;
 import ai.dataeng.sqml.parser.sqrl.LogicalDag;
 import ai.dataeng.sqml.parser.sqrl.schema.SqrlViewTable;
 import ai.dataeng.sqml.parser.sqrl.schema.StreamTable.StreamDataType;
-import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
+import ai.dataeng.sqml.parser.sqrl.schema.SourceTableFactory;
 import ai.dataeng.sqml.parser.sqrl.transformers.ExpressionToQueryTransformer;
 import ai.dataeng.sqml.parser.sqrl.transformers.Transformers;
 import ai.dataeng.sqml.planner.CalcitePlanner;
@@ -30,7 +31,6 @@ import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.ExpressionAssignment;
 import ai.dataeng.sqml.tree.FunctionCall;
 import ai.dataeng.sqml.tree.GroupBy;
-import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.ImportDefinition;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.JoinDeclaration;
@@ -42,8 +42,6 @@ import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Relation;
 import ai.dataeng.sqml.tree.ScriptNode;
 import ai.dataeng.sqml.tree.Select;
-import ai.dataeng.sqml.tree.SelectItem;
-import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.name.Name;
@@ -75,7 +73,6 @@ import org.apache.calcite.sql2rel.SqlToRelConverter;
 public class Analyzer {
   private ImportManager importManager;
   private CalcitePlanner planner;
-  private TableFactory tableFactory;
   private LogicalDag logicalDag;
   private DagExpander dagExpander;
 
@@ -138,7 +135,7 @@ public class Analyzer {
         throw new RuntimeException(String.format("Cannot import identifier: %s", node.getNamePath()));
       }
 
-      importManager.setTableFactory(new TableFactory(planner));
+      importManager.setTableFactory(new SourceTableFactory(planner));
       Table table = importManager.resolveTable(node.getNamePath().get(0), node.getNamePath().get(1),
           node.getAliasName(), errors);
       logicalDag.getSchema().add(table);
@@ -233,7 +230,7 @@ public class Analyzer {
       //Revalidate expanded
       planner.getValidator().validate(RelToSql.convertToSqlNode(expanded));
 
-      Table newTable = new Table(TableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
+      Table newTable = new Table(SourceTableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
           namePath, false);
       newTable.setRelNode(expanded);
 
@@ -309,7 +306,7 @@ public class Analyzer {
     public Void visitDistinctAssignment(DistinctAssignment node, Void context) {
       Optional<Table> refTable = getTable(node.getTable().toNamePath());
 
-      Table table = tableFactory.create(node.getNamePath(), node.getTable());
+      Table table = new TableFactory().create(node.getNamePath(), node.getTable());
       List<Column> fields = refTable.get().getFields().visibleList().stream().filter(f->f instanceof Column)
           .map(f->(Column)f).collect(
           Collectors.toList());

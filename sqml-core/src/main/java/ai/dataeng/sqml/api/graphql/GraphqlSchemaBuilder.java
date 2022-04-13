@@ -1,8 +1,6 @@
 package ai.dataeng.sqml.api.graphql;
 
-import ai.dataeng.execution.table.H2Table;
 import ai.dataeng.sqml.parser.Column;
-import ai.dataeng.sqml.parser.DatasetOrTable;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Relationship.Multiplicity;
 import ai.dataeng.sqml.parser.Table;
@@ -39,7 +37,6 @@ import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
-import io.vertx.sqlclient.Pool;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -102,7 +99,7 @@ public class GraphqlSchemaBuilder {
     GraphQLObjectType.Builder obj = GraphQLObjectType.newObject()
         .name("Query");
 
-    for (DatasetOrTable field : schema) {
+    for (Table field : schema) {
       Table table = (Table)field;
       if (table.getName().getCanonical().startsWith("_")) continue;
       GraphQLFieldDefinition f = GraphQLFieldDefinition.newFieldDefinition()

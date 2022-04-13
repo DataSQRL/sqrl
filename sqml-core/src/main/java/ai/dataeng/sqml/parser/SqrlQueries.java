@@ -1,6 +1,5 @@
 package ai.dataeng.sqml.parser;
 
-import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.tree.DistinctAssignment;
 import ai.dataeng.sqml.tree.SortItem.Ordering;
 import ai.dataeng.sqml.tree.name.Name;

@@ -53,7 +53,7 @@ import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.RowType.RowField;
 
 @AllArgsConstructor
-public class TableFactory {
+public class SourceTableFactory {
   CalcitePlanner planner;
   public final static AtomicInteger tableIdCounter = new AtomicInteger(0);
 
@@ -278,9 +278,5 @@ public class TableFactory {
       return new Column(name, parent,0,(BasicType)ftype.getType(),ftype.getArrayDepth(), constraints, false,
           false, null, false);
     }
-  }
-
-  public Table create(NamePath namePath, Name table) {
-    return new Table(tableIdCounter.incrementAndGet(), namePath.getLast(), namePath, false);
   }
 }

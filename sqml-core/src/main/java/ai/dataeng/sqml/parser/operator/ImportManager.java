@@ -6,7 +6,7 @@ import ai.dataeng.sqml.io.sources.dataset.SourceTable;
 import ai.dataeng.sqml.io.sources.stats.SchemaGenerator;
 import ai.dataeng.sqml.io.sources.stats.SourceTableStatistics;
 import ai.dataeng.sqml.parser.Table;
-import ai.dataeng.sqml.parser.sqrl.schema.TableFactory;
+import ai.dataeng.sqml.parser.sqrl.schema.SourceTableFactory;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NameCanonicalizer;
 import ai.dataeng.sqml.type.RelationType;
@@ -33,7 +33,7 @@ public class ImportManager {
     private final DatasetRegistry datasetRegistry;
     private Map<Name, FlexibleDatasetSchema> userSchema = Collections.EMPTY_MAP;
     private Map<Name, RelationType<StandardField>> scriptSchemas = new HashMap<>();
-    private TableFactory tableFactory = null;
+    private SourceTableFactory tableFactory = null;
 
     public ImportManager(DatasetRegistry datasetRegistry) {
         this.datasetRegistry = datasetRegistry;
@@ -172,7 +172,7 @@ public class ImportManager {
     }
 
     //temp, move to constructor on cleanup
-    public void setTableFactory(TableFactory tableFactory) {
+    public void setTableFactory(SourceTableFactory tableFactory) {
         this.tableFactory = tableFactory;
     }
 }

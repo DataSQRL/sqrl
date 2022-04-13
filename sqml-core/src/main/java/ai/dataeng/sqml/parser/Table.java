@@ -17,7 +17,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 @Getter
 @Setter
-public class Table implements DatasetOrTable {
+public class Table implements ShadowingContainer.Nameable {
 
   public Name name;
   public final int uniqueId;
@@ -36,37 +36,11 @@ public class Table implements DatasetOrTable {
   }
 
   public Field getField(Name name) {
-//    name = Name.system(name.getCanonical().split("\\$")[0]); //todo: fix version in paths
     Optional<Field> field = fields.getByName(name);
     return field.isEmpty() ? null : field.get();
   }
-//
-//  public Optional<FieldPath> getField(NamePath path, int version) {
-//    return getField(path);//todo: include version
-//  }
-//
-//  public Optional<FieldPath> getField(NamePath path) {
-//    List<Field> fields = new ArrayList<>();
-//    Table table = this;
-//    for (int i = 0; i < path.getLength() - 1; i++) {
-//      Optional<Field> field = table.getFields().getByName(path.get(i));
-//      if (field.isEmpty()) return Optional.empty();
-//      if (!(field.get() instanceof Relationship)) {
-//        return Optional.empty();
-//      }
-//      table = ((Relationship) field.get()).getToTable();
-//      fields.add(field.get());
-//    }
-//    Field field = table.getField(path.get(path.getLength() - 1));
-//    if (field == null) {
-//      return Optional.empty();
-//    }
-//    fields.add(field);
-//    return Optional.of(new FieldPath(fields));
-//  }
 
   public boolean addField(Field field) {
-//    field.setTable(this);
     return fields.add(field);
   }
 
@@ -89,12 +63,10 @@ public class Table implements DatasetOrTable {
     return pks;
   }
 
-  @Override
   public boolean isVisible() {
     return !isInternal;
   }
 
-  @Override
   public int getVersion() {
     return uniqueId;
   }
@@ -137,6 +109,7 @@ public class Table implements DatasetOrTable {
 
     return Optional.of(field);
   }
+
   public Optional<Table> walk(NamePath namePath) {
     if (namePath.isEmpty()) {
       return Optional.of(this);
@@ -189,11 +162,6 @@ public class Table implements DatasetOrTable {
 
   public void addUniqueConstraint(List<Field> partitionKeys) {
     this.partitionKeys = partitionKeys;
-  }
-
-  public List<Pair<Column, Column>> getParentPrimaryKeys() {
-    //the parent columns
-    return null;
   }
 
   /**

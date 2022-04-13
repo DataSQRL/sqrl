@@ -5,8 +5,8 @@ import static ai.dataeng.sqml.util.SqrlNodeUtil.mapToOrdinal;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.parser.Table;
-import ai.dataeng.sqml.parser.sqrl.JoinWalker;
-import ai.dataeng.sqml.parser.sqrl.JoinWalker.WalkResult;
+import ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker;
+import ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker.WalkResult;
 import ai.dataeng.sqml.parser.sqrl.analyzer.ExpressionAnalyzer.JoinResult;
 import ai.dataeng.sqml.parser.sqrl.analyzer.aggs.AggregationDetector;
 import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
@@ -169,7 +169,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           Optional.of(tableNodeAlias),
           namePath.popFirst(),
           Optional.empty(),
-          ()->Optional.empty(),
+          Optional.empty(),
           scope.getJoinScope());
       return createScope(result.getRelation(), scope);
     } else { //Table is in the schema
@@ -183,7 +183,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           Optional.of(tableNodeAlias),
           namePath.popFirst(),
           Optional.empty(),
-          ()->Optional.empty(),
+          Optional.empty(),
           scope.getJoinScope());
 
       return createScope(result.getRelation(), scope);
@@ -221,7 +221,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           Optional.of(lastAlias),
           rhs.getNamePath().popFirst(),
           Optional.of((Relation)left.getNode()),
-          ()->rewrite(node.getCriteria(), scope),
+          rewrite(node.getCriteria(), scope),
           scope.getJoinScope()
       );
 
@@ -255,7 +255,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
           Optional.of(lastAlias),
           rhs.getNamePath().popFirst(),
           Optional.of(join),
-          ()->rewrite(node.getCriteria(), scope),
+          rewrite(node.getCriteria(), scope),
           scope.getJoinScope()
       );
 

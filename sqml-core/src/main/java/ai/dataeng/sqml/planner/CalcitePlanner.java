@@ -47,7 +47,6 @@ public class CalcitePlanner {
 
   public CalcitePlanner() {
     this.typeFactory = new FlinkTypeFactory(new FlinkTypeSystem());
-//    this.typeFactory = new JavaTypeFactoryImpl();
     this.cluster = CalciteTools.createHepCluster(typeFactory);
     this.sqrlSchema = new SqrlSchema();
     this.calciteSchema = new SqrlCalciteSchema(sqrlSchema);

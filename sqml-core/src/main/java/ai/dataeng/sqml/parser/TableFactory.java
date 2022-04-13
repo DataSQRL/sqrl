@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.parser;
 
+import ai.dataeng.sqml.parser.sqrl.schema.SourceTableFactory;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.QuerySpecification;
@@ -7,6 +8,7 @@ import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.name.Name;
+import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -52,5 +54,9 @@ public class TableFactory {
         false, false, Optional.empty(), false);
 
     return column;
+  }
+
+  public Table create(NamePath namePath, Name table) {
+    return new Table(SourceTableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(), namePath, false);
   }
 }

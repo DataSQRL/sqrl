@@ -1,8 +1,8 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
 
-import static ai.dataeng.sqml.parser.sqrl.JoinWalker.createTableCriteria;
-import static ai.dataeng.sqml.parser.sqrl.JoinWalker.expandRelation;
+import static ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker.createTableCriteria;
+import static ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker.expandRelation;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.alias;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.function;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.ident;
@@ -14,9 +14,9 @@ import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.TableFactory;
-import ai.dataeng.sqml.parser.sqrl.JoinWalker;
-import ai.dataeng.sqml.parser.sqrl.JoinWalker.TableItem;
-import ai.dataeng.sqml.parser.sqrl.JoinWalker.WalkResult;
+import ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker;
+import ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker.TableItem;
+import ai.dataeng.sqml.parser.sqrl.transformers.JoinWalker.WalkResult;
 import ai.dataeng.sqml.parser.sqrl.PathUtil;
 import ai.dataeng.sqml.parser.sqrl.analyzer.Scope.ResolveResult;
 import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
@@ -131,7 +131,7 @@ public class ExpressionAnalyzer {
               Optional.empty(), //Terminal alias specified
               result.getRemaining().get(), //The fields from the base that we should resolve
               Optional.empty(), //push in relation
-              ()->Optional.empty(),
+              Optional.empty(),
               context.getScope().getJoinScope()
           );
           TableItem first = walkResult.getTableStack().get(0);

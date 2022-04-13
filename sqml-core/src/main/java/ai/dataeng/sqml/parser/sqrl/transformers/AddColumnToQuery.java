@@ -9,7 +9,6 @@ import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.TableFactory;
-import ai.dataeng.sqml.parser.sqrl.JoinWalker;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Join.Type;
