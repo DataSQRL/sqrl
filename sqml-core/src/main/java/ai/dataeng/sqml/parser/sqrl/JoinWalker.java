@@ -1,6 +1,5 @@
 package ai.dataeng.sqml.parser.sqrl;
 
-import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.getCriteria;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.and;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.eq;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.ident;
@@ -11,6 +10,8 @@ import ai.dataeng.sqml.parser.Field;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.TableFactory;
+import ai.dataeng.sqml.parser.sqrl.analyzer.Scope;
+import ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer;
 import ai.dataeng.sqml.parser.sqrl.analyzer.TableBookkeeping;
 import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.Expression;
@@ -25,6 +26,7 @@ import ai.dataeng.sqml.tree.TableNode;
 import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,22 +41,28 @@ public class JoinWalker {
   /**
    * Walks a join path
    */
-  public WalkResult walk(Name tableAlias, NamePath namePath, Optional<Relation> current,
+  public WalkResult walk(Name baseTableAlias, Optional<Name> lastAlias, NamePath namePath, Optional<Relation> current,
       Map<Name, Table> joinScope) {
-    Name baseTableAlias = gen.nextTableAliasName();
+//    Name baseTableAlias = gen.nextTableAliasName();
 
-    Table baseTable = joinScope.get(tableAlias);
-    Relation relation = current.isPresent() ? current.get() :
+    Table baseTable = joinScope.get(baseTableAlias);
+    Relation relation = current.isPresent()
+        ? current.get() :
         new TableNode(Optional.empty(), baseTable.getId().toNamePath(), Optional.of(baseTableAlias));
+
     joinScope.put(baseTableAlias, baseTable);
+
     TableBookkeeping b = new TableBookkeeping(relation, baseTableAlias, baseTable);
     List<TableItem> tableItems = new ArrayList<>();
 
     for (int i = 0; i < namePath.getLength(); i++) {
       Field field = b.getCurrentTable().getField(namePath.get(i));
+      Preconditions.checkNotNull(field);
       if (!(field instanceof Relationship)) break;
       Relationship rel = (Relationship)field;
-      Name alias = gen.nextTableAliasName();
+      Name alias = i == namePath.getLength() - 1
+          ? lastAlias.orElseGet(()->gen.nextTableAliasName())
+          : gen.nextTableAliasName();
       Relation relation1 = expandRelation(joinScope, rel, alias);
       JoinCriteria criteria = createRelCriteria(joinScope, b.getAlias(), alias, rel);
       Join join = new Join(
@@ -88,7 +96,13 @@ public class JoinWalker {
 
     List<Expression> conditions = new ArrayList<>();
     for (Column column : joinColumns) {
+      if (lhsTable.getEquivalent(column).isEmpty()) {
+        System.out.println();
+      }
       Column lhsColumn = lhsTable.getEquivalent(column).orElseThrow();
+      if (rhsTable.getEquivalent(column).isEmpty()) {
+        System.out.println();
+      }
       Column rhsColumn = rhsTable.getEquivalent(column).orElseThrow();
       conditions.add(eq(
           ident(lhs.toNamePath().concat(lhsColumn.getName())),
@@ -117,7 +131,13 @@ public class JoinWalker {
   public static Relation expandRelation(
       Map<Name, Table> joinScope,
       Relationship rel, Name nextAlias) {
+    if (rel == null) {
+      System.out.println();
+    }
     if (rel.getType() == Relationship.Type.JOIN) {
+      StatementAnalyzer statementAnalyzer = new StatementAnalyzer(null);
+//      rel.getNode().accept(statementAnalyzer, new Scope(Optional.empty(), null, joinScope, false, null))
+//          .getNode();
       TableSubquery tableSubquery = new TableSubquery(Optional.empty(), (Query)rel.getNode());
       joinScope.put(nextAlias, new TableFactory().create(tableSubquery));
       return new AliasedRelation(

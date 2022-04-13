@@ -12,7 +12,11 @@ import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
 
 public class AliasUtil {
 
@@ -45,25 +49,30 @@ public class AliasUtil {
         .collect(Collectors.toList());
   }
 
-  public static Name getTableAlias(TableNode tableNode, int i) {
+  @SneakyThrows
+  public static Name getTableAlias(TableNode tableNode, int i, Supplier<Name> aliasGenerator) {
     if (tableNode.getNamePath().getLength() == 1 && i == 0) {
       return tableNode.getAlias().orElse(tableNode.getNamePath().getFirst());
     }
 
     if (i == tableNode.getNamePath().getLength() - 1) {
-      return tableNode.getAlias().orElse(new AliasGenerator().nextTableAliasName());
+      return tableNode.getAlias().orElseGet(aliasGenerator);
     }
 
-    return new AliasGenerator().nextTableAliasName();
+    return aliasGenerator.get();
   }
 
   public static PrimaryKeySelectItem primaryKeySelect(NamePath name, NamePath alias, Column column) {
+    if (alias.getFirst().equals(Name.system("__f51"))) {
+      System.out.println();
+    }
     Identifier identifier = new Identifier(Optional.empty(), name);
     Identifier aliasIdentifier = new Identifier(Optional.empty(), alias);
     Column ppk = column.copy();
     ppk.setParentPrimaryKey(true);
     ppk.setSource(column);
     identifier.setResolved(ppk);
+    aliasIdentifier.setResolved(ppk);
     return new PrimaryKeySelectItem(identifier, aliasIdentifier, column);
   }
 }

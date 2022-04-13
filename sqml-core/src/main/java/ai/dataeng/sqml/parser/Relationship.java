@@ -1,5 +1,6 @@
 package ai.dataeng.sqml.parser;
 
+import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.Query;
@@ -7,6 +8,7 @@ import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SingleColumn;
+import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.VersionedName;
 import java.util.ArrayList;
@@ -64,27 +66,34 @@ public class Relationship extends Field {
   }
 
   public Node getNode() {
-    Query query = (Query) node;
-    QuerySpecification spec = (QuerySpecification)query.getQueryBody();
-    spec.setSelect(new Select(Optional.empty(), false, refreshSelect()));
+//    Query query = (Query) node;
+//    QuerySpecification spec = (QuerySpecification)query.getQueryBody();
+//    spec.setSelect(new Select(Optional.empty(), false, spec.getSelect().getSelectItems()));
     return node;
   }
 
   private List<SelectItem> refreshSelect() {
     List<SelectItem> selectItems = new ArrayList<>();
-    for (Field field : this.toTable.getFields().getElements()) {
-      if (field instanceof Relationship) continue;
-      Identifier identifier = new Identifier(Optional.empty(), field.getId().toNamePath());
+    Table table = new TableFactory().create(new TableSubquery(new Query(((Query)this.node).getQueryBody(), Optional.empty(), Optional.empty())));
+    for (Field field : table.getFields()) {
+      Identifier identifier = new Identifier(Optional.empty(), field.getName().toNamePath());
       identifier.setResolved(field);
-      selectItems.add(new SingleColumn(identifier));
+      selectItems.add(new SingleColumn(Optional.empty(), identifier, Optional.empty()));
     }
 
-    for (int i = 0; i < this.table.getPrimaryKeys().size(); i++) {
-      Column field = this.table.getPrimaryKeys().get(i);
-      Identifier key = new Identifier(Optional.empty(), field.getId().toNamePath());
-      key.setResolved(field);
-      selectItems.add(new SingleColumn(key, Optional.of(new Identifier(Optional.empty(), Name.system("_pk"+i).toNamePath()))));
-    }
+//
+//    for (Field field : this.toTable.getFields().getElements()) {
+//      if (field instanceof Relationship) continue;
+//      Identifier identifier = new Identifier(Optional.empty(), field.getId().toNamePath());
+//      identifier.setResolved(field);
+//      selectItems.add(new SingleColumn(identifier));
+//    }
+//    for (int i = 0; i < this.table.getPrimaryKeys().size(); i++) {
+//      Column field = this.table.getPrimaryKeys().get(i);
+//      Identifier key = new Identifier(Optional.empty(), field.getId().toNamePath());
+//      key.setResolved(field);
+//      selectItems.add(new SingleColumn(key, Optional.of(new Identifier(Optional.empty(), Name.system("_pk"+(i+ 5)).toNamePath()))));
+//    }
 
     return selectItems;
   }

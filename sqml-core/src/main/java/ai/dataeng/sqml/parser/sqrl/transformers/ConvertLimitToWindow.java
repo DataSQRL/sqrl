@@ -45,7 +45,7 @@ public class ConvertLimitToWindow {
    * WHERE row_num <= 5
    */
   public QuerySpecification transform(QuerySpecification spec, Table table) {
-    List<SelectItem> items = alias(spec.getSelect().getSelectItems());
+    List<SelectItem> items = new ArrayList<>(spec.getSelect().getSelectItems());//randomAliasSelectList(spec.getSelect().getSelectItems());
     items.add(new SingleColumn(new FunctionCall(Optional.empty(),
         NamePath.of("ROW_NUMBER"), List.of(), false, Optional.of(new Window(
           getSelectExpressions(spec.getSelect().getSelectItems(), spec.getParentPrimaryKeys()),
@@ -89,7 +89,7 @@ public class ConvertLimitToWindow {
         Optional.empty()
     );
 
-    return outer2;
+    return outer;
   }
 
   private OrderBy getOrder(Optional<OrderBy> orderBy) {
@@ -98,21 +98,15 @@ public class ConvertLimitToWindow {
   }
 
   private List<SelectItem> project(List<SelectItem> selectItems, List<SelectItem> aliases) {
-    int pkNum = 0;
     List<SelectItem> newSelect = new ArrayList<>();
     for (int i = 0; i < selectItems.size(); i++) {
       SingleColumn col = (SingleColumn) selectItems.get(i);
-      SingleColumn alias = (SingleColumn) aliases.get(i);
-      if (alias.getExpression() instanceof Identifier &&
-          ((Identifier) alias.getExpression()).getNamePath().getFirst().equals(Name.SELF_IDENTIFIER)) {
-        newSelect.add(new SingleColumn(col.getLocation(),
-            new Identifier(Optional.empty(), alias.getAlias().get().getNamePath()),
-            Optional.of(ident(Name.system("_pk"+pkNum++)))));
-      } else {
-        newSelect.add(new SingleColumn(col.getLocation(),
-            new Identifier(Optional.empty(), alias.getAlias().get().getNamePath()),
-            Optional.of(getColumnName(col))));
-      }
+      SingleColumn a = ((SingleColumn)aliases.get(i));
+      Identifier ident = new Identifier(Optional.empty(), getColumnName(col).getNamePath());
+      ident.setResolved(((Identifier)a.getExpression()).getResolved());
+      newSelect.add(new SingleColumn(col.getLocation(),
+          ident,
+          Optional.empty()));
     }
     return newSelect;
   }
@@ -128,7 +122,7 @@ public class ConvertLimitToWindow {
     throw new RuntimeException("Could not resolve identifier name");
   }
 
-  private List<SelectItem> alias(List<SelectItem> selectItems) {
+  private List<SelectItem> randomAliasSelectList(List<SelectItem> selectItems) {
     return selectItems.stream()
         .map(s->new SingleColumn(s.getLocation(), ((SingleColumn)s).getExpression(),
             Optional.of(ident(gen.nextAliasName()))))

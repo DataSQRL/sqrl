@@ -1,12 +1,9 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
 
-import static ai.dataeng.sqml.parser.sqrl.AliasUtil.selectAliasItem;
 import static ai.dataeng.sqml.parser.sqrl.JoinWalker.createTableCriteria;
-import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.getCriteria;
-import static ai.dataeng.sqml.parser.sqrl.analyzer.StatementAnalyzer.expandRelation;
+import static ai.dataeng.sqml.parser.sqrl.JoinWalker.expandRelation;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.alias;
-import static ai.dataeng.sqml.util.SqrlNodeUtil.and;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.function;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.ident;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.selectAlias;
@@ -132,6 +129,7 @@ public class ExpressionAnalyzer {
           JoinWalker joinWalker = new JoinWalker();
           WalkResult walkResult = joinWalker.walk(
               result.getAlias(), //The table alias that resolved the field
+              Optional.empty(), //Terminal alias specified
               result.getRemaining().get(), //The fields from the base that we should resolve
               Optional.empty(), //push in relation
               context.getScope().getJoinScope()
@@ -187,7 +185,7 @@ public class ExpressionAnalyzer {
     }
 
     private Optional<Window> createWindow(Scope scope) {
-      Table table = scope.getJoinScope(Name.SELF_IDENTIFIER).get();
+      Table table = scope.getFieldScope(Name.SELF_IDENTIFIER).get();
       List<Expression> partition = new ArrayList<>();
       for (Column column : table.getPrimaryKeys()) {
         partition.add(new Identifier(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath().concat(column.getId().toNamePath())));
@@ -211,7 +209,7 @@ public class ExpressionAnalyzer {
       }
       Preconditions.checkState(results.size() == 1,
           "Could not resolve field (ambiguous or non-existent: " + node + " : " + results + ")");
-
+      System.out.println(results.get(0));
       if (PathUtil.isToOne(results.get(0))) {
         ResolveResult result = results.get(0);
         /*
@@ -219,12 +217,12 @@ public class ExpressionAnalyzer {
          * subquery is joined to the table it was resolved from.
          */
         Name baseTableAlias = gen.nextTableAliasName();
-        Relation relation = expandRelation((Relationship)result.getFirstField(), baseTableAlias);
+        Relation relation = expandRelation(context.getScope().getJoinScope(), (Relationship)result.getFirstField(), baseTableAlias);
 
         joinResults.add(new JoinResult(
             Type.LEFT, relation,
-            getCriteria((Relationship) result.getFirstField(), result.getAlias(), baseTableAlias,
-                Optional.empty())
+            Optional.of(JoinWalker.createRelCriteria(context.getScope().getJoinScope(), result.getAlias(), baseTableAlias,
+                (Relationship) result.getFirstField()))
         ));
         return new Identifier(node.getLocation(), baseTableAlias.toNamePath().concat(
             result.getRemaining().get().getLast()));

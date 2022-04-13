@@ -86,6 +86,7 @@ public class SqrlNodeUtil {
     return new GroupBy(new SimpleGroupBy(ordinals));
   }
 
+  //TODO: This is incorrect logic as we need to match equivalent columns
   public static int mapToOrdinal(Select select, Expression expression) {
     int index = IntStream.range(0, select.getSelectItems().size())
         .filter(i -> {

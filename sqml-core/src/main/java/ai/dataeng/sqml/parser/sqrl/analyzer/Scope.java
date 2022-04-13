@@ -27,20 +27,19 @@ public class Scope {
   private Optional<Table> contextTable;
   private Node node;
 
-  //Alias mapping of tables
+  /* Tables the query can see */
   private Map<Name, Table> joinScope;
+  /* Fields the query can see */
+  private Map<Name, Table> fieldScope;
 
   private boolean expression;
   private Name expressionName;
 
   public List<Identifier> resolveFieldsWithPrefix(Optional<Name> alias) {
     if (alias.isPresent()) {
-      Table table = joinScope.get(alias.get());
-      if (table == null) {
-        System.out.println();
-      }
+      Table table = fieldScope.get(alias.get());
       Preconditions.checkNotNull(table, "Could not find table %s", alias.get());
-      List<Identifier> identifiers = joinScope.get(alias.get()).getFields().getElements().stream()
+      List<Identifier> identifiers = fieldScope.get(alias.get()).getFields().getElements().stream()
           .filter(f->f instanceof Column)
           .map(f->new Identifier(Optional.empty(), alias.get().toNamePath().concat(f.getName())))
           .collect(Collectors.toList());
@@ -48,7 +47,7 @@ public class Scope {
     }
 
     List<Identifier> allFields = new ArrayList<>();
-    for (Map.Entry<Name, Table> entry : joinScope.entrySet()) {
+    for (Map.Entry<Name, Table> entry : fieldScope.entrySet()) {
       List<Identifier> identifiers = entry.getValue().getFields().getElements().stream()
           .filter(f->f instanceof Column)
           .map(f->new Identifier(Optional.empty(), entry.getKey().toNamePath().concat(f.getName())))
@@ -59,12 +58,8 @@ public class Scope {
     return allFields;
   }
 
-  public Map<Name, Table> getJoinScope() {
-    return joinScope;
-  }
-
   public NamePath qualify(NamePath namePath) {
-    for (Map.Entry<Name, Table> entry : joinScope.entrySet()) {
+    for (Map.Entry<Name, Table> entry : fieldScope.entrySet()) {
       Name alias = entry.getKey();
       Table table = entry.getValue();
 
@@ -83,13 +78,13 @@ public class Scope {
     throw new RuntimeException("Cannot qualify");
   }
 
-  public Optional<Table> getJoinScope(Name name) {
-    return Optional.ofNullable(joinScope.get(name));
+  public Optional<Table> getFieldScope(Name name) {
+    return Optional.ofNullable(fieldScope.get(name));
   }
 
   public List<ResolveResult> resolveFirst(NamePath namePath) {
     List<ResolveResult> fields = new ArrayList<>();
-    for (Map.Entry<Name, Table> entry : joinScope.entrySet()) {
+    for (Map.Entry<Name, Table> entry : fieldScope.entrySet()) {
       Name alias = entry.getKey();
       Table table = entry.getValue();
 

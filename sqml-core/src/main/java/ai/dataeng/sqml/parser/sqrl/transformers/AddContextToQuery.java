@@ -3,6 +3,7 @@ package ai.dataeng.sqml.parser.sqrl.transformers;
 import static ai.dataeng.sqml.parser.sqrl.AliasUtil.primaryKeySelect;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.groupBy;
 
+import ai.dataeng.sqml.parser.AliasGenerator;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.sqrl.analyzer.aggs.AggregationDetector;
 import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
@@ -24,26 +25,29 @@ import java.util.stream.IntStream;
 
 public class AddContextToQuery {
   AggregationDetector aggregationDetector = new AggregationDetector(new FunctionLookup());
-
+  AliasGenerator gen = new AliasGenerator();
   /**
    * Adds context keys to select. If aggregating, create or append to group by.
+   *
+   * Since we are adding columns, we need to assure that they do not collide with existing fields.
    */
   public QuerySpecification transform(QuerySpecification spec, Table table) {
     return transform(spec, table, Name.SELF_IDENTIFIER);
   }
 
   public QuerySpecification transform(QuerySpecification spec, Table table, Name firstAlias) {
+
     List<SelectItem> additionalColumns = table.getPrimaryKeys().stream()
         .map(column -> primaryKeySelect(
             firstAlias.toNamePath().concat(column.getId().toNamePath()),
-            column.getId().toNamePath(), column))
+            gen.nextAliasName().toNamePath(), column))
         .collect(Collectors.toList());
     List<SelectItem> list = new ArrayList<>(spec.getSelect().getSelectItems());
     list.addAll(additionalColumns);
     List<Integer> parentPrimaryKeys = IntStream.range(spec.getSelect().getSelectItems().size(),
         list.size()).boxed().collect(Collectors.toList());
     spec.setParentPrimaryKeys(parentPrimaryKeys);
-
+    System.out.println(additionalColumns);
     Select select = new Select(spec.getSelect().getLocation(), spec.getSelect().isDistinct(), list);
 
     Optional<GroupBy> groupBy = spec.getGroupBy();

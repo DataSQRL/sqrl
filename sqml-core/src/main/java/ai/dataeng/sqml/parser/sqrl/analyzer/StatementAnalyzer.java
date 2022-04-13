@@ -1,23 +1,19 @@
 package ai.dataeng.sqml.parser.sqrl.analyzer;
 
 import static ai.dataeng.sqml.parser.sqrl.AliasUtil.getTableAlias;
-import static ai.dataeng.sqml.parser.sqrl.AliasUtil.toIdentifier;
-import static ai.dataeng.sqml.util.SqrlNodeUtil.and;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.mapToOrdinal;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
-import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Relationship;
 import ai.dataeng.sqml.parser.Table;
+import ai.dataeng.sqml.parser.sqrl.JoinWalker;
+import ai.dataeng.sqml.parser.sqrl.JoinWalker.WalkResult;
 import ai.dataeng.sqml.parser.sqrl.analyzer.ExpressionAnalyzer.JoinResult;
 import ai.dataeng.sqml.parser.sqrl.analyzer.aggs.AggregationDetector;
 import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
 import ai.dataeng.sqml.parser.sqrl.transformers.Transformers;
-import ai.dataeng.sqml.tree.AliasedRelation;
 import ai.dataeng.sqml.tree.AllColumns;
 import ai.dataeng.sqml.tree.AstVisitor;
-import ai.dataeng.sqml.tree.ComparisonExpression;
-import ai.dataeng.sqml.tree.ComparisonExpression.Operator;
 import ai.dataeng.sqml.tree.Except;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.GroupBy;
@@ -26,7 +22,6 @@ import ai.dataeng.sqml.tree.Intersect;
 import ai.dataeng.sqml.tree.Join;
 import ai.dataeng.sqml.tree.Join.Type;
 import ai.dataeng.sqml.tree.JoinCriteria;
-import ai.dataeng.sqml.tree.JoinOn;
 import ai.dataeng.sqml.tree.Node;
 import ai.dataeng.sqml.tree.NodeFormatter;
 import ai.dataeng.sqml.tree.OrderBy;
@@ -40,10 +35,10 @@ import ai.dataeng.sqml.tree.SetOperation;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.TableNode;
-import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.Union;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -57,6 +52,8 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   private final AggregationDetector aggregationDetector = new AggregationDetector(new FunctionLookup());
 
   private List<JoinResult> additionalJoins = new ArrayList<>();
+
+  public static final AliasGenerator gen = new AliasGenerator();
 
   public StatementAnalyzer(Analyzer analyzer) {
     this.analyzer = analyzer;
@@ -92,7 +89,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     // Qualify other expressions
     Select select = (Select)expandedSelect.accept(this, scope).getNode();
     Optional<Expression> where = node.getWhere().map(w->rewriteExpression(w, scope));
-    Optional<Expression> having = node.getHaving().map(h->rewriteExpression(h, scope));
+    Optional<Expression> having = node.getHaving().map(h->rewriteExpression(h, scope)); //todo identify and replace having clause
     Relation from = appendAdditionalJoins((Relation)sourceScope.getNode());
     QuerySpecification spec = new QuerySpecification(
         node.getLocation(),
@@ -158,6 +155,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   public Scope visitTable(TableNode tableNode, Scope scope) {
     NamePath namePath = tableNode.getNamePath();
 
+    // Get schema table or context table as the first Table in table path
     Table table = (namePath.getFirst().equals(Name.SELF_IDENTIFIER)) ?
         scope.getContextTable().get() :
         analyzer.getDag().getSchema().getByName(namePath.getFirst()).get();
@@ -167,27 +165,20 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       scope.getJoinScope().put(Name.SELF_IDENTIFIER, scope.getContextTable().get());
     }
 
-    Name firstAlias;
-    if (namePath.getFirst().equals(Name.SELF_IDENTIFIER)) {
-      firstAlias = Name.SELF_IDENTIFIER;
-    } else {
-      firstAlias = getTableAlias(tableNode, 0);
-    }
-    AliasGenerator gen = new AliasGenerator();
+    Name firstAlias = namePath.getFirst().equals(Name.SELF_IDENTIFIER)
+        ? Name.SELF_IDENTIFIER
+        : getTableAlias(tableNode, 0, gen::nextTableAliasName);
+    Name lastAlias = tableNode.getAlias().isPresent()
+        ? tableNode.getAlias().get()
+        : namePath.getLength() > 1 ? gen.nextTableAliasName() : namePath.getFirst();
 
-    Name lastAlias = tableNode.getAlias().isPresent() ?
-        tableNode.getAlias().get() :
-        namePath.getLength() > 1 ? gen.nextTableAliasName() : namePath.getFirst();
+//    TableNode relation = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(firstAlias));
+//    TableBookkeeping b = new TableBookkeeping(relation, firstAlias, table);
+    scope.getJoinScope().put(firstAlias, table);
+    WalkResult result = new JoinWalker().walk(firstAlias, Optional.of(lastAlias), namePath.popFirst(), Optional.empty(), scope.getJoinScope());
 
-    Relation relation = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(firstAlias));
-    if (namePath.getLength() == 1) {
-      scope.getJoinScope().put(lastAlias, table);
-    }
-
-    TableBookkeeping b = new TableBookkeeping(relation, firstAlias, table);
-    TableBookkeeping result = walkJoin(tableNode, b, 1, firstAlias, lastAlias, Optional.empty(), scope);
-
-    return createScope(result.getCurrent(), scope);
+    scope.getFieldScope().put(lastAlias, table.walk(namePath.popFirst()).get());
+    return createScope(result.getRelation(), scope);
   }
 
   /**
@@ -203,35 +194,45 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     Scope left = node.getLeft().accept(this, scope);
 
     TableNode rhs = (TableNode)node.getRight();
-    Name lastAlias = rhs.getAlias().isPresent() ?
-        rhs.getAlias().get() :
-        rhs.getNamePath().getLength() > 1 ? gen.nextTableAliasName() : rhs.getNamePath().getFirst();
+    Name lastAlias = rhs.getAlias().isPresent()
+        ? rhs.getAlias().get()
+        : rhs.getNamePath().getLength() > 1
+            ? Name.system(rhs.getNamePath().toString())  //todo needs to be unique
+            : rhs.getNamePath().getFirst();
+
     //A join traversal, e.g. FROM orders AS o JOIN o.entries
     if (scope.getJoinScope().containsKey(rhs.getNamePath().getFirst())) {
-      Name joinAlias = rhs.getNamePath().getFirst();
-      Table table = scope.getJoinScope(joinAlias).get();
+      Table baseTable = scope.getJoinScope().get(rhs.getNamePath().getFirst());
+      JoinWalker joinWalker = new JoinWalker();
+      WalkResult result = joinWalker.walk(
+          rhs.getNamePath().getFirst(),
+          Optional.of(lastAlias),
+          rhs.getNamePath().popFirst(),
+          Optional.of((Relation)left.getNode()),
+          scope.getJoinScope()
+      );
 
-      Relationship firstRel = (Relationship)table.getField(rhs.getNamePath().get(1));
-      Name firstAlias = getTableAlias(rhs, 1);
-      if (rhs.getNamePath().getLength() == 1) {
-        scope.getJoinScope().put(lastAlias, table);
-      }
-      TableBookkeeping b = new TableBookkeeping((Relation)left.getNode(), firstAlias, firstRel.getToTable());
-      TableBookkeeping result = walkJoin(rhs, b, 1, lastAlias, lastAlias, node.getCriteria(), scope);
-
-      return createScope(result.getCurrent(), scope);
+      scope.getFieldScope().put(lastAlias, baseTable.walk(rhs.getNamePath().popFirst()).get());
+      return createScope(result.getRelation(), scope);
     } else { //A regular join: FROM Orders JOIN entries
       Table table = analyzer.getDag().getSchema().getByName(rhs.getNamePath().get(0)).get();
-      Name joinAlias = getTableAlias(rhs, 0);
-      TableNode tableNode = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(joinAlias));
+      Name firstAlias = getTableAlias(rhs, 0, gen::nextTableAliasName);
+      scope.getJoinScope().put(firstAlias, table);
 
-      if (rhs.getNamePath().getLength() == 1) {
-        scope.getJoinScope().put(lastAlias, table);
-      }
-      TableBookkeeping b = new TableBookkeeping(tableNode, joinAlias, table);
-      TableBookkeeping result = walkJoin(rhs, b, 1, lastAlias, lastAlias, node.getCriteria(), scope);
+      TableNode tableNode = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(firstAlias));
+      Join join = new Join(Optional.empty(), Type.CROSS, (Relation)left.getNode(), tableNode, Optional.empty());
 
-      return createScope(result.getCurrent(), scope);
+      JoinWalker joinWalker = new JoinWalker();
+      WalkResult result = joinWalker.walk(
+          firstAlias,
+          Optional.of(lastAlias),
+          rhs.getNamePath().popFirst(),
+          Optional.of(join),
+          scope.getJoinScope()
+      );
+
+      scope.getFieldScope().put(lastAlias, table.walk(rhs.getNamePath().popFirst()).get());
+      return createScope(result.getRelation(), scope);
     }
   }
 
@@ -284,72 +285,10 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     }
     return new Select(expanded);
   }
-  public static final AliasGenerator gen = new AliasGenerator();
-  public static TableBookkeeping walkJoin(TableNode node, TableBookkeeping b, int startAt,
-      Name firstAlias,
-      Name lastAlias,
-      Optional<JoinCriteria> lastCriteria,//needs rewritten
-      Scope scope) {
-    for (int i = startAt; i < node.getNamePath().getLength(); i++) {
-      Relationship rel = (Relationship)b.getCurrentTable().getField(node.getNamePath().get(i));
-      Name alias = (i == node.getNamePath().getLength() - 1) ? lastAlias : (i == 0) ? firstAlias : gen.nextTableAliasName();
-      if (i == node.getNamePath().getLength() - 1) scope.getJoinScope().put(alias, rel.getToTable());
-      Optional<JoinCriteria> additional =
-          (i == node.getNamePath().getLength() - 1) ? lastCriteria : Optional.empty();
-      Join join = new Join(Optional.empty(), Type.INNER, b.getCurrent(),
-          expandRelation(rel, alias), getCriteria(rel, b.getAlias(), alias, additional));
-      b = new TableBookkeeping(join, alias, rel.getToTable());
-    }
-    return b;
-  }
-
-  public static Relation expandRelation(Relationship rel, Name nextAlias) {
-    if (rel.getType() == Relationship.Type.JOIN) {
-      return new AliasedRelation(Optional.empty(), new TableSubquery(Optional.empty(), (Query)rel.getNode()),
-          new Identifier(Optional.empty(), nextAlias.toNamePath()));
-    } else {
-      return new TableNode(Optional.empty(), rel.getToTable().getId().toNamePath(),
-          Optional.of(nextAlias));
-    }
-  }
-
-  public static Optional<JoinCriteria> getCriteria(List<Column> columns, Name alias, Name nextAlias) {
-    List<Expression> expr = columns.stream()
-        .map(c -> new ComparisonExpression(Optional.empty(), Operator.EQUAL,
-            toIdentifier(c, alias), toIdentifier(c, nextAlias)))
-        .collect(Collectors.toList());
-    return Optional.of(new JoinOn(Optional.empty(), and(expr)));
-  }
-
-  public static Optional<JoinCriteria> getCriteria(Relationship rel, Name alias, Name nextAlias,
-      Optional<JoinCriteria> additional) {
-    if (rel.type == Relationship.Type.JOIN){
-      //Join expansion uses the context table as its join
-      //these can be renamed, just use pk1, pk2, etc for now
-      List<Column> columns = rel.getTable().getPrimaryKeys();
-      List<Expression> expr = new ArrayList<>();
-      for (int i = 0; i < columns.size(); i++) {
-        Column c = columns.get(i);
-        ComparisonExpression comparisonExpression = new ComparisonExpression(Optional.empty(),
-            Operator.EQUAL,
-            toIdentifier(c, alias),
-            new Identifier(Optional.empty(),
-                nextAlias.toNamePath().concat(Name.system("_pk" + i).toNamePath()))
-        );
-        expr.add(comparisonExpression);
-      }
-      return Optional.of(new JoinOn(Optional.empty(), and(expr)));
-    } else if (rel.type == Relationship.Type.PARENT) {
-      List<Column> columns = rel.getToTable().getPrimaryKeys();
-      return getCriteria(columns, alias, nextAlias);
-    } else {
-      List<Column> columns = rel.getTable().getPrimaryKeys();
-      return getCriteria(columns, alias, nextAlias);
-    }
-  }
 
   private Scope createScope(Node node, Scope parentScope) {
     return new Scope(parentScope.getContextTable(), node, parentScope.getJoinScope(),
+        parentScope.getFieldScope(),
         parentScope.isExpression(), parentScope.getExpressionName());
   }
 

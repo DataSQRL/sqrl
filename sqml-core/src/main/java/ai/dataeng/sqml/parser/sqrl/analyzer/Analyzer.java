@@ -45,6 +45,7 @@ import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
 import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.TableNode;
+import ai.dataeng.sqml.tree.TableSubquery;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.base.Preconditions;
@@ -181,14 +182,13 @@ public class Analyzer {
       Table contextTable = namePath.getPrefix().flatMap(p-> getTable(p)).get();
       Query aliasedQuery = Transformers.aliasFirstColumn.transform(query, namePath.getLast());
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
-      Scope scope = aliasedQuery.accept(statementAnalyzer, new Scope(Optional.of(contextTable), aliasedQuery, new HashMap<>(),
+      Scope scope = aliasedQuery.accept(statementAnalyzer, new Scope(Optional.of(contextTable), aliasedQuery, new HashMap<>(),new HashMap<>(),
           true, namePath.getLast()));
 
       SqlNode sqlNode = planner.parse(scope.getNode());
       log.info("Calcite Query: {}", sqlNode);
 
       RelNode plan = planner.plan(sqlNode);
-      log.info("Logical Plan Query: " +RelToSql.convertToSql(plan));
 
       /*
        * Add columns to schema.
@@ -206,7 +206,6 @@ public class Analyzer {
        */
       RelNode expanded = plan.accept(dagExpander);
       //Revalidate expanded
-      System.out.println(RelToSql.convertToSql(expanded));
       planner.getValidator().validate(RelToSql.convertToSqlNode(expanded));
 
       contextTable.setRelNode(expanded);
@@ -222,7 +221,7 @@ public class Analyzer {
       Optional<Table> contextTable = namePath.getPrefix().flatMap(p-> getTable(p));
 
       StatementAnalyzer statementAnalyzer = new StatementAnalyzer(analyzer);
-      Scope scope = query.accept(statementAnalyzer, new Scope(contextTable, query, new HashMap<>(),
+      Scope scope = query.accept(statementAnalyzer, new Scope(contextTable, query, new HashMap<>(),new HashMap<>(),
           false, namePath.getLast()));
 
       SqlNode sqlNode = planner.parse(scope.getNode());
@@ -232,14 +231,13 @@ public class Analyzer {
       RelNode expanded = plan.accept(dagExpander);
       //Revalidate expanded
       planner.getValidator().validate(RelToSql.convertToSqlNode(expanded));
-      log.info(RelToSql.convertToSql(expanded));
 
       Table newTable = new Table(TableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(),
           namePath, false);
       newTable.setRelNode(expanded);
 
       //Append columns
-      List<Column> columns = createFieldsFromSelect(newTable, (Query)scope.getNode(), plan);
+      List<Field> columns = createFieldsFromSelect(newTable, (Query)scope.getNode(), plan);
       columns.forEach(newTable::addField);
 
       //Update schema
@@ -262,24 +260,27 @@ public class Analyzer {
 
     }
 
-    private List<Column> createFieldsFromSelect(Table table, Query node, RelNode plan) {
-      List<Column> columns = new ArrayList<>();
-      if (node.getQueryBody() instanceof QuerySpecification) {
-        QuerySpecification spec = (QuerySpecification) node.getQueryBody();
-        for (SelectItem selectItem : spec.getSelect().getSelectItems()) {
-          SingleColumn singleColumn = (SingleColumn) selectItem;
-          Name name = singleColumn.getAlias().map(i->i.getNamePath().getLast())
-              .orElseGet(()->((Identifier) singleColumn.getExpression()).getNamePath().getLast());
-          Column column = table.fieldFactory(name);
-          RelDataTypeField relField = plan.getRowType().getField(name.getCanonical(), false, false);
-          column.setType(RelDataTypeConverter.toBasicType(relField.getType()));
-          columns.add(column);
-        }
-
-        return columns;
-      }
-
-      throw new RuntimeException("not implemented yet");
+    private List<Field> createFieldsFromSelect(Table table, Query node, RelNode plan) {
+      return new ai.dataeng.sqml.parser.TableFactory().create(new TableSubquery(node))
+          .getFields().getElements();
+//
+//      List<Column> columns = new ArrayList<>();
+//      if (node.getQueryBody() instanceof QuerySpecification) {
+//        QuerySpecification spec = (QuerySpecification) node.getQueryBody();
+//        for (SelectItem selectItem : spec.getSelect().getSelectItems()) {
+//          SingleColumn singleColumn = (SingleColumn) selectItem;
+//          Name name = singleColumn.getAlias().map(i->i.getNamePath().getLast())
+//              .orElseGet(()->((Identifier) singleColumn.getExpression()).getNamePath().getLast());
+//          Column column = table.fieldFactory(name);
+//          RelDataTypeField relField = plan.getRowType().getField(name.getCanonical(), false, false);
+//          column.setType(RelDataTypeConverter.toBasicType(relField.getType()));
+//          columns.add(column);
+//        }
+//
+//        return columns;
+//      }
+//
+//      throw new RuntimeException("not implemented yet");
     }
 
     /**
@@ -378,10 +379,8 @@ public class Analyzer {
       System.out.println(NodeFormatter.accept(querySpec));
 
       Optional<Table> ctxTable = getTable(namePath.getPrefix().get());
-      Scope scope = querySpec.accept(statementAnalyzer, new Scope(ctxTable, querySpec, new LinkedHashMap<>(),
+      Scope scope = querySpec.accept(statementAnalyzer, new Scope(ctxTable, querySpec, new LinkedHashMap<>(),new LinkedHashMap<>(),
           false, null));
-
-      System.out.println(NodeFormatter.accept(scope.getNode()));
 
       Node rewritten = scope.getNode();
 
