@@ -171,6 +171,46 @@
       <artifactId>kafka-clients</artifactId>
       <version>3.1.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <version>3.1.0</version>
+      <classifier>test</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.13</artifactId>
+      <version>3.1.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.13</artifactId>
+      <version>3.1.0</version>
+      <scope>test</scope>
+      <classifier>test</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-streams</artifactId>
+      <version>3.1.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-streams</artifactId>
+      <version>3.1.0</version>
+      <scope>test</scope>
+      <classifier>test</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-streams-test-utils</artifactId>
+      <version>3.1.0</version>
+      <scope>test</scope>
+    </dependency>
+
 
     <dependency>
       <groupId>org.projectlombok</groupId>

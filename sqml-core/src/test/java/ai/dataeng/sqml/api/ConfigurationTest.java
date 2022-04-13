@@ -49,6 +49,8 @@ public class ConfigurationTest {
 
     public static final Path DATA_DIR = resourceDir.resolve("data");
 
+    public static final Path[] BOOK_FILES = new Path[]{DATA_DIR.resolve("book_001.json"), DATA_DIR.resolve("book_002.json")};
+
     private Environment env = null;
 
     @BeforeEach
