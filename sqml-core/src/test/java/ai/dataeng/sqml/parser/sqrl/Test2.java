@@ -41,7 +41,7 @@ public class Test2 {
 //    env.getDatasetRegistry().addOrUpdateSource("c360", dd, ErrorCollector.root());
 
 
-    String ds2Name = "c360";
+    String ds2Name = "ecommerce-data";
     DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
         .uri(C360Test.RETAIL_DATA_DIR.toAbsolutePath().toString())
         .build();
