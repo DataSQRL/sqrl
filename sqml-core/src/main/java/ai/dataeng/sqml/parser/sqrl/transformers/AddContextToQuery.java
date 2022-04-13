@@ -4,17 +4,19 @@ import static ai.dataeng.sqml.parser.sqrl.AliasUtil.primaryKeySelect;
 import static ai.dataeng.sqml.util.SqrlNodeUtil.groupBy;
 
 import ai.dataeng.sqml.parser.AliasGenerator;
+import ai.dataeng.sqml.parser.Column;
 import ai.dataeng.sqml.parser.Table;
 import ai.dataeng.sqml.parser.sqrl.analyzer.aggs.AggregationDetector;
 import ai.dataeng.sqml.parser.sqrl.function.FunctionLookup;
-import ai.dataeng.sqml.parser.sqrl.node.PrimaryKeySelectItem;
 import ai.dataeng.sqml.tree.Expression;
 import ai.dataeng.sqml.tree.GroupBy;
+import ai.dataeng.sqml.tree.Identifier;
 import ai.dataeng.sqml.tree.LongLiteral;
 import ai.dataeng.sqml.tree.OrderBy;
 import ai.dataeng.sqml.tree.QuerySpecification;
 import ai.dataeng.sqml.tree.Select;
 import ai.dataeng.sqml.tree.SelectItem;
+import ai.dataeng.sqml.tree.SingleColumn;
 import ai.dataeng.sqml.tree.SortItem;
 import ai.dataeng.sqml.tree.name.Name;
 import java.util.ArrayList;
@@ -75,7 +77,8 @@ public class AddContextToQuery {
 
     for (int i = 0; i < select.getSelectItems().size(); i++) {
       SelectItem selectItem = select.getSelectItems().get(i);
-      if (selectItem instanceof PrimaryKeySelectItem) {
+      SingleColumn singleColumn = (SingleColumn) selectItem;
+      if (isParentPrimaryKey(singleColumn)) {
         sortItems.add(new SortItem(Optional.empty(), new LongLiteral(Integer.toString(i + 1)), Optional.empty()));
       }
     }
@@ -85,6 +88,15 @@ public class AddContextToQuery {
     }
 
     return Optional.of(new OrderBy(Optional.empty(), sortItems));
+  }
+
+  private boolean isParentPrimaryKey(SingleColumn singleColumn) {
+    if (singleColumn.getExpression() instanceof Identifier &&
+        ((Identifier)singleColumn.getExpression()).getResolved() instanceof Column &&
+        ((Column)((Identifier)singleColumn.getExpression()).getResolved()).isPrimaryKey()) {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -98,7 +110,8 @@ public class AddContextToQuery {
 
     for (int i = 0; i < select.getSelectItems().size(); i++) {
       SelectItem selectItem = select.getSelectItems().get(i);
-      if (selectItem instanceof PrimaryKeySelectItem) {
+      SingleColumn singleColumn = (SingleColumn) selectItem;
+      if (isParentPrimaryKey(singleColumn)) {
         grouping.add(new LongLiteral(Integer.toString(i + 1)));
       }
     }

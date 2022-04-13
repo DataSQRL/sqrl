@@ -124,7 +124,9 @@ public class JoinWalker {
   public static JoinCriteria createTableCriteria(Map<Name, Table> joinScope, Name lhs, Name rhs) {
     //Use the lhs primary keys to join on the rhs
     Table lhsTable = joinScope.get(lhs);
+    Preconditions.checkNotNull(lhsTable, "Could not find join scope table %s", lhs);
     Table rhsTable = joinScope.get(rhs);
+    Preconditions.checkNotNull(lhsTable, "Could not find join scope table %s", rhs);
     List<Expression> conditions = new ArrayList<>();
 
     for (Column lhsColumn : lhsTable.getPrimaryKeys()) {

@@ -128,7 +128,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
         .orElse(spec);
 
     if (scope.isExpression() && contextTable.isPresent()) {
-      QuerySpecification query = Transformers.addColumnToQuery.transform(contextTable.get(), scope.getExpressionName(),
+      QuerySpecification query = Transformers.addColumnToQuery.transform(contextTable.get(), scope.getJoinScope(), scope.getExpressionName(),
           aggregationDetector.isAggregating(spec.getSelect()), rewrittenNode);
       return query;
     }
@@ -154,30 +154,40 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
   public Scope visitTable(TableNode tableNode, Scope scope) {
     NamePath namePath = tableNode.getNamePath();
 
-    // Get schema table or context table as the first Table in table path
-    Table table = (namePath.getFirst().equals(Name.SELF_IDENTIFIER)) ?
-        scope.getContextTable().get() :
-        analyzer.getDag().getSchema().getByName(namePath.getFirst()).get();
-
-    //Special case: Self identifier is added to join scope
-    if (namePath.getFirst().equals(Name.SELF_IDENTIFIER)) {
-      scope.getJoinScope().put(Name.SELF_IDENTIFIER, scope.getContextTable().get());
-    }
-
-    Name firstAlias = namePath.getFirst().equals(Name.SELF_IDENTIFIER)
-        ? Name.SELF_IDENTIFIER
-        : getTableAlias(tableNode, 0, gen::nextTableAliasName);
-    Name lastAlias = tableNode.getAlias().isPresent()
+    Name tableNodeAlias = tableNode.getAlias().isPresent()
         ? tableNode.getAlias().get()
         : namePath.getLength() > 1 ? gen.nextTableAliasName() : namePath.getFirst();
 
-    scope.getJoinScope().put(firstAlias, table);
-    WalkResult result = new JoinWalker().walk(firstAlias, Optional.of(lastAlias), namePath.popFirst(), Optional.empty(),
-        ()->Optional.empty(),
-        scope.getJoinScope());
+    if (tableNode.getNamePath().getFirst().equals(Name.SELF_IDENTIFIER)) {
+      Table table = scope.getContextTable().get();
 
-    scope.getFieldScope().put(lastAlias, table.walk(namePath.popFirst()).get());
-    return createScope(result.getRelation(), scope);
+      scope.getFieldScope().put(tableNodeAlias, table.walk(namePath.popFirst()).get());
+      //Special case: Self identifier is added to join scope
+      scope.getJoinScope().put(Name.SELF_IDENTIFIER, scope.getContextTable().get());
+
+      WalkResult result = new JoinWalker().walk(Name.SELF_IDENTIFIER,
+          Optional.of(tableNodeAlias),
+          namePath.popFirst(),
+          Optional.empty(),
+          ()->Optional.empty(),
+          scope.getJoinScope());
+      return createScope(result.getRelation(), scope);
+    } else { //Table is in the schema
+      Table table = analyzer.getDag().getSchema().getByName(namePath.getFirst()).get();
+      scope.getFieldScope().put(tableNodeAlias, table.walk(namePath.popFirst()).get());
+
+      Name firstAlias = getTableAlias(tableNode, 0, gen::nextTableAliasName);
+      scope.getJoinScope().put(firstAlias, table);
+
+      WalkResult result = new JoinWalker().walk(firstAlias,
+          Optional.of(tableNodeAlias),
+          namePath.popFirst(),
+          Optional.empty(),
+          ()->Optional.empty(),
+          scope.getJoinScope());
+
+      return createScope(result.getRelation(), scope);
+    }
   }
 
   /**
@@ -196,7 +206,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
     Name lastAlias = rhs.getAlias().isPresent()
         ? rhs.getAlias().get()
         : rhs.getNamePath().getLength() > 1
-            ? Name.system(rhs.getNamePath().toString())  //todo needs to be unique
+            ? gen.nextTableAliasName()  //todo needs to be unique
             : rhs.getNamePath().getFirst();
 
     //A join traversal, e.g. FROM orders AS o JOIN o.entries
@@ -204,6 +214,7 @@ public class StatementAnalyzer extends AstVisitor<Scope, Scope> {
       Table baseTable = scope.getJoinScope().get(rhs.getNamePath().getFirst());
       //Immediately register the field scope so the criteria can be resolved
       scope.getFieldScope().put(lastAlias, baseTable.walk(rhs.getNamePath().popFirst()).get());
+
       JoinWalker joinWalker = new JoinWalker();
       WalkResult result = joinWalker.walk(
           rhs.getNamePath().getFirst(),

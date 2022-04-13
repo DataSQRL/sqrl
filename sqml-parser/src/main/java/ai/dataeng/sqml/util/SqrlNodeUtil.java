@@ -129,13 +129,9 @@ public class SqrlNodeUtil {
     return new SingleColumn(expression, new Identifier(Optional.empty(), alias));
   }
 
-  public static Relation toSubquery(QuerySpecification spec, Name alias) {
-    return
-        new AliasedRelation(
-            new TableSubquery(Optional.empty(),
-                new Query(Optional.empty(), spec, Optional.empty(), Optional.empty())),
-            ident(alias.toNamePath()));
-
+  public static TableSubquery toSubquery(QuerySpecification spec) {
+    return new TableSubquery(Optional.empty(),
+                new Query(Optional.empty(), spec, Optional.empty(), Optional.empty()));
   }
 
   public static GroupBy groupBy(List<Expression> grouping) {

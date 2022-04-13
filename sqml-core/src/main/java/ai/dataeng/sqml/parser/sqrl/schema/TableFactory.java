@@ -280,12 +280,7 @@ public class TableFactory {
     }
   }
 
-  public Table create(NamePath name, Query node) {
-    return null;
-  }
-
   public Table create(NamePath namePath, Name table) {
-
     return new Table(tableIdCounter.incrementAndGet(), namePath.getLast(), namePath, false);
   }
 }

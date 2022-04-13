@@ -50,8 +50,7 @@ public class ConvertLimitToWindow {
         NamePath.of("ROW_NUMBER"), List.of(), false, Optional.of(new Window(
           getSelectExpressions(spec.getSelect().getSelectItems(), spec.getParentPrimaryKeys()),
           Optional.of(getOrder(spec.getOrderBy()))))),
-        new Identifier(Optional.empty(), rowNum.toNamePath())
-        ));
+        new Identifier(Optional.empty(), rowNum.toNamePath())));
 
     QuerySpecification inner = new QuerySpecification(
         spec,

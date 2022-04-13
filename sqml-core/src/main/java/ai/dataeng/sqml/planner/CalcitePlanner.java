@@ -66,7 +66,6 @@ public class CalcitePlanner {
     return new SqrlRelBuilder(null, cluster, catalogReader);
   }
 
-
   public SqlNode parse(Node node) {
     NodeToSqlNodeConverter converter = new NodeToSqlNodeConverter();
     SqlNode sqlNode = node.accept(converter, null);
@@ -109,7 +108,8 @@ public class CalcitePlanner {
 
   public SqlToRelConverter getSqlToRelConverter(SqlValidator validator) {
     SqlToRelConverter relConverter = new SqlToRelConverter(
-        new SqrlViewExpander(),
+        (rowType, queryString, schemaPath
+            , viewPath)->null,
         validator,
         catalogReader,
         cluster,
@@ -121,14 +121,5 @@ public class CalcitePlanner {
 
   public void setView(String name, Table table) {
     this.calciteSchema.add(name, table);
-  }
-
-  public class SqrlViewExpander implements ViewExpander {
-
-    @Override
-    public RelRoot expandView(RelDataType relDataType, String s, List<String> list,
-        List<String> list1) {
-      return null;
-    }
   }
 }
