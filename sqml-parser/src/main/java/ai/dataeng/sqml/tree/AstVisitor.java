@@ -32,6 +32,12 @@ public abstract class AstVisitor<R, C> {
     return null;
   }
 
+  //SQRL specific nodes
+
+  public R visitScript(ScriptNode node, C context) {
+    return visitNode(node, context);
+  }
+
   public R visitImportDefinition(ImportDefinition node, C context) {
     return visitNode(node, context);
   }
@@ -44,48 +50,44 @@ public abstract class AstVisitor<R, C> {
     return visitNode(declaration, context);
   }
 
-  public R visitExpression(Expression node, C context) {
+  public R visitExpressionAssignment(ExpressionAssignment node, C context) {
+    return visitAssignment(node, context);
+  }
+  public R visitQueryAssignment(QueryAssignment node, C context) {
+    return visitAssignment(node, context);
+  }
+
+  public R visitIsEmpty(IsEmpty node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitCreateSubscription(CreateSubscription node, C context) {
     return visitNode(node, context);
   }
 
-  public R visitArithmeticBinary(ArithmeticBinaryExpression node, C context) {
+  public R visitDistinctAssignment(DistinctAssignment node, C context) {
+    return visitAssignment(node, context);
+  }
+
+  public R visitJoinDeclaration(JoinDeclaration node, C context) {
+    return visitAssignment(node, context);
+  }
+  public R visitInlineJoin(InlineJoin node, C context) {
+    return visitDeclaration(node, context);
+  }
+
+  public R visitDereferenceExpression(DereferenceExpression node, C context) {
     return visitExpression(node, context);
   }
 
-  public R visitBetweenPredicate(BetweenPredicate node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitComparisonExpression(ComparisonExpression node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitLiteral(Literal node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitDoubleLiteral(DoubleLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
-  public R visitDecimalLiteral(DecimalLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
-  public R visitStatement(Statement node, C context) {
-    return visitNode(node, context);
-  }
+  // Query
 
   public R visitQuery(Query node, C context) {
     return visitStatement(node, context);
   }
 
-  public R visitGenericLiteral(GenericLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
-  public R visitTimeLiteral(TimeLiteral node, C context) {
-    return visitLiteral(node, context);
+  public R visitStatement(Statement node, C context) {
+    return visitNode(node, context);
   }
 
   public R visitSelect(Select node, C context) {
@@ -124,63 +126,7 @@ public abstract class AstVisitor<R, C> {
     return visitSetOperation(node, context);
   }
 
-  public R visitTimestampLiteral(TimestampLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
   public R visitWhenClause(WhenClause node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitIntervalLiteral(IntervalLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
-  public R visitInPredicate(InPredicate node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitFunctionCall(FunctionCall node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitSimpleCaseExpression(SimpleCaseExpression node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitStringLiteral(StringLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
-  public R visitBooleanLiteral(BooleanLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
-  public R visitEnumLiteral(EnumLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
-  public R visitInListExpression(InListExpression node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitIdentifier(Identifier node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitDereferenceExpression(DereferenceExpression node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitNullLiteral(NullLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
-  public R visitArithmeticUnary(ArithmeticUnaryExpression node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitNotExpression(NotExpression node, C context) {
     return visitExpression(node, context);
   }
 
@@ -196,43 +142,11 @@ public abstract class AstVisitor<R, C> {
     return visitSelectItem(node, context);
   }
 
-  public R visitLikePredicate(LikePredicate node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitIsNotNullPredicate(IsNotNullPredicate node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitIsNullPredicate(IsNullPredicate node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitArrayConstructor(ArrayConstructor node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitLongLiteral(LongLiteral node, C context) {
-    return visitLiteral(node, context);
-  }
-
-  public R visitParameter(Parameter node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitLogicalBinaryExpression(LogicalBinaryExpression node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitSubqueryExpression(SubqueryExpression node, C context) {
-    return visitExpression(node, context);
-  }
-
   public R visitSortItem(SortItem node, C context) {
     return visitNode(node, context);
   }
 
-  public R visitTable(Table node, C context) {
+  public R visitTable(TableNode node, C context) {
     return visitQueryBody(node, context);
   }
 
@@ -250,6 +164,18 @@ public abstract class AstVisitor<R, C> {
 
   public R visitJoin(Join node, C context) {
     return visitRelation(node, context);
+  }
+
+  public R visitWindow(Window window, C context) {
+    return visitNode(window, context);
+  }
+
+  public R visitDistinctOn(DistinctOn node, C context) {
+    return visitNode(node, context);
+  }
+
+  public R visitJoinOn(JoinOn node, C context) {
+    return visitNode(node, context);
   }
 
   public R visitExists(ExistsPredicate node, C context) {
@@ -276,6 +202,88 @@ public abstract class AstVisitor<R, C> {
     return visitGroupingElement(node, context);
   }
 
+  public R visitGroupingOperation(GroupingOperation node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitLimitNode(Limit node, C context) {
+    return visitNode(node, context);
+  }
+
+  // Expresssions
+
+  public R visitExpression(Expression node, C context) {
+    return visitNode(node, context);
+  }
+
+  public R visitArithmeticBinary(ArithmeticBinaryExpression node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitBetweenPredicate(BetweenPredicate node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitComparisonExpression(ComparisonExpression node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitInPredicate(InPredicate node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitFunctionCall(FunctionCall node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitSimpleCaseExpression(SimpleCaseExpression node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitInListExpression(InListExpression node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitIdentifier(Identifier node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitLikePredicate(LikePredicate node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitIsNotNullPredicate(IsNotNullPredicate node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitIsNullPredicate(IsNullPredicate node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitNotExpression(NotExpression node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitArithmeticUnary(ArithmeticUnaryExpression node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitArrayConstructor(ArrayConstructor node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitParameter(Parameter node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitLogicalBinaryExpression(LogicalBinaryExpression node, C context) {
+    return visitExpression(node, context);
+  }
+
+  public R visitSubqueryExpression(SubqueryExpression node, C context) {
+    return visitExpression(node, context);
+  }
+
   public R visitSymbolReference(SymbolReference node, C context) {
     return visitExpression(node, context);
   }
@@ -284,60 +292,57 @@ public abstract class AstVisitor<R, C> {
     return visitExpression(node, context);
   }
 
-  public R visitGroupingOperation(GroupingOperation node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitScript(ScriptNode node, C context) {
-    return visitNode(node, context);
-  }
-
-  public R visitExpressionAssignment(ExpressionAssignment node, C context) {
-    return visitAssignment(node, context);
-  }
-  public R visitQueryAssignment(QueryAssignment node, C context) {
-    return visitAssignment(node, context);
-  }
-  public R visitIsEmpty(IsEmpty node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitInlineJoinBody(InlineJoinBody node, C context) {
-    return visitExpression(node, context);
-  }
-
-  public R visitCreateSubscription(CreateSubscription node, C context) {
-    return visitNode(node, context);
-  }
-
-  public R visitDistinctAssignment(DistinctAssignment node, C context) {
-    return visitAssignment(node, context);
-  }
-
-  public R visitJoinAssignment(JoinDeclaration node, C context) {
-    return visitAssignment(node, context);
-  }
-  public R visitInlineJoin(InlineJoin node, C context) {
-    return visitDeclaration(node, context);
-  }
-
   public R visitFieldReference(FieldReference node, C context) {
     return visitExpression(node, context);
   }
 
-  public R visitWindow(Window window, C context) {
-    return visitNode(window, context);
+  //Literals
+
+  public R visitLiteral(Literal node, C context) {
+    return visitExpression(node, context);
   }
 
-  public R visitDistinctOn(DistinctOn node, C context) {
-    return visitNode(node, context);
+  public R visitDoubleLiteral(DoubleLiteral node, C context) {
+    return visitLiteral(node, context);
   }
 
-  public R visitLimitNode(Limit node, C context) {
-    return visitNode(node, context);
+  public R visitDecimalLiteral(DecimalLiteral node, C context) {
+    return visitLiteral(node, context);
   }
 
-  public R visitJoinOn(JoinOn node, C context) {
-    return visitNode(node, context);
+  public R visitGenericLiteral(GenericLiteral node, C context) {
+    return visitLiteral(node, context);
+  }
+
+  public R visitNullLiteral(NullLiteral node, C context) {
+    return visitLiteral(node, context);
+  }
+
+  public R visitTimeLiteral(TimeLiteral node, C context) {
+    return visitLiteral(node, context);
+  }
+
+  public R visitTimestampLiteral(TimestampLiteral node, C context) {
+    return visitLiteral(node, context);
+  }
+
+  public R visitIntervalLiteral(IntervalLiteral node, C context) {
+    return visitLiteral(node, context);
+  }
+
+  public R visitStringLiteral(StringLiteral node, C context) {
+    return visitLiteral(node, context);
+  }
+
+  public R visitBooleanLiteral(BooleanLiteral node, C context) {
+    return visitLiteral(node, context);
+  }
+
+  public R visitEnumLiteral(EnumLiteral node, C context) {
+    return visitLiteral(node, context);
+  }
+
+  public R visitLongLiteral(LongLiteral node, C context) {
+    return visitLiteral(node, context);
   }
 }

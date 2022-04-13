@@ -66,7 +66,7 @@ public class SourceHandler {
     private SourceDataset getDataset(RoutingContext routingContext) {
         RequestParameters params = routingContext.get("parsedParameters");
         String sourceName = params.pathParameter("sourceName").getString();
-        SourceDataset ds = registry.getDataset(sourceName);
+        SourceDataset ds = registry.getDataset(Name.system(sourceName));
         if (ds == null) {
             routingContext.fail(404, new Exception("Source not found"));
             return null;

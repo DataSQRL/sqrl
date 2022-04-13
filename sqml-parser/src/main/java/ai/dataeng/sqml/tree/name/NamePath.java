@@ -1,19 +1,16 @@
 package ai.dataeng.sqml.tree.name;
 
-import ai.dataeng.sqml.tree.QualifiedName;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
-import java.util.ArrayList;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
-
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Iterator;
 
 @Value
 public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePath> {
@@ -54,13 +51,13 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
       return NamePath.of(names);
   }
 
-  public NamePath resolve(@NonNull Name name) {
+  public NamePath concat(@NonNull Name name) {
         Name[] newnames = Arrays.copyOf(names,names.length+1);
         newnames[names.length] = name;
         return new NamePath(newnames);
     }
 
-    public NamePath resolve(@NonNull NamePath sub) {
+    public NamePath concat(@NonNull NamePath sub) {
         Name[] newnames = Arrays.copyOf(names,names.length+sub.names.length);
         System.arraycopy(sub.names, 0, newnames, names.length, sub.names.length);
         return new NamePath(newnames);
@@ -172,4 +169,15 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
   public boolean isEmpty() {
     return names.length == 0;
   }
+
+  public Optional<NamePath> subList(int from, int to) {
+    if (from > names.length || to > names.length) {
+      return Optional.empty();
+    }
+
+    Name[] newNames = Arrays.copyOfRange(names, from, to);
+
+    return Optional.of(new NamePath(newNames));
+  }
+
 }

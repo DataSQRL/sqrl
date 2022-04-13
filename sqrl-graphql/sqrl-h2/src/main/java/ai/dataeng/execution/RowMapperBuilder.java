@@ -108,7 +108,7 @@ public class RowMapperBuilder extends H2ColumnVisitor2<Object, ResultContext> {
   @Override
   public Object visitUUIDColumn(UUIDColumn column, ResultContext context) {
     context.getMap().put(column.getName(),
-        context.getRow().getUUID(column.getPhysicalName()));
+        context.getRow().getString(column.getPhysicalName()));
     return null;
   }
 

@@ -2,6 +2,8 @@ package ai.dataeng.sqml.parser;
 
 import ai.dataeng.sqml.parser.ParsingOptions.DecimalLiteralTreatment;
 import ai.dataeng.sqml.tree.ScriptNode;
+import ai.dataeng.sqml.tree.SqrlStatement;
+import ai.dataeng.sqml.tree.Statement;
 
 public class SqrlParser {
 
@@ -21,5 +23,9 @@ public class SqrlParser {
 
   public static SqrlParser newParser() {
     return new SqrlParser();
+  }
+
+  public SqrlStatement parseStatement(String statement) {
+    return (SqrlStatement)parser.createStatement(statement, parsingOptions);
   }
 }

@@ -24,13 +24,13 @@ import java.util.Optional;
 public class QuerySpecification
     extends QueryBody {
 
-  private final Select select;
-  private final Relation from;
-  private final Optional<Expression> where;
-  private final Optional<GroupBy> groupBy;
-  private final Optional<Expression> having;
-  private final Optional<OrderBy> orderBy;
-  private final Optional<Limit> limit;
+  private Select select;
+  private Relation from;
+  private Optional<Expression> where;
+  private Optional<GroupBy> groupBy;
+  private Optional<Expression> having;
+  private Optional<OrderBy> orderBy;
+  private Optional<Limit> limit;
 
   public QuerySpecification(
       NodeLocation location,
@@ -104,6 +104,35 @@ public class QuerySpecification
         .filter(l->l.getValue().equalsIgnoreCase("ALL"))
         .map(l->Long.parseLong(l.getValue()));
   }
+
+  public void setSelect(Select select) {
+    this.select = select;
+  }
+
+  public void setFrom(Relation from) {
+    this.from = from;
+  }
+
+  public void setWhere(Optional<Expression> where) {
+    this.where = where;
+  }
+
+  public void setGroupBy(Optional<GroupBy> groupBy) {
+    this.groupBy = groupBy;
+  }
+
+  public void setHaving(Optional<Expression> having) {
+    this.having = having;
+  }
+
+  public void setOrderBy(Optional<OrderBy> orderBy) {
+    this.orderBy = orderBy;
+  }
+
+  public void setLimit(Optional<Limit> limit) {
+    this.limit = limit;
+  }
+
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitQuerySpecification(this, context);

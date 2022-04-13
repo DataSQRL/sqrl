@@ -1,30 +1,8 @@
 package ai.dataeng.sqml.type;
 
+import ai.dataeng.sqml.type.schema.SchemaField;
 
-import ai.dataeng.sqml.tree.QualifiedName;
-import java.util.Optional;
-
-public interface TypedField extends Field {
+public interface TypedField extends SchemaField {
 
   public Type getType();
-
-  default Optional<QualifiedName> canResolvePrefix(QualifiedName name) {
-    if (this.getName() == null) {
-      return Optional.empty();
-    }
-
-    if (getAlias().isPresent()) {
-      QualifiedName alias = getAlias().get();
-      QualifiedName prefix = alias.append(getName());
-      if (name.hasPrefix(prefix)) {
-        return Optional.of(prefix);
-      }
-    }
-
-    if (name.hasPrefix(QualifiedName.of(getName()))) {
-      return Optional.of(QualifiedName.of(getName()));
-    }
-
-    return Optional.empty();
-  }
 }

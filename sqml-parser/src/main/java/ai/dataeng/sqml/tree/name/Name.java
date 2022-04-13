@@ -18,6 +18,7 @@ public interface Name extends Serializable, Comparable<Name> {
     public static final Name SELF_IDENTIFIER = Name.system("_");
     public static final Name PARENT_RELATIONSHIP = Name.system("parent");
     public static final Name SIBLING_RELATIONSHIP = Name.system("sibling");
+    public static final Name INGEST_TIME = Name.system("_ingest_time");
 
 
     /**

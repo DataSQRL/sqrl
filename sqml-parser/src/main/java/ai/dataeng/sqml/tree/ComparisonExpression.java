@@ -36,7 +36,7 @@ public class ComparisonExpression
     this(Optional.of(location), operator, left, right);
   }
 
-  private ComparisonExpression(Optional<NodeLocation> location, Operator operator, Expression left,
+  public ComparisonExpression(Optional<NodeLocation> location, Operator operator, Expression left,
       Expression right) {
     super(location);
     requireNonNull(operator, "type is null");
@@ -96,8 +96,8 @@ public class ComparisonExpression
     LESS_THAN("<"),
     LESS_THAN_OR_EQUAL("<="),
     GREATER_THAN(">"),
-    GREATER_THAN_OR_EQUAL(">="),
-    IS_DISTINCT_FROM("IS DISTINCT FROM");
+    GREATER_THAN_OR_EQUAL(">=");
+//    IS_DISTINCT_FROM("IS DISTINCT FROM");
 
     private final String value;
 
@@ -123,8 +123,6 @@ public class ComparisonExpression
           return LESS_THAN;
         case GREATER_THAN_OR_EQUAL:
           return LESS_THAN_OR_EQUAL;
-        case IS_DISTINCT_FROM:
-          return IS_DISTINCT_FROM;
         default:
           throw new IllegalArgumentException("Unsupported comparison: " + this);
       }

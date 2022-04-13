@@ -13,32 +13,30 @@
  */
 package ai.dataeng.sqml.tree;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static java.util.Objects.requireNonNull;
-
+import ai.dataeng.sqml.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import org.checkerframework.checker.units.qual.C;
 
+@Deprecated
 public class GroupingOperation
     extends Expression {
 
   private final List<Expression> groupingColumns;
 
-  public GroupingOperation(Optional<NodeLocation> location, List<QualifiedName> groupingColumns) {
+  public GroupingOperation(Optional<NodeLocation> location, List<NamePath> groupingColumns) {
     super(location);
-    requireNonNull(groupingColumns);
-    checkArgument(!groupingColumns.isEmpty(), "grouping operation columns cannot be empty");
-    this.groupingColumns = groupingColumns.stream()
-        .map(DereferenceExpression::from)
-        .collect(toImmutableList());
+    this.groupingColumns = List.of();
+//    requireNonNull(groupingColumns);
+//    checkArgument(!groupingColumns.isEmpty(), "grouping operation columns cannot be empty");
+//    this.groupingColumns = groupingColumns.stream()
+//        .map(DereferenceExpression::from)
+//        .collect(toImmutableList());
   }
 
   public List<Expression> getGroupingColumns() {
-    return groupingColumns;
+    return List.of();
   }
 
   @Override

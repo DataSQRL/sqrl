@@ -22,6 +22,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
+@Deprecated
 public class DereferenceExpression
     extends Expression {
 
@@ -43,44 +44,6 @@ public class DereferenceExpression
     checkArgument(field != null, "fieldName is null");
     this.base = base;
     this.field = field;
-  }
-
-  /**
-   * If this DereferenceExpression looks like a QualifiedName, return QualifiedName. Otherwise
-   * return null
-   */
-  public static QualifiedName getQualifiedName(DereferenceExpression expression) {
-    List<String> parts = tryParseParts(expression.base,
-        expression.field.getValue().toLowerCase(Locale.ENGLISH));
-    return parts == null ? null : QualifiedName.of(parts);
-  }
-
-  public static Expression from(QualifiedName name) {
-    Expression result = null;
-
-    for (String part : name.getParts()) {
-      if (result == null) {
-        result = new Identifier(part);
-      } else {
-        result = new DereferenceExpression(result, new Identifier(part));
-      }
-    }
-
-    return result;
-  }
-
-  private static List<String> tryParseParts(Expression base, String fieldName) {
-    if (base instanceof Identifier) {
-      return ImmutableList.of(((Identifier) base).getValue(), fieldName);
-    } else if (base instanceof DereferenceExpression) {
-      QualifiedName baseQualifiedName = getQualifiedName((DereferenceExpression) base);
-      if (baseQualifiedName != null) {
-        List<String> newList = new ArrayList<>(baseQualifiedName.getParts());
-        newList.add(fieldName);
-        return newList;
-      }
-    }
-    return null;
   }
 
   @Override

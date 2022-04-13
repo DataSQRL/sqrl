@@ -7,24 +7,17 @@ import java.util.Optional;
 public class QueryAssignment extends Assignment {
 
   private final Query query;
-  private final NamePath namePath;
   private final String sql;
 
   public QueryAssignment(Optional<NodeLocation> location, NamePath namePath,
       Query query, String sql) {
-    super(location, null);
+    super(location, namePath);
     this.query = query;
-    this.namePath = namePath;
     this.sql = sql;
   }
 
   public String getSql() {
     return sql;
-  }
-
-  @Override
-  public NamePath getNamePath() {
-    return namePath;
   }
 
   @Override

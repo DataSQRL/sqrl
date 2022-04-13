@@ -9,9 +9,13 @@ import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
 public class RelToSql {
 
-  public static String convertToSql(RelNode optimizedNode) {
+  public static SqlNode convertToSqlNode(RelNode optimizedNode) {
     RelToSqlConverter converter = new RelToSqlConverter(PostgresqlSqlDialect.DEFAULT);
     final SqlNode sqlNode = converter.visitRoot(optimizedNode).asStatement();
+    return sqlNode;
+  }
+
+  public static String convertToSql(RelNode optimizedNode) {
     UnaryOperator<SqlWriterConfig> transform = c ->
         c.withAlwaysUseParentheses(false)
             .withSelectListItemsOnSeparateLines(false)
@@ -19,7 +23,7 @@ public class RelToSql {
             .withIndentation(1)
             .withSelectFolding(null);
 
-    String sql = sqlNode.toSqlString(c -> transform.apply(c.withDialect(PostgresqlSqlDialect.DEFAULT)))
+    String sql = convertToSqlNode(optimizedNode).toSqlString(c -> transform.apply(c.withDialect(PostgresqlSqlDialect.DEFAULT)))
         .getSql();
     return sql;
   }

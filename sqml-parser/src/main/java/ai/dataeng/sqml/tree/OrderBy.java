@@ -35,7 +35,7 @@ public class OrderBy
     this(Optional.of(location), sortItems);
   }
 
-  private OrderBy(Optional<NodeLocation> location, List<SortItem> sortItems) {
+  public OrderBy(Optional<NodeLocation> location, List<SortItem> sortItems) {
     super(location);
     requireNonNull(sortItems, "sortItems is null");
     checkArgument(!sortItems.isEmpty(), "sortItems should not be empty");

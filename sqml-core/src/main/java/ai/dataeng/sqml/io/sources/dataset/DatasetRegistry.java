@@ -1,6 +1,5 @@
 package ai.dataeng.sqml.io.sources.dataset;
 
-import ai.dataeng.sqml.config.error.ErrorPrefix;
 import ai.dataeng.sqml.io.sources.*;
 import ai.dataeng.sqml.tree.name.Name;
 import ai.dataeng.sqml.config.error.ErrorCollector;
@@ -14,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 
 @Slf4j
-public class DatasetRegistry implements DatasetLookup, Closeable {
+public class DatasetRegistry implements Closeable {
 
     final DatasetRegistryPersistence persistence;
 
@@ -108,9 +107,12 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
         return Name.getIfValidSystemName(name,this::removeSource);
     }
 
-    @Override
     public SourceDataset getDataset(@NonNull Name name) {
         return datasets.get(name);
+    }
+
+    public SourceDataset getDataset(@NonNull String name) {
+        return datasets.get(Name.system(name));
     }
 
     public Collection<SourceDataset> getDatasets() {
@@ -119,7 +121,6 @@ public class DatasetRegistry implements DatasetLookup, Closeable {
 
     @Override
     public void close() throws IOException {
-
     }
 
 }
