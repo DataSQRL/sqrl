@@ -4,15 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>ai.dataeng.sqml</groupId>
-    <artifactId>sqml-official</artifactId>
+    <groupId>ai.datasqrl</groupId>
+    <artifactId>sqrl-root</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>sqml-core</module>
-        <module>sqml-parser</module>
-        <module>sqml-main</module>
-        <module>sqrl-graphql</module>
+        <module>sqrl-core</module>
     </modules>
 
     <properties>
@@ -23,100 +20,14 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>2.12.3</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
-                <artifactId>jackson-dataformat-yaml</artifactId>
-                <version>2.12.3</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>2.12.3</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>2.12.3</version>
-            </dependency>
-<!--            <dependency>-->
-<!--                <groupId>com.google.guava</groupId>-->
-<!--                <artifactId>guava</artifactId>-->
-<!--                <version>30.1.1-jre</version>-->
-<!--            </dependency>-->
-            <dependency>
-                <groupId>ai.dataeng.sqml</groupId>
-                <artifactId>sqml-parser</artifactId>
+                <artifactId>sqrl-core</artifactId>
+                <groupId>ai.datasqrl</groupId>
                 <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.dataeng.sqml</groupId>
-                <artifactId>presto-matching</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.dataeng.sqml</groupId>
-                <artifactId>sqml-main</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqml-core</artifactId>
-                <groupId>ai.dataeng.sqml</groupId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web</artifactId>
-                <version>4.1.0</version>
-            </dependency>
-            <dependency>
-                <groupId>org.example</groupId>
-                <artifactId>sqrl-jdbc</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>org.example</groupId>
-                <artifactId>sqrl-h2</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>org.example</groupId>
-                <artifactId>sqrl-servlet</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>org.example</groupId>
-                <artifactId>sqrl-db-api</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.graphql-java</groupId>
-                <artifactId>graphql-java</artifactId>
-                <version>16.2</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.reactivestreams</groupId>
-                        <artifactId>reactive-streams</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.reactivestreams</groupId>
-                <artifactId>reactive-streams</artifactId>
-                <version>1.0.3</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-maven-plugin</artifactId>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
