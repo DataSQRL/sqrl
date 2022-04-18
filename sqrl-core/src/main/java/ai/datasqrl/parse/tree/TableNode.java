@@ -54,7 +54,7 @@ public class TableNode
 
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
-    return visitor.visitTable(this, context);
+    return visitor.visitTableNode(this, context);
   }
 
   @Override

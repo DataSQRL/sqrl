@@ -2,7 +2,7 @@ package ai.datasqrl.parse.operator;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import ai.datasqrl.server.Environment;
+import ai.datasqrl.Environment;
 import ai.datasqrl.server.ScriptDeployment;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.graphql.schema.GraphqlSchemaBuilder;
@@ -85,7 +85,7 @@ public class C360Test {
             ))
             .build().initialize(ErrorCollector.root());
 
-    env.compile(ScriptDeployment.of(bundle));
+    env.compile(bundle);
 
     GraphQLSchema graphQLSchema = GraphqlSchemaBuilder.newGraphqlSchema()
 //        .schema(script.getNamespace().getSchema())

@@ -61,8 +61,8 @@ public class Column extends Field {
     }
   }
 
-  public static Column createTemp(String name, BasicType type, Table table, int version) {
-    return new Column(Name.system(name),
+  public static Column createTemp(Name name, BasicType type, Table table, int version) {
+    return new Column(name,
         table, version, type, 0, List.of(), false, false, null, false
           );
   }

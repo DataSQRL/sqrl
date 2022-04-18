@@ -1,7 +1,6 @@
 package ai.datasqrl;
 
 import ai.datasqrl.parse.operator.C360Test;
-import ai.datasqrl.server.Environment;
 import ai.datasqrl.server.ScriptDeployment;
 import ai.datasqrl.api.ConfigurationTest;
 import ai.datasqrl.config.SqrlSettings;
@@ -162,7 +161,7 @@ public class Test2 {
                   .build()
           ))
           .build().initialize(ErrorCollector.root());
-      env.compile(ScriptDeployment.of(bundle));
+      env.compile(bundle);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

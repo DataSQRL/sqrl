@@ -25,7 +25,7 @@ public class AggregationDetector extends DefaultTraversalVisitor<Void, Void> {
       return super.visitFunctionCall(node, context);
     }
 
-    if (functionLookup.lookup(node.getName()).isAggregate()) {
+    if (functionLookup.lookup(node.getNamePath()).isAggregate()) {
       this.agg = true;
     }
     return super.visitFunctionCall(node, context);

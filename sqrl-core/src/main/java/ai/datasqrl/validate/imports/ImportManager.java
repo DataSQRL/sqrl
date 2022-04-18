@@ -6,7 +6,7 @@ import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.stats.SchemaGenerator;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.SourceTableFactory;
+import ai.datasqrl.schema.SourceTablePlanner;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.schema.type.RelationType;
@@ -33,7 +33,7 @@ public class ImportManager {
     private final DatasetRegistry datasetRegistry;
     private Map<Name, FlexibleDatasetSchema> userSchema = Collections.EMPTY_MAP;
     private Map<Name, RelationType<StandardField>> scriptSchemas = new HashMap<>();
-    private SourceTableFactory tableFactory = null;
+    private SourceTablePlanner tableFactory = null;
 
     public ImportManager(DatasetRegistry datasetRegistry) {
         this.datasetRegistry = datasetRegistry;
@@ -107,6 +107,11 @@ public class ImportManager {
         }
     }
 
+    public SourceTableImport resolveTable2(@NonNull Name datasetName, @NonNull Name tableName,
+        Optional<Name> alias, ErrorCollector errors) {
+        SourceTableImport sourceTableImport = importTable(datasetName, tableName, errors);
+        return sourceTableImport;
+    }
     public Table resolveTable(@NonNull Name datasetName, @NonNull Name tableName,
         Optional<Name> alias, ErrorCollector errors) {
         SourceTableImport sourceTableImport = importTable(datasetName, tableName, errors);
@@ -172,7 +177,7 @@ public class ImportManager {
     }
 
     //temp, move to constructor on cleanup
-    public void setTableFactory(SourceTableFactory tableFactory) {
+    public void setTableFactory(SourceTablePlanner tableFactory) {
         this.tableFactory = tableFactory;
     }
 }

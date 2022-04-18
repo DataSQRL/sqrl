@@ -1,6 +1,6 @@
 package ai.datasqrl.api;
 
-import ai.datasqrl.server.Environment;
+import ai.datasqrl.Environment;
 import ai.datasqrl.config.EnvironmentConfiguration;
 import ai.datasqrl.config.GlobalConfiguration;
 import ai.datasqrl.config.SqrlSettings;

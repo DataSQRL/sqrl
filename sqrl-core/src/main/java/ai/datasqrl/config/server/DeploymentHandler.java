@@ -1,6 +1,6 @@
 package ai.datasqrl.config.server;
 
-import ai.datasqrl.server.Environment;
+import ai.datasqrl.Environment;
 import ai.datasqrl.server.ScriptDeployment;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.error.ErrorMessage;

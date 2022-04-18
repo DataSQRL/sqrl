@@ -50,7 +50,7 @@ public class FunctionCall
     this.arguments = arguments;
   }
 
-  public NamePath getName() {
+  public NamePath getNamePath() {
     return name;
   }
 

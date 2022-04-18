@@ -210,7 +210,7 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
   }
 
   @Override
-  public SqlNode visitTable(TableNode node, Void context) {
+  public SqlNode visitTableNode(TableNode node, Void context) {
     if (node.getAlias().isPresent()) {
       SqlIdentifier table = new SqlIdentifier(List.of(node.getNamePath().toString()), pos.getPos(node.getLocation()));
       SqlNode[] operands = {
@@ -385,7 +385,7 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
 
   @Override
   public SqlNode visitFunctionCall(FunctionCall node, Void context) {
-    String opName = node.getName().get(0).getCanonical();
+    String opName = node.getNamePath().get(0).getCanonical();
     List<SqlOperator> op = opMap.get(opName.toUpperCase());
     Preconditions.checkState(!op.isEmpty(), "Operation could not be found: %s", opName);
 

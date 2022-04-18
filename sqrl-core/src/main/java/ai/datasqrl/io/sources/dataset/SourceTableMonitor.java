@@ -1,6 +1,6 @@
 package ai.datasqrl.io.sources.dataset;
 
-import ai.datasqrl.server.Environment;
+import ai.datasqrl.Environment;
 
 /**
  * Call-back interface to inform the {@link Environment} to start monitoring a new {@link SourceTable}

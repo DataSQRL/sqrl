@@ -1,6 +1,6 @@
 package ai.datasqrl.config.server;
 
-import ai.datasqrl.server.Environment;
+import ai.datasqrl.Environment;
 import ai.datasqrl.config.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;

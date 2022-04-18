@@ -1,5 +1,7 @@
 package ai.datasqrl.schema;
 
+import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.Relationship.Type;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -27,10 +29,16 @@ public class Table implements ShadowingContainer.Nameable {
   private List<Field> partitionKeys;
 
   public Table(int uniqueId, Name name, NamePath path, boolean isInternal) {
+    this(uniqueId, name, path, isInternal, null);
+  }
+
+  public Table(int uniqueId, Name name, NamePath path, boolean isInternal,
+      RelNode relNode) {
     this.name = name;
     this.uniqueId = uniqueId;
     this.path = path;
     this.isInternal = isInternal;
+    this.relNode = relNode;
   }
 
   public Field getField(Name name) {
@@ -208,5 +216,24 @@ public class Table implements ShadowingContainer.Nameable {
       }
     }
     return pos;
+  }
+
+  //Todo: Validate first
+  public List<Field> walkFields(NamePath names) {
+    List<Field> fields = new ArrayList<>();
+    Table current = this;
+    Name[] namesNames = names.getNames();
+    for (int i = 0; i < namesNames.length; i++) {
+      Name field = namesNames[i];
+      Field f = current.getField(field);
+      if (f instanceof Relationship) {
+        Relationship rel = (Relationship) current.getField(field);
+        current = rel.getToTable();
+      } else {
+        current = null;
+      }
+      fields.add(f);
+    }
+    return fields;
   }
 }

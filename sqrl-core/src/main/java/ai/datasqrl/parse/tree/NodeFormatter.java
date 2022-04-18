@@ -142,7 +142,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitFunctionCall(FunctionCall node, Void context) {
-    return node.getName() + "(" + node.getArguments().stream().map(a->a.accept(this, null)).collect(
+    return node.getNamePath() + "(" + node.getArguments().stream().map(a->a.accept(this, null)).collect(
         Collectors.joining(", ")) + ")" + node.getOver().map(o->o.accept(this, context)).orElse("");
   }
 
@@ -243,7 +243,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   }
 
   @Override
-  public String visitTable(TableNode node, Void context) {
+  public String visitTableNode(TableNode node, Void context) {
     return node.getNamePath().getDisplay() + node.getAlias().map(a-> " AS " + a).orElse("");
   }
 

@@ -19,9 +19,6 @@ import static java.util.Objects.requireNonNull;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.parse.tree.SqrlStatement;
-import ai.datasqrl.parse.SqlBaseBaseListener;
-import ai.datasqrl.parse.SqlBaseLexer;
-import ai.datasqrl.parse.SqlBaseParser;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -39,7 +36,7 @@ import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.atn.PredictionMode;
 
-public class SqlParser {
+class SqlParser {
 
   private static final BaseErrorListener LEXER_ERROR_LISTENER = new BaseErrorListener() {
     @Override
@@ -66,10 +63,6 @@ public class SqlParser {
 
   private final BiConsumer<SqlBaseLexer, SqlBaseParser> initializer;
   private final boolean enhancedErrorHandlerEnabled;
-
-  public SqlParser() {
-    this(new SqlParserOptions());
-  }
 
   public SqlParser(SqlParserOptions options) {
     this(options, DEFAULT_PARSER_INITIALIZER);

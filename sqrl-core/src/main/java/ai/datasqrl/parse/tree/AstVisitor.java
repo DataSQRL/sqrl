@@ -146,7 +146,7 @@ public abstract class AstVisitor<R, C> {
     return visitNode(node, context);
   }
 
-  public R visitTable(TableNode node, C context) {
+  public R visitTableNode(TableNode node, C context) {
     return visitQueryBody(node, context);
   }
 

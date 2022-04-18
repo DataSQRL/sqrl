@@ -2,7 +2,7 @@ package ai.datasqrl.flink;
 
 import ai.datasqrl.api.ConfigurationTest;
 import ai.datasqrl.parse.operator.C360Test;
-import ai.datasqrl.server.Environment;
+import ai.datasqrl.Environment;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
 import ai.datasqrl.execute.flink.environment.LocalFlinkStreamEngineImpl;

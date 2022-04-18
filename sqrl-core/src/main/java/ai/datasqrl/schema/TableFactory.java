@@ -66,6 +66,6 @@ public class TableFactory {
   }
 
   public Table create(NamePath namePath, Name table) {
-    return new Table(SourceTableFactory.tableIdCounter.incrementAndGet(), namePath.getLast(), namePath, false);
+    return new Table(SourceTablePlanner.tableIdCounter.incrementAndGet(), namePath.getLast(), namePath, false);
   }
 }

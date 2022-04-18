@@ -4,13 +4,13 @@ import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
 import ai.datasqrl.plan.SqrlRelBuilder;
 import ai.datasqrl.parse.tree.Node;
 import java.util.Properties;
+import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.schema.SqrlSchema;
+import org.apache.calcite.schema.SqrlCalciteSchema;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
@@ -22,12 +22,13 @@ import org.apache.calcite.sql2rel.StandardConvertletTable;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 
+@Getter
 public class CalcitePlanner {
 
   private final RelOptCluster cluster;
   private final CalciteCatalogReader catalogReader;
-  private final SqrlSchema sqrlSchema;
-  private final SqrlCalciteSchema calciteSchema;
+  private final SqrlCalciteSchema sqrlSchema;
+  private final org.apache.calcite.jdbc.SqrlCalciteSchema calciteSchema;
   private final JavaTypeFactoryImpl typeFactory;
 
   SqlValidator.Config validatorConfig = SqlValidator.Config.DEFAULT
@@ -42,12 +43,12 @@ public class CalcitePlanner {
   public CalcitePlanner() {
     this.typeFactory = new FlinkTypeFactory(new FlinkTypeSystem());
     this.cluster = CalciteTools.createHepCluster(typeFactory);
-    this.sqrlSchema = new SqrlSchema();
-    this.calciteSchema = new SqrlCalciteSchema(sqrlSchema);
+    this.sqrlSchema = new SqrlCalciteSchema();
+    this.calciteSchema = new org.apache.calcite.jdbc.SqrlCalciteSchema(sqrlSchema);
     this.catalogReader = CalciteTools.getCalciteCatalogReader(calciteSchema);
   }
 
-  public SqrlCalciteSchema getSchema() {
+  public org.apache.calcite.jdbc.SqrlCalciteSchema getSchema() {
     return calciteSchema;
   }
 
