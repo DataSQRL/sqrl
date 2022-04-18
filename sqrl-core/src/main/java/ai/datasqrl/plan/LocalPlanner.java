@@ -57,8 +57,10 @@ public class LocalPlanner extends AstVisitor<LocalPlannerResult, StatementScope>
 
     RelOptTable table = RelOptTableImpl.create(schema1, toRelDataType(schema.getColumns()),
         List.of(name.getCanonical()), null);
+
     LogicalTableScan logicalTableScan = new LogicalTableScan(cluster, RelTraitSet.createEmpty(), List.of(),
         table);
+
     importedPaths.add(new ImportTable(name.toNamePath(), logicalTableScan,
         schema.getColumns().stream().map(e->Name.system(e.getName())).collect(
         Collectors.toList())));

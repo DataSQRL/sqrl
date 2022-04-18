@@ -1,6 +1,8 @@
 package ai.datasqrl;
 
 import ai.datasqrl.config.BundleOptions;
+import ai.datasqrl.config.engines.JDBCConfiguration;
+import ai.datasqrl.config.engines.JDBCConfiguration.Dialect;
 import ai.datasqrl.execute.Job;
 import ai.datasqrl.execute.ScriptExecutor;
 import ai.datasqrl.graphql.execution.SqlClientProvider;
@@ -19,6 +21,7 @@ import ai.datasqrl.execute.StreamEngine;
 import ai.datasqrl.io.sinks.registry.DataSinkRegistry;
 import ai.datasqrl.io.sources.dataset.DatasetRegistry;
 import ai.datasqrl.io.sources.dataset.SourceTableMonitor;
+import ai.datasqrl.validate.imports.ImportManager;
 import io.vertx.core.Vertx;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
@@ -73,8 +76,13 @@ public class Environment implements Closeable {
     Instant compileStart = Instant.now();
     ScriptDeployment deployment;
     try {
+      JDBCConfiguration configuration = JDBCConfiguration.builder()
+          .dbURL("jdbc:postgresql://localhost")
+          .dialect(Dialect.POSTGRES)
+          .build();
       ExecutionPlan plan = compile(bundle);
-      ScriptExecutor executor = new ScriptExecutor(/*Settings*/);
+      ScriptExecutor executor = new ScriptExecutor(configuration
+          .getDatabase("henneberger"));
       Job job = executor.execute(plan);
       deployment = ScriptDeployment.of(bundle);
       deployment.setExecutionId(job.getExecutionId());
@@ -102,9 +110,13 @@ public class Environment implements Closeable {
             .map(s -> s.getStatusResult(streamEngine, Optional.empty())).collect(Collectors.toList());
   }
 
+  //Option: drop table before create
   public ExecutionPlan compile(ScriptBundle bundle) throws Exception {
+    ImportManager importManager = settings.getImportManagerProvider().createImportManager(datasetRegistry);
+    importManager.registerUserSchema(bundle.getMainScript().getSchema());
+
     BundleOptions options = BundleOptions.builder()
-        .importManager(settings.getImportManagerProvider().createImportManager(datasetRegistry))
+        .importManager(importManager)
         .jdbcConfiguration(settings.getJdbcConfiguration())
         .streamEngine(streamEngine)
         .build();
