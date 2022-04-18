@@ -37,7 +37,8 @@ public class BundleProcessor {
     LogicalPlan plan = optimizer.findBestPlan(schema);
 
     Physicalizer physicalizer = new Physicalizer(options.getImportManager(),
-        options.getJdbcConfiguration());
+        options.getJdbcConfiguration(),
+        options.getStreamEngine());
     return physicalizer.plan(plan);
   }
 

@@ -106,6 +106,7 @@ public class Environment implements Closeable {
     BundleOptions options = BundleOptions.builder()
         .importManager(settings.getImportManagerProvider().createImportManager(datasetRegistry))
         .jdbcConfiguration(settings.getJdbcConfiguration())
+        .streamEngine(streamEngine)
         .build();
     BundleProcessor bundleProcessor = new BundleProcessor(options);
     return bundleProcessor.processBundle(bundle);

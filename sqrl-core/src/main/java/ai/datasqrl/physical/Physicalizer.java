@@ -2,6 +2,7 @@ package ai.datasqrl.physical;
 
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.execute.StreamEngine;
 import ai.datasqrl.execute.flink.environment.FlinkStreamEngine.Builder;
 import ai.datasqrl.execute.flink.environment.LocalFlinkStreamEngineImpl;
 import ai.datasqrl.execute.flink.ingest.DataStreamProvider;
@@ -48,6 +49,7 @@ import org.apache.flink.util.OutputTag;
 public class Physicalizer {
   ImportManager importManager;
   JDBCConfiguration jdbcConfiguration;
+  StreamEngine streamEngine;
 
   public ExecutionPlan plan(LogicalPlan plan) {
     List<SqlDDLStatement> databaseDDL = createDatabaseDDL(plan.getDatabaseQueries());
@@ -62,34 +64,30 @@ public class Physicalizer {
   }
 
   private StreamStatementSet createStreamJobGraph(List<RelQuery> streamQueries) {
-    LocalFlinkStreamEngineImpl flink = new LocalFlinkStreamEngineImpl();
-    Builder streamBuilder = flink.createStream();
-    StreamExecutionEnvironment senv = streamBuilder.getEnvironment();
+    Builder streamBuilder = ((LocalFlinkStreamEngineImpl)streamEngine).createStream();
     StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)
-        StreamTableEnvironment.create(senv);
+        StreamTableEnvironment.create(streamBuilder.getEnvironment());
 
     tEnv.getConfig()
         .getConfiguration()
-        .set(ExecutionConfigOptions.TABLE_EXEC_SINK_NOT_NULL_ENFORCER, NotNullEnforcer.DROP);
+        .set(ExecutionConfigOptions.TABLE_EXEC_SINK_NOT_NULL_ENFORCER, NotNullEnforcer.ERROR);
 
     StreamStatementSet stmtSet = tEnv.createStatementSet();
     for (RelQuery sink : streamQueries) {
       registerStream(sink, tEnv, streamBuilder);
 
-
       String sql = RelToSql.convertToSql(sink.getRelNode().getInput(0)).replaceAll("\"", "`");
       System.out.println(sql);
       org.apache.flink.table.api.Table tbl = tEnv.sqlQuery(sql);
-//      tbl.execute().print();
 
-      String name = sink.getTable().name.getDisplay();
+      String name = sink.getTable().name.getCanonical()+"_sink";
 
       Schema schema = FlinkPipelineGenerator.addPrimaryKey(tbl.getSchema().toSchema(), sink.getTable());
 
       TableDescriptor descriptor = TableDescriptor.forConnector("jdbc")
           .schema(schema)
-          .option("url",  "jdbc:postgresql://localhost/henneberger")
-          .option("table-name", name)
+          .option("url", "jdbc:postgresql://localhost/henneberger")
+          .option("table-name", sink.getTable().name.getCanonical())
           .build();
 
       //Create sink

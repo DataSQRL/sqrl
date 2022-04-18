@@ -31,6 +31,7 @@ public class ScriptExecutor {
 
   public String executeFlink(StreamStatementSet statementSet) {
     TableResult rslt = statementSet.execute();
+    rslt.print(); //todo: this just forces print to wait for the async
     return rslt.getJobClient().get()
         .getJobID().toString();
   }
