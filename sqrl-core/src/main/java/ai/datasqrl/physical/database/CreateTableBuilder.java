@@ -1,4 +1,4 @@
-package ai.datasqrl.sql.ddl;
+package ai.datasqrl.physical.database;
 
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Table;

@@ -4,7 +4,7 @@ import ai.datasqrl.plan.ImportLocalPlannerResult;
 import lombok.Value;
 
 @Value
-public class AddDatasetOp implements SqrlOperation {
+public class AddDatasetOp implements SchemaOperation {
   ImportLocalPlannerResult result;
 
   @Override

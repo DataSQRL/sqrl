@@ -1,4 +1,4 @@
-package ai.datasqrl.sql.ddl;
+package ai.datasqrl.physical.database;
 
 import com.google.common.base.Preconditions;
 import java.util.List;

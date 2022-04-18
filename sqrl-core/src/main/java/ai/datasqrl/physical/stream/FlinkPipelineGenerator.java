@@ -1,4 +1,4 @@
-package ai.datasqrl.physical;
+package ai.datasqrl.physical.stream;
 
 import ai.datasqrl.execute.flink.environment.LocalFlinkStreamEngineImpl;
 import ai.datasqrl.execute.flink.ingest.DataStreamProvider;
@@ -43,17 +43,12 @@ import org.apache.flink.table.api.config.ExecutionConfigOptions.NotNullEnforcer;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.OutputTag;
 
-//Flin kjob graph
-//Creates a "Job"
-//Stream dag
-//schema one thing
-//flink cluster mode, cluster client
-//Graphql schema as an asset
 public class FlinkPipelineGenerator {
 
-  public Pair<StreamStatementSet, Map<Table, TableDescriptor>> createFlinkPipeline(
+  public static Pair<StreamStatementSet, Map<Table, TableDescriptor>> createFlinkPipeline(
       List<LogicalFlinkSink> sinks,
       CalcitePlanner calcitePlanner) {
+
     FlinkTableConverter tbConverter = new FlinkTableConverter();
 
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(
@@ -177,7 +172,7 @@ public class FlinkPipelineGenerator {
     return Pair.of(stmtSet, ddl);
   }
 
-  private Schema addPrimaryKey(Schema toSchema, Table sqrlTable) {
+  private static Schema addPrimaryKey(Schema toSchema, Table sqrlTable) {
     Schema.Builder builder = Schema.newBuilder();
     List<String> pks = new ArrayList<>();
     List<UnresolvedColumn> columns = toSchema.getColumns();

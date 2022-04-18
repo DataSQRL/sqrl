@@ -1,20 +1,18 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.ImportTable;
 import ai.datasqrl.schema.operations.AddDatasetOp;
 import ai.datasqrl.schema.operations.OperationVisitor;
-import ai.datasqrl.schema.operations.SqrlOperation;
-import java.util.List;
+import ai.datasqrl.schema.operations.SchemaOperation;
 import lombok.Getter;
-import org.apache.calcite.rel.RelNode;
 
 public class SchemaBuilder extends OperationVisitor {
   @Getter
-  ShadowingContainer<Table> schema = new ShadowingContainer<>();
+  Schema schema = new Schema();
 
-  public void apply(SqrlOperation operation) {
+  private final TableFactory2 tableFactory = new TableFactory2();
+
+  public void apply(SchemaOperation operation) {
     operation.accept(this);
   }
 
@@ -22,7 +20,7 @@ public class SchemaBuilder extends OperationVisitor {
   public <T> T visit(AddDatasetOp op) {
     for (ImportTable entry :
         op.getResult().getImportedPaths()) {
-      Table table = createTable(entry.getTableName(), entry.getRelNode(),
+      Table table = tableFactory.create(entry.getTableName(), entry.getRelNode(),
           entry.getFields());
       schema.add(table);
     }
@@ -30,22 +28,14 @@ public class SchemaBuilder extends OperationVisitor {
     return null;
   }
 
-  /**
-   * TODO: move to table factory
-   */
-  private Table createTable(NamePath name, RelNode relNode,
-      List<Name> fields) {
-    Table table = new Table(SourceTablePlanner.tableIdCounter.incrementAndGet(),
-        name.getFirst(), name.getFirst().toNamePath(),
-        false, relNode);
-    for (Name n : fields) {
-      table.addField(Column.createTemp(n, null, table, 0));
-    }
-
-    return table;
+  public Schema peek() {
+    return schema;
   }
 
-  public Object build() {
-    return null;
+  /**
+   *
+   */
+  public Schema build() {
+    return schema;
   }
 }

@@ -1,6 +1,8 @@
 package ai.datasqrl;
 
 import ai.datasqrl.config.BundleOptions;
+import ai.datasqrl.execute.Job;
+import ai.datasqrl.execute.ScriptExecutor;
 import ai.datasqrl.graphql.execution.SqlClientProvider;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.error.ErrorCollector;
@@ -72,8 +74,12 @@ public class Environment implements Closeable {
     ScriptDeployment deployment;
     try {
       ExecutionPlan plan = compile(bundle);
-      deployment = createJob(bundle, plan);
+      ScriptExecutor executor = new ScriptExecutor(/*Settings*/);
+      Job job = executor.execute(plan);
+      deployment = ScriptDeployment.of(bundle);
+      deployment.setExecutionId(job.getExecutionId());
     } catch (Exception e) {
+      e.printStackTrace();
 //      errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,bundle.getName().getDisplay(),
 //              "Encountered error while compiling script: %s",e));
       return null;
@@ -83,10 +89,6 @@ public class Environment implements Closeable {
             Duration.between(compileStart,Instant.now()).toMillis());
     persistence.saveDeployment(deployment);
     return deployment.getStatusResult(streamEngine, Optional.of(compilationResult));
-  }
-
-  private ScriptDeployment createJob(ScriptBundle bundle, ExecutionPlan plan) {
-    return ScriptDeployment.of(bundle);
   }
 
   public Optional<ScriptDeployment.Result> getDeployment(@NonNull NamedIdentifier submissionId) {
@@ -108,69 +110,6 @@ public class Environment implements Closeable {
     return bundleProcessor.processBundle(bundle);
   }
 
-  public Object execute(ExecutionPlan schema) {
-
-    return null;
-  }
-
-  public void old(ScriptBundle bundle) {
-//    SqrlScript mainScript = bundle.getMainScript();
-//
-//    //Instantiate import resolver and register user schema
-//    ImportManager importManager = settings.getImportManagerProvider().createImportManager(
-//        datasetRegistry);
-//    ErrorCollector importErrors = importManager
-//            .registerUserSchema(mainScript.getSchema());
-//    Preconditions.checkArgument(!importErrors.isFatal(),
-//            importErrors);
-//
-//    SqrlParser sqmlParser = SqrlParser.newParser(errorCollector);
-//    ScriptNode scriptNode =  sqmlParser.parse(mainScript.getContent());
-//
-//    LogicalDag dag = new LogicalDag(new ShadowingContainer<>());
-//    CalcitePlanner calcitePlanner = new CalcitePlanner();
-//    Analyzer analyzer = new Analyzer(importManager, calcitePlanner,
-//        dag, new ViewExpander(calcitePlanner));
-//    analyzer.analyze(scriptNode);
-//    SqrlPlanner planner = new SqrlPlanner();
-//    planner.setDevQueries(dag);
-//
-//    Pair<List<LogicalFlinkSink>, List<LogicalPgSink>> flinkSinks = planner.optimize(dag);
-//
-//    FlinkPipelineGenerator pipelineGenerator = new FlinkPipelineGenerator();
-//    Pair<StreamStatementSet, Map<Table, TableDescriptor>> result =
-//        pipelineGenerator.createFlinkPipeline(flinkSinks.getKey(), calcitePlanner);
-//
-//    SqlDDLGenerator sqlDDLGenerator = new SqlDDLGenerator(result.getRight());
-//    List<String> db = sqlDDLGenerator.generate();
-//
-//    JDBCConnectionProvider config = new Database(
-//        "jdbc:postgresql://localhost/henneberger",
-//        null, null, null, Dialect.POSTGRES, "henneberger"
-//    );
-//
-//    SqrlExecutor executor = new SqrlExecutor();
-//    executor.executeDml(config, db);
-//    executor.executeFlink(result.getLeft());
-
-//    GraphqlGenerator graphqlGenerator = new GraphqlGenerator();
-//    GraphQL graphql = graphqlGenerator.graphql(dag, flinkSinks, result.getRight(), getPostgresClient());
-
-//    JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(submission.getId().getId());
-  }
-
-  private SqlClientProvider getPostgresClient() {
-    //TODO: this is hardcoded for now and needs to be integrated into configuration
-    JDBCPool pool = JDBCPool.pool(
-        Vertx.vertx(),
-        new JDBCConnectOptions()
-            .setJdbcUrl("jdbc:postgresql://localhost/henneberger"),
-        new PoolOptions()
-            .setMaxSize(1)
-    );
-
-    return () -> pool;
-  }
   public DatasetRegistry getDatasetRegistry() {
     return datasetRegistry;
   }

@@ -10,6 +10,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.ViewExpander;
 import ai.datasqrl.plan.calcite.CalcitePlanner;
+import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.ShadowingContainer;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.validate.imports.ImportManager;
@@ -36,9 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 public class StatementValidator {
   private ImportManager importManager;
-  private CalcitePlanner planner;
-  private ShadowingContainer<Table> schema;
-  private ViewExpander viewExpander;
+  private Schema schema;
 
   protected final ErrorCollector errors = ErrorCollector.root();
 

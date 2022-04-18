@@ -1,5 +1,8 @@
 package ai.datasqrl.schema.operations;
 
-public interface SqrlOperation {
+/**
+ *
+ */
+public interface SchemaOperation {
   public <T> T accept(OperationVisitor visitor);
 }

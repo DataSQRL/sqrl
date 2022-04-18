@@ -1,4 +1,4 @@
-package ai.datasqrl.sql.ddl;
+package ai.datasqrl.physical.database;
 
 import ai.datasqrl.schema.Table;
 import java.util.ArrayList;
