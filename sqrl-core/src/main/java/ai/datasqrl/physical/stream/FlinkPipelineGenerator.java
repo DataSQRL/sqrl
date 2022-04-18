@@ -172,25 +172,27 @@ public class FlinkPipelineGenerator {
     return Pair.of(stmtSet, ddl);
   }
 
-  private static Schema addPrimaryKey(Schema toSchema, Table sqrlTable) {
+  public static Schema addPrimaryKey(Schema toSchema, Table sqrlTable) {
     Schema.Builder builder = Schema.newBuilder();
     List<String> pks = new ArrayList<>();
     List<UnresolvedColumn> columns = toSchema.getColumns();
     for (int i = 0; i < columns.size(); i++) {
       UnresolvedColumn column = columns.get(i);
-      VersionedName name = VersionedName.parse(column.getName());
-      if (sqrlTable.getField(name) != null) {
-        Field field = sqrlTable.getField(name);
-        if (field instanceof Column && ((Column)field).isPrimaryKey()) {
+//      VersionedName name = VersionedName.parse(column.getName());
+      //hack, choose the first column
+      if (i == 0) {
+//      if (sqrlTable.getField(name) != null) {
+//        Field field = sqrlTable.getField(name);
+//        if (field instanceof Column && ((Column)field).isPrimaryKey()) {
           builder.column(column.getName(),
               ((UnresolvedPhysicalColumn) column).getDataType().notNull());
           pks.add(column.getName());
 
-        } else {
-          builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
-        }
+//        } else {
+//          builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
+//        }
       } else {
-        throw new RuntimeException("?");
+        builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
       }
     }
 

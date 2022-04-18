@@ -105,6 +105,7 @@ public class Environment implements Closeable {
   public ExecutionPlan compile(ScriptBundle bundle) throws Exception {
     BundleOptions options = BundleOptions.builder()
         .importManager(settings.getImportManagerProvider().createImportManager(datasetRegistry))
+        .jdbcConfiguration(settings.getJdbcConfiguration())
         .build();
     BundleProcessor bundleProcessor = new BundleProcessor(options);
     return bundleProcessor.processBundle(bundle);

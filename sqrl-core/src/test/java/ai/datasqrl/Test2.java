@@ -1,5 +1,10 @@
 package ai.datasqrl;
 
+import ai.datasqrl.config.EnvironmentConfiguration;
+import ai.datasqrl.config.GlobalConfiguration;
+import ai.datasqrl.config.engines.FlinkConfiguration;
+import ai.datasqrl.config.engines.JDBCConfiguration;
+import ai.datasqrl.config.engines.JDBCConfiguration.Dialect;
 import ai.datasqrl.parse.operator.C360Test;
 import ai.datasqrl.server.ScriptDeployment;
 import ai.datasqrl.api.ConfigurationTest;

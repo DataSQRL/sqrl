@@ -40,8 +40,7 @@ public class Optimizer {
     final Set<Table> toInclude = new HashSet<>();
     List<LogicalFlinkSink> flinkSinks = new ArrayList<>();
 
-    schema.visibleStream().filter(t -> t instanceof Table)
-        .map(t -> (Table)t).forEach(t -> toInclude.add(t));
+    schema.visibleStream().filter(t -> t instanceof Table).forEach(t -> toInclude.add(t));
 
     while (!toInclude.isEmpty()) {
       Table next = toInclude.iterator().next();
