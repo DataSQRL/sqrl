@@ -1,0 +1,335 @@
+%%% LaTeX Template: Two column article
+%%%
+%%% Source: http://www.howtotex.com/
+%%% Feel free to distribute this template, but please keep to referal to http://www.howtotex.com/ here.
+%%% Date: February 2011
+
+%%% Preamble
+\documentclass[	DIV=calc,%
+							paper=letter,%
+							fontsize=11pt,%
+							twocolumn]{scrartcl}	 					% KOMA-article class
+
+\usepackage{lipsum}													% Package to create dummy text
+
+\usepackage[english]{babel}										% English language/hyphenation
+\usepackage[protrusion=true,expansion=true]{microtype}				% Better typography
+\usepackage{amsmath,amsfonts,amsthm}					% Math packages
+\usepackage[pdftex]{graphicx}									% Enable pdflatex
+\usepackage[dvipsnames]{xcolor}									% Enabling colors by their 'svgnames'
+\usepackage[hang, small,labelfont=bf,up,textfont=it,up]{caption}	% Custom captions under/above floats
+\usepackage{epstopdf}												% Converts .eps to .pdf
+\usepackage{subfig}													% Subfigures
+\usepackage{booktabs}												% Nicer tables
+\usepackage{fix-cm}													% Custom fontsizes
+\usepackage{listings}
+
+%%%Define custom colors
+\definecolor{sqrlPrimary}{RGB}{47, 164, 218}
+\definecolor{sqrlSecondary}{RGB}{165, 91, 39}
+
+
+%%% Custom sectioning (sectsty package)
+\usepackage{sectsty}													% Custom sectioning (see below)
+\allsectionsfont{%															% Change font of al section commands
+	\usefont{OT1}{phv}{b}{n}%										% bch-b-n: CharterBT-Bold font
+	}
+
+\sectionfont{%																% Change font of \section command
+	\usefont{OT1}{phv}{b}{n}%										% bch-b-n: CharterBT-Bold font
+	}
+
+
+
+%%% Headers and footers
+\usepackage{fancyhdr}												% Needed to define custom headers/footers
+	\pagestyle{fancy}														% Enabling the custom headers/footers
+\usepackage{lastpage}
+
+% Header (empty)
+\lhead{}
+\chead{}
+\rhead{}
+% Footer (you may change this to your own needs)
+\lfoot{\footnotesize \texttt{DataSQRL.com} \textbullet ~SQRL: A Language for View Stores}
+\cfoot{}
+\rfoot{\footnotesize page \thepage\ of \pageref{LastPage}}	% "Page 1 of 2"
+\renewcommand{\headrulewidth}{0.0pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+
+
+%%% Creating an initial of the very first character of the content
+\usepackage{lettrine}
+\newcommand{\initial}[1]{%
+     \lettrine[lines=3,lhang=0.3,nindent=0em]{
+     				\color{sqrlPrimary}
+     				{\textsf{#1}}}{}}
+
+
+
+%%% Title, author and date metadata
+\usepackage{titling}															% For custom titles
+
+\newcommand{\HorRule}{\color{sqrlPrimary}%			% Creating a horizontal rule
+									  	\rule{\linewidth}{1pt}%
+										}
+%%begin novalidate
+\pretitle{\vspace{-30pt} \begin{flushleft} \HorRule
+				\fontsize{50}{50} \usefont{OT1}{phv}{b}{n} \color{sqrlSecondary} \selectfont
+				}
+\title{SQRL: A Language for View Stores}					% Title of your article goes here
+\posttitle{\par\end{flushleft}\vskip 0.5em}
+
+\preauthor{\begin{flushleft}
+					\large \lineskip 0.5em \usefont{OT1}{phv}{b}{sl} \color{sqrlSecondary}}
+\author{Daniel Henneberger, Matthias Broecheler }					% Author name goes here
+\postauthor{\footnotesize \usefont{OT1}{phv}{m}{sl} \color{Black}
+					DataSQRL.com 								% Institution of author
+					\par\end{flushleft}\HorRule}
+%%end novalidate
+\date{}																				% No date
+
+
+
+%%% Begin document
+\begin{document}
+\maketitle
+\thispagestyle{fancy} 			% Enabling the custom headers/footers for the first page
+% The first character should be within \initial{}
+\initial{A}\textbf{n increasing number of applications require low latency access to complex views over multiple sources of data including operational databases and data streams. Existing database systems don't serve those use cases well which forces application developers to build bespoke data systems that are expensive to implement and hard to maintain.
+We introduce \emph{View Store} as a new category of database system to address this class of use cases and propose SQRL as a developer-friendly language extension to SQL for defining programmatically accessed views. We outline the DataSQRL view store implementation and highlight the unique implementation challenges of view stores. We show that DataSQRL outperforms existing database engines by a factor of x-y and improves developer productivity.}
+
+\section{Introduction}
+
+Many applications need to perform complex data transformations and analytics with low latency and high throughput. Consumer applications contain recommendations engines, behavior prediction and activity analysis which combine, transform, and analyze available user and behavior data across multiple channels in real-time to enrich the user experience. IoT applications combine, transform, and analyze data from many sensors and external data streams instantly to automate factories, detect failures in complex machinery, and optimize operations. Supply-chain applications monitor goods continuously from production to delivery across warehouses and logistics to optimize inventory, reduce costs, and improve customer satisfaction. Fraud detection engines combine activity data from different user interactions to discern expected from fraudulent activity rapidly.
+
+What all these and many other applications have in common is the need to integrate, transform, aggregate, and analyze large amounts of data from multiple streaming sources with low latency and high throughput. The part of the application that processes the streaming data sources and makes the results accessible to user or application queries is called a \emph{streaming data service}\footnote{A streaming data service can be a separate, stand-alone service accessible via API or a component in a monolithic application.}
+
+
+
+Streaming data services need to provide low latency response times to both newly incoming data (e.g. a new user action that updates the recommendations for this user) and to user requests (e.g. a user viewing their recommendations in a mobile app). Likewise, streaming data services need to support high throughput for incoming data (e.g. the number of user action records per second) and user requests (e.g. the number of concurrent users viewing their recommendations).
+
+Implementing streaming data services that meet these requirements is very costly, time consuming, and error prone because of the lack of suitable data technologies and a complex developer ecosystem. Because streaming data services are difficult to implement in practice, their adoption has been relatively slow outside of a few technology companies with the talent and resources to build them successfully, despite the fact that the data-driven features and data-intensive applications they facilitate can deliver significant value to an organization.
+
+There is no single data technology that developers can use to implement a streaming data service that meets application requirements. As a consequence, actual implementations combine multiple data technologies like batch-processing, databases, ETL tools, and data warehouse that are orchestrated through fragile data pipelines and integrated with custom scripts. Such architectures require a lot of time and effort to implement and the resulting complexity makes it hard to reason about the system as a whole which causes errors and significant operational overhead.
+
+We propose \emph{view stores} as a category of data systems that addresses the needs of streaming data services. Section \ref{sec:viewstore} defines view stores and elaborates on the need to establish this category within the data community. Section \ref{sec:datasqrl} outlines the implementation of a view store called \emph{DataSQRL} and introduces the unique challenges of view store implementations.
+
+The second obstacle to implementing streaming data services is the complexity of the developer ecosystem and poor usability. To build a streaming data service developers need to have expertise in a fragmented set of tools and languages which do not share a conceptual model, lack interoperability, and require low-level tuning. Therefore, teams implementing streaming data services tend to be large, faced with a steep learning curve, spend a lot of time writing so called \textit{"plumbing"} code that maps data between systems or schemas, and have to hand-optimize the resulting data system.
+
+We propose an extension of SQL called \emph{SQRL} in Section \ref{sec:sqrl} that fills the gaps in the popular database query language needed to implement an end-to-end streaming data service. SQRL gives developers a single language and conceptual model to implement the entire logic of their data service. It eliminates the need for plumbing code, data mappings, and other developer inefficiencies. By building on the relational algebra and declarative nature of SQL, SQRL provides a logical model that can be optimized into a physical representation which allows developers to focus on \textit{what} they want their data service to do rather than spending a lot of time fine-tuning \textit{how} it gets done.
+
+We conclude this paper with a review of common streaming data service use cases, their implementation in SQRL, and compare the performance of DataSQRL to popular relational database systems like Postgres, MySQL as well as special-purpose databases like Neo4j and Timescale in Section \ref{sec:experiments}. Our experiments show that DataSQRL outperforms existing database engines by a factor of x-y. More significant, but also harder to measure, are the improvements in productivity that developers gain by using DataSQRL for their streaming data service implementations.
+
+\section{Implementing Streaming Data Services}
+\label{sec:viewstore}
+
+A streaming data service can be described as a set of complex views \ref{} over external sources of data\footnote{Some of the sources may be static or infrequently changing data. However, to be considered a \emph{streaming} data service, at least one source of data must be a data stream or update frequently (i.e. have a change stream)} that can be queried with low latency and high throughput.
+
+\emph{"View"} is a database term for a table that is defined as a query over other tables and views. A view is a derived table that transforms table data into useful result sets by joining, aggregating, and analyzing rows from existing tables.
+
+\subsection{Example Streaming Data Service}
+\label{sec:example_iot}
+
+For example, consider a simple IoT use case that monitors temperature sensors on large pieces of machinery. Each machine is equipped with dozens of sensors that collect a temperature reading every second. The input data maps onto the following table structure\footnote{We are using a pseudo-SQL syntax for the examples in this paper}:
+\begin{lstlisting}[language=SQL]
+CREATE TABLE SensorReading (
+    sensorid int,
+    time timestamp,
+    temperature decimal
+);
+
+CREATE TABLE SensorPlacement (
+    machineid int,
+    sensorid int
+);
+\end{lstlisting}
+
+For our example IoT application, we want to allow users to query for hourly temperature averages of a particular machine as well as granular 1 minute averages for the last hour. In both cases, we use the median temperature over the last minute for each sensor to smooth the data and remove outliers.
+
+This core logic of our streaming data service can be expressed as the following 3 views:
+
+\begin{lstlisting}[language=SQL]
+CREATE VIEW SensorSmoothReading AS
+SELECT sensorid,
+    minute(time) as time_min,
+    median(temperature) as temp
+FROM SensorReading
+GROUP BY sensorid, time_min
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL]
+CREATE VIEW MachineHourReading AS
+SELECT machineid,
+    hour(time_min) as time_hour
+    avg(temp) as avg_temp
+    max(temp) as max_temp
+FROM SensorPlacement p
+    JOIN SensorSmoothReading r
+    ON r.sensorid = p.sensorid
+GROUP BY machineid, time_hour
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL]
+CREATE VIEW MachineMinuteReading AS
+SELECT machineid, time_min
+    avg(temp) as avg_temp
+    max(temp) as max_temp
+FROM SensorPlacement p
+    JOIN SensorSmoothReading r
+    ON r.sensorid = p.sensorid
+GROUP BY machineid, time_min
+WHERE time + 1 HOUR >= now()
+\end{lstlisting}
+
+Based on these 3 views, our application submits queries that have the following structure:
+\begin{lstlisting}[language=SQL]
+SELECT * FROM MachineHourReading
+WHERE machineid = ?
+    AND time_hour + 1 WEEK >= now()
+\end{lstlisting}
+\begin{lstlisting}[language=SQL]
+SELECT * FROM MachineMinuteReading
+WHERE machineid = ?
+\end{lstlisting}
+
+In both cases, we use the question mark to indicate a query parameter that is set by the application at runtime. In the queries above the question mark represents the machine id of a particular machine a user wants to monitor.
+
+A straight-forward way to implement this use case would be to write the sensor readings into a database table, install the views, and execute the queries from the application. However, this approach would be very expensive with current database systems or does not meet latency requirements.
+
+\subsection{Transactional Database}
+
+A transactional (i.e. row-oriented) database like Postgres \ref{}, MySQL \ref{}, SQLServer \ref{}, or Oracle \ref{} would be able to quickly ingest the streaming sensor data. However, executing the first query asking for a week of average machine temperatures would require retrieving and aggregating over 6 million records for a machine with 10 sensors. Even with carefully tuned index structures and compaction strategies, the data would likely be scattered over multiple non-consecutive disk pages which leads to lengthy data fetch operations that exceed our latency requirements. To reliably achieve responsive query answers within 100 milliseconds\footnote{100 milliseconds is widely considered the threshold for responsive user interactions.} the data would need to be held in memory. However, that is very expensive for the amount of data we are dealing with. Assuming we are monitoring 10000 machines with an average of 20 sensors each, we ingest half a trillion records a month. And even with powerful hardware that has this much RAM, the tail query latencies for machines with 100s of sensors would likely still exceed the 100 millisecond latency threshold when the workload is high (i.e. many users are concurrently monitoring machines).
+
+\subsection{Data Warehouse}
+
+A data warehouse (i.e. column-oriented) database like BigQuery \ref{}, Snowflake \ref{}, Redshift \ref{}, or Vertica \ref{} would reduce the cost of storing the data because of greater storage efficiency, usage of cheaper secondary storage modes, and absence of index structures. However, a data warehouse would not be able to achieve low latency response times to our queries. A data warehouse is optimized for queries that scan a large percentage of the entire stored data. While 6 million records is a substantial amount of data, it is a tiny fraction of the total data stored which makes column scans inefficient. Assuming we are monitoring 10000 machines, our queries would filter out all but 0.01\% of data. Even on powerful hardware, a data warehouse would be unable to achieve low latency response times when the workload is high because of the cost of those expensive scans.
+
+\subsection{Analytics Engine}
+
+The downside to using either type of database system is that we are storing a lot of data that the user isn't directly querying for which is costly in terms of data storage and the computation needed at query time. An analytics engine like Apache Spark \ref{} or Hadoop \ref{} is able to precompute the \emph{MachineHourReading} and \emph{MachineMinuteReading} views in batch and store only the resulting rows in a database for query answering. That greatly reduces the amount of data stored in the database and the computation needed to return the user query results. However, the downside of using an analytics engine in combination with a database is the long latency until new sensor readings can be queried. If we re-compute the views every hour, we have to wait up to 60 minutes before sensor readings can be queried. That's not acceptable since users may not be able to spot issues with the temperature before it is too late. Recomputing views very often is expensive since we have to read the entire data and compute all the aggregates before writing them into the database. And even if we use a lot of hardware, it will likely still takes minutes for the entire batch computation process and database update to complete.
+
+\subsection{State of the Art}
+
+Using existing data systems to implement streaming data service is either too expensive or does not meet requirements. Our simple IoT use case demonstrates that (in-memory) databases would be too expensive and have high tail query latencies, data warehouses would not meet our query latency requirements, and analytics engines would not meet our data latency requirements.
+
+To implement streaming data services in practice, developers have to build custom architectures that combine multiple data systems to achieve the latency requirements at reasonable cost.
+
+A popular approach is the lambda architecture \ref{} which combines the periodic batch computation of the analytics engine with a feed that writes recent data directly into the database. At query time, the data from the batch computed view is combined with the recent data to provide an up-to-date view.
+
+Another approach is to build a data pipeline with custom scripts that build incrementally maintained materialized views which are stored in a database for querying.
+
+Custom architectures are complex, expensive to implement and maintain, and hard to reason about. For every streaming data service use case, developers have to build a custom, hand-tuned database engine from multiple components that need to be orchestrated. Building such architectures that work reliably in practice, accommodate edge cases, and can be holistically monitored requires an extraordinary amount of work and expertise.
+
+The high cost and lack of developer expertise result in implementation failures and lack of adoption of streaming data services despite the benefits they provide to data-driven applications.
+
+\subsection{View Store}
+\label{sec:viewstoredef}
+
+We propose \emph{View Store} as a type of database system that addresses the requirements of streaming data services and fills the gap in the current database landscape.
+
+A view store is a database system that supports low latency, high throughput querying on a set of pre-defined views over multiple external sources of data.
+
+Let's look at the 3 elements that define a view store in more detail.
+
+To meet the requirements of streaming data services, a view store has to provide low query and data latencies with high query and data throughput.
+The time it takes to process new data is called the \emph{data latency} which measures the time from new data being available until all updates triggered by that data have been processed and the results are accessible. The time it takes to answer an application request is called the \emph{query latency} which measures the time that it takes to answer a request for data and return the result. Data latency requirements for streaming data services are usually on the order of seconds whereas query latency requirements are on the order of 100 milliseconds\footnote{Required latency times differ between use cases. The numbers provided here are best practice requirements across a number of use cases}.
+The number of new data records that need to be ingested and processed across all data sources per time interval is called the \emph{data throughput}. The number of user or application requests that must be answered per time interval is called the \emph{query throughput}.
+
+A view store requires that the set of views and query templates accessed by the application are registered up front. That's the biggest difference to traditional database systems\footnote{Most databases treat views as registered queries and allow for arbitrary queries at runtime} and the key to meeting the throughput requirements. The views and query templates of a streaming data service are determined by the calling application, which means they are static when the application is deployed and only evolve during development cycles. Knowing the views, structure of the queries, and sources of data over which those are defined up front allows a view store to determine the optimal materialization strategy. Whereas traditional database systems find the fastest query plans against pre-defined data and index structures, a view store determines the optimal tradeoff between (partial) view materialization and query plans against the materialized views to meet latency requirements at low cost. We discuss optimization in more detail in Section~\ref{sec:optimization}.
+
+Lastly, view stores consume data from one or multiple sources of streaming and static data. Most database systems assume that the data is explicitly inserted into pre-defined data structures. Federated database systems support multiple sources of data but do not support low query latencies for complex views since they need to fetch the data from the source systems at query time. View stores consume external data but build their own internal data structures to provide fast query access.
+
+View stores are a specialized type of database system that meet the requirements of streaming data services. As streaming data services become more prevalent, we need view stores as a dedicated database category to support their implementation.
+In Section~\ref{sec:datasqrl} we outline the implementation of the DataSQRL view store and provide more details on how view stores differ from other types of databases.
+
+
+\section{SQRL}
+\label{sec:sqrl}
+
+Another impediment to implementing streaming data services is the lack of language support and resulting complexity of the developer ecosystem. The logic of a streaming data service is often fragmented across multiple languages depending on the tools and systems used. Data extraction and mapping could be implemented in a scripting language like Python, batch view computation in SQL, streaming view materialization in Java, query execution in SQL by way of an object-relational mapper (ORM), the serving layer in GO, and some of the logic may end up in the calling application in Javascript.
+
+While this fragmentation arises from the practical needs of the developers as they try to build custom architectures that meet requirements, it further exacerbates the cost of implementing and maintaining streaming data services by reducing developer productivity. There is no single language or consolidated developer ecosystem for implementing streaming data services, in addition to there being no single data system that meets their requirements.
+
+We propose an extension to the popular database query language SQL called \emph{SQRL} to include features that developers need when implementing streaming data services. SQL is already an important part of many streaming data service implementations and widely adopted in general, which makes it a great host language to build on.
+
+SQRL stands for "Structured Query and Reaction Language" and adds the following features to SQL: being able to "react" to changes in data, making it easier to define sets of complex views, and explicitly defining relationships and local scopes.
+
+\subsection{Reacting to Data Changes}
+
+A streaming data service often needs to react to changes in the data to trigger actions.
+For our IoT example, we want to be alerted when the maximum temperature on a machine exceeds $100^{\circ}$ Celsius.
+
+SQRL supports \emph{subscriptions} which create an event record whenever a particular change event is observed on an underlying view.
+
+\begin{lstlisting}[language=SQL]
+CREATE SUBSCRIPTION HighTemp
+ON ADD AS
+SELECT machineid, time_min, max_temp
+FROM MachineMinuteReading
+WHERE max_temp > 100
+\end{lstlisting}
+
+This example defines the \emph{HighTemp} subscription which creates an event record with \emph{machineid}, \emph{time\_min}, and \emph{max\_temp} whenever a max temperature reading in the \emph{MachineMinuteReading} view is greater than 100. We call the view definition (i.e. the part after "AS") the \emph{observed view}.
+
+A subscription specifies which type of change against the underlying view is observed:
+\begin{enumerate}
+    \item \textbf{ON ADD}: Creates an event record whenever a row is newly added to the observed view.
+    \item \textbf{ON CHANGE}: Creates an event record whenever a row in the observed view changes
+    \item \textbf{ON DELETE}: Creates an event records whenever a row is removed from the observed view.
+\end{enumerate}
+
+Unlike database triggers, which execute a piece of code when certain events happens, subscriptions define additional views that contain rows for each observed event. Subscriptions
+
+unlike triggers which call a procedure
+
+Alert when temperature is above 100 on MachineMinuteReading
+
+
+State and events
+now() + Distinct - machine change stream (type, last maintenance)
+
+\subsection{View Definitions}
+
+imports/exports
+
+incremental column defs (epoch time)
+
+simple view def syntax
+
+\subsection{Relationships and Local Scopes}
+
+relationship between sensor and machine (commonly used join)
+
+impedence mismatch, this provides an object structure that maps onto the application structure
+
+hierarchical data - machine components
+
+current temperature - easier to think about this locally than PARTITION OVER queries.
+
+
+
+
+
+
+All of these features extend the syntax of SQL but not the semantics of the underlying relational algebra.
+
+
+
+Exmaple with messy and hierarchical data to highlight data integration challenges
+
+\section{DataSQRL}
+\label{sec:datasqrl}
+
+\subsection{Optimization}
+\label{sec:optimization}
+
+
+\section{Experiments}
+\label{sec:experiments}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+\end{document}
