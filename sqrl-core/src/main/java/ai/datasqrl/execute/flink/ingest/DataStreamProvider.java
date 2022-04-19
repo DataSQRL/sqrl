@@ -1,5 +1,6 @@
 package ai.datasqrl.execute.flink.ingest;
 
+import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
 import ai.datasqrl.io.impl.kafka.KafkaSourceImplementation;
 import ai.datasqrl.io.sources.DataSource;
 import ai.datasqrl.io.sources.DataSourceConfiguration;
@@ -46,7 +47,7 @@ public class DataStreamProvider {
     TODO: Rework to use Flink's FileSource and FileEnumerator based on SourceTableConfig
      */
 
-    public DataStream<SourceRecord.Raw> getDataStream(SourceTable table, Builder streamBuilder) {
+    public DataStream<SourceRecord.Raw> getDataStream(SourceTable table, FlinkStreamEngine.Builder streamBuilder) {
         DataSource source = table.getDataset().getSource();
         DataSourceImplementation sourceImpl = source.getImplementation();
         DataSourceConfiguration sourceConfig = source.getConfig();

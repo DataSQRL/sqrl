@@ -113,12 +113,15 @@ public class Environment implements Closeable {
   //Option: drop table before create
   public ExecutionPlan compile(ScriptBundle bundle) throws Exception {
     ImportManager importManager = settings.getImportManagerProvider().createImportManager(datasetRegistry);
-    importManager.registerUserSchema(bundle.getMainScript().getSchema());
-
+    ErrorCollector errors = importManager.registerUserSchema(bundle.getMainScript().getSchema());
+    System.out.println(errors);
+    if (errors.isFatal()) {
+      throw new RuntimeException();
+    }
     BundleOptions options = BundleOptions.builder()
         .importManager(importManager)
         .jdbcConfiguration(settings.getJdbcConfiguration())
-        .streamEngine(streamEngine)
+        .streamEngine(settings.getStreamEngineProvider().create())
         .build();
     BundleProcessor bundleProcessor = new BundleProcessor(options);
     return bundleProcessor.processBundle(bundle);

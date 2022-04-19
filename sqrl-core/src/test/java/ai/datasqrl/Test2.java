@@ -54,15 +54,14 @@ public class Test2 {
   public void test() {
     //c360, test import all the way through to query
     run(
-        "IMPORT ecommerce-data.Customer;\n"
+//        "IMPORT ecommerce-data.Customer;\n"
 //            + "IMPORT ecommerce-data.Product;\n"
-//            + "IMPORT ecommerce-data.Orders;\n"
+             "IMPORT ecommerce-data.Orders;\n"
 //            + "\n"
 //            //TODO: 1. move some conditions to fields to be filtered on by db
 //            + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
 //            + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
 ////            TODO: Flink requires order to be a timestamp and required for rank
-////            + "Orders.rank := rank();\n"
 //            + "-- Compute useful statistics on orders\n"
 //            + "Orders.entries.discount := coalesce(discount, 0.0);\n"
 //            + "Orders.entries.total := quantity * unit_price - discount;\n"

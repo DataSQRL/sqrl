@@ -4,7 +4,7 @@ import ai.datasqrl.schema.type.SqmlTypeVisitor;
 import java.util.Collections;
 import java.util.Set;
 
-public class NumberType extends AbstractBasicType<Double> {
+public class NumberType extends AbstractBasicType<Float> {
 
     public static final NumberType INSTANCE = new NumberType();
 
@@ -14,11 +14,11 @@ public class NumberType extends AbstractBasicType<Double> {
     }
 
     @Override
-    public TypeConversion<Double> conversion() {
+    public TypeConversion<Float> conversion() {
         return new Conversion();
     }
 
-    public static class Conversion implements TypeConversion<Double> {
+    public static class Conversion implements TypeConversion<Float> {
 
         public Conversion() {
         }
@@ -28,7 +28,7 @@ public class NumberType extends AbstractBasicType<Double> {
             return Collections.EMPTY_SET;
         }
 
-        public Double convert(Object o) {
+        public Float convert(Object o) {
             return FloatType.Conversion.convertInternal(o);
         }
     }

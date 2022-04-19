@@ -102,6 +102,7 @@ public class ImportManager {
             if (userDSSchema == null) userDSSchema = FlexibleDatasetSchema.EMPTY;
             FlexibleDatasetSchema.TableField tbField = createTable(table, datasetName,
                     userDSSchema.getFieldByName(table.getName()),errors);
+            System.out.println(errors);
             //schemaConverter.convert(tbField,imp.asName.orElse(table.getName()))
             return new SourceTableImport(tableName, table, tbField);
         }

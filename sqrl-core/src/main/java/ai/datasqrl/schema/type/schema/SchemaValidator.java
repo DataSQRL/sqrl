@@ -52,6 +52,11 @@ public class SchemaValidator implements Serializable {
         for (Map.Entry<String,Object> entry : relationData.entrySet()) {
             Name name = Name.of(entry.getKey(), canonicalizer);
             Object data = entry.getValue();
+            //TODO FIX ME: Temp hack b/c of float v double conversion
+            if (data instanceof Double) {
+                data = ((Double)data).floatValue();
+            }
+
             FlexibleDatasetSchema.FlexibleField field = relationSchema.getFieldByName(name);
             if (field==null) {
                 if (!settings.dropFields()) {

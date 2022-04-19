@@ -4,6 +4,7 @@ import ai.datasqrl.execute.flink.process.DestinationTableSchema;
 import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.basic.BooleanType;
 import ai.datasqrl.schema.type.basic.DateTimeType;
+import ai.datasqrl.schema.type.basic.DoubleType;
 import ai.datasqrl.schema.type.basic.FloatType;
 import ai.datasqrl.schema.type.basic.IntegerType;
 import ai.datasqrl.schema.type.basic.NumberType;
@@ -68,9 +69,12 @@ public class FlinkUtilities {
             if (isArray) return BasicArrayTypeInfo.LONG_ARRAY_TYPE_INFO;
             else return BasicTypeInfo.LONG_TYPE_INFO;
         } else if (datatype instanceof FloatType) {
+            if (isArray) return BasicArrayTypeInfo.FLOAT_ARRAY_TYPE_INFO;
+            else return BasicTypeInfo.FLOAT_TYPE_INFO;
+        } else if (datatype instanceof DoubleType) {
             if (isArray) return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
             else return BasicTypeInfo.DOUBLE_TYPE_INFO;
-        } else if (datatype instanceof NumberType) {
+        }  else if (datatype instanceof NumberType) {
             if (isArray) return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
             else return BasicTypeInfo.DOUBLE_TYPE_INFO;
         } else if (datatype instanceof BooleanType) {

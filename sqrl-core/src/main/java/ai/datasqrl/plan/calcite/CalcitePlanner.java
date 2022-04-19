@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.calcite;
 
+import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
 import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
 import ai.datasqrl.plan.SqrlRelBuilder;
 import ai.datasqrl.parse.tree.Node;
@@ -57,6 +58,8 @@ public class CalcitePlanner {
   }
 
   public SqrlRelBuilder createRelBuilder() {
+
+
     return new SqrlRelBuilder(null, cluster, catalogReader);
   }
 
