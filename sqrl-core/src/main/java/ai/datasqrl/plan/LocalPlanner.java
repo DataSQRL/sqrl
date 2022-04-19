@@ -1,5 +1,7 @@
 package ai.datasqrl.plan;
 
+import static ai.datasqrl.parse.tree.name.Name.INGEST_TIME;
+
 import ai.datasqrl.execute.StreamEngine;
 import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
 import ai.datasqrl.execute.flink.ingest.schema.FlinkTableConverter;
@@ -21,6 +23,7 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.rel.logical.LogicalCorrelate;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
@@ -28,6 +31,7 @@ import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
@@ -41,6 +45,7 @@ import org.apache.flink.table.planner.calcite.FlinkRelOptClusterFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
 import org.apache.flink.table.types.AtomicDataType;
+import org.apache.flink.table.types.CollectionDataType;
 import org.apache.flink.table.types.FieldsDataType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
@@ -48,11 +53,7 @@ import org.apache.flink.table.types.logical.RowType.RowField;
 
 public class LocalPlanner extends AstVisitor<LocalPlannerResult, StatementScope> {
   private final FlinkTableConverter tbConverter = new FlinkTableConverter();
-  private final CalcitePlanner calcitePlanner;
-
-  public LocalPlanner(StreamEngine streamEngine) {
-    this.calcitePlanner = new CalcitePlanner();
-  }
+  private final CalcitePlanner calcitePlanner = new CalcitePlanner();
 
   public LocalPlannerResult plan(Node sqlNode, StatementScope scope) {
     return sqlNode.accept(this, scope);
@@ -78,7 +79,7 @@ public class LocalPlanner extends AstVisitor<LocalPlannerResult, StatementScope>
     RelDataType streamRelType = FlinkRelDataTypeConverter.toRelDataType(schema.getColumns());
     RelNode relNode = calcitePlanner.createRelBuilder()
         .scanStream(tableName, streamRelType)
-        .watermark("__ingest_time", 5)
+        .watermark(getIndex(tbl.getLeft(), INGEST_TIME.getCanonical()))
         .project(FlinkRelDataTypeConverter.getScalarIndexes(schema))
         .build();
 
@@ -87,75 +88,107 @@ public class LocalPlanner extends AstVisitor<LocalPlannerResult, StatementScope>
     importedPaths.add(table);
 
     if (requiresShredding(schema)) {
-//      importedPaths.addAll(shred(tableName, streamRelType, schema));
+      importedPaths.addAll(shred(tableName, streamRelType, schema));
     }
 
     return new ImportLocalPlannerResult(importedPaths);
   }
 
-  private List<ImportTable> shred(Name baseStream,
-      RelDataType streamRelType, Schema schema) {
-    List<ImportTable> tables = new ArrayList<>();
-    for (Pair<String, FieldsDataType> nestedField : FlinkSchemaUtil.getNestedFields(schema)) {
-      FieldsDataType type = nestedField.getRight();
-      List<RowField> fields = ((RowType)type.getLogicalType()).getFields();
-
-      SqrlRelBuilder builder = calcitePlanner.createRelBuilder();
-      RexBuilder rexBuilder = builder.getRexBuilder();
-      CorrelationId id = new CorrelationId(0);
-      int indexOfField = 3;
-      RelDataType t = FlinkTypeFactory.INSTANCE().createSqlType(SqlTypeName.INTEGER);
-
-      RelBuilder b = builder
-          .scanStream(baseStream, streamRelType)
-          .values(List.of(List.of(rexBuilder.makeExactLiteral(BigDecimal.ZERO))),
-              new RelRecordType(List.of(new RelDataTypeFieldImpl("ZERO", 0, t))))
-          .project(List.of(builder.getRexBuilder().makeFieldAccess(
-            rexBuilder.makeCorrel(streamRelType, id), nestedField.getLeft(), false
-          )), List.of(nestedField.getLeft()))
-          .uncollect(List.of(), false)
-          .correlate(JoinRelType.INNER, id, RexInputRef.of(indexOfField, builder.peek().getRowType()))
-          .project(rexBuilder.makeInputRef(builder.peek(), 1))//TODO: location of columns
-          ;
-
-      RelNode node = b.build();
-      System.out.println(node.explain());
-
-      List<Name> names = fields.stream()
-          .map(f->Name.system(f.getName()))
-          .collect(Collectors.toList());
-
-      String columnName = nestedField.getLeft();
-      NamePath namePath = baseStream.toNamePath().concat(Name.system(columnName));
-      ImportTable importTable = new ImportTable(namePath,
-          node, names
-      );
-      tables.add(importTable);
+  private int getIndex(Schema schema, String name) {
+    for (int i = 0; i < schema.getColumns().size(); i++) {
+      if (schema.getColumns().get(i).getName().equalsIgnoreCase(name)) {
+        return i;
+      }
     }
 
+    return -1;
+  }
+  private int getIndex(RelDataType type, String name) {
+    for (int i = 0; i < type.getFieldList().size(); i++) {
+      if (type.getFieldList().get(i).getName().equalsIgnoreCase(name)) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  private List<ImportTable> shred(Name baseStream, RelDataType streamRelType, Schema schema) {
+    List<UnresolvedColumn> columns = schema.getColumns();
+    List<ImportTable> tables = new ArrayList<>();
+
+    for (int i = 0; i < columns.size(); i++) {
+      UnresolvedColumn col = columns.get(i);
+      UnresolvedPhysicalColumn unresolvedPhysicalColumn = (UnresolvedPhysicalColumn) col;
+      if (unresolvedPhysicalColumn.getDataType() instanceof FieldsDataType
+          || unresolvedPhysicalColumn.getDataType() instanceof CollectionDataType) {
+        FieldsDataType fieldsDataType =
+            unresolvedPhysicalColumn.getDataType() instanceof CollectionDataType
+                //unbox collection types
+                ? (FieldsDataType) ((CollectionDataType) unresolvedPhysicalColumn.getDataType()).getElementDataType()
+                : (FieldsDataType) unresolvedPhysicalColumn.getDataType();
+        tables.add(shred(baseStream, unresolvedPhysicalColumn.getName(), i, fieldsDataType, streamRelType, schema));
+      }
+    }
     return tables;
   }
 
-  private RelDataTypeField toField(String name, List<RowField> fields) {
-    FlinkTypeFactory factory = FlinkTypeFactory.INSTANCE();
+  private ImportTable shred(Name baseStream, String fieldName, int index, FieldsDataType type,
+    RelDataType streamRelType, Schema schema) {
+    List<RowField> fields = ((RowType)type.getLogicalType()).getFields();
 
-    return new RelDataTypeFieldImpl(name, 0, factory.createArrayType(
-        toRecordType(fields, factory), -1));
+    SqrlRelBuilder builder = calcitePlanner.createRelBuilder();
+    RexBuilder rexBuilder = builder.getRexBuilder();
+    CorrelationId id = new CorrelationId(0);
+    int indexOfField = 3;
+    RelDataType t = FlinkTypeFactory.INSTANCE().createSqlType(SqlTypeName.INTEGER);
 
-//    return null;
+    RelBuilder b = builder
+        .scanStream(baseStream, streamRelType)
+//          .watermark(getIndex(streamRelType, INGEST_TIME.getCanonical())) TODO: FIX: timestamp is of the watermark type but an additional watermark gives wrong results (?)
+        .values(List.of(List.of(rexBuilder.makeExactLiteral(BigDecimal.ZERO))),
+            new RelRecordType(List.of(new RelDataTypeFieldImpl("ZERO", 0, t))))
+        .project(List.of(builder.getRexBuilder().makeFieldAccess(
+          rexBuilder.makeCorrel(streamRelType, id), fieldName, false
+        )), List.of(fieldName))
+        .uncollect(List.of(), false)
+        .correlate(JoinRelType.INNER, id, RexInputRef.of(indexOfField, builder.peek().getRowType()))
+        .project(projectShreddedColumns(rexBuilder, builder.peek()))//TODO: location of columns
+        ;
+
+    RelNode node = b.build();
+    System.out.println(node.explain());
+
+    List<Name> names = fields.stream()
+        .map(f->Name.system(f.getName()))
+        .collect(Collectors.toList());
+
+    String columnName = fieldName;
+    NamePath namePath = baseStream.toNamePath().concat(Name.system(columnName));
+    ImportTable importTable = new ImportTable(namePath,
+        node, names
+    );
+
+    return importTable;
   }
 
-  private RelDataType toRecordType(List<RowField> fields,
-      FlinkTypeFactory factory) {
-//    List<RelDataTypeField> f = fields.stream()
-//        .map(f->new RelDataTypeFieldImpl(f.getName(), 0, toDType(f.getType(), factory)))
-//        .collect(Collectors.toList());;
+  private List<RexNode> projectShreddedColumns(RexBuilder rexBuilder,
+      RelNode node) {
+    List<RexNode> projects = new ArrayList<>();
+    LogicalCorrelate correlate = (LogicalCorrelate) node;
+    for (int i = 0; i < correlate.getLeft().getRowType().getFieldCount(); i++) {
+      String name = correlate.getLeft().getRowType().getFieldNames().get(i);
+      if (name.equalsIgnoreCase("_uuid")){//|| name.equalsIgnoreCase("_ingest_time")) {
+        projects.add(rexBuilder.makeInputRef(node, i));
+      }
+    }
 
-   return new RelRecordType(StructKind.PEEK_FIELDS_NO_EXPAND, null);
-  }
+    //All columns on rhs
+    for (int i = correlate.getLeft().getRowType().getFieldCount(); i < correlate.getRowType().getFieldCount(); i++) {
+      projects.add(rexBuilder.makeInputRef(node, i));
+    }
 
-  private RelDataType toDType(LogicalType type, FlinkTypeFactory factory) {
-    return factory.createFieldTypeFromLogicalType(type);
+    return projects;
   }
 
   private boolean requiresShredding(Schema schema) {
@@ -167,7 +200,4 @@ public class LocalPlanner extends AstVisitor<LocalPlannerResult, StatementScope>
     }
     return false;
   }
-
-
-
 }

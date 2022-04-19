@@ -93,7 +93,7 @@ public class SqrlRelBuilder extends RelBuilder {
     return this;
   }
 
-  public SqrlRelBuilder watermark(String ingest_time, int i) {
+  public SqrlRelBuilder watermark(int i) {
     RexNode watermarkExpr = getRexBuilder().makeCall(SqlStdOperatorTable.MINUS,
         List.of(RexInputRef.of(i, peek().getRowType()), getRexBuilder().makeIntervalLiteral(
             BigDecimal.valueOf(10000),

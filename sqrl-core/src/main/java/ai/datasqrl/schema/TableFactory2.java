@@ -11,10 +11,10 @@ public class TableFactory2 {
   /**
    * TODO: move to table factory
    */
-  public Table create(NamePath name, RelNode relNode,
+  public Table create(Name name, NamePath namePath, RelNode relNode,
       List<Name> fields) {
     Table table = new Table(SourceTablePlanner.tableIdCounter.incrementAndGet(),
-        name.getFirst(), name.getFirst().toNamePath(),
+        name, namePath,
         false, relNode);
     for (Name n : fields) {
       table.addField(Column.createTemp(n, null, table, 0));

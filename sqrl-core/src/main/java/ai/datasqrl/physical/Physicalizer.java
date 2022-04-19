@@ -233,8 +233,8 @@ public class Physicalizer {
 //      Table tbl2 = tEnv.sqlQuery("SELECT o._uuid, items._idx as _idx1, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
 //          "FROM orders o CROSS JOIN UNNEST(o.entries) AS items");
 //      System.out.println(tbl2.explain());
-      RelOptCluster cluster = getClusterFromDatastream("orders", tEnv);
-      RelNode rewritten = rewrite(tEnv, inject, cluster);
+      RelOptCluster cluster = getClusterFromDatastream(tEnv.listTables()[0], tEnv);
+      RelNode rewritten = rewrite(tEnv, inject, cluster, tEnv.listTables()[0]);
 
       PlannerQueryOperation plannerQueryOperation = new PlannerQueryOperation(rewritten);
       Table tbl = AddPlanToEnv.addPlanToEnv(plannerQueryOperation, tEnv);
@@ -269,7 +269,7 @@ public class Physicalizer {
 
   private RelNode rewrite(
       StreamTableEnvironmentImpl tEnv,
-      RelNode inject, RelOptCluster cluster) {
+      RelNode inject, RelOptCluster cluster, String tableName) {
     //FlinkRelDistribution: any
     //MiniBatchIntervalTrait None:0
     //ModifyKindSetTrait : [NONE]
@@ -283,7 +283,8 @@ public class Physicalizer {
       @Override
       public RelNode visit(TableScan scan) {
         //Lookup TableSourceTable in flink, add statistics over
-        PlannerQueryOperation op = (PlannerQueryOperation) tEnv.getParser().parse("select * from orders").get(0);
+        PlannerQueryOperation op = (PlannerQueryOperation) tEnv.getParser().parse("select * from "
+            + scan.getTable().getQualifiedName().get(scan.getTable().getQualifiedName().size()-1)).get(0);
         return op.getCalciteTree().getInput(0);
 
 //        return flinkTable;
@@ -332,9 +333,9 @@ public class Physicalizer {
     });
   }
 
-  private RelOptCluster getClusterFromDatastream(String orders,
+  private RelOptCluster getClusterFromDatastream(String tableName,
       StreamTableEnvironmentImpl tEnv) {
-    PlannerQueryOperation op = (PlannerQueryOperation)tEnv.getPlanner().getParser().parse("SELECT * FROM orders").get(0);
+    PlannerQueryOperation op = (PlannerQueryOperation)tEnv.getPlanner().getParser().parse("SELECT * FROM " + tableName).get(0);
     ClusterGetter clusterGetter = new ClusterGetter();
     op.getCalciteTree().accept(clusterGetter);
 
@@ -364,9 +365,10 @@ public class Physicalizer {
     sink.getRelNode().accept(new RelShuttleImpl() {
       @Override
       public RelNode visit(TableScan scan) {
+
         String streamName = String.join(".",scan.getTable().getQualifiedName());
         String tableName = scan.getTable().getQualifiedName().get(scan.getTable().getQualifiedName().size() - 1);
-        if ((List.of(tEnv.listTables()).contains(streamName))) {
+        if ((List.of(tEnv.listTables()).contains(tableName))) {
           return super.visit(scan);
         }
 //        NamePath path = NamePath.parse(streamName);

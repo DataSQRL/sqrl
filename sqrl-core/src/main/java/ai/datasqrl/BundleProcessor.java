@@ -64,7 +64,7 @@ public class BundleProcessor {
     StatementTransformer transformer = new StatementTransformer(schema.peek());
     Node sqlNode = transformer.transform(statement, scope);
 
-    LocalPlanner planner = new LocalPlanner(this.options.getStreamEngine());
+    LocalPlanner planner = new LocalPlanner();
     LocalPlannerResult plan = planner.plan(sqlNode, scope);
 
     OperationFactory operationFactory = new OperationFactory();

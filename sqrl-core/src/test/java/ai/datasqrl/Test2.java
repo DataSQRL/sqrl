@@ -54,9 +54,9 @@ public class Test2 {
   public void test() {
     //c360, test import all the way through to query
     run(
-//        "IMPORT ecommerce-data.Customer;\n"
-//            + "IMPORT ecommerce-data.Product;\n"
-             "IMPORT ecommerce-data.Orders;\n"
+        "IMPORT ecommerce-data.Customer;\n"
+             + "IMPORT ecommerce-data.Product;\n"
+             + "IMPORT ecommerce-data.Orders;\n"
 //            + "\n"
 //            //TODO: 1. move some conditions to fields to be filtered on by db
 //            + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
