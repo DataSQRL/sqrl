@@ -39,6 +39,7 @@ import ai.datasqrl.transform.transforms.JoinWalker.WalkResult;
 import ai.datasqrl.util.AliasGenerator;
 import ai.datasqrl.validate.paths.PathUtil;
 import ai.datasqrl.validate.scopes.IdentifierScope;
+import ai.datasqrl.validate.scopes.ResolveResult;
 import ai.datasqrl.validate.scopes.StatementScope;
 import java.util.ArrayList;
 import java.util.HashMap;

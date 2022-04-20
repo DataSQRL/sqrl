@@ -6,49 +6,40 @@ import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.constraint.Constraint;
 import ai.datasqrl.schema.type.constraint.ConstraintHelper;
 import java.util.List;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
+@Setter
 public class Column extends Field {
-
   private final Table table;
   //Identity of the column in addition to name
-  @Setter
   public int version;
 
   //Type definition
-  @Setter
-  public BasicType type;
   public final int arrayDepth;
   public final boolean nonNull;
   public final List<Constraint> constraints;
 
   //System information
-  @Setter
   public boolean isPrimaryKey;
-  @Setter
   public boolean isForeignKey;
-  @Setter
-  public Optional<Column> fkReferences;
-  public final boolean isInternal;
+  public boolean isInternal;
+  //Equivalence testing: Todo: move out
   private Field source;
   private boolean parentPrimaryKey;
 
   public Column(Name name, Table table, int version,
-      BasicType type, int arrayDepth, List<Constraint> constraints,
-      boolean isPrimaryKey, boolean isForeignKey, Optional<Column> fkReferences,
+      int arrayDepth, List<Constraint> constraints,
+      boolean isPrimaryKey, boolean isForeignKey,
       boolean isInternal) {
     super(unboxName(name));
     this.table = table;
     this.version = version;
-    this.type = type;
     this.arrayDepth = arrayDepth;
     this.constraints = constraints;
     this.isPrimaryKey = isPrimaryKey;
     this.isForeignKey = isForeignKey;
-    this.fkReferences = fkReferences;
     this.isInternal = isInternal;
     this.nonNull = ConstraintHelper.isNonNull(constraints);
   }
@@ -63,7 +54,7 @@ public class Column extends Field {
 
   public static Column createTemp(Name name, BasicType type, Table table, int version) {
     return new Column(name,
-        table, version, type, 0, List.of(), false, false, null, false
+        table, version, 0, List.of(), false, false, false
           );
   }
 
@@ -89,15 +80,7 @@ public class Column extends Field {
   }
 
   public Column copy() {
-    return new Column(this.name, this.table, this.version, this.type, this.arrayDepth, this.constraints,
-        this.isPrimaryKey, this.isForeignKey, this.fkReferences, this.isInternal);
-  }
-
-  public void setParentPrimaryKey(boolean parentPrimaryKey) {
-    this.parentPrimaryKey = parentPrimaryKey;
-  }
-
-  public boolean getParentPrimaryKey() {
-    return parentPrimaryKey;
+    return new Column(this.name, this.table, this.version, this.arrayDepth, this.constraints,
+        this.isPrimaryKey, this.isForeignKey, this.isInternal);
   }
 }

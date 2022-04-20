@@ -60,7 +60,6 @@ public class QueryValidator extends AstVisitor<ValidatorScope, QueryScope> {
     throw new RuntimeException(String.format("Could not process node %s : %s", node.getClass().getName(), node));
   }
 
-
   @Override
   public ValidatorScope visitQuery(Query node, QueryScope scope) {
     ValidatorScope queryBodyValidateScope = node.getQueryBody().accept(this, scope);
@@ -69,13 +68,6 @@ public class QueryValidator extends AstVisitor<ValidatorScope, QueryScope> {
     return null;
   }
 
-  /**
-   * QuerySpec scope:
-   *  select item as (expressions)
-   *  group by ordinals
-   *  order by ordinals + expressions
-   *  having
-   */
   @Override
   public ValidatorScope visitQuerySpecification(QuerySpecification node, QueryScope scope) {
     ValidatorScope sourceValidateScope = node.getFrom().accept(this, scope);
@@ -131,7 +123,6 @@ public class QueryValidator extends AstVisitor<ValidatorScope, QueryScope> {
     scopes.put(tableNode, tableScope);
     return createValidateScope(scope);
   }
-
 
   /**
    * Joins have the assumption that the rhs will always be a TableNode so the rhs will be

@@ -11,7 +11,6 @@ import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.SelectItem;
 import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -53,8 +52,8 @@ public class SubqueryTableFactory {
     if (expression instanceof Identifier) {
       Identifier i = (Identifier) expression;
       Column column = new Column(alias.map(Identifier::getNamePath).orElseGet(i::getNamePath).getLast(),
-          null, 0, null, 0, List.of(),
-          false, false, Optional.empty(), false);
+          null, 0, 0, List.of(),
+          false, false, false);
       column.setSource((Field)i.getResolved());
 
       return column;
@@ -62,8 +61,8 @@ public class SubqueryTableFactory {
 
     Column column = new Column(alias.map(Identifier::getNamePath)
         .orElseGet(()->Name.system("unnamedColumn").toNamePath()).getLast(),
-        null, 0, null, 0, List.of(),
-        false, false, Optional.empty(), false);
+        null, 0, 0, List.of(),
+        false, false, false);
 
     return column;
   }

@@ -1,15 +1,23 @@
 package ai.datasqrl.validate;
 
-import ai.datasqrl.function.FunctionLookup;
-import ai.datasqrl.function.SqrlFunction;
+import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import java.util.Optional;
 
+/**
+ * The namespace allows the script to resolve imported scripts, functions, and datasets that
+ * are not immediately brought into scope.
+ */
 public class Namespace {
 
-  public SqrlFunction resolveFunction(NamePath namePath) {
-    FunctionLookup functionLookup = new FunctionLookup();
-    SqrlFunction function = functionLookup.lookup(namePath);
+  /**
+   * Adds a schema object to the namespace, so it can be referenced later
+   */
+  public void exposeSchemaObject(Optional<Name> alias, Object object) {
 
-    return function;
+  }
+
+  public Object resolveSchemaObject(NamePath namePath) {
+    return null;
   }
 }

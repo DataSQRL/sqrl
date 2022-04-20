@@ -1,4 +1,4 @@
-package ai.datasqrl.plan;
+package ai.datasqrl.plan.util;
 
 import ai.datasqrl.plan.calcite.CalcitePlanner;
 import ai.datasqrl.plan.nodes.SqrlViewTable;

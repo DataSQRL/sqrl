@@ -89,7 +89,7 @@ public class AddContextToQuery {
   private boolean isParentPrimaryKey(SingleColumn singleColumn) {
     if (singleColumn.getExpression() instanceof Identifier &&
         ((Identifier)singleColumn.getExpression()).getResolved() instanceof Column &&
-        ((Column)((Identifier)singleColumn.getExpression()).getResolved()).getParentPrimaryKey()) {
+        ((Column)((Identifier)singleColumn.getExpression()).getResolved()).isParentPrimaryKey()) {
       return true;
     }
     return false;
@@ -114,7 +114,6 @@ public class AddContextToQuery {
 
     return groupBy(grouping);
   }
-
 
   public static SelectItem primaryKeySelect(NamePath name, NamePath alias, Column column) {
     Identifier identifier = new Identifier(Optional.empty(), name);

@@ -1,4 +1,4 @@
-package ai.datasqrl.transform;
+package ai.datasqrl.validate.scopes;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;

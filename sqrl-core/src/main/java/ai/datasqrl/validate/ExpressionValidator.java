@@ -14,7 +14,7 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.Relation;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Field;
-import ai.datasqrl.transform.ResolveResult;
+import ai.datasqrl.validate.scopes.ResolveResult;
 import ai.datasqrl.validate.paths.PathUtil;
 import ai.datasqrl.validate.scopes.ExpressionScope;
 import ai.datasqrl.validate.scopes.FunctionCallScope;

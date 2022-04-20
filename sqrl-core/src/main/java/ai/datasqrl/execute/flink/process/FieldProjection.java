@@ -52,8 +52,8 @@ public interface FieldProjection extends Serializable {
         }
 
         public Column createColumn(Table table) {
-            return new Column(getName(),table,0,type,0,
-                    Collections.singletonList(NotNull.INSTANCE),isPrimary, parent.isPresent(), parent, false);
+            return new Column(getName(),table,0, 0,
+                    Collections.singletonList(NotNull.INSTANCE),isPrimary, parent.isPresent(), false);
         }
 
         @Override

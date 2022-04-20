@@ -11,6 +11,7 @@ import lombok.Value;
 public class RelativeTablePath implements TablePath {
   Table table;
   NamePath path;
+
   public static RelativeTablePath resolve(Table table, NamePath path) {
     return new RelativeTablePath(table, path);
   }

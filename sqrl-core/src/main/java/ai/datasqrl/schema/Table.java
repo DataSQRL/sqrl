@@ -220,7 +220,7 @@ public class Table implements ShadowingContainer.Nameable {
     List<Field> elements = fields.getElements();
     for (int i = 0; i < elements.size(); i++) {
       Field field = elements.get(i);
-      if (field instanceof Column && ((Column) field).getParentPrimaryKey()) {
+      if (field instanceof Column && ((Column) field).isParentPrimaryKey()) {
         pos.add(i);
       }
     }

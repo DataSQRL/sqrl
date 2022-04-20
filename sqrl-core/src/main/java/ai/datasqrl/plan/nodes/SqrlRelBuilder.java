@@ -1,10 +1,6 @@
-package ai.datasqrl.plan;
+package ai.datasqrl.plan.nodes;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.Table;
-import ai.datasqrl.server.ImportManager.SourceTableImport;
-import ai.datasqrl.plan.nodes.ShredTableScan;
-import ai.datasqrl.plan.nodes.StreamTableScan;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,23 +39,6 @@ public class SqrlRelBuilder extends RelBuilder {
 
     RelNode scan = new LogicalTableScan(this.cluster, traits, List.of(),
         table);
-    this.push(scan);
-    return this;
-  }
-
-  public SqrlRelBuilder scanStream(String name, SourceTableImport sourceTable,
-      Table sqrlTable) {
-    RelOptTable table = relOptSchema.getTableForMember(List.of(name));
-    StreamTableScan scan = new StreamTableScan(this.cluster, RelTraitSet.createEmpty(), List.of(), table, sourceTable, sqrlTable);
-
-    this.push(scan);
-    return this;
-  }
-
-  public SqrlRelBuilder scanShred(Table fromTable, String name) {
-    RelOptTable table = relOptSchema.getTableForMember(List.of(name));
-    ShredTableScan scan = new ShredTableScan(this.cluster, RelTraitSet.createEmpty(), List.of(), table, fromTable);
-
     this.push(scan);
     return this;
   }

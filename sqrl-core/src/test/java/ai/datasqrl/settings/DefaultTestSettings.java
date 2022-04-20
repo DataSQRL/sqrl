@@ -1,4 +1,4 @@
-package ai.datasqrl.parse.operator;
+package ai.datasqrl.settings;
 
 import ai.datasqrl.api.ConfigurationTest;
 import ai.datasqrl.config.EnvironmentConfiguration;

@@ -1,15 +1,37 @@
-package ai.datasqrl.transform;
+package ai.datasqrl.transform.transforms;
 
-import ai.datasqrl.schema.Table;
-import ai.datasqrl.util.AliasGenerator;
 import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.SortItem.Ordering;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Table;
+import ai.datasqrl.util.AliasGenerator;
+import ai.datasqrl.validate.scopes.DistinctScope;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParser;
 
-public class SqrlQueries {
-  static AliasGenerator gen = new AliasGenerator();
+public class DistinctToSqlNode {
+
+  @SneakyThrows
+  public SqlNode transform(DistinctAssignment node, DistinctScope distinctScope) {
+    String sql = generateDistinct(node,
+        distinctScope.getTable(),
+        distinctScope.getPartitionKeys().stream()
+          .map(name->name.getId().toString())
+          .collect(Collectors.toList()),
+        distinctScope.getTable().getFields().getElements().stream()
+          .filter(field->field instanceof Column)
+          .map(e->e.getId().toString())
+          .collect(Collectors.toList())
+    );
+
+    SqlParser parser = SqlParser.create(sql);
+
+    return parser.parseQuery();
+  }
 
   public static String generateDistinct(DistinctAssignment statement, Table refTable, List<String> partition, List<String> fields) {
     //https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/sql/queries/deduplication/
@@ -27,6 +49,7 @@ public class SqrlQueries {
         .collect(Collectors.toList());
     String orderStr = order.isEmpty() ? " " : " ORDER BY " + String.join(", ", order);
 
+    AliasGenerator gen = new AliasGenerator();
     String query = String.format(template,
         columnsStr,
         partitionStr, orderStr,

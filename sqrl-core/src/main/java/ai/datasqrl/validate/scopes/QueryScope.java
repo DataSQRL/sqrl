@@ -6,7 +6,6 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.transform.ResolveResult;
 import ai.datasqrl.validate.Namespace;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;

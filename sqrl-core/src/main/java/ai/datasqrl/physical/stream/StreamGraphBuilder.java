@@ -3,7 +3,7 @@ package ai.datasqrl.physical.stream;
 import ai.datasqrl.execute.StreamEngine;
 import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
 import ai.datasqrl.physical.stream.rel.InjectFlinkCluster;
-import ai.datasqrl.plan.RelQuery;
+import ai.datasqrl.plan.queries.TableQuery;
 import ai.datasqrl.server.ImportManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ import org.apache.flink.table.api.internal.FlinkEnvProxy;
 public class StreamGraphBuilder {
   private final StreamEngine streamEngine;
   private final ImportManager importManager;
-  public CreateStreamJobResult createStreamGraph(List<RelQuery> streamQueries) {
+  public CreateStreamJobResult createStreamGraph(List<TableQuery> streamQueries) {
     final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder)streamEngine.createStream();
     final StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)
         StreamTableEnvironment.create(streamBuilder.getEnvironment());
@@ -34,7 +34,7 @@ public class StreamGraphBuilder {
 
     StreamStatementSet stmtSet = tEnv.createStatementSet();
     List<TableDescriptor> createdTables = new ArrayList<>();
-    for (RelQuery sink : streamQueries) {
+    for (TableQuery sink : streamQueries) {
       dataStreamRegisterer.register(sink.getRelNode());
 
       RelNode relNode = InjectFlinkCluster.injectFlinkRelOptCluster(tEnv,

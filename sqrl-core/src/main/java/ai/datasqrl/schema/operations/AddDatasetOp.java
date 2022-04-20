@@ -1,6 +1,5 @@
 package ai.datasqrl.schema.operations;
 
-import ai.datasqrl.plan.ImportTable;
 import java.util.List;
 import lombok.Value;
 

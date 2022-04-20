@@ -2,7 +2,6 @@ package ai.datasqrl.schema.operations;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.ImportTable;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;

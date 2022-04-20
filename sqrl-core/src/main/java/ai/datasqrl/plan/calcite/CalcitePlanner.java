@@ -1,9 +1,8 @@
 package ai.datasqrl.plan.calcite;
 
-import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
-import ai.datasqrl.plan.SqrlRelBuilder;
+import ai.datasqrl.plan.nodes.SqrlRelBuilder;
 import ai.datasqrl.parse.tree.Node;
 import java.util.Properties;
 import lombok.Getter;
@@ -13,7 +12,6 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.schema.SqrlCalciteSchema;
-import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
@@ -54,13 +52,7 @@ public class CalcitePlanner {
     return calciteSchema;
   }
 
-  public void addTable(String name, org.apache.calcite.schema.Table table) {
-    calciteSchema.add(name, table);
-  }
-
   public SqrlRelBuilder createRelBuilder() {
-
-
     return new SqrlRelBuilder(null, cluster, catalogReader);
   }
 
@@ -115,9 +107,5 @@ public class CalcitePlanner {
         SqlToRelConverter.config()
             .withTrimUnusedFields(true));
     return relConverter;
-  }
-
-  public void setView(String name, Table table) {
-    this.calciteSchema.add(name, table);
   }
 }

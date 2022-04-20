@@ -16,7 +16,7 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
 import ai.datasqrl.transform.transforms.AliasFirstColumn;
 import ai.datasqrl.transform.transforms.ExpressionToQueryTransformer;
-import ai.datasqrl.transform.transforms.TransformToDistinct;
+import ai.datasqrl.transform.transforms.DistinctToSqlNode;
 import ai.datasqrl.validate.scopes.DistinctScope;
 import ai.datasqrl.validate.scopes.StatementScope;
 import com.google.common.base.Preconditions;
@@ -175,7 +175,7 @@ public class StatementTransformer {
     public SqlNode visitDistinctAssignment(DistinctAssignment node, StatementScope scope) {
       DistinctScope distinctScope = (DistinctScope)scope.getScopes().get(node);
 
-      TransformToDistinct transform = new TransformToDistinct();
+      DistinctToSqlNode transform = new DistinctToSqlNode();
       return transform.transform(node, distinctScope);
     }
 //

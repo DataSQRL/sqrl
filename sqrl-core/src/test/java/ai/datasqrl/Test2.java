@@ -1,17 +1,11 @@
 package ai.datasqrl;
 
-import ai.datasqrl.config.EnvironmentConfiguration;
-import ai.datasqrl.config.GlobalConfiguration;
-import ai.datasqrl.config.engines.FlinkConfiguration;
-import ai.datasqrl.config.engines.JDBCConfiguration;
-import ai.datasqrl.config.engines.JDBCConfiguration.Dialect;
-import ai.datasqrl.parse.operator.C360Test;
-import ai.datasqrl.server.ScriptDeployment;
 import ai.datasqrl.api.ConfigurationTest;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
+import ai.datasqrl.flink.IngestAndSchemaTest;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import com.google.common.collect.ImmutableList;
 import io.vertx.core.Vertx;
@@ -42,7 +36,7 @@ public class Test2 {
 
     String ds2Name = "ecommerce-data";
     DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
-        .uri(C360Test.RETAIL_DATA_DIR.toAbsolutePath().toString())
+        .uri(C360Example.RETAIL_DATA_DIR.toAbsolutePath().toString())
         .build();
     env.getDatasetRegistry().addOrUpdateSource(ds2Name, fileConfig, ErrorCollector.root());
 //    assertFalse(errors.isFatal());
@@ -55,13 +49,10 @@ public class Test2 {
     //c360, test import all the way through to query
     run(
         "IMPORT ecommerce-data.Customer;\n"
-             + "IMPORT ecommerce-data.Product;\n"
-             + "IMPORT ecommerce-data.Orders;\n"
-//            + "\n"
-//            //TODO: 1. move some conditions to fields to be filtered on by db
+            + "IMPORT ecommerce-data.Product;\n"
+            + "IMPORT ecommerce-data.Orders;\n"
             + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
             + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
-////            TODO: Flink requires order to be a timestamp and required for rank
 //            + "-- Compute useful statistics on orders\n"
             + "Orders.entries.discount := coalesce(discount, 0.0);\n"
             + "Orders.entries.total := quantity * unit_price - discount;\n"
@@ -156,13 +147,13 @@ public class Test2 {
     ErrorCollector errorCollector = ErrorCollector.root();
     try {
       ScriptBundle.Config bundle = ScriptBundle.Config.builder()
-          .name(C360Test.RETAIL_SCRIPT_NAME)
+          .name(C360Example.RETAIL_SCRIPT_NAME)
           .scripts(ImmutableList.of(
               SqrlScript.Config.builder()
-                  .name(C360Test.RETAIL_SCRIPT_NAME)
+                  .name(C360Example.RETAIL_SCRIPT_NAME)
                   .main(true)
                   .content(script)
-                  .inputSchema(Files.readString(C360Test.RETAIL_IMPORT_SCHEMA_FILE))
+                  .inputSchema(Files.readString(C360Example.RETAIL_IMPORT_SCHEMA_FILE))
                   .build()
           ))
           .build();
