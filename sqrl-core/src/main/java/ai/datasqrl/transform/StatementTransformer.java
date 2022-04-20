@@ -3,9 +3,17 @@ package ai.datasqrl.transform;
 import static ai.datasqrl.parse.util.SqrlNodeUtil.hasOneUnnamedColumn;
 
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.parse.tree.DistinctAssignment;
+import ai.datasqrl.plan.nodes.SqrlViewTable;
+import ai.datasqrl.plan.nodes.StreamTable.StreamDataType;
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.ShadowingContainer;
 import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.TableFactory;
+import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
 import ai.datasqrl.transform.transforms.ExpressionToQueryTransformer;
 import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.parse.tree.Expression;
@@ -17,13 +25,25 @@ import ai.datasqrl.parse.tree.Query;
 import ai.datasqrl.parse.tree.QueryAssignment;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.transform.transforms.TransformToDistinct;
+import ai.datasqrl.transform.transforms.Transformers;
+import ai.datasqrl.validate.scopes.DistinctScope;
 import ai.datasqrl.validate.scopes.StatementScope;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql2rel.SqlToRelConverter;
 
 @Slf4j
 @AllArgsConstructor
@@ -33,53 +53,53 @@ public class StatementTransformer {
   //Keep namespace here
   protected final ErrorCollector errors = ErrorCollector.root();
 
-  public Node transform(Node statement, StatementScope statementScope) {
+  public SqlNode transform(Node statement, StatementScope statementScope) {
     Visitor visitor = new Visitor();
     return statement.accept(visitor, statementScope);
   }
 
-  public class Visitor extends AstVisitor<Node, StatementScope> {
-    private final AtomicBoolean importResolved = new AtomicBoolean(false);
+  public class Visitor extends AstVisitor<SqlNode, StatementScope> {
+//    private final AtomicBoolean importResolved = new AtomicBoolean(false);
 
     @Override
-    public Node visitNode(Node node, StatementScope scope) {
+    public SqlNode visitNode(Node node, StatementScope scope) {
       throw new RuntimeException(String.format("Could not process node %s : %s", node.getClass().getName(), node));
     }
-
-    @Override
-    public Node visitScript(ScriptNode node, StatementScope scope) {
-      List<Node> statements = node.getStatements();
-      for (int i = 0; i < statements.size(); i++) {
-        statements.get(i).accept(this, null);
-
-        //Test for end of imports
-        Optional<Node> nextStatement = (i < statements.size()) ?
-          Optional.of(statements.get(i)) : Optional.empty();
-        if (nextStatement.map(s->!(s instanceof ImportDefinition))
-            .orElse(false)) {
-          importResolved.set(true);
-        }
-      }
-
-      return null;
-    }
+//
+//    @Override
+//    public Node visitScript(ScriptNode node, StatementScope scope) {
+//      List<Node> statements = node.getStatements();
+//      for (int i = 0; i < statements.size(); i++) {
+//        statements.get(i).accept(this, null);
+//
+//        //Test for end of imports
+//        Optional<Node> nextStatement = (i < statements.size()) ?
+//          Optional.of(statements.get(i)) : Optional.empty();
+//        if (nextStatement.map(s->!(s instanceof ImportDefinition))
+//            .orElse(false)) {
+//          importResolved.set(true);
+//        }
+//      }
+//
+//      return null;
+//    }
 
     /**
      * Noop
      */
     @Override
-    public Node visitImportDefinition(ImportDefinition node, StatementScope scope) {
-      return node;
+    public SqlNode visitImportDefinition(ImportDefinition node, StatementScope scope) {
+      return null;
     }
 
     @Override
-    public Node visitQueryAssignment(QueryAssignment queryAssignment, StatementScope scope) {
+    public SqlNode visitQueryAssignment(QueryAssignment queryAssignment, StatementScope scope) {
       transformStatement(queryAssignment.getNamePath(), queryAssignment.getQuery(), scope);
       return null;
     }
 
     @Override
-    public Node visitExpressionAssignment(ExpressionAssignment assignment, StatementScope scope) {
+    public SqlNode visitExpressionAssignment(ExpressionAssignment assignment, StatementScope scope) {
       NamePath namePath = assignment.getNamePath();
       Expression expression = assignment.getExpression();
 
@@ -91,7 +111,7 @@ public class StatementTransformer {
       return transformStatement(namePath, query, scope);
     }
 
-    public Node transformStatement(NamePath namePath, Query query, StatementScope scope) {
+    public SqlNode transformStatement(NamePath namePath, Query query, StatementScope scope) {
       log.info("Sqrl Query: {}", NodeFormatter.accept(query));
       if (hasOneUnnamedColumn(query)) {
         Preconditions.checkState(namePath.getPrefix().isPresent());
@@ -104,42 +124,16 @@ public class StatementTransformer {
     /**
      * Analyzes a query as an expression but has some handling to account for shadowing.
      */
-    public Node analyzeExpression(NamePath namePath, Query query,
+    public SqlNode analyzeExpression(NamePath namePath, Query query,
         StatementScope scope) {
-      //Query aliasedQuery = Transformers.aliasFirstColumn.transform(query, namePath.getLast());
+      Query aliasedQuery = Transformers.aliasFirstColumn.transform(query, namePath.getLast());
       QueryTransformer queryTransformer = new QueryTransformer();
-      Scope scope2 = query.accept(queryTransformer, scope);
-      
-      return scope2.getNode();
-//
-//      SqlNode sqlNode = planner.parse(scope.getNode());
-//      log.info("Calcite Query: {}", sqlNode);
-//
-//      RelNode plan = planner.plan(sqlNode);
-//
-//      /*
-//       * Add columns to schema.
-//       *
-//       * Associate the derived type with the column. SQRL types are not used in the query
-//       * analysis, but they are used at graphql query time.
-//       */
-//      Column column = scopeTable.fieldFactory(namePath.getLast());
-//      RelDataTypeField field = plan.getRowType().getField(column.getId().toString(), false, false);
-//      column.setType(CalciteToSqrlTypeConverter.toBasicType(field.getType()));
-//      scopeTable.addField(column);
-//
-//      /*
-//       * Expand dag
-//       */
-//      RelNode expanded = plan.accept(viewExpander);
-//      //Revalidate expanded
-//      planner.getValidator().validate(RelToSql.convertToSqlNode(expanded));
-//
-//      scopeTable.setRelNode(expanded);
-//
-//      //Update the calcite schema so new columns are visible
-//      ViewFactory viewFactory = new ViewFactory();
-//      planner.setView(scopeTable.getId().toString(), viewFactory.create(expanded));
+      Node node = aliasedQuery.accept(queryTransformer, scope);
+
+      NodeToSqlNodeConverter converter = new NodeToSqlNodeConverter();
+      SqlNode sqlNode = node.accept(converter, null);
+
+      return sqlNode;
     }
 
 //    //We are creating a new table but analyzing it in a similar way
@@ -223,29 +217,16 @@ public class StatementTransformer {
 //    public Node visitCreateSubscription(CreateSubscription subscription, StatementScope scope) {
 //      return null;
 //    }
-//
-//    @SneakyThrows
-//    @Override
-//    public Node visitDistinctAssignment(DistinctAssignment node, StatementScope scope) {
-//      Optional<Table> refTable = getTable(node.getTable().toNamePath());
-//
-//      Table table = new TableFactory().create(node.getNamePath(), node.getTable());
-//      List<Column> fields = refTable.get().getFields().visibleList().stream().filter(f->f instanceof Column)
-//          .map(f->(Column)f).collect(
-//          Collectors.toList());
-//      // https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/sql/queries/deduplication/
-//      String sql = SqrlQueries.generateDistinct(node,
-//          refTable.get(),
-//          node.getPartitionKeys().stream()
-//              .map(name->refTable.get().getField(name).getId().toString())
-//              .collect(Collectors.toList()),
-//          fields.stream().map(e->e.getId().toString()).collect(Collectors.toList())
-//          );
-//      SqlParser parser = SqlParser.create(sql);
-//
-//      SqlNode sqlNode = parser.parseQuery();
-//      SqlValidator validator = planner.getValidator();
-//      validator.validate(sqlNode);
+
+    @SneakyThrows
+    @Override
+    public SqlNode visitDistinctAssignment(DistinctAssignment node, StatementScope scope) {
+      DistinctScope distinctScope = (DistinctScope)scope.getScopes().get(node);
+
+      TransformToDistinct transform = new TransformToDistinct();
+
+      return transform.transform(node, distinctScope);
+
 //      SqlToRelConverter sqlToRelConverter = planner.getSqlToRelConverter(validator);
 //      RelNode relNode = sqlToRelConverter.convertQuery(sqlNode, false, true).rel;
 //
@@ -275,7 +256,7 @@ public class StatementTransformer {
 //      schema.add(table);
 //
 //      return null;
-//    }
+    }
 //
 //    @Override
 //    public Node visitJoinDeclaration(JoinDeclaration node, StatementScope scope) {

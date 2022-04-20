@@ -1,11 +1,12 @@
 package ai.datasqrl.schema.operations;
 
-import ai.datasqrl.plan.ImportLocalPlannerResult;
+import ai.datasqrl.plan.ImportTable;
+import java.util.List;
 import lombok.Value;
 
 @Value
 public class AddDatasetOp implements SchemaOperation {
-  ImportLocalPlannerResult result;
+  List<ImportTable> importedPaths;
 
   @Override
   public <T> T accept(OperationVisitor visitor) {

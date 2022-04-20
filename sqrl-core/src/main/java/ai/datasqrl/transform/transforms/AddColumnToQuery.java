@@ -21,6 +21,7 @@ import ai.datasqrl.parse.tree.TableNode;
 import ai.datasqrl.parse.tree.TableSubquery;
 import ai.datasqrl.parse.tree.name.Name;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,9 +42,10 @@ public class AddColumnToQuery {
    * INNER JOIN (SELECT _uuid, _idx1, COALESCE(discount, 0.0) AS discount
    *            FROM entries) AS _t2 ON _t1._uuid = _t2._uuid AND _t1._idx1 = _t2._idx1;
    */
-  public QuerySpecification transform(Table table, Map<Name, Table> joinScope, Name expressionName,
+  public QuerySpecification transform(Table table, Name expressionName,
       boolean isAggregating, QuerySpecification spec) {
     Name lAlias = gen.nextTableAliasName();
+    Map<Name, Table> joinScope = new HashMap<>();
     joinScope.put(lAlias, table);
     TableNode tableNode = new TableNode(Optional.empty(), table.getId().toNamePath(), Optional.of(lAlias));
 

@@ -3,6 +3,7 @@ package ai.datasqrl.parse.tree;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class DistinctAssignment extends Assignment {
@@ -37,13 +38,21 @@ public class DistinctAssignment extends Assignment {
   }
 
   @Override
-  public int hashCode() {
-    return 0;
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    DistinctAssignment that = (DistinctAssignment) o;
+    return Objects.equals(table, that.table) && Objects.equals(partitionKeys,
+        that.partitionKeys) && Objects.equals(order, that.order);
   }
 
   @Override
-  public boolean equals(Object obj) {
-    return false;
+  public int hashCode() {
+    return Objects.hash(table, partitionKeys, order);
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {

@@ -7,6 +7,7 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Table;
+import ai.datasqrl.transform.Scope.ResolveResult;
 import ai.datasqrl.validate.Namespace;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -103,11 +104,11 @@ public class QueryScope implements ValidatorScope {
     return null;
   }
 
-  @Value
-  public static class ResolveResult {
-    Field firstField;
-    Optional<NamePath> remaining;
-    Name alias;
-    Table table;
-  }
+//  @Value
+//  public static class ResolveResult {
+//    Field firstField;
+//    Optional<NamePath> remaining;
+//    Name alias;
+//    Table table;
+//  }
 }

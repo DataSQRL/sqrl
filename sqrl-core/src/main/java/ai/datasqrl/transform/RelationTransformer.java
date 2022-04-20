@@ -1,18 +1,37 @@
 package ai.datasqrl.transform;
 
+import ai.datasqrl.function.FunctionLookup;
 import ai.datasqrl.parse.tree.AstVisitor;
+import ai.datasqrl.parse.tree.Expression;
+import ai.datasqrl.parse.tree.Join;
 import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.Relation;
+import ai.datasqrl.parse.tree.Select;
+import ai.datasqrl.parse.tree.SelectItem;
+import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.TableNode;
+import ai.datasqrl.schema.Table;
+import ai.datasqrl.transform.ExpressionTransformer.JoinResult;
 import ai.datasqrl.transform.transforms.TablePathToJoin;
+import ai.datasqrl.transform.transforms.Transformers;
+import ai.datasqrl.validate.aggs.AggregationDetector;
 import ai.datasqrl.validate.scopes.StatementScope;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
+  AggregationDetector aggregationDetector = new AggregationDetector(new FunctionLookup());
+  private List<JoinResult> additionalJoins = new ArrayList<>();
 
   @Override
   public Relation visitQuerySpecification(QuerySpecification node, StatementScope scope) {
-//
-//    Scope sourceScope = node.getFrom().accept(this, scope);
+
+
+    Select select = rewriteSelect(node.getSelect(), scope);
+
+    Relation from = node.getFrom().accept(this, scope);
 //
 //    Select expandedSelect = expandStar(node.getSelect(), scope);
 //
@@ -22,10 +41,9 @@ public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
 //    Optional<OrderBy> orderBy = node.getOrderBy().map(order -> rewriteOrderBy(order, scope));
 //
 //    // Qualify other expressions
-//    Select select = (Select)expandedSelect.accept(this, scope).getNode();
 //    Optional<Expression> where = node.getWhere().map(w->rewriteExpression(w, scope));
 //    Optional<Expression> having = node.getHaving().map(h->rewriteExpression(h, scope)); //todo identify and replace having clause
-//    Relation from = appendAdditionalJoins((Relation)sourceScope.getNode());
+    Relation joined = appendAdditionalJoins(from);
 //    QuerySpecification spec = new QuerySpecification(
 //        node.getLocation(),
 //        select,
@@ -36,18 +54,27 @@ public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
 //        orderBy,
 //        node.getLimit()
 //    );
-//
-//    return createScope(rewriteQuerySpec(spec, scope), scope);
-    return new QuerySpecification(
+
+    return rewriteQuerySpec(new QuerySpecification(
         node.getLocation(),
-        node.getSelect(),
-        node.getFrom().accept(this, scope),
+        select,
+        joined,
         node.getWhere(),
         node.getGroupBy(),
         node.getHaving(),
         node.getOrderBy(),
         node.getLimit()
-    );
+    ), scope);
+//    return
+  }
+
+  public Select rewriteSelect(Select select, StatementScope scope) {
+    List<SelectItem> items = select.getSelectItems().stream()
+        .map(s->(SingleColumn)s)
+        .map(s-> new SingleColumn(rewriteExpression(s.getExpression(), scope), s.getAlias()))
+        .collect(Collectors.toList());
+
+    return new Select(select.getLocation(), select.isDistinct(), items);
   }
 //
 //  private OrderBy rewriteOrderBy(OrderBy order, Scope scope) {
@@ -57,37 +84,37 @@ public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
 //    return new OrderBy(order.getLocation(), items);
 //  }
 //
-//  /*
-//   * Rewrites queries to form compliant sql
-//   */
-//  private Node rewriteQuerySpec(QuerySpecification spec,
-//      Scope scope) {
-//
-//    Optional<Table> contextTable = scope.getContextTable();
-//
-//    QuerySpecification rewrittenNode = contextTable
-//        .map(t->{
-//          QuerySpecification rewritten = Transformers.addContextToQuery.transform(spec, t);
-//          return spec.getLimit().map(l -> Transformers.convertLimitToWindow.transform(rewritten, t))
-//              .orElse(rewritten);
-//        })
-//        .orElse(spec);
-//
-//    if (scope.isExpression() && contextTable.isPresent()) {
-//      QuerySpecification query = Transformers.addColumnToQuery.transform(contextTable.get(), scope.getJoinScope(), scope.getExpressionName(),
-//          aggregationDetector.isAggregating(spec.getSelect()), rewrittenNode);
-//      return query;
-//    }
-//
-//    return rewrittenNode;
-//  }
-//
-//  private Relation appendAdditionalJoins(Relation from) {
-//    for (JoinResult result : additionalJoins) {
-//      from = new Join(Optional.empty(), result.getType(), from, result.getRelation(), result.getCriteria());
-//    }
-//    return from;
-//  }
+  /*
+   * Rewrites queries to form compliant sql
+   */
+  private Relation rewriteQuerySpec(QuerySpecification spec,
+      StatementScope scope) {
+
+    Optional<Table> contextTable = scope.getContextTable();
+
+    QuerySpecification rewrittenNode = contextTable
+        .map(t->{
+          QuerySpecification rewritten = Transformers.addContextToQuery.transform(spec, t);
+          return spec.getLimit().map(l -> Transformers.convertLimitToWindow.transform(rewritten, t))
+              .orElse(rewritten);
+        })
+        .orElse(spec);
+
+    if (/*scope.isExpression() && */contextTable.isPresent()) {
+      QuerySpecification query = Transformers.addColumnToQuery.transform(contextTable.get(), scope.getNamePath().getLast(),
+          aggregationDetector.isAggregating(spec.getSelect()), rewrittenNode);
+      return query;
+    }
+
+    return rewrittenNode;
+  }
+
+  private Relation appendAdditionalJoins(Relation from) {
+    for (JoinResult result : additionalJoins) {
+      from = new Join(Optional.empty(), result.getType(), from, result.getRelation(), result.getCriteria());
+    }
+    return from;
+  }
 
   /**
    * Note: This node is not walked from the rhs of a join.
@@ -227,11 +254,11 @@ public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
 //        parentScope.isExpression(), parentScope.getExpressionName());
 //  }
 //
-//  private Expression rewriteExpression(Expression expression, Scope scope) {
-//    ExpressionAnalyzer analyzer = new ExpressionAnalyzer();
-//    Expression expr = analyzer.analyze(expression, scope);
-//
-//    this.additionalJoins.addAll(analyzer.joinResults);
-//    return expr;
-//  }
+  private Expression rewriteExpression(Expression expression, StatementScope scope) {
+    ExpressionTransformer expressionTransformer = new ExpressionTransformer();
+    Expression expr = expressionTransformer.transform(expression, scope);
+
+    this.additionalJoins.addAll(expressionTransformer.joinResults);
+    return expr;
+  }
 }

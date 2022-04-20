@@ -5,6 +5,7 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.VersionedName;
 import ai.datasqrl.schema.Relationship.Type;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataTypeField;
 
 @Getter
 @Setter
@@ -24,8 +26,8 @@ public class Table implements ShadowingContainer.Nameable {
   private final NamePath path;
   public final boolean isInternal;
   private RelNode relNode;
-  private final Set<Integer> primaryKey;
-  private final Set<Integer> parentPrimaryKey;
+  private Set<Integer> primaryKey;
+  private Set<Integer> parentPrimaryKey;
 
   private List<Field> partitionKeys;
 
@@ -67,19 +69,32 @@ public class Table implements ShadowingContainer.Nameable {
   }
 
   public List<Column> getPrimaryKeys() {
-    List<Column> pks = this.fields.visibleStream()
-        .filter(f->f instanceof Column)
-        .map(f->(Column) f)
-        .filter(f->f.isPrimaryKey)
-        .collect(Collectors.toList());
+    Set<Integer> pk = new HashSet<>();
+    pk.addAll(this.primaryKey);
+    pk.addAll(this.parentPrimaryKey);
 
-    //Bad remove this
-    if (pks.isEmpty()) {
-      return List.of((Column)this.fields.get(0));
+    List<Column> pks = new ArrayList<>();
+    for (Integer index : pk) {
+      RelDataTypeField field = this.relNode.getRowType().getFieldList().get(index);
+      pks.add((Column)this.fields.getByName(VersionedName.parse(field.getName()).toName()).get());
     }
 
     return pks;
   }
+//
+//  public List<Name> getPrimaryKeyNames() {
+//    Set<Integer> pk = new HashSet<>();
+//    pk.addAll(this.primaryKey);
+//    pk.addAll(this.parentPrimaryKey);
+//
+//    List<Name> pks = new ArrayList<>();
+//    for (Integer index : pk) {
+//      RelDataTypeField field = this.relNode.getRowType().getFieldList().get(index);
+//      pks.add(VersionedName.parse(field.getName()));
+//    }
+//
+//    return pks;
+//  }
 
   public boolean isVisible() {
     return !isInternal;

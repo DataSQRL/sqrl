@@ -41,17 +41,30 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.core.Uncollect;
+import org.apache.calcite.rel.logical.LogicalAggregate;
+import org.apache.calcite.rel.logical.LogicalCalc;
 import org.apache.calcite.rel.logical.LogicalCorrelate;
+import org.apache.calcite.rel.logical.LogicalFilter;
+import org.apache.calcite.rel.logical.LogicalIntersect;
+import org.apache.calcite.rel.logical.LogicalJoin;
+import org.apache.calcite.rel.logical.LogicalMatch;
+import org.apache.calcite.rel.logical.LogicalMinus;
 import org.apache.calcite.rel.logical.LogicalProject;
+import org.apache.calcite.rel.logical.LogicalSort;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.logical.LogicalTableScan;
+import org.apache.calcite.rel.logical.LogicalUnion;
 import org.apache.calcite.rel.logical.LogicalValues;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableSet;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -303,6 +316,47 @@ public class Physicalizer {
       public RelNode visit(LogicalProject project) {
         return new LogicalProject(cluster, temp, project.getHints(), project.getInput().accept(this),
             project.getProjects(), project.getRowType());
+      }
+
+      @Override
+      public RelNode visit(LogicalAggregate aggregate) {
+        return new LogicalAggregate(cluster, temp, aggregate.getHints(),
+            aggregate.getInput().accept(this),
+            aggregate.getGroupSet(),
+            aggregate.getGroupSets(), aggregate.getAggCallList());
+      }
+
+      @Override
+      public RelNode visit(LogicalFilter filter) {
+        return new LogicalFilter(cluster, temp, filter.getInput().accept(this), filter.getCondition(),
+            (ImmutableSet<CorrelationId>) filter.getVariablesSet());
+      }
+
+      @Override
+      public RelNode visit(LogicalJoin join) {
+        return new LogicalJoin(cluster, temp, join.getHints(), join.getLeft().accept(this), join.getRight().accept(this),
+            join.getCondition(), join.getVariablesSet(), join.getJoinType(), join.isSemiJoinDone(),
+            (ImmutableList<RelDataTypeField>) join.getSystemFieldList());
+      }
+
+      @Override
+      public RelNode visit(LogicalUnion union) {
+        return super.visit(union);
+      }
+
+      @Override
+      public RelNode visit(LogicalIntersect intersect) {
+        return super.visit(intersect);
+      }
+
+      @Override
+      public RelNode visit(LogicalMinus minus) {
+        return super.visit(minus);
+      }
+
+      @Override
+      public RelNode visit(LogicalSort sort) {
+        throw new RuntimeException("sort todo");
       }
 
       @Override

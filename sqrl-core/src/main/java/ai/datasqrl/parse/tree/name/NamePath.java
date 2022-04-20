@@ -155,6 +155,10 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
         return NamePath.of(newNames);
     }
 
+    public NamePath popLast() {
+      Name[] newNames = Arrays.copyOfRange(names, 0, names.length - 1);
+      return NamePath.of(newNames);
+    }
     public Name getFirst() {
         return names[0];
     }

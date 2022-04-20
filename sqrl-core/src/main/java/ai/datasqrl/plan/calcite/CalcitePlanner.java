@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
+import ai.datasqrl.schema.Schema;
 import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
 import ai.datasqrl.plan.SqrlRelBuilder;
 import ai.datasqrl.parse.tree.Node;
@@ -32,7 +33,7 @@ public class CalcitePlanner {
   private final org.apache.calcite.jdbc.SqrlCalciteSchema calciteSchema;
   private final JavaTypeFactoryImpl typeFactory;
 
-  SqlValidator.Config validatorConfig = SqlValidator.Config.DEFAULT
+  public static SqlValidator.Config validatorConfig = SqlValidator.Config.DEFAULT
       .withCallRewrite(true)
       .withIdentifierExpansion(true)
       .withColumnReferenceExpansion(true)
@@ -41,10 +42,10 @@ public class CalcitePlanner {
       .withSqlConformance(SqlConformanceEnum.LENIENT)
       ;
 
-  public CalcitePlanner() {
+  public CalcitePlanner(Schema schema) {
     this.typeFactory = new FlinkTypeFactory(new FlinkTypeSystem());
     this.cluster = CalciteTools.createHepCluster(typeFactory);
-    this.sqrlSchema = new SqrlCalciteSchema();
+    this.sqrlSchema = new SqrlCalciteSchema(schema);
     this.calciteSchema = new org.apache.calcite.jdbc.SqrlCalciteSchema(sqrlSchema);
     this.catalogReader = CalciteTools.getCalciteCatalogReader(calciteSchema);
   }

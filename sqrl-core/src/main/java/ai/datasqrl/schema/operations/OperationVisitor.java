@@ -1,10 +1,11 @@
 package ai.datasqrl.schema.operations;
 
-import ai.datasqrl.schema.operations.AddDatasetOp;
-
 public abstract class OperationVisitor {
 
-  public <T> T visit(AddDatasetOp op) {
-    return null;
-  }
+  public abstract <T> T visit(AddDatasetOp op);
+
+  public abstract <T> T visit(AddQueryOp addQueryOp);
+
+  public abstract <T> T visit(AddColumnOp addColumnOp);
+
 }

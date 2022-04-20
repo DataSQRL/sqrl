@@ -16,8 +16,12 @@ public class ViewExpander extends RelShuttleImpl {
 
   @Override
   public RelNode visit(TableScan scan) {
+    if (scan.getTable().getQualifiedName().get(0).equalsIgnoreCase("default_catalog")) {
+      return super.visit(scan);
+    }
+
     org.apache.calcite.schema.Table table = planner.getSchema()
-        .getTable(scan.getTable().getQualifiedName().get(0), false).getTable();
+        .getTable(scan.getTable().getQualifiedName().get(scan.getTable().getQualifiedName().size()-1), false).getTable();
 
     if (table instanceof SqrlViewTable) {
       return (((SqrlViewTable) table).getRelNode()).accept(this);

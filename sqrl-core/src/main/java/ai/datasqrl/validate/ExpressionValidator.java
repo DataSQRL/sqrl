@@ -2,8 +2,10 @@ package ai.datasqrl.validate;
 
 
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.function.FunctionLookup;
 import ai.datasqrl.function.SqrlFunction;
 import ai.datasqrl.parse.tree.AstVisitor;
+import ai.datasqrl.parse.tree.DefaultTraversalVisitor;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.Identifier;
@@ -13,6 +15,7 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.Relation;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Field;
+import ai.datasqrl.transform.Scope.ResolveResult;
 import ai.datasqrl.validate.paths.PathUtil;
 import ai.datasqrl.validate.scopes.ExpressionScope;
 import ai.datasqrl.validate.scopes.FunctionCallScope;
@@ -39,14 +42,16 @@ public class ExpressionValidator {
     return node.accept(visitor, scope);
   }
 
-  class Visitor extends AstVisitor<ExpressionScope, QueryScope> {
+  class Visitor extends DefaultTraversalVisitor<ExpressionScope, QueryScope> {
 
     /**
      * Validates and resolves function, validates to-many aggregations function
      */
     @Override
     public ExpressionScope visitFunctionCall(FunctionCall node, QueryScope scope) {
-      SqrlFunction function = scope.getNamespace().resolveFunction(node.getNamePath());
+//      SqrlFunction function = scope.getNamespace().resolveFunction(node.getNamePath());
+      FunctionLookup functionLookup = new FunctionLookup();
+      SqrlFunction function = functionLookup.lookup(node.getNamePath());
 
       FunctionCallScope functionCallScope = new FunctionCallScope(function, function.isAggregate());
       scopes.put(node, functionCallScope);
@@ -56,6 +61,7 @@ public class ExpressionValidator {
         ExpressionValidator expressionValidator = new ExpressionValidator();
         expressionValidator.validate(argument, scope);
         argumentScopes.putAll(expressionValidator.getScopes());
+        scopes.putAll(expressionValidator.getScopes());
       }
 
       /*
@@ -75,16 +81,16 @@ public class ExpressionValidator {
 
     @Override
     public ExpressionScope visitIdentifier(Identifier node, QueryScope scope) {
-      List<QueryScope.ResolveResult> results = scope.resolveFirst(node.getNamePath());
+      List<ResolveResult> results = scope.resolveFirst(node.getNamePath());
 
       Preconditions.checkState(results.size() == 1,
           "Could not resolve field (ambiguous or non-existent: " + node + " : " + results + ")");
 
-      QueryScope.ResolveResult result = results.get(0);
+      ResolveResult result = results.get(0);
       NamePath qualifiedName = scope.qualify(node.getNamePath());
       List<Field> fieldPath = result.getTable().walkFields(result.getRemaining().get());
 
-      IdentifierScope identifierScope = new IdentifierScope(result.getAlias(), qualifiedName, fieldPath);
+      IdentifierScope identifierScope = new IdentifierScope(result.getAlias(), qualifiedName, fieldPath, result);
       scopes.put(node, identifierScope);
       return identifierScope;
     }

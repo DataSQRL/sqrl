@@ -1,29 +1,16 @@
 package ai.datasqrl.transform;
 
 
-import static ai.datasqrl.transform.transforms.JoinWalker.createTableCriteria;
-import static ai.datasqrl.transform.transforms.JoinWalker.expandRelation;
 import static ai.datasqrl.parse.util.SqrlNodeUtil.alias;
 import static ai.datasqrl.parse.util.SqrlNodeUtil.function;
 import static ai.datasqrl.parse.util.SqrlNodeUtil.ident;
 import static ai.datasqrl.parse.util.SqrlNodeUtil.selectAlias;
+import static ai.datasqrl.transform.transforms.JoinWalker.createTableCriteria;
 
-import ai.datasqrl.util.AliasGenerator;
-import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.TableFactory;
-import ai.datasqrl.transform.transforms.JoinWalker;
-import ai.datasqrl.transform.transforms.JoinWalker.TableItem;
-import ai.datasqrl.transform.transforms.JoinWalker.WalkResult;
-import ai.datasqrl.validate.paths.PathUtil;
-import ai.datasqrl.transform.Scope.ResolveResult;
 import ai.datasqrl.function.FunctionLookup;
 import ai.datasqrl.function.RewritingFunction;
 import ai.datasqrl.function.SqlNativeFunction;
 import ai.datasqrl.function.SqrlFunction;
-import ai.datasqrl.transform.transforms.Transformers;
 import ai.datasqrl.parse.tree.AliasedRelation;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionRewriter;
@@ -33,19 +20,32 @@ import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.Join.Type;
 import ai.datasqrl.parse.tree.JoinCriteria;
 import ai.datasqrl.parse.tree.LongLiteral;
-import ai.datasqrl.parse.tree.OrderBy;
 import ai.datasqrl.parse.tree.Query;
 import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.Relation;
 import ai.datasqrl.parse.tree.Select;
-import ai.datasqrl.parse.tree.SortItem;
 import ai.datasqrl.parse.tree.TableSubquery;
 import ai.datasqrl.parse.tree.Window;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.TableFactory;
+import ai.datasqrl.transform.Scope.ResolveResult;
+import ai.datasqrl.transform.transforms.JoinWalker;
+import ai.datasqrl.transform.transforms.JoinWalker.TableItem;
+import ai.datasqrl.transform.transforms.JoinWalker.WalkResult;
+import ai.datasqrl.transform.transforms.Transformers;
+import ai.datasqrl.util.AliasGenerator;
+import ai.datasqrl.validate.paths.PathUtil;
+import ai.datasqrl.validate.scopes.IdentifierScope;
+import ai.datasqrl.validate.scopes.StatementScope;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.sql.SqlAggFunction;
@@ -59,10 +59,10 @@ public class ExpressionTransformer {
   }
 
 
-  public Expression analyze(Expression node, Scope scope) {
+  public Expression transform(Expression node, StatementScope scope) {
     Visitor visitor = new Visitor();
     Expression newExpression =
-        ExpressionTreeRewriter.rewriteWith(visitor, node, new Context(scope));
+        ExpressionTreeRewriter.rewriteWith(visitor, node, scope);
 
     return newExpression;
   }
@@ -79,10 +79,10 @@ public class ExpressionTransformer {
     }
   }
 
-  class Visitor extends ExpressionRewriter<Context> {
+  class Visitor extends ExpressionRewriter<StatementScope> {
     @Override
-    public Expression rewriteFunctionCall(FunctionCall node, Context context,
-        ExpressionTreeRewriter<Context> treeRewriter) {
+    public Expression rewriteFunctionCall(FunctionCall node, StatementScope scope,
+        ExpressionTreeRewriter<StatementScope> treeRewriter) {
       SqrlFunction function = functionLookup.lookup(node.getNamePath());
       //Special case for count
       //TODO Replace this bit of code
@@ -100,31 +100,32 @@ public class ExpressionTransformer {
         RewritingFunction rewritingFunction = (RewritingFunction) function;
         node = rewritingFunction.rewrite(node);
       }
-
       List<Expression> arguments = new ArrayList<>();
-
       for (Expression arg : node.getArguments()) {
-        arguments.add(treeRewriter.rewrite(arg, context));
+        arguments.add(treeRewriter.rewrite(arg, scope));
       }
 
-      if (function instanceof SqlNativeFunction && ((SqlNativeFunction)function).getOp() instanceof SqlAggFunction &&
+      if (function instanceof SqlNativeFunction && ((SqlNativeFunction)function).getOp() instanceof SqlAggFunction
+          &&
           ((SqlAggFunction)((SqlNativeFunction)function).getOp()).requiresOver()) {
         return new FunctionCall(node.getLocation(), node.getNamePath(), arguments, node.isDistinct(),
-            createWindow(context.getScope()));
+            createWindow(scope));
       }
-
       if (function.isAggregate() && node.getArguments().size() == 1 &&
           node.getArguments().get(0) instanceof Identifier) {
         Identifier identifier = (Identifier)node.getArguments().get(0);
+        IdentifierScope identifierScope = (IdentifierScope)scope.getScopes().get(identifier);
+
         /*
          * The first token is either the join scope or a column in any join scope
          */
-        List<ResolveResult> resolve = context.getScope().resolveFirst(identifier.getNamePath());
-        Preconditions.checkState(resolve.size() == 1,
-            "Column ambiguous or missing: %s %s", identifier.getNamePath(), resolve);
-        if(PathUtil.isToMany(resolve.get(0))) {
-          ResolveResult result = resolve.get(0);
-
+        ResolveResult resolve = identifierScope.getResolveResult();//context.getScope().resolveFirst(identifier.getNamePath());
+//        Preconditions.checkState(resolve.size() == 1,
+//            "Column ambiguous or missing: %s %s", identifier.getNamePath(), resolve);
+        if(PathUtil.isToMany(resolve)) {
+          ResolveResult result = resolve;
+          Map<Name, Table> joinScope = new HashMap<>();
+          joinScope.put(result.getAlias(), result.getTable());
           JoinWalker joinWalker = new JoinWalker();
           WalkResult walkResult = joinWalker.walk(
               result.getAlias(), //The table alias that resolved the field
@@ -132,7 +133,8 @@ public class ExpressionTransformer {
               result.getRemaining().get(), //The fields from the base that we should resolve
               Optional.empty(), //push in relation
               Optional.empty(),
-              context.getScope().getJoinScope()
+              joinScope
+//              context.getScope().getJoinScope()
           );
           TableItem first = walkResult.getTableStack().get(0);
           TableItem last = walkResult.getTableStack().get(walkResult.getTableStack().size() - 1);
@@ -161,7 +163,7 @@ public class ExpressionTransformer {
           );
 
           //Add context keys to query so we can rejoin it in the subsequent step
-          QuerySpecification contextSubquery = Transformers.addContextToQuery.transform(subquerySpec, resolve.get(0).getTable(),
+          QuerySpecification contextSubquery = Transformers.addContextToQuery.transform(subquerySpec, resolve.getTable(),
               first.getAlias());
 
           Query query = new Query(Optional.empty(), contextSubquery, Optional.empty(), Optional.empty());
@@ -170,11 +172,11 @@ public class ExpressionTransformer {
           TableFactory tableFactory = new TableFactory();
           Table table = tableFactory.create(query);
 
-          context.getScope().getJoinScope().put(tableAlias, table);
+          joinScope.put(tableAlias, table);
 
           AliasedRelation subquery = new AliasedRelation(tableSubquery, ident(tableAlias));
 
-          JoinCriteria criteria = createTableCriteria(context.getScope().getJoinScope(), result.getAlias(), tableAlias);
+          JoinCriteria criteria = createTableCriteria(joinScope, result.getAlias(), tableAlias);
           joinResults.add(new JoinResult(Type.LEFT, subquery, Optional.of(criteria)));
           return new Identifier(Optional.empty(), NamePath.of(tableAlias, fieldAlias));
         }
@@ -184,50 +186,55 @@ public class ExpressionTransformer {
           node.isDistinct(), node.getOver());
     }
 
-    private Optional<Window> createWindow(Scope scope) {
-      Table table = scope.getFieldScope(Name.SELF_IDENTIFIER).get();
-      List<Expression> partition = new ArrayList<>();
-      for (Column column : table.getPrimaryKeys()) {
-        partition.add(new Identifier(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath().concat(column.getId().toNamePath())));
-      }
-
-      OrderBy orderBy = new OrderBy(List.of(
-          new SortItem(Optional.empty(),
-              new Identifier(Optional.empty(), Name.INGEST_TIME.toNamePath()),
-              Optional.empty())));
-
-      return Optional.of(new Window(partition, Optional.of(orderBy)));
+    private Optional<Window> createWindow(StatementScope scope) {
+//      //
+//      Table table = scope.getFieldScope(Name.SELF_IDENTIFIER).get();
+//      List<Expression> partition = new ArrayList<>();
+//      for (Column column : table.getPrimaryKeys()) {
+//        partition.add(new Identifier(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath().concat(column.getId().toNamePath())));
+//      }
+//
+//      OrderBy orderBy = new OrderBy(List.of(
+//          new SortItem(Optional.empty(),
+//              new Identifier(Optional.empty(), Name.INGEST_TIME.toNamePath()),
+//              Optional.empty())));
+//
+//      return Optional.of(new Window(partition, Optional.of(orderBy)));
+      return Optional.empty();
     }
 
     @Override
-    public Expression rewriteIdentifier(Identifier node, Context context,
-        ExpressionTreeRewriter<Context> treeRewriter) {
-      List<Scope.ResolveResult> results = context.getScope().resolveFirst(node.getNamePath());
+    public Expression rewriteIdentifier(Identifier node, StatementScope scope,
+        ExpressionTreeRewriter<StatementScope> treeRewriter) {
+      IdentifierScope identifierScope = (IdentifierScope)scope.getScopes().get(node);
 
-      Preconditions.checkState(results.size() == 1,
-          "Could not resolve field (ambiguous or non-existent: " + node + " : " + results + ")");
+//      List<Scope.ResolveResult> results = scope.resolveFirst(node.getNamePath());
 
-      if (PathUtil.isToOne(results.get(0))) {
-        ResolveResult result = results.get(0);
-        /*
-         * Replace current token with an Identifier and expand the path into a subquery. This
-         * subquery is joined to the table it was resolved from.
-         */
-        Name baseTableAlias = gen.nextTableAliasName();
-        Relation relation = expandRelation(context.getScope().getJoinScope(), (Relationship)result.getFirstField(), baseTableAlias);
+//      Preconditions.checkState(results.size() == 1,
+//          "Could not resolve field (ambiguous or non-existent: " + node + " : " + results + ")");
+//
+//      List<Field> fieldPath = identifierScope.getFieldPath();
+//      if (PathUtil.isToOne(results.get(0))) {
+//        ResolveResult result = results.get(0);
+//        /*
+//         * Replace current token with an Identifier and expand the path into a subquery. This
+//         * subquery is joined to the table it was resolved from.
+//         */
+//        Name baseTableAlias = gen.nextTableAliasName();
+//        Relation relation = expandRelation(scope.getScope().getJoinScope(), (Relationship)result.getFirstField(), baseTableAlias);
+//
+//        joinResults.add(new JoinResult(
+//            Type.LEFT, relation,
+//            Optional.of(JoinWalker.createRelCriteria(scope.getScope().getJoinScope(), result.getAlias(), baseTableAlias,
+//                (Relationship) result.getFirstField()))
+//        ));
+//        return new Identifier(node.getLocation(), baseTableAlias.toNamePath().concat(
+//            result.getRemaining().get().getLast()));
+//      }
 
-        joinResults.add(new JoinResult(
-            Type.LEFT, relation,
-            Optional.of(JoinWalker.createRelCriteria(context.getScope().getJoinScope(), result.getAlias(), baseTableAlias,
-                (Relationship) result.getFirstField()))
-        ));
-        return new Identifier(node.getLocation(), baseTableAlias.toNamePath().concat(
-            result.getRemaining().get().getLast()));
-      }
-
-      NamePath qualifiedName = context.getScope().qualify(node.getNamePath());
+      NamePath qualifiedName = identifierScope.getQualifiedName();
       Identifier identifier = new Identifier(node.getLocation(), qualifiedName);
-      identifier.setResolved(results.get(0).getFirstField());
+      identifier.setResolved(identifierScope.getFieldPath().get(0));
       return identifier;
     }
   }

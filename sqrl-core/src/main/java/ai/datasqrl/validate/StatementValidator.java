@@ -5,23 +5,29 @@ import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
+import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.Node;
+import ai.datasqrl.parse.tree.SortItem;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.ViewExpander;
 import ai.datasqrl.plan.calcite.CalcitePlanner;
+import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.ShadowingContainer;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.validate.imports.ImportManager;
 import ai.datasqrl.validate.imports.ImportManager.SourceTableImport;
+import ai.datasqrl.validate.scopes.DistinctScope;
 import ai.datasqrl.validate.scopes.ImportScope;
 import ai.datasqrl.validate.scopes.QueryScope;
 import ai.datasqrl.validate.scopes.StatementScope;
 import ai.datasqrl.validate.scopes.ValidatorScope;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,6 +35,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import scala.annotation.meta.field;
 
 /**
  * The validator does a smell test of the statement and assigns scopes
@@ -87,7 +94,7 @@ public class StatementValidator {
       ImportScope importScope = new ImportScope(node.getNamePath(), node.getAliasName(), importSource);
       HashMap<Node, ValidatorScope> scopes = new HashMap();
       scopes.put(node, importScope);
-      return new StatementScope(Optional.empty(), scopes);
+      return new StatementScope(Optional.empty(), null, scopes);
     }
 //
 //    @Override
@@ -108,14 +115,21 @@ public class StatementValidator {
       NamePath namePath = assignment.getNamePath();
       Expression expression = assignment.getExpression();
 
-      Optional<Table> table = schema.getByName(namePath.getFirst());
+      Optional<Table> table = walk(schema, namePath.popLast());
+
       Preconditions.checkState(table.isPresent(), "Expression cannot be assigned to root");
 
       ExpressionValidator expressionValidator = new ExpressionValidator();
       QueryScope scope = new QueryScope(table, Map.of(Name.SELF_IDENTIFIER, table.get()));
       expressionValidator.validate(expression, scope);
 
-      return new StatementScope(table, expressionValidator.getScopes());
+
+      return new StatementScope(table, assignment.getNamePath(), expressionValidator.getScopes());
+    }
+
+    private Optional<Table> walk(Schema schema, NamePath namePath) {
+      Table table = schema.getByName(namePath.getFirst()).get();
+      return table.walk(namePath.popFirst());
     }
 //
 //    @Override
@@ -125,17 +139,32 @@ public class StatementValidator {
 //
 
     /**
+     * Validates tables and column names.
      */
     @SneakyThrows
     @Override
     public StatementScope visitDistinctAssignment(DistinctAssignment node, Void context) {
+      Preconditions.checkState(node.getNamePath().getLength() == 1, "Distinct node must be on root (tbd expand)");
+      Optional<Table> tableOpt = schema.getByName(node.getTable());
+      Preconditions.checkState(tableOpt.isPresent(), "Table could not be found: "+ node.getTable());
+      Table table = tableOpt.get();
+      List<Field> partitionKeys = new ArrayList<>();
+      for (Name key : node.getPartitionKeys()) {
+        Optional<Field> field = table.getFields().getByName(key);
+        Preconditions.checkState(field.isPresent(), "Partition key could not be found: "+ key);
+        partitionKeys.add(field.get());
+      }
+      List<Field> sortFields = new ArrayList<>();
+      for (SortItem sort : node.getOrder()) {
+        Preconditions.checkState(sort.getSortKey() instanceof Identifier);
+        Optional<Field> field = table.getFields().getByName(((Identifier)sort.getSortKey()).getNamePath().getFirst());
+        Preconditions.checkState(field.isPresent(), "Sort Item could not be found: " +
+            ((Identifier)sort.getSortKey()).getNamePath().getFirst());
+        sortFields.add(field.get());
+      }
 
-//      Optional<Table> refTable = getTable(node.getTable().toNamePath());
-
-//      Table table = new TableFactory().create(node.getNamePath(), node.getTable());
-
-      //TODO: Validate that everything is valid
-      return null;
+      Map<Node, ValidatorScope> scopes = Map.of(node, new DistinctScope(table, partitionKeys, sortFields));
+      return new StatementScope(Optional.empty(), node.getNamePath(), scopes);
     }
 
 //    @Override

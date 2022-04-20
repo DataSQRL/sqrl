@@ -10,16 +10,16 @@ import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.physical.ExecutionPlan;
 import ai.datasqrl.physical.Physicalizer;
 import ai.datasqrl.plan.LocalPlanner;
-import ai.datasqrl.plan.LocalPlannerResult;
 import ai.datasqrl.plan.LogicalPlan;
 import ai.datasqrl.plan.Optimizer;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.SchemaBuilder;
-import ai.datasqrl.schema.operations.OperationFactory;
 import ai.datasqrl.schema.operations.SchemaOperation;
 import ai.datasqrl.transform.StatementTransformer;
 import ai.datasqrl.validate.StatementValidator;
 import ai.datasqrl.validate.scopes.StatementScope;
+import com.google.common.base.Preconditions;
+import org.apache.calcite.sql.SqlNode;
 
 public class BundleProcessor {
 
@@ -49,6 +49,7 @@ public class BundleProcessor {
     SchemaBuilder schema = new SchemaBuilder();
     for (Node node : script.getStatements()) {
       SchemaOperation operation = processStatement(node, schema);
+      Preconditions.checkNotNull(operation, "Operation is null for statement: {%s}", node);
       schema.apply(operation);
     }
 
@@ -62,12 +63,9 @@ public class BundleProcessor {
     StatementScope scope = validator.validate(statement);
 
     StatementTransformer transformer = new StatementTransformer(schema.peek());
-    Node sqlNode = transformer.transform(statement, scope);
+    SqlNode sqlNode = transformer.transform(statement, scope);
 
-    LocalPlanner planner = new LocalPlanner();
-    LocalPlannerResult plan = planner.plan(sqlNode, scope);
-
-    OperationFactory operationFactory = new OperationFactory();
-    return operationFactory.create(sqlNode, plan);
+    LocalPlanner planner = new LocalPlanner(schema.peek());
+    return planner.plan(statement, sqlNode, scope);
   }
 }

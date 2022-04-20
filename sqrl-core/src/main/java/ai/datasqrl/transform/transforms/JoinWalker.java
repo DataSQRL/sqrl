@@ -47,7 +47,7 @@ public class JoinWalker {
         ? current.get() :
         new TableNode(Optional.empty(), baseTable.getId().toNamePath(), Optional.of(baseTableAlias));
 
-    joinScope.put(baseTableAlias, baseTable);
+//    joinScope.put(baseTableAlias, baseTable);
 
     TableBookkeeping b = new TableBookkeeping(relation, baseTableAlias, baseTable);
     List<TableItem> tableItems = new ArrayList<>();
@@ -110,7 +110,9 @@ public class JoinWalker {
     List<Expression> conditions = new ArrayList<>();
     for (Column column : joinColumns) {
       Column lhsColumn = lhsTable.getEquivalent(column).orElseThrow();
-      Column rhsColumn = rhsTable.getEquivalent(column).orElseThrow();
+      Column rhsColumn = rhsTable.getEquivalent(column)
+          .orElseThrow(()->
+              new RuntimeException("Could not find column: " + column  + " in " + rhsTable));
       conditions.add(eq(
           ident(lhs.toNamePath().concat(lhsColumn.getName())),
           ident(rhs.toNamePath().concat(rhsColumn.getName()))));

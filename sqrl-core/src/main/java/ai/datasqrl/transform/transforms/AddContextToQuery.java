@@ -89,7 +89,7 @@ public class AddContextToQuery {
   private boolean isParentPrimaryKey(SingleColumn singleColumn) {
     if (singleColumn.getExpression() instanceof Identifier &&
         ((Identifier)singleColumn.getExpression()).getResolved() instanceof Column &&
-        ((Column)((Identifier)singleColumn.getExpression()).getResolved()).isPrimaryKey()) {
+        ((Column)((Identifier)singleColumn.getExpression()).getResolved()).getParentPrimaryKey()) {
       return true;
     }
     return false;
