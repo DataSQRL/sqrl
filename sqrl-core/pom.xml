@@ -165,7 +165,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-kafka_2.11</artifactId>
+      <artifactId>flink-connector-kafka_2.12</artifactId>
       <version>1.14.0</version>
     </dependency>
     <dependency>
@@ -204,13 +204,13 @@
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.13</artifactId>
+      <artifactId>kafka_2.12</artifactId>
       <version>3.1.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.13</artifactId>
+      <artifactId>kafka_2.12</artifactId>
       <version>3.1.0</version>
       <scope>test</scope>
       <classifier>test</classifier>

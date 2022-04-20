@@ -1,6 +1,7 @@
 package ai.datasqrl.io;
 
 
+import ai.datasqrl.Environment;
 import ai.datasqrl.TestUtil;
 import ai.datasqrl.api.ConfigurationTest;
 import ai.datasqrl.config.SqrlSettings;
@@ -13,7 +14,6 @@ import ai.datasqrl.io.sources.dataset.DatasetRegistry;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
-import ai.datasqrl.server.Environment;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import lombok.SneakyThrows;
