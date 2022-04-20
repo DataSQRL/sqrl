@@ -12,8 +12,10 @@ import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.TableNode;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.transform.ExpressionTransformer.JoinResult;
+import ai.datasqrl.transform.transforms.AddColumnToQuery;
+import ai.datasqrl.transform.transforms.AddContextToQuery;
+import ai.datasqrl.transform.transforms.ConvertLimitToWindow;
 import ai.datasqrl.transform.transforms.TablePathToJoin;
-import ai.datasqrl.transform.transforms.Transformers;
 import ai.datasqrl.validate.aggs.AggregationDetector;
 import ai.datasqrl.validate.scopes.StatementScope;
 import java.util.ArrayList;
@@ -94,14 +96,14 @@ public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
 
     QuerySpecification rewrittenNode = contextTable
         .map(t->{
-          QuerySpecification rewritten = Transformers.addContextToQuery.transform(spec, t);
-          return spec.getLimit().map(l -> Transformers.convertLimitToWindow.transform(rewritten, t))
+          QuerySpecification rewritten = new AddContextToQuery().transform(spec, t);
+          return spec.getLimit().map(l -> new ConvertLimitToWindow().transform(rewritten, t))
               .orElse(rewritten);
         })
         .orElse(spec);
 
     if (/*scope.isExpression() && */contextTable.isPresent()) {
-      QuerySpecification query = Transformers.addColumnToQuery.transform(contextTable.get(), scope.getNamePath().getLast(),
+      QuerySpecification query = new AddColumnToQuery().transform(contextTable.get(), scope.getNamePath().getLast(),
           aggregationDetector.isAggregating(spec.getSelect()), rewrittenNode);
       return query;
     }

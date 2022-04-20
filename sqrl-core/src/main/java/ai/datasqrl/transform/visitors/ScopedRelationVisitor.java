@@ -30,17 +30,7 @@ public class ScopedRelationVisitor extends AstVisitor<Relation, Object> {
     return rewriteTableNode(node, (TableScope) validatorScope);
   }
 
-  public <T extends Relation> T visitTableNode(TableNode node, C context) {
-    return null;
-  }
-
   public <T extends Relation> T rewriteTableNode(TableNode functionCall, TableScope tableScope) {
     return null;
   }
-
-
-  public Node getScope(Node node) {
-    return null;
-  }
-
 }

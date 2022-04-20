@@ -1,13 +1,12 @@
 package ai.datasqrl.validate.scopes;
 
 import ai.datasqrl.parse.tree.Identifier;
-import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.transform.Scope.ResolveResult;
+import ai.datasqrl.transform.ResolveResult;
 import ai.datasqrl.validate.Namespace;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -19,7 +18,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.Value;
 
 @AllArgsConstructor
 @Builder
@@ -103,12 +101,4 @@ public class QueryScope implements ValidatorScope {
   public Namespace getNamespace() {
     return null;
   }
-
-//  @Value
-//  public static class ResolveResult {
-//    Field firstField;
-//    Optional<NamePath> remaining;
-//    Name alias;
-//    Table table;
-//  }
 }

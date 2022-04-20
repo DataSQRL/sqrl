@@ -14,7 +14,7 @@ import ai.datasqrl.execute.flink.ingest.FlinkSourceMonitor;
 import ai.datasqrl.io.sinks.registry.MetadataSinkRegistryPersistence;
 import ai.datasqrl.io.sources.dataset.MetadataSourceRegistryPersistence;
 import ai.datasqrl.io.sources.dataset.SourceTableMonitorImpl;
-import ai.datasqrl.validate.imports.ImportManager;
+import ai.datasqrl.server.ImportManager;
 import ai.datasqrl.config.metadata.JDBCMetadataStore.Provider;
 import ai.datasqrl.config.provider.DataSinkRegistryPersistenceProvider;
 import ai.datasqrl.config.provider.EnvironmentPersistenceProvider;

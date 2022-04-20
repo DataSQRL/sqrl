@@ -1,7 +1,7 @@
 package ai.datasqrl.plan.nodes;
 
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.validate.imports.ImportManager.SourceTableImport;
+import ai.datasqrl.server.ImportManager.SourceTableImport;
 import java.util.List;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;

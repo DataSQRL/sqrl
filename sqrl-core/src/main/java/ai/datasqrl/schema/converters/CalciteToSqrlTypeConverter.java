@@ -1,4 +1,4 @@
-package ai.datasqrl.schema;
+package ai.datasqrl.schema.converters;
 
 import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.basic.BigIntegerType;

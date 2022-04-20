@@ -1,18 +1,12 @@
 package ai.datasqrl.plan;
 
-import ai.datasqrl.schema.LogicalDag;
+import ai.datasqrl.plan.nodes.LogicalSqrlSink;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.plan.nodes.LogicalFlinkSink;
-import ai.datasqrl.plan.nodes.LogicalPgSink;
-import ai.datasqrl.plan.nodes.LogicalSqrlSink;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.apache.calcite.plan.RelTraitSet;
-import org.apache.commons.lang3.tuple.Pair;
 
 public class SqrlPlanner {
 

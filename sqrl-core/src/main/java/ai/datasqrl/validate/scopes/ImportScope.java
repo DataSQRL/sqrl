@@ -3,7 +3,7 @@ package ai.datasqrl.validate.scopes;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.validate.Namespace;
-import ai.datasqrl.validate.imports.ImportManager.SourceTableImport;
+import ai.datasqrl.server.ImportManager.SourceTableImport;
 import java.util.Optional;
 import lombok.Value;
 

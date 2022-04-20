@@ -13,7 +13,7 @@ import ai.datasqrl.plan.LocalPlanner;
 import ai.datasqrl.plan.LogicalPlan;
 import ai.datasqrl.plan.Optimizer;
 import ai.datasqrl.schema.Schema;
-import ai.datasqrl.schema.SchemaBuilder;
+import ai.datasqrl.schema.operations.OperationExecutor;
 import ai.datasqrl.schema.operations.SchemaOperation;
 import ai.datasqrl.transform.StatementTransformer;
 import ai.datasqrl.validate.StatementValidator;
@@ -46,7 +46,7 @@ public class BundleProcessor {
     SqrlParser parser = SqrlParser.newParser(errorCollector);
     ScriptNode script = parser.parse(mainScript.getContent());
 
-    SchemaBuilder schema = new SchemaBuilder();
+    OperationExecutor schema = new OperationExecutor();
     for (Node node : script.getStatements()) {
       SchemaOperation operation = processStatement(node, schema);
       Preconditions.checkNotNull(operation, "Operation is null for statement: {%s}", node);
@@ -56,13 +56,13 @@ public class BundleProcessor {
     return schema.build();
   }
 
-  public SchemaOperation processStatement(Node statement, SchemaBuilder schema) {
+  public SchemaOperation processStatement(Node statement, OperationExecutor schema) {
     StatementValidator validator = new StatementValidator(
         options.getImportManager(),
         schema.peek());
     StatementScope scope = validator.validate(statement);
 
-    StatementTransformer transformer = new StatementTransformer(schema.peek());
+    StatementTransformer transformer = new StatementTransformer();
     SqlNode sqlNode = transformer.transform(statement, scope);
 
     LocalPlanner planner = new LocalPlanner(schema.peek());

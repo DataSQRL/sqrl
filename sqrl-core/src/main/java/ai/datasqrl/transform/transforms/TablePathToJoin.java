@@ -7,7 +7,6 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.transform.transforms.JoinWalker.WalkResult;
 import ai.datasqrl.transform.visitors.ScopedRelationVisitor;
-import ai.datasqrl.transform.visitors.ScopedVisitor;
 import ai.datasqrl.validate.scopes.TableScope;
 import ai.datasqrl.validate.paths.RelativeTablePath;
 import ai.datasqrl.validate.scopes.StatementScope;

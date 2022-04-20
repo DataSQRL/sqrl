@@ -1,8 +1,8 @@
 package ai.datasqrl.schema.operations;
 
 /**
- *
+ * An operation that modifies the schema
  */
 public interface SchemaOperation {
-  public <T> T accept(OperationVisitor visitor);
+  <T> T accept(OperationVisitor visitor);
 }

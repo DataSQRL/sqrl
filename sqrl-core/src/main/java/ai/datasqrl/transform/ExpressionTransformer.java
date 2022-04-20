@@ -31,17 +31,15 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.TableFactory;
-import ai.datasqrl.transform.Scope.ResolveResult;
+import ai.datasqrl.schema.factory.SubqueryTableFactory;
+import ai.datasqrl.transform.transforms.AddContextToQuery;
 import ai.datasqrl.transform.transforms.JoinWalker;
 import ai.datasqrl.transform.transforms.JoinWalker.TableItem;
 import ai.datasqrl.transform.transforms.JoinWalker.WalkResult;
-import ai.datasqrl.transform.transforms.Transformers;
 import ai.datasqrl.util.AliasGenerator;
 import ai.datasqrl.validate.paths.PathUtil;
 import ai.datasqrl.validate.scopes.IdentifierScope;
 import ai.datasqrl.validate.scopes.StatementScope;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,18 +63,6 @@ public class ExpressionTransformer {
         ExpressionTreeRewriter.rewriteWith(visitor, node, scope);
 
     return newExpression;
-  }
-
-  public static class Context {
-    private final Scope scope;
-
-    public Context(Scope scope) {
-      this.scope = scope;
-    }
-
-    public Scope getScope() {
-      return scope;
-    }
   }
 
   class Visitor extends ExpressionRewriter<StatementScope> {
@@ -163,13 +149,13 @@ public class ExpressionTransformer {
           );
 
           //Add context keys to query so we can rejoin it in the subsequent step
-          QuerySpecification contextSubquery = Transformers.addContextToQuery.transform(subquerySpec, resolve.getTable(),
+          QuerySpecification contextSubquery = new AddContextToQuery().transform(subquerySpec, resolve.getTable(),
               first.getAlias());
 
           Query query = new Query(Optional.empty(), contextSubquery, Optional.empty(), Optional.empty());
           TableSubquery tableSubquery = new TableSubquery(query);
 
-          TableFactory tableFactory = new TableFactory();
+          SubqueryTableFactory tableFactory = new SubqueryTableFactory();
           Table table = tableFactory.create(query);
 
           joinScope.put(tableAlias, table);

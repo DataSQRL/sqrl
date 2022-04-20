@@ -4,7 +4,6 @@ import ai.datasqrl.config.scripts.SqrlQuery;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.nodes.LogicalFlinkSink;
 import ai.datasqrl.plan.nodes.LogicalSqrlSink;
-import ai.datasqrl.schema.LogicalDag;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;

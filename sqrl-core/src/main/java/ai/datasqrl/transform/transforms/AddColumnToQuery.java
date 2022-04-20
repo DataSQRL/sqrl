@@ -7,7 +7,7 @@ import ai.datasqrl.util.AliasGenerator;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.TableFactory;
+import ai.datasqrl.schema.factory.SubqueryTableFactory;
 import ai.datasqrl.parse.tree.AliasedRelation;
 import ai.datasqrl.parse.tree.Join;
 import ai.datasqrl.parse.tree.Join.Type;
@@ -53,7 +53,7 @@ public class AddColumnToQuery {
 
     Query query = new Query(Optional.empty(), spec, Optional.empty(), Optional.empty());
 
-    Table rhsTable = new TableFactory().create(query);
+    Table rhsTable = new SubqueryTableFactory().create(query);
     joinScope.put(rAlias, rhsTable);
     Type joinType = Type.LEFT;//isAggregating? Type.LEFT : Type.INNER;
     JoinCriteria criteria = JoinWalker.createTableCriteria(joinScope, lAlias, rAlias);
@@ -76,8 +76,8 @@ public class AddColumnToQuery {
 
   private Select toSelectList(Table table, Name expressionName, Name lAlias, Name rAlias) {
     List<SelectItem> selectItems = new ArrayList<>();
-    Column c = table.fieldFactory(expressionName);
-    SingleColumn column = singleColumn(rAlias.toNamePath().concat(expressionName), c.getId());
+    Name name = table.getNextFieldName(expressionName);
+    SingleColumn column = singleColumn(rAlias.toNamePath().concat(expressionName), name);
     selectItems.add(column);
 
     for (Field field : table.getFields().getElements()) {

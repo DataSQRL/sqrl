@@ -16,7 +16,7 @@ import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.validate.imports.ImportManager;
+import ai.datasqrl.server.ImportManager;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.schema.type.schema.SchemaAdjustmentSettings;
 import java.util.List;

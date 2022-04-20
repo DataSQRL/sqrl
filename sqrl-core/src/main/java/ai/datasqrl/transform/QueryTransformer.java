@@ -1,7 +1,5 @@
 package ai.datasqrl.transform;
 
-import static ai.datasqrl.parse.util.SqrlNodeUtil.mapToOrdinal;
-
 import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.rel.RelNode;
@@ -182,10 +181,6 @@ public class Table implements ShadowingContainer.Nameable {
   public String toString() {
     return "Table{" +
         "name=" + name +
-//        ", pk=" + getPrimaryKeys().stream().map(e->e.getName()).collect(Collectors.toList()) +
-//        ", fk=" + getForeignKeys().stream().map(e->e.getName()).collect(Collectors.toList()) +
-//        ", fields=" + getFields().stream().map(e->e.getName()).collect(Collectors.toList()) +
-//        ", relNode=" + getRelNode().explain() +
         '}';
   }
 
@@ -193,14 +188,10 @@ public class Table implements ShadowingContainer.Nameable {
     this.relNode = relNode;
   }
 
-  public void addUniqueConstraint(List<Field> partitionKeys) {
-    this.partitionKeys = partitionKeys;
-  }
-
   /**
-   * Creates a field but does not bind it to this table
+   * Determines the next field name
    */
-  public Column fieldFactory(Name name) {
+  public Name getNextFieldName(Name name) {
     if (name instanceof VersionedName) {
       name = ((VersionedName)name).toName();
     }
@@ -209,7 +200,7 @@ public class Table implements ShadowingContainer.Nameable {
       version = getField(name).getVersion() + 1;
     }
 
-    return new Column(name, this, version, null, 0, List.of(), false, false, Optional.empty(), false);
+    return VersionedName.of(name, version);
   }
 
   public Optional<Column> getEquivalent(Column lhsColumn) {

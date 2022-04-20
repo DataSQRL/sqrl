@@ -1,5 +1,8 @@
-package ai.datasqrl.schema;
+package ai.datasqrl.schema.factory;
 
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Table;
 import ai.datasqrl.validate.PrimaryKeyDeriver;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.Identifier;
@@ -13,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class TableFactory {
+public class SubqueryTableFactory {
 
   /**
    * Creates a table based on a subquery and derives its ppk and pk
@@ -63,9 +66,5 @@ public class TableFactory {
         false, false, Optional.empty(), false);
 
     return column;
-  }
-
-  public Table create(NamePath namePath, Name table) {
-    return new Table(SourceTablePlanner.tableIdCounter.incrementAndGet(), namePath.getLast(), namePath, false);
   }
 }

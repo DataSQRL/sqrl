@@ -4,7 +4,7 @@ import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.transform.Scope.ResolveResult;
+import ai.datasqrl.transform.ResolveResult;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.validate.scopes.IdentifierScope;
 

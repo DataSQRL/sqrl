@@ -3,19 +3,8 @@ package ai.datasqrl.transform;
 import static ai.datasqrl.parse.util.SqrlNodeUtil.hasOneUnnamedColumn;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.parse.tree.DistinctAssignment;
-import ai.datasqrl.plan.nodes.SqrlViewTable;
-import ai.datasqrl.plan.nodes.StreamTable.StreamDataType;
-import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Schema;
-import ai.datasqrl.schema.ShadowingContainer;
-import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.TableFactory;
-import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
-import ai.datasqrl.transform.transforms.ExpressionToQueryTransformer;
 import ai.datasqrl.parse.tree.AstVisitor;
+import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
 import ai.datasqrl.parse.tree.ImportDefinition;
@@ -23,34 +12,22 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.Query;
 import ai.datasqrl.parse.tree.QueryAssignment;
-import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
+import ai.datasqrl.transform.transforms.AliasFirstColumn;
+import ai.datasqrl.transform.transforms.ExpressionToQueryTransformer;
 import ai.datasqrl.transform.transforms.TransformToDistinct;
-import ai.datasqrl.transform.transforms.Transformers;
 import ai.datasqrl.validate.scopes.DistinctScope;
 import ai.datasqrl.validate.scopes.StatementScope;
 import com.google.common.base.Preconditions;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.parser.SqlParser;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql2rel.SqlToRelConverter;
 
 @Slf4j
 @AllArgsConstructor
 public class StatementTransformer {
-  private Schema schema;
-
-  //Keep namespace here
   protected final ErrorCollector errors = ErrorCollector.root();
 
   public SqlNode transform(Node statement, StatementScope statementScope) {
@@ -59,31 +36,6 @@ public class StatementTransformer {
   }
 
   public class Visitor extends AstVisitor<SqlNode, StatementScope> {
-//    private final AtomicBoolean importResolved = new AtomicBoolean(false);
-
-    @Override
-    public SqlNode visitNode(Node node, StatementScope scope) {
-      throw new RuntimeException(String.format("Could not process node %s : %s", node.getClass().getName(), node));
-    }
-//
-//    @Override
-//    public Node visitScript(ScriptNode node, StatementScope scope) {
-//      List<Node> statements = node.getStatements();
-//      for (int i = 0; i < statements.size(); i++) {
-//        statements.get(i).accept(this, null);
-//
-//        //Test for end of imports
-//        Optional<Node> nextStatement = (i < statements.size()) ?
-//          Optional.of(statements.get(i)) : Optional.empty();
-//        if (nextStatement.map(s->!(s instanceof ImportDefinition))
-//            .orElse(false)) {
-//          importResolved.set(true);
-//        }
-//      }
-//
-//      return null;
-//    }
-
     /**
      * Noop
      */
@@ -126,7 +78,7 @@ public class StatementTransformer {
      */
     public SqlNode analyzeExpression(NamePath namePath, Query query,
         StatementScope scope) {
-      Query aliasedQuery = Transformers.aliasFirstColumn.transform(query, namePath.getLast());
+      Query aliasedQuery = new AliasFirstColumn().transform(query, namePath.getLast());
       QueryTransformer queryTransformer = new QueryTransformer();
       Node node = aliasedQuery.accept(queryTransformer, scope);
 
@@ -224,38 +176,7 @@ public class StatementTransformer {
       DistinctScope distinctScope = (DistinctScope)scope.getScopes().get(node);
 
       TransformToDistinct transform = new TransformToDistinct();
-
       return transform.transform(node, distinctScope);
-
-//      SqlToRelConverter sqlToRelConverter = planner.getSqlToRelConverter(validator);
-//      RelNode relNode = sqlToRelConverter.convertQuery(sqlNode, false, true).rel;
-//
-//      for (Field field : fields) {
-//        if (field instanceof Column) {
-//          Column f = new Column(field.getName(), table, field.getVersion(),
-//              null, 0, List.of(), false, false, Optional.empty(), false);
-//          if (node.getPartitionKeys().contains(field.getName())) {
-//            f.setPrimaryKey(true);
-//          }
-//          table.addField(f);
-//        }
-//      }
-//
-//      RelNode expanded = relNode.accept(new RelShuttleImpl(){
-//        @Override
-//        public RelNode visit(TableScan scan) {
-//          return refTable.get().getRelNode();
-//        }
-//      });
-//      table.setRelNode(expanded);
-//
-//      StreamDataType streamDataType = new StreamDataType(table, expanded.getRowType().getFieldList());
-//
-//      planner.getSchema().add(table.getId().toString(), new SqrlViewTable(streamDataType, relNode));
-//
-//      schema.add(table);
-//
-//      return null;
     }
 //
 //    @Override
@@ -327,5 +248,10 @@ public class StatementTransformer {
 //      }
 //      return Optional.empty();
 ////    }
+      @Override
+      public SqlNode visitNode(Node node, StatementScope scope) {
+        throw new RuntimeException(String.format("Could not process node %s : %s", node.getClass().getName(), node));
+      }
+
   }
 }

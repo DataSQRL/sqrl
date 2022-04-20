@@ -11,14 +11,11 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.SortItem;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.ViewExpander;
-import ai.datasqrl.plan.calcite.CalcitePlanner;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Schema;
-import ai.datasqrl.schema.ShadowingContainer;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.validate.imports.ImportManager;
-import ai.datasqrl.validate.imports.ImportManager.SourceTableImport;
+import ai.datasqrl.server.ImportManager;
+import ai.datasqrl.server.ImportManager.SourceTableImport;
 import ai.datasqrl.validate.scopes.DistinctScope;
 import ai.datasqrl.validate.scopes.ImportScope;
 import ai.datasqrl.validate.scopes.QueryScope;
@@ -35,7 +32,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import scala.annotation.meta.field;
 
 /**
  * The validator does a smell test of the statement and assigns scopes
@@ -89,7 +85,7 @@ public class StatementValidator {
 //      importManager.setTableFactory(new SourceTableFactory(planner));
 
       SourceTableImport importSource = importManager
-          .resolveTable2(node.getNamePath().get(0), node.getNamePath().get(1), node.getAliasName(), errors);
+          .resolveTable(node.getNamePath().get(0), node.getNamePath().get(1), node.getAliasName(), errors);
 
       ImportScope importScope = new ImportScope(node.getNamePath(), node.getAliasName(), importSource);
       HashMap<Node, ValidatorScope> scopes = new HashMap();

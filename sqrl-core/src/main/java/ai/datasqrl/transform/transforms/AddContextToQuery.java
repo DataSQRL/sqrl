@@ -1,8 +1,8 @@
 package ai.datasqrl.transform.transforms;
 
-import static ai.datasqrl.parse.util.AliasUtil.primaryKeySelect;
 import static ai.datasqrl.parse.util.SqrlNodeUtil.groupBy;
 
+import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.util.AliasGenerator;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Table;
@@ -113,5 +113,17 @@ public class AddContextToQuery {
     }
 
     return groupBy(grouping);
+  }
+
+
+  public static SelectItem primaryKeySelect(NamePath name, NamePath alias, Column column) {
+    Identifier identifier = new Identifier(Optional.empty(), name);
+    Identifier aliasIdentifier = new Identifier(Optional.empty(), alias);
+    Column ppk = column.copy();
+    ppk.setParentPrimaryKey(true);
+    ppk.setSource(column);
+    identifier.setResolved(ppk);
+    aliasIdentifier.setResolved(ppk);
+    return new SingleColumn(identifier, aliasIdentifier);
   }
 }

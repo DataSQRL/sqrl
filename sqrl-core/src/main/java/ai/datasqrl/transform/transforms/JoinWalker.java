@@ -9,7 +9,7 @@ import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.TableFactory;
+import ai.datasqrl.schema.factory.SubqueryTableFactory;
 import ai.datasqrl.parse.tree.AliasedRelation;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.Identifier;
@@ -30,9 +30,6 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.Value;
 
-/**
- *
- */
 public class JoinWalker {
   AliasGenerator gen = new AliasGenerator();
   /**
@@ -46,8 +43,6 @@ public class JoinWalker {
     Relation relation = current.isPresent()
         ? current.get() :
         new TableNode(Optional.empty(), baseTable.getId().toNamePath(), Optional.of(baseTableAlias));
-
-//    joinScope.put(baseTableAlias, baseTable);
 
     TableBookkeeping b = new TableBookkeeping(relation, baseTableAlias, baseTable);
     List<TableItem> tableItems = new ArrayList<>();
@@ -109,7 +104,8 @@ public class JoinWalker {
 
     List<Expression> conditions = new ArrayList<>();
     for (Column column : joinColumns) {
-      Column lhsColumn = lhsTable.getEquivalent(column).orElseThrow();
+      Column lhsColumn = lhsTable.getEquivalent(column).orElseThrow(()->
+          new RuntimeException("Could not find column: " + column  + " in " + lhsTable));
       Column rhsColumn = rhsTable.getEquivalent(column)
           .orElseThrow(()->
               new RuntimeException("Could not find column: " + column  + " in " + rhsTable));
@@ -143,7 +139,7 @@ public class JoinWalker {
       Map<Name, Table> joinScope,
       Relationship rel, Name nextAlias) {
     if (rel.getType() == Relationship.Type.JOIN) {
-      joinScope.put(nextAlias, new TableFactory().create((Query)rel.getNode()));
+      joinScope.put(nextAlias, new SubqueryTableFactory().create((Query)rel.getNode()));
       TableSubquery tableSubquery = new TableSubquery(Optional.empty(), (Query)rel.getNode());
       return new AliasedRelation(
           Optional.empty(),
