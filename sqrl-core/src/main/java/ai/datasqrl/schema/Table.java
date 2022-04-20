@@ -1,15 +1,14 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.schema.Relationship.Multiplicity;
-import ai.datasqrl.schema.Relationship.Type;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.VersionedName;
+import ai.datasqrl.schema.Relationship.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,20 +24,24 @@ public class Table implements ShadowingContainer.Nameable {
   private final NamePath path;
   public final boolean isInternal;
   private RelNode relNode;
+  private final Set<Integer> primaryKey;
+  private final Set<Integer> parentPrimaryKey;
 
   private List<Field> partitionKeys;
 
   public Table(int uniqueId, Name name, NamePath path, boolean isInternal) {
-    this(uniqueId, name, path, isInternal, null);
+    this(uniqueId, name, path, isInternal, null, Set.of(), Set.of());
   }
 
   public Table(int uniqueId, Name name, NamePath path, boolean isInternal,
-      RelNode relNode) {
+      RelNode relNode, Set<Integer> primaryKey, Set<Integer> parentPrimaryKey) {
     this.name = name;
     this.uniqueId = uniqueId;
     this.path = path;
     this.isInternal = isInternal;
     this.relNode = relNode;
+    this.primaryKey = primaryKey;
+    this.parentPrimaryKey = parentPrimaryKey;
   }
 
   public Field getField(Name name) {

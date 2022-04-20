@@ -18,6 +18,7 @@ import ai.datasqrl.validate.scopes.StatementScope;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.rel.RelNode;
@@ -83,7 +84,11 @@ public class LocalPlanner extends AstVisitor<LocalPlannerResult, StatementScope>
         .project(FlinkRelDataTypeConverter.getScalarIndexes(schema))
         .build();
 
-    ImportTable table = new ImportTable(tableName.toNamePath(), relNode, FlinkSchemaUtil.getFieldNames(schema));
+    ImportTable table = new ImportTable(tableName.toNamePath(),
+        relNode,
+        FlinkSchemaUtil.getFieldNames(schema),
+        Set.of(getIndex(relNode.getRowType(), "_uuid")),
+        Set.of());
 
     importedPaths.add(table);
 
@@ -140,12 +145,12 @@ public class LocalPlanner extends AstVisitor<LocalPlannerResult, StatementScope>
     SqrlRelBuilder builder = calcitePlanner.createRelBuilder();
     RexBuilder rexBuilder = builder.getRexBuilder();
     CorrelationId id = new CorrelationId(0);
-    int indexOfField = 3;
+    int indexOfField = getIndex(streamRelType, fieldName);
     RelDataType t = FlinkTypeFactory.INSTANCE().createSqlType(SqlTypeName.INTEGER);
 
     RelBuilder b = builder
         .scanStream(baseStream, streamRelType)
-//          .watermark(getIndex(streamRelType, INGEST_TIME.getCanonical())) TODO: FIX: timestamp is of the watermark type but an additional watermark gives wrong results (?)
+        .watermark(getIndex(streamRelType, INGEST_TIME.getCanonical()))
         .values(List.of(List.of(rexBuilder.makeExactLiteral(BigDecimal.ZERO))),
             new RelRecordType(List.of(new RelDataTypeFieldImpl("ZERO", 0, t))))
         .project(List.of(builder.getRexBuilder().makeFieldAccess(
@@ -153,7 +158,7 @@ public class LocalPlanner extends AstVisitor<LocalPlannerResult, StatementScope>
         )), List.of(fieldName))
         .uncollect(List.of(), false)
         .correlate(JoinRelType.INNER, id, RexInputRef.of(indexOfField, builder.peek().getRowType()))
-        .project(projectShreddedColumns(rexBuilder, builder.peek()))//TODO: location of columns
+        .project(projectShreddedColumns(rexBuilder, builder.peek()))
         ;
 
     RelNode node = b.build();
@@ -166,7 +171,9 @@ public class LocalPlanner extends AstVisitor<LocalPlannerResult, StatementScope>
     String columnName = fieldName;
     NamePath namePath = baseStream.toNamePath().concat(Name.system(columnName));
     ImportTable importTable = new ImportTable(namePath,
-        node, names
+        node, names,
+        Set.of(getIndex(node.getRowType(), "_idx")),
+        Set.of(0) //first index for uuid
     );
 
     return importTable;

@@ -27,7 +27,8 @@ public class SchemaBuilder extends OperationVisitor {
       NamePath namePath = entry.getTableName();
       if (namePath.getLength() == 1) {
         Table table = tableFactory.create(namePath.getFirst(), namePath, entry.getRelNode(),
-            entry.getFields());
+            entry.getFields(),
+            entry.getPrimaryKey(), entry.getParentPrimaryKey());
         schema.add(table);
       } else {
         Table table = schema.getByName(namePath.get(0)).get();
@@ -39,10 +40,10 @@ public class SchemaBuilder extends OperationVisitor {
             table = ((Relationship) field).getToTable();
           }
         }
-        Table newTable = tableFactory.create(namePath.getLast(), namePath, entry.getRelNode(), entry.getFields());
+        Table newTable = tableFactory.create(namePath.getLast(), namePath, entry.getRelNode(), entry.getFields(),
+            entry.getPrimaryKey(), entry.getParentPrimaryKey());
         Relationship relationship = new Relationship(namePath.getLast(),
             table, newTable, Type.CHILD, Multiplicity.MANY);
-
         table.addField(relationship);
       }
     }

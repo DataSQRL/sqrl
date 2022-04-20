@@ -227,12 +227,6 @@ public class Physicalizer {
 
       RelNode inject = sink.getRelNode().getInput(0);
 
-//      String sql = RelToSql.convertToSql(sink.getRelNode().getInput(0)).replaceAll("\"", "`");
-//      System.out.println(sql);
-
-//      Table tbl2 = tEnv.sqlQuery("SELECT o._uuid, items._idx as _idx1, o._ingest_time, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
-//          "FROM orders o CROSS JOIN UNNEST(o.entries) AS items");
-//      System.out.println(tbl2.explain());
       RelOptCluster cluster = getClusterFromDatastream(tEnv.listTables()[0], tEnv);
       RelNode rewritten = rewrite(tEnv, inject, cluster, tEnv.listTables()[0]);
 
@@ -241,12 +235,6 @@ public class Physicalizer {
       System.out.println(tbl.explain());
 
 
-
-//      tEnv.createTable((QueryOperation) plannerQueryOperation);
-//      org.apache.flink.table.api.Table tbl = tEnv.sqlQuery(sql);
-//      tbl.execute().print();
-
-//      System.out.println(table);
       String name = sink.getTable().name.getCanonical() + "_sink";
 
       Schema schema = FlinkPipelineGenerator.addPrimaryKey(tbl.getSchema().toSchema(), sink.getTable());

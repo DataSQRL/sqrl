@@ -179,18 +179,10 @@ public class FlinkPipelineGenerator {
     for (int i = 0; i < columns.size(); i++) {
       UnresolvedColumn column = columns.get(i);
 //      VersionedName name = VersionedName.parse(column.getName());
-      //hack, choose the first column
-      if (i == 0) {
-//      if (sqrlTable.getField(name) != null) {
-//        Field field = sqrlTable.getField(name);
-//        if (field instanceof Column && ((Column)field).isPrimaryKey()) {
-          builder.column(column.getName(),
-              ((UnresolvedPhysicalColumn) column).getDataType().notNull());
-          pks.add(column.getName());
-
-//        } else {
-//          builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
-//        }
+      if (sqrlTable.getPrimaryKey().contains(i) || sqrlTable.getParentPrimaryKey().contains(i)) {
+        builder.column(column.getName(),
+            ((UnresolvedPhysicalColumn) column).getDataType().notNull());
+        pks.add(column.getName());
       } else {
         builder.column(column.getName(), ((UnresolvedPhysicalColumn) column).getDataType());
       }

@@ -2,6 +2,7 @@ package ai.datasqrl.validate;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.tree.AstVisitor;
+import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
 import ai.datasqrl.parse.tree.ImportDefinition;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -121,17 +123,21 @@ public class StatementValidator {
 //      return null;
 //    }
 //
-//    @SneakyThrows
-//    @Override
-//    public StatementScope visitDistinctAssignment(DistinctAssignment node, Void context) {
+
+    /**
+     */
+    @SneakyThrows
+    @Override
+    public StatementScope visitDistinctAssignment(DistinctAssignment node, Void context) {
+
 //      Optional<Table> refTable = getTable(node.getTable().toNamePath());
-//
+
 //      Table table = new TableFactory().create(node.getNamePath(), node.getTable());
-//
-//      //TODO: Validate that everything is valid
-//      return null;
-//    }
-//
+
+      //TODO: Validate that everything is valid
+      return null;
+    }
+
 //    @Override
 //    public StatementScope visitJoinDeclaration(JoinDeclaration node, Void context) {
 //      NamePath namePath = node.getNamePath();
