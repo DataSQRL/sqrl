@@ -134,59 +134,11 @@ public class IngestAndSchemaTest {
     tEnv.createTemporaryView("TheTable", table);
     table.printSchema();
 
-//        Table sum = table.select($("id").sum().as("sum"));
-//        tEnv.toChangelogStream(sum).print();
-
     Table tableShredding = tEnv.sqlQuery("SELECT  o._uuid, items._idx, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
             "FROM TheTable o CROSS JOIN UNNEST(o.entries) AS items");
 
-    RelNode node = ((PlannerQueryOperation)((TableImpl)tableShredding).getQueryOperation()).getCalciteTree();
-    System.out.println(node.explain());
-    PlannerQueryOperation plannerQueryOperation = new PlannerQueryOperation(
-        FlinkRelBuilder.of(node.getCluster(), null)
-        .push(node)
-        .project(RexInputRef.of(3, node.getRowType()))
-        .build()
-    );
-
-//        Table logicalPlanTable = CreateOperation.create(tEnv, plannerQueryOperation);
-
-    List<Operation> create = tEnv.getParser().parse("CREATE TABLE MyUserTable (\n"
-        + "  discount DOUBLE"
-        + ") WITH (\n"
-        + "   'connector' = 'jdbc',\n"
-        + "   'url' = 'jdbc:mysql://localhost:3306/mydatabase',\n"
-        + "   'table-name' = 'users'\n"
-        + ")\n");
-
-    System.out.println(create);
-
-    tEnv.executeSql("CREATE TABLE MyUserTable (\n"
-        + "  discount DOUBLE\n"
-        + ") WITH (\n"
-        + "   'connector' = 'jdbc',\n"
-        + "   'url' = 'jdbc:postgresql://localhost/henneberger',\n"
-        + "   'table-name' = 'users'\n"
-        + ")\n");
-
-    System.out.println( "Insert " +tEnv.getParser().parse("INSERT INTO MyUserTable\n"
-        + "SELECT discount FROM "+tableShredding+""));
-
-    StatementSet stmtSet = tEnv.createStatementSet();
-    stmtSet.addInsertSql("INSERT INTO MyUserTable\n"
-        + "SELECT discount FROM "+tableShredding+"");
-
-    System.out.println(stmtSet.explain(ExplainDetail.JSON_EXECUTION_PLAN));
-
-    TableResult tableResult2 = stmtSet.execute();
-
-//        Table flattenEntries = table.joinLateral(call("UNNEST", $("entries")
-//                ))
-//                .select($("id"),$("productid"),$("quantity"),$("_idx"));
     tEnv.toChangelogStream(tableShredding).print();
 
     env.execute();
-
   }
-
 }

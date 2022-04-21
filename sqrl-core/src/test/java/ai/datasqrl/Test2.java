@@ -31,8 +31,6 @@ public class Test2 {
 
     env = Environment.create(settings);
 
-//    env.getDatasetRegistry().addOrUpdateSource("c360", dd, ErrorCollector.root());
-
 
     String ds2Name = "ecommerce-data";
     DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
@@ -53,7 +51,7 @@ public class Test2 {
             + "IMPORT ecommerce-data.Orders;\n"
             + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
             + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
-//            + "-- Compute useful statistics on orders\n"
+            + "-- Compute useful statistics on orders\n"
             + "Orders.entries.discount := coalesce(discount, 0.0);\n"
             + "Orders.entries.total := quantity * unit_price - discount;\n"
             + "Orders.total := sum(entries.total);\n"

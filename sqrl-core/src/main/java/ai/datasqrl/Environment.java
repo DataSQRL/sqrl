@@ -1,6 +1,7 @@
 package ai.datasqrl;
 
 import ai.datasqrl.config.BundleOptions;
+import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.config.engines.JDBCConfiguration.Dialect;
 import ai.datasqrl.execute.Job;
@@ -71,20 +72,14 @@ public class Environment implements Closeable {
     Instant compileStart = Instant.now();
     ScriptDeployment deployment;
     try {
-      JDBCConfiguration configuration = JDBCConfiguration.builder()
-          .dbURL("jdbc:postgresql://localhost")
-          .dialect(Dialect.POSTGRES)
-          .build();
       ExecutionPlan plan = compile(bundle);
-      ScriptExecutor executor = new ScriptExecutor(configuration
-          .getDatabase("henneberger"));
+      ScriptExecutor executor = new ScriptExecutor(
+          this.settings.getJdbcConfiguration().getDatabase(MetaData.DEFAULT_DATABASE));
       Job job = executor.execute(plan);
       deployment = ScriptDeployment.of(bundle);
       deployment.setExecutionId(job.getExecutionId());
     } catch (Exception e) {
       e.printStackTrace();
-//      errors.add(ConfigurationError.fatal(ConfigurationError.LocationType.SCRIPT,bundle.getName().getDisplay(),
-//              "Encountered error while compiling script: %s",e));
       return null;
     }
     //TODO: Need to put the actual compilation results in here
@@ -109,7 +104,7 @@ public class Environment implements Closeable {
   public ExecutionPlan compile(ScriptBundle bundle) throws Exception {
     ImportManager importManager = settings.getImportManagerProvider().createImportManager(datasetRegistry);
     ErrorCollector errors = importManager.registerUserSchema(bundle.getMainScript().getSchema());
-    System.out.println(errors);
+
     if (errors.isFatal()) {
       throw new RuntimeException();
     }

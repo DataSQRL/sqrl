@@ -1,0 +1,5 @@
+db.dialect=POSTGRES
+db.driverClassName=org.postgresql.Driver
+db.url=jdbc:postgresql://localhost
+db.username=my_username
+db.password=

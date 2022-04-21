@@ -1,3 +1,9 @@
+
+##############################
+## Test settings
+##############################
+sqrl-core/src/test/resources/local.properties
+
 ##############################
 ## Java
 ##############################
@@ -57,7 +63,7 @@ tmp/
 *.bak
 *.swp
 *~.nib
-local.properties
+sqrl-core/src/test/resources/local.properties
 .loadpath
 .factorypath
 
@@ -87,3 +93,4 @@ sqrl-cli/datasqrl
 ## OS X
 ##############################
 .DS_Store
+

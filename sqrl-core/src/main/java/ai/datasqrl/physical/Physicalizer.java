@@ -19,7 +19,7 @@ public class Physicalizer {
   StreamEngine streamEngine;
 
   public ExecutionPlan plan(LogicalPlan plan) {
-    CreateStreamJobResult result = new StreamGraphBuilder(streamEngine, importManager)
+    CreateStreamJobResult result = new StreamGraphBuilder(streamEngine, importManager, jdbcConfiguration)
         .createStreamGraph(plan.getStreamQueries());
 
     List<SqlDDLStatement> statements = new StreamTableDDLBuilder()

@@ -33,9 +33,7 @@ public class JDBCConfiguration implements EngineConfiguration.Database {
     Dialect dialect;
 
     public enum Dialect {
-
-        POSTGRES, MYSQL, H2;
-
+        POSTGRES, MYSQL, H2
     }
 
     public static Pattern validDBName = Pattern.compile("^[a-z][_a-z0-9]{2,}$");

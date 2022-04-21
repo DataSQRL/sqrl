@@ -30,7 +30,7 @@ public class EnvironmentConfiguration {
     @AllArgsConstructor
     public static class MetaData {
 
-        private static final String DEFAULT_DATABASE = "datasqrl";
+        public static final String DEFAULT_DATABASE = "datasqrl";
 
         @Builder.Default @NonNull
         @NotNull

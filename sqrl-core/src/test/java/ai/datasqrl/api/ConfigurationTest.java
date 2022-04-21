@@ -1,11 +1,14 @@
 package ai.datasqrl.api;
 
 import ai.datasqrl.Environment;
+import ai.datasqrl.TestDatabase;
 import ai.datasqrl.config.EnvironmentConfiguration;
+import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
 import ai.datasqrl.config.GlobalConfiguration;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.engines.FlinkConfiguration;
 import ai.datasqrl.config.engines.JDBCConfiguration;
+import ai.datasqrl.config.engines.JDBCConfiguration.Dialect;
 import ai.datasqrl.io.formats.FileFormat;
 import ai.datasqrl.io.formats.FormatConfiguration;
 import ai.datasqrl.io.formats.JsonLineFormat;
@@ -24,8 +27,10 @@ import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.util.PropertiesUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -40,12 +45,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ConfigurationTest {
+    public static TestDatabase testDatabase = new TestDatabase();
 
     public static Path resourceDir = Paths.get("src","test","resources");
     public static Path configYml = resourceDir.resolve("simple-config.yml");
 
     public static final Path dbPath = Path.of("tmp");
-    public static final String jdbcURL = "jdbc:h2:"+dbPath.toAbsolutePath();
 
     public static final Path DATA_DIR = resourceDir.resolve("data");
 
@@ -236,19 +241,17 @@ public class ConfigurationTest {
     public static SqrlSettings getDefaultSettings(boolean monitorSources) {
         GlobalConfiguration config = GlobalConfiguration.builder()
                 .engines(GlobalConfiguration.Engines.builder()
-                        .jdbc(JDBCConfiguration.builder()
-                                .dbURL(jdbcURL)
-                                .driverName("org.h2.Driver")
-                                .dialect(JDBCConfiguration.Dialect.H2)
-                                .build())
+                        .jdbc(testDatabase.getJdbcConfiguration())
                         .flink(new FlinkConfiguration())
                         .build())
                 .environment(EnvironmentConfiguration.builder()
                         .monitorSources(monitorSources)
+                        .metastore(MetaData.builder()
+                            .database(MetaData.DEFAULT_DATABASE)
+                            .build())
                         .build())
                 .build();
         validateConfig(config);
         return SqrlSettings.fromConfiguration(config);
     }
-
 }

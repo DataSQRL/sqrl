@@ -1,5 +1,7 @@
 package ai.datasqrl.physical.stream;
 
+import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
+import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.execute.StreamEngine;
 import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
 import ai.datasqrl.physical.stream.rel.InjectFlinkCluster;
@@ -22,6 +24,8 @@ import org.apache.flink.table.api.internal.FlinkEnvProxy;
 public class StreamGraphBuilder {
   private final StreamEngine streamEngine;
   private final ImportManager importManager;
+  private final JDBCConfiguration jdbcConfiguration;
+
   public CreateStreamJobResult createStreamGraph(List<TableQuery> streamQueries) {
     final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder)streamEngine.createStream();
     final StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)
@@ -44,8 +48,10 @@ public class StreamGraphBuilder {
 
       TableDescriptor descriptor = TableDescriptor.forConnector("jdbc")
           .schema(FlinkPipelineUtils.addPrimaryKey(tbl.getSchema().toSchema(), sink.getTable()))
-          .option("url", "jdbc:postgresql://localhost/henneberger") // :)
+          .option("url", jdbcConfiguration.getDbURL().concat("/").concat(MetaData.DEFAULT_DATABASE))
           .option("table-name", sink.getTable().name.getCanonical())
+          .option("username", jdbcConfiguration.getUser())
+          .option("password", jdbcConfiguration.getPassword())
           .build();
 
       String name = sink.getTable().name.getCanonical() + "_sink";

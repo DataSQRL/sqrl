@@ -36,6 +36,7 @@
     <glassfish.version>3.0.0</glassfish.version>
     <graphql-java.version>16.2</graphql-java.version>
     <reactive-streams.version>1.0.3</reactive-streams.version>
+    <testcontainers.postgres.version>1.17.1</testcontainers.postgres.version>
   </properties>
 
   <dependencies>
@@ -273,6 +274,18 @@
       <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${testcontainers.postgres.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${testcontainers.postgres.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <!-- logging -->
     <dependency>
@@ -354,5 +367,4 @@
       </plugin>
     </plugins>
   </build>
-
 </project>

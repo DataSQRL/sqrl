@@ -57,18 +57,13 @@ public class SqrlSettings {
   public static SqrlSettingsBuilder builderFromConfiguration(GlobalConfiguration config) {
     SqrlSettingsBuilder builder =  SqrlSettings.builder()
         .jdbcConfiguration(config.getEngines().getJdbc())
-//        .sqlGeneratorProvider(jdbc->new SQLGenerator(jdbc))
-
         .environmentConfiguration(config.getEnvironment())
         .serializerProvider(new KryoProvider())
         .metadataStoreProvider(new Provider())
         .datasetRegistryPersistenceProvider(new MetadataSourceRegistryPersistence.Provider())
         .dataSinkRegistryPersistenceProvider(new MetadataSinkRegistryPersistence.Provider())
         .environmentPersistenceProvider(new MetadataEnvironmentPersistence.Provider())
-        .importManagerProvider((datasetLookup)-> {
-          ImportManager manager = new ImportManager(datasetLookup);
-          return manager;
-        });
+        .importManagerProvider(ImportManager::new);
 
     GlobalConfiguration.Engines engines = config.getEngines();
     Preconditions.checkArgument(engines.getFlink()!=null,"Must configure Flink engine");

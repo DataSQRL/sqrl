@@ -44,7 +44,6 @@ public class JDBCMetadataStore implements MetadataStore {
     private final Dialect dialect;
     private final Kryo kryo;
 
-
     public JDBCMetadataStore(JDBCConnectionProvider jdbcProvider, Kryo kryo) {
         this.kryo = kryo;
         try {
@@ -56,34 +55,41 @@ public class JDBCMetadataStore implements MetadataStore {
         }
 
         try (Statement stmt = connection.createStatement()) {
-            stmt.executeUpdate(CREATE_TABLE);
+            stmt.executeUpdate(CREATE_TABLE.get(jdbcProvider.getDialect()));
         } catch (SQLException e) {
             throw new RuntimeException("Could not execute SQL query",e);
         }
         dialect = jdbcProvider.getDialect();
     }
 
-    public static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `"+TABLE_NAME+"` (\n" +
+    public static final Map<Dialect,String> CREATE_TABLE = Map.of(
+        JDBCConfiguration.Dialect.H2, "CREATE TABLE IF NOT EXISTS `"+TABLE_NAME+"` (\n" +
             "key VARCHAR("+MAX_KEY_LENGTH*2+") NOT NULL,\n" + //Multiply by 2 for UTF
             "value BLOB NOT NULL,\n" +
             "PRIMARY KEY (`key`)\n" +
-            ");";
+            ");",
+        Dialect.POSTGRES, "CREATE TABLE IF NOT EXISTS "+TABLE_NAME+" (\n" +
+            "key VARCHAR("+MAX_KEY_LENGTH*2+") NOT NULL,\n" + //Multiply by 2 for UTF
+            "value bytea NOT NULL,\n" +
+            "PRIMARY KEY (key)\n" +
+            ");"
+    );
 
     public static final Map<Dialect,String> UPSERT_QUERIES =
             ImmutableMap.of(
                     JDBCConfiguration.Dialect.H2, "MERGE INTO `"+TABLE_NAME+"` " +
                             "KEY ( key ) VALUES ( ?, ? );",
-                    JDBCConfiguration.Dialect.POSTGRES, "INSERT INTO `"+TABLE_NAME+"` " +
+                    JDBCConfiguration.Dialect.POSTGRES, "INSERT INTO "+TABLE_NAME+" " +
                             "( key, value ) VALUES ( ?, ? ) ON CONFLICT ( key ) DO UPDATE SET value = EXCLUDED.value;",
                     JDBCConfiguration.Dialect.MYSQL, "REPLACE INTO `"+TABLE_NAME+"` " +
                             "( key, value ) VALUES ( ?, ? );"
             );
 
-    public static final String GET_VALUE = "SELECT value FROM `"+TABLE_NAME+"` WHERE key = ?";
+    public static final String GET_VALUE = "SELECT value FROM "+TABLE_NAME+" WHERE key = ?";
 
-    public static final String DELETE_VALUE = "DELETE FROM `"+TABLE_NAME+"` WHERE key = ?";
+    public static final String DELETE_VALUE = "DELETE FROM "+TABLE_NAME+" WHERE key = ?";
 
-    public static final String KEY_PREFIX = "SELECT key FROM `"+TABLE_NAME+"` WHERE key LIKE ?";
+    public static final String KEY_PREFIX = "SELECT key FROM "+TABLE_NAME+" WHERE key LIKE ?";
 
     @Override
     public void close() {
