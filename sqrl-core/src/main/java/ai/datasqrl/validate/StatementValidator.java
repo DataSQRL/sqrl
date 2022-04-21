@@ -1,14 +1,21 @@
 package ai.datasqrl.validate;
 
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.parse.tree.AllColumns;
 import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
+import ai.datasqrl.parse.tree.GroupBy;
 import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.ImportDefinition;
+import ai.datasqrl.parse.tree.Join;
+import ai.datasqrl.parse.tree.JoinDeclaration;
 import ai.datasqrl.parse.tree.Node;
+import ai.datasqrl.parse.tree.QuerySpecification;
+import ai.datasqrl.parse.tree.Relation;
 import ai.datasqrl.parse.tree.SortItem;
+import ai.datasqrl.parse.tree.TableNode;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Field;
@@ -52,18 +59,13 @@ public class StatementValidator {
    * @param node
    */
   public StatementScope validate(Node node) {
-    Visitor visitor = new Visitor(this);
+    Visitor visitor = new Visitor();
     return node.accept(visitor, null);
   }
 
   public class Visitor extends AstVisitor<StatementScope, Void> {
 
     private final AtomicBoolean importResolved = new AtomicBoolean(false);
-    private final StatementValidator analyzer;
-
-    public Visitor(StatementValidator analyzer) {
-      this.analyzer = analyzer;
-    }
 
     @Override
     public StatementScope visitNode(Node node, Void context) {
@@ -177,29 +179,18 @@ public class StatementValidator {
 //    public StatementScope visitJoinDeclaration(JoinDeclaration node, Void context) {
 //      NamePath namePath = node.getNamePath();
 //
-//      Name name = getLastTableName(node);
-//      QueryValidator statementAnalyzer = new QueryValidator(analyzer);
+//      QueryValidator validator = new QueryValidator(schema);
 //
-//      Select select = new Select(Optional.empty(), false, List.of(new AllColumns(name.toNamePath())));
-//      Query querySpec = new Query(new QuerySpecification(node.getLocation(),
-//          select,
-//          node.getInlineJoin().getRelation(),
-//          Optional.<Expression>empty(),
-//          Optional.<GroupBy>empty(),
-//          Optional.<Expression>empty(),
-//          node.getInlineJoin().getOrderBy(),
-//          node.getInlineJoin().getLimit()),
-//          Optional.empty(),
-//          Optional.empty()
-//      );
+//      Table table = schema.getByName(namePath.getFirst()).get()
+//          .walk(namePath.popFirst().popLast()).get();
 //
-//      Optional<Table> ctxTable = getTable(namePath.getPrefix().get());
+//      Map<Name, Table> fieldScope = new HashMap<>();
+//      fieldScope.put(Name.SELF_IDENTIFIER, table);
 //
+//      QueryScope queryScope = new QueryScope(Optional.of(table), fieldScope);
+//      ValidatorScope scope = node.getInlineJoin().accept(validator, queryScope);
 //
-////      ValidateScope scope = querySpec.accept(statementAnalyzer, new ValidateScope(ctxTable, querySpec, new LinkedHashMap<>(),new LinkedHashMap<>(),
-////          false, null));
-//
-//      return null;
+//      return new StatementScope(Optional.of(table), node.getNamePath(), Map.of(node, scope));
 //    }
 //
 //    private Name getLastTableName(JoinDeclaration node) {
@@ -209,20 +200,7 @@ public class StatementValidator {
 //      }
 //      TableNode table = (TableNode) rel;
 //
-//      return table.getAlias().orElse(table.getNamePath().getFirst());
+//      return table.getAlias().orElse(Name.system(table.getNamePath().toString()));
 //    }
-//  }
-//
-//  public Optional<Table> getTable(NamePath namePath) {
-//      Optional<Table> schemaTable = this.schema.getByName(namePath.getFirst());
-//      if (schemaTable.isPresent()) {
-//        if (namePath.getLength() == 1) {
-//          return schemaTable;
-//        }
-//
-//        return schemaTable.flatMap(t-> t.walk(namePath.popFirst()));
-//      }
-//      return Optional.empty();
-////    }
   }
 }

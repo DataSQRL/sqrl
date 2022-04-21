@@ -63,9 +63,9 @@ public class BundleProcessor {
     StatementScope scope = validator.validate(statement);
 
     StatementTransformer transformer = new StatementTransformer();
-    SqlNode sqlNode = transformer.transform(statement, scope);
+    Node node = transformer.transform(statement, scope);
 
     LocalPlanner planner = new LocalPlanner(schema.peek());
-    return planner.plan(statement, sqlNode, scope);
+    return planner.plan(statement, node, scope);
   }
 }

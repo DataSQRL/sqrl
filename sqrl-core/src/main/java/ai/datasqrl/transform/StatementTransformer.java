@@ -8,22 +8,28 @@ import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
 import ai.datasqrl.parse.tree.ImportDefinition;
+import ai.datasqrl.parse.tree.InlineJoin;
+import ai.datasqrl.parse.tree.Join;
+import ai.datasqrl.parse.tree.JoinDeclaration;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
+import ai.datasqrl.parse.tree.OrderBy;
 import ai.datasqrl.parse.tree.Query;
 import ai.datasqrl.parse.tree.QueryAssignment;
+import ai.datasqrl.parse.tree.Relation;
+import ai.datasqrl.parse.tree.TableNode;
+import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
 import ai.datasqrl.transform.transforms.AliasFirstColumn;
-import ai.datasqrl.transform.transforms.DistinctToSqlNode;
+import ai.datasqrl.transform.transforms.DistinctToNode;
 import ai.datasqrl.transform.transforms.ExpressionToQueryTransformer;
 import ai.datasqrl.validate.scopes.DistinctScope;
 import ai.datasqrl.validate.scopes.StatementScope;
 import com.google.common.base.Preconditions;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.sql.SqlNode;
 
 @Slf4j
 @AllArgsConstructor
@@ -31,29 +37,29 @@ public class StatementTransformer {
 
   protected final ErrorCollector errors = ErrorCollector.root();
 
-  public SqlNode transform(Node statement, StatementScope statementScope) {
+  public Node transform(Node statement, StatementScope statementScope) {
     Visitor visitor = new Visitor();
     return statement.accept(visitor, statementScope);
   }
 
-  public class Visitor extends AstVisitor<SqlNode, StatementScope> {
+  public class Visitor extends AstVisitor<Node, StatementScope> {
 
     /**
      * Noop
      */
     @Override
-    public SqlNode visitImportDefinition(ImportDefinition node, StatementScope scope) {
+    public Node visitImportDefinition(ImportDefinition node, StatementScope scope) {
       return null;
     }
 
     @Override
-    public SqlNode visitQueryAssignment(QueryAssignment queryAssignment, StatementScope scope) {
+    public Node visitQueryAssignment(QueryAssignment queryAssignment, StatementScope scope) {
       transformStatement(queryAssignment.getNamePath(), queryAssignment.getQuery(), scope);
       return null;
     }
 
     @Override
-    public SqlNode visitExpressionAssignment(ExpressionAssignment assignment,
+    public Node visitExpressionAssignment(ExpressionAssignment assignment,
         StatementScope scope) {
       NamePath namePath = assignment.getNamePath();
       Expression expression = assignment.getExpression();
@@ -66,7 +72,7 @@ public class StatementTransformer {
       return transformStatement(namePath, query, scope);
     }
 
-    public SqlNode transformStatement(NamePath namePath, Query query, StatementScope scope) {
+    public Node transformStatement(NamePath namePath, Query query, StatementScope scope) {
       log.info("Sqrl Query: {}", NodeFormatter.accept(query));
       if (hasOneUnnamedColumn(query)) {
         Preconditions.checkState(namePath.getPrefix().isPresent());
@@ -78,17 +84,15 @@ public class StatementTransformer {
 
     /**
      * Analyzes a query as an expression but has some handling to account for shadowing.
+     * @return
      */
-    public SqlNode analyzeExpression(NamePath namePath, Query query,
+    public Node analyzeExpression(NamePath namePath, Query query,
         StatementScope scope) {
       Query aliasedQuery = new AliasFirstColumn().transform(query, namePath.getLast());
       QueryTransformer queryTransformer = new QueryTransformer();
       Node node = aliasedQuery.accept(queryTransformer, scope);
 
-      NodeToSqlNodeConverter converter = new NodeToSqlNodeConverter();
-      SqlNode sqlNode = node.accept(converter, null);
-
-      return sqlNode;
+      return node;
     }
 
 //    //We are creating a new table but analyzing it in a similar way
@@ -99,13 +103,13 @@ public class StatementTransformer {
 //      QueryTransformer queryValidator = new QueryTransformer();
 //      Scope scope = query.accept(queryValidator, null);
 //
-//      SqlNode sqlNode = planner.parse(scope.getNode());
+//      Node sqlNode = planner.parse(scope.getNode());
 //      log.info("Calcite Query: {}", sqlNode);
 //
 //      RelNode plan = planner.plan(sqlNode);
 //      RelNode expanded = plan.accept(viewExpander);
 //      //Revalidate expanded
-//      planner.getValidator().validate(RelToSql.convertToSqlNode(expanded));
+//      planner.getValidator().validate(RelToSql.convertToNode(expanded));
 //
 //      Table newTable = new Table(SourceTablePlanner.tableIdCounter.incrementAndGet(), namePath.getLast(),
 //          namePath, false);
@@ -175,16 +179,17 @@ public class StatementTransformer {
 
     @SneakyThrows
     @Override
-    public SqlNode visitDistinctAssignment(DistinctAssignment node, StatementScope scope) {
+    public Node visitDistinctAssignment(DistinctAssignment node, StatementScope scope) {
       DistinctScope distinctScope = (DistinctScope) scope.getScopes().get(node);
 
-      DistinctToSqlNode transform = new DistinctToSqlNode();
+      DistinctToNode transform = new DistinctToNode();
       return transform.transform(node, distinctScope);
     }
 
-    //
-//    @Override
-//    public Node visitJoinDeclaration(JoinDeclaration node, StatementScope scope) {
+    @Override
+    public Node visitJoinDeclaration(JoinDeclaration node, StatementScope scope) {
+
+//
 //      NamePath namePath = node.getNamePath();
 //
 //      Name name = getLastTableName(node);
@@ -202,11 +207,11 @@ public class StatementTransformer {
 //          Optional.empty(),
 //          Optional.empty()
 //      );
-//
+
 //      Optional<Table> ctxTable = getTable(namePath.getPrefix().get());
 //      Scope scope2 = querySpec.accept(
 //          queryValidator, null);
-//
+
 //      Node rewritten = scope2.getNode();
 //
 //      Table table = ctxTable.get();
@@ -226,23 +231,22 @@ public class StatementTransformer {
 //
 //      joinField.setAlias(list.get(list.size() - 1).getKey());
 //      table.addField(joinField);
-//
-//      return null;
-//    }
-//
-//    private Name getLastTableName(JoinDeclaration node) {
-//      Relation rel = node.getInlineJoin().getRelation();
-//      while (rel instanceof Join) {
-//        rel = ((Join) rel).getRight();
-//      }
-//      TableNode table = (TableNode) rel;
-//
-//      return table.getAlias().orElse(table.getNamePath().getFirst());
-//    }
-//  }
+
+      return null;
+    }
+
+    private Name getLastTableName(JoinDeclaration node) {
+      Relation rel = node.getInlineJoin().getRelation();
+      while (rel instanceof Join) {
+        rel = ((Join) rel).getRight();
+      }
+      TableNode table = (TableNode) rel;
+
+      return table.getAlias().orElse(table.getNamePath().getFirst());
+    }
 //
 //  public Optional<Table> getTable(NamePath namePath) {
-//      Optional<Table> schemaTable = this.schema.getByName(namePath.getFirst());
+//      Optional<Table> schemaTable = schema.getByName(namePath.getFirst());
 //      if (schemaTable.isPresent()) {
 //        if (namePath.getLength() == 1) {
 //          return schemaTable;
@@ -251,9 +255,10 @@ public class StatementTransformer {
 //        return schemaTable.flatMap(t-> t.walk(namePath.popFirst()));
 //      }
 //      return Optional.empty();
-////    }
+//    }
+//
     @Override
-    public SqlNode visitNode(Node node, StatementScope scope) {
+    public Node visitNode(Node node, StatementScope scope) {
       throw new RuntimeException(
           String.format("Could not process node %s : %s", node.getClass().getName(), node));
     }

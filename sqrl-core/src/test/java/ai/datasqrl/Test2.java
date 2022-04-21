@@ -26,20 +26,14 @@ public class Test2 {
     VertxOptions vertxOptions = new VertxOptions();
     this.vertx = (VertxInternal) Vertx.vertx(vertxOptions);
 
-//    FileUtils.cleanDirectory(ConfigurationTest.dbPath.toFile());
     SqrlSettings settings = ConfigurationTest.getDefaultSettings(false);
-
     env = Environment.create(settings);
-
 
     String ds2Name = "ecommerce-data";
     DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
         .uri(C360Example.RETAIL_DATA_DIR.toAbsolutePath().toString())
         .build();
     env.getDatasetRegistry().addOrUpdateSource(ds2Name, fileConfig, ErrorCollector.root());
-//    assertFalse(errors.isFatal());
-
-//    registerDatasets();
   }
 
   @Test

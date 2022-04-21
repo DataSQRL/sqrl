@@ -11,6 +11,7 @@ import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
 import ai.datasqrl.parse.tree.ImportDefinition;
+import ai.datasqrl.parse.tree.JoinDeclaration;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.LocalPlanner.PlannerScope;
@@ -27,6 +28,7 @@ import ai.datasqrl.schema.operations.AddDatasetOp;
 import ai.datasqrl.schema.operations.AddQueryOp;
 import ai.datasqrl.schema.operations.ImportTable;
 import ai.datasqrl.schema.operations.SchemaOperation;
+import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
 import ai.datasqrl.validate.scopes.DistinctScope;
 import ai.datasqrl.validate.scopes.ImportScope;
 import ai.datasqrl.validate.scopes.StatementScope;
@@ -56,20 +58,20 @@ public class LocalPlanner extends AstVisitor<SchemaOperation, PlannerScope> {
     calcitePlanner = new CalcitePlanner(schema);
   }
 
-  public SchemaOperation plan(Node node, SqlNode sqlNode,
+  public SchemaOperation plan(Node node, Node transformed,
       StatementScope scope) {
-    return node.accept(this, createScope(scope, sqlNode));
+    return node.accept(this, createScope(scope, transformed));
   }
 
-  private PlannerScope createScope(StatementScope scope, SqlNode sqlNode) {
-    return new PlannerScope(scope, sqlNode);
+  private PlannerScope createScope(StatementScope scope, Node node) {
+    return new PlannerScope(scope, node);
   }
 
   @Value
   public class PlannerScope {
 
     StatementScope scope;
-    SqlNode sqlNode;
+    Node node;
   }
 
   /**
@@ -115,7 +117,11 @@ public class LocalPlanner extends AstVisitor<SchemaOperation, PlannerScope> {
   @Override
   public SchemaOperation visitDistinctAssignment(DistinctAssignment node, PlannerScope context) {
     SqlValidator validator = calcitePlanner.getValidator();
-    SqlNode validated = validator.validate(context.getSqlNode());
+
+    NodeToSqlNodeConverter converter = new NodeToSqlNodeConverter();
+    SqlNode sqlNode = context.getNode().accept(converter, null);
+    SqlNode validated = validator.validate(sqlNode);
+
     SqlToRelConverter sqlToRelConverter = calcitePlanner.getSqlToRelConverter(validator);
 
     RelNode relNode = sqlToRelConverter.convertQuery(validated, false, true).rel;
@@ -146,7 +152,9 @@ public class LocalPlanner extends AstVisitor<SchemaOperation, PlannerScope> {
   @Override
   public SchemaOperation visitExpressionAssignment(ExpressionAssignment node,
       PlannerScope context) {
-    RelNode plan = this.calcitePlanner.plan(context.getSqlNode());
+    NodeToSqlNodeConverter converter = new NodeToSqlNodeConverter();
+    SqlNode sqlNode = context.getNode().accept(converter, null);
+    RelNode plan = this.calcitePlanner.plan(sqlNode);
     Table contextTable = context.getScope().getContextTable().get();
     //The field has not been added to the table yet, infer its name
     Name fieldName = contextTable.getNextFieldName(node.getNamePath().getLast());
@@ -161,5 +169,14 @@ public class LocalPlanner extends AstVisitor<SchemaOperation, PlannerScope> {
     return new AddColumnOp(node.getNamePath().popLast(), node.getNamePath().getLast(), expanded,
         index, primaryKeys,
         parentPrimary);
+  }
+
+  @Override
+  public SchemaOperation visitJoinDeclaration(JoinDeclaration node, PlannerScope context) {
+    //AddJoinOp
+    // :
+    // :
+
+    return super.visitJoinDeclaration(node, context);
   }
 }
