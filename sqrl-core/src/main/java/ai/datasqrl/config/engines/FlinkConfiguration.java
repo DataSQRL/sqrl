@@ -13,11 +13,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class FlinkConfiguration implements EngineConfiguration.Stream {
 
-    @Builder.Default
-    boolean savepoint = false;
+  @Builder.Default
+  boolean savepoint = false;
 
-    @Override
-    public StreamEngine create() {
-        return new LocalFlinkStreamEngineImpl();
-    }
+  @Override
+  public StreamEngine create() {
+    return new LocalFlinkStreamEngineImpl();
+  }
 }

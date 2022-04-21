@@ -23,63 +23,65 @@ import org.apache.commons.lang3.StringUtils;
 @AllArgsConstructor
 public class JDBCConfiguration implements EngineConfiguration.Database {
 
-    @NonNull @NotNull
-    String dbURL;
-    String user;
-    String password;
-    @OptionalMinString
-    String driverName;
-    @NonNull @NotNull
-    Dialect dialect;
+  @NonNull @NotNull
+  String dbURL;
+  String user;
+  String password;
+  @OptionalMinString
+  String driverName;
+  @NonNull @NotNull
+  Dialect dialect;
 
-    public enum Dialect {
-        POSTGRES, MYSQL, H2
+  public enum Dialect {
+    POSTGRES, MYSQL, H2
+  }
+
+  public static Pattern validDBName = Pattern.compile("^[a-z][_a-z0-9]{2,}$");
+
+  public Database getDatabase(@NonNull String databaseName) {
+    Preconditions.checkArgument(StringUtils.isNotEmpty(databaseName)
+        && validDBName.matcher(databaseName).matches(), "Invalid database name: %s", databaseName);
+    //Construct URL pointing at database
+    String url = dbURL;
+    switch (dialect) {
+      case H2:
+      case MYSQL:
+      case POSTGRES:
+          if (!url.endsWith("/")) {
+              url += "/";
+          }
+        url += databaseName;
+        break;
+      default:
+        throw new UnsupportedOperationException("Unsupported dialect: " + dialect);
     }
 
-    public static Pattern validDBName = Pattern.compile("^[a-z][_a-z0-9]{2,}$");
-
-    public Database getDatabase(@NonNull String databaseName) {
-        Preconditions.checkArgument(StringUtils.isNotEmpty(databaseName)
-                && validDBName.matcher(databaseName).matches(),"Invalid database name: %s", databaseName);
-        //Construct URL pointing at database
-        String url = dbURL;
-        switch (dialect) {
-            case H2:
-            case MYSQL:
-            case POSTGRES:
-                if (!url.endsWith("/")) url+="/";
-                url += databaseName;
-                break;
-            default:
-                throw new UnsupportedOperationException("Unsupported dialect: " + dialect);
-        }
-
-        //Modify url for database engine
-        if (dialect.equals(Dialect.H2)) {
-            url += ";database_to_upper=false";
-        }
-
-        return new Database(url, user, password, driverName, dialect, databaseName);
+    //Modify url for database engine
+    if (dialect.equals(Dialect.H2)) {
+      url += ";database_to_upper=false";
     }
 
-    @Getter
-    @AllArgsConstructor
-    @EqualsAndHashCode
-    @ToString
-    public static class Database implements JDBCConnectionProvider {
+    return new Database(url, user, password, driverName, dialect, databaseName);
+  }
 
-        @NonNull
-        private String dbURL;
-        private String user;
-        private String password;
-        private String driverName;
-        private Dialect dialect;
-        private String databaseName;
+  @Getter
+  @AllArgsConstructor
+  @EqualsAndHashCode
+  @ToString
+  public static class Database implements JDBCConnectionProvider {
 
-        @Override
-        public Connection getConnection() throws SQLException, ClassNotFoundException {
-            return DriverManager.getConnection(dbURL, user, password);
-        }
+    @NonNull
+    private String dbURL;
+    private String user;
+    private String password;
+    private String driverName;
+    private Dialect dialect;
+    private String databaseName;
+
+    @Override
+    public Connection getConnection() throws SQLException, ClassNotFoundException {
+      return DriverManager.getConnection(dbURL, user, password);
     }
+  }
 
 }

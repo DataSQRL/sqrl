@@ -6,6 +6,7 @@ import lombok.Value;
 
 @Value
 public class BaseTablePath implements TablePath {
+
   Table table;
   NamePath namePath;
 

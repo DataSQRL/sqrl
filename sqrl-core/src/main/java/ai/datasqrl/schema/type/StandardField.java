@@ -10,12 +10,12 @@ import lombok.Getter;
 @Getter
 public class StandardField implements TypedField {
 
-    private final Name name;
-    private final Type type;
-    private final List<Constraint> constraints;
+  private final Name name;
+  private final Type type;
+  private final List<Constraint> constraints;
 
-    @Override
-    public String toString() {
-        return name.getDisplay() + ":" + type.toString();
-    }
+  @Override
+  public String toString() {
+    return name.getDisplay() + ":" + type.toString();
+  }
 }

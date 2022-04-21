@@ -8,22 +8,20 @@ import lombok.Getter;
 @Getter
 public enum CanonicalizerConfiguration implements Serializable {
 
-    lowercase(NameCanonicalizer.LOWERCASE_ENGLISH),
-    case_sensitive(NameCanonicalizer.AS_IS),
-    system(NameCanonicalizer.SYSTEM)
-    ;
+  lowercase(NameCanonicalizer.LOWERCASE_ENGLISH),
+  case_sensitive(NameCanonicalizer.AS_IS),
+  system(NameCanonicalizer.SYSTEM);
 
-    private final NameCanonicalizer canonicalizer;
+  private final NameCanonicalizer canonicalizer;
 
-    CanonicalizerConfiguration(NameCanonicalizer canonicalizer) {
-        this.canonicalizer = canonicalizer;
-    }
-
+  CanonicalizerConfiguration(NameCanonicalizer canonicalizer) {
+    this.canonicalizer = canonicalizer;
+  }
 
 
-    @Override
-    public String toString() {
-        return name().toLowerCase(Locale.ENGLISH);
-    }
+  @Override
+  public String toString() {
+    return name().toLowerCase(Locale.ENGLISH);
+  }
 
 }

@@ -5,10 +5,10 @@ import java.util.stream.Stream;
 
 public interface EnvironmentPersistence {
 
-        public void saveDeployment(ScriptDeployment script);
+  void saveDeployment(ScriptDeployment script);
 
-        public ScriptDeployment getSubmissionById(NamedIdentifier id);
+  ScriptDeployment getSubmissionById(NamedIdentifier id);
 
-        public Stream<ScriptDeployment> getAllDeployments();
+  Stream<ScriptDeployment> getAllDeployments();
 
 }

@@ -5,6 +5,7 @@ import lombok.Value;
 
 @Value
 public class AddDatasetOp implements SchemaOperation {
+
   List<ImportTable> importedPaths;
 
   @Override

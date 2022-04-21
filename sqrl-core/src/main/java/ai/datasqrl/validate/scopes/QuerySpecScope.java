@@ -9,6 +9,7 @@ import lombok.Value;
 
 @Value
 public class QuerySpecScope implements ValidatorScope {
+
   Map<TableNode, TableScope> tableScopes;
   Map<Name, Table> joinScopes;
 

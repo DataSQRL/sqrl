@@ -30,6 +30,7 @@ public class Identifier
     super(Optional.of(location));
     this.namePath = namePath;
   }
+
   public Identifier(Optional<NodeLocation> location, NamePath namePath) {
     super(location);
     this.namePath = namePath;
@@ -40,7 +41,7 @@ public class Identifier
   }
 
   public <T> T getResolved() {
-    return (T)resolved;
+    return (T) resolved;
   }
 
   public void setResolved(Object resolved) {

@@ -4,12 +4,6 @@ import static ai.datasqrl.parse.util.SqrlNodeUtil.and;
 import static ai.datasqrl.parse.util.SqrlNodeUtil.eq;
 import static ai.datasqrl.parse.util.SqrlNodeUtil.ident;
 
-import ai.datasqrl.util.AliasGenerator;
-import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.factory.SubqueryTableFactory;
 import ai.datasqrl.parse.tree.AliasedRelation;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.Identifier;
@@ -23,6 +17,12 @@ import ai.datasqrl.parse.tree.TableNode;
 import ai.datasqrl.parse.tree.TableSubquery;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.factory.SubqueryTableFactory;
+import ai.datasqrl.util.AliasGenerator;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,18 +31,23 @@ import java.util.Optional;
 import lombok.Value;
 
 public class JoinWalker {
+
   AliasGenerator gen = new AliasGenerator();
+
   /**
    * Walks a join path
    */
-  public WalkResult walk(Name baseTableAlias, Optional<Name> lastAlias, NamePath namePath, Optional<Relation> current,
-      Optional<JoinCriteria> lastCriteria, //Criteria is lazy because the join aliases don't exist yet to be evaluated
+  public WalkResult walk(Name baseTableAlias, Optional<Name> lastAlias, NamePath namePath,
+      Optional<Relation> current,
+      Optional<JoinCriteria> lastCriteria,
+      //Criteria is lazy because the join aliases don't exist yet to be evaluated
       Map<Name, Table> joinScope) {
 
     Table baseTable = joinScope.get(baseTableAlias);
     Relation relation = current.isPresent()
         ? current.get() :
-        new TableNode(Optional.empty(), baseTable.getId().toNamePath(), Optional.of(baseTableAlias));
+        new TableNode(Optional.empty(), baseTable.getId().toNamePath(),
+            Optional.of(baseTableAlias));
 
     TableBookkeeping b = new TableBookkeeping(relation, baseTableAlias, baseTable);
     List<TableItem> tableItems = new ArrayList<>();
@@ -50,11 +55,13 @@ public class JoinWalker {
     for (int i = 0; i < namePath.getLength(); i++) {
       Field field = b.getCurrentTable().getField(namePath.get(i));
       Preconditions.checkNotNull(field);
-      if (!(field instanceof Relationship)) break;
-      Relationship rel = (Relationship)field;
+      if (!(field instanceof Relationship)) {
+        break;
+      }
+      Relationship rel = (Relationship) field;
 
       Name alias = i == namePath.getLength() - 1
-          ? lastAlias.orElseGet(()->gen.nextTableAliasName())
+          ? lastAlias.orElseGet(() -> gen.nextTableAliasName())
           : gen.nextTableAliasName();
 
       Relation relation1 = expandRelation(joinScope, rel, alias);
@@ -83,10 +90,11 @@ public class JoinWalker {
     }
 
     return new JoinOn(criteria.getLocation(), and(criteria.getExpression(),
-        additionalCriteria.map(e->((JoinOn)e).getExpression())));
+        additionalCriteria.map(e -> ((JoinOn) e).getExpression())));
   }
 
-  public static JoinOn createRelCriteria(Map<Name, Table> joinScope, Name lhs, Name rhs, Relationship rel) {
+  public static JoinOn createRelCriteria(Map<Name, Table> joinScope, Name lhs, Name rhs,
+      Relationship rel) {
     //Use the lhs primary keys to join on the rhs
     Table lhsTable = joinScope.get(lhs);
     Table rhsTable = joinScope.get(rhs);
@@ -104,11 +112,11 @@ public class JoinWalker {
 
     List<Expression> conditions = new ArrayList<>();
     for (Column column : joinColumns) {
-      Column lhsColumn = lhsTable.getEquivalent(column).orElseThrow(()->
-          new RuntimeException("Could not find column: " + column  + " in " + lhsTable));
+      Column lhsColumn = lhsTable.getEquivalent(column).orElseThrow(() ->
+          new RuntimeException("Could not find column: " + column + " in " + lhsTable));
       Column rhsColumn = rhsTable.getEquivalent(column)
-          .orElseThrow(()->
-              new RuntimeException("Could not find column: " + column  + " in " + rhsTable));
+          .orElseThrow(() ->
+              new RuntimeException("Could not find column: " + column + " in " + rhsTable));
       conditions.add(eq(
           ident(lhs.toNamePath().concat(lhsColumn.getName())),
           ident(rhs.toNamePath().concat(rhsColumn.getName()))));
@@ -139,8 +147,8 @@ public class JoinWalker {
       Map<Name, Table> joinScope,
       Relationship rel, Name nextAlias) {
     if (rel.getType() == Relationship.Type.JOIN) {
-      joinScope.put(nextAlias, new SubqueryTableFactory().create((Query)rel.getNode()));
-      TableSubquery tableSubquery = new TableSubquery(Optional.empty(), (Query)rel.getNode());
+      joinScope.put(nextAlias, new SubqueryTableFactory().create((Query) rel.getNode()));
+      TableSubquery tableSubquery = new TableSubquery(Optional.empty(), (Query) rel.getNode());
       return new AliasedRelation(
           Optional.empty(),
           tableSubquery,
@@ -158,12 +166,14 @@ public class JoinWalker {
 
   @Value
   public class WalkResult {
+
     List<TableItem> tableStack;
     Relation relation;
   }
 
   @Value
   public class TableItem {
+
     Name alias;
   }
 }

@@ -22,69 +22,61 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class Window
-        extends Node
-{
-    private final List<Expression> partitionBy;
-    private final Optional<OrderBy> orderBy;
+    extends Node {
 
-    public Window(List<Expression> partitionBy, Optional<OrderBy> orderBy)
-    {
-        super(Optional.empty());
-        this.partitionBy = requireNonNull(partitionBy, "partitionBy is null");
-        this.orderBy = requireNonNull(orderBy, "orderBy is null");
-    }
+  private final List<Expression> partitionBy;
+  private final Optional<OrderBy> orderBy;
 
-    public List<Expression> getPartitionBy()
-    {
-        return partitionBy;
-    }
+  public Window(List<Expression> partitionBy, Optional<OrderBy> orderBy) {
+    super(Optional.empty());
+    this.partitionBy = requireNonNull(partitionBy, "partitionBy is null");
+    this.orderBy = requireNonNull(orderBy, "orderBy is null");
+  }
 
-    public Optional<OrderBy> getOrderBy()
-    {
-        return orderBy;
-    }
+  public List<Expression> getPartitionBy() {
+    return partitionBy;
+  }
 
-    @Override
-    public <R, C> R accept(AstVisitor<R, C> visitor, C context)
-    {
-        return visitor.visitWindow(this, context);
-    }
+  public Optional<OrderBy> getOrderBy() {
+    return orderBy;
+  }
 
-    @Override
-    public List<Node> getChildren()
-    {
-        ImmutableList.Builder<Node> nodes = ImmutableList.builder();
-        nodes.addAll(partitionBy);
-        orderBy.ifPresent(nodes::add);
-        return nodes.build();
-    }
+  @Override
+  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
+    return visitor.visitWindow(this, context);
+  }
 
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj) {
-            return true;
-        }
-        if ((obj == null) || (getClass() != obj.getClass())) {
-            return false;
-        }
-        Window o = (Window) obj;
-        return Objects.equals(partitionBy, o.partitionBy) &&
-                Objects.equals(orderBy, o.orderBy);
-    }
+  @Override
+  public List<Node> getChildren() {
+    ImmutableList.Builder<Node> nodes = ImmutableList.builder();
+    nodes.addAll(partitionBy);
+    orderBy.ifPresent(nodes::add);
+    return nodes.build();
+  }
 
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(partitionBy, orderBy);
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
     }
+    if ((obj == null) || (getClass() != obj.getClass())) {
+      return false;
+    }
+    Window o = (Window) obj;
+    return Objects.equals(partitionBy, o.partitionBy) &&
+        Objects.equals(orderBy, o.orderBy);
+  }
 
-    @Override
-    public String toString()
-    {
-        return toStringHelper(this)
-                .add("partitionBy", partitionBy)
-                .add("orderBy", orderBy)
-                .toString();
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(partitionBy, orderBy);
+  }
+
+  @Override
+  public String toString() {
+    return toStringHelper(this)
+        .add("partitionBy", partitionBy)
+        .add("orderBy", orderBy)
+        .toString();
+  }
 }

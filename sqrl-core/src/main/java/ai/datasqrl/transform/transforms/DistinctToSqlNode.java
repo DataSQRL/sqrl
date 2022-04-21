@@ -20,12 +20,12 @@ public class DistinctToSqlNode {
     String sql = generateDistinct(node,
         distinctScope.getTable(),
         distinctScope.getPartitionKeys().stream()
-          .map(name->name.getId().toString())
-          .collect(Collectors.toList()),
+            .map(name -> name.getId().toString())
+            .collect(Collectors.toList()),
         distinctScope.getTable().getFields().getElements().stream()
-          .filter(field->field instanceof Column)
-          .map(e->e.getId().toString())
-          .collect(Collectors.toList())
+            .filter(field -> field instanceof Column)
+            .map(e -> e.getId().toString())
+            .collect(Collectors.toList())
     );
 
     SqlParser parser = SqlParser.create(sql);
@@ -33,7 +33,8 @@ public class DistinctToSqlNode {
     return parser.parseQuery();
   }
 
-  public static String generateDistinct(DistinctAssignment statement, Table refTable, List<String> partition, List<String> fields) {
+  public static String generateDistinct(DistinctAssignment statement, Table refTable,
+      List<String> partition, List<String> fields) {
     //https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/sql/queries/deduplication/
     String template = "SELECT %s FROM (SELECT * FROM ("
         + " SELECT *, ROW_NUMBER() OVER (PARTITION BY %s %s) __row_number "
@@ -44,8 +45,9 @@ public class DistinctToSqlNode {
     String partitionStr = String.join(", ", partition);
 
     List<String> order = statement.getOrder().stream()
-        .map(o->refTable.getField(Name.system(o.getSortKey().toString())).getId()
-            + o.getOrdering().map(dir->" " + ((dir == Ordering.DESCENDING) ? "DESC" : "ASC")).orElse(""))
+        .map(o -> refTable.getField(Name.system(o.getSortKey().toString())).getId()
+            + o.getOrdering().map(dir -> " " + ((dir == Ordering.DESCENDING) ? "DESC" : "ASC"))
+            .orElse(""))
         .collect(Collectors.toList());
     String orderStr = order.isEmpty() ? " " : " ORDER BY " + String.join(", ", order);
 

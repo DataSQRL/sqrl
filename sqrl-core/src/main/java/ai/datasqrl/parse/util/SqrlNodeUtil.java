@@ -2,24 +2,24 @@ package ai.datasqrl.parse.util;
 
 import ai.datasqrl.parse.tree.ComparisonExpression;
 import ai.datasqrl.parse.tree.ComparisonExpression.Operator;
+import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.GroupBy;
+import ai.datasqrl.parse.tree.Identifier;
+import ai.datasqrl.parse.tree.LogicalBinaryExpression;
 import ai.datasqrl.parse.tree.LongLiteral;
 import ai.datasqrl.parse.tree.OrderBy;
 import ai.datasqrl.parse.tree.Query;
+import ai.datasqrl.parse.tree.QueryBody;
 import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.Relation;
 import ai.datasqrl.parse.tree.Select;
 import ai.datasqrl.parse.tree.SelectItem;
 import ai.datasqrl.parse.tree.SimpleGroupBy;
 import ai.datasqrl.parse.tree.SingleColumn;
+import ai.datasqrl.parse.tree.SortItem;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.parse.tree.Expression;
-import ai.datasqrl.parse.tree.Identifier;
-import ai.datasqrl.parse.tree.LogicalBinaryExpression;
-import ai.datasqrl.parse.tree.QueryBody;
-import ai.datasqrl.parse.tree.SortItem;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -28,13 +28,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class SqrlNodeUtil {
+
   /**
    * Unnamed columns are treated as expressions. It must not be an identifier
    */
   public static boolean hasOneUnnamedColumn(Query query) {
     QueryBody body = query.getQueryBody();
     if (body instanceof QuerySpecification) {
-      Select select = ((QuerySpecification)body).getSelect();
+      Select select = ((QuerySpecification) body).getSelect();
       if (select.getSelectItems().size() != 1) {
         return false;
       }
@@ -46,11 +47,7 @@ public class SqrlNodeUtil {
       if (column.getAlias().isPresent()) {
         return false;
       }
-      if (column.getExpression() instanceof Identifier) {
-        return false;
-      }
-
-      return true;
+      return !(column.getExpression() instanceof Identifier);
     }
     throw new RuntimeException("not yet implemented");
   }
@@ -58,9 +55,9 @@ public class SqrlNodeUtil {
   public static List<SingleColumn> getSelectList(Query query) {
     QueryBody body = query.getQueryBody();
     if (body instanceof QuerySpecification) {
-      Select select = ((QuerySpecification)body).getSelect();
+      Select select = ((QuerySpecification) body).getSelect();
       return select.getSelectItems().stream()
-          .map(c->(SingleColumn) c)
+          .map(c -> (SingleColumn) c)
           .collect(Collectors.toList());
     }
     throw new RuntimeException("not yet implemented");
@@ -68,13 +65,14 @@ public class SqrlNodeUtil {
 
   public static OrderBy mapToOrdinal(Select select, OrderBy orderBy) {
     List<SortItem> ordinals = orderBy.getSortItems().stream()
-        .map(s->new SortItem(s.getLocation(), new LongLiteral(
+        .map(s -> new SortItem(s.getLocation(), new LongLiteral(
             Long.toString(mapToOrdinal(select, s.getSortKey()) + 1)),
             s.getOrdering()))
         .collect(Collectors.toList());
 
     return new OrderBy(orderBy.getLocation(), ordinals);
   }
+
   public static GroupBy mapToOrdinal(Select select, GroupBy groupBy) {
     List<Expression> ordinals = mapToOrdinal(select, groupBy.getGroupingElement().getExpressions());
     return new GroupBy(new SimpleGroupBy(ordinals));
@@ -84,13 +82,13 @@ public class SqrlNodeUtil {
   public static int mapToOrdinal(Select select, Expression expression) {
     int index = IntStream.range(0, select.getSelectItems().size())
         .filter(i -> {
-          SingleColumn column = ((SingleColumn)select.getSelectItems().get(i));
+          SingleColumn column = ((SingleColumn) select.getSelectItems().get(i));
           return
               column.getExpression().equals(expression) ||
                   (column.getAlias().isPresent() && column.getAlias().get().equals(expression));
         })
         .findFirst()
-        .orElseThrow(()->
+        .orElseThrow(() ->
             new RuntimeException("Cannot find element for ordinal: " + expression));
     return index;
   }
@@ -103,7 +101,7 @@ public class SqrlNodeUtil {
     }
 
     List<Expression> ordinals = grouping.stream()
-        .map(i->(Expression)new LongLiteral(Long.toString(i + 1)))
+        .map(i -> (Expression) new LongLiteral(Long.toString(i + 1)))
         .collect(Collectors.toList());
     return ordinals;
   }
@@ -111,6 +109,7 @@ public class SqrlNodeUtil {
   public static Identifier ident(Name name) {
     return ident(name.toNamePath());
   }
+
   public static SingleColumn singleColumn(NamePath name, Name alias) {
     return new SingleColumn(ident(name), ident(alias));
   }
@@ -149,12 +148,15 @@ public class SqrlNodeUtil {
   public static GroupBy group(List<Expression> identifiers) {
     return new GroupBy(new SimpleGroupBy(identifiers));
   }
+
   public static Identifier alias(Name alias, Name id) {
     return new Identifier(Optional.empty(), alias.toNamePath().concat(id));
   }
+
   public static FunctionCall function(NamePath name, Identifier alias) {
     return new FunctionCall(name, List.of(alias), false);
   }
+
   public static Expression eq(Identifier ident, Identifier ident1) {
     return new ComparisonExpression(Optional.empty(), Operator.EQUAL, ident, ident1);
   }

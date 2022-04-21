@@ -48,7 +48,7 @@ public class SqrlRelBuilder extends RelBuilder {
    */
   public SqrlRelBuilder project(List<Integer> index) {
     List<RexInputRef> indexes = index.stream()
-        .map(i-> RexInputRef.of(i, this.peek().getRowType()))
+        .map(i -> RexInputRef.of(i, this.peek().getRowType()))
         .collect(Collectors.toList());
 
     this.project(indexes);

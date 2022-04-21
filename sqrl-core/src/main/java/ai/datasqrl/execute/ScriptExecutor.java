@@ -14,6 +14,7 @@ import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 
 @AllArgsConstructor
 public class ScriptExecutor {
+
   JDBCConnectionProvider configuration;
 
   public Job execute(ExecutionPlan executionPlan) {
@@ -23,13 +24,13 @@ public class ScriptExecutor {
   }
 
   public void executeDml(List<SqlDDLStatement> dmlQueries) {
-    String dmls = dmlQueries.stream().map(ddl->ddl.toSql()).collect(Collectors.joining("\n"));
+    String dmls = dmlQueries.stream().map(ddl -> ddl.toSql()).collect(Collectors.joining("\n"));
     try (Connection conn = configuration.getConnection(); Statement stmt = conn.createStatement()) {
       stmt.executeUpdate(dmls);
     } catch (SQLException e) {
-      throw new RuntimeException("Could not execute SQL query",e);
+      throw new RuntimeException("Could not execute SQL query", e);
     } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Could not load database driver",e);
+      throw new RuntimeException("Could not load database driver", e);
     }
   }
 

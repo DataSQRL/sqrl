@@ -101,8 +101,8 @@ public class QuerySpecification
 
   public Optional<Long> parseLimit() {
     return getLimit()
-        .filter(l->l.getValue().equalsIgnoreCase("ALL"))
-        .map(l->Long.parseLong(l.getValue()));
+        .filter(l -> l.getValue().equalsIgnoreCase("ALL"))
+        .map(l -> Long.parseLong(l.getValue()));
   }
 
   public void setSelect(Select select) {

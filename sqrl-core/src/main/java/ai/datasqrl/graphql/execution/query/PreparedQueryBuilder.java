@@ -1,7 +1,7 @@
 package ai.datasqrl.graphql.execution.query;
 
-import ai.datasqrl.graphql.execution.JdbcArgumentParser;
 import ai.datasqrl.graphql.execution.ArgumentContext;
+import ai.datasqrl.graphql.execution.JdbcArgumentParser;
 import ai.datasqrl.graphql.execution.RowMapperBuilder;
 import ai.datasqrl.graphql.execution.criteria.Criteria;
 import ai.datasqrl.graphql.execution.criteria.CriteriaBuilder;
@@ -28,6 +28,7 @@ import lombok.Value;
 //Todo: move to strategies
 @Value
 public class PreparedQueryBuilder {
+
   H2Table table;
   PageProvider pageProvider;
   H2OrderByProvider orderByProvider = new H2OrderByProvider();
@@ -49,10 +50,10 @@ public class PreparedQueryBuilder {
 
     CriteriaBuilder criteriaBuilder = new CriteriaBuilder(environment);
     //Criteria will be passed in via column of parent
-    Optional<CriteriaResult> criteria = this.criteria.map(e->e.accept(criteriaBuilder, null));
+    Optional<CriteriaResult> criteria = this.criteria.map(e -> e.accept(criteriaBuilder, null));
 
     //Should be same as tuples
-    List<String> criteriaList = criteria.map(c->c.getClauseList()).orElse(List.of());
+    List<String> criteriaList = criteria.map(c -> c.getClauseList()).orElse(List.of());
 
     //Todo remove if condition, exists here to have a condition on including the where clause
     Optional<Tuple> arguments;
@@ -83,7 +84,7 @@ public class PreparedQueryBuilder {
       builder.append(" OFFSET " + pageProvider.pageState(environment).get());
     }
 
-    System.out.println(builder.toString());
+    System.out.println(builder);
     System.out.println(arguments);
     String query = builder.toString();
     RowMapperBuilder rowMapperBuilder = new RowMapperBuilder(pageProvider);
@@ -99,6 +100,7 @@ public class PreparedQueryBuilder {
 
   @Value
   public class ColumnNameBuilder extends H2ColumnVisitor2<String, Object> {
+
     StringJoiner joiner = new StringJoiner(", ");
 
     @Override
@@ -120,6 +122,7 @@ public class PreparedQueryBuilder {
 
   @Value
   public class ColumnContext {
+
     DataFetchingEnvironment environment;
   }
 }

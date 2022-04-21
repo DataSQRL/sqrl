@@ -9,6 +9,7 @@ import lombok.Value;
 
 @Value
 public class IdentifierScope extends ExpressionScope {
+
   Name alias;
   NamePath qualifiedName;
   List<Field> fieldPath;

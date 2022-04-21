@@ -12,6 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Column extends Field {
+
   private final Table table;
   //Identity of the column in addition to name
   public int version;
@@ -46,7 +47,7 @@ public class Column extends Field {
 
   private static Name unboxName(Name name) {
     if (name instanceof VersionedName) {
-      return ((VersionedName)name).toName();
+      return ((VersionedName) name).toName();
     } else {
       return name;
     }
@@ -55,7 +56,7 @@ public class Column extends Field {
   public static Column createTemp(Name name, BasicType type, Table table, int version) {
     return new Column(name,
         table, version, 0, List.of(), false, false, false
-          );
+    );
   }
 
   public VersionedName getId() {

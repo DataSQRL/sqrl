@@ -11,10 +11,11 @@ import java.util.List;
 import java.util.Optional;
 
 public class AliasFirstColumn {
+
   public Query transform(Query query, Name name) {
     if (query.getQueryBody() instanceof QuerySpecification) {
       QuerySpecification spec = (QuerySpecification) query.getQueryBody();
-      SingleColumn column = (SingleColumn)spec.getSelect().getSelectItems().get(0);
+      SingleColumn column = (SingleColumn) spec.getSelect().getSelectItems().get(0);
       SingleColumn aliased = new SingleColumn(column.getLocation(), column.getExpression(),
           Optional.of(ident(name)));
 

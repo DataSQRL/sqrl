@@ -15,8 +15,8 @@ import ai.datasqrl.parse.tree.QueryAssignment;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
 import ai.datasqrl.transform.transforms.AliasFirstColumn;
-import ai.datasqrl.transform.transforms.ExpressionToQueryTransformer;
 import ai.datasqrl.transform.transforms.DistinctToSqlNode;
+import ai.datasqrl.transform.transforms.ExpressionToQueryTransformer;
 import ai.datasqrl.validate.scopes.DistinctScope;
 import ai.datasqrl.validate.scopes.StatementScope;
 import com.google.common.base.Preconditions;
@@ -28,6 +28,7 @@ import org.apache.calcite.sql.SqlNode;
 @Slf4j
 @AllArgsConstructor
 public class StatementTransformer {
+
   protected final ErrorCollector errors = ErrorCollector.root();
 
   public SqlNode transform(Node statement, StatementScope statementScope) {
@@ -36,6 +37,7 @@ public class StatementTransformer {
   }
 
   public class Visitor extends AstVisitor<SqlNode, StatementScope> {
+
     /**
      * Noop
      */
@@ -51,7 +53,8 @@ public class StatementTransformer {
     }
 
     @Override
-    public SqlNode visitExpressionAssignment(ExpressionAssignment assignment, StatementScope scope) {
+    public SqlNode visitExpressionAssignment(ExpressionAssignment assignment,
+        StatementScope scope) {
       NamePath namePath = assignment.getNamePath();
       Expression expression = assignment.getExpression();
 
@@ -173,12 +176,13 @@ public class StatementTransformer {
     @SneakyThrows
     @Override
     public SqlNode visitDistinctAssignment(DistinctAssignment node, StatementScope scope) {
-      DistinctScope distinctScope = (DistinctScope)scope.getScopes().get(node);
+      DistinctScope distinctScope = (DistinctScope) scope.getScopes().get(node);
 
       DistinctToSqlNode transform = new DistinctToSqlNode();
       return transform.transform(node, distinctScope);
     }
-//
+
+    //
 //    @Override
 //    public Node visitJoinDeclaration(JoinDeclaration node, StatementScope scope) {
 //      NamePath namePath = node.getNamePath();
@@ -248,10 +252,11 @@ public class StatementTransformer {
 //      }
 //      return Optional.empty();
 ////    }
-      @Override
-      public SqlNode visitNode(Node node, StatementScope scope) {
-        throw new RuntimeException(String.format("Could not process node %s : %s", node.getClass().getName(), node));
-      }
+    @Override
+    public SqlNode visitNode(Node node, StatementScope scope) {
+      throw new RuntimeException(
+          String.format("Could not process node %s : %s", node.getClass().getName(), node));
+    }
 
   }
 }

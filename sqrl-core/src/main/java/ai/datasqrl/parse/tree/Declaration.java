@@ -3,6 +3,7 @@ package ai.datasqrl.parse.tree;
 import java.util.Optional;
 
 public abstract class Declaration extends Node {
+
   protected Declaration(Optional<NodeLocation> location) {
     super(location);
   }

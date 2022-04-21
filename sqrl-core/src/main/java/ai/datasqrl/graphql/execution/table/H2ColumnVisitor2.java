@@ -66,6 +66,7 @@ public class H2ColumnVisitor2<R, C> {
   public R visitZonedTimeColumn(ZonedTimeColumn column, C context) {
     return visitH2Column(column, context);
   }
+
   public R visitPrimaryKeyColumn(PrimaryKeyColumn column, C context) {
     return visitH2Column(column, context);
   }

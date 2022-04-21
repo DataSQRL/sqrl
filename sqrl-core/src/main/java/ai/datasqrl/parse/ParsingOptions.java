@@ -23,6 +23,7 @@ public class ParsingOptions {
   };
   private final DecimalLiteralTreatment decimalLiteralTreatment;
   private final Consumer<ParsingWarning> warningConsumer;
+
   /**
    * @deprecated Use (@link #builder())
    */

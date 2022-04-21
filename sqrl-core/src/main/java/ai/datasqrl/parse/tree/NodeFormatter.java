@@ -4,7 +4,9 @@ import ai.datasqrl.parse.tree.SortItem.Ordering;
 import java.util.stream.Collectors;
 
 public class NodeFormatter extends AstVisitor<String, Void> {
+
   private static final NodeFormatter nodeFormatter = new NodeFormatter();
+
   public static String accept(Node node) {
     return node.accept(nodeFormatter, null);
   }
@@ -44,11 +46,11 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitQuery(Query node, Void context) {
     return node.getQueryBody().accept(this, null) +
-        node.getOrderBy().map(o->
-            o.getSortItems().stream()
-              .map(s->s.accept(this, null))
-              .collect(Collectors.joining("\n")))
-        .orElse("")
+        node.getOrderBy().map(o ->
+                o.getSortItems().stream()
+                    .map(s -> s.accept(this, null))
+                    .collect(Collectors.joining("\n")))
+            .orElse("")
         + node.getLimit().map(l -> " LIMIT " + l.getValue()).orElse("");
   }
 
@@ -64,53 +66,57 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitSelect(Select node, Void context) {
-    return (node.isDistinct()? " DISTINCT " : "") +
+    return (node.isDistinct() ? " DISTINCT " : "") +
 //        node.getDistinctOn().map(o->o.accept(this, null)).orElse("") +
         node.getSelectItems().stream()
-        .map(s->s.accept(this, null))
-        .collect(Collectors.joining(", "));
+            .map(s -> s.accept(this, null))
+            .collect(Collectors.joining(", "));
   }
 
   @Override
   public String visitOrderBy(OrderBy node, Void context) {
-    return node.getSortItems().stream().map(s->s.accept(this, null)).collect(Collectors.joining(", "));
+    return node.getSortItems().stream().map(s -> s.accept(this, null))
+        .collect(Collectors.joining(", "));
   }
 
   @Override
   public String visitQuerySpecification(QuerySpecification node, Void context) {
     return "SELECT " + node.getSelect().accept(this, null) +
         " FROM " + node.getFrom().accept(this, null) +
-        node.getWhere().map(w-> " WHERE " +w.accept(this, null)).orElse("") +
-        node.getGroupBy().map(g-> " GROUP BY " +g.accept(this, null)).orElse("") +
-        node.getHaving().map(h-> " HAVING " +h.accept(this, null)).orElse("") +
-        node.getOrderBy().map(o-> " ORDER BY " +o.accept(this, null)).orElse("") +
-        node.getLimit().map(l-> " LIMIT " +l.getValue()).orElse("");
+        node.getWhere().map(w -> " WHERE " + w.accept(this, null)).orElse("") +
+        node.getGroupBy().map(g -> " GROUP BY " + g.accept(this, null)).orElse("") +
+        node.getHaving().map(h -> " HAVING " + h.accept(this, null)).orElse("") +
+        node.getOrderBy().map(o -> " ORDER BY " + o.accept(this, null)).orElse("") +
+        node.getLimit().map(l -> " LIMIT " + l.getValue()).orElse("");
   }
 
   @Override
   public String visitUnion(Union node, Void context) {
     return node.getRelations().stream()
-        .map(r->r.accept(this, null))
+        .map(r -> r.accept(this, null))
         .collect(Collectors.joining(
-            node.isDistinct().map(d->d.booleanValue() ? " UNION " : " UNION ALL ").orElse(" UNION ")
+            node.isDistinct().map(d -> d.booleanValue() ? " UNION " : " UNION ALL ")
+                .orElse(" UNION ")
         ));
   }
 
   @Override
   public String visitIntersect(Intersect node, Void context) {
     return node.getRelations().stream()
-        .map(r->r.accept(this, null))
+        .map(r -> r.accept(this, null))
         .collect(Collectors.joining(
-            node.isDistinct().map(d->d.booleanValue() ? " INTERSECT " : " INTERSECT ALL ").orElse(" INTERSECT ")
+            node.isDistinct().map(d -> d.booleanValue() ? " INTERSECT " : " INTERSECT ALL ")
+                .orElse(" INTERSECT ")
         ));
   }
 
   @Override
   public String visitExcept(Except node, Void context) {
     return node.getRelations().stream()
-        .map(r->r.accept(this, null))
+        .map(r -> r.accept(this, null))
         .collect(Collectors.joining(
-            node.isDistinct().map(d->d.booleanValue() ? " EXCEPT " : " EXCEPT ALL ").orElse(" EXCEPT ")
+            node.isDistinct().map(d -> d.booleanValue() ? " EXCEPT " : " EXCEPT ALL ")
+                .orElse(" EXCEPT ")
         ));
   }
 
@@ -126,30 +132,35 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitWhenClause(WhenClause node, Void context) {
-    return "WHEN " + node.getOperand().accept(this, null) + " THEN " + node.getResult().accept(this, null);
+    return "WHEN " + node.getOperand().accept(this, null) + " THEN " + node.getResult()
+        .accept(this, null);
   }
 
   @Override
   public String visitIntervalLiteral(IntervalLiteral node, Void context) {
-    return "INTERVAL " + node.getExpression().accept(this, context) + " " + node.getStartField().name();
+    return "INTERVAL " + node.getExpression().accept(this, context) + " " + node.getStartField()
+        .name();
   }
 
   @Override
   public String visitInPredicate(InPredicate node, Void context) {
     return " IN TBD "; //node.getValue().accept(this, null) +
-       // " IN (" + node.getValueList().accept(this, null) + ")";
+    // " IN (" + node.getValueList().accept(this, null) + ")";
   }
 
   @Override
   public String visitFunctionCall(FunctionCall node, Void context) {
-    return node.getNamePath() + "(" + node.getArguments().stream().map(a->a.accept(this, null)).collect(
-        Collectors.joining(", ")) + ")" + node.getOver().map(o->o.accept(this, context)).orElse("");
+    return node.getNamePath() + "(" + node.getArguments().stream().map(a -> a.accept(this, null))
+        .collect(
+            Collectors.joining(", ")) + ")" + node.getOver().map(o -> o.accept(this, context))
+        .orElse("");
   }
 
   @Override
   public String visitSimpleCaseExpression(SimpleCaseExpression node, Void context) {
-    return "CASE " + node.getWhenClauses().stream().map(w->w.accept(this, null)).collect(
-        Collectors.joining("\n")) + node.getDefaultValue().map(e->" ELSE " + e.accept(this, null)).orElse("");
+    return "CASE " + node.getWhenClauses().stream().map(w -> w.accept(this, null)).collect(
+        Collectors.joining("\n")) + node.getDefaultValue().map(e -> " ELSE " + e.accept(this, null))
+        .orElse("");
   }
 
   @Override
@@ -159,7 +170,8 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitInListExpression(InListExpression node, Void context) {
-    return node.getValues().stream().map(i->i.accept(this, null)).collect(Collectors.joining(", "));
+    return node.getValues().stream().map(i -> i.accept(this, null))
+        .collect(Collectors.joining(", "));
   }
 
   @Override
@@ -185,13 +197,13 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitSingleColumn(SingleColumn node, Void context) {
     return node.getExpression().accept(this, null) +
-        node.getAlias().map(a->" AS " + a.accept(this, null))
-        .orElse("");
+        node.getAlias().map(a -> " AS " + a.accept(this, null))
+            .orElse("");
   }
 
   @Override
   public String visitAllColumns(AllColumns node, Void context) {
-    return node.getPrefix().map(p->p.toString() + ".").orElse("") + "*";
+    return node.getPrefix().map(p -> p + ".").orElse("") + "*";
   }
 
   @Override
@@ -211,7 +223,8 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitArrayConstructor(ArrayConstructor node, Void context) {
-    return "ARRAY<"+node.getValues().stream().map(t->t.accept(this, null)).collect(Collectors.joining(", ")) + ">";
+    return "ARRAY<" + node.getValues().stream().map(t -> t.accept(this, null))
+        .collect(Collectors.joining(", ")) + ">";
   }
 
   @Override
@@ -239,12 +252,12 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitSortItem(SortItem node, Void context) {
     return node.getSortKey().accept(this, null) +
-        (node.getOrdering().map(o-> o == Ordering.ASCENDING ? " ASC" : " DESC").orElse(""));
+        (node.getOrdering().map(o -> o == Ordering.ASCENDING ? " ASC" : " DESC").orElse(""));
   }
 
   @Override
   public String visitTableNode(TableNode node, Void context) {
-    return node.getNamePath().getDisplay() + node.getAlias().map(a-> " AS " + a).orElse("");
+    return node.getNamePath().getDisplay() + node.getAlias().map(a -> " AS " + a).orElse("");
   }
 
   @Override
@@ -255,7 +268,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitTableSubquery(TableSubquery node, Void context) {
     return "(" + node.getQuery().accept(this, null) +
-       ")";
+        ")";
   }
 
   @Override
@@ -266,11 +279,11 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitJoin(Join node, Void context) {
-    return  " " + node.getLeft().accept(this, null) + " " +
+    return " " + node.getLeft().accept(this, null) + " " +
         node.getType() + " JOIN " +
         node.getRight().accept(this, null) + " " +
-        node.getCriteria().map(c-> " ON " + c.accept(this, null))
-        .orElse("");
+        node.getCriteria().map(c -> " ON " + c.accept(this, null))
+            .orElse("");
   }
 
   @Override
@@ -280,7 +293,7 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitCast(Cast node, Void context) {
-    return "CAST("+ node.getExpression().accept(this, null) +" AS " +node.getType()+")";
+    return "CAST(" + node.getExpression().accept(this, null) + " AS " + node.getType() + ")";
   }
 
   @Override
@@ -295,13 +308,14 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitGroupingElement(GroupingElement node, Void context) {
-    return node.getExpressions().stream().map(g->g.accept(this, null))
+    return node.getExpressions().stream().map(g -> g.accept(this, null))
         .collect(Collectors.joining(" "));
   }
 
   @Override
   public String visitSimpleGroupBy(SimpleGroupBy node, Void context) {
-    return node.getExpressions().stream().map(e->e.accept(this, null)).collect(Collectors.joining(" "));
+    return node.getExpressions().stream().map(e -> e.accept(this, null))
+        .collect(Collectors.joining(" "));
   }
 
   @Override
@@ -317,14 +331,14 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitGroupingOperation(GroupingOperation node, Void context) {
-    return node.getGroupingColumns().stream().map(g->g.accept(this, null))
+    return node.getGroupingColumns().stream().map(g -> g.accept(this, null))
         .collect(Collectors.joining(" "));
   }
 
   @Override
   public String visitScript(ScriptNode node, Void context) {
     return node.getStatements()
-        .stream().map(s->s.accept(this, null))
+        .stream().map(s -> s.accept(this, null))
         .collect(Collectors.joining("\n"));
   }
 
@@ -361,9 +375,9 @@ public class NodeFormatter extends AstVisitor<String, Void> {
   @Override
   public String visitInlineJoin(InlineJoin node, Void context) {
     return node.getRelation().accept(this, context) +
-            (node.getOrderBy().isEmpty() ? "" :  " ORDER BY ") +
-        node.getLimit().map(i->" LIMIT " + i).orElse("") +
-        node.getInverse().map(i->" INVERSE " + i.getCanonical()).orElse("");
+        (node.getOrderBy().isEmpty() ? "" : " ORDER BY ") +
+        node.getLimit().map(i -> " LIMIT " + i).orElse("") +
+        node.getInverse().map(i -> " INVERSE " + i.getCanonical()).orElse("");
   }
 
   @Override
@@ -373,21 +387,22 @@ public class NodeFormatter extends AstVisitor<String, Void> {
 
   @Override
   public String visitSelectItem(SelectItem node, Void context) {
-    throw new RuntimeException(String.format("Undefiend node in printer %s", node.getClass().getName()));
+    throw new RuntimeException(
+        String.format("Undefiend node in printer %s", node.getClass().getName()));
   }
 
   @Override
   public String visitWindow(Window window, Void context) {
     return
         " OVER (PARTITION BY " + window.getPartitionBy().stream()
-            .map(e->e.accept(this, context))
+            .map(e -> e.accept(this, context))
             .collect(Collectors.joining(", ")) + ")";
   }
 
   @Override
   public String visitDistinctOn(DistinctOn node, Void context) {
     return String.format(" ON (%s) ", node.getOn().stream()
-        .map(e->e.getNamePath().toString()).collect(Collectors.joining(",")));
+        .map(e -> e.getNamePath().toString()).collect(Collectors.joining(",")));
   }
 
   @Override

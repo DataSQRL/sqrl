@@ -23,7 +23,8 @@ public class RelToSql {
             .withIndentation(1)
             .withSelectFolding(null);
 
-    String sql = convertToSqlNode(optimizedNode).toSqlString(c -> transform.apply(c.withDialect(PostgresqlSqlDialect.DEFAULT)))
+    String sql = convertToSqlNode(optimizedNode).toSqlString(
+            c -> transform.apply(c.withDialect(PostgresqlSqlDialect.DEFAULT)))
         .getSql();
     return sql;
   }

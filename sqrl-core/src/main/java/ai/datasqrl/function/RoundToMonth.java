@@ -13,7 +13,8 @@ public class RoundToMonth implements RewritingFunction {
 
   @Override
   public FunctionCall rewrite(FunctionCall node) {
-    return new FunctionCall(node.getLocation(), Name.system("COALESCE").toNamePath(), node.getArguments(), false,
+    return new FunctionCall(node.getLocation(), Name.system("COALESCE").toNamePath(),
+        node.getArguments(), false,
         Optional.empty());
   }
 }

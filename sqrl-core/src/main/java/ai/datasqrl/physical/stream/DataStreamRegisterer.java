@@ -29,6 +29,7 @@ import org.apache.flink.util.OutputTag;
 
 @AllArgsConstructor
 public class DataStreamRegisterer extends RelShuttleImpl {
+
   StreamTableEnvironment tEnv;
   ImportManager importManager;
   Builder streamBuilder;
@@ -42,11 +43,13 @@ public class DataStreamRegisterer extends RelShuttleImpl {
   public void register(RelNode relNode) {
     relNode.accept(this);
   }
+
   @Override
   public RelNode visit(TableScan scan) {
 
-    String streamName = String.join(".",scan.getTable().getQualifiedName());
-    String tableName = scan.getTable().getQualifiedName().get(scan.getTable().getQualifiedName().size() - 1);
+    String streamName = String.join(".", scan.getTable().getQualifiedName());
+    String tableName = scan.getTable().getQualifiedName()
+        .get(scan.getTable().getQualifiedName().size() - 1);
     if ((List.of(tEnv.listTables()).contains(tableName))) {
       return super.visit(scan);
     }
@@ -61,7 +64,8 @@ public class DataStreamRegisterer extends RelShuttleImpl {
     Pair<Schema, TypeInformation> tableSchema = tbConverter.tableSchemaConversion(
         sourceTable.getSourceSchema());
 
-    SchemaValidationProcess validationProcess = new SchemaValidationProcess(schemaErrorTag, sourceTable.getSourceSchema(),
+    SchemaValidationProcess validationProcess = new SchemaValidationProcess(schemaErrorTag,
+        sourceTable.getSourceSchema(),
         SchemaAdjustmentSettings.DEFAULT,
         sourceTable.getTable().getDataset().getDigest());
 

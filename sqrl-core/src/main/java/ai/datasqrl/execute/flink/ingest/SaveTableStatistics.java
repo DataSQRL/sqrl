@@ -14,42 +14,43 @@ import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 
 public class SaveTableStatistics extends RichSinkFunction<SourceTableStatistics> {
 
-    private JDBCConnectionProvider jdbc;
-    private MetadataStoreProvider metaProvider;
-    private SerializerProvider serializer;
-    private DatasetRegistryPersistenceProvider registryProvider;
-    private Name dataset;
-    private Name table;
+  private final JDBCConnectionProvider jdbc;
+  private final MetadataStoreProvider metaProvider;
+  private final SerializerProvider serializer;
+  private final DatasetRegistryPersistenceProvider registryProvider;
+  private final Name dataset;
+  private final Name table;
 
-    private transient MetadataStore store;
-    private transient DatasetRegistryPersistence persistence;
+  private transient MetadataStore store;
+  private transient DatasetRegistryPersistence persistence;
 
-    public SaveTableStatistics(JDBCConnectionProvider jdbc, MetadataStoreProvider metaProvider, SerializerProvider serializer,
-                               DatasetRegistryPersistenceProvider registryProvider, Name dataset, Name table) {
-        this.jdbc = jdbc;
-        this.metaProvider = metaProvider;
-        this.serializer = serializer;
-        this.registryProvider = registryProvider;
-        this.dataset = dataset;
-        this.table = table;
-    }
+  public SaveTableStatistics(JDBCConnectionProvider jdbc, MetadataStoreProvider metaProvider,
+      SerializerProvider serializer,
+      DatasetRegistryPersistenceProvider registryProvider, Name dataset, Name table) {
+    this.jdbc = jdbc;
+    this.metaProvider = metaProvider;
+    this.serializer = serializer;
+    this.registryProvider = registryProvider;
+    this.dataset = dataset;
+    this.table = table;
+  }
 
-    @Override
-    public void open(Configuration parameters) throws Exception {
-        store = metaProvider.openStore(jdbc, serializer);
-        persistence = registryProvider.createRegistryPersistence(store);
-    }
+  @Override
+  public void open(Configuration parameters) throws Exception {
+    store = metaProvider.openStore(jdbc, serializer);
+    persistence = registryProvider.createRegistryPersistence(store);
+  }
 
-    @Override
-    public void close() throws Exception {
-        store.close();
-        store = null;
-        persistence = null;
-    }
+  @Override
+  public void close() throws Exception {
+    store.close();
+    store = null;
+    persistence = null;
+  }
 
-    @Override
-    public void invoke(SourceTableStatistics stats, Context context) throws Exception {
-        persistence.putTableStatistics(dataset,table,stats);
-    }
+  @Override
+  public void invoke(SourceTableStatistics stats, Context context) throws Exception {
+    persistence.putTableStatistics(dataset, table, stats);
+  }
 
 }

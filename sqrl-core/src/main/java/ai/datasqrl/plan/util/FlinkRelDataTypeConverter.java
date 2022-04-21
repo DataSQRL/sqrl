@@ -19,7 +19,7 @@ public class FlinkRelDataTypeConverter {
 
   public static RelDataType toRelDataType(List<UnresolvedColumn> c) {
     List<UnresolvedPhysicalColumn> columns = c.stream()
-        .map(column->(UnresolvedPhysicalColumn) column)
+        .map(column -> (UnresolvedPhysicalColumn) column)
         .collect(Collectors.toList());
 
     FlinkTypeFactory factory = new FlinkTypeFactory(new FlinkTypeSystem());
@@ -28,7 +28,8 @@ public class FlinkRelDataTypeConverter {
     for (UnresolvedPhysicalColumn column : columns) {
       //Drop nullability requirements
       RelDataTypeFieldImpl field = new RelDataTypeFieldImpl(column.getName(), fields.size(),
-          factory.createFieldTypeFromLogicalType(((DataType)column.getDataType()).getLogicalType()));
+          factory.createFieldTypeFromLogicalType(
+              ((DataType) column.getDataType()).getLogicalType()));
 
       fields.add(field);
     }

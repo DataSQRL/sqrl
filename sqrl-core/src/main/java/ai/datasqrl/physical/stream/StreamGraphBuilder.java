@@ -22,15 +22,17 @@ import org.apache.flink.table.api.internal.FlinkEnvProxy;
 
 @AllArgsConstructor
 public class StreamGraphBuilder {
+
   private final StreamEngine streamEngine;
   private final ImportManager importManager;
   private final JDBCConfiguration jdbcConfiguration;
 
   public CreateStreamJobResult createStreamGraph(List<TableQuery> streamQueries) {
-    final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder)streamEngine.createStream();
+    final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder) streamEngine.createStream();
     final StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)
         StreamTableEnvironment.create(streamBuilder.getEnvironment());
-    final DataStreamRegisterer dataStreamRegisterer = new DataStreamRegisterer(tEnv, this.importManager, streamBuilder);
+    final DataStreamRegisterer dataStreamRegisterer = new DataStreamRegisterer(tEnv,
+        this.importManager, streamBuilder);
 
     tEnv.getConfig()
         .getConfiguration()

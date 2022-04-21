@@ -14,34 +14,36 @@ import lombok.NonNull;
 @AllArgsConstructor
 public class EnvironmentConfiguration {
 
-    @Builder.Default @NonNull
-    @NotNull @Valid
-    MetaData metastore = new MetaData();
+  @Builder.Default
+  @NonNull
+  @NotNull @Valid
+  MetaData metastore = new MetaData();
+  @Builder.Default
+  boolean monitorSources = true;
+
+  public MetaData getMetastore() {
+    return metastore;
+  }
+
+  @Builder
+  @Getter
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class MetaData {
+
+    public static final String DEFAULT_DATABASE = "datasqrl";
+
     @Builder.Default
-    boolean monitorSources = true;
+    @NonNull
+    @NotNull
+    String database = DEFAULT_DATABASE;
 
-    public MetaData getMetastore() {
-        return metastore;
+    public String getDatabase() {
+      return database;
     }
 
-    @Builder
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class MetaData {
 
-        public static final String DEFAULT_DATABASE = "datasqrl";
-
-        @Builder.Default @NonNull
-        @NotNull
-        String database = DEFAULT_DATABASE;
-
-        public String getDatabase() {
-            return database;
-        }
-
-
-    }
+  }
 
 
 }

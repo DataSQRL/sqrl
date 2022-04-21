@@ -16,6 +16,7 @@ import org.dataloader.DataLoaderRegistry;
 //TODO: wip
 @Value
 public class BatchDataFetcher {
+
   DataLoaderRegistry dataLoaderRegistry;
   SqlClientProvider sqlClientProvider;
   PageProvider pageProvider;

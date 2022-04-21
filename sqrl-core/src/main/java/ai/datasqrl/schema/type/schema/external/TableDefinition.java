@@ -4,11 +4,11 @@ import java.util.List;
 
 public class TableDefinition extends AbstractElementDefinition {
 
-    public static boolean PARTIAL_SCHEMA_DEFAULT = true;
+  public static boolean PARTIAL_SCHEMA_DEFAULT = true;
 
-    public Boolean partial_schema;
+  public Boolean partial_schema;
 
-    public List<FieldDefinition> columns;
-    public List<String> tests;
+  public List<FieldDefinition> columns;
+  public List<String> tests;
 
 }

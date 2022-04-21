@@ -5,8 +5,8 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import java.util.Optional;
 
 /**
- * The namespace allows the script to resolve imported scripts, functions, and datasets that
- * are not immediately brought into scope.
+ * The namespace allows the script to resolve imported scripts, functions, and datasets that are not
+ * immediately brought into scope.
  */
 public class Namespace {
 

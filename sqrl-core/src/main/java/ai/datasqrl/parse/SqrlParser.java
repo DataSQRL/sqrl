@@ -2,8 +2,8 @@ package ai.datasqrl.parse;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.error.ErrorMessage;
-import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.parse.ParsingOptions.DecimalLiteralTreatment;
+import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.parse.tree.SqrlStatement;
 
 /**
@@ -17,7 +17,7 @@ public class SqrlParser {
   public SqrlParser(ErrorCollector errorCollector) {
     parser = new SqlParser(new SqlParserOptions());
     parsingOptions = ParsingOptions.builder()
-        .setWarningConsumer((e)->
+        .setWarningConsumer((e) ->
             errorCollector.add(new ErrorMessage.Implementation(e.getWarning(), null, null)))
         .setDecimalLiteralTreatment(DecimalLiteralTreatment.AS_DOUBLE)
         .build();
@@ -32,6 +32,6 @@ public class SqrlParser {
   }
 
   public SqrlStatement parseStatement(String statement) {
-    return (SqrlStatement)parser.createStatement(statement, parsingOptions);
+    return parser.createStatement(statement, parsingOptions);
   }
 }

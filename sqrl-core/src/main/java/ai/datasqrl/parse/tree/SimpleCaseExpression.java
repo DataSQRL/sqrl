@@ -78,7 +78,7 @@ public class SimpleCaseExpression
     SimpleCaseExpression that = (SimpleCaseExpression) o;
     return
         Objects.equals(whenClauses, that.whenClauses) &&
-        Objects.equals(defaultValue, that.defaultValue);
+            Objects.equals(defaultValue, that.defaultValue);
   }
 
   @Override

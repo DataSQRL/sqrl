@@ -91,7 +91,7 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
 
   public NodeToSqlNodeConverter() {
     this.opMap = Multimaps.index(
-        SqlStdOperatorTable.instance().getOperatorList(), e->e.getName());
+        SqlStdOperatorTable.instance().getOperatorList(), e -> e.getName());
   }
 
   @Override
@@ -109,15 +109,15 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
   @Override
   public SqlNode visitSelect(Select node, Void context) {
     return new SqlNodeList(
-        node.getSelectItems().stream().map(s->s.accept(this, context))
-                .collect(Collectors.toList()),
+        node.getSelectItems().stream().map(s -> s.accept(this, context))
+            .collect(Collectors.toList()),
         pos.getPos(node.getLocation()));
   }
 
   @Override
   public SqlNode visitOrderBy(OrderBy node, Void context) {
     List<SqlNode> orderList = node.getSortItems().stream()
-        .map(s->((SqlNode)s.accept(this, context)))
+        .map(s -> s.accept(this, context))
         .collect(Collectors.toList());
 
     return new SqlNodeList(
@@ -131,18 +131,19 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
         pos.getPos(node.getLocation()),
         node.getSelect().isDistinct()
             ? new SqlNodeList(
-              List.of(SqlLiteral.createSymbol(SqlSelectKeyword.DISTINCT, pos.getPos(node.getLocation()))),
-              pos.getPos(node.getLocation()))
+            List.of(
+                SqlLiteral.createSymbol(SqlSelectKeyword.DISTINCT, pos.getPos(node.getLocation()))),
+            pos.getPos(node.getLocation()))
             : null,
         (SqlNodeList) node.getSelect().accept(this, null),
         node.getFrom().accept(this, null),
-        node.getWhere().map(n->n.accept(this, null)).orElse(null),
-        (SqlNodeList) node.getGroupBy().map(n->n.accept(this, null)).orElse(null),
-        node.getHaving().map(n->n.accept(this, null)).orElse(null),
+        node.getWhere().map(n -> n.accept(this, null)).orElse(null),
+        (SqlNodeList) node.getGroupBy().map(n -> n.accept(this, null)).orElse(null),
+        node.getHaving().map(n -> n.accept(this, null)).orElse(null),
         null,
-        (SqlNodeList) node.getOrderBy().map(n->n.accept(this, null)).orElse(null),
+        (SqlNodeList) node.getOrderBy().map(n -> n.accept(this, null)).orElse(null),
         null,
-        node.getLimit().map(n->n.accept(this, null)).orElse(null),
+        node.getLimit().map(n -> n.accept(this, null)).orElse(null),
         null
     );
     return select;
@@ -212,7 +213,8 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
   @Override
   public SqlNode visitTableNode(TableNode node, Void context) {
     if (node.getAlias().isPresent()) {
-      SqlIdentifier table = new SqlIdentifier(List.of(node.getNamePath().toString()), pos.getPos(node.getLocation()));
+      SqlIdentifier table = new SqlIdentifier(List.of(node.getNamePath().toString()),
+          pos.getPos(node.getLocation()));
       SqlNode[] operands = {
           table,
           new SqlIdentifier(node.getAlias().get().getCanonical(), SqlParserPos.ZERO)
@@ -220,7 +222,8 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
       return new SqlBasicCall(SqlStdOperatorTable.AS, operands, pos.getPos(node.getLocation()));
     }
 
-    return new SqlIdentifier(List.of(node.getNamePath().toString()), pos.getPos(node.getLocation()));
+    return new SqlIdentifier(List.of(node.getNamePath().toString()),
+        pos.getPos(node.getLocation()));
   }
 
   @Override
@@ -261,9 +264,10 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
         throw new IllegalStateException("Unexpected value: " + node.getType());
     }
 
-    SqlLiteral conditionType = node.getCriteria().map(c->c instanceof JoinOn)
+    SqlLiteral conditionType = node.getCriteria().map(c -> c instanceof JoinOn)
         .map(on ->
-            SqlLiteral.createSymbol(on ? JoinConditionType.ON : JoinConditionType.NONE, pos.getPos(node.getLocation())))
+            SqlLiteral.createSymbol(on ? JoinConditionType.ON : JoinConditionType.NONE,
+                pos.getPos(node.getLocation())))
         .orElse(SqlLiteral.createSymbol(JoinConditionType.NONE, SqlParserPos.ZERO));
 
     return new SqlJoin(pos.getPos(node.getLocation()),
@@ -272,7 +276,7 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
         SqlLiteral.createSymbol(type, pos.getPos(node.getLocation())),
         node.getRight().accept(this, null),
         conditionType,
-        node.getCriteria().map(e->e.accept(this, null)).orElse(null)
+        node.getCriteria().map(e -> e.accept(this, null)).orElse(null)
     );
   }
 //
@@ -308,13 +312,14 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
 
   @Override
   public SqlNode visitSimpleGroupBy(SimpleGroupBy node, Void context) {
-    return new SqlNodeList(node.getExpressions().stream().map(e->e.accept(this, null)).collect(Collectors.toList()),
+    return new SqlNodeList(
+        node.getExpressions().stream().map(e -> e.accept(this, null)).collect(Collectors.toList()),
         pos.getPos(node.getLocation()));
   }
 
   @Override
   public SqlNode visitLimitNode(Limit node, Void context) {
-    return node.getIntValue().map(i->SqlLiteral.createExactNumeric(node.getValue(),
+    return node.getIntValue().map(i -> SqlLiteral.createExactNumeric(node.getValue(),
         pos.getPos(node.getLocation()))).orElse(null);
   }
 
@@ -346,7 +351,8 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
 
   @Override
   public SqlNode visitBetweenPredicate(BetweenPredicate node, Void context) {
-    return call(node.getLocation(), SqlStdOperatorTable.BETWEEN, node.getValue(), node.getMin(), node.getMax());
+    return call(node.getLocation(), SqlStdOperatorTable.BETWEEN, node.getValue(), node.getMin(),
+        node.getMax());
   }
 
   @Override
@@ -389,11 +395,13 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
     List<SqlOperator> op = opMap.get(opName.toUpperCase());
     Preconditions.checkState(!op.isEmpty(), "Operation could not be found: %s", opName);
 
-    SqlBasicCall call = new SqlBasicCall(op.get(0), toOperand(node.getArguments()), pos.getPos(node.getLocation()));
+    SqlBasicCall call = new SqlBasicCall(op.get(0), toOperand(node.getArguments()),
+        pos.getPos(node.getLocation()));
 
     //Convert to OVER
     if (op.get(0).requiresOver()) {
-      List<SqlNode> partition = node.getOver().get().getPartitionBy().stream().map(e->e.accept(this, null)).collect(Collectors.toList());
+      List<SqlNode> partition = node.getOver().get().getPartitionBy().stream()
+          .map(e -> e.accept(this, null)).collect(Collectors.toList());
       SqlNodeList orderList = SqlNodeList.EMPTY;
       if (node.getOver().get().getOrderBy().isPresent()) {
         OrderBy order = node.getOver().get().getOrderBy().get();
@@ -447,7 +455,7 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
   public SqlNode visitIdentifier(Identifier node, Void context) {
     return new SqlIdentifier(
         Arrays.stream(node.getNamePath().getNames()).map(Name::getCanonical)
-          .collect(Collectors.toList()), pos.getPos(node.getLocation()));
+            .collect(Collectors.toList()), pos.getPos(node.getLocation()));
   }
 
   @Override
@@ -511,7 +519,8 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
 
   @Override
   public SqlNode visitDoubleLiteral(DoubleLiteral node, Void context) {
-    return SqlLiteral.createExactNumeric(Double.toString(node.getValue()), pos.getPos(node.getLocation()));
+    return SqlLiteral.createExactNumeric(Double.toString(node.getValue()),
+        pos.getPos(node.getLocation()));
   }
 
   @Override
@@ -531,19 +540,22 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
 
   @Override
   public SqlNode visitTimeLiteral(TimeLiteral node, Void context) {
-    return SqlLiteral.createTime(new TimeString(node.getValue()), 3, pos.getPos(node.getLocation()));
+    return SqlLiteral.createTime(new TimeString(node.getValue()), 3,
+        pos.getPos(node.getLocation()));
   }
 
   @Override
   public SqlNode visitTimestampLiteral(TimestampLiteral node, Void context) {
-    return SqlLiteral.createTimestamp(new TimestampString(node.getValue()), 3, pos.getPos(node.getLocation()));
+    return SqlLiteral.createTimestamp(new TimestampString(node.getValue()), 3,
+        pos.getPos(node.getLocation()));
   }
 
   @Override
   public SqlNode visitIntervalLiteral(IntervalLiteral node, Void context) {
     //convert to sql compliant interval
     return SqlTimeLiteral.createInterval(1, "10",
-        new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO), SqlParserPos.ZERO);
+        new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO),
+        SqlParserPos.ZERO);
 //    SqlNode intervalExpr = node.getExpression().accept(this, null);
 //    return SqlLiteral.createInterval(node.getSign(), node.getStartField(),
 //        node.get(), pos.getPos(node.getLocation()));
@@ -561,6 +573,7 @@ public class NodeToSqlNodeConverter extends AstVisitor<SqlNode, Void> {
 
   @Override
   public SqlNode visitLongLiteral(LongLiteral node, Void context) {
-    return SqlLiteral.createExactNumeric(Long.toString(node.getValue()), pos.getPos(node.getLocation()));
+    return SqlLiteral.createExactNumeric(Long.toString(node.getValue()),
+        pos.getPos(node.getLocation()));
   }
 }

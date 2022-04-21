@@ -14,7 +14,8 @@ public class RelOptClusterExtractor extends RelShuttleImpl {
   RelOptCluster cluster = null;
 
   public static RelOptCluster extract(String tableName, StreamTableEnvironmentImpl tEnv) {
-    PlannerQueryOperation op = (PlannerQueryOperation)tEnv.getPlanner().getParser().parse("SELECT * FROM " + tableName).get(0);
+    PlannerQueryOperation op = (PlannerQueryOperation) tEnv.getPlanner().getParser()
+        .parse("SELECT * FROM " + tableName).get(0);
     RelOptClusterExtractor clusterGetter = new RelOptClusterExtractor();
     op.getCalciteTree().accept(clusterGetter);
 

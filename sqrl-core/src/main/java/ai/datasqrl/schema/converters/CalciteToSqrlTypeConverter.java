@@ -73,7 +73,7 @@ public class CalciteToSqrlTypeConverter {
       case DYNAMIC_STAR:
       case GEOMETRY:
     }
-    
-    throw new RuntimeException("Unknown column:" + type) ;
+
+    throw new RuntimeException("Unknown column:" + type);
   }
 }

@@ -13,10 +13,8 @@
  */
 package ai.datasqrl.parse.tree;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
 
 public final class RelationTreeRewriter<C> {

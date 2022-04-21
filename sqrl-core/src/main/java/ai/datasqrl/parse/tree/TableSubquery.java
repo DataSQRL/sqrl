@@ -48,9 +48,11 @@ public class TableSubquery
   public Query getQuery() {
     return query;
   }
+
   public <T> T getResolved() {
-    return (T)resolved;
+    return (T) resolved;
   }
+
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitTableSubquery(this, context);

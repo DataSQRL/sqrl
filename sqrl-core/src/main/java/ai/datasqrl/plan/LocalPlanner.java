@@ -48,6 +48,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.Schema;
 
 public class LocalPlanner extends AstVisitor<SchemaOperation, PlannerScope> {
+
   private final FlinkTableConverter tbConverter = new FlinkTableConverter();
   private final CalcitePlanner calcitePlanner;
 
@@ -66,9 +67,11 @@ public class LocalPlanner extends AstVisitor<SchemaOperation, PlannerScope> {
 
   @Value
   public class PlannerScope {
+
     StatementScope scope;
     SqlNode sqlNode;
   }
+
   /**
    * Import
    */
@@ -116,14 +119,14 @@ public class LocalPlanner extends AstVisitor<SchemaOperation, PlannerScope> {
     SqlToRelConverter sqlToRelConverter = calcitePlanner.getSqlToRelConverter(validator);
 
     RelNode relNode = sqlToRelConverter.convertQuery(validated, false, true).rel;
-    DistinctScope distinctScope = (DistinctScope)context.getScope().getScopes().get(node);
+    DistinctScope distinctScope = (DistinctScope) context.getScope().getScopes().get(node);
 
-    RelNode expanded = relNode.accept(new RelShuttleImpl(){
-        @Override
-        public RelNode visit(TableScan scan) {
-          return distinctScope.getTable().getRelNode();
-        }
-      });
+    RelNode expanded = relNode.accept(new RelShuttleImpl() {
+      @Override
+      public RelNode visit(TableScan scan) {
+        return distinctScope.getTable().getRelNode();
+      }
+    });
 
     Set<Integer> primaryKeys = new HashSet<>();
     for (Field field : distinctScope.getPartitionKeys()) {
@@ -133,7 +136,7 @@ public class LocalPlanner extends AstVisitor<SchemaOperation, PlannerScope> {
 
     List<Name> fields = distinctScope.getTable()
         .getFields().stream()
-        .filter(f->f instanceof Column)
+        .filter(f -> f instanceof Column)
         .map(Field::getName)
         .collect(Collectors.toList());
 
@@ -155,7 +158,8 @@ public class LocalPlanner extends AstVisitor<SchemaOperation, PlannerScope> {
     Set<Integer> primaryKeys = remapPrimary(contextTable, expanded);
     Set<Integer> parentPrimary = remapParentPrimary(contextTable, expanded);
 
-    return new AddColumnOp(node.getNamePath().popLast(), node.getNamePath().getLast(), expanded, index, primaryKeys,
+    return new AddColumnOp(node.getNamePath().popLast(), node.getNamePath().getLast(), expanded,
+        index, primaryKeys,
         parentPrimary);
   }
 }

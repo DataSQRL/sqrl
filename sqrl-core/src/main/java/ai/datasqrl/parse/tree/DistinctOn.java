@@ -12,6 +12,7 @@ public class DistinctOn extends Node {
   public DistinctOn(List<Identifier> on) {
     this(Optional.empty(), on);
   }
+
   public DistinctOn(Optional<NodeLocation> nodeLocation, List<Identifier> on) {
     super(nodeLocation);
     this.on = on;

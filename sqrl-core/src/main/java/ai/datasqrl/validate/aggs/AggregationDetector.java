@@ -6,7 +6,9 @@ import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.Node;
 
 public class AggregationDetector extends DefaultTraversalVisitor<Void, Void> {
+
   private final FunctionLookup functionLookup;
+
   public AggregationDetector(FunctionLookup functionLookup) {
     this.functionLookup = functionLookup;
   }

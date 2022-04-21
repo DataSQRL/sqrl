@@ -26,6 +26,7 @@ public class LogicalBinaryExpression
   private final Operator operator;
   private final Expression left;
   private final Expression right;
+
   public LogicalBinaryExpression(Operator operator, Expression left, Expression right) {
     this(Optional.empty(), operator, left, right);
   }

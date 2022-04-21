@@ -4,6 +4,6 @@ import com.esotericsoftware.kryo.Kryo;
 
 public interface SerializerProvider {
 
-    public Kryo getSerializer();
+  Kryo getSerializer();
 
 }

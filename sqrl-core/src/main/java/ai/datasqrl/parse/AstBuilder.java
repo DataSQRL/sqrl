@@ -17,36 +17,6 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
-import ai.datasqrl.parse.tree.AllColumns;
-import ai.datasqrl.parse.tree.BetweenPredicate;
-import ai.datasqrl.parse.tree.Cast;
-import ai.datasqrl.parse.tree.ComparisonExpression;
-import ai.datasqrl.parse.tree.ComparisonExpression.Operator;
-import ai.datasqrl.parse.tree.ExpressionAssignment;
-import ai.datasqrl.parse.tree.FunctionCall;
-import ai.datasqrl.parse.tree.GroupBy;
-import ai.datasqrl.parse.tree.GroupingElement;
-import ai.datasqrl.parse.tree.IsNullPredicate;
-import ai.datasqrl.parse.tree.JoinDeclaration;
-import ai.datasqrl.parse.tree.LongLiteral;
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.NotExpression;
-import ai.datasqrl.parse.tree.OrderBy;
-import ai.datasqrl.parse.tree.Query;
-import ai.datasqrl.parse.tree.QueryAssignment;
-import ai.datasqrl.parse.tree.Relation;
-import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.Select;
-import ai.datasqrl.parse.tree.SimpleGroupBy;
-import ai.datasqrl.parse.tree.StringLiteral;
-import ai.datasqrl.parse.tree.TableSubquery;
-import ai.datasqrl.parse.tree.Union;
-import ai.datasqrl.parse.tree.WhenClause;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.parse.SqlBaseBaseVisitor;
-import ai.datasqrl.parse.SqlBaseLexer;
 import ai.datasqrl.parse.SqlBaseParser.ArithmeticBinaryContext;
 import ai.datasqrl.parse.SqlBaseParser.ArithmeticUnaryContext;
 import ai.datasqrl.parse.SqlBaseParser.AssignContext;
@@ -108,15 +78,24 @@ import ai.datasqrl.parse.SqlBaseParser.UnicodeStringLiteralContext;
 import ai.datasqrl.parse.SqlBaseParser.UnquotedIdentifierContext;
 import ai.datasqrl.parse.SqlBaseParser.ValueExpressionDefaultContext;
 import ai.datasqrl.parse.SqlBaseParser.WhenClauseContext;
+import ai.datasqrl.parse.tree.AllColumns;
 import ai.datasqrl.parse.tree.ArithmeticBinaryExpression;
 import ai.datasqrl.parse.tree.ArithmeticUnaryExpression;
+import ai.datasqrl.parse.tree.BetweenPredicate;
 import ai.datasqrl.parse.tree.BooleanLiteral;
+import ai.datasqrl.parse.tree.Cast;
+import ai.datasqrl.parse.tree.ComparisonExpression;
+import ai.datasqrl.parse.tree.ComparisonExpression.Operator;
 import ai.datasqrl.parse.tree.CreateSubscription;
 import ai.datasqrl.parse.tree.DecimalLiteral;
 import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.DoubleLiteral;
 import ai.datasqrl.parse.tree.Except;
 import ai.datasqrl.parse.tree.Expression;
+import ai.datasqrl.parse.tree.ExpressionAssignment;
+import ai.datasqrl.parse.tree.FunctionCall;
+import ai.datasqrl.parse.tree.GroupBy;
+import ai.datasqrl.parse.tree.GroupingElement;
 import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.InListExpression;
@@ -125,22 +104,41 @@ import ai.datasqrl.parse.tree.InlineJoin;
 import ai.datasqrl.parse.tree.Intersect;
 import ai.datasqrl.parse.tree.IntervalLiteral;
 import ai.datasqrl.parse.tree.IsNotNullPredicate;
+import ai.datasqrl.parse.tree.IsNullPredicate;
 import ai.datasqrl.parse.tree.Join;
 import ai.datasqrl.parse.tree.JoinCriteria;
+import ai.datasqrl.parse.tree.JoinDeclaration;
 import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.Limit;
 import ai.datasqrl.parse.tree.LogicalBinaryExpression;
+import ai.datasqrl.parse.tree.LongLiteral;
+import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeLocation;
+import ai.datasqrl.parse.tree.NotExpression;
 import ai.datasqrl.parse.tree.NullLiteral;
+import ai.datasqrl.parse.tree.OrderBy;
+import ai.datasqrl.parse.tree.Query;
+import ai.datasqrl.parse.tree.QueryAssignment;
 import ai.datasqrl.parse.tree.QueryBody;
 import ai.datasqrl.parse.tree.QuerySpecification;
+import ai.datasqrl.parse.tree.Relation;
+import ai.datasqrl.parse.tree.ScriptNode;
+import ai.datasqrl.parse.tree.Select;
 import ai.datasqrl.parse.tree.SelectItem;
 import ai.datasqrl.parse.tree.SimpleCaseExpression;
+import ai.datasqrl.parse.tree.SimpleGroupBy;
 import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.SortItem;
+import ai.datasqrl.parse.tree.StringLiteral;
 import ai.datasqrl.parse.tree.SubqueryExpression;
 import ai.datasqrl.parse.tree.SubscriptionType;
 import ai.datasqrl.parse.tree.TableNode;
+import ai.datasqrl.parse.tree.TableSubquery;
+import ai.datasqrl.parse.tree.Union;
+import ai.datasqrl.parse.tree.WhenClause;
+import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.NameCanonicalizer;
+import ai.datasqrl.parse.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -488,7 +486,7 @@ class AstBuilder
   @Override
   public Node visitGroupBy(GroupByContext context) {
     return new GroupBy(getLocation(context),
-        (GroupingElement)visit(context.groupingElement()));
+        (GroupingElement) visit(context.groupingElement()));
   }
 
   @Override
@@ -604,10 +602,12 @@ class AstBuilder
     JoinCriteria criteria = null;
     right = (Relation) visit(context.rightRelation);
     if (context.joinCriteria() != null && context.joinCriteria().ON() != null) {
-      criteria = new JoinOn(getLocation(context), (Expression) visit(context.joinCriteria().booleanExpression()));
+      criteria = new JoinOn(getLocation(context),
+          (Expression) visit(context.joinCriteria().booleanExpression()));
     }
 
-    return new Join(getLocation(context), toJoinType(context.joinType()), left, right, Optional.ofNullable(criteria));
+    return new Join(getLocation(context), toJoinType(context.joinType()), left, right,
+        Optional.ofNullable(criteria));
   }
 
   public Join.Type toJoinType(JoinTypeContext joinTypeContext) {
@@ -898,7 +898,8 @@ class AstBuilder
 
   @Override
   public Node visitImportDefinition(ImportDefinitionContext ctx) {
-    Optional<Identifier> alias = Optional.ofNullable(ctx.alias == null ? null : (Identifier)visit(ctx.alias));
+    Optional<Identifier> alias = Optional.ofNullable(
+        ctx.alias == null ? null : (Identifier) visit(ctx.alias));
     return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), alias);
   }
 
@@ -913,13 +914,13 @@ class AstBuilder
     return new DistinctAssignment(
         Optional.of(getLocation(ctx)),
         name,
-        Name.system(((Identifier) visit(ctx.table)).toString()),
+        Name.system(visit(ctx.table).toString()),
         ctx.identifier() == null ? List.of() :
             ctx.identifier().stream().skip(1)
-            .map(s->Name.system(((Identifier) visit(s)).toString()))
-            .collect(toList()),
+                .map(s -> Name.system(visit(s).toString()))
+                .collect(toList()),
         ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
-            .map(s->(SortItem) s.accept(this)).collect(toList())
+            .map(s -> (SortItem) s.accept(this)).collect(toList())
 
     );
   }
@@ -942,7 +943,8 @@ class AstBuilder
           .of(new OrderBy(getLocation(ctx.ORDER()), visit(ctx.sortItem(), SortItem.class)));
     }
 
-    Relation current = new TableNode(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath(), Optional.empty());
+    Relation current = new TableNode(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath(),
+        Optional.empty());
     for (InlineJoinBodyContext inline : ctx.inlineJoinBody()) {
       JoinCriteria criteria = null;
       if (inline.joinCriteria() != null && inline.joinCriteria().ON() != null) {
@@ -955,10 +957,9 @@ class AstBuilder
           toJoinType(inline.joinType()),
           current,
           (Relation) visit(inline.relationPrimary()),
-          (Optional<JoinCriteria>) Optional.ofNullable(criteria)
+          Optional.ofNullable(criteria)
       );
     }
-
 
     return new InlineJoin(
         Optional.of(getLocation(ctx)),
@@ -967,7 +968,7 @@ class AstBuilder
         ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
             Optional.of(new Limit(ctx.limit.getText())),
         ctx.inv == null ? Optional.empty() :
-            Optional.of(((Identifier)visit(ctx.inv)).getNamePath().getFirst())
+            Optional.of(((Identifier) visit(ctx.inv)).getNamePath().getFirst())
     );
   }
 
@@ -978,7 +979,7 @@ class AstBuilder
         ctx.query().stop.getStopIndex());
     String query = ctx.query().start.getInputStream().getText(interval);
     return new QueryAssignment(Optional.of(getLocation(ctx)), getNamePath(ctx.qualifiedName()),
-        (Query)visitQuery(ctx.query()), query);
+        (Query) visitQuery(ctx.query()), query);
   }
 
   @Override
@@ -990,7 +991,7 @@ class AstBuilder
     String expression = ctx.expression().start.getInputStream().getText(interval);
 
     return new ExpressionAssignment(Optional.of(getLocation(ctx)), name,
-        (Expression)visitExpression(ctx.expression()), expression);
+        (Expression) visitExpression(ctx.expression()), expression);
   }
 
   @Override
@@ -1062,9 +1063,9 @@ class AstBuilder
   private NamePath getNamePath(QualifiedNameContext context) {
     List<Name> parts = visit(context.identifier(), Identifier.class).stream()
         .map(Identifier::getNamePath) // TODO: preserve quotedness
-        .flatMap(e->Arrays.stream(e.getNames()))
+        .flatMap(e -> Arrays.stream(e.getNames()))
         .collect(Collectors.toList());
-    if (context.all != null ) {
+    if (context.all != null) {
       parts = new ArrayList<>(parts);
       parts.add(Name.of("*", NameCanonicalizer.LOWERCASE_ENGLISH));
     }

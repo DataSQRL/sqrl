@@ -3,8 +3,6 @@ package ai.datasqrl.transform.transforms;
 import static ai.datasqrl.parse.util.SqrlNodeUtil.and;
 import static ai.datasqrl.parse.util.SqrlNodeUtil.ident;
 
-import ai.datasqrl.util.AliasGenerator;
-import ai.datasqrl.schema.Table;
 import ai.datasqrl.parse.tree.AliasedRelation;
 import ai.datasqrl.parse.tree.ComparisonExpression;
 import ai.datasqrl.parse.tree.ComparisonExpression.Operator;
@@ -26,29 +24,30 @@ import ai.datasqrl.parse.tree.TableSubquery;
 import ai.datasqrl.parse.tree.Window;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.schema.Table;
+import ai.datasqrl.util.AliasGenerator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class ConvertLimitToWindow {
+
   AliasGenerator gen = new AliasGenerator();
   Name rowNum = Name.system("_row_num");
+
   /**
    * https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/sql/queries/topn/
-   *
-   * SELECT product_id, category, product_name, sales
-   * FROM (
-   *   SELECT *,
-   *     ROW_NUMBER() OVER (PARTITION BY category ORDER BY sales DESC) AS row_num
-   *   FROM ShopSales)
-   * WHERE row_num <= 5
+   * <p>
+   * SELECT product_id, category, product_name, sales FROM ( SELECT *, ROW_NUMBER() OVER (PARTITION
+   * BY category ORDER BY sales DESC) AS row_num FROM ShopSales) WHERE row_num <= 5
    */
   public QuerySpecification transform(QuerySpecification spec, Table table) {
-    List<SelectItem> items = new ArrayList<>(spec.getSelect().getSelectItems());//randomAliasSelectList(spec.getSelect().getSelectItems());
+    List<SelectItem> items = new ArrayList<>(spec.getSelect()
+        .getSelectItems());//randomAliasSelectList(spec.getSelect().getSelectItems());
     items.add(new SingleColumn(new FunctionCall(Optional.empty(),
         NamePath.of("ROW_NUMBER"), List.of(), false, Optional.of(new Window(
-          getSelectExpressions(spec.getSelect().getSelectItems(), table.getParentPrimaryKeys()),
-          Optional.of(getOrder(spec.getOrderBy()))))),
+        getSelectExpressions(spec.getSelect().getSelectItems(), table.getParentPrimaryKeys()),
+        Optional.of(getOrder(spec.getOrderBy()))))),
         new Identifier(Optional.empty(), rowNum.toNamePath())));
 
     QuerySpecification inner = new QuerySpecification(
@@ -62,7 +61,8 @@ public class ConvertLimitToWindow {
         Optional.empty());
 
     Name tableAlias = gen.nextTableAliasName();
-    Relation subquery = new AliasedRelation(new TableSubquery(new Query(inner, Optional.empty(), Optional.empty())), ident(tableAlias));
+    Relation subquery = new AliasedRelation(
+        new TableSubquery(new Query(inner, Optional.empty(), Optional.empty())), ident(tableAlias));
 
     QuerySpecification outer = new QuerySpecification(
         Optional.empty(),
@@ -80,17 +80,21 @@ public class ConvertLimitToWindow {
   }
 
   private OrderBy getOrder(Optional<OrderBy> orderBy) {
-    if (orderBy.isPresent()) return orderBy.get();
-    return new OrderBy(List.of(new SortItem(ident(Name.SELF_IDENTIFIER.toNamePath().concat(Name.INGEST_TIME)), Ordering.DESCENDING)));
+    if (orderBy.isPresent()) {
+      return orderBy.get();
+    }
+    return new OrderBy(List.of(
+        new SortItem(ident(Name.SELF_IDENTIFIER.toNamePath().concat(Name.INGEST_TIME)),
+            Ordering.DESCENDING)));
   }
 
   private List<SelectItem> project(List<SelectItem> selectItems, List<SelectItem> aliases) {
     List<SelectItem> newSelect = new ArrayList<>();
     for (int i = 0; i < selectItems.size(); i++) {
       SingleColumn col = (SingleColumn) selectItems.get(i);
-      SingleColumn a = ((SingleColumn)aliases.get(i));
+      SingleColumn a = ((SingleColumn) aliases.get(i));
       Identifier ident = new Identifier(Optional.empty(), getColumnName(col).getNamePath());
-      ident.setResolved(((Identifier)a.getExpression()).getResolved());
+      ident.setResolved(((Identifier) a.getExpression()).getResolved());
       newSelect.add(new SingleColumn(col.getLocation(),
           ident,
           Optional.empty()));
@@ -118,7 +122,7 @@ public class ConvertLimitToWindow {
       List<SelectItem> selectItems, List<Integer> parentPrimaryKeys) {
     List<Expression> expressions = new ArrayList<>();
     for (Integer ordinal : parentPrimaryKeys) {
-      expressions.add(((SingleColumn)selectItems.get(ordinal)).getExpression());
+      expressions.add(((SingleColumn) selectItems.get(ordinal)).getExpression());
     }
     return expressions;
   }

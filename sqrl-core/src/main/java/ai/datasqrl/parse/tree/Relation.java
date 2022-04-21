@@ -17,18 +17,20 @@ import java.util.Optional;
 
 public abstract class Relation
     extends Node {
+
   private Object resolved;
 
   protected Relation(Optional<NodeLocation> location) {
     super(location);
   }
+
   protected Relation(Optional<NodeLocation> location, Object resolved) {
     super(location);
     this.resolved = resolved;
   }
 
   public <T> T getResolved() {
-    return (T)resolved;
+    return (T) resolved;
   }
 
   public void setResolved(Object resolved) {

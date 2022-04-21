@@ -6,20 +6,20 @@ import lombok.Value;
 
 public interface TypeSignature {
 
-    public Type getRaw();
+  Type getRaw();
 
-    public Type getDetected();
+  Type getDetected();
 
-    public int getArrayDepth();
+  int getArrayDepth();
 
-    @Value
-    public static class Simple implements TypeSignature {
+  @Value
+  class Simple implements TypeSignature {
 
-        @NonNull
-        private final Type raw;
-        @NonNull
-        private final Type detected;
-        private final int arrayDepth;
+    @NonNull
+    private final Type raw;
+    @NonNull
+    private final Type detected;
+    private final int arrayDepth;
 
-    }
+  }
 }

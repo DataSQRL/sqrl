@@ -36,11 +36,12 @@ import org.apache.flink.table.planner.plan.trait.ModifyKindSetTrait;
 import org.apache.flink.table.planner.plan.trait.UpdateKindTrait;
 
 /**
- * The plan is created with a SQRL calcite cluster which needs to be migrated to the flink
- * calcite cluster
+ * The plan is created with a SQRL calcite cluster which needs to be migrated to the flink calcite
+ * cluster
  */
 @AllArgsConstructor
 public class InjectFlinkCluster extends RelShuttleImpl {
+
   TableEnvironmentImpl tEnv;
   RelOptCluster cluster;
   RelTraitSet defaultTrait;
@@ -50,7 +51,8 @@ public class InjectFlinkCluster extends RelShuttleImpl {
     return injectFlinkRelOptCluster(tEnv, input, cluster);
   }
 
-  private static RelNode injectFlinkRelOptCluster(StreamTableEnvironmentImpl tEnv, RelNode relNode, RelOptCluster cluster) {
+  private static RelNode injectFlinkRelOptCluster(StreamTableEnvironmentImpl tEnv, RelNode relNode,
+      RelOptCluster cluster) {
     RelTraitSet defaultTraits = RelTraitSet.createEmpty().plus(Convention.NONE)
         .plus(FlinkRelDistribution.ANY())
         .plus(MiniBatchIntervalTrait.NONE())
@@ -64,7 +66,8 @@ public class InjectFlinkCluster extends RelShuttleImpl {
   public RelNode visit(TableScan scan) {
     //Lookup TableSourceTable in flink, add statistics over
     PlannerQueryOperation op = (PlannerQueryOperation) tEnv.getParser().parse("select * from "
-        + scan.getTable().getQualifiedName().get(scan.getTable().getQualifiedName().size()-1)).get(0);
+            + scan.getTable().getQualifiedName().get(scan.getTable().getQualifiedName().size() - 1))
+        .get(0);
     return op.getCalciteTree().getInput(0);
   }
 
@@ -91,7 +94,8 @@ public class InjectFlinkCluster extends RelShuttleImpl {
 
   @Override
   public RelNode visit(LogicalProject project) {
-    return new LogicalProject(cluster, defaultTrait, project.getHints(), project.getInput().accept(this),
+    return new LogicalProject(cluster, defaultTrait, project.getHints(),
+        project.getInput().accept(this),
         project.getProjects(), project.getRowType());
   }
 
@@ -105,7 +109,8 @@ public class InjectFlinkCluster extends RelShuttleImpl {
 
   @Override
   public RelNode visit(LogicalFilter filter) {
-    return new LogicalFilter(cluster, defaultTrait, filter.getInput().accept(this), filter.getCondition(),
+    return new LogicalFilter(cluster, defaultTrait, filter.getInput().accept(this),
+        filter.getCondition(),
         (ImmutableSet<CorrelationId>) filter.getVariablesSet());
   }
 
@@ -144,8 +149,9 @@ public class InjectFlinkCluster extends RelShuttleImpl {
       return new Uncollect(cluster, defaultTrait, uncollect.getInput().accept(this),
           uncollect.withOrdinality, List.of());
     } else if (other instanceof LogicalWatermarkAssigner) {
-      LogicalWatermarkAssigner watermarkAssigner = (LogicalWatermarkAssigner)other;
-      return new LogicalWatermarkAssigner(cluster, defaultTrait, watermarkAssigner.getInput().accept(this),
+      LogicalWatermarkAssigner watermarkAssigner = (LogicalWatermarkAssigner) other;
+      return new LogicalWatermarkAssigner(cluster, defaultTrait,
+          watermarkAssigner.getInput().accept(this),
           watermarkAssigner.rowtimeFieldIndex(), watermarkAssigner.watermarkExpr());
     }
     throw new RuntimeException("not yet implemented:" + other.getClass());

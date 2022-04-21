@@ -3,14 +3,13 @@ package ai.datasqrl.execute.flink.environment;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.execute.StreamEngine;
 import com.google.common.base.Preconditions;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-
-import java.util.UUID;
 
 public interface FlinkStreamEngine extends StreamEngine {
 
@@ -33,11 +32,11 @@ public interface FlinkStreamEngine extends StreamEngine {
 
   static JdbcConnectionOptions getFlinkJDBC(JDBCConnectionProvider jdbc) {
     return new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-            .withUrl(jdbc.getDbURL())
-            .withDriverName(jdbc.getDriverName())
-            .withUsername(jdbc.getUser())
-            .withPassword(jdbc.getPassword())
-            .build();
+        .withUrl(jdbc.getDbURL())
+        .withDriverName(jdbc.getDriverName())
+        .withUsername(jdbc.getUser())
+        .withPassword(jdbc.getPassword())
+        .build();
   }
 
   @AllArgsConstructor
@@ -47,7 +46,9 @@ public interface FlinkStreamEngine extends StreamEngine {
 
     private final String name;
 
-    public String toString() {return name;}
+    public String toString() {
+      return name;
+    }
   }
 
   static String getFlinkName(String type, String identifier) {
@@ -69,8 +70,8 @@ public interface FlinkStreamEngine extends StreamEngine {
 
     @Override
     public String getId() {
-      Preconditions.checkArgument(jobId!=null,
-              "Job id is only available once job has been submitted");
+      Preconditions.checkArgument(jobId != null,
+          "Job id is only available once job has been submitted");
       //TODO: need to replace by jobid.toHex
       return jobId;
     }
@@ -79,7 +80,7 @@ public interface FlinkStreamEngine extends StreamEngine {
     public void execute(String name) {
       try {
         //TODO: move to async execution
-        JobExecutionResult result = execEnv.execute(getFlinkName(type.getName(),name));
+        JobExecutionResult result = execEnv.execute(getFlinkName(type.getName(), name));
         jobId = result.getJobID().toHexString();
       } catch (Exception e) {
         status = Status.FAILED;

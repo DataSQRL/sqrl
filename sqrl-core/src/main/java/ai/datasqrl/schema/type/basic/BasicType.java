@@ -4,11 +4,11 @@ import ai.datasqrl.schema.type.Type;
 
 public interface BasicType<JavaType> extends Type {
 
-    String getName();
+  String getName();
 
-    BasicType parentType();
+  BasicType parentType();
 
-    TypeConversion<JavaType> conversion();
+  TypeConversion<JavaType> conversion();
 
 
 }

@@ -5,6 +5,7 @@ import lombok.Value;
 
 @Value
 public class PrimaryKeyColumn implements H2Column {
+
   H2Column column;
 
   @Override

@@ -18,7 +18,8 @@ public abstract class Field implements ShadowingContainer.Nameable {
   }
 
   public VersionedName getId() {
-    return new VersionedName(this.getName().getCanonical(), this.getName().getDisplay(), getVersion());
+    return new VersionedName(this.getName().getCanonical(), this.getName().getDisplay(),
+        getVersion());
   }
 
   public Table getTable() {

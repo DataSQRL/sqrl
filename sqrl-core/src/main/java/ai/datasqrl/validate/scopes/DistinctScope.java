@@ -8,9 +8,11 @@ import lombok.Value;
 
 @Value
 public class DistinctScope implements ValidatorScope {
+
   Table table;
   List<Field> partitionKeys;
   List<Field> sortFields;
+
   @Override
   public Namespace getNamespace() {
     return null;

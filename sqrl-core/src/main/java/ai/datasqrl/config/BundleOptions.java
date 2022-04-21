@@ -9,6 +9,7 @@ import lombok.Value;
 @Builder
 @Value
 public class BundleOptions {
+
   ImportManager importManager;
   JDBCConfiguration jdbcConfiguration;
   StreamEngine streamEngine;

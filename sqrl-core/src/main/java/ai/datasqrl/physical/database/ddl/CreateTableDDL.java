@@ -2,7 +2,6 @@ package ai.datasqrl.physical.database.ddl;
 
 import java.util.List;
 import lombok.Value;
-import org.apache.calcite.rel.type.RelDataType;
 
 @Value
 public class CreateTableDDL implements SqlDDLStatement {

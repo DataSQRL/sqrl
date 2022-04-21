@@ -23,7 +23,8 @@ public class VersionedName extends SimpleName {
     if (parts.length == 1) {
       return new VersionedName(NameCanonicalizer.SYSTEM.getCanonical(parts[0]), parts[0], 0);
     }
-    return new VersionedName(NameCanonicalizer.SYSTEM.getCanonical(parts[0]), parts[0], Integer.parseInt(parts[1]));
+    return new VersionedName(NameCanonicalizer.SYSTEM.getCanonical(parts[0]), parts[0],
+        Integer.parseInt(parts[1]));
   }
 
   @Override

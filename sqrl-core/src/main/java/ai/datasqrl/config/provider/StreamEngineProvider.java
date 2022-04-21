@@ -4,6 +4,6 @@ import ai.datasqrl.execute.StreamEngine;
 
 public interface StreamEngineProvider {
 
-    StreamEngine create();
+  StreamEngine create();
 
 }

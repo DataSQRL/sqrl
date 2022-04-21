@@ -1,9 +1,13 @@
 package ai.datasqrl.io.sources.util;
 
-import lombok.*;
-
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.ToString;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -12,11 +16,11 @@ import java.time.Instant;
 @EqualsAndHashCode
 public class TimeAnnotatedRecord<R> implements Serializable {
 
-    @NonNull R record;
-    Instant sourceTime;
+  @NonNull R record;
+  Instant sourceTime;
 
-    public boolean hasTime() {
-        return sourceTime!=null;
-    }
+  public boolean hasTime() {
+    return sourceTime != null;
+  }
 
 }

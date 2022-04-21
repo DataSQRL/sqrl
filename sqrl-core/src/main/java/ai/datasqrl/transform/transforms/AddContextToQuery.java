@@ -2,11 +2,6 @@ package ai.datasqrl.transform.transforms;
 
 import static ai.datasqrl.parse.util.SqrlNodeUtil.groupBy;
 
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.util.AliasGenerator;
-import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Table;
-import ai.datasqrl.validate.aggs.AggregationDetector;
 import ai.datasqrl.function.FunctionLookup;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.GroupBy;
@@ -19,17 +14,24 @@ import ai.datasqrl.parse.tree.SelectItem;
 import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.SortItem;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Table;
+import ai.datasqrl.util.AliasGenerator;
+import ai.datasqrl.validate.aggs.AggregationDetector;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AddContextToQuery {
+
   AggregationDetector aggregationDetector = new AggregationDetector(new FunctionLookup());
   AliasGenerator gen = new AliasGenerator();
+
   /**
    * Adds context keys to select. If aggregating, create or append to group by.
-   *
+   * <p>
    * Since we are adding columns, we need to assure that they do not collide with existing fields.
    */
   public QuerySpecification transform(QuerySpecification spec, Table table) {
@@ -68,14 +70,17 @@ public class AddContextToQuery {
   }
 
   private Optional<OrderBy> appendOrderBy(Optional<OrderBy> orderBy, Select select) {
-    if (orderBy.isEmpty()) return orderBy;
+    if (orderBy.isEmpty()) {
+      return orderBy;
+    }
     List<SortItem> sortItems = new ArrayList<>();
 
     for (int i = 0; i < select.getSelectItems().size(); i++) {
       SelectItem selectItem = select.getSelectItems().get(i);
       SingleColumn singleColumn = (SingleColumn) selectItem;
       if (isParentPrimaryKey(singleColumn)) {
-        sortItems.add(new SortItem(Optional.empty(), new LongLiteral(Integer.toString(i + 1)), Optional.empty()));
+        sortItems.add(new SortItem(Optional.empty(), new LongLiteral(Integer.toString(i + 1)),
+            Optional.empty()));
       }
     }
 
@@ -87,12 +92,9 @@ public class AddContextToQuery {
   }
 
   private boolean isParentPrimaryKey(SingleColumn singleColumn) {
-    if (singleColumn.getExpression() instanceof Identifier &&
-        ((Identifier)singleColumn.getExpression()).getResolved() instanceof Column &&
-        ((Column)((Identifier)singleColumn.getExpression()).getResolved()).isParentPrimaryKey()) {
-      return true;
-    }
-    return false;
+    return singleColumn.getExpression() instanceof Identifier &&
+        ((Identifier) singleColumn.getExpression()).getResolved() instanceof Column &&
+        ((Column) ((Identifier) singleColumn.getExpression()).getResolved()).isParentPrimaryKey();
   }
 
   /**
@@ -101,7 +103,7 @@ public class AddContextToQuery {
   private GroupBy appendGroupBy(Optional<GroupBy> groupBy, Select select) {
     List<Expression> grouping = new ArrayList<>(
         groupBy
-            .map(g->g.getGroupingElement().getExpressions())
+            .map(g -> g.getGroupingElement().getExpressions())
             .orElse(new ArrayList<>()));
 
     for (int i = 0; i < select.getSelectItems().size(); i++) {

@@ -133,7 +133,8 @@ public class ExpressionRewriter<C> {
     return rewriteExpression(node, context, treeRewriter);
   }
 
-  public Expression rewriteFieldReference(FieldReference node, C context, ExpressionTreeRewriter<C> treeRewriter) {
+  public Expression rewriteFieldReference(FieldReference node, C context,
+      ExpressionTreeRewriter<C> treeRewriter) {
     return rewriteExpression(node, context, treeRewriter);
   }
 

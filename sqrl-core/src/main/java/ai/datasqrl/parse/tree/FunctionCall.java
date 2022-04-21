@@ -33,6 +33,7 @@ public class FunctionCall
       boolean distinct) {
     this(Optional.empty(), name, arguments, distinct, Optional.empty());
   }
+
   public FunctionCall(NodeLocation location, NamePath name, List<Expression> arguments,
       boolean distinct) {
     this(Optional.of(location), name, arguments, distinct, Optional.empty());

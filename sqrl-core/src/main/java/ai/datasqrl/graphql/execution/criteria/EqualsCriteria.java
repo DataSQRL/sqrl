@@ -4,6 +4,7 @@ import lombok.Value;
 
 @Value
 public class EqualsCriteria implements Criteria {
+
   String envVar;
   String columnName;
 

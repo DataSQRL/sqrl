@@ -14,7 +14,8 @@ import java.util.Optional;
 public class H2OrderByProvider implements OrderByProvider {
 
   public Optional<List<String>> getOrderBy(DataFetchingEnvironment environment, Columns columns) {
-    List<Map<String, Object>> orders = (List<Map<String, Object>>)environment.getArguments().get("order_by");
+    List<Map<String, Object>> orders = (List<Map<String, Object>>) environment.getArguments()
+        .get("order_by");
 
     if (orders == null) {
       return Optional.empty();
@@ -22,11 +23,12 @@ public class H2OrderByProvider implements OrderByProvider {
 
     //Todo inverse column handling for ordering
     List<String> orderBySql = new ArrayList<>();
-    Map<String, H2Column> columnMap = Maps.uniqueIndex(columns.getColumns(), c->c.getName());
+    Map<String, H2Column> columnMap = Maps.uniqueIndex(columns.getColumns(), c -> c.getName());
     for (Map<String, Object> map : orders) {
       //Todo: validate if there are more than one object? Is this ordered?
       for (Map.Entry<String, Object> objectEntry : map.entrySet()) {
-        orderBySql.add(String.format("%s %s", columnMap.get(objectEntry.getKey()).getPhysicalName(), objectEntry.getValue()));
+        orderBySql.add(String.format("%s %s", columnMap.get(objectEntry.getKey()).getPhysicalName(),
+            objectEntry.getValue()));
       }
     }
 

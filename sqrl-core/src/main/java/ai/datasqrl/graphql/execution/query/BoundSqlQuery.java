@@ -12,9 +12,11 @@ import lombok.Value;
 
 @Value
 public class BoundSqlQuery {
+
   SqlClient client;
   H2SingleQuery query;
   Optional<Tuple> arguments;
+
   public CompletionStage execute() {
     PreparedQuery<RowSet<Row>> preparedQuery = client.preparedQuery(query.getQuery());
 
@@ -29,7 +31,7 @@ public class BoundSqlQuery {
     return result
         .map(query.getResultMapper())
         .toCompletionStage()
-        .exceptionally(e->{
+        .exceptionally(e -> {
           e.printStackTrace();
           return e;
         });

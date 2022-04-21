@@ -15,9 +15,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.calcite.rel.RelNode;
 
 public class TableFactory {
+
   public final static AtomicInteger tableIdCounter = new AtomicInteger(0);
 
-  public void createTable(Schema schema, NamePath tableName, List<Name> fields, RelNode relNode, Set<Integer> primaryKey, Set<Integer> parentPrimaryKey) {
+  public void createTable(Schema schema, NamePath tableName, List<Name> fields, RelNode relNode,
+      Set<Integer> primaryKey, Set<Integer> parentPrimaryKey) {
     NamePath namePath = tableName;
     if (namePath.getLength() == 1) {
       Table table = create(namePath.getFirst(), namePath, relNode,
@@ -55,15 +57,15 @@ public class TableFactory {
     //Assign parent primary key source on columns for equivalence testing
     for (Integer i : parentPrimaryKey) {
       String parentColumn = relNode.getRowType().getFieldList().get(i).getName();
-      Column thisColumn = (Column)table.getField(Name.system(parentColumn));
+      Column thisColumn = (Column) table.getField(Name.system(parentColumn));
       thisColumn.setParentPrimaryKey(true);
-      Column column = (Column)parentTable.getField(Name.system(parentColumn));
+      Column column = (Column) parentTable.getField(Name.system(parentColumn));
       column.setSource(thisColumn);
     }
 
     for (Integer i : primaryKey) {
       String parentColumn = relNode.getRowType().getFieldList().get(i).getName();
-      Column thisColumn = (Column)table.getField(Name.system(parentColumn));
+      Column thisColumn = (Column) table.getField(Name.system(parentColumn));
       thisColumn.setPrimaryKey(true);
     }
 

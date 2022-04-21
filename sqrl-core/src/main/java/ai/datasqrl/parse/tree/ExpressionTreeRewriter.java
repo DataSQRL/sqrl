@@ -408,8 +408,8 @@ public final class ExpressionTreeRewriter<C> {
 
       if (
           !sameElements(node.getDefaultValue(), defaultValue) ||
-          !sameElements(node.getWhenClauses(), builder.build())) {
-        return new SimpleCaseExpression( builder.build(), defaultValue);
+              !sameElements(node.getWhenClauses(), builder.build())) {
+        return new SimpleCaseExpression(builder.build(), defaultValue);
       }
 
       return node;
@@ -448,7 +448,7 @@ public final class ExpressionTreeRewriter<C> {
 
       if (!sameElements(node.getArguments(), arguments)) {
         return new FunctionCall(node.getNamePath(), arguments,
-             node.isDistinct());
+            node.isDistinct());
       }
       return node;
     }
@@ -646,10 +646,10 @@ public final class ExpressionTreeRewriter<C> {
     }
 
     @Override
-    public Expression visitFieldReference(FieldReference node, Context<C> context)
-    {
+    public Expression visitFieldReference(FieldReference node, Context<C> context) {
       if (!context.isDefaultRewrite()) {
-        Expression result = rewriter.rewriteFieldReference(node, context.get(), ExpressionTreeRewriter.this);
+        Expression result = rewriter.rewriteFieldReference(node, context.get(),
+            ExpressionTreeRewriter.this);
         if (result != null) {
           return result;
         }

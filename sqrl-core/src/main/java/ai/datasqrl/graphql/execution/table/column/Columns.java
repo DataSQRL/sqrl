@@ -6,6 +6,7 @@ import lombok.Value;
 
 @Value
 public class Columns {
+
   //Todo: Verify that all columns have a unique logical name;
   List<H2Column> columns;
 

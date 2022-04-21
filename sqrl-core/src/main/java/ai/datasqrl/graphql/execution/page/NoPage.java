@@ -21,7 +21,7 @@ public class NoPage implements PageProvider {
 
   @Override
   public Optional<Integer> parsePageSize(DataFetchingEnvironment environment) {
-    Integer size = (Integer)environment.getArguments().get("limit");
+    Integer size = (Integer) environment.getArguments().get("limit");
     return Optional.ofNullable(size);
   }
 

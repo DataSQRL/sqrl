@@ -75,7 +75,7 @@ public class Table implements ShadowingContainer.Nameable {
     List<Column> pks = new ArrayList<>();
     for (Integer index : pk) {
       RelDataTypeField field = this.relNode.getRowType().getFieldList().get(index);
-      pks.add((Column)this.fields.getByName(VersionedName.parse(field.getName()).toName()).get());
+      pks.add((Column) this.fields.getByName(VersionedName.parse(field.getName()).toName()).get());
     }
 
     return pks;
@@ -170,8 +170,8 @@ public class Table implements ShadowingContainer.Nameable {
 
   public Optional<Table> getParent() {
     for (Field field : fields) {
-      if (field instanceof Relationship && ((Relationship)field).getType() == Type.PARENT) {
-        return Optional.of(((Relationship)field).getToTable());
+      if (field instanceof Relationship && ((Relationship) field).getType() == Type.PARENT) {
+        return Optional.of(((Relationship) field).getToTable());
       }
     }
     return Optional.empty();
@@ -193,7 +193,7 @@ public class Table implements ShadowingContainer.Nameable {
    */
   public Name getNextFieldName(Name name) {
     if (name instanceof VersionedName) {
-      name = ((VersionedName)name).toName();
+      name = ((VersionedName) name).toName();
     }
     int version = 0;
     if (getField(name) != null) {
@@ -206,7 +206,7 @@ public class Table implements ShadowingContainer.Nameable {
   public Optional<Column> getEquivalent(Column lhsColumn) {
     for (Field field : this.getFields()) {
       if (field instanceof Column) {
-        if (((Column)field).getSource() == lhsColumn.getSource()) {
+        if (((Column) field).getSource() == lhsColumn.getSource()) {
           return Optional.of((Column) field);
         }
       }

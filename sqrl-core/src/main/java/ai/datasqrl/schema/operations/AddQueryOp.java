@@ -9,6 +9,7 @@ import org.apache.calcite.rel.RelNode;
 
 @Value
 public class AddQueryOp implements SchemaOperation {
+
   NamePath namePath;
   RelNode relNode;
   List<Name> fieldNames;

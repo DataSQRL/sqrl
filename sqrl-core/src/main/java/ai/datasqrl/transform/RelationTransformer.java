@@ -24,12 +24,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
+
   AggregationDetector aggregationDetector = new AggregationDetector(new FunctionLookup());
-  private List<JoinResult> additionalJoins = new ArrayList<>();
+  private final List<JoinResult> additionalJoins = new ArrayList<>();
 
   @Override
   public Relation visitQuerySpecification(QuerySpecification node, StatementScope scope) {
-
 
     Select select = rewriteSelect(node.getSelect(), scope);
 
@@ -72,13 +72,14 @@ public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
 
   public Select rewriteSelect(Select select, StatementScope scope) {
     List<SelectItem> items = select.getSelectItems().stream()
-        .map(s->(SingleColumn)s)
-        .map(s-> new SingleColumn(rewriteExpression(s.getExpression(), scope), s.getAlias()))
+        .map(s -> (SingleColumn) s)
+        .map(s -> new SingleColumn(rewriteExpression(s.getExpression(), scope), s.getAlias()))
         .collect(Collectors.toList());
 
     return new Select(select.getLocation(), select.isDistinct(), items);
   }
-//
+
+  //
 //  private OrderBy rewriteOrderBy(OrderBy order, Scope scope) {
 //    List<SortItem> items = order.getSortItems().stream()
 //        .map(s->new SortItem(s.getLocation(), rewriteExpression(s.getSortKey(), scope), s.getOrdering()))
@@ -95,7 +96,7 @@ public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
     Optional<Table> contextTable = scope.getContextTable();
 
     QuerySpecification rewrittenNode = contextTable
-        .map(t->{
+        .map(t -> {
           QuerySpecification rewritten = new AddContextToQuery().transform(spec, t);
           return spec.getLimit().map(l -> new ConvertLimitToWindow().transform(rewritten, t))
               .orElse(rewritten);
@@ -103,7 +104,8 @@ public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
         .orElse(spec);
 
     if (/*scope.isExpression() && */contextTable.isPresent()) {
-      QuerySpecification query = new AddColumnToQuery().transform(contextTable.get(), scope.getNamePath().getLast(),
+      QuerySpecification query = new AddColumnToQuery().transform(contextTable.get(),
+          scope.getNamePath().getLast(),
           aggregationDetector.isAggregating(spec.getSelect()), rewrittenNode);
       return query;
     }
@@ -113,17 +115,18 @@ public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
 
   private Relation appendAdditionalJoins(Relation from) {
     for (JoinResult result : additionalJoins) {
-      from = new Join(Optional.empty(), result.getType(), from, result.getRelation(), result.getCriteria());
+      from = new Join(Optional.empty(), result.getType(), from, result.getRelation(),
+          result.getCriteria());
     }
     return from;
   }
 
   /**
    * Note: This node is not walked from the rhs of a join.
-   *
+   * <p>
    * Expand the path, if applicable. The first name will always be either a SELF or a base table.
-   * The remaining path are always relationships and are wrapped in a join. The final table
-   * is aliased by either a given alias or generated alias.
+   * The remaining path are always relationships and are wrapped in a join. The final table is
+   * aliased by either a given alias or generated alias.
    */
   @Override
   public Relation visitTableNode(TableNode tableNode, StatementScope scope) {
@@ -132,12 +135,12 @@ public class RelationTransformer extends AstVisitor<Relation, StatementScope> {
   }
 
   /**
-   * Joins have the assumption that the rhs will always be a TableNode so the rhs will be
-   * unwrapped at this node, so it can provide additional criteria to the join.
-   *
-   * The rhs first table name will either be a join scoped alias or a base table. If it is
-   * a join scoped alias, we will use that alias information to construct additional criteria
-   * on the join, otherwise it'll be a cross join.
+   * Joins have the assumption that the rhs will always be a TableNode so the rhs will be unwrapped
+   * at this node, so it can provide additional criteria to the join.
+   * <p>
+   * The rhs first table name will either be a join scoped alias or a base table. If it is a join
+   * scoped alias, we will use that alias information to construct additional criteria on the join,
+   * otherwise it'll be a cross join.
    */
 //  @Override
 //  public Relation rewriteJoin(Join node, Scope scope, RelationTreeRewriter relationTreeRewriter) {

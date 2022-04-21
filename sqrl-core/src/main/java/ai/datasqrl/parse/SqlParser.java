@@ -13,7 +13,6 @@
  */
 package ai.datasqrl.parse;
 
-import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
 import ai.datasqrl.parse.tree.Node;

@@ -8,9 +8,10 @@ import org.apache.flink.table.types.CollectionDataType;
 public class FlinkTypeToSql {
 
   public static String toSql(UnresolvedPhysicalColumn column) {
-    Preconditions.checkState(!(column.getDataType() instanceof CollectionDataType), "Collection column encountered");
+    Preconditions.checkState(!(column.getDataType() instanceof CollectionDataType),
+        "Collection column encountered");
 
-    AtomicDataType type = (AtomicDataType)column.getDataType();
+    AtomicDataType type = (AtomicDataType) column.getDataType();
 
     return toSql(column.getName(), getSQLType(type), !type.getLogicalType().isNullable());
   }
@@ -18,7 +19,9 @@ public class FlinkTypeToSql {
   private static String toSql(String name, String sqlType, boolean isNonNull) {
     StringBuilder sql = new StringBuilder();
     sql.append(name).append(" ").append(sqlType).append(" ");
-    if (isNonNull) sql.append("NOT NULL");
+    if (isNonNull) {
+      sql.append("NOT NULL");
+    }
     return sql.toString();
   }
 

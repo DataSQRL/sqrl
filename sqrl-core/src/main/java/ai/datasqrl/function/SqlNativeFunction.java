@@ -3,7 +3,8 @@ package ai.datasqrl.function;
 import lombok.Getter;
 import org.apache.calcite.sql.SqlOperator;
 
-public class SqlNativeFunction implements SqrlFunction{
+public class SqlNativeFunction implements SqrlFunction {
+
   @Getter
   private final SqlOperator op;
 

@@ -8,6 +8,7 @@ import lombok.Getter;
 
 @Getter
 public class ArgumentContext {
+
   DataFetchingEnvironment environment;
 
   public ArgumentContext(DataFetchingEnvironment environment) {

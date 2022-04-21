@@ -12,6 +12,7 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class FunctionLookup {
+
   private final Multimap<String, SqlOperator> opMap;
   private final Map<Name, RewritingFunction> rewritingFunctionMap;
 

@@ -24,8 +24,8 @@ import java.util.Optional;
 public class Select
     extends Node {
 
-  private boolean distinct;
-  private List<SelectItem> selectItems;
+  private final boolean distinct;
+  private final List<SelectItem> selectItems;
 
   public Select(boolean distinct, List<SelectItem> selectItems) {
     this(Optional.empty(), distinct, selectItems);

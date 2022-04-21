@@ -32,7 +32,7 @@ public class JdbcArgumentParser extends
     if (arguments.get("filter") == null) {
       return null;
     }
-    Map<String, H2Column> columnMap = Maps.uniqueIndex(columns.getColumns(), e->e.getName());
+    Map<String, H2Column> columnMap = Maps.uniqueIndex(columns.getColumns(), e -> e.getName());
     ColumnVisitor visitor = new ColumnVisitor(context);
     Map<String, Object> filter = (Map<String, Object>) arguments.get("filter");
     for (Map.Entry<String, Object> entry : filter.entrySet()) {
@@ -45,6 +45,7 @@ public class JdbcArgumentParser extends
 
   @Value
   public class ColumnVisitor extends H2ColumnVisitor2<Object, Object> {
+
     ArgumentContext argumentContext;
 
     @Override
@@ -108,7 +109,7 @@ public class JdbcArgumentParser extends
     }
 
     public Object visitNumberColumn(H2Column column, Object context) {
-      Map<String, Object> map = (Map<String, Object>)context;
+      Map<String, Object> map = (Map<String, Object>) context;
       for (Map.Entry<String, Object> filter : map.entrySet()) {
         String sql;
         switch (filter.getKey()) {
@@ -136,7 +137,7 @@ public class JdbcArgumentParser extends
     }
 
     public Object visitEqualityColumn(H2Column column, Object context) {
-      Map<String, Object> map = (Map<String, Object>)context;
+      Map<String, Object> map = (Map<String, Object>) context;
       for (Map.Entry<String, Object> filter : map.entrySet()) {
         addArgument(column, "%s = ?", filter.getValue());
       }

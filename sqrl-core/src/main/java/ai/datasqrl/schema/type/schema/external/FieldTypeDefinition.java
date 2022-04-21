@@ -4,11 +4,11 @@ import java.util.List;
 
 public interface FieldTypeDefinition {
 
-    String getType();
+  String getType();
 
-    List<FieldDefinition> getColumns();
+  List<FieldDefinition> getColumns();
 
-    List<String> getTests();
+  List<String> getTests();
 
 
 }

@@ -1,9 +1,9 @@
 package ai.datasqrl.plan.calcite;
 
+import ai.datasqrl.parse.tree.Node;
+import ai.datasqrl.plan.nodes.SqrlRelBuilder;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
-import ai.datasqrl.plan.nodes.SqrlRelBuilder;
-import ai.datasqrl.parse.tree.Node;
 import java.util.Properties;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionProperty;
@@ -37,8 +37,7 @@ public class CalcitePlanner {
       .withColumnReferenceExpansion(true)
       .withTypeCoercionEnabled(false)
       .withLenientOperatorLookup(true)
-      .withSqlConformance(SqlConformanceEnum.LENIENT)
-      ;
+      .withSqlConformance(SqlConformanceEnum.LENIENT);
 
   public CalcitePlanner(Schema schema) {
     this.typeFactory = new FlinkTypeFactory(new FlinkTypeSystem());
@@ -80,7 +79,8 @@ public class CalcitePlanner {
         catalogReader,
         cluster,
         StandardConvertletTable.INSTANCE,
-        SqlToRelConverter.config().withExpand(false).withTrimUnusedFields(true).withCreateValuesRel(false));
+        SqlToRelConverter.config().withExpand(false).withTrimUnusedFields(true)
+            .withCreateValuesRel(false));
 
     return relConverter.convertQuery(validated, false, true).rel;
   }
@@ -99,7 +99,7 @@ public class CalcitePlanner {
   public SqlToRelConverter getSqlToRelConverter(SqlValidator validator) {
     SqlToRelConverter relConverter = new SqlToRelConverter(
         (rowType, queryString, schemaPath
-            , viewPath)->null,
+            , viewPath) -> null,
         validator,
         catalogReader,
         cluster,

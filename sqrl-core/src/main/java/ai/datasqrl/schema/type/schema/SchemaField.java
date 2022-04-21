@@ -5,5 +5,5 @@ import java.io.Serializable;
 
 public interface SchemaField extends Serializable {
 
-  public Name getName();
+  Name getName();
 }

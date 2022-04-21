@@ -18,6 +18,7 @@ import org.apache.calcite.plan.RelTraitSet;
 
 @AllArgsConstructor
 public class Optimizer {
+
   private final Map<Name, SqrlQuery> queries;
   private final boolean allowSchemaQueries;
 
@@ -49,7 +50,7 @@ public class Optimizer {
       toInclude.remove(next);
       //Find all non-hidden related tables and add those
       next.getFields().visibleStream().filter(f -> f instanceof Relationship && !f.name.isHidden())
-          .map(f -> (Relationship)f)
+          .map(f -> (Relationship) f)
           .forEach(r -> {
 //            Preconditions.checkArgument(!r.toTable.name.isHidden(),"Hidden tables should not be reachable by non-hidden relationships: " + r.toTable.name);
             if (!included.contains(r.toTable)) {
@@ -60,11 +61,14 @@ public class Optimizer {
 
     List<TableQuery> queries = new ArrayList<>();
     for (Table queryTable : included) {
-      if (queryTable.getRelNode() == null) continue;
-      assert queryTable.getRelNode()!=null;
+      if (queryTable.getRelNode() == null) {
+        continue;
+      }
+      assert queryTable.getRelNode() != null;
       if (queryTable.getRelNode() instanceof LogicalSqrlSink) {
-        LogicalSqrlSink sink = (LogicalSqrlSink)queryTable.getRelNode();
-        flinkSinks.add(new LogicalFlinkSink(sink.getCluster(), sink.getTraitSet(), sink.getInput(0), queryTable));
+        LogicalSqrlSink sink = (LogicalSqrlSink) queryTable.getRelNode();
+        flinkSinks.add(new LogicalFlinkSink(sink.getCluster(), sink.getTraitSet(), sink.getInput(0),
+            queryTable));
         queries.add(new TableQuery(queryTable, sink));
       }
     }
@@ -92,7 +96,7 @@ public class Optimizer {
       toInclude.remove(next);
       //Find all non-hidden related tables and add those
       next.getFields().visibleStream().filter(f -> f instanceof Relationship && !f.name.isHidden())
-          .map(f -> (Relationship)f)
+          .map(f -> (Relationship) f)
           .forEach(r -> {
 //            Preconditions.checkArgument(!r.toTable.name.isHidden(),"Hidden tables should not be reachable by non-hidden relationships: " + r.toTable.name);
             if (!included.contains(r.toTable)) {
@@ -102,8 +106,11 @@ public class Optimizer {
     }
 
     for (Table queryTable : included) {
-      if (queryTable.getRelNode() == null )continue;
-      LogicalSqrlSink sink = new LogicalSqrlSink(queryTable.getRelNode().getCluster(), RelTraitSet.createEmpty(), queryTable.getRelNode(), queryTable);
+      if (queryTable.getRelNode() == null) {
+        continue;
+      }
+      LogicalSqrlSink sink = new LogicalSqrlSink(queryTable.getRelNode().getCluster(),
+          RelTraitSet.createEmpty(), queryTable.getRelNode(), queryTable);
       queryTable.setRelNode(sink);
     }
   }

@@ -7,9 +7,9 @@ import lombok.ToString;
 @ToString
 public class IdentityCanonicalizer implements NameCanonicalizer {
 
-    @Override
-    public String getCanonical(String name) {
-        return name.trim();
-    }
+  @Override
+  public String getCanonical(String name) {
+    return name.trim();
+  }
 
 }

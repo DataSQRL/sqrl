@@ -5,10 +5,10 @@ import static ai.datasqrl.plan.util.FlinkSchemaUtil.getIndex;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.operations.ImportTable;
-import ai.datasqrl.plan.nodes.SqrlRelBuilder;
 import ai.datasqrl.plan.calcite.CalcitePlanner;
+import ai.datasqrl.plan.nodes.SqrlRelBuilder;
 import ai.datasqrl.plan.util.FlinkSchemaUtil;
+import ai.datasqrl.schema.operations.ImportTable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,9 @@ import org.apache.flink.table.types.FieldsDataType;
 
 @AllArgsConstructor
 public class ShredPlanner {
+
   CalcitePlanner calcitePlanner;
+
   public List<ImportTable> shred(Name baseStream, RelDataType streamRelType, Schema schema) {
     List<UnresolvedColumn> columns = schema.getColumns();
     List<ImportTable> tables = new ArrayList<>();
@@ -50,7 +52,8 @@ public class ShredPlanner {
                 //unbox collection types
                 ? (FieldsDataType) ((CollectionDataType) unresolvedPhysicalColumn.getDataType()).getElementDataType()
                 : (FieldsDataType) unresolvedPhysicalColumn.getDataType();
-        tables.add(shred(baseStream, unresolvedPhysicalColumn.getName(), fieldsDataType, streamRelType));
+        tables.add(
+            shred(baseStream, unresolvedPhysicalColumn.getName(), fieldsDataType, streamRelType));
       }
     }
     return tables;
@@ -74,8 +77,7 @@ public class ShredPlanner {
         )), List.of(fieldName))
         .uncollect(List.of(), false)
         .correlate(JoinRelType.INNER, id, RexInputRef.of(indexOfField, builder.peek().getRowType()))
-        .project(projectShreddedColumns(rexBuilder, builder.peek()))
-        ;
+        .project(projectShreddedColumns(rexBuilder, builder.peek()));
 
     RelNode node = b.build();
 
@@ -96,13 +98,14 @@ public class ShredPlanner {
     LogicalCorrelate correlate = (LogicalCorrelate) node;
     for (int i = 0; i < correlate.getLeft().getRowType().getFieldCount(); i++) {
       String name = correlate.getLeft().getRowType().getFieldNames().get(i);
-      if (name.equalsIgnoreCase("_uuid")){//|| name.equalsIgnoreCase("_ingest_time")) {
+      if (name.equalsIgnoreCase("_uuid")) {//|| name.equalsIgnoreCase("_ingest_time")) {
         projects.add(rexBuilder.makeInputRef(node, i));
       }
     }
 
     //All columns on rhs
-    for (int i = correlate.getLeft().getRowType().getFieldCount(); i < correlate.getRowType().getFieldCount(); i++) {
+    for (int i = correlate.getLeft().getRowType().getFieldCount();
+        i < correlate.getRowType().getFieldCount(); i++) {
       projects.add(rexBuilder.makeInputRef(node, i));
     }
 

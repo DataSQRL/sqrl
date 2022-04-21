@@ -7,7 +7,7 @@ import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 @Value
 public class FlinkDBConfiguration {
 
-    @Nullable
-    private final JdbcConnectionOptions jdbcConnectionOptions;
+  @Nullable
+  private final JdbcConnectionOptions jdbcConnectionOptions;
 
 }

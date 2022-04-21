@@ -33,10 +33,12 @@ public class Join
   public Join(Type type, Relation left, Relation right, Optional<JoinCriteria> criteria) {
     this(Optional.empty(), type, left, right, criteria);
   }
+
   public Join(NodeLocation location, Type type, Relation left, Relation right,
       Optional<JoinCriteria> criteria) {
     this(Optional.of(location), type, left, right, criteria);
   }
+
   public Join(Optional<NodeLocation> location, Type type, Relation left, Relation right,
       Optional<JoinCriteria> criteria) {
     super(location);

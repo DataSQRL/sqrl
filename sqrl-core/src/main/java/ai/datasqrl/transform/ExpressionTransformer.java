@@ -50,6 +50,7 @@ import lombok.Value;
 import org.apache.calcite.sql.SqlAggFunction;
 
 public class ExpressionTransformer {
+
   FunctionLookup functionLookup = new FunctionLookup();
   AliasGenerator gen = new AliasGenerator();
   public List<JoinResult> joinResults = new ArrayList<>();
@@ -67,6 +68,7 @@ public class ExpressionTransformer {
   }
 
   class Visitor extends ExpressionRewriter<StatementScope> {
+
     @Override
     public Expression rewriteFunctionCall(FunctionCall node, StatementScope scope,
         ExpressionTreeRewriter<StatementScope> treeRewriter) {
@@ -76,7 +78,7 @@ public class ExpressionTransformer {
       if (function instanceof SqlNativeFunction) {
         SqlNativeFunction nativeFunction = (SqlNativeFunction) function;
         if (nativeFunction.getOp().getName().equalsIgnoreCase("COUNT") &&
-         node.getArguments().size() == 0
+            node.getArguments().size() == 0
         ) {
           return new FunctionCall(NamePath.of("COUNT"), List.of(new LongLiteral("1")), false);
         }
@@ -92,16 +94,18 @@ public class ExpressionTransformer {
         arguments.add(treeRewriter.rewrite(arg, scope));
       }
 
-      if (function instanceof SqlNativeFunction && ((SqlNativeFunction)function).getOp() instanceof SqlAggFunction
+      if (function instanceof SqlNativeFunction
+          && ((SqlNativeFunction) function).getOp() instanceof SqlAggFunction
           &&
-          ((SqlAggFunction)((SqlNativeFunction)function).getOp()).requiresOver()) {
-        return new FunctionCall(node.getLocation(), node.getNamePath(), arguments, node.isDistinct(),
+          ((SqlNativeFunction) function).getOp().requiresOver()) {
+        return new FunctionCall(node.getLocation(), node.getNamePath(), arguments,
+            node.isDistinct(),
             createWindow(scope));
       }
       if (function.isAggregate() && node.getArguments().size() == 1 &&
           node.getArguments().get(0) instanceof Identifier) {
-        Identifier identifier = (Identifier)node.getArguments().get(0);
-        IdentifierScope identifierScope = (IdentifierScope)scope.getScopes().get(identifier);
+        Identifier identifier = (Identifier) node.getArguments().get(0);
+        IdentifierScope identifierScope = (IdentifierScope) scope.getScopes().get(identifier);
 
         /*
          * The first token is either the join scope or a column in any join scope
@@ -109,7 +113,7 @@ public class ExpressionTransformer {
         ResolveResult resolve = identifierScope.getResolveResult();//context.getScope().resolveFirst(identifier.getNamePath());
 //        Preconditions.checkState(resolve.size() == 1,
 //            "Column ambiguous or missing: %s %s", identifier.getNamePath(), resolve);
-        if(PathUtil.isToMany(resolve)) {
+        if (PathUtil.isToMany(resolve)) {
           ResolveResult result = resolve;
           Map<Name, Table> joinScope = new HashMap<>();
           joinScope.put(result.getAlias(), result.getTable());
@@ -150,10 +154,12 @@ public class ExpressionTransformer {
           );
 
           //Add context keys to query so we can rejoin it in the subsequent step
-          QuerySpecification contextSubquery = new AddContextToQuery().transform(subquerySpec, resolve.getTable(),
+          QuerySpecification contextSubquery = new AddContextToQuery().transform(subquerySpec,
+              resolve.getTable(),
               first.getAlias());
 
-          Query query = new Query(Optional.empty(), contextSubquery, Optional.empty(), Optional.empty());
+          Query query = new Query(Optional.empty(), contextSubquery, Optional.empty(),
+              Optional.empty());
           TableSubquery tableSubquery = new TableSubquery(query);
 
           SubqueryTableFactory tableFactory = new SubqueryTableFactory();
@@ -193,7 +199,7 @@ public class ExpressionTransformer {
     @Override
     public Expression rewriteIdentifier(Identifier node, StatementScope scope,
         ExpressionTreeRewriter<StatementScope> treeRewriter) {
-      IdentifierScope identifierScope = (IdentifierScope)scope.getScopes().get(node);
+      IdentifierScope identifierScope = (IdentifierScope) scope.getScopes().get(node);
 
 //      List<Scope.ResolveResult> results = scope.resolveFirst(node.getNamePath());
 
@@ -228,6 +234,7 @@ public class ExpressionTransformer {
 
   @Value
   public static class JoinResult {
+
     Type type;
     Relation relation;
     Optional<JoinCriteria> criteria;

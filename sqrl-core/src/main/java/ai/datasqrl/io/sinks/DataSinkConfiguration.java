@@ -9,14 +9,14 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class DataSinkConfiguration extends SharedConfiguration {
 
-    @Override
-    protected boolean formatRequired() {
-        return true;
-    }
+  @Override
+  protected boolean formatRequired() {
+    return true;
+  }
 
-    public boolean initialize(ErrorCollector errors) {
-        return super.initialize(errors);
-    }
+  public boolean initialize(ErrorCollector errors) {
+    return super.initialize(errors);
+  }
 
 
 }

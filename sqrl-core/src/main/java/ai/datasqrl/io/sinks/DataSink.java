@@ -12,35 +12,35 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class DataSink {
 
-    private final Name name;
-    private final DataSinkImplementation implementation;
-    private final DataSinkConfiguration configuration;
+  private final Name name;
+  private final DataSinkImplementation implementation;
+  private final DataSinkConfiguration configuration;
 
-    public DataSink(DataSinkRegistration reg) {
-        name = Name.system(reg.getName());
-        implementation = reg.getSink();
-        configuration = reg.getConfig();
-    }
+  public DataSink(DataSinkRegistration reg) {
+    name = Name.system(reg.getName());
+    implementation = reg.getSink();
+    configuration = reg.getConfig();
+  }
 
-    public Name getName() {
-        return name;
-    }
+  public Name getName() {
+    return name;
+  }
 
-    public DataSinkImplementation getImplementation() {
-        return implementation;
-    }
+  public DataSinkImplementation getImplementation() {
+    return implementation;
+  }
 
-    public DataSinkRegistration getRegistration() {
-        return new DataSinkRegistration(name.getDisplay(), implementation, configuration);
-    }
+  public DataSinkRegistration getRegistration() {
+    return new DataSinkRegistration(name.getDisplay(), implementation, configuration);
+  }
 
-    public Format.Writer getWriter() {
-        FormatConfiguration formatConfig = configuration.getFormat();
-        return formatConfig.getImplementation().getWriter(formatConfig);
-    }
+  public Format.Writer getWriter() {
+    FormatConfiguration formatConfig = configuration.getFormat();
+    return formatConfig.getImplementation().getWriter(formatConfig);
+  }
 
-    public TableSink getTableSink(Name name) {
-        return new TableSink(name,this);
-    }
+  public TableSink getTableSink(Name name) {
+    return new TableSink(name, this);
+  }
 
 }

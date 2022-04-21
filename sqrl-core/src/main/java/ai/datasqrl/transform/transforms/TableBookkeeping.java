@@ -1,8 +1,8 @@
 package ai.datasqrl.transform.transforms;
 
-import ai.datasqrl.schema.Table;
 import ai.datasqrl.parse.tree.Relation;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.schema.Table;
 import lombok.Value;
 
 @Value

@@ -8,6 +8,7 @@ import lombok.Value;
 
 @Value
 public class SelectScope implements ValidatorScope {
+
   Select select;
   private List<Expression> expandedSelectList;
   private Expression orders;

@@ -12,6 +12,7 @@ import org.apache.calcite.rel.logical.LogicalTableScan;
 
 @AllArgsConstructor
 public class ViewExpander extends RelShuttleImpl {
+
   CalcitePlanner planner;
 
   @Override
@@ -21,11 +22,13 @@ public class ViewExpander extends RelShuttleImpl {
     }
 
     org.apache.calcite.schema.Table table = planner.getSchema()
-        .getTable(scan.getTable().getQualifiedName().get(scan.getTable().getQualifiedName().size()-1), false).getTable();
+        .getTable(
+            scan.getTable().getQualifiedName().get(scan.getTable().getQualifiedName().size() - 1),
+            false).getTable();
 
     if (table instanceof SqrlViewTable) {
       return (((SqrlViewTable) table).getRelNode()).accept(this);
-    } else if (!scan.getTable().getQualifiedName().get(0).endsWith("_stream")){
+    } else if (!scan.getTable().getQualifiedName().get(0).endsWith("_stream")) {
       //Replace with stream data type so calcite doesn't include columns that don't exist yet.
       RelOptTable table2 =
           planner.createRelBuilder().getRelOptSchema().getTableForMember(

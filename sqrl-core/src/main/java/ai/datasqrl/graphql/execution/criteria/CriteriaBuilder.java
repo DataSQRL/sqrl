@@ -9,6 +9,7 @@ import lombok.Value;
 
 @Value
 public class CriteriaBuilder extends CriteriaVisitor<CriteriaResult, Object> {
+
   DataFetchingEnvironment environment;
 
   @Override
@@ -18,7 +19,8 @@ public class CriteriaBuilder extends CriteriaVisitor<CriteriaResult, Object> {
     Preconditions.checkState(source instanceof Map, "Only map types expected");
     Map<String, Object> sourceMap = (Map<String, Object>) source;
     Object value = sourceMap.get(equalsCriteria.getEnvVar());
-    Preconditions.checkNotNull(value, "Missing criteria column. Looking for %s, found %s", equalsCriteria.getEnvVar(), sourceMap);
+    Preconditions.checkNotNull(value, "Missing criteria column. Looking for %s, found %s",
+        equalsCriteria.getEnvVar(), sourceMap);
 
     CriteriaResult result = new CriteriaResult(
         List.of(String.format(" %s = ? ", equalsCriteria.getColumnName())),
@@ -30,6 +32,7 @@ public class CriteriaBuilder extends CriteriaVisitor<CriteriaResult, Object> {
 
   @Value
   public class CriteriaResult {
+
     List<String> clauseList;
     List<Object> valuesList;
   }

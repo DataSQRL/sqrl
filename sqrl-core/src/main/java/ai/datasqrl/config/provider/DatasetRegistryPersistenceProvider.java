@@ -6,6 +6,6 @@ import java.io.Serializable;
 
 public interface DatasetRegistryPersistenceProvider extends Serializable {
 
-    DatasetRegistryPersistence createRegistryPersistence(MetadataStore metaStore);
+  DatasetRegistryPersistence createRegistryPersistence(MetadataStore metaStore);
 
 }

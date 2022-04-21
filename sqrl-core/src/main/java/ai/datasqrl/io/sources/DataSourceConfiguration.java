@@ -9,13 +9,13 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class DataSourceConfiguration extends SharedConfiguration {
 
-    @Override
-    protected boolean formatRequired() {
-        return false;
-    }
+  @Override
+  protected boolean formatRequired() {
+    return false;
+  }
 
-    public boolean initialize(ErrorCollector errors) {
-        return super.initialize(errors);
-    }
+  public boolean initialize(ErrorCollector errors) {
+    return super.initialize(errors);
+  }
 
 }

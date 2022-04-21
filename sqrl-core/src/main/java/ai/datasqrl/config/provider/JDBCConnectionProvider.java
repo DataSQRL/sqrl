@@ -9,18 +9,18 @@ import lombok.NonNull;
 
 public interface JDBCConnectionProvider extends Serializable {
 
-    @NonNull String getDbURL();
+  @NonNull String getDbURL();
 
-    String getUser();
+  String getUser();
 
-    String getPassword();
+  String getPassword();
 
-    String getDriverName();
+  String getDriverName();
 
-    @NonNull String getDatabaseName();
+  @NonNull String getDatabaseName();
 
-    @NotNull JDBCConfiguration.Dialect getDialect();
+  @NotNull JDBCConfiguration.Dialect getDialect();
 
-    public Connection getConnection() throws SQLException, ClassNotFoundException;
+  Connection getConnection() throws SQLException, ClassNotFoundException;
 
 }

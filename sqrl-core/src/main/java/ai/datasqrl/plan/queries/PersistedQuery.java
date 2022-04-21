@@ -9,7 +9,9 @@ import org.apache.calcite.rel.RelNode;
  * A persisted query for additional optimization
  */
 public class PersistedQuery extends TableQuery {
+
   Optional<SqrlQuery> query;
+
   public PersistedQuery(Table table, RelNode relNode, Optional<SqrlQuery> query) {
     super(table, relNode);
     this.query = query;

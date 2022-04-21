@@ -1,10 +1,10 @@
 package ai.datasqrl.config.scripts;
 
 import ai.datasqrl.config.constraints.OptionalMinString;
+import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.util.ConfigurationUtil;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.schema.type.schema.external.SchemaDefinition;
 import java.io.Serializable;
 import javax.validation.constraints.NotNull;
@@ -24,59 +24,64 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.yaml.YA
 @Value
 public class SqrlScript implements Serializable {
 
-    private final Name name;
-    private final String filename;
-    private final String content;
-    private final SchemaDefinition schema;
-    private boolean main;
+  private final Name name;
+  private final String filename;
+  private final String content;
+  private final SchemaDefinition schema;
+  private boolean main;
 
 
-    @Builder
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Config {
+  @Builder
+  @Getter
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class Config {
 
-        @NonNull @NotNull @Size(min = 3, max = 128)
-        private String name;
-        private String filename;
-        @NonNull @NotNull @Size(min = 10)
-        private String content;
+    @NonNull
+    @NotNull
+    @Size(min = 3, max = 128)
+    private String name;
+    private String filename;
+    @NonNull
+    @NotNull
+    @Size(min = 10)
+    private String content;
 
-        @OptionalMinString
-        private String inputSchema;
-        @Builder.Default
-        private boolean main = false;
+    @OptionalMinString
+    private String inputSchema;
+    @Builder.Default
+    private boolean main = false;
 
-        SqrlScript initialize(ErrorCollector errors, NameCanonicalizer canonicalizer) {
-            if (!ConfigurationUtil.javaxValidate(this, errors)) return null;
-            errors = errors.resolve(name);
-            SchemaDefinition schema;
-            try {
-                 schema = parseSchema();
-            } catch (JsonProcessingException e) {
-                errors.fatal("Parsing error for schemaYaml: [%s]", e);
-                return null;
-            }
-            return new SqrlScript(canonicalizer.name(name),
-                    StringUtils.isNotEmpty(filename)?filename:name,
-                    content,schema, main);
-        }
-
-        private SchemaDefinition parseSchema() throws JsonProcessingException {
-            if (StringUtils.isEmpty(inputSchema)) {
-                return SchemaDefinition.empty();
-            } else {
-                ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-                mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-                SchemaDefinition importSchema = mapper.readValue(inputSchema,
-                        SchemaDefinition.class);
-                return importSchema;
-            }
-        }
-
+    SqrlScript initialize(ErrorCollector errors, NameCanonicalizer canonicalizer) {
+      if (!ConfigurationUtil.javaxValidate(this, errors)) {
+        return null;
+      }
+      errors = errors.resolve(name);
+      SchemaDefinition schema;
+      try {
+        schema = parseSchema();
+      } catch (JsonProcessingException e) {
+        errors.fatal("Parsing error for schemaYaml: [%s]", e);
+        return null;
+      }
+      return new SqrlScript(canonicalizer.name(name),
+          StringUtils.isNotEmpty(filename) ? filename : name,
+          content, schema, main);
     }
 
+    private SchemaDefinition parseSchema() throws JsonProcessingException {
+      if (StringUtils.isEmpty(inputSchema)) {
+        return SchemaDefinition.empty();
+      } else {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        SchemaDefinition importSchema = mapper.readValue(inputSchema,
+            SchemaDefinition.class);
+        return importSchema;
+      }
+    }
+
+  }
 
 
 }

@@ -7,6 +7,7 @@ import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 
 @Value
 public class CreateStreamJobResult {
+
   StreamStatementSet streamQueries;
   List<TableDescriptor> createdTables;
 }

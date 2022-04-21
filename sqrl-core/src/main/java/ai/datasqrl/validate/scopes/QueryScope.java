@@ -23,6 +23,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class QueryScope implements ValidatorScope {
+
   private Optional<Table> contextTable;
 
   /* Fields the query can see */
@@ -33,8 +34,8 @@ public class QueryScope implements ValidatorScope {
       Table table = fieldScope.get(alias.get());
       Preconditions.checkNotNull(table, "Could not find table %s", alias.get());
       List<Identifier> identifiers = fieldScope.get(alias.get()).getFields().getElements().stream()
-          .filter(f->f instanceof Column)
-          .map(f->new Identifier(Optional.empty(), alias.get().toNamePath().concat(f.getName())))
+          .filter(f -> f instanceof Column)
+          .map(f -> new Identifier(Optional.empty(), alias.get().toNamePath().concat(f.getName())))
           .collect(Collectors.toList());
       return identifiers;
     }
@@ -42,8 +43,9 @@ public class QueryScope implements ValidatorScope {
     List<Identifier> allFields = new ArrayList<>();
     for (Map.Entry<Name, Table> entry : fieldScope.entrySet()) {
       List<Identifier> identifiers = entry.getValue().getFields().getElements().stream()
-          .filter(f->f instanceof Column)
-          .map(f->new Identifier(Optional.empty(), entry.getKey().toNamePath().concat(f.getName())))
+          .filter(f -> f instanceof Column)
+          .map(f -> new Identifier(Optional.empty(),
+              entry.getKey().toNamePath().concat(f.getName())))
           .collect(Collectors.toList());
       allFields.addAll(identifiers);
     }
@@ -84,12 +86,14 @@ public class QueryScope implements ValidatorScope {
       if (namePath.getFirst().equals(alias) && namePath.getLength() > 1) {
         Field field = table.getField(namePath.get(1));
         if (field != null) {
-          fields.add(new ResolveResult(field, namePath.subList(1, namePath.getLength()), alias, table));
+          fields.add(
+              new ResolveResult(field, namePath.subList(1, namePath.getLength()), alias, table));
         }
       }
       Field field = table.getField(namePath.getFirst());
       if (field != null) {
-        fields.add(new ResolveResult(field, namePath.subList(0, namePath.getLength()), alias, table));
+        fields.add(
+            new ResolveResult(field, namePath.subList(0, namePath.getLength()), alias, table));
       }
     }
 

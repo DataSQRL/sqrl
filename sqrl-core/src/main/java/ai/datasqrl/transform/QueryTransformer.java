@@ -11,12 +11,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class QueryTransformer extends AstVisitor<Node, StatementScope> {
+
   public QueryTransformer() {
   }
 
   @Override
   public Node visitNode(Node node, StatementScope context) {
-    throw new RuntimeException(String.format("Could not process node %s : %s", node.getClass().getName(), node));
+    throw new RuntimeException(
+        String.format("Could not process node %s : %s", node.getClass().getName(), node));
   }
 
   @Override

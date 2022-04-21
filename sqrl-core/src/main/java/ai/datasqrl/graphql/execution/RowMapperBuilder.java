@@ -28,7 +28,9 @@ import lombok.Value;
 @Value
 //Todo: list & point queries are row mapping behavior
 public class RowMapperBuilder extends H2ColumnVisitor2<Object, ResultContext> {
+
   PageProvider pageProvider;
+
   @Override
   public Object visitColumns(Columns columns, ResultContext context) {
     //Todo: Selected columns?
@@ -128,12 +130,13 @@ public class RowMapperBuilder extends H2ColumnVisitor2<Object, ResultContext> {
 
   @Override
   public Object visitStringColumn(StringColumn column, ResultContext context) {
-    return  context.getMap().put(column.getName(),
+    return context.getMap().put(column.getName(),
         context.getRow().getString(column.getPhysicalName()));
   }
 
   @Value
   public class ResultContext {
+
     Map map;
     Row row;
   }

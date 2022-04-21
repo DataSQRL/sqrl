@@ -14,12 +14,14 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class Physicalizer {
+
   ImportManager importManager;
   JDBCConfiguration jdbcConfiguration;
   StreamEngine streamEngine;
 
   public ExecutionPlan plan(LogicalPlan plan) {
-    CreateStreamJobResult result = new StreamGraphBuilder(streamEngine, importManager, jdbcConfiguration)
+    CreateStreamJobResult result = new StreamGraphBuilder(streamEngine, importManager,
+        jdbcConfiguration)
         .createStreamGraph(plan.getStreamQueries());
 
     List<SqlDDLStatement> statements = new StreamTableDDLBuilder()

@@ -9,6 +9,7 @@ import lombok.Value;
  */
 @Value
 public class RelativeTablePath implements TablePath {
+
   Table table;
   NamePath path;
 

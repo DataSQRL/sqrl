@@ -25,9 +25,11 @@ public class SortItem
 
   private final Expression sortKey;
   private final Optional<Ordering> ordering;
+
   public SortItem(Expression sortKey, Ordering ordering) {
     this(Optional.empty(), sortKey, ordering);
   }
+
   public SortItem(NodeLocation location, Expression sortKey, Ordering ordering) {
     this(Optional.of(location), sortKey, ordering);
   }
@@ -38,7 +40,8 @@ public class SortItem
     this.sortKey = sortKey;
   }
 
-  public SortItem(Optional<NodeLocation> location, Expression sortKey, Optional<Ordering> ordering) {
+  public SortItem(Optional<NodeLocation> location, Expression sortKey,
+      Optional<Ordering> ordering) {
     super(location);
     this.ordering = ordering;
     this.sortKey = sortKey;

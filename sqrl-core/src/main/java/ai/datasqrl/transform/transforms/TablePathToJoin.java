@@ -7,9 +7,9 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.transform.transforms.JoinWalker.WalkResult;
 import ai.datasqrl.transform.visitors.ScopedRelationVisitor;
-import ai.datasqrl.validate.scopes.TableScope;
 import ai.datasqrl.validate.paths.RelativeTablePath;
 import ai.datasqrl.validate.scopes.StatementScope;
+import ai.datasqrl.validate.scopes.TableScope;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +25,7 @@ public class TablePathToJoin extends ScopedRelationVisitor {
     Name tableNodeAlias = tableScope.getAlias();
 
     if (tableNode.getNamePath().getFirst().equals(Name.SELF_IDENTIFIER)) {
-      Table table = ((RelativeTablePath)tableScope.getTablePath()).getTable();
+      Table table = ((RelativeTablePath) tableScope.getTablePath()).getTable();
       Map<Name, Table> joinScope = new HashMap<>();
       joinScope.put(Name.SELF_IDENTIFIER, table);
       WalkResult result = new JoinWalker().walk(Name.SELF_IDENTIFIER,

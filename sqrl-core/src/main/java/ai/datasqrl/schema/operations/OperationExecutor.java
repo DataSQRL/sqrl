@@ -9,6 +9,7 @@ import ai.datasqrl.schema.factory.TableFactory;
 import lombok.Getter;
 
 public class OperationExecutor extends OperationVisitor {
+
   @Getter
   Schema schema = new Schema();
 

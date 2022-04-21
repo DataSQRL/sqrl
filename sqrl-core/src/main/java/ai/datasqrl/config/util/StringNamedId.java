@@ -12,16 +12,16 @@ import lombok.NonNull;
 @EqualsAndHashCode
 public class StringNamedId implements NamedIdentifier {
 
-    private String id;
+  private String id;
 
-    public static StringNamedId of(@NonNull String id) {
-        return new StringNamedId(id.trim());
-    }
+  public static StringNamedId of(@NonNull String id) {
+    return new StringNamedId(id.trim());
+  }
 
-    @Override
-    public String toString() {
-        return id;
-    }
+  @Override
+  public String toString() {
+    return id;
+  }
 
 
 }

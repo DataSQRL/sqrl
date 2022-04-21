@@ -6,6 +6,7 @@ import lombok.Value;
 
 @Value
 public class H2Table implements Table {
+
   Columns columns;
   String name;
 }

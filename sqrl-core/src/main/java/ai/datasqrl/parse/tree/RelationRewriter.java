@@ -24,30 +24,37 @@ public class RelationRewriter<C> {
       RelationTreeRewriter<C> treeRewriter) {
     return rewriteRelation(node, context, treeRewriter);
   }
+
   public Relation rewriteExcept(Except node, C context,
       RelationTreeRewriter<C> treeRewriter) {
     return rewriteRelation(node, context, treeRewriter);
   }
+
   public Relation rewriteIntersect(Intersect node, C context,
       RelationTreeRewriter<C> treeRewriter) {
     return rewriteRelation(node, context, treeRewriter);
   }
+
   public Relation rewriteJoin(Join node, C context,
       RelationTreeRewriter<C> treeRewriter) {
     return rewriteRelation(node, context, treeRewriter);
   }
+
   public Relation rewriteQuerySpecification(QuerySpecification node, C context,
       RelationTreeRewriter<C> treeRewriter) {
     return rewriteRelation(node, context, treeRewriter);
   }
+
   public Relation rewriteTableNode(TableNode node, C context,
       RelationTreeRewriter<C> treeRewriter) {
     return rewriteRelation(node, context, treeRewriter);
   }
+
   public Relation rewriteTableSubquery(TableSubquery node, C context,
       RelationTreeRewriter<C> treeRewriter) {
     return rewriteRelation(node, context, treeRewriter);
   }
+
   public Relation rewriteUnion(Union node, C context,
       RelationTreeRewriter<C> treeRewriter) {
     return rewriteRelation(node, context, treeRewriter);

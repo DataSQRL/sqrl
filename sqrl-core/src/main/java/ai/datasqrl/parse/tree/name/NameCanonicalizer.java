@@ -8,16 +8,16 @@ import java.io.Serializable;
 @FunctionalInterface
 public interface NameCanonicalizer extends Serializable {
 
-    String getCanonical(String name);
+  String getCanonical(String name);
 
-    default Name name(String name) {
-        return Name.of(name,this);
-    }
+  default Name name(String name) {
+    return Name.of(name, this);
+  }
 
-    NameCanonicalizer LOWERCASE_ENGLISH = new LowercaseEnglishCanonicalizer();
+  NameCanonicalizer LOWERCASE_ENGLISH = new LowercaseEnglishCanonicalizer();
 
-    NameCanonicalizer AS_IS = new IdentityCanonicalizer();
+  NameCanonicalizer AS_IS = new IdentityCanonicalizer();
 
-    NameCanonicalizer SYSTEM = LOWERCASE_ENGLISH;
+  NameCanonicalizer SYSTEM = LOWERCASE_ENGLISH;
 
 }

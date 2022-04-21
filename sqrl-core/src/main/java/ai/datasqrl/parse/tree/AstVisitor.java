@@ -53,6 +53,7 @@ public abstract class AstVisitor<R, C> {
   public R visitExpressionAssignment(ExpressionAssignment node, C context) {
     return visitAssignment(node, context);
   }
+
   public R visitQueryAssignment(QueryAssignment node, C context) {
     return visitAssignment(node, context);
   }
@@ -72,6 +73,7 @@ public abstract class AstVisitor<R, C> {
   public R visitJoinDeclaration(JoinDeclaration node, C context) {
     return visitAssignment(node, context);
   }
+
   public R visitInlineJoin(InlineJoin node, C context) {
     return visitDeclaration(node, context);
   }

@@ -4,7 +4,6 @@ import ai.datasqrl.parse.tree.TableNode;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.validate.Namespace;
 import ai.datasqrl.validate.paths.TablePath;
-import ai.datasqrl.validate.scopes.ValidatorScope;
 import lombok.Value;
 
 @Value

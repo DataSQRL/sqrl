@@ -8,6 +8,7 @@ import lombok.Setter;
 
 @Getter
 public class Relationship extends Field {
+
   private final Table table;
   public final Table toTable;
   public final Type type;
@@ -18,7 +19,8 @@ public class Relationship extends Field {
 
   public int version = 0;
 
-  public Relationship(Name name, Table fromTable, Table toTable, Type type, Multiplicity multiplicity) {
+  public Relationship(Name name, Table fromTable, Table toTable, Type type,
+      Multiplicity multiplicity) {
     super(name);
     this.table = fromTable;
     this.toTable = toTable;

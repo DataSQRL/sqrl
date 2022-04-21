@@ -4,6 +4,6 @@ import java.io.Serializable;
 
 public interface NamedIdentifier extends Serializable {
 
-    String getId();
-    
+  String getId();
+
 }

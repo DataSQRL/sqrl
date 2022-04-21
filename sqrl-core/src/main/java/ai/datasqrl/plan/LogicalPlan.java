@@ -7,6 +7,7 @@ import lombok.Value;
 
 @Value
 public class LogicalPlan {
+
   List<TableQuery> streamQueries;
   List<TableQuery> databaseQueries;
   Schema schema;

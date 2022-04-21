@@ -24,6 +24,7 @@ public class ArithmeticBinaryExpression
   private final Operator operator;
   private final Expression left;
   private final Expression right;
+
   public ArithmeticBinaryExpression(Operator operator, Expression left, Expression right) {
     this(Optional.empty(), operator, left, right);
   }

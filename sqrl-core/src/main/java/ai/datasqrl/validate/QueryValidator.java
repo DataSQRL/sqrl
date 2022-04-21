@@ -44,12 +44,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Getter
 public class QueryValidator extends AstVisitor<ValidatorScope, QueryScope> {
+
   public final StatementValidator analyzer;
 
-  private final AggregationDetector aggregationDetector = new AggregationDetector(new FunctionLookup());
-  private Map<TableNode, TableScope> tableScopes = new HashMap<>();
-  private Map<Name, Table> joinScopes = new HashMap<>();
-  private Map<Node, ValidatorScope> scopes = new HashMap<>();
+  private final AggregationDetector aggregationDetector = new AggregationDetector(
+      new FunctionLookup());
+  private final Map<TableNode, TableScope> tableScopes = new HashMap<>();
+  private final Map<Name, Table> joinScopes = new HashMap<>();
+  private final Map<Node, ValidatorScope> scopes = new HashMap<>();
 
   public QueryValidator(StatementValidator analyzer) {
     this.analyzer = analyzer;
@@ -57,7 +59,8 @@ public class QueryValidator extends AstVisitor<ValidatorScope, QueryScope> {
 
   @Override
   public ValidatorScope visitNode(Node node, QueryScope context) {
-    throw new RuntimeException(String.format("Could not process node %s : %s", node.getClass().getName(), node));
+    throw new RuntimeException(
+        String.format("Could not process node %s : %s", node.getClass().getName(), node));
   }
 
   @Override
@@ -84,7 +87,6 @@ public class QueryValidator extends AstVisitor<ValidatorScope, QueryScope> {
 //    Optional<Expression> where = node.getWhere().map(w-> validateExpression(w, scope));
 //    Optional<Expression> having = node.getHaving().map(h-> validateExpression(h, scope)); //todo identify and replace having clause
 
-
     return createValidateScope(scope);
   }
 
@@ -95,15 +97,15 @@ public class QueryValidator extends AstVisitor<ValidatorScope, QueryScope> {
 
   /**
    * Note: This node is not walked from the rhs of a join.
-   *
+   * <p>
    * Expand the path, if applicable. The first name will always be either a SELF or a base table.
-   * The remaining path are always relationships and are wrapped in a join. The final table
-   * is aliased by either a given alias or generated alias.
+   * The remaining path are always relationships and are wrapped in a join. The final table is
+   * aliased by either a given alias or generated alias.
    */
   @Override
   public ValidatorScope visitTableNode(TableNode tableNode, QueryScope scope) {
     NamePath namePath = tableNode.getNamePath();
-    Name aliasName = tableNode.getAlias().orElseGet(()->Name.system(namePath.toString()));
+    Name aliasName = tableNode.getAlias().orElseGet(() -> Name.system(namePath.toString()));
 
     Table table;
     TablePath tablePath;
@@ -125,18 +127,18 @@ public class QueryValidator extends AstVisitor<ValidatorScope, QueryScope> {
   }
 
   /**
-   * Joins have the assumption that the rhs will always be a TableNode so the rhs will be
-   * unwrapped at this node, so it can provide additional criteria to the join.
-   *
-   * The rhs first table name will either be a join scoped alias or a base table. If it is
-   * a join scoped alias, we will use that alias information to construct additional criteria
-   * on the join, otherwise it'll be a cross join.
+   * Joins have the assumption that the rhs will always be a TableNode so the rhs will be unwrapped
+   * at this node, so it can provide additional criteria to the join.
+   * <p>
+   * The rhs first table name will either be a join scoped alias or a base table. If it is a join
+   * scoped alias, we will use that alias information to construct additional criteria on the join,
+   * otherwise it'll be a cross join.
    */
   @Override
   public ValidatorScope visitJoin(Join node, QueryScope scope) {
     ValidatorScope left = node.getLeft().accept(this, scope);
 
-    TableNode rhs = (TableNode)node.getRight();
+    TableNode rhs = (TableNode) node.getRight();
     Name lastAlias = rhs.getAlias().isPresent()
         ? rhs.getAlias().get()
         : Name.system(rhs.getNamePath().toString());
@@ -159,7 +161,8 @@ public class QueryValidator extends AstVisitor<ValidatorScope, QueryScope> {
     this.tableScopes.put(rhs, new TableScope(rhs, tablePath, lastAlias));
 
     if (node.getCriteria().isPresent()) {
-      ExpressionScope expressionScope = validateExpression(((JoinOn)node.getCriteria().get()).getExpression(), scope);
+      ExpressionScope expressionScope = validateExpression(
+          ((JoinOn) node.getCriteria().get()).getExpression(), scope);
       //Additional validation:
       //No paths
     }
@@ -189,7 +192,7 @@ public class QueryValidator extends AstVisitor<ValidatorScope, QueryScope> {
   @Override
   public ValidatorScope visitSelect(Select select, QueryScope scope) {
     select.getSelectItems().stream()
-        .forEach(s->validateExpression(((SingleColumn)s).getExpression(), scope));
+        .forEach(s -> validateExpression(((SingleColumn) s).getExpression(), scope));
 
     return createValidateScope(scope);
   }
@@ -202,10 +205,10 @@ public class QueryValidator extends AstVisitor<ValidatorScope, QueryScope> {
     for (SelectItem item : select.getSelectItems()) {
       if (item instanceof AllColumns) {
         Optional<Name> starPrefix = ((AllColumns) item).getPrefix()
-            .map(e->e.getFirst());
+            .map(e -> e.getFirst());
         List<Identifier> fields = scope.resolveFieldsWithPrefix(starPrefix);
         for (Identifier identifier : fields) {
-          expanded.add(new SingleColumn(identifier,Optional.empty()));
+          expanded.add(new SingleColumn(identifier, Optional.empty()));
         }
       } else {
         expanded.add(item);

@@ -12,7 +12,8 @@ public class CreateSubscription extends Node {
   private final NamePath name;
   private final Query query;
 
-  public CreateSubscription(Optional<NodeLocation> location, SubscriptionType subscriptionType, NamePath name, Query query) {
+  public CreateSubscription(Optional<NodeLocation> location, SubscriptionType subscriptionType,
+      NamePath name, Query query) {
     super(location);
     this.subscriptionType = subscriptionType;
     this.name = name;

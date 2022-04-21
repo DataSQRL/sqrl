@@ -15,7 +15,6 @@ package ai.datasqrl.parse;
 
 import static java.util.Objects.requireNonNull;
 
-import ai.datasqrl.config.error.ErrorCollector;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.util.EnumSet;

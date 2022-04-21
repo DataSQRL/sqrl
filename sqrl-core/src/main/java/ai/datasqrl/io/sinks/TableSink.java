@@ -6,7 +6,7 @@ import lombok.Value;
 @Value
 public class TableSink {
 
-    private final Name name;
-    private final DataSink sink;
+  private final Name name;
+  private final DataSink sink;
 
 }

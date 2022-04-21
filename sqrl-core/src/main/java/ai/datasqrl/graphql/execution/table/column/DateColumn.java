@@ -5,6 +5,7 @@ import lombok.Value;
 
 @Value
 public class DateColumn implements H2Column {
+
   String name;
   String physicalName;
 

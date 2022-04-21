@@ -15,16 +15,17 @@ import lombok.Value;
 
 @Value
 public class BatchQueryBuilder {
+
   H2Table table;
   PageProvider pageProvider;
 
   public H2SingleQuery build(List<Object> environment) {
-    Object arr[][] = {new Object[]{1}, new Object[]{2}};
+    Object[][] arr = {new Object[]{1}, new Object[]{2}};
 
     return new H2SingleQuery(
         "select customerid, entries_pos, discount from entries where (customerid) = ANY(?)",
         Optional.of(Tuple.of(arr)),
-        new Function<RowSet<Row>,Object>() {
+        new Function<RowSet<Row>, Object>() {
           @Override
           public List<Object> apply(RowSet<Row> rowSet) {
             ArrayListMultimap<Object, Map> multiMap = ArrayListMultimap.create();
@@ -38,7 +39,7 @@ public class BatchQueryBuilder {
             //Reorder the results to the original order
             List result = new ArrayList<>();
             for (Object[] key : arr) {
-              result.add(pageProvider.wrap((List)multiMap.get(key[0]), "test", false));
+              result.add(pageProvider.wrap((List) multiMap.get(key[0]), "test", false));
             }
 
             return result;

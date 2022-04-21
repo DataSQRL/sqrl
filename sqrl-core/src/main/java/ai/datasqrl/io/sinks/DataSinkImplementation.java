@@ -6,9 +6,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "sinkType")
-@JsonSubTypes({ @JsonSubTypes.Type(value = DirectorySinkImplementation.class, name = "dir"), })
+@JsonSubTypes({@JsonSubTypes.Type(value = DirectorySinkImplementation.class, name = "dir"),})
 public interface DataSinkImplementation {
 
-    public boolean initialize(ErrorCollector errors);
+  boolean initialize(ErrorCollector errors);
 
 }

@@ -14,12 +14,12 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.Relation;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Field;
-import ai.datasqrl.validate.scopes.ResolveResult;
 import ai.datasqrl.validate.paths.PathUtil;
 import ai.datasqrl.validate.scopes.ExpressionScope;
 import ai.datasqrl.validate.scopes.FunctionCallScope;
 import ai.datasqrl.validate.scopes.IdentifierScope;
 import ai.datasqrl.validate.scopes.QueryScope;
+import ai.datasqrl.validate.scopes.ResolveResult;
 import ai.datasqrl.validate.scopes.ValidatorScope;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
@@ -31,8 +31,10 @@ import lombok.Value;
 
 @Getter
 public class ExpressionValidator {
+
   Map<Node, ValidatorScope> scopes = new HashMap<>();
   ErrorCollector errorCollector = ErrorCollector.root();
+
   public ExpressionValidator() {
   }
 
@@ -89,7 +91,8 @@ public class ExpressionValidator {
       NamePath qualifiedName = scope.qualify(node.getNamePath());
       List<Field> fieldPath = result.getTable().walkFields(result.getRemaining().get());
 
-      IdentifierScope identifierScope = new IdentifierScope(result.getAlias(), qualifiedName, fieldPath, result);
+      IdentifierScope identifierScope = new IdentifierScope(result.getAlias(), qualifiedName,
+          fieldPath, result);
       scopes.put(node, identifierScope);
       return identifierScope;
     }
@@ -97,6 +100,7 @@ public class ExpressionValidator {
 
   @Value
   public static class JoinResult {
+
     Type type;
     Relation relation;
     Optional<JoinCriteria> criteria;

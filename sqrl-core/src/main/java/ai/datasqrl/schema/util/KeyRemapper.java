@@ -11,15 +11,15 @@ public class KeyRemapper {
 
   public static Set<Integer> remapPrimary(Table table, RelNode expanded) {
     return table.getPrimaryKey().stream()
-        .map(i->table.getRelNode().getRowType().getFieldList().get(i))
-        .map(f->getIndex(expanded.getRowType(), f.getName()))
+        .map(i -> table.getRelNode().getRowType().getFieldList().get(i))
+        .map(f -> getIndex(expanded.getRowType(), f.getName()))
         .collect(Collectors.toSet());
   }
 
   public static Set<Integer> remapParentPrimary(Table table, RelNode expanded) {
     return table.getParentPrimaryKey().stream()
-        .map(i->table.getRelNode().getRowType().getFieldList().get(i))
-        .map(f->getIndex(expanded.getRowType(), f.getName()))
+        .map(i -> table.getRelNode().getRowType().getFieldList().get(i))
+        .map(f -> getIndex(expanded.getRowType(), f.getName()))
         .collect(Collectors.toSet());
   }
 }

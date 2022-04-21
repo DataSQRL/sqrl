@@ -26,6 +26,7 @@ public class ArithmeticUnaryExpression
 
   private final Expression value;
   private final Sign sign;
+
   public ArithmeticUnaryExpression(Sign sign, Expression value) {
     this(Optional.empty(), sign, value);
   }

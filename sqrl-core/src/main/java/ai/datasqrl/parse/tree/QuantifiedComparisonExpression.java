@@ -28,6 +28,7 @@ public class QuantifiedComparisonExpression
   private final Quantifier quantifier;
   private final Expression value;
   private final Expression subquery;
+
   public QuantifiedComparisonExpression(ComparisonExpression.Operator operator,
       Quantifier quantifier, Expression value, Expression subquery) {
     this(Optional.empty(), operator, quantifier, value, subquery);

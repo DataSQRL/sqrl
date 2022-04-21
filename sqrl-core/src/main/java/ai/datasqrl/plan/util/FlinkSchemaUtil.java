@@ -2,24 +2,20 @@ package ai.datasqrl.plan.util;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.VersionedName;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Schema.UnresolvedColumn;
 import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;
 import org.apache.flink.table.types.AtomicDataType;
-import org.apache.flink.table.types.CollectionDataType;
-import org.apache.flink.table.types.FieldsDataType;
 
 public class FlinkSchemaUtil {
 
   public static List<Name> getFieldNames(RelNode relNode) {
     List<Name> fieldNames = relNode.getRowType().getFieldNames().stream()
-        .map(e-> VersionedName.parse(e).toName())
+        .map(e -> VersionedName.parse(e).toName())
         .collect(Collectors.toList());
     return fieldNames;
   }
@@ -33,6 +29,7 @@ public class FlinkSchemaUtil {
 
     return -1;
   }
+
   public static int getIndex(RelDataType type, String name) {
     for (int i = 0; i < type.getFieldList().size(); i++) {
       if (type.getFieldList().get(i).getName().equalsIgnoreCase(name)) {

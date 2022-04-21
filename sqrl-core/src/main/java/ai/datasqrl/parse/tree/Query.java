@@ -73,8 +73,8 @@ public class Query
 
   public Optional<Long> parseLimit() {
     return getLimit()
-        .filter(l->l.getValue().equalsIgnoreCase("ALL"))
-        .map(l->Long.parseLong(l.getValue()));
+        .filter(l -> l.getValue().equalsIgnoreCase("ALL"))
+        .map(l -> Long.parseLong(l.getValue()));
   }
 
   @Override
@@ -111,8 +111,8 @@ public class Query
     Query o = (Query) obj;
     return
         Objects.equals(queryBody, o.queryBody) &&
-        Objects.equals(orderBy, o.orderBy) &&
-        Objects.equals(limit, o.limit);
+            Objects.equals(orderBy, o.orderBy) &&
+            Objects.equals(limit, o.limit);
   }
 
   @Override

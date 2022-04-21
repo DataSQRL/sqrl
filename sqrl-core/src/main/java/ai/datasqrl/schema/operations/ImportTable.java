@@ -9,6 +9,7 @@ import org.apache.calcite.rel.RelNode;
 
 @Value
 public class ImportTable {
+
   NamePath tableName;
   RelNode relNode;
   List<Name> fields;

@@ -5,6 +5,7 @@ import lombok.Value;
 
 @Value
 public class ZonedDateTimeColumn implements H2Column {
+
   String name;
   String physicalName;
 

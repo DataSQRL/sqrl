@@ -6,6 +6,7 @@ import lombok.Value;
 
 @Value
 public class TableFieldFetcher {
+
   H2Table table;
   Optional<Criteria> criteria;
 }

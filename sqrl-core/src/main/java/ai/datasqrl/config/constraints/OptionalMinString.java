@@ -19,15 +19,15 @@ import org.hibernate.validator.constraints.ConstraintComposition;
 @Size(max = 0)
 @Size(min = 3)
 @ReportAsSingleViolation
-@Target({ METHOD, FIELD })
+@Target({METHOD, FIELD})
 @Retention(RUNTIME)
-@Constraint(validatedBy = { })
+@Constraint(validatedBy = {})
 public @interface OptionalMinString {
 
-    String message() default "Must be either null or length>3 string value";
+  String message() default "Must be either null or length>3 string value";
 
-    Class<?>[] groups() default { };
+  Class<?>[] groups() default {};
 
-    Class<? extends Payload>[] payload() default { };
+  Class<? extends Payload>[] payload() default {};
 
 }

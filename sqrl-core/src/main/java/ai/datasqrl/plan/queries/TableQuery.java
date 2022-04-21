@@ -11,6 +11,7 @@ import org.apache.calcite.rel.RelNode;
 @AllArgsConstructor
 @Getter
 public class TableQuery {
+
   Table table;
   RelNode relNode;
 }
