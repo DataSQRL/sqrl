@@ -14,7 +14,8 @@ import ai.datasqrl.execute.StreamEngine;
 import ai.datasqrl.io.sinks.registry.DataSinkRegistry;
 import ai.datasqrl.io.sources.dataset.DatasetRegistry;
 import ai.datasqrl.io.sources.dataset.SourceTableMonitor;
-import ai.datasqrl.physical.ExecutionPlan;
+import ai.datasqrl.physical.PhysicalPlan;
+import ai.datasqrl.plan.BundlePlanner;
 import ai.datasqrl.server.CompilationResult;
 import ai.datasqrl.server.EnvironmentPersistence;
 import ai.datasqrl.server.ImportManager;
@@ -75,7 +76,7 @@ public class Environment implements Closeable {
     Instant compileStart = Instant.now();
     ScriptDeployment deployment;
     try {
-      ExecutionPlan plan = compile(bundle);
+      PhysicalPlan plan = compile(bundle);
       ScriptExecutor executor = new ScriptExecutor(
           this.settings.getJdbcConfiguration().getDatabase(MetaData.DEFAULT_DATABASE));
       Job job = executor.execute(plan);
@@ -107,7 +108,7 @@ public class Environment implements Closeable {
   }
 
   //Option: drop table before create
-  public ExecutionPlan compile(ScriptBundle bundle) throws Exception {
+  public PhysicalPlan compile(ScriptBundle bundle) throws Exception {
     ImportManager importManager = settings.getImportManagerProvider()
         .createImportManager(datasetRegistry);
     ErrorCollector errors = importManager.registerUserSchema(bundle.getMainScript().getSchema());
@@ -120,8 +121,8 @@ public class Environment implements Closeable {
         .jdbcConfiguration(settings.getJdbcConfiguration())
         .streamEngine(settings.getStreamEngineProvider().create())
         .build();
-    BundleProcessor bundleProcessor = new BundleProcessor(options);
-    return bundleProcessor.processBundle(bundle);
+    BundlePlanner bundlePlanner = new BundlePlanner(options);
+    return bundlePlanner.processBundle(bundle);
   }
 
   public DatasetRegistry getDatasetRegistry() {

@@ -1,7 +1,7 @@
 package ai.datasqrl.execute;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.physical.ExecutionPlan;
+import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.database.ddl.SqlDDLStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -17,9 +17,9 @@ public class ScriptExecutor {
 
   JDBCConnectionProvider configuration;
 
-  public Job execute(ExecutionPlan executionPlan) {
-    executeDml(executionPlan.getDatabaseDDL());
-    String executionId = executeFlink(executionPlan.getStreamQueries());
+  public Job execute(PhysicalPlan physicalPlan) {
+    executeDml(physicalPlan.getDatabaseDDL());
+    String executionId = executeFlink(physicalPlan.getStreamQueries());
     return new Job(executionId);
   }
 

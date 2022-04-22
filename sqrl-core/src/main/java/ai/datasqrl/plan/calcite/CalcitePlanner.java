@@ -3,7 +3,6 @@ package ai.datasqrl.plan.calcite;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.plan.nodes.SqrlRelBuilder;
 import ai.datasqrl.schema.Schema;
-import ai.datasqrl.sql.calcite.NodeToSqlNodeConverter;
 import java.util.Properties;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionProperty;
