@@ -13,7 +13,6 @@ import ai.datasqrl.parse.tree.ExpressionAssignment;
 import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.JoinAssignment;
 import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.QueryAssignment;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -27,7 +26,6 @@ import ai.datasqrl.plan.local.shred.ShredPlanner2;
 import ai.datasqrl.plan.local.transpiler.StatementNormalizer;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinDeclarationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
 import ai.datasqrl.plan.local.transpiler.toSql.ConvertContext;
 import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeConverter;
@@ -65,7 +63,7 @@ public class SchemaUpdatePlanner {
   private final FlinkTableConverter tbConverter = new FlinkTableConverter();
   private final LocalPlanner2 localPlanner;
 
-  public Optional<SchemaUpdateOp> update(Schema schema, Node node) {
+  public Optional<SchemaUpdateOp> plan(Schema schema, Node node) {
     return Optional.ofNullable(node.accept(new Visitor(schema), null));
   }
 
@@ -193,17 +191,6 @@ public class SchemaUpdatePlanner {
 
     }
 
-//    private Optional<Table> getContextTable(NamePath namePath) {
-//      if (namePath.getLength() > 1) {
-//        Table table = schema.getByName(namePath.getFirst())
-//            .get().walk(namePath.popFirst().popLast())
-//            .get();
-//        return Optional.of(table);
-//      }
-//
-//      return Optional.empty();
-//    }
-
     @Override
     public SchemaUpdateOp visitCreateSubscription(CreateSubscription node, Object context) {
       StatementNormalizer normalizer = new StatementNormalizer(importManager, schema);
@@ -223,8 +210,6 @@ public class SchemaUpdatePlanner {
       StatementNormalizer normalizer = new StatementNormalizer(importManager, schema);
       Node normalized = normalizer.normalize(node);
       JoinDeclarationNorm join = (JoinDeclarationNorm) normalized;
-//          normalizer.normalizeJoin(node.getJoinDeclaration(),
-//          schema, getContextTable(node.getNamePath()), node.getNamePath().getLast());
       Table parentTable = schema.walkTable(node.getNamePath().popLast());
       Multiplicity multiplicity = node.getJoinDeclaration().getLimit()
           .map(l-> l.getIntValue().filter(i -> i == 1).map(i -> Multiplicity.ONE)

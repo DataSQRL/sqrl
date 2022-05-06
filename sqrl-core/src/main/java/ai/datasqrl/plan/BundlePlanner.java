@@ -9,6 +9,8 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
+import ai.datasqrl.plan.local.LocalPlanner2;
+import ai.datasqrl.plan.local.SchemaUpdatePlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
 import ai.datasqrl.schema.Schema;
@@ -54,21 +56,10 @@ public class BundlePlanner {
   }
 
   public Optional<SchemaUpdateOp> planStatement(Node statement, SchemaBuilder schema) {
-//    log.info("Statement {}:", NodeFormatter.accept(statement));
-//    StatementValidator validator = new StatementValidator(
-//        options.getImportManager(),
-//        schema.peek());
-//    StatementScope scope = validator.validate(statement);
-//
-//    StatementTransformer transformer = new StatementTransformer();
-//    Optional<Node> node = transformer.transform(statement, scope);
-//    log.info("Transformed {}:", node.map(NodeFormatter::accept).orElse(""));
-//
-//    Optional<SqlResult> validationResult = ValidateSql.validate(node, schema.peek());
-//    log.info("SqlNode {}:", validationResult.map(v->SqlNodeToString.toString(v.getSqlNode())).orElse(""));
-//
-//    LocalPlanner planner = new LocalPlanner(schema.peek());
-//    return Optional.ofNullable(planner.plan(statement, node, scope, validationResult));
-    return Optional.empty();
+    SchemaUpdatePlanner planner = new SchemaUpdatePlanner(
+        this.options.getImportManager(),
+        this.errorCollector,
+        new LocalPlanner2(schema.peek()));
+    return planner.plan(schema.peek(), statement);
   }
 }

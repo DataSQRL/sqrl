@@ -13,22 +13,15 @@ import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.plan.calcite.CalcitePlanner;
 import ai.datasqrl.plan.local.LocalPlanner2;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
-import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeConverter;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
 import ai.datasqrl.server.ImportManager;
 import ai.datasqrl.plan.local.SchemaUpdatePlanner;
-import ai.datasqrl.plan.local.transpiler.StatementNormalizer;
-import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeFormatter;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.SqlNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -190,11 +183,11 @@ class SchemaTest {
        */
       if (n instanceof ImportDefinition) {
         Optional<SchemaUpdateOp> op =
-            schemaUpdatePlanner.update(schema.getSchema(), n);
+            schemaUpdatePlanner.plan(schema.getSchema(), n);
         op.ifPresent(o->schema.apply(o));
       } else {
         Optional<SchemaUpdateOp> op =
-            schemaUpdatePlanner.update(schema.getSchema(), n);
+            schemaUpdatePlanner.plan(schema.getSchema(), n);
         op.ifPresent(o->
             schema.apply(o));
       }
