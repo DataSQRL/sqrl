@@ -22,10 +22,6 @@ public abstract class QueryBody
     super(location);
   }
 
-  protected QueryBody(Optional<NodeLocation> location, Object resolved) {
-    super(location, resolved);
-  }
-
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitQueryBody(this, context);

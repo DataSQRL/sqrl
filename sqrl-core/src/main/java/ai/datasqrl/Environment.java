@@ -79,6 +79,7 @@ public class Environment implements Closeable {
       PhysicalPlan plan = compile(bundle);
       ScriptExecutor executor = new ScriptExecutor(
           this.settings.getJdbcConfiguration().getDatabase(MetaData.DEFAULT_DATABASE));
+      if (true) throw new RuntimeException("");
       Job job = executor.execute(plan);
       deployment = ScriptDeployment.of(bundle);
       deployment.setExecutionId(job.getExecutionId());

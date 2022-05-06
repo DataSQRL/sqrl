@@ -1,8 +1,9 @@
 package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.parse.tree.Node;
+import ai.datasqrl.plan.local.transpiler.toSql.ConvertContext;
 import ai.datasqrl.plan.nodes.SqrlRelBuilder;
-import ai.datasqrl.schema.Schema;
+import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeConverter;
 import java.util.Properties;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionProperty;
@@ -10,7 +11,7 @@ import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.schema.SqrlCalciteSchema;
+import org.apache.calcite.schema.AbstractSqrlSchema;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
@@ -26,7 +27,7 @@ public class CalcitePlanner {
 
   private final RelOptCluster cluster;
   private final CalciteCatalogReader catalogReader;
-  private final SqrlCalciteSchema sqrlSchema;
+  private final AbstractSqrlSchema sqrlSchema;
   private final org.apache.calcite.jdbc.SqrlCalciteSchema calciteSchema;
   private final JavaTypeFactoryImpl typeFactory;
 
@@ -38,10 +39,10 @@ public class CalcitePlanner {
       .withLenientOperatorLookup(true)
       .withSqlConformance(SqlConformanceEnum.LENIENT);
 
-  public CalcitePlanner(Schema schema) {
+  public CalcitePlanner(AbstractSqrlSchema sqrlSchema) {
+    this.sqrlSchema = sqrlSchema;
     this.typeFactory = new FlinkTypeFactory(new FlinkTypeSystem());
     this.cluster = CalciteTools.createHepCluster(typeFactory);
-    this.sqrlSchema = new SqrlCalciteSchema(schema);
     this.calciteSchema = new org.apache.calcite.jdbc.SqrlCalciteSchema(sqrlSchema);
     this.catalogReader = CalciteTools.getCalciteCatalogReader(calciteSchema);
   }
@@ -55,21 +56,15 @@ public class CalcitePlanner {
   }
 
   public SqlNode parse(Node node) {
-    NodeToSqlNodeConverter converter = new NodeToSqlNodeConverter();
-    SqlNode sqlNode = node.accept(converter, null);
+    SqlNodeConverter converter = new SqlNodeConverter();
+    SqlNode sqlNode = node.accept(converter, new ConvertContext());
 
     return sqlNode;
   }
 
-  public RelNode plan(SqlNode sqlNode) {
+  public RelNode plan(SqlNode sqlNode, SqlValidator validator) {
     Properties props = new Properties();
     props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
-
-    SqlValidator validator = SqlValidatorUtil.newValidator(SqlStdOperatorTable.instance(),
-        catalogReader, typeFactory,
-        validatorConfig);
-
-    SqlNode validated = validator.validate(sqlNode);
 
     SqlToRelConverter relConverter = new SqlToRelConverter(
         (rowType, queryString, schemaPath
@@ -81,10 +76,10 @@ public class CalcitePlanner {
         SqlToRelConverter.config().withExpand(false).withTrimUnusedFields(true)
             .withCreateValuesRel(false));
 
-    return relConverter.convertQuery(validated, false, true).rel;
+    return relConverter.convertQuery(sqlNode, false, true).rel;
   }
 
-  public SqlValidator getValidator() {
+  public SqlValidator createValidator() {
     Properties props = new Properties();
     props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
 

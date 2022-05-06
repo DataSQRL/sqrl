@@ -66,7 +66,7 @@ query
 queryNoWith:
       queryTerm
       (ORDER BY sortItem (',' sortItem)*)?
-      (LIMIT limit=(INTEGER_VALUE | ALL))?
+      (LIMIT limit=INTEGER_VALUE)?
     ;
 
 queryTerm
@@ -112,7 +112,6 @@ setQuantifier
 
 selectItem
     : expression (AS? identifier)?  #selectSingle
-    | qualifiedName '.' ASTERISK    #selectAll
     | ASTERISK                      #selectAll
     ;
 
@@ -177,7 +176,7 @@ primaryExpression
     | string                                                                              #stringLiteral
     | qualifiedName '(' ASTERISK ')'                                                      #functionCall
     | qualifiedName '(' (setQuantifier? expression (',' expression)*)? ')'                #functionCall
-    | '(' query ')'                                                                       #subqueryExpression
+//    | '(' query ')'                                                                       #subqueryExpression
     | CASE whenClause+ (ELSE elseExpression=expression)? END                              #simpleCase
     | CAST '(' expression AS type ')'                                                     #cast
     | qualifiedName                                                                       #columnReference

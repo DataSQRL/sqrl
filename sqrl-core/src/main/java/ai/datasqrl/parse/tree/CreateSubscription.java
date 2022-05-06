@@ -24,7 +24,7 @@ public class CreateSubscription extends Node {
     return subscriptionType;
   }
 
-  public NamePath getName() {
+  public NamePath getNamePath() {
     return name;
   }
 

@@ -9,15 +9,13 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
-import ai.datasqrl.plan.local.LocalPlanner;
-import ai.datasqrl.schema.Schema;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
-import ai.datasqrl.sqrl2sql.StatementTransformer;
-import ai.datasqrl.validate.StatementValidator;
-import ai.datasqrl.validate.scopes.StatementScope;
-import com.google.common.base.Preconditions;
+import ai.datasqrl.schema.Schema;
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class BundlePlanner {
 
   private final BundleOptions options;
@@ -45,24 +43,32 @@ public class BundlePlanner {
 
     SchemaBuilder schema = new SchemaBuilder();
     for (Node node : scriptAst.getStatements()) {
-      SchemaUpdateOp operation = planStatement(node, schema);
-      Preconditions.checkNotNull(operation, "Operation is null for statement: {%s}", node);
-      schema.apply(operation);
+      Optional<SchemaUpdateOp> operation = planStatement(node, schema);
+      if (operation.isEmpty()) {
+        log.warn("Operation is null for statement: {}", node.getClass());
+      }
+      operation.ifPresent(schema::apply);
     }
 
     return schema.build();
   }
 
-  public SchemaUpdateOp planStatement(Node statement, SchemaBuilder schema) {
-    StatementValidator validator = new StatementValidator(
-        options.getImportManager(),
-        schema.peek());
-    StatementScope scope = validator.validate(statement);
-
-    StatementTransformer transformer = new StatementTransformer();
-    Node node = transformer.transform(statement, scope);
-
-    LocalPlanner planner = new LocalPlanner(schema.peek());
-    return planner.plan(statement, node, scope);
+  public Optional<SchemaUpdateOp> planStatement(Node statement, SchemaBuilder schema) {
+//    log.info("Statement {}:", NodeFormatter.accept(statement));
+//    StatementValidator validator = new StatementValidator(
+//        options.getImportManager(),
+//        schema.peek());
+//    StatementScope scope = validator.validate(statement);
+//
+//    StatementTransformer transformer = new StatementTransformer();
+//    Optional<Node> node = transformer.transform(statement, scope);
+//    log.info("Transformed {}:", node.map(NodeFormatter::accept).orElse(""));
+//
+//    Optional<SqlResult> validationResult = ValidateSql.validate(node, schema.peek());
+//    log.info("SqlNode {}:", validationResult.map(v->SqlNodeToString.toString(v.getSqlNode())).orElse(""));
+//
+//    LocalPlanner planner = new LocalPlanner(schema.peek());
+//    return Optional.ofNullable(planner.plan(statement, node, scope, validationResult));
+    return Optional.empty();
   }
 }

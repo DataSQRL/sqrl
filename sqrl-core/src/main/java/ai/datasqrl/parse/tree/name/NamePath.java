@@ -174,13 +174,6 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
     return names[0];
   }
 
-  public NamePath version(int version) {
-    Name[] newNames = Arrays.copyOfRange(names, 0, names.length);
-    names[names.length - 1] = new VersionedName(names[names.length - 1].getCanonical(),
-        names[names.length - 1].getDisplay(), version);
-    return null;
-  }
-
   public boolean isEmpty() {
     return names.length == 0;
   }

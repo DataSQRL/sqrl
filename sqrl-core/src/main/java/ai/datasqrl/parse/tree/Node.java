@@ -54,4 +54,8 @@ public abstract class Node {
   public List<Annotation> getAnnotations() {
     return List.of();
   }
+
+  public int nativeHashCode() {
+    return this.hashCode();
+  }
 }

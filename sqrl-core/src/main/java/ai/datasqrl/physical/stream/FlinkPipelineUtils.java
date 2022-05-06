@@ -15,7 +15,7 @@ public class FlinkPipelineUtils {
     List<UnresolvedColumn> columns = toSchema.getColumns();
     for (int i = 0; i < columns.size(); i++) {
       UnresolvedColumn column = columns.get(i);
-      if (sqrlTable.getPrimaryKey().contains(i) || sqrlTable.getParentPrimaryKey().contains(i)) {
+      if (sqrlTable.getPrimaryKeys().contains(i)) {
         builder.column(column.getName(),
             ((UnresolvedPhysicalColumn) column).getDataType().notNull());
         pks.add(column.getName());

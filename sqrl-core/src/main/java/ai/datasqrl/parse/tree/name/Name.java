@@ -17,6 +17,7 @@ public interface Name extends Serializable, Comparable<Name> {
   Name PARENT_RELATIONSHIP = Name.system("parent");
   Name SIBLING_RELATIONSHIP = Name.system("sibling");
   Name INGEST_TIME = Name.system("_ingest_time");
+  Name UUID = Name.system("_uuid");
 
 
   /**
@@ -56,7 +57,7 @@ public interface Name extends Serializable, Comparable<Name> {
 //    }
 
   static boolean validName(String name) {
-    return !Strings.isNullOrEmpty(name) && name.indexOf(46) < 0 && name.indexOf(47) < 0;
+    return !Strings.isNullOrEmpty(name);// && name.indexOf('.') < 0 && name.indexOf('/') < 0;
   }
 
   static <T> T getIfValidName(@NonNull String name, @NonNull NameCanonicalizer canonicalizer,
@@ -100,6 +101,4 @@ public interface Name extends Serializable, Comparable<Name> {
   default NamePath toNamePath() {
     return NamePath.of(this);
   }
-
-
 }

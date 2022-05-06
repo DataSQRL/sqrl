@@ -13,6 +13,7 @@
  */
 package ai.datasqrl.parse.tree;
 
+import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -24,7 +25,10 @@ public class Identifier
 
   private final NamePath namePath;
 
-  private Object resolved;
+  public Identifier(Name name) {
+    super(Optional.empty());
+    this.namePath = name.toNamePath();
+  }
 
   public Identifier(NodeLocation location, NamePath namePath) {
     super(Optional.of(location));
@@ -38,14 +42,6 @@ public class Identifier
 
   public NamePath getNamePath() {
     return namePath;
-  }
-
-  public <T> T getResolved() {
-    return (T) resolved;
-  }
-
-  public void setResolved(Object resolved) {
-    this.resolved = resolved;
   }
 
   @Override

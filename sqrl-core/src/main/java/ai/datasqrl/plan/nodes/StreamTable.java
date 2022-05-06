@@ -26,25 +26,4 @@ public class StreamTable extends AbstractTable {
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory) {
     return relDataType;
   }
-
-
-  public static class StreamDataType extends RelDataTypeImpl {
-
-    @Getter
-    private final Table table;
-
-    public StreamDataType(
-        Table table, List<? extends RelDataTypeField> fieldList) {
-      super(fieldList);
-      this.table = table;
-      computeDigest();
-    }
-
-    @Override
-    protected void generateTypeString(StringBuilder sb, boolean b) {
-      sb.append("(DynamicRecordRow")
-          .append(getFieldNames())
-          .append(")");
-    }
-  }
 }

@@ -187,15 +187,6 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
     return this.elements.get(i);
   }
 
-  public E getByName(Name name, int version) {
-    for (E f : this.elements) {
-      if (f.getName().equals(name) && f.getVersion() == version) {
-        return f;
-      }
-    }
-    return null;
-  }
-
   @Override
   public String toString() {
     return "ShadowingContainer{" +

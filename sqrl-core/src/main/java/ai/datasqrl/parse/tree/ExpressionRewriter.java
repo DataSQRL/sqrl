@@ -13,6 +13,10 @@
  */
 package ai.datasqrl.parse.tree;
 
+import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceOrdinal;
+import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
+import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
+
 public class ExpressionRewriter<C> {
 
   public Expression rewriteExpression(Expression node, C context,
@@ -154,6 +158,21 @@ public class ExpressionRewriter<C> {
   }
 
   public Expression rewriteGroupingOperation(GroupingOperation node, C context,
+      ExpressionTreeRewriter<C> treeRewriter) {
+    return rewriteExpression(node, context, treeRewriter);
+  }
+
+  public Expression rewriteReferenceOrdinal(ReferenceOrdinal node, C context,
+      ExpressionTreeRewriter<C> treeRewriter) {
+    return rewriteExpression(node, context, treeRewriter);
+  }
+
+  public Expression rewriteResolvedFunctionCall(ResolvedFunctionCall node, C context,
+      ExpressionTreeRewriter<C> treeRewriter) {
+    return rewriteExpression(node, context, treeRewriter);
+  }
+
+  public Expression rewriteResolvedColumn(ResolvedColumn node, C context,
       ExpressionTreeRewriter<C> treeRewriter) {
     return rewriteExpression(node, context, treeRewriter);
   }

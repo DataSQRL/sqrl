@@ -35,6 +35,10 @@ public class JoinOn
     this.expression = requireNonNull(expression, "expression is null");
   }
 
+  public static Optional<JoinOn> on(Expression expression) {
+    return Optional.of(new JoinOn(Optional.empty(), expression));
+  }
+
   public Expression getExpression() {
     return expression;
   }

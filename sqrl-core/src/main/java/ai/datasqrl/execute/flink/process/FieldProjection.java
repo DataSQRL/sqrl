@@ -50,11 +50,11 @@ public interface FieldProjection extends Serializable {
     public Name getName() {
       return name;
     }
-
-    public Column createColumn(Table table) {
-      return new Column(getName(), table, 0, 0,
-          Collections.singletonList(NotNull.INSTANCE), isPrimary, parent.isPresent(), false);
-    }
+//
+//    public Column createColumn(Table table) {
+//      return new Column(getName(), table, 0, 0,
+//          Collections.singletonList(NotNull.INSTANCE), isPrimary, false);
+//    }
 
     @Override
     public abstract Object getData(SourceRecord<Name> record);
@@ -65,14 +65,14 @@ public interface FieldProjection extends Serializable {
     }
   }
 
-  static SpecialCase foreignKey(Column parent) {
-    return new SpecialCase("uuid", UuidType.INSTANCE, true, Optional.of(parent)) {
-      @Override
-      public Object getData(SourceRecord<Name> record) {
-        return record.getUuid().toString();
-      }
-    };
-  }
+//  static SpecialCase foreignKey(Column parent) {
+//    return new SpecialCase("uuid", UuidType.INSTANCE, true, Optional.of(parent)) {
+//      @Override
+//      public Object getData(SourceRecord<Name> record) {
+//        return record.getUuid().toString();
+//      }
+//    };
+//  }
 
   SpecialCase ROOT_UUID = new SpecialCase("uuid", UuidType.INSTANCE, true, Optional.empty()) {
     @Override

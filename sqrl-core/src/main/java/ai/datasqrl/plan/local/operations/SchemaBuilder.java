@@ -1,8 +1,5 @@
 package ai.datasqrl.plan.local.operations;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.factory.TableFactory;
@@ -21,41 +18,30 @@ public class SchemaBuilder extends SchemaOpVisitor {
 
   @Override
   public <T> T visit(AddDatasetOp op) {
-    for (ImportTable entry : op.getImportedPaths()) {
-      tableFactory.createTable(schema, entry.getTableName(), entry.getFields(), entry.getRelNode(),
-          entry.getPrimaryKey(), entry.getParentPrimaryKey());
-    }
+    schema.addAll(op.getTables());
     return null;
   }
 
   @Override
   public <T> T visit(AddQueryOp addQueryOp) {
-    tableFactory.createTable(schema, addQueryOp.getNamePath(),
-        addQueryOp.getFieldNames(),
-        addQueryOp.getRelNode(),
-        addQueryOp.getPrimaryKeys(),
-        addQueryOp.getParentPrimaryKeys()
-    );
-
+    schema.add(addQueryOp.getTable());
     return null;
   }
 
   @Override
-  public <T> T visit(AddColumnOp addColumnOp) {
-    Name columnName = addColumnOp.getName();
-    NamePath pathToTable = addColumnOp.getPathToTable();
+  public <T> T visit(AddNestedQueryOp op) {
+    tableFactory.assignRelationships(
+        op.getRelationshipName(),
+        op.getTable(),
+        op.getParentTable());
+    return null;
+  }
 
-    Table baseTable = schema.getByName(pathToTable.getFirst()).get();
-    Table table = baseTable.walk(pathToTable.popFirst()).get();
-
-    int version = 0;
-    if (table.getField(columnName) != null) {
-      version = table.getField(columnName).getVersion() + 1;
-    }
-    table.addField(Column.createTemp(columnName, null, table, version));
-    table.setRelNode(addColumnOp.getRelNode());
-    table.setPrimaryKey(addColumnOp.getPrimaryKeys());
-    table.setParentPrimaryKey(addColumnOp.getParentPrimaryKeys());
+  @Override
+  public <T> T visit(AddFieldOp addFieldOp) {
+    Table table = addFieldOp.getTable();
+    table.getFields().add(addFieldOp.getField());
+    addFieldOp.getRelNode().ifPresent(table::setHead);
     return null;
   }
 
