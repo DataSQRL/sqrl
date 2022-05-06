@@ -16,4 +16,9 @@ public class SqlNativeFunction implements SqrlFunction {
   public boolean isAggregate() {
     return op.isAggregator();
   }
+
+  @Override
+  public boolean requiresOver() {
+    return op.requiresOver();
+  }
 }

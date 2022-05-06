@@ -12,6 +12,11 @@ public class RoundToMonth implements RewritingFunction {
   }
 
   @Override
+  public boolean requiresOver() {
+    return false;
+  }
+
+  @Override
   public FunctionCall rewrite(FunctionCall node) {
     return new FunctionCall(node.getLocation(), Name.system("COALESCE").toNamePath(),
         node.getArguments(), false,

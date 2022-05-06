@@ -160,13 +160,29 @@ public class SchemaUpdatePlanner {
       List<Column> columns = new ArrayList<>();
       List<Expression> select = specNorm.getSelect().getSelectItems().stream().map(e->e.getExpression()).collect(
           Collectors.toList());
+      List<Expression> expressions = specNorm.getPrimaryKeys();
+
+      //Internal columns
+      List<Expression> addedPrimaryKeys = specNorm.getAddedPrimaryKeys();
+      for (int i = 0; i < addedPrimaryKeys.size(); i++) {
+        Expression expression = addedPrimaryKeys.get(i);
+        Name name = specNorm.getFieldName(expression);
+        Preconditions.checkNotNull(name);
+        Column column = new Column(name, null, 0, 0, List.of(), true,
+            expressions.contains(expression),
+            relNode.getRowType().getFieldList().get(
+                specNorm.getParentPrimaryKeys().size() + i),
+            Set.of());
+        columns.add(column);
+      }
+
       for (int i = 0; i < select.size(); i++) {
         Expression s = select.get(i);
         Name name = specNorm.getFieldName(s);
         Preconditions.checkNotNull(name);
 
         Column column = new Column(name, null, 0, 0, List.of(), false,
-            i == 0,//todo: primary key
+            expressions.contains(s),
             relNode.getRowType().getFieldList().get(specNorm.getParentPrimaryKeys().size() + specNorm.getAddedPrimaryKeys().size() + i),
             Set.of());
         columns.add(column);

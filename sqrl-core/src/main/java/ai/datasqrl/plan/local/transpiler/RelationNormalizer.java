@@ -39,9 +39,7 @@ import ai.datasqrl.plan.local.transpiler.transforms.JoinContextTransform;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -105,9 +103,10 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
 
     RelationNorm merged = mergeJoins(fromNorm, scope.getAddlJoins());
     SelectNorm selectNorm = SelectNorm.create(node.getSelect(), columns);
+    List<Expression> addedPrimaryKeys = new ArrayList<>();
     QuerySpecNorm specNorm = new QuerySpecNorm(Optional.empty(),
         parentPrimaryKeys,
-        List.of(),
+        addedPrimaryKeys,
         selectNorm,
         merged,
         where,
@@ -117,6 +116,18 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
         node.getLimit(), //todo: limit
         new PrimaryKeyDeriver(scope, selectNorm, groupByIndices, fromNorm).get()
     );
+
+    //Set references for ordinals
+    groupByIndices.stream().forEach(f->f.setTable(specNorm));
+
+    //Sometimes PKs need to get added back
+    List<Expression> selectExpr = selectNorm.getAsExpressions();
+    for (Expression expression : specNorm.getPrimaryKeys()) {
+      if (!parentPrimaryKeys.contains(expression) && !selectExpr.contains(expression)) {
+        addedPrimaryKeys.add(expression);
+      }
+    }
+
 
     return specNorm;
   }

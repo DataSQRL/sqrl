@@ -165,6 +165,7 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
         if (f instanceof ReferenceOrdinal) {
           ReferenceOrdinal referenceOrdinal = new ReferenceOrdinal(((ReferenceOrdinal)f).getOrdinal() +
               node.getParentPrimaryKeys().size() + node.getAddedPrimaryKeys().size());
+          referenceOrdinal.setTable(((ReferenceOrdinal) f).getTable());
           selectList.add(referenceOrdinal.accept(this, context));
         } else {
           SqlNode accept = f.accept(this, context);

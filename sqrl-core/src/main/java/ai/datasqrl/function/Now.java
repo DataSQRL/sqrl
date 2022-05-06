@@ -13,6 +13,11 @@ public class Now implements RewritingFunction {
   }
 
   @Override
+  public boolean requiresOver() {
+    return false;
+  }
+
+  @Override
   public FunctionCall rewrite(FunctionCall node) {
     return new FunctionCall(node.getLocation(),
         Name.system(SqlStdOperatorTable.CURRENT_TIMESTAMP.getName()).toNamePath(),

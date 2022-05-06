@@ -11,12 +11,15 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeLocation;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.commons.collections.ListUtils;
 
 /**
  * An normalized version of {@link ai.datasqrl.parse.tree.Join}
@@ -73,7 +76,11 @@ public class JoinNorm extends RelationNorm {
 
   @Override
   public List<Expression> getPrimaryKeys() {
-    throw new RuntimeException("Cannot get pk from a join norm");
+    if (this.type == Type.LEFT) {
+      return List.of();
+    }
+
+    return Lists.newArrayList(Iterables.concat(left.getPrimaryKeys(), right.getPrimaryKeys()));
   }
 
   @Override

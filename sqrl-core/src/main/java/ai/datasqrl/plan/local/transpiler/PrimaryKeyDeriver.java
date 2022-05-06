@@ -31,38 +31,12 @@ public class PrimaryKeyDeriver {
   }
 
   public List<Expression> get() {
-    //1. Check if there is a distinct
-    if (selectList.isDistinct()) {
-      return selectList.getAsExpressions();
-    }
-    //2. check group by
-    if (!group.isEmpty()) {
-      return group.stream()
-          .map(g->selectList.getSelectItems().get(g.getOrdinal()).getExpression())
-          .collect(Collectors.toList());
-    }
 //    //3. check for row_num in subquery
-//    SingleColumn col;
-//    if (fromNorm instanceof QuerySpecNorm && (col = hasRowNum((QuerySpecNorm) fromNorm)) != null) {
-//      ResolvedFunctionCall functionCall = (ResolvedFunctionCall)col.getExpression();
-//      Window window = functionCall.getOldExpression().getOver().get();
-//      return window.getPartitionBy();
-//    }
+
 //    //4. Walk join tree
 //
 //    throw new RuntimeException("");
     return List.of(selectList.getSelectItems().get(0).getExpression());
   }
 
-  private SingleColumn hasRowNum(QuerySpecNorm fromNorm) {
-    for (SingleColumn col : fromNorm.getSelect().getSelectItems()) {
-      if (col.getExpression() instanceof ResolvedFunctionCall &&
-          ((ResolvedFunctionCall)col.getExpression()).getFunction() instanceof SqlNativeFunction &&
-          ((SqlNativeFunction)((ResolvedFunctionCall)col.getExpression()).getFunction()).getOp() == SqlStdOperatorTable.ROW_NUMBER)
-          {
-        return col;
-      }
-    }
-    return null;
-  }
 }

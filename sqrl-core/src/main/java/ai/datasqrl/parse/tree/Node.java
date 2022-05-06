@@ -46,16 +46,7 @@ public abstract class Node {
   @Override
   public abstract boolean equals(Object obj);
 
-  @Override
-  public String toString() {
-    return NodeFormatter.accept(this);
-  }
-
   public List<Annotation> getAnnotations() {
     return List.of();
-  }
-
-  public int nativeHashCode() {
-    return this.hashCode();
   }
 }

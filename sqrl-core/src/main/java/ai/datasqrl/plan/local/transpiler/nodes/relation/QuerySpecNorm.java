@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.local.transpiler.nodes.relation;
 
+import ai.datasqrl.function.SqlNativeFunction;
 import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.GroupBy;
@@ -8,20 +9,27 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeLocation;
 import ai.datasqrl.parse.tree.OrderBy;
 import ai.datasqrl.parse.tree.SingleColumn;
+import ai.datasqrl.parse.tree.Window;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceExpression;
+import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceOrdinal;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
 import ai.datasqrl.plan.local.transpiler.nodes.node.SelectNorm;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javassist.expr.Expr;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.commons.math3.analysis.function.Exp;
+import org.checkerframework.checker.units.qual.C;
 
 /**
  * An normalized version of {@link ai.datasqrl.parse.tree.QuerySpecification}
@@ -42,7 +50,7 @@ public class QuerySpecNorm extends RelationNorm {
   private Optional<OrderBy> orderBy;
   private Optional<Limit> limit;
 
-  private List<Expression> primaryKeys;
+  private List<Expression> primaryKeys2;
 
   public QuerySpecNorm(Optional<NodeLocation> location, List<ResolvedColumn> parentPrimaryKeys,
       List<Expression> addedPrimaryKeys, SelectNorm select, RelationNorm from,
@@ -59,7 +67,7 @@ public class QuerySpecNorm extends RelationNorm {
     this.having = having;
     this.orderBy = orderBy;
     this.limit = limit;
-    this.primaryKeys = primaryKeys;
+    this.primaryKeys2 = primaryKeys;
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
@@ -122,7 +130,48 @@ public class QuerySpecNorm extends RelationNorm {
 
   @Override
   public List<Expression> getPrimaryKeys() {
-    return this.primaryKeys;
+    // Check group by
+    if (isAggregating()) {
+      Iterable<Expression> expressions = Iterables.concat(this.getParentPrimaryKeys(),
+          this.getAddedPrimaryKeys(),
+          this.groupBy.map(g->unpackOrdinals(g.getGroupingElement().getExpressions())).orElse(List.of()));
+      return Lists.newArrayList(expressions);
+    }
+    // Check distinct
+    if (this.select.isDistinct()) {
+      Iterable<Expression> expressions = Iterables.concat(this.getParentPrimaryKeys(),
+          this.getAddedPrimaryKeys(), this.getSelect().getAsExpressions());
+      return Lists.newArrayList(expressions);
+    }
+    // Check rownum
+    SingleColumn col;
+    if (this.from instanceof QuerySpecNorm && (col = ((QuerySpecNorm) from).getRowNumField()) != null) {
+      ResolvedFunctionCall functionCall = (ResolvedFunctionCall)col.getExpression();
+      Window window = functionCall.getOldExpression().getOver().get();
+      return window.getPartitionBy();
+    }
+
+    // else derive new PK
+    return from.getPrimaryKeys();
+  }
+
+  private List<Expression> unpackOrdinals(List<Expression> expressions) {
+    return expressions.stream()
+        .map(ex -> (ex instanceof ReferenceOrdinal)
+            ? this.select.getSelectItems().get(((ReferenceOrdinal)ex).getOrdinal()).getExpression()
+            : ex)
+        .collect(Collectors.toList());
+  }
+
+  protected SingleColumn getRowNumField() {
+    for (SingleColumn col : getSelect().getSelectItems()) {
+      if (col.getExpression() instanceof ResolvedFunctionCall &&
+          ((ResolvedFunctionCall)col.getExpression()).getFunction() instanceof SqlNativeFunction &&
+          ((SqlNativeFunction)((ResolvedFunctionCall)col.getExpression()).getFunction()).getOp() == SqlStdOperatorTable.ROW_NUMBER) {
+        return col;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -143,11 +192,13 @@ public class QuerySpecNorm extends RelationNorm {
     return walk(namePath).get();
   }
 
-
   public boolean isAggregating() {
     for (SingleColumn column : select.getSelectItems()) {
       if (column.getExpression() instanceof ResolvedFunctionCall &&
-          ((ResolvedFunctionCall) column.getExpression()).getFunction().isAggregate()) {
+          ((ResolvedFunctionCall) column.getExpression()).getFunction().isAggregate() &&
+          !((ResolvedFunctionCall) column.getExpression()).getFunction().requiresOver()
+      ) {
+
         return true;
       }
     }
