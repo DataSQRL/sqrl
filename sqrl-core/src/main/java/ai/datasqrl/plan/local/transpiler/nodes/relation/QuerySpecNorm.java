@@ -7,7 +7,6 @@ import ai.datasqrl.parse.tree.Limit;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeLocation;
 import ai.datasqrl.parse.tree.OrderBy;
-import ai.datasqrl.parse.tree.SelectItem;
 import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -17,7 +16,6 @@ import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
 import ai.datasqrl.plan.local.transpiler.nodes.node.SelectNorm;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.EqualsAndHashCode;
@@ -44,14 +42,13 @@ public class QuerySpecNorm extends RelationNorm {
   private Optional<OrderBy> orderBy;
   private Optional<Limit> limit;
 
-  private Map<Expression, Name> nameMap;
   private List<Expression> primaryKeys;
 
   public QuerySpecNorm(Optional<NodeLocation> location, List<ResolvedColumn> parentPrimaryKeys,
       List<Expression> addedPrimaryKeys, SelectNorm select, RelationNorm from,
       Optional<Expression> where,
       Optional<GroupBy> groupBy, Optional<Expression> having, Optional<OrderBy> orderBy,
-      Optional<Limit> limit, Map<Expression, Name> nameMap, List<Expression> primaryKeys) {
+      Optional<Limit> limit, List<Expression> primaryKeys) {
     super(location);
     this.parentPrimaryKeys = parentPrimaryKeys;
     this.addedPrimaryKeys = addedPrimaryKeys;
@@ -62,43 +59,8 @@ public class QuerySpecNorm extends RelationNorm {
     this.having = having;
     this.orderBy = orderBy;
     this.limit = limit;
-    this.nameMap = nameMap;
     this.primaryKeys = primaryKeys;
   }
-
-  //  private final boolean isAggregating;
-
-//  private final boolean isDistinct;
-//  List<Expression> select;
-//  RelationNorm from;
-//  private final List<JoinNorm> addlJoins; //join before passing here...
-//  Optional<Expression> where;
-//  Set<ReferenceExpression> groupBy;
-//  Optional<Expression> having; //replace repeated expressions with ReferenceOrdinal
-//  List<SortItem> orders; //replace repeated expressions with ReferenceOrdinal
-//  Optional<Integer> limit;
-//
-//  public QuerySpecNorm(boolean isAggregating, List<ResolvedColumn> parentPrimaryKeys,
-//      List<Expression> addedPrimaryKeys, boolean isDistinct,
-//      List<Expression> select, RelationNorm from, List<JoinNorm> addlJoins, Optional<Expression> where,
-//      Set<ReferenceExpression> groupBy, Optional<Expression> having, List<SortItem> orders,
-//      Optional<Integer> limit, Map<Expression, Name> nameMap, List<Expression> primaryKeys) {
-//    super();
-//    this.isAggregating = isAggregating;
-//    this.parentPrimaryKeys = parentPrimaryKeys;
-//    this.addedPrimaryKeys = addedPrimaryKeys;
-//    this.isDistinct = isDistinct;
-//    this.select = select;
-//    this.from = from;
-//    this.addlJoins = addlJoins;
-//    this.where = where;
-//    this.groupBy = groupBy;
-//    this.having = having;
-//    this.orders = orders;
-//    this.limit = limit;
-//    this.nameMap = nameMap;
-//    this.primaryKeys = primaryKeys;
-//  }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitQuerySpecNorm(this, context);
@@ -119,26 +81,42 @@ public class QuerySpecNorm extends RelationNorm {
     return this;
   }
 
+  //todo: cleanup
   @Override
   public Name getFieldName(Expression references) {
-    Name name = this.nameMap.get(references);
-    if (name == null) {
-      if (references instanceof ReferenceExpression) {
-        return getFieldName(((ReferenceExpression)references).getReferences());
-      } else if (references instanceof ResolvedColumn) {
-        return ((ResolvedColumn) references).getColumn().getId();
+    for (SingleColumn col : this.getSelect().getSelectItems()) {
+      if (col.getExpression().equals(references)) {
+        if (col.getAlias().isEmpty()) {
+          if (references instanceof ReferenceExpression) {
+            return getFieldName(((ReferenceExpression)references).getReferences());
+          } else if (references instanceof ResolvedColumn) {
+            return ((ResolvedColumn) references).getColumn().getId();
+          }
+        }
+        return col.getAlias().get().getNamePath().getLast();
       }
-
-      log.warn("Name should be aliased for {}", references);
-      return Name.system("<??>");
     }
-    return name;
+
+    for (ResolvedColumn column : this.parentPrimaryKeys) {
+      if (references == column) {
+        return column.getColumn().getId();
+      }
+    }
+
+    if (references instanceof ReferenceExpression) {
+      return getFieldName(((ReferenceExpression)references).getReferences());
+    } else if (references instanceof ResolvedColumn) {
+//      return ((ResolvedColumn) references).getColumn().getId();
+    }
+
+    log.warn("Name should be aliased for {}", references);
+    return Name.system("<??>");
   }
 
   @Override
   public List<Expression> getFields() {
     return this.select.getSelectItems().stream()
-        .map(ex-> new ReferenceExpression(this, ((SingleColumn)ex).getExpression()))
+        .map(ex-> new ReferenceExpression(this, ex.getExpression()))
         .collect(Collectors.toList());
   }
 
@@ -152,9 +130,9 @@ public class QuerySpecNorm extends RelationNorm {
     if (namePath.getLength() > 1) {
       return Optional.empty();
     }
-    for (Entry<Expression, Name> name : this.nameMap.entrySet()) {
-      if (name.getValue().equals(namePath.getLast())) {
-        return Optional.of(name.getKey());
+    for (SingleColumn col : this.getSelect().getSelectItems()) {
+      if (col.getAlias().get().getNamePath().equals(namePath)) {
+        return Optional.of(col.getExpression());
       }
     }
 

@@ -15,7 +15,6 @@ import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.Intersect;
 import ai.datasqrl.parse.tree.Join;
-import ai.datasqrl.parse.tree.Join.Type;
 import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.Limit;
 import ai.datasqrl.parse.tree.OrderBy;
@@ -28,7 +27,6 @@ import ai.datasqrl.parse.tree.TableNode;
 import ai.datasqrl.parse.tree.TableSubquery;
 import ai.datasqrl.parse.tree.Union;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceOrdinal;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.node.SelectNorm;
@@ -36,17 +34,10 @@ import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.schemaRef.RelationshipRef;
-import ai.datasqrl.plan.local.transpiler.nodes.schemaRef.SelfRef;
-import ai.datasqrl.plan.local.transpiler.nodes.schemaRef.TableOrRelationship;
 import ai.datasqrl.plan.local.transpiler.nodes.schemaRef.TableRef;
 import ai.datasqrl.plan.local.transpiler.transforms.JoinContextTransform;
-import ai.datasqrl.plan.local.transpiler.util.CriteriaUtil;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -103,21 +94,14 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
     Optional<Integer> limit = node.getLimit().flatMap(Limit::getIntValue);
 
     //only analyze select list as the group by and order have been extracted
-    Map<Expression, Name> aliasExpressionMap = new HashMap<>();
-    List<SingleColumn> columns = new ArrayList<>();
-    for (int i = 0; i < expandSelect.size(); i++) {
-      SingleColumn column = expandSelect.get(i);
-      Expression expression = rewriteExpression(column.getExpression(), true, scope);
-      Name alias = getSelectItemName(column, scope);
-      aliasExpressionMap.put(expression, alias);
-      columns.add(new SingleColumn(column.getLocation(), expression, SingleColumn.alias(alias)));
-    }
+    List<SingleColumn> columns = expandSelect.stream()
+        .map(
+            column -> new SingleColumn(column.getLocation(),
+                rewriteExpression(column.getExpression(), true, scope),
+                SingleColumn.alias(getSelectItemName(column, scope))))
+        .collect(Collectors.toList());
 
     List<ResolvedColumn> parentPrimaryKeys = resolvedParentPrimaryKeys(scope);
-    for (int i = 0; i < parentPrimaryKeys.size(); i++) {
-      ResolvedColumn ppk = parentPrimaryKeys.get(i);
-      aliasExpressionMap.put(ppk, ppk.getColumn().getName());
-    }
 
     RelationNorm merged = mergeJoins(fromNorm, scope.getAddlJoins());
     SelectNorm selectNorm = SelectNorm.create(node.getSelect(), columns);
@@ -131,7 +115,6 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
         having,
         toOrderBy(sortItems),
         node.getLimit(), //todo: limit
-        aliasExpressionMap,
         new PrimaryKeyDeriver(scope, selectNorm, groupByIndices, fromNorm).get()
     );
 

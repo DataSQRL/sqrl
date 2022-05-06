@@ -35,10 +35,6 @@ public class SingleColumn
     this(Optional.empty(), expression, alias);
   }
 
-  public SingleColumn(Expression expression, Identifier alias) {
-    this(Optional.empty(), expression, Optional.of(alias));
-  }
-
   public SingleColumn(NodeLocation location, Expression expression, Optional<Identifier> alias) {
     this(Optional.of(location), expression, alias);
   }

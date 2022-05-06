@@ -30,10 +30,7 @@ public class RejoinExprTransform {
         false);
     List<Expression> columns = table.getColumns().stream()
         .filter(field -> !field.containsAttribute(ForeignKey.class))
-        .map(c-> new ResolvedColumn(
-            new Identifier(c.getName()),
-            tableNodeNorm,
-            c))
+        .map(c-> ResolvedColumn.of(tableNodeNorm, c))
         .collect(Collectors.toList());
 
     columns.add(new ReferenceExpression(node, node.getSelect().getSelectItems().get(0).getExpression()));
@@ -62,7 +59,6 @@ public class RejoinExprTransform {
         Optional.empty(),
         Optional.empty(),
         Optional.empty(),
-        node.getNameMap(),
         List.of()
     );
     return outer;

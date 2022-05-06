@@ -182,11 +182,11 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
   private SqlNodeList toSelectList(QuerySpecNorm node, ConvertContext context) {
     List<SqlNode> selectList = new ArrayList<>();
     node.getParentPrimaryKeys().stream()
-            .map(e->alias(e, node.getNameMap().get(e), context))
+            .map(e->alias(e, e.getColumn().getId(), context))
             .forEach(selectList::add);
 
     node.getAddedPrimaryKeys().stream()
-            .map(e->alias(e, node.getNameMap().get(e), context))
+            .map(e->e.accept(this, context))
             .forEach(selectList::add);
 
     node.getSelect().getSelectItems().stream()

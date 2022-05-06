@@ -42,7 +42,6 @@ public class RelationNormRewriter extends AstVisitor<RelationNorm, Void> {
             .map(o->new SortItem(o.getLocation(), ExpressionTreeRewriter.rewriteWith(rewriter, o.getSortKey()), o.getOrdering()))
             .collect(Collectors.toList()))),
         node.getLimit(),
-        new HashMap<>(node.getNameMap()),
         rewriteList(node.getPrimaryKeys())
     );
     normMapping.put(node, querySpecNorm);

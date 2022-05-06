@@ -130,7 +130,6 @@ public class Relationship extends Field {
         Optional.empty(),
         Optional.empty(),
         Optional.empty(),
-        alias,
         List.of()
     );
 
@@ -158,7 +157,6 @@ public class Relationship extends Field {
         Optional.empty(),
         Optional.empty(),
         Optional.empty(),
-        Map.of(ref, Name.system("__ROW_NUM")),
         refPks
     );
 

@@ -162,7 +162,7 @@ public class SchemaUpdatePlanner {
           Collectors.toList());
       for (int i = 0; i < select.size(); i++) {
         Expression s = select.get(i);
-        Name name = specNorm.getNameMap().get(s);
+        Name name = specNorm.getFieldName(s);
         Preconditions.checkNotNull(name);
 
         Column column = new Column(name, null, 0, 0, List.of(), false,
