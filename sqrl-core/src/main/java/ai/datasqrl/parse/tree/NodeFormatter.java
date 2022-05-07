@@ -538,11 +538,11 @@ public class NodeFormatter extends AstVisitor<String, Object> {
   public String visitResolvedColumn(ResolvedColumn node, Object context) {
     return node.getColumn().getId().getCanonical();
   }
-
-  @Override
-  public String visitResolvedFunctionCall(ResolvedFunctionCall node, Object context) {
-    return visitFunctionCall(node, context);
-  }
+//
+//  @Override
+//  public String visitResolvedFunctionCall(ResolvedFunctionCall node, Object context) {
+//    return visitFunctionCall(node, context);
+//  }
 //
 //  @Override
 //  public String visitReferenceOrdinal(ReferenceOrdinal node, Object context) {

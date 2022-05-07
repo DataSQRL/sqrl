@@ -1,13 +1,9 @@
 package ai.datasqrl.plan.local.transpiler;
 
-import static ai.datasqrl.parse.util.SqrlNodeUtil.and;
-
 import ai.datasqrl.function.FunctionLookup;
 import ai.datasqrl.function.RewritingFunction;
 import ai.datasqrl.function.SqlNativeFunction;
 import ai.datasqrl.function.SqrlFunction;
-import ai.datasqrl.parse.tree.ComparisonExpression;
-import ai.datasqrl.parse.tree.ComparisonExpression.Operator;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionRewriter;
 import ai.datasqrl.parse.tree.ExpressionTreeRewriter;
@@ -17,10 +13,18 @@ import ai.datasqrl.parse.tree.Join.Type;
 import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.LongLiteral;
 import ai.datasqrl.parse.tree.QuerySpecification;
+import ai.datasqrl.parse.tree.Window;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceExpression;
+import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
+import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
+import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
+import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
+import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
+import ai.datasqrl.plan.local.transpiler.nodes.schemaRef.RelationshipRef;
+import ai.datasqrl.plan.local.transpiler.nodes.schemaRef.TableOrRelationship;
 import ai.datasqrl.plan.local.transpiler.transforms.ExtractSubQuery;
 import ai.datasqrl.plan.local.transpiler.util.CriteriaUtil;
 import ai.datasqrl.schema.Column;
@@ -28,13 +32,8 @@ import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.plan.local.transpiler.nodes.schemaRef.RelationshipRef;
-import ai.datasqrl.plan.local.transpiler.nodes.schemaRef.TableOrRelationship;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import graphql.com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +48,9 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
   private final boolean allowPaths;
   @Getter
   private List<JoinNorm> addlJoins = new ArrayList<>();
+
+  @Getter
+  private List<Expression> additionalColumns = new ArrayList<>();
 
   public ExpressionNormalizer(boolean allowPaths) {
     this.allowPaths = allowPaths;
@@ -146,7 +148,9 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
       SqlNativeFunction nativeFunction = (SqlNativeFunction) function;
       if (nativeFunction.getOp().getName().equalsIgnoreCase("COUNT") &&
           node.getArguments().size() == 0) {
-        return new ResolvedFunctionCall(new FunctionCall(NamePath.of("COUNT"), List.of(new LongLiteral("1")), false),
+        return new ResolvedFunctionCall(node.getLocation(),
+            NamePath.of("COUNT"), List.of(new LongLiteral("1")), false,
+            Optional.empty(), node,
             new SqlNativeFunction(SqlStdOperatorTable.COUNT));
       }
     }
@@ -161,22 +165,40 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
       arguments.add(treeRewriter.rewrite(arg, scope));
     }
 
-    if (function instanceof SqlNativeFunction
-        && ((SqlNativeFunction) function).getOp() instanceof SqlAggFunction
-        &&((SqlNativeFunction) function).getOp().requiresOver() &&
-        node.getOver().isEmpty()) { //TODO logic here not correct
-      throw new RuntimeException("todo over");
-//      FunctionCall functionCall = new FunctionCall(node.getLocation(), node.getNamePath(), arguments,
-//          node.isDistinct(),
-//          new AddWindowToOverFunction().createWindow(scope));
-//      scope.getScopes().put(functionCall, new FunctionCallScope(function, true));
-//      return functionCall;
+    Optional<Window> rewrittenWindow = Optional.empty();
+    if (function.requiresOver()) {
+      // unbox and validate over
+      // if context, add
+      Optional<Window> windowOpt = node.getOver();
+      Window window;
+      if (windowOpt.isEmpty()) {
+        //Add partition & order of table
+        //Partition is the current table's parent primary keys
+        Preconditions.checkState(scope.getContextTable().isPresent(), "Cannot rewrite window");
+        List<Expression> partition = scope.getContextTable().get().getParentPrimaryKeys().stream()
+            .map(c->ResolvedColumn.of(scope.getJoinScopes().get(Name.SELF_IDENTIFIER), c))
+            .collect(Collectors.toList());
+        window = new Window(partition, Optional.empty()); //todo: table ordering?
+      } else {
+        List<Expression> windowPartition = windowOpt.get().getPartitionBy().stream()
+            .map(e-> treeRewriter.rewrite(e, scope))
+            .collect(Collectors.toList());
+
+        if (scope.getContextTable().isPresent()) {
+          List<Expression> partition = scope.getContextTable().get().getParentPrimaryKeys().stream()
+              .map(c->ResolvedColumn.of(scope.getJoinScopes().get(Name.SELF_IDENTIFIER), c))
+              .collect(Collectors.toList());
+          window = new Window(Lists.newArrayList(Iterables.concat(windowPartition, partition)), Optional.empty()); //todo: table ordering?
+        } else {
+          window = new Window(windowPartition, Optional.empty()); //todo: table ordering?
+        }
+      }
+
+      rewrittenWindow = Optional.of(window);
     }
 
-    FunctionCall functionCall = new FunctionCall(node.getLocation(), node.getNamePath(), arguments,
-        node.isDistinct(), node.getOver());
-
-    return new ResolvedFunctionCall(functionCall, function);
+    return new ResolvedFunctionCall(node.getLocation(), node.getNamePath().getLast().toNamePath(), arguments,
+        node.isDistinct(), rewrittenWindow, node, function);
   }
 
   private boolean isToMany(List<Field> fields) {

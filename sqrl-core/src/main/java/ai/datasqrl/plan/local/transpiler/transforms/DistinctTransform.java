@@ -38,7 +38,6 @@ public class DistinctTransform {
               Optional.empty()))
         .collect(Collectors.toList());
 
-    //todo:
     List<Expression> partition = node.getPartitionKeys().stream()
         .map(f -> new Identifier(Optional.empty(), f.toNamePath()))
         .collect(Collectors.toList());

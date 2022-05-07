@@ -70,7 +70,6 @@ import ai.datasqrl.parse.SqlBaseParser.SingleGroupingSetContext;
 import ai.datasqrl.parse.SqlBaseParser.SingleStatementContext;
 import ai.datasqrl.parse.SqlBaseParser.SortItemContext;
 import ai.datasqrl.parse.SqlBaseParser.SubqueryContext;
-import ai.datasqrl.parse.SqlBaseParser.SubqueryExpressionContext;
 import ai.datasqrl.parse.SqlBaseParser.TableNameContext;
 import ai.datasqrl.parse.SqlBaseParser.TypeContext;
 import ai.datasqrl.parse.SqlBaseParser.TypeParameterContext;
@@ -773,10 +772,10 @@ class AstBuilder
     return new Identifier(getLocation(ctx), NamePath.parse(ctx.getText()));
   }
 
-  @Override
-  public Node visitSubqueryExpression(SubqueryExpressionContext context) {
-    return new SubqueryExpression(getLocation(context), (Query) visit(context.query()));
-  }
+//  @Override
+//  public Node visitSubqueryExpression(SubqueryExpressionContext context) {
+//    return new SubqueryExpression(getLocation(context), (Query) visit(context.query()));
+//  }
 
   @Override
   public Node visitColumnReference(ColumnReferenceContext context) {
@@ -918,10 +917,10 @@ class AstBuilder
     return new DistinctAssignment(
         Optional.of(getLocation(ctx)),
         name,
-        Name.system(visit(ctx.table).toString()),
+        ((Identifier)visit(ctx.table)).getNamePath().getLast(),
         ctx.identifier() == null ? List.of() :
             ctx.identifier().stream().skip(1)
-                .map(s -> Name.system(visit(s).toString()))
+                .map(s -> ((Identifier)visit(s)).getNamePath().getLast())
                 .collect(toList()),
         ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
             .map(s -> (SortItem) s.accept(this)).collect(toList())

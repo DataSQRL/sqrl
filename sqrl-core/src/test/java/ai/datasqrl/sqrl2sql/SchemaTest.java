@@ -85,8 +85,8 @@ class SchemaTest {
          + "IMPORT ecommerce-data.Product;\n"
          + "IMPORT ecommerce-data.Orders;\n"
          + "\n"
-//         + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
-//         + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
+         + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
+         + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
          + "\n"
          + "-- Compute useful statistics on orders\n"
          + "Orders.entries.discount := coalesce(discount, 0.0);\n"
@@ -181,16 +181,10 @@ class SchemaTest {
        * Import process flow:
        *  Script or Dataset import def will import a set of tables to be merged into the schema.
        */
-      if (n instanceof ImportDefinition) {
-        Optional<SchemaUpdateOp> op =
-            schemaUpdatePlanner.plan(schema.getSchema(), n);
-        op.ifPresent(o->schema.apply(o));
-      } else {
-        Optional<SchemaUpdateOp> op =
-            schemaUpdatePlanner.plan(schema.getSchema(), n);
-        op.ifPresent(o->
-            schema.apply(o));
-      }
+      Optional<SchemaUpdateOp> op =
+          schemaUpdatePlanner.plan(schema.getSchema(), n);
+      op.ifPresent(o->
+          schema.apply(o));
     }
     System.out.println(schema);
   }

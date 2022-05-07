@@ -175,13 +175,12 @@ public class Relationship extends Field {
   }
 
   private Expression rowNumFnc(RelationNorm table) {
-    ResolvedFunctionCall resolvedFunctionCall = new ResolvedFunctionCall(
-        new FunctionCall(Optional.empty(),
-            Name.system(SqlStdOperatorTable.ROW_NUMBER.getName()).toNamePath(),
-            List.of(),
-            false,
-            Optional.of(createWindow(table))
-        ),
+    ResolvedFunctionCall resolvedFunctionCall = new ResolvedFunctionCall(Optional.empty(),
+        Name.system(SqlStdOperatorTable.ROW_NUMBER.getName()).toNamePath(),
+        List.of(),
+        false,
+        Optional.of(createWindow(table)),
+      null,
         new SqlNativeFunction(SqlStdOperatorTable.ROW_NUMBER)
     );
     return resolvedFunctionCall;

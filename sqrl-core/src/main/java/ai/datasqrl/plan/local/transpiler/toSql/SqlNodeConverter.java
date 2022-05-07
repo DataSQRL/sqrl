@@ -276,7 +276,38 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
 
   @Override
   public SqlNode visitResolvedFunctionCall(ResolvedFunctionCall node, ConvertContext context) {
-    return visitFunctionCall(node, context);
+    String opName = node.getNamePath().getLast().getCanonical();
+    List<SqlOperator> op = opMap.get(opName.toUpperCase());
+    Preconditions.checkState(!op.isEmpty(), "Operation could not be found: %s", opName);
+
+    SqlBasicCall call = new SqlBasicCall(op.get(0), toOperand(node.getArguments(), context),
+        pos.getPos(node.getLocation()));
+
+    //Convert to OVER
+    if (op.get(0).requiresOver()) {
+      List<SqlNode> partition = node.getOver().get().getPartitionBy().stream()
+          .map(e -> e.accept(this, context)).collect(Collectors.toList());
+      SqlNodeList orderList = SqlNodeList.EMPTY;
+      if (node.getOver().get().getOrderBy().isPresent()) {
+        OrderBy order = node.getOver().get().getOrderBy().get();
+        List<SqlNode> ol = new ArrayList<>();
+        for (SortItem sortItem : order.getSortItems()) {
+          ol.add(sortItem.accept(this, context));
+        }
+        orderList = new SqlNodeList(ol, SqlParserPos.ZERO);
+      }
+      SqlNodeList partitionList = new SqlNodeList(partition, SqlParserPos.ZERO);
+
+      SqlNode[] operands = {
+          call,
+          new SqlWindow(pos.getPos(node.getLocation()), null, null, partitionList, orderList,
+              SqlLiteral.createBoolean(false, pos.getPos(node.getLocation())), null, null, null)
+      };
+
+      return new SqlBasicCall(SqlStdOperatorTable.OVER, operands, pos.getPos(node.getLocation()));
+    }
+
+    return call;
   }
 
   @Override

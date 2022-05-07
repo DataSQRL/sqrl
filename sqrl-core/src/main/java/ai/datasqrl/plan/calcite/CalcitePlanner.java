@@ -1,9 +1,6 @@
 package ai.datasqrl.plan.calcite;
 
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.plan.local.transpiler.toSql.ConvertContext;
 import ai.datasqrl.plan.nodes.SqrlRelBuilder;
-import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeConverter;
 import java.util.Properties;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionProperty;
@@ -53,13 +50,6 @@ public class CalcitePlanner {
 
   public SqrlRelBuilder createRelBuilder() {
     return new SqrlRelBuilder(null, cluster, catalogReader);
-  }
-
-  public SqlNode parse(Node node) {
-    SqlNodeConverter converter = new SqlNodeConverter();
-    SqlNode sqlNode = node.accept(converter, new ConvertContext());
-
-    return sqlNode;
   }
 
   public RelNode plan(SqlNode sqlNode, SqlValidator validator) {

@@ -120,15 +120,6 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
     //Set references for ordinals
     groupByIndices.stream().forEach(f->f.setTable(specNorm));
 
-    //Sometimes PKs need to get added back
-    List<Expression> selectExpr = selectNorm.getAsExpressions();
-    for (Expression expression : specNorm.getPrimaryKeys()) {
-      if (!parentPrimaryKeys.contains(expression) && !selectExpr.contains(expression)) {
-        addedPrimaryKeys.add(expression);
-      }
-    }
-
-
     return specNorm;
   }
 

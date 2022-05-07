@@ -145,14 +145,21 @@ public class QuerySpecNorm extends RelationNorm {
     }
     // Check rownum
     SingleColumn col;
-    if (this.from instanceof QuerySpecNorm && (col = ((QuerySpecNorm) from).getRowNumField()) != null) {
+    if (this.from instanceof QuerySpecNorm && (col = ((QuerySpecNorm) from).getRowNumField()) != null &&
+      checkRowNumFilter(col)) {
+
       ResolvedFunctionCall functionCall = (ResolvedFunctionCall)col.getExpression();
-      Window window = functionCall.getOldExpression().getOver().get();
+      Window window = functionCall.getOver().get();
       return window.getPartitionBy();
     }
 
     // else derive new PK
     return from.getPrimaryKeys();
+  }
+
+  //TODO: Fix me. Assume true for now because user's can't specify this in the script.
+  private boolean checkRowNumFilter(SingleColumn col) {
+    return true;
   }
 
   private List<Expression> unpackOrdinals(List<Expression> expressions) {
