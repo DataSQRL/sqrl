@@ -77,7 +77,7 @@ public class JoinNorm extends RelationNorm {
   @Override
   public List<Expression> getPrimaryKeys() {
     if (this.type == Type.LEFT) {
-      return List.of();
+      return List.copyOf(left.getPrimaryKeys());
     }
 
     return Lists.newArrayList(Iterables.concat(left.getPrimaryKeys(), right.getPrimaryKeys()));
