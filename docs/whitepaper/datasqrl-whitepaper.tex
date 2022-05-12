@@ -503,12 +503,12 @@ Localized scope is particularly useful in combination with relationships. Instea
 Machines.sensors := JOIN Sensors s
     ON s.machineid = _.machineid
 
-Machines.maxRecentTemp :=
+Machines.maxTemp :=
 SELECT max(temp) FROM _.sensors.readings
 WHERE time_min + 24 HOUR >= now()
 \end{lstlisting}
 
-$sensors$ defines a relationship column that relates rows in $Machines$ to the $Sensors$ that are placed on them through a natural join. The $maxRecentTemp$ column is a localized sub-query that aggregates the maximum temperature for all sensors readings per machine. The expression $\_.sensors.readings$ is a concatenated relationship expression that combines the join declarations from the two relationships.
+$sensors$ defines a relationship column that relates rows in $Machines$ to the $Sensors$ that are placed on them through a natural join. The $maxTemp$ column is a localized sub-query that aggregates the maximum temperature for all sensors readings per machine. The expression $\_.sensors.readings$ is a concatenated relationship expression that combines the join declarations from the two relationships.
 The complete view definition in SQL is shown in Figure~\ref{fig:machinesView} and demonstrates the convenience and utility of SQRL sytnax.
 
 \begin{figure*}
@@ -519,7 +519,7 @@ CREATE VIEW Machines AS SELECT machineid,
    (SELECT max(temp) FROM Sensors s
     JOIN SensorSmoothReading r ON r.sensorid = s.sensorid
     WHERE s.machineid = m.machineid AND
-          time_min + 24 HOUR >= now()) AS maxRecentTemp
+          time_min + 24 HOUR >= now()) AS maxTemp
 FROM (SELECT DISTINCT machineid FROM Sensors) m
 \end{lstlisting}
 \caption{Example of how SQRL syntax expends to standard SQL}
@@ -743,7 +743,7 @@ Machines.sensors := JOIN Sensors s
 Machines.currentTemp :=
     avg(sensors.lastReading.temp);
 
-Machines.maxRecentTemp :=
+Machines.maxTemp :=
     SELECT max(temp)
     FROM _.sensors.readings
     WHERE time_min + 24 HOUR >= now();
@@ -820,10 +820,15 @@ Note, how the syntax of SQRL allows us to express a moderately complex streaming
         \begin{lstlisting}
 scalar DateTime
 
+type TimeComparison {
+   before: DateTime
+   after: DateTime
+}
+
 type Machines {
    nodeid: ID!
    machineid: Int!
-   maxRecentTemp: Float
+   maxTemp: Float
    sensorcount: Int
    hourReading(time_hour: TimeComparison,
       limit: Int): [Machines_hourReading!]!
@@ -855,9 +860,9 @@ type Machines_minuteReading
     \begin{minipage}[r][][b]{1.0\columnwidth}
     \centering
     \begin{lstlisting}
-type TimeComparison {
-   before: DateTime,
-   after: DateTime,
+type Floatomparison {
+   larger: float
+   largerOrEq: float
 }
 
 type MonitoringGroup {
@@ -884,6 +889,10 @@ type MonitoringGroup_hourReading
 type Query {
   group(groupid: Int!): MonitoringGroup
   machine(machineid: Int!): Machines
+  machinesBySensor(sensorcount: Int!):
+                [Machines!]!
+  findMachines(sensorcount: Int,
+  maxTemp: FloatComparison): [Machines!]!
 }
     \end{lstlisting}
     \end{minipage}
@@ -893,7 +902,7 @@ type Query {
 
 The complete GraphQL API schema definition for our IoT streaming data service is shown in Figure~\ref{fig:complete_api}. It extends the previous API snippet by the Machine type and the nested sensor reading aggregates.
 
-Note, how the developer is free to customize the API to their needs by selecting the types and fields they need, providing data access paths through arguments, customizing the structure through interfaces, and defining query endpoints.
+Note, how the developer is free to customize the API to their needs by selecting the types and fields they need, providing data access paths through arguments, customizing the structure through interfaces, and defining query endpoints. For example, in addition to retrieving machines by their id, we added two additional query endpoints to the API: $machinesBySensor$ returns all machines that have a certain number of sensors and $findMachines$ finds machines that have a certain sensor count and recently exceeded the optionally provided temperature.
 
 \section{DataSQRL}
 \label{sec:datasqrl}
@@ -949,9 +958,9 @@ By default, DataSQRL uses a watermarking strategy with 5 second delay. The water
 
 \begin{figure*}[ht]
 \begin{center}
-\begin{tabular}{||c c c||}
+\begin{tabular}{|c c c|}
  \hline
- Data Type & Descriptoin & SQL \\
+ Data Type & Description & SQL \\
  \hline
  int & Integer scalar & BIGINT \\
  float & Floating point scalar & DECIMAL(9,3) \\
@@ -1087,42 +1096,84 @@ Likewise, the redefined $temperature$ column on $SensorReadings$ is a shadowing 
 
 All stream nodes in the DAG that are exported to an external data sink are marked with the data sink. In our example logical plan DAG in Figure~\ref{fig:lp_dag} this is indicated by a bold, horizontal arrow.
 
-After the logical plan DAG has been assembled, the compiler analyzes the API schema definition and attaches projections for all tables/views that are exposed in the API. As described in Section~\ref{sec:sqrl_api}, each type that is exposed in the API maps onto a table or view defined in the SQRL script. Those in turn map onto nodes in the logical plan DAG. Projections are attached to those nodes based on the fields that are visible in the API.
+After the logical plan DAG has been assembled, the compiler analyzes the API schema definition and attaches projections for all tables/views that are exposed in the API. As described in Section~\ref{sec:sqrl_api}, each type that is exposed in the API maps onto a table or view defined in the SQRL script. Those in turn map onto nodes in the logical plan DAG. We call those nodes the \emph{API nodes} since the result sets of those nodes can be queried through the API. Projections are attached to all API nodes based on the fields that are visible in the API for the respective table or view.
 
-The logical plan nodes with a thick border in Figure~\ref{fig:lp_dag} represent the types that are exposed by the GraphQL API defined in Figure~\ref{fig:complete_api}. To each of those nodes we attach a projection selecting all the fields that are visible in the API. In particular, note that the $Machines$ type in the API in Figure~\ref{fig:complete_api} does not expose the $currentTemp$ field and hence it is not part of the attached projection, which allows us to project the corresponding column out during optimization and avoid unnecessary computation.
+The API nodes for our IoT example are highlighted by a thick border in the logical plan DAG in Figure~\ref{fig:lp_dag} based on the GraphQL API schema in Figure~\ref{fig:complete_api}. To each of those nodes we attach a projection selecting all the fields that are visible in the API. In particular, note that the $Machines$ type in the API in Figure~\ref{fig:complete_api} does not expose the $currentTemp$ field and hence it is not part of the attached projection, which allows us to project the corresponding column out during optimization and avoid unnecessary computation.
 
 \subsubsection{DAG Cutting}
+\label{sec:dag_cut}
 
 In step three, the connected logical plan DAG is cut into two components: the write logical plan DAG ("write DAG" for short) and the read logical plan DAG (or "read DAG"). The write logical plan is the part of the logical plan DAG that gets computed incrementally as data is ingested and the results are materialized into the database or exported to downstream consumers through connected data sinks. The read logical plan DAG defines how to compute the table and view definitions exposed by the SQRL script from the materialized tables at query time in the database.
-Hence, the source nodes of the read logical plan DAG are a subset of the sink nodes of the write logical plan DAG. We call those overlapping nodes and the nodes that are exported the \emph{materialized nodes}. The materialized nodes form a cut of the original logical plan DAG.
+Hence, the source nodes of the read logical plan DAG are a subset of the sink nodes of the write logical plan DAG. We call those overlapping nodes the \emph{cut nodes}. The cut nodes form a cut of the original logical plan DAG and split the DAG into write and read DAGs. When cutting the DAG, the cut nodes get duplicated and are the only nodes that exist in both the write and the read DAG.
 
 Cutting the DAG is a crucial step in the compilation of an SQRL script as it determines how much of the data computation happens at write time, i.e. as data gets ingested, versus at read time which has significant implications for the overall performance and efficiency of the resulting data service.
 
-We discuss how to find the optimal cut in the DAG in Section~\ref{sec:dag_cut_opt}. Once the optimal cut has been determined, each node in the logical plan DAG is either labeled as "write" or as "read" depending on which side of the cut they get assigned to. In Figure~\ref{fig:lp_dag} the write logical plan nodes are shaded in grey while the read node is white.
+We discuss how to find the optimal cut in the DAG in Section~\ref{sec:dag_cut_opt}. Once the optimal cut has been determined, each node in the logical plan DAG is either labeled as "write" or as "read" depending on which side of the cut they get assigned to.
+
+In Figure~\ref{fig:lp_dag} the write logical plan nodes are shaded in grey while the read node is white. This means that the majority of data computation for our IoT example happens at write time when data is ingested and only the $MonitoringGroup.hourReading$ view is computed at read time when answering an API request. Section~\ref{sec:dag_cut_opt} explains the rationale for this cut and the discusses the trade-offs involved.
+
+The cut nodes in the logical plan DAG are those write nodes that are connected to read nodes. The result set for those nodes needs to be written to the database as it is incrementally computed on data ingest so that the database can compute the result sets for the read nodes on demand at query time.
+
+In our example, $MonitoringGroup\$3$ and $Machines.hourReading$ are cut nodes since those are the only nodes connected to the single read node. The records for those two incrementally computed views get written to the database so that we can compute the $MonitoringGroup.hourReading$ view at query time by joining them.
+
+Together, the set of cut nodes and the set of API nodes in the write DAG form the set of \emph{materialized nodes}. The incrementally computed records for the materialized nodes in the write DAG get written to the database. In our example, the materialized nodes are $Machines\$4$, $Machines.minuteReading$, $Machines.hourReading$, and $MonitoringGroup\$3$.
+In addition, we call all nodes that are marked for export to data sink \emph{export nodes}. In our example, the export nodes are $BigMachines$ and $HighTemp$.
 
 \subsubsection{Physical Plan Generation}
 
-..........
+In step four, the write and read logical plan DAGs are converted to physical execution plans for the Flink stream engine and the database. The physical plan is a sequence of specific instructions that a computer can execute whereas a logical plan is a graph of abstract operators. To produce a physical plan, the logical operators are mapped onto physical instructions with the help of an optimizer that takes characteristics of the execution engine and the data into account. For example, a scan operator followed by a filter would be mapped onto an index lookup instructions by a database engine if the scanned table has an index for the predicate of the filter.
+
+In other words, the logical plan is a representation of what to compute whereas a physical plan is a representation of how to execute that computation.
+
+The write DAG is mapped onto a logical data stream in Flink using Flink's table abstraction layer which Flink optimizes to a physical execution plan in the form of a Flink JobGraph. Mapping the write DAG to a Flink data stream is mostly a direct mapping since Flink supports all the logical operators in the DAG, including temporal joins and subscriptions.
+
+However, special consideration has to be given to filters that include the $now()$ function. $now()$ is used to express recency constraints and support computations that are based on recency. Semantically, $now()$ refers to query time, i.e. the point in time on the timeline when the API request is processed, and not the system time when data is pre-computed during the write stage. That means, we cannot evaluate $now()$ during the execution of the Flink JobGraph\footnote{Which is why the optimizer will attempt push $now()$ filters up and label them as "read" during the DAG cutting as discussed in Section~\ref{sec:dag_cut_opt}}.
+
+Instead, we preserve the semantics of $now()$ by converting it into a sliding window or a in the Flink data stream with a window width that is equal to the time interval in the filter predicate that references $now()$ sliding interval that has $2\%$ of the length the time window.
+
+For example, the $Machines.maxTemp$ view has the following $WHERE$ predicate referencing $now()$:
+\begin{lstlisting}[language=SQL]
+time_min + 24 HOUR >= now()
+\end{lstlisting}
+This predicate constraints the sensor readings that are aggregated in this view to be from the last 24 hours. We can rewrite this predicate to the following time interval expression:
+\begin{equation}
+time\_min \in [now() - 24h, now()]
+\end{equation}
+This gives us a 24 hour time window that advances with time, i.e. a sliding time window. By default, we advance the window every $28.8$ minutes which is two percent of 24 hours. This means we aggregate the maximum sensor temperatures for each machine in 50 time windows of 24 hours that are offset by $28.8$ minutes from each other. A sliding time window provides a good approximation for computing aggregates over recent time windows that balances memory requirements with data staleness.
 
 
-Finally, in step four, the stream and query logical plan DAGs are converted to phyiscal execution plans by the Flink stream engine and the database.
 
-The stream logical plan (stream LP for short) is mapped onto a logical data stream in Flink using Flink's table abstraction layer which Flink optimizes to a physical execution plan in the form of a Flink JobGraph. The execution plan maps the materialization nodes onto two types of sinks: those that insert or upsert records into the database and those that write records to a downstream consumer as configured by a data sink.
+Converting $now()$ predicates to sliding time windows is only supported for stream tables where the predicate constraints the timestamp of the table. Any other type of $now()$ predicate cannot be part of the write DAG.
 
-Talk about converting filter on now() to sliding windows
+Database sink nodes are attached to all materialization nodes in the write DAG, which inserts or upserts the incrementally computed records to the database. Similarly, all export nodes get an attached sink node that produces the records into the associated data sink.
 
-The query logical plan (query LP for short) is converted to SQL table and view definition that are installed in the database. The materialization nodes in the query logical plan (i.e. the source nodes) get converted into $CREATE TABLE$ statements to define the tables that the Flink data stream sink nodes insert record into. The rest of the logical plan gets incrementally converted to SQL view definitions from source to sink nodes. Those tables and views are queried by the API by mapping the script tables and views onto the physical table and view definitions through the script schema. When queried, the database produces a physical plan from the view definitions that is executed by the database to retrieve and compute the results.
+The read DAG is converted to SQL table and view definition that are installed in the database. The cut nodes in the read DAG are converted into $CREATE TABLE$ statements to define the tables that the Flink database sink nodes insert records into. The rest of the read DAG gets incrementally converted to SQL view definitions from source to sink nodes. Those tables and views are queried by the API by mapping the script tables and views onto the physical table and view definitions through the script schema. When queried, the database produces a physical plan from the view definitions that is executed by the database to retrieve and compute the results.
+
+All of the logical plan operators in the read DAG map to they corresponding SQL operators aside from temporal joins. Temporal joins are converted to partitioned window queries over the change stream of the state table.
+
+Nested tables are written into a separate table in the database. If the source table has a nested structure, DataSQRL will unnest the child table, prepend the parent primary key and write the record to a separate table. For example, the $MonitoringGroup\$3$ view has a nested $machines$ table which means that records from that view get unnested and a new record is produced for each entry in $machines$ which is written to the $MonitoringGroup_machines$ table in the database.
 
 \subsection{Optimization}
 \label{sec:optimization}
 
-There are five separate optimization processes during the compilation and execution of SQRL scripts.
+The goal of the DataSQRL optimizer is to produce the most efficient implementation of the data service defined by an SQRL script and associated API schema while guaranteeing low latency response times in the API.
 
-First, each local logical plan tree that is produced by Calcite after transpiling the SQRL statement is optimized using Calcite's Vulcano-style~\cite{} optimizer. DataSQRL feeds the statistics gathered during the data monitoring to the optimizer. DataSQRL adds additional rules to the Calcite optimizer, in particular, targeting the frequent sub-queries that get created during the transpilation process.
+The DataSQRL optimizer runs during the compilation to solve the following three optimization problems:
+\begin{enumerate}
+    \item What is the optimal cut of the logical plan DAG?
+    \item How can we identify and merge identical subgraphs in the write DAG to avoid repeat computations?
+    \item What is the optimal set of indexes to install on the tables in the database?
+\end{enumerate}
 
-\subsubsection{DAG Subgraph Merging}
+Each of these optimization problems is discussed in a subsection below.
 
-Second, in the construction of the logical plan DAG the DataSQRL optimizer identifies combinable sub-graphs which are merged to reduce the amount of computation. Two sub-graphs are combinable if they have the same source nodes and can be made identical by moving logical operators in a way that preserves equivalence. Unlike standard query optimization which typically pushes projections and predicates down toward the leaf nodes to reduce the size of intermediate result sets, combinable sub-graph identification requires pulling up projections, aggregations, and predicates to expose common sub-structures (e.g. joins and group-bys), merging those sub-stuctures in the DAG, and then combing the projections, aggregations, and predicates to push down the the covering set. Combinable sub-graph identifcation and logical plan DAG merging is described in Appendix~\ref{appendix:optimalDAG}.
+All these optimization problems are solved at compile time to improve performance and efficiency at runtime. Since SQRL scripts get compiled during the deployment process of the data service has more time to find optimal solutions than a typical database query optimizer that runs at query time.
+
+It should be noted that this section only provides detailed information on the optimization problems that are unique to DataSQRL. In addition, DataSQRL relies on the Calcite, Flink, and Postgres optimizers.
+
+After transpiling an SQRL view definition to normal SQL and running Calcite's planner to produce a local logical plan tree as described in Section~\ref{sec:compilation}, DataSQRL runs Calcite Volcano optimizer to optimize the local logical plan. The Volcano optimizer~\cite{volcano, cascade} is a common database optimizer framework that uses a rule set for transforming logical plans in combination with a cost model to find the least costly plan through dynamic programming. DataSQRL uses Calcite's optimizer to produce locally optimal plans before combining those into the logical plan DAG in order to determine the optimal join order and push down predicates. DataSQRL provides its own cost model based on the statistics gathered during data monitoring.
+
+In the generation of Flink's job graph, DataSQRL relies on Flink's optimizer convert the logical data stream produced from the write DAG to an optimal execution plan. Similarly, DataSQRL relies on Postgres' optimizer to convert the SQL queries issued by the DataSQRL API server to optimal execution plans against the tables in the database.
 
 \subsubsection{Optimal DAG Cut}
 \label{sec:dag_cut_opt}
@@ -1141,6 +1192,7 @@ The algorithm operates in two passes over the DAG and colors the nodes in the DA
  \begin{enumerate}
      \item Aggregations: number of unique group by keys multiplied by the cost of each aggregate (the cost of the aggregate is the number of bytes needed to incrementally compute the aggregate divided by 8, i.e. cost(sum) = 1, cost(avg) = 2)
      \item Windows: number of unique partitions multiplied by average window width.
+     \item $now()$: infinity cost if the column that is constraint by a $now()$ predicate is not the timestamp.
      \item Joins:
      \begin{enumerate}
          \item Temporal Join: Cardinality of the state table in the join
@@ -1153,13 +1205,110 @@ The algorithm operates in two passes over the DAG and colors the nodes in the DA
 
 Once the algorithm completes, all nodes are either labeled as read or write. The algorithm guarantees that this labeling produces a proper cut in the DAG, namely that we cannot have a read node on any path between a source and a write node and we cannot have a write node on any path between a read node and a sink.
 
+%---
+Talk about Machines.minuteReading and now the now() is actually part of the read DAG and gets converted to a TTL for timestamp columns.
+
+\subsubsection{DAG Subgraph Merging}
+
+Once the logical plan DAG has been cut, the write DAG is passed to Flink for planning and execution. However, the write DAG might contain identical subgraphs of logical plan fragments which means that the physical plan for such a DAG would compute the same results multiple times which is wasteful.
+
+For example, in the write DAG shown in Figure~\ref{fig:lp_dag} (i.e. the gray nodes) the logical plan fragments for $Machiens.minuteReading$, $Machines.hourReading$, and $Machines.maxTemp$ all have the same three-way join between $Machines\$2$, $Sensors\$2$, and $Sensors.readings$. Incrementally computing this join on data ingest is expensive and doing it three times is very wasteful. It is more efficient to compute the join once and use the result to incrementally update all three views.
+
+For this purpose, the DataSQRL optimizer identifies combinable sub-graphs which are merged to reduce the amount of computation. Two sub-graphs are combinable if they have the same source nodes and can be made identical by moving logical operators in a way that preserves equivalence. Unlike standard query optimization which typically pushes projections and predicates down toward the leaf nodes to reduce the size of intermediate result sets, combinable sub-graph identification requires pulling up projections, aggregations, and predicates to expose common sub-structures (e.g. joins and group-bys), merging those sub-stuctures in the DAG, and then combing the projections, aggregations, and predicates to push down the covering set.
+
 \subsubsection{Index Selection}
 
-Fourth, we determine the optimal set of indexes on the materialized tables that are the source nodes of the query logical plan DAG and will be created as physical tables in the database. As discussed in Section~\ref{sec:sqrl_api}, accessing a query field or relationship field that's defined in the API schema results in a query against the table that the data type of that field maps to. The arguments provided to the field create the $WHERE$ and $ORDER BY$ clauses of that query. For relationship fields, the primary key of the table is also added as a $WHERE$ condition.
+The read DAG is converted to SQL table definitions for the cut nodes and SQL view definitions for any other nodes that are queried by the API. When the DataSQRL server issues a query against one of the views defined in the database, the database determines the optimal query plan to execute the query against the cut node tables which are populated by the Flink stream. The efficiency and latency of those query plans depends on the availability of suitable indexes.
 
-For each query and relationship field, we generate all possible queries by combing the required arguments and all possible orders into query templates. A query template is a query where the conditions have placeholder values for the arguments, like a prepared query. We compile those query templates into logical plans and replace the table node in the logical plan by the corresponding node in the query logical plan DAG. We then optimize that combined logical plan to identify the optimal set of indexes by analyzing the filters that are pushed down to the source tables of the DAG.
+For example, the API schema for our IoT data service supports requests that look up machines by $machineid$. That means, accessing the query endpoint $machines(machineid: 4)$ in the API results in the SQL query:
+\begin{lstlisting}[language=SQL]
+SELECT * FROM Machines$4
+WHERE machineid = 4
+\end{lstlisting}
 
-Finally, DataSQRL passes the stream logical plan DAG to Flink which runs it's own optimization in producing the physical execution plan. Simiarly, the table and view definitions created from the query logical plan DAG are interpreted and optimized by the database during query execution.
+Without an index on the $machineid$ column for table $Machine\$4$ this query would result in a very costly table scan that iterates through all rows to find the row with $machineid = 4$.
+
+As discussed in Section~\ref{sec:sqrl_api}, accessing a query field or relationship field that's defined in the API schema results in a query against the table that the data type of that field maps to. The arguments provided to the field create the $WHERE$ and $ORDER BY$ clauses of that query. For relationship fields, the primary key of the table is also added as a $WHERE$ condition.
+
+For each query and relationship field in the API schema, we generate all possible queries by combing the arguments and all possible orders into query templates. A query template is a query where the conditions have placeholder values for the arguments, like a prepared query.
+
+For example, the $group$ query endpoint is converted to the following SQL query template using '?' as an argument placeholder:
+\begin{lstlisting}[language=SQL]
+SELECT * FROM MonitoringGroup$3
+WHERE groupid = ?
+\end{lstlisting}
+
+The $findMachines$ query endpoint is converted to:
+\begin{lstlisting}[language=SQL]
+SELECT * FROM Machines$4
+WHERE maxTemp > ? AND maxTemp >= ?
+   AND sensorcount = ?
+\end{lstlisting}
+
+The relationship $Machines.hourReading$ supports before and after time comparison on the $time\_hour$ timestamp via the $TimeComparison$ type and is converted to:
+\begin{lstlisting}[language=SQL]
+SELECT * FROM Machines_hourReading
+WHERE time_hour > ? AND time_hour < ?
+   AND _ppk_machineid = ?
+LIMIT ?
+\end{lstlisting}
+
+Here, the hidden column \emph{\_ppk\_machineid}\footnote{"ppk" stands for \emph{parent primary key}} is the primary key for the parent $Machines$ table which is automatically added to the primary key for nested tables.
+
+The $machine$ and $machinesBySensor$ query as well as the $Machines.minuteReading$, $MonitoringGroup.machines$, and $MonitoringGroup.hourReading$ relationships are converted similarly.
+
+All query templates are planned by Calcite into logical plans which are optimized. During optimization the filters are pushed down to the source nodes in the read DAG (i.e. the cut nodes). Those nodes represent the tables that are created in the database. For each table, all the filters that are pushed down to the corresponding source node in the DAG across all query templates are extracted and converted to conjunctive normal form (CNF). CNF is a normalized form for filter expressions where all top-level conditions are AND'ed together which makes it easier to analyze.
+
+For example, we have 3 queries which push down filters to the $Machines\$4$ table: $machine$, $machinesBySensor$, and $findMachines$. Those filter conditions are (in order):
+\begin{lstlisting}[language=SQL]
+1) machineid = ?
+2) sensorcount = ?
+3) maxTemp > ? AND maxTemp >= ?
+   AND sensorcount = ?
+\end{lstlisting}
+
+The conditions are already in CNF.
+
+Each condition is represented as a set such that each top-level predicate constraining a column is converted to an element that captures the column name and type of constraint (i.e. equality or range). The three filter conditions for the $Machines\$4$ table are represented by the following sets:
+\begin{lstlisting}[language=SQL]
+1) {=machineid}
+2) {=sensorcount}
+3) {<>maxTemp, =sensorcount}
+\end{lstlisting}
+
+We use the symbol $<>$ to mark a range condition and $=$ to mark an equality condition. Note, multiple range conditions on the same column result in the same set element as in the case of $maxTemp$.
+
+The sets representing filter conditions are called \emph{predicate sets}. Each set is replaced by all possible subsets based on whether the corresponding arguments are required in the API schema to match the combination of arguments that the caller of the API may provide. The first two queries only have a single required argument so the predicate sets remain the same. However, for the third query both arguments are optional which means the predicate set is replaced by its powerset\footnote{The power set of a set $S$ is the set of all subsets of $S$}:
+\begin{lstlisting}[language=SQL]
+1) {=machineid}
+2) {=sensorcount}
+3) {}, {<>maxTemp}, {=sensorcount},
+   {<>maxTemp, =sensorcount}
+\end{lstlisting}
+
+The predicate sets are now combined and empty sets removed. Each predicate set is then ordered by the selectivity of the predicate condition each element represents.
+
+
+ Predicate sets are ordered and pruned. The elements in a predicate set are ordered by selectivity of the predicate they represent.
+
+We compile those query templates into logical plans and replace the table node in the logical plan by the corresponding node in the query logical plan DAG. We then optimize that combined logical plan to identify the optimal set of indexes by analyzing the filters that are pushed down to the source tables of the DAG.
+
+\subsubsection{Hints}
+
+Developers can add annotations to the column and view definitions in their SQRL scripts in order to provide hints to the compiler and optimizer which are used to guide the compilation and act as constraints during optimization. Hints are added before a column or view definition to which they apply.
+
+DataSQRL supports the following annotation hints:
+
+\begin{tabular}{|p{0.15\columnwidth}p{0.75\columnwidth}|}
+ \hline
+ Annotation & Description \\
+ \hline
+write & Enforces that the root of the logical plan for this definition is marked as "write" for DAG cutting \\
+read & Enforces that the root of the logical plan for this definition is marked as "read" for DAG cutting \\
+window & Overrides the defaults for time windows like the advancement time for sliding windows \\
+ \hline
+\end{tabular}
+
 
 \section{Experiments}
 \label{sec:experiments}
@@ -1183,6 +1332,13 @@ Apache Calcite: A Foundational Framework for Optimized Query Processing Over Het
 Hasura for automatic API generation
 
 Why don't we use explicit tumble, sliding windows? Those are implementation concerns and put the burden to figure out how to optimize their program on the developer.
+
+\section{Future Work}
+
+better optimizers: use API statistics
+
+snapshot isolation:
+Need to propagate watermarks for each materialized table into Postgres and store them there (per partition) so that we can a) provide snapshot isolation by limiting to the max watermark across all tables involved in a query and b) determine which time buckets are closed for time buckets on stream tables that get created as views.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -1213,10 +1369,6 @@ Explain now() and translation to sliding and overlapping time windows (configura
 Explain temporal joins which are assumed by default between stream and stateful or stream tables.
     - between stream and state (via DISTINCT ON): join state at time of stream event (as determined by stream timestamp)
 
-Need to propagate watermarks for each materialized table into Postgres and store them there (per partition) so that we can a) provide snapshot isolation by limiting to the max watermark across all tables involved in a query and b) determine which time buckets are closed for time buckets on stream tables that get created as views.
-
-Treat all imported tables as stream unless they are imported with IMPORT dataset.table STATIC
-    - if we detect during analysis that a table is static, we suggest adding this automatically during compilation
 
 \begin{lstlisting}[language=SQL]
 
@@ -1351,9 +1503,6 @@ but detailed description from google doc in here
 Copy https://docs.google.com/document/d/1VjO8ZYUSkp5r8rvSGKBvhYV4M30sLoPqacjUyIkonXM/edit# in here
 \end{verbatim}
 
-
-\section{Logical Plan DAG Optimization}
-\label{appendix:optimalDAG}
 
 \section{Scrap Space}
 
