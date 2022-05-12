@@ -70,7 +70,6 @@ import ai.datasqrl.parse.SqlBaseParser.SingleGroupingSetContext;
 import ai.datasqrl.parse.SqlBaseParser.SingleStatementContext;
 import ai.datasqrl.parse.SqlBaseParser.SortItemContext;
 import ai.datasqrl.parse.SqlBaseParser.SubqueryContext;
-import ai.datasqrl.parse.SqlBaseParser.SubqueryExpressionContext;
 import ai.datasqrl.parse.SqlBaseParser.TableNameContext;
 import ai.datasqrl.parse.SqlBaseParser.TypeContext;
 import ai.datasqrl.parse.SqlBaseParser.TypeParameterContext;
@@ -100,14 +99,14 @@ import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.InListExpression;
 import ai.datasqrl.parse.tree.InPredicate;
-import ai.datasqrl.parse.tree.InlineJoin;
+import ai.datasqrl.parse.tree.JoinDeclaration;
 import ai.datasqrl.parse.tree.Intersect;
 import ai.datasqrl.parse.tree.IntervalLiteral;
 import ai.datasqrl.parse.tree.IsNotNullPredicate;
 import ai.datasqrl.parse.tree.IsNullPredicate;
 import ai.datasqrl.parse.tree.Join;
 import ai.datasqrl.parse.tree.JoinCriteria;
-import ai.datasqrl.parse.tree.JoinDeclaration;
+import ai.datasqrl.parse.tree.JoinAssignment;
 import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.Limit;
 import ai.datasqrl.parse.tree.LogicalBinaryExpression;
@@ -486,7 +485,7 @@ class AstBuilder
   @Override
   public Node visitGroupBy(GroupByContext context) {
     return new GroupBy(getLocation(context),
-        (GroupingElement) visit(context.groupingElement()));
+        (SimpleGroupBy) visit(context.groupingElement()));
   }
 
   @Override
@@ -524,15 +523,19 @@ class AstBuilder
 
   @Override
   public Node visitSelectAll(SelectAllContext context) {
-    if (context.qualifiedName() != null) {
-      return new AllColumns(getLocation(context), getNamePath(context.qualifiedName()));
-    }
 
     return new AllColumns(getLocation(context));
   }
 
   @Override
   public Node visitSelectSingle(SelectSingleContext context) {
+    Expression expression = (Expression) visit(context.expression());
+    if (expression instanceof Identifier && ((Identifier) expression).getNamePath().getLast().getCanonical()
+        .equalsIgnoreCase("*")) {
+      return new AllColumns(getLocation(context),
+          ((Identifier) expression).getNamePath().getPrefix().get());
+    }
+
     return new SingleColumn(
         getLocation(context),
         (Expression) visit(context.expression()),
@@ -599,7 +602,7 @@ class AstBuilder
       return new Join(getLocation(context), Join.Type.CROSS, left, right, Optional.empty());
     }
 
-    JoinCriteria criteria = null;
+    JoinOn criteria = null;
     right = (Relation) visit(context.rightRelation);
     if (context.joinCriteria() != null && context.joinCriteria().ON() != null) {
       criteria = new JoinOn(getLocation(context),
@@ -769,10 +772,10 @@ class AstBuilder
     return new Identifier(getLocation(ctx), NamePath.parse(ctx.getText()));
   }
 
-  @Override
-  public Node visitSubqueryExpression(SubqueryExpressionContext context) {
-    return new SubqueryExpression(getLocation(context), (Query) visit(context.query()));
-  }
+//  @Override
+//  public Node visitSubqueryExpression(SubqueryExpressionContext context) {
+//    return new SubqueryExpression(getLocation(context), (Query) visit(context.query()));
+//  }
 
   @Override
   public Node visitColumnReference(ColumnReferenceContext context) {
@@ -914,10 +917,10 @@ class AstBuilder
     return new DistinctAssignment(
         Optional.of(getLocation(ctx)),
         name,
-        Name.system(visit(ctx.table).toString()),
+        ((Identifier)visit(ctx.table)).getNamePath().getLast(),
         ctx.identifier() == null ? List.of() :
             ctx.identifier().stream().skip(1)
-                .map(s -> Name.system(visit(s).toString()))
+                .map(s -> ((Identifier)visit(s)).getNamePath().getLast())
                 .collect(toList()),
         ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
             .map(s -> (SortItem) s.accept(this)).collect(toList())
@@ -930,9 +933,9 @@ class AstBuilder
     NamePath name = getNamePath(ctx.qualifiedName());
     String query = "";
 
-    return new JoinDeclaration(Optional.of(getLocation(ctx)), name,
+    return new JoinAssignment(Optional.of(getLocation(ctx)), name,
         query,
-        (InlineJoin) visit(ctx.inlineJoin()));
+        (JoinDeclaration) visit(ctx.inlineJoin()));
   }
 
   @Override
@@ -946,7 +949,7 @@ class AstBuilder
     Relation current = new TableNode(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath(),
         Optional.empty());
     for (InlineJoinBodyContext inline : ctx.inlineJoinBody()) {
-      JoinCriteria criteria = null;
+      JoinOn criteria = null;
       if (inline.joinCriteria() != null && inline.joinCriteria().ON() != null) {
         criteria = new JoinOn(getLocation(inline),
             (Expression) visit(inline.joinCriteria().booleanExpression()));
@@ -961,7 +964,7 @@ class AstBuilder
       );
     }
 
-    return new InlineJoin(
+    return new JoinDeclaration(
         Optional.of(getLocation(ctx)),
         current,
         orderBy,

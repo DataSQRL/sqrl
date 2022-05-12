@@ -1,7 +1,8 @@
 package ai.datasqrl.plan.util;
 
 import ai.datasqrl.plan.calcite.CalcitePlanner;
-import ai.datasqrl.plan.nodes.SqrlViewTable;
+import ai.datasqrl.plan.nodes.SqrlRelationshipTable;
+import ai.datasqrl.plan.nodes.RelNodeTable;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.RelOptTable;
@@ -26,8 +27,10 @@ public class ViewExpander extends RelShuttleImpl {
             scan.getTable().getQualifiedName().get(scan.getTable().getQualifiedName().size() - 1),
             false).getTable();
 
-    if (table instanceof SqrlViewTable) {
-      return (((SqrlViewTable) table).getRelNode()).accept(this);
+    if (table instanceof SqrlRelationshipTable) {
+      return (((SqrlRelationshipTable) table).getRelNode()).accept(this);
+    } else if (table instanceof RelNodeTable) {
+      return (((RelNodeTable) table).getRelNode()).accept(this);
     } else if (!scan.getTable().getQualifiedName().get(0).endsWith("_stream")) {
       //Replace with stream data type so calcite doesn't include columns that don't exist yet.
       RelOptTable table2 =

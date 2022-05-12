@@ -1,74 +1,76 @@
 package ai.datasqrl.schema.factory;
 
+import static ai.datasqrl.parse.util.SqrlNodeUtil.and;
+
+import ai.datasqrl.parse.tree.ComparisonExpression;
+import ai.datasqrl.parse.tree.ComparisonExpression.Operator;
+import ai.datasqrl.parse.tree.Expression;
+import ai.datasqrl.parse.tree.Join.Type;
+import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
+import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
+import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
+import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
-import ai.datasqrl.schema.Relationship.Type;
-import ai.datasqrl.schema.Schema;
+import ai.datasqrl.schema.ShadowingContainer;
 import ai.datasqrl.schema.Table;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.calcite.rel.RelNode;
+import java.util.stream.Collectors;
 
 public class TableFactory {
 
   public final static AtomicInteger tableIdCounter = new AtomicInteger(0);
 
-  public void createTable(Schema schema, NamePath tableName, List<Name> fields, RelNode relNode,
-      Set<Integer> primaryKey, Set<Integer> parentPrimaryKey) {
-    NamePath namePath = tableName;
-    if (namePath.getLength() == 1) {
-      Table table = create(namePath.getFirst(), namePath, relNode,
-          fields,
-          primaryKey, parentPrimaryKey, null);
-      schema.add(table);
-    } else {
-      Table table = schema.getByName(namePath.get(0)).get();
-      Name[] names = namePath.getNames();
-      for (int i = 1; i < names.length - 1; i++) {
-        Name name = names[i];
-        Field field = table.getField(name);
-        if (names.length - 2 != i) {
-          table = ((Relationship) field).getToTable();
-        }
-      }
-      Table newTable = create(namePath.getLast(), namePath, relNode, fields,
-          primaryKey, parentPrimaryKey, table);
-      Relationship relationship = new Relationship(namePath.getLast(),
-          table, newTable, Type.CHILD, Multiplicity.MANY);
-      table.addField(relationship);
-    }
+  public Table createTable(NamePath tableName, List<Column> fields) {
+    Table table = createTableInternal(tableName, fields);
+    return table;
   }
 
-  private Table create(Name name, NamePath namePath, RelNode relNode,
-      List<Name> fields, Set<Integer> primaryKey,
-      Set<Integer> parentPrimaryKey, Table parentTable) {
-    Table table = new Table(tableIdCounter.incrementAndGet(),
-        name, namePath,
-        false, relNode, primaryKey, parentPrimaryKey);
-    for (Name n : fields) {
-      table.addField(Column.createTemp(n, null, table, 0));
-    }
+  public void assignRelationships(Name name, Table table, Table parentTable) {
+    //Built-in relationships
+    Relationship parent = new Relationship(Name.PARENT_RELATIONSHIP,
+        table, parentTable, JoinType.PARENT, Multiplicity.ONE,
+        createRelation(Type.INNER, parentTable.getPrimaryKeys(), table, parentTable),
+        Optional.empty(), Optional.empty());
+    table.getFields().add(parent);
 
-    //Assign parent primary key source on columns for equivalence testing
-    for (Integer i : parentPrimaryKey) {
-      String parentColumn = relNode.getRowType().getFieldList().get(i).getName();
-      Column thisColumn = (Column) table.getField(Name.system(parentColumn));
-      thisColumn.setParentPrimaryKey(true);
-      Column column = (Column) parentTable.getField(Name.system(parentColumn));
-      column.setSource(thisColumn);
-    }
+    Relationship child = new Relationship(name,
+        parentTable, table, JoinType.CHILD, Multiplicity.MANY,
+        createRelation(Type.INNER, parentTable.getPrimaryKeys(), parentTable, table),
+        Optional.empty(), Optional.empty());
+    parentTable.getFields().add(child);
+  }
 
-    for (Integer i : primaryKey) {
-      String parentColumn = relNode.getRowType().getFieldList().get(i).getName();
-      Column thisColumn = (Column) table.getField(Name.system(parentColumn));
-      thisColumn.setPrimaryKey(true);
-    }
+  private Table createTableInternal(NamePath tableName, List<Column> fields) {
+    return new Table(tableIdCounter.incrementAndGet(),
+        tableName, false, toShadowContainer(fields));
+  }
 
-    return table;
+  private ShadowingContainer<Field> toShadowContainer(List<Column> fields) {
+    ShadowingContainer<Field> shadowingContainer = new ShadowingContainer<>();
+    fields.forEach(shadowingContainer::add);
+    return shadowingContainer;
+  }
+
+  private RelationNorm createRelation(Type type, List<Column> keys, Table from, Table to) {
+    TableNodeNorm fromNorm = TableNodeNorm.of(from);
+    TableNodeNorm toNorm = TableNodeNorm.of(to);
+
+    List<Expression> criteria = keys.stream()
+        .map(column ->
+          new ComparisonExpression(Operator.EQUAL,
+              ResolvedColumn.of(fromNorm, column),
+              ResolvedColumn.of(toNorm, column)))
+        .collect(Collectors.toList());
+
+    return new JoinNorm(Optional.empty(), type, fromNorm, toNorm, JoinOn.on(and(criteria)));
   }
 }

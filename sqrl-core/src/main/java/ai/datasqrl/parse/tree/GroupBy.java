@@ -23,24 +23,24 @@ import java.util.Optional;
 public class GroupBy
     extends Node {
 
-  private final GroupingElement groupingElement;
+  private final SimpleGroupBy groupingElement;
 
-  public GroupBy(GroupingElement groupingElements) {
+  public GroupBy(SimpleGroupBy groupingElements) {
     this(Optional.empty(), groupingElements);
   }
 
   public GroupBy(NodeLocation location,
-      GroupingElement groupingElement) {
+      SimpleGroupBy groupingElement) {
     this(Optional.of(location), groupingElement);
   }
 
   public GroupBy(Optional<NodeLocation> location,
-      GroupingElement groupingElement) {
+      SimpleGroupBy groupingElement) {
     super(location);
     this.groupingElement = requireNonNull(groupingElement);
   }
 
-  public GroupingElement getGroupingElement() {
+  public SimpleGroupBy getGroupingElement() {
     return groupingElement;
   }
 

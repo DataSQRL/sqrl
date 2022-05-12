@@ -61,12 +61,12 @@ public class Optimizer {
 
     List<TableQuery> queries = new ArrayList<>();
     for (Table queryTable : included) {
-      if (queryTable.getRelNode() == null) {
+      if (queryTable.getHead() == null) {
         continue;
       }
-      assert queryTable.getRelNode() != null;
-      if (queryTable.getRelNode() instanceof LogicalSqrlSink) {
-        LogicalSqrlSink sink = (LogicalSqrlSink) queryTable.getRelNode();
+      assert queryTable.getHead() != null;
+      if (queryTable.getHead() instanceof LogicalSqrlSink) {
+        LogicalSqrlSink sink = (LogicalSqrlSink) queryTable.getHead();
         flinkSinks.add(new LogicalFlinkSink(sink.getCluster(), sink.getTraitSet(), sink.getInput(0),
             queryTable));
         queries.add(new TableQuery(queryTable, sink));
@@ -106,12 +106,12 @@ public class Optimizer {
     }
 
     for (Table queryTable : included) {
-      if (queryTable.getRelNode() == null) {
+      if (queryTable.getHead() == null) {
         continue;
       }
-      LogicalSqrlSink sink = new LogicalSqrlSink(queryTable.getRelNode().getCluster(),
-          RelTraitSet.createEmpty(), queryTable.getRelNode(), queryTable);
-      queryTable.setRelNode(sink);
+      LogicalSqrlSink sink = new LogicalSqrlSink(queryTable.getHead().getCluster(),
+          RelTraitSet.createEmpty(), queryTable.getHead(), queryTable);
+//      queryTable.setRelNode(sink);
     }
   }
 }

@@ -44,10 +44,6 @@ public class AliasedRelation
     this.alias = alias;
   }
 
-  public <T> T getResolved() {
-    return relation.getResolved();
-  }
-
   public Relation getRelation() {
     return relation;
   }

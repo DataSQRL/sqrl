@@ -20,6 +20,8 @@ import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.SortItem;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceOrdinal;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -51,32 +53,32 @@ public class SqrlNodeUtil {
     }
     throw new RuntimeException("not yet implemented");
   }
-
-  public static List<SingleColumn> getSelectList(Query query) {
-    QueryBody body = query.getQueryBody();
-    if (body instanceof QuerySpecification) {
-      Select select = ((QuerySpecification) body).getSelect();
-      return select.getSelectItems().stream()
-          .map(c -> (SingleColumn) c)
-          .collect(Collectors.toList());
-    }
-    throw new RuntimeException("not yet implemented");
-  }
-
-  public static OrderBy mapToOrdinal(Select select, OrderBy orderBy) {
-    List<SortItem> ordinals = orderBy.getSortItems().stream()
-        .map(s -> new SortItem(s.getLocation(), new LongLiteral(
-            Long.toString(mapToOrdinal(select, s.getSortKey()) + 1)),
-            s.getOrdering()))
-        .collect(Collectors.toList());
-
-    return new OrderBy(orderBy.getLocation(), ordinals);
-  }
-
-  public static GroupBy mapToOrdinal(Select select, GroupBy groupBy) {
-    List<Expression> ordinals = mapToOrdinal(select, groupBy.getGroupingElement().getExpressions());
-    return new GroupBy(new SimpleGroupBy(ordinals));
-  }
+//
+//  public static List<SingleColumn> getSelectList(Query query) {
+//    QueryBody body = query.getQueryBody();
+//    if (body instanceof QuerySpecification) {
+//      Select select = ((QuerySpecification) body).getSelect();
+//      return select.getSelectItems().stream()
+//          .map(c -> (SingleColumn) c)
+//          .collect(Collectors.toList());
+//    }
+//    throw new RuntimeException("not yet implemented");
+//  }
+//
+//  public static OrderBy mapToOrdinal(Select select, OrderBy orderBy) {
+//    List<SortItem> ordinals = orderBy.getSortItems().stream()
+//        .map(s -> new SortItem(s.getLocation(), new LongLiteral(
+//            Long.toString(mapToOrdinal(select, s.getSortKey()) + 1)),
+//            s.getOrdering()))
+//        .collect(Collectors.toList());
+//
+//    return new OrderBy(orderBy.getLocation(), ordinals);
+//  }
+//
+//  public static GroupBy mapToOrdinal(Select select, GroupBy groupBy) {
+//    List<Expression> ordinals = mapToOrdinal(select, groupBy.getGroupingElement().getExpressions());
+//    return new GroupBy(new SimpleGroupBy(ordinals));
+//  }
 
   //TODO: This is incorrect logic as we need to match equivalent columns
   public static int mapToOrdinal(Select select, Expression expression) {
@@ -92,38 +94,49 @@ public class SqrlNodeUtil {
             new RuntimeException("Cannot find element for ordinal: " + expression));
     return index;
   }
+//
+//  public static List<Expression> mapToOrdinal(Select select, List<Expression> expressions) {
+//    Set<Integer> grouping = new HashSet<>();
+//    for (Expression expression : expressions) {
+//      int index = mapToOrdinal(select, expression);
+//      grouping.add(index);
+//    }
+//
+//    List<Expression> ordinals = grouping.stream()
+//        .map(i -> (Expression) new LongLiteral(Long.toString(i + 1)))
+//        .collect(Collectors.toList());
+//    return ordinals;
+//  }
 
-  public static List<Expression> mapToOrdinal(Select select, List<Expression> expressions) {
-    Set<Integer> grouping = new HashSet<>();
-    for (Expression expression : expressions) {
-      int index = mapToOrdinal(select, expression);
-      grouping.add(index);
-    }
-
-    List<Expression> ordinals = grouping.stream()
-        .map(i -> (Expression) new LongLiteral(Long.toString(i + 1)))
-        .collect(Collectors.toList());
-    return ordinals;
-  }
-
-  public static Identifier ident(Name name) {
-    return ident(name.toNamePath());
-  }
-
-  public static SingleColumn singleColumn(NamePath name, Name alias) {
-    return new SingleColumn(ident(name), ident(alias));
-  }
+//  public static Identifier ident(Name name) {
+//    return ident(name.toNamePath());
+//  }
+//
+//  public static SingleColumn singleColumn(NamePath name, Name alias) {
+//    return new SingleColumn(ident(name), ident(alias));
+//  }
 
   public static Identifier ident(NamePath name) {
     return new Identifier(Optional.empty(), name);
   }
-
-  public static SelectItem selectAlias(Expression expression, NamePath alias) {
-    return new SingleColumn(expression, new Identifier(Optional.empty(), alias));
-  }
+//
+//  public static SelectItem selectAlias(Expression expression, NamePath alias) {
+//    return new SingleColumn(expression, new Identifier(Optional.empty(), alias));
+//  }
 
   public static GroupBy groupBy(List<Expression> grouping) {
     return new GroupBy(new SimpleGroupBy(grouping));
+  }
+
+  public static Optional<OrderBy> toOrderBy(List<SortItem> sortItems) {
+    if (sortItems.isEmpty()) return Optional.empty();
+    return Optional.of(new OrderBy(Optional.empty(), sortItems));
+  }
+
+  public static Optional<GroupBy> toGroupBy(Set<ReferenceOrdinal> group) {
+    if (group.isEmpty()) return Optional.empty();
+    return Optional.of(new GroupBy(Optional.empty(), new SimpleGroupBy(Optional.empty(),
+        new ArrayList<>(group))));
   }
 
   public static Query query(Select select, Relation relation, GroupBy group) {

@@ -41,6 +41,10 @@ public class StreamGraphBuilder {
     StreamStatementSet stmtSet = tEnv.createStatementSet();
     List<TableDescriptor> createdTables = new ArrayList<>();
     for (TableQuery sink : streamQueries) {
+      String name = sink.getTable().getName().getCanonical() + "_sink";
+      if (List.of(tEnv.listTables()).contains(name)) {
+        continue;
+      }
       dataStreamRegisterer.register(sink.getRelNode());
 
       RelNode relNode = InjectFlinkCluster.injectFlinkRelOptCluster(tEnv,
@@ -51,12 +55,11 @@ public class StreamGraphBuilder {
       TableDescriptor descriptor = TableDescriptor.forConnector("jdbc")
           .schema(FlinkPipelineUtils.addPrimaryKey(tbl.getSchema().toSchema(), sink.getTable()))
           .option("url", jdbcConfiguration.getDbURL().concat("/").concat(MetaData.DEFAULT_DATABASE))
-          .option("table-name", sink.getTable().name.getCanonical())
+          .option("table-name", sink.getTable().getName().getCanonical())
           .option("username", jdbcConfiguration.getUser())
           .option("password", jdbcConfiguration.getPassword())
           .build();
 
-      String name = sink.getTable().name.getCanonical() + "_sink";
       tEnv.createTable(name, descriptor);
 
       stmtSet.addInsert(name, tbl);

@@ -28,19 +28,19 @@ public class Join
   private final Type type;
   private final Relation left;
   private final Relation right;
-  private final Optional<JoinCriteria> criteria;
+  private final Optional<JoinOn> criteria;
 
-  public Join(Type type, Relation left, Relation right, Optional<JoinCriteria> criteria) {
+  public Join(Type type, Relation left, Relation right, Optional<JoinOn> criteria) {
     this(Optional.empty(), type, left, right, criteria);
   }
 
   public Join(NodeLocation location, Type type, Relation left, Relation right,
-      Optional<JoinCriteria> criteria) {
+      Optional<JoinOn> criteria) {
     this(Optional.of(location), type, left, right, criteria);
   }
 
   public Join(Optional<NodeLocation> location, Type type, Relation left, Relation right,
-      Optional<JoinCriteria> criteria) {
+      Optional<JoinOn> criteria) {
     super(location);
     requireNonNull(left, "left is null");
     requireNonNull(right, "right is null");
@@ -68,7 +68,7 @@ public class Join
     return right;
   }
 
-  public Optional<JoinCriteria> getCriteria() {
+  public Optional<JoinOn> getCriteria() {
     return criteria;
   }
 
@@ -82,7 +82,7 @@ public class Join
     ImmutableList.Builder<Node> nodes = ImmutableList.builder();
     nodes.add(left);
     nodes.add(right);
-    criteria.map(JoinCriteria::getNodes)
+    criteria.map(JoinOn::getNodes)
         .ifPresent(nodes::addAll);
     return nodes.build();
   }

@@ -1,7 +1,9 @@
 package ai.datasqrl.plan.nodes;
 
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.schema.Table;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -31,14 +33,14 @@ public class SqrlRelBuilder extends RelBuilder {
     super(context, cluster, relOptSchema);
   }
 
-  public SqrlRelBuilder scanStream(Name tableName, RelDataType toRelDataType) {
-    RelOptTable table = RelOptTableImpl.create(relOptSchema, toRelDataType,
+  public SqrlRelBuilder scanStream(Name tableName, Table table) {
+    RelOptTable relOptTable = RelOptTableImpl.create(relOptSchema, table.getRowType(),
         List.of("default_catalog", "default_database", tableName.getCanonical()), null);
     RelTraitSet traits = RelTraitSet.createEmpty();
     traits = traits.plus(Convention.NONE);
 
     RelNode scan = new LogicalTableScan(this.cluster, traits, List.of(),
-        table);
+        relOptTable);
     this.push(scan);
     return this;
   }
@@ -47,9 +49,11 @@ public class SqrlRelBuilder extends RelBuilder {
    * Project by index
    */
   public SqrlRelBuilder project(List<Integer> index) {
-    List<RexInputRef> indexes = index.stream()
-        .map(i -> RexInputRef.of(i, this.peek().getRowType()))
-        .collect(Collectors.toList());
+    List<RexInputRef> indexes = new ArrayList<>();
+    for (Integer i : index) {
+      RexInputRef of = RexInputRef.of(i, this.peek().getRowType());
+      indexes.add(of);
+    }
 
     this.project(indexes);
 
@@ -58,9 +62,9 @@ public class SqrlRelBuilder extends RelBuilder {
 
   public SqrlRelBuilder watermark(int i) {
     RexNode watermarkExpr = getRexBuilder().makeCall(SqlStdOperatorTable.MINUS,
-        List.of(RexInputRef.of(i, peek().getRowType()), getRexBuilder().makeIntervalLiteral(
-            BigDecimal.valueOf(10000),
-            new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO))));
+        List.of(RexInputRef.of(i, peek().getRowType()), getRexBuilder()
+            .makeIntervalLiteral(BigDecimal.valueOf(10000),
+              new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO))));
 
     this.push(LogicalWatermarkAssigner
         .create(cluster, build(), i, watermarkExpr));

@@ -1,66 +1,51 @@
 package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.VersionedName;
-import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.constraint.Constraint;
 import ai.datasqrl.schema.type.constraint.ConstraintHelper;
 import java.util.List;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.calcite.rel.type.RelDataTypeField;
 
 @Getter
-@Setter
 public class Column extends Field {
 
-  private final Table table;
+  @Setter
+  private Table table;
   //Identity of the column in addition to name
   public int version;
 
-  //Type definition
   public final int arrayDepth;
   public final boolean nonNull;
   public final List<Constraint> constraints;
+  private final boolean isPrimaryKey;
+  private final RelDataTypeField relDataTypeField;
+  private final Set<Attribute> attributes;
 
   //System information
-  public boolean isPrimaryKey;
-  public boolean isForeignKey;
   public boolean isInternal;
-  //Equivalence testing: Todo: move out
-  private Field source;
-  private boolean parentPrimaryKey;
 
   public Column(Name name, Table table, int version,
       int arrayDepth, List<Constraint> constraints,
-      boolean isPrimaryKey, boolean isForeignKey,
-      boolean isInternal) {
-    super(unboxName(name));
+      boolean isInternal, boolean isPrimaryKey,
+      RelDataTypeField relDataTypeField, Set<Attribute> attributes) {
+    super(name);
     this.table = table;
     this.version = version;
     this.arrayDepth = arrayDepth;
     this.constraints = constraints;
     this.isPrimaryKey = isPrimaryKey;
-    this.isForeignKey = isForeignKey;
+    this.relDataTypeField = relDataTypeField;
     this.isInternal = isInternal;
     this.nonNull = ConstraintHelper.isNonNull(constraints);
+    this.attributes = attributes;
   }
 
-  private static Name unboxName(Name name) {
-    if (name instanceof VersionedName) {
-      return ((VersionedName) name).toName();
-    } else {
-      return name;
-    }
-  }
-
-  public static Column createTemp(Name name, BasicType type, Table table, int version) {
-    return new Column(name,
-        table, version, 0, List.of(), false, false, false
-    );
-  }
-
-  public VersionedName getId() {
-    return VersionedName.of(name, version);
+  //Returns a calcite name for this column.
+  public Name getId() {
+    return Name.system(relDataTypeField.getName());
   }
 
   @Override
@@ -68,20 +53,27 @@ public class Column extends Field {
     return !isInternal;
   }
 
-  public void setSource(Field source) {
-    this.source = source;
-  }
-
-  public Field getSource() {
-    if (source == null) {
-      return this;
+  public boolean containsAttribute(Class clazz) {
+    for (Attribute attribute : attributes) {
+      if (attribute.getClass().isAssignableFrom(clazz)) {
+        return true;
+      }
     }
-    Column s = (Column) this.source;
-    return s.getSource();
+    return false;
   }
 
-  public Column copy() {
-    return new Column(this.name, this.table, this.version, this.arrayDepth, this.constraints,
-        this.isPrimaryKey, this.isForeignKey, this.isInternal);
+  @Override
+  public String toString() {
+    return "Column{" +
+        "version=" + version +
+        ", arrayDepth=" + arrayDepth +
+        ", nonNull=" + nonNull +
+        ", constraints=" + constraints +
+        ", isPrimaryKey=" + isPrimaryKey +
+        ", relDataTypeField=" + relDataTypeField +
+        ", attributes=" + attributes +
+        ", isInternal=" + isInternal +
+        ", name=" + name +
+        '}';
   }
 }

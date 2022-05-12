@@ -139,7 +139,8 @@ public class InjectFlinkCluster extends RelShuttleImpl {
 
   @Override
   public RelNode visit(LogicalSort sort) {
-    throw new RuntimeException("sort todo");
+    return sort.getInput().accept(this); //just remove sort atm
+//    throw new RuntimeException("sort todo");
   }
 
   @Override

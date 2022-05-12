@@ -15,6 +15,7 @@ package ai.datasqrl.parse.tree;
 
 import static java.util.Objects.requireNonNull;
 
+import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
@@ -34,10 +35,6 @@ public class SingleColumn
     this(Optional.empty(), expression, alias);
   }
 
-  public SingleColumn(Expression expression, Identifier alias) {
-    this(Optional.empty(), expression, Optional.of(alias));
-  }
-
   public SingleColumn(NodeLocation location, Expression expression, Optional<Identifier> alias) {
     this(Optional.of(location), expression, alias);
   }
@@ -50,6 +47,15 @@ public class SingleColumn
 
     this.expression = expression;
     this.alias = alias;
+  }
+
+  public static Optional<Identifier> alias(String name) {
+    return alias(Name.system(name));
+  }
+
+  public static Optional<Identifier> alias(Name name) {
+    if (name == null) return Optional.empty();
+    return Optional.of(new Identifier(name));
   }
 
   public Optional<Identifier> getAlias() {
