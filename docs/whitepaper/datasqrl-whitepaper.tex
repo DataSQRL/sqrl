@@ -144,9 +144,9 @@ CREATE TABLE SensorReading (
 );
 \end{lstlisting}
 
-To get a broad overview, users look at one hour temperature averages over the last week. To analyze a machine's recent performance they observe one minute averages over the last hour. In both cases, we use the median temperature over the last minute for each sensor to smooth the data and remove outliers.
+To get a broad overview, users look at one hour temperature averages over the last week, month, or other recent time period. To analyze a machine's recent performance they observe one minute averages over the last hour. In both cases, we use the median temperature over the last minute for each sensor to smooth the data and remove outliers.
 
-We can express these data transformations and aggregates as a set of 3 views over the input data\footnote{In the view definitions, \emph{avg} and \emph{max} are aggregate functions whereas \emph{minute} and \emph{hours} are time windowing functions that round a timestamp to the previous minute and hour, respectively.}:
+We can express these data transformations and aggregates as a set of 3 views over the input data\footnote{In the view definitions, \emph{avg} and \emph{max} are aggregate functions whereas \emph{minute} and \emph{hours} are time windowing functions that round a timestamp to the next minute and hour, respectively.}:
 
 \begin{lstlisting}[language=SQL]
 CREATE VIEW SensorSmoothReading AS
@@ -183,25 +183,19 @@ WHERE time_min + 1 HOUR >= now()
 
 \emph{"View"} is a database term \ref{} for a table that is defined as a query over other tables and views. A view is a derived table that transforms table data into useful result sets by joining, aggregating, and analyzing rows from existing tables. Those may be intermediate result sets, like the \emph{SensorSmoothReading} view or views that are ultimately queried by end users and applications like the \emph{MachineHourReading} and \emph{MachineMinuteReading} views.
 
-The user queries for our streaming data service can be expressed as the following query templates against the views defined above:
-
+The IoT streaming data service exposes two API endpoints that query the respective views
 \begin{lstlisting}[language=SQL]
-SELECT * FROM MachineHourReading
-WHERE machineid = ?
-    AND time_hour + 1 WEEK >= now()
+MachineHourReading(machineid: Int!,
+                   after: DateTime)
+MachineMinuteReading(machineid: Int!)
 \end{lstlisting}
-\begin{lstlisting}[language=SQL]
-SELECT * FROM MachineMinuteReading
-WHERE machineid = ?
-\end{lstlisting}
+The application calls those endpoints to fetch monitoring data for users.
 
-In both cases, we use the question mark to indicate a query parameter that is set by the user or application at runtime. In the queries above, the question mark represents the machine id of a particular machine a user wants to monitor.
+In general, a streaming data service can be defined by a set of complex views over external sources of data\footnote{Some of the sources may be static or infrequently changing data. However, to be considered a \emph{streaming} data service, at least one source of data must be a data stream or update frequently (i.e. have a change stream)} and an API that queries those views.
 
-In general, a streaming data service can be defined by a set of complex views over external sources of data\footnote{Some of the sources may be static or infrequently changing data. However, to be considered a \emph{streaming} data service, at least one source of data must be a data stream or update frequently (i.e. have a change stream)} and an associated set of query templates.
+In Section~\ref{sec:viewstore} we show that existing database technologies cannot efficiently implement such queried view sets with low latency and high throughput. We propose \emph{View Store} as a category of database systems that determine and execute optimal partial view materialization to support streaming data service use cases with low latency, high throughput querying on predefined views. Section \ref{sec:datasqrl} outlines the implementation of a view store called \emph{DataSQRL} and introduces the unique challenges of view store implementations.
 
-In Section~\ref{sec:viewstore} we show that existing database technologies cannot efficiently implement such view sets with low latency and high throughput. We propose \emph{View Store} as a category of database systems that determine and execute optimal partial view materialization to support streaming data service use cases with low latency, high throughput querying on predefined views. Section \ref{sec:datasqrl} outlines the implementation of a view store called \emph{DataSQRL} and introduces the unique challenges of view store implementations.
-
-SQL lacks some features needed to implement streaming data services. For our IoT example, we want to implement automatic alerts when machine temperatures exceed a certain threshold. SQL does not support "reacting" to changes in data. We propose an extension of SQL called \emph{SQRL} - for \emph{Structured Query and \textbf{Reaction} language} - in Section \ref{sec:sqrl} that adds the concept of \emph{subscriptions} for observing and reacting to changes in data. SQRL adds some additional convenience features to SQL that improve developer productivity for implementing streaming data services without changing the semantics of the relational algebra that SQL is based on.
+SQL lacks some features needed to implement streaming data services. For our IoT example, we want to implement automatic alerts when machine temperatures exceed a certain threshold. SQL does not support "reacting" to changes in data and does not support data streams natively. We propose an extension of SQL called \emph{SQRL} - for \emph{Structured Query and \textbf{Reaction} language} - in Section \ref{sec:sqrl} that distinguishes between streaming and stateful data and adds the concept of \emph{subscriptions} for reacting to changes in data. SQRL adds some additional convenience features like incremental view definitions and explicit relationships to SQL that improve developer productivity when implementing streaming data services without changing the semantics of the relational algebra that SQL is based on.
 
 We conclude this paper with a review of common streaming data service use cases, their implementation in SQRL, and compare the performance of DataSQRL to popular relational database systems like Postgres, MySQL as well as special-purpose databases like Neo4j and Timescale in Section \ref{sec:experiments}. Our experiments show that DataSQRL outperforms existing database engines by a factor of x-y. More significant, but also harder to measure, are the improvements in productivity that developers gain by using DataSQRL for their streaming data service implementations.
 
@@ -251,7 +245,7 @@ To meet the requirements of streaming data services, a view store has to provide
 The time it takes to process new data is called the \emph{data latency} which measures the time from new data being available until all updates triggered by that data have been processed and the results are accessible. The time it takes to answer an application request is called the \emph{query latency} which measures the time that it takes to answer a request for data and return the result. Data latency requirements for streaming data services are usually on the order of seconds whereas query latency requirements are on the order of 100 milliseconds\footnote{Required latency times differ between use cases. The numbers provided here are best practice requirements across a number of use cases}.
 The number of new data records that need to be ingested and processed across all data sources per time interval is called the \emph{data throughput}. The number of user or application requests that must be answered per time interval is called the \emph{query throughput}.
 
-A view store requires that the set of views and query templates accessed by the application are registered up front. That's the biggest difference to traditional database systems\footnote{Most databases treat views as registered queries and allow for arbitrary queries at runtime} and the key to meeting the throughput requirements. The views and query templates of a streaming data service are determined by the calling application, which means they are static when the application is deployed and only evolve during development cycles. Knowing the views, structure of the queries, and sources of data over which those are defined up front allows a view store to determine the optimal materialization strategy. Whereas traditional database systems find the fastest query plans against pre-defined data and index structures, a view store determines the optimal tradeoff between (partial) view materialization and query plans against the materialized views to meet latency requirements at low cost. We discuss optimization in more detail in Section~\ref{sec:optimization}.
+A view store requires that the set of views and the API which queries those views are defined prior to usage so that they can be compiled and optimized for efficient querying. That's the biggest difference to traditional database systems which allow arbitrary queries and optimize query execution at runtime\footnote{Most databases treat views as registered queries and allow for arbitrary queries at runtime}. However, the API of streaming data services only changes with the deployment cycle of the application and updates infrequently. And when it changes, those changes go through a deployment process. View stores take advantage of the fact that the views and queries are known in advance by investing resources up front in optimizing the data ingestion pipeline to reduce latencies at query time. Knowing the views, structure of the queries, and sources of data over which those are defined allows a view store to determine the optimal materialization strategy. Whereas traditional database systems find the fastest query plans against pre-defined data and index structures, a view store determines the optimal tradeoff between (partial) view materialization and query plans against the materialized views to meet latency requirements at low cost. We discuss optimization in more detail in Section~\ref{sec:optimization}.
 
 Lastly, view stores consume data from one or multiple sources of streaming and static data. Most database systems assume that the data is explicitly inserted into pre-defined data structures. Federated database systems support multiple sources of data but do not support low query latencies for complex views since they need to fetch the data from the source systems at query time. View stores consume external data but build their own internal data structures to provide fast query access.
 
@@ -261,62 +255,113 @@ In Section~\ref{sec:datasqrl} we outline the implementation of the DataSQRL view
 \section{SQRL}
 \label{sec:sqrl}
 
-SQRL, which stands for "Structured Query and Reaction Language", is an extension to the database query language SQL that accommodates the following needs of streaming data service implementations: 1) being able to "react" to changes in data and converting data streams to stateful data, 2) increasing developer productivity for defining sets of complex views, 3) explicitly defining relationships and local scopes, 4) natively handling hierarchical data, and 5) providing flexible, programmatic query access via API.
+SQRL, which stands for "Structured Query and Reaction Language", is an extension to the database query language SQL that accommodates the following needs of streaming data service implementations: 1) natively supporting streams of data and being able to "react" to changes in data, 2) increasing developer productivity for defining sets of complex views, 3) explicitly defining relationships and local scopes, 4) natively handling hierarchical data, and 5) providing flexible, programmatic query access via API.
 
-The motivation for SQRL is twofold. First, SQRL adds features to SQL needed for handling streaming data - in particular, reacting to changes in data and hence the "R" in "SQRL".
+The motivation for SQRL is twofold. First, SQRL adds features to SQL needed for handling streaming data - in particular, converting between streams and state to \emph{react} to changes in data and hence the "R" in "SQRL".
 Second, SQRL adds a number of developer productivity and convenience features to make the language more appealing to software developers of streaming data services.
 
-SQRL does not change the semantics of SQL and is based on the same relational algebra. SQRL can be translated to SQL as described in Appendix~\ref{appendix:sqrl2sql}, but the resulting syntax tends to be much more verbose and harder to understand.
+SQRL does not change the semantics of SQL and is based on the same relational algebra. SQRL is transpiled to SQL as described in Appendix~\ref{appendix:sqrl2sql}, but the resulting syntax tends to be much more verbose, harder to understand, and less efficient.
 
 \subsection{Reacting to Data Changes: State vs Events}
 
-A streaming data service often needs to react to changes in the data to trigger actions.
-For our IoT example, we want to be alerted when the maximum temperature on a machine exceeds $100^{\circ}$ Celsius.
-
-SQRL supports \emph{subscriptions} which create an event record whenever a particular change event is observed on an underlying view.
+A streaming data service often needs to react to changes in the data.
+For our IoT example, we want to be alerted when the maximum temperature on a machine exceeds $100^{\circ}$ Celsius and define the view $HighTemp$ to capture such instances.
 
 \begin{lstlisting}[language=SQL]
-CREATE SUBSCRIPTION HighTemp
-ON ADD AS
+CREATE VIEW HighTemp AS
 SELECT machineid, time_min, max_temp
 FROM MachineMinuteReading
 WHERE max_temp > 100
 \end{lstlisting}
 
-This example defines the \emph{HighTemp} subscription which creates an event record with \emph{machineid}, \emph{time\_min}, and \emph{max\_temp} whenever a max temperature reading in the \emph{MachineMinuteReading} view is greater than 100. We call the view definition (i.e. the part after "AS") the \emph{observed view}.
+The $HighTemp$ view is based on the $MachineMinuteReading$ view that aggregates sensor readings by machine, which in turn is based on the $SensorSmoothReading$ view that aggregates sensor readings from the $SensorReading$ table into one minute buckets. In a streaming data service, sensor readings are appended to the $SensorReading$ table every second that a sensor produces a temperature reading and we want those readings to percolate through all the intermediate views up to the $HighTemp$ view to alert us to high temperatures. In other words, $SensorReading$ is a streaming table and the sequence of views defined on top of it form a data stream.
 
-A subscription specifies which type of change against the observed view triggers an event:
+SQRL distinguishes between \emph{stream} and \emph{state} tables and views to support reacting to streams of data as well as handling relational data that represents state. Both stream and state tables/views\footnote{We use "table" and "view" interchangeably to describe the relations defined with SQRL. We use "table" for relational data that is imported and "view" for relations that are defined as queries against other relations}  are relations. \emph{Relation} is a database term for data records represented as rows with column structure. However, SQRL treats stream and state views differently for efficiency reasons.
+
+A stream table is an append-only set of records that represent events in time. Every record in a stream table has a timestamp of the time when the event represented by the record took place. We use $timestamp(t)$ to denote the timestamp column of table $t$. $SensorReading$ is a stream table with $time$ as the timestamp column, i.e. $timestamp(SensorReading) = time$.
+
+SQRL assumes that all events occur on a single, monotonically increasing timeline and that events arrive in order, i.e. that the timestamps are monotonically increasing. This is a simplifying assumption that is not true for real world systems. Section~\ref{sec:datasqrl-source} discusses how that assumption is relaxed in the DataSQRL system implementation without changing the semantics of SQRL.
+
+A state table is a set of records that represents the state of entities. Rows in state tables can change over time as the state of the represented entity changes. For example, the $MachineSensorCount$ view is a state view which keeps track of how many sensors have been placed on each machine.
+
+\begin{lstlisting}[language=SQL]
+CREATE VIEW MachineSensorCount AS
+SELECT machineid,
+       count(*) as sensorcount
+FROM Sensors
+GROUP BY machineid
+\end{lstlisting}
+
+If we place another sensor on the machine with id $1075$, the row with $machineid = 1075$ will increment the value of $sensorcount$ by 1.
+
+State tables have a natural key (i.e. a subset of columns) which uniquely identify the entity of which a particular row in the table represents its state. For $MachineSensorCount$ the natural key is $machineid$ which uniquely identifies the machine for each sensor count row in the view. We expect there to only be a single row for each $sensorid$ since a sensor can only be placed on one machine at a time. In contrast, we make no such uniqueness assumptions for streaming data.
+
+SQRL treats all input tables as stream tables by default and supports converting stream to state tables. That means, the $Sensors$ input table is a stream table. If the input data guarantees that there is only one record for each $sensorid$ there is no significant semantic difference between a stream and state table.
+However, if we want to allow moving sensors between machines, the $Sensors$ table contains the change-stream of sensor placements over time. That means, it can contain multiple records with the same $sensorid$ and different $machineid$. This changes the semantics of the $MachineSensorCount$ aggregate view because each sensor would count toward \emph{all} the machines it was ever placed on.
+Instead, we want to capture the state of each sensor and only count it toward the machine it is currently placed on.
+
+SQRL provides the \emph{DISTINCT ON} statement to convert streams to state based on a natural key:
+\begin{lstlisting}[language=SQL]
+CREATE VIEW Sensors AS
+DISTINCT Sensors ON sensorid
+    ORDER BY _source_time DESC;
+\end{lstlisting}
+This definition redefines the \emph{Sensors} table as a state view by taking the most recent change record for each \emph{sensorid} as the current state. This statement guarantees that there is only a single row per sensor id which contains the latest state or that sensor.
+The \emph{\_source\_time} column is automatically added to all input table rows and captures the time that the source system from which the record was ingested attached to the record (e.g. the timestamp of a message in a queue). For streaming data sources that don't have an explicit timestamp column the \_source\_time column provides a useful alternative. Section~\ref{sec:datasqrl-source} discusses timestamp definition and inference in more detail.
+
+The \emph{DISTINCT ON} statement converts a data stream of changes into a state view by taking the first row according to the specified order for each unique value of the natural key columns specified after \emph{ON}.
+
+By redefining the $Sensors$ table as a state table before the $MachineSensorCount$ view is defined, we ensure that the latter only counts the current sensor placement states.
+
+We can also use the familiar \emph{SELECT DISTINCT} statement to convert stream to state tables by deduplicating a data stream into unique data tuples. For example, we define a state view that contains all the machines we are monitoring as follows:
+\begin{lstlisting}[language=SQL]
+CREATE VIEW Machines AS
+SELECT DISTINCT machineid
+FROM Sensors
+\end{lstlisting}
+
+Similarly, \emph{GROUP BY} statements on stream tables produces state tables if the grouping key does not contain the timestamp column or timestamp function. The original $MachineSensorCount$ view is an example of creating a state aggregate over a stream.
+
+A \emph{GROUP BY} statement on a stream table with a timetamp column or function in the grouping produces a stream view that contains a record for each group once the time window of the group is \emph{closed}. A time window is closed when the timeline has advanced far enough that any future stream records must have a timestamp that is larger than the upper end of the time window.
+
+$SensorSmoothReading$ is an example of stream view created by a \emph{GROUP BY} on the underlying $SensorReading$ stream table because $time\_min$ is a timestamp function. A timestamp function is of the form $time\_func(timestamp)$ where $timestamp$ is the timestamp of the stream table and $time\_func$ is a monotonic function. In the case of $SensorSmoothReading$ the timestamp column is $time$ and the function is $minute$ which rounds the timestamp to the next minute and is therefore monotonic. $minute(time)$ creates time windows that are one minute wide.
+
+Suppose we are currently aggregating for the group $(sensorid = 101, time\_min = 2022-05-01 15:08)$ which means that we take the median of all temperature readings from $SensorReading$ where $sensorid = 101$ and the time falls into the time window from $15:07:01$ to $15:08:00$ on May 1st. As soon as the timeline advances to $15:08:01$ the time window for the group is closed and creates record with the median temperature computed up to this point. The monotonicity of the timeline guarantees that we won't encounter any older stream records that would need to be added to this time window.
+
+In other words, \emph{GROUP BY} stream views have an implied \emph{HAVING} clause that filters out groups where the upper end of the time window is bigger or equal to the current time on the timeline. Formally, the condition is $time\_func(timestamp) < time\_func(now())$ where $now()$ is the current time of the timeline.
+SQRL provides the special \emph{now()} function which stands for the current time as a convenient way to define sliding time windows and filter records by recency. The $MachineMinuteReading$ view is an example that uses $now()$ to restrict records to a recent time window by filtering in the \emph{WHERE} clause. $now()$ is another means for converting a stream to state by defining a "recent state". The specifics of $now()$ are discussed in more detail in Appendix~\ref{appendix:sqrl2sql}.
+
+The timestamp of a stream created by \emph{GROUP BY} is the timestamp column or function used in the grouping. The timestamp column of the $SensorSmoothReading$ is $time_min$.
+
+SQRL converts stream tables and views to state views when using \emph{DISTINCT ON}, \emph{SELECT DISTINCT}, \emph{GROUP BY} without time window, and filtering with $now()$. To convert from state to stream, SQRL provides the \emph{SUBSCRIBE TO} construct.
+
+For example, we want to alert the monitoring staff when a machine has more than 1000 sensors because such massive machines require special attention.
+
+\begin{lstlisting}[language=SQL]
+BigMachines := SUBSCRIBE ON ADD TO
+SELECT machineid, sensorcount
+FROM MachineSensorCount
+WHERE sensorcount >= 1000
+\end{lstlisting}
+
+This example defines the \emph{BigMachine} stream view as a subscription which creates an event record with \emph{machineid} and \emph{sensorcount} whenever a machine in the \emph{MachineSensorCount} view has more than 1000 sensors. We call the view definition of a subscription (i.e. the part after "TO") the \emph{observed view}.
+
+A subscription specifies which type of change against the observed view creates an event:
 \begin{enumerate}
     \item \textbf{ON ADD}: Creates an event record whenever a row is newly added to the observed view.
     \item \textbf{ON CHANGE}: Creates an event record whenever a row in the observed view changes
     \item \textbf{ON DELETE}: Creates an event records whenever a row is removed from the observed view.
 \end{enumerate}
 
-Subscriptions define additional tables in the logical model that contain rows for each observed event. Subscriptions create event streams from stateful data based on user defined criteria. That means we can build on subscriptions, export them to downstream consumers, and treat them like any other data stream.
+Observed views of subscriptions are state views from which events are created upon certain observed changes. Those events are the stream view defined by the subscription. A subscription stream view has an $\_event\_time$ column with the timestamp of the triggering event that can also be accessed via the special function $event\_time()$.
 
-When building streaming data services, we distinguish between \emph{streaming} and \emph{stateful} data. Both types of data are represented as rows with column structure but the way we interact and use the data depends on the type.
+Filters (\emph{WHERE}) and projections (\emph{SELECT}) do not affect the type of a table of view. However, join operators require special consideration.
 
-The \emph{SensorReading} input table contains streaming data. Every second that a sensor produces a temperature reading, an event record is created that is added to the table. Streaming data represents events that happen at a point in time and streaming data records usually have a timestamp column to mark that time.
+Joining two tables of the same type has the join semantics of standard relational algebra and produces a relation of the same type. When joining two stream tables $A$ and $B$, the $\_event\_time$ timestamp column contains the maximum timestamp of the two joined records unless the join has the condition $timestamp(A) >= timestamp(B)$ in which case the timestamp of table $A$ is the timestamp of the joined record.
 
-The \emph{Sensors} input table contains stateful data. Every row captures the state of a sensor entity, i.e. it's placement on a particular machine. Stateful data represents the state of an entity. Stateful data has a natural key (i.e. a subset of columns) which uniquely identifies the entity that the state is assigned to. For \emph{Sensors} the natural key is the \emph{sensorid} column. We expect there to only be a single row for each sensorid since a sensor can only be placed on one machine at a time. In contrast, we make no such uniqueness assumptions for streaming data.
+When joining a stream with a state table, the result is a state table under the standard join semantics. However, in most use cases the intended result is a stream of records that joins the stream event against the state at the time of the event.
 
-SQRL treats all input data as sources of streaming to avoid making assumptions about the data. The user determines what type of data each table represents by how the data is used. In our IoT example we are joining directly against the \emph{Sensors} table in computing the machine temperature aggregates which implies that the data is stateful, such as coming from a file that contains the unique sensor to machine mappings.
-
-We would have to treat the \emph{Sensors} table differently if it was streaming data, such as a change stream from a database system that keeps track of what machine a particular sensor is placed on. In that case, \emph{sensorid} is no longer a natural key because the data represents changes in sensor placement over time and the same $sensorid$ occurs multiple times when a sensor changes placement. To determine our temperature aggregates, we would only be interested in a sensors most recent location.
-
-SQRL provides the \emph{DISTINCT ON} statement to convert such change streams into stateful data.
-\begin{lstlisting}[language=SQL]
-CREATE VIEW Sensors AS
-DISTINCT Sensors ON sensorid
-    ORDER BY _ingest_time DESC;
-\end{lstlisting}
-This definition redefines the \emph{Sensors} table as a stateful view by taking the most recent change event for each \emph{sensorid}. The \emph{\_ingest\_time} column is automatically added to input table rows and captures the time at which the record was ingested into the system. For streaming data sources that don't have a timestamp column the \_ingest\_time column provides a useful alternative.
-
-More generally, the \emph{DISTINCT ON} statement converts a data stream of changes into stateful data by taking the first row according to the specified order for each unique value of the natural key columns specified after \emph{ON}.
-
-We can also use standard SQL statements to convert streaming to stateful data. The \emph{MachineHourReading} and \emph{MachineMinuteReading} view definitions use \emph{GROUP BY} to aggregate the streaming \emph{SensorSmoothReading} data into time buckets for each machine as stateful data with the \emph{machineid} and time bucket columns as natural key.
-
-In addition to aggregating over time windows, SQRL also makes it easy to define "most recent" aggregates. To track the highest temperature reading per machine over the last 24 hours, we can define the following view:
+For example, to track the highest temperature reading per machine over the last 24 hours, we might define the following view:
 \begin{lstlisting}[language=SQL]
 CREATE VIEW MachineRecentMaxTemp AS
 SELECT machineid,
@@ -328,17 +373,13 @@ WHERE time_min + 24 HOUR >= now()
 GROUP BY machineid
 \end{lstlisting}
 
-This defines a maximum temperature aggregate for each machine over a sliding window of time that extends over the last 24 hours. SQRL provides the special \emph{now()} function which stands for the current time as a convenient way to define sliding time windows and filter records by recency.
+However, if the join in this example is interpreted as an inner join between state view $Sensors$ and the stream view $SensorSmoothReading$ then moving a sensor $s$ from machine $m1$ to $m2$ would result in the last 24 hours of sensor readings from $s$ to be reassigned from $m1$ to $m2$. Hence, $MachineRecentMaxTemp$ would be a state view that changes over time with sensor placement. However, the intended result is for sensor readings to be assigned to the machines that the sensor was placed on at the time of the reading. Since this is a very common use case for joining state with stream data in streaming data services, SQRL introduces the \emph{TEMPORAL JOIN}.
 
-Finally, we can also use the familiar \emph{SELECT DISTINCT} statement to convert data stream to stateful data by deduplicating a data stream into unique data tuples. For example, we define a stateful view that contains all the machines we are monitoring as follows:
-\begin{lstlisting}[language=SQL]
-CREATE VIEW Machines AS
-SELECT DISTINCT machineid
-FROM Sensors
-\end{lstlisting}
+A \emph{TEMPORAL JOIN} is only defined between a stream and a state table and expands the join condition by the constraint that the records from the state table that participate in the join must have been valid at the time of the event from the stream table per the stream table's timestamp. A formal definition of temporal joins is provided in Appendix~\ref{appendix:sqrl2sql}. A temporal join preserves the timestamp of the stream table.
 
-When building streaming data services it is important to distinguish between streaming and stateful data. SQRL extends SQL by features that make it easy to seamlessly convert between the two. \emph{DISTINCT ON} and time-window aggregates using \emph{now()} and time window functions produce stateful data from data streams in addition to the standard SQL aggregation based on \emph{SELECT DISTINCT}. Subscriptions go the other way and produce event streams from stateful data.
+By default, a \emph{JOIN} between a stream and state is interpreted as a temporal join.
 
+When building streaming data services it is important to distinguish between streaming and stateful data. SQRL extends SQL by features that make it easy to seamlessly convert between the two and combine data from different types.
 
 \subsection{Developer Productivity}
 
@@ -346,8 +387,8 @@ SQL is a great language for defining queries over tabular data. For software dev
 
 Developers implement streaming data services in SQRL scripts. An SQRL script first declares the (streaming) data sources that it builds on using \emph{IMPORT} statements. Our IoT example has the following imports:
 \begin{lstlisting}[language=SQL]
-IMPORT sensordata.SensorReading
-IMPORT sensordata.Sensors
+IMPORT sensordata.SensorReading;
+IMPORT sensordata.Sensors;
 \end{lstlisting}
 
 An import statement has two parts: the name of the data source and the name of the table to import from that source. Data sources can be queues, file systems, logs, etc and are configured under a unique name. We discuss data sources in more detail in Section~\ref{sec:datasqrl-source}.
@@ -357,6 +398,17 @@ To reduce the verbosity of the SQL view definition syntax, SQRL adds the assignm
 
 \begin{lstlisting}[language=SQL]
 SensorSmoothReading := SELECT sensorid,
+    minute(time) as time_min,
+    median(temperature) as temp
+FROM SensorReading
+GROUP BY sensorid, time_min
+\end{lstlisting}
+
+SQRL automatically infers whether a view is a stream or state based on the definition. The developer can also explicitly declare the type in front of a definition to make the type explicit. Such type declaration is optional and does not change the semantics of the script. However, the compiler will return an error if the declared type does not match the inferred.
+
+\begin{lstlisting}[language=SQL]
+STREAM SensorSmoothReading :=
+SELECT sensorid,
     minute(time) as time_min,
     median(temperature) as temp
 FROM SensorReading
@@ -382,11 +434,16 @@ IMPORT sensorshared.SensorSmoothReading
 
 All public views and columns are accessible by the importing script. Views and columns with names starting with an underscore are private and not accessible outside the script.
 
-To connect subscription data streams to outside consumers, SQRL supports \emph{EXPORT} statements.
+To connect stream views to outside consumers, SQRL provides \emph{EXPORT} statements.
 \begin{lstlisting}[language=SQL]
 EXPORT HighTemp TO alerts.TempAlert
 \end{lstlisting}
-Assuming we have a data sink with the name \emph{alerts} registered, this statement exports all event records created by the subscription into the data sink under the \emph{TempAlert} namespace.
+Assuming we have a data sink with the name \emph{alerts} registered, this statement exports all event records from the $HighTemp$ stream into the data sink under the \emph{TempAlert} namespace. If the exported table/view is of type state, then the change stream is exported. In other words, $EXPORT\ State\ TO\ x$ is implicitly converted to:
+\begin{lstlisting}[language=SQL]
+EXPORT
+  (SUBSCRIBE ON CHANGE TO State)
+TO x
+\end{lstlisting}
 
 \subsection{Relationships and Local Scopes}
 
@@ -416,7 +473,7 @@ The join with \emph{s.readings} expands to the full join declaration from above 
 
 Relationship columns allow us to reuse join declarations across view definitions and column expressions as well as label a relationship explicitly to support code readability.
 
-Another feature that SQRL introduces is the concept of localized scopes to break out sub-queries and define them incrementally. To track the number of sensors that are placed on each machine, we could update the \emph{Machines} view and add a column:
+Another feature that SQRL introduces is the concept of localized scopes to break out sub-queries and define them incrementally. For example, if we wanted to add $sensorcount$ as a column on the $Machines$ view instead of tracking it in a separate view, we could update the \emph{Machines} view as follows:
 
 \begin{lstlisting}[language=SQL]
 CREATE VIEW Machines AS
@@ -451,7 +508,7 @@ SELECT max(temp) FROM _.sensors.readings
 WHERE time_min + 24 HOUR >= now()
 \end{lstlisting}
 
-$sensors$ defines a relationship column that relates rows in $Machines$ to the $Sensors$ that are placed on them through a natural join. The $maxRecentTemp$ column is a localized sub-query that aggregates the maximum temperature for all sensors readings per machine. The expression $\_.sensors.readings$ is a concatenated relationshiop expression that combines the join declarations from the two relationships.
+$sensors$ defines a relationship column that relates rows in $Machines$ to the $Sensors$ that are placed on them through a natural join. The $maxRecentTemp$ column is a localized sub-query that aggregates the maximum temperature for all sensors readings per machine. The expression $\_.sensors.readings$ is a concatenated relationship expression that combines the join declarations from the two relationships.
 The complete view definition in SQL is shown in Figure~\ref{fig:machinesView} and demonstrates the convenience and utility of SQRL sytnax.
 
 \begin{figure*}
@@ -481,7 +538,7 @@ JOIN SensorSmoothReading r
 Adding a \emph{LIMIT} to the join clause of a relationship definition constrains the multiplicity of the relationship. The \emph{ORDER BY} clause determines which related records are part of the relationship. We use the $lastReading$ relationship to compute the temperature average as follows:
 
 \begin{lstlisting}[language=SQL]
-Machine.currentTemp := SELECT avg(temp)
+Machines.currentTemp := SELECT avg(temp)
     FROM _.sensors.lastReading
 \end{lstlisting}
 
@@ -508,7 +565,7 @@ FROM (SELECT DISTINCT machineid FROM Sensors) m
 When aggregating a single column over a to-many relationship, SQRL supports a convenience syntax to specify the relationship path inside the aggregate function. This allows us to simplify the $currentTemp$ column definition to:
 
 \begin{lstlisting}[language=SQL]
-Machine.currentTemp :=
+Machines.currentTemp :=
   avg(sensors.lastReading.temp)
 \end{lstlisting}
 
@@ -535,12 +592,24 @@ For example, our IoT application allows users to define \emph{monitoring groups}
 }
 \end{lstlisting}
 
-In SQRL, this data can be imported like any other table via
+In SQRL, this data can be imported like any other table and converted to a state table:
 \begin{lstlisting}
-IMPORT iotapp.MonitorGroup
+IMPORT iotapp.MonitorGroup;
+
+MonitorGroup := DISTINCT MonitorGroup
+    ON groupid
+    ORDER BY _source_time DESC;
 \end{lstlisting}
 
-Internally, SQRL creates two tables: \emph{MonitorGroup} with columns $groupid$, $groupName$, and a relationship column $machines$ that relates to the respective rows in the nested table \emph{MonitorGroup.machines} which has the columns $machineid$, $machineName$, and a relationship column $parent$ which relates it back to the parent table row. SQRL creates a hidden primary key for the nested table that combines the primary key of the parent table with the local primary key of the nested table, e.g. the index offset in the array for our example data. The primary key of a table is either the natural key if one exists or the $\_uid$ column which is added by SQRL to contain a unique identifier for each row.
+Internally, SQRL creates two tables: \emph{MonitorGroup} with columns $groupid$, $groupName$, and a relationship column $machines$ that relates to the respective rows in the nested table \emph{MonitorGroup.machines} which has the columns $machineid$, $machineName$, and a relationship column $parent$ which relates it back to the parent table row.
+
+The relationships between the parent and child tables is based on their shared primary key. SQRL assigns a primary key to each imported table and defined view. The input stream tables are automatically assigned a universally unique identifier in the $\_uid$ column that SQRL appends to each incoming record. The primary key of state tables is the natural key. That means the columns after \emph{ON} for $DISTINCT\ ON$ statements, the columns selected in a $SELECT DISTINCT$ statement, or the grouping keys of a $GROUP BY$ clause.
+
+In our example, the primary key of $Sensors$ is $sensorid$ because $Sensors$ is defined by a $DISTINCT\ ON$ statement with $sensorid$ as the $ON$ columns. The primary key of $Machines$ is $machineid$ because $Machines$ is defined by a $SELECT\ DISTINCT$ statement with $machineid$ as the only selected column. And the primary key of $MachineSensorCount$ is $machineid$ because $machineid$ is the only key in the $GROUP BY$ clause of the view definition.
+
+When two tables or views are joined, the resulting relation is assigned the combined primary key. Filters and projections do not affect the primary key. SQRL always maintains the primary key on a table or view even if it is projected out in which case it is stored in hidden columns. SQRL maintains the primary key to trace lineage of records, ensure every record is identifiable, and generate unique ids for the API as discussed in Section~\ref{sec:sqrl_api}. $UNION (ALL)$, $INTERSECT$, and $EXCEPT$ have special semantics and primary key propagation depending on the type of tables/views involved as specified in Appendix~\ref{appendix:sqrl2sql}.
+
+In the case of hierarchical data, SQRL creates a hidden primary key for the nested table that combines the primary key of the parent table with the local primary key of the nested table, e.g. the index offset in the array for our example data.
 
 SQRL maps nested data onto separate tables related by shared primary key and uses relationship columns to explicitly relate the tables in the logical model to allow the user to navigate the hierarchical structure.
 
@@ -557,9 +626,9 @@ MonitorGroup.machines.machine :=
   ON m.machineid = _.machineid
 \end{lstlisting}
 
-SQRL automatically defines nested tables in the data model when the input data is hierarchically structured. In addition, the user can defined nested tables explicitly to group by the parent table.
+SQRL automatically defines nested tables in the data model when the input data is hierarchically structured. In addition, the user can define nested views explicitly to group by the parent table or view.
 
-For example, the following nested table computes the temperature maximums and averages by 1 hour time window for all the machines in a monitoring group:
+For example, the following nested view computes the temperature maximums and averages by 1 hour time window for all the machines in a monitoring group:
 \begin{lstlisting}[language=SQL]
 MonitorGroup.hourReading :=
 SELECT hour(time_min) as time_hour,
@@ -567,32 +636,66 @@ SELECT hour(time_min) as time_hour,
        max(temp) as max_temp
 FROM _.machines.machine.sensors.readings
 GROUP BY time_hour
+ORDER BY time_hour DESC
 \end{lstlisting}
 
-Because this query defines a nested table under the \emph{MonitorGroup} table, the grouping by parent table primary key is implied which simplifies the syntax.
+Because this query defines a nested view under the \emph{MonitorGroup} table, the grouping by parent table primary key is implied which simplifies the syntax. That means, $MonitorGroup.hourReading$ has the primary key ($groupid$,$time\_hour$) because the primary key of the parent $MonitorGroup$ table is $groupid$ (since it is defined by a $DISTINCT ON$ statement above) and the local key is the $GROUP BY$ key $time\_hour$.
 
 Relationship columns, localized query statements, and nested tables support an object-oriented thinking that many developers are familiar with and simplifies query statements. By making relationships in the data explicit, developers can directly translate their conceptual entity-relationship model into SQRL without intermediate translation.
 
 All of these features extend the syntax of SQL but not the semantics of the underlying relational algebra. Appendix~\ref{appendix:sqrl2sql} details how SQRL translates to SQL.
 
 \subsection{Programmatic Query Access via API}
+\label{sec:sqrl_api}
 
-Streaming data services are often accessed programmatically through an API from an application or developer code. SQRL automatically generates an API from the views and relationships that are defined in an SQRL script to reduce the boilerplate code developers have to write and narrow the impedence mismatch between the relational model and the object-oriented model of many development languages.
+Streaming data services are accessed programmatically through an API from an application or developer code. SQRL supports GraphQL and REST APIs. Specifically, SQRL maps API specifications in GraphQL schema (for GraphQL) or OpenAPI 3.0 (for REST) onto queries over the views defined in an SQRL script. This gives developers the flexibility to define custom APIs based on the naming convention of their SQRL script without having to specify and implement an explicit mapping.
 
-SQRL generates GraphQL and REST APIs where each table and view defined in the SQRL script gets exposed as an entity and each relationship is exposed as a traversable reference.
+The following outlines the mapping of GraphQL schema onto view queries. The mapping for OpenAPI is analogous and all the details are provided in Appendix~\ref{appendix:sqrl2graphql}.
 
-For our IoT data service, the generated API supports the following GraphQL query to retrieve information about and the last 24 hours of aggregating sensors readings for a monitoring group:
+GraphQL types are mapped onto public tables or views defined in the SQRL script with the same name. The field names for such types must match the column names and the field types must be compatible (but not necessarily identical) with the type of the column. For scalar columns, that means that the column data type must be convertible to the field data type and vice versa. For relationship columns, the field type must be a reference to the type that maps onto the related table or any interface that this type implements.
+Root queries defined in the GraphQL schema query the view that the query return type maps to. Any arguments of the query are mapped onto equality conditions for the column that has the same name as the argument, unless the data type of the argument is a range predicate (i.e. a NumberComparison or TimeComparison) in which case it is interpreted as a range constraint. In addition, $limit$, $offset$, and $order$ arguments of the query are mapped onto query limits, offsets, and order-by clauses, respectively. Such arguments can also be added to relationship fields in type definitions to constrain the query for the related table.
+
+For our example, we define the following GraphQL schema fragment:
+\begin{lstlisting}
+type MonitoringGroup {
+   nodeid: ID!
+   groupid: Int!
+   groupName: String!
+   machines: [MonitoringGroup_machines!]!
+   hourReading(limit: Int):
+      [MonitoringGroup_hourReading!]!
+}
+
+type MonitoringGroup_machines {
+  machineId: Int!
+  machineName: String!
+}
+
+type MonitoringGroup_hourReading {
+  time_hour: DateTime!
+  avg_temp: Float!
+  max_temp: Float!
+}
+
+type Query {
+  group(groupid: Int!): MonitoringGroup
+}
+\end{lstlisting}
+
+This schema defines a type for the $MonitoringGroup$ view as well as types for the two nested tables $machines$ and $hourReading$ which maps their respective columns. Note, that the relationship field $machines$ on $MonitoringGroup$ does not have any arguments and will return all machines in the group. The $hourReading$ field, on the other hand, supports a $limit$ argument to constrain how many rows from the nested view to return. Similarly, the root query $group$ has a required $groupid$ argument by which it queries $MonitoringGroup$ view.
+
+A field with an $ID$ data type returns a unique identifier for each record of the type by exposing the determined primary key of the mapped table. These identifiers can be used by the consumer to establish equivalence and retrieve records.
+
+This schema fragment supports the following GraphQL query over the views defined in our example SQRL script:
 
 \begin{lstlisting}
-monitoringGroup(filter =
-            {groupid: {eq: 501}}) {
+group(groupid : 501) {
     groupName
     machines {
         machineId
         machineName
     }
-    hourReading (limit: 24,
-      order: [{time_hour: DESC}]) {
+    hourReading (limit: 24) {
         time_hour
         avg_temp
         max_temp
@@ -600,21 +703,21 @@ monitoringGroup(filter =
 }
 \end{lstlisting}
 
-Each public view and table is exposed as a type of the same name in the GraphQL schema and a query endpoint. $monitoringGroup$ in the query above is the query endpoint for the $MonitoringGroup$ view in the SQRL script. The query endpoints return the type of the same name which has a field for every public column of the view/table that it represents.
-The filter attribute on the query endpoints allow users of the API to filter the rows returned by the endpoint. The example above uses the filter to return the monitoring group with id equal to $501$. The filter attribute allows API users to construct $WHERE$ clauses by logical conjunction of predicates on the columns defined in the view.
+This GraphQL query translates to a $SELECT$ query on the $MonitoringGroup$ view where $groupid = 501$. It also returns all the machines in that group and the last 24 hours of aggregate sensor readings by traversing through relationship fields. Developers can customize the API specification to their requirements by introducing interfaces, restricting types, adding arguments, etc. A complete description of the GraphQL schema to SQRL mapping is provided in Appendix~\ref{appendix:sqrl2graphql}.
 
-In addition, users can specify an order and limit to control the returned results. Relationships can be traversed through the GraphQL API as references and offer the same filter, order, and limit attributes as query endpoints. The example traverses through the $hourReading$ relationship to the nested table that contains the temperature aggregates. The $order$ and $limit$ attributes restrict the result set to the last 24 hours of readings. A more formal definition of the GraphQL and REST API generation is provided in Appendix~\ref{appendix:sqrl2graphql}.
-
-The generated GraphQL API allows developers to build nested \emph{SELECT} clauses over the views and tables defined in the SQRL script by traversing through relationships and specifying the columns to return. Developers can restrict the result set by applying filters, i.e. conjunctive \emph{WHERE} clauses, orders, and limits. Thereby, GraphQL queries map onto SQL queries against the defined views and tables. The API provides full programmatic access to the data transformations defined in the SQRL script. Unlike ORM layers and libraries, there is a direct mapping between the API and the underlying data which means there is no need to break out into SQL to get "full" query access.
+Note, how the entity-relationship model of SQRL maps directly onto the type-reference model of GraphQL. This gives developers flexibility in defining their APIs without having to write explicit mapping code, thereby significantly reducing the object-relational impedence mismatch~\cite{} that most ORM libraries and database abstraction layers introduce.
 
 \subsection{Complete Example}
 
-\begin{lstlisting}[language=SQL]
+\begin{figure*}[!ht]
+    \begin{minipage}[l]{1.0\columnwidth}
+        \centering
+        \begin{lstlisting}[language=SQL]
 IMPORT sensordata.*;
 IMPORT iotapp.MonitorGroup;
 
 Sensors := DISTINCT Sensors ON sensorid
-    ORDER BY _ingest_time DESC
+    ORDER BY _source_time DESC
 
 SensorReading.temperature :=
     coalesce(temperature,
@@ -624,27 +727,178 @@ Sensors.readings :=
     SELECT minute(time) as time_min,
         median(temperature) as temp
     FROM SensorReading r
-    WHERE r.sensorid = _.sensorid;
+    WHERE r.sensorid = _.sensorid
+    GROUP BY time_min;
 
+Sensors.lastReading :=
+    JOIN _.readings r
+    ORDER BY r.time_min DESC LIMIT 1;
 
+Machines := SELECT DISTINCT machineid
+    FROM Sensors;
 
-Sensors.temps :=
+Machines.sensors := JOIN Sensors s
+    ON s.machineid = _.machineid;
 
+Machines.currentTemp :=
+    avg(sensors.lastReading.temp);
 
+Machines.maxRecentTemp :=
+    SELECT max(temp)
+    FROM _.sensors.readings
+    WHERE time_min + 24 HOUR >= now();
+
+Machines.hourReading :=
+    SELECT hour(time_min) as time_hour
+        avg(temp) as avg_temp
+        max(temp) as max_temp
+    FROM _.sensors.readings
+    GROUP BY time_hour;
+    \end{lstlisting}
+    \end{minipage}
+    \hfill{}
+    \begin{minipage}[r][][b]{1.0\columnwidth}
+    \centering
+    \begin{lstlisting}[language=SQL]
+Machines.minuteReading :=
+    SELECT time_min
+        avg(temp) as avg_temp
+        max(temp) as max_temp
+    FROM _.sensors.readings
+    GROUP BY time_min
+    WHERE time_min + 1 HOUR >= now();
+
+HighTemp := SELECT parent.machineid,
+       time_min, max_temp
+FROM Machines.minuteReading
+WHERE max_temp > 100;
+
+EXPORT HighTemp TO alerts.TempAlert;
+
+Machines.sensorcount := count(sensors);
+
+BigMachines := SUBSCRIBE ON ADD TO
+SELECT machineid, sensorcount
+FROM Machines
+WHERE sensorcount >= 1000;
+
+EXPORT BigMachines TO alerts.BigMachine;
+
+MonitorGroup := DISTINCT MonitorGroup
+    ON groupid
+    ORDER BY _source_time DESC;
+
+MonitorGroup.numMachines :=
+                count(machines);
+
+MonitorGroup.machines.machine :=
+  JOIN Machines m
+  ON m.machineid = _.machineid
 
 MonitorGroup.hourReading :=
-SELECT hour(time_min) as time_hour,
-       avg(temp) as avg_temp,
-       max(temp) as max_temp
-FROM _.machines.machine.sensors.readings
+SELECT time_hour,
+       avg(avg_temp) as avg_temp,
+       max(max_temp) as max_temp
+FROM _.machines.machine.hourReading
 GROUP BY time_hour
+    \end{lstlisting}
+    \end{minipage}
+\caption{Complete SQRL script for the IoT streaming data service}
+\label{fig:complete_example}
+\end{figure*}
+
+The complete SQRL script for our running example is shown in Figure~\ref{fig:complete_example} which combines the SQRL code snippets discussed above. In the complete example, the \emph{SmoothSensorReadings} view is replaced by the nested view $Sensors.readings$. We also express the hour and minute temperature aggregates as nested views on the $Machines$ view. That allows us to refer $Machines.hourReading$ by its implied relationship with $Machines$ in the definition of $MonitorGroup.hourReading$ to simplify the relationship path in the $FROM$ clause to:
+\begin{lstlisting}[language=SQL]
+_.machines.machine.hourReading
 \end{lstlisting}
 
+Note, how the syntax of SQRL allows us to express a moderately complex streaming data service in a few lines of readily readable code without changing the core structure of SQL query and view definitions. In addition, the introduction of relationships, local scoping, and nested tables give SQRL an entity-centric conceptual model that aligns with the object-oriented thinking most developers are familiar with.
+
+\begin{figure*}[!ht]
+    \begin{minipage}[l]{1.0\columnwidth}
+        \centering
+        \begin{lstlisting}
+scalar DateTime
+
+type Machines {
+   nodeid: ID!
+   machineid: Int!
+   maxRecentTemp: Float
+   sensorcount: Int
+   hourReading(time_hour: TimeComparison,
+      limit: Int): [Machines_hourReading!]!
+   minuteReading(limit: Int):
+      [Machines_minuteReading!]!
+}
+
+interface Reading {
+  avg_temp: Float!
+  max_temp: Float!
+}
+
+type Machines_hourReading
+    implements Reading{
+  time_hour: DateTime!
+  avg_temp: Float!
+  max_temp: Float!
+}
+
+type Machines_minuteReading
+    implements Reading{
+  time_min: DateTime!
+  avg_temp: Float!
+  max_temp: Float!
+}
+    \end{lstlisting}
+    \end{minipage}
+    \hfill{}
+    \begin{minipage}[r][][b]{1.0\columnwidth}
+    \centering
+    \begin{lstlisting}
+type TimeComparison {
+   before: DateTime,
+   after: DateTime,
+}
+
+type MonitoringGroup {
+   nodeid: ID!
+   groupid: Int!
+   groupName: String!
+   machines: [MonitoringGroup_machines!]!
+   hourReading(limit: Int):
+      [MonitoringGroup_hourReading!]!
+}
+
+type MonitoringGroup_machines {
+  machineId: Int!
+  machineName: String!
+}
+
+type MonitoringGroup_hourReading
+    implements Reading{
+  time_hour: DateTime!
+  avg_temp: Float!
+  max_temp: Float!
+}
+
+type Query {
+  group(groupid: Int!): MonitoringGroup
+  machine(machineid: Int!): Machines
+}
+    \end{lstlisting}
+    \end{minipage}
+\caption{Complete GraphQL schema API for IoT example}
+\label{fig:complete_api}
+\end{figure*}
+
+The complete GraphQL API schema definition for our IoT streaming data service is shown in Figure~\ref{fig:complete_api}. It extends the previous API snippet by the Machine type and the nested sensor reading aggregates.
+
+Note, how the developer is free to customize the API to their needs by selecting the types and fields they need, providing data access paths through arguments, customizing the structure through interfaces, and defining query endpoints.
 
 \section{DataSQRL}
 \label{sec:datasqrl}
 
-DataSQRL is a view store implementation based on SQRL. The high-level architecture of DataSQRL is shown in Figure~\ref{fig:datasqrl_architecture}. The DataSQRL orchestrator provides an API for developers to compile and deploy SQRL scripts, connect data sources and sinks, and monitor the system.
+DataSQRL is a view store implementation based on SQRL. The high-level architecture of DataSQRL is shown in Figure~\ref{fig:datasqrl_architecture}. The DataSQRL orchestrator provides an API for developers to compile and deploy SQRL scripts, connect data sources and sinks, and monitor the whole system.
 
 \begin{figure}[h]
 \includegraphics[width=\linewidth]{datasqrl_architecture.pdf}
@@ -652,21 +906,260 @@ DataSQRL is a view store implementation based on SQRL. The high-level architectu
 \label{fig:datasqrl_architecture}
 \end{figure}
 
+DataSQRL uses Apache Flink~\cite{} for streaming data ingestion and view materialization. Flink consumes data from the connected data sources according to the data source configuration, processes the data, and writes the results into Postgres tables or publishes them to connected data sinks (for \emph{EXPORT} statements). The JobGraph that specifies the Flink stream execution is generated by the DataSQRL orchestrator. The orchestrator also generates views over the Postgres tables and installs them in the database. The DataSQRL API Server executes SQL queries against those views to respond to GraphQL and REST queries against the generated API based on the mapping defined by the API specification.
 
+The combination of stream engine, database, and API server is a common architecture for streaming data services. What makes DataSQRL unique is that it generates all the data models, mappings, and data transformations needed to combine these systems efficiently from the SQRL script and API schema. Section~\ref{sec:compilation} describes how DataSQRL compiles SQRL scripts. DataSQRL determines what should be materialized by the stream engine as data is ingested versus what data should be computed at query time in the database. This tradeoff has a huge impact on the performance and cost of the system. Section~\ref{sec:optimization} discusses this tradeoff in more detail and describes the DataSQRL optimizer which automatically optimizes the tradeoff.
 
-\subsection{Sources and Sinks}
+\subsection{Sources and Timestamps}
 \label{sec:datasqrl-source}
-Data Sources
 
-infering water marks or cofigure them explicitly in import
-managing retractions for stragglers within bounded window (configurable)
+The user configures data sources and sinks with DataSQRL, so that the system knows how to connect to the data contained therein and produce a suitable data source adapter for Flink.
+
+All imported tables are stream tables. The developer can define the timestamp for a stream table in the import statement explicitly through the \emph{TIMESTAMP} keyword:
+\begin{lstlisting}[language=SQL]
+IMPORT sensordata.SensorReading
+       TIMESTAMP time;
+\end{lstlisting}
+
+This import statement makes it explicit that the timestamp for the $SensorReading$ stream is the $time$ column. Timestamps can also be defined as expressions (e.g. to convert a column value to a $DateTime$ type) in which case the expression can be assigned to a new column on the table with the statement:
+
+\begin{lstlisting}[language=SQL]
+$IMPORT table TIMESTAMP
+    expression AS column_name$.
+\end{lstlisting}
+
+If a timestamp is not explicitly defined for a input stream table, DataSQRL infers it from the usage of the table. Specifically, to infer the timestamp $timestamp(T)$ for table $T$ DataSQRL uses the following rules in order:
+\begin{enumerate}
+    \item If $T$ occurs in a $DISTINCT ON$ statement, the timestamp is the $ORDER BY$ expression of the statement.
+    \item If a $DateTime$ column $c$ of $T$ is used as a $GROUP BY$ key (either directly or in a timestamp function), the timestamp column is $c$.
+    \item If a $DateTime$ column $c$ of $T$ is used in a comparison predicate with $now()$ in the $WHERE$ clause, the timestamp column is $c$.
+    \item If $T$ is joined with another stream table $S$ with a join condition that is an inequality predicate involving columns $T.c$ and $S.d$, then $c$ and $d$ are the timestamp columns of $T$ and $S$, respetively.
+    \item If $T$ is joined in a temporal join with a state table, apply the rules to the resulting stream table restricted to the columns from $T$.
+\end{enumerate}
+
+If none of the rules apply, the timestamp is defined as the $\_ingest\_time$ column which is a column that DataSQRL adds to all records to mark the time the record was ingested by the system.
+
+For example, we infer that the timestamps for the imported $Sensors$ and $MonitoringGroup$ tables are $\_source\_time$ because both are redefined as views using $DISTINCT ON$ with $\_source\_time$ as the order. We infer that the timestamp for SensorReading is $time$ because that column is used with the timestamp function $minute$ as a $GROUP BY$ key in defining the nested $Sensors.readings$ table.
+
+In the definition of SQRL we assumed a monotonically increasing timeline, meaning, we assume streamed events arrive in order. That's not realistic for real world data systems where events arrive out of order for a variety of reasons. DataSQRL relaxes the assumption by assuming a "mostly" monotonic timeline which means that events can arrive out of order but with a bounded delay. That bounded delay is represented by a \emph{watermark}. Watermarks are send in regular intervals to indicate that all records with a timestamp smaller or equal to the watermark have been processed. For instance, when the system receives a watermark with timestamp $15:08:00$ we know that all records up to that point in time have already been received and we can close any open time windows that end before or on $15:08:00$. In other words, we make no assumption about the order of event records, we only assume that the watermarks are monotonic and that we don't receive records older than the last watermark\footnote{Sometimes, the watermark assumption gets violated because of system failures or other unusual events and records arrive later than a watermark. DataSQRL accommodates such stragglers by keeping closed time windows around until a configurable grace period expires.}
+
+By default, DataSQRL uses a watermarking strategy with 5 second delay. The watermarking strategy can be configured for each data source.
+
+\subsection{Schema Inference and Type System}
+
+\begin{figure*}[ht]
+\begin{center}
+\begin{tabular}{||c c c||}
+ \hline
+ Data Type & Descriptoin & SQL \\
+ \hline
+ int & Integer scalar & BIGINT \\
+ float & Floating point scalar & DECIMAL(9,3) \\
+ string & Variable length string & VARCHAR(1024) \\
+ boolean & true or false & BOOLEAN \\
+ dateTime & Point in time & ? \\
+ uuid & Unique universal identifier & VARCHAR(16) \\
+ \hline
+\end{tabular}
+\end{center}
+\caption{DataSQRL type mapping}
+\label{tbl:datatypes}
+\end{figure*}
+
+For all views and columns that are defined in the SQRL script, DataSQRL infers the data type and any constraints from the source tables in the definition query using standard SQL semantics. The developer can provide a separate schema file that defines the schema of the source tables or DataSQRL infers the schema based on statistics that the system collects from the source data in those tables.
+
+For example, consider the column definition for $SensorReading.temperature$ which is defined as the $coalesce$ function applied to the $temperature$ column on the $SensorReading$ source table and an arithmetic expression involving the $temperature\_f$ column. The schema for the source table $SensorReading$ specifies that both columns have float data type and the compiler can infer that the data type of the redefined $temperature$ column must be float as well by analyzing the expression.
+
+DataSQRL uses a simplified type system with only a few scalar types: int, float, string, boolean, dateTime, and uuid. A description of all scalar data types and how they map to SQL types is shown in Figure~\ref{tbl:datatypes}. DataSQRL also supports arrays of scalar values. DataSQRL does not support maps because nested data is interpreted as nested tables.
+
+The developer can define the schema for the source tables in a YAML configuration file and pass it to the compiler as an additional argument. However, defining the schema explicitly is optional and not necessary in most cases because DataSQRL can infer the schema from the statistics it gathers on the source data.
+
+When a data source is connected to DataSQRL, the system starts a monitoring job that analyzes the records from the tables registered with the data source. For each record, DataSQRL keeps statistics on the structure of the record (i.e. how often each column occurred at what level in the nested structure), the data type of the value associated with the column, and the distribution of the values.
+
+These statistics are used to infer the schema of the source table and to optimize the exeuction of a DataSQRL script as discussed in Section~\ref{sec:optimization}.
+
+DataSQRL infers the schema by using the statistics to compile a super-structure that can accommodate all observed records. For instance, the stream of $SensorReading$ contains records with the structure $(sensorid, temperature, time)$ and $(sensorid, temperature\_f, time)$ which DataSQRL combines into the super-structure $(sensorid, temperature, temperature\_f, time)$. Similarly, uses the statistics on the data type to determine the data type that can accommodate all the observed values, coercing types to more general types where necessary. For instance, the $SensorReading$ records have temperature columns with integer and floating point values. Hence, DataSQRL infers $float$ as the data type and coerces integer values to float in the input data.
+
+This makes DataSQRL a schema-flexible system which infers the schema at the time when a SQRL script is compiled based on the statistics gathered from the observed data up to that point.
 
 \subsection{Compilation}
 \label{sec:compilation}
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{compilation.pdf}
+\caption{Diagram of SQRL compilation process}
+\label{fig:datasqrl_compilation}
+\end{figure}
+
+The DataSQRL script compilation process is visualized in Figure~\ref{fig:datasqrl_compilation} and executes in 4 steps.
+
+\subsubsection{Script Parsing}
+
+The first step parses the SQRL script and compiles a script schema that contains all the tables and views defined in the script with associated logical plans.
+
+A logical plan is an intermediate representation of an SQL query that is easier to analyze and optimize then the abstract syntax tree that is parsed out of an SQL statement. Logical plans represents a query statement in a way that is better for machine handling whereas SQL is better for human readability. A logical plan consists of a set of operator nodes that are connected into a tree or graph. Figure~\ref{fig:local_lp} shows an example of a logical plan tree as discussed below.
+
+The SQRL compiler first parses all import statements to register the source tables that are referenced in subsequent column and view definitions. Import statements are resolved against the referenced data source to identify the source table. The schema of the source table is either extracted from a user provided schema file as an argument to the compiler or produced from the collected statistics of the source table. If the user provided schema is incompatible with the gathered statistics, an error is produced. The resulting table and schema are added to the script schema. The logical plan for the source table is a single table-scan node with information on how to read the associated data stream.
+
+If the source table has a nested structure, multiple tables and their parent-child relationships are added to the script schema. The logical plans contain information on how to unnest the data into flat tables.
+
+For example, when parsing the following import
+\begin{lstlisting}[language=SQL]
+IMPORT iotapp.MonitorGroup;
+\end{lstlisting}
+the compiler looks up the $MonitorGroup$ source table in the connected $iotapp$ data source. The schema for this nested table is created from the gathered statistics. The compiler then registers the $MonitorGroup$ and $MonitorGroup.machines$ tables in the script schema with an associated scan node against the source table for the logical plan.
+
+View and columns definitions are transpiled into regular SQL. The abstract syntax tree (AST)\footnote{An abstract syntax tree is a parsed representation of an SQL query that converts the query string into a token tree so that the statement can be analyzed.} for the definition statement or expression is converted to an intermediate representation that makes it easy to replace relationships by their join definitions, expand relationship paths in expressions to sub-queries, convert nested query statements, make accommodations for primary key determination, propagate timestamps, and convert all other convenience features of SQRL to SQL. The intermediate representation then gets converted to an SQL AST which is analyzed and planned by Calcite~\cite{} to produce a logical plan and schema for the view. The schema and logical plan are added to the script schema.
+
+For example, the transpilation process converts the $Sensors.readings$ nested view definition to the following SQL equivalent:
+
+\begin{lstlisting}[language=SQL]
+CREATE VIEW Sensors.readings AS
+SELECT s.sensorid as sensorid,
+       minute(r.time) as time_min,
+       median(r.temperature) as temp
+FROM Sensors s
+     TEMPORAL JOIN SensorReading r
+WHERE s.sensorid = r.sensorid
+GROUP BY sensorid, time_min
+\end{lstlisting}
+
+The SQL AST for this statement is passed to Calcite for analysis to extract the schema of the resulting view (i.e. the three columns $sensorid$, $time_min$, and $temp$ with associated data types int, dateTime, and float) which is added to the script schema. The Calcite planner then produces a logical plan for this SQL statement as shown in Figure~\ref{fig:local_lp}.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{local_lp.pdf}
+\caption{Logical Plan for statement}
+\label{fig:local_lp}
+\end{figure}
+
+The logical plan consists of scan, filter, projection, join, aggregate, window, sort, and union/except/intersect operators which are the basic operators of relational algebra. The tree structure of the logical plan prescribes the order in which the operators are applied to the input tuples.
+
+DataSQRL uses a special join type for temporal joins which is not converted to standard SQL for efficiency reasons.
+
+SQL does not support subscriptions natively. DataSQRL adds a dedicated "subscription" operator to the logical plan to indicate when to produce a stream from the changes against the observed view. The observed view is transpiled and converted into a logical plan as outlined above and the subscription operator is added as the new root to that logical plan tree.
+
+The compiler converts relationships to their join definition when a relationship is used in a view definition's $FROM$ clause or expression.
+When a relationship is first defined, the compiler analyzes the relationship to check validity, converts it to an intermediate representation, and registers that relationship in the script schema so it can be resolved in subsequent references.
+
+DataSQRL uses Calcite to analyze relationship definition by converted the definition to a SQL with select-all and the table on which the relationship is defined, called the \emph{start table}, in the $FROM$ clause. For example, the $Machines.sensors$ relationship is converted to the following query for analysis:
+\begin{lstlisting}[language=SQL]
+SELECT * FROM Machines _
+JOIN Sensors s ON
+s.machineid = _.machineid
+\end{lstlisting}
+DataSQRL traverses the AST for this query to extract the \emph{end table} of the relationship (i.e. $Sensors$) and convert the join path and condition into an intermediate representation that can be instantiated in a view definition where the relationship is used.
+
+For example, the relationship path $_.sensors.readings$ in the $FROM$ clause of the $Machines.hourReading$ view definition gets expanded by instantiating the two relationships to:
+\begin{lstlisting}[language=SQL]
+FROM Machines m JOIN Sensors s
+ON s.machineid = m.machineid
+JOIN Sensors.readings r
+ON r.sensorid = s.sensorid
+\end{lstlisting}
+
+Appendix~\ref{appendix:sqrl2sql} describes the transpilation steps to convert an SQRL statement to a semantically equivalent SQL statement in more detail and specifically the instantiation of relationships.
+
+For export statements, the compiler adds a mapping to the script schema that keeps track of which subscription nodes in the logical plans are exported to the given data sink.
+
+At the end of the first step, the compiler has produced a schema and logical plan for all tables and views defined in the script.
+
+\subsubsection{DAG Construction}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=1.0\textwidth]{logical_dag.pdf}
+\caption{Logical Plan DAG for IoT Example}
+\label{fig:lp_dag}
+\end{figure*}
+
+In the second step, those logical plan trees are stitched together into one logical plan directed-acyclic graph (DAG) by resolving table references of logical plan tree leafs against the schema. Specifically, for each scan node at the leaf of a logical plan tree, the compiler looks up the table that is being scanned in the schema and replaces the leaf node with the root of the logical plan tree for that table. Essentially, this process stacks logical plan trees on top of each other. The result is a DAG and not a tree because a single table can be referenced by multiple scan leaf nodes.
+
+The result is one big connected logical plan that defines how to transform the source tables to produce all the views defined in the script. Each table in the script schema points to a node in the logical plan DAG that represents the computed table.
+
+Figure~\ref{fig:lp_dag} shows the logical plan DAG for our IoT example. Instead of showing the full logical plan DAG, the figure shows one node per logical plan tree in order to keep the result readable. Each node in this DAG visualization includes a short description underneath the name to describe the logical plan tree that the node represents. For instance, the $Sensors.readings$ node in Figure~\ref{fig:lp_dag} represents the entire logical plan tree shown in Figure~\ref{fig:local_lp} with scan nodes for $Sensors$ and $SensorReadings$ replaced by the nodes $Sensors\$2$ and $SensorReadings\$2$ in the DAG, respectively.
+
+During the initial script parsing, the compiler keeps track of views and columns that are redefined and overwritten in the script. We call those views and columns \emph{shadowed} and the compiler makes sure that references to such tables and columns are resolved correctly. The shadowing columns and views get an incrementing name suffix to keep the name lineage while guaranteeing unique names.
+
+In our example, we redefine $Sensors$ as a $DISTINCT ON$ view. This new view definition now shadows the original $Sensors$ source table that was imported. That original table is now shadowed. This means that any future references to $Sensors$ resolve to the redefined view and not the original source table which is no longer referenceable but is still part of the logical plan DAG. In the logical plan DAG shown in Figure~\ref{fig:lp_dag} the shadowing $Sensors$ view is named $Sensors\$2$ and the compiler makes sure that any subsequent references to $Sensors$ in the script resolve to $Sensors\$2$ in the DAG.
+Likewise, the redefined $temperature$ column on $SensorReadings$ is a shadowing column and called $temperature\$2$ in the logical plan.
+
+All stream nodes in the DAG that are exported to an external data sink are marked with the data sink. In our example logical plan DAG in Figure~\ref{fig:lp_dag} this is indicated by a bold, horizontal arrow.
+
+After the logical plan DAG has been assembled, the compiler analyzes the API schema definition and attaches projections for all tables/views that are exposed in the API. As described in Section~\ref{sec:sqrl_api}, each type that is exposed in the API maps onto a table or view defined in the SQRL script. Those in turn map onto nodes in the logical plan DAG. Projections are attached to those nodes based on the fields that are visible in the API.
+
+The logical plan nodes with a thick border in Figure~\ref{fig:lp_dag} represent the types that are exposed by the GraphQL API defined in Figure~\ref{fig:complete_api}. To each of those nodes we attach a projection selecting all the fields that are visible in the API. In particular, note that the $Machines$ type in the API in Figure~\ref{fig:complete_api} does not expose the $currentTemp$ field and hence it is not part of the attached projection, which allows us to project the corresponding column out during optimization and avoid unnecessary computation.
+
+\subsubsection{DAG Cutting}
+
+In step three, the connected logical plan DAG is cut into two components: the write logical plan DAG ("write DAG" for short) and the read logical plan DAG (or "read DAG"). The write logical plan is the part of the logical plan DAG that gets computed incrementally as data is ingested and the results are materialized into the database or exported to downstream consumers through connected data sinks. The read logical plan DAG defines how to compute the table and view definitions exposed by the SQRL script from the materialized tables at query time in the database.
+Hence, the source nodes of the read logical plan DAG are a subset of the sink nodes of the write logical plan DAG. We call those overlapping nodes and the nodes that are exported the \emph{materialized nodes}. The materialized nodes form a cut of the original logical plan DAG.
+
+Cutting the DAG is a crucial step in the compilation of an SQRL script as it determines how much of the data computation happens at write time, i.e. as data gets ingested, versus at read time which has significant implications for the overall performance and efficiency of the resulting data service.
+
+We discuss how to find the optimal cut in the DAG in Section~\ref{sec:dag_cut_opt}. Once the optimal cut has been determined, each node in the logical plan DAG is either labeled as "write" or as "read" depending on which side of the cut they get assigned to. In Figure~\ref{fig:lp_dag} the write logical plan nodes are shaded in grey while the read node is white.
+
+\subsubsection{Physical Plan Generation}
+
+..........
+
+
+Finally, in step four, the stream and query logical plan DAGs are converted to phyiscal execution plans by the Flink stream engine and the database.
+
+The stream logical plan (stream LP for short) is mapped onto a logical data stream in Flink using Flink's table abstraction layer which Flink optimizes to a physical execution plan in the form of a Flink JobGraph. The execution plan maps the materialization nodes onto two types of sinks: those that insert or upsert records into the database and those that write records to a downstream consumer as configured by a data sink.
+
+Talk about converting filter on now() to sliding windows
+
+The query logical plan (query LP for short) is converted to SQL table and view definition that are installed in the database. The materialization nodes in the query logical plan (i.e. the source nodes) get converted into $CREATE TABLE$ statements to define the tables that the Flink data stream sink nodes insert record into. The rest of the logical plan gets incrementally converted to SQL view definitions from source to sink nodes. Those tables and views are queried by the API by mapping the script tables and views onto the physical table and view definitions through the script schema. When queried, the database produces a physical plan from the view definitions that is executed by the database to retrieve and compute the results.
+
 \subsection{Optimization}
 \label{sec:optimization}
 
+There are five separate optimization processes during the compilation and execution of SQRL scripts.
+
+First, each local logical plan tree that is produced by Calcite after transpiling the SQRL statement is optimized using Calcite's Vulcano-style~\cite{} optimizer. DataSQRL feeds the statistics gathered during the data monitoring to the optimizer. DataSQRL adds additional rules to the Calcite optimizer, in particular, targeting the frequent sub-queries that get created during the transpilation process.
+
+\subsubsection{DAG Subgraph Merging}
+
+Second, in the construction of the logical plan DAG the DataSQRL optimizer identifies combinable sub-graphs which are merged to reduce the amount of computation. Two sub-graphs are combinable if they have the same source nodes and can be made identical by moving logical operators in a way that preserves equivalence. Unlike standard query optimization which typically pushes projections and predicates down toward the leaf nodes to reduce the size of intermediate result sets, combinable sub-graph identification requires pulling up projections, aggregations, and predicates to expose common sub-structures (e.g. joins and group-bys), merging those sub-stuctures in the DAG, and then combing the projections, aggregations, and predicates to push down the the covering set. Combinable sub-graph identifcation and logical plan DAG merging is described in Appendix~\ref{appendix:optimalDAG}.
+
+\subsubsection{Optimal DAG Cut}
+\label{sec:dag_cut_opt}
+
+Once all combinable sub-graphs have been merged, the third optimization process identifies the optimal cut of the DAG. The cut determines how much of the logical plan DAG gets incrementally maintained as data is ingested (i.e. the stream LP) and how much is computed at query time in the database (i.e. the query LP). Hence, the cut has profound implications on the overall performance of the system. The more of the logical plan DAG that gets pre-computed, the less computation the database has to perform and the faster the response times of the API. However, some joins and aggregations may be too expensive to pre-compute because of combinatorial explosion and are better computed at query time in the database when they are actually needed. Pre-computing everything is often infeasible and undesirable because of the resources it would take to do so and the time it would take to complete those computations.
+
+To identify the optimal cut of the logical plan DAG that balances the tradeoff between pre-computation to reduce API response times and query time computation to reduce the cost and delay of pre-computation, DataSQRL employs a simple algorithm.
+%Relate to graph coloring with (write/read) with the constraint that we cannot have a read node on any path between a source and a write node and we cannot have a write node on any path between a read node and a sink.
+The algorithm operates in two passes over the DAG and colors the nodes in the DAG as either "write" or "read".
+\begin{enumerate}
+    \item Traversing the DAG from source to sink, we use a cost-based cutoff heuristic to determine if a node is labeled write or read. If the cost assigned to a node exceeds a threshold, it is marked as read, otherwise write. The algorithm stops traversing the DAG once it labeled a node as read. If the algorithm runs out of nodes to process, it labels all remaining nodes as read.
+    \item For any pair of sink nodes labeled as write that share a single ancestral node N in the DAG by unique paths that only contain filter, projection, and window nodes such that the combined (generalized) filter has similar selectivity to the sum of the individual ones, combine the projections into node N' attached as a child to N and labeled write, add column-selection projections for each path and attach the paths to those projections with all those nodes marked as read. This step eliminates similar materialized tables when the cut moves all the way to the sinks.
+\end{enumerate}
+
+ We use a write-focused cost function that aims to pre-compute as much of the DAG as reasonably possible. It becomes unreasonable to pre-compute if the state we need to maintain in memory to compute an operator grows too large. Hence, our cost function assigns a cost of 0 to scan, projections and filters. Otherwise, the cost is as follows:
+ \begin{enumerate}
+     \item Aggregations: number of unique group by keys multiplied by the cost of each aggregate (the cost of the aggregate is the number of bytes needed to incrementally compute the aggregate divided by 8, i.e. cost(sum) = 1, cost(avg) = 2)
+     \item Windows: number of unique partitions multiplied by average window width.
+     \item Joins:
+     \begin{enumerate}
+         \item Temporal Join: Cardinality of the state table in the join
+         \item If at least one table is inferred to be static: Min of the cardinalities of the static tables
+         \item Stream table join with range condition on timestamps of both tables: Cardinality of records in time window. E.g. for $T1.timestamp >= T2.timestamp$ the cost is the cardinality of T2, for $T1.timestamp > T2.timestamp - 1 HOUR AND T1.timetamp < T2.timestamp + 1 HOUR$ the cost is the cardinality of 2 hours of records for T2.
+         \item Other: Sum of cardinalities of both tables.
+     \item Union, Intersect, Minus: Sum of cardinalities of both tables
+     \end{enumerate}
+ \end{enumerate}
+
+Once the algorithm completes, all nodes are either labeled as read or write. The algorithm guarantees that this labeling produces a proper cut in the DAG, namely that we cannot have a read node on any path between a source and a write node and we cannot have a write node on any path between a read node and a sink.
+
+\subsubsection{Index Selection}
+
+Fourth, we determine the optimal set of indexes on the materialized tables that are the source nodes of the query logical plan DAG and will be created as physical tables in the database. As discussed in Section~\ref{sec:sqrl_api}, accessing a query field or relationship field that's defined in the API schema results in a query against the table that the data type of that field maps to. The arguments provided to the field create the $WHERE$ and $ORDER BY$ clauses of that query. For relationship fields, the primary key of the table is also added as a $WHERE$ condition.
+
+For each query and relationship field, we generate all possible queries by combing the required arguments and all possible orders into query templates. A query template is a query where the conditions have placeholder values for the arguments, like a prepared query. We compile those query templates into logical plans and replace the table node in the logical plan by the corresponding node in the query logical plan DAG. We then optimize that combined logical plan to identify the optimal set of indexes by analyzing the filters that are pushed down to the source tables of the DAG.
+
+Finally, DataSQRL passes the stream logical plan DAG to Flink which runs it's own optimization in producing the physical execution plan. Simiarly, the table and view definitions created from the query logical plan DAG are interpreted and optimized by the database during query execution.
 
 \section{Experiments}
 \label{sec:experiments}
@@ -675,9 +1168,21 @@ managing retractions for stragglers within bounded window (configurable)
 \section{Related Work}
 \label{sec:related}
 
-The SQRL query language is inspired by the work of Widom et al. on the CQL query language~\cite{arasu_cql_2006} for streaming database systems~\cite{arasu_stream_2016}.
+Streaming integration:
+
+General: The SQRL query language is inspired by the work of Widom et al. on the CQL query language~\cite{arasu_cql_2006} for streaming database systems~\cite{arasu_stream_2016}.
+
+Subscribe = Stream: Julian Hyde. 2010. Data in Flight. Commun. ACM 53, 1 (Jan. 2010), 48–52
+
+Temporal JOIN: from Apache Flink
+
+Unnesting Arbitrary Queries by Thomas Neumann and Alfons Kemper
+
+Apache Calcite: A Foundational Framework for Optimized Query Processing Over Heterogeneous Data Sources
 
 Hasura for automatic API generation
+
+Why don't we use explicit tumble, sliding windows? Those are implementation concerns and put the burden to figure out how to optimize their program on the developer.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -689,13 +1194,166 @@ Hasura for automatic API generation
 \section{Translating SQRL to SQL}
 \label{appendix:sqrl2sql}
 
+- Every stream table has a timestamp column, denoted timestamp(table)
+- A temporal join between tableA and tableB where tableA must be a stream table, i.e. "tableA TEMPORAL JOIN tableB ON ()" is equivalent to an inner join where the join condition is extended by the predicate:
+    timestamp(tableA) >= timestamp(tableB)
+    - if tableB is a state table:
+    - if tableB is an stream table: adding condition timestamp(tableB) <= timestamp(tableA)
+
+How we assign timestamps to streams:
+    - infer: order of DISTINCT ON, column used in now() comparison, column used in time windows
+        - must be of DateTime type
+    - if none of the above: use \_source\_time or \_ingest\_time if former is null
+    - user can define explicitly in IMPORT: IMPORT dataset.table TIMESTAMP expression
+        - expression must evaluate to DateTime type
+How do we get watermarks?
+How can we provide snapshot isolation?
+
+Explain now() and translation to sliding and overlapping time windows (configurable via hints)
+Explain temporal joins which are assumed by default between stream and stateful or stream tables.
+    - between stream and state (via DISTINCT ON): join state at time of stream event (as determined by stream timestamp)
+
+Need to propagate watermarks for each materialized table into Postgres and store them there (per partition) so that we can a) provide snapshot isolation by limiting to the max watermark across all tables involved in a query and b) determine which time buckets are closed for time buckets on stream tables that get created as views.
+
+Treat all imported tables as stream unless they are imported with IMPORT dataset.table STATIC
+    - if we detect during analysis that a table is static, we suggest adding this automatically during compilation
+
+\begin{lstlisting}[language=SQL]
+
+#### IMPORT/EXPORT Statements
+
+Import: Registers table in schema with columns (those tables are root nodes in the logical plan DAG)
+
+Export: Registers an export against a defined subscription table in the schema
+
+#### Relationship Definitions
+
+Table.relationship := JOIN Table[1] a[1] ON condition[1]
+
+- relationship column added to Table in schema
+
+#### Definition Statements
+
+### Step 1: Normalize local statements
+
+# Normalize expression to statement
+Table.column := expression
+- replace expression by statement:
+    SELECT expression FROM _
+
+# Normalize local statement
+Table.columnOrNested := local statement
+- in validation _ resolves to Table
+- if statement has single anonymous SELECT expression
+    then column definition: add column to Table in schema
+    else nested table definition: add nested table (with reference to Table) to schema with parent and child relationship columns and PK = Table PK + local PK for nested table (see below)
+- if _ not in FROM table list (_ cannot be used as an explicit alias)
+    then add "Table _" to beginning of FROM list
+
+### Step 2: Convert local statements to global statements
+
+# Convert local column definition to view definition
+Table.column := local statement
+- if statement only has _ in FROM table list and no where/group-by clause
+    then: Table:= SELECT _.*, (SELECT expression from statement) AS column[+] FROM Table _
+    else:
+        Let statement* = statement with added WHERE clause: AND (for all PK columns pk of Table: _.pk = __.pk)
+        Table:= AS SELECT __.*, (statement*) AS column[+] FROM Table __
+
+# Convert local nested table statement to global statement
+Table.nested := local statement
+- Let statement* = statement with
+    - add parent Table PK to select and group by:
+        for all PK columns pk of Table, i=i+1: add "_.pk AS _ppk[i]" to SELECT and "_.pk" to GROUP BY
+- Table.nested := statement*
+
+### Step 3: Inline Relationships in global statements
+
+# Convert relationships in expressions
+Case 1: agg_fct(TableOrAlias.rel[1].rel[2]...rel[n].column)
+=> replace with sub-query (SELECT agg_fct(_r.column) FROM TableOrAlias.rel[1].rel[2]...rel[n] AS _r)
+Case 2: TableOrAlias.rel[1].rel[2]...rel[n].column if rel[i] are all to-0/1 relationships
+=> replace with sub-query (SELECT _r.column FROM TableOrAlias.rel[1].rel[2]...rel[n] AS _r)
+
+# Convert Relationships in FROM clauses
+- in FROM: join or table list
+
+
+### Step 4: Normalize global statements
+
+Table := statement
+- map column names for shadowed columns
+- pull outer ORDER BY and LIMIT expressions as columns in SELECT and extract as meta data for Table in schema
+
+
+
+#### Special Handling
+
+Formally, a temporal join between a stream table $A$ and a state table $B$ is defined as:
+\begin{lstlisting}[language=SQL]
+A JOIN
+(SELECT t.* FROM
+	(SELECT s.*, row_number() OVER PARTITION BY primaryKey(B) ORDER BY s._event_time DESC AS row_no FROM (SUBSCRIBE ON CHANGE TO B) as s
+	WHERE s._event_time <= timestamp(A)) as t)
+WHERE t.row_no=1)
+
+#1. DISTINCT Table ON distinct-columns ORDER BY order
+- Let columns be the columns on Table
+    SELECT _2.columns FROM
+        (SELECT _1.*, row_number() OVER (PARTITION BY distinct-columns ORDER BY order) AS rowno
+            FROM Table) _2
+    WHERE rowno = 1;
+- Kept as a separate construct in logical plan to convert to FLink special handlign
+
+#2. Subscriptions
+- Observed view is converted like any other statement and added to schema and logical plans
+- Subscription table (with columns) is added to schema and linked to observed view with observation type (ADD, DELETE, UPDATE)
+- Subscriptions are treated as CREATE TABLE statements in SQL and only materialized in flink by producing a change-stream
+
+#3. Time Windows
+
+Time Window functions + sliding window interpreted differently in streaming vs query (need to add watermark filter for window functions, sliding window is not continuous in streaming)
+
+#4. UNION, etc
+
+UNION, UNION ALL, INTERSECT, EXCEPT is supported between two stream tables if they have the same timestamp column. The semantics of these operations are the normal SQL semantics. The special SQL columns _uid, _source_time, _ingest_time are not considered in the comparison, however, the timestamp column always is. The result is a stream with the same timestamp.
+
+UNION, UNION ALL, INTERSECT, EXCEPT is supported between two state tables if they have the same primary key. However, the semantics is different from standard SQL: the comparison is done only on the primary key columns. For UNION, INTERSECT and EXCEPT the non-primary key values of the left hand side are used for columns with the same primary key. These operations preserve the original primary key.
+UNION ALL merges states and does not do primary key comparison. This operation extends the primary key by an additional column that keeps track of which table a particular record came from and to ensure that the primary key remains unique.
+
+UNION, UNION ALL, INTERSECT, EXCEPT are not supported between stream and state tables.
+
+
+#5. Windows
+
+Window based partitioning and aggregation in the SELECT clause is not supported by SQRL.
+
+---------------
+
+Local Query Rewriting rules:
+- sub-queries to LEFT JOIN
+- eliminate identical self-joins (i.e. self joins on table PK cols)
+
+Global (DAG) Query Rewriting rules:
+- combine incremental view definitions (e.g. for adding column definitions) that are chained together in a straight line (i.e. no other dependencies) and don't reference previously defined columns
+
+\end{lstlisting}
+
+
 We infer watermark timestamp for streaming data sources and only consider closed time buckets when watermark is used in GROUP BY. However, there may be stragglers which causes retractions - even in downstream data sinks using
 
 but detailed description from google doc in here
 
-\section{Generating GraphQL schema from SQRL data model}
+\section{Mapping API schema definition to SQRL}
 \label{appendix:sqrl2graphql}
 
+\begin{verbatim}
+Copy https://docs.google.com/document/d/1VjO8ZYUSkp5r8rvSGKBvhYV4M30sLoPqacjUyIkonXM/edit# in here
+\end{verbatim}
+
+
+\section{Logical Plan DAG Optimization}
+\label{appendix:optimalDAG}
 
 \section{Scrap Space}
 
