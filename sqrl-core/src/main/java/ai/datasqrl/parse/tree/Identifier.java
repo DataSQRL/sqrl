@@ -70,4 +70,9 @@ public class Identifier
   public int hashCode() {
     return Objects.hash(namePath);
   }
+
+  @Override
+  public String toString() {
+    return namePath.toString();
+  }
 }

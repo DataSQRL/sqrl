@@ -168,7 +168,19 @@ class SchemaTest {
          + "SELECT customerid, email, name, total_orders FROM Customer WHERE total_orders >= 100;\n");
   }
 
-  public void runScript(String script) {
+  @Test
+  public void testQuerySmall() {
+    runScript("IMPORT ecommerce-data.Customer;\n"
+            + "IMPORT ecommerce-data.Orders;\n"
+            + "\n"
+            + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
+            + "\n"
+            + "-- Relate Customer to Orders and compute a customer's total order spent\n"
+            + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
+            + "Customer.total_count := sum(orders.entries.quantity);\n");
+  }
+
+    public void runScript(String script) {
     ScriptNode node = parser.parse(script);
     SchemaBuilder schema = new SchemaBuilder();
 

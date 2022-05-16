@@ -123,7 +123,7 @@ public class SchemaUpdatePlanner {
       System.out.println("Sql: " + SqlNodeFormatter.toString(sqlNode));
 
       RelNode relNode = localPlanner.plan(sqlNode);
-      System.out.println(relNode.explain());
+      System.out.println("RelNode:\n" + relNode.explain());
       System.out.println(RelToSql.convertToSql(relNode));
 
       Table table = schema.walkTable(name.popLast());
