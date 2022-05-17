@@ -1,8 +1,6 @@
 package org.apache.calcite.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.nodes.SqrlRelationshipTable;
 import ai.datasqrl.plan.nodes.RelNodeTable;
 import ai.datasqrl.schema.Relationship;
 import java.util.HashSet;
@@ -22,18 +20,7 @@ public class SqrlCalciteSchema extends AbstractSqrlSchema {
       }
     }
 
-    for (Relationship rel : rels.getLeft()) {
-      if (rel.getId().equals(Name.system(s))) {
-        //Recursively expand relationship until we have no more Relationship tables.
-
-        return new SqrlRelationshipTable(rel);
-      }
-    }
-    NamePath p = NamePath.parse(s);
-
-    ai.datasqrl.schema.Table t = schema.getByName(p.getFirst()).get().walk(p.popFirst()).get();
-    return new RelNodeTable(t.getHead().getRowType(), t.getHead());
-//    throw new RuntimeException("Could not resolve table " + s);
+    throw new RuntimeException("Could not resolve table " + s);
   }
 
   public static Pair<Set<Relationship>, Set<ai.datasqrl.schema.Table>> getAllTables(ai.datasqrl.schema.Schema schema) {
@@ -50,9 +37,6 @@ public class SqrlCalciteSchema extends AbstractSqrlSchema {
       assert !included.contains(next);
       included.add(next);
       toInclude.remove(next);
-      next.getRelationships().stream().filter(f -> f instanceof Relationship)
-          .map(f -> (Relationship)f)
-          .forEach(toIncludeRel::add);
       //Find all non-hidden related tables and add those
       next.getFields().visibleStream().filter(f -> f instanceof Relationship)
           .map(f -> (Relationship)f)
