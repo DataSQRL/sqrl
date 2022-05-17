@@ -180,6 +180,20 @@ class SchemaTest {
             + "Customer.total_count := sum(orders.entries.quantity);\n");
   }
 
+  @Test
+  public void testQueryExperiment() {
+    runScript("IMPORT ecommerce-data.Customer;\n"
+            + "IMPORT ecommerce-data.Orders;\n"
+            + "\n"
+            + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
+            + "\n"
+            + "-- Relate Customer to Orders and compute a customer's total order spent\n"
+            + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
+            + "Customer.count := SELECT SUM(e.quantity) as total, AVG(e.quantity) as average FROM _.orders.entries e;\n"
+            + "CustomerCount := SELECT c.customerid, SUM(e.quantity) as total, AVG(e.quantity) as average FROM Customer c JOIN c.orders.entries e GROUP BY c.customerid;\n"
+    );
+  }
+
     public void runScript(String script) {
     ScriptNode node = parser.parse(script);
     SchemaBuilder schema = new SchemaBuilder();

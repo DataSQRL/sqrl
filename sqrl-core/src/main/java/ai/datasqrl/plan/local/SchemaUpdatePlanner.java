@@ -188,7 +188,7 @@ public class SchemaUpdatePlanner {
         columns.add(column);
       }
 
-      Preconditions.checkState(columns.stream().anyMatch(Column::isPrimaryKey), "No primary key was found");
+      //Preconditions.checkState(columns.stream().anyMatch(Column::isPrimaryKey), "No primary key was found");
 
       //Creates a table that is not bound to the schema
       TableFactory tableFactory = new TableFactory();
