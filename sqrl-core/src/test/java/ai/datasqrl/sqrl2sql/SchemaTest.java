@@ -194,6 +194,17 @@ class SchemaTest {
     );
   }
 
+  @Test
+  public void testNestedPushdown() {
+    runScript("IMPORT ecommerce-data.Orders;\n"
+            + "\n"
+            + "Orders.entries.discount := coalesce(discount, 0.0);\n"
+            + "Orders.entries.total := quantity * unit_price - discount;\n"
+            + "Orders.total := sum(entries.total);\n"
+            + "Orders.total_savings := sum(entries.discount);\n"
+            + "Orders.total_entries := count(entries);\n");
+  }
+
     public void runScript(String script) {
     ScriptNode node = parser.parse(script);
     SchemaBuilder schema = new SchemaBuilder();
