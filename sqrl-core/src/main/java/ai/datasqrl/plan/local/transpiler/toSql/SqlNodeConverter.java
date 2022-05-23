@@ -231,6 +231,8 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
   public SqlNode visitJoinNorm(JoinNorm node, ConvertContext context) {
     JoinType type;
     switch (node.getType()) {
+      case DEFAULT:
+      case TEMPORAL:
       case INNER:
         type = JoinType.INNER;
         break;

@@ -94,7 +94,6 @@ import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
 import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.GroupBy;
-import ai.datasqrl.parse.tree.GroupingElement;
 import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.InListExpression;
@@ -105,7 +104,6 @@ import ai.datasqrl.parse.tree.IntervalLiteral;
 import ai.datasqrl.parse.tree.IsNotNullPredicate;
 import ai.datasqrl.parse.tree.IsNullPredicate;
 import ai.datasqrl.parse.tree.Join;
-import ai.datasqrl.parse.tree.JoinCriteria;
 import ai.datasqrl.parse.tree.JoinAssignment;
 import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.Limit;
@@ -464,7 +462,7 @@ class AstBuilder
       Relation relation = iterator.next();
 
       while (iterator.hasNext()) {
-        relation = new Join(getLocation(context), Join.Type.IMPLICIT, relation, iterator.next(),
+        relation = new Join(getLocation(context), Join.Type.DEFAULT, relation, iterator.next(),
             Optional.empty());
       }
 
@@ -622,8 +620,12 @@ class AstBuilder
       joinType = Join.Type.RIGHT;
     } else if (joinTypeContext.FULL() != null) {
       joinType = Join.Type.FULL;
-    } else {
+    } else if (joinTypeContext.INNER() != null) {
       joinType = Join.Type.INNER;
+    } else if (joinTypeContext.TEMPORAL() != null) {
+      joinType = Join.Type.TEMPORAL;
+    } else {
+      joinType = Join.Type.DEFAULT;
     }
 
     return joinType;
