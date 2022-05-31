@@ -8,16 +8,22 @@ public class QueryAssignment extends Assignment {
 
   private final Query query;
   private final String sql;
+  private final List<Hint> hints;
 
   public QueryAssignment(Optional<NodeLocation> location, NamePath namePath,
-      Query query, String sql) {
+      Query query, String sql, List<Hint> hints) {
     super(location, namePath);
     this.query = query;
     this.sql = sql;
+    this.hints = hints;
   }
 
   public String getSql() {
     return sql;
+  }
+
+  public List<Hint> getHints() {
+    return hints;
   }
 
   @Override

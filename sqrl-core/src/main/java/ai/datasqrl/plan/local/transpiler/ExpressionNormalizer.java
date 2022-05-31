@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
@@ -101,7 +100,7 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
     Field field = base.getRef().getTable().walkField(path).get();
 
     if (toExpand.size() > 0) {
-      JoinNorm expanded = (JoinNorm) TablePathToJoins.expand(toExpand);
+      JoinNorm expanded = (JoinNorm) TablePathToJoins.expand(toExpand, List.of());
 
       Optional<JoinOn> criteria = CriteriaUtil.joinEq(base, expanded);
 

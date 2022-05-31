@@ -4,7 +4,6 @@ import ai.datasqrl.function.SqlNativeFunction;
 import ai.datasqrl.parse.tree.ComparisonExpression;
 import ai.datasqrl.parse.tree.ComparisonExpression.Operator;
 import ai.datasqrl.parse.tree.Expression;
-import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.Join.Type;
 import ai.datasqrl.parse.tree.JoinOn;
@@ -107,7 +106,7 @@ public class Relationship extends Field {
   private RelationNorm transformLimit(JoinNorm joinNorm) {
     TableOrRelationship tableRef = ((TableNodeNorm)joinNorm.getLeftmost()).getRef();
     TableNodeNorm base = new TableNodeNorm(Optional.empty(), tableRef.getTable().getPath(),
-        Optional.empty(), tableRef, false);
+        Optional.empty(), tableRef, false, List.of());
 
     /**
      *     SELECT rightmost.f1, rightmost.f2, ...

@@ -17,6 +17,7 @@ import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.GenericLiteral;
 import ai.datasqrl.parse.tree.GroupBy;
+import ai.datasqrl.parse.tree.Hint;
 import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.InListExpression;
 import ai.datasqrl.parse.tree.InPredicate;
@@ -74,6 +75,8 @@ import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlBasicCall;
+import org.apache.calcite.sql.SqlHint;
+import org.apache.calcite.sql.SqlHint.HintOptionFormat;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlJoin;
@@ -83,6 +86,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSelectKeyword;
+import org.apache.calcite.sql.SqlTableRef;
 import org.apache.calcite.sql.SqlTimeLiteral;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.fun.SqlCase;
@@ -217,9 +221,28 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
 
   @Override
   public SqlNode visitTableNorm(TableNodeNorm node, ConvertContext context) {
+
     return alias(
-        new SqlIdentifier(node.getRef().getTable().getId().getCanonical(), pos.getPos(Optional.empty())),
+        new SqlTableRef(
+            pos.getPos(Optional.empty()),
+            new SqlIdentifier(node.getRef().getTable().getId().getCanonical(), pos.getPos(Optional.empty())),
+            convertHints(node.getHints())),
         context.getOrCreateAlias(node));
+  }
+
+  private SqlNodeList convertHints(List<Hint> hints) {
+    if (hints.isEmpty()) return SqlNodeList.EMPTY;
+    return new SqlNodeList(hints.stream()
+        .map(h-> convertHint(h))
+        .collect(Collectors.toList()),
+        pos.getPos(Optional.empty()));
+  }
+
+  private SqlHint convertHint(Hint h) {
+    return new SqlHint(pos.getPos(Optional.empty()),
+        new SqlIdentifier(h.getValue(), pos.getPos(Optional.empty())),
+        SqlNodeList.EMPTY,
+        HintOptionFormat.EMPTY);
   }
 
 //  @Override

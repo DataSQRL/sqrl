@@ -1,11 +1,11 @@
 package ai.datasqrl.plan.local.transpiler;
 
 import ai.datasqrl.parse.tree.Expression;
+import ai.datasqrl.parse.tree.Hint;
 import ai.datasqrl.parse.tree.Join.Type;
 import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.local.transpiler.RelationScope;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
@@ -28,9 +28,9 @@ import java.util.stream.Collectors;
  */
 public class TablePathToJoins {
 
-  public static RelationNorm expand(NamePath namePath, RelationScope scope) {
+  public static RelationNorm expand(NamePath namePath, List<Hint> hints, RelationScope scope) {
     List<TableOrRelationship> walk = mapToReference(namePath, scope);
-    return expand(walk);
+    return expand(walk, hints);
   }
 
   /**
@@ -83,23 +83,23 @@ public class TablePathToJoins {
     }
   }
 
-  public static RelationNorm expand(List<TableOrRelationship> fields) {
+  public static RelationNorm expand(List<TableOrRelationship> fields, List<Hint> hints) {
     if (fields.size() == 1) {
-      return expand(fields.get(0));
+      return expand(fields.get(0), hints);
     }
-    RelationNorm left = expand(fields.get(0));
-    RelationNorm right = expand(fields.subList(1, fields.size()));
+    RelationNorm left = expand(fields.get(0), List.of());
+    RelationNorm right = expand(fields.subList(1, fields.size()), hints);
     Expression criteria = CriteriaUtil.sameTableEq(left.getRightmost(), right.getLeftmost());
 
     return new JoinNorm(Optional.empty(), Type.INNER, left, right, JoinOn.on(criteria));
   }
 
-  private static RelationNorm expand(TableOrRelationship field) {
+  private static RelationNorm expand(TableOrRelationship field, List<Hint> hints) {
     if (field instanceof SelfRef) {
       return ((SelfRef)field).getSelf();
     } else if (field instanceof TableRef) {
       return new TableNodeNorm(Optional.empty(), field.getTable().getPath(),
-          Optional.empty(), field, false);
+          Optional.empty(), field, false, hints);
     } else {
       Relationship rel = ((RelationshipRef) field).getRelationship();
       return rel.getRelation();

@@ -27,16 +27,22 @@ public class TableNode
 
   private final NamePath name;
   private final Optional<Name> alias;
+  private final List<Hint> hints;
 
   public TableNode(NodeLocation location, NamePath name,
-      Optional<Name> alias) {
-    this(Optional.of(location), name, alias);
+      Optional<Name> alias, List<Hint> hints) {
+    this(Optional.of(location), name, alias, hints);
   }
 
   public TableNode(Optional<NodeLocation> location, NamePath name, Optional<Name> alias) {
+    this(location, name, alias, List.of());
+  }
+
+  public TableNode(Optional<NodeLocation> location, NamePath name, Optional<Name> alias, List<Hint> hints) {
     super(location);
     this.name = name;
     this.alias = alias;
+    this.hints = hints;
   }
 
   public NamePath getNamePath() {
@@ -45,6 +51,10 @@ public class TableNode
 
   public Optional<Name> getAlias() {
     return alias;
+  }
+
+  public List<Hint> getHints() {
+    return hints;
   }
 
   @Override

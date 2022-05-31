@@ -11,17 +11,23 @@ public class DistinctAssignment extends Assignment {
   private final Name table;
   private final List<Name> partitionKeys;
   private final List<SortItem> order;
+  private final List<Hint> hints;
 
   public DistinctAssignment(Optional<NodeLocation> location,
-      NamePath name, Name table, List<Name> fields, List<SortItem> order) {
+      NamePath name, Name table, List<Name> fields, List<SortItem> order, List<Hint> hints) {
     super(location, name);
     this.table = table;
     this.partitionKeys = fields;
     this.order = order;
+    this.hints = hints;
   }
 
   public Name getTable() {
     return table;
+  }
+
+  public List<Hint> getHints() {
+    return hints;
   }
 
   public List<Name> getPartitionKeys() {
