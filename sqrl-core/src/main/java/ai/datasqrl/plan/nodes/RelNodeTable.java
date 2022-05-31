@@ -1,12 +1,16 @@
 package ai.datasqrl.plan.nodes;
 
 import lombok.Getter;
+import org.apache.calcite.DataContext;
+import org.apache.calcite.linq4j.Enumerable;
+import org.apache.calcite.linq4j.Linq4j;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.schema.ScannableTable;
 import org.apache.calcite.schema.impl.AbstractTable;
 
-public class RelNodeTable extends AbstractTable {
+public class RelNodeTable extends AbstractTable implements ScannableTable {
 
   RelDataType relDataType;
 
@@ -23,4 +27,8 @@ public class RelNodeTable extends AbstractTable {
     return relDataType;
   }
 
+  @Override
+  public Enumerable<Object[]> scan(DataContext dataContext) {
+    return Linq4j.asEnumerable(new Object[][]{});
+  }
 }

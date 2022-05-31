@@ -17,14 +17,13 @@
 package org.apache.calcite.jdbc;
 
 import org.apache.calcite.schema.Schema;
-import org.apache.calcite.schema.Table;
 
 /**
  * A no-op wrapper for SimpleCalciteSchema
  */
-public class SqrlCalciteSchema extends SimpleCalciteSchema {
+public class SqrlSimpleCalciteSchema extends SimpleCalciteSchema {
 
-  public SqrlCalciteSchema(Schema schema) {
+  public SqrlSimpleCalciteSchema(Schema schema) {
     super(null, schema, "");
   }
 }
