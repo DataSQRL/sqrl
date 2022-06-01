@@ -74,7 +74,7 @@ public class RelationNormRewriter extends AstVisitor<RelationNorm, Void> {
   @Override
   public RelationNorm visitTableNorm(TableNodeNorm node, Void context) {
     TableNodeNorm tableNodeNorm = new TableNodeNorm(node.getLocation(), node.getName(), node.getAlias(), node.getRef(),
-        false);
+        false, List.of());
     normMapping.put(node, tableNodeNorm);
     return tableNodeNorm;
   }

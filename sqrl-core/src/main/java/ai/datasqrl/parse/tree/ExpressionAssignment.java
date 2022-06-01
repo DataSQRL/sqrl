@@ -8,16 +8,22 @@ public class ExpressionAssignment extends Assignment {
 
   private final Expression expression;
   private final String sql;
+  private final List<Hint> hints;
 
   public ExpressionAssignment(Optional<NodeLocation> location,
-      NamePath name, Expression expression, String sql) {
+      NamePath name, Expression expression, String sql, List<Hint> hints) {
     super(location, name);
     this.expression = expression;
     this.sql = sql;
+    this.hints = hints;
   }
 
   public String getSql() {
     return sql;
+  }
+
+  public List<Hint> getHints() {
+    return hints;
   }
 
   @Override

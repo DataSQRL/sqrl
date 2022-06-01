@@ -185,7 +185,7 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
       return tableNorm;
     }
 
-    RelationNorm result = TablePathToJoins.expand(node.getNamePath(), scope);
+    RelationNorm result = TablePathToJoins.expand(node.getNamePath(), node.getHints(), scope);
 
     Name alias = getTableName(node, scope);
     scope.getJoinScopes().put(alias, result.getRightmost());
@@ -221,7 +221,7 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
     if (scope.getContextTable().isPresent()) {
       Table table = scope.getContextTable().get();
       TableNodeNorm tableNodeNorm = new TableNodeNorm(Optional.empty(), table.getPath(),
-          Optional.of(Name.SELF_IDENTIFIER), new TableRef(table), true);
+          Optional.of(Name.SELF_IDENTIFIER), new TableRef(table), true, List.of());
       scope.getJoinScopes().put(Name.SELF_IDENTIFIER, tableNodeNorm);
     }
   }

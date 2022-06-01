@@ -37,12 +37,20 @@ importDefinition
     ;
 
 assignment
-    : qualifiedName ':=' inlineJoin                                                    # joinAssignment
-    | qualifiedName ':=' expression                                                    # expressionAssign
-    | qualifiedName ':=' query                                                         # queryAssign
-    | qualifiedName ':=' DISTINCT table=identifier ON '('? identifier (',' identifier)* ')'?
+    : hint? qualifiedName ':=' inlineJoin                                                    # joinAssignment
+    | hint? qualifiedName ':=' expression                                                    # expressionAssign
+    | hint? qualifiedName ':=' query                                                         # queryAssign
+    | hint? qualifiedName ':=' DISTINCT table=identifier ON '('? identifier (',' identifier)* ')'?
       (ORDER BY sortItem (',' sortItem)*)?                          # distinctAssignment
     ;
+
+hint
+   : '/+' hintItem (',' hintItem)* '+/'
+   ;
+
+hintItem
+   : qualifiedName
+   ;
 
 subscriptionType
     : ADD //todo: add other types
@@ -128,6 +136,7 @@ joinType
     | LEFT OUTER?
     | RIGHT OUTER?
     | FULL OUTER?
+    | TEMPORAL
     ;
 
 joinCriteria
@@ -135,7 +144,7 @@ joinCriteria
     ;
 
 relationPrimary
-    : qualifiedName (AS? identifier)? #tableName
+    : qualifiedName hint? (AS? identifier)? #tableName
     ;
 
 expression
@@ -438,6 +447,7 @@ SYSTEM: 'SYSTEM';
 TABLE: 'TABLE';
 TABLES: 'TABLES';
 TABLESAMPLE: 'TABLESAMPLE';
+TEMPORAL: 'TEMPORAL';
 TEXT: 'TEXT';
 THEN: 'THEN';
 TIMESTAMP: 'TIMESTAMP';

@@ -36,6 +36,8 @@ import ai.datasqrl.parse.SqlBaseParser.ExpressionAssignContext;
 import ai.datasqrl.parse.SqlBaseParser.ExpressionContext;
 import ai.datasqrl.parse.SqlBaseParser.FunctionCallContext;
 import ai.datasqrl.parse.SqlBaseParser.GroupByContext;
+import ai.datasqrl.parse.SqlBaseParser.HintContext;
+import ai.datasqrl.parse.SqlBaseParser.HintItemContext;
 import ai.datasqrl.parse.SqlBaseParser.ImportDefinitionContext;
 import ai.datasqrl.parse.SqlBaseParser.ImportStatementContext;
 import ai.datasqrl.parse.SqlBaseParser.InListContext;
@@ -94,7 +96,7 @@ import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
 import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.GroupBy;
-import ai.datasqrl.parse.tree.GroupingElement;
+import ai.datasqrl.parse.tree.Hint;
 import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.InListExpression;
@@ -105,7 +107,6 @@ import ai.datasqrl.parse.tree.IntervalLiteral;
 import ai.datasqrl.parse.tree.IsNotNullPredicate;
 import ai.datasqrl.parse.tree.IsNullPredicate;
 import ai.datasqrl.parse.tree.Join;
-import ai.datasqrl.parse.tree.JoinCriteria;
 import ai.datasqrl.parse.tree.JoinAssignment;
 import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.Limit;
@@ -464,7 +465,7 @@ class AstBuilder
       Relation relation = iterator.next();
 
       while (iterator.hasNext()) {
-        relation = new Join(getLocation(context), Join.Type.IMPLICIT, relation, iterator.next(),
+        relation = new Join(getLocation(context), Join.Type.DEFAULT, relation, iterator.next(),
             Optional.empty());
       }
 
@@ -622,8 +623,12 @@ class AstBuilder
       joinType = Join.Type.RIGHT;
     } else if (joinTypeContext.FULL() != null) {
       joinType = Join.Type.FULL;
-    } else {
+    } else if (joinTypeContext.INNER() != null) {
       joinType = Join.Type.INNER;
+    } else if (joinTypeContext.TEMPORAL() != null) {
+      joinType = Join.Type.TEMPORAL;
+    } else {
+      joinType = Join.Type.DEFAULT;
     }
 
     return joinType;
@@ -636,7 +641,20 @@ class AstBuilder
       alias = Optional.of(((Identifier) visit(context.identifier())).getNamePath().getFirst());
     }
 
-    return new TableNode(getLocation(context), getNamePath(context.qualifiedName()), alias);
+    return new TableNode(getLocation(context), getNamePath(context.qualifiedName()), alias,
+        getHints(context.hint()));
+  }
+
+  public List<Hint> getHints(HintContext hint) {
+    if (hint == null) return List.of();
+    return hint.hintItem().stream()
+        .map(h->(Hint) visitHintItem(h))
+        .collect(toList());
+  }
+
+  @Override
+  public Node visitHintItem(HintItemContext ctx) {
+    return new Hint(Optional.of(getLocation(ctx)), getNamePath(ctx.qualifiedName()).getLast().getDisplay());
   }
 
   @Override
@@ -923,8 +941,8 @@ class AstBuilder
                 .map(s -> ((Identifier)visit(s)).getNamePath().getLast())
                 .collect(toList()),
         ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
-            .map(s -> (SortItem) s.accept(this)).collect(toList())
-
+            .map(s -> (SortItem) s.accept(this)).collect(toList()),
+        getHints(ctx.hint())
     );
   }
 
@@ -935,7 +953,8 @@ class AstBuilder
 
     return new JoinAssignment(Optional.of(getLocation(ctx)), name,
         query,
-        (JoinDeclaration) visit(ctx.inlineJoin()));
+        (JoinDeclaration) visit(ctx.inlineJoin()),
+        getHints(ctx.hint()));
   }
 
   @Override
@@ -982,7 +1001,8 @@ class AstBuilder
         ctx.query().stop.getStopIndex());
     String query = ctx.query().start.getInputStream().getText(interval);
     return new QueryAssignment(Optional.of(getLocation(ctx)), getNamePath(ctx.qualifiedName()),
-        (Query) visitQuery(ctx.query()), query);
+        (Query) visitQuery(ctx.query()), query,
+        getHints(ctx.hint()));
   }
 
   @Override
@@ -994,7 +1014,8 @@ class AstBuilder
     String expression = ctx.expression().start.getInputStream().getText(interval);
 
     return new ExpressionAssignment(Optional.of(getLocation(ctx)), name,
-        (Expression) visitExpression(ctx.expression()), expression);
+        (Expression) visitExpression(ctx.expression()), expression,
+        getHints(ctx.hint()));
   }
 
   @Override

@@ -17,6 +17,9 @@ import ai.datasqrl.parse.tree.QueryAssignment;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.physical.util.RelToSql;
+import ai.datasqrl.plan.calcite.MultiphaseOptimizer;
+import ai.datasqrl.plan.calcite.SqrlPrograms;
+import ai.datasqrl.plan.calcite.SqrlRuleSets;
 import ai.datasqrl.plan.local.operations.AddDatasetOp;
 import ai.datasqrl.plan.local.operations.AddFieldOp;
 import ai.datasqrl.plan.local.operations.AddNestedQueryOp;
@@ -48,8 +51,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.sql.SqlExplainFormat;
+import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -61,7 +67,7 @@ public class SchemaUpdatePlanner {
   private final ImportManager importManager;
   private final ErrorCollector errors;
   private final FlinkTableConverter tbConverter = new FlinkTableConverter();
-  private final LocalPlanner2 localPlanner;
+  private final LocalPlanner localPlanner;
 
   public Optional<SchemaUpdateOp> plan(Schema schema, Node node) {
     return Optional.ofNullable(node.accept(new Visitor(schema), null));
@@ -126,6 +132,13 @@ public class SchemaUpdatePlanner {
       System.out.println("RelNode:\n" + relNode.explain());
       System.out.println(RelToSql.convertToSql(relNode));
 
+      MultiphaseOptimizer optimizer = new MultiphaseOptimizer();
+      RelNode optimized = optimizer.optimize(relNode, SqrlPrograms.testProgram);
+
+      System.out.println(
+          RelOptUtil.dumpPlan("[Physical plan]", optimized, SqlExplainFormat.TEXT,
+              SqlExplainLevel.ALL_ATTRIBUTES));
+
       Table table = schema.walkTable(name.popLast());
       int nextVersion = table.getNextFieldVersion(name.getLast());
 
@@ -155,6 +168,13 @@ public class SchemaUpdatePlanner {
       System.out.println("Sql: " + SqlNodeFormatter.toString(sqlNode));
 
       RelNode relNode = localPlanner.plan(sqlNode);
+
+      MultiphaseOptimizer optimizer = new MultiphaseOptimizer();
+      RelNode optimized = optimizer.optimize(relNode, SqrlPrograms.testProgram);
+
+      System.out.println(
+          RelOptUtil.dumpPlan("[Physical plan]", optimized, SqlExplainFormat.TEXT,
+              SqlExplainLevel.ALL_ATTRIBUTES));
       //To column list
       QuerySpecNorm specNorm = ((QuerySpecNorm)relationNorm);
       List<Column> columns = new ArrayList<>();

@@ -9,11 +9,10 @@ import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.parse.SqrlParser;
-import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.plan.local.LocalPlanner2;
+import ai.datasqrl.plan.local.LocalPlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
 import ai.datasqrl.server.ImportManager;
@@ -211,7 +210,7 @@ class SchemaTest {
 
     for (Node n : node.getStatements()) {
       SchemaUpdatePlanner schemaUpdatePlanner = new SchemaUpdatePlanner(this.importManager,
-          errorCollector, new LocalPlanner2(schema.peek()));
+          errorCollector, new LocalPlanner(schema.peek()));
       System.out.println("Statement: " + NodeFormatter.accept(n));
 
       /*

@@ -2,7 +2,7 @@ package ai.datasqrl.plan.local.transpiler.nodes.relation;
 
 import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.parse.tree.Expression;
-import ai.datasqrl.parse.tree.Identifier;
+import ai.datasqrl.parse.tree.Hint;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeLocation;
 import ai.datasqrl.parse.tree.name.Name;
@@ -33,19 +33,21 @@ public class TableNodeNorm extends RelationNorm {
   private final Optional<Name> alias;
   private final TableOrRelationship ref;
   private final boolean isLocalTable;
+  private final List<Hint> hints;
 
   public TableNodeNorm(Optional<NodeLocation> location, NamePath name,
-      Optional<Name> alias, TableOrRelationship ref, boolean isLocalTable) {
+      Optional<Name> alias, TableOrRelationship ref, boolean isLocalTable, List<Hint> hints) {
     super(location);
     this.name = name;
     this.alias = alias;
     this.ref = ref;
     this.isLocalTable = isLocalTable;
+    this.hints = hints;
   }
 
   public static TableNodeNorm of(Table table) {
     return new TableNodeNorm(Optional.empty(), table.getPath(), Optional.empty(), new TableRef(table),
-        false);
+        false, List.of());
   }
 
   @Override

@@ -1,13 +1,18 @@
 package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.plan.nodes.SqrlRelBuilder;
+import java.util.Collections;
 import java.util.Properties;
 import lombok.Getter;
+import org.apache.calcite.config.CalciteConnectionConfig;
+import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
+import org.apache.calcite.jdbc.SqrlSimpleCalciteSchema;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.AbstractSqrlSchema;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
@@ -25,7 +30,7 @@ public class CalcitePlanner {
   private final RelOptCluster cluster;
   private final CalciteCatalogReader catalogReader;
   private final AbstractSqrlSchema sqrlSchema;
-  private final org.apache.calcite.jdbc.SqrlCalciteSchema calciteSchema;
+  private final SqrlSimpleCalciteSchema calciteSchema;
   private final JavaTypeFactoryImpl typeFactory;
 
   public static SqlValidator.Config validatorConfig = SqlValidator.Config.DEFAULT
@@ -39,12 +44,25 @@ public class CalcitePlanner {
   public CalcitePlanner(AbstractSqrlSchema sqrlSchema) {
     this.sqrlSchema = sqrlSchema;
     this.typeFactory = new FlinkTypeFactory(new FlinkTypeSystem());
-    this.cluster = CalciteTools.createHepCluster(typeFactory);
-    this.calciteSchema = new org.apache.calcite.jdbc.SqrlCalciteSchema(sqrlSchema);
-    this.catalogReader = CalciteTools.getCalciteCatalogReader(calciteSchema);
+    this.cluster = MultiphaseOptimizer.newCluster(typeFactory);
+    this.calciteSchema = new SqrlSimpleCalciteSchema(sqrlSchema);
+    this.catalogReader = getCalciteCatalogReader(calciteSchema);
   }
 
-  public org.apache.calcite.jdbc.SqrlCalciteSchema getSchema() {
+  public static CalciteCatalogReader getCalciteCatalogReader(SqrlSimpleCalciteSchema schema) {
+    RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl();
+
+    // Configure and instantiate validator
+    Properties props = new Properties();
+    props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
+    CalciteConnectionConfig config = new CalciteConnectionConfigImpl(props);
+    CalciteCatalogReader catalogReader = new CalciteCatalogReader(schema,
+        Collections.singletonList(""),
+        typeFactory, config);
+    return catalogReader;
+  }
+
+  public SqrlSimpleCalciteSchema getSchema() {
     return calciteSchema;
   }
 

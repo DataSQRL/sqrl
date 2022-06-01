@@ -9,7 +9,7 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
-import ai.datasqrl.plan.local.LocalPlanner2;
+import ai.datasqrl.plan.local.LocalPlanner;
 import ai.datasqrl.plan.local.SchemaUpdatePlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
@@ -59,7 +59,7 @@ public class BundlePlanner {
     SchemaUpdatePlanner planner = new SchemaUpdatePlanner(
         this.options.getImportManager(),
         this.errorCollector,
-        new LocalPlanner2(schema.peek()));
+        new LocalPlanner(schema.peek()));
     return planner.plan(schema.peek(), statement);
   }
 }

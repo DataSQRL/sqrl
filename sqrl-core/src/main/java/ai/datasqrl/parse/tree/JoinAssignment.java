@@ -8,13 +8,15 @@ public class JoinAssignment extends Assignment {
 
   private final String query;
   private final JoinDeclaration joinDeclaration;
+  private final List<Hint> hints;
 
   public JoinAssignment(Optional<NodeLocation> location,
-      NamePath name, String query, JoinDeclaration joinDeclaration) {
+      NamePath name, String query, JoinDeclaration joinDeclaration, List<Hint> hints) {
     super(location, name);
     this.query = query;
 
     this.joinDeclaration = joinDeclaration;
+    this.hints = hints;
   }
 
   public JoinDeclaration getJoinDeclaration() {
@@ -23,6 +25,10 @@ public class JoinAssignment extends Assignment {
 
   public String getQuery() {
     return query;
+  }
+
+  public List<Hint> getHints() {
+    return hints;
   }
 
   @Override

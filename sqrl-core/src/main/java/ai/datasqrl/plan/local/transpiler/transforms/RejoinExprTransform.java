@@ -1,7 +1,6 @@
 package ai.datasqrl.plan.local.transpiler.transforms;
 
 import ai.datasqrl.parse.tree.Expression;
-import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.Join.Type;
 import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.SingleColumn;
@@ -27,7 +26,7 @@ public class RejoinExprTransform {
    */
   public static RelationNorm transform(QuerySpecNorm node, Table table) {
     TableNodeNorm tableNodeNorm = new TableNodeNorm(Optional.empty(), table.getPath(), Optional.empty(), new TableRef(table),
-        false);
+        false, List.of());
     List<Expression> columns = table.getColumns().stream()
         .filter(field -> !field.containsAttribute(ForeignKey.class))
         .map(c-> ResolvedColumn.of(tableNodeNorm, c))
