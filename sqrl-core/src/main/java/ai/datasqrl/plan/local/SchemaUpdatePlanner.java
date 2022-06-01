@@ -5,6 +5,7 @@ import static ai.datasqrl.plan.util.FlinkSchemaUtil.requiresShredding;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.execute.flink.ingest.schema.FlinkTableConverter;
+import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.parse.tree.CreateSubscription;
 import ai.datasqrl.parse.tree.DistinctAssignment;
@@ -19,13 +20,12 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.physical.util.RelToSql;
 import ai.datasqrl.plan.calcite.MultiphaseOptimizer;
 import ai.datasqrl.plan.calcite.SqrlPrograms;
-import ai.datasqrl.plan.calcite.SqrlRuleSets;
 import ai.datasqrl.plan.local.operations.AddDatasetOp;
 import ai.datasqrl.plan.local.operations.AddFieldOp;
 import ai.datasqrl.plan.local.operations.AddNestedQueryOp;
 import ai.datasqrl.plan.local.operations.AddQueryOp;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
-import ai.datasqrl.plan.local.shred.ShredPlanner2;
+import ai.datasqrl.plan.local.shred.ShredPlanner;
 import ai.datasqrl.plan.local.transpiler.StatementNormalizer;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinDeclarationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
@@ -101,15 +101,20 @@ public class SchemaUpdatePlanner {
       List<Column> columns =
           FlinkRelDataTypeConverter.buildColumns(flinkSchema.getColumns());
 
-      ShredPlanner2 shredPlanner = new ShredPlanner2();
+      SourceTableStatistics sourceStats = importSource.getTable().getStatistics();
+
+      ShredPlanner shredPlanner = new ShredPlanner();
       TableFactory tableFactory = new TableFactory();
-      Table table = tableFactory.createTable(tableName.toNamePath(), columns);
-      RelNode relNode = shredPlanner.plan(tableName, localPlanner.getCalcitePlanner().createRelBuilder(), tbl.getLeft(), table);
+      Table table = tableFactory.createSourceTable(tableName.toNamePath(), columns,
+              sourceStats.getRelationStats(NamePath.ROOT));
+      RelNode relNode = shredPlanner.plan(tableName, localPlanner.getCalcitePlanner().createRelBuilder(), tbl.getLeft(),
+              table);
 
       table.setHead(relNode);
 
       if (requiresShredding(flinkSchema)) {
-        shredPlanner.shred(tableName, flinkSchema, table, localPlanner.getCalcitePlanner().createRelBuilder());
+        shredPlanner.shred(tableName, flinkSchema, table, sourceStats,
+                localPlanner.getCalcitePlanner().createRelBuilder());
       }
 
       return new AddDatasetOp(List.of(table));
@@ -172,6 +177,9 @@ public class SchemaUpdatePlanner {
       MultiphaseOptimizer optimizer = new MultiphaseOptimizer();
       RelNode optimized = optimizer.optimize(relNode, SqrlPrograms.testProgram);
 
+      double derivedRowCount = 1; //TODO: derive from optimizer
+      // double derivedRowCount = optimized.estimateRowCount(??);
+
       System.out.println(
           RelOptUtil.dumpPlan("[Physical plan]", optimized, SqlExplainFormat.TEXT,
               SqlExplainLevel.ALL_ATTRIBUTES));
@@ -208,11 +216,14 @@ public class SchemaUpdatePlanner {
         columns.add(column);
       }
 
+      //TODO: infer table type from relNode
+      Table.Type tblType = Table.Type.STREAM;
+
       //Preconditions.checkState(columns.stream().anyMatch(Column::isPrimaryKey), "No primary key was found");
 
       //Creates a table that is not bound to the schema
       TableFactory tableFactory = new TableFactory();
-      Table table = tableFactory.createTable(namePath, columns);
+      Table table = tableFactory.createTable(namePath, tblType, columns, derivedRowCount);
       table.setHead(relNode);
       System.out.println(relNode.explain());
 

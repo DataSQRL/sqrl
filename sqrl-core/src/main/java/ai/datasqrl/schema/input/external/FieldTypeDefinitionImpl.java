@@ -1,4 +1,4 @@
-package ai.datasqrl.schema.type.schema.external;
+package ai.datasqrl.schema.input.external;
 
 import java.util.List;
 

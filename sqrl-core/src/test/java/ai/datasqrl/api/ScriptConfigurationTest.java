@@ -5,8 +5,8 @@ import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlQuery;
 import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.schema.type.schema.external.DatasetDefinition;
-import ai.datasqrl.schema.type.schema.external.TableDefinition;
+import ai.datasqrl.schema.input.external.DatasetDefinition;
+import ai.datasqrl.schema.input.external.TableDefinition;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

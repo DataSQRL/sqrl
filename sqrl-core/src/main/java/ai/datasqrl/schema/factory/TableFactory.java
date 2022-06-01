@@ -2,6 +2,8 @@ package ai.datasqrl.schema.factory;
 
 import static ai.datasqrl.parse.util.SqrlNodeUtil.and;
 
+import ai.datasqrl.io.sources.stats.RelationStats;
+import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.ComparisonExpression;
 import ai.datasqrl.parse.tree.ComparisonExpression.Operator;
 import ai.datasqrl.parse.tree.Expression;
@@ -13,13 +15,10 @@ import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
-import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.*;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
-import ai.datasqrl.schema.ShadowingContainer;
-import ai.datasqrl.schema.Table;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,9 +28,22 @@ public class TableFactory {
 
   public final static AtomicInteger tableIdCounter = new AtomicInteger(0);
 
-  public Table createTable(NamePath tableName, List<Column> fields) {
-    Table table = createTableInternal(tableName, fields);
+  public Table createTable(NamePath tableName, Table.Type type, List<Column> fields,
+                           double rowCount) {
+    Table table = createTableInternal(tableName, type, fields, new TableStatistic(rowCount));
     return table;
+  }
+
+  public Table createSourceTable(NamePath tableName, List<Column> fields,
+                                 RelationStats stats) {
+    Table table = createTableInternal(tableName, Table.Type.STREAM, fields, TableStatistic.from(stats));
+    return table;
+  }
+
+  private Table createTableInternal(NamePath tableName, Table.Type type, List<Column> fields,
+                                    TableStatistic statistic) {
+    return new Table(tableIdCounter.incrementAndGet(),
+            tableName, type, toShadowContainer(fields), statistic);
   }
 
   public void assignRelationships(Name name, Table table, Table parentTable) {
@@ -49,10 +61,6 @@ public class TableFactory {
     parentTable.getFields().add(child);
   }
 
-  private Table createTableInternal(NamePath tableName, List<Column> fields) {
-    return new Table(tableIdCounter.incrementAndGet(),
-        tableName, false, toShadowContainer(fields));
-  }
 
   private ShadowingContainer<Field> toShadowContainer(List<Column> fields) {
     ShadowingContainer<Field> shadowingContainer = new ShadowingContainer<>();

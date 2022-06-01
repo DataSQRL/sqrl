@@ -10,7 +10,7 @@ import ai.datasqrl.schema.type.basic.BasicTypeManager;
 import ai.datasqrl.schema.type.basic.StringType;
 import ai.datasqrl.schema.type.constraint.Cardinality;
 import ai.datasqrl.schema.type.constraint.Constraint;
-import ai.datasqrl.schema.type.schema.FlexibleDatasetSchema;
+import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;

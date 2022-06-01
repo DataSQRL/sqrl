@@ -1,4 +1,4 @@
-package ai.datasqrl.schema.type.schema.external;
+package ai.datasqrl.schema.input.external;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.util.NamedIdentifier;
@@ -15,8 +15,8 @@ import ai.datasqrl.schema.type.constraint.Cardinality;
 import ai.datasqrl.schema.type.constraint.Constraint;
 import ai.datasqrl.schema.type.constraint.Constraint.Lookup;
 import ai.datasqrl.schema.type.constraint.ConstraintHelper;
-import ai.datasqrl.schema.type.schema.FlexibleDatasetSchema;
-import ai.datasqrl.schema.type.schema.SchemaElementDescription;
+import ai.datasqrl.schema.input.FlexibleDatasetSchema;
+import ai.datasqrl.schema.input.SchemaElementDescription;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.ArrayList;

@@ -3,6 +3,7 @@ package ai.datasqrl.plan.local.shred;
 import static ai.datasqrl.parse.tree.name.Name.INGEST_TIME;
 import static ai.datasqrl.plan.util.FlinkSchemaUtil.getIndex;
 
+import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.nodes.SqrlRelBuilder;
@@ -13,10 +14,7 @@ import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.attributes.ForeignKey;
 import ai.datasqrl.schema.factory.TableFactory;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
@@ -40,7 +38,7 @@ import org.apache.flink.table.types.CollectionDataType;
 import org.apache.flink.table.types.FieldsDataType;
 
 @AllArgsConstructor
-public class ShredPlanner2 {
+public class ShredPlanner {
   public RelNode plan(Name tableName, SqrlRelBuilder builder,
       org.apache.flink.table.api.Schema schema, Table table) {
 
@@ -109,20 +107,22 @@ public class ShredPlanner2 {
     return projects;
   }
 
-  public void shred(Name baseStream, Schema schema, Table table, SqrlRelBuilder builder) {
+  public void shred(Name baseStream, Schema schema, Table table, SourceTableStatistics sourceStats,
+                    SqrlRelBuilder builder) {
     List<UnresolvedColumn> columns = schema.getColumns();
     for (int i = 0; i < columns.size(); i++) {
       UnresolvedColumn col = columns.get(i);
       UnresolvedPhysicalColumn unresolvedPhysicalColumn = (UnresolvedPhysicalColumn) col;
       if (unresolvedPhysicalColumn.getDataType() instanceof FieldsDataType
           || unresolvedPhysicalColumn.getDataType() instanceof CollectionDataType) {
-          shred(baseStream, unresolvedPhysicalColumn.getName(), table, builder);
+        String nestedTableName = unresolvedPhysicalColumn.getName();
+        shred(baseStream, nestedTableName, table, sourceStats, builder);
       }
     }
   }
 
   private void shred(Name baseStream, String fieldName, Table parentTable,
-      SqrlRelBuilder builder) {
+                  SourceTableStatistics sourceStats, SqrlRelBuilder builder) {
     RelNode relNode = planNested(builder, baseStream, fieldName, parentTable);
 
     List<Column> columns = relNode.getRowType().getFieldList().stream()
@@ -133,7 +133,7 @@ public class ShredPlanner2 {
 
     TableFactory tableFactory = new TableFactory();
 
-    Table table = tableFactory.createTable(tableName, columns);
+    Table table = tableFactory.createSourceTable(tableName, columns, sourceStats.getRelationStats(tableName));
     tableFactory.assignRelationships(Name.system(fieldName), table, parentTable);
     table.setHead(relNode);
   }

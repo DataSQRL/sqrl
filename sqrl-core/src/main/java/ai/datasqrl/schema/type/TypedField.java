@@ -1,6 +1,6 @@
 package ai.datasqrl.schema.type;
 
-import ai.datasqrl.schema.type.schema.SchemaField;
+import ai.datasqrl.schema.input.SchemaField;
 
 public interface TypedField extends SchemaField {
 

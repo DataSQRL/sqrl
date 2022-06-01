@@ -78,6 +78,10 @@ public interface Name extends Serializable, Comparable<Name> {
     return new StandardName(canonicalizer.getCanonical(name), name);
   }
 
+  static Name ofCanonical(String canonicalName) {
+    return new SimpleName(canonicalName);
+  }
+
   static Name changeDisplayName(Name name, String displayName) {
     Preconditions.checkArgument(StringUtils.isNotEmpty(displayName));
     return new StandardName(name.getCanonical(), displayName.trim());

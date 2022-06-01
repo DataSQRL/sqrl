@@ -1,4 +1,4 @@
-package ai.datasqrl.schema.type.schema;
+package ai.datasqrl.schema.input;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.SourceRecord;

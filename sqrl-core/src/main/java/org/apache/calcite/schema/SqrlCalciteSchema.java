@@ -4,8 +4,10 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.nodes.RelNodeTable;
 import ai.datasqrl.schema.Relationship;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor
@@ -16,11 +18,16 @@ public class SqrlCalciteSchema extends AbstractSqrlSchema {
     Pair<Set<Relationship>, Set<ai.datasqrl.schema.Table>> rels = getAllTables(schema);
     for (ai.datasqrl.schema.Table table : rels.getRight()) {
       if (table.getId().equals(Name.system(s))) {
-        return new RelNodeTable(table.getHead().getRowType(), table.getHead());
+        Statistic stat = Statistics.of(table.getStatistic().getRowCount(), List.of(getPrimaryKey(table)));
+        return new RelNodeTable(table.getHead(), stat);
       }
     }
 
     throw new RuntimeException("Could not resolve table " + s);
+  }
+
+  public static ImmutableBitSet getPrimaryKey(ai.datasqrl.schema.Table table) {
+    throw new UnsupportedOperationException("Not yet implemented");
   }
 
   public static Pair<Set<Relationship>, Set<ai.datasqrl.schema.Table>> getAllTables(ai.datasqrl.schema.Schema schema) {

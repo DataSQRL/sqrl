@@ -5,7 +5,7 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.util.ConfigurationUtil;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.schema.type.schema.external.SchemaDefinition;
+import ai.datasqrl.schema.input.external.SchemaDefinition;
 import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;

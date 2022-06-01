@@ -1,12 +1,12 @@
 package ai.datasqrl.schema;
 
+import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.nodes.SqrlCalciteTable;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.attributes.ForeignKey;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -23,17 +23,20 @@ public class Table implements ShadowingContainer.Nameable {
 
   private final int uniqueId;
   private final NamePath path;
-  private final boolean isInternal;
-  private final ShadowingContainer<Field> fields;
+  private final Type type;
 
+  private final ShadowingContainer<Field> fields;
+  private final TableStatistic statistic;
   @Setter
   private RelNode head;
 
-  public Table(int uniqueId, NamePath path, boolean isInternal, ShadowingContainer<Field> fields) {
+  public Table(int uniqueId, NamePath path, Type type, ShadowingContainer<Field> fields,
+               TableStatistic statistic) {
     this.uniqueId = uniqueId;
     this.path = path;
-    this.isInternal = isInternal;
+    this.type = type;
     this.fields = fields;
+    this.statistic = statistic;
   }
 
   public Optional<Field> getField(Name name) {
@@ -60,7 +63,7 @@ public class Table implements ShadowingContainer.Nameable {
   }
 
   public boolean isVisible() {
-    return !isInternal;
+    return true;
   }
 
   public int getVersion() {
@@ -213,5 +216,9 @@ public class Table implements ShadowingContainer.Nameable {
         .filter(f->f instanceof Relationship)
         .map(f->(Relationship) f)
         .collect(Collectors.toList());
+  }
+
+  public enum Type {
+    STREAM, STATE;
   }
 }

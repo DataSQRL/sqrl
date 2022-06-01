@@ -9,7 +9,7 @@ import ai.datasqrl.execute.flink.ingest.schema.FlinkTableConverter;
 import ai.datasqrl.io.sources.SourceRecord.Named;
 import ai.datasqrl.io.sources.SourceRecord.Raw;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.type.schema.SchemaAdjustmentSettings;
+import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.server.ImportManager;
 import ai.datasqrl.server.ImportManager.SourceTableImport;
 import java.util.List;

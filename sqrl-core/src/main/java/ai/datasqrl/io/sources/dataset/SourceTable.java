@@ -61,6 +61,7 @@ public class SourceTable {
    * @return
    */
   //public DataStream<SourceRecord<String>> getDataStream(StreamExecutionEnvironment env);
+
   public SourceTableStatistics getStatistics() {
     SourceTableStatistics stats = dataset.registry.persistence.getTableStatistics(dataset.getName(),
         getName());

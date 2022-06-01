@@ -14,22 +14,28 @@ public class Column extends Field {
 
   @Setter
   private Table table;
-  //Identity of the column in addition to name
+  /* Identity of the column in addition to name for shadowed columns which we need to keep
+     on the table even though it is no longer referenceable since another column may depend on it
+     (unlike relationships which can be ignored once they are shadowed and no longer referenceable)
+   */
   public int version;
+
+  private final boolean isPrimaryKey;
+  private final boolean isTimestamp;
+
 
   public final int arrayDepth;
   public final boolean nonNull;
   public final List<Constraint> constraints;
-  private final boolean isPrimaryKey;
   private final RelDataTypeField relDataTypeField;
-  private final Set<Attribute> attributes;
+  private final Set<Attribute> attributes; //TODO: what are those for?
 
   //System information
   public boolean isInternal;
 
   public Column(Name name, Table table, int version,
       int arrayDepth, List<Constraint> constraints,
-      boolean isInternal, boolean isPrimaryKey,
+      boolean isInternal, boolean isPrimaryKey, //boolean isTimestamp,
       RelDataTypeField relDataTypeField, Set<Attribute> attributes) {
     super(name);
     this.table = table;
@@ -37,6 +43,7 @@ public class Column extends Field {
     this.arrayDepth = arrayDepth;
     this.constraints = constraints;
     this.isPrimaryKey = isPrimaryKey;
+    this.isTimestamp = false;
     this.relDataTypeField = relDataTypeField;
     this.isInternal = isInternal;
     this.nonNull = ConstraintHelper.isNonNull(constraints);
@@ -70,6 +77,7 @@ public class Column extends Field {
         ", nonNull=" + nonNull +
         ", constraints=" + constraints +
         ", isPrimaryKey=" + isPrimaryKey +
+        ", isTimestamp =" + isTimestamp +
         ", relDataTypeField=" + relDataTypeField +
         ", attributes=" + attributes +
         ", isInternal=" + isInternal +
