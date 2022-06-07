@@ -7,10 +7,9 @@ import lombok.ToString;
 
 @Getter
 @ToString
-@Setter
 public abstract class Field implements ShadowingContainer.Nameable {
 
-  public Name name;
+  protected final Name name;
 
   protected Field(Name name) {
     this.name = name;
@@ -18,7 +17,4 @@ public abstract class Field implements ShadowingContainer.Nameable {
 
   public abstract Name getId();
 
-  public Table getTable() {
-    return null;
-  }
 }

@@ -6,12 +6,11 @@ import static ai.datasqrl.plan.util.FlinkSchemaUtil.getIndex;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.nodes.SqrlRelBuilder;
 import ai.datasqrl.plan.util.FlinkRelDataTypeConverter;
-import ai.datasqrl.schema.Attribute;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.attributes.ForeignKey;
 import ai.datasqrl.schema.factory.TableFactory;
 import java.math.BigDecimal;
 import java.util.*;
@@ -139,17 +138,12 @@ public class ShredPlanner {
   }
 
   private Column createNestedColumn(RelDataTypeField field, List<Column> parentPrimaryKeys) {
-    boolean isParentPrimaryKey = false;
-    Set<Attribute> attributes = new HashSet<>();
-    for (Column column : parentPrimaryKeys) {
-      if (column.getName().getCanonical().equals(field.getName())) {
-        attributes.add(new ForeignKey(column));
-        isParentPrimaryKey = true;
-        break;
-      }
-    }
+    final Name fieldName = Name.system(field.getName()); //TODO: Need to preserve name casing
+    boolean isParentPrimaryKey = parentPrimaryKeys.stream().map(Column::getName).anyMatch(n -> fieldName.equals(n));
+    boolean isPrimaryKey = isParentPrimaryKey || fieldName.equals(ReservedName.ARRAY_IDX);
 
-    return new Column(Name.system(field.getName()), null, 0, 0, List.of(), false,
-        field.getName().equalsIgnoreCase("_idx") || isParentPrimaryKey, field, attributes);
+    //TODO: Need to put timestamp into child
+    return new Column(fieldName, 0, field, List.of(), false,
+        isPrimaryKey, isParentPrimaryKey, false);
   }
 }

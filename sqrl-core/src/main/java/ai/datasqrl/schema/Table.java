@@ -1,11 +1,10 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.nodes.SqrlCalciteTable;
 import ai.datasqrl.schema.Relationship.JoinType;
-import ai.datasqrl.schema.attributes.ForeignKey;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -192,7 +191,7 @@ public class Table implements ShadowingContainer.Nameable {
 
   public List<Column> getParentPrimaryKeys() {
     return this.fields.stream()
-        .filter(f->f instanceof Column && ((Column)f).containsAttribute(ForeignKey.class))
+            .filter(f->f instanceof Column && ((Column) f).isParentPrimaryKey())
         .map(f->(Column) f)
         .collect(Collectors.toList());
   }
@@ -206,7 +205,7 @@ public class Table implements ShadowingContainer.Nameable {
 
   public List<Column> getColumns() {
     return this.fields.getElements().stream()
-        .filter(f->f instanceof Column && !((Column) f).isInternal)
+        .filter(f->f instanceof Column && !((Column) f).isInternal())
         .map(f->(Column) f)
         .collect(Collectors.toList());
   }

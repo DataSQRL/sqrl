@@ -49,12 +49,12 @@ public class Optimizer {
       included.add(next);
       toInclude.remove(next);
       //Find all non-hidden related tables and add those
-      next.getFields().visibleStream().filter(f -> f instanceof Relationship && !f.name.isHidden())
+      next.getFields().visibleStream().filter(f -> f instanceof Relationship && !f.getName().isHidden())
           .map(f -> (Relationship) f)
           .forEach(r -> {
 //            Preconditions.checkArgument(!r.toTable.name.isHidden(),"Hidden tables should not be reachable by non-hidden relationships: " + r.toTable.name);
-            if (!included.contains(r.toTable)) {
-              toInclude.add(r.toTable);
+            if (!included.contains(r.getToTable())) {
+              toInclude.add(r.getToTable());
             }
           });
     }
@@ -95,12 +95,12 @@ public class Optimizer {
       included.add(next);
       toInclude.remove(next);
       //Find all non-hidden related tables and add those
-      next.getFields().visibleStream().filter(f -> f instanceof Relationship && !f.name.isHidden())
+      next.getFields().visibleStream().filter(f -> f instanceof Relationship && !f.getName().isHidden())
           .map(f -> (Relationship) f)
           .forEach(r -> {
 //            Preconditions.checkArgument(!r.toTable.name.isHidden(),"Hidden tables should not be reachable by non-hidden relationships: " + r.toTable.name);
-            if (!included.contains(r.toTable)) {
-              toInclude.add(r.toTable);
+            if (!included.contains(r.getToTable())) {
+              toInclude.add(r.getToTable());
             }
           });
     }

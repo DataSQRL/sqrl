@@ -35,8 +35,7 @@ public class FlinkRelDataTypeConverter {
       boolean isInternal = !(field.getType() instanceof BasicSqlType);
       boolean isPrimaryKey = unresolvedColumn.getName().equalsIgnoreCase(Name.UUID.getCanonical());
       Column column = new Column(Name.system(unresolvedColumn.getName()),
-          null, 0, 0, List.of(), isInternal, isPrimaryKey,
-          field, new HashSet<>());
+           0, field, List.of(), isInternal, isPrimaryKey, false, false);
       columns.add(column);
     }
 

@@ -50,13 +50,11 @@ public class QuerySpecNorm extends RelationNorm {
   private Optional<OrderBy> orderBy;
   private Optional<Limit> limit;
 
-  private List<Expression> primaryKeys2;
-
   public QuerySpecNorm(Optional<NodeLocation> location, List<ResolvedColumn> parentPrimaryKeys,
       List<Expression> addedPrimaryKeys, SelectNorm select, RelationNorm from,
       Optional<Expression> where,
       Optional<GroupBy> groupBy, Optional<Expression> having, Optional<OrderBy> orderBy,
-      Optional<Limit> limit, List<Expression> primaryKeys) {
+      Optional<Limit> limit) {
     super(location);
     this.parentPrimaryKeys = parentPrimaryKeys;
     this.addedPrimaryKeys = addedPrimaryKeys;
@@ -67,7 +65,6 @@ public class QuerySpecNorm extends RelationNorm {
     this.having = having;
     this.orderBy = orderBy;
     this.limit = limit;
-    this.primaryKeys2 = primaryKeys;
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {

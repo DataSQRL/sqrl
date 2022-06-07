@@ -149,8 +149,8 @@ public class SchemaUpdatePlanner {
 
       //By convention, the last field is new the expression
       RelDataTypeField relField = relNode.getRowType().getFieldList().get(relNode.getRowType().getFieldList().size() - 1);
-      Column column = new Column(name.getLast(), table, nextVersion, 0, List.of(), false,
-          false, relField, new HashSet<>());
+      Column column = new Column(name.getLast(), nextVersion, relField, List.of(), false,
+          false, false, false);
 
       return new AddFieldOp(table, column, Optional.of(relNode));
     }
@@ -196,11 +196,10 @@ public class SchemaUpdatePlanner {
         Expression expression = addedPrimaryKeys.get(i);
         Name name = specNorm.getFieldName(expression);
         Preconditions.checkNotNull(name);
-        Column column = new Column(name, null, 0, 0, List.of(), true,
-            expressions.contains(expression),
-            relNode.getRowType().getFieldList().get(
-                specNorm.getParentPrimaryKeys().size() + i),
-            Set.of());
+        RelDataTypeField datatype = relNode.getRowType().getFieldList().get(
+                specNorm.getParentPrimaryKeys().size() + i);
+        Column column = new Column(name, 0, datatype, List.of(), true,
+            expressions.contains(expression), false, false);
         columns.add(column);
       }
 
@@ -208,11 +207,10 @@ public class SchemaUpdatePlanner {
         Expression s = select.get(i);
         Name name = specNorm.getFieldName(s);
         Preconditions.checkNotNull(name);
-
-        Column column = new Column(name, null, 0, 0, List.of(), false,
-            expressions.contains(s),
-            relNode.getRowType().getFieldList().get(specNorm.getParentPrimaryKeys().size() + specNorm.getAddedPrimaryKeys().size() + i),
-            Set.of());
+        RelDataTypeField datatype = relNode.getRowType().getFieldList().get(
+                specNorm.getParentPrimaryKeys().size() + specNorm.getAddedPrimaryKeys().size() + i);
+        Column column = new Column(name, 0, datatype, List.of(), false,
+            expressions.contains(s), false, false);
         columns.add(column);
       }
 

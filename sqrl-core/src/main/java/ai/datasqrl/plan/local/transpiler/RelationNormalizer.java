@@ -113,8 +113,7 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
         toGroupBy(groupByIndices),
         having,
         toOrderBy(sortItems),
-        node.getLimit(), //todo: limit
-        new PrimaryKeyDeriver(scope, selectNorm, groupByIndices, fromNorm).get()
+        node.getLimit()
     );
 
     //Set references for ordinals

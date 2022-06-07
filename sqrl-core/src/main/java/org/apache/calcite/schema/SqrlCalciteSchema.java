@@ -48,8 +48,8 @@ public class SqrlCalciteSchema extends AbstractSqrlSchema {
       next.getFields().visibleStream().filter(f -> f instanceof Relationship)
           .map(f -> (Relationship)f)
           .forEach(r -> {
-            if (!included.contains(r.toTable)) {
-              toInclude.add(r.toTable);
+            if (!included.contains(r.getToTable())) {
+              toInclude.add(r.getToTable());
             }
           });
     }
