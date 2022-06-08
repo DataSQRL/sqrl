@@ -1,4 +1,4 @@
-package ai.datasqrl.server;
+package ai.datasqrl.environment;
 
 import ai.datasqrl.config.metadata.MetadataStore;
 import ai.datasqrl.config.provider.EnvironmentPersistenceProvider;

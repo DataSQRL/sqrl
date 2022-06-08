@@ -22,7 +22,7 @@ import ai.datasqrl.plan.local.transpiler.transforms.ExpressionToQueryTransformer
 import ai.datasqrl.plan.local.transpiler.transforms.RejoinExprTransform;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.server.ImportManager;
+import ai.datasqrl.environment.ImportManager;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import lombok.AllArgsConstructor;

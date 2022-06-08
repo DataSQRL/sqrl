@@ -1,7 +1,7 @@
 package ai.datasqrl.api;
 
-import ai.datasqrl.Environment;
-import ai.datasqrl.server.ScriptDeployment;
+import ai.datasqrl.environment.Environment;
+import ai.datasqrl.environment.ScriptDeployment;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;

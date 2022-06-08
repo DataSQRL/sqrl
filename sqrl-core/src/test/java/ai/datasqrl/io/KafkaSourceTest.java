@@ -1,7 +1,7 @@
 package ai.datasqrl.io;
 
 
-import ai.datasqrl.Environment;
+import ai.datasqrl.environment.Environment;
 import ai.datasqrl.TestUtil;
 import ai.datasqrl.api.ConfigurationTest;
 import ai.datasqrl.config.SqrlSettings;
@@ -15,7 +15,6 @@ import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -32,11 +31,9 @@ import org.junit.jupiter.api.*;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 

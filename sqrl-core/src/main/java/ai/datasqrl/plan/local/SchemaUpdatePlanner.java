@@ -20,10 +20,10 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.physical.util.RelToSql;
 import ai.datasqrl.plan.calcite.MultiphaseOptimizer;
 import ai.datasqrl.plan.calcite.SqrlPrograms;
-import ai.datasqrl.plan.local.operations.AddDatasetOp;
+import ai.datasqrl.plan.local.operations.AddImportedTablesOp;
 import ai.datasqrl.plan.local.operations.AddFieldOp;
-import ai.datasqrl.plan.local.operations.AddNestedQueryOp;
-import ai.datasqrl.plan.local.operations.AddQueryOp;
+import ai.datasqrl.plan.local.operations.AddNestedTableOp;
+import ai.datasqrl.plan.local.operations.AddTableOp;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
 import ai.datasqrl.plan.local.shred.ShredPlanner;
 import ai.datasqrl.plan.local.transpiler.StatementNormalizer;
@@ -41,14 +41,12 @@ import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.factory.TableFactory;
-import ai.datasqrl.server.ImportManager;
-import ai.datasqrl.server.ImportManager.SourceTableImport;
+import ai.datasqrl.environment.ImportManager;
+import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.RelOptUtil;
@@ -117,7 +115,7 @@ public class SchemaUpdatePlanner {
                 localPlanner.getCalcitePlanner().createRelBuilder());
       }
 
-      return new AddDatasetOp(List.of(table));
+      return new AddImportedTablesOp(List.of(table));
     }
 
     @Override
@@ -226,12 +224,12 @@ public class SchemaUpdatePlanner {
       System.out.println(relNode.explain());
 
       if (namePath.getLength() == 1) {
-        return new AddQueryOp(table);
+        return new AddTableOp(table);
       } else {
         Table parentTable = schema.walkTable(namePath.popLast());
         Name relationshipName = namePath.getLast();
 
-        return new AddNestedQueryOp(parentTable, table, relationshipName);
+        return new AddNestedTableOp(parentTable, table, relationshipName);
       }
 
     }

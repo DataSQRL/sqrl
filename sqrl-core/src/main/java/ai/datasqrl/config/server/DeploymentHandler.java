@@ -1,11 +1,11 @@
 package ai.datasqrl.config.server;
 
-import ai.datasqrl.Environment;
+import ai.datasqrl.environment.Environment;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.error.ErrorMessage;
 import ai.datasqrl.config.scripts.ScriptBundle.Config;
 import ai.datasqrl.config.util.StringNamedId;
-import ai.datasqrl.server.ScriptDeployment;
+import ai.datasqrl.environment.ScriptDeployment;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;

@@ -2,7 +2,7 @@ package ai.datasqrl.config;
 
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.execute.StreamEngine;
-import ai.datasqrl.server.ImportManager;
+import ai.datasqrl.environment.ImportManager;
 import lombok.Builder;
 import lombok.Value;
 

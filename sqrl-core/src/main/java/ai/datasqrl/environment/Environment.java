@@ -1,4 +1,4 @@
-package ai.datasqrl;
+package ai.datasqrl.environment;
 
 import ai.datasqrl.config.BundleOptions;
 import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
@@ -16,11 +16,7 @@ import ai.datasqrl.io.sources.dataset.DatasetRegistry;
 import ai.datasqrl.io.sources.dataset.SourceTableMonitor;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.plan.BundlePlanner;
-import ai.datasqrl.server.CompilationResult;
-import ai.datasqrl.server.EnvironmentPersistence;
-import ai.datasqrl.server.ImportManager;
-import ai.datasqrl.server.ScriptDeployment;
-import ai.datasqrl.server.ScriptDeployment.Result;
+import ai.datasqrl.environment.ScriptDeployment.Result;
 import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;

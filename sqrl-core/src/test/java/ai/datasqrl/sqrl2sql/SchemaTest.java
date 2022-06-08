@@ -1,7 +1,7 @@
 package ai.datasqrl.sqrl2sql;
 
 import ai.datasqrl.C360Example;
-import ai.datasqrl.Environment;
+import ai.datasqrl.environment.Environment;
 import ai.datasqrl.api.ConfigurationTest;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.error.ErrorCollector;
@@ -15,7 +15,7 @@ import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.plan.local.LocalPlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
-import ai.datasqrl.server.ImportManager;
+import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.plan.local.SchemaUpdatePlanner;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;

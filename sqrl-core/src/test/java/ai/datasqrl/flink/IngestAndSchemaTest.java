@@ -2,7 +2,7 @@ package ai.datasqrl.flink;
 
 import ai.datasqrl.C360Example;
 import ai.datasqrl.api.ConfigurationTest;
-import ai.datasqrl.Environment;
+import ai.datasqrl.environment.Environment;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
 import ai.datasqrl.execute.flink.environment.LocalFlinkStreamEngineImpl;
@@ -16,7 +16,7 @@ import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.server.ImportManager;
+import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import lombok.SneakyThrows;

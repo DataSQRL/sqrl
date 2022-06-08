@@ -5,7 +5,7 @@ import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
-import ai.datasqrl.flink.IngestAndSchemaTest;
+import ai.datasqrl.environment.Environment;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import com.google.common.collect.ImmutableList;
 import io.vertx.core.Vertx;

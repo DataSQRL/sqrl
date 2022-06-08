@@ -1,12 +1,9 @@
 package ai.datasqrl.plan.nodes;
 
-import ai.datasqrl.schema.Table;
-import ai.datasqrl.server.ImportManager.SourceTableImport;
-import java.util.List;
+import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeImpl;
 import org.apache.calcite.schema.impl.AbstractTable;
 

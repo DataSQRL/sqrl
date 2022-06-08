@@ -17,19 +17,19 @@ public class SchemaBuilder extends SchemaOpVisitor {
   }
 
   @Override
-  public <T> T visit(AddDatasetOp op) {
+  public <T> T visit(AddImportedTablesOp op) {
     schema.addAll(op.getTables());
     return null;
   }
 
   @Override
-  public <T> T visit(AddQueryOp addQueryOp) {
-    schema.add(addQueryOp.getTable());
+  public <T> T visit(AddTableOp addTableOp) {
+    schema.add(addTableOp.getTable());
     return null;
   }
 
   @Override
-  public <T> T visit(AddNestedQueryOp op) {
+  public <T> T visit(AddNestedTableOp op) {
     tableFactory.assignRelationships(
         op.getRelationshipName(),
         op.getTable(),

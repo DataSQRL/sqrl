@@ -1,4 +1,4 @@
-package ai.datasqrl.server;
+package ai.datasqrl.environment;
 
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.util.NamedIdentifier;

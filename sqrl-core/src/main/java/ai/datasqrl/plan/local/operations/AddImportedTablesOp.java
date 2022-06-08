@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.Value;
 
 @Value
-public class AddDatasetOp implements SchemaUpdateOp {
+public class AddImportedTablesOp implements SchemaUpdateOp {
 
   List<Table> tables;
 

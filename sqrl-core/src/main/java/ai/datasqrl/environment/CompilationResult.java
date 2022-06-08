@@ -1,4 +1,4 @@
-package ai.datasqrl.server;
+package ai.datasqrl.environment;
 
 import ai.datasqrl.config.error.ErrorMessage;
 import ai.datasqrl.config.scripts.ScriptBundle;

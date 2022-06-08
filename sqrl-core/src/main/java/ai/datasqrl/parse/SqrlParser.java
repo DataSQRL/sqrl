@@ -7,7 +7,7 @@ import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.parse.tree.SqrlStatement;
 
 /**
- * Pasers scripts or statements
+ * Parses SQRL scripts or statements
  */
 public class SqrlParser {
 
@@ -18,7 +18,7 @@ public class SqrlParser {
     parser = new SqlParser(new SqlParserOptions());
     parsingOptions = ParsingOptions.builder()
         .setWarningConsumer((e) ->
-            errorCollector.add(new ErrorMessage.Implementation(e.getWarning(), null, null)))
+            errorCollector.warn(e.getLineNumber(),e.getColumnNumber(),e.getWarning()))
         .setDecimalLiteralTreatment(DecimalLiteralTreatment.AS_DOUBLE)
         .build();
   }
@@ -27,11 +27,12 @@ public class SqrlParser {
     return parser.createScript(script, parsingOptions);
   }
 
+  public SqrlStatement parseStatement(String statement) {
+    return parser.createStatement(statement, parsingOptions);
+  }
+
   public static SqrlParser newParser(ErrorCollector errorCollector) {
     return new SqrlParser(errorCollector);
   }
 
-  public SqrlStatement parseStatement(String statement) {
-    return parser.createStatement(statement, parsingOptions);
-  }
 }
