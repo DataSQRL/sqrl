@@ -1,6 +1,6 @@
 package ai.datasqrl.schema.type.basic;
 
-import ai.datasqrl.schema.type.SqmlTypeVisitor;
+import ai.datasqrl.schema.type.SqrlTypeVisitor;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -23,7 +23,7 @@ public class UuidType extends SimpleBasicType<UUID> {
     return s -> UUID.fromString(s);
   }
 
-  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitUuidType(this, context);
   }
 }

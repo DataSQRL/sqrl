@@ -8,10 +8,10 @@ import ai.datasqrl.io.sources.stats.SchemaGenerator;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.schema.type.RelationType;
-import ai.datasqrl.schema.type.StandardField;
-import ai.datasqrl.schema.type.constraint.Constraint;
+import ai.datasqrl.schema.Schema;
+import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
+import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaImport;
 import com.google.common.base.Preconditions;
@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
 import lombok.NonNull;
 import lombok.Value;
 
@@ -30,7 +30,7 @@ public class ImportManager {
 
   private final DatasetRegistry datasetRegistry;
   private Map<Name, FlexibleDatasetSchema> userSchema = Collections.EMPTY_MAP;
-  private final Map<Name, RelationType<StandardField>> scriptSchemas = new HashMap<>();
+  private final Map<Name, Schema> scriptSchemas = new HashMap<>();
 
   public ImportManager(DatasetRegistry datasetRegistry) {
     this.datasetRegistry = datasetRegistry;
@@ -56,13 +56,14 @@ public class ImportManager {
   }
 
   public void registerScript(@NonNull Name name,
-      @NonNull RelationType<StandardField> datasetSchema) {
+      @NonNull Schema scriptSchema) {
     Preconditions.checkArgument(scriptSchemas.containsKey(name),
         "Duplicate name for script import: %s", name);
-    scriptSchemas.put(name, datasetSchema);
+    scriptSchemas.put(name, scriptSchema);
   }
 
   public List<TableImport> importAllTables(@NonNull Name datasetName,
+      SchemaAdjustmentSettings schemaAdjustmentSettings,
       ErrorCollector errors) {
     List<TableImport> imports = new ArrayList<>();
     if (scriptSchemas.containsKey(datasetName)) {
@@ -74,7 +75,7 @@ public class ImportManager {
         return imports; //abort
       }
       for (SourceTable table : dsDef.getTables()) {
-        TableImport tblimport = importTable(datasetName, table.getName(), errors);
+        TableImport tblimport = importTable(datasetName, table.getName(), schemaAdjustmentSettings, errors);
         if (tblimport != null) {
           imports.add(tblimport);
         }
@@ -84,6 +85,7 @@ public class ImportManager {
   }
 
   public SourceTableImport importTable(@NonNull Name datasetName, @NonNull Name tableName,
+      SchemaAdjustmentSettings schemaAdjustmentSettings,
       ErrorCollector errors) {
     if (scriptSchemas.containsKey(datasetName)) {
       throw new UnsupportedOperationException("Not yet implemented");
@@ -104,17 +106,11 @@ public class ImportManager {
         userDSSchema = FlexibleDatasetSchema.EMPTY;
       }
       FlexibleDatasetSchema.TableField tbField = createTable(table, datasetName,
-          userDSSchema.getFieldByName(table.getName()), errors);
+          userDSSchema.getFieldByName(table.getName()), schemaAdjustmentSettings, errors);
       System.out.println(errors);
       //schemaConverter.convert(tbField,imp.asName.orElse(table.getName()))
-      return new SourceTableImport(tableName, table, tbField);
+      return new SourceTableImport(tableName, table, tbField, schemaAdjustmentSettings);
     }
-  }
-
-  public SourceTableImport resolveTable(@NonNull Name datasetName, @NonNull Name tableName,
-      Optional<Name> alias, ErrorCollector errors) {
-    SourceTableImport sourceTableImport = importTable(datasetName, tableName, errors);
-    return sourceTableImport;
   }
 
   public interface TableImport {
@@ -138,6 +134,8 @@ public class ImportManager {
     private final SourceTable table;
     @NonNull
     private final FlexibleDatasetSchema.TableField sourceSchema;
+    @NonNull
+    private final SchemaAdjustmentSettings schemaAdjustmentSettings;
 
     @Override
     public boolean isSource() {
@@ -160,8 +158,8 @@ public class ImportManager {
 
   private FlexibleDatasetSchema.TableField createTable(SourceTable table, Name datasetname,
       FlexibleDatasetSchema.TableField userSchema,
+      SchemaAdjustmentSettings schemaAdjustmentSettings,
       ErrorCollector errors) {
-    SchemaGenerator generator = new SchemaGenerator();
     SourceTableStatistics stats = table.getStatistics();
     errors = errors.resolve(datasetname);
     if (userSchema == null) {
@@ -172,6 +170,7 @@ public class ImportManager {
       }
       userSchema = FlexibleDatasetSchema.TableField.empty(table.getName());
     }
+    SchemaGenerator generator = new SchemaGenerator(schemaAdjustmentSettings);
     FlexibleDatasetSchema.TableField result = generator.mergeSchema(stats, userSchema,
         errors.resolve(table.getName()));
     return result;

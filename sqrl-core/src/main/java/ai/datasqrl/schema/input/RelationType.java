@@ -1,8 +1,8 @@
-package ai.datasqrl.schema.type;
+package ai.datasqrl.schema.input;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema.AbstractField;
-import ai.datasqrl.schema.input.SchemaField;
+import ai.datasqrl.schema.type.Type;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -1,9 +1,8 @@
 package ai.datasqrl.schema.input;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.type.RelationType;
 import ai.datasqrl.schema.type.Type;
-import ai.datasqrl.schema.type.constraint.Constraint;
+import ai.datasqrl.schema.constraint.Constraint;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;

@@ -1,16 +1,14 @@
 package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.type.constraint.Constraint;
-import ai.datasqrl.schema.type.constraint.ConstraintHelper;
+import ai.datasqrl.schema.constraint.Constraint;
+import ai.datasqrl.schema.constraint.ConstraintHelper;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import com.google.common.base.Preconditions;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;

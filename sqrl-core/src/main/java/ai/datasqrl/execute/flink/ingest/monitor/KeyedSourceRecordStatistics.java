@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.ingest;
+package ai.datasqrl.execute.flink.ingest.monitor;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.execute.flink.environment.util.FlinkUtilities;
@@ -49,6 +49,7 @@ public class KeyedSourceRecordStatistics extends
     }
     ErrorCollector errors = acc.validate(sourceRecord, datasetReg);
     if (errors.isFatal()) {
+      System.out.println("Stats Validation Error: " + errors);
       //TODO: Record is flawed, put it in sideoutput and issue warning
     } else {
       acc.add(sourceRecord, datasetReg);

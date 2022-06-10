@@ -4,7 +4,8 @@ import static ai.datasqrl.parse.util.SqrlNodeUtil.hasOneUnnamedColumn;
 import static ai.datasqrl.plan.util.FlinkSchemaUtil.requiresShredding;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.execute.flink.ingest.schema.FlinkTableConverter;
+import ai.datasqrl.execute.flink.ingest.schema.FlinkInputHandlerProvider;
+import ai.datasqrl.execute.flink.ingest.schema.FlinkTableSchemaGenerator;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.parse.tree.CreateSubscription;
@@ -17,6 +18,7 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.QueryAssignment;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.physical.util.RelToSql;
 import ai.datasqrl.plan.calcite.MultiphaseOptimizer;
 import ai.datasqrl.plan.calcite.SqrlPrograms;
@@ -43,6 +45,8 @@ import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.factory.TableFactory;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
+import ai.datasqrl.schema.input.FlexibleTableConverter;
+import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,8 +67,9 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 public class SchemaUpdatePlanner {
 
   private final ImportManager importManager;
+  private final SchemaAdjustmentSettings schemaSettings;
   private final ErrorCollector errors;
-  private final FlinkTableConverter tbConverter = new FlinkTableConverter();
+  private final FlinkInputHandlerProvider tbConverter = new FlinkInputHandlerProvider();
   private final LocalPlanner localPlanner;
 
   public Optional<SchemaUpdateOp> plan(Schema schema, Node node) {
@@ -81,41 +86,61 @@ public class SchemaUpdatePlanner {
 
     @Override
     public SchemaUpdateOp visitImportDefinition(ImportDefinition node, Object context) {
-      if (node.getNamePath().getLength() > 2) {
+      if (node.getNamePath().getLength() != 2) {
         throw new RuntimeException(
-            String.format("Cannot import identifier: %s", node.getNamePath()));
+            String.format("Invalid import identifier: %s", node.getNamePath()));
       }
 
-      SourceTableImport importSource = importManager
-          .resolveTable(node.getNamePath().get(0), node.getNamePath().get(1), node.getAliasName(),
-              errors);
+      //Check if this imports all or a single table
+      Name sourceDataset = node.getNamePath().get(0);
+      Name sourceTable = node.getNamePath().get(1);
 
-      Pair<org.apache.flink.table.api.Schema, TypeInformation> tbl = tbConverter
-          .tableSchemaConversion(importSource.getSourceSchema());
-      org.apache.flink.table.api.Schema flinkSchema = tbl.getLeft();
+      List<ImportManager.TableImport> importTables;
+      Optional<Name> nameAlias;
 
-      Name tableName = node.getAliasName().orElse(importSource.getTableName());
-
-      List<Column> columns =
-          FlinkRelDataTypeConverter.buildColumns(flinkSchema.getColumns());
-
-      SourceTableStatistics sourceStats = importSource.getTable().getStatistics();
-
-      ShredPlanner shredPlanner = new ShredPlanner();
-      TableFactory tableFactory = new TableFactory();
-      Table table = tableFactory.createSourceTable(tableName.toNamePath(), columns,
-              sourceStats.getRelationStats(NamePath.ROOT));
-      RelNode relNode = shredPlanner.plan(tableName, localPlanner.getCalcitePlanner().createRelBuilder(), tbl.getLeft(),
-              table);
-
-      table.setHead(relNode);
-
-      if (requiresShredding(flinkSchema)) {
-        shredPlanner.shred(tableName, flinkSchema, table, sourceStats,
-                localPlanner.getCalcitePlanner().createRelBuilder());
+      if (sourceTable.equals(ReservedName.ALL)) { //import all tables from dataset
+        importTables = importManager.importAllTables(sourceDataset, schemaSettings, errors);
+        nameAlias = Optional.empty();
+      } else { //importing a single table
+        importTables = List.of(importManager
+                .importTable(sourceDataset, sourceTable, schemaSettings, errors));
+        nameAlias = node.getAliasName();
       }
 
-      return new AddImportedTablesOp(List.of(table));
+      List<Table> resultTables = new ArrayList<>();
+      for (ImportManager.TableImport tblImport : importTables) {
+        Name tableName = nameAlias.orElse(tblImport.getTableName());
+        if (tblImport.isSource()) {
+          SourceTableImport importSource = (SourceTableImport)tblImport;
+
+          org.apache.flink.table.api.Schema flinkSchema = FlinkTableSchemaGenerator.convert(
+                  new FlexibleTableConverter(importSource.getSourceSchema()));
+
+          List<Column> columns =
+                  FlinkRelDataTypeConverter.buildColumns(flinkSchema.getColumns());
+
+          SourceTableStatistics sourceStats = importSource.getTable().getStatistics();
+
+          ShredPlanner shredPlanner = new ShredPlanner();
+          TableFactory tableFactory = new TableFactory();
+          Table table = tableFactory.createSourceTable(tableName.toNamePath(), columns,
+                  sourceStats.getRelationStats(NamePath.ROOT));
+          RelNode relNode = shredPlanner.plan(tableName, localPlanner.getCalcitePlanner().createRelBuilder(), flinkSchema,
+                  table);
+
+          table.setHead(relNode);
+
+          if (requiresShredding(flinkSchema)) {
+            shredPlanner.shred(tableName, flinkSchema, table, sourceStats,
+                    localPlanner.getCalcitePlanner().createRelBuilder());
+          }
+          resultTables.add(table);
+        } else {
+          throw new UnsupportedOperationException("Script imports are not yet supported");
+        }
+      }
+
+      return new AddImportedTablesOp(resultTables);
     }
 
     @Override

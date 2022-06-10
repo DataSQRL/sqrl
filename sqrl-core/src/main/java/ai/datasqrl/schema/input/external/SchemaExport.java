@@ -2,10 +2,10 @@ package ai.datasqrl.schema.input.external;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.SpecialName;
-import ai.datasqrl.schema.type.RelationType;
+import ai.datasqrl.schema.input.RelationType;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.BasicType;
-import ai.datasqrl.schema.type.constraint.Constraint;
+import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;

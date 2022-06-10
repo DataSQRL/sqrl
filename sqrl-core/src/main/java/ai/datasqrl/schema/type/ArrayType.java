@@ -36,7 +36,7 @@ public class ArrayType implements Type {
     return "[" + subType.toString() + "]";
   }
 
-  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitArrayType(this, context);
   }
 }

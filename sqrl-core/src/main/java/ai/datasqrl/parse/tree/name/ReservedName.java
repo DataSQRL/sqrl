@@ -22,5 +22,6 @@ public class ReservedName extends AbstractName {
   public static ReservedName INGEST_TIME = new ReservedName("_ingest_time");
   public static ReservedName SOURCE_TIME = new ReservedName("_source_time");
   public static ReservedName ARRAY_IDX = new ReservedName("_idx");
+  public static ReservedName ALL = new ReservedName("*");
 
 }

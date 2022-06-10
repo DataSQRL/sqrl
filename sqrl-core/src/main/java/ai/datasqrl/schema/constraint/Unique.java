@@ -1,43 +1,30 @@
-package ai.datasqrl.schema.type.constraint;
+package ai.datasqrl.schema.constraint;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.type.Type;
 import java.util.Map;
 import java.util.Optional;
+import lombok.Getter;
 
-public class NotNull implements Constraint {
+@Getter
+public class Unique implements Constraint {
 
-  public static final Name NAME = Name.system("not_null");
+  public static final Name NAME = Name.system("unique");
 
-  public static final NotNull INSTANCE = new NotNull();
+  public static final Unique UNCONSTRAINED = new Unique();
 
-  private NotNull() {
-  }
+  private Unique() {
+  } //For Kryo
 
   @Override
   public boolean satisfies(Object value) {
-    if (value == null) {
-      return false;
-    }
-    if (value.getClass().isArray()) {
-      for (Object v : (Object[]) value) {
-        if (value == null) {
-          return false;
-        }
-      }
-    }
     return true;
   }
 
   @Override
   public boolean appliesTo(Type type) {
-    return true;
-  }
-
-  @Override
-  public String toString() {
-    return NAME.getDisplay();
+    return false;
   }
 
   @Override
@@ -47,9 +34,13 @@ public class NotNull implements Constraint {
 
   @Override
   public Map<String, Object> export() {
-    return null;
+    return Map.of();
   }
 
+  @Override
+  public String toString() {
+    return NAME.getDisplay();
+  }
 
   public static class Factory implements Constraint.Factory {
 
@@ -60,9 +51,7 @@ public class NotNull implements Constraint {
 
     @Override
     public Optional<Constraint> create(Map<String, Object> parameters, ErrorCollector errors) {
-      return Optional.of(INSTANCE);
+      return Optional.of(new Unique());
     }
-
   }
-
 }

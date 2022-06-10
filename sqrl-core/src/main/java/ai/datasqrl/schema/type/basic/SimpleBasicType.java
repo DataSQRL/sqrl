@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+
+import com.google.common.collect.ImmutableSet;
 import lombok.NonNull;
 
 public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
@@ -23,15 +25,22 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
 
     private final Class<J> clazz;
     private final Function<String, J> stringParser;
+    private final Set<Class> javaClasses;
 
     public Conversion(@NonNull Class<J> clazz, @NonNull Function<String, J> stringParser) {
       this.clazz = clazz;
       this.stringParser = stringParser;
+      this.javaClasses = Collections.singleton(clazz);
     }
 
     @Override
     public Set<Class> getJavaTypes() {
-      return Collections.singleton(clazz);
+      return javaClasses;
+    }
+
+    @Override
+    public Optional<Integer> getTypeDistance(BasicType fromType) {
+      return Optional.empty();
     }
 
     public boolean detectType(String original) {
@@ -41,6 +50,8 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
       } catch (IllegalArgumentException e) {
         return false;
       } catch (DateTimeParseException e) {
+        return false;
+      } catch (Exception e) {
         return false;
       }
     }

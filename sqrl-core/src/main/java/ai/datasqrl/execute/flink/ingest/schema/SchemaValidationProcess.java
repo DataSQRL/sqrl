@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.ingest;
+package ai.datasqrl.execute.flink.ingest.schema;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.SourceRecord;

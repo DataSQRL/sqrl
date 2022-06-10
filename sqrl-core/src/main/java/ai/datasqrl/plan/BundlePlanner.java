@@ -58,6 +58,7 @@ public class BundlePlanner {
   public Optional<SchemaUpdateOp> planStatement(Node statement, SchemaBuilder schema) {
     SchemaUpdatePlanner planner = new SchemaUpdatePlanner(
         this.options.getImportManager(),
+        this.options.getSchemaSettings(),
         this.errorCollector,
         new LocalPlanner(schema.peek()));
     return planner.plan(schema.peek(), statement);

@@ -17,6 +17,7 @@ import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.plan.local.SchemaUpdatePlanner;
+import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -210,6 +211,7 @@ class SchemaTest {
 
     for (Node n : node.getStatements()) {
       SchemaUpdatePlanner schemaUpdatePlanner = new SchemaUpdatePlanner(this.importManager,
+              SchemaAdjustmentSettings.DEFAULT,
           errorCollector, new LocalPlanner(schema.peek()));
       System.out.println("Statement: " + NodeFormatter.accept(n));
 

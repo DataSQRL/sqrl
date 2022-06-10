@@ -3,32 +3,39 @@ package ai.datasqrl.io.sources.stats;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.SpecialName;
-import ai.datasqrl.schema.type.RelationType;
+import ai.datasqrl.schema.input.RelationType;
+import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.basic.BasicTypeManager;
 import ai.datasqrl.schema.type.basic.StringType;
-import ai.datasqrl.schema.type.constraint.Cardinality;
-import ai.datasqrl.schema.type.constraint.Constraint;
+import ai.datasqrl.schema.constraint.Cardinality;
+import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
+import java.io.Serializable;
+import java.util.*;
+
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
-public class SchemaGenerator {
+/**
+ *
+ * This class is not thread-safe and should be used to merge one schema at a time.
+ */
+public class SchemaGenerator implements Serializable {
+
+  private final SchemaAdjustmentSettings settings;
 
   private boolean isComplete;
+
+  public SchemaGenerator(SchemaAdjustmentSettings settings) {
+    this.settings = settings;
+  }
 
   public FlexibleDatasetSchema.TableField mergeSchema(@NonNull SourceTableStatistics tableStats,
       @NonNull FlexibleDatasetSchema.TableField tableDef, @NonNull ErrorCollector errors) {
@@ -85,11 +92,11 @@ public class SchemaGenerator {
   List<FlexibleDatasetSchema.FieldType> merge(@NonNull Set<FieldTypeStats> statTypes,
       @NonNull List<FlexibleDatasetSchema.FieldType> fieldTypes, @NonNull ErrorCollector errors) {
     if (fieldTypes.isEmpty()) {
-            /* Need to generate single type from statistics. First, we check if there is one family of detected types.
-               If not (or if there is ambiguity), we combine all of the raw types.
-               This provides a defensive approach (i.e. we don't force type combination on detected types) with user friendliness
-               in cases where the detected type is obvious.
-             */
+      /* Need to generate single type from statistics. First, we check if there is one family of detected types.
+         If not (or if there is ambiguity), we combine all of the raw types.
+         This provides a defensive approach (i.e. we don't force type combination on detected types) with user friendliness
+         in cases where the detected type is obvious.
+       */
       Preconditions.checkArgument(!statTypes.isEmpty() && !isComplete);
       FlexibleDatasetSchema.FieldType result = null;
       int maxArrayDepth = 0;
@@ -100,7 +107,7 @@ public class SchemaGenerator {
           if (type == null) {
             type = (BasicType) td;
           } else {
-            type = BasicTypeManager.combine(type, (BasicType) td, false);
+            type = BasicTypeManager.combine(type, (BasicType) td, settings.maxCastingTypeDistance()).orElse(null);
           }
           maxArrayDepth = Math.max(fts.getArrayDepth(), maxArrayDepth);
         } else {
@@ -126,7 +133,7 @@ public class SchemaGenerator {
             if (type == null) {
               type = (BasicType) td;
             } else {
-              type = BasicTypeManager.combine(type, (BasicType) td, true);
+              type = BasicTypeManager.combineForced(type, (BasicType) td);
             }
             maxArrayDepth = Math.max(fts.getArrayDepth(), maxArrayDepth);
           } else {
@@ -167,13 +174,13 @@ public class SchemaGenerator {
       assert result != null;
       return Collections.singletonList(result);
     } else {
-             /*
-               In this case, we need to honor the types as defined by the user in the schema. All we are doing here is checking
-               that all of the types in the statistics have a place to match and alert the user if not (because that would lead to
-               records being filtered out).
-               We first try to match on raw type witin type families with the closest relative. If that doesn't match, we try
-               the same with the detected type. If all fails, we forcefully combine the raw type.
-             */
+       /*
+         In this case, we need to honor the types as defined by the user in the schema. All we are doing here is checking
+         that all of the types in the statistics have a place to match and alert the user if not (because that would lead to
+         records being filtered out).
+         We first try to match on raw type witin type families with the closest relative. If that doesn't match, we try
+         the same with the detected type. If all fails, we forcefully combine the raw type.
+       */
       List<FlexibleDatasetSchema.FieldType> result = new ArrayList<>(fieldTypes.size());
       Multimap<FlexibleDatasetSchema.FieldType, FieldTypeStats> typePairing = ArrayListMultimap.create();
       for (FieldTypeStats fts : statTypes) {
@@ -218,84 +225,63 @@ public class SchemaGenerator {
     }
   }
 
-//    public static FlexibleDatasetSchema.FieldType matchType(FieldTypeStats.TypeDepth rawType, FieldTypeStats.TypeDepth detectedType,
-//                                                             List<FlexibleDatasetSchema.FieldType> fieldTypes) {
-//        return matchType(rawType.getType(), rawType.getArrayDepth(), detectedType.getType(), detectedType.getArrayDepth(), fieldTypes);
-//    }
-
-  public static FlexibleDatasetSchema.FieldType matchType(TypeSignature typeSignature,
+  public FlexibleDatasetSchema.FieldType matchType(TypeSignature typeSignature,
       List<FlexibleDatasetSchema.FieldType> fieldTypes) {
     FlexibleDatasetSchema.FieldType match;
     //First, try to match raw type
-    match = matchSingleType(typeSignature.getRaw(), typeSignature.getArrayDepth(), fieldTypes);
+    match = matchSingleType(typeSignature.getRaw(), typeSignature.getArrayDepth(), fieldTypes, false);
     if (match == null) {
       //Second, try to match on detected
       match = matchSingleType(typeSignature.getDetected(), typeSignature.getArrayDepth(),
-          fieldTypes);
+          fieldTypes, false);
       if (match == null) {
         //If neither of those worked, try to force a match which means casting raw to STRING if available
-        match = fieldTypes.stream().filter(ft -> typeSignature.getArrayDepth() <= ft.getArrayDepth()
-                && ft.getType() instanceof StringType)
-            .min(Comparator.comparing(FlexibleDatasetSchema.FieldType::getArrayDepth)).orElse(null);
+        match = matchSingleType(typeSignature.getRaw(), typeSignature.getArrayDepth(), fieldTypes, true);
       }
     }
     return match;
   }
 
-  private static FlexibleDatasetSchema.FieldType matchSingleType(Type type, int arrayDepth,
-      List<FlexibleDatasetSchema.FieldType> fieldTypes) {
+  private FlexibleDatasetSchema.FieldType matchSingleType(Type type, int arrayDepth,
+      List<FlexibleDatasetSchema.FieldType> fieldTypes, boolean force) {
+    FlexibleDatasetSchema.FieldType match;
     if (type instanceof RelationType) {
       assert arrayDepth == 1;
-      return fieldTypes.stream().filter(ft -> ft.getType() instanceof RelationType).findFirst()
+      match = fieldTypes.stream().filter(ft -> ft.getType() instanceof RelationType).findFirst()
           .orElse(null);
+      if (match == null && force) {
+        //TODO: Should we consider coercing a relation to string (as json)?
+      }
     } else {
       BasicType btype = (BasicType) type;
-      return fieldTypes.stream().filter(ft -> ft.getType() instanceof BasicType)
-          .map(ft -> new ImmutablePair<>(
-              typeDistance(btype, arrayDepth, (BasicType) ft.getType(), ft.getArrayDepth()), ft))
-          .filter(p -> p.getKey() >= 0).min(Comparator.comparing(ImmutablePair::getKey))
-          .map(ImmutablePair::getValue).orElse(null);
+      List<Pair<Integer,FlexibleDatasetSchema.FieldType>> potentialMatches = new ArrayList<>(fieldTypes.size());
+      for (FlexibleDatasetSchema.FieldType ft : fieldTypes) {
+        if (ft.getType() instanceof BasicType) {
+          typeDistanceWithArray(btype, arrayDepth, (BasicType) ft.getType(), ft.getArrayDepth(),
+                  force? settings.maxForceCastingTypeDistance() : settings.maxCastingTypeDistance())
+            .ifPresent(i -> potentialMatches.add(Pair.of(i,ft)));
+        }
+      }
+      match = potentialMatches.stream().min(Comparator.comparing(Pair::getKey))
+              .map(Pair::getValue).orElse(null);
     }
+    return match;
   }
 
   private static final int ARRAY_DISTANCE_OFFSET = 100; //Assume maximum array depth is 100
 
-  public static int typeDistance(BasicType childType, int childArrayDepth, BasicType ancestorType,
-      int ancestorArrayDepth) {
-    if (childArrayDepth > ancestorArrayDepth) {
-      return -1;
+  private Optional<Integer> typeDistanceWithArray(BasicType fromType, int fromArrayDepth, BasicType toType,
+                                           int toArrayDepth, int maxTypeDistance) {
+    if (fromArrayDepth > toArrayDepth || (!settings.deepenArrays() && fromArrayDepth!=toArrayDepth)) {
+      return Optional.empty();
     }
-    return typeDistance(childType, ancestorType) * ARRAY_DISTANCE_OFFSET + (ancestorArrayDepth
-        - childArrayDepth);
+    //Type distance is the primary factor in determining match - array distance is secondary
+    return typeDistance(fromType, toType, maxTypeDistance)
+            .map( i -> i * ARRAY_DISTANCE_OFFSET + (toArrayDepth - fromArrayDepth));
   }
 
-  private static final int SIBLING_DISTANCE_OFFSET = 5;
-
-  public static int typeDistance(BasicType baseType, BasicType relatedType) {
-    BasicType parent = baseType;
-    int distance = 0;
-    Map<BasicType, Integer> distanceMap = new HashMap<>();
-    while (parent != null && !parent.equals(relatedType)) {
-      distanceMap.put(parent, distance);
-      parent = parent.parentType();
-      distance++;
-    }
-    if (parent
-        == null) { //We did not find a match within the ancestors. Let's see if it's a sibling
-      parent = relatedType.parentType();
-      distance = 1;
-      while (parent != null && !distanceMap.containsKey(parent)) {
-        parent = parent.parentType();
-        distance++;
-      }
-      if (parent == null) { //Could not find a path between the two types in the type hierarchy
-        return -1;
-      } else {
-        return distance * SIBLING_DISTANCE_OFFSET + distanceMap.get(parent);
-      }
-    } else {
-      return distance;
-    }
+  private Optional<Integer> typeDistance(BasicType fromType, BasicType toType, int maxTypeDistance) {
+    return BasicTypeManager.typeCastingDistance(fromType, toType).filter(i -> i>=0 && i<= maxTypeDistance);
   }
 
 }

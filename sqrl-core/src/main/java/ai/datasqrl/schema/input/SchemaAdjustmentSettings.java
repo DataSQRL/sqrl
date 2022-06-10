@@ -24,12 +24,23 @@ public interface SchemaAdjustmentSettings extends Serializable {
     return true;
   }
 
+  default int maxCastingTypeDistance() {
+    if (!castDataType()) return 0;
+    return 10;
+  }
+
+  default boolean forceCastDataType() {
+    return castDataType();
+  }
+
+  default int maxForceCastingTypeDistance() {
+    if (!forceCastDataType()) return maxCastingTypeDistance();
+    return Integer.MAX_VALUE;
+  }
+
   default boolean dropFields() {
     return true;
   }
 
-  default java.time.ZoneOffset getLocalTimezone() {
-    throw new UnsupportedOperationException("Needs to be implemented");
-  }
 
 }

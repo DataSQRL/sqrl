@@ -7,8 +7,9 @@ import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
 import ai.datasqrl.execute.flink.environment.LocalFlinkStreamEngineImpl;
 import ai.datasqrl.execute.flink.ingest.DataStreamProvider;
-import ai.datasqrl.execute.flink.ingest.SchemaValidationProcess;
-import ai.datasqrl.execute.flink.ingest.schema.FlinkTableConverter;
+import ai.datasqrl.execute.flink.ingest.schema.SchemaValidationProcess;
+import ai.datasqrl.execute.flink.ingest.schema.FlinkInputHandler;
+import ai.datasqrl.execute.flink.ingest.schema.FlinkInputHandlerProvider;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.DatasetRegistry;
@@ -21,12 +22,9 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
@@ -46,10 +44,12 @@ public class IngestAndSchemaTest {
 
   Environment env = null;
   DatasetRegistry registry = null;
+  FlinkInputHandlerProvider inputHandlerProvider = new FlinkInputHandlerProvider();
 
   @BeforeEach
   public void setup() throws IOException {
-      FileUtils.cleanDirectory(ConfigurationTest.dbPath.toFile());
+      if (FileUtils.isDirectory(ConfigurationTest.dbPath.toFile()))
+        FileUtils.cleanDirectory(ConfigurationTest.dbPath.toFile());
       SqrlSettings settings = ConfigurationTest.getDefaultSettings(true);
       env = Environment.create(settings);
       registry = env.getDatasetRegistry();
@@ -61,6 +61,29 @@ public class IngestAndSchemaTest {
       env = null;
       registry = null;
   }
+
+  @Test
+  @SneakyThrows
+  public void testC360SchemaInference() {
+    ErrorCollector errors = ErrorCollector.root();
+    String ds2Name = "c360";
+    DirectorySourceImplementation  fileConfig = DirectorySourceImplementation.builder()
+            .uri(C360Example.RETAIL_DATA_DIR.toAbsolutePath().toString())
+            .build();
+    registry.addOrUpdateSource(ds2Name, fileConfig, errors);
+    assertFalse(errors.isFatal());
+
+    SourceDataset ds = registry.getDataset(Name.system(ds2Name));
+    assertEquals(3, ds.getTables().size());
+    SourceTable customer = ds.getTable("customer");
+    SourceTable orders = ds.getTable("orders");
+    SourceTable product = ds.getTable("product");
+
+    assertEquals(4,customer.getStatistics().getCount());
+    assertEquals(6,product.getStatistics().getCount());
+    assertEquals(4,orders.getStatistics().getCount());
+  }
+
 
   @SneakyThrows
   @Test
@@ -96,13 +119,13 @@ public class IngestAndSchemaTest {
     assertEquals(5, person.getStatistics().getCount());
 
     ImportManager imports = new ImportManager(registry);
-    FlinkTableConverter tbConverter = new FlinkTableConverter();
+    FlinkInputHandlerProvider tbConverter = new FlinkInputHandlerProvider();
 
     ErrorCollector schemaErrs = ErrorCollector.root();
-    ImportManager.SourceTableImport bookImp = imports.importTable(Name.system(dsName),Name.system("book"),schemaErrs);
-    Pair<Schema, TypeInformation> bookSchema = tbConverter.tableSchemaConversion(bookImp.getSourceSchema());
-    ImportManager.SourceTableImport ordersImp = imports.importTable(Name.system(ds2Name),Name.system("orders"),schemaErrs);
-    Pair<Schema, TypeInformation> ordersSchema = tbConverter.tableSchemaConversion(ordersImp.getSourceSchema());
+    ImportManager.SourceTableImport bookImp = imports.importTable(Name.system(dsName),Name.system("book"),
+            SchemaAdjustmentSettings.DEFAULT,schemaErrs);
+    ImportManager.SourceTableImport ordersImp = imports.importTable(Name.system(ds2Name),Name.system("orders"),
+            SchemaAdjustmentSettings.DEFAULT,schemaErrs);
 
     LocalFlinkStreamEngineImpl flink = new LocalFlinkStreamEngineImpl();
     FlinkStreamEngine.Builder streamBuilder = flink.createStream();
@@ -111,14 +134,14 @@ public class IngestAndSchemaTest {
     final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>("SCHEMA_ERROR"){};
 
     ImportManager.SourceTableImport imp = ordersImp;
-    Pair<Schema, TypeInformation> schema = ordersSchema;
+    FlinkInputHandler inputHandler = inputHandlerProvider.get(imp.getSourceSchema());
 
     DataStream<SourceRecord.Raw> stream = new DataStreamProvider().getDataStream(imp.getTable(),streamBuilder);
     SingleOutputStreamOperator<SourceRecord.Named> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, imp.getSourceSchema(),
             SchemaAdjustmentSettings.DEFAULT, imp.getTable().getDataset().getDigest()));
-    SingleOutputStreamOperator<Row> rows = validate.map(tbConverter.getRowMapper(imp.getSourceSchema()),schema.getRight());
+    SingleOutputStreamOperator<Row> rows = validate.map(inputHandler.getMapper(),inputHandler.getTypeInformation());
 
-    Table table = tEnv.fromDataStream(rows,schema.getLeft());
+    Table table = tEnv.fromDataStream(rows, inputHandler.getTableSchema());
 
     tEnv.createTemporaryView("TheTable", table);
     table.printSchema();

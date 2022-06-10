@@ -3,9 +3,10 @@ package ai.datasqrl.physical.stream;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.execute.flink.environment.FlinkStreamEngine.Builder;
 import ai.datasqrl.execute.flink.ingest.DataStreamProvider;
-import ai.datasqrl.execute.flink.ingest.SchemaValidationProcess;
-import ai.datasqrl.execute.flink.ingest.SchemaValidationProcess.Error;
-import ai.datasqrl.execute.flink.ingest.schema.FlinkTableConverter;
+import ai.datasqrl.execute.flink.ingest.schema.SchemaValidationProcess;
+import ai.datasqrl.execute.flink.ingest.schema.SchemaValidationProcess.Error;
+import ai.datasqrl.execute.flink.ingest.schema.FlinkInputHandler;
+import ai.datasqrl.execute.flink.ingest.schema.FlinkInputHandlerProvider;
 import ai.datasqrl.io.sources.SourceRecord.Named;
 import ai.datasqrl.io.sources.SourceRecord.Raw;
 import ai.datasqrl.parse.tree.name.Name;
@@ -13,16 +14,13 @@ import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import java.util.List;
-import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
-import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.OutputTag;
@@ -38,7 +36,7 @@ public class DataStreamRegisterer extends RelShuttleImpl {
 
   final OutputTag<Error> schemaErrorTag = new OutputTag<>("SCHEMA_ERROR") {
   };
-  final FlinkTableConverter tbConverter = new FlinkTableConverter();
+  final FlinkInputHandlerProvider inputProvider = new FlinkInputHandlerProvider();
 
   public void register(RelNode relNode) {
     relNode.accept(this);
@@ -54,15 +52,13 @@ public class DataStreamRegisterer extends RelShuttleImpl {
       return super.visit(scan);
     }
 //        NamePath path = NamePath.parse(streamName);
-    //TODO: resolve imports
-    SourceTableImport sourceTable = importManager.resolveTable(Name.system("ecommerce-data"),
-        Name.system(tableName),
-        Optional.empty(), errors);
+    //TODO: resolve imports - this is broken and needs to be fixed
+    SourceTableImport sourceTable = importManager.importTable(Name.system("ecommerce-data"),
+        Name.system(tableName), null, errors);
 
     DataStream<Raw> stream = new DataStreamProvider().getDataStream(sourceTable.getTable(),
         streamBuilder);
-    Pair<Schema, TypeInformation> tableSchema = tbConverter.tableSchemaConversion(
-        sourceTable.getSourceSchema());
+    FlinkInputHandler inputHandler = inputProvider.get(sourceTable.getSourceSchema());
 
     SchemaValidationProcess validationProcess = new SchemaValidationProcess(schemaErrorTag,
         sourceTable.getSourceSchema(),
@@ -71,11 +67,10 @@ public class DataStreamRegisterer extends RelShuttleImpl {
 
     SingleOutputStreamOperator<Named> validate = stream.process(validationProcess);
 
-    SingleOutputStreamOperator<Row> rows = validate.map(
-        tbConverter.getRowMapper(sourceTable.getSourceSchema()),
-        tableSchema.getRight());
+    SingleOutputStreamOperator<Row> rows = validate.map(inputHandler.getMapper(),
+            inputHandler.getTypeInformation());
 
-    tEnv.createTemporaryView(tableName, rows, tableSchema.getKey());
+    tEnv.createTemporaryView(tableName, rows, inputHandler.getTableSchema());
 
     return super.visit(scan);
   }

@@ -2,7 +2,7 @@ package ai.datasqrl.schema.input;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.SpecialName;
-import ai.datasqrl.schema.type.constraint.ConstraintHelper;
+import ai.datasqrl.schema.constraint.ConstraintHelper;
 
 public class FlexibleSchemaHelper {
 

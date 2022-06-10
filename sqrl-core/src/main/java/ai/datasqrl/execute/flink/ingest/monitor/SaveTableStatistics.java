@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.ingest;
+package ai.datasqrl.execute.flink.ingest.monitor;
 
 import ai.datasqrl.config.metadata.MetadataStore;
 import ai.datasqrl.config.provider.DatasetRegistryPersistenceProvider;

@@ -1,15 +1,10 @@
 package ai.datasqrl.schema.type.basic;
 
-import ai.datasqrl.schema.type.SqmlTypeVisitor;
+import ai.datasqrl.schema.type.SqrlTypeVisitor;
 
 public abstract class AbstractBasicType<J> implements BasicType<J> {
 
   AbstractBasicType() {
-  }
-
-  @Override
-  public BasicType parentType() {
-    return null;
   }
 
   @Override
@@ -35,7 +30,11 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
     return getName();
   }
 
-  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+  public int compareTo(BasicType o) {
+    return getName().compareTo(o.getName());
+  }
+
+  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitBasicType(this, context);
   }
 }

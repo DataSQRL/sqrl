@@ -9,7 +9,6 @@ import ai.datasqrl.io.sources.stats.SchemaGenerator;
 import ai.datasqrl.io.sources.stats.TypeSignature.Simple;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.schema.type.RelationType;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.basic.StringType;
@@ -37,6 +36,7 @@ public class SchemaValidator implements Serializable {
   private final SchemaAdjustmentSettings settings;
   private final FlexibleDatasetSchema.TableField tableSchema;
   private final NameCanonicalizer canonicalizer;
+  private final SchemaGenerator schemaGenerator;
 
   public SchemaValidator(@NonNull FlexibleDatasetSchema.TableField tableSchema,
       @NonNull SchemaAdjustmentSettings settings,
@@ -45,6 +45,7 @@ public class SchemaValidator implements Serializable {
     this.settings = settings;
     this.tableSchema = tableSchema;
     this.canonicalizer = dataset.getCanonicalizer();
+    this.schemaGenerator = new SchemaGenerator(settings);
   }
 
 
@@ -138,7 +139,7 @@ public class SchemaValidator implements Serializable {
     List<FlexibleDatasetSchema.FieldType> types = field.getTypes();
     Simple typeSignature = FieldStats.detectTypeSignature(data, s -> detectType(s, types),
         m -> detectType(m, types));
-    FlexibleDatasetSchema.FieldType match = SchemaGenerator.matchType(typeSignature, types);
+    FlexibleDatasetSchema.FieldType match = schemaGenerator.matchType(typeSignature, types);
     if (match != null) {
       Object converted = verifyAndAdjust(data, match, field, typeSignature.getArrayDepth(), errors);
       return ImmutablePair.of(FlexibleSchemaHelper.getCombinedName(field, match), converted);

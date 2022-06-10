@@ -139,6 +139,7 @@ import ai.datasqrl.parse.tree.WhenClause;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1091,7 +1092,7 @@ class AstBuilder
         .collect(Collectors.toList());
     if (context.all != null) {
       parts = new ArrayList<>(parts);
-      parts.add(Name.of("*", NameCanonicalizer.LOWERCASE_ENGLISH));
+      parts.add(ReservedName.ALL);
     }
 
     return NamePath.of(parts);

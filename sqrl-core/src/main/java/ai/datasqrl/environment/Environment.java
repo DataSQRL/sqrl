@@ -23,6 +23,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -114,6 +116,7 @@ public class Environment implements Closeable {
     }
     BundleOptions options = BundleOptions.builder()
         .importManager(importManager)
+        .schemaSettings(SchemaAdjustmentSettings.DEFAULT)
         .jdbcConfiguration(settings.getJdbcConfiguration())
         .streamEngine(settings.getStreamEngineProvider().create())
         .build();
