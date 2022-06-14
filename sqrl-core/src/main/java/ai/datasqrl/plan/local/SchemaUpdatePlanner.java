@@ -1,54 +1,38 @@
 package ai.datasqrl.plan.local;
 
 import static ai.datasqrl.parse.util.SqrlNodeUtil.hasOneUnnamedColumn;
-import static ai.datasqrl.plan.util.FlinkSchemaUtil.requiresShredding;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.execute.flink.ingest.schema.FlinkTableConverter;
-import ai.datasqrl.parse.tree.AstVisitor;
-import ai.datasqrl.parse.tree.CreateSubscription;
-import ai.datasqrl.parse.tree.DistinctAssignment;
-import ai.datasqrl.parse.tree.Expression;
-import ai.datasqrl.parse.tree.ExpressionAssignment;
-import ai.datasqrl.parse.tree.ImportDefinition;
-import ai.datasqrl.parse.tree.JoinAssignment;
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.QueryAssignment;
+import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.physical.util.RelToSql;
 import ai.datasqrl.plan.calcite.MultiphaseOptimizer;
 import ai.datasqrl.plan.calcite.SqrlPrograms;
-import ai.datasqrl.plan.calcite.SqrlRuleSets;
-import ai.datasqrl.plan.local.operations.AddDatasetOp;
+import ai.datasqrl.plan.local.operations.AddImportedTablesOp;
 import ai.datasqrl.plan.local.operations.AddFieldOp;
-import ai.datasqrl.plan.local.operations.AddNestedQueryOp;
-import ai.datasqrl.plan.local.operations.AddQueryOp;
+import ai.datasqrl.plan.local.operations.AddNestedTableOp;
+import ai.datasqrl.plan.local.operations.AddTableOp;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
-import ai.datasqrl.plan.local.shred.ShredPlanner2;
 import ai.datasqrl.plan.local.transpiler.StatementNormalizer;
+import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinDeclarationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
 import ai.datasqrl.plan.local.transpiler.toSql.ConvertContext;
 import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeConverter;
 import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeFormatter;
-import ai.datasqrl.plan.util.FlinkRelDataTypeConverter;
-import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.*;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
-import ai.datasqrl.schema.Schema;
-import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.factory.TableFactory;
-import ai.datasqrl.server.ImportManager;
-import ai.datasqrl.server.ImportManager.SourceTableImport;
+import ai.datasqrl.environment.ImportManager;
+import ai.datasqrl.environment.ImportManager.SourceTableImport;
+import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.RelOptUtil;
@@ -57,16 +41,15 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlExplainFormat;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 
 
 @AllArgsConstructor
 public class SchemaUpdatePlanner {
 
   private final ImportManager importManager;
+  private final BundleTableFactory tableFactory;
+  private final SchemaAdjustmentSettings schemaSettings;
   private final ErrorCollector errors;
-  private final FlinkTableConverter tbConverter = new FlinkTableConverter();
   private final LocalPlanner localPlanner;
 
   public Optional<SchemaUpdateOp> plan(Schema schema, Node node) {
@@ -83,36 +66,37 @@ public class SchemaUpdatePlanner {
 
     @Override
     public SchemaUpdateOp visitImportDefinition(ImportDefinition node, Object context) {
-      if (node.getNamePath().getLength() > 2) {
+      if (node.getNamePath().getLength() != 2) {
         throw new RuntimeException(
-            String.format("Cannot import identifier: %s", node.getNamePath()));
+            String.format("Invalid import identifier: %s", node.getNamePath()));
       }
 
-      SourceTableImport importSource = importManager
-          .resolveTable(node.getNamePath().get(0), node.getNamePath().get(1), node.getAliasName(),
-              errors);
+      //Check if this imports all or a single table
+      Name sourceDataset = node.getNamePath().get(0);
+      Name sourceTable = node.getNamePath().get(1);
 
-      Pair<org.apache.flink.table.api.Schema, TypeInformation> tbl = tbConverter
-          .tableSchemaConversion(importSource.getSourceSchema());
-      org.apache.flink.table.api.Schema flinkSchema = tbl.getLeft();
+      List<ImportManager.TableImport> importTables;
+      Optional<Name> nameAlias;
 
-      Name tableName = node.getAliasName().orElse(importSource.getTableName());
-
-      List<Column> columns =
-          FlinkRelDataTypeConverter.buildColumns(flinkSchema.getColumns());
-
-      ShredPlanner2 shredPlanner = new ShredPlanner2();
-      TableFactory tableFactory = new TableFactory();
-      Table table = tableFactory.createTable(tableName.toNamePath(), columns);
-      RelNode relNode = shredPlanner.plan(tableName, localPlanner.getCalcitePlanner().createRelBuilder(), tbl.getLeft(), table);
-
-      table.setHead(relNode);
-
-      if (requiresShredding(flinkSchema)) {
-        shredPlanner.shred(tableName, flinkSchema, table, localPlanner.getCalcitePlanner().createRelBuilder());
+      if (sourceTable.equals(ReservedName.ALL)) { //import all tables from dataset
+        importTables = importManager.importAllTables(sourceDataset, schemaSettings, errors);
+        nameAlias = Optional.empty();
+      } else { //importing a single table
+        importTables = List.of(importManager
+                .importTable(sourceDataset, sourceTable, schemaSettings, errors));
+        nameAlias = node.getAliasName();
       }
 
-      return new AddDatasetOp(List.of(table));
+      List<Table> resultTables = new ArrayList<>();
+      for (ImportManager.TableImport tblImport : importTables) {
+        if (tblImport.isSource()) {
+          SourceTableImport importSource = (SourceTableImport)tblImport;
+          resultTables.add(tableFactory.importTable(localPlanner.getCalcitePlanner(), importSource, nameAlias));
+        } else {
+          throw new UnsupportedOperationException("Script imports are not yet supported");
+        }
+      }
+      return new AddImportedTablesOp(resultTables);
     }
 
     @Override
@@ -140,12 +124,14 @@ public class SchemaUpdatePlanner {
               SqlExplainLevel.ALL_ATTRIBUTES));
 
       Table table = schema.walkTable(name.popLast());
-      int nextVersion = table.getNextFieldVersion(name.getLast());
+      Name columnName = name.getLast();
+      int nextVersion = table.getNextFieldVersion(columnName);
 
       //By convention, the last field is new the expression
-      RelDataTypeField relField = relNode.getRowType().getFieldList().get(relNode.getRowType().getFieldList().size() - 1);
-      Column column = new Column(name.getLast(), table, nextVersion, 0, List.of(), false,
-          false, relField, new HashSet<>());
+      int index = relNode.getRowType().getFieldList().size() - 1;
+      RelDataTypeField relField = relNode.getRowType().getFieldList().get(index);
+      Column column = new Column(columnName, nextVersion, index, relField.getType(),
+              false, false, List.of(), false);
 
       return new AddFieldOp(table, column, Optional.of(relNode));
     }
@@ -172,57 +158,60 @@ public class SchemaUpdatePlanner {
       MultiphaseOptimizer optimizer = new MultiphaseOptimizer();
       RelNode optimized = optimizer.optimize(relNode, SqrlPrograms.testProgram);
 
+      double derivedRowCount = 1; //TODO: derive from optimizer
+      // double derivedRowCount = optimized.estimateRowCount(??);
+
       System.out.println(
           RelOptUtil.dumpPlan("[Physical plan]", optimized, SqlExplainFormat.TEXT,
               SqlExplainLevel.ALL_ATTRIBUTES));
       //To column list
       QuerySpecNorm specNorm = ((QuerySpecNorm)relationNorm);
-      List<Column> columns = new ArrayList<>();
       List<Expression> select = specNorm.getSelect().getSelectItems().stream().map(e->e.getExpression()).collect(
           Collectors.toList());
-      List<Expression> expressions = specNorm.getPrimaryKeys();
-
-      //Internal columns
+      List<Expression> primaryKeys = specNorm.getPrimaryKeys();
       List<Expression> addedPrimaryKeys = specNorm.getAddedPrimaryKeys();
-      for (int i = 0; i < addedPrimaryKeys.size(); i++) {
-        Expression expression = addedPrimaryKeys.get(i);
+      List<? extends Expression> parentPrimaryKeys = specNorm.getParentPrimaryKeys();
+
+      BundleTableFactory.TableBuilder builder = tableFactory.build(namePath);
+
+      for (RelDataTypeField field : relNode.getRowType().getFieldList()) {
+        int index = field.getIndex();
+        Expression expression;
+        int i = index;
+        if (i < parentPrimaryKeys.size()) {
+          expression = parentPrimaryKeys.get(i);
+        }
+        i = i - parentPrimaryKeys.size();
+        if (i < addedPrimaryKeys.size()) {
+          expression = addedPrimaryKeys.get(i);
+        }
+        i = i - addedPrimaryKeys.size();
+        expression = select.get(i);
         Name name = specNorm.getFieldName(expression);
         Preconditions.checkNotNull(name);
-        Column column = new Column(name, null, 0, 0, List.of(), true,
-            expressions.contains(expression),
-            relNode.getRowType().getFieldList().get(
-                specNorm.getParentPrimaryKeys().size() + i),
-            Set.of());
-        columns.add(column);
+        builder.addColumn(name,field.getType(),true, true, true, true);
       }
 
-      for (int i = 0; i < select.size(); i++) {
-        Expression s = select.get(i);
-        Name name = specNorm.getFieldName(s);
-        Preconditions.checkNotNull(name);
-
-        Column column = new Column(name, null, 0, 0, List.of(), false,
-            expressions.contains(s),
-            relNode.getRowType().getFieldList().get(specNorm.getParentPrimaryKeys().size() + specNorm.getAddedPrimaryKeys().size() + i),
-            Set.of());
-        columns.add(column);
-      }
+      //TODO: infer table type from relNode
+      Table.Type tblType = Table.Type.STREAM;
 
       //Preconditions.checkState(columns.stream().anyMatch(Column::isPrimaryKey), "No primary key was found");
 
-      //Creates a table that is not bound to the schema
-      TableFactory tableFactory = new TableFactory();
-      Table table = tableFactory.createTable(namePath, columns);
-      table.setHead(relNode);
+      //Creates a table that is not bound to the schema TODO: determine timestamp
+      Table table = builder.createTable(tblType, null, relNode, TableStatistic.of(derivedRowCount));
       System.out.println(relNode.explain());
 
       if (namePath.getLength() == 1) {
-        return new AddQueryOp(table);
+        return new AddTableOp(table);
       } else {
         Table parentTable = schema.walkTable(namePath.popLast());
         Name relationshipName = namePath.getLast();
+        Relationship.Multiplicity multiplicity = Multiplicity.MANY;
+        if (specNorm.getLimit().flatMap(Limit::getIntValue).orElse(2) == 1) {
+          multiplicity = Multiplicity.ONE;
+        }
 
-        return new AddNestedQueryOp(parentTable, table, relationshipName);
+        return new AddNestedTableOp(parentTable, table, relationshipName, multiplicity);
       }
 
     }

@@ -1,10 +1,13 @@
 package ai.datasqrl.schema.type.basic;
 
-import ai.datasqrl.schema.type.SqmlTypeVisitor;
+import ai.datasqrl.schema.type.SqrlTypeVisitor;
 import com.google.common.collect.ImmutableSet;
+
+import java.time.Duration;
+import java.util.Optional;
 import java.util.Set;
 
-public class IntervalType extends AbstractBasicType<Long> {
+public class IntervalType extends AbstractBasicType<Duration> {
 
   public static final IntervalType INSTANCE = new IntervalType();
 
@@ -13,44 +16,41 @@ public class IntervalType extends AbstractBasicType<Long> {
     return "INTERVAL";
   }
 
-  public BasicType parentType() {
-    return NumberType.INSTANCE;
-  }
-
   @Override
-  public TypeConversion<Long> conversion() {
+  public TypeConversion<Duration> conversion() {
     return new Conversion();
   }
 
-  public static class Conversion extends SimpleBasicType.Conversion<Long> {
-
-    private static final Set<Class> INT_CLASSES = ImmutableSet.of(Integer.class, Long.class,
-        Byte.class, Short.class);
+  public static class Conversion extends SimpleBasicType.Conversion<Duration> {
 
     public Conversion() {
-      super(Long.class, s -> Long.parseLong(s));
+      super(Duration.class, s -> Duration.ofMillis(Long.parseLong(s)));
     }
 
-    @Override
-    public Set<Class> getJavaTypes() {
-      return INT_CLASSES;
-    }
-
-    public Long convert(Object o) {
-      if (o instanceof Long) {
-        return (Long) o;
+    public Duration convert(Object o) {
+      if (o instanceof Duration) {
+        return (Duration)o;
       }
-      if (o instanceof Number) {
-        return ((Number) o).longValue();
-      }
-      if (o instanceof Boolean) {
-        return ((Boolean) o).booleanValue() ? 1L : 0L;
+      if (o instanceof Float || o instanceof Double) {
+        return Duration.ofMillis((long)((Number)o).doubleValue()*1000);
+      } else if (o instanceof Number) {
+        return Duration.ofMillis(((Number) o).longValue());
       }
       throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
     }
+
+    @Override
+    public Optional<Integer> getTypeDistance(BasicType fromType) {
+      if (fromType instanceof FloatType) {
+        return Optional.of(40);
+      } else if (fromType instanceof IntegerType) {
+        return Optional.of(25);
+      }
+      return Optional.empty();
+    }
   }
 
-  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitIntervalType(this, context);
   }
 }

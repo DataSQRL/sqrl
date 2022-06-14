@@ -8,6 +8,7 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.Select;
 import ai.datasqrl.parse.tree.SingleColumn;
+import ai.datasqrl.plan.calcite.CalciteEnvironment;
 import ai.datasqrl.plan.calcite.CalcitePlanner;
 import ai.datasqrl.plan.local.transpiler.toSql.ConvertContext;
 import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeConverter;
@@ -30,11 +31,11 @@ public class ValidateSql extends AstVisitor<SqlResult, Void> {
     this.planner = planner;
   }
 
-  public static Optional<SqlResult> validate(Optional<Node> node, Schema schema) {
+  public static Optional<SqlResult> validate(CalciteEnvironment calcite, Optional<Node> node, Schema schema) {
     if (node.isEmpty()) {
       return Optional.empty();
     }
-    ValidateSql validateSql = new ValidateSql(new CalcitePlanner(new SqrlCalciteSchema(schema)));
+    ValidateSql validateSql = new ValidateSql(new CalcitePlanner(calcite, new SqrlCalciteSchema(schema)));
 
     return Optional.ofNullable(node.get().accept(validateSql, null));
   }

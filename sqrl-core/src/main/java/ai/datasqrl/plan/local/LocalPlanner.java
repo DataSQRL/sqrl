@@ -2,6 +2,7 @@ package ai.datasqrl.plan.local;
 
 import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.physical.util.RelToSql;
+import ai.datasqrl.plan.calcite.CalciteEnvironment;
 import ai.datasqrl.plan.calcite.CalcitePlanner;
 import ai.datasqrl.schema.Schema;
 import lombok.Getter;
@@ -18,8 +19,8 @@ public class LocalPlanner extends AstVisitor<Void, Void> {
   @Getter
   private final CalcitePlanner calcitePlanner;
 
-  public LocalPlanner(Schema schema) {
-    calcitePlanner = new CalcitePlanner(new SqrlCalciteSchema(schema));
+  public LocalPlanner(CalciteEnvironment calcite, Schema schema) {
+    calcitePlanner = new CalcitePlanner(calcite, new SqrlCalciteSchema(schema));
   }
 
   public RelNode plan(SqlNode sqlNode) {

@@ -1,7 +1,8 @@
 package ai.datasqrl.schema.type.basic;
 
-import ai.datasqrl.schema.type.SqmlTypeVisitor;
+import ai.datasqrl.schema.type.SqrlTypeVisitor;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 public class StringType extends AbstractBasicType<String> {
@@ -31,9 +32,17 @@ public class StringType extends AbstractBasicType<String> {
     public String convert(Object o) {
       return o.toString();
     }
+
+    @Override
+    public Optional<Integer> getTypeDistance(BasicType fromType) {
+      if (fromType instanceof UuidType) {
+        return Optional.of(5);
+      }
+      return Optional.of(30);
+    }
   }
 
-  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitStringType(this, context);
   }
 }

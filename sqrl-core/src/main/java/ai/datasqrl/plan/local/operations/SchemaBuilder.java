@@ -1,39 +1,45 @@
 package ai.datasqrl.plan.local.operations;
 
+import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.factory.TableFactory;
 import lombok.Getter;
 
 public class SchemaBuilder extends SchemaOpVisitor {
 
   @Getter
+  private final BundleTableFactory tableFactory;
+
+  @Getter
   Schema schema = new Schema();
 
-  private final TableFactory tableFactory = new TableFactory();
+  public SchemaBuilder(BundleTableFactory tableFactory) {
+    this.tableFactory = tableFactory;
+  }
 
   public void apply(SchemaUpdateOp operation) {
     operation.accept(this);
   }
 
   @Override
-  public <T> T visit(AddDatasetOp op) {
+  public <T> T visit(AddImportedTablesOp op) {
     schema.addAll(op.getTables());
     return null;
   }
 
   @Override
-  public <T> T visit(AddQueryOp addQueryOp) {
-    schema.add(addQueryOp.getTable());
+  public <T> T visit(AddTableOp addTableOp) {
+    schema.add(addTableOp.getTable());
     return null;
   }
 
   @Override
-  public <T> T visit(AddNestedQueryOp op) {
-    tableFactory.assignRelationships(
+  public <T> T visit(AddNestedTableOp op) {
+    tableFactory.createParentChildRelationship(
         op.getRelationshipName(),
         op.getTable(),
-        op.getParentTable());
+        op.getParentTable(),
+        op.getMultiplicity());
     return null;
   }
 
@@ -51,5 +57,10 @@ public class SchemaBuilder extends SchemaOpVisitor {
 
   public Schema build() {
     return schema;
+  }
+
+  @Override
+  public String toString() {
+    return schema.toString();
   }
 }

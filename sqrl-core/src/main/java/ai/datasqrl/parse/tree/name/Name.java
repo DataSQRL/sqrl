@@ -14,10 +14,6 @@ public interface Name extends Serializable, Comparable<Name> {
 
   String HIDDEN_PREFIX = "_";
   Name SELF_IDENTIFIER = Name.system("_");
-  Name PARENT_RELATIONSHIP = Name.system("parent");
-  Name SIBLING_RELATIONSHIP = Name.system("sibling");
-  Name INGEST_TIME = Name.system("_ingest_time");
-  Name UUID = Name.system("_uuid");
 
 
   /**
@@ -76,6 +72,10 @@ public interface Name extends Serializable, Comparable<Name> {
     Preconditions.checkArgument(validName(name), "Invalid name: %s", name);
     name = name.trim();
     return new StandardName(canonicalizer.getCanonical(name), name);
+  }
+
+  static Name ofCanonical(String canonicalName) {
+    return new SimpleName(canonicalName);
   }
 
   static Name changeDisplayName(Name name, String displayName) {

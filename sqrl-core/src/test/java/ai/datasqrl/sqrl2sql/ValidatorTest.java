@@ -1,7 +1,7 @@
 //package ai.datasqrl.sqrl2sql;
 //
 //import ai.datasqrl.C360Example;
-//import ai.datasqrl.Environment;
+//import ai.datasqrl.environment.Environment;
 //import ai.datasqrl.api.ConfigurationTest;
 //import ai.datasqrl.config.SqrlSettings;
 //import ai.datasqrl.config.error.ErrorCollector;

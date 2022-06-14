@@ -39,29 +39,22 @@ import lombok.Getter;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 @Getter
-
 public class Relationship extends Field {
 
-  private final Name name;
   private final Table table;
-  public final Table toTable;
-  public final JoinType joinType;
+  private final Table toTable;
+  private final JoinType joinType;
+  private final Multiplicity multiplicity;
 
   private final Relation relation;
   private final Optional<OrderBy> orders;
-
-  public final Multiplicity multiplicity;
   //Requires a transformation to limit cardinality to one
   private final Optional<Limit> limit;
-
-  public static AtomicInteger versionIncrementer = new AtomicInteger(0);
-  public int version;
 
   public Relationship(Name name, Table table, Table toTable, JoinType joinType,
       Multiplicity multiplicity, Relation relation, Optional<OrderBy> orders,
       Optional<Limit> limit) {
     super(name);
-    this.name = name;
     this.table = table;
     this.toTable = toTable;
     this.joinType = joinType;
@@ -71,14 +64,19 @@ public class Relationship extends Field {
     this.limit = limit;
   }
 
+  public Relationship(Name name, Table table, Table toTable, JoinType joinType,
+                      Multiplicity multiplicity, Relation relation) {
+    this(name,table,toTable,joinType,multiplicity,relation, Optional.empty(), Optional.empty());
+  }
+
   @Override
   public Name getId() {
-    return Name.system(name + Table.ID_DELIMITER + version);
+    return name;
   }
 
   @Override
   public int getVersion() {
-    return version;
+    return 0;
   }
 
   public RelationNorm getRelation() {
@@ -128,8 +126,7 @@ public class Relationship extends Field {
         Optional.empty(),
         Optional.empty(),
         Optional.empty(),
-        Optional.empty(),
-        List.of()
+        Optional.empty()
     );
 
     ReferenceExpression ref = new ReferenceExpression(inner, row_num);
@@ -155,8 +152,7 @@ public class Relationship extends Field {
         Optional.empty(),
         Optional.empty(),
         Optional.empty(),
-        Optional.empty(),
-        refPks
+        Optional.empty()
     );
 
     return new JoinNorm(Optional.empty(),

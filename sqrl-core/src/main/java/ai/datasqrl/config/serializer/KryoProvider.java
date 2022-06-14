@@ -4,7 +4,7 @@ import ai.datasqrl.config.provider.SerializerProvider;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlQuery;
 import ai.datasqrl.config.scripts.SqrlScript;
-import ai.datasqrl.server.ScriptDeployment;
+import ai.datasqrl.environment.ScriptDeployment;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.serializers.JavaSerializer;
 import java.io.Serializable;

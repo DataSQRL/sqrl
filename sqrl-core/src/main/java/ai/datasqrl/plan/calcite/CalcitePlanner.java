@@ -27,11 +27,10 @@ import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 @Getter
 public class CalcitePlanner {
 
-  private final RelOptCluster cluster;
+  private final CalciteEnvironment environment;
   private final CalciteCatalogReader catalogReader;
   private final AbstractSqrlSchema sqrlSchema;
   private final SqrlSimpleCalciteSchema calciteSchema;
-  private final JavaTypeFactoryImpl typeFactory;
 
   public static SqlValidator.Config validatorConfig = SqlValidator.Config.DEFAULT
       .withCallRewrite(true)
@@ -41,10 +40,9 @@ public class CalcitePlanner {
       .withLenientOperatorLookup(true)
       .withSqlConformance(SqlConformanceEnum.LENIENT);
 
-  public CalcitePlanner(AbstractSqrlSchema sqrlSchema) {
+  public CalcitePlanner(CalciteEnvironment environment, AbstractSqrlSchema sqrlSchema) {
+    this.environment = environment;
     this.sqrlSchema = sqrlSchema;
-    this.typeFactory = new FlinkTypeFactory(new FlinkTypeSystem());
-    this.cluster = MultiphaseOptimizer.newCluster(typeFactory);
     this.calciteSchema = new SqrlSimpleCalciteSchema(sqrlSchema);
     this.catalogReader = getCalciteCatalogReader(calciteSchema);
   }
@@ -67,7 +65,7 @@ public class CalcitePlanner {
   }
 
   public SqrlRelBuilder createRelBuilder() {
-    return new SqrlRelBuilder(null, cluster, catalogReader);
+    return new SqrlRelBuilder(null, environment.getCluster(), catalogReader);
   }
 
   public RelNode plan(SqlNode sqlNode, SqlValidator validator) {
@@ -79,7 +77,7 @@ public class CalcitePlanner {
             , viewPath) -> null,
         validator,
         catalogReader,
-        cluster,
+            environment.getCluster(),
         StandardConvertletTable.INSTANCE,
         SqlToRelConverter.config().withExpand(false).withTrimUnusedFields(true)
             .withCreateValuesRel(false));
@@ -92,7 +90,7 @@ public class CalcitePlanner {
     props.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
 
     SqlValidator validator = SqlValidatorUtil.newValidator(SqlStdOperatorTable.instance(),
-        catalogReader, typeFactory,
+        catalogReader, environment.getTypeFactory(),
         validatorConfig);
 
     return validator;
@@ -104,7 +102,7 @@ public class CalcitePlanner {
             , viewPath) -> null,
         validator,
         catalogReader,
-        cluster,
+        environment.getCluster(),
         StandardConvertletTable.INSTANCE,
         SqlToRelConverter.config()
             .withTrimUnusedFields(true));

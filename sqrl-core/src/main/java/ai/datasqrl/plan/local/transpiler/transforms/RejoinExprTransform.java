@@ -14,7 +14,7 @@ import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.schemaRef.TableRef;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.attributes.ForeignKey;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,7 +28,7 @@ public class RejoinExprTransform {
     TableNodeNorm tableNodeNorm = new TableNodeNorm(Optional.empty(), table.getPath(), Optional.empty(), new TableRef(table),
         false, List.of());
     List<Expression> columns = table.getColumns().stream()
-        .filter(field -> !field.containsAttribute(ForeignKey.class))
+        .filter(field -> !field.isParentPrimaryKey())
         .map(c-> ResolvedColumn.of(tableNodeNorm, c))
         .collect(Collectors.toList());
 
@@ -39,8 +39,7 @@ public class RejoinExprTransform {
         node,
         Optional.of(new JoinOn(Optional.empty(), NormalizerUtils.primaryKeyCriteria(table, node, tableNodeNorm))));
 
-    List<ResolvedColumn> ppk = table.getColumns().stream()
-        .filter(field -> field.containsAttribute(ForeignKey.class))
+    List<ResolvedColumn> ppk = table.getParentPrimaryKeys().stream()
         .map(c-> ResolvedColumn.of(tableNodeNorm, c))
         .collect(Collectors.toList());
 
@@ -57,8 +56,7 @@ public class RejoinExprTransform {
         Optional.empty(),
         Optional.empty(),
         Optional.empty(),
-        Optional.empty(),
-        List.of()
+        Optional.empty()
     );
     return outer;
   }

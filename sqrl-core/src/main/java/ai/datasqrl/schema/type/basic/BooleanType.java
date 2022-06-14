@@ -1,6 +1,8 @@
 package ai.datasqrl.schema.type.basic;
 
-import ai.datasqrl.schema.type.SqmlTypeVisitor;
+import ai.datasqrl.schema.type.SqrlTypeVisitor;
+
+import java.util.Optional;
 import java.util.function.Function;
 
 public class BooleanType extends AbstractBasicType<Boolean> {
@@ -25,21 +27,19 @@ public class BooleanType extends AbstractBasicType<Boolean> {
   }
 
   @Override
-  public BasicType parentType() {
-    return IntegerType.INSTANCE;
-  }
-
-  @Override
   public Conversion conversion() {
-    return new Conversion();
+    return Conversion.INSTANCE;
   }
 
-  public static class Conversion extends SimpleBasicType.Conversion<Boolean> {
+  private static class Conversion extends SimpleBasicType.Conversion<Boolean> {
 
-    public Conversion() {
+    private static final Conversion INSTANCE = new Conversion();
+
+    private Conversion() {
       super(Boolean.class, parseBoolean);
     }
 
+    @Override
     public Boolean convert(Object o) {
       if (o instanceof Boolean) {
         return (Boolean) o;
@@ -50,9 +50,17 @@ public class BooleanType extends AbstractBasicType<Boolean> {
       throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
     }
 
+    @Override
+    public Optional<Integer> getTypeDistance(BasicType fromType) {
+      if (fromType instanceof IntegerType) {
+        return Optional.of(80);
+      }
+      return Optional.empty();
+    }
+
   }
 
-  public <R, C> R accept(SqmlTypeVisitor<R, C> visitor, C context) {
+  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitBooleanType(this, context);
   }
 }

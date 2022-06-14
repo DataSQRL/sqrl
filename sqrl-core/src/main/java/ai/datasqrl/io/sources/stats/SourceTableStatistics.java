@@ -3,12 +3,15 @@ package ai.datasqrl.io.sources.stats;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
+import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.NamePath;
+import lombok.Getter;
 import lombok.ToString;
+import org.apache.flink.util.Preconditions;
 
 @ToString
 public class SourceTableStatistics implements
     Accumulator<SourceRecord<String>, SourceTableStatistics, SourceDataset.Digest> {
-
 
   final RelationStats relation;
 
@@ -35,5 +38,21 @@ public class SourceTableStatistics implements
 
   public long getCount() {
     return relation.getCount();
+  }
+
+  public RelationStats getRelationStats(NamePath path) {
+    RelationStats current = relation;
+    for (int i = 0; i < path.getLength(); i++) {
+      Name n = path.get(i);
+      FieldStats field = current.fieldStats.get(n);
+      if (field == null) return RelationStats.EMPTY;
+      Preconditions.checkNotNull(field,"Could not find nested table: %s",n);
+      current = field.types.values().stream()
+              .filter(fts -> fts.nestedRelationStats!=null)
+              .map(fts -> fts.nestedRelationStats)
+              .reduce((a,b) -> {throw new IllegalStateException("Expected single RelationStats for nested");})
+              .orElse(RelationStats.EMPTY);
+    }
+    return current;
   }
 }

@@ -2,11 +2,9 @@ package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.nodes.SqrlCalciteTable;
 import ai.datasqrl.schema.Relationship.JoinType;
-import ai.datasqrl.schema.attributes.ForeignKey;
+
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -14,41 +12,40 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.flink.shaded.guava30.com.google.common.base.Preconditions;
 
 @Getter
-public class Table implements ShadowingContainer.Nameable {
+public class Table implements ShadowingContainer.Element {
   public static final String ID_DELIMITER = "$";
 
   private final int uniqueId;
   private final NamePath path;
-  private final boolean isInternal;
+  private final Type type;
+
   private final ShadowingContainer<Field> fields;
+  private final Column timestamp;
+  private final TableStatistic statistic;
 
   @Setter
   private RelNode head;
 
-  public Table(int uniqueId, NamePath path, boolean isInternal, ShadowingContainer<Field> fields) {
+  public Table(int uniqueId, NamePath path, Type type, ShadowingContainer<Field> fields,
+               Column timestamp, RelNode head, TableStatistic statistic) {
     this.uniqueId = uniqueId;
     this.path = path;
-    this.isInternal = isInternal;
+    this.type = type;
     this.fields = fields;
+    this.timestamp = timestamp;
+    this.head = head;
+    this.statistic = statistic;
+    Preconditions.checkNotNull(fields.contains(timestamp));
   }
 
   public Optional<Field> getField(Name name) {
     return fields.getByName(name);
   }
 
-  public RelDataType getRowType() {
-    List<RelDataTypeField> fields = this.fields.stream()
-        .filter(f->f instanceof Column)
-        .map(f->(Column)f)
-        .map(Column::getRelDataTypeField)
-        .collect(Collectors.toList());
 
-    return new SqrlCalciteTable(this, fields);
-  }
 
   public Name getId() {
     return Name.system(getName() + ID_DELIMITER + uniqueId);
@@ -60,7 +57,7 @@ public class Table implements ShadowingContainer.Nameable {
   }
 
   public boolean isVisible() {
-    return !isInternal;
+    return true;
   }
 
   public int getVersion() {
@@ -189,7 +186,7 @@ public class Table implements ShadowingContainer.Nameable {
 
   public List<Column> getParentPrimaryKeys() {
     return this.fields.stream()
-        .filter(f->f instanceof Column && ((Column)f).containsAttribute(ForeignKey.class))
+            .filter(f->f instanceof Column && ((Column) f).isParentPrimaryKey())
         .map(f->(Column) f)
         .collect(Collectors.toList());
   }
@@ -203,7 +200,7 @@ public class Table implements ShadowingContainer.Nameable {
 
   public List<Column> getColumns() {
     return this.fields.getElements().stream()
-        .filter(f->f instanceof Column && !((Column) f).isInternal)
+        .filter(f->f instanceof Column && !((Column) f).isInternal())
         .map(f->(Column) f)
         .collect(Collectors.toList());
   }
@@ -213,5 +210,9 @@ public class Table implements ShadowingContainer.Nameable {
         .filter(f->f instanceof Relationship)
         .map(f->(Relationship) f)
         .collect(Collectors.toList());
+  }
+
+  public enum Type {
+    STREAM, STATE;
   }
 }

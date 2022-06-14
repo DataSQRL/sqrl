@@ -6,7 +6,7 @@ import ai.datasqrl.execute.StreamEngine;
 import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
 import ai.datasqrl.physical.stream.rel.InjectFlinkCluster;
 import ai.datasqrl.plan.queries.TableQuery;
-import ai.datasqrl.server.ImportManager;
+import ai.datasqrl.environment.ImportManager;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;

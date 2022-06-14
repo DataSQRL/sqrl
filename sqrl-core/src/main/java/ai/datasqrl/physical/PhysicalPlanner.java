@@ -8,7 +8,7 @@ import ai.datasqrl.physical.database.ddl.SqlDDLStatement;
 import ai.datasqrl.physical.stream.CreateStreamJobResult;
 import ai.datasqrl.physical.stream.StreamGraphBuilder;
 import ai.datasqrl.plan.LogicalPlan;
-import ai.datasqrl.server.ImportManager;
+import ai.datasqrl.environment.ImportManager;
 import java.util.List;
 import lombok.AllArgsConstructor;
 

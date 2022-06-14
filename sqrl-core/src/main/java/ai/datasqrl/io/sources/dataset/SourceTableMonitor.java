@@ -1,6 +1,6 @@
 package ai.datasqrl.io.sources.dataset;
 
-import ai.datasqrl.Environment;
+import ai.datasqrl.environment.Environment;
 
 /**
  * Call-back interface to inform the {@link Environment} to start monitoring a new {@link

@@ -2,7 +2,7 @@ package ai.datasqrl.io.sources.stats;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.schema.type.RelationType;
+import ai.datasqrl.schema.input.RelationType;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.basic.BasicTypeManager;
@@ -57,18 +57,18 @@ public class FieldStats implements Serializable {
                 return;
             }
         }
-          if (type == null) {
-              type = elementType;
-          } else if (!elementType.equals(type)) {
-              if (type instanceof BasicType && elementType instanceof BasicType) {
-                  type = BasicTypeManager.combine((BasicType) type, (BasicType) elementType, true);
-              } else {
-                  errors.fatal(
-                      "Array contains elements with incompatible types: [%s]. Found [%s] and [%s]",
-                      o,
-                      type, elementType);
-              }
-          }
+        if (type == null) {
+            type = elementType;
+        } else if (!elementType.equals(type)) {
+            if (type instanceof BasicType && elementType instanceof BasicType) {
+                type = BasicTypeManager.combineForced((BasicType) type, (BasicType) elementType);
+            } else {
+                errors.fatal(
+                    "Array contains elements with incompatible types: [%s]. Found [%s] and [%s]",
+                    o,
+                    type, elementType);
+            }
+        }
       }
     } else if (o != null) {
       //Single element
@@ -118,7 +118,7 @@ public class FieldStats implements Serializable {
                   detectedType = detectFromString.apply((String) next);
               }
           } else if (detectedType != null) {
-            rawType = BasicTypeManager.combine((BasicType) rawType, getBasicType(next), true);
+            rawType = BasicTypeManager.combineForced((BasicType) rawType, getBasicType(next));
             BasicType detect2 = detectFromString.apply((String) next);
               if (detect2 == null || !detect2.equals(detectedType)) {
                   detectedType = null;
