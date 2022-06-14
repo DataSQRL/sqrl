@@ -12,6 +12,8 @@ import ai.datasqrl.parse.SqrlParser;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.ScriptNode;
+import ai.datasqrl.plan.calcite.CalciteEnvironment;
+import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.plan.local.LocalPlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
@@ -29,6 +31,7 @@ class SchemaTest {
   SqrlParser parser;
   ErrorCollector errorCollector;
   ImportManager importManager;
+  CalciteEnvironment calciteEnv;
 
   @BeforeEach
   public void setup() throws IOException {
@@ -58,8 +61,15 @@ class SchemaTest {
     ScriptBundle bundle = config.initialize(errorCollector);
     System.out.println(errorCollector);
     importManager.registerUserSchema(bundle.getMainScript().getSchema());
-
+    calciteEnv = new CalciteEnvironment();
     parser = SqrlParser.newParser(errorCollector);
+  }
+
+  @Test
+  public void testImport() {
+    runScript(
+            "IMPORT ecommerce-data.Orders;\n"
+    );
   }
 
   @Test
@@ -205,14 +215,15 @@ class SchemaTest {
             + "Orders.total_entries := count(entries);\n");
   }
 
-    public void runScript(String script) {
+  public void runScript(String script) {
     ScriptNode node = parser.parse(script);
-    SchemaBuilder schema = new SchemaBuilder();
+    BundleTableFactory tableFactory = new BundleTableFactory(calciteEnv);
+    SchemaBuilder schema = new SchemaBuilder(tableFactory);
 
     for (Node n : node.getStatements()) {
       SchemaUpdatePlanner schemaUpdatePlanner = new SchemaUpdatePlanner(this.importManager,
-              SchemaAdjustmentSettings.DEFAULT,
-          errorCollector, new LocalPlanner(schema.peek()));
+          tableFactory, SchemaAdjustmentSettings.DEFAULT,
+          errorCollector, new LocalPlanner(calciteEnv, schema.peek()));
       System.out.println("Statement: " + NodeFormatter.accept(n));
 
       /*

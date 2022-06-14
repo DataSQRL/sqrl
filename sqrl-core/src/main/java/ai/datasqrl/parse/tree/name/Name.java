@@ -14,10 +14,6 @@ public interface Name extends Serializable, Comparable<Name> {
 
   String HIDDEN_PREFIX = "_";
   Name SELF_IDENTIFIER = Name.system("_");
-  Name PARENT_RELATIONSHIP = Name.system("parent");
-  Name SIBLING_RELATIONSHIP = Name.system("sibling");
-  Name INGEST_TIME = Name.system("_ingest_time");
-  Name UUID = Name.system("_uuid");
 
 
   /**

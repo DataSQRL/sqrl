@@ -45,12 +45,13 @@ public class SourceTableStatistics implements
     for (int i = 0; i < path.getLength(); i++) {
       Name n = path.get(i);
       FieldStats field = current.fieldStats.get(n);
+      if (field == null) return RelationStats.EMPTY;
       Preconditions.checkNotNull(field,"Could not find nested table: %s",n);
       current = field.types.values().stream()
               .filter(fts -> fts.nestedRelationStats!=null)
               .map(fts -> fts.nestedRelationStats)
               .reduce((a,b) -> {throw new IllegalStateException("Expected single RelationStats for nested");})
-              .orElseThrow();
+              .orElse(RelationStats.EMPTY);
     }
     return current;
   }

@@ -96,14 +96,14 @@ public class IngestAndSchemaTest {
             .build();
     registry.addOrUpdateSource(dsName, fileConfig, errors);
     System.out.println(errors);
-    assertFalse(errors.isFatal());
+    assertFalse(errors.isFatal(), errors.toString());
 
     String ds2Name = "c360";
     fileConfig = DirectorySourceImplementation.builder()
             .uri(C360Example.RETAIL_DATA_DIR.toAbsolutePath().toString())
             .build();
     registry.addOrUpdateSource(ds2Name, fileConfig, errors);
-    assertFalse(errors.isFatal());
+    assertFalse(errors.isFatal(), errors.toString());
 
 
     //Needs some time to wait for the flink pipeline to compile data

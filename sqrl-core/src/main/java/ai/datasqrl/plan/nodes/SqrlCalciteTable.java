@@ -8,13 +8,9 @@ import org.apache.calcite.rel.type.RelDataTypeImpl;
 
 public class SqrlCalciteTable extends RelDataTypeImpl {
 
-  @Getter
-  private final Table table;
 
-  public SqrlCalciteTable(
-      Table table, List<? extends RelDataTypeField> fieldList) {
+  public SqrlCalciteTable(List<? extends RelDataTypeField> fieldList) {
     super(fieldList);
-    this.table = table;
     computeDigest();
   }
 

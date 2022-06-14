@@ -64,6 +64,11 @@ public class Relationship extends Field {
     this.limit = limit;
   }
 
+  public Relationship(Name name, Table table, Table toTable, JoinType joinType,
+                      Multiplicity multiplicity, Relation relation) {
+    this(name,table,toTable,joinType,multiplicity,relation, Optional.empty(), Optional.empty());
+  }
+
   @Override
   public Name getId() {
     return name;

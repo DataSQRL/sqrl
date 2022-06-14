@@ -178,14 +178,14 @@ public class NamePath implements Iterable<Name>, Serializable, Comparable<NamePa
     return names.length == 0;
   }
 
-  public Optional<NamePath> subList(int from, int to) {
-    if (from > names.length || to > names.length) {
-      return Optional.empty();
+  public NamePath subList(int from, int to) {
+    if (from < 0 || to < from || to > names.length) {
+      throw new IllegalArgumentException("Invalid offsets");
+    } else if (from == to) {
+      return NamePath.ROOT;
     }
-
     Name[] newNames = Arrays.copyOfRange(names, from, to);
-
-    return Optional.of(new NamePath(newNames));
+    return new NamePath(newNames);
   }
 
 }

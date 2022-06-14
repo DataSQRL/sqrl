@@ -13,6 +13,7 @@ import ai.datasqrl.plan.local.LocalPlanner;
 import ai.datasqrl.plan.local.SchemaUpdatePlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
+import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.schema.Schema;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 public class BundlePlanner {
 
   private final BundleOptions options;
-  ErrorCollector errorCollector = ErrorCollector.root();
+  private final ErrorCollector errorCollector = ErrorCollector.root();
+  private final BundleTableFactory tableFactory;
 
   public BundlePlanner(BundleOptions options) {
     this.options = options;
+    this.tableFactory = new BundleTableFactory(options.getCalciteEnv());
   }
 
   public PhysicalPlan processBundle(ScriptBundle bundle) {
@@ -43,7 +46,7 @@ public class BundlePlanner {
     SqrlParser parser = SqrlParser.newParser(errorCollector);
     ScriptNode scriptAst = parser.parse(mainScript.getContent());
 
-    SchemaBuilder schema = new SchemaBuilder();
+    SchemaBuilder schema = new SchemaBuilder(tableFactory);
     for (Node node : scriptAst.getStatements()) {
       Optional<SchemaUpdateOp> operation = planStatement(node, schema);
       if (operation.isEmpty()) {
@@ -58,9 +61,10 @@ public class BundlePlanner {
   public Optional<SchemaUpdateOp> planStatement(Node statement, SchemaBuilder schema) {
     SchemaUpdatePlanner planner = new SchemaUpdatePlanner(
         this.options.getImportManager(),
+        schema.getTableFactory(),
         this.options.getSchemaSettings(),
         this.errorCollector,
-        new LocalPlanner(schema.peek()));
+        new LocalPlanner(options.getCalciteEnv(),schema.peek()));
     return planner.plan(schema.peek(), statement);
   }
 }

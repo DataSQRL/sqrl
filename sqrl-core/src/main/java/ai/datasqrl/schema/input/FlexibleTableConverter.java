@@ -8,17 +8,24 @@ import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.constraint.Cardinality;
 import ai.datasqrl.schema.constraint.ConstraintHelper;
 import com.google.common.base.Preconditions;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 
 import java.util.*;
 
 @Value
+@AllArgsConstructor
 public class FlexibleTableConverter {
 
     private final FlexibleDatasetSchema.TableField table;
+    private final Optional<Name> tableAlias;
+
+    public FlexibleTableConverter(FlexibleDatasetSchema.TableField table) {
+        this(table, Optional.empty());
+    }
 
     public<T> Optional<T> apply(Visitor<T> visitor) {
-        return visitRelation(NamePath.ROOT, table.getName(), table.getFields(), false, false, visitor);
+        return visitRelation(NamePath.ROOT, tableAlias.orElse(table.getName()), table.getFields(), false, false, visitor);
     }
 
     private<T> Optional<T> visitRelation(NamePath path, Name name, RelationType<FlexibleDatasetSchema.FlexibleField> relation,

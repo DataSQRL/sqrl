@@ -11,7 +11,9 @@ import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rex.RexNode;
 
 @Getter
@@ -22,39 +24,45 @@ public class Column extends Field {
      (unlike relationships which can be ignored once they are shadowed and no longer referenceable)
    */
   private final int version;
+  private final int index;
+  private final RelDataType datatype;
 
   private final boolean isPrimaryKey;
   private final boolean isParentPrimaryKey;
-  private final boolean isTimestamp;
 
   private final boolean nonNull;
   private final List<Constraint> constraints;
-  private final RelDataTypeField relDataTypeField;
 
-  //System information
+  //Column isn't visible to user but needed by system (for primary key or timestamp)
   private final boolean isInternal;
 
   private final Optional<LPDefinition> definition = Optional.empty();
 
-  public Column(Name name, int version,
-                RelDataTypeField relDataTypeField, List<Constraint> constraints,
-                boolean isInternal, boolean isPrimaryKey,
-                boolean isParentPrimaryKey, boolean isTimestamp) {
+  public Column(Name name, int version, int index,
+                RelDataType datatype,
+                boolean isPrimaryKey, boolean isParentPrimaryKey,
+                List<Constraint> constraints, boolean isInternal) {
     super(name);
     this.version = version;
-    this.relDataTypeField = relDataTypeField;
+    this.index = index;
+    this.datatype = datatype;
     this.constraints = constraints;
     this.isInternal = isInternal;
     Preconditions.checkArgument(!isParentPrimaryKey || isPrimaryKey);
     this.isPrimaryKey = isPrimaryKey;
     this.isParentPrimaryKey = isParentPrimaryKey;
-    this.isTimestamp = isTimestamp;
     this.nonNull = ConstraintHelper.isNonNull(constraints);
+    Preconditions.checkArgument(!isPrimaryKey || nonNull);
+    Preconditions.checkArgument(!isParentPrimaryKey || isPrimaryKey);
   }
 
   //Returns a calcite name for this column.
   public Name getId() {
-    return Name.system(relDataTypeField.getName());
+    return name;
+  }
+
+  public RelDataTypeField getRelDataTypeField() {
+    return new RelDataTypeFieldImpl(name.getCanonical(),index,datatype);
   }
 
   @Override
@@ -85,12 +93,12 @@ public class Column extends Field {
   public String toString() {
     return "Column{" +
         "version=" + version +
+        ", index =" + index +
+        ", datatype=" + datatype +
         ", nonNull=" + nonNull +
         ", constraints=" + constraints +
         ", isPrimaryKey=" + isPrimaryKey +
         ", isParentPrimaryKey=" + isParentPrimaryKey +
-        ", isTimestamp =" + isTimestamp +
-        ", relDataTypeField=" + relDataTypeField +
         ", isInternal=" + isInternal +
         ", name=" + name +
         '}';

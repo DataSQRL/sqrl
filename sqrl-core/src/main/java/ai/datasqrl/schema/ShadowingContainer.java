@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
- * A container that keeps any type of object that implements the {@link ShadowingContainer.Nameable}
+ * A container that keeps any type of object that implements the {@link Element}
  * interface which returns the name of that object. Objects can be retrieved by their name. If an
  * object with the same name is inserted, it shadows the previous element. That means, the previous
  * element is no longer accessible by name but only when iterating through the entire list of
@@ -22,7 +22,7 @@ import org.apache.commons.lang3.tuple.Pair;
  *
  * @param <E>
  */
-public class ShadowingContainer<E extends ShadowingContainer.Nameable> implements Collection<E> {
+public class ShadowingContainer<E extends ShadowingContainer.Element> implements Collection<E> {
 
   private final List<E> elements = new ArrayList<>();
   private final Map<Name, E> byName = new LinkedHashMap<>();
@@ -194,7 +194,7 @@ public class ShadowingContainer<E extends ShadowingContainer.Nameable> implement
         '}';
   }
 
-  public interface Nameable {
+  public interface Element {
 
     Name getName();
 

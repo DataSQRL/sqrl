@@ -1,16 +1,21 @@
 package ai.datasqrl.plan.local.operations;
 
+import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.factory.TableFactory;
 import lombok.Getter;
 
 public class SchemaBuilder extends SchemaOpVisitor {
 
   @Getter
+  private final BundleTableFactory tableFactory;
+
+  @Getter
   Schema schema = new Schema();
 
-  private final TableFactory tableFactory = new TableFactory();
+  public SchemaBuilder(BundleTableFactory tableFactory) {
+    this.tableFactory = tableFactory;
+  }
 
   public void apply(SchemaUpdateOp operation) {
     operation.accept(this);
@@ -30,10 +35,11 @@ public class SchemaBuilder extends SchemaOpVisitor {
 
   @Override
   public <T> T visit(AddNestedTableOp op) {
-    tableFactory.assignRelationships(
+    tableFactory.createParentChildRelationship(
         op.getRelationshipName(),
         op.getTable(),
-        op.getParentTable());
+        op.getParentTable(),
+        op.getMultiplicity());
     return null;
   }
 
@@ -51,5 +57,10 @@ public class SchemaBuilder extends SchemaOpVisitor {
 
   public Schema build() {
     return schema;
+  }
+
+  @Override
+  public String toString() {
+    return schema.toString();
   }
 }
