@@ -18,11 +18,12 @@ public class ReservedName extends AbstractName {
     return name;
   }
 
-  public static ReservedName UUID = new ReservedName("_uuid");
-  public static ReservedName INGEST_TIME = new ReservedName("_ingest_time");
-  public static ReservedName SOURCE_TIME = new ReservedName("_source_time");
-  public static ReservedName ARRAY_IDX = new ReservedName("_idx");
-  public static ReservedName PARENT = new ReservedName("parent");
-  public static ReservedName ALL = new ReservedName("*");
+  public static final Name SELF_IDENTIFIER = Name.system(HIDDEN_PREFIX);
+  public static final ReservedName UUID = new ReservedName(HIDDEN_PREFIX + "uuid");
+  public static final ReservedName INGEST_TIME = new ReservedName(HIDDEN_PREFIX + "ingest_time");
+  public static final ReservedName SOURCE_TIME = new ReservedName(HIDDEN_PREFIX + "source_time");
+  public static final ReservedName ARRAY_IDX = new ReservedName(HIDDEN_PREFIX + "idx");
+  public static final ReservedName PARENT = new ReservedName("parent");
+  public static final ReservedName ALL = new ReservedName("*");
 
 }

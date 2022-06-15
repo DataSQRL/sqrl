@@ -4,8 +4,8 @@ import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.Hint;
 import ai.datasqrl.parse.tree.Join.Type;
 import ai.datasqrl.parse.tree.JoinOn;
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
@@ -37,10 +37,10 @@ public class TablePathToJoins {
    * Turn a table path into the references of either table, relationship, or self
    */
   public static List<TableOrRelationship> mapToReference(NamePath namePath, RelationScope scope) {
-    if (namePath.getLength() > 1 && namePath.get(0).equals(Name.SELF_IDENTIFIER) &&
+    if (namePath.getLength() > 1 && namePath.get(0).equals(ReservedName.SELF_IDENTIFIER) &&
         !scope.getHasExpandedSelf().get()) {
       //Special case 2: has a self reference but we have not expanded table yet
-      RelationNorm self = scope.getJoinScopes().get(Name.SELF_IDENTIFIER);
+      RelationNorm self = scope.getJoinScopes().get(ReservedName.SELF_IDENTIFIER);
       scope.getHasExpandedSelf().set(true);
 
       List<TableOrRelationship> rels = new ArrayList<>();

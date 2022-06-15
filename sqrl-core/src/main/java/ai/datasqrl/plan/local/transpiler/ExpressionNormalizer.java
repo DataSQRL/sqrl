@@ -16,6 +16,7 @@ import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.Window;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceExpression;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
@@ -175,7 +176,7 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
         //Partition is the current table's parent primary keys
         Preconditions.checkState(scope.getContextTable().isPresent(), "Cannot rewrite window");
         List<Expression> partition = scope.getContextTable().get().getParentPrimaryKeys().stream()
-            .map(c->ResolvedColumn.of(scope.getJoinScopes().get(Name.SELF_IDENTIFIER), c))
+            .map(c->ResolvedColumn.of(scope.getJoinScopes().get(ReservedName.SELF_IDENTIFIER), c))
             .collect(Collectors.toList());
         window = new Window(partition, Optional.empty()); //todo: table ordering?
       } else {
@@ -185,7 +186,7 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
 
         if (scope.getContextTable().isPresent()) {
           List<Expression> partition = scope.getContextTable().get().getParentPrimaryKeys().stream()
-              .map(c->ResolvedColumn.of(scope.getJoinScopes().get(Name.SELF_IDENTIFIER), c))
+              .map(c->ResolvedColumn.of(scope.getJoinScopes().get(ReservedName.SELF_IDENTIFIER), c))
               .collect(Collectors.toList());
           window = new Window(Lists.newArrayList(Iterables.concat(windowPartition, partition)), Optional.empty()); //todo: table ordering?
         } else {
@@ -236,7 +237,7 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
     Table baseTable = ((TableNodeNorm)resolved.get(0)).getRef().getTable();
 
     Name fieldName = fields.get(fields.size() - 1).getName();
-    NamePath tablePath = Name.SELF_IDENTIFIER.toNamePath().concat(relPath.popLast());
+    NamePath tablePath = ReservedName.SELF_IDENTIFIER.toNamePath().concat(relPath.popLast());
     QuerySpecification spec = ExtractSubQuery.extract(node, fieldName, tablePath);
 
     RelationScope subQueryScope = new RelationScope(scope.getSchema(),

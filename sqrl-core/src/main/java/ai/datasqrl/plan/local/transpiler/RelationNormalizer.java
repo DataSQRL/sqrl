@@ -27,6 +27,7 @@ import ai.datasqrl.parse.tree.TableNode;
 import ai.datasqrl.parse.tree.TableSubquery;
 import ai.datasqrl.parse.tree.Union;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceOrdinal;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.node.SelectNorm;
@@ -178,8 +179,8 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
     //Attempt to set the self scope
     setSelfScope(scope);
     //special case for explicit context table
-    if (node.getNamePath().getLength() == 1 && node.getNamePath().get(0).equals(Name.SELF_IDENTIFIER)) {
-      RelationNorm tableNorm = scope.getJoinScopes().get(Name.SELF_IDENTIFIER);
+    if (node.getNamePath().getLength() == 1 && node.getNamePath().get(0).equals(ReservedName.SELF_IDENTIFIER)) {
+      RelationNorm tableNorm = scope.getJoinScopes().get(ReservedName.SELF_IDENTIFIER);
       scope.getHasExpandedSelf().set(true);
       return tableNorm;
     }
@@ -206,7 +207,7 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
   private List<ResolvedColumn> resolvedParentPrimaryKeys(RelationScope scope) {
     if (scope.getContextTable().isPresent()) {
       //todo check for missing context table so we can add it
-      RelationNorm tableNorm = scope.getJoinScopes().get(Name.SELF_IDENTIFIER);
+      RelationNorm tableNorm = scope.getJoinScopes().get(ReservedName.SELF_IDENTIFIER);
       return (List)new ArrayList<>(tableNorm.getPrimaryKeys());
     }
 
@@ -214,14 +215,14 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
   }
 
   private void setSelfScope(RelationScope scope) {
-    if (scope.getJoinScopes().containsKey(Name.SELF_IDENTIFIER)) {
+    if (scope.getJoinScopes().containsKey(ReservedName.SELF_IDENTIFIER)) {
       return;
     }
     if (scope.getContextTable().isPresent()) {
       Table table = scope.getContextTable().get();
       TableNodeNorm tableNodeNorm = new TableNodeNorm(Optional.empty(), table.getPath(),
-          Optional.of(Name.SELF_IDENTIFIER), new TableRef(table), true, List.of());
-      scope.getJoinScopes().put(Name.SELF_IDENTIFIER, tableNodeNorm);
+          Optional.of(ReservedName.SELF_IDENTIFIER), new TableRef(table), true, List.of());
+      scope.getJoinScopes().put(ReservedName.SELF_IDENTIFIER, tableNodeNorm);
     }
   }
 
@@ -323,7 +324,7 @@ public class RelationNormalizer extends AstVisitor<RelationNorm, RelationScope> 
       @Override
       public Object visitTableNode(TableNode node, Object context) {
         if (node.getNamePath().getLength() == 1 &&
-            node.getNamePath().getFirst().equals(Name.SELF_IDENTIFIER)) {
+            node.getNamePath().getFirst().equals(ReservedName.SELF_IDENTIFIER)) {
           atomicBoolean.set(true);
         }
         return null;

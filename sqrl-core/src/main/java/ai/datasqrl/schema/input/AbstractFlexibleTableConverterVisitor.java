@@ -3,6 +3,7 @@ package ai.datasqrl.schema.input;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
+import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.type.SqrlTypeVisitor;
 import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.basic.DateTimeType;
@@ -20,6 +21,7 @@ public abstract class AbstractFlexibleTableConverterVisitor<T> implements Flexib
     @Override
     public void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
         stack.addFirst(new TableBuilder<>(name, namePath));
+        augmentTable(isNested, isSingleton);
     }
 
     protected void augmentTable(boolean isNested, boolean isSingleton) {
@@ -35,7 +37,6 @@ public abstract class AbstractFlexibleTableConverterVisitor<T> implements Flexib
 
     @Override
     public Optional<T> endTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
-        augmentTable(isNested, isSingleton);
         return createTable(stack.removeFirst());
     }
 
@@ -65,8 +66,13 @@ public abstract class AbstractFlexibleTableConverterVisitor<T> implements Flexib
         final NamePath namePath;
         final List<Pair<Name,T>> columns = new ArrayList<>();
 
-        void add(Name name, T type) {
-            columns.add(Pair.of(name,type));
+        void add(final Name name, T type) {
+            //A name may clash with a previously added reserved name in which case we have to suffix it
+            Name columnId = Column.getId(name,0);
+            if (columns.stream().map(Pair::getKey).anyMatch(n -> n.equals(name))) {
+                columnId = Column.getId(name,1);
+            }
+            columns.add(Pair.of(columnId,type));
         }
 
     }

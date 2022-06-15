@@ -43,6 +43,7 @@ import static ai.datasqrl.parse.util.SqrlNodeUtil.and;
 public class BundleTableFactory {
 
     private final AtomicInteger tableIdCounter = new AtomicInteger(0);
+    private final Name parentRelationshipName = ReservedName.PARENT;
     private final SqrlType2Calcite typeConverter;
 
     public BundleTableFactory(CalciteEnvironment calciteEnvironment) {
@@ -56,30 +57,28 @@ public class BundleTableFactory {
         converter.apply(visitor);
         TableBuilder tblBuilder = visitor.lastCreatedTable;
         assert tblBuilder != null;
-        //Identify timestamp column; TODO: additional method argument for explicit timestamp definition
-        Column timestamp = tblBuilder.fields.stream().filter(f -> f.getName().equals(ReservedName.INGEST_TIME))
+        //Identify timestamp column and add it; TODO: additional method argument for explicit timestamp definition
+        Column timestamp = tblBuilder.getFields().stream().filter(f -> f.getName().equals(ReservedName.INGEST_TIME))
                 .map(f->(Column)f).findFirst().get();
-        return createImportTableHierarchy(calcitePlanner, tblBuilder,timestamp,
-                null, impTbl.getTable().getStatistics());
+        return createImportTableHierarchy(calcitePlanner, tblBuilder, timestamp, impTbl.getTable().getStatistics());
     }
 
     private Table createImportTableHierarchy(CalcitePlanner calcitePlanner,
                                              TableBuilder tblBuilder, Column timestamp,
-                                             Table parentTbl, SourceTableStatistics statistics) {
-        if (parentTbl != null) {
-            //Add parent primary keys to child
-            tblBuilder.addParentPrimaryKeys(parentTbl);
-        }
-        NamePath tblPath = tblBuilder.namePath;
+                                             SourceTableStatistics statistics) {
+        NamePath tblPath = tblBuilder.getPath();
         RelationStats stats = statistics.getRelationStats(tblPath.subList(1,tblPath.getLength()));
         SqrlRelBuilder relBuilder = calcitePlanner.createRelBuilder();
-        RelNode tableHead = relBuilder.scanStream(tblPath.getLast(),tblBuilder).build();
+        RelNode tableHead = relBuilder.scanStream(tblBuilder).build();
         Table table = tblBuilder.createTable(Table.Type.STREAM, timestamp, tableHead, TableStatistic.from(stats));
         //Recurse through children and add parent-child relationships
         for (Pair<TableBuilder,Relationship.Multiplicity> child : tblBuilder.children) {
             TableBuilder childBuilder = child.getKey();
-            Table childTbl = createImportTableHierarchy(calcitePlanner, childBuilder, null, table, statistics);
-            Name childName = childBuilder.namePath.getLast();
+            //Add parent timestamp as internal column
+            Column childTimestamp = childBuilder.addColumn(timestamp.getName(), timestamp.getDatatype(),
+                    false, false, true, true);
+            Table childTbl = createImportTableHierarchy(calcitePlanner, childBuilder, childTimestamp, statistics);
+            Name childName = childBuilder.getPath().getLast();
             createParentChildRelationship(childName, childTbl, table, child.getValue());
         }
         return table;
@@ -87,11 +86,13 @@ public class BundleTableFactory {
 
     public void createParentChildRelationship(Name childName, Table childTable, Table parentTable,
                                               Relationship.Multiplicity multiplicity) {
-        //Built-in relationships
-        Relationship parentRel = new Relationship(ReservedName.PARENT,
-                childTable, parentTable, Relationship.JoinType.PARENT, Relationship.Multiplicity.ONE,
-                createParentChildRelation(Join.Type.INNER, parentTable.getPrimaryKeys(), childTable, parentTable));
-        childTable.getFields().add(parentRel);
+        //Avoid overwriting an existing "parent" column on the child
+        if (childTable.getField(parentRelationshipName).isEmpty()) {
+            Relationship parentRel = new Relationship(parentRelationshipName,
+                    childTable, parentTable, Relationship.JoinType.PARENT, Relationship.Multiplicity.ONE,
+                    createParentChildRelation(Join.Type.INNER, parentTable.getPrimaryKeys(), childTable, parentTable));
+            childTable.getFields().add(parentRel);
+        }
 
         Relationship childRel = new Relationship(childName,
                 parentTable, childTable, Relationship.JoinType.CHILD, multiplicity,
@@ -126,12 +127,16 @@ public class BundleTableFactory {
 
         @Override
         public void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
+            TableBuilder tblBuilder = new TableBuilder(namePath.concat(name));
             //Add primary keys
-            stack.addFirst(new TableBuilder(namePath.concat(name)));
-        }
-
-        protected void augmentTable(TableBuilder tblBuilder, boolean isNested, boolean isSingleton) {
-            if (!isNested) {
+            if (isNested) {
+                //Add parent primary keys
+                tblBuilder.addParentPrimaryKeys(stack.getFirst());
+                if (!isSingleton) {
+                    tblBuilder.addColumn(ReservedName.ARRAY_IDX, convertType(IntegerType.INSTANCE), true,
+                            false, true, false);
+                }
+            } else {
                 tblBuilder.addColumn(ReservedName.UUID, convertType(UuidType.INSTANCE), true,
                         false, true, false);
                 tblBuilder.addColumn(ReservedName.INGEST_TIME, convertType(DateTimeType.INSTANCE), false,
@@ -139,16 +144,12 @@ public class BundleTableFactory {
                 tblBuilder.addColumn(ReservedName.SOURCE_TIME, convertType(DateTimeType.INSTANCE), false,
                         false, false, false);
             }
-            if (isNested && !isSingleton) {
-                tblBuilder.addColumn(ReservedName.ARRAY_IDX, convertType(IntegerType.INSTANCE), true,
-                        false, true, true);
-            }
+            stack.addFirst(tblBuilder);
         }
 
         @Override
         public Optional<Type> endTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
             lastCreatedTable = stack.removeFirst();
-            augmentTable(lastCreatedTable, isNested, isSingleton);
             return Optional.of(RelationType.EMPTY);
         }
 
@@ -194,26 +195,27 @@ public class BundleTableFactory {
         return new TableBuilder(tableName);
     }
 
-    public class TableBuilder {
+    public class TableBuilder extends AbstractTable {
 
-        private final NamePath namePath;
-        private final ShadowingContainer<Field> fields = new ShadowingContainer<>();
         private final List<Pair<TableBuilder, Relationship.Multiplicity>> children = new ArrayList<>();
         private int columnCounter = 0;
 
         private TableBuilder(NamePath namePath) {
-            this.namePath = namePath;
+            super(tableIdCounter.incrementAndGet(), namePath, new ShadowingContainer<>());
         }
 
         private void addChild(TableBuilder table, Relationship.Multiplicity multi) {
             children.add(Pair.of(table,multi));
         }
 
-        public void addColumn(Name name, RelDataType type, boolean isPrimaryKey, boolean isParentPrimaryKey,
+        public Column addColumn(Name name, RelDataType type, boolean isPrimaryKey, boolean isParentPrimaryKey,
                        boolean notnull, boolean isInternal) {
-            fields.add(new Column(name, 0, columnCounter++, type,
+            int version = getNextColumnVersion(name);
+            Column col = new Column(name, version, columnCounter++, type,
                     isPrimaryKey, isParentPrimaryKey,
-                    notnull? List.of(NotNull.INSTANCE) : List.of(), isInternal));
+                    notnull? List.of(NotNull.INSTANCE) : List.of(), isInternal);
+            fields.add(col);
+            return col;
         }
 
         public RelDataType getRowType() {
@@ -225,15 +227,14 @@ public class BundleTableFactory {
             return new SqrlCalciteTable(fields);
         }
 
-        private void addParentPrimaryKeys(Table parent) {
+        public void addParentPrimaryKeys(AbstractTable parent) {
             for (Column ppk : parent.getPrimaryKeys()) {
-                //TODO: append suffix to name to ensure uniqueness on child; rework #createParentChildRelation correspondingly
                 addColumn(ppk.getName(), ppk.getDatatype(), true, true, true, true);
             }
         }
 
         public Table createTable(Table.Type type, Column timestamp, RelNode head, TableStatistic statistic) {
-            return new Table(tableIdCounter.incrementAndGet(), namePath, type, fields, timestamp, head, statistic);
+            return new Table(uniqueId, path, type, fields, timestamp, head, statistic);
         }
 
     }

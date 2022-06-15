@@ -59,7 +59,12 @@ public class Column extends Field {
 
   //Returns a calcite name for this column.
   public Name getId() {
-    return name;
+    return getId(name,version);
+  }
+
+  public static Name getId(Name name, int version) {
+    if (version==0) return name;
+    else return name.suffix(Integer.toString(version));
   }
 
   public RelDataTypeField getRelDataTypeField() {

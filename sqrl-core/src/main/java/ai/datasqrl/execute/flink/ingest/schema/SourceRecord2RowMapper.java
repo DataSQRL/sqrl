@@ -27,12 +27,18 @@ public class SourceRecord2RowMapper implements MapFunction<SourceRecord.Named, R
     @Override
     public Row map(SourceRecord.Named sourceRecord) throws Exception {
         Object[] cols = constructRows(sourceRecord.getData(), tableSchema.getFields());
-        int offset = cols.length;
-        cols = Arrays.copyOf(cols, cols.length + 3);
-        cols[offset++] = sourceRecord.getUuid().toString();
-        cols[offset++] = sourceRecord.getIngestTime();
-        cols[offset++] = sourceRecord.getSourceTime();
+        //Add metadata
+        cols = extendCols(cols,3);
+        cols[0] = sourceRecord.getUuid().toString();
+        cols[1] = sourceRecord.getIngestTime();
+        cols[2] = sourceRecord.getSourceTime();
         return Row.ofKind(RowKind.INSERT, cols);
+    }
+
+    private static Object[] extendCols(Object[] cols, int paddingLength) {
+        Object[] extendedCols = new Object[cols.length + paddingLength];
+        System.arraycopy(cols,0,extendedCols,paddingLength, cols.length);
+        return extendedCols;
     }
 
     private Object[] constructRows(Map<Name, Object> data,
@@ -52,8 +58,8 @@ public class SourceRecord2RowMapper implements MapFunction<SourceRecord.Named, R
                             for (Map<Name, Object> item : nestedData) {
                                 Object[] cols = constructRows(item, subType);
                                 //Add index
-                                cols = Arrays.copyOf(cols, cols.length + 1);
-                                cols[cols.length - 1] = Long.valueOf(idx);
+                                cols = extendCols(cols,1);
+                                cols[0] = Long.valueOf(idx);
                                 result[idx] = Row.of(cols);
                                 idx++;
                             }

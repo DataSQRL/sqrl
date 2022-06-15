@@ -16,7 +16,6 @@ import ai.datasqrl.plan.local.operations.AddNestedTableOp;
 import ai.datasqrl.plan.local.operations.AddTableOp;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
 import ai.datasqrl.plan.local.transpiler.StatementNormalizer;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinDeclarationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
@@ -125,7 +124,7 @@ public class SchemaUpdatePlanner {
 
       Table table = schema.walkTable(name.popLast());
       Name columnName = name.getLast();
-      int nextVersion = table.getNextFieldVersion(columnName);
+      int nextVersion = table.getNextColumnVersion(columnName);
 
       //By convention, the last field is new the expression
       int index = relNode.getRowType().getFieldList().size() - 1;

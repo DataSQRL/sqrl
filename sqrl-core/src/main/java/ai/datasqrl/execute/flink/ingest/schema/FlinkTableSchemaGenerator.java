@@ -28,7 +28,6 @@ public class FlinkTableSchemaGenerator extends AbstractFlexibleTableConverterVis
 
     @Override
     public Optional<DataType> endTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
-        augmentTable(isNested, isSingleton);
         TableBuilder<DataType> tblBuilder = stack.removeFirst();
         if (isNested) {
             return createTable(tblBuilder);

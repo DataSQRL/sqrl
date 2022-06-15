@@ -6,7 +6,6 @@ import ai.datasqrl.schema.Relationship.JoinType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -16,21 +15,15 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.flink.shaded.guava30.com.google.common.base.Preconditions;
 
 @Getter
-public class Table implements ShadowingContainer.Element {
+public class Table extends AbstractTable {
 
   public enum Type {
     STREAM, //a stream of records with synthetic (i.e. uuid) primary key ordered by timestamp
     STATE; //table with natural primary key that ensures uniqueness and timestamp for change-stream
   }
 
-  public static final String ID_DELIMITER = "$";
-
-  private final int uniqueId;
-  @NonNull private final NamePath path;
   @NonNull private final Type type;
-
-  @NonNull private final ShadowingContainer<Field> fields;
-  private final Column timestamp; //Can be null for dependent child tables that inherit timestamp from parent
+  @NonNull private final Column timestamp; //Can be null for dependent child tables that inherit timestamp from parent
   @NonNull private final TableStatistic statistic;
   @NonNull private final RelNode baseLogicalPlan;
 
@@ -39,53 +32,13 @@ public class Table implements ShadowingContainer.Element {
 
   public Table(int uniqueId, NamePath path, Type type, ShadowingContainer<Field> fields,
                Column timestamp, RelNode baseLogicalPlan, TableStatistic statistic) {
-    this.uniqueId = uniqueId;
-    this.path = path;
+    super(uniqueId,path,fields);
     this.type = type;
-    this.fields = fields;
     this.timestamp = timestamp;
     this.baseLogicalPlan = baseLogicalPlan;
     this.statistic = statistic;
     Preconditions.checkNotNull(fields.contains(timestamp));
     setHead(baseLogicalPlan);
-  }
-
-  public Optional<Field> getField(Name name) {
-    return fields.getByName(name);
-  }
-
-  public Name getId() {
-    return getName().suffix(Integer.toString(uniqueId));
-  }
-
-  @Override
-  public Name getName() {
-    return path.getLast();
-  }
-
-  public boolean isVisible() {
-    return true;
-  }
-
-  public int getVersion() {
-    return uniqueId;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    Table table = (Table) o;
-    return uniqueId == table.uniqueId;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(uniqueId);
   }
 
   public Optional<Field> walkField(NamePath namePath) {
@@ -145,27 +98,14 @@ public class Table implements ShadowingContainer.Element {
     return Optional.empty();
   }
 
-  @Override
-  public String toString() {
-    return "Table{" +
-        "name=" + getName() +
-        '}';
-  }
-
   /**
    * Determines the next field name
    */
   public Name getNextFieldId(Name name) {
-    return Name.system(name.getCanonical() + ID_DELIMITER + getNextFieldVersion(name));
+    return name.suffix(Integer.toString(getNextColumnVersion(name)));
   }
 
-  public int getNextFieldVersion(Name name) {
-    int version = 0;
-    if (getField(name).isPresent()) {
-      version = getField(name).get().getVersion() + 1;
-    }
-    return version;
-  }
+
 
   //Todo: Validate first
   public Optional<List<Field>> walkFields(NamePath names) {
@@ -194,13 +134,6 @@ public class Table implements ShadowingContainer.Element {
   public List<Column> getParentPrimaryKeys() {
     return this.fields.stream()
             .filter(f->f instanceof Column && ((Column) f).isParentPrimaryKey())
-        .map(f->(Column) f)
-        .collect(Collectors.toList());
-  }
-
-  public List<Column> getPrimaryKeys() {
-    return this.fields.stream()
-        .filter(f->f instanceof Column && ((Column) f).isPrimaryKey())
         .map(f->(Column) f)
         .collect(Collectors.toList());
   }

@@ -5,7 +5,7 @@ import ai.datasqrl.parse.tree.Join;
 import ai.datasqrl.parse.tree.Join.Type;
 import ai.datasqrl.parse.tree.Relation;
 import ai.datasqrl.parse.tree.TableNode;
-import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Table;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,8 +24,8 @@ public class JoinContextTransform {
     //Special case: if we're nested then we need to do a cross join on the first table
     //e.g. _ JOIN Orders
     return new Join(Optional.empty(), Type.CROSS,
-        new TableNode(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath(),
-            Optional.of(Name.SELF_IDENTIFIER)), from, Optional.empty());
+        new TableNode(Optional.empty(), ReservedName.SELF_IDENTIFIER.toNamePath(),
+            Optional.of(ReservedName.SELF_IDENTIFIER)), from, Optional.empty());
   }
 
   private static boolean hasAnyContextReference(Relation node) {
@@ -33,7 +33,7 @@ public class JoinContextTransform {
     node.accept(new DefaultTraversalVisitor<>() {
       @Override
       public Object visitTableNode(TableNode node, Object context) {
-        if (node.getNamePath().getFirst().equals(Name.SELF_IDENTIFIER)) {
+        if (node.getNamePath().getFirst().equals(ReservedName.SELF_IDENTIFIER)) {
           atomicBoolean.set(true);
         }
         return null;

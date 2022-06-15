@@ -137,7 +137,6 @@ import ai.datasqrl.parse.tree.TableSubquery;
 import ai.datasqrl.parse.tree.Union;
 import ai.datasqrl.parse.tree.WhenClause;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import com.google.common.collect.ImmutableList;
@@ -966,7 +965,7 @@ class AstBuilder
           .of(new OrderBy(getLocation(ctx.ORDER()), visit(ctx.sortItem(), SortItem.class)));
     }
 
-    Relation current = new TableNode(Optional.empty(), Name.SELF_IDENTIFIER.toNamePath(),
+    Relation current = new TableNode(Optional.empty(), ReservedName.SELF_IDENTIFIER.toNamePath(),
         Optional.empty());
     for (InlineJoinBodyContext inline : ctx.inlineJoinBody()) {
       JoinOn criteria = null;

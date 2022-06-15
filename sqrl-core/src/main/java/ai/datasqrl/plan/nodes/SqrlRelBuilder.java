@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.nodes;
 
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.schema.Table;
@@ -45,9 +46,9 @@ public class SqrlRelBuilder extends RelBuilder {
     super(context, cluster, relOptSchema);
   }
 
-  public SqrlRelBuilder scanStream(Name tableName, BundleTableFactory.TableBuilder table) {
+  public SqrlRelBuilder scanStream(BundleTableFactory.TableBuilder table) {
     RelOptTable relOptTable = RelOptTableImpl.create(relOptSchema, table.getRowType(),
-        List.of(tableName.getCanonical()), null);
+        List.of(table.getId().getCanonical()), null);
     RelTraitSet traits = RelTraitSet.createEmpty();
     traits = traits.plus(Convention.NONE);
 

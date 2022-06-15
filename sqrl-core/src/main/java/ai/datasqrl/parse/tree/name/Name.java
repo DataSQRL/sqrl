@@ -13,9 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 public interface Name extends Serializable, Comparable<Name> {
 
   String HIDDEN_PREFIX = "_";
-  Name SELF_IDENTIFIER = Name.system("_");
-
-  String NAME_DELIMITER = "$";
+  char NAME_DELIMITER = '$';
 
   /**
    * Returns the canonical version of the field name.

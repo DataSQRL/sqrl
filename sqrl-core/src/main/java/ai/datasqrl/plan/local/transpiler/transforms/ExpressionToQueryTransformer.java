@@ -7,9 +7,11 @@ import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.Select;
 import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.TableNode;
-import ai.datasqrl.parse.tree.name.Name;
+
 import java.util.List;
 import java.util.Optional;
+
+import ai.datasqrl.parse.tree.name.ReservedName;
 import lombok.AllArgsConstructor;
 
 /**
@@ -24,7 +26,7 @@ public class ExpressionToQueryTransformer {
     Select select = new Select(expression.getLocation(), false,
         List.of(new SingleColumn(expression)));
 
-    TableNode tableNode = new TableNode(location, Name.SELF_IDENTIFIER.toNamePath(),
+    TableNode tableNode = new TableNode(location, ReservedName.SELF_IDENTIFIER.toNamePath(),
         Optional.empty());
 
     QuerySpecification queryBody = new QuerySpecification(location, select,

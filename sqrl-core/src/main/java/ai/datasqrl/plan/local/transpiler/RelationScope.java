@@ -7,6 +7,7 @@ import ai.datasqrl.parse.tree.SelectItem;
 import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
@@ -147,7 +148,7 @@ class RelationScope {
     }
 
     for (Map.Entry<Name, RelationNorm> entry : joinScopes.entrySet()) {
-      if (entry.getKey().equals(Name.SELF_IDENTIFIER) && !isSelfInScope()) {
+      if (entry.getKey().equals(ReservedName.SELF_IDENTIFIER) && !isSelfInScope()) {
         continue;
       }
 
