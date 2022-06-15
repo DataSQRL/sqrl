@@ -48,6 +48,10 @@ public class ScriptBundle implements Serializable {
   private final Map<Name, SqrlScript> scripts;
   private final Map<Name, SqrlQuery> queries;
 
+  public String getId() {
+    return name.suffix(version.getId()).getCanonical();
+  }
+
   public SqrlScript getMainScript() {
     if (scripts.size() == 1) {
       return scripts.values().iterator().next();

@@ -15,6 +15,7 @@ public interface Name extends Serializable, Comparable<Name> {
   String HIDDEN_PREFIX = "_";
   Name SELF_IDENTIFIER = Name.system("_");
 
+  String NAME_DELIMITER = "$";
 
   /**
    * Returns the canonical version of the field name.
@@ -40,6 +41,19 @@ public interface Name extends Serializable, Comparable<Name> {
 
   default boolean isHidden() {
     return getCanonical().startsWith(HIDDEN_PREFIX);
+  }
+
+  default NamePath toNamePath() {
+    return NamePath.of(this);
+  }
+
+  default Name append(Name name) {
+    return new StandardName(this.getCanonical() + name.getCanonical(),
+            this.getDisplay() + name.getCanonical());
+  }
+
+  default Name suffix(String suffix) {
+    return append(system(NAME_DELIMITER + suffix));
   }
 
 //    /**
@@ -74,20 +88,9 @@ public interface Name extends Serializable, Comparable<Name> {
     return new StandardName(canonicalizer.getCanonical(name), name);
   }
 
-  static Name ofCanonical(String canonicalName) {
-    return new SimpleName(canonicalName);
-  }
-
   static Name changeDisplayName(Name name, String displayName) {
     Preconditions.checkArgument(StringUtils.isNotEmpty(displayName));
     return new StandardName(name.getCanonical(), displayName.trim());
-  }
-
-  String COMBINATION_SEPERATOR = "_";
-
-  static Name combine(Name name1, Name name2) {
-    return new StandardName(name1.getCanonical() + COMBINATION_SEPERATOR + name2.getCanonical(),
-        name1.getDisplay() + COMBINATION_SEPERATOR + name2.getDisplay());
   }
 
   static Name system(String name) {
@@ -98,7 +101,4 @@ public interface Name extends Serializable, Comparable<Name> {
     return system(HIDDEN_PREFIX + name);
   }
 
-  default NamePath toNamePath() {
-    return NamePath.of(this);
-  }
 }

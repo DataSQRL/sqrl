@@ -10,45 +10,52 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.flink.shaded.guava30.com.google.common.base.Preconditions;
 
 @Getter
 public class Table implements ShadowingContainer.Element {
+
+  public enum Type {
+    STREAM, //a stream of records with synthetic (i.e. uuid) primary key ordered by timestamp
+    STATE; //table with natural primary key that ensures uniqueness and timestamp for change-stream
+  }
+
   public static final String ID_DELIMITER = "$";
 
   private final int uniqueId;
-  private final NamePath path;
-  private final Type type;
+  @NonNull private final NamePath path;
+  @NonNull private final Type type;
 
-  private final ShadowingContainer<Field> fields;
-  private final Column timestamp;
-  private final TableStatistic statistic;
+  @NonNull private final ShadowingContainer<Field> fields;
+  private final Column timestamp; //Can be null for dependent child tables that inherit timestamp from parent
+  @NonNull private final TableStatistic statistic;
+  @NonNull private final RelNode baseLogicalPlan;
 
   @Setter
   private RelNode head;
 
   public Table(int uniqueId, NamePath path, Type type, ShadowingContainer<Field> fields,
-               Column timestamp, RelNode head, TableStatistic statistic) {
+               Column timestamp, RelNode baseLogicalPlan, TableStatistic statistic) {
     this.uniqueId = uniqueId;
     this.path = path;
     this.type = type;
     this.fields = fields;
     this.timestamp = timestamp;
-    this.head = head;
+    this.baseLogicalPlan = baseLogicalPlan;
     this.statistic = statistic;
     Preconditions.checkNotNull(fields.contains(timestamp));
+    setHead(baseLogicalPlan);
   }
 
   public Optional<Field> getField(Name name) {
     return fields.getByName(name);
   }
 
-
-
   public Name getId() {
-    return Name.system(getName() + ID_DELIMITER + uniqueId);
+    return getName().suffix(Integer.toString(uniqueId));
   }
 
   @Override
@@ -212,7 +219,4 @@ public class Table implements ShadowingContainer.Element {
         .collect(Collectors.toList());
   }
 
-  public enum Type {
-    STREAM, STATE;
-  }
 }

@@ -126,6 +126,7 @@ public class BundleTableFactory {
 
         @Override
         public void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
+            //Add primary keys
             stack.addFirst(new TableBuilder(namePath.concat(name)));
         }
 

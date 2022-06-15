@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import com.google.common.base.Preconditions;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
@@ -25,13 +26,13 @@ public class Column extends Field {
    */
   private final int version;
   private final int index;
-  private final RelDataType datatype;
+  @NonNull private final RelDataType datatype;
 
   private final boolean isPrimaryKey;
   private final boolean isParentPrimaryKey;
 
   private final boolean nonNull;
-  private final List<Constraint> constraints;
+  @NonNull private final List<Constraint> constraints;
 
   //Column isn't visible to user but needed by system (for primary key or timestamp)
   private final boolean isInternal;
