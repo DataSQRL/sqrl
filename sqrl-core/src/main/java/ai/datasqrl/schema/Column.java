@@ -35,20 +35,20 @@ public class Column extends Field {
   @NonNull private final List<Constraint> constraints;
 
   //Column isn't visible to user but needed by system (for primary key or timestamp)
-  private final boolean isInternal;
+  private final boolean isVisible;
 
   private final Optional<LPDefinition> definition = Optional.empty();
 
   public Column(Name name, int version, int index,
                 RelDataType datatype,
                 boolean isPrimaryKey, boolean isParentPrimaryKey,
-                List<Constraint> constraints, boolean isInternal) {
+                List<Constraint> constraints, boolean isVisible) {
     super(name);
     this.version = version;
     this.index = index;
     this.datatype = datatype;
     this.constraints = constraints;
-    this.isInternal = isInternal;
+    this.isVisible = isVisible;
     Preconditions.checkArgument(!isParentPrimaryKey || isPrimaryKey);
     this.isPrimaryKey = isPrimaryKey;
     this.isParentPrimaryKey = isParentPrimaryKey;
@@ -73,7 +73,7 @@ public class Column extends Field {
 
   @Override
   public boolean isVisible() {
-    return !isInternal;
+    return isVisible;
   }
 
   /**
@@ -105,7 +105,7 @@ public class Column extends Field {
         ", constraints=" + constraints +
         ", isPrimaryKey=" + isPrimaryKey +
         ", isParentPrimaryKey=" + isParentPrimaryKey +
-        ", isInternal=" + isInternal +
+        ", isInternal=" + isVisible +
         ", name=" + name +
         '}';
   }

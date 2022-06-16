@@ -71,7 +71,7 @@ public class BundleTableFactory {
             TableBuilder childBuilder = child.getKey();
             //Add parent timestamp as internal column
             Column childTimestamp = childBuilder.addColumn(timestamp.getName(), timestamp.getDatatype(),
-                    false, false, true, true);
+                    false, false, true, false);
             Table childTbl = createImportTableHierarchy(childBuilder, childTimestamp, statistics);
             Name childName = childBuilder.getPath().getLast();
             Optional<Relationship> parentRel = createParentRelationship(childTbl, table);
@@ -137,15 +137,15 @@ public class BundleTableFactory {
                 tblBuilder.addParentPrimaryKeys(stack.getFirst());
                 if (!isSingleton) {
                     tblBuilder.addColumn(ReservedName.ARRAY_IDX, convertType(IntegerType.INSTANCE), true,
-                            false, true, false);
+                            false, true, true);
                 }
             } else {
                 tblBuilder.addColumn(ReservedName.UUID, convertType(UuidType.INSTANCE), true,
-                        false, true, false);
+                        false, true, true);
                 tblBuilder.addColumn(ReservedName.INGEST_TIME, convertType(DateTimeType.INSTANCE), false,
-                        false, true, false);
+                        false, true, true);
                 tblBuilder.addColumn(ReservedName.SOURCE_TIME, convertType(DateTimeType.INSTANCE), false,
-                        false, false, false);
+                        false, false, true);
             }
             stack.addFirst(tblBuilder);
         }
@@ -168,7 +168,7 @@ public class BundleTableFactory {
             } else {
                 //It's a column
                 stack.getFirst().addColumn(name, convertType(type), false,
-                        false, notnull, false);
+                        false, notnull, true);
             }
         }
 
@@ -212,11 +212,11 @@ public class BundleTableFactory {
         }
 
         public Column addColumn(Name name, RelDataType type, boolean isPrimaryKey, boolean isParentPrimaryKey,
-                       boolean notnull, boolean isInternal) {
+                       boolean notnull, boolean isVisible) {
             int version = getNextColumnVersion(name);
             Column col = new Column(name, version, columnCounter++, type,
                     isPrimaryKey, isParentPrimaryKey,
-                    notnull? List.of(NotNull.INSTANCE) : List.of(), isInternal);
+                    notnull? List.of(NotNull.INSTANCE) : List.of(), isVisible);
             fields.add(col);
             return col;
         }
@@ -232,7 +232,7 @@ public class BundleTableFactory {
 
         public void addParentPrimaryKeys(AbstractTable parent) {
             for (Column ppk : parent.getPrimaryKeys()) {
-                addColumn(ppk.getName(), ppk.getDatatype(), true, true, true, true);
+                addColumn(ppk.getName(), ppk.getDatatype(), true, true, true, false);
             }
         }
 

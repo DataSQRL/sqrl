@@ -23,7 +23,7 @@ public class Table extends AbstractTable {
   }
 
   @NonNull private final Type type;
-  @NonNull private final Column timestamp; //Can be null for dependent child tables that inherit timestamp from parent
+  @NonNull private final Column timestamp;
   @NonNull private final TableStatistic statistic;
   @NonNull private final RelNode baseLogicalPlan;
 
@@ -141,7 +141,7 @@ public class Table extends AbstractTable {
 
   public List<Column> getColumns() {
     return this.fields.getElements().stream()
-        .filter(f->f instanceof Column && !((Column) f).isInternal())
+        .filter(f->f instanceof Column && !((Column) f).isVisible())
         .map(f->(Column) f)
         .collect(Collectors.toList());
   }

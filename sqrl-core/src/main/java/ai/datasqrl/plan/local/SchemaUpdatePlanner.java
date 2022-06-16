@@ -127,7 +127,7 @@ public class SchemaUpdatePlanner {
 //      RelDataTypeField relField = relNode.getRowType().getFieldList().get(index);
 
       Column column = new Column(columnName, nextVersion, 0, null,
-              false, false, List.of(), false);
+              false, false, List.of(), true);
 
       return new AddColumnOp(table, relationNorm, column);
     }
@@ -171,19 +171,18 @@ public class SchemaUpdatePlanner {
           specNorm.getParentPrimaryKeys().stream()
       ).forEach(expr -> {
         Name name = specNorm.getFieldName(expr);
-        builder.addColumn(name, null,true, true, true, true);
+        builder.addColumn(name, null,true, true, true, false);
       });
 
       specNorm.getPrimaryKeys().stream().forEach(expr -> {
         Name name = specNorm.getFieldName(expr);
-        builder.addColumn(name, null,true, false, true, false);
+        builder.addColumn(name, null,true, false, true, true);
       });
 
-      select.stream()
-          .forEach(expr -> {
-            Name name = specNorm.getFieldName(expr);
-            builder.addColumn(name, null,false, false, true, false);
-          });
+      select.stream().forEach(expr -> {
+        Name name = specNorm.getFieldName(expr);
+        builder.addColumn(name, null,false, false, true, true);
+      });
 
 
 //      List<Expression> primaryKeys = specNorm.getPrimaryKeys();
