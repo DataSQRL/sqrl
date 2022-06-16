@@ -310,7 +310,7 @@ class SchemaTest {
 
   @Test
   public void testNestedPushdown() {
-    runScript("IMPORT ecommerce-data.Orders;\n"
+    runScript("IMPORT ecommerce-data.Orders TIMESTAMP uuid AS uuid;\n"
             + "\n"
             + "Orders.entries.discount := coalesce(discount, 0.0);\n"
             + "Orders.entries.total := quantity * unit_price - discount;\n"

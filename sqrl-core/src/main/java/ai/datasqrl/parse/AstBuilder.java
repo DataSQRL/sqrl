@@ -921,7 +921,21 @@ class AstBuilder
   public Node visitImportDefinition(ImportDefinitionContext ctx) {
     Optional<Identifier> alias = Optional.ofNullable(
         ctx.alias == null ? null : (Identifier) visit(ctx.alias));
-    return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), alias);
+
+    Optional<SingleColumn> timestamp;
+    if (ctx.TIMESTAMP() != null) {
+      Expression expression = (Expression) visitExpression(ctx.expression());
+      if (ctx.timestampAlias != null) {
+        Identifier timestampAlias = ((Identifier) visit(ctx.timestampAlias));
+        timestamp = Optional.of(new SingleColumn(expression, Optional.of(timestampAlias)));
+      } else {
+        timestamp = Optional.of(new SingleColumn(expression));
+      }
+    } else {
+      timestamp = Optional.empty();
+    }
+
+    return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), alias, timestamp);
   }
 
   @Override

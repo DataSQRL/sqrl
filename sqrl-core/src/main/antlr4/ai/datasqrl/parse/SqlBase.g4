@@ -33,7 +33,7 @@ statement
     ;
 
 importDefinition
-    : qualifiedName (AS? alias=identifier)? (TIMESTAMP expression (AS? alias=identifier)?)?
+    : qualifiedName (AS? alias=identifier)? (TIMESTAMP expression (AS? timestampAlias=identifier)?)?
     ;
 
 assignment

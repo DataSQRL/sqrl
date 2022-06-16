@@ -30,7 +30,9 @@ public class NodeFormatter extends AstVisitor<String, Object> {
 
   @Override
   public String visitImportDefinition(ImportDefinition node, Object context) {
-    return "IMPORT " + node.getNamePath() + ";";
+    return "IMPORT " + node.getNamePath() +
+        node.getTimestamp().map(s->" TIMESTAMP " + s.accept(this, context))
+          .orElse("")+ ";";
   }
 
   @Override

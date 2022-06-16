@@ -24,13 +24,15 @@ public class ImportDefinition extends SqrlStatement {
   protected final NodeLocation location;
   protected final NamePath namePath;
   private final Optional<Identifier> alias;
+  private final Optional<SingleColumn> timestamp;
 
   public ImportDefinition(NodeLocation location,
-      NamePath namePath, Optional<Identifier> alias) {
+      NamePath namePath, Optional<Identifier> alias, Optional<SingleColumn> timestamp) {
     super(Optional.ofNullable(location));
     this.location = location;
     this.namePath = namePath;
     this.alias = alias;
+    this.timestamp = timestamp;
   }
 
   public NamePath getNamePath() {
@@ -43,6 +45,10 @@ public class ImportDefinition extends SqrlStatement {
 
   public Optional<Name> getAliasName() {
     return getAlias().map(a -> a.getNamePath().getFirst());
+  }
+
+  public Optional<SingleColumn> getTimestamp() {
+    return timestamp;
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
