@@ -11,14 +11,11 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.CalciteEnvironment;
-import ai.datasqrl.plan.calcite.CalcitePlanner;
 import ai.datasqrl.plan.calcite.SqrlType2Calcite;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
-import ai.datasqrl.plan.nodes.SqrlCalciteTable;
-import ai.datasqrl.plan.nodes.SqrlRelBuilder;
 import ai.datasqrl.schema.*;
 import ai.datasqrl.schema.constraint.NotNull;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
@@ -32,6 +29,7 @@ import ai.datasqrl.schema.type.basic.UuidType;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -50,7 +48,7 @@ public class BundleTableFactory {
         this.typeConverter = calciteEnvironment.getTypeConverter();
     }
 
-    public Table importTable(CalcitePlanner calcitePlanner, ImportManager.SourceTableImport impTbl,
+    public Table importTable(ImportManager.SourceTableImport impTbl,
                              Optional<Name> tableAlias) {
         ImportVisitor visitor = new ImportVisitor();
         FlexibleTableConverter converter = new FlexibleTableConverter(impTbl.getSourceSchema(), tableAlias);
@@ -60,46 +58,51 @@ public class BundleTableFactory {
         //Identify timestamp column and add it; TODO: additional method argument for explicit timestamp definition
         Column timestamp = tblBuilder.getFields().stream().filter(f -> f.getName().equals(ReservedName.INGEST_TIME))
                 .map(f->(Column)f).findFirst().get();
-        return createImportTableHierarchy(calcitePlanner, tblBuilder, timestamp, impTbl.getTable().getStatistics());
+        return createImportTableHierarchy(tblBuilder, timestamp, impTbl.getTable().getStatistics());
     }
 
-    private Table createImportTableHierarchy(CalcitePlanner calcitePlanner,
-                                             TableBuilder tblBuilder, Column timestamp,
+    private Table createImportTableHierarchy(TableBuilder tblBuilder, Column timestamp,
                                              SourceTableStatistics statistics) {
         NamePath tblPath = tblBuilder.getPath();
         RelationStats stats = statistics.getRelationStats(tblPath.subList(1,tblPath.getLength()));
-        SqrlRelBuilder relBuilder = calcitePlanner.createRelBuilder();
-        RelNode tableHead = relBuilder.scanStream(tblBuilder).build();
-        Table table = tblBuilder.createTable(Table.Type.STREAM, timestamp, tableHead, TableStatistic.from(stats));
+        Table table = tblBuilder.createTable(Table.Type.STREAM, timestamp, null, TableStatistic.from(stats));
         //Recurse through children and add parent-child relationships
         for (Pair<TableBuilder,Relationship.Multiplicity> child : tblBuilder.children) {
             TableBuilder childBuilder = child.getKey();
             //Add parent timestamp as internal column
             Column childTimestamp = childBuilder.addColumn(timestamp.getName(), timestamp.getDatatype(),
                     false, false, true, true);
-            Table childTbl = createImportTableHierarchy(calcitePlanner, childBuilder, childTimestamp, statistics);
+            Table childTbl = createImportTableHierarchy(childBuilder, childTimestamp, statistics);
             Name childName = childBuilder.getPath().getLast();
-            createParentChildRelationship(childName, childTbl, table, child.getValue());
+            Optional<Relationship> parentRel = createParentRelationship(childTbl, table);
+            parentRel.map(rel -> childTbl.getFields().add(rel));
+            Relationship childRel = createChildRelationship(childName, childTbl, table, child.getValue());
+            table.getFields().add(childRel);
         }
         return table;
     }
 
-    public void createParentChildRelationship(Name childName, Table childTable, Table parentTable,
-                                              Relationship.Multiplicity multiplicity) {
+    public Optional<Relationship> createParentRelationship(Table childTable, Table parentTable) {
         //Avoid overwriting an existing "parent" column on the child
         if (childTable.getField(parentRelationshipName).isEmpty()) {
             Relationship parentRel = new Relationship(parentRelationshipName,
                     childTable, parentTable, Relationship.JoinType.PARENT, Relationship.Multiplicity.ONE,
                     createParentChildRelation(Join.Type.INNER, parentTable.getPrimaryKeys(), childTable, parentTable));
-            childTable.getFields().add(parentRel);
+            return Optional.of(parentRel);
         }
+        return Optional.empty();
+    }
 
+
+    public Relationship createChildRelationship(Name childName, Table childTable, Table parentTable,
+                                              Relationship.Multiplicity multiplicity) {
         Relationship childRel = new Relationship(childName,
                 parentTable, childTable, Relationship.JoinType.CHILD, multiplicity,
                 createParentChildRelation(Join.Type.INNER, parentTable.getPrimaryKeys(), parentTable, childTable),
                 Optional.empty(), Optional.empty());
-        parentTable.getFields().add(childRel);
+        return childRel;
     }
+
 
     private RelationNorm createParentChildRelation(Join.Type type, List<Column> keys, Table from, Table to) {
         TableNodeNorm fromNorm = TableNodeNorm.of(from);
@@ -224,7 +227,7 @@ public class BundleTableFactory {
                     .map(f->(Column)f)
                     .map(Column::getRelDataTypeField)
                     .collect(Collectors.toList());
-            return new SqrlCalciteTable(fields);
+            return new RelRecordType(fields);
         }
 
         public void addParentPrimaryKeys(AbstractTable parent) {
@@ -234,7 +237,7 @@ public class BundleTableFactory {
         }
 
         public Table createTable(Table.Type type, Column timestamp, RelNode head, TableStatistic statistic) {
-            return new Table(uniqueId, path, type, fields, timestamp, head, statistic);
+            return new Table(uniqueId, path, type, fields, timestamp, null, statistic);
         }
 
     }

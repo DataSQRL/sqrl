@@ -24,6 +24,6 @@ import org.apache.calcite.schema.Schema;
 public class SqrlSimpleCalciteSchema extends SimpleCalciteSchema {
 
   public SqrlSimpleCalciteSchema(Schema schema) {
-    super(null, schema, "");
+    super(CalciteSchema.createRootSchema(true), schema, "");
   }
 }

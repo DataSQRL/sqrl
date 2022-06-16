@@ -13,7 +13,7 @@ public abstract class AbstractSqrlSchema implements Schema {
 
   @Override
   public Set<String> getTableNames() {
-    return Set.of();
+    return Set.of("Product");
   }
 
   @Override
@@ -58,6 +58,6 @@ public abstract class AbstractSqrlSchema implements Schema {
 
   @Override
   public Schema snapshot(SchemaVersion schemaVersion) {
-    return null;
+    return this;
   }
 }

@@ -26,7 +26,7 @@ public class Column extends Field {
    */
   private final int version;
   private final int index;
-  @NonNull private final RelDataType datatype;
+  private final RelDataType datatype;
 
   private final boolean isPrimaryKey;
   private final boolean isParentPrimaryKey;

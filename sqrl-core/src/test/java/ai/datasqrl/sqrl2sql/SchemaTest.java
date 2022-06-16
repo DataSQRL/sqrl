@@ -1,29 +1,35 @@
 package ai.datasqrl.sqrl2sql;
 
 import ai.datasqrl.C360Example;
-import ai.datasqrl.environment.Environment;
 import ai.datasqrl.api.ConfigurationTest;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
+import ai.datasqrl.environment.Environment;
+import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.parse.SqrlParser;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.plan.calcite.CalciteEnvironment;
+import ai.datasqrl.plan.calcite.PlanDag;
+import ai.datasqrl.plan.calcite.Planner;
+import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.calcite.SqrlSchemaCatalog;
 import ai.datasqrl.plan.local.BundleTableFactory;
-import ai.datasqrl.plan.local.LocalPlanner;
+import ai.datasqrl.plan.local.SchemaUpdatePlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
-import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.plan.local.SchemaUpdatePlanner;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.schema.BridgedCalciteSchema;
+import org.apache.calcite.schema.SchemaPlus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -64,7 +70,105 @@ class SchemaTest {
     calciteEnv = new CalciteEnvironment();
     parser = SqrlParser.newParser(errorCollector);
   }
-
+//
+//
+//  @SneakyThrows
+//  @Test
+//  public void testProduct() {
+//    ScriptNode node = parser.parse("IMPORT ecommerce-data.Product;");
+//    BundleTableFactory tableFactory = new BundleTableFactory(calciteEnv);
+//    SchemaBuilder schema = new SchemaBuilder();
+//    for (Node n : node.getStatements()) {
+//      SchemaUpdatePlanner schemaUpdatePlanner = new SchemaUpdatePlanner(this.importManager,
+//          tableFactory, SchemaAdjustmentSettings.DEFAULT,
+//          errorCollector, new LocalPlanner(calciteEnv, schema.peek()));
+//      System.out.println("Statement: " + NodeFormatter.accept(n));
+//
+//      Optional<SchemaUpdateOp> op =
+//          schemaUpdatePlanner.plan(schema.getSchema(), n);
+//      op.ifPresent(o->
+//          schema.apply(o));
+//    }
+//    System.out.println(schema);
+//    RelNode node2 = schema.getSchema().get(0).getHead();
+//
+//    RelNode relNode = new MultiphaseOptimizer().optimize(node2, SqrlPrograms.testProgram);
+//    System.out.println(relNode.explain());
+//
+//
+//
+//    Class.forName("org.apache.calcite.jdbc.Driver");
+//    Properties info = new Properties();
+//    info.put(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
+////    info.put(CalciteConnectionProperty.LEX, "java");
+//    Connection connection =
+//        DriverManager.getConnection("jdbc:calcite:", info);
+//    Hook.PROGRAM.run(Programs.sequence(
+//        Programs.of(RuleSets.ofList(new DataSourceEnumeratorRule()))
+//    ));
+//
+//    CalciteConnection calciteConnection =
+//        connection.unwrap(CalciteConnection.class);
+//    System.out.println(calciteConnection.config().caseSensitive());
+//    SchemaPlus rootSchema = calciteConnection.getRootSchema();
+//    Schema schema1 = new LocalPlanner(calciteEnv, schema.peek()).getCalcitePlanner().getSqrlSchema();
+//    rootSchema.add("uuidscript", schema1);
+//
+//    System.out.println(schema1);
+//    Statement statement = calciteConnection.createStatement();
+//    ResultSet resultSet = statement.executeQuery(
+//        "select \"productid\", count(*)\n"
+//            + "from uuidscript.Product GROUP BY \"productid\"");
+//
+//    output(resultSet, System.out);
+//
+//    resultSet.close();
+//    statement.close();
+//    connection.close();
+//
+//    EnumerableBindable bind = (EnumerableBindable)relNode;
+//
+//    for (Object[] o : bind.bind(new DataContext() {
+//      @Override
+//      public SchemaPlus getRootSchema() {
+//        return new LocalPlanner(calciteEnv, schema.peek()).getCalcitePlanner().getSchema()
+//            .plus();
+//      }
+//
+//      @Override
+//      public JavaTypeFactory getTypeFactory() {
+//        return new JavaTypeFactoryImpl();
+//      }
+//
+//      @Override
+//      public QueryProvider getQueryProvider() {
+//        return null;
+//      }
+//
+//      @Override
+//      public Object get(String s) {
+//        return null;
+//      }
+//    })) {
+//      System.out.println(Arrays.toString(o));
+//    }
+//  }
+//  private void output(ResultSet resultSet, PrintStream out)
+//      throws SQLException {
+//    final ResultSetMetaData metaData = resultSet.getMetaData();
+//    final int columnCount = metaData.getColumnCount();
+//    while (resultSet.next()) {
+//      for (int i = 1;; i++) {
+//        out.print(resultSet.getObject(i));
+//        if (i < columnCount) {
+//          out.print(", ");
+//        } else {
+//          out.println();
+//          break;
+//        }
+//      }
+//    }
+//  }
   @Test
   public void testImport() {
     runScript(
@@ -103,7 +207,7 @@ class SchemaTest {
          + "Orders.entries.total := quantity * unit_price - discount;\n"
          + "Orders.total := sum(entries.total);\n"
          + "Orders.total_savings := sum(entries.discount);\n"
-         + "Orders.total_entries := count(entries);\n"
+//         + "Orders.total_entries := count(entries);\n"
          + "\n"
          + "-- Relate Customer to Orders and compute a customer's total order spent\n"
          + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
@@ -211,19 +315,32 @@ class SchemaTest {
             + "Orders.entries.discount := coalesce(discount, 0.0);\n"
             + "Orders.entries.total := quantity * unit_price - discount;\n"
             + "Orders.total := sum(entries.total);\n"
-            + "Orders.total_savings := sum(entries.discount);\n"
-            + "Orders.total_entries := count(entries);\n");
+            + "Orders.total_savings := sum(entries.discount);\n");
+//            + "Orders.total_entries := count(entries);\n");
   }
 
   public void runScript(String script) {
     ScriptNode node = parser.parse(script);
     BundleTableFactory tableFactory = new BundleTableFactory(calciteEnv);
-    SchemaBuilder schema = new SchemaBuilder(tableFactory);
+    SchemaBuilder schema = new SchemaBuilder();
+
+    SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
+    SqrlSchemaCatalog catalog = new SqrlSchemaCatalog(rootSchema);
+
+    String schemaName = "test";
+    BridgedCalciteSchema subSchema = new BridgedCalciteSchema();
+    catalog.add(schemaName, subSchema);
+
+    PlannerFactory plannerFactory = new PlannerFactory(catalog);
+    Planner planner = plannerFactory.createPlanner(schemaName);
+
+    PlanDag dag = new PlanDag(planner);
+    subSchema.setBridge(dag);
 
     for (Node n : node.getStatements()) {
       SchemaUpdatePlanner schemaUpdatePlanner = new SchemaUpdatePlanner(this.importManager,
           tableFactory, SchemaAdjustmentSettings.DEFAULT,
-          errorCollector, new LocalPlanner(calciteEnv, schema.peek()));
+          errorCollector);
       System.out.println("Statement: " + NodeFormatter.accept(n));
 
       /*

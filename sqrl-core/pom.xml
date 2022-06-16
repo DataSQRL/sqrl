@@ -40,6 +40,13 @@
   </properties>
 
   <dependencies>
+    <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>3.21.1</version>
+    </dependency>
+
     <!-- vertx -->
     <dependency>
       <groupId>io.vertx</groupId>

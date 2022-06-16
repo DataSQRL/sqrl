@@ -1,12 +1,11 @@
 package ai.datasqrl.plan.local.operations;
 
-public abstract class SchemaOpVisitor {
-
-  public abstract <T> T visit(AddImportedTablesOp op);
-
-  public abstract <T> T visit(AddTableOp op);
-
-  public abstract <T> T visit(AddNestedTableOp op);
-
-  public abstract <T> T visit(AddFieldOp op);
+public interface SchemaOpVisitor {
+  <T> T visit(AddColumnOp op);
+  <T> T visit(AddJoinDeclarationOp op);
+  <T> T visit(AddNestedTableOp op);
+  <T> T visit(AddRootTableOp op);
+  <T> T visit(MultipleUpdateOp op);
+  <T> T visit(ScriptTableImportOp op);
+  <T> T visit(SourceTableImportOp op);
 }

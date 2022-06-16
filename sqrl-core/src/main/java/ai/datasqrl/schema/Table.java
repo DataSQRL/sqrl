@@ -27,6 +27,7 @@ public class Table extends AbstractTable {
   @NonNull private final TableStatistic statistic;
   @NonNull private final RelNode baseLogicalPlan;
 
+  @Deprecated
   @Setter
   private RelNode head;
 

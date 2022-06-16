@@ -6,18 +6,8 @@ import org.apache.calcite.plan.RelOptCluster;
 
 @Getter
 public class CalciteEnvironment {
-
-    private final RelOptCluster cluster;
-    private final JavaTypeFactoryImpl typeFactory;
-
-    public CalciteEnvironment() {
-        this.typeFactory = new JavaTypeFactoryImpl(); //new FlinkTypeFactory(new FlinkTypeSystem());
-        this.cluster = MultiphaseOptimizer.newCluster(typeFactory);
-    }
-
+    @Deprecated //TODO: move calcite out of schema planning phase
     public SqrlType2Calcite getTypeConverter() {
-        return new SqrlType2Calcite(typeFactory);
+        return new SqrlType2Calcite(new JavaTypeFactoryImpl());
     }
-
-
 }

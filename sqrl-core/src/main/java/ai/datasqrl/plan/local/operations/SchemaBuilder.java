@@ -1,53 +1,64 @@
 package ai.datasqrl.plan.local.operations;
 
-import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
 import lombok.Getter;
 
-public class SchemaBuilder extends SchemaOpVisitor {
-
-  @Getter
-  private final BundleTableFactory tableFactory;
+/**
+ * SchemaUpdatePlanner creates the schema pieces and this schema builder applies them
+ */
+public class SchemaBuilder implements SchemaOpVisitor {
 
   @Getter
   Schema schema = new Schema();
 
-  public SchemaBuilder(BundleTableFactory tableFactory) {
-    this.tableFactory = tableFactory;
-  }
-
-  public void apply(SchemaUpdateOp operation) {
-    operation.accept(this);
+  public void apply(SchemaUpdateOp op) {
+    op.accept(this);
   }
 
   @Override
-  public <T> T visit(AddImportedTablesOp op) {
-    schema.addAll(op.getTables());
+  public <T> T visit(AddColumnOp op) {
+    Table table = op.getTable();
+    table.getFields().add(op.getColumn());
     return null;
   }
 
   @Override
-  public <T> T visit(AddTableOp addTableOp) {
-    schema.add(addTableOp.getTable());
+  public <T> T visit(AddJoinDeclarationOp op) {
+    Table table = op.getTable();
+    table.getFields().add(op.getRelationship());
     return null;
   }
 
   @Override
   public <T> T visit(AddNestedTableOp op) {
-    tableFactory.createParentChildRelationship(
-        op.getRelationshipName(),
-        op.getTable(),
-        op.getParentTable(),
-        op.getMultiplicity());
+    /* no-op, nested tables are added to the schema in AddJoinDeclarationOp */
     return null;
   }
 
   @Override
-  public <T> T visit(AddFieldOp addFieldOp) {
-    Table table = addFieldOp.getTable();
-    table.getFields().add(addFieldOp.getField());
-    addFieldOp.getRelNode().ifPresent(table::setHead);
+  public <T> T visit(AddRootTableOp op) {
+    schema.add(op.getTable());
+    return null;
+  }
+
+  @Override
+  public <T> T visit(MultipleUpdateOp op) {
+    for (SchemaUpdateOp o : op.getOps()) {
+      o.accept(this);
+    }
+    return null;
+  }
+
+  @Override
+  public <T> T visit(ScriptTableImportOp op) {
+    throw new RuntimeException("tbd");
+  }
+
+  @Override
+  public <T> T visit(SourceTableImportOp op) {
+
+    schema.add(op.getTable());
     return null;
   }
 
@@ -57,10 +68,5 @@ public class SchemaBuilder extends SchemaOpVisitor {
 
   public Schema build() {
     return schema;
-  }
-
-  @Override
-  public String toString() {
-    return schema.toString();
   }
 }

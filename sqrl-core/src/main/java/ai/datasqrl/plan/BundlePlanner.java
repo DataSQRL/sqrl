@@ -9,11 +9,10 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
-import ai.datasqrl.plan.local.LocalPlanner;
+import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.plan.local.SchemaUpdatePlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
-import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.schema.Schema;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +32,8 @@ public class BundlePlanner {
   public PhysicalPlan processBundle(ScriptBundle bundle) {
     Schema schema = planMain(bundle.getMainScript());
 
-    Optimizer optimizer = new Optimizer(bundle.getQueries(), true);
-    LogicalPlan plan = optimizer.findBestPlan(schema);
+//    Optimizer optimizer = new Optimizer(bundle.getQueries(), true);
+    LogicalPlan plan = null;//optimizer.findBestPlan(schema);
 
     PhysicalPlanner physicalPlanner = new PhysicalPlanner(options.getImportManager(),
         options.getJdbcConfiguration(),
@@ -46,7 +45,7 @@ public class BundlePlanner {
     SqrlParser parser = SqrlParser.newParser(errorCollector);
     ScriptNode scriptAst = parser.parse(mainScript.getContent());
 
-    SchemaBuilder schema = new SchemaBuilder(tableFactory);
+    SchemaBuilder schema = new SchemaBuilder();
     for (Node node : scriptAst.getStatements()) {
       Optional<SchemaUpdateOp> operation = planStatement(node, schema);
       if (operation.isEmpty()) {
@@ -61,10 +60,9 @@ public class BundlePlanner {
   public Optional<SchemaUpdateOp> planStatement(Node statement, SchemaBuilder schema) {
     SchemaUpdatePlanner planner = new SchemaUpdatePlanner(
         this.options.getImportManager(),
-        schema.getTableFactory(),
+        tableFactory,
         this.options.getSchemaSettings(),
-        this.errorCollector,
-        new LocalPlanner(options.getCalciteEnv(),schema.peek()));
+        this.errorCollector);
     return planner.plan(schema.peek(), statement);
   }
 }

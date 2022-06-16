@@ -27,6 +27,9 @@ public class CriteriaUtil {
             ResolvedColumn.of(left, column),
             ResolvedColumn.of(right, column)))
         .collect(Collectors.toList());
+    if (condition.isEmpty()) {
+      System.out.println();
+    }
 
     Preconditions.checkState(!condition.isEmpty(), "Could not build critiera for %s %s", left, right);
 

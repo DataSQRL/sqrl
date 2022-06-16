@@ -130,6 +130,9 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
       Identifier identifier = (Identifier) node.getArguments().get(0);
       //Analyze identifier:
       List<RelationNorm> table = scope.resolve(identifier.getNamePath());
+      if (table.isEmpty()) {
+        //could not resolve error
+      }
       NamePath path = removeAliasFromPath(identifier.getNamePath(), scope);
       List<Field> fields = ((TableNodeNorm)table.get(0)).getRef().getTable().walkFields(path).get();
       if (fields.get(fields.size() - 1) instanceof Relationship) {

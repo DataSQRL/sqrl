@@ -7,6 +7,7 @@ import ai.datasqrl.schema.type.basic.*;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
@@ -15,7 +16,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 @Value
 public class SqrlType2Calcite implements SqrlTypeVisitor<RelDataType,Void> {
 
-    private final SqlTypeFactoryImpl typeFactory;
+    RelDataTypeFactory typeFactory;
 
     @Override
     public RelDataType visitType(Type type, Void context) {
