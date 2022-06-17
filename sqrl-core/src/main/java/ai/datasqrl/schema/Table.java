@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import org.apache.calcite.rel.RelNode;
-import org.apache.flink.shaded.guava30.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 
 @Getter
 public class Table extends AbstractTable {

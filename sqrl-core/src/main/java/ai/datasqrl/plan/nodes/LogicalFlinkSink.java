@@ -10,6 +10,7 @@ import org.apache.calcite.rel.SingleRel;
 
 @Getter
 @Setter
+//TODO: This should be moved to physical.stream.flink.plan ??
 public class LogicalFlinkSink extends SingleRel {
 
   private final Table sqrlTable;
