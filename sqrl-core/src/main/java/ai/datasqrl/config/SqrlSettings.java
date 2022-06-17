@@ -26,7 +26,6 @@ public class SqrlSettings {
   StreamEngineProvider streamEngineProvider;
 
   SqlGeneratorProvider sqlGeneratorProvider;
-  StreamGeneratorProvider streamGeneratorProvider;
 
   EnvironmentConfiguration environmentConfiguration;
   MetadataStoreProvider metadataStoreProvider;
@@ -58,7 +57,6 @@ public class SqrlSettings {
     Preconditions.checkArgument(engines.getFlink() != null, "Must configure Flink engine");
     FlinkConfiguration flinkConfig = engines.getFlink();
     builder.streamEngineProvider(flinkConfig);
-//    builder.streamGeneratorProvider((flink, jdbc) -> new FlinkGenerator(jdbc, (FlinkStreamEngine) flink));
     builder.tableStatisticsStoreProvider(new MetadataSourceRegistryPersistence.TableStatsProvider());
 
 

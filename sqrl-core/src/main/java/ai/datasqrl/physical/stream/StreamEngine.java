@@ -26,11 +26,7 @@ public interface StreamEngine extends Closeable {
 
     Job build();
 
-
-
   }
-
-
 
   Optional<? extends Job> getJob(String id);
 
@@ -48,15 +44,4 @@ public interface StreamEngine extends Closeable {
 
   }
 
-  interface Generator {
-
-//        public Job generateStream(LogicalPlanResult logical, Map<MaterializeSource, DatabaseSink> sinkMapper);
-
-  }
-
-  interface SourceMonitor {
-
-    Job monitorTable(SourceTable table);
-
-  }
 }
