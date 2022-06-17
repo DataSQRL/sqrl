@@ -1,6 +1,7 @@
 package ai.datasqrl.config;
 
 import ai.datasqrl.config.engines.FlinkConfiguration;
+import ai.datasqrl.config.engines.InMemoryStreamConfiguration;
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.FileScriptConfiguration;
@@ -61,6 +62,8 @@ public class GlobalConfiguration {
     JDBCConfiguration jdbc;
     @Valid
     FlinkConfiguration flink;
+    @Valid
+    InMemoryStreamConfiguration inmemory;
 
 
   }

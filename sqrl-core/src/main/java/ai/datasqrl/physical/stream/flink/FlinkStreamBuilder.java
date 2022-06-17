@@ -3,6 +3,8 @@ package ai.datasqrl.physical.stream.flink;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -27,6 +29,7 @@ import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
+import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -53,10 +56,10 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
-import org.apache.flink.util.Preconditions;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 @Getter
+//TODO: Do output tags (errors, monitor) need a globally unique name or just local to the job?
 public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
 
   public static final int DEFAULT_PARALLELISM = 16;
@@ -68,6 +71,9 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   private final UUID uuid;
   private final int defaultParallelism = DEFAULT_PARALLELISM;
   private FlinkStreamEngine.JobType jobType;
+
+  public static final String ERROR_TAG_PREFIX = "error";
+  private Map<String, OutputTag<ProcessError>> errorTags = new HashMap<>();
 
 
   public FlinkStreamBuilder(FlinkStreamEngine engine, StreamExecutionEnvironment environment) {
@@ -85,6 +91,18 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   @Override
   public FlinkStreamEngine.FlinkJob build() {
     return engine.createStreamJob(environment, jobType);
+  }
+
+  @Override
+  public OutputTag<ProcessError> getErrorTag(final String errorName) {
+    OutputTag<ProcessError> errorTag = errorTags.get(errorName);
+    if (errorTag==null) {
+      errorTag = new OutputTag<>(
+              FlinkStreamEngine.getFlinkName(ERROR_TAG_PREFIX, errorName)) {
+      };
+      errorTags.put(errorName, errorTag);
+    }
+    return errorTag;
   }
 
   @Override
@@ -135,6 +153,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
     TypeInformation typeInformation = FlinkTypeInfoSchemaGenerator.convert(converter);
     SourceRecord2RowMapper<Row,Row> mapper = new SourceRecord2RowMapper(schema, FlinkRowConstructor.INSTANCE);
 
+    //TODO: error handling when mapping doesn't work?
     SingleOutputStreamOperator<Row> rows = flinkStream.getStream().map(r -> mapper.apply(r),typeInformation);
     Schema tableSchema = FlinkTableSchemaGenerator.convert(converter);
     Table table = tableEnvironment.fromDataStream(rows, tableSchema);

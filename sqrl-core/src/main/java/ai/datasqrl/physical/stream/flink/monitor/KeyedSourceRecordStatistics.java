@@ -49,8 +49,8 @@ public class KeyedSourceRecordStatistics extends
     }
     ErrorCollector errors = acc.validate(sourceRecord, datasetReg);
     if (errors.isFatal()) {
+      //TODO: Record is flawed, put it in sideoutput and issue warning; reuse MapWithErrorProcess
       System.out.println("Stats Validation Error: " + errors);
-      //TODO: Record is flawed, put it in sideoutput and issue warning
     } else {
       acc.add(sourceRecord, datasetReg);
       stats.update(acc);

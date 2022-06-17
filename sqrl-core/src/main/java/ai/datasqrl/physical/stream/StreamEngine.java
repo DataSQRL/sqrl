@@ -40,7 +40,7 @@ public interface StreamEngine extends Closeable {
 
     Status getStatus();
 
-    enum Status {PREPARING, RUNNING, STOPPED, FAILED}
+    enum Status {PREPARING, RUNNING, COMPLETED, FAILED}
 
   }
 

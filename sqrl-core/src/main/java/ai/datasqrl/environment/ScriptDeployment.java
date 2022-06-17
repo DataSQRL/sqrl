@@ -69,7 +69,7 @@ public class ScriptDeployment implements Serializable {
           case RUNNING:
             status = Status.running;
             break;
-          case STOPPED:
+          case COMPLETED:
             status = Status.stopped;
             break;
         }

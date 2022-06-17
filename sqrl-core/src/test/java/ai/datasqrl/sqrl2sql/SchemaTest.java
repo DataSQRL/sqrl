@@ -1,12 +1,10 @@
 package ai.datasqrl.sqrl2sql;
 
-import ai.datasqrl.C360Example;
-import ai.datasqrl.api.ConfigurationTest;
-import ai.datasqrl.config.SqrlSettings;
+import ai.datasqrl.AbstractSQRLIntegrationTest;
+import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
-import ai.datasqrl.environment.Environment;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.parse.SqrlParser;
@@ -23,6 +21,8 @@ import ai.datasqrl.plan.local.SchemaUpdatePlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
+import ai.datasqrl.util.ScriptComplexity;
+import ai.datasqrl.util.data.C360;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,7 +33,7 @@ import org.apache.calcite.schema.SchemaPlus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class SchemaTest {
+class SchemaTest extends AbstractSQRLIntegrationTest {
   SqrlParser parser;
   ErrorCollector errorCollector;
   ImportManager importManager;
@@ -42,30 +42,13 @@ class SchemaTest {
   @BeforeEach
   public void setup() throws IOException {
     errorCollector = ErrorCollector.root();
+    initialize(IntegrationTestSettings.getDefault(false));
+    C360 example = C360.INSTANCE;
 
-    SqrlSettings settings = ConfigurationTest.getDefaultSettings(false);
-    Environment env = Environment.create(settings);
+    example.registerSource(env);
 
-    String ds2Name = "ecommerce-data";
-    DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
-        .uri(C360Example.RETAIL_DATA_DIR.toAbsolutePath().toString())
-        .build();
-    env.getDatasetRegistry().addOrUpdateSource(ds2Name, fileConfig, ErrorCollector.root());
-
-    importManager = settings.getImportManagerProvider().createImportManager(env.getDatasetRegistry());
-    ScriptBundle.Config config = ScriptBundle.Config.builder()
-        .name(C360Example.RETAIL_SCRIPT_NAME)
-        .scripts(ImmutableList.of(
-            SqrlScript.Config.builder()
-                .name(C360Example.RETAIL_SCRIPT_NAME)
-                .main(true)
-                .content("IMPORT ecommerce-data.Orders;")
-                .inputSchema(Files.readString(C360Example.RETAIL_IMPORT_SCHEMA_FILE))
-                .build()
-        ))
-        .build();
-    ScriptBundle bundle = config.initialize(errorCollector);
-    System.out.println(errorCollector);
+    importManager = sqrlSettings.getImportManagerProvider().createImportManager(env.getDatasetRegistry());
+    ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
     importManager.registerUserSchema(bundle.getMainScript().getSchema());
     calciteEnv = new CalciteEnvironment();
     parser = SqrlParser.newParser(errorCollector);

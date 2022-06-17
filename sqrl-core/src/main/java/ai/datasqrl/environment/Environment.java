@@ -110,6 +110,7 @@ public class Environment implements Closeable {
   public PhysicalPlan compile(ScriptBundle bundle) throws Exception {
     ImportManager importManager = settings.getImportManagerProvider()
         .createImportManager(datasetRegistry);
+
     ErrorCollector errors = importManager.registerUserSchema(bundle.getMainScript().getSchema());
 
     if (errors.isFatal()) {

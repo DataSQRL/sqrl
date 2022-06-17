@@ -1,8 +1,8 @@
 package ai.datasqrl.api;
 
-import ai.datasqrl.environment.Environment;
+import ai.datasqrl.AbstractSQRLIntegrationTest;
+import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.environment.ScriptDeployment;
-import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.config.server.ApiVerticle;
@@ -13,7 +13,6 @@ import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.io.sinks.DataSink;
 import ai.datasqrl.io.sinks.DataSinkConfiguration;
 import ai.datasqrl.io.sinks.DataSinkRegistration;
-import ai.datasqrl.io.sinks.registry.DataSinkRegistry;
 import ai.datasqrl.io.sources.DataSourceImplementation;
 import ai.datasqrl.io.sources.DataSourceUpdate;
 import ai.datasqrl.io.sources.SourceTableConfiguration;
@@ -22,6 +21,9 @@ import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.util.TestDataset;
+import ai.datasqrl.util.TestResources;
+import ai.datasqrl.util.data.BookClub;
 import com.google.common.collect.ImmutableSet;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -31,13 +33,13 @@ import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.awt.print.Book;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -48,40 +50,26 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(VertxExtension.class)
-public class APIServerTest {
+public class APIServerTest extends AbstractSQRLIntegrationTest {
 
-
-    Environment env = null;
-    DatasetRegistry sourceRegistry = null;
-    DataSinkRegistry sinkRegistry = null;
     WebClient webClient = null;
     int port = ApiVerticle.DEFAULT_PORT;
 
-
     @BeforeEach
     public void setup(Vertx vertx) throws IOException {
-        FileUtils.cleanDirectory(ConfigurationTest.dbPath.toFile());
-        SqrlSettings settings = ConfigurationTest.getDefaultSettings(false);
-        env = Environment.create(settings);
-        sourceRegistry = env.getDatasetRegistry();
-        sinkRegistry = env.getDataSinkRegistry();
+        initialize(IntegrationTestSettings.getDefault(false));
         webClient = WebClient.create(vertx);
     }
 
     @AfterEach
     public void close() {
-        env.close();
-        env = null;
-        sourceRegistry = null;
-        sinkRegistry = null;
         webClient.close();
         webClient = null;
     }
 
-    final String dsName = "bookclub";
-    final DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
-            .uri(ConfigurationTest.DATA_DIR.toAbsolutePath().toString())
-            .build();
+    final BookClub bookClub = BookClub.INSTANCE;
+    final DirectorySourceImplementation fileConfig = bookClub.getSource();
+    final String dsName = bookClub.getName();
     final JsonObject fileObj = getDataSourcePayload(dsName,fileConfig);
 
     public static JsonObject getDataSourcePayload(String name, DataSourceImplementation source) {
@@ -136,7 +124,7 @@ public class APIServerTest {
 
     @Test
     public void testGettingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
-        sourceRegistry.addOrUpdateSource(dsName, fileConfig,ErrorCollector.root());
+        bookClub.registerSource(env);
         assertNotNull(sourceRegistry.getDataset(dsName));
 
         Checkpoint requestCheckpoint = testContext.checkpoint(3);
@@ -196,7 +184,7 @@ public class APIServerTest {
 
     @Test
     public void testDeleteSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
-        sourceRegistry.addOrUpdateSource(dsName, fileConfig, ErrorCollector.root());
+        bookClub.registerSource(env);
         assertNotNull(sourceRegistry.getDataset(dsName));
         assertEquals(2, sourceRegistry.getDataset(dsName).getTables().size());
 
@@ -358,7 +346,7 @@ public class APIServerTest {
     static final String sinkName = "testSink";
     static final DataSinkRegistration sinkReg = DataSinkRegistration.builder()
             .name(sinkName)
-            .sink(DirectorySinkImplementation.builder().uri(ConfigurationTest.DATA_DIR.toAbsolutePath().toString()).build())
+            .sink(DirectorySinkImplementation.builder().uri(BookClub.DATA_DIR.toAbsolutePath().toString()).build())
             .config(DataSinkConfiguration.builder().format(new JsonLineFormat.Configuration()).build())
             .build();
     static final JsonObject sinkObj = JsonObject.mapFrom(sinkReg);
@@ -448,10 +436,10 @@ public class APIServerTest {
     @Test
     public void testUpdateSink(Vertx vertx, VertxTestContext testContext) throws Throwable {
         sinkRegistry.addOrUpdateSink(sinkReg,ErrorCollector.root());
-        assertEquals(ConfigurationTest.DATA_DIR.toAbsolutePath().toString(),
+        assertEquals(BookClub.DATA_DIR.toAbsolutePath().toString(),
                 ((DirectorySinkImplementation)sinkRegistry.getSink(sinkName).getImplementation()).getUri());
 
-        String newDir = ConfigurationTest.resourceDir.toAbsolutePath().toString();
+        String newDir = TestResources.RESOURCE_DIR.toAbsolutePath().toString();
         DataSinkRegistration sinkReg2 = DataSinkRegistration.builder()
                 .name(sinkName)
                 .sink(DirectorySinkImplementation.builder().uri(newDir).build())
@@ -521,21 +509,13 @@ public class APIServerTest {
 
     final String deployName = "test";
     final String deployVersion = "v2";
-    final ScriptBundle.Config deployConfig = ScriptBundle.Config.builder()
-            .name(deployName)
-            .scripts(List.of(SqrlScript.Config.builder()
-                    .name(deployName)
-                    .content("IMPORT data.book;\nIMPORT data.person;\n")
-                    .filename(deployName+".sqrl")
-                    .inputSchema("")
-                    .main(true)
-                    .build()))
-            .version(deployVersion)
-            .build();
+    final ScriptBundle.Config deployConfig = BookClub.INSTANCE.buildBundle()
+            .setName(deployName).setVersion(deployVersion).getConfig();
     final JsonObject deploymentObj = JsonObject.mapFrom(deployConfig);
 
     @Test
     public void testAddingDeployment(Vertx vertx, VertxTestContext testContext) throws Throwable {
+        bookClub.registerSource(env);
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
         assertEquals(0,env.getActiveDeployments().size());
 

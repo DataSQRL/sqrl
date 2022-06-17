@@ -1,6 +1,7 @@
 package ai.datasqrl.config;
 
 import ai.datasqrl.config.engines.FlinkConfiguration;
+import ai.datasqrl.config.engines.InMemoryStreamConfiguration;
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.config.metadata.JDBCMetadataStore.Provider;
 import ai.datasqrl.config.provider.*;
@@ -54,9 +55,12 @@ public class SqrlSettings {
         .importManagerProvider(ImportManager::new);
 
     GlobalConfiguration.Engines engines = config.getEngines();
-    Preconditions.checkArgument(engines.getFlink() != null, "Must configure Flink engine");
-    FlinkConfiguration flinkConfig = engines.getFlink();
-    builder.streamEngineProvider(flinkConfig);
+    if (engines.getFlink() != null) {
+      builder.streamEngineProvider(engines.getFlink());
+    } else if (engines.getInmemory() != null) {
+      builder.streamEngineProvider(engines.getInmemory());
+
+    } else throw new IllegalArgumentException("Must configure a stream engine");
     builder.tableStatisticsStoreProvider(new MetadataSourceRegistryPersistence.TableStatsProvider());
 
 

@@ -1,23 +1,21 @@
 package ai.datasqrl.io;
 
 
-import ai.datasqrl.environment.Environment;
-import ai.datasqrl.TestUtil;
-import ai.datasqrl.api.ConfigurationTest;
-import ai.datasqrl.config.SqrlSettings;
+import ai.datasqrl.AbstractSQRLIntegrationTest;
+import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.formats.JsonLineFormat;
 import ai.datasqrl.io.impl.kafka.KafkaSourceImplementation;
 import ai.datasqrl.io.sources.DataSourceConfiguration;
 import ai.datasqrl.io.sources.DataSourceUpdate;
-import ai.datasqrl.io.sources.dataset.DatasetRegistry;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
+import ai.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
+import ai.datasqrl.util.data.BookClub;
 import com.google.common.collect.ImmutableList;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.consumer.*;
@@ -29,6 +27,7 @@ import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.*;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -41,7 +40,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
-public class KafkaSourceTest {
+//TODO: flink integration currently hangs on monitoring
+public class KafkaSourceTest extends AbstractSQRLIntegrationTest {
 
     public static final int NUM_BROKERS = 1;
 
@@ -59,19 +59,15 @@ public class KafkaSourceTest {
 
     String[] bootstrapServers;
     String[] topics = {"bookclub.book","book.json"};
-    Environment env = null;
 
     @BeforeEach
     public void before() throws Exception {
-        FileUtils.cleanDirectory(ConfigurationTest.dbPath.toFile());
         bootstrapServers = CLUSTER.bootstrapServers().split(";");
         CLUSTER.createTopics(topics);
     }
 
     @AfterEach
     public void after() throws Exception {
-        if (env!=null) env.close();
-        env = null;
         CLUSTER.deleteAllTopicsAndWait(0L);
     }
 
@@ -124,6 +120,10 @@ public class KafkaSourceTest {
         }
     }
 
+    private void writeTextFilesToTopic(String topic, String key, Path... paths) {
+        writeToTopic(topics[0], addDefaultKey(key, FileStreamUtil.filesByline(paths)));
+    }
+
     @Test
     @SneakyThrows
     public void testKafka() {
@@ -136,7 +136,7 @@ public class KafkaSourceTest {
         int numRecords = 0;
         try (KafkaConsumer<String,String> consumer = new KafkaConsumer<>(getConsumerProps("test1"))) {
             consumer.subscribe(ImmutableList.of(topics[0]));
-            writeToTopic(topics[0], addDefaultKey("key", TestUtil.files2StringByLine(ConfigurationTest.BOOK_FILES)));
+            writeTextFilesToTopic(topics[0], "key", BookClub.BOOK_FILES);
 
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(2));
             for (ConsumerRecord<String, String> record : records) {
@@ -150,7 +150,7 @@ public class KafkaSourceTest {
     @Test
     @SneakyThrows
     public void testDatasetMonitoringWithPrefix() {
-        writeToTopic(topics[0], addDefaultKey("key",TestUtil.files2StringByLine(ConfigurationTest.BOOK_FILES)));
+        writeTextFilesToTopic(topics[0], "key", BookClub.BOOK_FILES);
 
         String dsName = "bookclub";
         DataSourceUpdate dsUpdate = DataSourceUpdate.builder()
@@ -167,7 +167,7 @@ public class KafkaSourceTest {
     @Test
     @SneakyThrows
     public void testDatasetMonitoringWithExtension() {
-        writeToTopic(topics[1], addDefaultKey("key",TestUtil.files2StringByLine(ConfigurationTest.BOOK_FILES)));
+        writeTextFilesToTopic(topics[1], "key", BookClub.BOOK_FILES);
 
         String dsName = "test";
         DataSourceUpdate dsUpdate = DataSourceUpdate.builder()
@@ -179,19 +179,15 @@ public class KafkaSourceTest {
     }
 
     public void testBookSourceTable(String dsName, DataSourceUpdate dsUpdate) {
-        SqrlSettings settings = ConfigurationTest.getDefaultSettings(true);
-        env = Environment.create(settings);
-
-        DatasetRegistry registry = env.getDatasetRegistry();
+        initialize(IntegrationTestSettings.getFlink());
 
         ErrorCollector errors = ErrorCollector.root();
-        registry.addOrUpdateSource(dsUpdate, errors);
-        if (errors.hasErrors()) System.out.println(errors);
-        assertFalse(errors.isFatal());
+        sourceRegistry.addOrUpdateSource(dsUpdate, errors);
+        assertFalse(errors.isFatal(), errors.toString());
 
         //Needs some time to wait for the flink pipeline to compile data
 
-        SourceDataset ds = registry.getDataset(dsName);
+        SourceDataset ds = sourceRegistry.getDataset(dsName);
         assertEquals(1, ds.getTables().size());
         SourceTable book = ds.getTable("book");
         assertNotNull(book);

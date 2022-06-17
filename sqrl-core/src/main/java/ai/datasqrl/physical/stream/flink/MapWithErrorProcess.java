@@ -2,25 +2,19 @@ package ai.datasqrl.physical.stream.flink;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.physical.stream.FunctionWithError;
-import lombok.Value;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, Output> {
 
-  public static final String ERROR_TAG_PREFIX = "error";
-
-  private final OutputTag<Error> errorTag;
+  private final OutputTag<ProcessError> errorTag;
   private final FunctionWithError<Input, Output> function;
 
-  public MapWithErrorProcess(OutputTag<Error> errorTag, FunctionWithError<Input, Output> function) {
+  public MapWithErrorProcess(OutputTag<ProcessError> errorTag, FunctionWithError<Input, Output> function) {
     this.errorTag = errorTag;
     this.function = function;
   }
@@ -31,7 +25,7 @@ public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, O
     ErrorHolder errorHolder = new ErrorHolder();
     Optional<Output> result = function.apply(input,errorHolder);
     if (errorHolder.hasErrors()) {
-      context.output(errorTag, MapWithErrorProcess.Error.of(errorHolder.errors, input));
+      context.output(errorTag, ProcessError.of(errorHolder.errors, input));
     }
     if (result.isPresent()) out.collect(result.get());
   }
@@ -51,17 +45,4 @@ public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, O
 
   }
 
-  @Value
-  public static class Error<Input> implements Serializable {
-
-    private List<String> errors;
-    private Input input;
-
-    public static<Input> Error<Input> of(ErrorCollector errors, Input input) {
-      List<String> errorMsgs = new ArrayList<>();
-      errors.forEach(e -> errorMsgs.add(e.toString()));
-      return new Error(errorMsgs, input);
-    }
-
-  }
 }

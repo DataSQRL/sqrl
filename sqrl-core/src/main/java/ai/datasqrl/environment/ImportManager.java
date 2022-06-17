@@ -44,7 +44,7 @@ public class ImportManager {
     ErrorCollector errors = ErrorCollector.root();
     SchemaImport importer = new SchemaImport(datasetRegistry, Constraint.FACTORY_LOOKUP);
     Map<Name, FlexibleDatasetSchema> result = importer.convertImportSchema(yamlSchema, errors);
-    if (!errors.isFatal()) {
+    if (!errors.isFatal() && !result.isEmpty()) {
       registerUserSchema(result);
     }
     return errors;

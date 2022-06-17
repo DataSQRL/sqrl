@@ -1,12 +1,12 @@
 package ai.datasqrl;
 
-import ai.datasqrl.api.ConfigurationTest;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.environment.Environment;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
+import ai.datasqrl.util.data.C360;
 import com.google.common.collect.ImmutableList;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -26,12 +26,12 @@ public class Test2 {
     VertxOptions vertxOptions = new VertxOptions();
     this.vertx = (VertxInternal) Vertx.vertx(vertxOptions);
 
-    SqrlSettings settings = ConfigurationTest.getDefaultSettings(false);
+    SqrlSettings settings = null;
     env = Environment.create(settings);
 
     String ds2Name = "ecommerce-data";
     DirectorySourceImplementation fileConfig = DirectorySourceImplementation.builder()
-        .uri(C360Example.RETAIL_DATA_DIR.toAbsolutePath().toString())
+        .uri(C360.RETAIL_DATA_DIR.toAbsolutePath().toString())
         .build();
     env.getDatasetRegistry().addOrUpdateSource(ds2Name, fileConfig, ErrorCollector.root());
   }
@@ -135,13 +135,13 @@ public class Test2 {
     ErrorCollector errorCollector = ErrorCollector.root();
     try {
       ScriptBundle.Config bundle = ScriptBundle.Config.builder()
-          .name(C360Example.RETAIL_SCRIPT_NAME)
+          .name(C360.RETAIL_SCRIPT_NAME)
           .scripts(ImmutableList.of(
               SqrlScript.Config.builder()
-                  .name(C360Example.RETAIL_SCRIPT_NAME)
+                  .name(C360.RETAIL_SCRIPT_NAME)
                   .main(true)
                   .content(script)
-                  .inputSchema(Files.readString(C360Example.RETAIL_IMPORT_SCHEMA_FILE))
+                  .inputSchema(Files.readString(C360.RETAIL_IMPORT_SCHEMA_FILE))
                   .build()
           ))
           .build();

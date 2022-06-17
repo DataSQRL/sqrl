@@ -10,6 +10,7 @@ import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.util.OutputTag;
 
 public interface FlinkStreamEngine extends StreamEngine {
 
@@ -21,7 +22,7 @@ public interface FlinkStreamEngine extends StreamEngine {
 
     StreamTableEnvironment getTableEnvironment();
 
-
+    OutputTag<ProcessError> getErrorTag(final String errorName);
 
     void setJobType(JobType jobType);
 
@@ -95,7 +96,7 @@ public interface FlinkStreamEngine extends StreamEngine {
     @Override
     public void cancel() {
       //TODO
-      status = Status.STOPPED;
+      status = Status.COMPLETED;
       throw new UnsupportedOperationException("Not yet implemented");
     }
 

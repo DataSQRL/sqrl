@@ -1,4 +1,4 @@
-package ai.datasqrl;
+package ai.datasqrl.util;
 
 import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
 import ai.datasqrl.config.engines.JDBCConfiguration;
@@ -14,14 +14,17 @@ import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.utility.DockerImageName;
 
 public class TestDatabase {
+
   private final Properties properties;
+  private final PostgreSQLContainer postgreSQLContainer;
 
   public TestDatabase() {
     if (hasLocalDbConfig()) {
       this.properties = PropertiesUtil.properties;
+      this.postgreSQLContainer = null;
     } else {
       DockerImageName image = DockerImageName.parse("postgres:14.2");
-      PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer(image)
+      postgreSQLContainer = new PostgreSQLContainer(image)
           .withDatabaseName(MetaData.DEFAULT_DATABASE);
       postgreSQLContainer.start();
 
@@ -35,7 +38,13 @@ public class TestDatabase {
     }
   }
 
-  private boolean hasLocalDbConfig() {
+  public void stop() {
+    if (postgreSQLContainer!=null) {
+      postgreSQLContainer.stop();
+    }
+  }
+
+  private static boolean hasLocalDbConfig() {
     return !PropertiesUtil.properties.isEmpty();
   }
 

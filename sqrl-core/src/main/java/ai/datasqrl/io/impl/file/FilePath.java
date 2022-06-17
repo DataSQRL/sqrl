@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -140,6 +141,14 @@ public class FilePath implements Serializable {
 
   public static FilePath fromFlinkPath(Path path) {
     return new FilePath(path);
+  }
+
+  public static FilePath fromJavaPath(java.nio.file.Path path) {
+    return new FilePath(path.toAbsolutePath().toString());
+  }
+
+  public static java.nio.file.Path toJavaPath(FilePath path) {
+    return java.nio.file.Path.of(path.flinkPath.toUri().getPath());
   }
 
 
