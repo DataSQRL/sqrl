@@ -1,7 +1,7 @@
 package ai.datasqrl.io.sources.util;
 
-import ai.datasqrl.execute.StreamEngine;
-import ai.datasqrl.execute.StreamHolder;
+import ai.datasqrl.physical.stream.StreamEngine;
+import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 

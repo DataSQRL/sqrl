@@ -1,6 +1,6 @@
-package ai.datasqrl.execute.flink;
+package ai.datasqrl.physical.stream.flink;
 
-import ai.datasqrl.execute.StreamEngine;
+import ai.datasqrl.physical.stream.StreamEngine;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;

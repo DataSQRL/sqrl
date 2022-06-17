@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.schema;
+package ai.datasqrl.physical.stream.flink.schema;
 
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;

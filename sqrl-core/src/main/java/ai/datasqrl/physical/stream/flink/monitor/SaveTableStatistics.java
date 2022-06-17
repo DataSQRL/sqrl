@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.monitor;
+package ai.datasqrl.physical.stream.flink.monitor;
 
 import ai.datasqrl.config.provider.*;
 import ai.datasqrl.io.sources.dataset.TableStatisticsStore;

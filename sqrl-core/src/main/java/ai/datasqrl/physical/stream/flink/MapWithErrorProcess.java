@@ -1,7 +1,7 @@
-package ai.datasqrl.execute.flink;
+package ai.datasqrl.physical.stream.flink;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.execute.FunctionWithError;
+import ai.datasqrl.physical.stream.FunctionWithError;
 import lombok.Value;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;

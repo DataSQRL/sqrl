@@ -1,10 +1,9 @@
-package ai.datasqrl.physical.stream;
+package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
 import ai.datasqrl.config.engines.JDBCConfiguration;
-import ai.datasqrl.execute.StreamEngine;
-import ai.datasqrl.execute.flink.FlinkStreamEngine;
-import ai.datasqrl.physical.stream.rel.InjectFlinkCluster;
+import ai.datasqrl.physical.stream.StreamEngine;
+import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
 import ai.datasqrl.plan.queries.TableQuery;
 import ai.datasqrl.environment.ImportManager;
 import java.util.ArrayList;

@@ -1,7 +1,7 @@
 package ai.datasqrl.config;
 
 import ai.datasqrl.config.engines.JDBCConfiguration;
-import ai.datasqrl.execute.StreamEngine;
+import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.plan.calcite.CalciteEnvironment;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;

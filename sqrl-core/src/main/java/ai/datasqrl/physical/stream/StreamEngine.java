@@ -1,4 +1,4 @@
-package ai.datasqrl.execute;
+package ai.datasqrl.physical.stream;
 
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.io.sources.SourceRecord;

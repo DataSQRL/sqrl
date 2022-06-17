@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink;
+package ai.datasqrl.physical.stream.flink;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -7,13 +7,13 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
-import ai.datasqrl.execute.StreamHolder;
-import ai.datasqrl.execute.flink.monitor.KeyedSourceRecordStatistics;
-import ai.datasqrl.execute.flink.monitor.SaveTableStatistics;
-import ai.datasqrl.execute.flink.schema.FlinkRowConstructor;
-import ai.datasqrl.execute.flink.schema.FlinkTableSchemaGenerator;
-import ai.datasqrl.execute.flink.schema.FlinkTypeInfoSchemaGenerator;
-import ai.datasqrl.execute.flink.util.FlinkUtilities;
+import ai.datasqrl.physical.stream.StreamHolder;
+import ai.datasqrl.physical.stream.flink.monitor.KeyedSourceRecordStatistics;
+import ai.datasqrl.physical.stream.flink.monitor.SaveTableStatistics;
+import ai.datasqrl.physical.stream.flink.schema.FlinkRowConstructor;
+import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
+import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
+import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
 import ai.datasqrl.io.formats.TextLineFormat;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.io.impl.file.FilePath;
@@ -47,7 +47,6 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;

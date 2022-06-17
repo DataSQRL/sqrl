@@ -3,7 +3,7 @@ package ai.datasqrl.environment;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.util.NamedIdentifier;
 import ai.datasqrl.config.util.StringNamedId;
-import ai.datasqrl.execute.StreamEngine;
+import ai.datasqrl.physical.stream.StreamEngine;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import java.time.Instant;

@@ -1,4 +1,4 @@
-package ai.datasqrl.execute;
+package ai.datasqrl.physical.stream;
 
 import ai.datasqrl.config.error.ErrorCollector;
 

@@ -1,4 +1,4 @@
-package ai.datasqrl.physical.stream.rel;
+package ai.datasqrl.physical.stream.flink.plan;
 
 import lombok.Getter;
 import org.apache.calcite.plan.RelOptCluster;

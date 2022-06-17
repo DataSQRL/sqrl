@@ -1,4 +1,4 @@
-package ai.datasqrl.physical.stream;
+package ai.datasqrl.physical.stream.flink.plan;
 
 import java.util.List;
 import lombok.Value;

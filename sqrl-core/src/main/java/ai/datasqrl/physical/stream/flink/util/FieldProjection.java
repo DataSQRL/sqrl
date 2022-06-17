@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.util;
+package ai.datasqrl.physical.stream.flink.util;
 
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.parse.tree.name.Name;

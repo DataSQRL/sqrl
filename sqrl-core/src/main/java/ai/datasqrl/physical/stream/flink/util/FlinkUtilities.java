@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.util;
+package ai.datasqrl.physical.stream.flink.util;
 
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.streaming.api.CheckpointingMode;

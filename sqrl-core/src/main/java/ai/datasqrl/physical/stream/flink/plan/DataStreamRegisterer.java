@@ -1,7 +1,7 @@
-package ai.datasqrl.physical.stream;
+package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.execute.flink.FlinkStreamEngine.Builder;
+import ai.datasqrl.physical.stream.flink.FlinkStreamEngine.Builder;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;

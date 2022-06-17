@@ -1,4 +1,4 @@
-package ai.datasqrl.physical.stream;
+package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.schema.Table;
 import java.util.ArrayList;

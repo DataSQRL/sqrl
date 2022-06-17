@@ -1,9 +1,8 @@
-package ai.datasqrl.execute.flink;
+package ai.datasqrl.physical.stream.flink;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.execute.StreamEngine;
+import ai.datasqrl.physical.stream.StreamEngine;
 import com.google.common.base.Preconditions;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +10,6 @@ import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 
 public interface FlinkStreamEngine extends StreamEngine {
 

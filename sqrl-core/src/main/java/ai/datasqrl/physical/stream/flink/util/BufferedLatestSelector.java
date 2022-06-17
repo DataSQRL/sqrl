@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.util;
+package ai.datasqrl.physical.stream.flink.util;
 
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;

@@ -1,7 +1,7 @@
 package ai.datasqrl.schema.input;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.execute.FunctionWithError;
+import ai.datasqrl.physical.stream.FunctionWithError;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.stats.FieldStats;

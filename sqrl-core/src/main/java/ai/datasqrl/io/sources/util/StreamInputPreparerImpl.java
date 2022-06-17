@@ -1,9 +1,9 @@
 package ai.datasqrl.io.sources.util;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.execute.StreamEngine;
-import ai.datasqrl.execute.FunctionWithError;
-import ai.datasqrl.execute.StreamHolder;
+import ai.datasqrl.physical.stream.StreamEngine;
+import ai.datasqrl.physical.stream.FunctionWithError;
+import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.io.formats.Format;
 import ai.datasqrl.io.formats.TextLineFormat;
 import ai.datasqrl.io.sources.SourceRecord;

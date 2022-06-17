@@ -1,6 +1,6 @@
 package ai.datasqrl.config.provider;
 
-import ai.datasqrl.execute.StreamEngine;
+import ai.datasqrl.physical.stream.StreamEngine;
 
 public interface StreamEngineProvider {
 
