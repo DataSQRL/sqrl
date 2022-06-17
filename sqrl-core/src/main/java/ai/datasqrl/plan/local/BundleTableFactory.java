@@ -11,7 +11,6 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.CalciteEnvironment;
-import ai.datasqrl.plan.calcite.SqrlType2Calcite;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
@@ -23,13 +22,6 @@ import ai.datasqrl.schema.input.RelationType;
 import ai.datasqrl.schema.type.ArrayType;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.BasicType;
-import ai.datasqrl.schema.type.basic.DateTimeType;
-import ai.datasqrl.schema.type.basic.IntegerType;
-import ai.datasqrl.schema.type.basic.UuidType;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -42,10 +34,8 @@ public class BundleTableFactory {
 
     private final AtomicInteger tableIdCounter = new AtomicInteger(0);
     private final Name parentRelationshipName = ReservedName.PARENT;
-    private final SqrlType2Calcite typeConverter;
 
     public BundleTableFactory(CalciteEnvironment calciteEnvironment) {
-        this.typeConverter = calciteEnvironment.getTypeConverter();
     }
 
     public Table importTable(ImportManager.SourceTableImport impTbl,
@@ -65,13 +55,13 @@ public class BundleTableFactory {
                                              SourceTableStatistics statistics) {
         NamePath tblPath = tblBuilder.getPath();
         RelationStats stats = statistics.getRelationStats(tblPath.subList(1,tblPath.getLength()));
-        Table table = tblBuilder.createTable(Table.Type.STREAM, timestamp, null, TableStatistic.from(stats));
+        Table table = tblBuilder.createTable(Table.Type.STREAM, timestamp, TableStatistic.from(stats));
         //Recurse through children and add parent-child relationships
         for (Pair<TableBuilder,Relationship.Multiplicity> child : tblBuilder.children) {
             TableBuilder childBuilder = child.getKey();
             //Add parent timestamp as internal column
-            Column childTimestamp = childBuilder.addColumn(timestamp.getName(), timestamp.getDatatype(),
-                    false, false, true, false);
+            Column childTimestamp = childBuilder.addColumn(timestamp.getName(),
+                false, false, true, true);
             Table childTbl = createImportTableHierarchy(childBuilder, childTimestamp, statistics);
             Name childName = childBuilder.getPath().getLast();
             Optional<Relationship> parentRel = createParentRelationship(childTbl, table);
@@ -118,10 +108,6 @@ public class BundleTableFactory {
         return new JoinNorm(Optional.empty(), type, fromNorm, toNorm, JoinOn.on(and(criteria)));
     }
 
-    private RelDataType convertType(Type type) {
-        return type.accept(typeConverter,null);
-    }
-
     private class ImportVisitor implements FlexibleTableConverter.Visitor<Type> {
 
         private final Deque<TableBuilder> stack = new ArrayDeque<>();
@@ -136,15 +122,15 @@ public class BundleTableFactory {
                 //Add parent primary keys
                 tblBuilder.addParentPrimaryKeys(stack.getFirst());
                 if (!isSingleton) {
-                    tblBuilder.addColumn(ReservedName.ARRAY_IDX, convertType(IntegerType.INSTANCE), true,
+                    tblBuilder.addColumn(ReservedName.ARRAY_IDX,true,
                             false, true, true);
                 }
             } else {
-                tblBuilder.addColumn(ReservedName.UUID, convertType(UuidType.INSTANCE), true,
+                tblBuilder.addColumn(ReservedName.UUID,true,
                         false, true, true);
-                tblBuilder.addColumn(ReservedName.INGEST_TIME, convertType(DateTimeType.INSTANCE), false,
+                tblBuilder.addColumn(ReservedName.INGEST_TIME, false,
                         false, true, true);
-                tblBuilder.addColumn(ReservedName.SOURCE_TIME, convertType(DateTimeType.INSTANCE), false,
+                tblBuilder.addColumn(ReservedName.SOURCE_TIME,false,
                         false, false, true);
             }
             stack.addFirst(tblBuilder);
@@ -167,7 +153,7 @@ public class BundleTableFactory {
                 lastCreatedTable = null;
             } else {
                 //It's a column
-                stack.getFirst().addColumn(name, convertType(type), false,
+                stack.getFirst().addColumn(name, false,
                         false, notnull, true);
             }
         }
@@ -211,33 +197,24 @@ public class BundleTableFactory {
             children.add(Pair.of(table,multi));
         }
 
-        public Column addColumn(Name name, RelDataType type, boolean isPrimaryKey, boolean isParentPrimaryKey,
+        public Column addColumn(Name name, boolean isPrimaryKey, boolean isParentPrimaryKey,
                        boolean notnull, boolean isVisible) {
             int version = getNextColumnVersion(name);
-            Column col = new Column(name, version, columnCounter++, type,
+            Column col = new Column(name, version, columnCounter++,
                     isPrimaryKey, isParentPrimaryKey,
                     notnull? List.of(NotNull.INSTANCE) : List.of(), isVisible);
             fields.add(col);
             return col;
         }
 
-        public RelDataType getRowType() {
-            List<RelDataTypeField> fields = this.fields.stream()
-                    .filter(f->f instanceof Column)
-                    .map(f->(Column)f)
-                    .map(Column::getRelDataTypeField)
-                    .collect(Collectors.toList());
-            return new RelRecordType(fields);
-        }
-
         public void addParentPrimaryKeys(AbstractTable parent) {
             for (Column ppk : parent.getPrimaryKeys()) {
-                addColumn(ppk.getName(), ppk.getDatatype(), true, true, true, false);
+                addColumn(ppk.getName(), true, true, true, false);
             }
         }
 
-        public Table createTable(Table.Type type, Column timestamp, RelNode head, TableStatistic statistic) {
-            return new Table(uniqueId, path, type, fields, timestamp, null, statistic);
+        public Table createTable(Table.Type type, Column timestamp, TableStatistic statistic) {
+            return new Table(uniqueId, path, type, fields, timestamp, statistic);
         }
 
     }

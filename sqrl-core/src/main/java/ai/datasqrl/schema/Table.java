@@ -10,8 +10,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
-import org.apache.calcite.rel.RelNode;
 import org.apache.flink.shaded.guava30.com.google.common.base.Preconditions;
 
 @Getter
@@ -25,21 +23,14 @@ public class Table extends AbstractTable {
   @NonNull private final Type type;
   @NonNull private final Column timestamp;
   @NonNull private final TableStatistic statistic;
-  @NonNull private final RelNode baseLogicalPlan;
-
-  @Deprecated
-  @Setter
-  private RelNode head;
 
   public Table(int uniqueId, NamePath path, Type type, ShadowingContainer<Field> fields,
-               Column timestamp, RelNode baseLogicalPlan, TableStatistic statistic) {
+               Column timestamp, TableStatistic statistic) {
     super(uniqueId,path,fields);
     this.type = type;
     this.timestamp = timestamp;
-    this.baseLogicalPlan = baseLogicalPlan;
     this.statistic = statistic;
     Preconditions.checkNotNull(fields.contains(timestamp));
-    setHead(baseLogicalPlan);
   }
 
   public Optional<Field> walkField(NamePath namePath) {
@@ -103,7 +94,12 @@ public class Table extends AbstractTable {
    * Determines the next field name
    */
   public Name getNextFieldId(Name name) {
-    return name.suffix(Integer.toString(getNextColumnVersion(name)));
+    int nextVersion = getNextColumnVersion(name);
+    if (nextVersion != 0) {
+      return name.suffix(Integer.toString(nextVersion));
+    } else {
+      return name;
+    }
   }
 
 
@@ -141,7 +137,7 @@ public class Table extends AbstractTable {
 
   public List<Column> getColumns() {
     return this.fields.getElements().stream()
-        .filter(f->f instanceof Column && !((Column) f).isVisible())
+        .filter(f->f instanceof Column && f.isVisible())
         .map(f->(Column) f)
         .collect(Collectors.toList());
   }

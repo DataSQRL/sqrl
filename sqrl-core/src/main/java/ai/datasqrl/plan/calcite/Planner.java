@@ -24,6 +24,13 @@ public class Planner extends PlannerImpl {
 
   public Planner(FrameworkConfig config) {
     super(config);
+    ready();
+  }
+
+  public void refresh() {
+    close();
+    reset();
+    ready();
   }
 
   /**

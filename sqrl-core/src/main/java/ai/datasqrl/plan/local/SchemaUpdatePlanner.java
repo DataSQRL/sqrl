@@ -27,6 +27,7 @@ import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,27 +108,12 @@ public class SchemaUpdatePlanner {
       SqlNode sqlNode = relationNorm.accept(converter, new ConvertContext());
       System.out.println("Sql: " + SqlNodeFormatter.toString(sqlNode));
 
-//      RelNode relNode = localPlanner.plan(sqlNode);
-//      System.out.println("RelNode:\n" + relNode.explain());
-//      System.out.println(RelToSql.convertToSql(relNode));
-
-//      MultiphaseOptimizer optimizer = new MultiphaseOptimizer();
-//      RelNode optimized = optimizer.optimize(relNode, SqrlPrograms.testProgram);
-//
-//      System.out.println(
-//          RelOptUtil.dumpPlan("[Physical plan]", optimized, SqlExplainFormat.TEXT,
-//              SqlExplainLevel.ALL_ATTRIBUTES));
-
       Table table = schema.walkTable(name.popLast());
       Name columnName = name.getLast();
       int nextVersion = table.getNextColumnVersion(columnName);
 
-      //By convention, the last field is new the expression
-//      int index = relNode.getRowType().getFieldList().size() - 1;
-//      RelDataTypeField relField = relNode.getRowType().getFieldList().get(index);
-
-      Column column = new Column(columnName, nextVersion, 0, null,
-              false, false, List.of(), true);
+      Column column = new Column(columnName, nextVersion, 0,
+          false, false, List.of(), true);
 
       return new AddColumnOp(table, relationNorm, column);
     }
@@ -144,77 +130,24 @@ public class SchemaUpdatePlanner {
     }
 
     public SchemaUpdateOp query(Node relationNorm, NamePath namePath) {
-//      System.out.println("Converted: " + NodeFormatter.accept(relationNorm));
       SqlNodeConverter converter = new SqlNodeConverter();
       SqlNode sqlNode = relationNorm.accept(converter, new ConvertContext());
       System.out.println("Sql: " + SqlNodeFormatter.toString(sqlNode));
 
-//      RelNode relNode = localPlanner.plan(sqlNode);
-//      MultiphaseOptimizer optimizer = new MultiphaseOptimizer();
-//      RelNode optimized = optimizer.optimize(relNode, SqrlPrograms.testProgram);
-
       double derivedRowCount = 1; //TODO: derive from optimizer
-      // double derivedRowCount = optimized.estimateRowCount(??);
 
-//      System.out.println(
-//          RelOptUtil.dumpPlan("[Physical plan]", optimized, SqlExplainFormat.TEXT,
-//              SqlExplainLevel.ALL_ATTRIBUTES));
-      //To column list
       QuerySpecNorm specNorm = ((QuerySpecNorm)relationNorm);
-      List<Expression> select = specNorm.getSelect().getSelectItems().stream().map(e->e.getExpression()).collect(
-          Collectors.toList());
-
       final BundleTableFactory.TableBuilder builder = tableFactory.build(namePath);
 
-      Streams.concat(
-          specNorm.getAddedPrimaryKeys().stream(),
-          specNorm.getParentPrimaryKeys().stream()
-      ).forEach(expr -> {
+      specNorm.getAllColumns().stream().forEach(expr -> {
         Name name = specNorm.getFieldName(expr);
-        builder.addColumn(name, null,true, true, true, false);
+        builder.addColumn(name, specNorm.isPrimaryKey(expr), specNorm.isParentPrimaryKey(expr),true, true);
       });
-
-      specNorm.getPrimaryKeys().stream().forEach(expr -> {
-        Name name = specNorm.getFieldName(expr);
-        builder.addColumn(name, null,true, false, true, true);
-      });
-
-      select.stream().forEach(expr -> {
-        Name name = specNorm.getFieldName(expr);
-        builder.addColumn(name, null,false, false, true, true);
-      });
-
-
-//      List<Expression> primaryKeys = specNorm.getPrimaryKeys();
-//      List<Expression> addedPrimaryKeys = specNorm.getAddedPrimaryKeys();
-//      List<? extends Expression> parentPrimaryKeys = specNorm.getParentPrimaryKeys();
-
-//      for (RelDataTypeField field : relNode.getRowType().getFieldList()) {
-//        int index = field.getIndex();
-//        Expression expression;
-//        int i = index;
-//        if (i < parentPrimaryKeys.size()) {
-//          expression = parentPrimaryKeys.get(i);
-//        }
-//        i = i - parentPrimaryKeys.size();
-//        if (i < addedPrimaryKeys.size()) {
-//          expression = addedPrimaryKeys.get(i);
-//        }
-//        i = i - addedPrimaryKeys.size();
-//        expression = select.get(i);
-//        Name name = specNorm.getFieldName(expression);
-//        Preconditions.checkNotNull(name);
-//        builder.addColumn(name, field.getType(),true, true, true, true);
-//      }
-
       //TODO: infer table type from relNode
       Table.Type tblType = Table.Type.STREAM;
 
-//      Preconditions.checkState(columns.stream().anyMatch(Column::isPrimaryKey), "No primary key was found");
-
       //Creates a table that is not bound to the schema TODO: determine timestamp
-      Table table = builder.createTable(tblType, null, null, TableStatistic.of(derivedRowCount));
-//      System.out.println(relNode.explain());
+      Table table = builder.createTable(tblType, null, TableStatistic.of(derivedRowCount));
 
       if (namePath.getLength() == 1) {
         return new AddRootTableOp(table, relationNorm);

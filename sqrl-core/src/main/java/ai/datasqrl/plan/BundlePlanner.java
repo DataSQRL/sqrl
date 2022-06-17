@@ -9,13 +9,22 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
+import ai.datasqrl.plan.calcite.PlanDag;
+import ai.datasqrl.plan.calcite.Planner;
+import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
+import ai.datasqrl.plan.calcite.SqrlSchemaCatalog;
 import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.plan.local.SchemaUpdatePlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
 import ai.datasqrl.schema.Schema;
+import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.schema.BridgedCalciteSchema;
+import org.apache.calcite.schema.SchemaPlus;
 
 @Slf4j
 public class BundlePlanner {
@@ -33,7 +42,7 @@ public class BundlePlanner {
     Schema schema = planMain(bundle.getMainScript());
 
 //    Optimizer optimizer = new Optimizer(bundle.getQueries(), true);
-    LogicalPlan plan = null;//optimizer.findBestPlan(schema);
+    LogicalPlan plan = new LogicalPlan(List.of(), List.of(), schema);
 
     PhysicalPlanner physicalPlanner = new PhysicalPlanner(options.getImportManager(),
         options.getJdbcConfiguration(),
@@ -44,6 +53,7 @@ public class BundlePlanner {
   private Schema planMain(SqrlScript mainScript) {
     SqrlParser parser = SqrlParser.newParser(errorCollector);
     ScriptNode scriptAst = parser.parse(mainScript.getContent());
+    PlanDag dag = createDag(mainScript.getName().getCanonical());
 
     SchemaBuilder schema = new SchemaBuilder();
     for (Node node : scriptAst.getStatements()) {
@@ -52,9 +62,25 @@ public class BundlePlanner {
         log.warn("Operation is null for statement: {}", node.getClass());
       }
       operation.ifPresent(schema::apply);
+      operation.ifPresent(dag::apply);
     }
 
     return schema.build();
+  }
+
+  public PlanDag createDag(String schemaName) {
+    SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
+    SqrlSchemaCatalog catalog = new SqrlSchemaCatalog(rootSchema);
+
+    BridgedCalciteSchema subSchema = new BridgedCalciteSchema();
+    catalog.add(schemaName, subSchema);
+
+    PlannerFactory plannerFactory = new PlannerFactory(catalog);
+    Planner planner = plannerFactory.createPlanner(schemaName);
+
+    PlanDag dag = new PlanDag(planner);
+    subSchema.setBridge(dag);
+    return dag;
   }
 
   public Optional<SchemaUpdateOp> planStatement(Node statement, SchemaBuilder schema) {

@@ -45,7 +45,7 @@ public class DistinctTransform {
     List<SelectItem> selectPartition = new ArrayList<>(selectItems);
     //TODO: Sort items outside of the ingest time
     selectPartition.add(new SingleColumn(Optional.empty(), new FunctionCall(Optional.empty(), NamePath.of("ROW_NUMBER"), List.of(), false,
-        Optional.of(new Window(partition, Optional.of(new OrderBy(List.of(new SortItem(new Identifier(Optional.empty(), NamePath.parse("_ingest_time")), Ordering.DESCENDING))))))),
+        Optional.of(new Window(partition, Optional.empty()))),//todo order //Optional.of(new OrderBy(List.of(new SortItem(new Identifier(Optional.empty(), NamePath.parse("_ingest_time")), Ordering.DESCENDING))))))),
             Optional.of(new Identifier(Optional.empty(), NamePath.parse("_row_num"))))
         );
 
