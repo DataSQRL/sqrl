@@ -19,6 +19,8 @@ import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
 import ai.datasqrl.plan.local.transpiler.nodes.node.SelectNorm;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Streams;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -207,5 +209,20 @@ public class QuerySpecNorm extends RelationNorm {
       }
     }
     return false;
+  }
+
+  public boolean isPrimaryKey(Expression expr) {
+    return getPrimaryKeys().contains(expr);
+  }
+
+  public boolean isParentPrimaryKey(Expression expr) {
+    return getParentPrimaryKeys().contains(expr);
+  }
+
+  public List<Expression> getAllColumns() {
+    return Streams.concat(parentPrimaryKeys.stream(),
+        addedPrimaryKeys.stream(),
+        select.getSelectItems().stream().map(e->e.getExpression()))
+        .collect(Collectors.toList());
   }
 }

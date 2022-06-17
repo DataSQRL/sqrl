@@ -3,18 +3,14 @@ package ai.datasqrl.schema;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.constraint.ConstraintHelper;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rex.RexNode;
 
 @Getter
@@ -26,7 +22,6 @@ public class Column extends Field {
    */
   private final int version;
   private final int index;
-  private final RelDataType datatype;
 
   private final boolean isPrimaryKey;
   private final boolean isParentPrimaryKey;
@@ -40,13 +35,12 @@ public class Column extends Field {
   private final Optional<LPDefinition> definition = Optional.empty();
 
   public Column(Name name, int version, int index,
-                RelDataType datatype,
                 boolean isPrimaryKey, boolean isParentPrimaryKey,
                 List<Constraint> constraints, boolean isVisible) {
+
     super(name);
     this.version = version;
     this.index = index;
-    this.datatype = datatype;
     this.constraints = constraints;
     this.isVisible = isVisible;
     Preconditions.checkArgument(!isParentPrimaryKey || isPrimaryKey);
@@ -65,10 +59,6 @@ public class Column extends Field {
   public static Name getId(Name name, int version) {
     if (version==0) return name;
     else return name.suffix(Integer.toString(version));
-  }
-
-  public RelDataTypeField getRelDataTypeField() {
-    return new RelDataTypeFieldImpl(name.getCanonical(),index,datatype);
   }
 
   @Override
@@ -100,12 +90,11 @@ public class Column extends Field {
     return "Column{" +
         "version=" + version +
         ", index =" + index +
-        ", datatype=" + datatype +
         ", nonNull=" + nonNull +
         ", constraints=" + constraints +
         ", isPrimaryKey=" + isPrimaryKey +
         ", isParentPrimaryKey=" + isParentPrimaryKey +
-        ", isInternal=" + isVisible +
+        ", isVisible=" + isVisible +
         ", name=" + name +
         '}';
   }

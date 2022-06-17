@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.prepare;
 
+import lombok.Getter;
 import org.apache.calcite.adapter.java.JavaTypeFactory;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
@@ -72,9 +73,12 @@ import static java.util.Objects.requireNonNull;
  * 
  * SQRL Changelog:
  *  - Change protected modifiers to protected
+ *  - Getters for all properties
+ *  - remove createSqlValidator config override to allow sqrlconformance
  */
 
 /** Implementation of {@link org.apache.calcite.tools.Planner}. */
+@Getter
 public class PlannerImpl implements Planner, ViewExpander {
   protected final SqlOperatorTable operatorTable;
   protected final ImmutableList<Program> programs;
@@ -175,7 +179,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     state = State.STATE_1_RESET;
   }
 
-  protected void ready() {
+  public void ready() {
     switch (state) {
     case STATE_0_CLOSED:
       reset();
@@ -344,10 +348,11 @@ public class PlannerImpl implements Planner, ViewExpander {
         catalogReader,
         getTypeFactory(),
         sqlValidatorConfig
-            .withDefaultNullCollation(connectionConfig.defaultNullCollation())
-            .withLenientOperatorLookup(connectionConfig.lenientOperatorLookup())
-            .withSqlConformance(connectionConfig.conformance())
-            .withIdentifierExpansion(true));
+//            .withDefaultNullCollation(connectionConfig.defaultNullCollation())
+//            .withLenientOperatorLookup(connectionConfig.lenientOperatorLookup())
+//            .withSqlConformance(connectionConfig.conformance())
+//            .withIdentifierExpansion(true)
+            );
   }
 
   protected static SchemaPlus rootSchema(SchemaPlus schema) {

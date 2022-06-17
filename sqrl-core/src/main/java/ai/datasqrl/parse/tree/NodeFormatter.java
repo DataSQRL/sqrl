@@ -24,8 +24,10 @@ public class NodeFormatter extends AstVisitor<String, Object> {
 
   @Override
   public String visitNode(Node node, Object context) {
-    throw new RuntimeException("");
-//    return "{}";
+    if (node != null) {
+      throw new RuntimeException("Could not format sql node: " + node.getClass());
+    }
+    throw new RuntimeException("Could not format sql node");
   }
 
   @Override

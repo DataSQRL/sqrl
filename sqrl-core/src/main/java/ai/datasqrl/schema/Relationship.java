@@ -182,13 +182,14 @@ public class Relationship extends Field {
   }
 
   private Window createWindow(RelationNorm table) {
-    Window window = new Window(toPartition(table),
-        Optional.of(new OrderBy(List.of(
-            new SortItem(
-                new Identifier(
-                    Optional.empty(),
-                    NamePath.parse("_ingest_time")),
-                Ordering.DESCENDING)))));
+    Window window = new Window(toPartition(table), Optional.empty());
+    //todo window
+//        Optional.of(new OrderBy(List.of(
+//            new SortItem(
+//                new Identifier(
+//                    Optional.empty(),
+//                    NamePath.parse("_ingest_time")),
+//                Ordering.DESCENDING)))));
     return window;
   }
 

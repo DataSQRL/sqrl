@@ -299,6 +299,7 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
          pos.getPos(Optional.empty()));
   }
 
+  //todo: remove and delegate entirely to calcite functions (via a sqrl to calcite bridge)
   @Override
   public SqlNode visitResolvedFunctionCall(ResolvedFunctionCall node, ConvertContext context) {
     String opName = node.getNamePath().getLast().getCanonical();

@@ -93,7 +93,7 @@ public class SqrlConformance implements SqlConformance {
 
   @Override
   public boolean allowNiladicParentheses() {
-    return false;
+    return true; //todo: we probably want this to be false
   }
 
   @Override

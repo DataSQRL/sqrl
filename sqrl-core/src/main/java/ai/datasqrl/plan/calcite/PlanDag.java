@@ -12,17 +12,20 @@ import ai.datasqrl.plan.local.operations.SchemaOpVisitor;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
 import ai.datasqrl.plan.local.operations.ScriptTableImportOp;
 import ai.datasqrl.plan.local.operations.SourceTableImportOp;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.input.FlexibleTableConverter;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor
 public class PlanDag implements SqrlCalciteBridge, SchemaOpVisitor {
@@ -39,7 +42,9 @@ public class PlanDag implements SqrlCalciteBridge, SchemaOpVisitor {
   public <T> T visit(AddColumnOp op) {
     SchemaCalciteTable table = (SchemaCalciteTable)tableMap.get(op.getTable().getId());
 
+    planner.refresh();
     SqlNode sqlNode = planner.convert(op.getNode());
+    System.out.println(sqlNode);
     planner.validate(sqlNode);
 
     RelRoot root = planner.rel(sqlNode);
@@ -85,25 +90,29 @@ public class PlanDag implements SqrlCalciteBridge, SchemaOpVisitor {
   @Override
   public <T> T visit(SourceTableImportOp op) {
     SourceTableImport tableImport = op.getSourceTableImport();
+    SqrlType2Calcite typeConverter = planner.getTypeConverter();
 
-    SchemaCalciteTable schemaCalciteTable =
-        new SchemaCalciteTable(op.getTable().getHead().getRowType().getFieldList());
+    FieldInfoBuilder builder = planner.getTypeFactory()
+        .builder();
+    builder.kind(StructKind.FULLY_QUALIFIED);
 
-    for (Relationship relationship : op.getTable().getRelationships()) {
-      if (relationship.getJoinType() == JoinType.CHILD) {
-        Table table = relationship.getToTable();
-        SourceTableImportOp child = new SourceTableImportOp(table, null);
-        child.accept(this);
-      }
+    FlexibleTableConverter tableConverter = new FlexibleTableConverter(tableImport.getSourceSchema());
+    ImportTableRelDataTypeFactory builder1 = new ImportTableRelDataTypeFactory(planner.getTypeFactory(), typeConverter, op.getTable());
+    tableConverter.apply(builder1);
+//    RelDataType t = builder1.getFieldBuilders().peek().build();
+
+    for (Pair<Table, RelDataType> pair : builder1.getResult()) {
+      SchemaCalciteTable schemaCalciteTable =
+          new SchemaCalciteTable(pair.getRight().getFieldList());
+      tableMap.put(pair.getLeft().getId(), schemaCalciteTable);
     }
-
-    tableMap.put(op.getTable().getId(), schemaCalciteTable);
 
     return null;
   }
 
   @SneakyThrows //todo remove sneakythrows and add error handling
   private void addTable(Name name, Node node) {
+    planner.refresh();
     SqlNode sqlNode = planner.convert(node);
     planner.validate(sqlNode);
 
@@ -113,6 +122,9 @@ public class PlanDag implements SqrlCalciteBridge, SchemaOpVisitor {
 
     SchemaCalciteTable schemaCalciteTable = new SchemaCalciteTable(root.rel.getRowType().getFieldList());
     tableMap.put(name, schemaCalciteTable);
-    planner.reset();
+  }
+
+  public void apply(SchemaUpdateOp op) {
+    op.accept(this);
   }
 }
