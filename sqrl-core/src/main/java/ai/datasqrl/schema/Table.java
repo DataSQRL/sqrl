@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.flink.shaded.guava30.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 
 @Getter
 public class Table extends AbstractTable {
