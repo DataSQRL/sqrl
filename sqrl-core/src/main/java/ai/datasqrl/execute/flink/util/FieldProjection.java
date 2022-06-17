@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.process;
+package ai.datasqrl.execute.flink.util;
 
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.parse.tree.name.Name;
@@ -8,7 +8,6 @@ import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.basic.DateTimeType;
 import ai.datasqrl.schema.type.basic.IntegerType;
 import ai.datasqrl.schema.type.basic.UuidType;
-import ai.datasqrl.schema.constraint.NotNull;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import java.util.Map;

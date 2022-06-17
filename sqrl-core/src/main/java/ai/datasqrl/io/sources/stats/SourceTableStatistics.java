@@ -5,9 +5,9 @@ import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.ToString;
-import org.apache.flink.util.Preconditions;
 
 @ToString
 public class SourceTableStatistics implements

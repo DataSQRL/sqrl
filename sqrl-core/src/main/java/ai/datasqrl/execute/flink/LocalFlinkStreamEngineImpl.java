@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.environment;
+package ai.datasqrl.execute.flink;
 
 import ai.datasqrl.execute.StreamEngine;
 import java.io.IOException;
@@ -14,7 +14,7 @@ public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
   private final ConcurrentHashMap<String, LocalJob> jobs = new ConcurrentHashMap<>();
 
   @Override
-  public FlinkStreamBuilder createStream() {
+  public FlinkStreamBuilder createJob() {
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(
         org.apache.flink.configuration.Configuration.fromMap(Map.of(
                 "taskmanager.memory.network.fraction", "0.4",

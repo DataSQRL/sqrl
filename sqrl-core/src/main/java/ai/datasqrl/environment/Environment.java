@@ -6,6 +6,7 @@ import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.metadata.MetadataStore;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
+import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.util.NamedIdentifier;
 import ai.datasqrl.execute.Job;
@@ -51,10 +52,9 @@ public class Environment implements Closeable {
     persistence = settings.getEnvironmentPersistenceProvider()
         .createEnvironmentPersistence(metadataStore);
 
-    SourceTableMonitor monitor = settings.getSourceTableMonitorProvider().create(streamEngine,
-        settings.getStreamMonitorProvider().create(streamEngine, jdbc,
-            settings.getMetadataStoreProvider(), settings.getSerializerProvider(),
-            settings.getDatasetRegistryPersistenceProvider()));
+    TableStatisticsStoreProvider.Encapsulated statsStore = new TableStatisticsStoreProvider.EncapsulatedImpl(jdbc,
+            settings.getMetadataStoreProvider(), settings.getSerializerProvider(), settings.getTableStatisticsStoreProvider());
+    SourceTableMonitor monitor = settings.getSourceTableMonitorProvider().create(streamEngine, statsStore);
     datasetRegistry = new DatasetRegistry(settings.getDatasetRegistryPersistenceProvider()
         .createRegistryPersistence(metadataStore), monitor);
     dataSinkRegistry = new DataSinkRegistry(

@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.ingest.schema;
+package ai.datasqrl.execute.flink.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.input.AbstractFlexibleTableConverterVisitor;
@@ -10,8 +10,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
-import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.types.DataType;
 
 import java.util.List;
 import java.util.Optional;

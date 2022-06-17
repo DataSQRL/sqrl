@@ -1,7 +1,7 @@
 package ai.datasqrl.config.engines;
 
 import ai.datasqrl.execute.StreamEngine;
-import ai.datasqrl.execute.flink.environment.LocalFlinkStreamEngineImpl;
+import ai.datasqrl.execute.flink.LocalFlinkStreamEngineImpl;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

@@ -1,10 +1,9 @@
-package ai.datasqrl.execute.flink.ingest.schema;
+package ai.datasqrl.execute.flink.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.input.AbstractFlexibleTableConverterVisitor;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
-import ai.datasqrl.schema.type.ArrayType;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.*;
 import com.google.common.base.Preconditions;

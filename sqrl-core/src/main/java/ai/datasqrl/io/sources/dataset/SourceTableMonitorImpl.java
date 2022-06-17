@@ -1,6 +1,10 @@
 package ai.datasqrl.io.sources.dataset;
 
+import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.execute.StreamEngine;
+import ai.datasqrl.execute.StreamHolder;
+import ai.datasqrl.io.sources.SourceRecord;
+import ai.datasqrl.io.sources.util.StreamInputPreparer;
 import lombok.AllArgsConstructor;
 
 /**
@@ -9,15 +13,22 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class SourceTableMonitorImpl implements SourceTableMonitor {
 
-  StreamEngine stream;
-  StreamEngine.SourceMonitor monitor;
+  private final StreamEngine stream;
+  private final TableStatisticsStoreProvider.Encapsulated statsStore;
+  private final StreamInputPreparer streamPreparer;
 
   @Override
   public void startTableMonitoring(SourceTable table) {
     //TODO: check if this table is already being monitored
-    StreamEngine.Job job = monitor.monitorTable(table);
-    job.execute(table.qualifiedName());
-//        return job.getId();
+    //Only monitor tables with flexible schemas (i.e. schemas that aren't defined ahead of time)
+    if (streamPreparer.isRawInput(table)) {
+      StreamEngine.Builder streamBuilder = stream.createJob();
+      StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(table,streamBuilder);
+      stream = streamBuilder.monitor(stream, table, statsStore);
+      stream.printSink();
+      StreamEngine.Job job = streamBuilder.build();
+      job.execute(table.qualifiedName());
+    } //else do nothing
   }
 
   @Override

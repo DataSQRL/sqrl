@@ -4,32 +4,26 @@ import ai.datasqrl.C360Example;
 import ai.datasqrl.api.ConfigurationTest;
 import ai.datasqrl.environment.Environment;
 import ai.datasqrl.config.SqrlSettings;
-import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
-import ai.datasqrl.execute.flink.environment.LocalFlinkStreamEngineImpl;
-import ai.datasqrl.execute.flink.ingest.DataStreamProvider;
-import ai.datasqrl.execute.flink.ingest.schema.SchemaValidationProcess;
-import ai.datasqrl.execute.flink.ingest.schema.FlinkInputHandler;
-import ai.datasqrl.execute.flink.ingest.schema.FlinkInputHandlerProvider;
+import ai.datasqrl.execute.StreamHolder;
+import ai.datasqrl.execute.flink.FlinkStreamEngine;
+import ai.datasqrl.execute.flink.LocalFlinkStreamEngineImpl;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.DatasetRegistry;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
+import ai.datasqrl.io.sources.util.StreamInputPreparer;
+import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
+import ai.datasqrl.schema.input.SchemaValidator;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
-import org.apache.flink.types.Row;
-import org.apache.flink.util.OutputTag;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,11 +34,12 @@ import static org.apache.flink.table.api.Expressions.call;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class IngestAndSchemaTest {
+public class FlinkIngestSchemaTest {
 
   Environment env = null;
   DatasetRegistry registry = null;
-  FlinkInputHandlerProvider inputHandlerProvider = new FlinkInputHandlerProvider();
+
+  public static final String SCHEMA_ERROR_TAG = "schema";
 
   @BeforeEach
   public void setup() throws IOException {
@@ -119,7 +114,6 @@ public class IngestAndSchemaTest {
     assertEquals(5, person.getStatistics().getCount());
 
     ImportManager imports = new ImportManager(registry);
-    FlinkInputHandlerProvider tbConverter = new FlinkInputHandlerProvider();
 
     ErrorCollector schemaErrs = ErrorCollector.root();
     ImportManager.SourceTableImport bookImp = imports.importTable(Name.system(dsName),Name.system("book"),
@@ -128,29 +122,23 @@ public class IngestAndSchemaTest {
             SchemaAdjustmentSettings.DEFAULT,schemaErrs);
 
     LocalFlinkStreamEngineImpl flink = new LocalFlinkStreamEngineImpl();
-    FlinkStreamEngine.Builder streamBuilder = flink.createStream();
-    StreamExecutionEnvironment env = streamBuilder.getEnvironment();
-    StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)StreamTableEnvironment.create(env);
-    final OutputTag<SchemaValidationProcess.Error> schemaErrorTag = new OutputTag<>("SCHEMA_ERROR"){};
+    FlinkStreamEngine.Builder streamBuilder = flink.createJob();
+    StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 
     ImportManager.SourceTableImport imp = ordersImp;
-    FlinkInputHandler inputHandler = inputHandlerProvider.get(imp.getSourceSchema());
 
-    DataStream<SourceRecord.Raw> stream = new DataStreamProvider().getDataStream(imp.getTable(),streamBuilder);
-    SingleOutputStreamOperator<SourceRecord.Named> validate = stream.process(new SchemaValidationProcess(schemaErrorTag, imp.getSourceSchema(),
-            SchemaAdjustmentSettings.DEFAULT, imp.getTable().getDataset().getDigest()));
-    SingleOutputStreamOperator<Row> rows = validate.map(inputHandler.getMapper(),inputHandler.getTypeInformation());
+    StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(imp.getTable(),streamBuilder);
+    SchemaValidator schemaValidator = new SchemaValidator(imp.getSourceSchema(), SchemaAdjustmentSettings.DEFAULT, imp.getTable().getDataset().getDigest());
+    StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),SCHEMA_ERROR_TAG, SourceRecord.Named.class);
+    streamBuilder.addAsTable(validate, imp.getSourceSchema(), Name.system("thetable"));
 
-    Table table = tEnv.fromDataStream(rows, inputHandler.getTableSchema());
-
-    tEnv.createTemporaryView("TheTable", table);
-    table.printSchema();
+    StreamTableEnvironment tEnv = streamBuilder.getTableEnvironment();
 
     Table tableShredding = tEnv.sqlQuery("SELECT  o._uuid, items._idx, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
-            "FROM TheTable o CROSS JOIN UNNEST(o.entries) AS items");
+            "FROM thetable o CROSS JOIN UNNEST(o.entries) AS items");
 
     tEnv.toChangelogStream(tableShredding).print();
-
-    env.execute();
+    streamBuilder.setJobType(FlinkStreamEngine.JobType.SCRIPT);
+    streamBuilder.build().execute("test");
   }
 }

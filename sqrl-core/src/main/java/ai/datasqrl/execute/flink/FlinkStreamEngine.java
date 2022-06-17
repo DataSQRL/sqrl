@@ -1,4 +1,4 @@
-package ai.datasqrl.execute.flink.environment;
+package ai.datasqrl.execute.flink;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.execute.StreamEngine;
@@ -10,16 +10,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 
 public interface FlinkStreamEngine extends StreamEngine {
 
-  Builder createStream();
+  Builder createJob();
 
   interface Builder extends StreamEngine.Builder {
 
-    UUID getUuid();
-
     StreamExecutionEnvironment getEnvironment();
+
+    StreamTableEnvironment getTableEnvironment();
+
+
 
     void setJobType(JobType jobType);
 

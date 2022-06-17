@@ -6,7 +6,7 @@ import ai.datasqrl.io.sources.dataset.SourceTableMonitor;
 
 public interface SourceTableMonitorProvider {
 
-  SourceTableMonitor create(StreamEngine engine, StreamEngine.SourceMonitor monitor);
+  SourceTableMonitor create(StreamEngine engine, TableStatisticsStoreProvider.Encapsulated statsStore);
 
   SourceTableMonitorProvider NO_MONITORING = (e, m) -> {
 

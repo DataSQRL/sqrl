@@ -1,7 +1,7 @@
-package ai.datasqrl.execute.flink.ingest.monitor;
+package ai.datasqrl.execute.flink.monitor;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.execute.flink.environment.util.FlinkUtilities;
+import ai.datasqrl.execute.flink.util.FlinkUtilities;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;

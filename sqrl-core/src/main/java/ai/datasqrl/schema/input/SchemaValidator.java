@@ -1,8 +1,8 @@
 package ai.datasqrl.schema.input;
 
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.execute.FunctionWithError;
 import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.SourceRecord.Named;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.stats.FieldStats;
 import ai.datasqrl.io.sources.stats.SchemaGenerator;
@@ -24,6 +24,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -48,8 +51,11 @@ public class SchemaValidator implements Serializable {
     this.schemaGenerator = new SchemaGenerator(settings);
   }
 
+  public FunctionWithError<SourceRecord.Raw,SourceRecord.Named> getFunction() {
+    return new Function(this);
+  }
 
-  public Named verifyAndAdjust(SourceRecord<String> record, ErrorCollector errors) {
+  public SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
     Map<Name, Object> result = verifyAndAdjust(record.getData(), tableSchema.getFields(), errors);
     return record.replaceData(result);
   }
@@ -232,6 +238,24 @@ public class SchemaValidator implements Serializable {
       }
     }
     return data;
+  }
+
+  @AllArgsConstructor
+  public static class Function implements FunctionWithError<SourceRecord.Raw,SourceRecord.Named> {
+
+    private final SchemaValidator validator;
+
+    @Override
+    public Optional<SourceRecord.Named> apply(SourceRecord.Raw raw, Consumer<ErrorCollector> errorCollectorConsumer) {
+      ErrorCollector errors = ErrorCollector.root();
+      SourceRecord.Named result = validator.verifyAndAdjust(raw, errors);
+      if (errors.hasErrors()) errorCollectorConsumer.accept(errors);
+      if (errors.isFatal()) {
+        return Optional.empty();
+      } else {
+        return Optional.of(result);
+      }
+    }
   }
 
 }

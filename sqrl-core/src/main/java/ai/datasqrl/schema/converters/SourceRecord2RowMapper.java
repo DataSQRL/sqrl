@@ -1,38 +1,34 @@
-package ai.datasqrl.execute.flink.ingest.schema;
+package ai.datasqrl.schema.converters;
 
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.schema.constraint.ConstraintHelper;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.FlexibleSchemaHelper;
 import ai.datasqrl.schema.input.RelationType;
-import ai.datasqrl.schema.constraint.ConstraintHelper;
+import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.types.Row;
-import org.apache.flink.types.RowKind;
 
-import java.util.Arrays;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class SourceRecord2RowMapper implements MapFunction<SourceRecord.Named, Row> {
+@AllArgsConstructor
+public class SourceRecord2RowMapper<R,S> implements Function<SourceRecord.Named, R>, Serializable {
 
     private final FlexibleDatasetSchema.TableField tableSchema;
+    private final RowConstructor<R,S> rowConstructor;
 
-    public SourceRecord2RowMapper(FlexibleDatasetSchema.TableField tableSchema) {
-        this.tableSchema = tableSchema;
-    }
-
-    @Override
-    public Row map(SourceRecord.Named sourceRecord) throws Exception {
+    public R apply(SourceRecord.Named sourceRecord) {
         Object[] cols = constructRows(sourceRecord.getData(), tableSchema.getFields());
         //Add metadata
         cols = extendCols(cols,3);
         cols[0] = sourceRecord.getUuid().toString();
         cols[1] = sourceRecord.getIngestTime();
         cols[2] = sourceRecord.getSourceTime();
-        return Row.ofKind(RowKind.INSERT, cols);
+        return rowConstructor.createRoot(cols);
     }
 
     private static Object[] extendCols(Object[] cols, int paddingLength) {
@@ -50,17 +46,17 @@ public class SourceRecord2RowMapper implements MapFunction<SourceRecord.Named, R
                     if (ftype.getType() instanceof RelationType) {
                         RelationType<FlexibleDatasetSchema.FlexibleField> subType = (RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType();
                         if (isSingleton(ftype)) {
-                            return Row.of(constructRows((Map<Name, Object>) data.get(name), subType));
+                            return rowConstructor.createNested(constructRows((Map<Name, Object>) data.get(name), subType));
                         } else {
                             int idx = 0;
                             List<Map<Name, Object>> nestedData = (List<Map<Name, Object>>) data.get(name);
-                            Row[] result = new Row[nestedData.size()];
+                            S[] result = rowConstructor.createRowArray(nestedData.size());
                             for (Map<Name, Object> item : nestedData) {
                                 Object[] cols = constructRows(item, subType);
                                 //Add index
                                 cols = extendCols(cols,1);
                                 cols[0] = Long.valueOf(idx);
-                                result[idx] = Row.of(cols);
+                                result[idx] = rowConstructor.createNested(cols);
                                 idx++;
                             }
                             return result;
@@ -84,6 +80,16 @@ public class SourceRecord2RowMapper implements MapFunction<SourceRecord.Named, R
 
     private static boolean isSingleton(FlexibleDatasetSchema.FieldType ftype) {
         return ConstraintHelper.getCardinality(ftype.getConstraints()).isSingleton();
+    }
+
+    public interface RowConstructor<R,S> extends Serializable {
+
+        R createRoot(Object[] columns);
+
+        S createNested(Object[] columns);
+
+        S[] createRowArray(int size);
+
     }
 
 }

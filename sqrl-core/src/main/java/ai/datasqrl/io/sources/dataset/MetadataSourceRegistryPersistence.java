@@ -2,18 +2,21 @@ package ai.datasqrl.io.sources.dataset;
 
 import ai.datasqrl.config.metadata.MetadataStore;
 import ai.datasqrl.config.provider.DatasetRegistryPersistenceProvider;
+import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.io.sources.DataSource;
 import ai.datasqrl.io.sources.SourceTableConfiguration;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Preconditions;
+
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-public class MetadataSourceRegistryPersistence implements DatasetRegistryPersistence {
+public class MetadataSourceRegistryPersistence implements DatasetRegistryPersistence, TableStatisticsStore {
 
   public static final String STORE_TABLE_STATS_KEY = "stats";
   public static final String STORE_DATASET_KEY = "datasets";
@@ -22,7 +25,6 @@ public class MetadataSourceRegistryPersistence implements DatasetRegistryPersist
   public static final String STORE_TABLE_CONFIG_KEY = "config";
 
   private final MetadataStore store;
-
 
   @Override
   public Collection<DataSource> getDatasets() {
@@ -89,10 +91,24 @@ public class MetadataSourceRegistryPersistence implements DatasetRegistryPersist
         store.name2Key(tableName), STORE_TABLE_STATS_KEY);
   }
 
-  public static class Provider implements DatasetRegistryPersistenceProvider {
+  @Override
+  public void close() throws IOException {
+    store.close();
+  }
+
+  public static class RegistryProvider implements DatasetRegistryPersistenceProvider {
 
     @Override
     public DatasetRegistryPersistence createRegistryPersistence(MetadataStore metaStore) {
+      return new MetadataSourceRegistryPersistence(metaStore);
+    }
+  }
+
+
+  public static class TableStatsProvider implements TableStatisticsStoreProvider {
+
+    @Override
+    public TableStatisticsStore openStore(MetadataStore metaStore) {
       return new MetadataSourceRegistryPersistence(metaStore);
     }
   }

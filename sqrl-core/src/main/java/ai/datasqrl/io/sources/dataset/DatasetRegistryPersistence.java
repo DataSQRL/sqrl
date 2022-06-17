@@ -22,8 +22,6 @@ public interface DatasetRegistryPersistence {
 
   SourceTableStatistics getTableStatistics(Name datasetName, Name tableName);
 
-  void putTableStatistics(Name datasetName, Name tableName, SourceTableStatistics stats);
-
   boolean removeTableStatistics(Name datasetName, Name tableName);
 
 }

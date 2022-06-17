@@ -5,7 +5,6 @@ import ai.datasqrl.io.sources.SourceTableConfiguration;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import lombok.NonNull;
-import org.apache.flink.streaming.api.datastream.DataStream;
 
 /**
  * A {@link SourceTable} defines an input source to be imported into an SQML script. A {@link
@@ -52,15 +51,6 @@ public class SourceTable {
   public boolean hasSchema() {
     return false;
   }
-
-  /**
-   * Produces a {@link DataStream} of {@link SourceRecord} for this table source.
-   * <p>
-   * TODO: Need to figure out how to distinguish between replay from start vs continuous streaming
-   *
-   * @return
-   */
-  //public DataStream<SourceRecord<String>> getDataStream(StreamExecutionEnvironment env);
 
   public SourceTableStatistics getStatistics() {
     SourceTableStatistics stats = dataset.registry.persistence.getTableStatistics(dataset.getName(),

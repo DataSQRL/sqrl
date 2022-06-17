@@ -3,7 +3,7 @@ package ai.datasqrl.physical.stream;
 import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.execute.StreamEngine;
-import ai.datasqrl.execute.flink.environment.FlinkStreamEngine;
+import ai.datasqrl.execute.flink.FlinkStreamEngine;
 import ai.datasqrl.physical.stream.rel.InjectFlinkCluster;
 import ai.datasqrl.plan.queries.TableQuery;
 import ai.datasqrl.environment.ImportManager;
@@ -28,7 +28,7 @@ public class StreamGraphBuilder {
   private final JDBCConfiguration jdbcConfiguration;
 
   public CreateStreamJobResult createStreamGraph(List<TableQuery> streamQueries) {
-    final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder) streamEngine.createStream();
+    final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder) streamEngine.createJob();
     final StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)
         StreamTableEnvironment.create(streamBuilder.getEnvironment());
     final DataStreamRegisterer dataStreamRegisterer = new DataStreamRegisterer(tEnv,
