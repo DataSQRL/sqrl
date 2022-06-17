@@ -1,20 +1,6 @@
 package ai.datasqrl.plan;
 
-import ai.datasqrl.config.scripts.SqrlQuery;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.plan.nodes.LogicalFlinkSink;
-import ai.datasqrl.plan.nodes.LogicalSqrlSink;
-import ai.datasqrl.plan.queries.TableQuery;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Schema;
-import ai.datasqrl.schema.Table;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.plan.RelTraitSet;
 
 @AllArgsConstructor
 public class Optimizer {
