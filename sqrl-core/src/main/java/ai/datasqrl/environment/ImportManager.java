@@ -11,6 +11,7 @@ import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
+import ai.datasqrl.schema.input.InputTableSchema;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaImport;
@@ -140,6 +141,10 @@ public class ImportManager {
     @Override
     public boolean isSource() {
       return true;
+    }
+
+    public InputTableSchema getSchema() {
+      return new InputTableSchema(sourceSchema, table.hasSourceTimestamp());
     }
   }
 

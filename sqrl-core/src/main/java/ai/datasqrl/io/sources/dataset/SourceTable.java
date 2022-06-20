@@ -35,6 +35,10 @@ public class SourceTable {
     return dataset;
   }
 
+  public boolean hasSourceTimestamp() {
+    return dataset.getSource().getImplementation().hasSourceTimestamp();
+  }
+
   /**
    * Returns the name of this table. It must be unique within its {@link SourceDataset}
    *

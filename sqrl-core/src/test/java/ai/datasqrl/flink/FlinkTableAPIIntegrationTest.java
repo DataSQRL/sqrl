@@ -45,9 +45,9 @@ public class FlinkTableAPIIntegrationTest extends AbstractSQRLIntegrationTest {
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 
     StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(imp.getTable(),streamBuilder);
-    SchemaValidator schemaValidator = new SchemaValidator(imp.getSourceSchema(), SchemaAdjustmentSettings.DEFAULT, imp.getTable().getDataset().getDigest());
+    SchemaValidator schemaValidator = new SchemaValidator(imp.getSchema(), SchemaAdjustmentSettings.DEFAULT, imp.getTable().getDataset().getDigest());
     StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),"schema", SourceRecord.Named.class);
-    streamBuilder.addAsTable(validate, imp.getSourceSchema(), Name.system("thetable"));
+    streamBuilder.addAsTable(validate, imp.getSchema(), Name.system("thetable"));
 
     StreamTableEnvironment tEnv = streamBuilder.getTableEnvironment();
 

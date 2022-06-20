@@ -37,14 +37,14 @@ import org.apache.commons.lang3.tuple.Pair;
 public class SchemaValidator implements Serializable {
 
   private final SchemaAdjustmentSettings settings;
-  private final FlexibleDatasetSchema.TableField tableSchema;
+  private final InputTableSchema tableSchema;
   private final NameCanonicalizer canonicalizer;
   private final SchemaGenerator schemaGenerator;
 
-  public SchemaValidator(@NonNull FlexibleDatasetSchema.TableField tableSchema,
+  public SchemaValidator(@NonNull InputTableSchema tableSchema,
       @NonNull SchemaAdjustmentSettings settings,
       @NonNull SourceDataset.Digest dataset) {
-    Preconditions.checkArgument(!tableSchema.isPartialSchema());
+    Preconditions.checkArgument(!tableSchema.getSchema().isPartialSchema());
     this.settings = settings;
     this.tableSchema = tableSchema;
     this.canonicalizer = dataset.getCanonicalizer();
@@ -56,7 +56,11 @@ public class SchemaValidator implements Serializable {
   }
 
   public SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
-    Map<Name, Object> result = verifyAndAdjust(record.getData(), tableSchema.getFields(), errors);
+    //verify meta data
+    if (!record.hasUUID()) errors.fatal("Input record does not have UUID");
+    if (record.getIngestTime()==null) errors.fatal("Input record does not ingest timestamp");
+    if (tableSchema.isHasSourceTimestamp() && record.getSourceTime()==null) errors.fatal("Input record does not source timestamp");
+    Map<Name, Object> result = verifyAndAdjust(record.getData(), tableSchema.getSchema().getFields(), errors);
     return record.replaceData(result);
   }
 

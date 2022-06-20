@@ -41,11 +41,10 @@ public class BundleTableFactory {
     public Table importTable(ImportManager.SourceTableImport impTbl,
                              Optional<Name> tableAlias) {
         ImportVisitor visitor = new ImportVisitor();
-        FlexibleTableConverter converter = new FlexibleTableConverter(impTbl.getSourceSchema(), tableAlias);
+        FlexibleTableConverter converter = new FlexibleTableConverter(impTbl.getSchema(), tableAlias);
         converter.apply(visitor);
         TableBuilder tblBuilder = visitor.lastCreatedTable;
         assert tblBuilder != null;
-        //Identify timestamp column and add it; TODO: additional method argument for explicit timestamp definition
         Column timestamp = tblBuilder.getFields().stream().filter(f -> f.getName().equals(ReservedName.INGEST_TIME))
                 .map(f->(Column)f).findFirst().get();
         return createImportTableHierarchy(tblBuilder, timestamp, impTbl.getTable().getStatistics());
@@ -60,8 +59,8 @@ public class BundleTableFactory {
         for (Pair<TableBuilder,Relationship.Multiplicity> child : tblBuilder.children) {
             TableBuilder childBuilder = child.getKey();
             //Add parent timestamp as internal column
-            Column childTimestamp = childBuilder.addColumn(timestamp.getName(),
-                false, false, true, true);
+            Column childTimestamp = childBuilder.addColumn(ReservedName.TIMESTAMP,
+                false, false, true, false);
             Table childTbl = createImportTableHierarchy(childBuilder, childTimestamp, statistics);
             Name childName = childBuilder.getPath().getLast();
             Optional<Relationship> parentRel = createParentRelationship(childTbl, table);
@@ -115,12 +114,13 @@ public class BundleTableFactory {
 
 
         @Override
-        public void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
+        public void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton, boolean hasSourceTimestamp) {
             TableBuilder tblBuilder = new TableBuilder(namePath.concat(name));
             //Add primary keys
             if (isNested) {
                 //Add parent primary keys
                 tblBuilder.addParentPrimaryKeys(stack.getFirst());
+                //Add denormalized timestap placeholder
                 if (!isSingleton) {
                     tblBuilder.addColumn(ReservedName.ARRAY_IDX,true,
                             false, true, true);
@@ -130,8 +130,10 @@ public class BundleTableFactory {
                         false, true, true);
                 tblBuilder.addColumn(ReservedName.INGEST_TIME, false,
                         false, true, true);
-                tblBuilder.addColumn(ReservedName.SOURCE_TIME,false,
-                        false, false, true);
+                if (hasSourceTimestamp) {
+                    tblBuilder.addColumn(ReservedName.SOURCE_TIME, false,
+                            false, true, true);
+                }
             }
             stack.addFirst(tblBuilder);
         }

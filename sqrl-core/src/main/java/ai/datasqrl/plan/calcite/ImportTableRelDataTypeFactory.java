@@ -44,7 +44,7 @@ public class ImportTableRelDataTypeFactory implements Visitor<RelDataType> {
   }
 
   @Override
-  public void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
+  public void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton, boolean hasSourceTimestamp) {
     Table cur = tableStack.peek();
     FieldInfoBuilder curBuilder = fieldBuilders.peek();
     if (isNested) {

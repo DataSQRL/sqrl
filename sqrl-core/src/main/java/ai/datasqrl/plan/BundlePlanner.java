@@ -58,9 +58,10 @@ public class BundlePlanner {
   private Schema planMain(SqrlScript mainScript) {
     ConfiguredSqrlParser parser = ConfiguredSqrlParser.newParser(errorCollector);
     ScriptNode scriptAst = parser.parse(mainScript.getContent());
-    PlanDag dag = createDag(mainScript.getName().getCanonical());
 
+    PlanDag dag = createDag(mainScript.getName().getCanonical());
     SchemaBuilder schema = new SchemaBuilder();
+
     for (Node node : scriptAst.getStatements()) {
       Optional<SchemaUpdateOp> operation = planStatement(node, schema);
       if (operation.isEmpty()) {

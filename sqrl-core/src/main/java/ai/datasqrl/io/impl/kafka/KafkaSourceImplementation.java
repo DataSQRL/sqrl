@@ -104,6 +104,11 @@ public class KafkaSourceImplementation implements DataSourceImplementation, Seri
   }
 
   @Override
+  public boolean hasSourceTimestamp() {
+    return true;
+  }
+
+  @Override
   public Collection<SourceTableConfiguration> discoverTables(
       @NonNull DataSourceConfiguration config, @NonNull ErrorCollector errors) {
     List<SourceTableConfiguration> tables = new ArrayList<>();

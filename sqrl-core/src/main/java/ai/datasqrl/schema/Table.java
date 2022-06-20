@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import com.google.common.base.Preconditions;
+import lombok.Setter;
 
 @Getter
 public class Table extends AbstractTable {
@@ -21,7 +22,8 @@ public class Table extends AbstractTable {
   }
 
   @NonNull private final Type type;
-  @NonNull private final Column timestamp;
+  @Setter
+  @NonNull private Column timestamp;
   @NonNull private final TableStatistic statistic;
 
   public Table(int uniqueId, NamePath path, Type type, ShadowingContainer<Field> fields,

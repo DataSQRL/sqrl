@@ -17,20 +17,21 @@ import java.util.*;
 @AllArgsConstructor
 public class FlexibleTableConverter {
 
-    private final FlexibleDatasetSchema.TableField table;
+    private final InputTableSchema tableSchema;
     private final Optional<Name> tableAlias;
 
-    public FlexibleTableConverter(FlexibleDatasetSchema.TableField table) {
-        this(table, Optional.empty());
+    public FlexibleTableConverter(InputTableSchema tableSchema) {
+        this(tableSchema, Optional.empty());
     }
 
     public<T> Optional<T> apply(Visitor<T> visitor) {
-        return visitRelation(NamePath.ROOT, tableAlias.orElse(table.getName()), table.getFields(), false, false, visitor);
+        return visitRelation(NamePath.ROOT, tableAlias.orElse(tableSchema.getSchema().getName()), tableSchema.getSchema().getFields(),
+                false, false, tableSchema.isHasSourceTimestamp(), visitor);
     }
 
     private<T> Optional<T> visitRelation(NamePath path, Name name, RelationType<FlexibleDatasetSchema.FlexibleField> relation,
-                                         boolean isNested, boolean isSingleton, Visitor<T> visitor) {
-        visitor.beginTable(name, path, isNested, isSingleton);
+                                         boolean isNested, boolean isSingleton, boolean hasSourceTime, Visitor<T> visitor) {
+        visitor.beginTable(name, path, isNested, isSingleton, hasSourceTime);
         path = path.concat(name);
 
         for (FlexibleDatasetSchema.FlexibleField field : relation.getFields()) {
@@ -51,7 +52,7 @@ public class FlexibleTableConverter {
         if (ftype.getType() instanceof RelationType) {
             boolean isSingleton = isSingleton(ftype);
             Optional<T> relType = visitRelation(path, fieldName, (RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType(), true,
-                    isSingleton, visitor);
+                    isSingleton, false, visitor);
             Preconditions.checkArgument(relType.isPresent());
             resultType = relType.get();
             if (!isSingleton(ftype)) {
@@ -90,7 +91,8 @@ public class FlexibleTableConverter {
 
     public interface Visitor<T> {
 
-        default void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
+        default void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton,
+                                boolean hasSourceTimestamp) {
 
         }
 

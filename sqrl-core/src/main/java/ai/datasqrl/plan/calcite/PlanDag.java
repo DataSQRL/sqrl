@@ -96,7 +96,7 @@ public class PlanDag implements SqrlCalciteBridge, SchemaOpVisitor {
         .builder();
     builder.kind(StructKind.FULLY_QUALIFIED);
 
-    FlexibleTableConverter tableConverter = new FlexibleTableConverter(tableImport.getSourceSchema());
+    FlexibleTableConverter tableConverter = new FlexibleTableConverter(tableImport.getSchema());
     ImportTableRelDataTypeFactory builder1 = new ImportTableRelDataTypeFactory(planner.getTypeFactory(), typeConverter, op.getTable());
     tableConverter.apply(builder1);
 //    RelDataType t = builder1.getFieldBuilders().peek().build();

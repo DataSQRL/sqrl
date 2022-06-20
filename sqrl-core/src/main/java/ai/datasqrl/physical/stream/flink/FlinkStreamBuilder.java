@@ -29,6 +29,7 @@ import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
+import ai.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -145,7 +146,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   }
 
   @Override
-  public void addAsTable(StreamHolder<SourceRecord.Named> stream, FlexibleDatasetSchema.TableField schema, Name tableName) {
+  public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, Name tableName) {
     Preconditions.checkArgument(stream instanceof FlinkStreamHolder && ((FlinkStreamHolder)stream).getBuilder().equals(this));
     FlinkStreamHolder<SourceRecord.Named> flinkStream = (FlinkStreamHolder)stream;
     FlexibleTableConverter converter = new FlexibleTableConverter(schema);

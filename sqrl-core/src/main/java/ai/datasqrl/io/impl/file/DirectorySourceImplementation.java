@@ -96,6 +96,11 @@ public class DirectorySourceImplementation implements DataSourceImplementation, 
   }
 
   @Override
+  public boolean hasSourceTimestamp() {
+    return false;
+  }
+
+  @Override
   public Collection<SourceTableConfiguration> discoverTables(DataSourceConfiguration config,
       ErrorCollector errors) {
     Map<Name, SourceTableConfiguration> tablesByName = new HashMap<>();

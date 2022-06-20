@@ -19,16 +19,18 @@ public abstract class AbstractFlexibleTableConverterVisitor<T> implements Flexib
     public final Deque<TableBuilder<T>> stack = new ArrayDeque<>();
 
     @Override
-    public void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
+    public void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton, boolean hasSourceTimestamp) {
         stack.addFirst(new TableBuilder<>(name, namePath));
-        augmentTable(isNested, isSingleton);
+        augmentTable(isNested, isSingleton, hasSourceTimestamp);
     }
 
-    protected void augmentTable(boolean isNested, boolean isSingleton) {
+    protected void augmentTable(boolean isNested, boolean isSingleton, boolean hasSourceTimestamp) {
         if (!isNested) {
             addField(ReservedName.UUID,UuidType.INSTANCE,true);
             addField(ReservedName.INGEST_TIME,DateTimeType.INSTANCE,true);
-            addField(ReservedName.SOURCE_TIME,DateTimeType.INSTANCE,false);
+            if (hasSourceTimestamp) {
+                addField(ReservedName.SOURCE_TIME, DateTimeType.INSTANCE, true);
+            }
         }
         if (isNested && !isSingleton) {
             addField(ReservedName.ARRAY_IDX, IntegerType.INSTANCE, true);
