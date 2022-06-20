@@ -11,6 +11,8 @@ import lombok.Builder;
 import lombok.Value;
 import org.apache.commons.lang3.tuple.Pair;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @Value
 @Builder
 public class IntegrationTestSettings {
@@ -48,11 +50,8 @@ public class IntegrationTestSettings {
     }
 
     public static void validateConfig(GlobalConfiguration config) {
-        ErrorCollector errors = config.validate();
-        if (errors.hasErrors()) {
-            System.err.println(errors);
-        }
-        if (errors.isFatal()) throw new IllegalArgumentException("Encountered fatal configuration errors");
+        ErrorCollector errors = ErrorCollector.root();
+        assertTrue(config.validate(errors), errors.toString());
     }
 
 

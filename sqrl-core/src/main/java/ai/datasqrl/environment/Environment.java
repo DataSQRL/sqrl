@@ -75,7 +75,7 @@ public class Environment implements Closeable {
     Instant compileStart = Instant.now();
     ScriptDeployment deployment;
     try {
-      PhysicalPlan plan = compile(bundle);
+      PhysicalPlan plan = compile(bundle, errors);
       ScriptExecutor executor = new ScriptExecutor(
           this.settings.getJdbcConfiguration().getDatabase(MetaData.DEFAULT_DATABASE));
       Job job = executor.execute(plan);
@@ -107,14 +107,14 @@ public class Environment implements Closeable {
   }
 
   //Option: drop table before create
-  public PhysicalPlan compile(ScriptBundle bundle) throws Exception {
+  public PhysicalPlan compile(ScriptBundle bundle, @NonNull ErrorCollector errors) throws Exception {
     ImportManager importManager = settings.getImportManagerProvider()
         .createImportManager(datasetRegistry);
 
-    ErrorCollector errors = importManager.registerUserSchema(bundle.getMainScript().getSchema());
+    ;
 
-    if (errors.isFatal()) {
-      throw new RuntimeException();
+    if (!importManager.registerUserSchema(bundle.getMainScript().getSchema(),errors)) {
+      return null;
     }
     BundleOptions options = BundleOptions.builder()
         .importManager(importManager)

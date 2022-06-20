@@ -83,8 +83,8 @@ public class GlobalConfiguration {
     return config;
   }
 
-  public ErrorCollector validate() {
-    return ConfigurationUtil.javaxValidate(this);
+  public boolean validate(ErrorCollector errors) {
+    return ConfigurationUtil.javaxValidate(this, errors);
   }
 
 }

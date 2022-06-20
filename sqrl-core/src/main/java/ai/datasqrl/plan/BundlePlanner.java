@@ -25,6 +25,12 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
 
+/**
+ * Creates a logical and physical plan for a SQRL {@link ScriptBundle} submitted to the DataSQRL server for
+ * compilation or execution.
+ *
+ * @see ScriptBundle
+ */
 @Slf4j
 public class BundlePlanner {
 
@@ -67,7 +73,7 @@ public class BundlePlanner {
     return schema.build();
   }
 
-  public PlanDag createDag(String schemaName) {
+  private PlanDag createDag(String schemaName) {
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
     SqrlSchemaCatalog catalog = new SqrlSchemaCatalog(rootSchema);
 
@@ -82,7 +88,7 @@ public class BundlePlanner {
     return dag;
   }
 
-  public Optional<SchemaUpdateOp> planStatement(Node statement, SchemaBuilder schema) {
+  private Optional<SchemaUpdateOp> planStatement(Node statement, SchemaBuilder schema) {
     SchemaUpdatePlanner planner = new SchemaUpdatePlanner(
         this.options.getImportManager(),
         tableFactory,

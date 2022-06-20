@@ -29,6 +29,8 @@ import org.apache.calcite.schema.SchemaPlus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.Assert.assertTrue;
+
 class SchemaTest extends AbstractSQRLIntegrationTest {
   ConfiguredSqrlParser parser;
   ErrorCollector errorCollector;
@@ -45,7 +47,7 @@ class SchemaTest extends AbstractSQRLIntegrationTest {
 
     importManager = sqrlSettings.getImportManagerProvider().createImportManager(env.getDatasetRegistry());
     ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
-    importManager.registerUserSchema(bundle.getMainScript().getSchema());
+    assertTrue(importManager.registerUserSchema(bundle.getMainScript().getSchema(),ErrorCollector.root()));
     calciteEnv = new CalciteEnvironment();
     parser = ConfiguredSqrlParser.newParser(errorCollector);
   }

@@ -40,14 +40,14 @@ public class ImportManager {
     return datasetRegistry;
   }
 
-  public ErrorCollector registerUserSchema(SchemaDefinition yamlSchema) {
-    ErrorCollector errors = ErrorCollector.root();
+  public boolean registerUserSchema(SchemaDefinition yamlSchema, ErrorCollector errors) {
     SchemaImport importer = new SchemaImport(datasetRegistry, Constraint.FACTORY_LOOKUP);
-    Map<Name, FlexibleDatasetSchema> result = importer.convertImportSchema(yamlSchema, errors);
-    if (!errors.isFatal() && !result.isEmpty()) {
-      registerUserSchema(result);
+    Map<Name, FlexibleDatasetSchema> schema = importer.convertImportSchema(yamlSchema, errors);
+    if (errors.isFatal()) return false;
+    if (!schema.isEmpty()) {
+      registerUserSchema(schema);
     }
-    return errors;
+    return true;
   }
 
   public void registerUserSchema(Map<Name, FlexibleDatasetSchema> schema) {
