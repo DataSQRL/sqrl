@@ -4,10 +4,8 @@ import ai.datasqrl.AbstractSQRLIntegrationTest;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
-import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
-import ai.datasqrl.parse.SqrlParser;
+import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.ScriptNode;
@@ -21,11 +19,9 @@ import ai.datasqrl.plan.local.SchemaUpdatePlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
-import ai.datasqrl.util.ScriptComplexity;
 import ai.datasqrl.util.data.C360;
-import com.google.common.collect.ImmutableList;
+
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Optional;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
@@ -34,7 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class SchemaTest extends AbstractSQRLIntegrationTest {
-  SqrlParser parser;
+  ConfiguredSqrlParser parser;
   ErrorCollector errorCollector;
   ImportManager importManager;
   CalciteEnvironment calciteEnv;
@@ -51,7 +47,7 @@ class SchemaTest extends AbstractSQRLIntegrationTest {
     ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
     importManager.registerUserSchema(bundle.getMainScript().getSchema());
     calciteEnv = new CalciteEnvironment();
-    parser = SqrlParser.newParser(errorCollector);
+    parser = ConfiguredSqrlParser.newParser(errorCollector);
   }
 //
 //

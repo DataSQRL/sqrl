@@ -152,6 +152,9 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+/**
+ * Builds the abstract syntax tree for an SQRL script using the classes in {@link ai.datasqrl.parse.tree}.
+ */
 class AstBuilder
     extends SqlBaseBaseVisitor<Node> {
 

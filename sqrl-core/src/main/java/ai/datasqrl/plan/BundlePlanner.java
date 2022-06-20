@@ -4,7 +4,7 @@ import ai.datasqrl.config.BundleOptions;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
-import ai.datasqrl.parse.SqrlParser;
+import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.physical.PhysicalPlan;
@@ -12,7 +12,6 @@ import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.plan.calcite.PlanDag;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
 import ai.datasqrl.plan.calcite.SqrlSchemaCatalog;
 import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.plan.local.SchemaUpdatePlanner;
@@ -51,7 +50,7 @@ public class BundlePlanner {
   }
 
   private Schema planMain(SqrlScript mainScript) {
-    SqrlParser parser = SqrlParser.newParser(errorCollector);
+    ConfiguredSqrlParser parser = ConfiguredSqrlParser.newParser(errorCollector);
     ScriptNode scriptAst = parser.parse(mainScript.getContent());
     PlanDag dag = createDag(mainScript.getName().getCanonical());
 

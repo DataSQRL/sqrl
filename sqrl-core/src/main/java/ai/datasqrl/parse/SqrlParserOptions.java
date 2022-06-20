@@ -20,7 +20,11 @@ import com.google.common.collect.Iterables;
 import java.util.EnumSet;
 import java.util.Set;
 
-public class SqlParserOptions {
+/**
+ * Global configuration options for {@link SqrlParser}.
+ * Primarily used to control enhanced error handling in the parser and control reserved keywords.
+ */
+public class SqrlParserOptions {
 
   protected static final Set<String> RESERVED_WORDS_WARNING = ImmutableSet.of(
       "CALLED", "CURRENT_ROLE", "DETERMINISTIC", "FUNCTION", "LANGUAGE", "RETURN", "RETURNS",
@@ -30,20 +34,20 @@ public class SqlParserOptions {
       .noneOf(IdentifierSymbol.class);
   private boolean enhancedErrorHandlerEnabled = true;
 
-  public SqlParserOptions() {
+  public SqrlParserOptions() {
   }
 
-  private SqlParserOptions(EnumSet<IdentifierSymbol> identifierSymbols,
-      boolean enhancedErrorHandlerEnabled) {
+  private SqrlParserOptions(EnumSet<IdentifierSymbol> identifierSymbols,
+                            boolean enhancedErrorHandlerEnabled) {
     this.enhancedErrorHandlerEnabled = enhancedErrorHandlerEnabled;
     this.allowedIdentifierSymbols.addAll(identifierSymbols);
   }
 
-  public static SqlParserOptions copyOf(SqlParserOptions other) {
-    return new SqlParserOptions(other.allowedIdentifierSymbols, other.enhancedErrorHandlerEnabled);
+  public static SqrlParserOptions copyOf(SqrlParserOptions other) {
+    return new SqrlParserOptions(other.allowedIdentifierSymbols, other.enhancedErrorHandlerEnabled);
   }
 
-  public SqlParserOptions allowIdentifierSymbol(Iterable<IdentifierSymbol> identifierSymbols) {
+  public SqrlParserOptions allowIdentifierSymbol(Iterable<IdentifierSymbol> identifierSymbols) {
     Iterables.addAll(allowedIdentifierSymbols, identifierSymbols);
     return this;
   }
@@ -52,14 +56,14 @@ public class SqlParserOptions {
     return EnumSet.copyOf(allowedIdentifierSymbols);
   }
 
-  public SqlParserOptions allowIdentifierSymbol(IdentifierSymbol... identifierSymbols) {
+  public SqrlParserOptions allowIdentifierSymbol(IdentifierSymbol... identifierSymbols) {
     for (IdentifierSymbol identifierSymbol : identifierSymbols) {
       allowedIdentifierSymbols.add(requireNonNull(identifierSymbol, "identifierSymbol is null"));
     }
     return this;
   }
 
-  public SqlParserOptions useEnhancedErrorHandler(boolean enable) {
+  public SqrlParserOptions useEnhancedErrorHandler(boolean enable) {
     enhancedErrorHandlerEnabled = enable;
     return this;
   }
