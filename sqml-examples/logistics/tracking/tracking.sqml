@@ -1,0 +1,8 @@
+IMPORT tracking-data.*;
+
+Shipments.events := JOIN TransportEvent ON TransportEvent.trackingno = @.trackingno INVERSE shipment;
+
+Shipments.last_event := JOIN @.events e ORDER BY e.timestamp DESC LIMIT 1;
+Shipments.is_delivered := SELECT COUNT(*)>0 FROM @.events WHERE type = "DELIVERED";
+Shipments.last_update := last_event.timestamp;
+Shipments.current_location := last_event.location;

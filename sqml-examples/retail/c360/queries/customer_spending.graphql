@@ -1,0 +1,18 @@
+query CustomerSpending($id: Int!, $before: DateTime, $num_months: Int = 12) {
+   customers(filter: { customerid: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       spending_by_month(filter: { month: {lt: $before}}, limit: $num_months) {
+         month
+         total
+         savings
+         categories(order-by: [{category_name: ASC}], limit: 50) {
+           category_name
+           total
+           savings
+         }
+       }
+     }
+   }
+ }

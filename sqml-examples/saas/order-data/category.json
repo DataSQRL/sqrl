@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1002043,
+    "name": "Floatation Devices",
+    "parents_id": []
+  },
+  {
+    "id": 1002341,
+    "name": "Play Floatation Devices",
+    "parents_id": [1002043]
+  },
+  {
+    "id": 1004539,
+    "name": "Emergency Floatation Devices",
+    "parents_id": [1002043]
+  },
+  {
+    "id": 1005929,
+    "name": "Look-alike Floatation Devices",
+    "parents_id": [1002043]
+  },
+  {
+    "id": 1004553,
+    "name": "Inflatable Donuts",
+    "parents_id": [1005929, 1002341]
+  },
+  {
+    "id": 1009583,
+    "name": "Flotation Noodles",
+    "parents_id": [1005929, 1004539]
+  },
+  {
+    "id": 1008875,
+    "name": "Life Buoys",
+    "parents_id": [1004539]
+  }
+]

@@ -1,0 +1,19 @@
+IMPORT network-data.*;
+
+Users._friendships := SELECT fid, requestuser AS friendid, accepttimestamp AS since FROM Friendships
+                 WHERE acceptuser = @.userid AND accepttimestamp IS NOT NULL
+                 UNION ALL
+                 SELECT fid, acceptuser AS friendid, accepttimestamp AS since FROM Friendships
+                 WHERE requestuser = @.userid AND accepttimestamp IS NOT NULL
+
+Users.friends := SELECT friendid, MIN(since) AS since FROM @._friendships
+                 GROUP BY friendid;
+
+Users.friends.friend := JOIN Users ON Users.userid = @.friendid;
+
+Users.postings := JOIN Postings ON Postings.userid = @.userid INVERSE user;
+
+Groupmemberships.grp := JOIN Groups ON Groupmemberships.groupid = Groups.groupid;
+
+Users.groups := JOIN Groupmemberships ON Groupmemberships.userid = @.userid
+                    JOIN Groups ON Groupmemberships.groupid = Groups.groupid INVERSE members;

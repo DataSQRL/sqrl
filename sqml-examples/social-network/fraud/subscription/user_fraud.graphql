@@ -1,0 +1,16 @@
+subscription UserFraudDetection {
+  FraudulentUserAlert {
+    userid
+    name
+    num-friends
+    num-groups
+    num-postings
+    friendship_request_by_week (order-by: [{week: DESC}], limit: 10)
+    {
+      week
+      num_accepted
+      num_rejected
+      reject_ratio
+    }
+  }
+}

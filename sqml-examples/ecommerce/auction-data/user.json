@@ -1,0 +1,46 @@
+[
+  {
+    "id": 10007543,
+    "name": "Robert Duck",
+    "email": "robert.duck@gmail.com",
+    "registrationTime": 1609907136,
+    "address":
+    {
+        "state": "CA",
+        "city": "San Francisco",
+    }
+  },
+  {
+    "id": 10009341,
+    "name": "Lorita Sanchez",
+    "email": "bigl@gmail.com",
+    "registrationTime": 1612742688,
+    "address":
+    {
+        "state": "WA",
+        "city": "Kent",
+    }
+  },
+  {
+    "id": 10003561,
+    "name": "Rebecca Yaimeng",
+    "email": "becci.y35@gmail.com",
+    "registrationTime": 1612853111,
+    "address":
+    {
+        "state": "CA",
+        "city": "San Francisco",
+    }
+  },
+  {
+    "id": 10009245,
+    "name": "Dimitri Rogalov",
+    "email": "d.rogalov@hotmail.com",
+    "registrationTime": 1625059692,
+    "address":
+    {
+        "state": "WA",
+        "city": "Seattle",
+    }
+  }
+]

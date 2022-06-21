@@ -1,0 +1,10 @@
+query CustomerByEmail($email: String!) {
+   customers(filter: { email: {eq: $email}}, limit: 1)
+   {
+     data
+     {
+       customerid
+       name
+     }
+   }
+ }

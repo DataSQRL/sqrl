@@ -1,0 +1,28 @@
+query UserPosts($user: Int!, $page: String) {
+  users(filter: { id: {eq: $user}}, limit: 1)
+  {
+    data
+    {
+      posts(order-by: [{timestamp: DESC}], page: $page, page-size: 50)
+      {
+        id
+        user
+        {
+          id
+          name
+          num_stars
+        }
+        num_stars
+        num_connections
+        title
+        text
+        timestamp
+      }
+    }
+    page-state
+    {
+      has-next
+      next-page
+    }
+  }
+ }

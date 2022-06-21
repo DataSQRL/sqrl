@@ -1,0 +1,9 @@
+subscription RuleTriggeredEvent {
+  RuleTriggeredEvent {
+    event_id
+    timestamp
+    homeid
+    ruleid
+    action
+  }
+}

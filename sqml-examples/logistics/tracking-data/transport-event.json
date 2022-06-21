@@ -1,0 +1,123 @@
+[
+  {
+    "id": "a5ec55eb-4999-4943-90a1-ff31c857cab6",
+    "trackingno": 6011360655759936,
+    "type": "RECEIVED",
+    "timestamp": "2021-06-30T15:34:27+00:00",
+    "location":
+    {
+        "state": "CA",
+        "city": "San Francisco",
+    }
+  },
+  {
+    "id": "b7618aa8-03c4-4b6a-b94f-50176aa3f5c4",
+    "trackingno": 6011360655759936,
+    "type": "TRANSIT_CHECKIN",
+    "timestamp": "2021-06-30T19:15:39+00:00",
+    "location":
+    {
+        "state": "CA",
+        "city": "Oakland",
+    }
+  },
+  {
+    "id": "a7d7cb01-bd91-4007-a3d7-53b2db7758ad",
+    "trackingno": 6011360655759936,
+    "type": "TRANSIT_CHECKOUT",
+    "timestamp": "2021-07-01T02:05:11+00:00",
+    "location":
+    {
+        "state": "CA",
+        "city": "Oakland",
+    }
+  },
+  {
+    "id": "9716b1cb-dc55-45c7-98ac-09c6f9a94632",
+    "trackingno": 6011360655759936,
+    "type": "TRANSIT_CHECKIN",
+    "timestamp": "2021-07-01T12:05:27+00:00",
+    "location":
+    {
+        "state": "OR",
+        "city": "Salem",
+    }
+  },
+  {
+    "id": "937f55fd-25a2-434d-a49a-85919566595e",
+    "trackingno": 6011360655759936,
+    "type": "TRANSIT_CHECKOUT",
+    "timestamp": "2021-07-02T03:55:35+00:00",
+    "location":
+    {
+        "state": "OR",
+        "city": "Salem",
+    }
+  },
+  {
+    "id": "58b84cc2-d51a-439a-9174-113c02c12fcc",
+    "trackingno": 6011360655759936,
+    "type": "TRANSIT_CHECKIN",
+    "timestamp": "2021-07-02T15:07:19+00:00",
+    "location":
+    {
+        "state": "WA",
+        "city": "Tacoma",
+    }
+  },
+  {
+    "id": "e0987b29-7503-4bbb-99a1-02a507d21022",
+    "trackingno": 6011360655759936,
+    "type": "OUT_FOR_DELIVERY",
+    "timestamp": "2021-07-03T06:12:48+00:00",
+    "location":
+    {
+        "state": "WA",
+        "city": "Tacoma",
+    }
+  },
+  {
+    "id": "875e5264-f40e-4203-8043-569316a6b00b",
+    "trackingno": 6011360655759936,
+    "type": "DELIVERY_ATTEMPT",
+    "timestamp": "2021-07-03T14:22:51+00:00",
+    "location":
+    {
+        "state": "WA",
+        "city": "SEATTLE",
+    }
+  },
+  {
+    "id": "05b9abd6-d24f-4fed-9262-3127f6439090",
+    "trackingno": 6011360655759936,
+    "type": "TRANSIT_CHECKIN",
+    "timestamp": "2021-07-03T18:48:10+00:00",
+    "location":
+    {
+        "state": "WA",
+        "city": "KENT",
+    }
+  },
+  {
+    "id": "7dee5a27-e592-4ffe-8a14-7e98d85427a2",
+    "trackingno": 6011360655759936,
+    "type": "OUT_FOR_DELIVERY",
+    "timestamp": "2021-07-04T06:25:03+00:00",
+    "location":
+    {
+        "state": "WA",
+        "city": "KENT",
+    }
+  },
+  {
+    "id": "ce85e89d-381f-46bd-9573-74bb6d1d1a09",
+    "trackingno": 6011360655759936,
+    "type": "DELIVERED",
+    "timestamp": "2021-07-04T11:41:34+00:00",
+    "location":
+    {
+        "state": "WA",
+        "city": "SEATTLE",
+    }
+  }
+]

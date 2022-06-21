@@ -1,0 +1,51 @@
+[
+  {
+    "userid": 104534349,
+    "timestamp": 1623323608,
+    "type": "running",
+    "distance": 15400
+  },
+  {
+    "userid": 104534349,
+    "timestamp": 1623295608,
+    "type": "swimming",
+    "distance":  2000
+  },
+  {
+    "userid": 104534349,
+    "timestamp": 1623244608,
+    "type": "swimming",
+    "distance": 2000
+  },
+  {
+    "userid": 104534349,
+    "timestamp": 1623195608,
+    "type": "running",
+    "distance": 10000
+  },
+
+  {
+    "userid": 234023410,
+    "timestamp": 1623353608,
+    "type": "biking",
+    "distance": 80000
+  },
+  {
+    "userid": 234023410,
+    "timestamp": 1623276545,
+    "type": "running",
+    "distance": 18500
+  },
+  {
+    "userid": 234023410,
+    "timestamp": 1623255971,
+    "type": "biking",
+    "distance": 70000
+  },
+  {
+    "userid": 234023410,
+    "timestamp": 1623185349,
+    "type": "biking",
+    "distance": 40000
+  },
+]

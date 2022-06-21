@@ -1,0 +1,25 @@
+query UserLookup($userid: Int!, $requestuser: Int!) {
+   users(filter: { userid: {eq: $userid}}, limit: 1): user
+   {
+     data
+     {
+       name
+       num-friends
+       num-groups
+     }
+   }
+   users(filter: { userid: {eq: $requestuser}}, limit: 1): requestuser
+   {
+     data
+     {
+       friends(filter: {friendid: {eq: $userid}}, limit: 1)
+       {
+         since
+       }
+       foaf(filter: {foafid: {eq: $userid}}, limit: 5) {
+         friendid
+         friendname
+       }
+     }
+   }
+ }

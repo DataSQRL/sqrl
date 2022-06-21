@@ -1,0 +1,19 @@
+query FriendRecommendation($requestuser: Int!, $page: String) {
+   users(filter: { userid: {eq: $requestuser}}, limit: 1)
+   {
+     data
+     {
+       friend_recommend(page-size: 5, page: $page)
+       {
+         userid
+         name
+         sharedfriends
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

@@ -1,0 +1,40 @@
+query StreamDetails($id: Int!) {
+   streams(filter: { streamid: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       title
+       tags
+       user
+       {
+         id
+         name
+       }
+       scheduled_start
+       scheduled_end
+       isLive
+       live_stats
+       {
+         total_viewers
+         total_duration
+         current_viewers
+       }
+       review_stats
+       {
+         number
+         avg_stars
+       }
+       reviews (order-by: {timestamp: DESC}, limit: 10)
+       {
+         reviewid
+         stream
+         {
+           streamid
+           title
+         }
+         stars
+         text
+       }
+     }
+   }
+ }

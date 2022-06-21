@@ -1,0 +1,34 @@
+subscription WildfireAlert {
+  WildfireAlert {
+    sensorid
+    location
+    registered
+    readings (order-by: {timestamp: DESC}, limit: 20)
+    {
+      timestamp
+      temperature
+      co2
+      temp_deviation
+      co2_deviation
+      max_deviation
+    }
+    neighbors (limit: 50)
+    {
+       sensorid
+       location
+       {
+         lat
+         long
+       }
+       readings (order-by: {timestamp: DESC}, limit: 5)
+       {
+         timestamp
+         temperature
+         co2
+         temp_deviation
+         co2_deviation
+         max_deviation
+       }
+    }
+  }
+}

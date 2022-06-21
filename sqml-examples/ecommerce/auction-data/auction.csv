@@ -1,0 +1,5 @@
+id, category_id, seller_id, start_time, end_time, start_price, item_name, item_description
+20500523, 523342, 10007543, 1625067267, 1625367267, 100.0, Persian Runner 3 x 7 ft, A barely used runner in classic Persian style - top condition
+20893445, 992125, 10007543, 1625067207, 1625369005, 222.0, Victorian Vase, Beautifully ornamented Vase
+34521124, 992125, 10003561, 1625067141, 1625369100, 15.0, Pirate Coin, Authentic Pirate Gold Coin from Jack Sparrow
+95234512, 382341, 10009245, 1625065341, 1625368009, 500.0, 50 in Panasinic TV Set, High Quality TV Set - Brand New

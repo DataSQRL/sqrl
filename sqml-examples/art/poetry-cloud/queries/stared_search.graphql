@@ -1,0 +1,28 @@
+query StaredSearch($user: Int!, $query: String!, $page: String) {
+   users(filter: { id: {eq: $user}}, limit: 1)
+   {
+     data
+     {
+       stared_posts(search: { query: $query, fields: { title: yes, text: yes }}, order-by: [{num_stars: DESC}], page: $page, page-size: 20)
+       {
+         id
+         user
+         {
+           id
+           name
+           num_stars
+         }
+         num_stars
+         num_connections
+         title
+         text
+         timestamp
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

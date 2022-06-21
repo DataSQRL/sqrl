@@ -1,0 +1,25 @@
+subscription NodeCapacityAlert {
+  NodeCapacityAlert
+  {
+    id
+    timestamp
+    clusterid
+    nodeid
+    high_load_percent_lastHour
+    tx_dropped_percent_lastHour
+    high_p99_percent_lastHour
+
+    metrics_agg (order-by:[{time: DESC}], limit: 60)
+    {
+      time
+      cpu_load
+      memory_load
+      storage_load
+      tx_throughput
+      tx_dropped
+      avg_p99
+      num_high_load
+      num_metrics
+    }
+  }
+}

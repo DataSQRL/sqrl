@@ -1,0 +1,16 @@
+IMPORT social-commons.*;
+
+IMPORT FUNCTION time.exp-decay AS timedecay;
+
+Users.friend_recommend := SELECT foaf.userid AS userid, foaf.name AS name, COUNT(*) AS sharedfriends
+              FROM @.friends.friend f JOIN f.friends.friend AS foaf
+              WHERE userid NOT IN @.friends.friendid
+              GROUP BY userid, name ORDER BY sharedfriends DESC;
+
+Users._groupmemberships := JOIN Groupmemberships ON Groupmemberships.userid = @.userid
+
+Users.group_recommend := SELECT gm.groupid AS groupid, gm.grp.name AS groupname,
+                            SUM(timedecay(gm.jointimestamp, INTERVAL 4 WEEK)) AS _score
+                         FROM @.friends.friend f JOIN f._groupmemberships gm
+                         WHERE gm.jointimestamp > now() - INTERVAL 1 YEAR
+                         GROUP BY groupid, groupname ORDER BY _score DESC;

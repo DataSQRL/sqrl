@@ -1,0 +1,53 @@
+IMPORT home-data.*;
+
+IMPORT FUNCTION time.*;
+IMPORT FUNCTION vec.*;
+
+-- Link entities together
+
+Sensor.metrics := JOIN SensorMetrics ON SensorMetrics.sensorid = @.sensorid INVERSE sensor;
+Home.sensors := JOIN Sensor ON Sensor.homeid = @.homeid INVERSE home;
+Home.rules := JOIN Rule ON Rule.homeid = @.homeid INVERSE home;
+
+Home.rooms := SELECT DISTINCT room AS name FROM @.sensors;
+Home.rooms.sensors := JOIN @.parent.sensors s ON s.room = @.name;
+
+Home.rooms.readings := SELECT time.roundToMin(timestamp, 10) AS time,
+                              AVG(temperature) AS temperature, AVG(pm25) AS pm25,
+                              vec.boolOR(motion) AS motion
+                       FROM @.sensors.metrics
+                       GROUP BY time ORDER BY time DESC;
+
+Home.rooms.readings.isVacant := (SELECT * FROM @.parent.readings r /* = @.siblings */
+                                WHERE r.time <= @.time AND r.time >= @.time - INTERVAL 30 MINUTE AND
+                                      r.motion IS TRUE) IS EMPTY;
+
+-- We want to synchronize all sensor readings in the house on the most recent shared time
+Home.rooms.most_recent_time := SELECT time FROM @.readings ORDER BY time DESC LIMIT 1;
+Home.most_recent_time := MAX(@.rooms.most_recent_time);
+
+Home.rooms.most_recent := SELECT temperature, pm25, motion FROM @.readings
+                                      WHERE time <= @.parent.most_recent_time
+                                      ORDER BY time DESC LIMIT 1;
+
+-- A subscription becomes a table in itself so we can query fired events
+
+Rule.isActiveTime := (active_from IS NULL OR time.ofDay(home.most_recent_time) >= active_from)
+                  AND (active_to IS NULL OR time.ofDay(home.most_recent_time) <= active_to)
+
+Rule.conditions.room := JOIN @.parent.home.rooms r ON r.name = @.room_name;
+Rule.conditions.isActive := (temperature_higher IS NULL OR room.most_recent.temperature >= temperature_higher)
+                        AND (temperature_lower IS NULL OR room.most_recent.temperature <= temperature_lower)
+                        AND (vacant IS NULL OR room.most_recent.isVacant = vacant)
+                        AND (motion IS NULL OR room.most_recent.motion = motion)
+                        AND (pm25_higher IS NULL OR room.most_recent.pm25 >= pm25_higher)
+                        AND (pm25_lower IS NULL OR room.most_recent.pm25 <= pm25_lower);
+
+Rule.isActive := isActiveTime AND vec.boolAND(conditions.isActive);
+
+CREATE SUBSCRIPTION RuleTriggeredEvent ON ADD AS
+SELECT uuid() AS eventid, now() AS timestamp, home.homeid, ruleid, action FROM Rule
+WHERE isActive;
+
+Home.triggeredRules := JOIN RuleTriggeredEvent ON RuleTriggered.homeid = @.homeid INVERSE home;
+RuleTriggeredEvent.rule := JOIN Rule ON Rule.ruleid = @.ruleid INVERSE triggerEvents;

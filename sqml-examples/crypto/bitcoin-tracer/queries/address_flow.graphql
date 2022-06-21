@@ -1,0 +1,20 @@
+query AddressFlowHistory($address: String!, $from: DateTime!, $to: DateTime!, $page: String) {
+   addresses(filter: { address: {eq: $address}}, limit: 1)
+   {
+     data
+     {
+       flow_history(filter: {day: {gte: $from, lte: $to}}, order-by: [{day: DESC}], page: $page, page-size: 50)
+       {
+         day
+         received_total
+         sent_total
+         num_tx
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

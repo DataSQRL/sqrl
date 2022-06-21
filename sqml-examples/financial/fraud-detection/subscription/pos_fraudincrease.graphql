@@ -1,0 +1,26 @@
+subscription PoSWithFraudIncrease {
+  FraudIncreaseAlert {
+    pos_id
+    merchant {
+      merchant_id
+      name
+      category
+    }
+    registered_on
+    online
+    location {
+      lat
+      long
+    }
+    fraud_by_week(limit: 12) {
+      num_tx
+      total
+      num_fraud
+      total_fraud
+      fraud_tx_ratio
+      fraud_total_ratio
+      fraud_ratio
+      wow_change
+    }
+  }
+}

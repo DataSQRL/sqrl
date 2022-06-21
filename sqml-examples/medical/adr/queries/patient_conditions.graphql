@@ -1,0 +1,20 @@
+query PatientConditions($id: Int!, $page: String) {
+   patients(filter: { id: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       name
+       conditions(page-size: 50, page: $page)
+       {
+         code
+         date
+         source
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

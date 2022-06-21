@@ -1,0 +1,47 @@
+query SensorDetails($id: Int!, $page: String) {
+   sensor(filter: { sensorid: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       sensorid
+       location
+       {
+         lat
+         long
+       }
+       registered
+       readings (order-by: {timestamp: DESC}, page: $page, page-size: 50)
+       {
+         timestamp
+         temperature
+         co2
+         temp_deviation
+         co2_deviation
+         max_deviation
+       }
+       neighbors (limit: 50)
+       {
+          sensorid
+          location
+          {
+            lat
+            long
+          }
+          readings (order-by: {timestamp: DESC}, limit: 10)
+          {
+            timestamp
+            temperature
+            co2
+            temp_deviation
+            co2_deviation
+            max_deviation
+          }
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }
