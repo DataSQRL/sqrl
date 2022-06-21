@@ -9,7 +9,6 @@ on:
 jobs:
   build:
 
-    # this should be a docker containter?
     runs-on: ubuntu-latest
 
     steps:
@@ -20,14 +19,11 @@ jobs:
       uses: actions/setup-java@v3
       with:
         java-version: '11'
-        distribution: 'temurin'
+        distribution: 'adopt'
         cache: maven
-        
-    - name: Build with Maven
-      run: mvn -B -Dskiptests package --file pom.xml
       
-    - name: Test
-      run: mvn --batch-mode -Dmaven.test.failure.ignore=true test
+    - name: Verify
+      run: mvn verify
       
     - name: Report
       uses: dorny/test-reporter@v1
