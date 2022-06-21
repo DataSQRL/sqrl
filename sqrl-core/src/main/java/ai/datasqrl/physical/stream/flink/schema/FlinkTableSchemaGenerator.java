@@ -31,18 +31,20 @@ public class FlinkTableSchemaGenerator extends AbstractFlexibleTableConverterVis
         if (isNested) {
             return createTable(tblBuilder);
         } else {
-            tblBuilder.getColumns().stream().forEach(p -> {
-                schemaBuilder.column(p.getKey().getCanonical(),p.getValue());
-            });
+            for (TableBuilder.Column<DataType> column : tblBuilder.getColumns()) {
+                schemaBuilder.column(column.getName().getCanonical(),column.getType());
+            };
             return Optional.empty();
         }
     }
 
     @Override
     protected Optional<DataType> createTable(TableBuilder<DataType> tblBuilder) {
-        DataTypes.Field[] fields = tblBuilder.getColumns().stream().map(p ->
-                DataTypes.FIELD(p.getKey().getCanonical(),p.getValue())
-        ).toArray(i -> new DataTypes.Field[i]);
+        DataTypes.Field[] fields = new DataTypes.Field[tblBuilder.getColumns().size()];
+        for (int i = 0; i < fields.length; i++) {
+            TableBuilder.Column<DataType> column = tblBuilder.getColumns().get(i);
+            fields[i] = DataTypes.FIELD(column.getName().getCanonical(),column.getType());
+        }
         return Optional.of(DataTypes.ROW(fields));
     }
 

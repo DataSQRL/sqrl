@@ -21,10 +21,10 @@ public class FlinkTypeInfoSchemaGenerator extends AbstractFlexibleTableConverter
 
     @Override
     protected Optional<TypeInformation> createTable(TableBuilder<TypeInformation> tblBuilder) {
-        List<Pair<Name,TypeInformation>> columns = tblBuilder.getColumns();
+        List<TableBuilder.Column> columns = tblBuilder.getColumns();
         return Optional.of(Types.ROW_NAMED(
-                columns.stream().map(Pair::getKey).map(Name::getCanonical).toArray(i -> new String[i]),
-                columns.stream().map(Pair::getValue).toArray(i -> new TypeInformation[i])));
+                columns.stream().map(TableBuilder.Column::getName).map(Name::getCanonical).toArray(i -> new String[i]),
+                columns.stream().map(TableBuilder.Column::getType).toArray(i -> new TypeInformation[i])));
     }
 
     @Override

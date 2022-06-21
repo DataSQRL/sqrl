@@ -46,7 +46,7 @@ public abstract class AbstractFlexibleTableConverterVisitor<T> implements Flexib
 
     @Override
     public void addField(Name name, T type, boolean notnull) {
-        stack.getFirst().add(name,nullable(type,notnull));
+        stack.getFirst().add(name,nullable(type,notnull),notnull);
     }
 
     public abstract T nullable(T type, boolean notnull);
@@ -57,24 +57,33 @@ public abstract class AbstractFlexibleTableConverterVisitor<T> implements Flexib
 
     protected abstract SqrlTypeConverter<T> getTypeConverter();
 
-    protected interface SqrlTypeConverter<T> extends SqrlTypeVisitor<T,Void> {
+    public interface SqrlTypeConverter<T> extends SqrlTypeVisitor<T,Void> {
 
     }
 
     @Value
-    protected static class TableBuilder<T> {
+    public static class TableBuilder<T> {
 
         final Name name;
         final NamePath namePath;
-        final List<Pair<Name,T>> columns = new ArrayList<>();
+        final List<Column> columns = new ArrayList<>();
 
-        void add(final Name name, T type) {
+        void add(final Name name, T type, boolean notNull) {
             //A name may clash with a previously added reserved name in which case we have to suffix it
-            Name columnId = Column.getId(name,0);
-            if (columns.stream().map(Pair::getKey).anyMatch(n -> n.equals(name))) {
-                columnId = Column.getId(name,1);
+            Name columnId = ai.datasqrl.schema.Column.getId(name,0);
+            if (columns.stream().map(Column::getName).anyMatch(n -> n.equals(name))) {
+                columnId = ai.datasqrl.schema.Column.getId(name,1);
             }
-            columns.add(Pair.of(columnId,type));
+            columns.add(new Column(columnId,type,notNull));
+        }
+
+        @Value
+        public static class Column<T> {
+
+            Name name;
+            T type;
+            boolean notNull;
+
         }
 
     }
