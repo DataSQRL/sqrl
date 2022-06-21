@@ -25,6 +25,8 @@ public interface DataSourceImplementation extends Serializable {
    */
   @NonNull Optional<String> getDefaultName();
 
+  public boolean hasSourceTimestamp();
+
 //    @NonNull NameCanonicalizer getCanonicalizer();
 
   Collection<SourceTableConfiguration> discoverTables(@NonNull DataSourceConfiguration config,

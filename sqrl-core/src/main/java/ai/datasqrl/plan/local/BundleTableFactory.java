@@ -10,18 +10,22 @@ import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.CalciteEnvironment;
+import ai.datasqrl.plan.local.operations.SourceTableImportOp;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
 import ai.datasqrl.schema.*;
-import ai.datasqrl.schema.constraint.NotNull;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.RelationType;
 import ai.datasqrl.schema.type.ArrayType;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.BasicType;
+import ai.datasqrl.schema.type.basic.DateTimeType;
+import ai.datasqrl.schema.type.basic.IntegerType;
+import ai.datasqrl.schema.type.basic.UuidType;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -34,35 +38,38 @@ public class BundleTableFactory {
 
     private final AtomicInteger tableIdCounter = new AtomicInteger(0);
     private final Name parentRelationshipName = ReservedName.PARENT;
+    private final Map<Name,Integer> defaultTimestampPreference = ImmutableMap.of(
+            ReservedName.SOURCE_TIME, 6,
+            ReservedName.INGEST_TIME, 3,
+            Name.system("timestamp"), 20,
+            Name.system("time"), 8);
 
-    public BundleTableFactory(CalciteEnvironment calciteEnvironment) {
+    public BundleTableFactory() {
     }
 
-    public Table importTable(ImportManager.SourceTableImport impTbl,
-                             Optional<Name> tableAlias) {
+    public Pair<Table,Map<Table,SourceTableImportOp.RowType>> importTable(ImportManager.SourceTableImport impTbl,
+                                                                      Optional<Name> tableAlias) {
         ImportVisitor visitor = new ImportVisitor();
-        FlexibleTableConverter converter = new FlexibleTableConverter(impTbl.getSourceSchema(), tableAlias);
+        FlexibleTableConverter converter = new FlexibleTableConverter(impTbl.getSchema(), tableAlias);
         converter.apply(visitor);
         TableBuilder tblBuilder = visitor.lastCreatedTable;
         assert tblBuilder != null;
-        //Identify timestamp column and add it; TODO: additional method argument for explicit timestamp definition
-        Column timestamp = tblBuilder.getFields().stream().filter(f -> f.getName().equals(ReservedName.INGEST_TIME))
-                .map(f->(Column)f).findFirst().get();
-        return createImportTableHierarchy(tblBuilder, timestamp, impTbl.getTable().getStatistics());
+        Map<Table,SourceTableImportOp.RowType> tables = new HashMap<>();
+        Table rootTable = createImportTableHierarchy(tblBuilder, impTbl.getTable().getStatistics(), tables);
+        return Pair.of(rootTable,tables);
     }
 
-    private Table createImportTableHierarchy(TableBuilder tblBuilder, Column timestamp,
-                                             SourceTableStatistics statistics) {
+    private Table createImportTableHierarchy(TableBuilder tblBuilder, SourceTableStatistics statistics,
+                                             Map<Table,SourceTableImportOp.RowType> tables) {
         NamePath tblPath = tblBuilder.getPath();
         RelationStats stats = statistics.getRelationStats(tblPath.subList(1,tblPath.getLength()));
-        Table table = tblBuilder.createTable(Table.Type.STREAM, timestamp, TableStatistic.from(stats));
+        Table table = tblBuilder.createTable(Table.Type.STREAM, TableStatistic.from(stats));
+        tables.put(table,tblBuilder.rowType);
         //Recurse through children and add parent-child relationships
         for (Pair<TableBuilder,Relationship.Multiplicity> child : tblBuilder.children) {
             TableBuilder childBuilder = child.getKey();
             //Add parent timestamp as internal column
-            Column childTimestamp = childBuilder.addColumn(timestamp.getName(),
-                false, false, true, true);
-            Table childTbl = createImportTableHierarchy(childBuilder, childTimestamp, statistics);
+            Table childTbl = createImportTableHierarchy(childBuilder, statistics, tables);
             Name childName = childBuilder.getPath().getLast();
             Optional<Relationship> parentRel = createParentRelationship(childTbl, table);
             parentRel.map(rel -> childTbl.getFields().add(rel));
@@ -115,23 +122,27 @@ public class BundleTableFactory {
 
 
         @Override
-        public void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
+        public void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton, boolean hasSourceTimestamp) {
             TableBuilder tblBuilder = new TableBuilder(namePath.concat(name));
             //Add primary keys
             if (isNested) {
                 //Add parent primary keys
                 tblBuilder.addParentPrimaryKeys(stack.getFirst());
+                //Add denormalized timestamp placeholder
+                Column timestamp = tblBuilder.addColumn(ReservedName.TIMESTAMP,false,
+                        false, DateTimeType.INSTANCE, true, false);
+                tblBuilder.setTimestamp(timestamp);
                 if (!isSingleton) {
                     tblBuilder.addColumn(ReservedName.ARRAY_IDX,true,
-                            false, true, true);
+                            false, IntegerType.INSTANCE, true, true);
                 }
             } else {
                 tblBuilder.addColumn(ReservedName.UUID,true,
-                        false, true, true);
-                tblBuilder.addColumn(ReservedName.INGEST_TIME, false,
-                        false, true, true);
-                tblBuilder.addColumn(ReservedName.SOURCE_TIME,false,
-                        false, false, true);
+                        false, UuidType.INSTANCE, true, true);
+                tblBuilder.addColumn(ReservedName.INGEST_TIME, false, false, DateTimeType.INSTANCE, true, true);
+                if (hasSourceTimestamp) {
+                    tblBuilder.addColumn(ReservedName.SOURCE_TIME, false, false, DateTimeType.INSTANCE, true, true);
+                }
             }
             stack.addFirst(tblBuilder);
         }
@@ -144,17 +155,18 @@ public class BundleTableFactory {
 
         @Override
         public void addField(Name name, Type type, boolean notnull) {
+            TableBuilder tblBuilder = stack.getFirst();
             if (isRelationType(type)) {
                 //It's a relationship
                 Relationship.Multiplicity multi = Relationship.Multiplicity.ZERO_ONE;
                 if (type instanceof ArrayType) multi = Relationship.Multiplicity.MANY;
                 else if (notnull) multi = Relationship.Multiplicity.ONE;
-                stack.getFirst().addChild(lastCreatedTable,multi);
+                tblBuilder.addChild(lastCreatedTable,multi);
                 lastCreatedTable = null;
             } else {
-                //It's a column
-                stack.getFirst().addColumn(name, false,
-                        false, notnull, true);
+                //It's a column, determine if it is a default timestamp candidate
+                Column column = tblBuilder.addColumn(name, false,
+                        false, type, notnull, true);
             }
         }
 
@@ -186,8 +198,9 @@ public class BundleTableFactory {
 
     public class TableBuilder extends AbstractTable {
 
+        private final SourceTableImportOp.RowType rowType = new SourceTableImportOp.RowType();
         private final List<Pair<TableBuilder, Relationship.Multiplicity>> children = new ArrayList<>();
-        private int columnCounter = 0;
+        private Pair<Column, Integer> timestampCandidate = null;
 
         private TableBuilder(NamePath namePath) {
             super(tableIdCounter.incrementAndGet(), namePath, new ShadowingContainer<>());
@@ -197,23 +210,55 @@ public class BundleTableFactory {
             children.add(Pair.of(table,multi));
         }
 
+        public void setTimestamp(Column column) {
+            setTimestampCol(column,Integer.MAX_VALUE);
+        }
+
+        private void setTimestampCol(Column column, int preference) {
+            timestampCandidate = Pair.of(column,preference);
+        }
+
         public Column addColumn(Name name, boolean isPrimaryKey, boolean isParentPrimaryKey,
-                       boolean notnull, boolean isVisible) {
+                                boolean isVisible) {
             int version = getNextColumnVersion(name);
-            Column col = new Column(name, version, columnCounter++,
-                    isPrimaryKey, isParentPrimaryKey,
-                    notnull? List.of(NotNull.INSTANCE) : List.of(), isVisible);
+            Column col = new Column(name, version, getNextColumnIndex(),
+                    isPrimaryKey, isParentPrimaryKey, isVisible);
             fields.add(col);
             return col;
         }
 
-        public void addParentPrimaryKeys(AbstractTable parent) {
+        private Column addColumn(Name name, boolean isPrimaryKey, boolean isParentPrimaryKey,
+                       Type type, boolean notnull, boolean isVisible) {
+            Column column = addColumn(name, isPrimaryKey, isParentPrimaryKey, isVisible);
+            rowType.add(column.getIndex(),new SourceTableImportOp.ColumnType(type,notnull));
+            //Check if this is a candidate for timestamp
+            if (notnull && (type instanceof DateTimeType) &&
+                    defaultTimestampPreference.containsKey(name)) {
+                //this column is a candidate for timestamp
+                Integer preference = defaultTimestampPreference.get(name);
+                if (timestampCandidate == null || timestampCandidate.getValue() < preference) {
+                    setTimestampCol(column,preference);
+                }
+            }
+            return column;
+        }
+
+        private void addParentPrimaryKeys(TableBuilder parent) {
             for (Column ppk : parent.getPrimaryKeys()) {
-                addColumn(ppk.getName(), true, true, true, false);
+                Column copiedPpk = addColumn(ppk.getName(), true, true,
+                        false);
+                rowType.add(copiedPpk.getIndex(),parent.rowType.get(ppk.getIndex()));
             }
         }
 
-        public Table createTable(Table.Type type, Column timestamp, TableStatistic statistic) {
+        public Table createTable(Table.Type type, TableStatistic statistic) {
+            if (timestampCandidate==null) { //TODO: remove once timestamps are properly propagated
+                timestampCandidate = Pair.of(null, Integer.MAX_VALUE);
+            }
+            Preconditions.checkState(timestampCandidate!=null, "Missing timestamp column");
+            TableTimestamp timestamp = TableTimestamp.of(timestampCandidate.getKey(),
+                    timestampCandidate.getValue()==Integer.MAX_VALUE? TableTimestamp.Status.INFERRED :
+                            TableTimestamp.Status.DEFAULT);
             return new Table(uniqueId, path, type, fields, timestamp, statistic);
         }
 

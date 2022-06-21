@@ -219,6 +219,10 @@ public class QuerySpecNorm extends RelationNorm {
     return getParentPrimaryKeys().contains(expr);
   }
 
+  public boolean isVisible(Expression expr) {
+    return !isParentPrimaryKey(expr) && !getAddedPrimaryKeys().contains(expr);
+  }
+
   public List<Expression> getAllColumns() {
     return Streams.concat(parentPrimaryKeys.stream(),
         addedPrimaryKeys.stream(),

@@ -14,7 +14,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexNode;
 
 @Getter
-public class Column extends Field {
+public class Column extends Field implements ShadowingContainer.IndexElement {
 
   /* Identity of the column in addition to name for shadowed columns which we need to keep
      on the table even though it is no longer referenceable since another column may depend on it
@@ -26,28 +26,19 @@ public class Column extends Field {
   private final boolean isPrimaryKey;
   private final boolean isParentPrimaryKey;
 
-  private final boolean nonNull;
-  @NonNull private final List<Constraint> constraints;
-
   //Column isn't visible to user but needed by system (for primary key or timestamp)
   private final boolean isVisible;
 
-  private final Optional<LPDefinition> definition = Optional.empty();
-
   public Column(Name name, int version, int index,
-                boolean isPrimaryKey, boolean isParentPrimaryKey,
-                List<Constraint> constraints, boolean isVisible) {
+                boolean isPrimaryKey, boolean isParentPrimaryKey, boolean isVisible) {
 
     super(name);
     this.version = version;
     this.index = index;
-    this.constraints = constraints;
     this.isVisible = isVisible;
     Preconditions.checkArgument(!isParentPrimaryKey || isPrimaryKey);
     this.isPrimaryKey = isPrimaryKey;
     this.isParentPrimaryKey = isParentPrimaryKey;
-    this.nonNull = ConstraintHelper.isNonNull(constraints);
-    Preconditions.checkArgument(!isPrimaryKey || nonNull);
     Preconditions.checkArgument(!isParentPrimaryKey || isPrimaryKey);
   }
 
@@ -66,37 +57,13 @@ public class Column extends Field {
     return isVisible;
   }
 
-  /**
-   * Whether this column is a simple projection column
-   * @return
-   */
-  public boolean isSimple() {
-    if (definition.isEmpty()) return true; //Column is defined by original query
-    LPDefinition def = definition.get();
-    if (!def.leftJoins.isEmpty()) return false; //Column requires left-joins which makes it complex
-    //Else, check if the columns this column depends on are simple
-    for (Column col : def.columnPositionMap.values()) {
-      if (!col.isSimple()) return false;
-    }
-    return true;
-  }
-
-  public boolean isComplex() {
-    return !isSimple();
-  }
-
   @Override
   public String toString() {
-    return "Column{" +
-        "version=" + version +
-        ", index =" + index +
-        ", nonNull=" + nonNull +
-        ", constraints=" + constraints +
-        ", isPrimaryKey=" + isPrimaryKey +
-        ", isParentPrimaryKey=" + isParentPrimaryKey +
-        ", isVisible=" + isVisible +
-        ", name=" + name +
-        '}';
+    String s = getId() + " @" + index + ": ";
+    if (isPrimaryKey) s += "pk ";
+    if (isParentPrimaryKey) s += "ppk ";
+    if (!isVisible) s += "hidden";
+    return s;
   }
 
   @Value
@@ -106,6 +73,16 @@ public class Column extends Field {
     private final List<RelNode> leftJoins;
     private final int tableColumnWidth;
     private final Map<Integer, Column> columnPositionMap;
+
+
+    public boolean isSimple() {
+//      if (!leftJoins.isEmpty()) return false; //Column requires left-joins which makes it complex
+//      //Else, check if the columns this column depends on are simple
+//      for (Column col : columnPositionMap.values()) {
+//        if (!col.isSimple()) return false;
+//      }
+      return true;
+    }
 
   }
 

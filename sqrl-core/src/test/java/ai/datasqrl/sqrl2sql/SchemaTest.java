@@ -30,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SchemaTest extends AbstractSQRLIntegrationTest {
   ConfiguredSqrlParser parser;
@@ -277,7 +278,7 @@ class SchemaTest extends AbstractSQRLIntegrationTest {
 
   @Test
   public void testNestedPushdown() {
-    runScript("IMPORT ecommerce-data.Orders TIMESTAMP uuid AS uuid;\n"
+    runScript("IMPORT ecommerce-data.Orders TIMESTAMP time;\n"
             + "\n"
             + "Orders.entries.discount := coalesce(discount, 0.0);\n"
             + "Orders.entries.total := quantity * unit_price - discount;\n"
@@ -286,9 +287,17 @@ class SchemaTest extends AbstractSQRLIntegrationTest {
 //            + "Orders.total_entries := count(entries);\n");
   }
 
+  @Test
+  public void testImportTimestamp() {
+    runScript("IMPORT ecommerce-data.Orders TIMESTAMP time;\n");
+    assertThrows(IllegalArgumentException.class, () -> runScript("IMPORT ecommerce-data.Orders TIMESTAMP uuid;\n"));
+    assertThrows(IllegalArgumentException.class, () -> runScript("IMPORT ecommerce-data.Orders TIMESTAMP id;\n"));
+  }
+
+
   public void runScript(String script) {
     ScriptNode node = parser.parse(script);
-    BundleTableFactory tableFactory = new BundleTableFactory(calciteEnv);
+    BundleTableFactory tableFactory = new BundleTableFactory();
     SchemaBuilder schema = new SchemaBuilder();
 
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();

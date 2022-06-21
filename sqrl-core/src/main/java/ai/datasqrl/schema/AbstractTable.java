@@ -31,10 +31,7 @@ public class AbstractTable implements ShadowingContainer.Element {
         return path.getLast();
     }
 
-    public boolean isVisible() {
-        return true;
-    }
-
+    @Override
     public int getVersion() {
         return uniqueId;
     }
@@ -58,22 +55,33 @@ public class AbstractTable implements ShadowingContainer.Element {
 
     @Override
     public String toString() {
-        return "Table{" +
-                "name=" + getName() +
-                '}';
+        StringBuilder s = new StringBuilder();
+        s.append("Table[id=").append(getId()).append("]{\n");
+        for (Field f : fields) {
+            s.append("\t").append(f.toString()).append("\n");
+        }
+        s.append("}");
+        return s.toString();
     }
 
     public Optional<Field> getField(Name name) {
-        return fields.getByName(name);
+        return fields.getVisibleByName(name);
     }
 
     public Stream<Column> getAllColumns() {
         return fields.stream().filter(Column.class::isInstance).map(Column.class::cast);
     }
 
+    public Stream<Relationship> getAllRelationships() {
+        return fields.stream().filter(Relationship.class::isInstance).map(Relationship.class::cast);
+    }
+
     public int getNextColumnVersion(Name name) {
-        return getAllColumns().filter(c -> c.getName().equals(name)).map(Column::getVersion).max(Integer::compareTo)
-                .map(i -> i+1).orElse(0);
+        return fields.getMaxVersion(name).map(v -> v+1).orElse(0);
+    }
+
+    public int getNextColumnIndex() {
+        return fields.getIndexLength();
     }
 
     public List<Column> getPrimaryKeys() {

@@ -22,7 +22,6 @@ import ai.datasqrl.plan.local.transpiler.transforms.ExpressionToQueryTransformer
 import ai.datasqrl.plan.local.transpiler.transforms.RejoinExprTransform;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.environment.ImportManager;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -38,7 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 public class StatementNormalizer {
 
-  private ImportManager importManager;
   private Schema schema;
 
   private final RelationNormalizer relationNormalizer = new RelationNormalizer();
@@ -99,7 +97,7 @@ public class StatementNormalizer {
     public Node visitDistinctAssignment(DistinctAssignment node, Void context) {
       Preconditions.checkState(node.getNamePath().getLength() == 1,
           "Distinct node must be on root (tbd expand)");
-      Optional<Table> tableOpt = schema.getByName(node.getTable());
+      Optional<Table> tableOpt = schema.getVisibleByName(node.getTable());
       Preconditions.checkState(tableOpt.isPresent(),
           "Table could not be found: " + node.getTable());
 
@@ -134,7 +132,7 @@ public class StatementNormalizer {
       if (namePath.getLength() == 0) {
         return Optional.empty();
       }
-      Table table = schema.getByName(namePath.getFirst()).get();
+      Table table = schema.getVisibleByName(namePath.getFirst()).get();
       return table.walk(namePath.popFirst());
     }
 

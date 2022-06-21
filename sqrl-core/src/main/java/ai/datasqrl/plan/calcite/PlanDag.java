@@ -16,6 +16,8 @@ import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
@@ -25,6 +27,7 @@ import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor
@@ -40,6 +43,8 @@ public class PlanDag implements SqrlCalciteBridge, SchemaOpVisitor {
   @Override
   @SneakyThrows
   public <T> T visit(AddColumnOp op) {
+    //TODO: validate not null and DateTime for timestamps
+
     SchemaCalciteTable table = (SchemaCalciteTable)tableMap.get(op.getTable().getId());
 
     planner.refresh();
@@ -52,7 +57,10 @@ public class PlanDag implements SqrlCalciteBridge, SchemaOpVisitor {
     int index = relNode.getRowType().getFieldList().size() - 1;
     RelDataTypeField relField = relNode.getRowType().getFieldList().get(index);
     table.addField(relField);
-
+    if (op.isTimestamp()) {
+      Preconditions.checkArgument(!relField.getType().isNullable() && relField.getType().getSqlTypeName() == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE,
+              "Invalid data type for timestamp column: " + relField);
+    }
     return null;
   }
 
@@ -89,24 +97,25 @@ public class PlanDag implements SqrlCalciteBridge, SchemaOpVisitor {
 
   @Override
   public <T> T visit(SourceTableImportOp op) {
-    SourceTableImport tableImport = op.getSourceTableImport();
     SqrlType2Calcite typeConverter = planner.getTypeConverter();
 
-    FieldInfoBuilder builder = planner.getTypeFactory()
-        .builder();
-    builder.kind(StructKind.FULLY_QUALIFIED);
+    //Produce a Calcite row schema for each table in the nested hierarchy
+    for (Map.Entry<Table, SourceTableImportOp.RowType> tableImp : op.getTableTypes().entrySet()) {
+      FieldInfoBuilder fieldBuilder = planner.getTypeFactory().builder().kind(StructKind.FULLY_QUALIFIED);
+      Table table = tableImp.getKey();
+      SourceTableImportOp.RowType rowType = tableImp.getValue();
+      Preconditions.checkArgument(table.getFields().getIndexLength() == rowType.size());
+      for (int i = 0; i< rowType.size(); i++) {
+        SourceTableImportOp.ColumnType colType = rowType.get(i);
+        RelDataType type = colType.getType().accept(typeConverter, null);
+        fieldBuilder.add(table.getFields().atIndex(i).getName().getCanonical(), type).nullable(colType.isNotnull());
+      }
 
-    FlexibleTableConverter tableConverter = new FlexibleTableConverter(tableImport.getSourceSchema());
-    ImportTableRelDataTypeFactory builder1 = new ImportTableRelDataTypeFactory(planner.getTypeFactory(), typeConverter, op.getTable());
-    tableConverter.apply(builder1);
-//    RelDataType t = builder1.getFieldBuilders().peek().build();
-
-    for (Pair<Table, RelDataType> pair : builder1.getResult()) {
       SchemaCalciteTable schemaCalciteTable =
-          new SchemaCalciteTable(pair.getRight().getFieldList());
-      tableMap.put(pair.getLeft().getId(), schemaCalciteTable);
-    }
+              new SchemaCalciteTable(fieldBuilder.build().getFieldList());
+      tableMap.put(table.getId(), schemaCalciteTable);
 
+    }
     return null;
   }
 

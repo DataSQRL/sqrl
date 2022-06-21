@@ -19,6 +19,7 @@ import ai.datasqrl.physical.stream.flink.FlinkStreamBuilder;
 import ai.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
+import ai.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -111,7 +112,7 @@ public class InMemStreamEngine implements StreamEngine {
         }
 
         @Override
-        public void addAsTable(StreamHolder<SourceRecord.Named> stream, FlexibleDatasetSchema.TableField schema, Name tableName) {
+        public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, Name tableName) {
             final Consumer<Object[]> records = recordHolder.getCollector(tableName);
             SourceRecord2RowMapper<Object[],Object[]> mapper = new SourceRecord2RowMapper(schema, RowConstructor.INSTANCE);
             ((Holder<SourceRecord.Named>)stream).mapWithError((r,c) -> {

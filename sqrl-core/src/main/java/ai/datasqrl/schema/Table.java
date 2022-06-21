@@ -5,12 +5,14 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Relationship.JoinType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import com.google.common.base.Preconditions;
+import lombok.Setter;
 
 @Getter
 public class Table extends AbstractTable {
@@ -21,16 +23,23 @@ public class Table extends AbstractTable {
   }
 
   @NonNull private final Type type;
-  @NonNull private final Column timestamp;
+  @NonNull private TableTimestamp timestamp;
   @NonNull private final TableStatistic statistic;
 
   public Table(int uniqueId, NamePath path, Type type, ShadowingContainer<Field> fields,
-               Column timestamp, TableStatistic statistic) {
+               TableTimestamp timestamp, TableStatistic statistic) {
     super(uniqueId,path,fields);
     this.type = type;
     this.timestamp = timestamp;
     this.statistic = statistic;
     Preconditions.checkNotNull(fields.contains(timestamp));
+  }
+
+  @Override
+  public String toString() {
+    String s = super.toString();
+    s += "[" + type + "," + timestamp + "," + statistic + "]";
+    return s;
   }
 
   public Optional<Field> walkField(NamePath namePath) {
@@ -52,7 +61,7 @@ public class Table extends AbstractTable {
           .walkField(namePath.popFirst());
     }
 
-    return Optional.of(field.get());
+    return field;
   }
 
   public Optional<Table> walk(NamePath namePath) {
@@ -82,12 +91,11 @@ public class Table extends AbstractTable {
   }
 
   public Optional<Table> getParent() {
-    for (Field field : fields) {
-      if (field instanceof Relationship && ((Relationship) field).getJoinType() == JoinType.PARENT) {
-        return Optional.of(((Relationship) field).getToTable());
-      }
-    }
-    return Optional.empty();
+    return getAllRelationships().filter(r -> r.getJoinType() == JoinType.PARENT).map(Relationship::getToTable).findFirst();
+  }
+
+  public Collection<Table> getChildren() {
+    return getAllRelationships().filter(r -> r.getJoinType() == JoinType.CHILD).map(Relationship::getToTable).collect(Collectors.toList());
   }
 
   /**
@@ -129,24 +137,11 @@ public class Table extends AbstractTable {
   }
 
   public List<Column> getParentPrimaryKeys() {
-    return this.fields.stream()
-            .filter(f->f instanceof Column && ((Column) f).isParentPrimaryKey())
-        .map(f->(Column) f)
-        .collect(Collectors.toList());
+    return getAllColumns().filter(Column::isParentPrimaryKey).collect(Collectors.toList());
   }
 
-  public List<Column> getColumns() {
-    return this.fields.getElements().stream()
-        .filter(f->f instanceof Column && f.isVisible())
-        .map(f->(Column) f)
-        .collect(Collectors.toList());
-  }
-
-  public List<Relationship> getRelationships() {
-    return this.fields.getElements().stream()
-        .filter(f->f instanceof Relationship)
-        .map(f->(Relationship) f)
-        .collect(Collectors.toList());
+  public List<Column> getVisibleColumns() {
+    return getAllColumns().filter(Column::isVisible).collect(Collectors.toList());
   }
 
 }

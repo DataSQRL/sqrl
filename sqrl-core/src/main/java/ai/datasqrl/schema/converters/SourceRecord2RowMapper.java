@@ -5,6 +5,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.constraint.ConstraintHelper;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.FlexibleSchemaHelper;
+import ai.datasqrl.schema.input.InputTableSchema;
 import ai.datasqrl.schema.input.RelationType;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Triple;
@@ -18,16 +19,18 @@ import java.util.stream.Stream;
 @AllArgsConstructor
 public class SourceRecord2RowMapper<R,S> implements Function<SourceRecord.Named, R>, Serializable {
 
-    private final FlexibleDatasetSchema.TableField tableSchema;
+    private final InputTableSchema tableSchema;
     private final RowConstructor<R,S> rowConstructor;
 
     public R apply(SourceRecord.Named sourceRecord) {
-        Object[] cols = constructRows(sourceRecord.getData(), tableSchema.getFields());
+        Object[] cols = constructRows(sourceRecord.getData(), tableSchema.getSchema().getFields());
         //Add metadata
-        cols = extendCols(cols,3);
+        cols = extendCols(cols,2+(tableSchema.isHasSourceTimestamp()?1:0));
         cols[0] = sourceRecord.getUuid().toString();
         cols[1] = sourceRecord.getIngestTime();
-        cols[2] = sourceRecord.getSourceTime();
+        if (tableSchema.isHasSourceTimestamp()) {
+            cols[2] = sourceRecord.getSourceTime();
+        }
         return rowConstructor.createRoot(cols);
     }
 
