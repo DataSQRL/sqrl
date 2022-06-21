@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1543329,
+    "ssn": "555-55-5555",
+    "name": "Josephine Dolphin",
+    "diagnosis":
+    [
+      {
+        "identifier": "x5w34325",
+        "date": ,
+        "code": ,
+        "provider_id": 5545324
+      }
+    ]
+  }
+]

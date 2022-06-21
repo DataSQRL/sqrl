@@ -1,0 +1,173 @@
+version: 1
+
+tables:
+  - name: Bus
+    description: Table of all busses in the fleet
+    source:
+      - type: file
+        name: bus.csv
+    columns:
+      - name: busid
+        tests:
+          - type: integer
+          - unique
+          - not_null
+      - name: vin
+        tests:
+          - type: string
+          - not_null
+          - unique
+      - name: type
+        tests:
+          - type: string
+      - name: capacity
+        tests:
+          - type: integer
+          - not_null
+          - comparison: "> 0"
+      - name: sensorid
+        tests:
+          - type: integer
+          - not_null
+  - name: GPS_Tracking
+    description: Stream of location data from bus-mounted GPS sensors
+    source:
+      - type: file
+        name: gps-tracking.json
+    columns:
+      - name: sensorid
+        tests:
+          - type: integer
+          - not_null
+      - name: timestamp
+        tests:
+          - type: timestamp
+          - not_null
+      - name: location
+        tests:
+          - type: geopoint
+          - not_null
+  - name: Busstop
+    description: All the bus stops
+    source:
+      - type: file
+        name: busstop.json
+    columns:
+      - name: stopid
+        tests:
+          - type: integer
+          - not_null
+          - unique
+      - name: name
+        tests:
+          - type: string
+          - not_null
+      - name: location
+        tests:
+          - type: geopoint
+          - not_null
+  - name: Route
+    description: The serviced bus routes
+    source:
+      - type: file
+        name: route.json
+    columns:
+      - name: routeid
+        tests:
+          - type: integer
+          - unique
+          - not_null
+      - name: label
+        tests:
+         - type: string
+         - not_null
+      - name: name
+        tests:
+         - type: string
+         - not_null
+  - name: Routestops
+    description: The sequence of stops that makes up a bus route
+    source:
+      - type: file
+        name: routestops.json
+    tests:
+      - unique_combination_of_columns:
+          combination_of_columns:
+            - routeid
+            - stopno
+    columns:
+      - name: routeid
+        tests:
+         - relationships:
+             to: Route
+             field: routeid
+             name: route
+      - name: stopno
+        tests:
+          - type: integer
+          - not_null
+      - name: stopid
+        tests:
+         - relationships:
+             to: Busstop
+             field: stopid
+             name: stop
+      - name: timeoffset_min
+        tests:
+          - type: integer
+          - not_null
+          - comparison: ">= 0"
+  - name: Schedule
+    description: The scheduled bus route runs
+    source:
+      - type: file
+        name: schedule.json
+    columns:
+      - name: scheduleid
+        tests:
+          - type: integer
+          - not_null
+          - unique
+      - name: routeid
+        tests:
+         - relationships:
+             to: Route
+             field: routeid
+             name: route
+      - name: busid
+        tests:
+         - relationships:
+             to: Bus
+             field: busid
+             name: bus
+      - name: starttime
+        tests:
+          - type: timestamp
+          - not_null
+  - name: Schedulefollows
+    description: Users following a particular bus schedule and stop
+    source:
+      - type: file
+        name: schedulefollows.json
+    columns:
+      - name: followid
+        tests:
+          - type: integer
+          - not_null
+          - unique
+      - name: userid
+        tests:
+          - type: integer
+          - not_null
+      - name: scheduleid
+        tests:
+         - relationships:
+             to: Schedule
+             field: scheduleid
+             name: schedule
+      - name: stopid
+        tests:
+         - relationships:
+             to: Busstop
+             field: stopid
+             name: stop

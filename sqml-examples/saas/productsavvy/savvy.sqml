@@ -1,0 +1,72 @@
+IMPORT order-data.*;
+IMPORT FUNCTION time.roundToDay;
+IMPORT FUNCTION time.roundToHour;
+IMPORT FUNCTION math;
+
+Order := DISTINCT Order ON id ORDER BY time DESC;
+Tenant := SELECT DISTINCT tenant_id AS id FROM Order;
+
+Category.parents := JOIN Category c ON c.id IN @.parents_id;
+
+Order.total := SUM(entries.total_price);
+
+Tenant.orders := JOIN Order ON Order.tenant_id = @.id ORDER BY time DESC;
+Tenant.order_volume := SELECT roundToDay(time) as day, state, SUM(total) AS revenue, COUNT(*) AS num_orders
+                        FROM @.orders GROUP BY day, state ORDER BY day DESC;
+
+
+Tenant.products := SELECT DISTINCT product_id, name, category_id FROM Product WHERE tenant_id = @.id;
+Tenant.products.orderEntries := JOIN Order o ON o.tenant_id = @.parent.id
+                          JOIN o.entries e ON e.product_id = @.product_id ORDER BY o.time DESC;
+Tenant.products.views := JOIN Views v ON v.tenant_id = @.parent.id AND v.product_id = @.product_id;
+
+
+{% for period in [{name: "DAY", column: "day", interval: "5 YEAR"}, {name: "HOUR", column: "hour", interval: "28 WEEK"}] %}
+
+Tenant.products.volumeBy{{period[name]}} := SELECT roundTo{{period[name]}}(time) as {{period[column]}}, state, SUM(total_price) AS revenue,
+                                 SUM(quantity) AS quantity, SUM(num_orders) AS num_orders, SUM(num_views) AS num_views
+                        FROM (
+                            SELECT parent.time AS time, parent.state AS state, 1 AS num_orders, quantity, total_price FROM @.orderEntries
+                              WHERE time > now() - INTERVAL {{period[interval]}}
+                            UNION ALL
+                            SELECT time, state, 1 AS num_views FROM @.views
+                              WHERE time > now() - INTERVAL {{period[interval]}}
+                             )
+                        GROUP BY {{period[column]}}, state ORDER BY {{period[column]}} DESC;
+
+
+Tenant._categoryVolume{{period[name]}} :=
+WITH categoryVolumeRec
+AS (
+    SELECT {{period[column]}}, state, revenue, quantity, num_orders, num_views, parent.category_id as category_id
+        FROM @.products.volume
+    UNION ALL
+    SELECT {{period[column]}}, state, SUM(revenue), SUM(quantity), SUM(num_orders), SUM(num_views), p.id AS category_id
+        FROM categoryVolumeRec cvr JOIN Category c ON c.id = cvr.category_id JOIN Category p ON p.id IN c.parents_id
+        GROUP BY category_id, {{period[column]}}, state;
+)
+SELECT {{period[column]}}, state, category_id, SUM(revenue) AS revenue, SUM(quantity) AS quantity, SUM(num_orders) AS num_orders, SUM(num_views) AS num_views
+FROM categoryVolumeRec GROUP BY {{period[column]}}, state, category_id ORDER BY category_id ASC, {{period[column]}} DESC;
+
+_CategoryVolume{{period[name]}} := SELECT {{period[column]}}, state, category_id, SUM(revenue) AS revenue, SUM(quantity) AS quantity, SUM(num_orders) AS num_orders, SUM(num_views) AS num_views
+                   FROM Tenant._categoryVolume{{period[name]}} GROUP BY {{period[column]}}, state, category_id ORDER BY category_id ASC, {{period[column]}} DESC;
+Category.volumeBy{{period[name]}} := JOIN _CategoryVolume{{period[name]}} cv ON cv.category_id = @.id;
+
+{% endfor %}
+
+Tenant.categories := SELECT DISTINCT category_id FROM @._categoryVolumeDay;
+Tenant.categories.global_category := JOIN Category ON Category.id = @.category_id;
+Tenant.categories.products := JOIN @.parent.products p ON @.category_id = p.category_id INVERSE category;
+Tenant.categories.volumeByHour := JOIN @.parent._categoryVolumeHour cv ON cv.category_id = @.category_id;
+Tenant.categories.volumeByDay := JOIN @.parent._categoryVolumeDay cv ON cv.category_id = @.category_id;
+
+{% for table in ["Tenant.products","Tenant.categories","Category"] %}
+
+{{table}}.last24hRevenue := SELECT SUM(revenue) FROM @.volumeByHour
+                        WHERE hour < now() - INTERVAL 1 HOUR AND hour > now() - INTERVAL 25 HOUR;
+-- a week is 168 hours
+{{table}}._priorWeek24hRevenue := SELECT SUM(revenue) FROM @.volumeByHour
+                        WHERE hour < now() - INTERVAL (168+1) HOUR AND hour > now() - INTERVAL (168+25) HOUR;
+{{table}}.wow24hRevenue := @.last24hRevenue / math.max(@._priorWeek24hRevenue, 1);
+
+{% endfor %}

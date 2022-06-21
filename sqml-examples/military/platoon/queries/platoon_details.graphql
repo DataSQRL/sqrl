@@ -1,0 +1,26 @@
+query PlatoonDetails($id: Int!) {
+   platforms(filter: { platoonId: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       overview(limit: 100)
+       {
+         category
+         number
+         num_reporting
+         percent_reporting
+         num_healthy
+         percent_healthy
+       }
+       location
+       {
+         center
+         {
+           lat
+           long
+         }
+         spread
+       }
+     }
+   }
+ }

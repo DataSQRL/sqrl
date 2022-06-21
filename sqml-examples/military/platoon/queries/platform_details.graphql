@@ -1,0 +1,41 @@
+query PlatformDetails($prn: Int!) {
+   platforms(filter: { prn: {eq: $prn}}, limit: 1)
+   {
+     data
+     {
+       prn
+       type
+       category
+       platoonId
+       isReporting
+       isHealthy
+       lastStatus
+       {
+         timestamp
+         location
+         {
+           lat
+           long
+         }
+         measurements(limit: 100)
+         {
+           type
+           value
+         }
+       }
+       lastTracking
+       {
+         timestamp
+         tracking(limit: 100)
+         {
+           location
+           {
+             lat
+             long
+           }
+           speed
+         }
+       }
+     }
+   }
+ }

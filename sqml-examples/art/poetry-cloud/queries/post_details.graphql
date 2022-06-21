@@ -1,0 +1,18 @@
+query PostDetails($post: Int!) {
+   posts(filter: { id: {eq: $post}}, limit: 1)
+   {
+     data
+     {
+       id
+       title
+       timestamp
+       user
+       {
+         id
+         name
+         num_stars
+         num_posts
+       }
+     }
+   }
+ }

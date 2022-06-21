@@ -1,0 +1,20 @@
+query AuctionByDay($page: String) {
+   auctionsbydays (page: $page, page-size: 30)
+   {
+     data
+     {
+       day
+       num_auctions
+       max_price
+       avg_price
+       avg_num_bids
+       total_bids
+       avg_duration
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

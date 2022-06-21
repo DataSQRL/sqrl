@@ -1,0 +1,46 @@
+[
+  {
+    "id": 6674,
+    "name": "Ironman",
+    "week_of": "6/7/2021",
+    "points": 50,
+    "goals": [
+      {
+        "type": "running",
+        "distance": 42200
+      },
+      {
+        "type": "biking",
+        "distance": 180200
+      },
+      {
+        "type": "swimming",
+        "distance": 3900
+      }
+    ]
+  },
+  {
+    "id": 6673,
+    "name": "Hulk",
+    "week_of": "5/31/2021",
+    "points": 30,
+    "goals": [
+      {
+        "type": "pushup",
+        "repetitions": 1000
+      },
+      {
+        "type": "situps",
+        "repetitions": 1000
+      },
+      {
+        "type": "deadlifts",
+        "repetitions": 1000
+      },
+      {
+        "type": "pullups",
+        "repetitions": 1000
+      }
+    ]
+  }
+]

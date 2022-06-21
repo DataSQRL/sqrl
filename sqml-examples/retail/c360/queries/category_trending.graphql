@@ -1,0 +1,19 @@
+query CategoryTrending($category: String!, $page: String) {
+   categories(filter: { name: {eq: $category}}, limit: 1)
+   {
+     data
+     {
+       name
+       trending(page: $page, page-size: 20) {
+         productid
+         name
+         description
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

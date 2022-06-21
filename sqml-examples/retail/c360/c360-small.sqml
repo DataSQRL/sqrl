@@ -1,0 +1,18 @@
+IMPORT ecommerce-data.Orders;
+
+-- Compute useful statistics on orders
+/*
+Orders.entries.discount := discount ? 0.0;
+Orders.entries.total := quantity * unit_price - discount;
+*/
+
+/*
+Orders.total := sum(entries.total);
+Orders.total_savings := sum(entries.discount) + 5;
+Orders.total_entries := count(entries);
+*/
+
+
+CustomerOrderStats := SELECT customerid, count(*) as num_orders FROM Orders
+                      WHERE time % 2 = 0
+                      GROUP BY customerid;

@@ -1,0 +1,18 @@
+subscription HealthAlert {
+  HealthAlert {
+    prn
+    platoonId
+    isReporting
+    isHealthy
+    lastStatus
+    {
+      timestamp
+      location
+      measurements
+      {
+        type
+        value
+      }
+    }
+  }
+}

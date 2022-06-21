@@ -1,0 +1,30 @@
+query CreditCardInfo($cc: Number!, $dayofweek: String!, $merchant_id: Number!) {
+   creditcards(filter: { number: {eq: $cc}}, limit: 1)
+   {
+     last24h_spent
+     {
+       total
+       average
+       num_tx
+     }
+     avg_daily_spent(limit: 14)
+     {
+       day
+       total
+       average
+       num_tx
+     }
+     dayofweek_spent(filter: { dayofweek: {eq: $dayofweek}}, limit: 1)
+     {
+       avg_total
+       avg_num_tx
+       avg_tx_amount
+     }
+     merchant_spent(filter: { merchant_id: {eq: $merchant_id}}, limit: 1)
+     {
+       total
+       average
+       num_tx
+     }
+   }
+}

@@ -1,0 +1,24 @@
+query CustomerRecommendation($id: Int!, $page: String) {
+   customers(filter: { customerid: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       favorite_categories(page: $page, page-size: 5) {
+         total
+         category {
+           name
+           trending(limit: 5) {
+             productid
+             name
+             description
+           }
+         }
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

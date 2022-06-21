@@ -147,7 +147,7 @@ public class KafkaSourceTest extends AbstractSQRLIntegrationTest {
         assertEquals(4,numRecords);
     }
 
-    @Test
+//    @Test
     @SneakyThrows
     public void testDatasetMonitoringWithPrefix() {
         writeTextFilesToTopic(topics[0], "key", BookClub.BOOK_FILES);
@@ -164,7 +164,7 @@ public class KafkaSourceTest extends AbstractSQRLIntegrationTest {
         testBookSourceTable(dsName,dsUpdate);
     }
 
-    @Test
+//    @Test
     @SneakyThrows
     public void testDatasetMonitoringWithExtension() {
         writeTextFilesToTopic(topics[1], "key", BookClub.BOOK_FILES);

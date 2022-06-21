@@ -1,0 +1,27 @@
+query CustomerOrderAgain($id: Int!, $page: String) {
+   customers(filter: { customerid: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       recent_products (page: $page, page-size: 20)
+       {
+         product
+         {
+           productid
+           name
+           category
+         }
+         quantity
+       }
+       recent_product_categories (limit: 20)
+       {
+         category
+         num_products
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+ }

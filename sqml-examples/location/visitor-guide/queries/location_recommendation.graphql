@@ -1,0 +1,23 @@
+query LocationRecommendation($visitor: Int!, $page: String) {
+   visitors(filter: { visitor_id: {eq: $visitor}}, limit: 1)
+   {
+     data
+     {
+       favorite_locations(order-by: [{score: DESC}], page-size:20, page: $page)
+       {
+         location
+         {
+           id
+           name
+         }
+         time_spent
+         score         
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

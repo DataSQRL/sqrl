@@ -1,0 +1,12 @@
+query CreditCardInfo($cc: Number!, $page: String) {
+   creditcards(filter: { number: {eq: $cc}}, limit: 1)
+   {
+     recent_locations (order-by: [{state: DESC}], page: $page, page-size: 50)
+     {
+       state
+       num_tx
+       avg_amount
+       most_recent
+     }
+   }
+}

@@ -1,0 +1,43 @@
+IMPORT poetry-data.*;
+
+IMPORT col.collect_as_set;
+
+Star := DISTINCT Star ON userid, postid ORDER BY timestamp DESC;
+
+-- Adding relationships between the tables
+Star.post := JOIN Post ON Post.id = @.postid INVERSE stars;
+Star.user := JOIN User On User.id = @.userid INVERSE stared;
+
+Connect.from := JOIN Post ON Post.id = @.frompostid;
+Connect.to := JOIN Post ON Post.id = @.topostid;
+Connect.user := JOIN User ON User.id = @.userid INVERSE connections;
+
+Post.user := JOIN User ON User.id = @.userid INVERSE posts;
+Post.connections := JOIN Connect ON (@.id = Connect.frompostid OR @.id = Connect.topostid);
+
+-- Aggregates
+
+Post.num_stars := COUNT(stars);
+Post.num_connections := COUNT(connections);
+
+-- We count connections double for activity levels
+Post.recent_activity := (SELECT COUNT(*) FROM @.stars WHERE timestamp > now() - INTERVAL 24 HOUR LIMIT 1)
+                        + 2*(SELECT COUNT(*) FROM @.connections WHERE timestamp > now() - INTERVAL 24 HOUR LIMIT 1)
+
+Post.agg_connections := SELECT iff(c.frompostid=@.id,c.topostid,c.frompostid) as otherid,
+                               COUNT(*) as count, collect_as_set(c.tag) as tags
+                        FROM @ JOIN @.connections c
+                        GROUP BY otherid ORDER BY count;
+Post.agg_connections.other = JOIN Post ON Post.id = @.otherid;
+
+User.num_posts := COUNT(posts);
+User.num_stars := SUM(posts.num_stars);
+User.num_connections := COUNT(connections);
+
+//Need to rework this so we only get notified when a new connection is added, not when a user stars something new
+CREATE SUBSCRIPTION NewConnections ON ADD AS
+SELECT u.id as userid, p.id as sourcepostid, c.id as connectionid
+    FROM User u JOIN u.stared s JOIN s.posts p JOIN p.connections c
+    WHERE s._ingest_time < c._ingest_time
+
+NewConnections.connection := JOIN Connect c ON c.id = @.connectionid;

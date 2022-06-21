@@ -1,0 +1,19 @@
+query StreamStatistics($id: Int!, $page: String) {
+   streams(filter: { streamid: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       stats_by_minute (order-by: {min: DESC}, page: $page, page-size: 180)
+       {
+         min
+         viewers
+         view_percentage
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

@@ -1,0 +1,23 @@
+query UserDetails($userid: Int!, $requestuser: Int!) {
+   users(filter: { userid: {eq: $userid}}, limit: 1): user
+   {
+     data
+     {
+       name
+       num-friends
+       num-groups
+       num-postings
+       postings(order-by: {timestamp: DESC}, $page-size: 10)
+       {
+         postid
+         timestamp
+         text
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

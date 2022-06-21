@@ -1,0 +1,42 @@
+query PoSInfo($pos_id: Number!) {
+   pos(filter: { pos_id: {eq: $pos_id}}, limit: 1)
+   {
+     fraud_by_week(order-by: {week : DESC}, limit: 12)
+     {
+       week
+       num_tx
+       total
+       num_fraud
+       total_fraud
+       fraud_tx_ratio
+       fraud_total_ratio
+       fraud_ratio
+     }
+     fraud_last_year
+     {
+       num_tx
+       total
+       num_fraud
+       total_fraud
+       fraud_tx_ratio
+       fraud_total_ratio
+       fraud_ratio
+     }
+     merchant
+     {
+       merchant_id
+       name
+       category
+       fraud_last_year
+       {
+         num_tx
+         total
+         num_fraud
+         total_fraud
+         fraud_tx_ratio
+         fraud_total_ratio
+         fraud_ratio
+       }
+     }
+   }
+}

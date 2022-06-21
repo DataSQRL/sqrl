@@ -1,0 +1,10 @@
+subscription ADRAlert {
+  adr_alert {
+    id
+    timestamp
+    patient_id
+    adr_ref
+    name
+    severity
+  }
+}
