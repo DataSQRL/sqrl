@@ -59,14 +59,11 @@ public class Column extends Field implements ShadowingContainer.IndexElement {
 
   @Override
   public String toString() {
-    return "Column{" +
-        "version=" + version +
-        ", index =" + index +
-        ", isPrimaryKey=" + isPrimaryKey +
-        ", isParentPrimaryKey=" + isParentPrimaryKey +
-        ", isVisible=" + isVisible +
-        ", name=" + name +
-        '}';
+    String s = getId() + " @" + index + ": ";
+    if (isPrimaryKey) s += "pk ";
+    if (isParentPrimaryKey) s += "ppk ";
+    if (!isVisible) s += "hidden";
+    return s;
   }
 
   @Value

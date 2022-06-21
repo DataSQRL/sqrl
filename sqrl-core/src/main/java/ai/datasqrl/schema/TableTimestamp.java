@@ -23,6 +23,11 @@ public class TableTimestamp {
         this.column = column;
     }
 
+    @Override
+    public String toString() {
+        return "TIMESTAMP="+(column==null?"none":column.getId())+"@"+status;
+    }
+
     public boolean isLocked() {
         return status.isLocked();
     }

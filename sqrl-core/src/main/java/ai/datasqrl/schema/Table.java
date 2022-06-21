@@ -5,6 +5,7 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Relationship.JoinType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,6 +33,13 @@ public class Table extends AbstractTable {
     this.timestamp = timestamp;
     this.statistic = statistic;
     Preconditions.checkNotNull(fields.contains(timestamp));
+  }
+
+  @Override
+  public String toString() {
+    String s = super.toString();
+    s += "[" + type + "," + timestamp + "," + statistic + "]";
+    return s;
   }
 
   public Optional<Field> walkField(NamePath namePath) {
@@ -83,12 +91,11 @@ public class Table extends AbstractTable {
   }
 
   public Optional<Table> getParent() {
-    for (Field field : fields) {
-      if (field instanceof Relationship && ((Relationship) field).getJoinType() == JoinType.PARENT) {
-        return Optional.of(((Relationship) field).getToTable());
-      }
-    }
-    return Optional.empty();
+    return getAllRelationships().filter(r -> r.getJoinType() == JoinType.PARENT).map(Relationship::getToTable).findFirst();
+  }
+
+  public Collection<Table> getChildren() {
+    return getAllRelationships().filter(r -> r.getJoinType() == JoinType.CHILD).map(Relationship::getToTable).collect(Collectors.toList());
   }
 
   /**

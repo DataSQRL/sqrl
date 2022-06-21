@@ -89,7 +89,6 @@ public class SchemaUpdatePlanner {
           SourceTableImportOp op = new SourceTableImportOp(table, tableTypes, importSource);
           ops.add(op);
           //Add timestamp if explicitly defined
-          Column timestampColumn;
           if (node.getTimestamp().isPresent()) {
             SingleColumn timeColDef = node.getTimestamp().get();
             Name timeColName = timeColDef.getAlias().map(n -> n.getNamePath().getLast()).orElse(ReservedName.TIMESTAMP);

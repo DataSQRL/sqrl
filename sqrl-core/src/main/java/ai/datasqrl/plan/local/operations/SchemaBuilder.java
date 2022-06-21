@@ -70,4 +70,9 @@ public class SchemaBuilder implements SchemaOpVisitor {
   public Schema build() {
     return schema;
   }
+
+  @Override
+  public String toString() {
+    return schema.toString();
+  }
 }

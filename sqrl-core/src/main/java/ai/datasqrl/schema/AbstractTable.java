@@ -55,9 +55,13 @@ public class AbstractTable implements ShadowingContainer.Element {
 
     @Override
     public String toString() {
-        return "Table{" +
-                "name=" + getName() +
-                '}';
+        StringBuilder s = new StringBuilder();
+        s.append("Table[id=").append(getId()).append("]{\n");
+        for (Field f : fields) {
+            s.append("\t").append(f.toString()).append("\n");
+        }
+        s.append("}");
+        return s.toString();
     }
 
     public Optional<Field> getField(Name name) {

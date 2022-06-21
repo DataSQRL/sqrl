@@ -16,4 +16,9 @@ public class TableStatistic {
         return new TableStatistic(rowCount);
     }
 
+    @Override
+    public String toString() {
+        return "Stats="+rowCount;
+    }
+
 }
