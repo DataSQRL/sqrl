@@ -288,7 +288,7 @@ class SchemaTest extends AbstractSQRLIntegrationTest {
 
   public void runScript(String script) {
     ScriptNode node = parser.parse(script);
-    BundleTableFactory tableFactory = new BundleTableFactory(calciteEnv);
+    BundleTableFactory tableFactory = new BundleTableFactory();
     SchemaBuilder schema = new SchemaBuilder();
 
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();

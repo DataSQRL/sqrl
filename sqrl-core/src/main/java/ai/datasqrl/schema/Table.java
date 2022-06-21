@@ -22,12 +22,11 @@ public class Table extends AbstractTable {
   }
 
   @NonNull private final Type type;
-  @Setter
-  @NonNull private Column timestamp;
+  @NonNull private TableTimestamp timestamp;
   @NonNull private final TableStatistic statistic;
 
   public Table(int uniqueId, NamePath path, Type type, ShadowingContainer<Field> fields,
-               Column timestamp, TableStatistic statistic) {
+               TableTimestamp timestamp, TableStatistic statistic) {
     super(uniqueId,path,fields);
     this.type = type;
     this.timestamp = timestamp;
@@ -54,7 +53,7 @@ public class Table extends AbstractTable {
           .walkField(namePath.popFirst());
     }
 
-    return Optional.of(field.get());
+    return field;
   }
 
   public Optional<Table> walk(NamePath namePath) {

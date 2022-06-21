@@ -38,7 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 public class StatementNormalizer {
 
-  private ImportManager importManager;
   private Schema schema;
 
   private final RelationNormalizer relationNormalizer = new RelationNormalizer();

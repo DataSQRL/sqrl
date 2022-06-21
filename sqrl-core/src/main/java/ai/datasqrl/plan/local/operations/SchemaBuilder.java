@@ -2,6 +2,7 @@ package ai.datasqrl.plan.local.operations;
 
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.TableTimestamp;
 import lombok.Getter;
 
 /**
@@ -20,6 +21,7 @@ public class SchemaBuilder implements SchemaOpVisitor {
   public <T> T visit(AddColumnOp op) {
     Table table = op.getTable();
     table.getFields().add(op.getColumn());
+    if (op.isTimestamp()) table.getTimestamp().update(op.getColumn(), TableTimestamp.Status.DEFINED);
     return null;
   }
 
@@ -57,8 +59,7 @@ public class SchemaBuilder implements SchemaOpVisitor {
 
   @Override
   public <T> T visit(SourceTableImportOp op) {
-
-    schema.add(op.getTable());
+    schema.add(op.getRootTable());
     return null;
   }
 

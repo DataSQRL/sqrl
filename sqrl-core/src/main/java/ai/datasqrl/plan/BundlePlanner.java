@@ -40,7 +40,7 @@ public class BundlePlanner {
 
   public BundlePlanner(BundleOptions options) {
     this.options = options;
-    this.tableFactory = new BundleTableFactory(options.getCalciteEnv());
+    this.tableFactory = new BundleTableFactory();
   }
 
   public PhysicalPlan processBundle(ScriptBundle bundle) {

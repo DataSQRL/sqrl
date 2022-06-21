@@ -63,18 +63,19 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
     //1. lookup in scope to see if we're dealing with an alias, or expression
     //   validate we have an unambiguous result
 
-    List<RelationNorm> table = scope.resolve(namePath);
-    if (table.isEmpty()) {
+    List<RelationNorm> tables = scope.resolve(namePath);
+    if (tables.isEmpty()) {
       throw new RuntimeException("Could not find field " + namePath);
-    } else if (table.size() > 1) {
-      throw new RuntimeException("Ambiguous field " + namePath + " " + table);
+    } else if (tables.size() > 1) {
+      throw new RuntimeException("Ambiguous field " + namePath + " " + tables);
     }
 
-    if (table.get(0) instanceof QuerySpecNorm) {
-      return new ReferenceExpression(table.get(0), ((QuerySpecNorm)table.get(0)).getField(namePath));
+    RelationNorm table = tables.get(0);
+    if (table instanceof QuerySpecNorm) {
+      return new ReferenceExpression(table, ((QuerySpecNorm)table).getField(namePath));
     }
 
-    TableNodeNorm base = (TableNodeNorm)table.get(0);
+    TableNodeNorm base = (TableNodeNorm)table;
     //2. If we're dealing with an alias, pop first, resolve remainder of path
     //   Else resolve the entire path
     NamePath path = removeAliasFromPath(namePath, scope);
