@@ -28,7 +28,7 @@ public class FlinkTableAPIIntegrationTest extends AbstractSQRLIntegrationTest {
   }
 
   @SneakyThrows
-  @Test
+//  @Test
   public void testFlinkTableAPIIntegration() {
     C360 example = C360.INSTANCE;
     example.registerSource(env);
