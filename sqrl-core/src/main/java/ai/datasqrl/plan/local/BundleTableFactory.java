@@ -10,14 +10,12 @@ import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.CalciteEnvironment;
 import ai.datasqrl.plan.local.operations.SourceTableImportOp;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
 import ai.datasqrl.schema.*;
-import ai.datasqrl.schema.constraint.NotNull;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.RelationType;
 import ai.datasqrl.schema.type.ArrayType;
@@ -141,9 +139,9 @@ public class BundleTableFactory {
             } else {
                 tblBuilder.addColumn(ReservedName.UUID,true,
                         false, UuidType.INSTANCE, true, true);
-                addField(ReservedName.INGEST_TIME, DateTimeType.INSTANCE, true);
+                tblBuilder.addColumn(ReservedName.INGEST_TIME, false, false, DateTimeType.INSTANCE, true, true);
                 if (hasSourceTimestamp) {
-                    addField(ReservedName.SOURCE_TIME, DateTimeType.INSTANCE, true);
+                    tblBuilder.addColumn(ReservedName.SOURCE_TIME, false, false, DateTimeType.INSTANCE, true, true);
                 }
             }
             stack.addFirst(tblBuilder);
@@ -202,7 +200,6 @@ public class BundleTableFactory {
 
         private final SourceTableImportOp.RowType rowType = new SourceTableImportOp.RowType();
         private final List<Pair<TableBuilder, Relationship.Multiplicity>> children = new ArrayList<>();
-        private int columnCounter = 0;
         private Pair<Column, Integer> timestampCandidate = null;
 
         private TableBuilder(NamePath namePath) {
@@ -224,7 +221,7 @@ public class BundleTableFactory {
         public Column addColumn(Name name, boolean isPrimaryKey, boolean isParentPrimaryKey,
                                 boolean isVisible) {
             int version = getNextColumnVersion(name);
-            Column col = new Column(name, version, columnCounter++,
+            Column col = new Column(name, version, getNextColumnIndex(),
                     isPrimaryKey, isParentPrimaryKey, isVisible);
             fields.add(col);
             return col;
@@ -233,7 +230,7 @@ public class BundleTableFactory {
         private Column addColumn(Name name, boolean isPrimaryKey, boolean isParentPrimaryKey,
                        Type type, boolean notnull, boolean isVisible) {
             Column column = addColumn(name, isPrimaryKey, isParentPrimaryKey, isVisible);
-            rowType.set(column.getIndex(),new SourceTableImportOp.ColumnType(type,notnull));
+            rowType.add(column.getIndex(),new SourceTableImportOp.ColumnType(type,notnull));
             //Check if this is a candidate for timestamp
             if (notnull && (type instanceof DateTimeType) &&
                     defaultTimestampPreference.containsKey(name)) {
@@ -250,7 +247,7 @@ public class BundleTableFactory {
             for (Column ppk : parent.getPrimaryKeys()) {
                 Column copiedPpk = addColumn(ppk.getName(), true, true,
                         false);
-                rowType.set(copiedPpk.getIndex(),parent.rowType.get(ppk.getIndex()));
+                rowType.add(copiedPpk.getIndex(),parent.rowType.get(ppk.getIndex()));
             }
         }
 

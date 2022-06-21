@@ -7,14 +7,11 @@ import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.LongLiteral;
-import ai.datasqrl.parse.tree.OrderBy;
 import ai.datasqrl.parse.tree.Query;
 import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.Select;
 import ai.datasqrl.parse.tree.SelectItem;
 import ai.datasqrl.parse.tree.SingleColumn;
-import ai.datasqrl.parse.tree.SortItem;
-import ai.datasqrl.parse.tree.SortItem.Ordering;
 import ai.datasqrl.parse.tree.TableNode;
 import ai.datasqrl.parse.tree.TableSubquery;
 import ai.datasqrl.parse.tree.Window;
@@ -30,7 +27,7 @@ public class DistinctTransform {
 
   @SneakyThrows
   public Query transform(DistinctAssignment node, Table table) {
-    List<SelectItem> selectItems = table.getColumns()
+    List<SelectItem> selectItems = table.getVisibleColumns()
         .stream()
         .map(f->
             new SingleColumn(Optional.empty(),

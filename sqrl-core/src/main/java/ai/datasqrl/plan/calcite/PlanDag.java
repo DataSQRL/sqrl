@@ -104,11 +104,11 @@ public class PlanDag implements SqrlCalciteBridge, SchemaOpVisitor {
       FieldInfoBuilder fieldBuilder = planner.getTypeFactory().builder().kind(StructKind.FULLY_QUALIFIED);
       Table table = tableImp.getKey();
       SourceTableImportOp.RowType rowType = tableImp.getValue();
-      Preconditions.checkArgument(table.getFields().size()== rowType.size());
+      Preconditions.checkArgument(table.getFields().getIndexLength() == rowType.size());
       for (int i = 0; i< rowType.size(); i++) {
         SourceTableImportOp.ColumnType colType = rowType.get(i);
         RelDataType type = colType.getType().accept(typeConverter, null);
-        fieldBuilder.add(table.getFields().get(i).getName().getCanonical(), type).nullable(colType.isNotnull());
+        fieldBuilder.add(table.getFields().atIndex(i).getName().getCanonical(), type).nullable(colType.isNotnull());
       }
 
       SchemaCalciteTable schemaCalciteTable =

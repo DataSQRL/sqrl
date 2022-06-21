@@ -27,7 +27,7 @@ public class RejoinExprTransform {
   public static RelationNorm transform(QuerySpecNorm node, Table table) {
     TableNodeNorm tableNodeNorm = new TableNodeNorm(Optional.empty(), table.getPath(), Optional.empty(), new TableRef(table),
         false, List.of());
-    List<Expression> columns = table.getColumns().stream()
+    List<Expression> columns = table.getVisibleColumns().stream()
         .filter(field -> !field.isParentPrimaryKey())
         .map(c-> ResolvedColumn.of(tableNodeNorm, c))
         .collect(Collectors.toList());

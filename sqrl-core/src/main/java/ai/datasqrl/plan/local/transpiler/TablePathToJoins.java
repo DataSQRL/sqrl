@@ -68,7 +68,7 @@ public class TablePathToJoins {
           .collect(Collectors.toList());
     } else {
       List<TableOrRelationship> rels = new ArrayList<>();
-      Table table = scope.getSchema().getByName(namePath.getFirst())
+      Table table = scope.getSchema().getVisibleByName(namePath.getFirst())
           .orElseThrow(()->new RuntimeException(namePath.toString()));
       rels.add(new TableRef(table));
       Optional<List<Field>> remaining = table.walkFields(namePath.popFirst());

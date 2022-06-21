@@ -46,23 +46,6 @@ public class SchemaUpdatePlanner {
     return Optional.ofNullable(node.accept(new Visitor(schema), null));
   }
 
-  private static AddColumnOp planExpression(Node node, NamePath name, Schema schema) {
-    StatementNormalizer normalizer = new StatementNormalizer(schema);
-    Node relationNorm = normalizer.normalize(node);
-//      System.out.println("Converted: " + NodeFormatter.accept(relationNorm));
-    SqlNodeConverter converter = new SqlNodeConverter();
-    SqlNode sqlNode = relationNorm.accept(converter, new ConvertContext());
-    System.out.println("Sql: " + SqlNodeFormatter.toString(sqlNode));
-
-    Table table = schema.walkTable(name.popLast());
-    Name columnName = name.getLast();
-    int nextVersion = table.getNextColumnVersion(columnName);
-
-    Column column = new Column(columnName, nextVersion, table.getFields().size(),
-            false, false, true);
-
-    return new AddColumnOp(table, relationNorm, column);
-  }
 
   private class Visitor extends AstVisitor<SchemaUpdateOp, Object> {
 
@@ -129,7 +112,8 @@ public class SchemaUpdatePlanner {
               schema.apply(new SourceTableImportOp(table, tableTypes, importSource));
               NamePath colPath = NamePath.of(table.getName(),timeColName);
               ExpressionAssignment timeColAssign = new ExpressionAssignment(Optional.empty(),colPath,timeColDef.getExpression(),"",List.of());
-              AddColumnOp timeCol = planExpression(timeColAssign,colPath,schema.peek());
+              Visitor localVisitor = new Visitor(schema.peek());
+              AddColumnOp timeCol = localVisitor.planExpression(timeColAssign,colPath);
               ops.add(timeCol.asTimestamp());
             }
           }
@@ -142,14 +126,32 @@ public class SchemaUpdatePlanner {
 
     @Override
     public SchemaUpdateOp visitExpressionAssignment(ExpressionAssignment node, Object context) {
-      return planExpression(node, node.getNamePath(), schema);
+      return planExpression(node, node.getNamePath());
+    }
+
+    private AddColumnOp planExpression(Node node, NamePath name) {
+      StatementNormalizer normalizer = new StatementNormalizer(schema);
+      Node relationNorm = normalizer.normalize(node);
+//      System.out.println("Converted: " + NodeFormatter.accept(relationNorm));
+      SqlNodeConverter converter = new SqlNodeConverter();
+      SqlNode sqlNode = relationNorm.accept(converter, new ConvertContext());
+      System.out.println("Sql: " + SqlNodeFormatter.toString(sqlNode));
+
+      Table table = schema.walkTable(name.popLast());
+      Name columnName = name.getLast();
+      int nextVersion = table.getNextColumnVersion(columnName);
+
+      Column column = new Column(columnName, nextVersion, table.getNextColumnIndex(),
+              false, false, true);
+
+      return new AddColumnOp(table, relationNorm, column);
     }
 
 
     @Override
     public SchemaUpdateOp visitQueryAssignment(QueryAssignment node, Object context) {
       if (hasOneUnnamedColumn(node.getQuery())) {
-        return planExpression(node, node.getNamePath(), schema);
+        return planExpression(node, node.getNamePath());
       }
 
       StatementNormalizer normalizer = new StatementNormalizer(schema);

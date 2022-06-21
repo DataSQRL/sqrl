@@ -14,7 +14,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexNode;
 
 @Getter
-public class Column extends Field {
+public class Column extends Field implements ShadowingContainer.IndexElement {
 
   /* Identity of the column in addition to name for shadowed columns which we need to keep
      on the table even though it is no longer referenceable since another column may depend on it
@@ -56,13 +56,6 @@ public class Column extends Field {
   public boolean isVisible() {
     return isVisible;
   }
-
-  /**
-   * Whether this column is a simple projection column
-   * @return
-   */
-
-
 
   @Override
   public String toString() {

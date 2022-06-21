@@ -77,7 +77,7 @@ public class TableNodeNorm extends RelationNorm {
 
   @Override
   public List<Expression> getFields() {
-    return ref.getTable().getColumns().stream()
+    return ref.getTable().getVisibleColumns().stream()
         .map(c-> ResolvedColumn.of(this, c))
         .collect(Collectors.toList());
   }

@@ -130,24 +130,11 @@ public class Table extends AbstractTable {
   }
 
   public List<Column> getParentPrimaryKeys() {
-    return this.fields.stream()
-            .filter(f->f instanceof Column && ((Column) f).isParentPrimaryKey())
-        .map(f->(Column) f)
-        .collect(Collectors.toList());
+    return getAllColumns().filter(Column::isParentPrimaryKey).collect(Collectors.toList());
   }
 
-  public List<Column> getColumns() {
-    return this.fields.getElements().stream()
-        .filter(f->f instanceof Column && f.isVisible())
-        .map(f->(Column) f)
-        .collect(Collectors.toList());
-  }
-
-  public List<Relationship> getRelationships() {
-    return this.fields.getElements().stream()
-        .filter(f->f instanceof Relationship)
-        .map(f->(Relationship) f)
-        .collect(Collectors.toList());
+  public List<Column> getVisibleColumns() {
+    return getAllColumns().filter(Column::isVisible).collect(Collectors.toList());
   }
 
 }
