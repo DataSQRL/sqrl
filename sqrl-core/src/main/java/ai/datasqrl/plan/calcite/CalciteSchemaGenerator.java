@@ -40,7 +40,7 @@ public class CalciteSchemaGenerator extends AbstractFlexibleTableConverterVisito
 
     @Override
     public RelDataType wrapArray(RelDataType type, boolean notnull) {
-        return typeFactory.createArrayType(type,Short.MAX_VALUE);
+        return typeFactory.createArrayType(type,-1L);
     }
 
 

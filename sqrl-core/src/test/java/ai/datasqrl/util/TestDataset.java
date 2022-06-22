@@ -46,11 +46,11 @@ public interface TestDataset {
         return List.of(BookClub.INSTANCE, C360.INSTANCE);
     }
 
-    static Stream<? extends Arguments> generateAsArguments(List<Object>... otherArgs) {
+    static Stream<? extends Arguments> generateAsArguments(List<? extends Object>... otherArgs) {
         return generateAsArguments(Predicates.alwaysTrue(),otherArgs);
     }
 
-    static Stream<? extends Arguments> generateAsArguments(Predicate<TestDataset> filter, List<Object>... otherArgs) {
+    static Stream<? extends Arguments> generateAsArguments(Predicate<TestDataset> filter, List<? extends Object>... otherArgs) {
         List<TestDataset> datasets = getAll().stream().filter(filter).collect(Collectors.toList());
         List<List<? extends Object>> argumentLists = new ArrayList<>();
         argumentLists.add(datasets);
@@ -66,12 +66,5 @@ public interface TestDataset {
         }
     }
 
-    class WithSchemaProvider implements ArgumentsProvider {
-
-        @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {
-            return TestDataset.generateAsArguments(td -> td.getInputSchema().isPresent());
-        }
-    }
 
 }

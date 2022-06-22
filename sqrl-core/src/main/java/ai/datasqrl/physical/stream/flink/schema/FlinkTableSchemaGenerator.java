@@ -64,12 +64,16 @@ public class FlinkTableSchemaGenerator extends AbstractFlexibleTableConverterVis
         return DataTypes.ARRAY(nullable(type,notnull));
     }
 
+    public Schema getSchema() {
+        Preconditions.checkState(stack.isEmpty());
+        //TODO: add watermark
+        return schemaBuilder.build();
+    }
+
     public static Schema convert(FlexibleTableConverter converter) {
         FlinkTableSchemaGenerator tblGen = new FlinkTableSchemaGenerator();
         converter.apply(tblGen);
-        Preconditions.checkState(tblGen.stack.isEmpty());
-        //TODO: add watermark
-        return tblGen.schemaBuilder.build();
+        return tblGen.getSchema();
     }
 
     public static class SqrlType2TableConverter implements SqrlTypeConverter<DataType> {
