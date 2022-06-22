@@ -32,6 +32,8 @@ import ai.datasqrl.parse.SqlBaseParser.CreateSubscriptionContext;
 import ai.datasqrl.parse.SqlBaseParser.DecimalLiteralContext;
 import ai.datasqrl.parse.SqlBaseParser.DistinctAssignmentContext;
 import ai.datasqrl.parse.SqlBaseParser.DoubleLiteralContext;
+import ai.datasqrl.parse.SqlBaseParser.ExportDefinitionContext;
+import ai.datasqrl.parse.SqlBaseParser.ExportStatementContext;
 import ai.datasqrl.parse.SqlBaseParser.ExpressionAssignContext;
 import ai.datasqrl.parse.SqlBaseParser.ExpressionContext;
 import ai.datasqrl.parse.SqlBaseParser.FunctionCallContext;
@@ -92,6 +94,7 @@ import ai.datasqrl.parse.tree.DecimalLiteral;
 import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.DoubleLiteral;
 import ai.datasqrl.parse.tree.Except;
+import ai.datasqrl.parse.tree.ExportDefinition;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
 import ai.datasqrl.parse.tree.FunctionCall;
@@ -939,6 +942,15 @@ class AstBuilder
     }
 
     return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), alias, timestamp);
+  }
+
+  @Override
+  public Node visitExportStatement(ExportStatementContext ctx) { return visit(ctx.exportDefinition()); }
+
+  @Override
+  public Node visitExportDefinition(ExportDefinitionContext ctx) {
+    return new ExportDefinition(getLocation(ctx),
+      getNamePath(ctx.qualifiedName(0)), getNamePath(ctx.qualifiedName(1)));
   }
 
   @Override

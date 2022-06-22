@@ -1,0 +1,17 @@
+query LocationDetails($location: Int!, $page: String) {
+   locations(page: $page, page-size: 50)
+   {
+     data
+     {
+       name
+       capacity
+       occupancy
+       occupancy_rate
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

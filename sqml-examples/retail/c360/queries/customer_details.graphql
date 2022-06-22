@@ -1,0 +1,11 @@
+query CustomerDetails($id: Int!) {
+   customers(filter: { customerid: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       name
+       total_orders
+       email
+     }
+   }
+ }

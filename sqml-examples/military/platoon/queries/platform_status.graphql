@@ -1,0 +1,28 @@
+query PlatformStatus($prn: Int!, $page: String) {
+   platforms(filter: { prn: {eq: $prn}}, limit: 1)
+   {
+     data
+     {
+       prn
+       status(order-by: [{timestamp: DESC}], page-size: 50, page: $page)
+       {
+         timestamp
+         location
+         {
+           lat
+           long
+         }
+         measurements(limit: 100)
+         {
+           type
+           value
+         }
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

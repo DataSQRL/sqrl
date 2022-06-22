@@ -1,1 +1,2 @@
 taskmanager.network.numberOfBuffers: 20
+taskmanager.memory.task.off-heap.size: 2000

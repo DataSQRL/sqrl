@@ -51,6 +51,10 @@ public abstract class AstVisitor<R, C> {
     return visitNode(node, context);
   }
 
+  public R visitExportDefinition(ExportDefinition node, C context) {
+    return visitNode(node, context);
+  }
+
   public R visitAssignment(Assignment node, C context) {
     return visitNode(node, context);
   }

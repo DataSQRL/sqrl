@@ -1,0 +1,20 @@
+query ADRTemplate($id: Int!) {
+   adrtemplates(filter: { reference: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       name
+       severity
+       ingredients(limit: 100)
+       {
+         ingredient
+         min_dosage
+       }
+       preconditions(limit: 100)
+       {
+         diagnosis
+         max_duration
+       }
+     }
+   }
+ }

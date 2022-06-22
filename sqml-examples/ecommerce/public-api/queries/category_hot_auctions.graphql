@@ -1,0 +1,36 @@
+query CategoryHotAuctions($category: Int!, $time: Datetime!, $page: String) {
+   categories(filter: { category_id: {eq: $category}}, limit: 1)
+   {
+     data
+     {
+       auctions(filter: { end_time: {gt: $time}}, order-by: {num_recent_bids: DESC}, page: $page, page-size: 25) : hotauctions
+       {
+         id
+         item_name
+         category
+         {
+           name
+         }
+         seller
+         {
+           id
+           name
+         }
+         start_time
+         end_time
+         start_price
+         highest_bid_price
+         highest_bidder
+         {
+           id
+           name
+         }
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

@@ -1,0 +1,7 @@
+subscription HighInventoryAlert {
+  HighInventory {
+    location
+    num_shipments
+    total_weight
+  }
+}

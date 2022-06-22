@@ -1,0 +1,27 @@
+query UpcomingAuctions($time: Datetime!, $page: String) {
+   auctions(filter: { start_time: {gt: $time}}, order-by: {start_time: ASC}, page: $page, page-size: 25)
+   {
+     data
+     {
+       id
+       item_name
+       category
+       {
+         name
+       }
+       seller
+       {
+         id
+         name
+       }
+       start_time
+       end_time
+       start_price
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

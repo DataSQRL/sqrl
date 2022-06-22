@@ -1,0 +1,35 @@
+version: 1
+
+datasets:
+  - name: nutshop-data
+    tables:
+      - name: Product
+        columns:
+          - name: id
+            type: integer
+            tests:
+              - not_null
+          - name: name
+            type: string
+            tests:
+              - not_null
+          - name: sizing
+            type: string
+            tests:
+              - not_null
+          - name: weight_in_gram
+            type: integer
+            tests:
+              - not_null
+          - name: type
+            type: string
+            tests:
+              - not_null
+          - name: category
+            type: string
+            tests:
+              - not_null
+          - name: usda_id
+            type: integer
+            tests:
+              - not_null

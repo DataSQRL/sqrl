@@ -1,0 +1,24 @@
+query SimDataByMonth($uid: String!, $month: String!, $page: String) {
+   sims(filter: { uid: {eq: $uid}}, limit: 1)
+   {
+     data
+     {
+       data_by_month(filter: { month: {eq: $month}}, limit: 1)
+       {
+         month
+         total_data
+       }
+       requests_by_month(filter: { month: {eq: $month}}, page: $page, page-size: 50)
+       {
+         timestamp
+         uri
+         data_size
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

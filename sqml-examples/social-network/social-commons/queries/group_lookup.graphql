@@ -1,0 +1,21 @@
+query GroupLookup($groupid: Int!, $requestuser: Int!) {
+   groups(filter: { groupid: {eq: $groupid}}, limit: 1): group
+   {
+     data
+     {
+       name
+       num-members
+     }
+   }
+   users(filter: { userid: {eq: $requestuser}}, limit: 1): requestuser
+   {
+     data
+     {
+       friendgroups(filter: {groupid: {eq: $groupid}}, limit: 5)
+       {
+         friendid
+         friendname
+       }
+     }
+   }
+ }

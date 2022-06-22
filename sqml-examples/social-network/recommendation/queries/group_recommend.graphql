@@ -1,0 +1,18 @@
+query GroupRecommendation($requestuser: Int!, $page: String) {
+   users(filter: { userid: {eq: $requestuser}}, limit: 1)
+   {
+     data
+     {
+       group_recommend(page-size: 5, page: $page)
+       {
+         groupid
+         groupname
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

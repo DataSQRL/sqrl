@@ -1,0 +1,50 @@
+query HomeDetails($homeid: Int!) {
+   homes(filter: { homeid: {eq: $homeid}}, limit: 1)
+   {
+     data
+     {
+       registered
+       location
+       {
+         lat
+         long
+       }
+       rooms (order-by: { name: ASC})
+       {
+         name
+         readings (order-by: {time: DESC}, limit: 10) {
+           time
+           temperature
+           pm25
+           motion
+         }
+       }
+       rules (order-by: {active_from: ASC})
+       {
+         ruleid
+         active_from
+         active_to
+         action
+         conditions
+         {
+           room_name
+           temperature_lower
+           temperature_higher
+           vacant
+           motion
+           pm25_higher
+         }
+         triggerEvents (order-by: {timestamp: DESC}, limit: 5)
+         {
+           eventid
+           timestamp
+         }
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

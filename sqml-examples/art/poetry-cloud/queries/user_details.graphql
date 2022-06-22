@@ -1,0 +1,18 @@
+query UserDetails($user: Int!) {
+   users(filter: { id: {eq: $user}}, limit: 1)
+   {
+     data
+     {
+       id
+       name
+       num_stars
+       num_connections
+       num_posts
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

@@ -1,0 +1,22 @@
+query CustomerSpendingMonth($id: Int!, $month: DateTime!, $page: String) {
+   customers(filter: { customerid: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       spending_by_month(filter: { month: {eq: $month}}, limit: 1) {
+         total
+         savings
+         categories(page: $page, page-size: 50) {
+           category_name
+           total
+           savings
+         }
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

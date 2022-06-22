@@ -1,0 +1,66 @@
+version: 1
+
+datasets:
+  - name: ecommerce-data
+    tables:
+      - name: Customer
+        description: customer records from online shop
+        columns:
+          - name: customerid
+            description: the unique id for each customer
+            type: integer
+            tests:
+              - unique
+              - not_null
+          - name: email
+            type: string
+            tests:
+              - not_null
+          - name: name
+            type: string
+      - name: Product
+        description: Catalog of all products
+        columns:
+          - name: productid
+            type: integer
+            tests:
+              - unique
+              - not_null
+          - name: name
+            type: string
+            tests:
+              - not_null
+          - name: description
+            type: string
+          - name: category
+            type: string
+            tests:
+              - not_null
+      - name: Orders
+        description: Order records placed online
+        columns:
+          - name: id
+            type: integer
+            tests:
+              - unique
+              - not_null
+          - name: customerid
+            type: integer
+          - name: time
+            type: datetime
+            tests:
+              - not_null
+          - name: entries
+            columns:
+              - name: productid
+                type: integer
+              - name: quantity
+                type: integer
+                tests:
+                  - not_null
+              - name: unit_price
+                type: float
+                tests:
+                  - not_null
+              - name: discount
+                type: float

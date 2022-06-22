@@ -1,0 +1,37 @@
+query ProductsDaily($tenant: Int!, $yesterday: DateTime!, $page: String) {
+   tenants(filter: { id: {eq: $tenant}}, limit: 1)
+   {
+     data
+     {
+       products (order-by: [{last24hRevenue: DESC}], page: $page, page-size: 50)
+       {
+         product_id
+         name
+         category
+         {
+            category_id
+            global_category
+            {
+              name
+            }
+         }
+         last24hRevenue
+         wow24hRevenue
+         volumeByHour (filter: {hour: {gte: $since}}, aggregate: {state: ALL}, order-by: [{hour: DESC}], limit: 100)
+         {
+           hour
+           revenue
+           quantity
+           num_orders
+           num_views
+         }
+
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

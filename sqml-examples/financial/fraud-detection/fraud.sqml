@@ -1,0 +1,92 @@
+IMPORT cc-data.*;
+
+-- Import a purchased dataset table from a public source
+IMPORT PUBLIC marketplace.geo-solutions.coordinate-resolution.USStates;
+
+IMPORT FUNCTION time;
+
+-- Resolve coordinates to states for POS
+PoS.location_state := SELECT state FROM USStates
+                      WHERE @.online=false AND @.location IN bounding_box LIMIT 1;
+
+-- Compute average statistics per credit card number to describe "normal" behavior
+
+CreditCard := SELECT DISTINCT cc_number AS number FROM Transaction;
+
+CreditCard.tx := JOIN Transaction ON Transaction.cc_number = number;
+
+Transaction.pos := JOIN PoS ON @.pos_id = PoS.pos_id;
+PoS.merchant := JOIN Merchant ON @.merchant_id = Merchant.merchant_id;
+
+CreditCard.recent_locations := SELECT pos.location_state AS state, COUNT(*) AS num_tx,
+                               AVG(amount) AS avg_amount, MAX(timestamp) AS most_recent
+                        FROM @.tx
+                        WHERE timestamp > now() - INTERVAL 4 WEEK
+                        AND state IS NOT NULL
+                        AND canceled = false AND contested = false
+                        GROUP BY state;
+
+CreditCard.avg_daily_spent := SELECT time.roundToDay(timestamp) AS day, SUM(amount) AS total,
+                                      AVG(amount) AS average, COUNT(*) AS num_tx
+                              FROM @.tx
+                              WHERE settled = true AND canceled = false
+                              AND timestamp > now() - INTERVAL 2 YEAR
+                              GROUP BY day ORDER BY day DESC;
+
+CreditCard.dayofweek_spent := SELECT time.dayofweek(day) AS dayofweek, AVG(total) AS avg_total,
+                                     AVG(num_tx) AS avg_num_tx, avg_total/avg_num_tx AS avg_tx_amount
+                              FROM @.avg_daily_spent
+                              GROUP BY dayofweek;
+
+CreditCard.last24h_spent := SELECT SUM(amount) AS total, AVG(amount) AS average, COUNT(*) AS num_tx
+                              FROM @.tx
+                              WHERE canceled = false AND timestamp > now() - INTERVAL 24 HOUR
+                              LIMIT 1;
+
+CreditCard.merchant_spent := SELECT pos.merchant_id AS merchant_id, SUM(amount) AS total,
+                                    AVG(amount) AS average, COUNT(*) AS num_tx
+                             FROM @.tx
+                             WHERE settled = true AND canceled = false
+                             AND timestamp > now() - INTERVAL 2 YEAR
+                             GROUP BY merchant_id;
+
+-- Compute the amount and ratio of fraudulent transactions per point of service
+
+PoS.tx := JOIN Transaction ON Transaction.pos_id = pos_id;
+
+Transaction._fraudulent := contested = true AND canceled = true;
+
+PoS.fraud_by_week := SELECT time.roundToWeek(timestamp) AS week,
+                           COUNT(*) AS num_tx, SUM(amount) AS total,
+                           SUM(iff(_fraudulent,1,0)) AS num_fraud, SUM(iff(_fraudulent,1,0)*amount) AS total_fraud,
+                           num_fraud/num_tx AS fraud_tx_ratio, total_fraud/total AS fraud_total_ratio,
+                           MAX(fraud_tx_ratio, fraud_total_ratio) AS fraud_ratio
+                    FROM @.tx
+                    WHERE NOT(contested = false AND canceled = true)
+                    GROUP BY week ORDER BY week DESC
+
+PoS.fraud_last_year := SELECT SUM(num_tx) AS num_tx, SUM(total) AS total,
+                              SUM(num_fraud) AS num_fraud, SUM(total_fraud) AS total_fraud,
+                              num_fraud/num_tx AS fraud_tx_ratio, total_fraud/total AS fraud_total_ratio,
+                              MAX(fraud_tx_ratio, fraud_total_ratio) AS fraud_ratio
+                        FROM @.fraud_by_week
+                        WHERE week > now() - INTERVAL 1 YEAR LIMIT 1;
+
+-- Compute the amount and ratio of fraudulent transactions per merchant
+
+Merchant.poss := JOIN PoS ON PoS.merchant_id = merchant_id;
+
+Merchant.fraud_last_year := SELECT SUM(num_tx) AS num_tx, SUM(total) AS total,
+                              SUM(num_fraud) AS num_fraud, SUM(total_fraud) AS total_fraud,
+                              num_fraud/num_tx AS fraud_tx_ratio, total_fraud/total AS fraud_total_ratio,
+                              MAX(fraud_tx_ratio, fraud_total_ratio) AS fraud_ratio
+                        FROM @.poss.fraud_last_year LIMIT 1;
+
+-- Identify PoS where fraud has increased sharply or reached a threshold
+
+PoS.fraud_by_week.wow_change := @.fraud_ratio /
+                                (SELECT fraud_ratio FROM @.siblings
+                                 WHERE week < @.week ORDER BY week DESC LIMIT 1);
+
+CREATE SUBSCRIPTION FraudIncreaseAlert ON ADD AS
+SELECT parent FROM PoS.fraud_by_week WHERE wow_change > 1.2 OR fraud_ratio > 0.03;

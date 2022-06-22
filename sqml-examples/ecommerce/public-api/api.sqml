@@ -1,0 +1,34 @@
+IMPORT auction-data.*;
+
+-- Let's establish the relationships in the data
+
+Auction.bids := JOIN Bid ON Bid.auction_id = @.id INVERSE auction;
+Auction.category := JOIN Category ON Category.id = @.category_id INVERSE auctions;
+Auction.seller := JOIN User ON User.id = @.seller_id INVERSE auctions;
+
+User.bids := JOIN Bid ON Bid.bidder_id = @.id INVERSE bidder;
+
+-- Annotate Auction with additional data
+
+/* This is the wrong way to do it because it creates a new relation. Instead, we
+want to reference a particular existing relation, i.e. we need a JOIN
+Auction.highest_bid := SELECT * FROM @.bids ORDER BY bid_price DESC LIMIT 1;
+*/
+Auction.highest_bid := JOIN @.bids b ORDER BY b.bid_price DESC LIMIT 1;
+Auction.highest_bidder := highest_bid.bidder;
+Auction.highest_bid_price := highest_bid.bid_price;
+
+Auction.num_bids := count(bids);
+Auction.duration := end_time - start_time;
+
+Auction.location := seller.address.state;
+
+-- Identify "HOT" Auctions
+
+Auction.num_recent_bids := SELECT COUNT(*) FROM @.bids
+                           WHERE timestamp > now() - INTERVAL 1 HOUR;
+
+-- Annotate Seller with additional data
+
+User.num_auctions := count(auctions);
+User.num_bids := count(bids)

@@ -1,0 +1,27 @@
+query SystemRecentTraffic($id: Int!, $day: String, $hour: Int, $page: String) {
+   systems(filter: { systemid: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       lastHourTraffic (page: $page, page-size: 50)
+       {
+         day
+         hour
+         direction
+         port
+         otherSystem {
+           systemid
+           name
+         }
+         otherPort
+         total_len
+         num_packets
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }

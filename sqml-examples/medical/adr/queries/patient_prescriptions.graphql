@@ -1,0 +1,24 @@
+query PatientPrescriptions($id: Int!, $page: String) {
+   patients(filter: { id: {eq: $id}}, limit: 1)
+   {
+     data
+     {
+       name
+       prescriptions(page-size: 50, page: $page)
+       {
+         order_no
+         provider_id
+         prescribed_on
+         start
+         end
+         drug_id
+         dosage
+       }
+     }
+     page-state
+     {
+       has-next
+       next-page
+     }
+   }
+ }
