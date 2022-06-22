@@ -5,6 +5,7 @@ import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.metadata.MetadataStore;
+import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.config.scripts.ScriptBundle;
@@ -44,15 +45,15 @@ public class Environment implements Closeable {
 
   private Environment(SqrlSettings settings) {
     this.settings = settings;
-    JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(
-        settings.getEnvironmentConfiguration().getMetastore().getDatabase());
+    DatabaseConnectionProvider dbConnection = settings.getDatabaseEngineProvider().getDatabase(
+        settings.getEnvironmentConfiguration().getMetastore().getDatabaseName());
     metadataStore = settings.getMetadataStoreProvider()
-        .openStore(jdbc, settings.getSerializerProvider());
+        .openStore(dbConnection, settings.getSerializerProvider());
     streamEngine = settings.getStreamEngineProvider().create();
     persistence = settings.getEnvironmentPersistenceProvider()
         .createEnvironmentPersistence(metadataStore);
 
-    TableStatisticsStoreProvider.Encapsulated statsStore = new TableStatisticsStoreProvider.EncapsulatedImpl(jdbc,
+    TableStatisticsStoreProvider.Encapsulated statsStore = new TableStatisticsStoreProvider.EncapsulatedImpl(dbConnection,
             settings.getMetadataStoreProvider(), settings.getSerializerProvider(), settings.getTableStatisticsStoreProvider());
     SourceTableMonitor monitor = settings.getSourceTableMonitorProvider().create(streamEngine, statsStore);
     datasetRegistry = new DatasetRegistry(settings.getDatasetRegistryPersistenceProvider()
@@ -68,6 +69,8 @@ public class Environment implements Closeable {
   public Result deployScript(@NonNull ScriptBundle.Config scriptConfig,
       @NonNull ErrorCollector errors) {
     ScriptBundle bundle = scriptConfig.initialize(errors);
+
+
     if (bundle == null) {
       return null;
     }
@@ -76,8 +79,7 @@ public class Environment implements Closeable {
     ScriptDeployment deployment;
     try {
       PhysicalPlan plan = compile(bundle, errors);
-      ScriptExecutor executor = new ScriptExecutor(
-          this.settings.getJdbcConfiguration().getDatabase(MetaData.DEFAULT_DATABASE));
+      ScriptExecutor executor = new ScriptExecutor();
       Job job = executor.execute(plan);
       deployment = ScriptDeployment.of(bundle);
       deployment.setExecutionId(job.getExecutionId());
@@ -120,7 +122,7 @@ public class Environment implements Closeable {
         .importManager(importManager)
         .calciteEnv(new CalciteEnvironment())
         .schemaSettings(SchemaAdjustmentSettings.DEFAULT)
-        .jdbcConfiguration(settings.getJdbcConfiguration())
+        .dbConnection((JDBCConnectionProvider) settings.getDatabaseEngineProvider().getDatabase(bundle.getId()))
         .streamEngine(settings.getStreamEngineProvider().create())
         .build();
     BundlePlanner bundlePlanner = new BundlePlanner(options);

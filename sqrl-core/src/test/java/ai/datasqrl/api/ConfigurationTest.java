@@ -19,7 +19,6 @@ import ai.datasqrl.io.sources.SourceTableConfiguration;
 import ai.datasqrl.io.sources.dataset.DatasetRegistry;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.dataset.SourceTable;
-import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.util.TestDataset;
@@ -27,7 +26,6 @@ import ai.datasqrl.util.TestResources;
 import ai.datasqrl.util.data.BookClub;
 import ai.datasqrl.util.data.C360;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,7 +42,7 @@ public class ConfigurationTest extends AbstractSQRLIntegrationTest {
         IntegrationTestSettings.validateConfig(config);
         assertEquals(config.getEngines().getJdbc().getDbURL(),"jdbc:h2:tmp/output");
         assertNotNull(config.getEngines().getFlink());
-        assertEquals(config.getEnvironment().getMetastore().getDatabase(),"system");
+        assertEquals(config.getEnvironment().getMetastore().getDatabaseName(),"system");
         assertEquals(1, config.getSources().size());
         assertTrue(config.getSources().get(0).getSource() instanceof DirectorySourceImplementation);
         assertEquals(1, config.getSinks().size());
@@ -55,7 +53,7 @@ public class ConfigurationTest extends AbstractSQRLIntegrationTest {
 
     @Test
     public void testSettings() {
-        initialize(IntegrationTestSettings.getDefault());
+        initialize(IntegrationTestSettings.getInMemory());
         assertNotNull(env.getDatasetRegistry());
     }
 
@@ -70,7 +68,7 @@ public class ConfigurationTest extends AbstractSQRLIntegrationTest {
     }
 
     public void testDatasetRegistry(TestDataset example) {
-        initialize(IntegrationTestSettings.getDefault(false));
+        initialize(IntegrationTestSettings.getInMemory(false));
         DatasetRegistry registry = env.getDatasetRegistry();
 
         assertNotNull(registry);
@@ -129,7 +127,7 @@ public class ConfigurationTest extends AbstractSQRLIntegrationTest {
 
     @Test
     public void testDatasetRegistryWithExplicitTableRegistration() {
-        initialize(IntegrationTestSettings.getDefault(false));
+        initialize(IntegrationTestSettings.getInMemory(false));
         DatasetRegistry registry = env.getDatasetRegistry();
         TestDataset example = BookClub.INSTANCE;
 
@@ -152,7 +150,7 @@ public class ConfigurationTest extends AbstractSQRLIntegrationTest {
 
     @Test
     public void testDataSink() {
-        initialize(IntegrationTestSettings.getDefault(false));
+        initialize(IntegrationTestSettings.getInMemory(false));
 
         DataSinkRegistry registry = env.getDataSinkRegistry();
         assertNotNull(registry);

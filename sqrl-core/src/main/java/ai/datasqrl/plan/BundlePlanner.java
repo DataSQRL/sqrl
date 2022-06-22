@@ -50,7 +50,7 @@ public class BundlePlanner {
     LogicalPlan plan = new LogicalPlan(List.of(), List.of(), schema);
 
     PhysicalPlanner physicalPlanner = new PhysicalPlanner(options.getImportManager(),
-        options.getJdbcConfiguration(),
+        options.getDbConnection(),
         options.getStreamEngine());
     return physicalPlanner.plan(plan);
   }

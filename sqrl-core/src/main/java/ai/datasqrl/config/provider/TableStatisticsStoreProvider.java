@@ -19,14 +19,14 @@ public interface TableStatisticsStoreProvider extends Serializable {
     @AllArgsConstructor
     class EncapsulatedImpl implements Encapsulated {
 
-        private final JDBCConnectionProvider jdbc;
+        private final DatabaseConnectionProvider dbConnection;
         private final MetadataStoreProvider metaProvider;
         private final SerializerProvider serializer;
         private final TableStatisticsStoreProvider statsProvider;
 
         @Override
         public TableStatisticsStore openStore() {
-            MetadataStore store = metaProvider.openStore(jdbc, serializer);
+            MetadataStore store = metaProvider.openStore(dbConnection, serializer);
             return statsProvider.openStore(store);
         }
     }

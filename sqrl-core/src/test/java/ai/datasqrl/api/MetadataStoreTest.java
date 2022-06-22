@@ -4,20 +4,28 @@ import ai.datasqrl.AbstractSQRLIntegrationTest;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.metadata.MetadataStore;
+import ai.datasqrl.config.provider.DatabaseConnectionProvider;
+import ai.datasqrl.config.provider.DatabaseEngineProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.serializer.KryoProvider;
+import ai.datasqrl.io.TestDataSetMonitoring;
+import ai.datasqrl.util.TestDataset;
 import com.google.common.collect.ImmutableSet;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.io.IOException;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,16 +33,11 @@ public class MetadataStoreTest extends AbstractSQRLIntegrationTest {
 
     MetadataStore meta = null;
 
-    @BeforeEach
-    public void setup() {
-        initialize(IntegrationTestSettings.getDefault());
-        meta = getStore(sqrlSettings);
-    }
-
-    public MetadataStore getStore(SqrlSettings settings) {
-        JDBCConnectionProvider jdbc = settings.getJdbcConfiguration().getDatabase(
-                settings.getEnvironmentConfiguration().getMetastore().getDatabase());
-        return settings.getMetadataStoreProvider().openStore(jdbc, new KryoProvider());
+    public void setup(IntegrationTestSettings.DatabaseEngine database) {
+        initialize(IntegrationTestSettings.getEngines(IntegrationTestSettings.StreamEngine.INMEMORY, database));
+        DatabaseConnectionProvider dbConn = sqrlSettings.getDatabaseEngineProvider().getDatabase(
+                sqrlSettings.getEnvironmentConfiguration().getMetastore().getDatabaseName());
+        meta = sqrlSettings.getMetadataStoreProvider().openStore(dbConn, new KryoProvider());
     }
 
     @AfterEach
@@ -42,8 +45,10 @@ public class MetadataStoreTest extends AbstractSQRLIntegrationTest {
         meta.close();
     }
 
-    @Test
-    public void testStore() {
+    @ParameterizedTest
+    @ArgumentsSource(DatabaseEngineProvider.class)
+    public void testStore(IntegrationTestSettings.DatabaseEngine database) {
+        setup(database);
         Value[] values = new Value[10];
         for (int i = 0; i < values.length; i++) {
             values[i]=new Value(i, RandomStringUtils.random(10000,true,true));
@@ -78,5 +83,14 @@ public class MetadataStoreTest extends AbstractSQRLIntegrationTest {
         private int number;
         private String str;
 
+    }
+
+    static class DatabaseEngineProvider implements ArgumentsProvider {
+
+        @Override
+        public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {
+            return Stream.of(IntegrationTestSettings.DatabaseEngine.INMEMORY, IntegrationTestSettings.DatabaseEngine.POSTGRES)
+                    .map(Arguments::of);
+        }
     }
 }

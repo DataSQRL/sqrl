@@ -1,20 +1,11 @@
 package ai.datasqrl.plan.calcite;
 
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.input.AbstractFlexibleTableConverterVisitor;
-import ai.datasqrl.schema.input.FlexibleTableConverter;
-import ai.datasqrl.schema.type.Type;
-import ai.datasqrl.schema.type.basic.*;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.StructKind;
-import org.apache.calcite.sql.type.ArraySqlType;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.table.types.DataType;
 
-
-import java.util.List;
 import java.util.Optional;
 
 @Value

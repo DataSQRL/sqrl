@@ -15,17 +15,15 @@ import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 @AllArgsConstructor
 public class ScriptExecutor {
 
-  JDBCConnectionProvider configuration;
-
   public Job execute(PhysicalPlan physicalPlan) {
-    executeDml(physicalPlan.getDatabaseDDL());
+    executeDml(physicalPlan.getDatabaseDDL(), physicalPlan.getDbConnection());
     String executionId = executeFlink(physicalPlan.getStreamQueries());
     return new Job(executionId);
   }
 
-  public void executeDml(List<SqlDDLStatement> dmlQueries) {
+  public void executeDml(List<SqlDDLStatement> dmlQueries, JDBCConnectionProvider dbConnection) {
     String dmls = dmlQueries.stream().map(ddl -> ddl.toSql()).collect(Collectors.joining("\n"));
-    try (Connection conn = configuration.getConnection(); Statement stmt = conn.createStatement()) {
+    try (Connection conn = dbConnection.getConnection(); Statement stmt = conn.createStatement()) {
       stmt.executeUpdate(dmls);
     } catch (SQLException e) {
       throw new RuntimeException("Could not execute SQL query", e);

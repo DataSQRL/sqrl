@@ -1,9 +1,10 @@
 package ai.datasqrl.config.engines;
 
+import ai.datasqrl.config.provider.DatabaseEngineProvider;
 import ai.datasqrl.config.provider.StreamEngineProvider;
 import java.io.Serializable;
 
-public interface EngineConfiguration {
+public interface EngineConfiguration extends Serializable {
 
   enum Type {STREAM, DATABASE}
 
@@ -17,7 +18,7 @@ public interface EngineConfiguration {
 
   }
 
-  interface Database extends EngineConfiguration, Serializable {
+  interface Database extends EngineConfiguration, DatabaseEngineProvider {
 
     default Type getType() {
       return Type.DATABASE;

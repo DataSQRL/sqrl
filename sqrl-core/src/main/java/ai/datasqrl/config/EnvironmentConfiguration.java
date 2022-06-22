@@ -36,11 +36,7 @@ public class EnvironmentConfiguration {
     @Builder.Default
     @NonNull
     @NotNull
-    String database = DEFAULT_DATABASE;
-
-    public String getDatabase() {
-      return database;
-    }
+    String databaseName = DEFAULT_DATABASE;
 
 
   }

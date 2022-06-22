@@ -1,7 +1,9 @@
 package ai.datasqrl.config.metadata;
 
+import ai.datasqrl.config.engines.FileDatabaseConfiguration;
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.config.engines.JDBCConfiguration.Dialect;
+import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.provider.MetadataStoreProvider;
 import ai.datasqrl.config.provider.SerializerProvider;
@@ -208,7 +210,9 @@ public class JDBCMetadataStore implements MetadataStore {
   public static class Provider implements MetadataStoreProvider {
 
     @Override
-    public MetadataStore openStore(JDBCConnectionProvider jdbc, SerializerProvider serializer) {
+    public MetadataStore openStore(DatabaseConnectionProvider dbConnection, SerializerProvider serializer) {
+      Preconditions.checkArgument(dbConnection instanceof JDBCConnectionProvider);
+      JDBCConnectionProvider jdbc = (JDBCConnectionProvider)dbConnection;
       return new JDBCMetadataStore(jdbc, serializer.getSerializer());
     }
 
