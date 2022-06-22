@@ -30,6 +30,11 @@ statement
     : assignment                                                       #assign
     | CREATE SUBSCRIPTION qualifiedName ON subscriptionType AS query   #createSubscription
     | IMPORT importDefinition                                          #importStatement
+    | EXPORT exportDefinition                                          #exportStatement
+    ;
+
+exportDefinition
+    : qualifiedName TO qualifiedName
     ;
 
 importDefinition
@@ -328,6 +333,7 @@ EXCEPT: 'EXCEPT';
 EXCLUDING: 'EXCLUDING';
 EXECUTE: 'EXECUTE';
 EXISTS: 'EXISTS';
+EXPORT: 'EXPORT';
 EXTRACT: 'EXTRACT';
 EXTERNAL: 'EXTERNAL';
 FALSE: 'FALSE';

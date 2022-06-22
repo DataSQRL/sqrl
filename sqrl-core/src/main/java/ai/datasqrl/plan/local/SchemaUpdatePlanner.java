@@ -56,6 +56,11 @@ public class SchemaUpdatePlanner {
     }
 
     @Override
+    public SchemaUpdateOp visitExportDefinition(ExportDefinition node, Object context) {
+      return null;
+    }
+
+    @Override
     public SchemaUpdateOp visitImportDefinition(ImportDefinition node, Object context) {
       if (node.getNamePath().getLength() != 2) {
         throw new RuntimeException(

@@ -38,6 +38,11 @@ public class NodeFormatter extends AstVisitor<String, Object> {
   }
 
   @Override
+  public String visitExportDefinition(ExportDefinition node, Object context) {
+    return "EXPORT " + node.getTablePath() + " TO " + node.getSinkPath();
+  }
+
+  @Override
   public String visitCreateSubscription(CreateSubscription node, Object context) {
     return "CREATE SUBSCRIPTION " +node.getSubscriptionType()+ " AS " + node.getQuery().accept(this, context);
   }
