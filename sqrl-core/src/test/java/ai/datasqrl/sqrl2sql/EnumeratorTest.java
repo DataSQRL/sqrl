@@ -42,11 +42,11 @@ import org.apache.calcite.jdbc.Driver;
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class EnumeratorTest extends AbstractSQRLIT {
@@ -66,7 +66,7 @@ class EnumeratorTest extends AbstractSQRLIT {
 
     importManager = sqrlSettings.getImportManagerProvider().createImportManager(env.getDatasetRegistry());
     ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
-    assertTrue(importManager.registerUserSchema(bundle.getMainScript().getSchema(),ErrorCollector.root()));
+    Assertions.assertTrue(importManager.registerUserSchema(bundle.getMainScript().getSchema(),ErrorCollector.root()));
     calciteEnv = new CalciteEnvironment();
     parser = ConfiguredSqrlParser.newParser(errorCollector);
   }
@@ -93,18 +93,20 @@ class EnumeratorTest extends AbstractSQRLIT {
         "select _ingest_time, count(*)\n"
             + "from test.product$1 GROUP BY _ingest_time");
 
-    output(resultSet, System.out);
-
+    int rowCount = output(resultSet, System.out);
+    Assertions.assertTrue(rowCount > 0);
     resultSet.close();
     statement.close();
     calciteConnection.close();
   }
 
-  private void output(ResultSet resultSet, PrintStream out)
+  private int output(ResultSet resultSet, PrintStream out)
       throws SQLException {
     final ResultSetMetaData metaData = resultSet.getMetaData();
     final int columnCount = metaData.getColumnCount();
+    int size = 0;
     while (resultSet.next()) {
+      size++;
       for (int i = 1;; i++) {
         out.print(resultSet.getObject(i));
         if (i < columnCount) {
@@ -115,6 +117,7 @@ class EnumeratorTest extends AbstractSQRLIT {
         }
       }
     }
+    return size;
   }
 
   @Test
