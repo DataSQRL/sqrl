@@ -9,6 +9,10 @@ import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import java.util.Map;
 
+/**
+ * This class rewrites the expression trees for a query using a mapping from old table relations to
+ * new ones. This is used with RelationNormRewriter to rewrite the entire query tree.
+ */
 public class ExpressionNormRewriter extends ExpressionRewriter {
 
   private final Map<RelationNorm, RelationNorm> normMapping;

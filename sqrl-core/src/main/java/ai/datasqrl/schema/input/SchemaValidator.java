@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,7 +68,7 @@ public class SchemaValidator implements Serializable {
   private Map<Name, Object> verifyAndAdjust(Map<String, Object> relationData,
       RelationType<FlexibleDatasetSchema.FlexibleField> relationSchema,
       ErrorCollector errors) {
-    Map<Name, Object> result = new HashMap<>(relationData.size());
+    Map<Name, Object> result = new LinkedHashMap<>(relationData.size());
     Set<Name> visitedFields = new HashSet<>();
     for (Map.Entry<String, Object> entry : relationData.entrySet()) {
       Name name = Name.of(entry.getKey(), canonicalizer);

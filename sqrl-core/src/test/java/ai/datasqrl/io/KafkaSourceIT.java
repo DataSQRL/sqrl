@@ -1,7 +1,7 @@
 package ai.datasqrl.io;
 
 
-import ai.datasqrl.AbstractSQRLIntegrationTest;
+import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.formats.JsonLineFormat;
@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 //TODO: flink integration currently hangs on monitoring
-public class KafkaSourceTest extends AbstractSQRLIntegrationTest {
+public class KafkaSourceIT extends AbstractSQRLIT {
 
     public static final int NUM_BROKERS = 1;
 

@@ -1,6 +1,6 @@
 package ai.datasqrl.api;
 
-import ai.datasqrl.AbstractSQRLIntegrationTest;
+import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.environment.Environment;
 import ai.datasqrl.config.GlobalConfiguration;
@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ConfigurationTest extends AbstractSQRLIntegrationTest {
+public class ConfigurationIT extends AbstractSQRLIT {
 
     @Test
     public void testConfigFromFile() {

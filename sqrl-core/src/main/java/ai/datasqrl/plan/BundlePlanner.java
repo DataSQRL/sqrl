@@ -9,7 +9,7 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
-import ai.datasqrl.plan.calcite.PlanDag;
+import ai.datasqrl.plan.calcite.BasicSqrlCalciteBridge;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.SqrlSchemaCatalog;
@@ -59,7 +59,7 @@ public class BundlePlanner {
     ConfiguredSqrlParser parser = ConfiguredSqrlParser.newParser(errorCollector);
     ScriptNode scriptAst = parser.parse(mainScript.getContent());
 
-    PlanDag dag = createDag(mainScript.getName().getCanonical());
+    BasicSqrlCalciteBridge dag = createDag(mainScript.getName().getCanonical());
     SchemaBuilder schema = new SchemaBuilder();
 
     for (Node node : scriptAst.getStatements()) {
@@ -74,7 +74,7 @@ public class BundlePlanner {
     return schema.build();
   }
 
-  private PlanDag createDag(String schemaName) {
+  public BasicSqrlCalciteBridge createDag(String schemaName) {
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
     SqrlSchemaCatalog catalog = new SqrlSchemaCatalog(rootSchema);
 
@@ -84,7 +84,7 @@ public class BundlePlanner {
     PlannerFactory plannerFactory = new PlannerFactory(catalog);
     Planner planner = plannerFactory.createPlanner(schemaName);
 
-    PlanDag dag = new PlanDag(planner);
+    BasicSqrlCalciteBridge dag = new BasicSqrlCalciteBridge(planner);
     subSchema.setBridge(dag);
     return dag;
   }

@@ -1,6 +1,6 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.AbstractSQRLIntegrationTest;
+import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.SqrlScript;
@@ -16,7 +16,6 @@ import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.InputTableSchema;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaImport;
-import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.util.TestDataset;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -41,7 +40,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FlexibleSchemaHandlingTest extends AbstractSQRLIntegrationTest {
+public class FlexibleSchemaHandlingTest extends AbstractSQRLIT {
 
     @SneakyThrows
     public FlexibleDatasetSchema getSchema(TestDataset example) {

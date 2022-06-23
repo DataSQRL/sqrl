@@ -11,12 +11,18 @@ import lombok.Value;
 public class AddColumnOp implements SchemaUpdateOp {
   Table table;
   Node node;
+
+  /*
+   * The expression also joined back to the original table.
+   */
+  Node joinedNode;
   Column column;
   boolean isTimestamp;
 
   public AddColumnOp(Table table, Node node, Column column) {
     this.table = table;
     this.node = node;
+    this.joinedNode = node;
     this.column = column;
     this.isTimestamp = false;
   }
@@ -27,6 +33,6 @@ public class AddColumnOp implements SchemaUpdateOp {
   }
 
   public AddColumnOp asTimestamp() {
-    return new AddColumnOp(table,node,column,true);
+    return new AddColumnOp(table,node,joinedNode,column,true);
   }
 }

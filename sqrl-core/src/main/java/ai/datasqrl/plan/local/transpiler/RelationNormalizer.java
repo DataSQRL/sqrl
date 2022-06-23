@@ -51,6 +51,11 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Normalizes an sql query into resolved expressions and references to expressions.
+ *
+ * Bottom up traversal: This means that it starts with the leaves of the tree, which represent the individual
+ * tokens in the SQL query, and then builds up the tree by combining the tokens into larger and larger units.
+ * Transformed nodes are returned where applicable.
+ *
  */
 @AllArgsConstructor
 @Getter

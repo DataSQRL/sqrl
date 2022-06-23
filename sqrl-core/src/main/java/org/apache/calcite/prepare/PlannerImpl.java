@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.prepare;
 
+import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import lombok.Getter;
 import org.apache.calcite.adapter.java.JavaTypeFactory;
 import org.apache.calcite.config.CalciteConnectionConfig;
@@ -38,6 +39,7 @@ import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexExecutor;
@@ -61,6 +63,8 @@ import org.apache.calcite.util.Pair;
 
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
+import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -75,6 +79,7 @@ import static java.util.Objects.requireNonNull;
  *  - Change protected modifiers to protected
  *  - Getters for all properties
  *  - remove createSqlValidator config override to allow sqrlconformance
+ *  - TypeFactory to something that can handle Instants
  */
 
 /** Implementation of {@link org.apache.calcite.tools.Planner}. */
@@ -103,7 +108,7 @@ public class PlannerImpl implements Planner, ViewExpander {
 
   // set in STATE_2_READY
   protected @Nullable SchemaPlus defaultSchema;
-  protected @Nullable JavaTypeFactory typeFactory;
+  protected @Nullable RelDataTypeFactory typeFactory;
   protected @Nullable RelOptPlanner planner;
   protected @Nullable RexExecutor executor;
 
@@ -129,6 +134,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     this.context = config.getContext();
     this.connectionConfig = connConfig(context, parserConfig);
     this.typeSystem = config.getTypeSystem();
+    this.planner = new VolcanoPlanner(costFactory, context);
     reset();
   }
 
@@ -189,8 +195,8 @@ public class PlannerImpl implements Planner, ViewExpander {
     }
     ensure(State.STATE_1_RESET);
 
-    typeFactory = new JavaTypeFactoryImpl(typeSystem);
-    RelOptPlanner planner = this.planner = new VolcanoPlanner(costFactory, context);
+    typeFactory = new SqrlTypeFactory(typeSystem);
+    RelOptPlanner planner = this.planner;
     RelOptUtil.registerDefaultRules(planner,
         connectionConfig.materializationsEnabled(),
         Hook.ENABLE_BINDABLE.get(false));
@@ -331,7 +337,7 @@ public class PlannerImpl implements Planner, ViewExpander {
   }
 
   // CalciteCatalogReader is stateless; no need to store one
-  protected CalciteCatalogReader createCatalogReader() {
+  public CalciteCatalogReader createCatalogReader() {
     SchemaPlus defaultSchema = requireNonNull(this.defaultSchema, "defaultSchema");
     final SchemaPlus rootSchema = rootSchema(defaultSchema);
 
@@ -344,7 +350,7 @@ public class PlannerImpl implements Planner, ViewExpander {
   protected SqlValidator createSqlValidator(CalciteCatalogReader catalogReader) {
     final SqlOperatorTable opTab =
         SqlOperatorTables.chain(operatorTable, catalogReader);
-    return new CalciteSqlValidator(opTab,
+    return new FlinkCalciteSqlValidator(opTab,
         catalogReader,
         getTypeFactory(),
         sqlValidatorConfig
@@ -370,14 +376,14 @@ public class PlannerImpl implements Planner, ViewExpander {
     return new RexBuilder(getTypeFactory());
   }
 
-  @Override public JavaTypeFactory getTypeFactory() {
+  @Override public RelDataTypeFactory getTypeFactory() {
     return requireNonNull(typeFactory, "typeFactory");
   }
 
   @SuppressWarnings("deprecation")
   @Override public RelNode transform(int ruleSetIndex, RelTraitSet requiredOutputTraits,
       RelNode rel) {
-    ensure(State.STATE_5_CONVERTED);
+//    ensure(State.STATE_5_CONVERTED);
     rel.getCluster().setMetadataProvider(
         new org.apache.calcite.rel.metadata.CachingRelMetadataProvider(
             requireNonNull(rel.getCluster().getMetadataProvider(), "metadataProvider"),

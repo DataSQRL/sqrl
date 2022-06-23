@@ -8,7 +8,7 @@ import ai.datasqrl.util.DatabaseHandle;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 
-public abstract class AbstractSQRLIntegrationTest {
+public abstract class AbstractSQRLIT {
 
     private DatabaseHandle database = null;
     public SqrlSettings sqrlSettings = null;

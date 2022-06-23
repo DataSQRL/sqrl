@@ -24,7 +24,13 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Expands table paths to joins
+ * This class identifies table paths in the query and expands them to joins.
+ *
+ * A query with a table path looks like this:
+ * SELECT * FROM _.user.posts;
+ *
+ * It will expand it to a query that looks like this:
+ * SELECT * FROM _ JOIN user ON _._uuid = user._uuid JOIN posts ON user.id = posts.user_id;
  */
 public class TablePathToJoins {
 
