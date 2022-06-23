@@ -14,16 +14,17 @@ import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.RelHint;
 
-public class SqrlEnumerableTableScan extends TableScan implements EnumerableRel {
+/**
+ * Contains code generation routine that executes the in-memory schema that contains data
+ */
+public class InMemoryEnumerableTableScan extends TableScan implements EnumerableRel {
 
-  SqrlAbstractTable abstractTable;
-  protected SqrlEnumerableTableScan(RelOptCluster cluster,
+  public InMemoryEnumerableTableScan(RelOptCluster cluster,
       RelTraitSet traitSet,
       List<RelHint> hints,
       RelOptTable table) {
     super(cluster, traitSet.plus(EnumerableConvention.INSTANCE), hints, table);
   }
-
 
   @Override
   public Result implement(EnumerableRelImplementor implementor, Prefer pref) {
@@ -33,21 +34,11 @@ public class SqrlEnumerableTableScan extends TableScan implements EnumerableRel 
             getRowType(),
             pref.preferArray());
 
-//    if (table instanceof SchemaCalciteTable) {
-//      return implementor.result(
-//          physType,
-//          Blocks.toBlock(
-//              Expressions.call(SchemaCalciteTable.class, "project")));
-//
-//    } else if (table instanceof SourceCalciteTable) {
+
       return implementor.result(
           physType,
           Blocks.toBlock(
-              Expressions.call(table.getExpression(SourceCalciteTable.class),
+              Expressions.call(table.getExpression(DataTable.class),
                   "project", implementor.getRootExpression())));
-//
-//    }
-//
-//    throw new RuntimeException();
   }
 }

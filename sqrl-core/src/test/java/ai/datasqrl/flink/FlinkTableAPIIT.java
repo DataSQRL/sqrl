@@ -1,6 +1,6 @@
 package ai.datasqrl.flink;
 
-import ai.datasqrl.AbstractSQRLIntegrationTest;
+import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.environment.ImportManager;
@@ -20,7 +20,7 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class FlinkTableAPIIntegrationTest extends AbstractSQRLIntegrationTest {
+public class FlinkTableAPIIT extends AbstractSQRLIT {
 
   @BeforeEach
   public void setup() {

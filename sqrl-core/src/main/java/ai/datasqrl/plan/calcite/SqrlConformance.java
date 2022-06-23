@@ -2,6 +2,9 @@ package ai.datasqrl.plan.calcite;
 
 import org.apache.calcite.sql.validate.SqlConformance;
 
+/**
+ * Defines the SQL standard conformance of the SqlParser and validator
+ */
 public class SqrlConformance implements SqlConformance {
 
   public static final SqlConformance INSTANCE = new SqrlConformance();
@@ -41,9 +44,23 @@ public class SqrlConformance implements SqlConformance {
     return true;
   }
 
+  /**
+   * In SQL, when the ORDER BY clause is used to sort the result set, the sort order can be defined by either an expression or an alias.
+   * If isSortByAliasObscures is set to true, then when an alias is used to sort the result set, the sort order will be determined by the expression that the alias is based on, not the alias itself.
+   *
+   * For example, given the following query:
+   *
+   * SELECT col1 AS a, col2 AS b
+   * FROM table
+   * ORDER BY b;
+   *
+   * If isSortByAliasObscures is set to true, the sort order will be determined by col2, not b.
+   *
+   * If isSortByAliasObscures is set to false, the sort order will be determined by b.
+   */
   @Override
   public boolean isSortByAliasObscures() {
-    return false;
+    return true;
   }
 
   @Override

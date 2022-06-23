@@ -1,6 +1,6 @@
 package ai.datasqrl.api;
 
-import ai.datasqrl.AbstractSQRLIntegrationTest;
+import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.environment.ScriptDeployment;
 import ai.datasqrl.config.scripts.ScriptBundle;
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(VertxExtension.class)
-public class APIServerTest extends AbstractSQRLIntegrationTest {
+public class APIServerIT extends AbstractSQRLIT {
 
     WebClient webClient = null;
     int port = ApiVerticle.DEFAULT_PORT;

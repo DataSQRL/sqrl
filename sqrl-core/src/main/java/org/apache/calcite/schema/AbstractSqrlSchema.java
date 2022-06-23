@@ -13,7 +13,7 @@ public abstract class AbstractSqrlSchema implements Schema {
 
   @Override
   public Set<String> getTableNames() {
-    return Set.of("Product");
+    return null;
   }
 
   @Override

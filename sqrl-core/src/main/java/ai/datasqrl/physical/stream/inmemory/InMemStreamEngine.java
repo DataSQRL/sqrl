@@ -15,21 +15,15 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.stream.FunctionWithError;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.StreamHolder;
-import ai.datasqrl.physical.stream.flink.FlinkStreamBuilder;
 import ai.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -44,8 +38,8 @@ public class InMemStreamEngine implements StreamEngine {
     private final ConcurrentHashMap<String, Job> jobs = new ConcurrentHashMap<>();
 
     @Override
-    public Builder createJob() {
-        return new Builder();
+    public JobBuilder createJob() {
+        return new JobBuilder();
     }
 
     @Override
@@ -58,7 +52,7 @@ public class InMemStreamEngine implements StreamEngine {
         jobs.clear();
     }
 
-    public class Builder implements StreamEngine.Builder {
+    public class JobBuilder implements StreamEngine.Builder {
 
         private final List<Stream> mainStreams = new ArrayList<>();
         private final List<Stream> sideStreams = new ArrayList<>();
@@ -133,9 +127,10 @@ public class InMemStreamEngine implements StreamEngine {
             return new Job(mainStreams,sideStreams,errorHolder,recordHolder);
         }
 
-        private class Holder<T> implements StreamHolder<T> {
+        public class Holder<T> implements StreamHolder<T> {
 
             private boolean isClosed = false;
+            @Getter
             private final Stream<T> stream;
 
             private Holder(Stream<T> stream) {

@@ -1,7 +1,6 @@
 package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.plan.calcite.SqrlType2Calcite;
 import ai.datasqrl.plan.local.transpiler.toSql.ConvertContext;
 import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeConverter;
 import org.apache.calcite.plan.RelOptCluster;
@@ -20,6 +19,7 @@ import org.apache.calcite.tools.RelBuilder;
  *   (Planner rules ordered and indexed in Rules class)
  */
 public class Planner extends PlannerImpl {
+
   SqlNodeConverter sqlNodeConverter = new SqlNodeConverter();
 
   public Planner(FrameworkConfig config) {
@@ -53,7 +53,7 @@ public class Planner extends PlannerImpl {
 
   public RelBuilder getRelBuilder() {
     RelOptCluster cluster = RelOptCluster.create(this.planner, createRexBuilder());
-    return sqlToRelConverterConfig.getRelBuilderFactory().create(cluster, null);
+    return sqlToRelConverterConfig.getRelBuilderFactory().create(cluster, createCatalogReader());
   }
 
   public SqrlType2Calcite getTypeConverter() {

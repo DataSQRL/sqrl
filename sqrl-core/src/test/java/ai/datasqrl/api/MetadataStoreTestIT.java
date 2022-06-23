@@ -1,35 +1,28 @@
 package ai.datasqrl.api;
 
-import ai.datasqrl.AbstractSQRLIntegrationTest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.metadata.MetadataStore;
 import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.config.provider.DatabaseEngineProvider;
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.serializer.KryoProvider;
-import ai.datasqrl.io.TestDataSetMonitoring;
-import ai.datasqrl.util.TestDataset;
 import com.google.common.collect.ImmutableSet;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-public class MetadataStoreTest extends AbstractSQRLIntegrationTest {
+public class MetadataStoreTestIT extends AbstractSQRLIT {
 
     MetadataStore meta = null;
 

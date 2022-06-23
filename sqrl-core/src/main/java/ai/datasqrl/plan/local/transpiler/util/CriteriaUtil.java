@@ -12,6 +12,7 @@ import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
+import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Table;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -19,17 +20,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Provides helper functions for building criteria for joins and subqueries.
+ */
 public class CriteriaUtil {
 
   public static Expression sameTableEq(RelationNorm left, RelationNorm right) {
+    validatePrimaryKey(((TableNodeNorm)left).getRef().getTable().getPrimaryKeys());
+
     List<Expression> condition = ((TableNodeNorm)left).getRef().getTable().getPrimaryKeys().stream()
         .map(column->new ComparisonExpression(Operator.EQUAL,
             ResolvedColumn.of(left, column),
             ResolvedColumn.of(right, column)))
         .collect(Collectors.toList());
-    if (condition.isEmpty()) {
-      System.out.println();
-    }
 
     Preconditions.checkState(!condition.isEmpty(), "Could not build critiera for %s %s", left, right);
 
@@ -38,6 +41,8 @@ public class CriteriaUtil {
 
   public static Optional<JoinOn> subqueryEq(Table baseTable, TableNodeNorm baseRel,
       QuerySpecNorm subquery) {
+    validatePrimaryKey(baseTable.getPrimaryKeys());
+
     List<Expression> criteria = new ArrayList<>();
     for (int i = 0; i < baseTable.getPrimaryKeys().size(); i++) {
       criteria.add(new ComparisonExpression(Operator.EQUAL,
@@ -50,6 +55,8 @@ public class CriteriaUtil {
   }
 
   public static Optional<JoinOn> joinEq(TableNodeNorm base, JoinNorm expanded) {
+    validatePrimaryKey(expanded.getLeftmost().getPrimaryKeys());
+    validatePrimaryKey(base.getRef().getTable().getPrimaryKeys());
 
     List<Expression> criteria = new ArrayList<>();
     for (int i = 0; i < expanded.getLeftmost().getPrimaryKeys().size(); i++) {
@@ -58,5 +65,9 @@ public class CriteriaUtil {
           expanded.getLeftmost().getPrimaryKeys().get(i)));
     }
     return JoinOn.on(and(criteria));
+  }
+
+  private static void validatePrimaryKey(List primaryKeys) {
+    Preconditions.checkState(!primaryKeys.isEmpty(), "Primary keys must not be empty");
   }
 }

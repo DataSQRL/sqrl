@@ -20,6 +20,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Duplicates a relation and keeps normalized references intact.
+ */
 public class RelationNormRewriter extends AstVisitor<RelationNorm, Void> {
   ExpressionNormRewriter rewriter;
   Map<RelationNorm, RelationNorm> normMapping;
@@ -53,21 +56,10 @@ public class RelationNormRewriter extends AstVisitor<RelationNorm, Void> {
         .collect(Collectors.toList()));
   }
 
-  private <T extends RelationNorm> List<T> rewriteNodeList(List<T> node) {
-    return (List<T>)node.stream()
-        .map(e->e.accept(this, null))
-        .collect(Collectors.toList());
-  }
-
   private <T extends Expression> List<T> rewriteList(List<T> node) {
     return (List<T>)node.stream()
         .map(e->ExpressionTreeRewriter.rewriteWith(rewriter, e))
         .collect(Collectors.toList());
-  }
-  private <T extends Expression> Set<T> rewriteSet(Set<T> node) {
-    return (Set<T>)node.stream()
-        .map(e->ExpressionTreeRewriter.rewriteWith(rewriter, e))
-        .collect(Collectors.toSet());
   }
 
   @Override
@@ -85,7 +77,7 @@ public class RelationNormRewriter extends AstVisitor<RelationNorm, Void> {
         node.getLeft().accept(this, null),
         node.getRight().accept(this, null),
         node.getCriteria().map(c->new JoinOn(c.getLocation(),
-            ExpressionTreeRewriter.rewriteWith(rewriter, ((JoinOn)c).getExpression())))
+            ExpressionTreeRewriter.rewriteWith(rewriter, c.getExpression())))
     );
     normMapping.put(node, joinNorm);
     return joinNorm;

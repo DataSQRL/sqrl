@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Optional;
 
 public abstract class JoinCriteria extends Node {
-  public static JoinOn JOIN_ON_TRUE = new JoinOn(Optional.empty(), BooleanLiteral.TRUE_LITERAL);
 
   protected JoinCriteria(Optional<NodeLocation> location) {
     super(location);

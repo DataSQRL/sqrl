@@ -1,6 +1,6 @@
 package ai.datasqrl.io;
 
-import ai.datasqrl.AbstractSQRLIntegrationTest;
+import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TestDataSetMonitoring extends AbstractSQRLIntegrationTest {
+public class TestDataSetMonitoringIT extends AbstractSQRLIT {
 
     @ParameterizedTest
     @ArgumentsSource(TestDatasetPlusStreamEngine.class)

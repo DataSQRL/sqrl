@@ -15,6 +15,7 @@ import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
 import ai.datasqrl.plan.local.transpiler.toSql.ConvertContext;
 import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeConverter;
 import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeFormatter;
+import ai.datasqrl.plan.local.transpiler.transforms.RejoinExprTransform;
 import ai.datasqrl.schema.*;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
@@ -28,12 +29,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.lang3.tuple.Pair;
 
 
+/**
+ * The SchemaUpdatePlanner class is responsible for taking a schema and a statement, and mapping
+ * that statement to the schema, creating a plan to update the schema and generate the logical
+ * plans.
+ *
+ * The Normalizer classes are used to normalize the query before passing it to the schema and
+ * transpiler.
+ */
 @AllArgsConstructor
 public class SchemaUpdatePlanner {
 
@@ -78,6 +86,7 @@ public class SchemaUpdatePlanner {
         importTables = importManager.importAllTables(sourceDataset, schemaSettings, errors);
         nameAlias = Optional.empty();
       } else { //importing a single table
+        //todo: Check if table exists
         importTables = List.of(importManager
                 .importTable(sourceDataset, sourceTable, schemaSettings, errors));
         nameAlias = node.getAliasName();
@@ -136,10 +145,6 @@ public class SchemaUpdatePlanner {
     private AddColumnOp planExpression(Node node, NamePath name) {
       StatementNormalizer normalizer = new StatementNormalizer(schema);
       Node relationNorm = normalizer.normalize(node);
-//      System.out.println("Converted: " + NodeFormatter.accept(relationNorm));
-      SqlNodeConverter converter = new SqlNodeConverter();
-      SqlNode sqlNode = relationNorm.accept(converter, new ConvertContext());
-      System.out.println("Sql: " + SqlNodeFormatter.toString(sqlNode));
 
       Table table = schema.walkTable(name.popLast());
       Name columnName = name.getLast();
@@ -148,7 +153,9 @@ public class SchemaUpdatePlanner {
       Column column = new Column(columnName, nextVersion, table.getNextColumnIndex(),
               false, false, true);
 
-      return new AddColumnOp(table, relationNorm, column);
+      Node joinedNorm = RejoinExprTransform.transform((QuerySpecNorm) relationNorm, table);
+
+      return new AddColumnOp(table, relationNorm, joinedNorm, column, false);
     }
 
 

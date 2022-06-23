@@ -86,6 +86,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSelectKeyword;
+import org.apache.calcite.sql.SqlSetOperator;
 import org.apache.calcite.sql.SqlTableRef;
 import org.apache.calcite.sql.SqlTimeLiteral;
 import org.apache.calcite.sql.SqlWindow;
@@ -403,28 +404,25 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
   }
 
   @Override
-  public SqlNode visitSetOperation(SetOperation node, ConvertContext context) {
-    return super.visitSetOperation(node, context);
+  public SqlNode visitUnion(Union node, ConvertContext context) {
+    List<SqlNode> queries = node.getRelations().stream().map(x -> x.accept(this, context)).collect(Collectors.toList());
+    SqlSetOperator op = node.isDistinct().orElse(false) ? SqlStdOperatorTable.UNION_ALL : SqlStdOperatorTable.UNION;
+    return new SqlBasicCall(op, queries.toArray(new SqlNode[0]), SqlParserPosFactory.from(node));
   }
 
-  @Override
-  public SqlNode visitUnion(Union node, ConvertContext context) {
-    return super.visitUnion(node, context);
-  }
 
   @Override
   public SqlNode visitIntersect(Intersect node, ConvertContext context) {
-    return super.visitIntersect(node, context);
+    List<SqlNode> queries = node.getRelations().stream().map(x -> x.accept(this, context)).collect(Collectors.toList());
+    SqlSetOperator op = node.isDistinct().orElse(false) ? SqlStdOperatorTable.INTERSECT_ALL : SqlStdOperatorTable.INTERSECT;
+    return new SqlBasicCall(op, queries.toArray(new SqlNode[0]), SqlParserPosFactory.from(node));
   }
 
   @Override
   public SqlNode visitExcept(Except node, ConvertContext context) {
-    return super.visitExcept(node, context);
-  }
-
-  @Override
-  public SqlNode visitWhenClause(WhenClause node, ConvertContext context) {
-    return super.visitWhenClause(node, context);
+    List<SqlNode> queries = node.getRelations().stream().map(x -> x.accept(this, context)).collect(Collectors.toList());
+    SqlSetOperator op = node.isDistinct().orElse(false) ? SqlStdOperatorTable.EXCEPT_ALL : SqlStdOperatorTable.EXCEPT;
+    return new SqlBasicCall(op, queries.toArray(new SqlNode[0]), SqlParserPosFactory.from(node));
   }
 
   @Override
@@ -439,7 +437,7 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
 
   @Override
   public SqlNode visitAllColumns(AllColumns node, ConvertContext context) {
-    throw new RuntimeException("'SELECT *' not supported in calcite node conversions");
+    return new SqlIdentifier("*", SqlParserPosFactory.from(node));
   }
 
   @Override
@@ -448,19 +446,9 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
     if (node.getOrdering().isPresent() && node.getOrdering().get() == Ordering.DESCENDING) {
       SqlNode[] sortOps = {sortKey};
       return new SqlBasicCall(SqlStdOperatorTable.DESC, sortOps, SqlParserPos.ZERO);
-    } else {
-      return sortKey;
     }
 
-//    SqlLiteral direction = SqlLiteral.createSymbol(
-//        (node.getOrdering().isPresent() && node.getOrdering().get() == Ordering.ASCENDING) ?
-//            Direction.ASCENDING :
-//            Direction.DESCENDING
-//        , pos.getPos(node.getLocation()));
-//
-//    return new SqlNodeList(
-//        List.of(node.getSortKey().accept(this, context), direction),
-//        pos.getPos(node.getLocation()));
+    return sortKey;
   }
 
   @Override

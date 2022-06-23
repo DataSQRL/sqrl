@@ -65,9 +65,7 @@ public class StatementNormalizer {
       RelationScope scope = createScope(namePath, isExpression);
       Node norm = relationNormalizer.normalize(query, scope);
 
-      return isExpression
-          ? RejoinExprTransform.transform((QuerySpecNorm) norm, scope.getContextTable().get())
-          : norm;
+      return norm;
     }
 
     @Override
@@ -78,9 +76,9 @@ public class StatementNormalizer {
       Query query = toQueryTransformer.transform(assignment.getExpression());
 
       RelationScope scope = createScope(namePath, true);
-      Node norm =  relationNormalizer.normalize(query, scope);
+      Node norm = relationNormalizer.normalize(query, scope);
 
-      return RejoinExprTransform.transform((QuerySpecNorm)norm, scope.getContextTable().get());
+      return norm;
     }
 
     @Override
