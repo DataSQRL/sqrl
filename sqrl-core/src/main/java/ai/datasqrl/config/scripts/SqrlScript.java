@@ -59,7 +59,7 @@ public class SqrlScript implements Serializable {
       errors = errors.resolve(name);
       SchemaDefinition schema;
       try {
-        schema = parseSchema();
+        schema = parseSchema(inputSchema);
       } catch (JsonProcessingException e) {
         errors.fatal("Parsing error for schemaYaml: [%s]", e);
         return null;
@@ -69,7 +69,7 @@ public class SqrlScript implements Serializable {
           content, schema, main);
     }
 
-    private SchemaDefinition parseSchema() throws JsonProcessingException {
+    public static SchemaDefinition parseSchema(String inputSchema) throws JsonProcessingException {
       if (StringUtils.isEmpty(inputSchema)) {
         return SchemaDefinition.empty();
       } else {

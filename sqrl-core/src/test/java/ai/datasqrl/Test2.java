@@ -14,6 +14,7 @@ import io.vertx.core.impl.VertxInternal;
 import java.io.IOException;
 import java.nio.file.Files;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class Test2 {
@@ -36,6 +37,7 @@ public class Test2 {
     env.getDatasetRegistry().addOrUpdateSource(ds2Name, fileConfig, ErrorCollector.root());
   }
 
+  @Disabled("should we delete this test?")
   @Test
   public void test() {
     //c360, test import all the way through to query

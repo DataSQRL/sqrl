@@ -1,6 +1,8 @@
 package ai.datasqrl.config;
 
 import ai.datasqrl.config.engines.JDBCConfiguration;
+import ai.datasqrl.config.provider.DatabaseConnectionProvider;
+import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.plan.calcite.CalciteEnvironment;
@@ -15,7 +17,7 @@ public class BundleOptions {
   ImportManager importManager;
   SchemaAdjustmentSettings schemaSettings;
   CalciteEnvironment calciteEnv;
-  JDBCConfiguration jdbcConfiguration;
+  JDBCConnectionProvider dbConnection;
   StreamEngine streamEngine;
 
 

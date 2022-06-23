@@ -2,6 +2,7 @@ package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
 import ai.datasqrl.config.engines.JDBCConfiguration;
+import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
 import ai.datasqrl.plan.queries.TableQuery;
@@ -24,7 +25,7 @@ public class StreamGraphBuilder {
 
   private final StreamEngine streamEngine;
   private final ImportManager importManager;
-  private final JDBCConfiguration jdbcConfiguration;
+  private final JDBCConnectionProvider jdbcConfiguration;
 
   public CreateStreamJobResult createStreamGraph(List<TableQuery> streamQueries) {
     final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder) streamEngine.createJob();
@@ -53,7 +54,7 @@ public class StreamGraphBuilder {
 
       TableDescriptor descriptor = TableDescriptor.forConnector("jdbc")
           .schema(FlinkPipelineUtils.addPrimaryKey(tbl.getSchema().toSchema(), sink.getTable()))
-          .option("url", jdbcConfiguration.getDbURL().concat("/").concat(MetaData.DEFAULT_DATABASE))
+          .option("url", jdbcConfiguration.getDbURL())
           .option("table-name", sink.getTable().getName().getCanonical())
           .option("username", jdbcConfiguration.getUser())
           .option("password", jdbcConfiguration.getPassword())

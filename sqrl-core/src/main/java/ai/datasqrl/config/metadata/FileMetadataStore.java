@@ -1,5 +1,7 @@
 package ai.datasqrl.config.metadata;
 
+import ai.datasqrl.config.engines.FileDatabaseConfiguration;
+import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.provider.MetadataStoreProvider;
 import ai.datasqrl.config.provider.SerializerProvider;
@@ -134,15 +136,11 @@ public class FileMetadataStore implements MetadataStore {
 
   public static class Provider implements MetadataStoreProvider {
 
-    private final String baseDir;
-
-    public Provider(String baseDir) {
-      this.baseDir = baseDir;
-    }
-
     @Override
-    public MetadataStore openStore(JDBCConnectionProvider jdbc, SerializerProvider serializer) {
-      Path basePath = Path.of(baseDir);
+    public MetadataStore openStore(DatabaseConnectionProvider dbConnection, SerializerProvider serializer) {
+      Preconditions.checkArgument(dbConnection instanceof FileDatabaseConfiguration.ConnectionProvider);
+      FileDatabaseConfiguration.ConnectionProvider conn = (FileDatabaseConfiguration.ConnectionProvider)dbConnection;
+      Path basePath = conn.getDirectory();
       if (Files.notExists(basePath)) {
         try {
           Files.createDirectories(basePath);

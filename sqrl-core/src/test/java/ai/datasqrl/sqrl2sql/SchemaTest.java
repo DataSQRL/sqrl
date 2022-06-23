@@ -41,7 +41,7 @@ class SchemaTest extends AbstractSQRLIntegrationTest {
   @BeforeEach
   public void setup() throws IOException {
     errorCollector = ErrorCollector.root();
-    initialize(IntegrationTestSettings.getDefault(false));
+    initialize(IntegrationTestSettings.getInMemory(false));
     C360 example = C360.INSTANCE;
 
     example.registerSource(env);

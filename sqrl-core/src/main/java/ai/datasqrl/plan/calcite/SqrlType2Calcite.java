@@ -11,8 +11,6 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.ArraySqlType;
-import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 @Value
@@ -67,6 +65,6 @@ public class SqrlType2Calcite implements AbstractFlexibleTableConverterVisitor.S
 
     @Override
     public RelDataType visitArrayType(ArrayType type, Void context) {
-        return typeFactory.createArrayType(type.getSubType().accept(this, null), Short.MAX_VALUE);
+        return typeFactory.createArrayType(type.getSubType().accept(this, null), -1L);
     }
 }

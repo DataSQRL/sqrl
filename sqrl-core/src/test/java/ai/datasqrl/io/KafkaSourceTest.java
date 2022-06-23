@@ -147,7 +147,8 @@ public class KafkaSourceTest extends AbstractSQRLIntegrationTest {
         assertEquals(4,numRecords);
     }
 
-//    @Test
+    @Disabled("fix after Flink monitoring idling is solved")
+    @Test
     @SneakyThrows
     public void testDatasetMonitoringWithPrefix() {
         writeTextFilesToTopic(topics[0], "key", BookClub.BOOK_FILES);
@@ -164,7 +165,8 @@ public class KafkaSourceTest extends AbstractSQRLIntegrationTest {
         testBookSourceTable(dsName,dsUpdate);
     }
 
-//    @Test
+    @Disabled("fix after Flink monitoring idling is solved")
+    @Test
     @SneakyThrows
     public void testDatasetMonitoringWithExtension() {
         writeTextFilesToTopic(topics[1], "key", BookClub.BOOK_FILES);
@@ -179,7 +181,7 @@ public class KafkaSourceTest extends AbstractSQRLIntegrationTest {
     }
 
     public void testBookSourceTable(String dsName, DataSourceUpdate dsUpdate) {
-        initialize(IntegrationTestSettings.getFlink());
+        initialize(IntegrationTestSettings.getFlinkWithDB());
 
         ErrorCollector errors = ErrorCollector.root();
         sourceRegistry.addOrUpdateSource(dsUpdate, errors);

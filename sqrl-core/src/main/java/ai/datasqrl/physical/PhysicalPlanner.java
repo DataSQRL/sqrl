@@ -1,6 +1,7 @@
 package ai.datasqrl.physical;
 
 import ai.datasqrl.config.engines.JDBCConfiguration;
+import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.database.MaterializedTableDDLBuilder;
 import ai.datasqrl.physical.database.ViewDDLBuilder;
@@ -16,12 +17,12 @@ import lombok.AllArgsConstructor;
 public class PhysicalPlanner {
 
   ImportManager importManager;
-  JDBCConfiguration jdbcConfiguration;
+  JDBCConnectionProvider dbConnection;
   StreamEngine streamEngine;
 
   public PhysicalPlan plan(LogicalPlan plan) {
     CreateStreamJobResult result = new StreamGraphBuilder(streamEngine, importManager,
-        jdbcConfiguration)
+            dbConnection)
         .createStreamGraph(plan.getStreamQueries());
 
     List<SqlDDLStatement> statements = new MaterializedTableDDLBuilder()
@@ -29,6 +30,6 @@ public class PhysicalPlanner {
     statements.addAll(new ViewDDLBuilder()
         .create(plan.getDatabaseQueries()));
 
-    return new PhysicalPlan(statements, result.getStreamQueries(), plan.getSchema());
+    return new PhysicalPlan(dbConnection, statements, result.getStreamQueries(), plan.getSchema());
   }
 }

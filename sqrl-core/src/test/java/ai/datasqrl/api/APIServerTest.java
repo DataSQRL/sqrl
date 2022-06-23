@@ -4,7 +4,6 @@ import ai.datasqrl.AbstractSQRLIntegrationTest;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.environment.ScriptDeployment;
 import ai.datasqrl.config.scripts.ScriptBundle;
-import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.config.server.ApiVerticle;
 import ai.datasqrl.config.util.StringNamedId;
 import ai.datasqrl.io.formats.JsonLineFormat;
@@ -21,7 +20,6 @@ import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.TestResources;
 import ai.datasqrl.util.data.BookClub;
 import com.google.common.collect.ImmutableSet;
@@ -33,16 +31,14 @@ import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.awt.print.Book;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -58,7 +54,7 @@ public class APIServerTest extends AbstractSQRLIntegrationTest {
 
     @BeforeEach
     public void setup(Vertx vertx) throws IOException {
-        initialize(IntegrationTestSettings.getDefault(false));
+        initialize(IntegrationTestSettings.getInMemory(false));
         webClient = WebClient.create(vertx);
     }
 
@@ -84,7 +80,7 @@ public class APIServerTest extends AbstractSQRLIntegrationTest {
     ######## Source endpoints
      */
 
-//    @Test
+    @Test
     public void testAddingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
         Checkpoint deploymentCheckpoint = testContext.checkpoint();
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
@@ -123,7 +119,7 @@ public class APIServerTest extends AbstractSQRLIntegrationTest {
     }
 
 
-//    @Test
+    @Test
     public void testGettingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
         bookClub.registerSource(env);
         assertNotNull(sourceRegistry.getDataset(dsName));
@@ -352,7 +348,7 @@ public class APIServerTest extends AbstractSQRLIntegrationTest {
             .build();
     static final JsonObject sinkObj = JsonObject.mapFrom(sinkReg);
 
-//    @Test
+    @Test
     public void testAddingSink(Vertx vertx, VertxTestContext testContext) throws Throwable {
         Checkpoint deploymentCheckpoint = testContext.checkpoint();
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
@@ -435,7 +431,6 @@ public class APIServerTest extends AbstractSQRLIntegrationTest {
     }
 
     @Test
-    @Disabled //Test does not run successfully
     public void testUpdateSink(Vertx vertx, VertxTestContext testContext) throws Throwable {
         sinkRegistry.addOrUpdateSink(sinkReg,ErrorCollector.root());
         assertEquals(BookClub.DATA_DIR.toAbsolutePath().toString(),
@@ -477,7 +472,7 @@ public class APIServerTest extends AbstractSQRLIntegrationTest {
                 ((DirectorySinkImplementation)sinkRegistry.getSink(sinkName).getImplementation()).getUri());
     }
 
-//    @Test
+    @Test
     public void testDeleteSink(Vertx vertx, VertxTestContext testContext) throws Throwable {
         sinkRegistry.addOrUpdateSink(sinkReg,ErrorCollector.root());
         assertNotNull(sinkRegistry.getSink(sinkName));
@@ -515,7 +510,8 @@ public class APIServerTest extends AbstractSQRLIntegrationTest {
             .setName(deployName).setVersion(deployVersion).getConfig();
     final JsonObject deploymentObj = JsonObject.mapFrom(deployConfig);
 
-//    @Test
+    @Disabled("fix after Environment is finalized")
+    @Test
     public void testAddingDeployment(Vertx vertx, VertxTestContext testContext) throws Throwable {
         bookClub.registerSource(env);
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
@@ -554,7 +550,8 @@ public class APIServerTest extends AbstractSQRLIntegrationTest {
         assertEquals(deployVersion,deploy.get().getVersion());
     }
 
-//    @Test
+    @Disabled("fix after Environment is finalized")
+    @Test
     public void testReadDeployment(Vertx vertx, VertxTestContext testContext) throws Throwable {
         ErrorCollector errors = ErrorCollector.root();
         ScriptDeployment.Result result = env.deployScript(deployConfig,errors);

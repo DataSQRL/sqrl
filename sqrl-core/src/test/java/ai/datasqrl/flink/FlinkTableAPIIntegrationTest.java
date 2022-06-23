@@ -24,11 +24,11 @@ public class FlinkTableAPIIntegrationTest extends AbstractSQRLIntegrationTest {
 
   @BeforeEach
   public void setup() {
-      initialize(IntegrationTestSettings.getFlink());
+      initialize(IntegrationTestSettings.getFlinkWithDB());
   }
 
   @SneakyThrows
-//  @Test
+  @Test
   public void testFlinkTableAPIIntegration() {
     C360 example = C360.INSTANCE;
     example.registerSource(env);

@@ -115,10 +115,10 @@ public class BundleTableFactory {
         return new JoinNorm(Optional.empty(), type, fromNorm, toNorm, JoinOn.on(and(criteria)));
     }
 
-    private class ImportVisitor implements FlexibleTableConverter.Visitor<Type> {
+    protected class ImportVisitor implements FlexibleTableConverter.Visitor<Type> {
 
         private final Deque<TableBuilder> stack = new ArrayDeque<>();
-        private TableBuilder lastCreatedTable = null;
+        protected TableBuilder lastCreatedTable = null;
 
 
         @Override

@@ -4,12 +4,21 @@ import ai.datasqrl.config.EnvironmentConfiguration;
 import ai.datasqrl.config.GlobalConfiguration;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.engines.FlinkConfiguration;
+import ai.datasqrl.config.engines.InMemoryDatabaseConfiguration;
 import ai.datasqrl.config.engines.InMemoryStreamConfiguration;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.util.TestDatabase;
+import ai.datasqrl.config.metadata.InMemoryMetadataStore;
+import ai.datasqrl.util.DatabaseHandle;
+import ai.datasqrl.util.JDBCTestDatabase;
+import ai.datasqrl.util.TestDataset;
 import lombok.Builder;
 import lombok.Value;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -19,21 +28,41 @@ public class IntegrationTestSettings {
 
     public enum StreamEngine {FLINK, INMEMORY}
 
+    public enum DatabaseEngine {INMEMORY, H2, POSTGRES, LOCAL}
+
     @Builder.Default
-    final StreamEngine engine = StreamEngine.INMEMORY;
+    final StreamEngine stream = StreamEngine.INMEMORY;
+    @Builder.Default
+    final DatabaseEngine database = DatabaseEngine.INMEMORY;
     @Builder.Default
     final boolean monitorSources = true;
 
-    Pair<TestDatabase, SqrlSettings> getSqrlSettings() {
-        TestDatabase database = new TestDatabase();
+    Pair<DatabaseHandle, SqrlSettings> getSqrlSettings() {
+
         GlobalConfiguration.Engines.EnginesBuilder enginesBuilder = GlobalConfiguration.Engines.builder();
         //Database
-        enginesBuilder.jdbc(database.getJdbcConfiguration());
+
         //Stream engine
-        if (getEngine() == IntegrationTestSettings.StreamEngine.FLINK) {
-            enginesBuilder.flink(new FlinkConfiguration());
-        } else {
-            enginesBuilder.inmemory(new InMemoryStreamConfiguration());
+        switch (getStream()) {
+            case FLINK:
+                enginesBuilder.flink(new FlinkConfiguration());
+                break;
+            case INMEMORY:
+                enginesBuilder.inmemoryStream(new InMemoryStreamConfiguration());
+                break;
+        }
+        DatabaseHandle database = null;
+        switch (getDatabase()) {
+            case INMEMORY:
+                enginesBuilder.inmemoryDB(new InMemoryDatabaseConfiguration());
+                database = () -> InMemoryMetadataStore.clearLocal();
+                break;
+            case H2:
+            case POSTGRES:
+            case LOCAL:
+                JDBCTestDatabase jdbcDB = new JDBCTestDatabase(getDatabase());
+                enginesBuilder.jdbc(jdbcDB.getJdbcConfiguration());
+                database = jdbcDB;
         }
 
         GlobalConfiguration config = GlobalConfiguration.builder()
@@ -41,7 +70,7 @@ public class IntegrationTestSettings {
                 .environment(EnvironmentConfiguration.builder()
                         .monitorSources(isMonitorSources())
                         .metastore(EnvironmentConfiguration.MetaData.builder()
-                                .database(EnvironmentConfiguration.MetaData.DEFAULT_DATABASE)
+                                .databaseName(EnvironmentConfiguration.MetaData.DEFAULT_DATABASE)
                                 .build())
                         .build())
                 .build();
@@ -55,17 +84,28 @@ public class IntegrationTestSettings {
     }
 
 
-    public static IntegrationTestSettings getDefault() {
+    public static IntegrationTestSettings getInMemory() {
         return IntegrationTestSettings.builder().build();
     }
 
-    public static IntegrationTestSettings getDefault(boolean monitorSources) {
+    public static IntegrationTestSettings getInMemory(boolean monitorSources) {
         return IntegrationTestSettings.builder().monitorSources(monitorSources).build();
     }
 
-    public static IntegrationTestSettings getFlink() {
-        return IntegrationTestSettings.builder().engine(StreamEngine.FLINK).build();
+    public static IntegrationTestSettings getFlinkWithDB() {
+        return getEngines(StreamEngine.FLINK,DatabaseEngine.POSTGRES);
     }
 
+    public static IntegrationTestSettings getEngines(StreamEngine stream, DatabaseEngine database) {
+        return IntegrationTestSettings.builder().stream(stream).database(database).build();
+    }
+
+    @Value
+    public static class EnginePair {
+
+        DatabaseEngine database;
+        StreamEngine stream;
+
+    }
 
 }

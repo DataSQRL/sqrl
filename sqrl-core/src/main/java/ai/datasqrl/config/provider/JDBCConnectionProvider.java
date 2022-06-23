@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import javax.validation.constraints.NotNull;
 import lombok.NonNull;
 
-public interface JDBCConnectionProvider extends Serializable {
+public interface JDBCConnectionProvider extends DatabaseConnectionProvider {
 
   @NonNull String getDbURL();
 
