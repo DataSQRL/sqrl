@@ -33,7 +33,7 @@ import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -435,7 +435,7 @@ public class APIServerTest extends AbstractSQRLIntegrationTest {
     }
 
     @Test
-    @Ignore //Test does not run successfully
+    @Disabled //Test does not run successfully
     public void testUpdateSink(Vertx vertx, VertxTestContext testContext) throws Throwable {
         sinkRegistry.addOrUpdateSink(sinkReg,ErrorCollector.root());
         assertEquals(BookClub.DATA_DIR.toAbsolutePath().toString(),
