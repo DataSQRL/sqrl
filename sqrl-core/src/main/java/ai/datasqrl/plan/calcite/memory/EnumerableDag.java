@@ -73,11 +73,11 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
   public <T> T visit(SourceTableImportOp op) {
     List<Table> createdTables = super.visit(op);
 
-    RelDataType type2 = new FlexibleTableConverter(op.getSourceTableImport().getSchema()).apply(
+    RelDataType rootType = new FlexibleTableConverter(op.getSourceTableImport().getSchema()).apply(
         new CalciteSchemaGenerator(planner.getTypeFactory())).get();
 
     inMemorySchema.registerDataSet(op.getSourceTableImport().getTable().qualifiedName(),
-        type2.getFieldList(), getDataFromImport(op.getSourceTableImport()));
+        rootType.getFieldList(), getDataFromImport(op.getSourceTableImport()));
 
     for (Table table : createdTables) {
       RelBuilder builder = planner.getRelBuilder();

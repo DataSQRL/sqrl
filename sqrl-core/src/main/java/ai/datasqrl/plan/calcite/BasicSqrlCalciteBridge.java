@@ -2,7 +2,9 @@ package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.plan.calcite.sqrl.table.DatasetTableCalciteTable;
+import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.plan.calcite.sqrl.table.LogicalBaseTableCalciteTable;
+import ai.datasqrl.plan.calcite.sqrl.table.SourceTableCalciteTable;
 import ai.datasqrl.plan.calcite.sqrl.table.QueryCalciteTable;
 import ai.datasqrl.plan.local.operations.AddColumnOp;
 import ai.datasqrl.plan.local.operations.AddJoinDeclarationOp;
@@ -47,13 +49,15 @@ public class BasicSqrlCalciteBridge implements SqrlCalciteBridge, SchemaOpVisito
         .apply(new CalciteSchemaGenerator(planner.getTypeFactory()))
         .get();
 
-    DatasetTableCalciteTable datasetTable = new DatasetTableCalciteTable(op.getSourceTableImport(), rootType);
+    SourceTableCalciteTable sourceTable = new SourceTableCalciteTable(op.getSourceTableImport(), rootType);
 
     Name datasetName = Name.system(op.getSourceTableImport().getTable().qualifiedName());
-    setTable(datasetName, datasetTable);
+    setTable(datasetName, sourceTable);
 
-    DatasetTableCalciteTable calciteTable = new DatasetTableCalciteTable(op.getSourceTableImport(), rootType);
-    setTable(op.getRootTable().getId(), calciteTable);
+    LogicalBaseTableCalciteTable baseTable = new LogicalBaseTableCalciteTable(
+        op.getSourceTableImport(), rootType, NamePath.of(op.getRootTable().getName()));
+
+    setTable(op.getRootTable().getId(), baseTable);
 
     return (T)List.of(op.getRootTable());
 

@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite.sqrl.rules;
 
-import ai.datasqrl.plan.calcite.sqrl.table.DatasetTableCalciteTable;
+import ai.datasqrl.plan.calcite.sqrl.table.LogicalBaseTableCalciteTable;
+import ai.datasqrl.plan.calcite.sqrl.table.SourceTableCalciteTable;
 import ai.datasqrl.plan.calcite.sqrl.table.QueryCalciteTable;
 import java.util.List;
 import org.apache.calcite.plan.RelOptRule;
@@ -21,12 +22,12 @@ public class SqrlExpansionRelRule extends RelOptRule {
   @Override
   public void onMatch(RelOptRuleCall call) {
     LogicalTableScan table = call.rel(0);
-    DatasetTableCalciteTable dataset = table.getTable().unwrap(DatasetTableCalciteTable.class);
+    LogicalBaseTableCalciteTable baseTable = table.getTable().unwrap(LogicalBaseTableCalciteTable.class);
     QueryCalciteTable query = table.getTable().unwrap(QueryCalciteTable.class);
 
-    if (dataset != null) {
-      RelOptTable baseDatasetRelOptTable = table.getTable().getRelOptSchema().getTableForMember(
-          List.of(dataset.getSourceTableImport().getTable().qualifiedName()));
+    if (baseTable != null) {
+      RelOptTable baseDatasetRelOptTable = table.getTable().getRelOptSchema()
+          .getTableForMember(List.of(baseTable.getSourceTableImport().getTable().qualifiedName()));
 
       RelNode scan = LogicalTableScan.create(table.getCluster(), baseDatasetRelOptTable, table.getHints());
 
