@@ -67,13 +67,6 @@ public class APIServerIT extends AbstractSQRLIT {
     }
 
     @AfterEach
-    void cleanUp(Vertx vertx) {
-        // Clean things up on the same Vert.x event-loop thread
-        // that called prepare and foo
-            vertx.close();
-    }
-
-    @AfterEach
     public void close() {
 //        webClient.close();
 //        webClient = null;
@@ -130,7 +123,7 @@ public class APIServerIT extends AbstractSQRLIT {
         SourceDataset ds = sourceRegistry.getDataset(dsName);
         assertNotNull(ds);
         Assertions.assertEquals(dsName,ds.getName().getCanonical());
-
+        testContext.completeNow();
     }
 
 
@@ -192,6 +185,7 @@ public class APIServerIT extends AbstractSQRLIT {
 
         DatasetRegistry registry = env.getDatasetRegistry();
         assertEquals(1,registry.getDatasets().size());
+        testContext.completeNow();
     }
 
     @Test
@@ -222,6 +216,7 @@ public class APIServerIT extends AbstractSQRLIT {
             throw testContext.causeOfFailure();
         }
         assertEquals(0, sourceRegistry.getDatasets().size());
+        testContext.completeNow();
     }
 
     /*
@@ -260,7 +255,7 @@ public class APIServerIT extends AbstractSQRLIT {
         }
         assertEquals(1, sourceRegistry.getDataset(dsName).getTables().size());
         assertEquals("book", sourceRegistry.getDataset(dsName).getTable("test").getConfiguration().getIdentifier());
-
+        testContext.completeNow();
     }
 
     @Test
@@ -321,6 +316,7 @@ public class APIServerIT extends AbstractSQRLIT {
         if (testContext.failed()) {
             throw testContext.causeOfFailure();
         }
+        testContext.completeNow();
     }
 
     @Test
@@ -350,6 +346,7 @@ public class APIServerIT extends AbstractSQRLIT {
         }
         assertEquals(ImmutableSet.of("person"), sourceRegistry.getDataset(dsName).getTables().stream()
                 .map(SourceTable::getName).map(Name::getCanonical).collect(Collectors.toSet()));
+        testContext.completeNow();
     }
 
     /*
@@ -397,7 +394,7 @@ public class APIServerIT extends AbstractSQRLIT {
         DataSink sink = sinkRegistry.getSink(sinkName);
         assertNotNull(sink);
         Assertions.assertEquals(sinkName,sink.getName().getDisplay());
-
+        testContext.completeNow();
     }
 
 
@@ -445,6 +442,7 @@ public class APIServerIT extends AbstractSQRLIT {
         }
 
         assertEquals(1,sinkRegistry.getSinks().size());
+        testContext.completeNow();
     }
 
     @Test
@@ -488,6 +486,7 @@ public class APIServerIT extends AbstractSQRLIT {
 
         assertEquals(newDir,
                 ((DirectorySinkImplementation)sinkRegistry.getSink(sinkName).getImplementation()).getUri());
+        testContext.completeNow();
     }
 
     @Test
@@ -516,6 +515,7 @@ public class APIServerIT extends AbstractSQRLIT {
             throw testContext.causeOfFailure();
         }
         assertEquals(0, sinkRegistry.getSinks().size());
+        testContext.completeNow();
     }
 
 
@@ -568,6 +568,7 @@ public class APIServerIT extends AbstractSQRLIT {
         assertTrue(deploy.isPresent());
         assertEquals(deployName,deploy.get().getName());
         assertEquals(deployVersion,deploy.get().getVersion());
+        testContext.completeNow();
     }
 
     @Disabled("fix after Environment is finalized")
@@ -600,6 +601,7 @@ public class APIServerIT extends AbstractSQRLIT {
         if (testContext.failed()) {
             throw testContext.causeOfFailure();
         }
+        testContext.completeNow();
     }
 
 
