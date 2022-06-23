@@ -23,4 +23,4 @@ jobs:
         cache: maven
       
     - name: Verify
-      run: mvn verify -Dall-modules
+      run: mvn verify
