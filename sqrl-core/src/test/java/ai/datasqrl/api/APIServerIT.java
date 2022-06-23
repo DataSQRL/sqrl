@@ -24,6 +24,8 @@ import ai.datasqrl.util.TestResources;
 import ai.datasqrl.util.data.BookClub;
 import com.google.common.collect.ImmutableSet;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
@@ -49,15 +51,20 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(VertxExtension.class)
 public class APIServerIT extends AbstractSQRLIT {
 
-    WebClient webClient = null;
+//    WebClient webClient = null;
     int port = ApiVerticle.DEFAULT_PORT;
+//
+//    @BeforeEach
+//    public void setup(Vertx vertx) throws IOException {
+//        webClient = WebClient.create(vertx);
+//    }
 
     @BeforeEach
-    public void setup(Vertx vertx) throws IOException {
+    void deploy_verticle(Vertx vertx, VertxTestContext testContext) {
         initialize(IntegrationTestSettings.getInMemory(false));
-        webClient = WebClient.create(vertx);
-    }
 
+        vertx.deployVerticle(new ApiVerticle(env), testContext.succeedingThenComplete());
+    }
 
     @AfterEach
     void cleanUp(Vertx vertx) {
@@ -68,8 +75,8 @@ public class APIServerIT extends AbstractSQRLIT {
 
     @AfterEach
     public void close() {
-        webClient.close();
-        webClient = null;
+//        webClient.close();
+//        webClient = null;
     }
 
     final BookClub bookClub = BookClub.INSTANCE;
@@ -90,15 +97,15 @@ public class APIServerIT extends AbstractSQRLIT {
 
     @Test
     public void testAddingSource(Vertx vertx, VertxTestContext testContext) throws Throwable {
-        Checkpoint deploymentCheckpoint = testContext.checkpoint();
+//        Checkpoint deploymentCheckpoint = testContext.checkpoint();
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
 
         //System.out.println(fileObj);
-
+        WebClient webClient = WebClient.create(vertx);
         assertEquals(0, sourceRegistry.getDatasets().size());
 
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            deploymentCheckpoint.flag();
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+//            deploymentCheckpoint.flag();
             webClient.post(port, "localhost", "/source")
                     .as(BodyCodec.jsonObject())
                     .sendJsonObject(fileObj, testContext.succeeding(resp -> {
@@ -111,7 +118,8 @@ public class APIServerIT extends AbstractSQRLIT {
                         });
                     }));
 
-        }));
+//        }));
+        testContext.succeedingThenComplete();
 
         assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
         if (testContext.failed()) {
@@ -132,8 +140,8 @@ public class APIServerIT extends AbstractSQRLIT {
         assertNotNull(sourceRegistry.getDataset(dsName));
 
         Checkpoint requestCheckpoint = testContext.checkpoint(3);
-
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+        WebClient webClient = WebClient.create(vertx);
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             webClient.get(port, "localhost", "/source")
                     .as(BodyCodec.jsonArray())
                     .send(testContext.succeeding(resp -> {
@@ -175,7 +183,7 @@ public class APIServerIT extends AbstractSQRLIT {
                     }));
 
 
-        }));
+//        }));
 
         assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
         if (testContext.failed()) {
@@ -191,9 +199,9 @@ public class APIServerIT extends AbstractSQRLIT {
         bookClub.registerSource(env);
         assertNotNull(sourceRegistry.getDataset(dsName));
         assertEquals(2, sourceRegistry.getDataset(dsName).getTables().size());
-
+        WebClient webClient = WebClient.create(vertx);
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             webClient.delete(port, "localhost", "/source/"+dsName)
                     .as(BodyCodec.jsonObject())
                     .send(testContext.succeeding(resp -> {
@@ -207,7 +215,7 @@ public class APIServerIT extends AbstractSQRLIT {
                             requestCheckpoint.flag();
                         });
                     }));
-        }));
+//        }));
 
         assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
         if (testContext.failed()) {
@@ -231,7 +239,8 @@ public class APIServerIT extends AbstractSQRLIT {
         JsonObject payload = JsonObject.mapFrom(tableConf);
 
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+        WebClient webClient = WebClient.create(vertx);
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             webClient.post(port, "localhost", "/source/" + dsName + "/tables")
                     .as(BodyCodec.jsonObject())
                     .sendJsonObject(payload, testContext.succeeding(resp -> {
@@ -243,7 +252,7 @@ public class APIServerIT extends AbstractSQRLIT {
                             requestCheckpoint.flag();
                         });
                     }));
-        }));
+//        }));
 
         assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
         if (testContext.failed()) {
@@ -265,8 +274,8 @@ public class APIServerIT extends AbstractSQRLIT {
         JsonObject payload = JsonObject.mapFrom(tableConf);
 
         Checkpoint requestCheckpoint = testContext.checkpoint(3);
-
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+        WebClient webClient = WebClient.create(vertx);
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             webClient.get(port, "localhost", "/source/" + dsName + "/tables")
                     .as(BodyCodec.jsonArray())
                     .send(testContext.succeeding(resp -> {
@@ -279,14 +288,14 @@ public class APIServerIT extends AbstractSQRLIT {
                             assertNotNull(table.getJsonObject("format"));
                             requestCheckpoint.flag();
                         });
-                    }));
+//                    }));
 
             webClient.get(port, "localhost", "/source/" + dsName + "/tables/book")
                     .as(BodyCodec.jsonObject())
-                    .send(testContext.succeeding(resp -> {
+                    .send(testContext.succeeding(resp2 -> {
                         testContext.verify(() -> {
-                            assertEquals(200, resp.statusCode());
-                            JsonObject table = resp.body();
+                            assertEquals(200, resp2.statusCode());
+                            JsonObject table = resp2.body();
                             assertEquals("book",table.getString("identifier"));
                             assertEquals("json",table.getJsonObject("format").getString("formatType"));
                             requestCheckpoint.flag();
@@ -295,10 +304,10 @@ public class APIServerIT extends AbstractSQRLIT {
 
             webClient.post(port, "localhost", "/source/" + dsName + "/tables")
                     .as(BodyCodec.jsonArray())
-                    .sendJsonObject(payload, testContext.succeeding(resp -> {
+                    .sendJsonObject(payload, testContext.succeeding(resp3 -> {
                         testContext.verify(() -> {
-                            assertEquals(400, resp.statusCode());
-                            JsonArray error = resp.body();
+                            assertEquals(400, resp3.statusCode());
+                            JsonArray error = resp3.body();
                             assertEquals(1, error.size());
 //                            System.out.println("Error msg: " + error.getString("message"));
                             requestCheckpoint.flag();
@@ -319,9 +328,9 @@ public class APIServerIT extends AbstractSQRLIT {
         DataSourceUpdate dsUpdate = DataSourceUpdate.builder().name(dsName).source(fileConfig).discoverTables(true).build();
         sourceRegistry.addOrUpdateSource(dsUpdate, ErrorCollector.root());
         assertEquals(2, sourceRegistry.getDataset(dsName).getTables().size());
-
+        WebClient webClient = WebClient.create(vertx);
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             webClient.delete(port, "localhost", "/source/" + dsName + "/tables/book")
                     .as(BodyCodec.jsonObject())
                     .send(testContext.succeeding(resp -> {
@@ -333,7 +342,7 @@ public class APIServerIT extends AbstractSQRLIT {
                             requestCheckpoint.flag();
                         });
                     }));
-        }));
+//        }));
 
         assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
         if (testContext.failed()) {
@@ -357,13 +366,13 @@ public class APIServerIT extends AbstractSQRLIT {
 
     @Test
     public void testAddingSink(Vertx vertx, VertxTestContext testContext) throws Throwable {
-        Checkpoint deploymentCheckpoint = testContext.checkpoint();
+//        Checkpoint deploymentCheckpoint = testContext.checkpoint();
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
 
         assertEquals(0, sinkRegistry.getSinks().size());
-
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            deploymentCheckpoint.flag();
+        WebClient webClient = WebClient.create(vertx);
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+//            deploymentCheckpoint.flag();
 
             webClient.post(port, "localhost", "/sink")
                     .as(BodyCodec.jsonObject())
@@ -377,7 +386,7 @@ public class APIServerIT extends AbstractSQRLIT {
                         });
                     }));
 
-        }));
+//        }));
 
         assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
         if (testContext.failed()) {
@@ -398,8 +407,8 @@ public class APIServerIT extends AbstractSQRLIT {
         assertNotNull(sinkRegistry.getSink(sinkName));
 
         Checkpoint requestCheckpoint = testContext.checkpoint(2);
-
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+        WebClient webClient = WebClient.create(vertx);
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             webClient.get(port, "localhost", "/sink")
                     .as(BodyCodec.jsonArray())
                     .send(testContext.succeeding(resp -> {
@@ -412,14 +421,15 @@ public class APIServerIT extends AbstractSQRLIT {
                             assertEquals(sinkName,sinkRes.getString("name"));
                             requestCheckpoint.flag();
                         });
-                    }));
+
+//                    }));
 
             webClient.get(port, "localhost", "/sink/"+sinkName)
                     .as(BodyCodec.jsonObject())
-                    .send(testContext.succeeding(resp -> {
+                    .send(testContext.succeeding(resp2 -> {
                         testContext.verify(() -> {
-                            assertEquals(200, resp.statusCode());
-                            JsonObject sinkRes = resp.body();
+                            assertEquals(200, resp2.statusCode());
+                            JsonObject sinkRes = resp2.body();
                             assertEquals("dir",sinkRes.getJsonObject("sink").getString("sinkType"));
                             assertEquals(sinkName,sinkRes.getString("name"));
                             requestCheckpoint.flag();
@@ -452,8 +462,9 @@ public class APIServerIT extends AbstractSQRLIT {
         JsonObject sinkObj2 = JsonObject.mapFrom(sinkReg2);
 
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
+        WebClient webClient = WebClient.create(vertx);
 
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             webClient.post(port, "localhost", "/sink")
                     .as(BodyCodec.jsonObject())
                     .sendJsonObject(sinkObj2, testContext.succeeding(resp -> {
@@ -468,7 +479,7 @@ public class APIServerIT extends AbstractSQRLIT {
                     }));
 
 
-        }));
+//        }));
 
         assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
         if (testContext.failed()) {
@@ -483,9 +494,10 @@ public class APIServerIT extends AbstractSQRLIT {
     public void testDeleteSink(Vertx vertx, VertxTestContext testContext) throws Throwable {
         sinkRegistry.addOrUpdateSink(sinkReg,ErrorCollector.root());
         assertNotNull(sinkRegistry.getSink(sinkName));
+        WebClient webClient = WebClient.create(vertx);
 
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             webClient.delete(port, "localhost", "/sink/"+sinkName)
                     .as(BodyCodec.jsonObject())
                     .send(testContext.succeeding(resp -> {
@@ -497,7 +509,7 @@ public class APIServerIT extends AbstractSQRLIT {
                             requestCheckpoint.flag();
                         });
                     }));
-        }));
+//        }));
 
         assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
         if (testContext.failed()) {
@@ -525,8 +537,9 @@ public class APIServerIT extends AbstractSQRLIT {
         assertEquals(0,env.getActiveDeployments().size());
 
         AtomicReference<String> submissionId = new AtomicReference<>("");
+        WebClient webClient = WebClient.create(vertx);
 
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
 
             webClient.post(port, "localhost", "/deployment")
                     .as(BodyCodec.jsonObject())
@@ -543,7 +556,7 @@ public class APIServerIT extends AbstractSQRLIT {
                         });
                     }));
 
-        }));
+//        }));
 
         assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
         if (testContext.failed()) {
@@ -563,10 +576,11 @@ public class APIServerIT extends AbstractSQRLIT {
         ErrorCollector errors = ErrorCollector.root();
         ScriptDeployment.Result result = env.deployScript(deployConfig,errors);
         assertNotNull(result);
+        WebClient webClient = WebClient.create(vertx);
 
 
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
-        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
+//        vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             webClient.get(port, "localhost", "/deployment")
                     .as(BodyCodec.jsonArray())
                     .send(testContext.succeeding(resp -> {
@@ -580,7 +594,7 @@ public class APIServerIT extends AbstractSQRLIT {
                             requestCheckpoint.flag();
                         });
                     }));
-        }));
+//        }));
 
         assertTrue(testContext.awaitCompletion(5, TimeUnit.SECONDS));
         if (testContext.failed()) {
