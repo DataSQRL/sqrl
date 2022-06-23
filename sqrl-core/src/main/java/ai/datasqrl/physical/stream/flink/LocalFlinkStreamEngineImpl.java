@@ -17,8 +17,8 @@ public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
   public FlinkStreamBuilder createJob() {
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(
         org.apache.flink.configuration.Configuration.fromMap(Map.of(
-                "taskmanager.memory.network.fraction", "0.4",
-                "taskmanager.memory.network.max", "2gb"
+                "taskmanager.memory.network.fraction", "0.3",
+                "taskmanager.memory.network.max", "1gb"
             )
         ));
     env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
