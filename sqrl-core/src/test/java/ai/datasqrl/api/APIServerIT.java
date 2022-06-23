@@ -91,7 +91,7 @@ public class APIServerIT extends AbstractSQRLIT {
 
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             deploymentCheckpoint.flag();
-            webClient.post("/source")
+            webClient.post(port, "localhost", "/source")
                     .as(BodyCodec.jsonObject())
                     .sendJsonObject(fileObj, testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -126,7 +126,7 @@ public class APIServerIT extends AbstractSQRLIT {
         Checkpoint requestCheckpoint = testContext.checkpoint(3);
 
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.get("/source")
+            webClient.get(port, "localhost", "/source")
                     .as(BodyCodec.jsonArray())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -140,7 +140,7 @@ public class APIServerIT extends AbstractSQRLIT {
                         });
                     }));
 
-            webClient.get("/source/"+dsName)
+            webClient.get(port, "localhost", "/source/"+dsName)
                     .as(BodyCodec.jsonObject())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -154,7 +154,7 @@ public class APIServerIT extends AbstractSQRLIT {
                         });
                     }));
 
-            webClient.post("/source")
+            webClient.post(port, "localhost", "/source")
                     .as(BodyCodec.jsonArray())
                     .sendJsonObject(fileObj, testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -186,7 +186,7 @@ public class APIServerIT extends AbstractSQRLIT {
 
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.delete("/source/"+dsName)
+            webClient.delete(port, "localhost", "/source/"+dsName)
                     .as(BodyCodec.jsonObject())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -224,7 +224,7 @@ public class APIServerIT extends AbstractSQRLIT {
 
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.post("/source/" + dsName + "/tables")
+            webClient.post(port, "localhost", "/source/" + dsName + "/tables")
                     .as(BodyCodec.jsonObject())
                     .sendJsonObject(payload, testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -259,7 +259,7 @@ public class APIServerIT extends AbstractSQRLIT {
         Checkpoint requestCheckpoint = testContext.checkpoint(3);
 
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.get("/source/" + dsName + "/tables")
+            webClient.get(port, "localhost", "/source/" + dsName + "/tables")
                     .as(BodyCodec.jsonArray())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -273,7 +273,7 @@ public class APIServerIT extends AbstractSQRLIT {
                         });
                     }));
 
-            webClient.get("/source/" + dsName + "/tables/book")
+            webClient.get(port, "localhost", "/source/" + dsName + "/tables/book")
                     .as(BodyCodec.jsonObject())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -285,7 +285,7 @@ public class APIServerIT extends AbstractSQRLIT {
                         });
                     }));
 
-            webClient.post("/source/" + dsName + "/tables")
+            webClient.post(port, "localhost", "/source/" + dsName + "/tables")
                     .as(BodyCodec.jsonArray())
                     .sendJsonObject(payload, testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -314,7 +314,7 @@ public class APIServerIT extends AbstractSQRLIT {
 
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.delete("/source/" + dsName + "/tables/book")
+            webClient.delete(port, "localhost", "/source/" + dsName + "/tables/book")
                     .as(BodyCodec.jsonObject())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -357,7 +357,7 @@ public class APIServerIT extends AbstractSQRLIT {
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
             deploymentCheckpoint.flag();
 
-            webClient.post("/sink")
+            webClient.post(port, "localhost", "/sink")
                     .as(BodyCodec.jsonObject())
                     .sendJsonObject(sinkObj, testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -392,7 +392,7 @@ public class APIServerIT extends AbstractSQRLIT {
         Checkpoint requestCheckpoint = testContext.checkpoint(2);
 
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.get("/sink")
+            webClient.get(port, "localhost", "/sink")
                     .as(BodyCodec.jsonArray())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -406,7 +406,7 @@ public class APIServerIT extends AbstractSQRLIT {
                         });
                     }));
 
-            webClient.get("/sink/"+sinkName)
+            webClient.get(port, "localhost", "/sink/"+sinkName)
                     .as(BodyCodec.jsonObject())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -446,7 +446,7 @@ public class APIServerIT extends AbstractSQRLIT {
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
 
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.post("/sink")
+            webClient.post(port, "localhost", "/sink")
                     .as(BodyCodec.jsonObject())
                     .sendJsonObject(sinkObj2, testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -478,7 +478,7 @@ public class APIServerIT extends AbstractSQRLIT {
 
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.delete("/sink/"+sinkName)
+            webClient.delete(port, "localhost", "/sink/"+sinkName)
                     .as(BodyCodec.jsonObject())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -520,7 +520,7 @@ public class APIServerIT extends AbstractSQRLIT {
 
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
 
-            webClient.post("/deployment")
+            webClient.post(port, "localhost", "/deployment")
                     .as(BodyCodec.jsonObject())
                     .sendJsonObject(deploymentObj, testContext.succeeding(resp -> {
                         testContext.verify(() -> {
@@ -559,7 +559,7 @@ public class APIServerIT extends AbstractSQRLIT {
 
         Checkpoint requestCheckpoint = testContext.checkpoint(1);
         vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-            webClient.get("/deployment")
+            webClient.get(port, "localhost", "/deployment")
                     .as(BodyCodec.jsonArray())
                     .send(testContext.succeeding(resp -> {
                         testContext.verify(() -> {
