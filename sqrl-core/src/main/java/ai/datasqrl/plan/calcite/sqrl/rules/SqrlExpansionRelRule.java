@@ -1,7 +1,7 @@
 package ai.datasqrl.plan.calcite.sqrl.rules;
 
-import ai.datasqrl.plan.calcite.sqrl.tables.DatasetTableCalciteTable;
-import ai.datasqrl.plan.calcite.sqrl.tables.QueryCalciteTable;
+import ai.datasqrl.plan.calcite.sqrl.table.DatasetTableCalciteTable;
+import ai.datasqrl.plan.calcite.sqrl.table.QueryCalciteTable;
 import java.util.List;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;

@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.tables;
+package ai.datasqrl.plan.calcite.sqrl.table;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

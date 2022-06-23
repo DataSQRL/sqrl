@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.tables;
+package ai.datasqrl.plan.calcite.sqrl.table;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import lombok.AllArgsConstructor;

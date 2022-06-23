@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite;
+package ai.datasqrl.plan.calcite.memory.table;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;

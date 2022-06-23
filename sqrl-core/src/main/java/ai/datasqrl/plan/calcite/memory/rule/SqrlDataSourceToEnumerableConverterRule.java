@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.sqrl.rules;
+package ai.datasqrl.plan.calcite.memory.rule;
 
-import ai.datasqrl.plan.calcite.InMemoryEnumerableTableScan;
+import ai.datasqrl.plan.calcite.memory.rel.InMemoryEnumerableTableScan;
 import org.apache.calcite.adapter.enumerable.EnumerableTableScan;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;

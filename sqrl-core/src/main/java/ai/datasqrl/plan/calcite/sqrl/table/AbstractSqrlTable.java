@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.tables;
+package ai.datasqrl.plan.calcite.sqrl.table;
 
 import java.lang.reflect.Type;
 import org.apache.calcite.linq4j.QueryProvider;

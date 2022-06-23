@@ -1,5 +1,6 @@
-package ai.datasqrl.plan.calcite;
+package ai.datasqrl.plan.calcite.memory;
 
+import ai.datasqrl.plan.calcite.memory.rel.InMemoryEnumerableTableScan;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.DataContext;
 import org.apache.calcite.adapter.enumerable.EnumerableRel.Prefer;
@@ -19,7 +20,7 @@ public class LocalDataContext implements DataContext {
 
   /**
    * Entry point for code generated procedures
-   * @see ai.datasqrl.plan.calcite.InMemoryEnumerableTableScan#implement(EnumerableRelImplementor, Prefer)
+   * @see InMemoryEnumerableTableScan#implement(EnumerableRelImplementor, Prefer)
    */
   @Override
   public SchemaPlus getRootSchema() {

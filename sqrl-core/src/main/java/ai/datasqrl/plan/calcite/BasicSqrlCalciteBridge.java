@@ -2,8 +2,8 @@ package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.plan.calcite.sqrl.tables.DatasetTableCalciteTable;
-import ai.datasqrl.plan.calcite.sqrl.tables.QueryCalciteTable;
+import ai.datasqrl.plan.calcite.sqrl.table.DatasetTableCalciteTable;
+import ai.datasqrl.plan.calcite.sqrl.table.QueryCalciteTable;
 import ai.datasqrl.plan.local.operations.AddColumnOp;
 import ai.datasqrl.plan.local.operations.AddJoinDeclarationOp;
 import ai.datasqrl.plan.local.operations.AddNestedTableOp;

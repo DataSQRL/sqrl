@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.calcite;
 
-import ai.datasqrl.plan.calcite.sqrl.rules.SqrlDataSourceToEnumerableConverterRule;
+import ai.datasqrl.plan.calcite.memory.rule.SqrlDataSourceToEnumerableConverterRule;
 import ai.datasqrl.plan.calcite.sqrl.rules.SqrlExpansionRelRule;
 import java.util.List;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite;
+package ai.datasqrl.plan.calcite.memory;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.io.sources.SourceRecord;
@@ -9,6 +9,10 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine;
 import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine.JobBuilder;
+import ai.datasqrl.plan.calcite.BasicSqrlCalciteBridge;
+import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
+import ai.datasqrl.plan.calcite.Planner;
+import ai.datasqrl.plan.calcite.Rules;
 import ai.datasqrl.plan.calcite.Rules.Stage;
 import ai.datasqrl.plan.local.operations.AddColumnOp;
 import ai.datasqrl.plan.local.operations.AddNestedTableOp;

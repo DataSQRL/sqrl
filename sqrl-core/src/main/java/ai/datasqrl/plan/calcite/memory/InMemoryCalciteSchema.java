@@ -1,5 +1,6 @@
-package ai.datasqrl.plan.calcite;
+package ai.datasqrl.plan.calcite.memory;
 
+import ai.datasqrl.plan.calcite.memory.table.DataTable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
