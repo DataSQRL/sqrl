@@ -60,10 +60,10 @@ public class APIServerIT extends AbstractSQRLIT {
 
 
     @AfterEach
-    void cleanUp(VertxTestContext testContext) {
+    void cleanUp(Vertx vertx) {
         // Clean things up on the same Vert.x event-loop thread
         // that called prepare and foo
-        testContext.completeNow();
+            vertx.close();
     }
 
     @AfterEach
