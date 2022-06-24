@@ -20,7 +20,6 @@ public class BridgedCalciteSchema extends AbstractSqrlSchema {
   @Override
   public Expression getExpression(SchemaPlus schemaPlus, String s) {
     return Schemas.subSchemaExpression(schemaPlus, s, this.getClass());
-//    return Expressions.call(DataContext.ROOT, BuiltInMethod.DATA_CONTEXT_GET_ROOT_SCHEMA.method, new Expression[0]);
   }
 
   public void setBridge(SqrlCalciteBridge bridge) {

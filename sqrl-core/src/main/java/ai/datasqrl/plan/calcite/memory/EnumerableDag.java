@@ -42,9 +42,9 @@ import org.apache.calcite.tools.RelBuilder;
 /**
  * The enumerable DAG helps evaluate calcite plans. Once it does that, it stores the results in the
  * LocalDataContext for future SQRL statements.
- *
- * The EnumerableDag manages an independent calcite schema which contains enumerable data. This is used
- * by the DataContext for data retrieval.
+ * <p>
+ * The EnumerableDag manages an independent calcite schema which contains enumerable data. This is
+ * used by the DataContext for data retrieval.
  */
 public class EnumerableDag extends BasicSqrlCalciteBridge {
 
@@ -64,9 +64,6 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
   }
 
   /**
-   * This method works in two parts:
-   *  1. Registers the data source with the memory schema
-   *  2. Evaluates all tables and stores the result in the memory schema
    */
   @Override
   @SneakyThrows
@@ -91,7 +88,8 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
           .scan(table.getId().getCanonical())
           .build();
       List<Object[]> data = execute(rel);
-      inMemorySchema.registerDataTable(table.getId().getCanonical(), rel.getRowType().getFieldList(),
+      inMemorySchema.registerDataTable(table.getId().getCanonical(),
+          rel.getRowType().getFieldList(),
           data);
     }
 
@@ -103,8 +101,10 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 
     StreamHolder<Raw> stream = streamPreparer.getRawInput(tableImport.getTable(), streamJobBuilder);
-    SchemaValidator schemaValidator = new SchemaValidator(tableImport.getSchema(), SchemaAdjustmentSettings.DEFAULT, tableImport.getTable().getDataset().getDigest());
-    StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),"schema", SourceRecord.Named.class);
+    SchemaValidator schemaValidator = new SchemaValidator(tableImport.getSchema(),
+        SchemaAdjustmentSettings.DEFAULT, tableImport.getTable().getDataset().getDigest());
+    StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),
+        "schema", SourceRecord.Named.class);
 
     streamJobBuilder.addAsTable(validate, tableImport.getSchema(), tableImport.getTableName());
     InMemStreamEngine.Job job = streamJobBuilder.build();
@@ -161,20 +161,21 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
   @SneakyThrows
   public List<Object[]> execute(RelNode node) {
     for (Stage stage : Rules.ENUMERABLE_STAGES) {
-      node = planner.transform(stage.getStage(), stage.applyStageTrait(planner.getEmptyTraitSet()), node);
+      node = planner.transform(stage.getStage(), stage.applyStageTrait(planner.getEmptyTraitSet()),
+          node);
 
     }
 
     Bindable<Object[]> bindable = EnumerableInterpretable.toBindable(new HashMap<>(),
-        null, (EnumerableRel)node, Prefer.ARRAY);
+        null, (EnumerableRel) node, Prefer.ARRAY);
 
     List<Object[]> results = new ArrayList<>();
 
     LocalDataContext ctx = new LocalDataContext(this.rootMemSchema);
     for (Object o : bindable.bind(ctx)) {
       if (o instanceof Object[]) {
-        results.add((Object[])o);
-        System.out.println(Arrays.toString((Object[])o));
+        results.add((Object[]) o);
+        System.out.println(Arrays.toString((Object[]) o));
       } else {
         results.add(new Object[]{o});
       }

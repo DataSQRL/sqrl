@@ -34,7 +34,7 @@ public class PlannerFactory {
         .newConfigBuilder()
         .parserConfig(SqlParser.Config.DEFAULT.withConformance(SqrlConformance.INSTANCE))
         .traitDefs(ConventionTraitDef.INSTANCE, RelCollationTraitDef.INSTANCE)
-        .operatorTable(SqlStdOperatorTable.instance())
+        .operatorTable(SqrlOperatorTable.instance())
         .programs(Rules.programs())
         .typeSystem(SqrlTypeSystem.INSTANCE)
         .defaultSchema(rootSchema.getSubSchema(schemaName))

@@ -12,6 +12,7 @@ import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.Window;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceExpression;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceOrdinal;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
@@ -173,7 +174,7 @@ public class QuerySpecNorm extends RelationNorm {
     for (SingleColumn col : getSelect().getSelectItems()) {
       if (col.getExpression() instanceof ResolvedFunctionCall &&
           ((ResolvedFunctionCall)col.getExpression()).getFunction() instanceof SqlNativeFunction &&
-          ((SqlNativeFunction)((ResolvedFunctionCall)col.getExpression()).getFunction()).getOp() == SqlStdOperatorTable.ROW_NUMBER) {
+          ((SqlNativeFunction)((ResolvedFunctionCall)col.getExpression()).getFunction()).getOp() == SqrlOperatorTable.ROW_NUMBER) {
         return col;
       }
     }

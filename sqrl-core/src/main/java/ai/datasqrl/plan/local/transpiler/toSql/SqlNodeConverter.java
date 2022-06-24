@@ -56,6 +56,7 @@ import ai.datasqrl.parse.tree.Union;
 import ai.datasqrl.parse.tree.WhenClause;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqlParserPosFactory;
+import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceExpression;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceOrdinal;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
@@ -106,7 +107,7 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
 
   public SqlNodeConverter() {
     this.opMap = Multimaps.index(
-        SqlStdOperatorTable.instance().getOperatorList(), e -> e.getName());
+        SqrlOperatorTable.instance().getOperatorList(), e -> e.getName());
   }
 
   @Override

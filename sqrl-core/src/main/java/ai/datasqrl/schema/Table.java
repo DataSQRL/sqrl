@@ -2,6 +2,7 @@ package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Relationship.JoinType;
 
 import java.util.ArrayList;
@@ -144,4 +145,12 @@ public class Table extends AbstractTable {
     return getAllColumns().filter(Column::isVisible).collect(Collectors.toList());
   }
 
+  public NamePath getPath() {
+    if (getField(ReservedName.PARENT).isPresent()) {
+      return ((Relationship) getField(ReservedName.PARENT).get())
+          .getToTable().getPath().concat(getName());
+    } else {
+      return getName().toNamePath();
+    }
+  }
 }

@@ -5,6 +5,7 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
+import ai.datasqrl.function.calcite.MyFunction;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
@@ -27,10 +28,13 @@ import ai.datasqrl.util.data.C360;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import lombok.SneakyThrows;
@@ -39,9 +43,14 @@ import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.jdbc.CalciteJdbc41Factory;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.Driver;
+import org.apache.calcite.linq4j.tree.Types;
 import org.apache.calcite.runtime.Hook;
+import org.apache.calcite.schema.AbstractSqrlSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
+import org.apache.calcite.schema.Function;
+import org.apache.calcite.schema.ScalarFunction;
 import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -71,11 +80,58 @@ class EnumeratorTest extends AbstractSQRLIT {
     parser = ConfiguredSqrlParser.newParser(errorCollector);
   }
 
+
+  /**
+   * The function implementation lives in:
+   * {@link ai.datasqrl.function.calcite.MyFunction}
+   *
+   * The type inference lives:
+   * {@link  ai.datasqrl.plan.calcite.SqrlOperatorTable#MY_FUNCTION}
+   *
+   *
+   */
+  @SneakyThrows
+  @Test
+  public void testFunctionCall() {
+    //We'll pass this in to register the functions in the proper place
+    Map<String, org.apache.calcite.schema.Function> functionMap = new HashMap<>();
+    functionMap.put("MY_FUNCTION", MyFunction.FUNCTION);
+
+    //Able to execute it in the script
+    InMemoryCalciteSchema memSchema = runScript(
+        "IMPORT ecommerce-data.Product;\n" +
+            "Product.functionTest := my_function(1);",
+        functionMap
+    );
+
+    Statement statement = createStatement(memSchema);
+
+    //Able to get the result
+    ResultSet resultSet = statement.executeQuery(
+        "select functionTest \n"
+            + "from test.product$1");
+
+    int rowCount = output(resultSet, System.out);
+    System.out.println("Rows: " + rowCount);
+  }
+
   @SneakyThrows
   @Test
   public void testCalciteConnection() {
-    InMemoryCalciteSchema memSchema = runScript("IMPORT ecommerce-data.Product;");
+    InMemoryCalciteSchema memSchema = runScript("IMPORT ecommerce-data.Product;", Map.of());
+    Statement statement = createStatement(memSchema);
+    ResultSet resultSet = statement.executeQuery(
+        "select _ingest_time, count(*)\n"
+            + "from test.product$1 GROUP BY _ingest_time");
 
+    int rowCount = output(resultSet, System.out);
+    Assertions.assertTrue(rowCount > 0);
+    resultSet.close();
+    statement.close();
+  }
+
+  @SneakyThrows
+  private Statement createStatement(AbstractSqrlSchema memSchema) {
     Properties info = new Properties();
     info.setProperty(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), "false");
     info.setProperty("lex", "JAVA");
@@ -89,15 +145,7 @@ class EnumeratorTest extends AbstractSQRLIT {
     Hook.PROGRAM.run(Rules.programs());
 
     Statement statement = calciteConnection.createStatement();
-    ResultSet resultSet = statement.executeQuery(
-        "select _ingest_time, count(*)\n"
-            + "from test.product$1 GROUP BY _ingest_time");
-
-    int rowCount = output(resultSet, System.out);
-    Assertions.assertTrue(rowCount > 0);
-    resultSet.close();
-    statement.close();
-    calciteConnection.close();
+    return statement;
   }
 
   private int output(ResultSet resultSet, PrintStream out)
@@ -126,8 +174,8 @@ class EnumeratorTest extends AbstractSQRLIT {
             "IMPORT ecommerce-data.Product;\n"
           + "Product.example := productid;"
           + "Product.example2 := SELECT productid, category FROM _;"
-          + "Product2 := SELECT productid, category FROM Product.example2;"
-    );
+          + "Product2 := SELECT productid, category FROM Product.example2;",
+        Map.of());
   }
 
   @Disabled
@@ -217,19 +265,23 @@ class EnumeratorTest extends AbstractSQRLIT {
          + "-- Create subscription for customer spending more than $100 so we can send them a coupon --\n"
          + "\n"
          + "CREATE SUBSCRIPTION NewCustomerPromotion ON ADD AS\n"
-         + "SELECT customerid, email, name, total_orders FROM Customer WHERE total_orders >= 100;\n");
+         + "SELECT customerid, email, name, total_orders FROM Customer WHERE total_orders >= 100;"
+             + "\n",
+         Map.of());
   }
 
   @Disabled
   @Test
   public void testImportTimestamp() {
-    runScript("IMPORT ecommerce-data.Orders TIMESTAMP time;\n");
-    assertThrows(IllegalArgumentException.class, () -> runScript("IMPORT ecommerce-data.Orders TIMESTAMP uuid;\n"));
-    assertThrows(IllegalArgumentException.class, () -> runScript("IMPORT ecommerce-data.Orders TIMESTAMP id;\n"));
+    runScript("IMPORT ecommerce-data.Orders TIMESTAMP time;\n", Map.of());
+    assertThrows(IllegalArgumentException.class, () -> runScript("IMPORT ecommerce-data.Orders TIMESTAMP uuid;\n",
+        Map.of()));
+    assertThrows(IllegalArgumentException.class, () -> runScript("IMPORT ecommerce-data.Orders TIMESTAMP id;\n",
+        Map.of()));
   }
 
 
-  public InMemoryCalciteSchema runScript(String script) {
+  public InMemoryCalciteSchema runScript(String script, Map<String, Function> functionMap) {
     ScriptNode node = parser.parse(script);
     BundleTableFactory tableFactory = new BundleTableFactory();
     SchemaBuilder schema = new SchemaBuilder();
@@ -240,6 +292,7 @@ class EnumeratorTest extends AbstractSQRLIT {
     String schemaName = "test";
     BridgedCalciteSchema subSchema = new BridgedCalciteSchema();
     catalog.add(schemaName, subSchema);
+    addFunctions(subSchema, functionMap);
 
     PlannerFactory plannerFactory = new PlannerFactory(catalog);
     Planner planner = plannerFactory.createPlanner(schemaName);
@@ -266,6 +319,10 @@ class EnumeratorTest extends AbstractSQRLIT {
     }
     System.out.println(schema);
     return dag.getInMemorySchema();
+  }
+
+  private void addFunctions(AbstractSqrlSchema subSchema, Map<String, Function> functionMap) {
+    subSchema.setFunctionMap(functionMap);
   }
 
 }

@@ -17,6 +17,7 @@ import ai.datasqrl.parse.tree.Window;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
+import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceExpression;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
@@ -155,7 +156,7 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
         return new ResolvedFunctionCall(node.getLocation(),
             NamePath.of("COUNT"), List.of(new LongLiteral("1")), false,
             Optional.empty(), node,
-            new SqlNativeFunction(SqlStdOperatorTable.COUNT));
+            new SqlNativeFunction(SqrlOperatorTable.COUNT));
       }
     }
 

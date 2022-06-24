@@ -2,6 +2,7 @@ package ai.datasqrl.function;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public class FunctionLookup {
 
   public FunctionLookup() {
     this.opMap = Multimaps.index(
-        SqlStdOperatorTable.instance().getOperatorList(), e -> e.getName());
+        SqrlOperatorTable.instance().getOperatorList(), e -> e.getName());
     this.rewritingFunctionMap = new HashMap<>();
     this.rewritingFunctionMap.put(Name.system("roundToMonth"), new RoundToMonth());
     this.rewritingFunctionMap.put(Name.system("now"), new Now());
