@@ -33,7 +33,7 @@ public abstract class AbstractSqrlSchema implements Schema {
   public Collection<Function> getFunctions(String s) {
     Function function = functionMap.get(s);
 
-    return List.of(function);
+    return List.of();
   }
 
   @Override

@@ -1,40 +1,37 @@
 package ai.datasqrl.sqrl2sql;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.function.calcite.MyFunction;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.plan.calcite.CalciteEnvironment;
-import ai.datasqrl.plan.calcite.memory.EnumerableDag;
-import ai.datasqrl.plan.calcite.memory.InMemoryCalciteSchema;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.Rules;
 import ai.datasqrl.plan.calcite.SqrlSchemaCatalog;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
+import ai.datasqrl.plan.calcite.memory.EnumerableDag;
+import ai.datasqrl.plan.calcite.memory.InMemoryCalciteSchema;
 import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.plan.local.SchemaUpdatePlanner;
 import ai.datasqrl.plan.local.operations.SchemaBuilder;
 import ai.datasqrl.plan.local.operations.SchemaUpdateOp;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
-
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import lombok.SneakyThrows;
@@ -43,20 +40,14 @@ import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.jdbc.CalciteJdbc41Factory;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.Driver;
-import org.apache.calcite.linq4j.tree.Types;
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.schema.AbstractSqrlSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
-import org.apache.calcite.schema.Function;
-import org.apache.calcite.schema.ScalarFunction;
 import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class EnumeratorTest extends AbstractSQRLIT {
   ConfiguredSqrlParser parser;
@@ -93,15 +84,10 @@ class EnumeratorTest extends AbstractSQRLIT {
   @SneakyThrows
   @Test
   public void testFunctionCall() {
-    //We'll pass this in to register the functions in the proper place
-    Map<String, org.apache.calcite.schema.Function> functionMap = new HashMap<>();
-    functionMap.put("MY_FUNCTION", MyFunction.FUNCTION);
-
     //Able to execute it in the script
     InMemoryCalciteSchema memSchema = runScript(
         "IMPORT ecommerce-data.Product;\n" +
-            "Product.functionTest := my_function(1);",
-        functionMap
+            "Product.functionTest := my_function(productid);"
     );
 
     Statement statement = createStatement(memSchema);
@@ -118,7 +104,7 @@ class EnumeratorTest extends AbstractSQRLIT {
   @SneakyThrows
   @Test
   public void testCalciteConnection() {
-    InMemoryCalciteSchema memSchema = runScript("IMPORT ecommerce-data.Product;", Map.of());
+    InMemoryCalciteSchema memSchema = runScript("IMPORT ecommerce-data.Product;");
     Statement statement = createStatement(memSchema);
     ResultSet resultSet = statement.executeQuery(
         "select _ingest_time, count(*)\n"
@@ -174,8 +160,8 @@ class EnumeratorTest extends AbstractSQRLIT {
             "IMPORT ecommerce-data.Product;\n"
           + "Product.example := productid;"
           + "Product.example2 := SELECT productid, category FROM _;"
-          + "Product2 := SELECT productid, category FROM Product.example2;",
-        Map.of());
+          + "Product2 := SELECT productid, category FROM Product.example2;"
+    );
   }
 
   @Disabled
@@ -266,22 +252,22 @@ class EnumeratorTest extends AbstractSQRLIT {
          + "\n"
          + "CREATE SUBSCRIPTION NewCustomerPromotion ON ADD AS\n"
          + "SELECT customerid, email, name, total_orders FROM Customer WHERE total_orders >= 100;"
-             + "\n",
-         Map.of());
+             + "\n"
+     );
   }
 
   @Disabled
   @Test
   public void testImportTimestamp() {
-    runScript("IMPORT ecommerce-data.Orders TIMESTAMP time;\n", Map.of());
-    assertThrows(IllegalArgumentException.class, () -> runScript("IMPORT ecommerce-data.Orders TIMESTAMP uuid;\n",
-        Map.of()));
-    assertThrows(IllegalArgumentException.class, () -> runScript("IMPORT ecommerce-data.Orders TIMESTAMP id;\n",
-        Map.of()));
+    runScript("IMPORT ecommerce-data.Orders TIMESTAMP time;\n");
+    assertThrows(IllegalArgumentException.class, () -> runScript("IMPORT ecommerce-data.Orders TIMESTAMP uuid;\n"
+    ));
+    assertThrows(IllegalArgumentException.class, () -> runScript("IMPORT ecommerce-data.Orders TIMESTAMP id;\n"
+    ));
   }
 
 
-  public InMemoryCalciteSchema runScript(String script, Map<String, Function> functionMap) {
+  public InMemoryCalciteSchema runScript(String script) {
     ScriptNode node = parser.parse(script);
     BundleTableFactory tableFactory = new BundleTableFactory();
     SchemaBuilder schema = new SchemaBuilder();
@@ -292,7 +278,6 @@ class EnumeratorTest extends AbstractSQRLIT {
     String schemaName = "test";
     BridgedCalciteSchema subSchema = new BridgedCalciteSchema();
     catalog.add(schemaName, subSchema);
-    addFunctions(subSchema, functionMap);
 
     PlannerFactory plannerFactory = new PlannerFactory(catalog);
     Planner planner = plannerFactory.createPlanner(schemaName);
@@ -320,9 +305,4 @@ class EnumeratorTest extends AbstractSQRLIT {
     System.out.println(schema);
     return dag.getInMemorySchema();
   }
-
-  private void addFunctions(AbstractSqrlSchema subSchema, Map<String, Function> functionMap) {
-    subSchema.setFunctionMap(functionMap);
-  }
-
 }
