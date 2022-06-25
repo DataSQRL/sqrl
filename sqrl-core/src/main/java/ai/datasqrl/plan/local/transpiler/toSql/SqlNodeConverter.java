@@ -257,9 +257,11 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
     JoinType type;
     switch (node.getType()) {
       case DEFAULT:
-      case TEMPORAL:
       case INNER:
         type = JoinType.INNER;
+        break;
+      case TEMPORAL:
+        type = JoinType.TEMPORAL;
         break;
       case LEFT:
         type = JoinType.LEFT;
@@ -282,6 +284,18 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
 //            SqlLiteral.createSymbol(on ? JoinConditionType.ON : JoinConditionType.NONE,
 //                pos.getPos(node.getLocation())))
 //        .orElse(SqlLiteral.createSymbol(JoinConditionType.NONE, SqlParserPos.ZERO));
+
+    if (type == JoinType.CROSS) {
+      return new SqlJoin(pos.getPos(node.getLocation()),
+          node.getLeft().accept(this, context),
+          SqlLiteral.createBoolean(false, pos.getPos(node.getLocation())),
+          SqlLiteral.createSymbol(type, pos.getPos(node.getLocation())),
+          node.getRight().accept(this, context),
+          SqlLiteral.createSymbol(JoinConditionType.NONE, pos.getPos(Optional.empty())),
+          null
+      );
+    }
+
 
     return new SqlJoin(pos.getPos(node.getLocation()),
         node.getLeft().accept(this, context),
