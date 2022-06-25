@@ -59,7 +59,7 @@ public class CriteriaUtil {
     validatePrimaryKey(base.getRef().getTable().getPrimaryKeys());
 
     List<Expression> criteria = new ArrayList<>();
-    for (int i = 0; i < expanded.getLeftmost().getPrimaryKeys().size(); i++) {
+    for (int i = 0; i < 1 /*expanded.getLeftmost().getPrimaryKeys().size()*/; i++) {
       criteria.add(new ComparisonExpression(Operator.EQUAL,
           ResolvedColumn.of(base, base.getRef().getTable().getPrimaryKeys().get(i)),
           expanded.getLeftmost().getPrimaryKeys().get(i)));

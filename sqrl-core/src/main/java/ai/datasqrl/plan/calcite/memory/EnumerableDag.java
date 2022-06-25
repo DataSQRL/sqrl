@@ -6,6 +6,8 @@ import ai.datasqrl.io.sources.SourceRecord.Raw;
 import ai.datasqrl.io.sources.util.StreamInputPreparer;
 import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
 import ai.datasqrl.parse.tree.Node;
+import ai.datasqrl.parse.tree.NodeFormatter;
+import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine;
 import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine.JobBuilder;
@@ -14,6 +16,7 @@ import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.Rules;
 import ai.datasqrl.plan.calcite.Rules.Stage;
+import ai.datasqrl.plan.calcite.memory.table.DataTable;
 import ai.datasqrl.plan.local.operations.AddColumnOp;
 import ai.datasqrl.plan.local.operations.AddNestedTableOp;
 import ai.datasqrl.plan.local.operations.AddRootTableOp;
@@ -91,6 +94,8 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
       inMemorySchema.registerDataTable(table.getId().getCanonical(),
           rel.getRowType().getFieldList(),
           data);
+      //Override the installed table to indicate that we don't need to expand the query table anymore
+      this.tableMap.put(table.getId(), new DataTable(rel.getRowType().getFieldList(), data));
     }
 
     return null;
@@ -156,6 +161,9 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
     inMemorySchema.registerDataTable(tableName,
         rel.getRowType().getFieldList(),
         data);
+
+    //Override the installed table to indicate that we don't need to expand the query table anymore
+    this.tableMap.put(Name.system(tableName), new DataTable(rel.getRowType().getFieldList(), data));
   }
 
   @SneakyThrows
@@ -163,7 +171,7 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
     for (Stage stage : Rules.ENUMERABLE_STAGES) {
       node = planner.transform(stage.getStage(), stage.applyStageTrait(planner.getEmptyTraitSet()),
           node);
-
+      System.out.println(node.explain());
     }
 
     Bindable<Object[]> bindable = EnumerableInterpretable.toBindable(new HashMap<>(),

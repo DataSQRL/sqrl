@@ -324,7 +324,9 @@ public class SqlNodeConverter extends AstVisitor<SqlNode, ConvertContext> {
         }
         orderList = new SqlNodeList(ol, SqlParserPos.ZERO);
       }
-      SqlNodeList partitionList = new SqlNodeList(partition, SqlParserPos.ZERO);
+
+      //todo limit to just one partition
+      SqlNodeList partitionList = new SqlNodeList(List.of(partition.get(0)), SqlParserPos.ZERO);
 
       SqlNode[] operands = {
           call,

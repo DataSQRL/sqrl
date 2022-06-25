@@ -105,6 +105,7 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
     if (toExpand.size() > 0) {
       JoinNorm expanded = (JoinNorm) TablePathToJoins.expand(toExpand, List.of());
 
+      //TODO: This does not build the correct equality
       Optional<JoinOn> criteria = CriteriaUtil.joinEq(base, expanded);
 
       JoinNorm joinNorm = new JoinNorm(Optional.empty(), Type.LEFT, base, expanded, criteria);

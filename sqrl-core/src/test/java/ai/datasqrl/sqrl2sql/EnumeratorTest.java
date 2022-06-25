@@ -155,6 +155,23 @@ class EnumeratorTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
+  public void testTemporal() {
+    runScript(
+            "IMPORT ecommerce-data.Product;\n"
+          + "Product.example := SELECT p1.* FROM Product p1 "
+                + "TEMPORAL JOIN Product p2 ON p1.productid = p2.productid;"
+    );
+  }
+
+  @Test
+  public void testOrders() {
+    runScript(
+        "IMPORT ecommerce-data.Orders;\n"
+    );
+  }
+  @Test
+
   public void testEnumerable() {
     runScript(
             "IMPORT ecommerce-data.Product;\n"
@@ -222,7 +239,7 @@ class EnumeratorTest extends AbstractSQRLIT {
          + "   These numbers are internal to determine trending products */\n"
          + "Product._sales_last_week := SELECT SUM(e.quantity)\n"
          + "                          FROM _.order_entries e;\n"
-         + "                          --WHERE e.parent.time > now() - INTERVAL 1 WEEK;\n"
+//         + "                          --WHERE e.parent.time > now() - INTERVAL 1 WEEK;\n"
 //         + "                          WHERE e.parent.time > now() - INTERVAL 7 DAY;\n"
          + "\n"
          + "Product._sales_last_month := SELECT SUM(e.quantity)\n"
