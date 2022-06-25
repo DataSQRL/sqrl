@@ -145,11 +145,12 @@ public class BasicSqrlCalciteBridge implements SqrlCalciteBridge, SchemaOpVisito
   private RelNode plan(Node node) {
     planner.refresh();
     SqlNode sqlNode = planner.convert(node);
-    System.out.println(sqlNode);
     planner.validate(sqlNode);
 
     RelRoot root = planner.rel(sqlNode);
     RelNode relNode = root.rel;
+    System.out.println(relNode);
+
     return relNode;
   }
 

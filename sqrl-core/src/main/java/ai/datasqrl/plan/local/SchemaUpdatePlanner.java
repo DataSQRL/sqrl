@@ -173,7 +173,6 @@ public class SchemaUpdatePlanner {
     public SchemaUpdateOp query(Node relationNorm, NamePath namePath) {
       SqlNodeConverter converter = new SqlNodeConverter();
       SqlNode sqlNode = relationNorm.accept(converter, new ConvertContext());
-      System.out.println("Sql: " + SqlNodeFormatter.toString(sqlNode));
 
       double derivedRowCount = 1; //TODO: derive from optimizer
 
