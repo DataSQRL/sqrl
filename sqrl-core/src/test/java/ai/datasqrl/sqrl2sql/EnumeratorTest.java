@@ -181,7 +181,6 @@ class EnumeratorTest extends AbstractSQRLIT {
     );
   }
 
-  @Disabled
   @Test
   public void testQuery() {
      runScript("IMPORT ecommerce-data.Customer;\n"
