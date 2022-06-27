@@ -7,6 +7,7 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
+import ai.datasqrl.function.builtin.example.MyFunction;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
@@ -74,7 +75,7 @@ class EnumeratorTest extends AbstractSQRLIT {
 
   /**
    * The function implementation lives in:
-   * {@link ai.datasqrl.function.calcite.MyFunction}
+   * {@link MyFunction}
    *
    * The type inference lives:
    * {@link  ai.datasqrl.plan.calcite.SqrlOperatorTable#MY_FUNCTION}
@@ -182,6 +183,7 @@ class EnumeratorTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void testQuery() {
      runScript("IMPORT ecommerce-data.Customer;\n"
          + "IMPORT ecommerce-data.Product;\n"

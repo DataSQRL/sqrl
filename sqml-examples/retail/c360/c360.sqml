@@ -35,7 +35,7 @@ Customer.recent_products_categories.products := JOIN _.parent.recent_products rp
 
 -- Aggregate customer spending by month and product category for the 'spending history' feature
 Customer._spending_by_month_category :=
-                     SELECT time_roundToMonth(parent.`time`) AS `month`,
+                     SELECT time.roundToMonth(parent.`time`) AS `month`,
                             product.category AS category,
                             sum(total) AS total,
                             sum(discount) AS savings

@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.local.transpiler.nodes.expression;
 
-import ai.datasqrl.function.SqrlFunction;
+import ai.datasqrl.function.SqrlAwareFunction;
 import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.FunctionCall;
@@ -23,12 +23,12 @@ public class ResolvedFunctionCall extends Expression {
   private final Optional<Window> over;
 
   private final FunctionCall oldExpression;
-  private final SqrlFunction function;
+  private final SqrlAwareFunction function;
 
   public ResolvedFunctionCall(Optional<NodeLocation> location, NamePath namePath,
       List<Expression> arguments, boolean distinct, Optional<Window> over,
       FunctionCall oldExpression,
-      SqrlFunction function) {
+      SqrlAwareFunction function) {
     super(location);
     this.namePath = namePath;
     this.arguments = arguments;
