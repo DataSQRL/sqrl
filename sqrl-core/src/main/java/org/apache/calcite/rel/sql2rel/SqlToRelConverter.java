@@ -211,7 +211,7 @@ import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 /**
  * Copied from Calcite:
- * - Added temporal join
+ * - Added temporal join. {@link org.apache.calcite.sql2rel.SqlToRelConverter#convertJoinType(org.apache.calcite.sql.JoinType)}
  */
 
 /**

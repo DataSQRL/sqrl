@@ -57,69 +57,18 @@ public class SqrlValidator extends SqlValidatorImpl {
         validateWhereOrOn(joinScope, condition, "ON");
 //        checkRollUp(null, join, condition, joinScope, "ON");
         break;
-      case USING:
-        SqlNodeList list = (SqlNodeList) condition;
-
-        // Parser ensures that using clause is not empty.
-        Preconditions.checkArgument(list.size() > 0, "Empty USING clause");
-        for (SqlNode node : list) {
-          SqlIdentifier id = (SqlIdentifier) node;
-//          final RelDataType leftColType = validateUsingCol(id, left);
-//          final RelDataType rightColType = validateUsingCol(id, right);
-//          if (!SqlTypeUtil.isComparable(leftColType, rightColType)) {
-//            throw newValidationError(
-//                id,
-//                RESOURCE.naturalOrUsingColumnNotCompatible(
-//                    id.getSimple(),
-//                    leftColType.toString(),
-//                    rightColType.toString()));
-//          }
-//          checkRollUpInUsing(id, left, scope);
-//          checkRollUpInUsing(id, right, scope);
-        }
-        break;
       default:
         throw Util.unexpected(conditionType);
     }
 
     // Validate NATURAL.
     if (natural) {
-      if (condition != null) {
-        throw newValidationError(condition, RESOURCE.naturalDisallowsOnOrUsing());
-      }
-
-      // Join on fields that occur exactly once on each side. Ignore
-      // fields that occur more than once on either side.
-      final RelDataType leftRowType = getNamespace(left).getRowType();
-      final RelDataType rightRowType = getNamespace(right).getRowType();
-      final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
-      List<String> naturalColumnNames =
-          SqlValidatorUtil.deriveNaturalJoinColumnList(
-              nameMatcher, leftRowType, rightRowType);
-
-      // Check compatibility of the chosen columns.
-      for (String name : naturalColumnNames) {
-        final RelDataType leftColType = nameMatcher.field(leftRowType, name).getType();
-        final RelDataType rightColType = nameMatcher.field(rightRowType, name).getType();
-        if (!SqlTypeUtil.isComparable(leftColType, rightColType)) {
-          throw newValidationError(
-              join,
-              RESOURCE.naturalOrUsingColumnNotCompatible(
-                  name, leftColType.toString(), rightColType.toString()));
-        }
-      }
+      throw Util.unexpected(conditionType);
     }
 
     // Which join types require/allow a ON/USING condition, or allow
     // a NATURAL keyword?
     switch (joinType) {
-      case LEFT_SEMI_JOIN:
-//        if (!this.config.sqlConformance().isLiberal()) {
-//          throw newValidationError(
-//              join.getJoinTypeNode(),
-//              RESOURCE.dialectDoesNotSupportFeature("LEFT SEMI JOIN"));
-//        }
-        // fall through
       case INNER:
       case LEFT:
       case RIGHT:
@@ -144,5 +93,4 @@ public class SqrlValidator extends SqlValidatorImpl {
         throw Util.unexpected(joinType);
     }
   }
-
 }
