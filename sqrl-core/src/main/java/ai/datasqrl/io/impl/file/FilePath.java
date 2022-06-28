@@ -148,7 +148,7 @@ public class FilePath implements Serializable {
   }
 
   public static java.nio.file.Path toJavaPath(FilePath path) {
-    return java.nio.file.Path.of(path.flinkPath.toUri().getPath());
+    return java.nio.file.Path.of(path.flinkPath.toString());
   }
 
 
