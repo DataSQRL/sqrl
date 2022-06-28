@@ -154,6 +154,7 @@ public class EnumerableCalciteBridge extends BasicSqrlCalciteBridge {
     rootMemSchema.add(planner.getDefaultSchema().getName(), inMemorySchema);
 
     LocalDataContext ctx = new LocalDataContext(rootMemSchema);
+    System.out.println("--Results");
     for (Object o : bindable.bind(ctx)) {
       if (o instanceof Object[]) {
         results.add((Object[]) o);
