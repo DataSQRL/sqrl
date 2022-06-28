@@ -88,7 +88,7 @@ class EnumeratorTest extends AbstractSQRLIT {
     //Able to execute it in the script
     InMemoryCalciteSchema memSchema = runScript(
         "IMPORT ecommerce-data.Product;\n" +
-            "Product.functionTest := my_function(productid);"
+            "Product.functionTest := TRUNCATE_TO_MONTH(_ingest_time);"
     );
 
     Statement statement = createStatement(memSchema);
