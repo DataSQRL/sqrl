@@ -1,7 +1,8 @@
-package ai.datasqrl.function.calcite;
+package ai.datasqrl.function.builtin.time;
 
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
+import ai.datasqrl.function.SqrlAwareFunction;
+import ai.datasqrl.parse.tree.name.Name;
+import java.time.Instant;
 import java.util.List;
 import org.apache.calcite.linq4j.tree.Types;
 import org.apache.calcite.schema.ScalarFunction;
@@ -18,21 +19,20 @@ import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedFunction;
 
-public class SqlMyFunction extends SqlUserDefinedFunction {
+public class RoundMonth extends SqlUserDefinedFunction implements SqrlAwareFunction {
   static final ScalarFunction fnc =
-      ScalarFunctionImpl.create(Types.lookupMethod(MyFunction.class, "eval", Long.class));
+      ScalarFunctionImpl.create(Types.lookupMethod(RoundMonthFunction.class, "eval", Instant.class));
 
-  public SqlMyFunction() {
+  public RoundMonth() {
     super(
-        new SqlIdentifier("MY_FUNCTION", SqlParserPos.ZERO),
+        new SqlIdentifier("ROUNDTOMONTH", SqlParserPos.ZERO),
         SqlKind.OTHER,
-        ReturnTypes.BIGINT,
+        ReturnTypes.TIMESTAMP,
         InferTypes.RETURN_TYPE,
         OperandTypes.operandMetadata(
-            List.of(SqlTypeFamily.NUMERIC),
+            List.of(SqlTypeFamily.TIMESTAMP),
             typeFactory -> List.of(
-                typeFactory.createSqlType(SqlTypeName.BIGINT),
-                typeFactory.createSqlType(SqlTypeName.INTEGER)),
+                typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE)),
             i -> "arg" + i,
             i -> false),
         fnc,
@@ -45,6 +45,21 @@ public class SqlMyFunction extends SqlUserDefinedFunction {
   }
 
   public boolean isDynamicFunction() {
+    return true;
+  }
+
+  @Override
+  public Name getSqrlName() {
+    return Name.system(getName());
+  }
+
+  @Override
+  public boolean isAggregate() {
+    return false;
+  }
+
+  @Override
+  public boolean isTimestampPreserving() {
     return true;
   }
 }

@@ -1,6 +1,6 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.function.SqlNativeFunction;
+import ai.datasqrl.function.calcite.CalciteFunctionProxy;
 import ai.datasqrl.parse.tree.ComparisonExpression;
 import ai.datasqrl.parse.tree.ComparisonExpression.Operator;
 import ai.datasqrl.parse.tree.Expression;
@@ -177,7 +177,7 @@ public class Relationship extends Field {
         false,
         Optional.of(createWindow(table)),
       null,
-        new SqlNativeFunction(SqlStdOperatorTable.ROW_NUMBER)
+        new CalciteFunctionProxy(SqlStdOperatorTable.ROW_NUMBER)
     );
     return resolvedFunctionCall;
   }

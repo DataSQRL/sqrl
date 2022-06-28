@@ -1,6 +1,5 @@
 package ai.datasqrl.plan.local.transpiler.nodes.relation;
 
-import ai.datasqrl.function.SqlNativeFunction;
 import ai.datasqrl.parse.tree.AstVisitor;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.GroupBy;
@@ -21,18 +20,13 @@ import ai.datasqrl.plan.local.transpiler.nodes.node.SelectNorm;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javassist.expr.Expr;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.commons.math3.analysis.function.Exp;
-import org.checkerframework.checker.units.qual.C;
 
 /**
  * An normalized version of {@link ai.datasqrl.parse.tree.QuerySpecification}
@@ -173,8 +167,8 @@ public class QuerySpecNorm extends RelationNorm {
   protected SingleColumn getRowNumField() {
     for (SingleColumn col : getSelect().getSelectItems()) {
       if (col.getExpression() instanceof ResolvedFunctionCall &&
-          ((ResolvedFunctionCall)col.getExpression()).getFunction() instanceof SqlNativeFunction &&
-          ((SqlNativeFunction)((ResolvedFunctionCall)col.getExpression()).getFunction()).getOp() == SqrlOperatorTable.ROW_NUMBER) {
+          ((ResolvedFunctionCall)col.getExpression()).getFunction().getSqrlName()
+              .equals(Name.system(SqrlOperatorTable.ROW_NUMBER.getName()))) {
         return col;
       }
     }

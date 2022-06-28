@@ -1,9 +1,9 @@
 package ai.datasqrl.plan.local.transpiler;
 
-import ai.datasqrl.function.FunctionLookup;
-import ai.datasqrl.function.RewritingFunction;
-import ai.datasqrl.function.SqlNativeFunction;
-import ai.datasqrl.function.SqrlFunction;
+import ai.datasqrl.function.calcite.CalciteFunctionMetadataProvider;
+import ai.datasqrl.function.calcite.CalciteFunctionProxy;
+import ai.datasqrl.function.FunctionMetadataProvider;
+import ai.datasqrl.function.SqrlAwareFunction;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionRewriter;
 import ai.datasqrl.parse.tree.ExpressionTreeRewriter;
@@ -42,9 +42,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
+  private static final FunctionMetadataProvider functionMetadataProvider =
+      new CalciteFunctionMetadataProvider(SqrlOperatorTable.instance());
 
   private final boolean allowPaths;
   @Getter
@@ -125,8 +126,10 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
   @Override
   public Expression rewriteFunctionCall(FunctionCall node, RelationScope scope,
       ExpressionTreeRewriter<RelationScope> treeRewriter) {
-    FunctionLookup functionLookup = new FunctionLookup();
-    SqrlFunction function = functionLookup.lookup(node.getNamePath());
+
+    Optional<SqrlAwareFunction> functionOptional = functionMetadataProvider.lookup(node.getNamePath());
+    Preconditions.checkState(functionOptional.isPresent(), "Could not find function {}", node.getNamePath());
+    SqrlAwareFunction function = functionOptional.get();
 
     if (function.isAggregate() && node.getArguments().size() == 1 &&
         node.getArguments().get(0) instanceof Identifier) {
@@ -149,23 +152,15 @@ public class ExpressionNormalizer extends ExpressionRewriter<RelationScope> {
     }
 
     //Special case for count
-    //TODO Replace this bit of code
-    if (function instanceof SqlNativeFunction) {
-      SqlNativeFunction nativeFunction = (SqlNativeFunction) function;
-      if (nativeFunction.getOp().getName().equalsIgnoreCase("COUNT") &&
-          node.getArguments().size() == 0) {
-        return new ResolvedFunctionCall(node.getLocation(),
-            NamePath.of("COUNT"), List.of(new LongLiteral("1")), false,
-            Optional.empty(), node,
-            new SqlNativeFunction(SqrlOperatorTable.COUNT));
-      }
+    //TODO Replace this bit of code by fixing the count function to take other args
+    if (function.getSqrlName().getCanonical().equalsIgnoreCase("COUNT") &&
+        node.getArguments().size() == 0) {
+      return new ResolvedFunctionCall(node.getLocation(),
+          NamePath.of("COUNT"), List.of(new LongLiteral("1")), false,
+          Optional.empty(), node,
+          new CalciteFunctionProxy(SqrlOperatorTable.COUNT));
     }
 
-    if (function instanceof RewritingFunction) {
-      //rewrite function immediately
-      RewritingFunction rewritingFunction = (RewritingFunction) function;
-      node = rewritingFunction.rewrite(node);
-    }
     List<Expression> arguments = new ArrayList<>();
     for (Expression arg : node.getArguments()) {
       arguments.add(treeRewriter.rewrite(arg, scope));

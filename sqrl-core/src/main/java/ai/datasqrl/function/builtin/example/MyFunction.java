@@ -1,4 +1,4 @@
-package ai.datasqrl.function.calcite;
+package ai.datasqrl.function.builtin.example;
 
 public class MyFunction {
 
