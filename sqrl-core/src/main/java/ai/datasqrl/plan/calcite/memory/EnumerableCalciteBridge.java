@@ -36,11 +36,14 @@ import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.tools.RelBuilder;
 
 /**
- * The enumerable DAG helps evaluate calcite plans. Once it does that, it stores the results in the
- * LocalDataContext for future SQRL statements.
- * <p>
- * The EnumerableDag manages an independent calcite schema which contains enumerable data. This is
- * used by the DataContext for data retrieval.
+ * The {@link EnumerableCalciteBridge} plans and immediately executes all {@link ai.datasqrl.plan.local.operations.SchemaUpdateOp}
+ * that it visits. It stores the results of that execution as a {@link DataTable} inside the {@link InMemoryCalciteSchema}
+ * that it maintains separately from tableMap of the parent class, because that schema is used to initiate the
+ * {@link LocalDataContext} required for the enumerable execution by Calcite.
+ *
+ * This bridge implementation is used primarily for testing and in-memory execution since it eagerly materializes
+ * all defined SQRL tables and stores the results in memory.
+ *
  */
 public class EnumerableCalciteBridge extends BasicSqrlCalciteBridge {
 
