@@ -17,10 +17,10 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 @AllArgsConstructor
-public class SourceRecord2RowMapper<R,S> implements Function<SourceRecord.Named, R>, Serializable {
+public class SourceRecord2RowMapper<R> implements Function<SourceRecord.Named, R>, Serializable {
 
     private final InputTableSchema tableSchema;
-    private final RowConstructor<R,S> rowConstructor;
+    private final RowConstructor<R> rowConstructor;
 
     public R apply(SourceRecord.Named sourceRecord) {
         Object[] cols = constructRows(sourceRecord.getData(), tableSchema.getSchema().getFields());
@@ -31,7 +31,7 @@ public class SourceRecord2RowMapper<R,S> implements Function<SourceRecord.Named,
         if (tableSchema.isHasSourceTimestamp()) {
             cols[2] = sourceRecord.getSourceTime();
         }
-        return rowConstructor.createRoot(cols);
+        return rowConstructor.createRow(cols);
     }
 
     private static Object[] extendCols(Object[] cols, int paddingLength) {
@@ -49,20 +49,20 @@ public class SourceRecord2RowMapper<R,S> implements Function<SourceRecord.Named,
                     if (ftype.getType() instanceof RelationType) {
                         RelationType<FlexibleDatasetSchema.FlexibleField> subType = (RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType();
                         if (isSingleton(ftype)) {
-                            return rowConstructor.createNested(constructRows((Map<Name, Object>) data.get(name), subType));
+                            return rowConstructor.createNestedRow(constructRows((Map<Name, Object>) data.get(name), subType));
                         } else {
                             int idx = 0;
                             List<Map<Name, Object>> nestedData = (List<Map<Name, Object>>) data.get(name);
-                            S[] result = rowConstructor.createRowArray(nestedData.size());
+                            Object[] rows = new Object[nestedData.size()];
                             for (Map<Name, Object> item : nestedData) {
                                 Object[] cols = constructRows(item, subType);
                                 //Add index
                                 cols = extendCols(cols,1);
                                 cols[0] = Long.valueOf(idx);
-                                result[idx] = rowConstructor.createNested(cols);
+                                rows[idx] = rowConstructor.createNestedRow(cols);
                                 idx++;
                             }
-                            return result;
+                            return rowConstructor.createRowList(rows);
                         }
                     } else {
                         //Data is already correctly prepared by schema validation map-step
@@ -85,13 +85,13 @@ public class SourceRecord2RowMapper<R,S> implements Function<SourceRecord.Named,
         return ConstraintHelper.getCardinality(ftype.getConstraints()).isSingleton();
     }
 
-    public interface RowConstructor<R,S> extends Serializable {
+    public interface RowConstructor<R> extends Serializable {
 
-        R createRoot(Object[] columns);
+        R createRow(Object[] columns);
 
-        S createNested(Object[] columns);
+        Object createNestedRow(Object[] columns);
 
-        S[] createRowArray(int size);
+        Object createRowList(Object[] rows);
 
     }
 

@@ -1,16 +1,10 @@
 package ai.datasqrl.plan.calcite.memory;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
-import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.SourceRecord.Raw;
 import ai.datasqrl.io.sources.util.StreamInputPreparer;
-import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.physical.stream.StreamHolder;
+import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine;
-import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine.JobBuilder;
 import ai.datasqrl.plan.calcite.BasicSqrlCalciteBridge;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.Planner;
@@ -23,8 +17,7 @@ import ai.datasqrl.plan.local.operations.AddRootTableOp;
 import ai.datasqrl.plan.local.operations.SourceTableImportOp;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
-import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
-import ai.datasqrl.schema.input.SchemaValidator;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,21 +42,19 @@ import org.apache.calcite.tools.RelBuilder;
  * The EnumerableDag manages an independent calcite schema which contains enumerable data. This is
  * used by the DataContext for data retrieval.
  */
-public class EnumerableDag extends BasicSqrlCalciteBridge {
+public class EnumerableCalciteBridge extends BasicSqrlCalciteBridge {
+
+  private final StreamEngine streamEngine;
+  private final StreamInputPreparer streamPreparer;
 
   @Getter
   private final InMemoryCalciteSchema inMemorySchema;
 
-  @Getter
-  private final SchemaPlus rootMemSchema;
-
-  public EnumerableDag(Planner planner) {
+  public EnumerableCalciteBridge(Planner planner, StreamEngine streamEngine, StreamInputPreparer streamPreparer) {
     super(planner);
-    SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
-    InMemoryCalciteSchema memorySchema = new InMemoryCalciteSchema();
-    rootSchema.add(planner.getDefaultSchema().getName(), memorySchema);
-    this.inMemorySchema = memorySchema;
-    this.rootMemSchema = rootSchema;
+    this.streamEngine = streamEngine;
+    this.streamPreparer = streamPreparer;
+    this.inMemorySchema = new InMemoryCalciteSchema();
   }
 
   /**
@@ -76,48 +67,24 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
     RelDataType rootType = new FlexibleTableConverter(op.getSourceTableImport().getSchema()).apply(
         new CalciteSchemaGenerator(planner.getTypeFactory())).get();
 
-    inMemorySchema.registerDataSet(op.getSourceTableImport().getTable().qualifiedName(),
+    inMemorySchema.registerSourceTable(op.getSourceTableImport().getTable().qualifiedName(),
         rootType.getFieldList(), getDataFromImport(op.getSourceTableImport()));
 
     for (Table table : createdTables) {
-      RelBuilder builder = planner.getRelBuilder();
-      /*
-       * during shredding rule eval gets transforms from:
-       * SELECT * FROM table$1;
-       * into:
-       * SELECT * FROM dataset.Table;
-       */
-      RelNode rel = builder
-          .scan(table.getId().getCanonical())
-          .build();
-      List<Object[]> data = execute(rel);
-      inMemorySchema.registerDataTable(table.getId().getCanonical(),
-          rel.getRowType().getFieldList(),
-          data);
-      //Override the installed table to indicate that we don't need to expand the query table anymore
-      this.tableMap.put(table.getId(), new DataTable(rel.getRowType().getFieldList(), data));
+      executeAndRegister(table.getId().getCanonical());
     }
 
     return null;
   }
 
   public Collection<Object[]> getDataFromImport(SourceTableImport tableImport) {
-    JobBuilder streamJobBuilder = new InMemStreamEngine().createJob();
-    StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
+    StreamEngine.Builder streamJobBuilder = streamEngine.createJob();
+    streamPreparer.importTable(tableImport,streamJobBuilder);
+    StreamEngine.Job job = streamJobBuilder.build();
+    String tableQualifiedName = tableImport.getTable().qualifiedName();
+    job.execute("populate["+tableQualifiedName+"]");
 
-    StreamHolder<Raw> stream = streamPreparer.getRawInput(tableImport.getTable(), streamJobBuilder);
-    SchemaValidator schemaValidator = new SchemaValidator(tableImport.getSchema(),
-        SchemaAdjustmentSettings.DEFAULT, tableImport.getTable().getDataset().getDigest());
-    StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),
-        "schema", SourceRecord.Named.class);
-
-    streamJobBuilder.addAsTable(validate, tableImport.getSchema(), tableImport.getTableName());
-    InMemStreamEngine.Job job = streamJobBuilder.build();
-
-//    fills the streams?
-    job.execute("test");
-
-    Collection<Object[]> objects = job.getRecordHolder().get(tableImport.getTableName());
+    Collection<Object[]> objects = ((InMemStreamEngine.Job)job).getRecordHolder().get(tableQualifiedName);
     return objects;
   }
 
@@ -125,7 +92,7 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
   @Override
   public <T> T visit(AddColumnOp op) {
     super.visit(op);
-    executeAndRegister(op.getTable().getId().getCanonical(), op.getJoinedNode());
+    executeAndRegister(op.getTable().getId().getCanonical());
     return null;
   }
 
@@ -133,7 +100,7 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
   @Override
   public <T> T visit(AddNestedTableOp op) {
     super.visit(op);
-    executeAndRegister(op.getTable().getId().getCanonical(), op.getNode());
+    executeAndRegister(op.getTable().getId().getCanonical());
     return super.visit(op);
   }
 
@@ -141,13 +108,13 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
   @Override
   public <T> T visit(AddRootTableOp op) {
     super.visit(op);
-    executeAndRegister(op.getTable().getId().getCanonical(), op.getNode());
+    executeAndRegister(op.getTable().getId().getCanonical());
 
     return super.visit(op);
   }
 
   @SneakyThrows
-  public void executeAndRegister(String tableName, Node n) {
+  public void executeAndRegister(String tableName) {
     RelBuilder builder = planner.getRelBuilder();
 
     RelNode rel = builder
@@ -174,12 +141,16 @@ public class EnumerableDag extends BasicSqrlCalciteBridge {
       System.out.println(node.explain());
     }
 
+
     Bindable<Object[]> bindable = EnumerableInterpretable.toBindable(new HashMap<>(),
         null, (EnumerableRel) node, Prefer.ARRAY);
 
     List<Object[]> results = new ArrayList<>();
 
-    LocalDataContext ctx = new LocalDataContext(this.rootMemSchema);
+    SchemaPlus rootMemSchema = CalciteSchema.createRootSchema(false, false).plus();
+    rootMemSchema.add(planner.getDefaultSchema().getName(), inMemorySchema);
+
+    LocalDataContext ctx = new LocalDataContext(rootMemSchema);
     for (Object o : bindable.bind(ctx)) {
       if (o instanceof Object[]) {
         results.add((Object[]) o);

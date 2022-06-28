@@ -7,10 +7,13 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
+import ai.datasqrl.io.sources.util.StreamInputPreparer;
+import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.ScriptNode;
+import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine;
 import ai.datasqrl.plan.calcite.CalciteEnvironment;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
@@ -18,7 +21,7 @@ import ai.datasqrl.plan.calcite.Rules;
 import ai.datasqrl.plan.calcite.SqrlSchemaCatalog;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import ai.datasqrl.plan.calcite.memory.EnumerableDag;
+import ai.datasqrl.plan.calcite.memory.EnumerableCalciteBridge;
 import ai.datasqrl.plan.calcite.memory.InMemoryCalciteSchema;
 import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.plan.local.SchemaUpdatePlanner;
@@ -298,14 +301,17 @@ class EnumeratorTest extends AbstractSQRLIT {
     PlannerFactory plannerFactory = new PlannerFactory(catalog);
     Planner planner = plannerFactory.createPlanner(schemaName);
 
-    EnumerableDag dag = new EnumerableDag(planner);
+    InMemStreamEngine streamEngine = new InMemStreamEngine();
+    StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
+
+    EnumerableCalciteBridge dag = new EnumerableCalciteBridge(planner, streamEngine, streamPreparer);
     subSchema.setBridge(dag);
 
     for (Node n : node.getStatements()) {
       SchemaUpdatePlanner schemaUpdatePlanner = new SchemaUpdatePlanner(this.importManager,
           tableFactory, SchemaAdjustmentSettings.DEFAULT,
           errorCollector);
-      System.out.println("Statement: " + NodeFormatter.accept(n));
+      System.out.println("---Statement: " + NodeFormatter.accept(n));
 
       /*
        * Import process flow:

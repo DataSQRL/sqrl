@@ -23,7 +23,7 @@ public interface StreamEngine extends Closeable {
                                            SourceTable sourceTable,
                                            TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider);
 
-    void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, Name tableName);
+    void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, String qualifiedTableName);
 
     Job build();
 

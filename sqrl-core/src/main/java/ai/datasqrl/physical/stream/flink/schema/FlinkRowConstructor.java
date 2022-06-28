@@ -4,22 +4,24 @@ import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 
-public class FlinkRowConstructor implements SourceRecord2RowMapper.RowConstructor<Row, Row> {
+import java.util.Arrays;
+
+public class FlinkRowConstructor implements SourceRecord2RowMapper.RowConstructor<Row> {
 
     public static final FlinkRowConstructor INSTANCE = new FlinkRowConstructor();
 
     @Override
-    public Row createRoot(Object[] columns) {
+    public Row createRow(Object[] columns) {
         return Row.ofKind(RowKind.INSERT, columns);
     }
 
     @Override
-    public Row createNested(Object[] columns) {
+    public Row createNestedRow(Object[] columns) {
         return Row.of(columns);
     }
 
     @Override
-    public Row[] createRowArray(int size) {
-        return new Row[size];
+    public Row[] createRowList(Object[] rows) {
+        return Arrays.copyOf(rows,rows.length,Row[].class);
     }
 }
