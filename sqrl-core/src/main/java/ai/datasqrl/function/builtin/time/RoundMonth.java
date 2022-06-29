@@ -27,7 +27,7 @@ public class RoundMonth extends SqlUserDefinedFunction implements SqrlAwareFunct
     super(
         new SqlIdentifier("ROUNDTOMONTH", SqlParserPos.ZERO),
         SqlKind.OTHER,
-        ReturnTypes.TIMESTAMP,
+        ReturnTypes.explicit(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE),
         InferTypes.RETURN_TYPE,
         OperandTypes.operandMetadata(
             List.of(SqlTypeFamily.TIMESTAMP),
