@@ -174,14 +174,35 @@ class EnumeratorTest extends AbstractSQRLIT {
         "IMPORT ecommerce-data.Orders;\n"
     );
   }
-  @Test
 
+  @Test
   public void testEnumerable() {
     runScript(
             "IMPORT ecommerce-data.Product;\n"
           + "Product.example := productid;"
           + "Product.example2 := SELECT productid, category FROM _;"
           + "Product2 := SELECT productid, category FROM Product.example2;"
+    );
+  }
+
+  @Test
+  public void testNestedWithParentExpression() {
+    runScript(
+            "IMPORT ecommerce-data.Orders;\n"
+          + "IMPORT ecommerce-data.Product;\n"
+          + "Test := SELECT p.productid, p.name, e.quantity, e.parent.time FROM Product p JOIN Orders.entries e ON e.productid = p.productid;"
+    );
+    //This produces the wrong results because the left join for e.parent.time joins entries$2 against itself but only on the parent primary
+    //key (_uuid) and not the full primary key of entries$2 (_uuid, _idx). Hence, we see the results show up multiple times depending on how
+    //many entries a particular order has.
+  }
+
+  @Test
+  public void testSimpleNested() {
+    runScript(
+            "IMPORT ecommerce-data.Orders;\n"
+                    + "IMPORT ecommerce-data.Product;\n"
+                    + "Test := SELECT p.productid, p.name, e.quantity FROM Product p JOIN Orders.entries e ON e.productid = p.productid;"
     );
   }
 
