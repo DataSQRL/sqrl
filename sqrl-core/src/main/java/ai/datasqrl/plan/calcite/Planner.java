@@ -4,7 +4,9 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.plan.local.transpiler.toSql.ConvertContext;
 import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeConverter;
 import org.apache.calcite.plan.RelOptCluster;
+import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.prepare.PlannerImpl;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.calcite.tools.RelBuilder;
@@ -59,4 +61,11 @@ public class Planner extends PlannerImpl {
   public SqrlType2Calcite getTypeConverter() {
     return new SqrlType2Calcite(typeFactory);
   }
+
+  public RelNode transform(OptimizationStage stage, RelNode node) {
+    RelTraitSet outputTraits = getEmptyTraitSet();
+    outputTraits = stage.getTrait().map(outputTraits::replace).orElse(outputTraits);
+    return super.transform(stage.getIndex(), outputTraits, node);
+  }
+
 }

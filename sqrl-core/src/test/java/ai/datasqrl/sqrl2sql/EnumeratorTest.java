@@ -15,13 +15,7 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine;
-import ai.datasqrl.plan.calcite.CalciteEnvironment;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.calcite.Rules;
-import ai.datasqrl.plan.calcite.SqrlSchemaCatalog;
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
+import ai.datasqrl.plan.calcite.*;
 import ai.datasqrl.plan.calcite.memory.EnumerableCalciteBridge;
 import ai.datasqrl.plan.calcite.memory.InMemoryCalciteSchema;
 import ai.datasqrl.plan.local.BundleTableFactory;
@@ -132,7 +126,7 @@ class EnumeratorTest extends AbstractSQRLIT {
     CalciteConnection calciteConnection = factory.newConnection(new Driver(),  new CalciteJdbc41Factory(),
         "jdbc:calcite:test:", info, rootSchema0, new SqrlTypeFactory(new SqrlTypeSystem()));
 
-    Hook.PROGRAM.run(Rules.programs());
+    Hook.PROGRAM.run(OptimizationStage.getAllPrograms());
 
     Statement statement = calciteConnection.createStatement();
     return statement;

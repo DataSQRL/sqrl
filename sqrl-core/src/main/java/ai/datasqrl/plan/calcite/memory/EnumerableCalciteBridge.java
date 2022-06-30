@@ -5,11 +5,7 @@ import ai.datasqrl.io.sources.util.StreamInputPreparer;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine;
-import ai.datasqrl.plan.calcite.BasicSqrlCalciteBridge;
-import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.Rules;
-import ai.datasqrl.plan.calcite.Rules.Stage;
+import ai.datasqrl.plan.calcite.*;
 import ai.datasqrl.plan.calcite.memory.table.DataTable;
 import ai.datasqrl.plan.local.operations.AddColumnOp;
 import ai.datasqrl.plan.local.operations.AddNestedTableOp;
@@ -17,12 +13,6 @@ import ai.datasqrl.plan.local.operations.AddRootTableOp;
 import ai.datasqrl.plan.local.operations.SourceTableImportOp;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.calcite.adapter.enumerable.EnumerableInterpretable;
@@ -34,6 +24,8 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.runtime.Bindable;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.tools.RelBuilder;
+
+import java.util.*;
 
 /**
  * The {@link EnumerableCalciteBridge} plans and immediately executes all {@link ai.datasqrl.plan.local.operations.SchemaUpdateOp}
@@ -124,8 +116,6 @@ public class EnumerableCalciteBridge extends BasicSqrlCalciteBridge {
         .scan(tableName)
         .build();
 
-    System.out.println(rel.explain());
-
     List<Object[]> data = execute(rel);
 
     inMemorySchema.registerDataTable(tableName,
@@ -138,10 +128,10 @@ public class EnumerableCalciteBridge extends BasicSqrlCalciteBridge {
 
   @SneakyThrows
   public List<Object[]> execute(RelNode node) {
-    for (Stage stage : Rules.ENUMERABLE_STAGES) {
-      node = planner.transform(stage.getStage(), stage.applyStageTrait(planner.getEmptyTraitSet()),
-          node);
-      System.out.println(node.explain());
+    System.out.println("-Before Optimization:\n" + node.explain());
+    for (OptimizationStage stage : OptimizationStage.ENUMERABLE_STAGES) {
+      node = planner.transform(stage,node);
+      System.out.println("-Stage "+stage.getName()+":\n"+node.explain());
     }
 
 

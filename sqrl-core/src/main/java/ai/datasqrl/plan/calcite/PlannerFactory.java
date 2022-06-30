@@ -35,7 +35,7 @@ public class PlannerFactory {
         .parserConfig(SqlParser.Config.DEFAULT.withConformance(SqrlConformance.INSTANCE))
         .traitDefs(ConventionTraitDef.INSTANCE, RelCollationTraitDef.INSTANCE)
         .operatorTable(SqrlOperatorTable.instance())
-        .programs(Rules.programs())
+        .programs(OptimizationStage.getAllPrograms())
         .typeSystem(SqrlTypeSystem.INSTANCE)
         .defaultSchema(rootSchema.getSubSchema(schemaName))
         .sqlToRelConverterConfig(sqlToRelConverterConfig)
