@@ -186,6 +186,7 @@ class EnumeratorTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void testNestedWithParentExpression() {
     runScript(
             "IMPORT ecommerce-data.Orders;\n"
@@ -198,11 +199,23 @@ class EnumeratorTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
+  public void testNestedWithRelationship() {
+    runScript(
+            "IMPORT ecommerce-data.Orders;\n"
+                    + "IMPORT ecommerce-data.Product;\n"
+                    + "Product.entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
+                    + "Test2 := SELECT p.productid, p.name, e.quantity FROM Product p JOIN p.entries e;"
+    );
+    //Fails because the ON condition on the first self-join between __t9 and __t11 is not generated (i.e. equality conditoin on product$3 pk)
+  }
+
+  @Test
   public void testSimpleNested() {
     runScript(
             "IMPORT ecommerce-data.Orders;\n"
                     + "IMPORT ecommerce-data.Product;\n"
-                    + "Test := SELECT p.productid, p.name, e.quantity FROM Product p JOIN Orders.entries e ON e.productid = p.productid;"
+                    + "Test1 := SELECT p.productid, p.name, e.quantity FROM Product p JOIN Orders.entries e ON e.productid = p.productid;\n"
     );
   }
 
