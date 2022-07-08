@@ -87,7 +87,7 @@ public abstract class AstVisitor<R, C> {
     return visitAssignment(node, context);
   }
 
-  public R visitJoinAssignment(JoinDeclaration node, C context) {
+  public R visitJoinDeclaration(JoinDeclaration node, C context) {
     return visitDeclaration(node, context);
   }
 

@@ -3,6 +3,7 @@ package ai.datasqrl.schema;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
+import ai.datasqrl.plan.local.analyzer.Analysis.TableVersion;
 import ai.datasqrl.schema.Relationship.JoinType;
 
 import java.util.ArrayList;
@@ -13,10 +14,15 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import com.google.common.base.Preconditions;
-import lombok.Setter;
 
 @Getter
 public class Table extends AbstractTable {
+  TableVersion currentVersion = new TableVersion(this, 0);
+
+  public void addExpressionColumn(Column column) {
+    fields.add(column);
+    currentVersion = new TableVersion(this, currentVersion.getVersion() + 1);
+  }
 
   public enum Type {
     STREAM, //a stream of records with synthetic (i.e. uuid) primary key ordered by timestamp
@@ -65,7 +71,7 @@ public class Table extends AbstractTable {
     return field;
   }
 
-  public Optional<Table> walk(NamePath namePath) {
+  public Optional<Table> walkTable(NamePath namePath) {
     if (namePath.isEmpty()) {
       return Optional.of(this);
     }
@@ -85,7 +91,7 @@ public class Table extends AbstractTable {
     if (field.get() instanceof Relationship) {
       Relationship relationship = (Relationship) field.get();
       return relationship.getToTable()
-          .walk(namePath.popFirst());
+          .walkTable(namePath.popFirst());
     }
 
     return Optional.empty();
@@ -152,5 +158,9 @@ public class Table extends AbstractTable {
     } else {
       return getName().toNamePath();
     }
+  }
+
+  public RootTableField asField() {
+    return new RootTableField(this);
   }
 }

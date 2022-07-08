@@ -27,4 +27,7 @@ public abstract class AbstractSqrlTable extends AbstractTable implements Queryab
   public Type getElementType() {
     return Object[].class;
   }
+
+  //Get primary keys
+  //Get timestamp, etc
 }

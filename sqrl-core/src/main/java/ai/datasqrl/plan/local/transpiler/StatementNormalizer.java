@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.local.transpiler;
 
-import static ai.datasqrl.parse.util.SqrlNodeUtil.hasOneUnnamedColumn;
+import static ai.datasqrl.parse.util.SqrlNodeUtil.isExpression;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.tree.AstVisitor;
@@ -15,11 +15,9 @@ import ai.datasqrl.parse.tree.Query;
 import ai.datasqrl.parse.tree.QueryAssignment;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinDeclarationNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
 import ai.datasqrl.plan.local.transpiler.transforms.DistinctTransform;
 import ai.datasqrl.plan.local.transpiler.transforms.ExpressionToQueryTransformer;
-import ai.datasqrl.plan.local.transpiler.transforms.RejoinExprTransform;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
 import com.google.common.base.Preconditions;
@@ -61,7 +59,7 @@ public class StatementNormalizer {
       NamePath namePath = queryAssignment.getNamePath();
       Query query = queryAssignment.getQuery();
 
-      boolean isExpression = hasOneUnnamedColumn(queryAssignment.getQuery());
+      boolean isExpression = isExpression(queryAssignment.getQuery());
       RelationScope scope = createScope(namePath, isExpression);
       Node norm = relationNormalizer.normalize(query, scope);
 
@@ -131,7 +129,7 @@ public class StatementNormalizer {
         return Optional.empty();
       }
       Table table = schema.getVisibleByName(namePath.getFirst()).get();
-      return table.walk(namePath.popFirst());
+      return table.walkTable(namePath.popFirst());
     }
 
     private RelationScope createScope(NamePath namePath) {

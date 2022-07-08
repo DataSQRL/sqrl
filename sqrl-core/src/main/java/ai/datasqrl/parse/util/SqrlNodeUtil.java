@@ -7,7 +7,6 @@ import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.GroupBy;
 import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.LogicalBinaryExpression;
-import ai.datasqrl.parse.tree.LongLiteral;
 import ai.datasqrl.parse.tree.OrderBy;
 import ai.datasqrl.parse.tree.Query;
 import ai.datasqrl.parse.tree.QueryBody;
@@ -22,11 +21,9 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceOrdinal;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class SqrlNodeUtil {
@@ -34,7 +31,7 @@ public class SqrlNodeUtil {
   /**
    * Unnamed columns are treated as expressions. It must not be an identifier
    */
-  public static boolean hasOneUnnamedColumn(Query query) {
+  public static boolean isExpression(Query query) {
     QueryBody body = query.getQueryBody();
     if (body instanceof QuerySpecification) {
       Select select = ((QuerySpecification) body).getSelect();

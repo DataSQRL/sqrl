@@ -964,10 +964,10 @@ class AstBuilder
     return new DistinctAssignment(
         Optional.of(getLocation(ctx)),
         name,
-        ((Identifier)visit(ctx.table)).getNamePath().getLast(),
+        new TableNode(getLocation(ctx.table), ((Identifier)visit(ctx.table)).getNamePath(), Optional.empty(), List.of()),
         ctx.identifier() == null ? List.of() :
             ctx.identifier().stream().skip(1)
-                .map(s -> ((Identifier)visit(s)).getNamePath().getLast())
+                .map(s -> ((Identifier)visit(s)))
                 .collect(toList()),
         ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
             .map(s -> (SortItem) s.accept(this)).collect(toList()),
@@ -1019,7 +1019,7 @@ class AstBuilder
         ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? Optional.empty() :
             Optional.of(new Limit(ctx.limit.getText())),
         ctx.inv == null ? Optional.empty() :
-            Optional.of(((Identifier) visit(ctx.inv)).getNamePath().getFirst())
+            Optional.of(((Identifier) visit(ctx.inv)))
     );
   }
 

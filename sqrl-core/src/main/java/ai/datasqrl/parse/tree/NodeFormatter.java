@@ -404,7 +404,7 @@ public class NodeFormatter extends AstVisitor<String, Object> {
   }
 
   @Override
-  public String visitJoinAssignment(JoinDeclaration node, Object context) {
+  public String visitJoinDeclaration(JoinDeclaration node, Object context) {
     return node.getRelation().accept(this, context) +
         (node.getOrderBy().isEmpty() ? "" : " ORDER BY ") +
         node.getLimit().map(i -> " LIMIT " + i).orElse("") +

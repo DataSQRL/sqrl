@@ -237,7 +237,7 @@ public class PlannerImpl implements Planner, ViewExpander {
 
   @EnsuresNonNull("validator")
   @Override public SqlNode validate(SqlNode sqlNode) throws ValidationException {
-    ensure(State.STATE_3_PARSED);
+//    ensure(State.STATE_3_PARSED);
     this.validator = createSqlValidator(createCatalogReader());
     try {
       validatedSqlNode = validator.validate(sqlNode);

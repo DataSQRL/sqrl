@@ -13,6 +13,8 @@ import ai.datasqrl.parse.tree.Relation;
 import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.Window;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.plan.local.analyzer.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceExpression;
 import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
 import ai.datasqrl.plan.local.transpiler.nodes.node.SelectNorm;
@@ -37,7 +39,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 public class Relationship extends Field {
 
   private final Table fromTable;
-  private final Table toTable;
+  private final Table toTable; //todo rename to TargetTable
   private final JoinType joinType;
   private final Multiplicity multiplicity;
 

@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.local;
 
-import static ai.datasqrl.parse.util.SqrlNodeUtil.hasOneUnnamedColumn;
+import static ai.datasqrl.parse.util.SqrlNodeUtil.isExpression;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.tree.*;
@@ -14,7 +14,6 @@ import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
 import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
 import ai.datasqrl.plan.local.transpiler.toSql.ConvertContext;
 import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeConverter;
-import ai.datasqrl.plan.local.transpiler.toSql.SqlNodeFormatter;
 import ai.datasqrl.plan.local.transpiler.transforms.RejoinExprTransform;
 import ai.datasqrl.schema.*;
 import ai.datasqrl.schema.Relationship.JoinType;
@@ -24,7 +23,6 @@ import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.schema.type.basic.DateTimeType;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -161,7 +159,7 @@ public class SchemaUpdatePlanner {
 
     @Override
     public SchemaUpdateOp visitQueryAssignment(QueryAssignment node, Object context) {
-      if (hasOneUnnamedColumn(node.getQuery())) {
+      if (isExpression(node.getQuery())) {
         return planExpression(node, node.getNamePath());
       }
 
