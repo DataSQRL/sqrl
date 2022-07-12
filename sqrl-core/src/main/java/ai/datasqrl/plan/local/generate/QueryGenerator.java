@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.local.generate;
 
+import static ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil.and;
 import static org.apache.calcite.sql.fun.SqlStdOperatorTable.AS;
 
 import ai.datasqrl.parse.tree.AllColumns;
@@ -10,6 +11,7 @@ import ai.datasqrl.parse.tree.BooleanLiteral;
 import ai.datasqrl.parse.tree.ComparisonExpression;
 import ai.datasqrl.parse.tree.DecimalLiteral;
 import ai.datasqrl.parse.tree.DefaultTraversalVisitor;
+import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.DoubleLiteral;
 import ai.datasqrl.parse.tree.Except;
 import ai.datasqrl.parse.tree.Expression;
@@ -55,6 +57,7 @@ import ai.datasqrl.parse.tree.WhenClause;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqlParserPosFactory;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
+import ai.datasqrl.plan.calcite.SqrlType2Calcite;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
 import ai.datasqrl.plan.local.analyze.Analysis;
 import ai.datasqrl.plan.local.generate.node.builder.JoinPathBuilder;
@@ -65,8 +68,11 @@ import ai.datasqrl.plan.local.analyze.Analysis.ResolvedFunctionCall;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamedReference;
 import ai.datasqrl.plan.local.generate.QueryGenerator.Scope;
+import ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.SourceTableImportMeta;
+import ai.datasqrl.schema.SourceTableImportMeta.RowType;
 import com.google.common.base.Preconditions;
 import graphql.com.google.common.collect.ImmutableListMultimap;
 import graphql.com.google.common.collect.Multimaps;
@@ -80,6 +86,9 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
+import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlBasicCall;
@@ -95,6 +104,7 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSelectKeyword;
 import org.apache.calcite.sql.SqlSetOperator;
+import org.apache.calcite.sql.SqlTableRef;
 import org.apache.calcite.sql.SqlTimeLiteral;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.fun.SqlCase;
@@ -119,6 +129,135 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     this.analysis = analysis;
     //todo: move
     this.opMap = Multimaps.index(SqrlOperatorTable.instance().getOperatorList(), e -> e.getName());
+  }
+
+  public SqlNode generateDistinctQuery(DistinctAssignment node) {
+    ResolvedNamePath path = analysis.getResolvedNamePath().get(node.getTableNode());
+    AbstractSqrlTable table = tables.get(path.getToTable().getId());
+    Preconditions.checkNotNull(table, "Could not find table");
+
+    List<SqlNode> inner = SqlNodeUtil.toSelectList(Optional.of(path.getAlias()),
+        table.getRowType(null).getFieldList());
+    List<SqlNode> outer = SqlNodeUtil.toSelectList(Optional.empty(),
+        table.getRowType(null).getFieldList());
+
+    SqlBasicCall rowNum = new SqlBasicCall(SqrlOperatorTable.ROW_NUMBER, new SqlNode[]{},
+        SqlParserPos.ZERO);
+
+    List<SqlNode> partition = node.getPartitionKeyNodes().stream()
+        .map(n -> analysis.getResolvedNamePath().get(n))
+        .map(n -> n.getPath().get(0))
+        .map(n -> SqlNodeUtil.fieldToNode(Optional.of(path.getAlias()), table.getField(n)))
+        .collect(Collectors.toList());
+
+    List<SqlNode> orderList = new ArrayList<>();
+    if (!node.getOrder().isEmpty()) {
+      for (SortItem sortItem : node.getOrder()) {
+        orderList.add(sortItem.accept(this, null));
+      }
+    } else {
+      //default to current timestamp
+      orderList.add(SqlNodeUtil.fieldToNode(Optional.of(path.getAlias()), table.getTimestamp()));
+    }
+
+    SqlNode[] operands = {rowNum,
+        new SqlWindow(pos.getPos(node.getLocation()), null, null,
+            new SqlNodeList(partition, SqlParserPos.ZERO),
+            new SqlNodeList(orderList, SqlParserPos.ZERO),
+            SqlLiteral.createBoolean(false, pos.getPos(node.getLocation())), null, null, null)};
+
+    SqlBasicCall over = new SqlBasicCall(SqlStdOperatorTable.OVER, operands,
+        pos.getPos(node.getLocation()));
+
+    SqlBasicCall rowNumAlias = new SqlBasicCall(
+        SqrlOperatorTable.AS,
+        new SqlNode[]{
+            over,
+            new SqlIdentifier("_row_num", SqlParserPos.ZERO)
+        },
+        SqlParserPos.ZERO);
+    inner.add(rowNumAlias);
+
+    SqlNode outerSelect = new SqlSelect(
+        SqlParserPos.ZERO,
+        null,
+        new SqlNodeList(outer, SqlParserPos.ZERO),
+        new SqlSelect(
+            SqlParserPos.ZERO,
+            null,
+            new SqlNodeList(inner, SqlParserPos.ZERO),
+
+            new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
+                new SqlTableRef(SqlParserPos.ZERO,
+                    new SqlIdentifier(path.getToTable().getId().getCanonical(), SqlParserPos.ZERO),
+                    new SqlNodeList(SqlParserPos.ZERO)),
+                new SqlIdentifier(path.getAlias(), SqlParserPos.ZERO)
+            }, SqlParserPos.ZERO),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            new SqlNodeList(SqlParserPos.ZERO)
+        ),
+        new SqlBasicCall(
+            SqrlOperatorTable.EQUALS,
+            new SqlNode[]{
+                new SqlIdentifier("_row_num", SqlParserPos.ZERO),
+                SqlLiteral.createExactNumeric("1", SqlParserPos.ZERO)
+            },
+            SqlParserPos.ZERO),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        new SqlNodeList(SqlParserPos.ZERO)
+    );
+
+    return outerSelect;
+  }
+
+  protected void createParentChildJoinDeclaration(Relationship rel) {
+    this.getJoins().put(rel,
+        new SqlJoinDeclaration(createTableRef(rel.getToTable()), createParentChildCondition(rel)));
+  }
+
+  protected SqlNode createParentChildCondition(Relationship rel) {
+    Name lhsName = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? rel.getFromTable().getId()
+        : rel.getToTable().getId();
+    Name rhsName = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? rel.getToTable().getId()
+        : rel.getFromTable().getId();
+
+    AbstractSqrlTable lhs = tables.get(lhsName);
+    AbstractSqrlTable rhs = tables.get(rhsName);
+
+    List<SqlNode> conditions = new ArrayList<>();
+    for (String pk : lhs.getPrimaryKeys()) {
+      conditions.add(new SqlBasicCall(
+          SqrlOperatorTable.EQUALS,
+          new SqlNode[]{
+              new SqlIdentifier(List.of("_", pk), SqlParserPos.ZERO),
+              new SqlIdentifier(List.of("t", pk), SqlParserPos.ZERO)
+          },
+          SqlParserPos.ZERO));
+    }
+
+    return and(conditions);
+  }
+
+  protected SqlNode createTableRef(ai.datasqrl.schema.Table table) {
+    return new SqlBasicCall(SqrlOperatorTable.AS,
+        new SqlNode[]{
+            new SqlTableRef(SqlParserPos.ZERO,
+                new SqlIdentifier(table.getId().getCanonical(), SqlParserPos.ZERO),
+                SqlNodeList.EMPTY),
+            new SqlIdentifier("t", SqlParserPos.ZERO)
+        },
+        SqlParserPos.ZERO);
   }
 
   @Override

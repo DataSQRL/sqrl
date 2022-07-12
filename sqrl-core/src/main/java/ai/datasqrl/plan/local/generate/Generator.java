@@ -1,7 +1,5 @@
 package ai.datasqrl.plan.local.generate;
 
-import static ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil.and;
-
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
@@ -10,7 +8,6 @@ import ai.datasqrl.parse.tree.JoinAssignment;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.QueryAssignment;
 import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SortItem;
 import ai.datasqrl.parse.tree.SqrlStatement;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
@@ -25,20 +22,16 @@ import ai.datasqrl.plan.calcite.sqrl.table.SourceTableCalciteTable;
 import ai.datasqrl.plan.local.analyze.Analysis;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil;
-import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
-import ai.datasqrl.plan.local.analyze.Analysis.TableVersion;
-import ai.datasqrl.schema.SourceTableImportMeta;
-import ai.datasqrl.schema.SourceTableImportMeta.RowType;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Relationship.JoinType;
+import ai.datasqrl.schema.SourceTableImportMeta;
+import ai.datasqrl.schema.SourceTableImportMeta.RowType;
+import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
@@ -47,18 +40,14 @@ import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.StructKind;
-import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlTableRef;
-import org.apache.calcite.sql.SqlWindow;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class Generator extends QueryGenerator implements SqrlCalciteBridge {
@@ -85,15 +74,13 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     List<SourceTableImport> sourceTableImports = analysis.getImportSourceTables().get(node);
     Map<ai.datasqrl.schema.Table, SourceTableImportMeta.RowType> tableTypes =
         analysis.getImportTableTypes()
-            .get(node);
+        .get(node);
 
     SourceTableImport tableImport = sourceTableImports.get(0);//todo: support import *;
-    RelDataType rootType = new FlexibleTableConverter(tableImport.getSchema())
-        .apply(new CalciteSchemaGenerator(planner.getTypeFactory()))
-        .get();
+    RelDataType rootType = new FlexibleTableConverter(tableImport.getSchema()).apply(
+        new CalciteSchemaGenerator(planner.getTypeFactory())).get();
 
-    SourceTableCalciteTable sourceTable = new SourceTableCalciteTable(tableImport,
-        rootType);
+    SourceTableCalciteTable sourceTable = new SourceTableCalciteTable(tableImport, rootType);
 
     Name datasetName = Name.system(tableImport.getTable().qualifiedName());
 
@@ -106,8 +93,8 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
       RelDataType logicalTableType = getLogicalTableType(tableImp.getKey(), tableImp.getValue());
       ai.datasqrl.schema.Table table = tableImp.getKey();
 
-      LogicalBaseTableCalciteTable baseTable = new LogicalBaseTableCalciteTable(
-          tableImport, logicalTableType, table.getPath());
+      LogicalBaseTableCalciteTable baseTable = new LogicalBaseTableCalciteTable(tableImport,
+          logicalTableType, table.getPath());
 
       this.tables.put(table.getId(), baseTable);
 
@@ -118,45 +105,6 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     }
 
     return null;
-  }
-
-  private void createParentChildJoinDeclaration(Relationship rel) {
-    this.getJoins().put(rel,
-        new SqlJoinDeclaration(createTableRef(rel.getToTable()), createParentChildCondition(rel)));
-  }
-
-  private SqlNode createParentChildCondition(Relationship rel) {
-    Name lhsName = rel.getJoinType().equals(JoinType.PARENT) ? rel.getFromTable().getId()
-        : rel.getToTable().getId();
-    Name rhsName = rel.getJoinType().equals(JoinType.PARENT) ? rel.getToTable().getId()
-        : rel.getFromTable().getId();
-
-    AbstractSqrlTable lhs = tables.get(lhsName);
-    AbstractSqrlTable rhs = tables.get(rhsName);
-
-    List<SqlNode> conditions = new ArrayList<>();
-    for (String pk : lhs.getPrimaryKeys()) {
-      conditions.add(new SqlBasicCall(
-          SqrlOperatorTable.EQUALS,
-          new SqlNode[]{
-              new SqlIdentifier(List.of("_", pk), SqlParserPos.ZERO),
-              new SqlIdentifier(List.of("t", pk), SqlParserPos.ZERO)
-          },
-          SqlParserPos.ZERO));
-    }
-
-    return and(conditions);
-  }
-
-  private SqlNode createTableRef(ai.datasqrl.schema.Table table) {
-    return new SqlBasicCall(SqrlOperatorTable.AS,
-        new SqlNode[]{
-            new SqlTableRef(SqlParserPos.ZERO,
-                new SqlIdentifier(table.getId().getCanonical(), SqlParserPos.ZERO),
-                SqlNodeList.EMPTY),
-            new SqlIdentifier("t", SqlParserPos.ZERO)
-        },
-        SqlParserPos.ZERO);
   }
 
   private RelDataType getLogicalTableType(ai.datasqrl.schema.Table table, RowType rowType) {
@@ -175,109 +123,15 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     return fieldBuilder.build();
   }
 
-  /**
-   * SELECT [column_list] FROM ( SELECT [column_list], ROW_NUMBER() OVER ([PARTITION BY col1[,
-   * col2...]] ORDER BY time_attr [asc|desc]) AS rownum FROM table_name) WHERE rownum = 1;
-   */
   @Override
   public SqlNode visitDistinctAssignment(DistinctAssignment node, Scope context) {
     SqlNode sqlNode = generateDistinctQuery(node);
-
-    QueryCalciteTable table = new QueryCalciteTable(plan(sqlNode));
-    TableVersion version = analysis.getProducedTable().get(node);
-    this.tables.put(version.getId(), table);
+    RelNode relNode = plan(sqlNode);
+    QueryCalciteTable table = new QueryCalciteTable(relNode);
+    Table createdTable = analysis.getProducedTable().get(node);
+    this.tables.put(createdTable.getId(), table);
 
     return sqlNode;
-  }
-
-  public SqlNode generateDistinctQuery(DistinctAssignment node) {
-    ResolvedNamePath path = analysis.getResolvedNamePath().get(node.getTableNode());
-    AbstractSqrlTable table = tables.get(path.getToTable().getId());
-    Preconditions.checkNotNull(table, "Could not find table");
-
-    List<SqlNode> inner = SqlNodeUtil.toSelectList(Optional.of(path.getAlias()),
-        table.getRowType(null).getFieldList());
-    List<SqlNode> outer = SqlNodeUtil.toSelectList(Optional.empty(),
-        table.getRowType(null).getFieldList());
-
-    SqlBasicCall rowNum = new SqlBasicCall(SqrlOperatorTable.ROW_NUMBER, new SqlNode[]{},
-        SqlParserPos.ZERO);
-
-    List<SqlNode> partition = node.getPartitionKeyNodes().stream()
-        .map(n -> analysis.getResolvedNamePath().get(n))
-        .map(n -> n.getPath().get(0))
-        .map(n -> SqlNodeUtil.fieldToNode(Optional.of(path.getAlias()), table.getField(n)))
-        .collect(Collectors.toList());
-
-    List<SqlNode> orderList = new ArrayList<>();
-    if (!node.getOrder().isEmpty()) {
-      for (SortItem sortItem : node.getOrder()) {
-        orderList.add(sortItem.accept(this, null));
-      }
-    } else {
-      //default to current timestamp
-      orderList.add(SqlNodeUtil.fieldToNode(Optional.of(path.getAlias()), table.getTimestamp()));
-    }
-
-    SqlNode[] operands = {rowNum,
-        new SqlWindow(pos.getPos(node.getLocation()), null, null,
-            new SqlNodeList(partition, SqlParserPos.ZERO),
-            new SqlNodeList(orderList, SqlParserPos.ZERO),
-            SqlLiteral.createBoolean(false, pos.getPos(node.getLocation())), null, null, null)};
-
-    SqlBasicCall over = new SqlBasicCall(SqlStdOperatorTable.OVER, operands,
-        pos.getPos(node.getLocation()));
-
-    SqlBasicCall rowNumAlias = new SqlBasicCall(
-        SqrlOperatorTable.AS,
-        new SqlNode[]{
-            over,
-            new SqlIdentifier("_row_num", SqlParserPos.ZERO)
-        },
-        SqlParserPos.ZERO);
-    inner.add(rowNumAlias);
-
-    SqlNode outerSelect = new SqlSelect(
-        SqlParserPos.ZERO,
-        null,
-        new SqlNodeList(outer, SqlParserPos.ZERO),
-        new SqlSelect(
-            SqlParserPos.ZERO,
-            null,
-            new SqlNodeList(inner, SqlParserPos.ZERO),
-
-            new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
-                new SqlTableRef(SqlParserPos.ZERO,
-                    new SqlIdentifier(path.getToTable().getId().getCanonical(), SqlParserPos.ZERO),
-                    new SqlNodeList(SqlParserPos.ZERO)),
-                new SqlIdentifier(path.getAlias(), SqlParserPos.ZERO)
-            }, SqlParserPos.ZERO),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            new SqlNodeList(SqlParserPos.ZERO)
-        ),
-        new SqlBasicCall(
-            SqrlOperatorTable.EQUALS,
-            new SqlNode[]{
-                new SqlIdentifier("_row_num", SqlParserPos.ZERO),
-                SqlLiteral.createExactNumeric("1", SqlParserPos.ZERO)
-            },
-            SqlParserPos.ZERO),
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        new SqlNodeList(SqlParserPos.ZERO)
-    );
-
-    return outerSelect;
   }
 
   @Override
@@ -295,7 +149,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   @Override
   public SqlNode visitExpressionAssignment(ExpressionAssignment node, Scope context) {
 
-    TableVersion v = analysis.getProducedTable().get(node);
+    Table v = analysis.getProducedTable().get(node);
     //Were do subqueries live here?
     Scope ctx = new Scope(this.analysis, this);
     SqlNode sqlNode = node.getExpression().accept(this, ctx);
@@ -315,8 +169,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
         RelDataTypeField produced = relNode.getRowType().getFieldList()
             .get(relNode.getRowType().getFieldList().size() - 1);
         RelDataTypeField newExpr = new RelDataTypeFieldImpl(field.getId().getCanonical(),
-            table.getRowType(null).getFieldList().size(),
-            produced.getType());
+            table.getRowType(null).getFieldList().size(), produced.getType());
 
         table.addField(newExpr);
 
@@ -332,28 +185,16 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
           new SqlIdentifier(field.getId().getCanonical(), SqlParserPos.ZERO)}, SqlParserPos.ZERO);
 
       SqlSelect select = new SqlSelect(SqlParserPos.ZERO, null,
-          new SqlNodeList(List.of(call), SqlParserPos.ZERO),
-          new SqlBasicCall(SqrlOperatorTable.AS,
-              new SqlNode[]{
-                  new SqlTableRef(SqlParserPos.ZERO,
-                      new SqlIdentifier(v.getTable().getId().getCanonical(), SqlParserPos.ZERO),
-                      SqlNodeList.EMPTY),
-                  new SqlIdentifier("_", SqlParserPos.ZERO)
-              }, SqlParserPos.ZERO),
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          SqlNodeList.EMPTY);
+          new SqlNodeList(List.of(call), SqlParserPos.ZERO), new SqlBasicCall(SqrlOperatorTable.AS,
+          new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
+              new SqlIdentifier(v.getId().getCanonical(), SqlParserPos.ZERO),
+              SqlNodeList.EMPTY), new SqlIdentifier("_", SqlParserPos.ZERO)}, SqlParserPos.ZERO),
+          null, null, null, null, null, null, null, SqlNodeList.EMPTY);
       RelNode relNode = plan(select);
       AbstractSqrlTable table = this.tables.get(v.getId());
       RelDataTypeField produced = relNode.getRowType().getFieldList().get(0);
       RelDataTypeField newExpr = new RelDataTypeFieldImpl(produced.getName(),
-          table.getRowType(null).getFieldList().size(),
-          produced.getType());
+          table.getRowType(null).getFieldList().size(), produced.getType());
 
       table.addField(newExpr);
 
@@ -366,13 +207,14 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     if (analysis.getExpressionStatements().contains(queryAssignment)) {
       SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(null, null));
       RelNode relNode = plan(sqlNode);
-      TableVersion tableVersion = analysis.getProducedTable().get(queryAssignment);
-      Preconditions.checkNotNull(tableVersion);
-      AbstractSqrlTable t = this.tables.get(tableVersion.getTable().getId());
-      RelDataTypeField field = relNode.getRowType().getFieldList().get(relNode.getRowType().getFieldCount()-1);
-      RelDataTypeField newField = new RelDataTypeFieldImpl(queryAssignment.getNamePath().getLast().getCanonical(),
-          t.getRowType(null).getFieldCount(),
-          field.getValue());
+      Table table = analysis.getProducedTable().get(queryAssignment);
+      Preconditions.checkNotNull(table);
+      AbstractSqrlTable t = this.tables.get(table.getId());
+      RelDataTypeField field = relNode.getRowType().getFieldList()
+          .get(relNode.getRowType().getFieldCount() - 1);
+      RelDataTypeField newField = new RelDataTypeFieldImpl(
+          queryAssignment.getNamePath().getLast().getCanonical(),
+          t.getRowType(null).getFieldCount(), field.getValue());
 
       t.addField(newField);
 
@@ -381,9 +223,9 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
       SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(null, null));
       RelNode relNode = plan(sqlNode);
 
-      TableVersion tableVersion = analysis.getProducedTable().get(queryAssignment);
+      Table table = analysis.getProducedTable().get(queryAssignment);
 
-      this.tables.put(tableVersion.getTable().getId(), new QueryCalciteTable(relNode));
+      this.tables.put(table.getId(), new QueryCalciteTable(relNode));
     }
     return null;
   }
@@ -400,8 +242,8 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   }
 
   @Override
-  public Table getTable(Name sqrlTableName) {
-    Table table = this.tables.get(sqrlTableName);
+  public org.apache.calcite.schema.Table getTable(Name sqrlTableName) {
+    org.apache.calcite.schema.Table table = this.tables.get(sqrlTableName);
     if (table != null) {
       return table;
     }

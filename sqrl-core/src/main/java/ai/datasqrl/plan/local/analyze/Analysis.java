@@ -59,7 +59,7 @@ public class Analysis {
   /**
    * Assignments create or modify a table
    */
-  private Map<Assignment, TableVersion> producedTable = new HashMap<>();
+  private Map<Assignment, Table> producedTable = new HashMap<>();
 
   /**
    * Some queries don't have a self query defined for nested queries so
@@ -85,20 +85,6 @@ public class Analysis {
   public Map<Node, String> fieldAlias = new HashMap<>();
 
   //TODO: Register subqueries as separate anonymous queries
-
-  /**
-   * Adding a new column to a table creates a new table version.
-   */
-  @AllArgsConstructor
-  @Getter
-  public static class TableVersion {
-    Table table;
-    int version;
-
-    public Name getId() {
-      return Name.system(table.getId().getCanonical());
-    }
-  }
 
   @Value
   public static class ResolvedFunctionCall {
