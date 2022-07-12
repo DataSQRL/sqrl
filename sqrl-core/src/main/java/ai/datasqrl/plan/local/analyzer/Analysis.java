@@ -15,6 +15,7 @@ import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.RootTableField;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
+import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -101,6 +102,12 @@ public class Analysis {
    */
   private Map<Node, Scope> scopes = new HashMap<>();
 
+  private Map<Node, Field> producedField = new HashMap<>();
+
+  public Map<Node, Name> tableAliases = new HashMap<>();
+
+  public Map<Node, String> fieldAlias = new HashMap<>();
+
   //TODO: Register subqueries as separate anonymous queries
 
   /**
@@ -113,7 +120,7 @@ public class Analysis {
     int version;
 
     public Name getId() {
-      return Name.system(table.getId() + "$" + version);
+      return Name.system(table.getId().getCanonical());
     }
 
     //TODO: Returns a new table w/ calcite stuff
@@ -187,7 +194,7 @@ public class Analysis {
     private final Name name;
 
     public ResolvedNamedReference(Name name) {
-      super(Optional.empty(), List.of());
+      super(name.getCanonical(), Optional.empty(), List.of());
       this.name = name;
     }
   }
@@ -200,11 +207,13 @@ public class Analysis {
    */
   @Getter
   public static class ResolvedNamePath {
+
+    private final String alias2;
     Optional<ResolvedNamePath> base;
     List<Field> path;
 
-    public ResolvedNamePath(Optional<ResolvedNamePath> base, List<Field> path) {
-//      Preconditions.checkState(!path.isEmpty());
+    public ResolvedNamePath(String alias, Optional<ResolvedNamePath> base, List<Field> path) {
+      this.alias2 = alias;
       this.base = base;
       this.path = path;
     }
@@ -222,6 +231,10 @@ public class Analysis {
 
     public Optional<String> getAlias() {
       return null;
+    }
+
+    public ResolvedNamePath trimTrailingColumn() {
+      return this;
     }
   }
 

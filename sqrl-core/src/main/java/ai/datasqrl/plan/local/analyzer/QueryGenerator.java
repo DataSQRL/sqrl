@@ -57,8 +57,15 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqlParserPosFactory;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
+import ai.datasqrl.plan.local.JoinPathBuilder;
+import ai.datasqrl.plan.local.LocalAggBuilder;
+import ai.datasqrl.plan.local.SqlJoinDeclaration;
+import ai.datasqrl.plan.local.SqrlIdentifier;
 import ai.datasqrl.plan.local.analyzer.Analysis.ResolvedNamePath;
+import ai.datasqrl.plan.local.analyzer.Analysis.ResolvedNamedReference;
 import ai.datasqrl.plan.local.analyzer.QueryGenerator.Scope;
+import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Relationship;
 import com.google.common.base.Preconditions;
 import graphql.com.google.common.collect.ImmutableListMultimap;
 import graphql.com.google.common.collect.Multimaps;
@@ -94,6 +101,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.TimeString;
 import org.apache.calcite.util.TimestampString;
+import scala.annotation.meta.field;
 
 /**
  * Generates a query based on a script, the analysis, and the calcite schema.
@@ -105,6 +113,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   private final ImmutableListMultimap<String, SqlOperator> opMap;
   protected Map<Name, AbstractSqrlTable> tables = new HashMap<>();
   SqlParserPosFactory pos = new SqlParserPosFactory();
+  private Map<Relationship, SqlJoinDeclaration> joins = new HashMap<>();
 
   public QueryGenerator(Analysis analysis) {
     this.analysis = analysis;
@@ -125,12 +134,29 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   @Override
   public SqlNode visitQuerySpecification(QuerySpecification node, Scope context) {
+    SqlNodeList sel = (SqlNodeList) node.getSelect().accept(this, context);
+    SqlNode where = node.getWhere().map(n -> n.accept(this, context)).orElse(null);
+
+    SqlNode from = node.getFrom().accept(this, context);
+    if (!context.getSubqueries().isEmpty()) {
+      for (int i = 0; i < context.getSubqueries().size(); i++) {
+        SqlLiteral conditionType = SqlLiteral.createSymbol(JoinConditionType.ON, SqlParserPos.ZERO);
+        SqlLiteral joinType = SqlLiteral.createSymbol(org.apache.calcite.sql.JoinType.LEFT, SqlParserPos.ZERO);
+        from = new SqlJoin(SqlParserPos.ZERO, from, SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
+            joinType, context.getSubqueries().get(i), conditionType,
+            SqlLiteral.createBoolean(true, SqlParserPos.ZERO));
+      }
+
+    }
+
+
     SqlSelect select = new SqlSelect(pos.getPos(node.getLocation()),
         node.getSelect().isDistinct() ? new SqlNodeList(List.of(
             SqlLiteral.createSymbol(SqlSelectKeyword.DISTINCT, pos.getPos(node.getLocation()))),
             pos.getPos(node.getLocation())) : null,
-        (SqlNodeList) node.getSelect().accept(this, context), node.getFrom().accept(this, context),
-        node.getWhere().map(n -> n.accept(this, context)).orElse(null),
+        sel,
+        from,
+        where,
         (SqlNodeList) node.getGroupBy().map(n -> n.accept(this, context)).orElse(null),
         node.getHaving().map(n -> n.accept(this, context)).orElse(null), null,
         (SqlNodeList) node.getOrderBy().map(n -> n.accept(this, context)).orElse(null), null,
@@ -189,7 +215,10 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   public SqlNode visitSingleColumn(SingleColumn node, Scope context) {
     SqlNode expr = node.getExpression().accept(this, context);
     if (node.getAlias().isPresent()) {
-      return call(node.getLocation(), AS, context, node.getExpression(), node.getAlias().get());
+      return new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
+          expr,
+          new SqlIdentifier(node.getAlias().get().getNamePath().getFirst().getCanonical(), SqlParserPos.ZERO)
+      }, SqlParserPos.ZERO);
     }
     return expr;
   }
@@ -214,14 +243,19 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   public SqlNode visitTableNode(TableNode node, Scope context) {
     ResolvedNamePath resolvedTable = analysis.getResolvedNamePath().get(node);
     String name = resolvedTable.getToTable().getId().getCanonical();
-    if (node.getAlias().isPresent()) {
-      SqlIdentifier table = new SqlIdentifier(List.of(name), pos.getPos(node.getLocation()));
-      SqlNode[] operands = {table,
-          new SqlIdentifier(node.getAlias().get().getCanonical(), SqlParserPos.ZERO)};
-      return new SqlBasicCall(AS, operands, pos.getPos(node.getLocation()));
-    }
-
-    return new SqlIdentifier(List.of(name), pos.getPos(node.getLocation()));
+//    if (node.getAlias().isPresent()) {
+//      SqlIdentifier table = new SqlIdentifier(List.of(name), pos.getPos(node.getLocation()));
+//      SqlNode[] operands = {table,
+//          new SqlIdentifier(node.getAlias().get().getCanonical(), SqlParserPos.ZERO)};
+//      return new SqlBasicCall(AS, operands, pos.getPos(node.getLocation()));
+//    }
+    //Always alias
+    return new SqlBasicCall(SqrlOperatorTable.AS,
+        new SqlNode[]{
+            new SqlIdentifier(List.of(name), pos.getPos(node.getLocation())),
+            new SqlIdentifier(analysis.getTableAliases().get(node).getCanonical(), SqlParserPos.ZERO)
+        },
+        SqlParserPos.ZERO);
   }
 
   @Override
@@ -244,6 +278,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
       case INNER:
         type = JoinType.INNER;
         break;
+      case DEFAULT:
       case LEFT:
         type = JoinType.LEFT;
         break;
@@ -383,6 +418,35 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   @Override
   public SqlNode visitFunctionCall(FunctionCall node, Scope context) {
+    //1. Check if inline agg from analyzer
+
+    boolean isLocalAggregate = analysis.getIsLocalAggregate().contains(node);
+    if (isLocalAggregate) {
+      //1. Convert to call
+      //2. Pass to
+      LocalAggBuilder localAggBuilder = new LocalAggBuilder(this.tables, new JoinPathBuilder(this.joins));
+      ResolvedNamePath namePath = analysis.getResolvedNamePath().get(node.getArguments().get(0));
+      Preconditions.checkNotNull(namePath);
+
+      String opName = node.getNamePath().get(0).getCanonical();
+      List<SqlOperator> op = opMap.get(opName.toUpperCase());
+      SqlBasicCall call = new SqlBasicCall(op.get(0), new SqlNode[]{new SqrlIdentifier(namePath, SqlParserPos.ZERO)},
+          pos.getPos(node.getLocation()));
+
+      SqlSelect select = localAggBuilder.extractSubquery(call);
+      System.out.println(select);
+
+      context.getSubqueries().add(select);
+      //todo name subquery
+      //create join key
+
+      context.getConditions().add(Optional.of(SqlLiteral.createBoolean(true, SqlParserPos.ZERO)));
+
+      return new SqlIdentifier("tbd", SqlParserPos.ZERO);
+    }
+
+
+
     String opName = node.getNamePath().get(0).getCanonical();
     List<SqlOperator> op = opMap.get(opName.toUpperCase());
     Preconditions.checkState(!op.isEmpty(), "Operation could not be found: %s", opName);
@@ -441,8 +505,43 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   @Override
   public SqlNode visitIdentifier(Identifier node, Scope context) {
-    return new SqlIdentifier(Arrays.stream(node.getNamePath().getNames()).map(Name::getCanonical)
+    ResolvedNamePath p = analysis.getResolvedNamePath().get(node);
+    if (p == null) {//could be alias, etc
+      return new SqlIdentifier(Arrays.stream(node.getNamePath().getNames()).map(Name::getCanonical)
         .collect(Collectors.toList()), pos.getPos(node.getLocation()));
+    }
+    //group by / order by
+    if (p instanceof ResolvedNamedReference) {
+      return new SqlIdentifier(List.of(
+          ((ResolvedNamedReference)p).getName().getCanonical()), SqlParserPos.ZERO);
+    }
+
+    if (p.getPath().size() > 1) {
+      JoinPathBuilder joinPathBuilder = new JoinPathBuilder(this.joins);
+      String name = p.getAlias2();
+      Preconditions.checkNotNull(name);
+      joinPathBuilder.setCurrentAlias(name);
+      for (Field field : p.getPath()) {
+        if (field instanceof Relationship) {
+          joinPathBuilder.join((Relationship) field);
+        }
+      }
+
+      context.getSubqueries().add(joinPathBuilder.getSqlNode());
+      context.getConditions().add(joinPathBuilder.getTrailingCondition());
+
+      return new SqlIdentifier(List.of("product", p.getPath().get(p.getPath().size()-1).getId().getCanonical()), SqlParserPos.ZERO);
+    } else {
+
+//    Preconditions.checkNotNull(p, "Could not find node {}", node);
+
+      Field field = p.getPath().get(0);
+
+//    Arrays.stream(node.getNamePath().getNames()).map(Name::getCanonical)
+//        .collect(Collectors.toList())
+      return new SqlIdentifier(
+          List.of(p.getAlias2(), field.getId().getCanonical()), pos.getPos(node.getLocation()));
+    }
   }
 
   @Override
@@ -583,91 +682,8 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   public static class Scope {
     Analysis analysis;
     QueryGenerator calcite;
+    //todo: Should be also the trailing condition
+    final List<SqlNode> subqueries = new ArrayList<>();
+    final List<Optional<SqlNode>> conditions = new ArrayList<>();
   }
-
-  /**
-   * Import:
-   *  - Resolve abstract tables
-   *
-   * Expression:
-   *  - Convert to sql query via sql generator, plan, add to table map
-   *
-   * Query:
-   *  - Convert to sql query via sql generator, plan, add to table map
-   *
-   * Join declaration:
-   *  - ...
-   *
-   * Calcite schema then has a full DAG and local execution plan
-   *
-   * We then pass it to the global optimizer
-   *
-   */
-
-  /**
-   * Brainstorm:
-   *
-   * Primary keys:
-   * - Needed for join conditions
-   * - Needed to determine cardinality (!)
-   * - Needed for windows
-   *
-   * Join expansion:
-   * - Need to store the join declaration somewhere
-   * - Relationships to paths.
-   *
-   * One schema pattern:
-   * - TableVersion has calcite information ?
-   *
-   * When do we give it to the implementer?
-   * Go over the entire annotated script:
-   *
-   *
-   * When do we introduce _uuid + index etc:
-   *
-   *
-   *First the customer writes up a script for how he wants us to implement it. He mails it to us
-   * for processing.
-   *
-   * At the office, the analyzer gets the script and goes over it to understand it. He annotates
-   * all of the symbols for what they should mean. He will need to also derive primary keys for
-   * distinct & group by statements, otherwise the inline paths are assumed to be to-many unless
-   * there are explicit LIMIT 1s. All tables have a _id primary key which could be derived from
-   * other fields later. The analyzer can deduce the cardinality of all pathed relationships.
-   *
-   * Next the analyzer passes this information to the generator.
-   *
-   * The generator's responsibility is to convert the annotated script into our internal format
-   * to be processed. The generator uses a set of tools to reduce the difficulty of their job.
-   * The generator will create a schema with all of the extra fields to complete the queries.
-   * They will create relationships between these tables using this schema. The generator will
-   * create a schema and all of the sql queries they need to populate the tables.
-   *
-   * The calcite schema will now have all of the logical plans and how they are connected. We
-   * then go through the list of queries the user wants answered and generate logical plans for
-   * each one. The logical plans are then passed to the optimizer.
-   *
-   * The optimizer's responsibility is to take the logical plans and find efficient ways of
-   * executing them. The optimizer will use a cost model to determine the best way to execute the
-   * query. The optimizer will also resolve any ambiguities in the logical plans. The optimizer
-   * will also check to see if any of the logical plans can be executed in parallel.
-   *
-   * The optimizer will then pass the optimized logical plans to the physical planner.
-   *
-   * The physical planner's responsibility is to take the optimized logical plans and find the
-   * best way to execute them on the hardware. The physical planner will use a cost model to
-   * determine the best way to execute the query. The physical planner will also resolve any
-   * ambiguities in the logical plans. The physical planner will also check to see if any of the
-   * logical plans can be executed in parallel.
-   *
-   * The physical planner will then pass the physical plans to the executor.
-   *
-   * The executor's responsibility is to take the physical plans and execute them. The executor
-   * will use a cost model to determine the best way to execute the query. The executor will also
-   * resolve any ambiguities in the physical plans. The executor will also check to see if any of
-   * the physical plans can be executed in parallel.
-   *
-   * The executor will then return the results of the query to the user.
-   *
-   */
 }

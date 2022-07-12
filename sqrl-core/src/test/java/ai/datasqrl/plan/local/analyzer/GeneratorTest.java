@@ -52,12 +52,12 @@ class GeneratorTest extends AbstractSQRLIT {
         errorCollector);
 
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
-    SqrlSchemaCatalog catalog = new SqrlSchemaCatalog(rootSchema);
+//    SqrlSchemaCatalog catalog = new SqrlSchemaCatalog(rootSchema);
     String schemaName = "test";
     subSchema = new BridgedCalciteSchema();
-    catalog.add(schemaName, subSchema);
+//    catalog.add(schemaName, subSchema);
 
-    PlannerFactory plannerFactory = new PlannerFactory(catalog);
+    PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
     Planner planner = plannerFactory.createPlanner(schemaName);
     this.planner = planner;
   }

@@ -2,6 +2,8 @@ package org.apache.calcite.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;

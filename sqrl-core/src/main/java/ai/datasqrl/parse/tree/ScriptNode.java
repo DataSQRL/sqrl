@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 public final class ScriptNode
-    extends Expression {
+    extends Node {
 
   private final List<Node> statements;
 

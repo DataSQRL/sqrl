@@ -2,12 +2,20 @@ package ai.datasqrl.plan.local.analyzer;
 
 import static org.mockito.Mockito.mock;
 
+import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
+import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
+import ai.datasqrl.plan.local.LocalAggBuilder;
 import ai.datasqrl.plan.local.JoinPathBuilder;
 import ai.datasqrl.plan.local.SqlAliasIdentifier;
 import ai.datasqrl.plan.local.SqlJoinDeclaration;
+import ai.datasqrl.plan.local.SqrlIdentifier;
+import ai.datasqrl.plan.local.analyzer.Analysis.ResolvedNamePath;
 import ai.datasqrl.schema.Relationship;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -17,15 +25,64 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.junit.jupiter.api.Test;
 
-/**
- * TODO today:
- * 1. Expand relationships to SQL Nodes to include primary keys (join declarations)
- * 2. Expand joins
- * 3.
- *
- */
 class QueryGeneratorTest {
 
+  @Test
+  public void testSumAbsolute() {
+    String query = "sum(Orders.total)";
+    String result = "SELECT sum(o.total) AS fnc FROM Orders o";
+    String trailingCondition = null;
+  }
+
+  @Test
+  public void testCountAbsolute() {
+    String query = "count(Products)";
+    String result = "SELECT count(p.*) AS fnc FROM Products p";
+    String trailingCondition = null;
+  }
+
+  @Test
+  public void testSumRelative() {
+    //FROM Orders.entries e
+    String query = "sum(e.product.productid)";
+    String result = "SELECT e._uuid, e._idx, SUM(p.productid) FROM Entries e JOIN Product p GROUP BY e._uuid, e._idx";
+    String trailingCondition = "q1._uuid = e._uuid, q1._idx = e._idx";
+  }
+
+  @Test
+  public void testExtract() {
+    Map<Name, AbstractSqrlTable> tables = new HashMap<>();
+    ResolvedNamePath namePath = new ResolvedNamePath("_", Optional.empty(), List.of());
+
+    LocalAggBuilder aggExtractor = new LocalAggBuilder(tables, new JoinPathBuilder(new HashMap<>()));
+    SqlBasicCall call = new SqlBasicCall(
+        SqrlOperatorTable.SUM,
+        new SqlNode[]{
+          new SqrlIdentifier(namePath, SqlParserPos.ZERO)
+         },
+        SqlParserPos.ZERO);
+
+    SqlNode node = aggExtractor.extractSubquery(call);
+    System.out.println(node);
+
+
+    String a = "sum(Products.productid)";
+    String a2 = "count(Products)";
+    String a3 = "count(_.orders.entries)";
+    String a4 = "sum(o.orders.entries.total)";
+  }
+
+  /**
+   *
+   */
+  @Test
+  public void distinctTest() {
+    String x = "Entries := DISTINCT Order.entries ON parent._uuid, _idx ORDER BY parent.time";
+
+
+
+
+  }
 
 //
 //  @Value
@@ -116,7 +173,7 @@ class QueryGeneratorTest {
     SqlJoinDeclaration declaration = new SqlJoinDeclaration(aliasedRef, condition);
     SqlJoinDeclaration declaration2 = new SqlJoinDeclaration(aliasedRef2, condition2);
 
-    JoinPathBuilder builder = new JoinPathBuilder();
+    JoinPathBuilder builder = new JoinPathBuilder(new HashMap<>());
     builder.joinDeclarations.put(relationship, declaration);
     builder.joinDeclarations.put(relationship2, declaration2);
 

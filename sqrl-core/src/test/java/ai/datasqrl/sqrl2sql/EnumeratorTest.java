@@ -322,13 +322,13 @@ class EnumeratorTest extends AbstractSQRLIT {
     SchemaBuilder schema = new SchemaBuilder();
 
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
-    SqrlSchemaCatalog catalog = new SqrlSchemaCatalog(rootSchema);
+//    SqrlSchemaCatalog catalog = new SqrlSchemaCatalog(rootSchema);
 
     String schemaName = "test";
     BridgedCalciteSchema subSchema = new BridgedCalciteSchema();
-    catalog.add(schemaName, subSchema);
+//    catalog.add(schemaName, subSchema);
 
-    PlannerFactory plannerFactory = new PlannerFactory(catalog);
+    PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
     Planner planner = plannerFactory.createPlanner(schemaName);
 
     InMemStreamEngine streamEngine = new InMemStreamEngine();

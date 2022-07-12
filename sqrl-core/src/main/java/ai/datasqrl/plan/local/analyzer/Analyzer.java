@@ -23,6 +23,7 @@ import ai.datasqrl.parse.tree.Intersect;
 import ai.datasqrl.parse.tree.Join;
 import ai.datasqrl.parse.tree.JoinAssignment;
 import ai.datasqrl.parse.tree.JoinDeclaration;
+import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.OrderBy;
 import ai.datasqrl.parse.tree.Query;
@@ -36,6 +37,7 @@ import ai.datasqrl.parse.tree.SetOperation;
 import ai.datasqrl.parse.tree.SimpleGroupBy;
 import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.SortItem;
+import ai.datasqrl.parse.tree.SqrlStatement;
 import ai.datasqrl.parse.tree.SubqueryExpression;
 import ai.datasqrl.parse.tree.TableNode;
 import ai.datasqrl.parse.tree.TableSubquery;
@@ -75,7 +77,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Produces an Analysis object of a script/statement
@@ -93,6 +94,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
   private final List<JoinNorm> addlJoins = new ArrayList<>();
   @Getter
   private final List<Expression> additionalColumns = new ArrayList<>();
+  @Getter
   protected Analysis analysis;
 
   public Analyzer(ImportManager importManager, SchemaAdjustmentSettings schemaSettings,
@@ -100,14 +102,18 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     this.importManager = importManager;
     this.schemaSettings = schemaSettings;
     this.errors = errors;
+    this.analysis = new Analysis();
   }
 
   public Analysis analyze(ScriptNode script) {
-    this.analysis = new Analysis();
-
     for (Node statement : script.getStatements()) {
       statement.accept(this, null);
     }
+    return analysis;
+  }
+
+  public Analysis analyze(SqrlStatement statement) {
+    statement.accept(this, null);
     return analysis;
   }
 
@@ -168,7 +174,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     Preconditions.checkState(node.getTableNode().getNamePath().getLength() == 1);
 
     Table table = tableOpt.get();
-    ResolvedNamePath resolvedNamePath = new ResolvedNamePath(Optional.empty(),
+    ResolvedNamePath resolvedNamePath = new ResolvedNamePath(node.getTableNode().getNamePath().getFirst().getCanonical(), Optional.empty(),
         List.of(new RootTableField(table)));
     analysis.getResolvedNamePath().put(node.getTableNode(), resolvedNamePath);
 
@@ -191,6 +197,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     Table distinctTable = builder.createTable(tblType, TableStatistic.of(derivedRowCount));
 
     analysis.getSchema().add(distinctTable);
+    analysis.getProducedTable().put(node, distinctTable.getCurrentVersion());
 
     return null;
   }
@@ -223,26 +230,29 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
         Optional.empty(), node.getJoinDeclaration().getLimit());
 
     parentTable.getFields().add(relationship);
+    analysis.getProducedField().put(node, relationship);
 
     return null;
   }
 
   @Override
-  public Scope visitExpressionAssignment(ExpressionAssignment expressionAssignment, Scope context) {
-    Scope scope = createScope(expressionAssignment.getNamePath(), true, null);
+  public Scope visitExpressionAssignment(ExpressionAssignment node, Scope context) {
+    Scope scope = createScope(node.getNamePath(), true, null);
     scope.setSelfInScope(true);
     addSelfToScope(scope, scope.getContextTable());
-    expressionAssignment.getExpression().accept(this, scope);
+    node.getExpression().accept(this, scope);
 
     // Add to schema
     Table table = scope.getContextTable().get();
-    Name columnName = expressionAssignment.getNamePath().getLast();
+    Name columnName = node.getNamePath().getLast();
     int nextVersion = table.getNextColumnVersion(columnName);
 
     Column column = new Column(columnName, nextVersion, table.getNextColumnIndex(), false, false,
         true);
 
     table.addExpressionColumn(column);
+    analysis.getProducedTable().put(node, table.getCurrentVersion());
+    analysis.getProducedField().put(node, column);
 
     return null;
   }
@@ -405,7 +415,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
   }
 
   private void addSelfToScope(Scope scope, Optional<Table> contextTable) {
-    ResolvedNamePath resolvedNamePath = new ResolvedNamePath(Optional.empty(),
+    ResolvedNamePath resolvedNamePath = new ResolvedNamePath("_", Optional.empty(),
         List.of(new RootTableField(scope.getContextTable().get())));
     scope.joinScopes.put(ReservedName.SELF_IDENTIFIER, resolvedNamePath);
   }
@@ -513,6 +523,12 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     return scope;
   }
 
+  @Override
+  public Scope visitJoinOn(JoinOn node, Scope context) {
+    node.getExpression().accept(this, context);
+    return context;
+  }
+
   /**
    * Expands table identifiers.
    * <p>
@@ -531,6 +547,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
 
     Name alias = getTableName(node, scope);
     scope.getJoinScopes().put(alias, table);
+    analysis.getTableAliases().put(node, alias);
 
     return scope;
   }
@@ -670,9 +687,9 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
         .get(0) instanceof Identifier) {
       Identifier identifier = (Identifier) node.getArguments().get(0);
 
-      ResolvedNamePath field = scope.resolveNamePathOrThrow(identifier.getNamePath());
-
-      if (field.getPath().size() > 1 && isToMany(field)) {
+      ResolvedNamePath path = scope.resolveNamePathOrThrow(identifier.getNamePath());
+      analysis.getResolvedNamePath().put(identifier, path);
+      if (path.getPath().size() > 1 && isToMany(path)) {
         analysis.getIsLocalAggregate().add(node);
         return null;
       }
@@ -917,6 +934,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       if (isInGroupByOrSortBy && namePath.getLength() == 1) { //select list items take priority
         for (Name name : fieldNames) {
           if (namePath.get(0).equals(name)) {
+            //todo: need to resolve the entire identifier
             return Optional.of(List.of(new ResolvedNamedReference(name)));
           }
         }
@@ -926,12 +944,13 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       Optional<ResolvedNamePath> explicitAlias = Optional.ofNullable(
           joinScopes.get(namePath.getFirst()));
 
-      if (explicitAlias.isPresent() && (namePath.getLength() == 1 || walk(explicitAlias.get(),
+      if (explicitAlias.isPresent() && (namePath.getLength() == 1 || walk(
+          namePath.getFirst().getCanonical(), explicitAlias.get(),
           namePath.popFirst()).isPresent())) { //Alias take priority
         if (namePath.getLength() == 1) {
           return explicitAlias.map(List::of);
         } else {
-          resolved.add(walk(explicitAlias.get(), namePath.popFirst()).get());
+          resolved.add(walk(namePath.getFirst().getCanonical(), explicitAlias.get(), namePath.popFirst()).get());
           return Optional.of(resolved);
         }
       }
@@ -944,7 +963,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
             continue;
           }
 
-          Optional<ResolvedNamePath> resolvedPath = walk(entry.getValue(), namePath);
+          Optional<ResolvedNamePath> resolvedPath = walk(entry.getKey().getCanonical(), entry.getValue(), namePath);
           resolvedPath.ifPresent(resolved::add);
         }
       }
@@ -976,10 +995,10 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
         return Optional.empty();
       }
 
-      return Optional.of(new ResolvedNamePath(Optional.empty(), fields));
+      return Optional.of(new ResolvedNamePath(namePath.getFirst().getCanonical(), Optional.empty(), fields));
     }
 
-    private Optional<ResolvedNamePath> walk(ResolvedNamePath resolvedNamePath, NamePath namePath) {
+    private Optional<ResolvedNamePath> walk(String alias, ResolvedNamePath resolvedNamePath, NamePath namePath) {
       Field field = resolvedNamePath.getPath().get(resolvedNamePath.getPath().size() - 1);
       Optional<Table> table = getTableOfField(field);
       if (table.isEmpty()) {
@@ -991,7 +1010,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
         return Optional.empty();
       }
 
-      return Optional.of(new ResolvedNamePath(Optional.of(resolvedNamePath), fields.get()));
+      return Optional.of(new ResolvedNamePath(alias, Optional.of(resolvedNamePath), fields.get()));
     }
 
     private Optional<List<Field>> walk(Table tbl, NamePath namePath) {

@@ -1,5 +1,55 @@
 package ai.datasqrl.plan.local;
 
+import ai.datasqrl.plan.calcite.SqrlOperatorTable;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.sql.SqlBasicCall;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.pretty.SqlPrettyWriter;
+
 public class SqlNodeUtil {
 
+  public static List<SqlNode> toSelectList(List<RelDataTypeField> fieldList) {
+    return fieldList.stream()
+        .map(SqlNodeUtil::fieldToNode)
+        .collect(Collectors.toList());
+  }
+
+  public static SqlNode fieldToNode(RelDataTypeField field) {
+    return new SqlIdentifier(field.getName(), SqlParserPos.ZERO);
+  }
+
+  public static SqlNode and(List<SqlNode> expressions) {
+    if (expressions.size() == 0) {
+      return null;
+    } else if (expressions.size() == 1) {
+      return expressions.get(0);
+    } else if (expressions.size() == 2) {
+      return new SqlBasicCall(SqrlOperatorTable.AND,
+          new SqlNode[]{
+              expressions.get(0),
+              expressions.get(1)
+          },
+          SqlParserPos.ZERO);
+    }
+
+    return new SqlBasicCall(SqrlOperatorTable.AND,
+        new SqlNode[]{
+            expressions.get(0),
+            and(expressions.subList(1, expressions.size()))
+        },
+        SqlParserPos.ZERO);
+  }
+
+  public static String printJoin(SqlNode from) {
+
+    SqlPrettyWriter sqlWriter = new SqlPrettyWriter();
+    sqlWriter.startList("", "");
+    from.unparse(sqlWriter, 0, 0);
+    System.out.println(sqlWriter.toString());
+    return sqlWriter.toString();
+  }
 }

@@ -63,7 +63,7 @@ public class SqlJoinDeclaration {
       if (alias.equalsIgnoreCase("_")) {
         continue;
       }
-      aliasMap.put(alias, alias + "$" + (++aliasIncrementer));
+      aliasMap.put(alias, alias);//todo: fix
     }
     aliasMap.put("_", selfAlias);
 
