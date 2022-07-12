@@ -55,7 +55,6 @@ public class SqlNodeUtil {
     SqlPrettyWriter sqlWriter = new SqlPrettyWriter();
     sqlWriter.startList("", "");
     from.unparse(sqlWriter, 0, 0);
-    System.out.println(sqlWriter.toString());
     return sqlWriter.toString();
   }
 }

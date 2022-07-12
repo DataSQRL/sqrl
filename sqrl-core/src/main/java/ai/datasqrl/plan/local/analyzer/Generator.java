@@ -122,7 +122,6 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   private void createParentChildJoinDeclaration(Relationship rel) {
     this.getJoins().put(rel,
         new SqlJoinDeclaration(createTableRef(rel.getToTable()), createParentChildCondition(rel)));
-
   }
 
   private SqlNode createParentChildCondition(Relationship rel) {
@@ -149,7 +148,6 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   }
 
   private SqlNode createTableRef(ai.datasqrl.schema.Table table) {
-
     return new SqlBasicCall(SqrlOperatorTable.AS,
         new SqlNode[]{
             new SqlTableRef(SqlParserPos.ZERO,
@@ -183,7 +181,6 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   @Override
   public SqlNode visitDistinctAssignment(DistinctAssignment node, Scope context) {
     SqlNode sqlNode = generateDistinctQuery(node);
-    System.out.println(sqlNode);
 
     QueryCalciteTable table = new QueryCalciteTable(plan(sqlNode));
     TableVersion version = analysis.getProducedTable().get(node);
@@ -350,7 +347,6 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
           null,
           null,
           SqlNodeList.EMPTY);
-      System.out.println(select);
       RelNode relNode = plan(select);
       AbstractSqrlTable table = this.tables.get(v.getId());
       RelDataTypeField produced = relNode.getRowType().getFieldList().get(0);
@@ -368,21 +364,21 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   public SqlNode visitQueryAssignment(QueryAssignment queryAssignment, Scope context) {
     if (analysis.getExpressionStatements().contains(queryAssignment)) {
       SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(null, null));
-      System.out.println(sqlNode);
       RelNode relNode = plan(sqlNode);
-      System.out.println(relNode.explain());
       TableVersion tableVersion = analysis.getProducedTable().get(queryAssignment);
+      Preconditions.checkNotNull(tableVersion);
+      AbstractSqrlTable t = this.tables.get(tableVersion.getTable().getId());
+      RelDataTypeField field = relNode.getRowType().getFieldList().get(relNode.getRowType().getFieldCount()-1);
+      RelDataTypeField newField = new RelDataTypeFieldImpl(queryAssignment.getNamePath().getLast().getCanonical(),
+          t.getRowType(null).getFieldCount(),
+          field.getValue());
 
+      t.addField(null, newField);
 
-      this.tables.get(tableVersion.getTable().getId())
-          .addField(null, relNode.getRowType().getFieldList().get(relNode.getRowType().getFieldCount()-1));
-
-      throw new RuntimeException("TBD");
+      return sqlNode;
     } else {
       SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(null, null));
-      System.out.println(sqlNode);
       RelNode relNode = plan(sqlNode);
-      System.out.println(relNode.explain());
 
       TableVersion tableVersion = analysis.getProducedTable().get(queryAssignment);
 
@@ -398,7 +394,6 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
     RelRoot root = planner.rel(sqlNode);
     RelNode relNode = root.rel;
-    System.out.println(relNode);
 
     return relNode;
   }

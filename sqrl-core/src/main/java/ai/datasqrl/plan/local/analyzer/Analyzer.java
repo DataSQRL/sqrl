@@ -292,7 +292,8 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       Column column = new Column(columnName, nextVersion, table.getNextColumnIndex(), false, false,
           true);
       table.getFields().add(column);
-
+      analysis.getProducedField().put(queryAssignment, column);
+      analysis.getProducedTable().put(queryAssignment, table.getCurrentVersion());
     } else {
       double derivedRowCount = 1; //TODO: derive from optimizer
 

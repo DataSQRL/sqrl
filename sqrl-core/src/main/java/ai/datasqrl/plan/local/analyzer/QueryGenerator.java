@@ -422,8 +422,6 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
     boolean isLocalAggregate = analysis.getIsLocalAggregate().contains(node);
     if (isLocalAggregate) {
-      //1. Convert to call
-      //2. Pass to
       LocalAggBuilder localAggBuilder = new LocalAggBuilder(this.tables, new JoinPathBuilder(this.joins));
       ResolvedNamePath namePath = analysis.getResolvedNamePath().get(node.getArguments().get(0));
       Preconditions.checkNotNull(namePath);
@@ -434,7 +432,6 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
           pos.getPos(node.getLocation()));
 
       SqlSelect select = localAggBuilder.extractSubquery(call);
-      System.out.println(select);
 
       context.getSubqueries().add(select);
       //todo name subquery

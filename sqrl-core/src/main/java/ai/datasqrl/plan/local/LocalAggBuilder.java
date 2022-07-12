@@ -45,8 +45,6 @@ public class LocalAggBuilder {
     ResolvedNamePath namePath = identifier.getNamePath();
     SqlNode from = joinPathBuilder.resolveFull(namePath);
 
-    System.out.println(SqlNodeUtil.printJoin(from));
-
     List<SqlNode> selectList = new ArrayList<>();
     List<SqlNode> groupBy = new ArrayList<>();
     String subqueryAlias = aliasGenerator.nextTableAliasName().getCanonical();

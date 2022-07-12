@@ -37,10 +37,24 @@ public class SqlJoinDeclaration {
     this.toTableAlias = toTableAlias;
   }
 
-  private void analyze(SqlNode rel) {
-    rel.accept(new SqlBasicVisitor<>(){
+  public SqlNode getRel() {
+    return rel.accept(new SqlShuttle(){
       @Override
-      public Object visit(SqlCall call) {
+      public SqlNode visit(SqlIdentifier id) {
+        return id.clone(SqlParserPos.ZERO);
+      }
+
+      @Override
+      public SqlNode visit(SqlCall call) {
+        return call.clone(SqlParserPos.ZERO);
+      }
+    });
+  }
+
+  private void analyze(SqlNode rel) {
+    rel.accept(new SqlShuttle(){
+      @Override
+      public SqlNode visit(SqlCall call) {
         if (call.getOperator() == SqrlOperatorTable.AS) {
           String alias = ((SqlIdentifier)call.getOperandList().get(1)).names.get(0);
           aliases.add(alias);
@@ -68,7 +82,7 @@ public class SqlJoinDeclaration {
     aliasMap.put("_", selfAlias);
 
 
-    SqlNode newRel = rel.accept(new RewriteIdentifierSqlShuttle(aliasMap));
+    SqlNode newRel = getRel().accept(new RewriteIdentifierSqlShuttle(aliasMap));
     SqlNode newCondition = condition.accept(new RewriteIdentifierSqlShuttle(aliasMap));
 
     return new SqlJoinDeclaration(newRel, newCondition, aliasMap.get(toTableAlias));
@@ -91,7 +105,7 @@ public class SqlJoinDeclaration {
         names.set(0, newAlias);
         return new SqlIdentifier(names, id.getParserPosition());
       }
-      return super.visit(id);
+      return id.clone(SqlParserPos.ZERO);
     }
 
     //todo: our own sqlNodes?
@@ -108,5 +122,15 @@ public class SqlJoinDeclaration {
       }
       return super.visit(call);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "SqlJoinDeclaration{" +
+        "rel=" + SqlNodeUtil.printJoin(rel) +
+        ", condition=" + condition +
+        ", toTableAlias='" + toTableAlias + '\'' +
+        ", aliases=" + aliases +
+        '}';
   }
 }
