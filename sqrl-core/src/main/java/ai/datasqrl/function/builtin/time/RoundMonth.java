@@ -10,6 +10,7 @@ import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.InferTypes;
@@ -61,5 +62,10 @@ public class RoundMonth extends SqlUserDefinedFunction implements SqrlAwareFunct
   @Override
   public boolean isTimestampPreserving() {
     return true;
+  }
+
+  @Override
+  public SqlOperator getOp() {
+    return this;
   }
 }

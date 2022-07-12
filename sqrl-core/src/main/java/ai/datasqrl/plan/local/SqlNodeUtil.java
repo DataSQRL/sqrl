@@ -1,7 +1,9 @@
 package ai.datasqrl.plan.local;
 
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlBasicCall;
@@ -12,14 +14,18 @@ import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 
 public class SqlNodeUtil {
 
-  public static List<SqlNode> toSelectList(List<RelDataTypeField> fieldList) {
+  public static List<SqlNode> toSelectList(Optional<String> alias, List<RelDataTypeField> fieldList) {
     return fieldList.stream()
-        .map(SqlNodeUtil::fieldToNode)
+        .map(field -> fieldToNode(alias, field))
         .collect(Collectors.toList());
   }
 
-  public static SqlNode fieldToNode(RelDataTypeField field) {
-    return new SqlIdentifier(field.getName(), SqlParserPos.ZERO);
+  public static SqlNode fieldToNode(Optional<String> alias, RelDataTypeField field) {
+    List<String> name = new ArrayList<>();
+    alias.ifPresent(a->name.add(a));
+    name.add(field.getName());
+
+    return new SqlIdentifier(name, SqlParserPos.ZERO);
   }
 
   public static SqlNode and(List<SqlNode> expressions) {

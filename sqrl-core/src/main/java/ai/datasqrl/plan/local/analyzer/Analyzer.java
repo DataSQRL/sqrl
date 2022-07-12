@@ -932,10 +932,11 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     public Optional<List<ResolvedNamePath>> resolveNamePath(NamePath namePath,
         boolean requireAlias) {
       if (isInGroupByOrSortBy && namePath.getLength() == 1) { //select list items take priority
-        for (Name name : fieldNames) {
+        for (int i = 0; i < fieldNames.size(); i++) {
+          Name name = fieldNames.get(i);
           if (namePath.get(0).equals(name)) {
             //todo: need to resolve the entire identifier
-            return Optional.of(List.of(new ResolvedNamedReference(name)));
+            return Optional.of(List.of(new ResolvedNamedReference(name, i)));
           }
         }
       }

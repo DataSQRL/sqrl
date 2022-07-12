@@ -41,6 +41,11 @@ public class CalciteFunctionProxy implements SqrlAwareFunction {
   }
 
   @Override
+  public SqlOperator getOp() {
+    return op;
+  }
+
+  @Override
   public String toString() {
     return "CalciteFunctionProxy{" +
         "name=" + getSqrlName() +

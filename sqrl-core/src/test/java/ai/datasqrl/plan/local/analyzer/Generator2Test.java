@@ -140,8 +140,8 @@ class Generator2Test extends AbstractSQRLIT {
     gen("IMPORT ecommerce-data.Product;\n");
     gen("IMPORT ecommerce-data.Orders;\n");
     SqlNode node;
-//
-//    SqlNode node = gen("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
+
+    node = gen("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
 //    assertEquals(
 //        "SELECT `EXPR$0`.`_uuid`, `EXPR$0`.`_ingest_time`, `EXPR$0`.`customerid`, `EXPR$0`"
 //            + ".`email`, `EXPR$0`.`name`\n"
@@ -152,8 +152,8 @@ class Generator2Test extends AbstractSQRLIT {
 //            + "FROM `test`.`customer$1`) AS `EXPR$0`\n"
 //            + "WHERE `EXPR$0`.`_row_num` = 1",
 //        node.toString());
-//
-//    node = gen("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n");
+
+    node = gen("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n");
 //    assertEquals(
 //        "SELECT `EXPR$0`.`_uuid`, `EXPR$0`.`_ingest_time`, `EXPR$0`.`productid`, `EXPR$0`.`name`,"
 //            + " `EXPR$0`.`description`, `EXPR$0`.`category`\n"
@@ -164,37 +164,37 @@ class Generator2Test extends AbstractSQRLIT {
 //            + "FROM `test`.`product$2`) AS `EXPR$0`\n"
 //            + "WHERE `EXPR$0`.`_row_num` = 1",
 //        node.toString());
-//
-//    node = gen("Orders.entries.discount := coalesce(discount, 0.0);\n");
+
+    node = gen("Orders.entries.discount := coalesce(discount, 0.0);\n");
 //    assertEquals(
 //        "CASE WHEN `entries$4`.`discount` IS NOT NULL THEN `entries$4`.`discount` ELSE 0.0 END AS"
 //            + " `discount$1`",
 //        node.toString());
-//    node = gen("Orders.entries.total := quantity * unit_price - discount;\n");
+    node = gen("Orders.entries.total := quantity * unit_price - discount;\n");
 //    assertEquals(
 //        "`entries$4`.`quantity` * `entries$4`.`unit_price` - `entries$4`.`discount$1` AS `total`",
 //        node.toString());
-//    node = gen("Orders.total := sum(entries.total);\n");
+    node = gen("Orders.total := sum(entries.total);\n");
 //    assertEquals(
 //        "SELECT `_`.`_uuid`, SUM(`t`.`total`) AS `__t0`\n"
 //            + "FROM `test`.`orders$3` AS `_`\n"
 //            + "LEFT JOIN `test`.`entries$4` AS `t` ON `_`.`_uuid` = `t`.`_uuid`\n"
 //            + "GROUP BY `_`.`_uuid`",
 //        node.toString());
-//    node = gen("Orders.total_savings := sum(entries.discount);\n");
-////    node = gen("Orders.total_entries := count(entries);\n");
+    node = gen("Orders.total_savings := sum(entries.discount);\n");
+//    node = gen("Orders.total_entries := count(entries);\n");
     node = gen("Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n");
     node = gen("Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n");
     node = gen("Customer.recent_products := SELECT productid, e.product.category AS category,"
         + "                                   sum(quantity) AS quantity, count(*) AS num_orders"
         + "                            FROM _.orders.entries e"
-//        + "                            WHERE parent.time > now() - INTERVAL 2 YEAR");
+        + "                            WHERE parent.time > now() - INTERVAL 2 YEAR"
         + "                            GROUP BY productid, category ORDER BY num_orders DESC, "
         + "quantity DESC;\n");
     node = gen("Customer.recent_products_categories :="
         + "                     SELECT category, count(*) AS num_products"
-        + "                     FROM _.recent_products");
-//        + "                     GROUP BY category ORDER BY num_products;\n");
+        + "                     FROM _.recent_products"
+        + "                     GROUP BY category ORDER BY num_products;\n");
     node = gen(
         "Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp"
             + ".category=_.category;\n");

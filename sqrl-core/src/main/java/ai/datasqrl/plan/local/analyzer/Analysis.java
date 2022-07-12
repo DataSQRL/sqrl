@@ -15,7 +15,6 @@ import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.RootTableField;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
-import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -192,10 +191,12 @@ public class Analysis {
   @Getter
   public static class ResolvedNamedReference extends ResolvedNamePath {
     private final Name name;
+    private final int ordinal;
 
-    public ResolvedNamedReference(Name name) {
+    public ResolvedNamedReference(Name name, int ordinal) {
       super(name.getCanonical(), Optional.empty(), List.of());
       this.name = name;
+      this.ordinal = ordinal;
     }
   }
 

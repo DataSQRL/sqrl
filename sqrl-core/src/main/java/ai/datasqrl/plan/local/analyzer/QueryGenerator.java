@@ -61,6 +61,7 @@ import ai.datasqrl.plan.local.JoinPathBuilder;
 import ai.datasqrl.plan.local.LocalAggBuilder;
 import ai.datasqrl.plan.local.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.SqrlIdentifier;
+import ai.datasqrl.plan.local.analyzer.Analysis.ResolvedFunctionCall;
 import ai.datasqrl.plan.local.analyzer.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyzer.Analysis.ResolvedNamedReference;
 import ai.datasqrl.plan.local.analyzer.QueryGenerator.Scope;
@@ -448,14 +449,16 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
 
     String opName = node.getNamePath().get(0).getCanonical();
-    List<SqlOperator> op = opMap.get(opName.toUpperCase());
-    Preconditions.checkState(!op.isEmpty(), "Operation could not be found: %s", opName);
+    ResolvedFunctionCall resolvedCall = analysis.getResolvedFunctions().get(node);
+//    List<SqlOperator> op = opMap.get(opName.toUpperCase());
+//    Preconditions.checkState(!op.isEmpty(), "Operation could not be found: %s", opName);
 
-    SqlBasicCall call = new SqlBasicCall(op.get(0), toOperand(node.getArguments(), context),
+    SqlBasicCall call = new SqlBasicCall(
+        resolvedCall.getFunction().getOp(), toOperand(node.getArguments(), context),
         pos.getPos(node.getLocation()));
 
     //Convert to OVER
-    if (op.get(0).requiresOver()) {
+    if (resolvedCall.getFunction().requiresOver()) {
       List<SqlNode> partition = node.getOver().get().getPartitionBy().stream()
           .map(e -> e.accept(this, context)).collect(Collectors.toList());
       SqlNodeList orderList = SqlNodeList.EMPTY;
@@ -512,8 +515,9 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     }
     //group by / order by
     if (p instanceof ResolvedNamedReference) {
-      return new SqlIdentifier(List.of(
-          ((ResolvedNamedReference)p).getName().getCanonical()), SqlParserPos.ZERO);
+      SqlLiteral lit = SqlLiteral.createExactNumeric((((ResolvedNamedReference)p).getOrdinal() + 1) +"", SqlParserPos.ZERO);
+
+      return lit;
     }
 
     if (p.getPath().size() > 1) {
@@ -530,7 +534,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
       context.getSubqueries().add(joinPathBuilder.getSqlNode());
       context.getConditions().add(joinPathBuilder.getTrailingCondition());
 
-      return new SqlIdentifier(List.of("product", p.getPath().get(p.getPath().size()-1).getId().getCanonical()), SqlParserPos.ZERO);
+      return new SqlIdentifier(List.of(joinPathBuilder.currentAlias, p.getPath().get(p.getPath().size()-1).getId().getCanonical()), SqlParserPos.ZERO);
     } else {
 
 //    Preconditions.checkNotNull(p, "Could not find node {}", node);
