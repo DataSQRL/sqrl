@@ -367,6 +367,16 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   @Override
   public SqlNode visitQueryAssignment(QueryAssignment queryAssignment, Scope context) {
     if (analysis.getExpressionStatements().contains(queryAssignment)) {
+      SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(null, null));
+      System.out.println(sqlNode);
+      RelNode relNode = plan(sqlNode);
+      System.out.println(relNode.explain());
+      TableVersion tableVersion = analysis.getProducedTable().get(queryAssignment);
+
+
+      this.tables.get(tableVersion.getTable().getId())
+          .addField(null, relNode.getRowType().getFieldList().get(relNode.getRowType().getFieldCount()-1));
+
       throw new RuntimeException("TBD");
     } else {
       SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(null, null));

@@ -150,7 +150,6 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
     }
 
-
     SqlSelect select = new SqlSelect(pos.getPos(node.getLocation()),
         node.getSelect().isDistinct() ? new SqlNodeList(List.of(
             SqlLiteral.createSymbol(SqlSelectKeyword.DISTINCT, pos.getPos(node.getLocation()))),
