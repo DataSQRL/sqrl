@@ -13,9 +13,7 @@
  */
 package ai.datasqrl.parse.tree;
 
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceOrdinal;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
+import ai.datasqrl.plan.local.analyze.Analysis.ResolvedFunctionCall;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import java.util.Iterator;
@@ -701,45 +699,6 @@ public final class ExpressionTreeRewriter<C> {
       if (!context.isDefaultRewrite()) {
         Expression result = rewriter
             .rewriteGroupingOperation(node, context.get(), ExpressionTreeRewriter.this);
-        if (result != null) {
-          return result;
-        }
-      }
-
-      return node;
-    }
-
-    @Override
-    public Expression visitResolvedColumn(ResolvedColumn node, Context<C> context) {
-      if (!context.isDefaultRewrite()) {
-        Expression result = rewriter
-            .rewriteResolvedColumn(node, context.get(), ExpressionTreeRewriter.this);
-        if (result != null) {
-          return result;
-        }
-      }
-
-      return node;
-    }
-
-    @Override
-    public Expression visitResolvedFunctionCall(ResolvedFunctionCall node, Context<C> context) {
-      if (!context.isDefaultRewrite()) {
-        Expression result = rewriter
-            .rewriteResolvedFunctionCall(node, context.get(), ExpressionTreeRewriter.this);
-        if (result != null) {
-          return result;
-        }
-      }
-
-      return node;
-    }
-
-    @Override
-    public Expression visitReferenceOrdinal(ReferenceOrdinal node, Context<C> context) {
-      if (!context.isDefaultRewrite()) {
-        Expression result = rewriter
-            .rewriteReferenceOrdinal(node, context.get(), ExpressionTreeRewriter.this);
         if (result != null) {
           return result;
         }

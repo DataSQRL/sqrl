@@ -1,9 +1,6 @@
 package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.local.analyzer.Analysis.ResolvedNamePath;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.ToString;
 

@@ -1,10 +1,8 @@
 package ai.datasqrl.plan.calcite.sqrl.table;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
-import ai.datasqrl.schema.Field;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -30,7 +28,7 @@ public class SourceTableCalciteTable extends AbstractSqrlTable {
   }
 
   @Override
-  public void addField(Field field, RelDataTypeField relDataTypeField) {
+  public void addField(RelDataTypeField relDataTypeField) {
     fields.add(relDataTypeField);
   }
 }

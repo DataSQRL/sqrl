@@ -5,8 +5,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 
 import ai.datasqrl.plan.local.BundleTableFactory;
-import ai.datasqrl.plan.local.analyzer.Analysis.ResolvedNamePath;
-import ai.datasqrl.plan.local.operations.SourceTableImportOp.RowType;
+import ai.datasqrl.schema.SourceTableImportMeta.RowType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

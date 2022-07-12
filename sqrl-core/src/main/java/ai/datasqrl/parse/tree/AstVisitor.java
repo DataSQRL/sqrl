@@ -13,15 +13,6 @@
  */
 package ai.datasqrl.parse.tree;
 
-import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinDeclarationNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceExpression;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceOrdinal;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
 import javax.annotation.Nullable;
 
 /**
@@ -171,10 +162,6 @@ public abstract class AstVisitor<R, C> {
 
   public R visitTableSubquery(TableSubquery node, C context) {
     return visitQueryBody(node, context);
-  }
-
-  public R visitAliasedRelation(AliasedRelation node, C context) {
-    return visitRelation(node, context);
   }
 
   public R visitJoin(Join node, C context) {
@@ -359,49 +346,5 @@ public abstract class AstVisitor<R, C> {
 
   public R visitLongLiteral(LongLiteral node, C context) {
     return visitLiteral(node, context);
-  }
-
-  public R visitQuerySpecNorm(QuerySpecNorm node, C context) {
-    return visitRelation(node, context);
-  }
-
-  public R visitResolvedColumn(
-      ResolvedColumn node, C context) {
-    return visitNode(node, context);
-  }
-
-  public R visitResolvedFunctionCall(
-      ResolvedFunctionCall node, C context) {
-    return visitNode(node, context);
-  }
-
-  public R visitReferenceOrdinal(ReferenceOrdinal node,
-      C context) {
-    return visitNode(node, context);
-  }
-
-  public R visitReferenceExpression(
-      ReferenceExpression node, C context) {
-    return visitNode(node, context);
-  }
-
-  public R visitRelationNorm(RelationNorm node, C context) {
-    return visitNode(node, context);
-  }
-
-  public R visitTableNorm(TableNodeNorm node, C context) {
-    return visitNode(node, context);
-  }
-
-//  public R visitSubQueryNorm(SubQueryNorm node, C context) {
-//    return visitNode(node, context);
-//  }
-
-  public R visitJoinNorm(JoinNorm node, C context) {
-    return visitNode(node, context);
-  }
-
-  public R visitJoinDeclarationNorm(JoinDeclarationNorm node, C context) {
-    return visitNode(node, context);
   }
 }

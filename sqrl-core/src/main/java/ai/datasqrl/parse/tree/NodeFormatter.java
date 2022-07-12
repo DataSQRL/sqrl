@@ -1,17 +1,6 @@
 package ai.datasqrl.parse.tree;
 
-import static ai.datasqrl.parse.util.SqrlNodeUtil.and;
-
 import ai.datasqrl.parse.tree.SortItem.Ordering;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceExpression;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ReferenceOrdinal;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedFunctionCall;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.QuerySpecNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class NodeFormatter extends AstVisitor<String, Object> {
@@ -303,12 +292,6 @@ public class NodeFormatter extends AstVisitor<String, Object> {
   }
 
   @Override
-  public String visitAliasedRelation(AliasedRelation node, Object context) {
-    return node.getRelation().accept(this, context) +
-        " AS " + node.getAlias().accept(this, context);
-  }
-
-  @Override
   public String visitJoin(Join node, Object context) {
     return " " + node.getLeft().accept(this, context) + " " +
         node.getType() + " JOIN " +
@@ -456,133 +439,4 @@ public class NodeFormatter extends AstVisitor<String, Object> {
   public String visitLimitNode(Limit node, Object context) {
     return node.getValue();
   }
-//
-//  @Override
-//  public String visitQuerySpecNorm(QuerySpecNorm node, Object context) {
-//    StringBuilder b = new StringBuilder();
-//    b.append("SELECT ")
-//        .append(node.isDistinct() ? " DISTINCT " : "");
-//    b.append(node.getSelect().stream().map(e->e.accept(this, node))
-//        .collect(Collectors.joining(", ")));
-//    b.append(" FROM ")
-//        .append(node.getFrom().accept(this, context));
-//    node.getAddlJoins().stream()
-//        .map(e->e.accept(this, context))
-//        .forEach(b::append);
-//    node.getWhere().map(w-> b.append(" WHERE " + w.accept(this, node)));
-//    if (!node.getGroupBy().isEmpty()) {
-//      b.append(" GROUP BY ");
-//      b.append(String.join(",", node.getGroupBy().stream().map(i->i.accept(this, node))
-//          .collect(Collectors.toList())));
-//    }
-//    node.getHaving().map(h->b.append(" HAVING " + h.accept(this, node)));
-//
-//    if (!node.getOrders().isEmpty()) {
-//      b.append(" ORDER BY ");
-//      b.append(String.join(",", node.getOrders().stream().map(i->i.accept(this, node))
-//          .collect(Collectors.toList())));
-//    }
-//
-//    node.getLimit().map(l->b.append(" LIMIT " + l));
-//
-//    return b.toString();
-//  }
-//
-//  public String walkFrom(List<RelBody> fromRoots) {
-//    StringBuilder b = new StringBuilder();
-//    for (RelBody relBody : fromRoots) {
-//      b.append(walk(relBody));
-//    }
-//    return b.toString();
-//  }
-//
-//  public String walk(RelBody relBody) {
-//    StringBuilder b = new StringBuilder();
-//
-//    if (relBody instanceof JoinNorm) {
-//      JoinNorm joinNorm = (JoinNorm) relBody;
-//      b.append(" (" +walk(joinNorm.getLeftmost()) + ") " + joinNorm.getJoinType() +
-//          " JOIN (" + walk(joinNorm.getRightmost()) + ")");
-//    } else if (relBody instanceof TableNodeBody) {
-//      TableNodeBody tableNodeBody = (TableNodeBody) relBody;
-//      b.append(tableNodeBody.getTableItem().getTable());
-//    }
-//
-//    return b.toString();
-//
-//  }
-//
-//  private String walkFrom2(List<TableItem> fromRoots) {
-//    StringBuilder b = new StringBuilder();
-//
-//    for (int i = 0; i < fromRoots.size(); i++) {
-//      TableItem tableItem = fromRoots.get(i);
-//      if (i != 0) {
-//        b.append(tableItem.getJoinType() + " JOIN ");
-//      }
-//      b.append(tableItem.getTable().getId());
-//      tableItem.getAliasHint().map(a->b.append(" AS " + a + " "));
-//
-//      walkRel(tableItem.getNext(), b);
-//    }
-//    return b.toString();
-//  }
-//
-//  private void walkRel(List<RelItem> next, StringBuilder b) {
-//    for (int i = 0; i < next.size(); i++) {
-//      RelItem relItem = next.get(i);
-//      b.append(relItem.getJoinType() + " JOIN ");
-//      if (relItem instanceof SubQueryItem2) {
-//        b.append("(" + ((SubQueryItem2)relItem).getTableBody().accept(this, null) + ")");
-//      } else {
-//        b.append(relItem.getId());
-//      }
-//      relItem.getAliasHint().map(a->b.append(" AS " + a + " "));
-//
-//      walkRel(relItem.getNext(), b);
-//    }
-//  }
-
-  @Override
-  public String visitResolvedColumn(ResolvedColumn node, Object context) {
-    return node.getColumn().getId().getCanonical();
-  }
-//
-//  @Override
-//  public String visitResolvedFunctionCall(ResolvedFunctionCall node, Object context) {
-//    return visitFunctionCall(node, context);
-//  }
-//
-//  @Override
-//  public String visitReferenceOrdinal(ReferenceOrdinal node, Object context) {
-//    QuerySpecNorm querySpecNorm = (QuerySpecNorm) context;
-//    return "<" + querySpecNorm.getSelect().get(node.getOrdinal()).accept(this, context) + " ("+node.getOrdinal()+")>";
-//  }
-
-  @Override
-  public String visitReferenceExpression(ReferenceExpression node, Object context) {
-    return "<" + node.getReferences().accept(this, context) + ">";
-  }
-
-  @Override
-  public String visitRelationNorm(RelationNorm node, Object context) {
-    return super.visitRelationNorm(node, context);
-  }
-
-  @Override
-  public String visitTableNorm(TableNodeNorm node, Object context) {
-    return node.getRef().getTable().getId() + node.getAlias().map(a->" AS " + a).orElse("");
-  }
-
-//  @Override
-//  public String visitSubQueryNorm(SubQueryNorm node, Object context) {
-//    return "( " + node.getQuerySpecNorm().accept(this, null) +")";
-//  }
-
-//  @Override
-//  public String visitJoinNorm(JoinNorm node, Object context) {
-//    return " (" + node.getLeft().accept(this, context) + ") " + node.getJoinType() + " JOIN "
-//        + " ("+ node.getRight().accept(this, context) + ") "
-//        + Optional.ofNullable(node.getCriteria()).map(e-> " ON " + e.accept(this, context)).orElse("");
-//  }
 }

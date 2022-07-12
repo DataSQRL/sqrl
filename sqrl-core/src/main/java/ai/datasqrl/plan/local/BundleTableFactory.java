@@ -3,19 +3,17 @@ package ai.datasqrl.plan.local;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.io.sources.stats.RelationStats;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
-import ai.datasqrl.parse.tree.ComparisonExpression;
-import ai.datasqrl.parse.tree.Expression;
-import ai.datasqrl.parse.tree.Join;
-import ai.datasqrl.parse.tree.JoinOn;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.local.operations.SourceTableImportOp;
-import ai.datasqrl.plan.local.transpiler.nodes.expression.ResolvedColumn;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.JoinNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.RelationNorm;
-import ai.datasqrl.plan.local.transpiler.nodes.relation.TableNodeNorm;
-import ai.datasqrl.schema.*;
+import ai.datasqrl.schema.SourceTableImportMeta;
+import ai.datasqrl.schema.AbstractTable;
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.ShadowingContainer;
+import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.TableStatistic;
+import ai.datasqrl.schema.TableTimestamp;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.RelationType;
 import ai.datasqrl.schema.type.ArrayType;
@@ -26,13 +24,15 @@ import ai.datasqrl.schema.type.basic.IntegerType;
 import ai.datasqrl.schema.type.basic.UuidType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
-import static ai.datasqrl.parse.util.SqrlNodeUtil.and;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class BundleTableFactory {
 
@@ -47,20 +47,20 @@ public class BundleTableFactory {
     public BundleTableFactory() {
     }
 
-    public Pair<Table,Map<Table,SourceTableImportOp.RowType>> importTable(ImportManager.SourceTableImport impTbl,
+    public Pair<Table,Map<Table, SourceTableImportMeta.RowType>> importTable(ImportManager.SourceTableImport impTbl,
                                                                       Optional<Name> tableAlias) {
         ImportVisitor visitor = new ImportVisitor();
         FlexibleTableConverter converter = new FlexibleTableConverter(impTbl.getSchema(), tableAlias);
         converter.apply(visitor);
         TableBuilder tblBuilder = visitor.lastCreatedTable;
         assert tblBuilder != null;
-        Map<Table,SourceTableImportOp.RowType> tables = new HashMap<>();
+        Map<Table, SourceTableImportMeta.RowType> tables = new HashMap<>();
         Table rootTable = createImportTableHierarchy(tblBuilder, impTbl.getTable().getStatistics(), tables);
         return Pair.of(rootTable,tables);
     }
 
     private Table createImportTableHierarchy(TableBuilder tblBuilder, SourceTableStatistics statistics,
-                                             Map<Table,SourceTableImportOp.RowType> tables) {
+                                             Map<Table, SourceTableImportMeta.RowType> tables) {
         NamePath tblPath = tblBuilder.getPath();
         RelationStats stats = statistics.getRelationStats(tblPath.subList(1,tblPath.getLength()));
         Table table = tblBuilder.createTable(Table.Type.STREAM, TableStatistic.from(stats));
@@ -83,8 +83,7 @@ public class BundleTableFactory {
         //Avoid overwriting an existing "parent" column on the child
         if (childTable.getField(parentRelationshipName).isEmpty()) {
             Relationship parentRel = new Relationship(parentRelationshipName,
-                    childTable, parentTable, Relationship.JoinType.PARENT, Relationship.Multiplicity.ONE,
-                    createParentChildRelation(Join.Type.INNER, parentTable.getPrimaryKeys(), childTable, parentTable));
+                    childTable, parentTable, Relationship.JoinType.PARENT, Relationship.Multiplicity.ONE, null);
             return Optional.of(parentRel);
         }
         return Optional.empty();
@@ -95,24 +94,9 @@ public class BundleTableFactory {
                                               Relationship.Multiplicity multiplicity) {
         Relationship childRel = new Relationship(childName,
                 parentTable, childTable, Relationship.JoinType.CHILD, multiplicity,
-                createParentChildRelation(Join.Type.INNER, parentTable.getPrimaryKeys(), parentTable, childTable),
+               null,
                 Optional.empty(), Optional.empty());
         return childRel;
-    }
-
-
-    private RelationNorm createParentChildRelation(Join.Type type, List<Column> keys, Table from, Table to) {
-        TableNodeNorm fromNorm = TableNodeNorm.of(from);
-        TableNodeNorm toNorm = TableNodeNorm.of(to);
-
-        List<Expression> criteria = keys.stream()
-                .map(column ->
-                        new ComparisonExpression(ComparisonExpression.Operator.EQUAL,
-                                ResolvedColumn.of(fromNorm, column),
-                                ResolvedColumn.of(toNorm, column)))
-                .collect(Collectors.toList());
-
-        return new JoinNorm(Optional.empty(), type, fromNorm, toNorm, JoinOn.on(and(criteria)));
     }
 
     protected class ImportVisitor implements FlexibleTableConverter.Visitor<Type> {
@@ -198,7 +182,7 @@ public class BundleTableFactory {
 
     public class TableBuilder extends AbstractTable {
 
-        private final SourceTableImportOp.RowType rowType = new SourceTableImportOp.RowType();
+        private final SourceTableImportMeta.RowType rowType = new SourceTableImportMeta.RowType();
         private final List<Pair<TableBuilder, Relationship.Multiplicity>> children = new ArrayList<>();
         private Pair<Column, Integer> timestampCandidate = null;
 
@@ -230,7 +214,7 @@ public class BundleTableFactory {
         private Column addColumn(Name name, boolean isPrimaryKey, boolean isParentPrimaryKey,
                        Type type, boolean notnull, boolean isVisible) {
             Column column = addColumn(name, isPrimaryKey, isParentPrimaryKey, isVisible);
-            rowType.add(column.getIndex(),new SourceTableImportOp.ColumnType(type,notnull));
+            rowType.add(column.getIndex(),new SourceTableImportMeta.ColumnType(type,notnull));
             //Check if this is a candidate for timestamp
             if (notnull && (type instanceof DateTimeType) &&
                     defaultTimestampPreference.containsKey(name)) {
@@ -261,7 +245,5 @@ public class BundleTableFactory {
                             TableTimestamp.Status.DEFAULT);
             return new Table(uniqueId, path, type, fields, timestamp, statistic);
         }
-
     }
-
 }

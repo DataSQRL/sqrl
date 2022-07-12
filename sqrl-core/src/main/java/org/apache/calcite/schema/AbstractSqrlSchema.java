@@ -12,8 +12,6 @@ import org.apache.calcite.rel.type.RelProtoDataType;
 
 public abstract class AbstractSqrlSchema implements Schema {
 
-  private Map<String, Function> functionMap = new HashMap<>();
-
   @Override
   public Set<String> getTableNames() {
     return null;
@@ -31,14 +29,12 @@ public abstract class AbstractSqrlSchema implements Schema {
 
   @Override
   public Collection<Function> getFunctions(String s) {
-    Function function = functionMap.get(s);
-
     return List.of();
   }
 
   @Override
   public Set<String> getFunctionNames() {
-    return functionMap.keySet();
+    return Set.of();
   }
 
   @Override
@@ -64,9 +60,5 @@ public abstract class AbstractSqrlSchema implements Schema {
   @Override
   public Schema snapshot(SchemaVersion schemaVersion) {
     return this;
-  }
-
-  public void setFunctionMap(Map<String, Function> functionMap) {
-    this.functionMap = functionMap;
   }
 }

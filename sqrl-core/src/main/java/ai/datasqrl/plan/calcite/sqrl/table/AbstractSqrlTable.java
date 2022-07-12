@@ -53,5 +53,5 @@ public abstract class AbstractSqrlTable extends AbstractTable implements Queryab
     throw new RuntimeException("Could not find sqrl timestamp in calcite table");
   }
 
-  public abstract void addField(Field field, RelDataTypeField relDataTypeField);
+  public abstract void addField(RelDataTypeField relDataTypeField);
 }
