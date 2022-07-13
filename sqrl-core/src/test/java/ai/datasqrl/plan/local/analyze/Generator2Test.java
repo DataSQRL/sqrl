@@ -47,7 +47,7 @@ class Generator2Test extends AbstractSQRLIT {
     Assertions.assertTrue(importManager.registerUserSchema(bundle.getMainScript().getSchema(),
         ErrorCollector.root()));
     parser = ConfiguredSqrlParser.newParser(errorCollector);
-    analyzer = new StatementAnalyzer(importManager, SchemaAdjustmentSettings.DEFAULT,
+    analyzer = new Analyzer(importManager, SchemaAdjustmentSettings.DEFAULT,
         errorCollector);
 
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();

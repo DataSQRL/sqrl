@@ -9,7 +9,6 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.local.analyze.Analyzer.Scope;
 import ai.datasqrl.schema.SourceTableImportMeta;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;

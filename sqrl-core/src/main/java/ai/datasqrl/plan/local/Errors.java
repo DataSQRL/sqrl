@@ -12,9 +12,12 @@ public class Errors {
   public static final Error<DistinctAssignment> DISTINCT_TABLE_NESTED = new Error<>();
   public static final Error<? super NamePath> DISTINCT_NOT_ON_ROOT = new Error<>();
   public static final Error<? super TableNode> TABLE_NOT_FOUND = new Error<>();
+  public static final Error<? super ExpressionAssignment> EXPRESSION_ON_ROOT = new Error<>();
   public static Error<? super ExpressionAssignment> UNASSIGNABLE_EXPRESSION  ;
   public static Error<? super JoinAssignment> UNASSIGNABLE_TABLE;
   public static Error<? super QueryAssignment> UNASSIGNABLE_QUERY_TABLE;
+  public static Error<? super QueryAssignment> QUERY_EXPRESSION_ON_ROOT;
+  public static Error<? super JoinAssignment> JOIN_ON_ROOT;
 
   public static class Error<T> {
 

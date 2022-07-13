@@ -12,6 +12,7 @@ public class SqrlNodeUtil {
   /**
    * Unnamed columns are treated as expressions. It must not be an identifier
    * todo: must be aggregating
+   * todo: cannot be root scope
    */
   public static boolean isExpression(Query query) {
     QueryBody body = query.getQueryBody();
