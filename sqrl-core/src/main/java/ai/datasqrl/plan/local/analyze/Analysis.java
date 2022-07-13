@@ -8,6 +8,7 @@ import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.analyze.Analyzer.Scope;
 import ai.datasqrl.schema.SourceTableImportMeta;
 import ai.datasqrl.schema.Field;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
@@ -103,6 +105,13 @@ public class Analysis {
     }
   }
 
+  public static class ResolvedTable extends ResolvedNamePath {
+
+    public ResolvedTable(String alias, Optional<ResolvedNamePath> base, List<Field> path) {
+      super(alias, base, path);
+    }
+  }
+
   /**
    * Resolved name path must be:
    * Maybe a root table w/ version
@@ -131,6 +140,14 @@ public class Analysis {
       } else {
         throw new RuntimeException("No table on field");
       }
+    }
+
+    public NamePath getNamePath() {
+      return NamePath.of(this.path.stream().map(e->e.getName()).collect(Collectors.toList()));
+    }
+
+    public Field getLast() {
+      return this.path.get(this.path.size() - 1);
     }
   }
 }

@@ -36,7 +36,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public class BundleTableFactory {
 
-    private final AtomicInteger tableIdCounter = new AtomicInteger(0);
+    public static final AtomicInteger tableIdCounter = new AtomicInteger(0);
     private final Name parentRelationshipName = ReservedName.PARENT;
     private final Map<Name,Integer> defaultTimestampPreference = ImmutableMap.of(
             ReservedName.SOURCE_TIME, 6,
@@ -83,7 +83,7 @@ public class BundleTableFactory {
         //Avoid overwriting an existing "parent" column on the child
         if (childTable.getField(parentRelationshipName).isEmpty()) {
             Relationship parentRel = new Relationship(parentRelationshipName,
-                    childTable, parentTable, Relationship.JoinType.PARENT, Relationship.Multiplicity.ONE, null);
+                    childTable, parentTable, Relationship.JoinType.PARENT, Relationship.Multiplicity.ONE);
             return Optional.of(parentRel);
         }
         return Optional.empty();
@@ -94,8 +94,7 @@ public class BundleTableFactory {
                                               Relationship.Multiplicity multiplicity) {
         Relationship childRel = new Relationship(childName,
                 parentTable, childTable, Relationship.JoinType.CHILD, multiplicity,
-               null,
-                Optional.empty(), Optional.empty());
+            Optional.empty(), Optional.empty());
         return childRel;
     }
 

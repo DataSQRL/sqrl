@@ -4,8 +4,6 @@ import static ai.datasqrl.parse.util.SqrlNodeUtil.isExpression;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.environment.ImportManager.SourceTableImport;
-import ai.datasqrl.environment.ImportManager.TableImport;
 import ai.datasqrl.function.FunctionMetadataProvider;
 import ai.datasqrl.function.SqrlAwareFunction;
 import ai.datasqrl.function.calcite.CalciteFunctionMetadataProvider;
@@ -17,7 +15,6 @@ import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
 import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.Identifier;
-import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.Intersect;
 import ai.datasqrl.parse.tree.Join;
 import ai.datasqrl.parse.tree.JoinAssignment;
@@ -49,16 +46,14 @@ import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedFunctionCall;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamedReference;
-import ai.datasqrl.plan.local.analyze.Analysis.TableVersion;
+import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.plan.local.analyze.Analyzer.Scope;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.RootTableField;
 import ai.datasqrl.schema.Schema;
-import ai.datasqrl.schema.SourceTableImportMeta.RowType;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.TableStatistic;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
@@ -80,14 +75,16 @@ import lombok.Setter;
 public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
 
   private static final FunctionMetadataProvider functionMetadataProvider =
-      new CalciteFunctionMetadataProvider(SqrlOperatorTable.instance());
+      new CalciteFunctionMetadataProvider(
+      SqrlOperatorTable.instance());
 
-  private final ImportManager importManager;
-  private final SchemaAdjustmentSettings schemaSettings;
-  private final ErrorCollector errors;
-  private final boolean allowPaths = false;
-  @Getter
-  private final List<Expression> additionalColumns = new ArrayList<>();
+  protected final ImportManager importManager;
+  protected final SchemaAdjustmentSettings schemaSettings;
+  protected final ErrorCollector errors;
+  protected final boolean allowPaths = false;
+  protected final Namespace namespace;
+  protected final SchemaBuilder schemaBuilder;
+
   @Getter
   protected Analysis analysis;
 
@@ -97,6 +94,8 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     this.schemaSettings = schemaSettings;
     this.errors = errors;
     this.analysis = new Analysis();
+    this.schemaBuilder = new SchemaBuilder(analysis);
+    this.namespace = new Namespace(analysis.getSchema());
   }
 
   public Analysis analyze(ScriptNode script) {
@@ -112,219 +111,29 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
   }
 
   @Override
-  public Scope visitImportDefinition(ImportDefinition node, Scope context) {
-    if (node.getNamePath().getLength() != 2) {
-      throw new RuntimeException(
-          String.format("Invalid import identifier: %s", node.getNamePath()));
-    }
-
-    //Check if this imports all or a single table
-    Name sourceDataset = node.getNamePath().get(0);
-    Name sourceTable = node.getNamePath().get(1);
-
-    List<TableImport> importTables;
-    Optional<Name> nameAlias;
-
-    if (sourceTable.equals(ReservedName.ALL)) { //import all tables from dataset
-      importTables = importManager.importAllTables(sourceDataset, schemaSettings, errors);
-      nameAlias = Optional.empty();
-    } else { //importing a single table
-      //todo: Check if table exists
-      SourceTableImport sourceTableImport = importManager.importTable(sourceDataset, sourceTable,
-          schemaSettings, errors);
-      importTables = List.of(sourceTableImport);
-      nameAlias = node.getAliasName();
-    }
-
-    for (ImportManager.TableImport tblImport : importTables) {
-      if (tblImport.isSource()) {
-        SourceTableImport importSource = (SourceTableImport) tblImport;
-        Map<Table, RowType> types = analysis.getSchema().addImportTable(importSource, nameAlias);
-        analysis.getImportSourceTables().put(node, List.of(importSource));
-        analysis.getImportTableTypes().put(node, types);
-
-        //Plan timestamp expression.
-//            schema.apply(new SourceTableImportOp(table, tableTypes, importSource));
-//            NamePath colPath = NamePath.of(table.getName(), timeColName);
-//            ExpressionAssignment timeColAssign = new ExpressionAssignment(Optional.empty(),
-//            colPath,
-//                timeColDef.getExpression(), "", List.of());
-//            Visitor localVisitor = new Visitor(schema.peek());
-//            AddColumnOp timeCol = localVisitor.planExpression(timeColAssign, colPath);
-//            ops.add(timeCol.asTimestamp());
-      } else {
-        throw new UnsupportedOperationException("Script imports are not yet supported");
-      }
-    }
-
-    return null;
-  }
-
-  @Override
-  public Scope visitDistinctAssignment(DistinctAssignment node, Scope context) {
-    Optional<Table> tableOpt = analysis.getSchema()
-        .getTable(node.getTableNode().getNamePath().getFirst());
-    Preconditions.checkState(tableOpt.isPresent());
-    Preconditions.checkState(node.getTableNode().getNamePath().getLength() == 1);
-
-    Table table = tableOpt.get();
-    ResolvedNamePath resolvedNamePath = new ResolvedNamePath(node.getTableNode().getNamePath().getFirst().getCanonical(), Optional.empty(),
-        List.of(new RootTableField(table)));
-    analysis.getResolvedNamePath().put(node.getTableNode(), resolvedNamePath);
-
-    Scope scope = new Scope(analysis.getSchema(), Optional.empty(), Optional.empty(),
-        Optional.empty(), null);
-    scope.joinScopes.put(table.getName(), resolvedNamePath);
-
+  public Scope visitDistinctAssignment(DistinctAssignment node, Scope scope) {
+    node.getTableNode().accept(this, scope);
     node.getPartitionKeyNodes().forEach(pk -> pk.accept(this, scope));
-
     node.getOrder().forEach(o -> o.accept(this, scope));
-
-    //Add to schema:
-    double derivedRowCount = 1; //TODO: derive from optimizer
-    final BundleTableFactory.TableBuilder builder = analysis.getSchema().getTableFactory()
-        .build(node.getTableNode().getNamePath());
-    table.getVisibleColumns().forEach(
-        c -> builder.addColumn(c.getName(), c.isPrimaryKey(), c.isParentPrimaryKey(),
-            c.isVisible()));
-    Table.Type tblType = Table.Type.STREAM;
-    Table distinctTable = builder.createTable(tblType, TableStatistic.of(derivedRowCount));
-
-    analysis.getSchema().add(distinctTable);
-    analysis.getProducedTable().put(node, distinctTable.getCurrentVersion());
-
     return null;
   }
 
   @Override
   public Scope visitJoinAssignment(JoinAssignment node, Scope context) {
-    //1. Validate all entries
-    Scope scope = createScope(node.getNamePath(), false, null);
-
-    addSelfToScope(scope);
-
-    node.getJoinDeclaration().accept(this, scope);
-
-    //TargetTable:
-    TableNode targetTableNode = node.getJoinDeclaration().getRelation() instanceof TableNode
-        ? (TableNode) node.getJoinDeclaration().getRelation()
-        : (TableNode) ((Join) node.getJoinDeclaration()
-            .getRelation()).getRight(); //assumption: always a join list
-
-    ResolvedNamePath resolvedTable = analysis.getResolvedNamePath().get(targetTableNode);
-
-    //Add to schema:
-    Table parentTable = analysis.getSchema().walkTable(node.getNamePath().popLast());
-    Multiplicity multiplicity = node.getJoinDeclaration().getLimit().map(
-        l -> l.getIntValue().filter(i -> i == 1).map(i -> Multiplicity.ONE)
-            .orElse(Multiplicity.MANY)).orElse(Multiplicity.MANY);
-    Relationship relationship = new Relationship(node.getNamePath().getLast(), parentTable,
-        resolvedTable.getToTable(), JoinType.JOIN, multiplicity, null,
-        //Todo: not stored here, store in calcite to resolve table paths (maybe materialize)
-        Optional.empty(), node.getJoinDeclaration().getLimit());
-
-    parentTable.getFields().add(relationship);
-    analysis.getProducedField().put(node, relationship);
-
+    node.getJoinDeclaration().accept(this, context);
     return null;
   }
 
   @Override
   public Scope visitExpressionAssignment(ExpressionAssignment node, Scope context) {
-    Scope scope = createScope(node.getNamePath(), true, null);
-    scope.setSelfInScope(true);
-    addSelfToScope(scope);
-    node.getExpression().accept(this, scope);
-
-    // Add to schema
-    Table table = scope.getContextTable().get();
-    Name columnName = node.getNamePath().getLast();
-    int nextVersion = table.getNextColumnVersion(columnName);
-
-    Column column = new Column(columnName, nextVersion, table.getNextColumnIndex(), false, false,
-        true);
-
-    table.addExpressionColumn(column);
-    analysis.getProducedTable().put(node, table.getCurrentVersion());
-    analysis.getProducedField().put(node, column);
-
+    node.getExpression().accept(this, context);
     return null;
   }
 
-  /**
-   * Assigns a query to a variable.
-   * <p>
-   * Table := SELECT * FROM x;
-   * <p>
-   * Query may assign a column instead of a query if there is a single unnamed or same named column
-   * and it does not break the cardinality of the result.
-   * <p>
-   * Table.column := SELECT productid + 1 FROM _;  <==> Table.column := productid + 1;
-   * <p>
-   * Table.total := SELECT sum(productid) AS total FROM _ HAVING total > 10;
-   */
   @Override
   public Scope visitQueryAssignment(QueryAssignment queryAssignment, Scope context) {
-    NamePath namePath = queryAssignment.getNamePath();
-    Query query = queryAssignment.getQuery();
-
-    boolean isExpression = isExpression(queryAssignment.getQuery());
-    if (isExpression) {
-      analysis.getExpressionStatements().add(queryAssignment);
-    }
-
-    Scope scope = createScope(namePath, isExpression, query);
-
-    Scope queryScope = query.accept(this, scope);
-
-    if (isExpression) {
-      //do not create table, add column
-      Table table = analysis.getSchema().walkTable(namePath.popLast());
-      Name columnName = namePath.getLast();
-      int nextVersion = table.getNextColumnVersion(columnName);
-
-      Column column = new Column(columnName, nextVersion, table.getNextColumnIndex(), false, false,
-          true);
-      table.getFields().add(column);
-      analysis.getProducedField().put(queryAssignment, column);
-      analysis.getProducedTable().put(queryAssignment, table.getCurrentVersion());
-    } else {
-      double derivedRowCount = 1; //TODO: derive from optimizer
-
-      final BundleTableFactory.TableBuilder builder = analysis.getSchema().getTableFactory()
-          .build(namePath);
-
-      //todo: column names:
-      queryScope.getFieldNames().forEach(n -> builder.addColumn(n, false, false, true));
-
-      //TODO: infer table type from relNode
-      Table.Type tblType = Table.Type.STREAM;
-
-      //Creates a table that is not bound to the schema TODO: determine timestamp
-      Table table = builder.createTable(tblType, TableStatistic.of(derivedRowCount));
-
-      if (namePath.getLength() == 1) {
-        analysis.getSchema().add(table);
-      } else {
-        Table parentTable = analysis.getSchema().walkTable(namePath.popLast());
-        Name relationshipName = namePath.getLast();
-        Relationship.Multiplicity multiplicity = Multiplicity.MANY;
-//        if (specNorm.getLimit().flatMap(Limit::getIntValue).orElse(2) == 1) {
-//          multiplicity = Multiplicity.ONE;
-//        }
-
-        Optional<Relationship> parentRel = analysis.getSchema().getTableFactory()
-            .createParentRelationship(table, parentTable);
-        parentRel.map(rel -> table.getFields().add(rel));
-
-        Relationship childRel = analysis.getSchema().getTableFactory()
-            .createChildRelationship(relationshipName, table, parentTable, multiplicity);
-        parentTable.getFields().add(childRel);
-      }
-      analysis.getProducedTable().put(queryAssignment, new TableVersion(table, 0));
-    }
-
-    return null;
+    Scope queryScope = queryAssignment.getQuery().accept(this, context);
+    return queryScope;
   }
 
   @Override
@@ -356,13 +165,6 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     if (node.getOrderBy().isPresent()) {
       node.getOrderBy().map(o -> o.accept(this, scope));
       //Disallow order & limit in union statements (?)
-
-//      if (queryBodyScope.getOuterQueryParent().isPresent() && !node.getLimit().isPresent()) {
-//         not the root scope and ORDER BY is ineffective
-//        analysis.markRedundantOrderBy(node.getOrderBy().get());
-//        warningCollector.add(
-//            new PrestoWarning(REDUNDANT_ORDER_BY, "ORDER BY in subquery may have no effect"));
-//      }
     }
 
     return queryBodyScope;
@@ -449,7 +251,8 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
   }
 
   private Scope createGroupOrSortScope(Scope scope) {
-    Scope newScope = new Scope(scope.schema, scope.contextTable, scope.isExpression, scope.targetName, scope.query);
+    Scope newScope = new Scope(scope.schema, scope.contextTable, scope.isExpression,
+        scope.targetName);
     newScope.setSelfInScope(scope.isSelfInScope);
     newScope.setFieldNames(scope.fieldNames);
     newScope.isInGroupByOrSortBy = true;
@@ -461,7 +264,8 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
   public Scope visitOrderBy(OrderBy node, Scope scope) {
     Scope orderByScope = createGroupOrSortScope(scope);
 
-    node.getSortItems().stream().map(SortItem::getSortKey).forEach(e -> e.accept(this, orderByScope));
+    node.getSortItems().stream().map(SortItem::getSortKey)
+        .forEach(e -> e.accept(this, orderByScope));
     return null;
   }
 
@@ -548,100 +352,6 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     }
     return Name.system("_expr");
   }
-//
-//  private List<SortItem> analyzeOrderBy(List<SingleColumn> selectList, Optional<OrderBy> orders) {
-//    if (orders.isEmpty()) {
-//      return new ArrayList<>();
-//    }
-//    List<SortItem> newSortItems = new ArrayList<>();
-//    for (SortItem sortItem : orders.get().getSortItems()) {
-//      //Look at the alias name, if its the alias name then return ordinal
-//      //Look in select list, if the identifier is in there exactly then return ordinal
-//      //Else: rewrite expression
-//      int ordinal = getSelectListOrdinal(selectList, sortItem.getSortKey());
-//      if (ordinal != -1) {
-//        newSortItems.add(new SortItem(sortItem.getLocation(), new ReferenceOrdinal(ordinal),
-//            sortItem.getOrdering()));
-//      } else {
-//        newSortItems.add(sortItem);
-//      }
-//    }
-//
-//    return newSortItems;
-//  }
-//
-//  private int getSelectListOrdinal(List<SingleColumn> selectList, Expression expression) {
-//    //Check in selectlist for alias
-//    for (int i = 0; i < selectList.size(); i++) {
-//      SingleColumn item = selectList.get(i);
-//      if (item.getAlias().isPresent() && item.getAlias().get().equals(expression)) {
-//        return i;
-//      }
-//    }
-//
-//    return selectList.stream().map(e -> e.getExpression()).collect(Collectors.toList())
-//        .indexOf(expression);
-//  }
-//
-//  private Optional<Expression> analyzeHaving(QuerySpecification node, Scope scope,
-//      List<SingleColumn> selectList) {
-//    if (node.getHaving().isPresent()) {
-//      return Optional.of(rewriteHavingExpression(node.getHaving().get(), selectList, scope));
-//    }
-//    return Optional.empty();
-//  }
-//
-//  private Expression rewriteHavingExpression(Expression expression, List<SingleColumn> selectList,
-//      Scope scope) {
-//    List<Expression> expressionList = selectList.stream().map(s -> s.getExpression())
-//        .collect(Collectors.toList());
-//
-//    Expression rewritten = ExpressionTreeRewriter.rewriteWith(new ExpressionRewriter<>() {
-//      @Override
-//      public Expression rewriteFunctionCall(FunctionCall node, List<SingleColumn> context,
-//          ExpressionTreeRewriter<List<SingleColumn>> treeRewriter) {
-//        int index = expressionList.indexOf(node);
-//        if (index != -1) {
-//          return new ReferenceOrdinal(index);
-//        }
-//
-//        return node;
-//      }
-//    }, expression, selectList);
-//    //remove expressions that are in the select list and replace them with identifiers. The
-//    // replacing identifier is always a FunctionCall.
-//
-//    //Also, qualify all of the fields, disallow paths.
-//    return rewriteExpression(rewritten, false, scope);
-//  }
-//
-//  private Expression rewriteExpression(Expression expression, boolean allowPaths, Scope scope) {
-////    ExpressionNormalizer expressionNormalizer = new ExpressionNormalizer(allowPaths);
-////    Expression rewritten = ExpressionTreeRewriter.rewriteWith(expressionNormalizer, expression,
-////    scope);
-////    scope.getAddlJoins().addAll(expressionNormalizer.getAddlJoins());
-//    return null;
-//  }
-//
-//  protected Optional<OrderBy> rewriteOrderBy(Optional<OrderBy> orderBy, Scope scope) {
-//    if (orderBy.isEmpty()) {
-//      return Optional.empty();
-//    }
-//
-//    List<SortItem> sortItems = new ArrayList<>();
-//    for (SortItem sortItem : orderBy.get().getSortItems()) {
-//      Expression key = rewriteExpression(sortItem.getSortKey(), scope);
-//      sortItems.add(new SortItem(sortItem.getLocation(), key, sortItem.getOrdering()));
-//    }
-//
-//    OrderBy order = new OrderBy(orderBy.get().getLocation(), sortItems);
-//    return Optional.of(order);
-//  }
-
-//  private Expression rewriteExpression(Expression expression, Scope scope) {
-//    return ExpressionTreeRewriter.rewriteWith(new ExpressionNormalizer(false), expression, scope);
-//    return null;
-//  }
 
   @Override
   public Scope visitIdentifier(Identifier node, Scope scope) {
@@ -754,9 +464,25 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     return table.walkTable(namePath.popFirst());
   }
 
-  private Scope createScope(NamePath namePath, boolean isExpression, Query query) {
+  protected Scope createSelfScope(NamePath namePath, boolean isExpression) {
     Optional<Table> contextTable = getContext(namePath.popLast());
-    return new Scope(analysis.getSchema(), contextTable, isExpression, namePath.getLast(), query);
+    Scope scope = new Scope(analysis.getSchema(), contextTable, isExpression, namePath.getLast());
+    addSelfToScope(scope);
+    scope.setSelfInScope(true);
+    return scope;
+  }
+
+  protected Scope createScope(NamePath namePath, boolean isExpression) {
+    Optional<Table> contextTable = getContext(namePath.popLast());
+    return new Scope(analysis.getSchema(), contextTable, isExpression, namePath.getLast());
+  }
+
+  public Scope createSingleTableScope(ResolvedTable resolvedTable) {
+    Scope scope = new Scope(analysis.getSchema(), Optional.empty(), Optional.empty(),
+        Optional.empty());
+    scope.setAllowIdentifierPaths(false);
+    scope.joinScopes.put(resolvedTable.getToTable().getName(), resolvedTable);
+    return scope;
   }
 
   @Getter
@@ -774,7 +500,6 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     //Used to create internal joins that cannot be unreferenced by alias
     private final AtomicInteger internalIncrementer = new AtomicInteger();
     private final AtomicBoolean hasExpandedSelf = new AtomicBoolean();
-    private final Query query;
 
     /**
      * Query has a context table explicitly defined in the query. Self fields are always available
@@ -789,18 +514,18 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     @Setter
     private boolean isInGroupByOrSortBy = false;
 
-    public Scope(Schema schema, Optional<Table> contextTable, boolean isExpression, Name targetName,
-        Query query) {
-      this(schema, contextTable, Optional.of(isExpression), Optional.of(targetName), query);
+    @Setter
+    private boolean allowIdentifierPaths = true;
+    public Scope(Schema schema, Optional<Table> contextTable, boolean isExpression, Name targetName) {
+      this(schema, contextTable, Optional.of(isExpression), Optional.of(targetName));
     }
 
     public Scope(Schema schema, Optional<Table> contextTable, Optional<Boolean> isExpression,
-        Optional<Name> targetName, Query query) {
+        Optional<Name> targetName) {
       this.schema = schema;
       this.contextTable = contextTable;
       this.isExpression = isExpression;
       this.targetName = targetName;
-      this.query = query;
     }
 
     private List<Identifier> resolveFieldsWithPrefix(Optional<Name> alias) {
@@ -866,7 +591,8 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
         if (namePath.getLength() == 1) {
           return explicitAlias.map(List::of);
         } else {
-          resolved.add(walk(namePath.getFirst().getCanonical(), explicitAlias.get(), namePath.popFirst()).get());
+          resolved.add(walk(namePath.getFirst().getCanonical(), explicitAlias.get(),
+              namePath.popFirst()).get());
           return Optional.of(resolved);
         }
       }
@@ -879,7 +605,8 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
             continue;
           }
 
-          Optional<ResolvedNamePath> resolvedPath = walk(entry.getKey().getCanonical(), entry.getValue(), namePath);
+          Optional<ResolvedNamePath> resolvedPath = walk(entry.getKey().getCanonical(),
+              entry.getValue(), namePath);
           resolvedPath.ifPresent(resolved::add);
         }
       }
@@ -911,10 +638,12 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
         return Optional.empty();
       }
 
-      return Optional.of(new ResolvedNamePath(namePath.getFirst().getCanonical(), Optional.empty(), fields));
+      return Optional.of(
+          new ResolvedNamePath(namePath.getFirst().getCanonical(), Optional.empty(), fields));
     }
 
-    private Optional<ResolvedNamePath> walk(String alias, ResolvedNamePath resolvedNamePath, NamePath namePath) {
+    private Optional<ResolvedNamePath> walk(String alias, ResolvedNamePath resolvedNamePath,
+        NamePath namePath) {
       Field field = resolvedNamePath.getPath().get(resolvedNamePath.getPath().size() - 1);
       Optional<Table> table = getTableOfField(field);
       if (table.isEmpty()) {

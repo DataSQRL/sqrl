@@ -104,6 +104,7 @@ import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.InListExpression;
 import ai.datasqrl.parse.tree.InPredicate;
+import ai.datasqrl.parse.tree.Join.Type;
 import ai.datasqrl.parse.tree.JoinDeclaration;
 import ai.datasqrl.parse.tree.Intersect;
 import ai.datasqrl.parse.tree.IntervalLiteral;
@@ -1005,7 +1006,7 @@ class AstBuilder
 
       current = new Join(
           Optional.of(getLocation(inline)),
-          toJoinType(inline.joinType()),
+          Type.DEFAULT,
           current,
           (Relation) visit(inline.relationPrimary()),
           Optional.ofNullable(criteria)

@@ -3,26 +3,17 @@ package ai.datasqrl.schema;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.local.analyze.Analysis.TableVersion;
 import ai.datasqrl.schema.Relationship.JoinType;
-
-import java.util.ArrayList;
+import com.google.common.base.Preconditions;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
-import com.google.common.base.Preconditions;
 
 @Getter
 public class Table extends AbstractTable {
-  TableVersion currentVersion = new TableVersion(this, 0);
-
-  public void addExpressionColumn(Column column) {
-    fields.add(column);
-    currentVersion = new TableVersion(this, currentVersion.getVersion() + 1);
-  }
 
   public enum Type {
     STREAM, //a stream of records with synthetic (i.e. uuid) primary key ordered by timestamp
@@ -39,36 +30,11 @@ public class Table extends AbstractTable {
     this.type = type;
     this.timestamp = timestamp;
     this.statistic = statistic;
-    Preconditions.checkNotNull(fields.contains(timestamp));
+//    Preconditions.checkNotNull(fields.contains(timestamp));
   }
 
-  @Override
-  public String toString() {
-    String s = super.toString();
-    s += "[" + type + "," + timestamp + "," + statistic + "]";
-    return s;
-  }
-
-  public Optional<Field> walkField(NamePath namePath) {
-    if (namePath.isEmpty()) {
-      return Optional.empty();
-    }
-    Optional<Field> field = getField(namePath.getFirst());
-    if (field.isEmpty()) {
-      return Optional.empty();
-    }
-
-    if (namePath.getLength() == 1) {
-      return field;
-    }
-
-    if (field.get() instanceof Relationship) {
-      Relationship relationship = (Relationship) field.get();
-      return relationship.getToTable()
-          .walkField(namePath.popFirst());
-    }
-
-    return field;
+  public void addExpressionColumn(Column column) {
+    fields.add(column);
   }
 
   public Optional<Table> walkTable(NamePath namePath) {
@@ -105,50 +71,14 @@ public class Table extends AbstractTable {
     return getAllRelationships().filter(r -> r.getJoinType() == JoinType.CHILD).map(Relationship::getToTable).collect(Collectors.toList());
   }
 
-  /**
-   * Determines the next field name
-   */
-  public Name getNextFieldId(Name name) {
-    int nextVersion = getNextColumnVersion(name);
-    if (nextVersion != 0) {
-      return name.suffix(Integer.toString(nextVersion));
-    } else {
-      return name;
-    }
-  }
-
-
-
-  //Todo: Validate first
-  public Optional<List<Field>> walkFields(NamePath names) {
-    List<Field> fields = new ArrayList<>();
-    Table current = this;
-    Name[] namesNames = names.getNames();
-    for (Name field : namesNames) {
-      Optional<Field> f = current.getField(field);
-      if (f.isEmpty()) {
-        return Optional.empty();
-      }
-      if (f.get() instanceof Relationship) {
-        Relationship rel = (Relationship) current.getField(field).get();
-        current = rel.getToTable();
-      } else {
-        current = null;
-      }
-      fields.add(f.get());
-    }
-    if (fields.isEmpty()) {
-      return Optional.empty();
-    }
-    return Optional.of(fields);
-  }
-
-  public List<Column> getParentPrimaryKeys() {
-    return getAllColumns().filter(Column::isParentPrimaryKey).collect(Collectors.toList());
-  }
-
   public List<Column> getVisibleColumns() {
     return getAllColumns().filter(Column::isVisible).collect(Collectors.toList());
+  }
+
+  public void addColumn(Name name, boolean primaryKey, boolean parentPrimaryKey, boolean visible) {
+    int version = this.fields.getMaxVersion(name).map(v->v+1).orElse(0);
+
+    this.fields.add(new Column(name, version, fields.size(), primaryKey, parentPrimaryKey, visible));
   }
 
   public NamePath getPath() {
@@ -160,7 +90,11 @@ public class Table extends AbstractTable {
     }
   }
 
-  public RootTableField asField() {
-    return new RootTableField(this);
+  @Override
+  public String toString() {
+    String s = super.toString();
+    s += "[" + type + "," + timestamp + "," + statistic + "]";
+    return s;
   }
+
 }

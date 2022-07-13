@@ -1,7 +1,6 @@
 package ai.datasqrl.plan.local.generate;
 
 import static ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil.and;
-import static org.apache.calcite.sql.fun.SqlStdOperatorTable.AS;
 
 import ai.datasqrl.parse.tree.AllColumns;
 import ai.datasqrl.parse.tree.ArithmeticBinaryExpression;
@@ -57,25 +56,20 @@ import ai.datasqrl.parse.tree.WhenClause;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqlParserPosFactory;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
-import ai.datasqrl.plan.calcite.SqrlType2Calcite;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
 import ai.datasqrl.plan.local.analyze.Analysis;
-import ai.datasqrl.plan.local.generate.node.builder.JoinPathBuilder;
-import ai.datasqrl.plan.local.generate.node.builder.LocalAggBuilder;
-import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
-import ai.datasqrl.plan.local.generate.node.SqlResolvedIdentifier;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedFunctionCall;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamedReference;
 import ai.datasqrl.plan.local.generate.QueryGenerator.Scope;
+import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
+import ai.datasqrl.plan.local.generate.node.SqlResolvedIdentifier;
+import ai.datasqrl.plan.local.generate.node.builder.JoinPathBuilder;
+import ai.datasqrl.plan.local.generate.node.builder.LocalAggBuilder;
 import ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.SourceTableImportMeta;
-import ai.datasqrl.schema.SourceTableImportMeta.RowType;
 import com.google.common.base.Preconditions;
-import graphql.com.google.common.collect.ImmutableListMultimap;
-import graphql.com.google.common.collect.Multimaps;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -86,9 +80,6 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
-import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlBasicCall;
@@ -120,15 +111,12 @@ import org.apache.calcite.util.TimestampString;
 public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   protected final Analysis analysis;
-  private final ImmutableListMultimap<String, SqlOperator> opMap;
   protected Map<Name, AbstractSqrlTable> tables = new HashMap<>();
   SqlParserPosFactory pos = new SqlParserPosFactory();
   private Map<Relationship, SqlJoinDeclaration> joins = new HashMap<>();
 
   public QueryGenerator(Analysis analysis) {
     this.analysis = analysis;
-    //todo: move
-    this.opMap = Multimaps.index(SqrlOperatorTable.instance().getOperatorList(), e -> e.getName());
   }
 
   public SqlNode generateDistinctQuery(DistinctAssignment node) {
@@ -549,6 +537,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   @Override
   public SqlNode visitFunctionCall(FunctionCall node, Scope context) {
     //1. Check if inline agg from analyzer
+    ResolvedFunctionCall resolvedCall = analysis.getResolvedFunctions().get(node);
 
     boolean isLocalAggregate = analysis.getIsLocalAggregate().contains(node);
     if (isLocalAggregate) {
@@ -557,8 +546,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
       Preconditions.checkNotNull(namePath);
 
       String opName = node.getNamePath().get(0).getCanonical();
-      List<SqlOperator> op = opMap.get(opName.toUpperCase());
-      SqlBasicCall call = new SqlBasicCall(op.get(0), new SqlNode[]{new SqlResolvedIdentifier(namePath, SqlParserPos.ZERO)},
+      SqlBasicCall call = new SqlBasicCall(resolvedCall.getFunction().getOp(), new SqlNode[]{new SqlResolvedIdentifier(namePath, SqlParserPos.ZERO)},
           pos.getPos(node.getLocation()));
 
       SqlSelect select = localAggBuilder.extractSubquery(call);
@@ -572,12 +560,6 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
       return new SqlIdentifier("tbd", SqlParserPos.ZERO);
     }
 
-
-
-    String opName = node.getNamePath().get(0).getCanonical();
-    ResolvedFunctionCall resolvedCall = analysis.getResolvedFunctions().get(node);
-//    List<SqlOperator> op = opMap.get(opName.toUpperCase());
-//    Preconditions.checkState(!op.isEmpty(), "Operation could not be found: %s", opName);
 
     SqlBasicCall call = new SqlBasicCall(
         resolvedCall.getFunction().getOp(), toOperand(node.getArguments(), context),
@@ -810,8 +792,6 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   @Value
   public static class Scope {
-    Analysis analysis;
-    QueryGenerator calcite;
     //todo: Should be also the trailing condition
     final List<SqlNode> subqueries = new ArrayList<>();
     final List<Optional<SqlNode>> conditions = new ArrayList<>();

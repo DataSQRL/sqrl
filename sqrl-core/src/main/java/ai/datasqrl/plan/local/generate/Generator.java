@@ -148,10 +148,9 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
   @Override
   public SqlNode visitExpressionAssignment(ExpressionAssignment node, Scope context) {
-
     Table v = analysis.getProducedTable().get(node);
     //Were do subqueries live here?
-    Scope ctx = new Scope(this.analysis, this);
+    Scope ctx = new Scope();
     SqlNode sqlNode = node.getExpression().accept(this, ctx);
 
     if (!ctx.getSubqueries().isEmpty()) {
@@ -205,7 +204,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   @Override
   public SqlNode visitQueryAssignment(QueryAssignment queryAssignment, Scope context) {
     if (analysis.getExpressionStatements().contains(queryAssignment)) {
-      SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(null, null));
+      SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope());
       RelNode relNode = plan(sqlNode);
       Table table = analysis.getProducedTable().get(queryAssignment);
       Preconditions.checkNotNull(table);
@@ -220,7 +219,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
       return sqlNode;
     } else {
-      SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(null, null));
+      SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope());
       RelNode relNode = plan(sqlNode);
 
       Table table = analysis.getProducedTable().get(queryAssignment);

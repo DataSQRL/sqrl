@@ -16,6 +16,7 @@ import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
 import java.io.IOException;
 import java.util.Optional;
+import org.apache.calcite.sql.SqlNode;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -775,4 +776,42 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void invalidAliasJoinOrder() {
     String query = "SELECT * From Orders o JOIN o;";
   }
+
+
+  @Test
+  public void invalidDistinctTest1() {
+    SqlNode node;
+//    node = gen("IMPORT ecommerce-data.Customer;\n");
+//    node = gen("Customer.nested := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
+//    System.out.println(node);
+  }
+//
+//  @Test
+//  public void invalidDistinctTest2() {
+//    SqlNode node;
+//    node = gen("IMPORT ecommerce-data.Orders;\n");
+//    node = gen("Customer := DISTINCT Orders.entries ON _idx;\n");
+//    System.out.println(node);
+//  }
+//  @Test
+//  public void invalidDistinctTest3() {
+//    SqlNode node;
+//    node = gen("IMPORT ecommerce-data.Orders;\n");
+//    node = gen("Customer := DISTINCT Orders o ON _uuid ORDER BY o.entries;\n");
+//    System.out.println(node);
+//  }
+//  @Test
+//  public void distinctWithAlias() {
+//    SqlNode node;
+//    node = gen("IMPORT ecommerce-data.Customer;\n");
+//    node = gen("Customer := DISTINCT Customer c ON c.customerid;\n");
+//    System.out.println(node);
+//  }
+//  @Test
+//  public void invalidNonAggregatingExpression() {
+//    SqlNode node;
+//    node = gen("IMPORT ecommerce-data.Customer;\n");
+//    node = gen("Customer.test := SELECT customerid+1 FROM _;");
+//    System.out.println(node);
+//  }
 }

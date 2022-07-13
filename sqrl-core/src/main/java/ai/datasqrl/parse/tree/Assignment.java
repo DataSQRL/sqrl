@@ -5,6 +5,7 @@ import java.util.Optional;
 
 public abstract class Assignment extends SqrlStatement {
 
+  //Todo migrate to object
   private final NamePath name;
 
   protected Assignment(Optional<NodeLocation> location, NamePath name) {

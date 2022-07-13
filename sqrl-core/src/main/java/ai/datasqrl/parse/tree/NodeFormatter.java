@@ -294,7 +294,7 @@ public class NodeFormatter extends AstVisitor<String, Object> {
   @Override
   public String visitJoin(Join node, Object context) {
     return " " + node.getLeft().accept(this, context) + " " +
-        node.getType() + " JOIN " +
+        " JOIN " +
         node.getRight().accept(this, context) +
         node.getCriteria().map(c -> " ON " + c.accept(this, context))
             .orElse("");

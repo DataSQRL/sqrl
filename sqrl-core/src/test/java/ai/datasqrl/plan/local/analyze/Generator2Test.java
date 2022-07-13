@@ -47,7 +47,7 @@ class Generator2Test extends AbstractSQRLIT {
     Assertions.assertTrue(importManager.registerUserSchema(bundle.getMainScript().getSchema(),
         ErrorCollector.root()));
     parser = ConfiguredSqrlParser.newParser(errorCollector);
-    analyzer = new Analyzer(importManager, SchemaAdjustmentSettings.DEFAULT,
+    analyzer = new StatementAnalyzer(importManager, SchemaAdjustmentSettings.DEFAULT,
         errorCollector);
 
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
@@ -63,8 +63,18 @@ class Generator2Test extends AbstractSQRLIT {
     subSchema.setBridge(generator);
   }
 
+
   @Test
   public void distinctTest() {
+    SqlNode node;
+    node = gen("IMPORT ecommerce-data.Customer;\n");
+    node = gen("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
+    System.out.println(node);
+  }
+
+
+  @Test
+  public void fullTest() {
     gen("IMPORT ecommerce-data.Customer;\n");
     gen("IMPORT ecommerce-data.Product;\n");
     gen("IMPORT ecommerce-data.Orders;\n");
