@@ -47,7 +47,7 @@ public class FlinkTableAPIIT extends AbstractSQRLIT {
     StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(imp.getTable(),streamBuilder);
     SchemaValidator schemaValidator = new SchemaValidator(imp.getSchema(), SchemaAdjustmentSettings.DEFAULT, imp.getTable().getDataset().getDigest());
     StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),"schema", SourceRecord.Named.class);
-    streamBuilder.addAsTable(validate, imp.getSchema(), Name.system("thetable"));
+    streamBuilder.addAsTable(validate, imp.getSchema(), "thetable");
 
     StreamTableEnvironment tEnv = streamBuilder.getTableEnvironment();
 

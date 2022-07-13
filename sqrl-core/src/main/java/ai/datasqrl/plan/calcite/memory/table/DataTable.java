@@ -71,29 +71,6 @@ public class DataTable extends AbstractTable implements QueryableTable {
   }
 
   private <T> Enumerator<T> toEnumerator(Collection<Object[]> elements) {
-    Object[] list = elements.toArray(new Object[0]);
-
-    for (int i = 0; i < elements.size(); i++) {
-      Object[] o = (Object[])list[i];
-      for (int j = 0; j <o.length; j++) {
-        if (o[j] instanceof Object[]) {
-          o[j] = boxAsList((Object[]) o[j]);
-        }
-      }
-
-    }
-    return (Enumerator<T>) Linq4j.asEnumerable(list).enumerator();
-  }
-
-  private List boxAsList(Object[] elements) {
-    List list = new ArrayList();
-    for (Object o : elements) {
-      if (o instanceof Object[]) {
-        list.add(boxAsList((Object[]) o));
-      } else {
-        list.add(o);
-      }
-    }
-    return list;
+    return (Enumerator<T>) Linq4j.asEnumerable(elements).enumerator();
   }
 }

@@ -110,13 +110,11 @@ public class ImportManager {
           userDSSchema.getFieldByName(table.getName()), schemaAdjustmentSettings, errors);
       System.out.println(errors);
       //schemaConverter.convert(tbField,imp.asName.orElse(table.getName()))
-      return new SourceTableImport(tableName, table, tbField, schemaAdjustmentSettings);
+      return new SourceTableImport(table, tbField, schemaAdjustmentSettings);
     }
   }
 
   public interface TableImport {
-
-    Name getTableName();
 
     boolean isSource();
 
@@ -129,8 +127,6 @@ public class ImportManager {
   @Value
   public static class SourceTableImport implements TableImport {
 
-    @NonNull
-    private final Name tableName;
     @NonNull
     private final SourceTable table;
     @NonNull

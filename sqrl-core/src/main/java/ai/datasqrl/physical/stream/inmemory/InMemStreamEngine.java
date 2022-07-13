@@ -25,6 +25,7 @@ import lombok.Getter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -106,9 +107,9 @@ public class InMemStreamEngine implements StreamEngine {
         }
 
         @Override
-        public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, Name tableName) {
-            final Consumer<Object[]> records = recordHolder.getCollector(tableName);
-            SourceRecord2RowMapper<Object[],Object[]> mapper = new SourceRecord2RowMapper(schema, RowConstructor.INSTANCE);
+        public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, String qualifiedTableName) {
+            final Consumer<Object[]> records = recordHolder.getCollector(qualifiedTableName);
+            SourceRecord2RowMapper<Object[]> mapper = new SourceRecord2RowMapper(schema, RowConstructor.INSTANCE);
             ((Holder<SourceRecord.Named>)stream).mapWithError((r,c) -> {
                 try {
                     records.accept(mapper.apply(r));
@@ -180,7 +181,7 @@ public class InMemStreamEngine implements StreamEngine {
     public static class ErrorHolder extends OutputCollector<String, ErrorCollector> {
     }
 
-    public static class RecordHolder extends OutputCollector<Name, Object[]> {
+    public static class RecordHolder extends OutputCollector<String, Object[]> {
     }
 
     public class Job implements StreamEngine.Job {
@@ -239,23 +240,23 @@ public class InMemStreamEngine implements StreamEngine {
         }
     }
 
-    private static class RowConstructor implements SourceRecord2RowMapper.RowConstructor<Object[],Object[]> {
+    private static class RowConstructor implements SourceRecord2RowMapper.RowConstructor<Object[]> {
 
         private static final RowConstructor INSTANCE = new RowConstructor();
 
         @Override
-        public Object[] createRoot(Object[] columns) {
+        public Object[] createRow(Object[] columns) {
             return columns;
         }
 
         @Override
-        public Object[] createNested(Object[] columns) {
-            return columns;
+        public List createNestedRow(Object[] columns) {
+            return Arrays.asList(columns);
         }
 
         @Override
-        public Object[][] createRowArray(int size) {
-            return new Object[size][];
+        public List createRowList(Object[] rows) {
+            return Arrays.asList(rows);
         }
     }
 

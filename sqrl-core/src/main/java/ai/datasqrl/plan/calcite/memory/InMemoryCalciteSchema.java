@@ -34,7 +34,7 @@ public class InMemoryCalciteSchema extends AbstractSqrlSchema {
     dataTableMap.put(name, new DataTable(header, data));
   }
 
-  public void registerDataSet(String name, List<RelDataTypeField> header, Collection<Object[]> data) {
+  public void registerSourceTable(String name, List<RelDataTypeField> header, Collection<Object[]> data) {
     dataTableMap.put(name, new DataTable(header, data));
   }
 

@@ -146,19 +146,19 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   }
 
   @Override
-  public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, Name tableName) {
+  public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, String qualifiedTableName) {
     Preconditions.checkArgument(stream instanceof FlinkStreamHolder && ((FlinkStreamHolder)stream).getBuilder().equals(this));
     FlinkStreamHolder<SourceRecord.Named> flinkStream = (FlinkStreamHolder)stream;
     FlexibleTableConverter converter = new FlexibleTableConverter(schema);
 
     TypeInformation typeInformation = FlinkTypeInfoSchemaGenerator.convert(converter);
-    SourceRecord2RowMapper<Row,Row> mapper = new SourceRecord2RowMapper(schema, FlinkRowConstructor.INSTANCE);
+    SourceRecord2RowMapper<Row> mapper = new SourceRecord2RowMapper(schema, FlinkRowConstructor.INSTANCE);
 
     //TODO: error handling when mapping doesn't work?
     SingleOutputStreamOperator<Row> rows = flinkStream.getStream().map(r -> mapper.apply(r),typeInformation);
     Schema tableSchema = FlinkTableSchemaGenerator.convert(converter);
     Table table = tableEnvironment.fromDataStream(rows, tableSchema);
-    tableEnvironment.createTemporaryView(tableName.getCanonical(), table);
+    tableEnvironment.createTemporaryView(qualifiedTableName, table);
   }
 
   public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(SourceTable table) {

@@ -72,16 +72,16 @@ import java.io.Reader;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
+
 /*
  * Copied from Calcite.
  * 
  * SQRL Changelog:
- *  - Change protected modifiers to protected
+ *  - Change private modifiers to protected
  *  - Getters for all properties
- *  - remove createSqlValidator config override to allow sqrlconformance
+ *  - remove createSqlValidator config override to allow SQRL conformance
  *  - TypeFactory to something that can handle Instants
  */
-
 /** Implementation of {@link org.apache.calcite.tools.Planner}. */
 @Getter
 public class PlannerImpl implements Planner, ViewExpander {

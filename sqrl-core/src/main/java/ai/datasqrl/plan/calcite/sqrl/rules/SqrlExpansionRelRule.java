@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite.sqrl.rules;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
+import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.memory.table.DataTable;
@@ -48,23 +49,13 @@ public class SqrlExpansionRelRule extends RelOptRule {
     LogicalTableScan table = call.rel(0);
     LogicalBaseTableCalciteTable baseTable = table.getTable()
         .unwrap(LogicalBaseTableCalciteTable.class);
-    SourceTableCalciteTable sourceTable = table.getTable()
-        .unwrap(SourceTableCalciteTable.class);
     QueryCalciteTable query = table.getTable().unwrap(QueryCalciteTable.class);
     DataTable dt = table.getTable().unwrap(DataTable.class);
 
     /*
      * A dataset table, such as ecommerce-data.Products
      */
-    if (sourceTable != null) {
-      RelOptTable sourceTableRelOptTable = table.getTable().getRelOptSchema()
-          .getTableForMember(List.of(sourceTable.getSourceTableImport().getTable().qualifiedName()));
-
-      RelNode scan = LogicalTableScan.create(table.getCluster(), sourceTableRelOptTable,
-          table.getHints());
-
-      call.transformTo(scan);
-    } else if (baseTable != null) { //A logical table that may need shredding, such as Products$1
+    if (baseTable != null) { //A logical table that may need shredding, such as Products$1
       RelOptTable baseDatasetRelOptTable = table.getTable().getRelOptSchema()
           .getTableForMember(List.of(baseTable.getSourceTableImport().getTable().qualifiedName()));
 
@@ -86,7 +77,7 @@ public class SqrlExpansionRelRule extends RelOptRule {
     RelNode scan = LogicalTableScan.create(table.getCluster(), baseDatasetRelOptTable,
         table.getHints());
 
-    if (sourceTableImport.getTableName().getCanonical().equalsIgnoreCase("orders")) {
+    if (sourceTableImport.getTable().getName().equals(Name.system("orders"))) {
       if (shredPath.getLength() == 1) {
         RelBuilder builder = relBuilderFactory.create(table.getCluster(), table.getTable().getRelOptSchema());
         RexBuilder rexBuilder = builder.getRexBuilder();

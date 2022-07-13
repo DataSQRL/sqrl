@@ -7,19 +7,16 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
+import ai.datasqrl.io.sources.util.StreamInputPreparer;
+import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
 import ai.datasqrl.function.builtin.example.MyFunction;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.NodeFormatter;
 import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.plan.calcite.CalciteEnvironment;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.calcite.Rules;
-import ai.datasqrl.plan.calcite.SqrlSchemaCatalog;
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import ai.datasqrl.plan.calcite.memory.EnumerableDag;
+import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine;
+import ai.datasqrl.plan.calcite.*;
+import ai.datasqrl.plan.calcite.memory.EnumerableCalciteBridge;
 import ai.datasqrl.plan.calcite.memory.InMemoryCalciteSchema;
 import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.plan.local.SchemaUpdatePlanner;
@@ -129,7 +126,7 @@ class EnumeratorTest extends AbstractSQRLIT {
     CalciteConnection calciteConnection = factory.newConnection(new Driver(),  new CalciteJdbc41Factory(),
         "jdbc:calcite:test:", info, rootSchema0, new SqrlTypeFactory(new SqrlTypeSystem()));
 
-    Hook.PROGRAM.run(Rules.programs());
+    Hook.PROGRAM.run(OptimizationStage.getAllPrograms());
 
     Statement statement = calciteConnection.createStatement();
     return statement;
@@ -171,14 +168,48 @@ class EnumeratorTest extends AbstractSQRLIT {
         "IMPORT ecommerce-data.Orders;\n"
     );
   }
-  @Test
 
+  @Test
   public void testEnumerable() {
     runScript(
             "IMPORT ecommerce-data.Product;\n"
           + "Product.example := productid;"
           + "Product.example2 := SELECT productid, category FROM _;"
           + "Product2 := SELECT productid, category FROM Product.example2;"
+    );
+  }
+
+  @Test
+  @Disabled
+  public void testNestedWithParentExpression() {
+    runScript(
+            "IMPORT ecommerce-data.Orders;\n"
+          + "IMPORT ecommerce-data.Product;\n"
+          + "Test := SELECT p.productid, p.name, e.quantity, e.parent.time FROM Product p JOIN Orders.entries e ON e.productid = p.productid;"
+    );
+    //This produces the wrong results because the left join for e.parent.time joins entries$2 against itself but only on the parent primary
+    //key (_uuid) and not the full primary key of entries$2 (_uuid, _idx). Hence, we see the results show up multiple times depending on how
+    //many entries a particular order has.
+  }
+
+  @Test
+  @Disabled
+  public void testNestedWithRelationship() {
+    runScript(
+            "IMPORT ecommerce-data.Orders;\n"
+                    + "IMPORT ecommerce-data.Product;\n"
+                    + "Product.entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
+                    + "Test2 := SELECT p.productid, p.name, e.quantity FROM Product p JOIN p.entries e;"
+    );
+    //Fails because the ON condition on the first self-join between __t9 and __t11 is not generated (i.e. equality conditoin on product$3 pk)
+  }
+
+  @Test
+  public void testSimpleNested() {
+    runScript(
+            "IMPORT ecommerce-data.Orders;\n"
+                    + "IMPORT ecommerce-data.Product;\n"
+                    + "Test1 := SELECT p.productid, p.name, e.quantity FROM Product p JOIN Orders.entries e ON e.productid = p.productid;\n"
     );
   }
 
@@ -300,14 +331,17 @@ class EnumeratorTest extends AbstractSQRLIT {
     PlannerFactory plannerFactory = new PlannerFactory(catalog);
     Planner planner = plannerFactory.createPlanner(schemaName);
 
-    EnumerableDag dag = new EnumerableDag(planner);
+    InMemStreamEngine streamEngine = new InMemStreamEngine();
+    StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
+
+    EnumerableCalciteBridge dag = new EnumerableCalciteBridge(planner, streamEngine, streamPreparer);
     subSchema.setBridge(dag);
 
     for (Node n : node.getStatements()) {
       SchemaUpdatePlanner schemaUpdatePlanner = new SchemaUpdatePlanner(this.importManager,
           tableFactory, SchemaAdjustmentSettings.DEFAULT,
           errorCollector);
-      System.out.println("Statement: " + NodeFormatter.accept(n));
+      System.out.println("---Statement: " + NodeFormatter.accept(n));
 
       /*
        * Import process flow:
