@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.local.analyze;
 
 import ai.datasqrl.parse.tree.Identifier;
+import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
@@ -50,6 +51,8 @@ public class Scope {
   @Setter
   private List<Name> fieldNames = new ArrayList<>();
   @Setter
+  List<SingleColumn> selectItems = new ArrayList<>();
+  @Setter
   private boolean isInGroupByOrSortBy = false;
 
   @Setter
@@ -66,24 +69,13 @@ public class Scope {
     this.targetName = targetName;
   }
 
-  protected List<Identifier> resolveFieldsWithPrefix(Optional<Name> alias) {
-    throw new RuntimeException("resolveFieldsWithPrefix TBD");
+  //Need to determine if _ is scoped to include it or not
+  public List<Identifier> resolveAllScopedFields() {
+    throw new RuntimeException("resolveAllScopedFields TBD");
   }
 
   public List<Name> getFieldNames() {
     return fieldNames;
-  }
-
-  public ResolvedNamePath resolveTableOrThrow(NamePath namePath) {
-    Optional<List<ResolvedNamePath>> paths = resolveTable(namePath);
-    List<ResolvedNamePath> path = paths.orElseThrow(
-        () -> new RuntimeException("Cannot find path: " + namePath));
-    if (path.size() == 0) {
-      throw new RuntimeException("Cannot find path: " + namePath);
-    } else if (path.size() > 1) {
-      throw new RuntimeException("Ambiguous path: " + namePath);
-    }
-    return path.get(0);
   }
 
   public ResolvedNamePath resolveNamePathOrThrow(NamePath namePath) {

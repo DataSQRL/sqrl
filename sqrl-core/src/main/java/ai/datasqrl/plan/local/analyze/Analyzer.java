@@ -113,7 +113,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
 
     Optional<ResolvedTable> tbl = namespace.resolveTable(node.getTableNode());
     Check.state(tbl.isPresent(), node.getTableNode(), Errors.TABLE_NOT_FOUND);
-    Check.state(tbl.get().getPath().size() > 1, node, Errors.DISTINCT_TABLE_NESTED);
+    Check.state(tbl.get().getPath().size() == 1, node, Errors.DISTINCT_TABLE_NESTED);
 
     ResolvedTable resolvedTable = tbl.get();
     Scope scope = Scope.createSingleTableScope(analysis.getSchema(), resolvedTable);

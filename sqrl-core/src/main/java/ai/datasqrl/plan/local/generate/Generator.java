@@ -232,7 +232,11 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   @SneakyThrows
   private RelNode plan(SqlNode sqlNode) {
     planner.refresh();
-    planner.validate(sqlNode);
+    try {
+      planner.validate(sqlNode);
+    } catch (Exception e) {
+      System.out.println(sqlNode.toString());
+    }
 
     RelRoot root = planner.rel(sqlNode);
     RelNode relNode = root.rel;

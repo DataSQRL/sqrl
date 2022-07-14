@@ -7,6 +7,7 @@ import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.QuerySpecification;
+import ai.datasqrl.parse.tree.SortItem;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.SourceTableImportMeta;
@@ -15,6 +16,7 @@ import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.RootTableField;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.Table;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.Value;
 
 /**
@@ -74,17 +77,17 @@ public class Analysis {
   private Map<ImportDefinition, List<SourceTableImport>> importSourceTables = new HashMap<>();
   private Map<ImportDefinition, Map<ai.datasqrl.schema.Table, SourceTableImportMeta.RowType>> importTableTypes = new HashMap<>();
 
-  /**
-   * Store scopes for field lookups
-   */
-  private Map<Node, Scope> scopes = new HashMap<>();
-
   private Map<Node, Field> producedField = new HashMap<>();
 
   public Map<Node, Name> tableAliases = new HashMap<>();
 
   public Map<Node, String> fieldAlias = new HashMap<>();
 
+  @Setter
+  public List<Integer> groupByOrdinals = new ArrayList<>();
+
+  @Setter
+  public List<SortItem> orderByExpressions = new ArrayList<>();
   //TODO: Register subqueries as separate anonymous queries
 
   @Value

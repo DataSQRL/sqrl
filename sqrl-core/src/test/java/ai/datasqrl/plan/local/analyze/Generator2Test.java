@@ -131,6 +131,7 @@ class Generator2Test extends AbstractSQRLIT {
         + "                            WHERE parent.time > now() - INTERVAL 2 YEAR"
         + "                            GROUP BY productid, category ORDER BY num_orders DESC, "
         + "quantity DESC;\n");
+
     node = gen("Customer.recent_products_categories :="
         + "                     SELECT category, count(*) AS num_products"
         + "                     FROM _.recent_products"
