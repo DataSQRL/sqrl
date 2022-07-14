@@ -11,6 +11,8 @@ import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.SortItem;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SourceTableImportMeta;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
@@ -153,6 +155,38 @@ public class Analysis {
 
     public Field getLast() {
       return this.path.get(this.path.size() - 1);
+    }
+
+    public boolean isToMany() {
+      if (getPath().isEmpty()) {
+        return false;
+      } else if (getPath().size() == 1 && getPath().get(0) instanceof Column) {
+        return false;
+      }
+
+      for (Field field : getPath()) {
+        if (field instanceof Relationship
+            && ((Relationship) field).getMultiplicity() != Multiplicity.MANY) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    public boolean isToOne() {
+      if (getPath().isEmpty()) {
+        return false;
+      } else if (getPath().size() == 1 && getPath().get(0) instanceof Column) {
+        return false;
+      }
+
+      for (Field field : getPath()) {
+        if (field instanceof Relationship
+            && ((Relationship) field).getMultiplicity() != Multiplicity.ONE) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 }

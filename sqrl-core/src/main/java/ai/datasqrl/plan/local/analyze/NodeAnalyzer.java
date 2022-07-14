@@ -41,7 +41,6 @@ import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.RootTableField;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -56,9 +55,7 @@ import lombok.Getter;
  * Produces an Analysis object of a script/statement
  */
 public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
-
   protected final ErrorCollector errors;
-  protected final boolean allowPaths = false;
   protected final Namespace namespace;
 
   @Getter
@@ -373,7 +370,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
     Check.state(field.getLast() instanceof Column, node, Errors.IDENTIFIER_MUST_BE_COLUMN);
     Check.state(!(field.getPath().size() > 1 && !scope.isAllowIdentifierPaths()), node,
         Errors.PATH_NOT_ALLOWED);
-    Check.state(!(field.getPath().size() > 1 && !isToOne(field)), node, Errors.PATH_NOT_TO_ONE);
+    Check.state(!(field.getPath().size() > 1 && !field.isToOne()), node, Errors.PATH_NOT_TO_ONE);
 
     analysis.getResolvedNamePath().put(node, field);
 
@@ -416,39 +413,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
 
     Identifier identifier = (Identifier) node.getArguments().get(0);
     ResolvedNamePath path = scope.resolveNamePathOrThrow(identifier.getNamePath());
-    return isToMany(path);
-  }
-
-  private boolean isToMany(ResolvedNamePath fields) {
-    if (fields.getPath().isEmpty()) {
-      return false;
-    } else if (fields.getPath().size() == 1 && fields.getPath().get(0) instanceof Column) {
-      return false;
-    }
-
-    for (Field field : fields.getPath()) {
-      if (field instanceof Relationship
-          && ((Relationship) field).getMultiplicity() != Multiplicity.MANY) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private boolean isToOne(ResolvedNamePath fields) {
-    if (fields.getPath().isEmpty()) {
-      return false;
-    } else if (fields.getPath().size() == 1 && fields.getPath().get(0) instanceof Column) {
-      return false;
-    }
-
-    for (Field field : fields.getPath()) {
-      if (field instanceof Relationship
-          && ((Relationship) field).getMultiplicity() != Multiplicity.ONE) {
-        return false;
-      }
-    }
-    return true;
+    return path.isToMany();
   }
 
   /**

@@ -12,8 +12,6 @@ import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ShadowingContainer;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.TableStatistic;
-import ai.datasqrl.schema.TableTimestamp;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.RelationType;
 import ai.datasqrl.schema.type.ArrayType;
@@ -22,7 +20,6 @@ import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.basic.DateTimeType;
 import ai.datasqrl.schema.type.basic.IntegerType;
 import ai.datasqrl.schema.type.basic.UuidType;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -63,7 +60,7 @@ public class BundleTableFactory {
                                              Map<Table, SourceTableImportMeta.RowType> tables) {
         NamePath tblPath = tblBuilder.getPath();
         RelationStats stats = statistics.getRelationStats(tblPath.subList(1,tblPath.getLength()));
-        Table table = tblBuilder.createTable(Table.Type.STREAM, TableStatistic.from(stats));
+        Table table = tblBuilder.createTable();
         tables.put(table,tblBuilder.rowType);
         //Recurse through children and add parent-child relationships
         for (Pair<TableBuilder,Relationship.Multiplicity> child : tblBuilder.children) {
@@ -93,8 +90,8 @@ public class BundleTableFactory {
     public Relationship createChildRelationship(Name childName, Table childTable, Table parentTable,
                                               Relationship.Multiplicity multiplicity) {
         Relationship childRel = new Relationship(childName,
-                parentTable, childTable, Relationship.JoinType.CHILD, multiplicity,
-            Optional.empty(), Optional.empty());
+                parentTable, childTable, Relationship.JoinType.CHILD, multiplicity
+        );
         return childRel;
     }
 
@@ -234,15 +231,15 @@ public class BundleTableFactory {
             }
         }
 
-        public Table createTable(Table.Type type, TableStatistic statistic) {
-            if (timestampCandidate==null) { //TODO: remove once timestamps are properly propagated
-                timestampCandidate = Pair.of(null, Integer.MAX_VALUE);
-            }
-            Preconditions.checkState(timestampCandidate!=null, "Missing timestamp column");
-            TableTimestamp timestamp = TableTimestamp.of(timestampCandidate.getKey(),
-                    timestampCandidate.getValue()==Integer.MAX_VALUE? TableTimestamp.Status.INFERRED :
-                            TableTimestamp.Status.DEFAULT);
-            return new Table(uniqueId, path, type, fields, timestamp, statistic);
+        public Table createTable() {
+//            if (timestampCandidate==null) { //TODO: remove once timestamps are properly propagated
+//                timestampCandidate = Pair.of(null, Integer.MAX_VALUE);
+//            }
+//            Preconditions.checkState(timestampCandidate!=null, "Missing timestamp column");
+//            TableTimestamp timestamp = TableTimestamp.of(timestampCandidate.getKey(),
+//                    timestampCandidate.getValue()==Integer.MAX_VALUE? TableTimestamp.Status.INFERRED :
+//                            TableTimestamp.Status.DEFAULT);
+            return new Table(uniqueId, path, fields);
         }
     }
 }

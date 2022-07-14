@@ -13,8 +13,6 @@ import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.ShadowingContainer;
 import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.Table.Type;
-import ai.datasqrl.schema.TableStatistic;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -27,7 +25,7 @@ public class SchemaBuilder {
   public Table createDistinctTable(ResolvedTable resolvedTable, List<ResolvedNamePath> pks) {
     ShadowingContainer<Field> container = new ShadowingContainer<>();
     Table table = new Table(BundleTableFactory.tableIdCounter.incrementAndGet(),
-        resolvedTable.getNamePath(), Type.STREAM, container, null, null);
+        resolvedTable.getNamePath(), container);
     resolvedTable.getToTable().getVisibleColumns().forEach(
         c -> table.addColumn(c.getName(), isPrimaryKey(c, pks), c.isParentPrimaryKey(),
             c.isVisible()));
@@ -46,13 +44,14 @@ public class SchemaBuilder {
 
   public Relationship addJoinDeclaration(NamePath namePath, Table target, Optional<Limit> limit) {
     Table parentTable = analysis.getSchema().walkTable(namePath.popLast());
+
+    //determine if
     Multiplicity multiplicity = limit.map(
         l -> l.getIntValue().filter(i -> i == 1).map(i -> Multiplicity.ONE)
             .orElse(Multiplicity.MANY)).orElse(Multiplicity.MANY);
 
     Relationship relationship = new Relationship(namePath.getLast(), parentTable, target,
-        JoinType.JOIN, multiplicity,
-        Optional.empty(), limit);
+        JoinType.JOIN, multiplicity);
 
     parentTable.getFields().add(relationship);
     return relationship;
@@ -92,11 +91,8 @@ public class SchemaBuilder {
     //todo: column names:
     fieldNames.forEach(n -> builder.addColumn(n, false, false, true));
 
-    //TODO: infer table type from relNode
-    Table.Type tblType = Table.Type.STREAM;
-
     //Creates a table that is not bound to the schema TODO: determine timestamp
-    Table table = builder.createTable(tblType, TableStatistic.of(derivedRowCount));
+    Table table = builder.createTable();
 
     if (namePath.getLength() == 1) {
       analysis.getSchema().add(table);

@@ -4,33 +4,16 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Relationship.JoinType;
-import com.google.common.base.Preconditions;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import lombok.NonNull;
 
 @Getter
 public class Table extends AbstractTable {
-
-  public enum Type {
-    STREAM, //a stream of records with synthetic (i.e. uuid) primary key ordered by timestamp
-    STATE; //table with natural primary key that ensures uniqueness and timestamp for change-stream
-  }
-
-  @NonNull private final Type type;
-  @NonNull private TableTimestamp timestamp;
-  @NonNull private final TableStatistic statistic;
-
-  public Table(int uniqueId, NamePath path, Type type, ShadowingContainer<Field> fields,
-               TableTimestamp timestamp, TableStatistic statistic) {
+  public Table(int uniqueId, NamePath path, ShadowingContainer<Field> fields) {
     super(uniqueId,path,fields);
-    this.type = type;
-    this.timestamp = timestamp;
-    this.statistic = statistic;
-//    Preconditions.checkNotNull(fields.contains(timestamp));
   }
 
   public void addExpressionColumn(Column column) {
@@ -89,12 +72,4 @@ public class Table extends AbstractTable {
       return getName().toNamePath();
     }
   }
-
-  @Override
-  public String toString() {
-    String s = super.toString();
-    s += "[" + type + "," + timestamp + "," + statistic + "]";
-    return s;
-  }
-
 }

@@ -123,7 +123,7 @@ class Generator2Test extends AbstractSQRLIT {
     node = gen("Orders.total_savings := sum(entries.discount);\n");
 //    node = gen("Orders.total_entries := count(entries);\n");
     node = gen("Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n");
-    node = gen("Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n");
+    node = gen("Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n");
     node = gen( "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n");
     node = gen("Customer.recent_products := SELECT productid, e.product.category AS category,"
         + "                                   sum(quantity) AS quantity, count(*) AS num_orders"
