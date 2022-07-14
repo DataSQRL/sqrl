@@ -3,6 +3,7 @@ package ai.datasqrl.plan.local.analyze;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.function.SqrlAwareFunction;
 import ai.datasqrl.parse.tree.Assignment;
+import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.Node;
@@ -88,6 +89,8 @@ public class Analysis {
 
   @Setter
   public List<SortItem> orderByExpressions = new ArrayList<>();
+  @Setter
+  public List<Expression> uniqueOrderExpressions = new ArrayList<>();
   //TODO: Register subqueries as separate anonymous queries
 
   @Value

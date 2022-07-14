@@ -69,11 +69,6 @@ public class Scope {
     this.targetName = targetName;
   }
 
-  //Need to determine if _ is scoped to include it or not
-  public List<Identifier> resolveAllScopedFields() {
-    throw new RuntimeException("resolveAllScopedFields TBD");
-  }
-
   public List<Name> getFieldNames() {
     return fieldNames;
   }

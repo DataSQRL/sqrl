@@ -3,6 +3,7 @@ package ai.datasqrl.plan.local;
 import ai.datasqrl.parse.tree.DistinctAssignment;
 import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
+import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.JoinAssignment;
 import ai.datasqrl.parse.tree.Node;
@@ -35,6 +36,9 @@ public class Errors {
   public static Error<? super Identifier> PATH_NOT_ALLOWED;
   public static Error<? super Expression> GROUP_BY_COLUMN_MISSING;
   public static Error<? super SelectItem> UNNAMED_QUERY_COLUMN;
+  public static Error<? super FunctionCall> FUNCTION_NOT_FOUND;
+  public static Error<? super FunctionCall> FUNCTION_REQUIRES_OVER;
+  public static Error<? super FunctionCall> FUNCTION_ORDER_UNEXPECTED;
 
   public static class Error<T> {
 

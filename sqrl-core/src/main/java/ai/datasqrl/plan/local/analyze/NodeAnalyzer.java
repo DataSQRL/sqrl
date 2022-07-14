@@ -43,7 +43,6 @@ import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.RootTableField;
-import graphql.com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -164,7 +163,8 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
         selectItems.add(singleColumn);
 
         Check.state(context.getIsExpression().isPresent() && context.getIsExpression().get() ||
-                singleColumn.getExpression() instanceof Identifier || singleColumn.getAlias().isPresent(),
+                singleColumn.getExpression() instanceof Identifier || singleColumn.getAlias()
+                .isPresent(),
             selectItem, Errors.UNNAMED_QUERY_COLUMN);
       } else if (selectItem instanceof AllColumns) {
         if (((AllColumns) selectItem).getPrefix().isPresent()) {
@@ -261,6 +261,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
     //Replace some sort items with literals before analyzing
     List<Expression> expressions = scope.getSelectItems().stream().map(SingleColumn::getExpression)
         .collect(Collectors.toList());
+    List<Expression> uniqueOrderExpressions = new ArrayList<>();
     for (SortItem sortItem : node.getSortItems()) {
       if (sortItem.getSortKey() instanceof Identifier) {
         Identifier identifier = (Identifier) sortItem.getSortKey();
@@ -283,10 +284,12 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
       } else {
         sortItem.getSortKey().accept(this, scope);
         sortItems.add(sortItem);
+        uniqueOrderExpressions.add(sortItem.getSortKey());
       }
     }
 
     analysis.setOrderByExpressions(sortItems);
+    analysis.setUniqueOrderExpressions(uniqueOrderExpressions);
     return orderByScope;
   }
 
@@ -380,39 +383,68 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
   @Override
   public Scope visitFunctionCall(FunctionCall node, Scope scope) {
     Optional<SqrlAwareFunction> functionOptional = namespace.lookupFunction(node.getNamePath());
-    Preconditions.checkState(functionOptional.isPresent(), "Could not find function {}",
-        node.getNamePath());
+    Check.state(functionOptional.isPresent(), node, Errors.FUNCTION_NOT_FOUND);
+
     SqrlAwareFunction function = functionOptional.get();
+    if (isLocalAggregate(function, node, scope)) {
+      Identifier identifier = (Identifier) node.getArguments().get(0);
+      ResolvedNamePath path = scope.resolveNamePathOrThrow(identifier.getNamePath());
+
+      analysis.getResolvedNamePath().put(identifier, path);
+      analysis.getIsLocalAggregate().add(node);
+    } else {
+      for (Expression arg : node.getArguments()) {
+        arg.accept(this, scope);
+      }
+
+      Check.state(!(node.getOver().isPresent() && !function.requiresOver()), node,
+          Errors.FUNCTION_ORDER_UNEXPECTED);
+      Check.state(!(node.getOver().isEmpty() && function.requiresOver()), node,
+          Errors.FUNCTION_REQUIRES_OVER);
+      node.getOver().map(over -> over.accept(this, scope));
+    }
     analysis.getResolvedFunctions().put(node, new ResolvedFunctionCall(function));
 
-    if (function.isAggregate() && node.getArguments().size() == 1 && node.getArguments()
-        .get(0) instanceof Identifier) {
-      Identifier identifier = (Identifier) node.getArguments().get(0);
-
-      ResolvedNamePath path = scope.resolveNamePathOrThrow(identifier.getNamePath());
-      analysis.getResolvedNamePath().put(identifier, path);
-      if (path.getPath().size() > 1 && isToMany(path)) {
-        analysis.getIsLocalAggregate().add(node);
-        return null;
-      }
-    }
-
-    for (Expression arg : node.getArguments()) {
-      arg.accept(this, scope);
-    }
-
-    node.getOver().map(over -> over.accept(this, scope));
-
     return scope;
+  }
+
+  private boolean isLocalAggregate(SqrlAwareFunction function, FunctionCall node, Scope scope) {
+    if (!(function.isAggregate() && node.getArguments().size() == 1 && node.getArguments()
+        .get(0) instanceof Identifier)) {
+      return false;
+    }
+
+    Identifier identifier = (Identifier) node.getArguments().get(0);
+    ResolvedNamePath path = scope.resolveNamePathOrThrow(identifier.getNamePath());
+    return isToMany(path);
   }
 
   private boolean isToMany(ResolvedNamePath fields) {
     if (fields.getPath().isEmpty()) {
       return false;
+    } else if (fields.getPath().size() == 1 && fields.getPath().get(0) instanceof Column) {
+      return false;
     }
+
     for (Field field : fields.getPath()) {
       if (field instanceof Relationship
           && ((Relationship) field).getMultiplicity() != Multiplicity.MANY) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean isToOne(ResolvedNamePath fields) {
+    if (fields.getPath().isEmpty()) {
+      return false;
+    } else if (fields.getPath().size() == 1 && fields.getPath().get(0) instanceof Column) {
+      return false;
+    }
+
+    for (Field field : fields.getPath()) {
+      if (field instanceof Relationship
+          && ((Relationship) field).getMultiplicity() != Multiplicity.ONE) {
         return false;
       }
     }
@@ -460,9 +492,5 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
         //If we're in a table path, the fields cannot be referenced using the path syntax
         .orElseGet(
             () -> Name.system("_internal$" + scope.getInternalIncrementer().incrementAndGet()));
-  }
-
-  private boolean isToOne(ResolvedNamePath path) {
-    return true;
   }
 }
