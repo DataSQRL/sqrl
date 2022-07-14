@@ -8,6 +8,8 @@ import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.QuerySpecification;
+import ai.datasqrl.parse.tree.SelectItem;
+import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.SortItem;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -93,6 +95,7 @@ public class Analysis {
   public List<SortItem> orderByExpressions = new ArrayList<>();
   @Setter
   public List<Expression> uniqueOrderExpressions = new ArrayList<>();
+  public Map<Node, List<SingleColumn>> selectItems = new HashMap<>();
   //TODO: Register subqueries as separate anonymous queries
 
   @Value

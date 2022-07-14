@@ -196,6 +196,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
     context.setFieldNames(new ArrayList<>(names));
     context.setSelectItems(selectItems);
 
+    analysis.getSelectItems().put(node, selectItems);
     return context;
   }
 
