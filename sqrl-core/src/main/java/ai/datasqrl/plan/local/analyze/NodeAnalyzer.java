@@ -157,6 +157,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
       if (selectItem instanceof SingleColumn) {
         SingleColumn singleColumn = (SingleColumn) selectItem;
         selectItem.accept(this, context);
+        //todo: always alias columns ?
         selectItems.add(singleColumn);
 
         Check.state(context.getIsExpression().isPresent() && context.getIsExpression().get() ||
@@ -171,6 +172,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
           ResolvedNamePath namePath = context.getJoinScopes().get(aliasPath.getFirst());
           List<SingleColumn> resolvedItems = namePath.getToTable().getVisibleColumns().stream()
               .map(c -> new Identifier(selectItem.getLocation(), c.getName()))
+              //todo: always alias columns
               .map(i -> new SingleColumn(selectItem.getLocation(), i, Optional.empty()))
               .collect(Collectors.toList());
           selectItems.addAll(resolvedItems);
@@ -179,6 +181,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
                   e -> !(e.getKey().equals(ReservedName.SELF_IDENTIFIER) && !context.isSelfInScope()))
               .flatMap(e -> e.getValue().getToTable().getVisibleColumns().stream())
               .map(c -> new Identifier(selectItem.getLocation(), c.getName()))
+              //todo: always alias columns
               .map(i -> new SingleColumn(selectItem.getLocation(), i, Optional.empty()))
               .collect(Collectors.toList());
           selectItems.addAll(resolvedItems);
@@ -397,7 +400,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
 
       Check.state(!(node.getOver().isPresent() && !function.requiresOver()), node,
           Errors.FUNCTION_ORDER_UNEXPECTED);
-      Check.state(!(node.getOver().isEmpty() && function.requiresOver()), node,
+      Check.state(!(node.getOver().isEmpty() && function.requiresOver() && !scope.isNested()), node,
           Errors.FUNCTION_REQUIRES_OVER);
       node.getOver().map(over -> over.accept(this, scope));
     }

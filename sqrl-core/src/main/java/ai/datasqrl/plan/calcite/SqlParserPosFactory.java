@@ -7,7 +7,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class SqlParserPosFactory {
 
-  public static SqlParserPos from(Node node) {
+  public static SqlParserPos getPos(Node node) {
     return SqlParserPos.ZERO;
   }
   public SqlParserPos getPos(Optional<NodeLocation> pos) {

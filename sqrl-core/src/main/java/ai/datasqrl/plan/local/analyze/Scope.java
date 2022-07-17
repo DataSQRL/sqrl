@@ -6,7 +6,6 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
-import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamedReference;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
@@ -96,15 +95,15 @@ public class Scope {
 
   public Optional<List<ResolvedNamePath>> resolveNamePath(NamePath namePath,
       boolean requireAlias) {
-    if (isInGroupByOrSortBy && namePath.getLength() == 1) { //select list items take priority
-      for (int i = 0; i < fieldNames.size(); i++) {
-        Name name = fieldNames.get(i);
-        if (namePath.get(0).equals(name)) {
-          //todo: need to resolve the entire identifier
-          return Optional.of(List.of(new ResolvedNamedReference(name, i)));
-        }
-      }
-    }
+//    if (isInGroupByOrSortBy && namePath.getLength() == 1) { //select list items take priority
+//      for (int i = 0; i < fieldNames.size(); i++) {
+//        Name name = fieldNames.get(i);
+//        if (namePath.get(0).equals(name)) {
+//          //todo: need to resolve the entire identifier
+//          return Optional.of(List.of(new ResolvedNamedReference(name, i)));
+//        }
+//      }
+//    }
 
     List<ResolvedNamePath> resolved = new ArrayList<>();
     Optional<ResolvedNamePath> explicitAlias = Optional.ofNullable(
@@ -245,5 +244,9 @@ public class Scope {
     newScope.isInGroupByOrSortBy = true;
     newScope.joinScopes.putAll(scope.getJoinScopes());
     return newScope;
+  }
+
+  public boolean isNested() {
+    return contextTable.isPresent();
   }
 }

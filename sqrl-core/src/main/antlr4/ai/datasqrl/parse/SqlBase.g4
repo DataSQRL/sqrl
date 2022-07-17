@@ -138,9 +138,9 @@ relation
 
 joinType
     : INNER?
-    | LEFT OUTER?
-    | RIGHT OUTER?
-    | FULL OUTER?
+//    | LEFT OUTER?
+//    | RIGHT OUTER?
+//    | FULL OUTER?
     | TEMPORAL
     ;
 

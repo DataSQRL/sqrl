@@ -150,7 +150,8 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   public SqlNode visitExpressionAssignment(ExpressionAssignment node, Scope context) {
     Table v = analysis.getProducedTable().get(node);
     //Were do subqueries live here?
-    Scope ctx = new Scope();
+
+    Scope ctx = new Scope(this.getTables().values().stream().findFirst().get(), true);
     SqlNode sqlNode = node.getExpression().accept(this, ctx);
 
     if (!ctx.getSubqueries().isEmpty()) {
@@ -204,7 +205,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   @Override
   public SqlNode visitQueryAssignment(QueryAssignment queryAssignment, Scope context) {
     if (analysis.getExpressionStatements().contains(queryAssignment)) {
-      SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope());
+      SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(this.getTables().values().stream().findFirst().get(), true));
       RelNode relNode = plan(sqlNode);
       Table table = analysis.getProducedTable().get(queryAssignment);
       Preconditions.checkNotNull(table);
@@ -219,7 +220,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
       return sqlNode;
     } else {
-      SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope());
+      SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(this.getTables().values().stream().findFirst().get(), true));
       RelNode relNode = plan(sqlNode);
 
       Table table = analysis.getProducedTable().get(queryAssignment);
@@ -231,11 +232,13 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
   @SneakyThrows
   private RelNode plan(SqlNode sqlNode) {
+    System.out.println(sqlNode);
     planner.refresh();
     try {
       planner.validate(sqlNode);
     } catch (Exception e) {
       System.out.println(sqlNode.toString());
+      throw new RuntimeException(e);
     }
 
     RelRoot root = planner.rel(sqlNode);

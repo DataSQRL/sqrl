@@ -3,6 +3,7 @@ package ai.datasqrl.plan.local.generate.node.util;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -11,6 +12,7 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
+import org.codehaus.commons.nullanalysis.Nullable;
 
 public class SqlNodeUtil {
 
@@ -26,6 +28,10 @@ public class SqlNodeUtil {
     name.add(field.getName());
 
     return new SqlIdentifier(name, SqlParserPos.ZERO);
+  }
+
+  public static SqlNode and(@Nullable SqlNode... exprs) {
+    return and(List.of(exprs).stream().filter(Objects::isNull).collect(Collectors.toList()));
   }
 
   public static SqlNode and(List<SqlNode> expressions) {

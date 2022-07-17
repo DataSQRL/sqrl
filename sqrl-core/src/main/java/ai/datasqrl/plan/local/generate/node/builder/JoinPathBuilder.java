@@ -1,5 +1,7 @@
 package ai.datasqrl.plan.local.generate.node.builder;
 
+import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
@@ -118,6 +120,10 @@ public class JoinPathBuilder {
         conditionType,
         getTrailingCondition().get()
     );
+  }
+
+  public void expand(NamePath namePath, Optional<Name> alias) {
+
   }
 
   //return result

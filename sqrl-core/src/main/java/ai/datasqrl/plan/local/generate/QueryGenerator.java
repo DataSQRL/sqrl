@@ -40,6 +40,7 @@ import ai.datasqrl.parse.tree.OrderBy;
 import ai.datasqrl.parse.tree.Query;
 import ai.datasqrl.parse.tree.QuerySpecification;
 import ai.datasqrl.parse.tree.Select;
+import ai.datasqrl.parse.tree.SetOperation;
 import ai.datasqrl.parse.tree.SimpleCaseExpression;
 import ai.datasqrl.parse.tree.SimpleGroupBy;
 import ai.datasqrl.parse.tree.SingleColumn;
@@ -60,7 +61,6 @@ import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
 import ai.datasqrl.plan.local.analyze.Analysis;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedFunctionCall;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
-import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamedReference;
 import ai.datasqrl.plan.local.generate.QueryGenerator.Scope;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.generate.node.SqlResolvedIdentifier;
@@ -77,12 +77,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.Getter;
-import lombok.Value;
+import lombok.Setter;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlBasicCall;
+import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -92,6 +94,7 @@ import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSelectKeyword;
 import org.apache.calcite.sql.SqlSetOperator;
@@ -103,6 +106,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.TimeString;
 import org.apache.calcite.util.TimestampString;
+import org.codehaus.commons.nullanalysis.Nullable;
 
 /**
  * Generates a query based on a script, the analysis, and the calcite schema.
@@ -119,6 +123,10 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     this.analysis = analysis;
   }
 
+  private List<SqlNode> visit(List<? extends Node> nodes, Scope context) {
+    return nodes.stream().map(n -> n.accept(this, context)).collect(Collectors.toList());
+  }
+
   @Override
   public SqlNode visitNode(Node node, Scope context) {
     throw new RuntimeException(
@@ -127,16 +135,110 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   @Override
   public SqlNode visitQuery(Query node, Scope context) {
+    if (node.getQueryBody() instanceof SetOperation && (node.getOrderBy().isPresent()
+        || node.getLimit().isPresent())) {
+      //Can be empty if limit exists
+      List<SqlNode> orderList = node.getOrderBy().map(o -> visit(o.getSortItems(), context))
+          .orElse(List.of());
 
+      Optional<SqlNode> limit = node.getLimit().map(l -> l.accept(this, context));
+      SqlNode query = node.getQueryBody().accept(this, context);
+      SqlOrderBy order = new SqlOrderBy(SqlParserPos.ZERO, query,
+          new SqlNodeList(orderList, SqlParserPos.ZERO), null, limit.orElse(null));
+
+      return order;
+    }
 
     return node.getQueryBody().accept(this, context);
   }
 
   @Override
   public SqlNode visitQuerySpecification(QuerySpecification node, Scope context) {
-    SqlNodeList sel = (SqlNodeList) node.getSelect().accept(this, context);
-    SqlNode where = node.getWhere().map(n -> n.accept(this, context)).orElse(null);
+    /**
+     * Nested:
+     *
+     * if limit:
+     *  - add rn/rank/dr, pull into subquery
+     *
+     *
+     */
 
+    List<SqlNode> ppk = parentPrimaryKeys(context);
+    List<SqlNode> ppkIndex = IntStream.range(0, ppk.size()).mapToObj(i->
+        SqlLiteral.createExactNumeric(Long.toString(i + 1), SqlParserPos.ZERO))
+        .collect(Collectors.toList());
+    SqlNodeList keywords = keywords(node.getSelect());
+    SqlNodeList select = (SqlNodeList) node.getSelect().accept(this, context);
+    select = prepend(select, ppk);
+    context.setOffset(ppk.size());
+    SqlNodeList groupBy = (SqlNodeList) node.getGroupBy().map(n -> n.accept(this, context))
+        .orElse(null);
+    groupBy = prepend(groupBy, ppkIndex);
+    SqlNode having = node.getHaving().map(n -> n.accept(this, context)).orElse(null);
+    SqlNodeList orderBy = (SqlNodeList) node.getOrderBy().map(n -> n.accept(this, context))
+        .orElse(null);
+    orderBy = prepend(orderBy, ppkIndex);
+    SqlNode where = node.getWhere().map(n -> n.accept(this, context)).orElse(null);
+    SqlNode limit = node.getLimit().map(n -> n.accept(this, context)).orElse(null);
+
+    //Note: Group by still required for distinct:
+    //e.g. SELECT DISTINCT COUNT(*) FROM Product GROUP BY name;
+    if (isNestedLimitDistinct(node, context)) {
+      keywords = null;
+      select = append(select, rownumber(), rank(), denserank());
+      where = and(where, filterNestedLimitDistinct(node));
+      limit = null;
+    } else if (isNestedDistinct(node, context)) {
+      keywords = null;
+      select = append(select, rownumber(), rank());
+      where = and(where, filterNestedDistinct(node));
+    } else if (isNestedLimit(node, context)) {
+      select = append(select, rownumber());
+      where = and(where, filterLimit(node));
+      limit = null;
+    }
+
+
+
+    /*
+     * If root:
+     *  No transform
+     *
+     * If nested:
+     *  If distinct and limit:
+     *   add rn, rank, dr
+     *   select * from (select o._uuid, e.productid, row_number() over (partition by o._uuid
+     * order by e.productid) rn, rank() over (partition by o._uuid order by e.productid) rank,
+     * dense_rank() over (partition by o._uuid order by e.productid) dr FROM orders o join
+     * entries e on o._uuid = e._uuid) x where rn = rank AND dr <= 1;
+     *  If distinct and no limit:
+     *   add rn, rank
+     *   select * from (select o._uuid, e.productid, row_number() over (partition by o._uuid
+     * order by e.productid) rn, rank() over (partition by o._uuid order by e.productid) rank) dr
+     *  FROM orders o join entries e on o._uuid = e._uuid) x where rn = rank;
+     *  If aggregating and limit:
+     *   add ppk, rn
+     *   SELECT * FROM (select _uuid, productid, sum(total), row_number() OVER (PARTITION BY
+     * _uuid) rn from entries group by _uuid, productid) x where rn <= 1;
+     *  If aggregating and no limit:
+     *   add ppk
+     *
+     *
+     *
+     * Distinct logic:
+     * If LIMIT, convert to a window query, otherwise, ?
+     * Customer.categories := SELECT DISTINCT category AS name FROM Product ORDER BY name DESC
+     * LIMIT 2;
+     * => Nested distinct, no relative path
+     *
+     *
+     * Group by logic:
+     * if LIMIT, convert to window, otherwise add group keys
+     *
+     *
+     */
+
+    //If doesn't have _ and is nested, need to add it.
     SqlNode from = node.getFrom().accept(this, context);
     if (!context.getSubqueries().isEmpty()) {
       for (int i = 0; i < context.getSubqueries().size(); i++) {
@@ -148,47 +250,169 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
             context.getSubqueries().get(i), conditionType,
             SqlLiteral.createBoolean(true, SqlParserPos.ZERO));
       }
-
     }
 
-    SqlSelect select = new SqlSelect(pos.getPos(node.getLocation()),
-        node.getSelect().isDistinct() ? new SqlNodeList(List.of(
-            SqlLiteral.createSymbol(SqlSelectKeyword.DISTINCT, pos.getPos(node.getLocation()))),
-            pos.getPos(node.getLocation())) : null, sel, from, where,
-        (SqlNodeList) node.getGroupBy().map(n -> n.accept(this, context)).orElse(null),
-        node.getHaving().map(n -> n.accept(this, context)).orElse(null), null,
-        (SqlNodeList) node.getOrderBy().map(n -> n.accept(this, context)).orElse(null), null,
-        node.getLimit().map(n -> n.accept(this, context)).orElse(null), null);
+    SqlSelect query = new SqlSelect(pos.getPos(node.getLocation()), keywords, select, from, where,
+        groupBy, having, null,
+        orderBy, null, limit,
+        null);
 
-    //If nested & limit, transform to rownum
     //Add parent primary keys
 
-    return select;
+    return query;
+  }
+
+  private SqlNode filterLimit(QuerySpecification node) {
+    if (node.getLimit().get().getIntValue().isEmpty()) {
+      return null;
+    }
+    Integer limit = node.getLimit().get().getIntValue().get();
+
+    SqlBinaryOperator op =
+        (limit.equals(1)) ? SqrlOperatorTable.EQUALS : SqrlOperatorTable.LESS_THAN_OR_EQUAL;
+
+    return new SqlBasicCall(op, new SqlNode[]{new SqlIdentifier("__row_number", SqlParserPos.ZERO),
+        SqlLiteral.createApproxNumeric(node.getLimit().map(l -> l.getValue()).orElseThrow(),
+            SqlParserPos.ZERO)}, SqlParserPos.ZERO);
+  }
+
+  private SqlNode filterNestedDistinct(QuerySpecification node) {
+    return new SqlBasicCall(SqrlOperatorTable.EQUALS,
+        new SqlNode[]{new SqlIdentifier("__row_number", SqlParserPos.ZERO),
+            new SqlIdentifier("__rank", SqlParserPos.ZERO)}, SqlParserPos.ZERO);
+  }
+
+  private SqlNode filterNestedLimitDistinct(QuerySpecification node) {
+    return and(new SqlBasicCall(SqrlOperatorTable.EQUALS,
+            new SqlNode[]{new SqlIdentifier("__row_number", SqlParserPos.ZERO),
+                new SqlIdentifier("__rank", SqlParserPos.ZERO)}, SqlParserPos.ZERO),
+        new SqlBasicCall(SqrlOperatorTable.EQUALS,
+            new SqlNode[]{new SqlIdentifier("__denserank", SqlParserPos.ZERO),
+                SqlLiteral.createApproxNumeric(node.getLimit().map(Limit::getValue).orElseThrow(),
+                    SqlParserPos.ZERO)}, SqlParserPos.ZERO));
+  }
+
+  private SqlNode rank() {
+    SqlWindow window = window(SqlNodeList.EMPTY, SqlNodeList.EMPTY);
+    return as(
+        over(new SqlBasicCall(SqrlOperatorTable.RANK, new SqlNode[0], SqlParserPos.ZERO), window),
+        "__rank");
+  }
+
+  private SqlNode as(SqlNode node, String name) {
+    return new SqlBasicCall(SqrlOperatorTable.AS,
+        new SqlNode[]{node, new SqlIdentifier(name, SqlParserPos.ZERO)}, SqlParserPos.ZERO);
+  }
+
+  private SqlWindow window(SqlNodeList partition, SqlNodeList order) {
+    return new SqlWindow(SqlParserPos.ZERO, null, null, partition, order,
+        SqlLiteral.createBoolean(false, SqlParserPos.ZERO), null, null, null);
+  }
+
+  private SqlNode over(SqlBasicCall call, SqlWindow window) {
+    return new SqlBasicCall(SqrlOperatorTable.OVER, new SqlNode[]{call, window}, SqlParserPos.ZERO);
+  }
+
+  private SqlNode denserank() {
+    SqlWindow window = window(SqlNodeList.EMPTY, SqlNodeList.EMPTY);
+    return as(
+        over(new SqlBasicCall(SqrlOperatorTable.DENSE_RANK, new SqlNode[0], SqlParserPos.ZERO),
+            window), "__denserank");
+  }
+
+  private SqlNode rownumber() {
+    SqlWindow window = window(SqlNodeList.EMPTY, SqlNodeList.EMPTY);
+    return as(
+        over(new SqlBasicCall(SqrlOperatorTable.ROW_NUMBER, new SqlNode[0], SqlParserPos.ZERO),
+            window), "__row_number");
+  }
+
+  private boolean isNestedLimitDistinct(QuerySpecification node, Scope context) {
+    return context.isNested() && node.getLimit().isPresent() && node.getSelect().isDistinct();
+  }
+
+  private boolean isNestedDistinct(QuerySpecification node, Scope context) {
+    return context.isNested() && node.getSelect().isDistinct();
+  }
+
+  private boolean isNestedLimit(QuerySpecification node, Scope context) {
+    return context.isNested() && node.getLimit().isPresent();
+  }
+
+  private List<SqlNode> parentPrimaryKeys(Scope context) {
+    return context.getParentTable().getPrimaryKeys().stream()
+        .map(e -> new SqlIdentifier(List.of("_", e), SqlParserPos.ZERO)).collect(Collectors.toList());
+  }
+
+  private SqlNodeList prepend(SqlNodeList nodeList, List<SqlNode> toAdd) {
+    return prepend(nodeList, toAdd.toArray(new SqlNode[0]));
+  }
+
+  private SqlNodeList prepend(@Nullable SqlNodeList nodeList, SqlNode... toAdd) {
+    if (nodeList == null) {
+      return new SqlNodeList(List.of(toAdd), nodeList.getParserPosition());
+    }
+    List<SqlNode> list = new ArrayList<>(List.of(toAdd));
+    list.addAll(nodeList.getList());
+    return new SqlNodeList(list, nodeList.getParserPosition());
+  }
+
+  private SqlNodeList append(SqlNodeList nodeList, List<SqlNode> toAdd) {
+    return append(nodeList, toAdd.toArray(new SqlNode[0]));
+  }
+
+  private SqlNodeList append(@Nullable SqlNodeList nodeList, SqlNode... toAdd) {
+    if (nodeList == null) {
+      return new SqlNodeList(List.of(toAdd), nodeList.getParserPosition());
+    }
+    List<SqlNode> list = new ArrayList<>(nodeList.getList());
+    list.addAll(List.of(toAdd));
+    return new SqlNodeList(list, nodeList.getParserPosition());
+  }
+
+  private SqlNodeList keywords(Select select) {
+    return select.isDistinct() ? new SqlNodeList(List.of(
+        SqlLiteral.createSymbol(SqlSelectKeyword.DISTINCT, SqlParserPosFactory.getPos(select))),
+        SqlParserPosFactory.getPos(select)) : null;
   }
 
   @Override
   public SqlNode visitSelect(Select node, Scope context) {
-    return new SqlNodeList(node.getSelectItems().stream().map(s -> s.accept(this, context))
-        .collect(Collectors.toList()), pos.getPos(node.getLocation()));
+    /**
+     * if agg, add ppk
+     */
+
+    List<SingleColumn> columns = analysis.getSelectItems().get(node);
+    return new SqlNodeList(
+        columns.stream().map(s -> s.accept(this, context)).collect(Collectors.toList()),
+        pos.getPos(node.getLocation()));
   }
 
   @Override
   public SqlNode visitOrderBy(OrderBy node, Scope context) {
     List<SqlNode> orderList = analysis.getOrderByExpressions().stream()
-        .map(s -> s.accept(this, context)).collect(Collectors.toList());
+        .map(s -> s.getSortKey() instanceof LongLiteral ?
+            new SortItem(s.getLocation(), offset((LongLiteral) s.getSortKey(), context),
+                s.getOrdering()) : s)
+        .map(s -> s.accept(this, context))
+        .collect(Collectors.toList());
 
     return new SqlNodeList(orderList, pos.getPos(node.getLocation()));
+  }
+
+  private Expression offset(LongLiteral sortKey, Scope context) {
+    return new LongLiteral(sortKey.getLocation(), Long.toString(sortKey.getValue() + context.getOffset()));
   }
 
   @Override
   public SqlNode visitUnion(Union node, Scope context) {
     List<SqlNode> queries = node.getRelations().stream().map(x -> x.accept(this, context))
         .collect(Collectors.toList());
+    //TODO: line up columns by name.
     SqlSetOperator op =
         node.isDistinct().orElse(false) ? SqlStdOperatorTable.UNION_ALL : SqlStdOperatorTable.UNION;
-    return new SqlBasicCall(op, queries.toArray(new SqlNode[0]), SqlParserPosFactory.from(node));
+    return new SqlBasicCall(op, queries.toArray(new SqlNode[0]), SqlParserPosFactory.getPos(node));
   }
-
 
   @Override
   public SqlNode visitIntersect(Intersect node, Scope context) {
@@ -196,7 +420,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
         .collect(Collectors.toList());
     SqlSetOperator op = node.isDistinct().orElse(false) ? SqlStdOperatorTable.INTERSECT_ALL
         : SqlStdOperatorTable.INTERSECT;
-    return new SqlBasicCall(op, queries.toArray(new SqlNode[0]), SqlParserPosFactory.from(node));
+    return new SqlBasicCall(op, queries.toArray(new SqlNode[0]), SqlParserPosFactory.getPos(node));
   }
 
   @Override
@@ -205,7 +429,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
         .collect(Collectors.toList());
     SqlSetOperator op = node.isDistinct().orElse(false) ? SqlStdOperatorTable.EXCEPT_ALL
         : SqlStdOperatorTable.EXCEPT;
-    return new SqlBasicCall(op, queries.toArray(new SqlNode[0]), SqlParserPosFactory.from(node));
+    return new SqlBasicCall(op, queries.toArray(new SqlNode[0]), SqlParserPosFactory.getPos(node));
   }
 
   @Override
@@ -221,20 +445,24 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   @Override
   public SqlNode visitAllColumns(AllColumns node, Scope context) {
-    return new SqlIdentifier("*", SqlParserPosFactory.from(node));
+    throw new RuntimeException("");
   }
 
   @Override
   public SqlNode visitSortItem(SortItem node, Scope context) {
     SqlNode sortKey = node.getSortKey().accept(this, context);
     if (node.getOrdering().isPresent() && node.getOrdering().get() == Ordering.DESCENDING) {
-      SqlNode[] sortOps = {sortKey};
-      return new SqlBasicCall(SqlStdOperatorTable.DESC, sortOps, SqlParserPos.ZERO);
+      return new SqlBasicCall(SqlStdOperatorTable.DESC, new SqlNode[]{sortKey}, SqlParserPos.ZERO);
     }
 
     return sortKey;
   }
 
+  /**
+   * FROM _ JOIN _.entries;
+   * <p>
+   * FROM Order JOIN entries on Order.pk = e.pk
+   */
   @Override
   public SqlNode visitTableNode(TableNode node, Scope context) {
     ResolvedNamePath resolvedTable = analysis.getResolvedNamePath().get(node);
@@ -246,6 +474,21 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 //      return new SqlBasicCall(AS, operands, pos.getPos(node.getLocation()));
 //    }
     //Always alias
+
+//    JoinPathBuilder builder = new JoinPathBuilder(joins);
+//    builder.expand(node.getNamePath(), node.getAlias());
+//
+//    SqlNode n = builder.getSqlNode();
+//    Optional<SqlNode> condition = builder.getTrailingCondition();
+//
+//    String alias = analysis.getTableAliases().get(node).getCanonical();
+//    String name = resolvedTable.getToTable().getId().getCanonical();
+//
+//    //if node is relative scoped, trailing condition goes on join.
+//
+////    context.setTrailingCondition(condition);
+//
+//    return n;
     return new SqlBasicCall(SqrlOperatorTable.AS,
         new SqlNode[]{new SqlIdentifier(List.of(name), pos.getPos(node.getLocation())),
             new SqlIdentifier(analysis.getTableAliases().get(node).getCanonical(),
@@ -254,7 +497,8 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   @Override
   public SqlNode visitTableSubquery(TableSubquery node, Scope context) {
-    return node.getQuery().accept(this, context);
+    throw new RuntimeException("TBD");
+//    return node.getQuery().accept(this, context);
   }
 
   @Override
@@ -325,8 +569,11 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   @Override
   public SqlNode visitSimpleGroupBy(SimpleGroupBy node, Scope context) {
+    //is aggregating, add group by
+
     List<SqlNode> ordinals = analysis.groupByOrdinals.stream()
-        .map(i -> SqlLiteral.createExactNumeric(Integer.toString(i + 1), SqlParserPos.ZERO))
+        .map(i -> SqlLiteral.createExactNumeric(Integer.toString(i + 1 + context.offset),
+            SqlParserPos.ZERO))
         .collect(Collectors.toList());
 
     return new SqlNodeList(ordinals, pos.getPos(node.getLocation()));
@@ -334,6 +581,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   @Override
   public SqlNode visitLimitNode(Limit node, Scope context) {
+    //throw if nested
     return node.getIntValue()
         .map(i -> SqlLiteral.createExactNumeric(node.getValue(), pos.getPos(node.getLocation())))
         .orElse(null);
@@ -407,7 +655,6 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   @Override
   public SqlNode visitFunctionCall(FunctionCall node, Scope context) {
-    //1. Check if inline agg from analyzer
     ResolvedFunctionCall resolvedCall = analysis.getResolvedFunctions().get(node);
 
     boolean isLocalAggregate = analysis.getIsLocalAggregate().contains(node);
@@ -417,6 +664,8 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
       ResolvedNamePath namePath = analysis.getResolvedNamePath().get(node.getArguments().get(0));
       Preconditions.checkNotNull(namePath);
 
+      //Create new join artifact, realias condition
+
       String opName = node.getNamePath().get(0).getCanonical();
       SqlBasicCall call = new SqlBasicCall(resolvedCall.getFunction().getOp(),
           new SqlNode[]{new SqlResolvedIdentifier(namePath, SqlParserPos.ZERO)},
@@ -425,8 +674,6 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
       SqlSelect select = localAggBuilder.extractSubquery(call);
 
       context.getSubqueries().add(select);
-      //todo name subquery
-      //create join key
 
       context.getConditions().add(Optional.of(SqlLiteral.createBoolean(true, SqlParserPos.ZERO)));
 
@@ -437,6 +684,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
         toOperand(node.getArguments(), context), pos.getPos(node.getLocation()));
 
     //Convert to OVER
+    //Add pk to over
     if (resolvedCall.getFunction().requiresOver()) {
       List<SqlNode> partition = node.getOver().get().getPartitionBy().stream()
           .map(e -> e.accept(this, context)).collect(Collectors.toList());
@@ -493,12 +741,12 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
           .collect(Collectors.toList()), pos.getPos(node.getLocation()));
     }
     //group by / order by
-    if (p instanceof ResolvedNamedReference) {
-      SqlLiteral lit = SqlLiteral.createExactNumeric(
-          (((ResolvedNamedReference) p).getOrdinal() + 1) + "", SqlParserPos.ZERO);
-
-      return lit;
-    }
+//    if (p instanceof ResolvedNamedReference) {
+//      SqlLiteral lit = SqlLiteral.createExactNumeric(
+//          (((ResolvedNamedReference) p).getOrdinal() + 1) + "", SqlParserPos.ZERO);
+//
+//      return lit;
+//    }
 
     if (p.getPath().size() > 1) {
       JoinPathBuilder joinPathBuilder = new JoinPathBuilder(this.joins);
@@ -667,45 +915,38 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     AbstractSqrlTable table = tables.get(path.getToTable().getId());
     Preconditions.checkNotNull(table, "Could not find table");
 
-    List<SqlNode> inner = SqlNodeUtil.toSelectList(Optional.of(path.getAlias()),
-        table.getRowType(null).getFieldList());
-    List<SqlNode> outer = SqlNodeUtil.toSelectList(Optional.empty(),
-        table.getRowType(null).getFieldList());
-
-    SqlBasicCall rowNum = new SqlBasicCall(SqrlOperatorTable.ROW_NUMBER, new SqlNode[]{},
-        SqlParserPos.ZERO);
-
-    List<SqlNode> partition = node.getPartitionKeyNodes().stream()
-        .map(n -> analysis.getResolvedNamePath().get(n)).map(n -> n.getPath().get(0))
-        .map(n -> SqlNodeUtil.fieldToNode(Optional.of(path.getAlias()), table.getField(n)))
+    List<SqlNode> partition = node.getPartitionKeyNodes().stream().map(p -> p.accept(this, null))
         .collect(Collectors.toList());
 
-    List<SqlNode> orderList = new ArrayList<>();
-    if (!node.getOrder().isEmpty()) {
-      for (SortItem sortItem : node.getOrder()) {
-        orderList.add(sortItem.accept(this, null));
-      }
-    } else {
-      //default to current timestamp
+    List<SqlNode> orderList = node.getOrder().stream().map(p -> p.accept(this, null))
+        .collect(Collectors.toList());
+
+    //Assure at least 1 order
+    if (orderList.isEmpty()) {
       orderList.add(SqlNodeUtil.fieldToNode(Optional.of(path.getAlias()), table.getTimestamp()));
     }
 
-    SqlNode[] operands = {rowNum, new SqlWindow(pos.getPos(node.getLocation()), null, null,
-        new SqlNodeList(partition, SqlParserPos.ZERO),
-        new SqlNodeList(orderList, SqlParserPos.ZERO),
-        SqlLiteral.createBoolean(false, pos.getPos(node.getLocation())), null, null, null)};
+    SqlNode[] operands = {
+        new SqlBasicCall(SqrlOperatorTable.ROW_NUMBER, new SqlNode[]{}, SqlParserPos.ZERO),
+        new SqlWindow(pos.getPos(node.getLocation()), null, null,
+            new SqlNodeList(partition, SqlParserPos.ZERO),
+            new SqlNodeList(orderList, SqlParserPos.ZERO),
+            SqlLiteral.createBoolean(false, pos.getPos(node.getLocation())), null, null, null)};
 
     SqlBasicCall over = new SqlBasicCall(SqlStdOperatorTable.OVER, operands,
         pos.getPos(node.getLocation()));
 
     SqlBasicCall rowNumAlias = new SqlBasicCall(SqrlOperatorTable.AS,
         new SqlNode[]{over, new SqlIdentifier("_row_num", SqlParserPos.ZERO)}, SqlParserPos.ZERO);
+
+    List<SqlNode> inner = SqlNodeUtil.toSelectList(Optional.of(path.getAlias()),
+        table.getRowType(null).getFieldList());
     inner.add(rowNumAlias);
 
-    SqlNode outerSelect = new SqlSelect(SqlParserPos.ZERO, null,
-        new SqlNodeList(outer, SqlParserPos.ZERO),
+    SqlNode outerQuery = new SqlSelect(SqlParserPos.ZERO, null, new SqlNodeList(
+        SqlNodeUtil.toSelectList(Optional.empty(), table.getRowType(null).getFieldList()),
+        SqlParserPos.ZERO),
         new SqlSelect(SqlParserPos.ZERO, null, new SqlNodeList(inner, SqlParserPos.ZERO),
-
             new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
                 new SqlIdentifier(path.getToTable().getId().getCanonical(), SqlParserPos.ZERO),
                 new SqlNodeList(SqlParserPos.ZERO)),
@@ -716,7 +957,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
                 SqlLiteral.createExactNumeric("1", SqlParserPos.ZERO)}, SqlParserPos.ZERO), null,
         null, null, null, null, null, new SqlNodeList(SqlParserPos.ZERO));
 
-    return outerSelect;
+    return outerQuery;
   }
 
   protected void createParentChildJoinDeclaration(Relationship rel) {
@@ -751,11 +992,20 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   }
 
 
-  @Value
+  @Getter
   public static class Scope {
 
     //todo: Should be also the trailing condition
     final List<SqlNode> subqueries = new ArrayList<>();
     final List<Optional<SqlNode>> conditions = new ArrayList<>();
+    final AbstractSqrlTable parentTable;
+    final boolean isNested;
+    @Setter
+    int offset = 0;
+
+    public Scope(AbstractSqrlTable parentTable, boolean isNested) {
+      this.parentTable = parentTable;
+      this.isNested = isNested;
+    }
   }
 }

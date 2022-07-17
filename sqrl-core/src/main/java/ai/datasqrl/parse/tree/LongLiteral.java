@@ -31,7 +31,7 @@ public class LongLiteral
     this(Optional.of(location), value);
   }
 
-  private LongLiteral(Optional<NodeLocation> location, String value) {
+  public LongLiteral(Optional<NodeLocation> location, String value) {
     super(location);
     requireNonNull(value, "value is null");
     try {
