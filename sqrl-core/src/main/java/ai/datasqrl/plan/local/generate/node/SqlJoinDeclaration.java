@@ -28,7 +28,7 @@ public class SqlJoinDeclaration {
     analyze(rel);
   }
 
-  private SqlJoinDeclaration(SqlNode rel, SqlNode condition, String toTableAlias) {
+  public SqlJoinDeclaration(SqlNode rel, SqlNode condition, String toTableAlias) {
     this.rel = rel;
     this.condition = condition;
     this.toTableAlias = toTableAlias;
@@ -62,7 +62,12 @@ public class SqlJoinDeclaration {
     });
 
     //Ego centric traversal, we need to know the last alias to join later
-    this.toTableAlias = ((SqlIdentifier)((SqlBasicCall)rel).getOperandList().get(1)).names.get(0);
+    if (rel instanceof SqlBasicCall) {
+      this.toTableAlias = ((SqlIdentifier) ((SqlBasicCall) rel).getOperandList().get(1)).names.get(
+          0);
+    } else {
+      this.toTableAlias = "_";
+    }
   }
 
   //Rewrites all self aliases w/ incoming alias

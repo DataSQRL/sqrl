@@ -137,9 +137,11 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   @Override
   public SqlNode visitJoinAssignment(JoinAssignment node, Scope context) {
     //Create join declaration, recursively expand paths.
-    SqlJoin sqlNode = (SqlJoin) node.getJoinDeclaration().getRelation().accept(this, null);
+    Scope scope = new Scope(this.getTables().values().stream().findFirst().get(), true);
+    SqlJoin sqlNode = (SqlJoin) node.getJoinDeclaration().getRelation().accept(this, scope);
     SqlNodeUtil.printJoin(sqlNode);
     Relationship rel = (Relationship) analysis.getProducedField().get(node);
+
     this.getJoins().put(rel, new SqlJoinDeclaration(sqlNode.getRight(), sqlNode.getCondition()));
     //todo: plan/validate
 
@@ -154,15 +156,16 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     Scope ctx = new Scope(this.getTables().values().stream().findFirst().get(), true);
     SqlNode sqlNode = node.getExpression().accept(this, ctx);
 
-    if (!ctx.getSubqueries().isEmpty()) {
+    if (!ctx.getAddlJoins().isEmpty()) {
       //With subqueries
-      if (ctx.getSubqueries().size() > 1) {
+      if (ctx.getAddlJoins().size() > 1) {
         throw new RuntimeException("TBD");
       } else if (sqlNode instanceof SqlIdentifier) {
         //Just one subquery and just a literal assignment. No need to rejoin to parent.
         //e.g. Orders.total := sum(entries.total);
-
-        RelNode relNode = plan(ctx.getSubqueries().get(0));
+        //AS
+        SqlBasicCall call = (SqlBasicCall)ctx.getAddlJoins().get(0).getRel();
+        RelNode relNode = plan(call.getOperandList().get(0));
         Field field = analysis.getProducedField().get(node);
 
         AbstractSqrlTable table = this.tables.get(v.getId());
@@ -173,7 +176,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
         table.addField(newExpr);
 
-        return ctx.getSubqueries().get(0);
+        return ctx.getAddlJoins().get(0).getRel();
       } else {
         throw new RuntimeException("TBD");
       }

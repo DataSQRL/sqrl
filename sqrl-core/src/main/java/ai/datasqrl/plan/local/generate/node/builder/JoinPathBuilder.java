@@ -1,12 +1,12 @@
 package ai.datasqrl.plan.local.generate.node.builder;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.RootTableField;
 import com.google.common.base.Preconditions;
 import java.util.Map;
 import java.util.Optional;
@@ -122,8 +122,26 @@ public class JoinPathBuilder {
     );
   }
 
-  public void expand(NamePath namePath, Optional<Name> alias) {
+  public SqlJoinDeclaration expand(ResolvedNamePath namePath, Optional<Name> alias) {
+    String baseAlias = namePath.getAlias();
+    setCurrentAlias(baseAlias);
+    for (Field field : namePath.getPath()) {
+      if (field instanceof RootTableField) {
+        RootTableField root = (RootTableField) field;
+        String tableAlias = namePath.getAlias();
+        this.sqlNode =  new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
+            new SqlTableRef(SqlParserPos.ZERO,
+                new SqlIdentifier(root.getTable().getId().getCanonical(),
+                    SqlParserPos.ZERO), SqlNodeList.EMPTY),
+            new SqlIdentifier(tableAlias, SqlParserPos.ZERO)
+        }, SqlParserPos.ZERO);
+      }
+      if (field instanceof Relationship) {
+        this.join((Relationship) field);
+      }
+    }
 
+    return new SqlJoinDeclaration(this.sqlNode, this.trailingCondition.orElse(null), this.currentAlias);
   }
 
   //return result

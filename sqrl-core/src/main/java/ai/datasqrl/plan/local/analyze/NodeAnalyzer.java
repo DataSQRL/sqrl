@@ -340,6 +340,8 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
    */
   @Override
   public Scope visitTableNode(TableNode node, Scope scope) {
+    //TODO: Handle `_ CROSS JOIN _.entries;`
+
     if (node.getNamePath().getLength() == 1 && node.getNamePath().getFirst()
         .equals(ReservedName.SELF_IDENTIFIER)) {
       scope.setSelfInScope(true);

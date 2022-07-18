@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -31,7 +32,10 @@ public class SqlNodeUtil {
   }
 
   public static SqlNode and(@Nullable SqlNode... exprs) {
-    return and(List.of(exprs).stream().filter(Objects::isNull).collect(Collectors.toList()));
+    if (exprs == null) {
+      return null;
+    }
+    return and(Stream.of(exprs).filter(Objects::isNull).collect(Collectors.toList()));
   }
 
   public static SqlNode and(List<SqlNode> expressions) {
