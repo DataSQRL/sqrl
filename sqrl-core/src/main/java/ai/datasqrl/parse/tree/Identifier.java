@@ -39,6 +39,10 @@ public class Identifier
     super(location);
     this.namePath = namePath;
   }
+  public Identifier(Optional<NodeLocation> location, Name name) {
+    super(location);
+    this.namePath = name.toNamePath();
+  }
 
   public NamePath getNamePath() {
     return namePath;

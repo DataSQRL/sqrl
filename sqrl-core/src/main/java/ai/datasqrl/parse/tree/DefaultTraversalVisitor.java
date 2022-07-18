@@ -264,11 +264,6 @@ public abstract class DefaultTraversalVisitor<R, C>
   }
 
   @Override
-  public R visitAliasedRelation(AliasedRelation node, C context) {
-    return process(node.getRelation(), context);
-  }
-
-  @Override
   public R visitJoin(Join node, C context) {
     process(node.getLeft(), context);
     process(node.getRight(), context);

@@ -51,6 +51,7 @@ import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.util.SqlOperatorTables;
 import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqrlValidator;
 import org.apache.calcite.sql2rel.RelDecorrelator;
 import org.apache.calcite.sql2rel.SqlRexConvertletTable;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -236,7 +237,7 @@ public class PlannerImpl implements Planner, ViewExpander {
 
   @EnsuresNonNull("validator")
   @Override public SqlNode validate(SqlNode sqlNode) throws ValidationException {
-    ensure(State.STATE_3_PARSED);
+//    ensure(State.STATE_3_PARSED);
     this.validator = createSqlValidator(createCatalogReader());
     try {
       validatedSqlNode = validator.validate(sqlNode);
@@ -350,7 +351,7 @@ public class PlannerImpl implements Planner, ViewExpander {
   protected SqlValidator createSqlValidator(CalciteCatalogReader catalogReader) {
     final SqlOperatorTable opTab =
         SqlOperatorTables.chain(operatorTable, catalogReader);
-    return new FlinkCalciteSqlValidator(opTab,
+    return new SqrlValidator(opTab,
         catalogReader,
         getTypeFactory(),
         sqlValidatorConfig

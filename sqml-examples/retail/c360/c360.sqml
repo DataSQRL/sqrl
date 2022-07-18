@@ -23,7 +23,7 @@ Orders.entries.product := JOIN Product ON Product.productid = _.productid INVERS
 Customer.recent_products := SELECT productid, product.category AS category,
                                    sum(quantity) AS quantity, count(*) AS num_orders
                             FROM _.orders.entries
-                            WHERE parent.`time` > now() - INTERVAL 2 YEAR
+                            WHERE parent.time > now() - INTERVAL 2 YEAR
                             GROUP BY productid, category ORDER BY num_orders DESC, quantity DESC;
 
 Customer.recent_products_categories :=
@@ -35,17 +35,17 @@ Customer.recent_products_categories.products := JOIN _.parent.recent_products rp
 
 -- Aggregate customer spending by month and product category for the 'spending history' feature
 Customer._spending_by_month_category :=
-                     SELECT time.roundToMonth(parent.`time`) AS `month`,
+                     SELECT time.roundToMonth(parent.time) AS month,
                             product.category AS category,
                             sum(total) AS total,
                             sum(discount) AS savings
                      FROM _.orders.entries
-                     GROUP BY `month`, category ORDER BY `month` DESC;
+                     GROUP BY month, category ORDER BY month DESC;
 
 Customer.spending_by_month :=
-                    SELECT `month`, sum(total) AS total, sum(savings) AS savings
+                    SELECT month, sum(total) AS total, sum(savings) AS savings
                     FROM _._spending_by_month_category
-                    GROUP BY `month` ORDER BY `month` DESC;
+                    GROUP BY month ORDER BY month DESC;
 Customer.spending_by_month.categories :=
     JOIN _.parent._spending_by_month_category c ON c.month=month;
 
@@ -54,12 +54,12 @@ Customer.spending_by_month.categories :=
 Product._sales_last_week := SELECT SUM(e.quantity)
                           FROM _.order_entries e
                           --WHERE e.parent.time > now() - INTERVAL 1 WEEK;
-                          WHERE e.parent.`time` > now() - INTERVAL 7 DAY;
+                          WHERE e.parent.time > now() - INTERVAL 7 DAY;
 
 Product._sales_last_month := SELECT SUM(e.quantity)
                           FROM _.order_entries e
                           --WHERE e.parent.time > now() - INTERVAL 4 WEEK;
-                          WHERE e.parent.`time` > now() - INTERVAL 1 MONTH;
+                          WHERE e.parent.time > now() - INTERVAL 1 MONTH;
 
 Product._last_week_increase := _sales_last_week * 4 / _sales_last_month;
 
@@ -74,7 +74,7 @@ Category.trending := JOIN Product p ON _.name = p.category AND p._last_week_incr
 Customer.favorite_categories := SELECT s.category as category_name,
                                         sum(s.total) AS total
                                 FROM _._spending_by_month_category s
-                                WHERE s.`month` >= now() - INTERVAL 1 YEAR
+                                WHERE s.month >= now() - INTERVAL 1 YEAR
                                 GROUP BY category_name ORDER BY total DESC LIMIT 5;
 
 Customer.favorite_categories.category := JOIN Category ON _.category_name = Category.name;

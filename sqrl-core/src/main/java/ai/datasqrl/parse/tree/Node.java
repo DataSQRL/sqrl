@@ -45,8 +45,4 @@ public abstract class Node {
 
   @Override
   public abstract boolean equals(Object obj);
-
-  public List<Annotation> getAnnotations() {
-    return List.of();
-  }
 }

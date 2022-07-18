@@ -2,6 +2,11 @@ package org.apache.calcite.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
+import java.util.HashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.linq4j.tree.Expression;
 
 /**
@@ -9,12 +14,17 @@ import org.apache.calcite.linq4j.tree.Expression;
  * is always in flux as the user defines the script, a mapping object is used to resolve the
  * current
  */
+@Slf4j
 public class BridgedCalciteSchema extends AbstractSqrlSchema {
   SqrlCalciteBridge bridge;
 
   @Override
   public Table getTable(String table) {
-    return bridge.getTable(Name.system(table));
+    Table calciteTable = bridge.getTable(Name.system(table));
+    if (calciteTable == null) {
+      log.error("Could not find calcite table {}", table);
+    }
+    return calciteTable;
   }
 
   @Override
