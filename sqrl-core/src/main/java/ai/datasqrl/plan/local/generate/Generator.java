@@ -238,7 +238,8 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     this.getJoins().put(rel, new SqlJoinDeclaration(
         new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
             new SqlTableRef(SqlParserPos.ZERO,
-                new SqlIdentifier(ta.getId().getCanonical(), SqlParserPos.ZERO), SqlNodeList.EMPTY),
+                new SqlIdentifier(table.getId().getCanonical(), SqlParserPos.ZERO), SqlNodeList.EMPTY),
+            //todo fix
             new SqlIdentifier("_internal$1", SqlParserPos.ZERO)
         }, SqlParserPos.ZERO),
         Optional.empty()

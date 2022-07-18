@@ -136,41 +136,41 @@ class Generator2Test extends AbstractSQRLIT {
         + "                     SELECT category, count(*) AS num_products"
         + "                     FROM _.recent_products"
         + "                     GROUP BY category ORDER BY num_products;\n");
-//    node = gen(
-//        "Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp"
-//            + ".category=_.category;\n");
-//    node = gen("Customer._spending_by_month_category :="
-//        + "                     SELECT time.roundToMonth(parent.time) AS month,"
-//        + "                            e.product.category AS category,"
-//        + "                            sum(total) AS total,"
-//        + "                            sum(discount) AS savings"
-//        + "                     FROM _.orders.entries e"
-//        + "                     GROUP BY month, category ORDER BY month DESC;\n");
-//
-//    node = gen("Customer.spending_by_month :="
-//        + "                    SELECT month, sum(total) AS total, sum(savings) AS savings"
-//        + "                    FROM _._spending_by_month_category"
-//        + "                    GROUP BY month ORDER BY month DESC;\n");
-//    node = gen("Customer.spending_by_month.categories :="
-//        + "    JOIN _.parent._spending_by_month_category c ON c.month=_.month;\n");
-//    node = gen("Product._sales_last_week := SELECT SUM(e.quantity)"
-//        + "                          FROM _.order_entries e"
-//        + "                          WHERE e.parent.time > now() - INTERVAL 7 DAY;\n");
-//    node = gen("Product._sales_last_month := SELECT SUM(e.quantity)"
-//        + "                          FROM _.order_entries e"
-//        + "                          WHERE e.parent.time > now() - INTERVAL 1 MONTH;\n");
-//    node = gen("Product._last_week_increase := _sales_last_week * 4 / _sales_last_month;\n");
-//    node = gen("Category := SELECT DISTINCT category AS name FROM Product;\n");
-//    node = gen("Category.products := JOIN Product ON _.name = Product.category;\n");
-//    node = gen(
-//        "Category.trending := JOIN Product p ON _.name = p.category AND p._last_week_increase >"
-//            + " 0"
-//            + "                     ORDER BY p._last_week_increase DESC LIMIT 10;\n");
-//    node = gen("Customer.favorite_categories := SELECT s.category as category_name,"
-//        + "                                        sum(s.total) AS total"
-//        + "                                FROM _._spending_by_month_category s"
-//        + "                                WHERE s.month >= now() - INTERVAL 1 YEAR"
-//        + "                                GROUP BY category_name ORDER BY total DESC LIMIT 5;\n");
+    node = gen(
+        "Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp"
+            + ".category=_.category;\n");
+    node = gen("Customer._spending_by_month_category :="
+        + "                     SELECT time.roundToMonth(parent.time) AS month,"
+        + "                            e.product.category AS category,"
+        + "                            sum(total) AS total,"
+        + "                            sum(discount) AS savings"
+        + "                     FROM _.orders.entries e"
+        + "                     GROUP BY month, category ORDER BY month DESC;\n");
+
+    node = gen("Customer.spending_by_month :="
+        + "                    SELECT month, sum(total) AS total, sum(savings) AS savings"
+        + "                    FROM _._spending_by_month_category"
+        + "                    GROUP BY month ORDER BY month DESC;\n");
+    node = gen("Customer.spending_by_month.categories :="
+        + "    JOIN _.parent._spending_by_month_category c ON c.month=_.month;\n");
+    node = gen("Product._sales_last_week := SELECT SUM(e.quantity)"
+        + "                          FROM _.order_entries e"
+        + "                          WHERE e.parent.time > now() - INTERVAL 7 DAY;\n");
+    node = gen("Product._sales_last_month := SELECT SUM(e.quantity)"
+        + "                          FROM _.order_entries e"
+        + "                          WHERE e.parent.time > now() - INTERVAL 1 MONTH;\n");
+    node = gen("Product._last_week_increase := _sales_last_week * 4 / _sales_last_month;\n");
+    node = gen("Category := SELECT DISTINCT category AS name FROM Product;\n");
+    node = gen("Category.products := JOIN Product ON _.name = Product.category;\n");
+    node = gen(
+        "Category.trending := JOIN Product p ON _.name = p.category AND p._last_week_increase >"
+            + " 0"
+            + "                     ORDER BY p._last_week_increase DESC LIMIT 10;\n");
+    node = gen("Customer.favorite_categories := SELECT s.category as category_name,"
+        + "                                        sum(s.total) AS total"
+        + "                                FROM _._spending_by_month_category s"
+        + "                                WHERE s.month >= now() - INTERVAL 1 YEAR"
+        + "                                GROUP BY category_name ORDER BY total DESC LIMIT 5;\n");
 //    node = gen("Customer.favorite_categories.category := JOIN Category ON _.category_name = Category.name;\n");
 ////            + "CREATE SUBSCRIPTION NewCustomerPromotion ON ADD AS "
 ////            + "SELECT customerid, email, name, total_orders FROM Customer WHERE total_orders >=
