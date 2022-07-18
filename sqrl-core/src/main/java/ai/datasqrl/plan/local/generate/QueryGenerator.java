@@ -158,15 +158,6 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   @Override
   public SqlNode visitQuerySpecification(QuerySpecification node, Scope context) {
-    /**
-     * Nested:
-     *
-     * if limit:
-     *  - add rn/rank/dr, pull into subquery
-     *
-     *
-     */
-
     List<SqlNode> ppk = parentPrimaryKeys(context);
     List<SqlNode> ppkIndex = IntStream.range(0, ppk.size())
         .mapToObj(i -> SqlLiteral.createExactNumeric(Long.toString(i + 1), SqlParserPos.ZERO))
@@ -190,15 +181,15 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     if (isNestedLimitDistinct(node, context)) {
       keywords = null;
       select = append(select, rownumber(), rank(), denserank());
-      where = and(where, filterNestedLimitDistinct(node));
+//      where = and(where, filterNestedLimitDistinct(node));
       limit = null;
     } else if (isNestedDistinct(node, context)) {
       keywords = null;
-      select = append(select, rownumber(), rank());
-      where = and(where, filterNestedDistinct(node));
+      select = append(select/*, rownumber(), rank()*/);
+//      where = and(where, filterNestedDistinct(node));
     } else if (isNestedLimit(node, context)) {
       select = append(select, rownumber());
-      where = and(where, filterLimit(node));
+//      where = and(where, filterLimit(node));
       limit = null;
     }
 
@@ -232,7 +223,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 //    }
 
     SqlSelect query = new SqlSelect(pos.getPos(node.getLocation()), keywords, select, from, where,
-        groupBy, having, null, orderBy, null, limit, null);
+        groupBy.getList().isEmpty()? null: groupBy, having, null, orderBy, null, limit, null);
 
     //Add parent primary keys
 
@@ -317,7 +308,11 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   }
 
   private List<SqlNode> parentPrimaryKeys(Scope context) {
-    return context.getParentTable().getPrimaryKeys().stream()
+    if (context.getParentTable().isEmpty()) {
+      return List.of();
+    }
+
+    return context.getParentTable().get().getPrimaryKeys().stream()
         .map(e -> new SqlIdentifier(List.of("_", e), SqlParserPos.ZERO))
         .collect(Collectors.toList());
   }
@@ -328,7 +323,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   private SqlNodeList prepend(@Nullable SqlNodeList nodeList, SqlNode... toAdd) {
     if (nodeList == null) {
-      return new SqlNodeList(List.of(toAdd), nodeList.getParserPosition());
+      return new SqlNodeList(List.of(toAdd), SqlParserPos.ZERO);
     }
     List<SqlNode> list = new ArrayList<>(List.of(toAdd));
     list.addAll(nodeList.getList());
@@ -961,7 +956,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     final List<SqlJoinDeclaration> addlJoins = new ArrayList<>();
     //    final List<SqlNode> subqueries = new ArrayList<>();
 //    final List<Optional<SqlNode>> conditions = new ArrayList<>();
-    final AbstractSqrlTable parentTable;
+    final Optional<AbstractSqrlTable> parentTable;
     final boolean isNested;
 
     @Getter
@@ -970,7 +965,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     int offset = 0;
     private SqlNode join = null;
 
-    public Scope(AbstractSqrlTable parentTable, boolean isNested) {
+    public Scope(Optional<AbstractSqrlTable> parentTable, boolean isNested) {
       this.parentTable = parentTable;
       this.isNested = isNested;
     }

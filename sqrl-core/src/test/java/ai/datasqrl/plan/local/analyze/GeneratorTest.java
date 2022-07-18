@@ -6,20 +6,17 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.SqrlStatement;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.local.generate.Generator;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
 import java.io.IOException;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.sql.SqlNode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,8 +28,10 @@ class GeneratorTest extends AbstractSQRLIT {
   ErrorCollector errorCollector;
   ImportManager importManager;
   Analyzer analyzer;
+  Analysis analysis;
   private Planner planner;
-  BridgedCalciteSchema subSchema;
+  //  private ScriptNode script;
+  private Generator generator;
 
   @BeforeEach
   public void setup() throws IOException {
@@ -52,174 +51,139 @@ class GeneratorTest extends AbstractSQRLIT {
         errorCollector);
 
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
-//    SqrlSchemaCatalog catalog = new SqrlSchemaCatalog(rootSchema);
     String schemaName = "test";
-    subSchema = new BridgedCalciteSchema();
-//    catalog.add(schemaName, subSchema);
+    BridgedCalciteSchema subSchema = new BridgedCalciteSchema();
+    rootSchema.add(schemaName, subSchema); //also give the subschema access
 
     PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
     Planner planner = plannerFactory.createPlanner(schemaName);
     this.planner = planner;
-  }
 
-  @Test
-  public void importTest() {
-    ScriptNode scriptNode = parser.parse("IMPORT ecommerce-data.Product;");
-    Analysis analysis = analyzer.analyze(scriptNode);
-    Generator generator = new Generator(planner, analysis);
-    generator.generate(scriptNode);
-
-    Table product = analysis.getSchema().getTable(Name.system("Product")).get();
-
-    Assertions.assertNotNull(generator.getTable(Name.system("ecommerce-data.Product")));
-    Assertions.assertNotNull(generator.getTable(product.getId()));
-  }
-
-  @Test
-  public void testQuery() {
-    ScriptNode scriptNode = parser.parse("IMPORT ecommerce-data.Product;"
-        + "Product2 := SELECT productid FROM Product;");
-    Analysis analysis = analyzer.analyze(scriptNode);
-    Generator generator = new Generator(planner, analysis);
+    generator = new Generator(planner, analyzer.getAnalysis());
     subSchema.setBridge(generator);
-    generator.generate(scriptNode);
-
-    Assertions.assertNotNull(generator.getTable(Name.system("ecommerce-data.Product")));
-    Assertions.assertNotNull(generator.getTable(Name.system("Product2")));
-  }
-
-  @Test
-  public void nestedQueryTest() {
-    ScriptNode scriptNode = parser.parse("IMPORT ecommerce-data.Product;"
-        + "Product.nested := SELECT productid FROM _;");
-    Analysis analysis = analyzer.analyze(scriptNode);
-    Generator generator = new Generator(planner, analysis);
-    subSchema.setBridge(generator);
-    generator.generate(scriptNode);
-
-    Field field = analysis.getSchema().getTable(Name.system("Product")).get().getField(Name.system("nested")).get();
-
-    Assertions.assertTrue(field instanceof Relationship);
-    Assertions.assertNotNull(generator.getTable(((Relationship)field).getToTable().getName()));
   }
 
 
   @Test
-  public void queryPathTest() {
-    ScriptNode scriptNode = parser.parse("IMPORT ecommerce-data.Product;"
-        + "Product.nested := SELECT productid FROM _;"
-        + "Product2 := SELECT productid FROM Product.nested;"
-    );
-    Analysis analysis = analyzer.analyze(scriptNode);
-    Generator generator = new Generator(planner, analysis);
-    subSchema.setBridge(generator);
-    generator.generate(scriptNode);
-
-    Table table = analysis.getSchema().getTable(Name.system("Product2")).get();
-    Assertions.assertNotNull(generator.getTable(table.getId()));
+  public void distinctTest() {
+    SqlNode node;
+    node = gen("IMPORT ecommerce-data.Customer;\n");
+    node = gen("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
+    System.out.println(node);
   }
+
 
   @Test
   public void fullTest() {
+    gen("IMPORT ecommerce-data.Customer;\n");
+    gen("IMPORT ecommerce-data.Product;\n");
+    gen("IMPORT ecommerce-data.Orders;\n");
+    SqlNode node;
 
-    String query = "IMPORT ecommerce-data.Customer;\n"
-        + "IMPORT ecommerce-data.Product;\n"
-        + "IMPORT ecommerce-data.Orders;\n"
-        + "\n"
-        + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
-        + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
-        + "\n"
-        + "-- Compute useful statistics on orders\n"
-        + "Orders.entries.discount := coalesce(discount, 0.0);\n"
-        + "Orders.entries.total := quantity * unit_price - discount;\n"
-        + "Orders.total := sum(entries.total);\n"
-        + "Orders.total_savings := sum(entries.discount);\n"
-        + "Orders.total_entries := count(entries);\n"
-        + "\n"
-        + "\n"
-        + "-- Relate Customer to Orders and compute a customer's total order spent\n"
-        + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
-        + "Customer.total_orders := sum(_.orders.total);\n"
-        + "\n"
-        + "-- Aggregate all products the customer has ordered for the 'order again' feature\n"
-        + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
-        + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
-        + "\n"
-        + "Customer.recent_products := SELECT productid, e.product.category AS category,\n"
-        + "                                   sum(quantity) AS quantity, count(*) AS num_orders\n"
-        + "                            FROM _.orders.entries e\n"
-        + "                            WHERE parent.time > now() - INTERVAL 2 YEAR\n"
+    node = gen("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
+//    assertEquals(
+//        "SELECT `EXPR$0`.`_uuid`, `EXPR$0`.`_ingest_time`, `EXPR$0`.`customerid`, `EXPR$0`"
+//            + ".`email`, `EXPR$0`.`name`\n"
+//            + "FROM (SELECT `customer$1`.`_uuid`, `customer$1`.`_ingest_time`, `customer$1`"
+//            + ".`customerid`, `customer$1`.`email`, `customer$1`.`name`, ROW_NUMBER() OVER "
+//            + "(PARTITION BY `customer$1`.`customerid` ORDER BY `customer$1`.`_ingest_time` DESC)"
+//            + " AS `_row_num`\n"
+//            + "FROM `test`.`customer$1`) AS `EXPR$0`\n"
+//            + "WHERE `EXPR$0`.`_row_num` = 1",
+//        node.toString());
+
+    node = gen("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n");
+//    assertEquals(
+//        "SELECT `EXPR$0`.`_uuid`, `EXPR$0`.`_ingest_time`, `EXPR$0`.`productid`, `EXPR$0`.`name`,"
+//            + " `EXPR$0`.`description`, `EXPR$0`.`category`\n"
+//            + "FROM (SELECT `product$2`.`_uuid`, `product$2`.`_ingest_time`, `product$2`"
+//            + ".`productid`, `product$2`.`name`, `product$2`.`description`, `product$2`"
+//            + ".`category`, ROW_NUMBER() OVER (PARTITION BY `product$2`.`productid` ORDER BY "
+//            + "`product$2`.`_ingest_time` DESC) AS `_row_num`\n"
+//            + "FROM `test`.`product$2`) AS `EXPR$0`\n"
+//            + "WHERE `EXPR$0`.`_row_num` = 1",
+//        node.toString());
+
+    node = gen("Orders.entries.discount := coalesce(discount, 0.0);\n");
+//    assertEquals(
+//        "CASE WHEN `entries$4`.`discount` IS NOT NULL THEN `entries$4`.`discount` ELSE 0.0 END AS"
+//            + " `discount$1`",
+//        node.toString());
+    node = gen("Orders.entries.total := quantity * unit_price - discount;\n");
+//    assertEquals(
+//        "`entries$4`.`quantity` * `entries$4`.`unit_price` - `entries$4`.`discount$1` AS `total`",
+//        node.toString());
+    node = gen("Orders.total := sum(entries.total);\n");
+//    assertEquals(
+//        "SELECT `_`.`_uuid`, SUM(`t`.`total`) AS `__t0`\n"
+//            + "FROM `test`.`orders$3` AS `_`\n"
+//            + "LEFT JOIN `test`.`entries$4` AS `t` ON `_`.`_uuid` = `t`.`_uuid`\n"
+//            + "GROUP BY `_`.`_uuid`",
+//        node.toString());
+    node = gen("Orders.total_savings := sum(entries.discount);\n");
+//    node = gen("Orders.total_entries := count(entries);\n");
+    node = gen("Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n");
+    node = gen("Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n");
+    node = gen( "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n");
+    node = gen("Customer.recent_products := SELECT productid, e.product.category AS category,"
+        + "                                   sum(quantity) AS quantity, count(*) AS num_orders"
+        + "                            FROM _.orders.entries e"
+        + "                            WHERE parent.time > now() - INTERVAL 2 YEAR"
         + "                            GROUP BY productid, category ORDER BY num_orders DESC, "
-        + "quantity DESC;\n"
-        + "\n"
-        + "Customer.recent_products_categories :=\n"
-        + "                     SELECT category, count(*) AS num_products\n"
-        + "                     FROM _.recent_products\n"
-        + "                     GROUP BY category ORDER BY num_products;\n"
-        + "\n"
-        + "Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp"
-        + ".category=_.category;\n"
-        + "\n"
-        + "-- Aggregate customer spending by month and product category for the 'spending "
-        + "history' feature\n"
-        + "Customer._spending_by_month_category :=\n"
-        + "                     SELECT time.roundToMonth(parent.time) AS month,\n"
-        + "                            e.product.category AS category,\n"
-        + "                            sum(total) AS total,\n"
-        + "                            sum(discount) AS savings\n"
-        + "                     FROM _.orders.entries e\n"
-        + "                     GROUP BY month, category ORDER BY month DESC;\n"
-        + "\n"
-        + "Customer.spending_by_month :=\n"
-        + "                    SELECT month, sum(total) AS total, sum(savings) AS savings\n"
-        + "                    FROM _._spending_by_month_category\n"
-        + "                    GROUP BY month ORDER BY month DESC;\n"
-        + "Customer.spending_by_month.categories :=\n"
-        + "    JOIN _.parent._spending_by_month_category c ON c.month=month;\n"
-        + "\n"
-        + "/* Compute w/w product sales volume increase average over a month\n"
-        + "   These numbers are internal to determine trending products */\n"
-        + "Product._sales_last_week := SELECT SUM(e.quantity)\n"
-        + "                          FROM _.order_entries e\n"
-        + "                          --WHERE e.parent.time > now() - INTERVAL 1 WEEK;\n"
-        + "                          WHERE e.parent.time > now() - INTERVAL 7 DAY;\n"
-        + "\n"
-        + "Product._sales_last_month := SELECT SUM(e.quantity)\n"
-        + "                          FROM _.order_entries e\n"
-        + "                          --WHERE e.parent.time > now() - INTERVAL 4 WEEK;\n"
-        + "                          WHERE e.parent.time > now() - INTERVAL 1 MONTH;\n"
-        + "\n"
-        + "Product._last_week_increase := _sales_last_week * 4 / _sales_last_month;\n"
-        + "\n"
-        + "-- Determine trending products for each category\n"
-        + "Category := SELECT DISTINCT category AS name FROM Product;\n"
-        + "Category.products := JOIN Product ON _.name = Product.category;\n"
-        + "Category.trending := JOIN Product p ON _.name = p.category AND p._last_week_increase >"
-        + " 0\n"
-        + "                     ORDER BY p._last_week_increase DESC LIMIT 10;\n"
-        + "\n"
-        + "/* Determine customers favorite categories by total spent\n"
-        + "   In combination with trending products this is used for the product recommendation "
-        + "feature */\n"
-        + "Customer.favorite_categories := SELECT s.category as category_name,\n"
-        + "                                        sum(s.total) AS total\n"
-        + "                                FROM _._spending_by_month_category s\n"
-        + "                                WHERE s.month >= now() - INTERVAL 1 YEAR\n"
-        + "                                GROUP BY category_name ORDER BY total DESC LIMIT 5;\n"
-        + "\n"
-        + "Customer.favorite_categories.category := JOIN Category ON _.category_name = Category"
-        + ".name;\n"
-        + "\n"
-        + "-- Create subscription for customer spending more than $100 so we can send them a "
-        + "coupon --\n"
-        + "\n"
-        + "CREATE SUBSCRIPTION NewCustomerPromotion ON ADD AS\n"
-        + "SELECT customerid, email, name, total_orders FROM Customer WHERE total_orders >= 100;\n";
+        + "quantity DESC;\n");
 
-    ScriptNode scriptNode = parser.parse(query);
-    Analysis analysis = analyzer.analyze(scriptNode);
-    Generator generator = new Generator(planner, analysis);
-    subSchema.setBridge(generator);
-    generator.generate(scriptNode);
+    node = gen("Customer.recent_products_categories :="
+        + "                     SELECT category, count(*) AS num_products"
+        + "                     FROM _.recent_products"
+        + "                     GROUP BY category ORDER BY num_products;\n");
+    node = gen(
+        "Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp"
+            + ".category=_.category;\n");
+    node = gen("Customer._spending_by_month_category :="
+        + "                     SELECT time.roundToMonth(parent.time) AS month,"
+        + "                            e.product.category AS category,"
+        + "                            sum(total) AS total,"
+        + "                            sum(discount) AS savings"
+        + "                     FROM _.orders.entries e"
+        + "                     GROUP BY month, category ORDER BY month DESC;\n");
+
+    node = gen("Customer.spending_by_month :="
+        + "                    SELECT month, sum(total) AS total, sum(savings) AS savings"
+        + "                    FROM _._spending_by_month_category"
+        + "                    GROUP BY month ORDER BY month DESC;\n");
+    node = gen("Customer.spending_by_month.categories :="
+        + "    JOIN _.parent._spending_by_month_category c ON c.month=_.month;\n");
+    node = gen("Product._sales_last_week := SELECT SUM(e.quantity)"
+        + "                          FROM _.order_entries e"
+        + "                          WHERE e.parent.time > now() - INTERVAL 7 DAY;\n");
+    node = gen("Product._sales_last_month := SELECT SUM(e.quantity)"
+        + "                          FROM _.order_entries e"
+        + "                          WHERE e.parent.time > now() - INTERVAL 1 MONTH;\n");
+    node = gen("Product._last_week_increase := _sales_last_week * 4 / _sales_last_month;\n");
+    node = gen("Category := SELECT DISTINCT category AS name FROM Product;\n");
+    node = gen("Category.products := JOIN Product ON _.name = Product.category;\n");
+    node = gen(
+        "Category.trending := JOIN Product p ON _.name = p.category AND p._last_week_increase >"
+            + " 0"
+            + "                     ORDER BY p._last_week_increase DESC LIMIT 10;\n");
+    node = gen("Customer.favorite_categories := SELECT s.category as category_name,"
+        + "                                        sum(s.total) AS total"
+        + "                                FROM _._spending_by_month_category s"
+        + "                                WHERE s.month >= now() - INTERVAL 1 YEAR"
+        + "                                GROUP BY category_name ORDER BY total DESC LIMIT 5;\n");
+//    node = gen("Customer.favorite_categories.category := JOIN Category ON _.category_name = Category.name;\n");
+////            + "CREATE SUBSCRIPTION NewCustomerPromotion ON ADD AS "
+////            + "SELECT customerid, email, name, total_orders FROM Customer WHERE total_orders >=
+////            100;\n";
+  }
+
+  private SqlNode gen(String query) {
+    SqrlStatement imp = parse(query);
+    analyzer.analyze(imp);
+    return generator.generate(imp);
+  }
+
+  private SqrlStatement parse(String query) {
+    return (SqrlStatement) parser.parse(query).getStatements().get(0);
   }
 }
