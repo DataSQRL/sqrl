@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.apache.commons.lang3.tuple.Pair;
 
 @Getter
 public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
@@ -198,8 +199,9 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       analysis.getProducedField().put(node, column);
       analysis.getProducedTable().put(node, scope.getContextTable().get());
     } else {
-      Table table = schemaBuilder.addQuery(namePath, queryScope.getFieldNames());
-      analysis.getProducedTable().put(node, table);
+      Pair<Optional<Relationship>,Table> table = schemaBuilder.addQuery(namePath, queryScope.getFieldNames());
+      analysis.getProducedTable().put(node, table.getRight());
+      table.getLeft().ifPresent(r->analysis.getProducedField().put(node, r));
     }
     scope.getContextTable().ifPresent(t -> analysis.getParentTable().put(node, t));
     return null;

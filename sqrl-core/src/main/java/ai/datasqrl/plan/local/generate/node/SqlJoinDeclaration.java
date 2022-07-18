@@ -16,6 +16,7 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlTableRef;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 
@@ -108,7 +109,7 @@ public class SqlJoinDeclaration {
       return identifier.names.get(0);
     }
 
-    throw new RuntimeException("");
+    throw new RuntimeException("Unknown type: "+ node);
   }
 
   public SqlJoinDeclaration rewriteTargetAlias(String a) {

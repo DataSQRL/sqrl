@@ -16,6 +16,7 @@ import ai.datasqrl.schema.Table;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor
 public class SchemaBuilder {
@@ -81,7 +82,7 @@ public class SchemaBuilder {
     return column;
   }
 
-  public Table addQuery(NamePath namePath, List<Name> fieldNames) {
+  public Pair<Optional<Relationship>, Table> addQuery(NamePath namePath, List<Name> fieldNames) {
 
     double derivedRowCount = 1; //TODO: derive from optimizer
 
@@ -111,7 +112,8 @@ public class SchemaBuilder {
       Relationship childRel = analysis.getSchema().getTableFactory()
           .createChildRelationship(relationshipName, table, parentTable, multiplicity);
       parentTable.getFields().add(childRel);
+      return Pair.of(Optional.of(childRel), table);
     }
-    return table;
+    return Pair.of(Optional.empty(), table);
   }
 }

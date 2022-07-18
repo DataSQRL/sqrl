@@ -10,6 +10,7 @@ import ai.datasqrl.parse.tree.QueryAssignment;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.parse.tree.SqrlStatement;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
@@ -21,7 +22,6 @@ import ai.datasqrl.plan.calcite.sqrl.table.QueryCalciteTable;
 import ai.datasqrl.plan.calcite.sqrl.table.SourceTableCalciteTable;
 import ai.datasqrl.plan.local.analyze.Analysis;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
-import ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SourceTableImportMeta;
@@ -75,7 +75,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     List<SourceTableImport> sourceTableImports = analysis.getImportSourceTables().get(node);
     Map<ai.datasqrl.schema.Table, SourceTableImportMeta.RowType> tableTypes =
         analysis.getImportTableTypes()
-        .get(node);
+            .get(node);
 
     SourceTableImport tableImport = sourceTableImports.get(0);//todo: support import *;
     RelDataType rootType = new FlexibleTableConverter(tableImport.getSchema()).apply(
@@ -145,7 +145,8 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     //SqlNodeUtil.printJoin(sqlNode);
     Relationship rel = (Relationship) analysis.getProducedField().get(node);
 
-    this.getJoins().put(rel, new SqlJoinDeclaration(sqlNode.getRight(), Optional.of(sqlNode.getCondition())));
+    this.getJoins()
+        .put(rel, new SqlJoinDeclaration(sqlNode.getRight(), Optional.of(sqlNode.getCondition())));
     //todo: plan/validate
 
     return sqlNode;
@@ -167,7 +168,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
         //Just one subquery and just a literal assignment. No need to rejoin to parent.
         //e.g. Orders.total := sum(entries.total);
         //AS
-        SqlBasicCall call = (SqlBasicCall)ctx.getAddlJoins().get(0).getRel();
+        SqlBasicCall call = (SqlBasicCall) ctx.getAddlJoins().get(0).getRel();
         RelNode relNode = plan(call.getOperandList().get(0));
         Field field = analysis.getProducedField().get(node);
 
@@ -229,9 +230,19 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
       return sqlNode;
     } else {
-
       this.tables.put(table.getId(), new QueryCalciteTable(relNode));
     }
+
+    Relationship rel = (Relationship) analysis.getProducedField().get(node);
+    Preconditions.checkNotNull(rel);
+    this.getJoins().put(rel, new SqlJoinDeclaration(
+        new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
+            new SqlTableRef(SqlParserPos.ZERO,
+                new SqlIdentifier(ta.getId().getCanonical(), SqlParserPos.ZERO), SqlNodeList.EMPTY),
+            new SqlIdentifier("_internal$1", SqlParserPos.ZERO)
+        }, SqlParserPos.ZERO),
+        Optional.empty()
+    ));
     return null;
   }
 
