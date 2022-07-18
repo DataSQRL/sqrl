@@ -25,14 +25,16 @@ public class JoinDeclaration
   private final Relation relation;
 
   private final Optional<Name> inverse;
+  private final Optional<Identifier> inverseNode;
   private final Optional<OrderBy> orderBy;
   private final Optional<Limit> limit;
 
   public JoinDeclaration(Optional<NodeLocation> location, Relation relation, Optional<OrderBy> orderBy,
-      Optional<Limit> limit, Optional<Name> inverse) {
+      Optional<Limit> limit, Optional<Identifier> inverse) {
     super(location);
     this.relation = relation;
-    this.inverse = inverse;
+    this.inverseNode = inverse;
+    this.inverse = inverse.map(i->i.getNamePath().getFirst());
     this.orderBy = orderBy;
     this.limit = limit;
   }
@@ -41,8 +43,13 @@ public class JoinDeclaration
     return relation;
   }
 
+  @Deprecated
   public Optional<Name> getInverse() {
     return inverse;
+  }
+
+  public Optional<Identifier> getInverseNode() {
+    return inverseNode;
   }
 
   public Optional<OrderBy> getOrderBy() {
@@ -55,7 +62,7 @@ public class JoinDeclaration
 
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
-    return visitor.visitJoinAssignment(this, context);
+    return visitor.visitJoinDeclaration(this, context);
   }
 
   @Override

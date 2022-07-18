@@ -31,6 +31,7 @@ public class AllColumns
     prefix = Optional.empty();
   }
 
+  //TODO: Fix prefix
   public AllColumns(Optional<NamePath> prefix) {
     super(Optional.empty());
     this.prefix = prefix;

@@ -83,8 +83,7 @@ public class TableNode
       return false;
     }
 
-    TableNode tableNode = (TableNode) o;
-    return Objects.equals(name, tableNode.name);
+    return this == o;
   }
 
   @Override

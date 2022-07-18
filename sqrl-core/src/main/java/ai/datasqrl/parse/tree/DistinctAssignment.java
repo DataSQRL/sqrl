@@ -5,24 +5,32 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class DistinctAssignment extends Assignment {
 
-  private final Name table;
+  private final TableNode table;
   private final List<Name> partitionKeys;
   private final List<SortItem> order;
   private final List<Hint> hints;
+  private final List<Identifier> partitionKeyNodes;
 
   public DistinctAssignment(Optional<NodeLocation> location,
-      NamePath name, Name table, List<Name> fields, List<SortItem> order, List<Hint> hints) {
+      NamePath name, TableNode table, List<Identifier> fields, List<SortItem> order, List<Hint> hints) {
     super(location, name);
     this.table = table;
-    this.partitionKeys = fields;
+    this.partitionKeys = fields.stream().map(e->e.getNamePath().getLast()).collect(Collectors.toList());
+    this.partitionKeyNodes = fields;
     this.order = order;
     this.hints = hints;
   }
 
+  @Deprecated
   public Name getTable() {
+    return table.getNamePath().getFirst();
+  }
+
+  public TableNode getTableNode() {
     return table;
   }
 
@@ -30,8 +38,13 @@ public class DistinctAssignment extends Assignment {
     return hints;
   }
 
+  @Deprecated
   public List<Name> getPartitionKeys() {
     return partitionKeys;
+  }
+
+  public List<Identifier> getPartitionKeyNodes() {
+    return partitionKeyNodes;
   }
 
   public List<SortItem> getOrder() {
