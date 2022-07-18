@@ -32,6 +32,7 @@ import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
@@ -137,12 +138,14 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   @Override
   public SqlNode visitJoinAssignment(JoinAssignment node, Scope context) {
     //Create join declaration, recursively expand paths.
-    Scope scope = new Scope(this.getTables().values().stream().findFirst().get(), true);
+    Table table = analysis.getParentTable().get(node);
+    AbstractSqrlTable tbl = tables.get(table.getId());
+    Scope scope = new Scope(tbl, true);
     SqlJoin sqlNode = (SqlJoin) node.getJoinDeclaration().getRelation().accept(this, scope);
-    SqlNodeUtil.printJoin(sqlNode);
+    //SqlNodeUtil.printJoin(sqlNode);
     Relationship rel = (Relationship) analysis.getProducedField().get(node);
 
-    this.getJoins().put(rel, new SqlJoinDeclaration(sqlNode.getRight(), sqlNode.getCondition()));
+    this.getJoins().put(rel, new SqlJoinDeclaration(sqlNode.getRight(), Optional.of(sqlNode.getCondition())));
     //todo: plan/validate
 
     return sqlNode;
@@ -151,9 +154,9 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   @Override
   public SqlNode visitExpressionAssignment(ExpressionAssignment node, Scope context) {
     Table v = analysis.getProducedTable().get(node);
-    //Were do subqueries live here?
-
-    Scope ctx = new Scope(this.getTables().values().stream().findFirst().get(), true);
+    Table ta = analysis.getParentTable().get(node);
+    AbstractSqrlTable tbl = tables.get(ta.getId());
+    Scope ctx = new Scope(tbl, true);
     SqlNode sqlNode = node.getExpression().accept(this, ctx);
 
     if (!ctx.getAddlJoins().isEmpty()) {
@@ -206,27 +209,26 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   }
 
   @Override
-  public SqlNode visitQueryAssignment(QueryAssignment queryAssignment, Scope context) {
-    if (analysis.getExpressionStatements().contains(queryAssignment)) {
-      SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(this.getTables().values().stream().findFirst().get(), true));
-      RelNode relNode = plan(sqlNode);
-      Table table = analysis.getProducedTable().get(queryAssignment);
+  public SqlNode visitQueryAssignment(QueryAssignment node, Scope context) {
+    Table ta = analysis.getParentTable().get(node);
+    AbstractSqrlTable tbl = tables.get(ta.getId());
+    SqlNode sqlNode = node.getQuery().accept(this, new Scope(tbl, true));
+    RelNode relNode = plan(sqlNode);
+    Table table = analysis.getProducedTable().get(node);
+
+    if (analysis.getExpressionStatements().contains(node)) {
       Preconditions.checkNotNull(table);
       AbstractSqrlTable t = this.tables.get(table.getId());
       RelDataTypeField field = relNode.getRowType().getFieldList()
           .get(relNode.getRowType().getFieldCount() - 1);
       RelDataTypeField newField = new RelDataTypeFieldImpl(
-          queryAssignment.getNamePath().getLast().getCanonical(),
+          node.getNamePath().getLast().getCanonical(),
           t.getRowType(null).getFieldCount(), field.getValue());
 
       t.addField(newField);
 
       return sqlNode;
     } else {
-      SqlNode sqlNode = queryAssignment.getQuery().accept(this, new Scope(this.getTables().values().stream().findFirst().get(), true));
-      RelNode relNode = plan(sqlNode);
-
-      Table table = analysis.getProducedTable().get(queryAssignment);
 
       this.tables.put(table.getId(), new QueryCalciteTable(relNode));
     }

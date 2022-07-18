@@ -144,7 +144,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
         resolvedTable.getToTable(), node.getJoinDeclaration().getLimit());
 
     analysis.getProducedField().put(node, relationship);
-
+    scope.getContextTable().ifPresent(t -> analysis.getParentTable().put(node, t));
     return null;
   }
 
@@ -161,7 +161,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     //Todo: remove produced table from here
     analysis.getProducedTable().put(node, scope.getContextTable().get());
     analysis.getProducedField().put(node, column);
-
+    scope.getContextTable().ifPresent(t -> analysis.getParentTable().put(node, t));
     return null;
   }
 
@@ -201,7 +201,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       Table table = schemaBuilder.addQuery(namePath, queryScope.getFieldNames());
       analysis.getProducedTable().put(node, table);
     }
-
+    scope.getContextTable().ifPresent(t -> analysis.getParentTable().put(node, t));
     return null;
   }
 

@@ -12,6 +12,7 @@ import ai.datasqrl.parse.tree.Select;
 import ai.datasqrl.parse.tree.SelectItem;
 import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.SortItem;
+import ai.datasqrl.parse.tree.TableNode;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Column;
@@ -88,6 +89,7 @@ public class Analysis {
   public Map<Node, Name> tableAliases = new HashMap<>();
 
   public Map<Node, String> fieldAlias = new HashMap<>();
+  public Map<Node, Table> parentTable = new HashMap<>();
 
   @Setter
   public List<Integer> groupByOrdinals = new ArrayList<>();
@@ -97,6 +99,9 @@ public class Analysis {
   @Setter
   public List<Expression> uniqueOrderExpressions = new ArrayList<>();
   public Map<Select, List<SingleColumn>> selectItems = new HashMap<>();
+
+  public Map<QuerySpecification, TableNode> selfTableNode = new HashMap();
+
   //TODO: Register subqueries as separate anonymous queries
 
   @Value

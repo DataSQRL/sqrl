@@ -35,7 +35,7 @@ public class SqlNodeUtil {
     if (exprs == null) {
       return null;
     }
-    return and(Stream.of(exprs).filter(Objects::isNull).collect(Collectors.toList()));
+    return and(Stream.of(exprs).filter(Objects::nonNull).collect(Collectors.toList()));
   }
 
   public static SqlNode and(List<SqlNode> expressions) {

@@ -205,8 +205,9 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     Relation relation = node.getFrom();
     if (analysis.getNeedsSelfTableJoin().contains(node)) {
       //Transform using sqrl ast
-      relation = new Join(Type.CROSS, new TableNode(Optional.empty(),
-          ReservedName.SELF_IDENTIFIER.toNamePath(), Optional.of(ReservedName.SELF_IDENTIFIER)),
+      TableNode n = analysis.getSelfTableNode().get(node);
+
+      relation = new Join(Type.CROSS, n,
           relation,
           Optional.empty());
     }
@@ -216,12 +217,17 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 //    if (!context.getSubqueries().isEmpty()) {
     for (int i = 0; i < context.getAddlJoins().size(); i++) {
       SqlJoinDeclaration join = context.getAddlJoins().get(i);
-      SqlLiteral conditionType = SqlLiteral.createSymbol(JoinConditionType.ON, SqlParserPos.ZERO);
+      SqlLiteral conditionType;
+      if (join.getTrailingCondition().isPresent()) {
+        conditionType = SqlLiteral.createSymbol(JoinConditionType.ON, SqlParserPos.ZERO);
+      } else {
+        conditionType = SqlLiteral.createSymbol(JoinConditionType.NONE, SqlParserPos.ZERO);
+      }
       SqlLiteral joinType = SqlLiteral.createSymbol(org.apache.calcite.sql.JoinType.LEFT,
           SqlParserPos.ZERO);
       from = new SqlJoin(SqlParserPos.ZERO, from,
           SqlLiteral.createBoolean(false, SqlParserPos.ZERO), joinType, join.getRel(),
-          conditionType, join.getCondition());
+          conditionType, join.getTrailingCondition().orElse(null));
     }
 //    }
 
@@ -437,19 +443,13 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   @Override
   public SqlNode visitTableNode(TableNode node, Scope context) {
     ResolvedNamePath resolvedTable = analysis.getResolvedNamePath().get(node);
-    String name = resolvedTable.getToTable().getId().getCanonical();
-
     JoinPathBuilder builder = new JoinPathBuilder(joins);
     SqlJoinDeclaration join = builder.expand(resolvedTable, node.getAlias());
-
-    context.setPullupCondition(join);
+    if (join.getTrailingCondition().isPresent()) {
+      context.setPullupCondition(join.getTrailingCondition().get());
+    }
 
     return join.getRel();
-
-//    return new SqlBasicCall(SqrlOperatorTable.AS,
-//        new SqlNode[]{new SqlIdentifier(List.of(name), pos.getPos(node.getLocation())),
-//            new SqlIdentifier(analysis.getTableAliases().get(node).getCanonical(),
-//                SqlParserPos.ZERO)}, SqlParserPos.ZERO);
   }
 
   @Override
@@ -482,20 +482,27 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
         throw new IllegalStateException("Unexpected value: " + node.getType());
     }
 
-    SqlLiteral conditionType = node.getCriteria().map(c -> c instanceof JoinOn).map(
-            on -> SqlLiteral.createSymbol(on ? JoinConditionType.ON : JoinConditionType.NONE,
-                pos.getPos(node.getLocation())))
-        .orElse(SqlLiteral.createSymbol(JoinConditionType.NONE, SqlParserPos.ZERO));
-
     SqlParserPos ppos = pos.getPos(node.getLocation());
     SqlLiteral natural = SqlLiteral.createBoolean(false, pos.getPos(node.getLocation()));
-    SqlLiteral joinType = SqlLiteral.createSymbol(type, pos.getPos(node.getLocation()));
     SqlNode lhs = node.getLeft().accept(this, context);
     SqlNode rhs = node.getRight().accept(this, context);
 
     SqlNode criteria = node.getCriteria().map(e -> e.accept(this, context)).orElse(null);
-    Optional<SqlJoinDeclaration> addl = context.consumePullupCondition();
-    SqlNode addedCriteria = addl.map(d -> and(criteria, d.getCondition())).orElse(criteria);
+    Optional<SqlNode> addlCondition = context.consumePullupCondition();
+    SqlNode addedCriteria = addlCondition.map(c ->
+        and(criteria, c)).orElse(criteria);
+    if (addlCondition.isPresent()) {
+      type = JoinType.LEFT;
+    }
+    SqlLiteral joinType = SqlLiteral.createSymbol(type, pos.getPos(node.getLocation()));
+
+
+    SqlLiteral conditionType;
+    if (addlCondition.isPresent()) {
+      conditionType = SqlLiteral.createSymbol(JoinConditionType.ON, SqlParserPos.ZERO);
+    } else {
+      conditionType = SqlLiteral.createSymbol(JoinConditionType.NONE, SqlParserPos.ZERO);
+    }
 
     return new SqlJoin(ppos, lhs, natural, joinType, rhs, conditionType, addedCriteria);
   }
@@ -638,7 +645,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
           new SqlNode[]{select, new SqlIdentifier(alias, SqlParserPos.ZERO)}, SqlParserPos.ZERO);
 
       context.getAddlJoins()
-          .add(new SqlJoinDeclaration(as, SqlLiteral.createBoolean(true, SqlParserPos.ZERO)));
+          .add(new SqlJoinDeclaration(as, Optional.of(SqlLiteral.createBoolean(true, SqlParserPos.ZERO))));
 
       return new SqlIdentifier(List.of(alias, "tbd"), SqlParserPos.ZERO);
     }
@@ -707,32 +714,15 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
       return new SqlIdentifier(Arrays.stream(node.getNamePath().getNames()).map(Name::getCanonical)
           .collect(Collectors.toList()), pos.getPos(node.getLocation()));
     }
-    //group by / order by
-//    if (p instanceof ResolvedNamedReference) {
-//      SqlLiteral lit = SqlLiteral.createExactNumeric(
-//          (((ResolvedNamedReference) p).getOrdinal() + 1) + "", SqlParserPos.ZERO);
-//
-//      return lit;
-//    }
 
+    //to-one path to be left joined
     if (p.getPath().size() > 1) {
       JoinPathBuilder joinPathBuilder = new JoinPathBuilder(this.joins);
-      String name = p.getAlias();
-      Preconditions.checkNotNull(name);
-      joinPathBuilder.setCurrentAlias(name);
-      for (Field field : p.getPath()) {
-        if (field instanceof Relationship) {
-          joinPathBuilder.join((Relationship) field);
-        }
-      }
+      SqlJoinDeclaration left = joinPathBuilder.expand(p, Optional.empty());
+      context.getAddlJoins().add(left.rewriteSelfAlias(p.getAlias(),
+          Optional.empty()));
 
-      context.getAddlJoins().add(new SqlJoinDeclaration(joinPathBuilder.getSqlNode(),
-          joinPathBuilder.getTrailingCondition()
-              .orElse(SqlLiteral.createBoolean(true, SqlParserPos.ZERO))));
-//      context.getSubqueries().add(joinPathBuilder.getSqlNode());
-//      context.getConditions().add(joinPathBuilder.getTrailingCondition());
-
-      return new SqlIdentifier(List.of(joinPathBuilder.currentAlias,
+      return new SqlIdentifier(List.of(left.getToTableAlias(),
           p.getPath().get(p.getPath().size() - 1).getId().getCanonical()), SqlParserPos.ZERO);
     } else {
 
@@ -933,7 +923,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   protected void createParentChildJoinDeclaration(Relationship rel) {
     String alias = "t" + (++i);
     this.getJoins().put(rel,
-        new SqlJoinDeclaration(createTableRef(rel.getToTable(), alias), createParentChildCondition(rel, alias)));
+        new SqlJoinDeclaration(createTableRef(rel.getToTable(), alias), Optional.of(createParentChildCondition(rel, alias))));
   }
 
   protected SqlNode createParentChildCondition(Relationship rel, String alias) {
@@ -978,20 +968,19 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     public Aliaser aliaser = new Aliaser();
     @Setter
     int offset = 0;
-    private SqlJoinDeclaration join = null;
+    private SqlNode join = null;
 
     public Scope(AbstractSqrlTable parentTable, boolean isNested) {
       this.parentTable = parentTable;
       this.isNested = isNested;
     }
 
-    public void setPullupCondition(SqlJoinDeclaration join) {
-
+    public void setPullupCondition(SqlNode join) {
       this.join = join;
     }
 
-    public Optional<SqlJoinDeclaration> consumePullupCondition() {
-      SqlJoinDeclaration tmp = this.join;
+    public Optional<SqlNode> consumePullupCondition() {
+      SqlNode tmp = this.join;
       this.join = null;
       return Optional.ofNullable(tmp);
     }

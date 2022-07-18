@@ -4,6 +4,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
+import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.generate.node.SqlResolvedIdentifier;
 import ai.datasqrl.plan.local.generate.node.util.AliasGenerator;
 import com.google.common.base.Preconditions;
@@ -44,7 +45,7 @@ public class LocalAggBuilder {
     //o.entries.total
     SqlResolvedIdentifier identifier = (SqlResolvedIdentifier)call.getOperandList().get(0);
     ResolvedNamePath namePath = identifier.getNamePath();
-    SqlNode from = joinPathBuilder.resolveFull(namePath);
+    SqlJoinDeclaration from = joinPathBuilder.expandSubquery(namePath);
 
     List<SqlNode> selectList = new ArrayList<>();
     List<SqlNode> groupBy = new ArrayList<>();
@@ -64,7 +65,7 @@ public class LocalAggBuilder {
 
     //Add new
     //May be alias
-    SqlIdentifier newArg = new SqlIdentifier(List.of(joinPathBuilder.currentAlias,
+    SqlIdentifier newArg = new SqlIdentifier(List.of(from.getToTableAlias(),
         namePath.getPath().get(namePath.getPath().size() - 1).getId().getCanonical()), SqlParserPos.ZERO);
     SqlCall rewrittenCall = (SqlCall)call.accept(new SqlShuttle(){
       @Override
@@ -83,7 +84,7 @@ public class LocalAggBuilder {
 
     SqlNodeList selectNodeList = new SqlNodeList(selectList, SqlParserPos.ZERO);
     //Get primary key from destination table of alias
-    return new SqlSelect(SqlParserPos.ZERO, null, selectNodeList, from,
+    return new SqlSelect(SqlParserPos.ZERO, null, selectNodeList, from.getRel(),
         null, new SqlNodeList(groupBy, SqlParserPos.ZERO), null, null,
         null, null, null,
         new SqlNodeList(SqlParserPos.ZERO));

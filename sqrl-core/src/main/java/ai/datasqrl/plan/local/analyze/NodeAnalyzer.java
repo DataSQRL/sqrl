@@ -55,6 +55,7 @@ import lombok.Getter;
  * Produces an Analysis object of a script/statement
  */
 public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
+
   protected final ErrorCollector errors;
   protected final Namespace namespace;
 
@@ -137,6 +138,14 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
     if (scope.getContextTable().isPresent() && !hasExplicitSelfTable(node.getFrom())) {
       /* Needs a self table added to transpiled query */
       analysis.getNeedsSelfTableJoin().add(node);
+      TableNode tableNode = new TableNode(Optional.empty(),
+          ReservedName.SELF_IDENTIFIER.toNamePath(), Optional.of(ReservedName.SELF_IDENTIFIER));
+      analysis.getResolvedNamePath().put(tableNode, new ResolvedNamePath(
+          ReservedName.SELF_IDENTIFIER.getCanonical(),
+          Optional.empty(),
+          List.of(new RootTableField(scope.getContextTable().get()))
+      ));
+      analysis.getSelfTableNode().put(node, tableNode);
     }
 
     Scope relScope = node.getFrom().accept(this, scope);
@@ -160,10 +169,9 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
         //todo: always alias columns ?
         selectItems.add(singleColumn);
 
-        Check.state(context.getIsExpression().isPresent() && context.getIsExpression().get() ||
-                singleColumn.getExpression() instanceof Identifier || singleColumn.getAlias()
-                .isPresent(),
-            selectItem, Errors.UNNAMED_QUERY_COLUMN);
+        Check.state(context.getIsExpression().isPresent() && context.getIsExpression().get()
+            || singleColumn.getExpression() instanceof Identifier || singleColumn.getAlias()
+            .isPresent(), selectItem, Errors.UNNAMED_QUERY_COLUMN);
       } else if (selectItem instanceof AllColumns) {
         if (((AllColumns) selectItem).getPrefix().isPresent()) {
           NamePath aliasPath = ((AllColumns) selectItem).getPrefix().get();
@@ -231,8 +239,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
         //Aliased identifier
         if (identifier.getNamePath().getLength() == 1 && scope.getFieldNames()
             .contains(identifier.getNamePath().getFirst())) {
-          Integer index = scope.getFieldNames()
-              .indexOf(identifier.getNamePath().getFirst());
+          Integer index = scope.getFieldNames().indexOf(identifier.getNamePath().getFirst());
           groupByOrdinals.add(index);
           continue;
         }
