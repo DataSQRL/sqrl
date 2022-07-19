@@ -17,6 +17,7 @@ import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.SqrlType2Calcite;
+import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.rules.Sqrl2SqlLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
@@ -58,6 +59,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlTableRef;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
 
 public class Generator extends QueryGenerator implements SqrlCalciteBridge {
@@ -120,7 +122,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
       RelBuilder relBuilder = planner.getRelBuilder();
       relBuilder.scan(datasetName.getCanonical());
       RelNode relNode = relBuilder.build(); //?
-      
+
       for (int i = 0; i < logicalTableType.getFieldList().size(); i++) {
         this.fieldNames.put(table.getFields().values().get(i),
             logicalTableType.getFieldList().get(i).getName());
@@ -243,10 +245,14 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
       }
     } else {
       //Simple
+      AbstractSqrlTable t = tables.get(v.getId());
       Field field = analysis.getProducedField().get(node);
 
+      List<String> toUnique = new ArrayList(t.getRowType().getFieldNames());
+      toUnique.add(node.getNamePath().getLast().getCanonical());
+      List<String> uniqued = SqlValidatorUtil.uniquify(toUnique, false);
       SqlCall call = new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{sqlNode,
-          new SqlIdentifier(fieldNames.get(field), SqlParserPos.ZERO)}, SqlParserPos.ZERO);
+          new SqlIdentifier(uniqued.get(uniqued.size()-1), SqlParserPos.ZERO)}, SqlParserPos.ZERO);
 
       SqlSelect select = new SqlSelect(SqlParserPos.ZERO, null,
           new SqlNodeList(List.of(call), SqlParserPos.ZERO), new SqlBasicCall(SqrlOperatorTable.AS,
@@ -254,6 +260,8 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
               new SqlIdentifier(v.getId().getCanonical(), SqlParserPos.ZERO), SqlNodeList.EMPTY),
               new SqlIdentifier("_", SqlParserPos.ZERO)}, SqlParserPos.ZERO), null, null, null,
           null, null, null, null, SqlNodeList.EMPTY);
+      System.out.println(select);
+
       RelNode relNode = plan(select);
       this.fieldNames.put(field, relNode.getRowType().getFieldList()
           .get(relNode.getRowType().getFieldCount()-1).getName());
