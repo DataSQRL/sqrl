@@ -40,11 +40,17 @@ class NowTest {
   }
 
   @Test
-  public void StringToTSTest() {
-    StringToTimestampFunction stringToTimestamp = new StringToTimestampFunction();
+  public void StringTSConversionTest() {
     SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
-    RelDataType type = stringToTimestamp.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(type, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+
+    StringToTimestampFunction stringToTimestamp = new StringToTimestampFunction();
+    TimestampToStringFunction timestampToString = new TimestampToStringFunction();
+
+    RelDataType typeTS = stringToTimestamp.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeTS, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+
+    RelDataType typeString = timestampToString.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeString, typeFactory.createSqlType(SqlTypeName.VARCHAR, 2000));
   }
 
   @Test
