@@ -57,7 +57,6 @@ import ai.datasqrl.parse.tree.TimestampLiteral;
 import ai.datasqrl.parse.tree.Union;
 import ai.datasqrl.parse.tree.WhenClause;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.SqlParserPosFactory;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
@@ -120,8 +119,9 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   protected final Analysis analysis;
   private final Map<Relationship, SqlJoinDeclaration> joins = new HashMap<>();
-  protected Map<Name, AbstractSqrlTable> tables = new HashMap<>();
+  protected Map<String, AbstractSqrlTable> tables = new HashMap<>();
   protected Map<Field, String> fieldNames = new HashMap<>();
+  protected Map<Table, AbstractSqrlTable> tableMap = new HashMap<>();
 
   SqlParserPosFactory pos = new SqlParserPosFactory();
 
@@ -441,7 +441,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   @Override
   public SqlNode visitTableNode(TableNode node, Scope context) {
     ResolvedNamePath resolvedTable = analysis.getResolvedNamePath().get(node);
-    JoinPathBuilder builder = new JoinPathBuilder(joins);
+    JoinPathBuilder builder = new JoinPathBuilder(joins, tableMap);
     SqlJoinDeclaration join = builder.expand(resolvedTable, node.getAlias());
     if (join.getTrailingCondition().isPresent()) {
       context.setPullupCondition(join.getTrailingCondition().get());
@@ -625,8 +625,8 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     ResolvedFunctionCall resolvedCall = analysis.getResolvedFunctions().get(node);
 
     if (isLocalAggregate(node)) {
-      LocalAggBuilder localAggBuilder = new LocalAggBuilder(this.tables,
-          new JoinPathBuilder(this.joins), this.fieldNames);
+      LocalAggBuilder localAggBuilder = new LocalAggBuilder(
+          new JoinPathBuilder(this.joins, this.tableMap), this.fieldNames, this.tableMap);
       ResolvedNamePath namePath = analysis.getResolvedNamePath().get(node.getArguments().get(0));
       Preconditions.checkNotNull(namePath);
 
@@ -715,7 +715,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
     //to-one path to be left joined
     if (p.getPath().size() > 1) {
-      JoinPathBuilder joinPathBuilder = new JoinPathBuilder(this.joins);
+      JoinPathBuilder joinPathBuilder = new JoinPathBuilder(this.joins, tableMap);
       SqlJoinDeclaration left = joinPathBuilder.expand(p, Optional.empty());
       context.getAddlJoins().add(left.rewriteSelfAlias(p.getAlias(),
           Optional.empty()));
@@ -872,7 +872,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   public SqlNode generateDistinctQuery(DistinctAssignment node) {
     ResolvedNamePath path = analysis.getResolvedNamePath().get(node.getTableNode());
-    AbstractSqrlTable table = tables.get(path.getToTable().getId());
+    AbstractSqrlTable table = tableMap.get(path.getToTable());
     Preconditions.checkNotNull(table, "Could not find table");
 
     List<SqlNode> partition = node.getPartitionKeyNodes().stream().map(p -> p.accept(this, null))
@@ -908,7 +908,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
         SqlParserPos.ZERO),
         new SqlSelect(SqlParserPos.ZERO, null, new SqlNodeList(inner, SqlParserPos.ZERO),
             new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
-                new SqlIdentifier(path.getToTable().getId().getCanonical(), SqlParserPos.ZERO),
+                new SqlIdentifier(tableMap.get(path.getToTable()).getNameId(), SqlParserPos.ZERO),
                 new SqlNodeList(SqlParserPos.ZERO)),
                 new SqlIdentifier(path.getAlias(), SqlParserPos.ZERO)}, SqlParserPos.ZERO), null,
             null, null, null, null, null, null, new SqlNodeList(SqlParserPos.ZERO)),
@@ -927,14 +927,11 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   }
 
   protected SqlNode createParentChildCondition(Relationship rel, String alias) {
-    Name lhsName =
-        rel.getJoinType().equals(Relationship.JoinType.PARENT) ? rel.getFromTable().getId()
-            : rel.getToTable().getId();
-    Name rhsName = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? rel.getToTable().getId()
-        : rel.getFromTable().getId();
-
-    AbstractSqrlTable lhs = tables.get(lhsName);
-    AbstractSqrlTable rhs = tables.get(rhsName);
+    AbstractSqrlTable lhs =
+        rel.getJoinType().equals(Relationship.JoinType.PARENT) ? tableMap.get(rel.getFromTable())
+            : tableMap.get(rel.getToTable());
+    AbstractSqrlTable rhs = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? tableMap.get(rel.getToTable())
+        : tableMap.get(rel.getFromTable());
 
     List<SqlNode> conditions = new ArrayList<>();
     for (String pk : lhs.getPrimaryKeys()) {
@@ -949,7 +946,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
   protected SqlNode createTableRef(Table table, String alias) {
     return new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
-        new SqlIdentifier(table.getId().getCanonical(), SqlParserPos.ZERO), SqlNodeList.EMPTY),
+        new SqlIdentifier(tableMap.get(table).getNameId(), SqlParserPos.ZERO), SqlNodeList.EMPTY),
         new SqlIdentifier(alias, SqlParserPos.ZERO)}, SqlParserPos.ZERO);
   }
 

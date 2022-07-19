@@ -21,11 +21,6 @@ public class AbstractTable implements ShadowingContainer.Element {
     protected final NamePath path;
     @NonNull protected final FieldContainer fields;
 
-
-    public Name getId() {
-        return getName().suffix(Integer.toString(uniqueId));
-    }
-
     @Override
     public Name getName() {
         return path.getLast();
@@ -56,7 +51,7 @@ public class AbstractTable implements ShadowingContainer.Element {
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder();
-        s.append("Table[id=").append(getId()).append("]{\n");
+        s.append("Table[id=").append(getName()).append("]{\n");
         for (Field f : fields) {
             s.append("\t").append(f.toString()).append("\n");
         }

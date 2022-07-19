@@ -22,7 +22,7 @@ public class Relationship extends Field {
 
   @Override
   public String toString() {
-    return fromTable.getId() + " -> " + toTable.getId()
+    return fromTable.getName() + " -> " + toTable.getName()
             + " [" + joinType + "," + multiplicity + "]";
   }
 

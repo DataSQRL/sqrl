@@ -7,5 +7,5 @@ import ai.datasqrl.parse.tree.name.Name;
  */
 public interface SqrlCalciteBridge {
 
-  org.apache.calcite.schema.Table getTable(Name sqrlTableName);
+  org.apache.calcite.schema.Table getTable(String tableName);
 }
