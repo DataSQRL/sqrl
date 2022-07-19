@@ -10,24 +10,24 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.*;
 import org.apache.calcite.sql.validate.SqlUserDefinedFunction;
 
+import java.time.Instant;
 import java.util.List;
 
-public class StringToTimestampFunction extends SqlUserDefinedFunction implements SqrlAwareFunction {
+public class RoundToMinuteFunction extends SqlUserDefinedFunction implements SqrlAwareFunction {
 
     static final ScalarFunction fnc = ScalarFunctionImpl.create(Types.lookupMethod(
-            StringToTimestamp.class, "stringToTimestamp", String.class));
+            RoundToMinute.class, "roundToMinute", Instant.class));
 
-    public StringToTimestampFunction() {
+    public RoundToMinuteFunction() {
         super(
-                new SqlIdentifier("STRING_TO_TIMESTAMP", SqlParserPos.ZERO),
+                new SqlIdentifier("ROUND_TO_MINUTE", SqlParserPos.ZERO),
                 SqlKind.OTHER,
                 ReturnTypes.TIMESTAMP,
-                //ReturnTypes.explicit(SqlTypeName.TIMESTAMP),
                 InferTypes.ANY_NULLABLE,
                 OperandTypes.operandMetadata(
-                        List.of(SqlTypeFamily.CHARACTER),
+                        List.of(SqlTypeFamily.TIMESTAMP),
                         typeFactory -> List.of(
-                                typeFactory.createSqlType(SqlTypeName.VARCHAR)),
+                                typeFactory.createSqlType(SqlTypeName.TIMESTAMP)),
                         i -> "arg" + i,
                         i -> false),
                 fnc,
@@ -46,7 +46,7 @@ public class StringToTimestampFunction extends SqlUserDefinedFunction implements
     public boolean isAggregate() {return false;}
 
     @Override
-    public boolean isTimestampPreserving() {return true;}
+    public boolean isTimestampPreserving() {return false;}
 
     @Override
     public SqlOperator getOp() {return this;}
