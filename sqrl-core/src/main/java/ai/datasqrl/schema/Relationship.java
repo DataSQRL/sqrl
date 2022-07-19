@@ -21,18 +21,8 @@ public class Relationship extends Field {
   }
 
   @Override
-  public Name getId() {
-    return name;
-  }
-
-  @Override
-  public int getVersion() {
-    return 0;
-  }
-
-  @Override
   public String toString() {
-    return getId() + ": " + fromTable.getId() + " -> " + toTable.getId()
+    return fromTable.getId() + " -> " + toTable.getId()
             + " [" + joinType + "," + multiplicity + "]";
   }
 

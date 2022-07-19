@@ -6,14 +6,12 @@ import lombok.ToString;
 
 @Getter
 @ToString
-public abstract class Field implements ShadowingContainer.Element {
+public abstract class Field {
 
   protected final Name name;
 
   protected Field(Name name) {
     this.name = name;
   }
-
-  public abstract Name getId();
 
 }

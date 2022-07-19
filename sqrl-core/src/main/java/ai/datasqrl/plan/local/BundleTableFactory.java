@@ -8,6 +8,7 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.AbstractTable;
 import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.FieldContainer;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ShadowingContainer;
 import ai.datasqrl.schema.SourceTableImportMeta;
@@ -175,7 +176,7 @@ public class BundleTableFactory {
         private Pair<Column, Integer> timestampCandidate = null;
 
         private TableBuilder(NamePath namePath) {
-            super(tableIdCounter.incrementAndGet(), namePath, new ShadowingContainer<>());
+            super(tableIdCounter.incrementAndGet(), namePath, new FieldContainer());
         }
 
         private void addChild(TableBuilder table, Relationship.Multiplicity multi) {
@@ -192,8 +193,8 @@ public class BundleTableFactory {
 
         public Column addColumn(Name name, boolean isPrimaryKey, boolean isParentPrimaryKey,
                                 boolean isVisible) {
-            int version = getNextColumnVersion(name);
-            Column col = new Column(name, version, getNextColumnIndex(),
+//            int version = getNextColumnVersion(name);
+            Column col = new Column(name, getNextColumnIndex(),
                     isPrimaryKey, isParentPrimaryKey, isVisible);
             fields.add(col);
             return col;

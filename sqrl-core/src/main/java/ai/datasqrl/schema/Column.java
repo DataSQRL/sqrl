@@ -16,7 +16,6 @@ public class Column extends Field implements ShadowingContainer.IndexElement {
      on the table even though it is no longer referenceable since another column may depend on it
      (unlike relationships which can be ignored once they are shadowed and no longer referenceable)
    */
-  private final int version;
   private final int index;
 
   private final boolean isPrimaryKey;
@@ -25,11 +24,10 @@ public class Column extends Field implements ShadowingContainer.IndexElement {
   //Column isn't visible to user but needed by system (for primary key or timestamp)
   private final boolean isVisible;
 
-  public Column(Name name, int version, int index,
+  public Column(Name name, int index,
                 boolean isPrimaryKey, boolean isParentPrimaryKey, boolean isVisible) {
 
     super(name);
-    this.version = version;
     this.index = index;
     this.isVisible = isVisible;
     Preconditions.checkArgument(!isParentPrimaryKey || isPrimaryKey);
@@ -38,24 +36,19 @@ public class Column extends Field implements ShadowingContainer.IndexElement {
     Preconditions.checkArgument(!isParentPrimaryKey || isPrimaryKey);
   }
 
-  //Returns a calcite name for this column.
-  public Name getId() {
-    return getId(name,version);
-  }
-
-  public static Name getId(Name name, int version) {
-    if (version==0) return name;
-    else return name.suffix(Integer.toString(version));
-  }
-
   @Override
   public boolean isVisible() {
     return isVisible;
   }
 
   @Override
+  public int getVersion() {
+    return 0;
+  }
+
+  @Override
   public String toString() {
-    String s = getId() + " @" + index + ": ";
+    String s = getName().getCanonical() + ": ";
     if (isPrimaryKey) s += "pk ";
     if (isParentPrimaryKey) s += "ppk ";
     if (!isVisible) s += "hidden";

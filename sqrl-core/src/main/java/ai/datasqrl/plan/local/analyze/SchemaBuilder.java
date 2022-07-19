@@ -8,15 +8,18 @@ import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.FieldContainer;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.ShadowingContainer;
 import ai.datasqrl.schema.Table;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 @AllArgsConstructor
 public class SchemaBuilder {
@@ -24,9 +27,8 @@ public class SchemaBuilder {
   Analysis analysis;
 
   public Table createDistinctTable(ResolvedTable resolvedTable, List<ResolvedNamePath> pks) {
-    ShadowingContainer<Field> container = new ShadowingContainer<>();
     Table table = new Table(BundleTableFactory.tableIdCounter.incrementAndGet(),
-        resolvedTable.getNamePath(), container);
+        resolvedTable.getNamePath(), new FieldContainer());
     resolvedTable.getToTable().getVisibleColumns().forEach(
         c -> table.addColumn(c.getName(), isPrimaryKey(c, pks), c.isParentPrimaryKey(),
             c.isVisible()));
@@ -61,9 +63,9 @@ public class SchemaBuilder {
   public Column addExpression(NamePath namePath) {
     Table table = analysis.getSchema().walkTable(namePath.popLast());
     Name columnName = namePath.getLast();
-    int nextVersion = table.getNextColumnVersion(columnName);
+//    int nextVersion = table.getNextColumnVersion(columnName);
 
-    Column column = new Column(columnName, nextVersion, table.getNextColumnIndex(), false, false,
+    Column column = new Column(columnName, table.getNextColumnIndex(), false, false,
         true);
 
     table.addExpressionColumn(column);
@@ -74,23 +76,26 @@ public class SchemaBuilder {
     //do not create table, add column
     Table table = analysis.getSchema().walkTable(namePath.popLast());
     Name columnName = namePath.getLast();
-    int nextVersion = table.getNextColumnVersion(columnName);
+//    int nextVersion = table.getNextColumnVersion(columnName);
 
-    Column column = new Column(columnName, nextVersion, table.getNextColumnIndex(), false, false,
+    Column column = new Column(columnName, table.getNextColumnIndex(), false, false,
         true);
     table.getFields().add(column);
     return column;
   }
 
-  public Pair<Optional<Relationship>, Table> addQuery(NamePath namePath, List<Name> fieldNames) {
+  public Triple<Optional<Relationship>, Table, List<Field>> addQuery(NamePath namePath, List<Name> fieldNames) {
 
     double derivedRowCount = 1; //TODO: derive from optimizer
-
+    List<Field> fields = new ArrayList<>();
     final BundleTableFactory.TableBuilder builder = analysis.getSchema().getTableFactory()
         .build(namePath);
 
     //todo: column names:
-    fieldNames.forEach(n -> builder.addColumn(n, false, false, true));
+    fieldNames.forEach(n -> {
+      Column column = builder.addColumn(n, false, false, true);
+      fields.add(column);
+    });
 
     //Creates a table that is not bound to the schema TODO: determine timestamp
     Table table = builder.createTable();
@@ -112,8 +117,8 @@ public class SchemaBuilder {
       Relationship childRel = analysis.getSchema().getTableFactory()
           .createChildRelationship(relationshipName, table, parentTable, multiplicity);
       parentTable.getFields().add(childRel);
-      return Pair.of(Optional.of(childRel), table);
+      return Triple.of(Optional.of(childRel), table, fields);
     }
-    return Pair.of(Optional.empty(), table);
+    return Triple.of(Optional.empty(), table, fields);
   }
 }

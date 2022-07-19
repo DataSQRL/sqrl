@@ -25,6 +25,7 @@ import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.plan.local.analyze.util.AstUtil;
 import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SourceTableImportMeta.RowType;
 import ai.datasqrl.schema.Table;
@@ -35,6 +36,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 @Getter
 public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
@@ -97,6 +99,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       if (tblImport.isSource()) {
         SourceTableImport importSource = (SourceTableImport) tblImport;
         Map<Table, RowType> types = analysis.getSchema().addImportTable(importSource, nameAlias);
+
         analysis.getImportSourceTables().put(node, List.of(importSource));
         analysis.getImportTableTypes().put(node, types);
       } else {
@@ -123,7 +126,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     List<ResolvedNamePath> pks = node.getPartitionKeyNodes().stream()
         .map(pk -> analysis.getResolvedNamePath().get(pk)).collect(Collectors.toList());
     Table distinctTable = schemaBuilder.createDistinctTable(resolvedTable, pks);
-
+    analysis.getProducedFieldList().put(node, distinctTable.getFields().values());
     analysis.getResolvedNamePath().put(node.getTableNode(), resolvedTable);
     analysis.getSchema().add(distinctTable);
     analysis.getProducedTable().put(node, distinctTable);
@@ -199,8 +202,9 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       analysis.getProducedField().put(node, column);
       analysis.getProducedTable().put(node, scope.getContextTable().get());
     } else {
-      Pair<Optional<Relationship>,Table> table = schemaBuilder.addQuery(namePath, queryScope.getFieldNames());
-      analysis.getProducedTable().put(node, table.getRight());
+      Triple<Optional<Relationship>,Table, List<Field>> table = schemaBuilder.addQuery(namePath, queryScope.getFieldNames());
+      analysis.getProducedFieldList().put(node, table.getRight());
+      analysis.getProducedTable().put(node, table.getMiddle());
       table.getLeft().ifPresent(r->analysis.getProducedField().put(node, r));
     }
     scope.getContextTable().ifPresent(t -> analysis.getParentTable().put(node, t));

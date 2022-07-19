@@ -121,6 +121,8 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   protected final Analysis analysis;
   private final Map<Relationship, SqlJoinDeclaration> joins = new HashMap<>();
   protected Map<Name, AbstractSqrlTable> tables = new HashMap<>();
+  protected Map<Field, String> fieldNames = new HashMap<>();
+
   SqlParserPosFactory pos = new SqlParserPosFactory();
 
   public QueryGenerator(Analysis analysis) {
@@ -164,6 +166,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
         .collect(Collectors.toList());
     SqlNodeList keywords = keywords(node.getSelect());
     SqlNodeList select = (SqlNodeList) node.getSelect().accept(this, context);
+    context.setPPKOffset(ppk.size());
     select = prepend(select, ppk);
     context.setOffset(ppk.size());
     SqlNodeList groupBy = (SqlNodeList) node.getGroupBy().map(n -> n.accept(this, context))
@@ -623,7 +626,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
     if (isLocalAggregate(node)) {
       LocalAggBuilder localAggBuilder = new LocalAggBuilder(this.tables,
-          new JoinPathBuilder(this.joins));
+          new JoinPathBuilder(this.joins), this.fieldNames);
       ResolvedNamePath namePath = analysis.getResolvedNamePath().get(node.getArguments().get(0));
       Preconditions.checkNotNull(namePath);
 
@@ -718,7 +721,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
           Optional.empty()));
 
       return new SqlIdentifier(List.of(left.getToTableAlias(),
-          p.getPath().get(p.getPath().size() - 1).getId().getCanonical()), SqlParserPos.ZERO);
+          fieldNames.get(p.getPath().get(p.getPath().size() - 1))), SqlParserPos.ZERO);
     } else {
 
 //    Preconditions.checkNotNull(p, "Could not find node {}", node);
@@ -727,7 +730,9 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
 //    Arrays.stream(node.getNamePath().getNames()).map(Name::getCanonical)
 //        .collect(Collectors.toList())
-      return new SqlIdentifier(List.of(p.getAlias(), field.getId().getCanonical()),
+
+      System.out.println(field + ":" + fieldNames.get(field));
+      return new SqlIdentifier(List.of(p.getAlias(), fieldNames.get(field)),
           pos.getPos(node.getLocation()));
     }
   }
@@ -964,6 +969,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     @Setter
     int offset = 0;
     private SqlNode join = null;
+    private int PPKOffset;
 
     public Scope(Optional<AbstractSqrlTable> parentTable, boolean isNested) {
       this.parentTable = parentTable;
@@ -978,6 +984,14 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
       SqlNode tmp = this.join;
       this.join = null;
       return Optional.ofNullable(tmp);
+    }
+
+    public void setPPKOffset(int ppkOffset) {
+      this.PPKOffset = ppkOffset;
+    }
+
+    public int getPPKOffset() {
+      return PPKOffset;
     }
   }
 

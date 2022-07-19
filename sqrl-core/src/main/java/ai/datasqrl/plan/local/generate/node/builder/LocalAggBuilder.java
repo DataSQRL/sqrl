@@ -7,6 +7,7 @@ import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.generate.node.SqlResolvedIdentifier;
 import ai.datasqrl.plan.local.generate.node.util.AliasGenerator;
+import ai.datasqrl.schema.Field;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ public class LocalAggBuilder {
   final AliasGenerator aliasGenerator = new AliasGenerator();
   Map<Name, AbstractSqrlTable> tables;
   JoinPathBuilder joinPathBuilder;
+  Map<Field, String> fieldNames;
 
 
   /**
@@ -66,7 +68,7 @@ public class LocalAggBuilder {
     //Add new
     //May be alias
     SqlIdentifier newArg = new SqlIdentifier(List.of(from.getToTableAlias(),
-        namePath.getPath().get(namePath.getPath().size() - 1).getId().getCanonical()), SqlParserPos.ZERO);
+        fieldNames.get(namePath.getPath().get(namePath.getPath().size() - 1))), SqlParserPos.ZERO);
     SqlCall rewrittenCall = (SqlCall)call.accept(new SqlShuttle(){
       @Override
       public SqlNode visit(SqlIdentifier id) {

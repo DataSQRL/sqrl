@@ -73,6 +73,11 @@ public class Analysis {
   private Map<Assignment, Table> producedTable = new HashMap<>();
 
   /**
+   * Created fields (in order)
+   */
+  private Map<Assignment, List<Field>> producedFieldList = new HashMap<>();
+
+  /**
    * Some queries don't have a self query defined for nested queries so
    * one needs to be added.
    */

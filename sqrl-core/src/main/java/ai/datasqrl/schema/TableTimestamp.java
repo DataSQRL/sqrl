@@ -25,7 +25,7 @@ public class TableTimestamp {
 
     @Override
     public String toString() {
-        return "TIMESTAMP="+(column==null?"none":column.getId())+"@"+status;
+        return "TIMESTAMP="+(column==null?"none":column.getName().getCanonical())+"@"+status;
     }
 
     public boolean isLocked() {

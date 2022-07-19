@@ -1,9 +1,5 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
-import java.util.Optional;
 import lombok.Getter;
 
 public class RootTableField extends Field {
@@ -18,16 +14,9 @@ public class RootTableField extends Field {
   }
 
   @Override
-  public Name getId() {
-    return table.getId();
-  }
-
-  @Override
-  public int getVersion() {
-    return table.getVersion();
-  }
-
-  public Optional<ResolvedNamePath> walk(NamePath namePath) {
-    return null;
+  public String toString() {
+    return "RootTableField{" +
+        "name=" + name +
+        '}';
   }
 }

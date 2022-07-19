@@ -4,7 +4,6 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Relationship.JoinType;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +12,7 @@ import lombok.Getter;
 
 @Getter
 public class Table extends AbstractTable {
-  public Table(int uniqueId, NamePath path, ShadowingContainer<Field> fields) {
+  public Table(int uniqueId, NamePath path, FieldContainer fields) {
     super(uniqueId,path,fields);
   }
 
@@ -56,13 +55,15 @@ public class Table extends AbstractTable {
   }
 
   public List<Column> getVisibleColumns() {
-    return getAllColumns().filter(Column::isVisible).collect(Collectors.toList());
+    return fields.stream()
+        .filter(c->c instanceof Column)
+        .map(c->(Column)c).filter(Column::isVisible).collect(Collectors.toList());
   }
 
   public void addColumn(Name name, boolean primaryKey, boolean parentPrimaryKey, boolean visible) {
-    int version = this.fields.getMaxVersion(name).map(v->v+1).orElse(0);
+//    int version = this.fields.getMaxVersion(name).map(v->v+1).orElse(0);
 
-    this.fields.add(new Column(name, version, fields.size(), primaryKey, parentPrimaryKey, visible));
+    this.fields.add(new Column(name, fields.size(), primaryKey, parentPrimaryKey, visible));
   }
 
   public NamePath getPath() {
@@ -73,4 +74,6 @@ public class Table extends AbstractTable {
       return getName().toNamePath();
     }
   }
+
+
 }

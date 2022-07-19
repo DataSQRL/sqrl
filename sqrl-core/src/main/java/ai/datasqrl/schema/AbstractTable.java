@@ -19,7 +19,7 @@ public class AbstractTable implements ShadowingContainer.Element {
     protected final int uniqueId;
     @NonNull
     protected final NamePath path;
-    @NonNull protected final ShadowingContainer<Field> fields;
+    @NonNull protected final FieldContainer fields;
 
 
     public Name getId() {
@@ -68,24 +68,23 @@ public class AbstractTable implements ShadowingContainer.Element {
         return fields.getVisibleByName(name);
     }
 
-    public Stream<Column> getAllColumns() {
-        return fields.stream().filter(Column.class::isInstance).map(Column.class::cast);
-    }
+//    public Stream<Column> getAllColumns() {
+//        return fields.stream().filter(Column.class::isInstance).map(Column.class::cast);
+//    }
 
     public Stream<Relationship> getAllRelationships() {
         return fields.stream().filter(Relationship.class::isInstance).map(Relationship.class::cast);
     }
 
-    public int getNextColumnVersion(Name name) {
-        return fields.getMaxVersion(name).map(v -> v+1).orElse(0);
-    }
-
     public int getNextColumnIndex() {
-        return fields.getIndexLength();
+        return fields.size();
     }
 
     public List<Column> getPrimaryKeys() {
-        return getAllColumns().filter(Column::isPrimaryKey).collect(Collectors.toList());
+        return fields.stream()
+            .filter(c->c instanceof Column)
+            .map(c->(Column)c)
+            .filter(c-> c.isPrimaryKey()).collect(Collectors.toList());
     }
 
 }
