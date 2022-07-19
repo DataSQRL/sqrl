@@ -1,10 +1,14 @@
 package ai.datasqrl.schema;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
+import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.plan.calcite.sqrl.table.ImportedSqrlTable;
+import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
 import ai.datasqrl.schema.Table;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Optional;
 
 import ai.datasqrl.schema.type.Type;
 import lombok.Value;
@@ -19,7 +23,7 @@ public class SourceTableImportMeta {
   public static class ColumnType {
 
     Type type;
-    boolean notnull;
+    boolean nullable;
 
   }
 

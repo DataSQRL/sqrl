@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.calcite.sqrl.table;
 
+import ai.datasqrl.parse.tree.name.Name;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -15,8 +16,14 @@ public class QueryCalciteTable extends AbstractSqrlTable {
   private final RelNode relNode;
 
   public QueryCalciteTable(RelNode relNode) {
+    super(Name.system("x"));
     this.relNode = relNode;
     this.fields = new ArrayList<>(relNode.getRowType().getFieldList());
+  }
+
+  @Override
+  public RelDataType getRowType() {
+    return getRowType(null);
   }
 
   @Override

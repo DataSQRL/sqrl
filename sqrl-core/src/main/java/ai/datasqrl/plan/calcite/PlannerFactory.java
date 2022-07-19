@@ -15,7 +15,6 @@ import org.apache.calcite.tools.Frameworks;
 public class PlannerFactory {
   private final SchemaPlus rootSchema;
 
-
   public static SqlValidator.Config sqlValidatorConfig = SqlValidator.Config.DEFAULT
       .withCallRewrite(true)
       .withIdentifierExpansion(true)

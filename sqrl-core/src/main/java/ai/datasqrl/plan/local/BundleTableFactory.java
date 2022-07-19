@@ -6,11 +6,11 @@ import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.schema.SourceTableImportMeta;
 import ai.datasqrl.schema.AbstractTable;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ShadowingContainer;
+import ai.datasqrl.schema.SourceTableImportMeta;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.RelationType;
@@ -134,30 +134,22 @@ public class BundleTableFactory {
         }
 
         @Override
-        public void addField(Name name, Type type, boolean notnull) {
+        public void addField(Name name, Type type, boolean nullable, boolean isNested, boolean isSingleton) {
             TableBuilder tblBuilder = stack.getFirst();
-            if (isRelationType(type)) {
+            if (isNested) {
                 //It's a relationship
                 Relationship.Multiplicity multi = Relationship.Multiplicity.ZERO_ONE;
-                if (type instanceof ArrayType) multi = Relationship.Multiplicity.MANY;
-                else if (notnull) multi = Relationship.Multiplicity.ONE;
+                if (!isSingleton) multi = Relationship.Multiplicity.MANY;
+                else if (!nullable) multi = Relationship.Multiplicity.ONE;
                 tblBuilder.addChild(lastCreatedTable,multi);
                 lastCreatedTable = null;
             } else {
                 //It's a column, determine if it is a default timestamp candidate
                 Column column = tblBuilder.addColumn(name, false,
-                        false, type, notnull, true);
+                        false, type, nullable, true);
             }
         }
 
-
-        private boolean isRelationType(Type type) {
-            if (type instanceof RelationType) return true;
-            if (type instanceof ArrayType) {
-                return isRelationType(((ArrayType)type).getSubType());
-            }
-            return false;
-        }
 
         @Override
         public Type convertBasicType(BasicType type) {
@@ -165,7 +157,7 @@ public class BundleTableFactory {
         }
 
         @Override
-        public Type wrapArray(Type type, boolean notnull) {
+        public Type wrapArray(Type type, boolean nullable) {
             return new ArrayType(type); //Nullability is ignored
         }
 
@@ -208,11 +200,11 @@ public class BundleTableFactory {
         }
 
         private Column addColumn(Name name, boolean isPrimaryKey, boolean isParentPrimaryKey,
-                       Type type, boolean notnull, boolean isVisible) {
+                       Type type, boolean nullable, boolean isVisible) {
             Column column = addColumn(name, isPrimaryKey, isParentPrimaryKey, isVisible);
-            rowType.add(column.getIndex(),new SourceTableImportMeta.ColumnType(type,notnull));
+            rowType.add(column.getIndex(),new SourceTableImportMeta.ColumnType(type,nullable));
             //Check if this is a candidate for timestamp
-            if (notnull && (type instanceof DateTimeType) &&
+            if (!nullable && (type instanceof DateTimeType) &&
                     defaultTimestampPreference.containsKey(name)) {
                 //this column is a candidate for timestamp
                 Integer preference = defaultTimestampPreference.get(name);

@@ -878,7 +878,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
 
     //Assure at least 1 order
     if (orderList.isEmpty()) {
-      orderList.add(SqlNodeUtil.fieldToNode(Optional.of(path.getAlias()), table.getTimestamp()));
+      orderList.add(SqlNodeUtil.fieldToNode(Optional.of(path.getAlias()), table.getTimestampColumn()));
     }
 
     SqlNode[] operands = {

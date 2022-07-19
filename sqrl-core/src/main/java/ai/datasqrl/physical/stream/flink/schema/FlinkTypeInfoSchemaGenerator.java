@@ -1,12 +1,12 @@
 package ai.datasqrl.physical.stream.flink.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.input.AbstractFlexibleTableConverterVisitor;
+import ai.datasqrl.schema.input.SimpleFlexibleTableConverterVisitor;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
+import ai.datasqrl.schema.table.builder.SimpleTableBuilder;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.*;
 import lombok.Value;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
@@ -15,20 +15,21 @@ import java.util.List;
 import java.util.Optional;
 
 @Value
-public class FlinkTypeInfoSchemaGenerator extends AbstractFlexibleTableConverterVisitor<TypeInformation> {
+public class FlinkTypeInfoSchemaGenerator extends SimpleFlexibleTableConverterVisitor<TypeInformation> {
 
     public static final FlinkTypeInfoSchemaGenerator INSTANCE = new FlinkTypeInfoSchemaGenerator();
 
+
     @Override
-    protected Optional<TypeInformation> createTable(TableBuilder<TypeInformation> tblBuilder) {
-        List<TableBuilder.Column> columns = tblBuilder.getColumns();
+    protected Optional<TypeInformation> createTable(SimpleTableBuilder<TypeInformation> tblBuilder) {
+        List<SimpleTableBuilder.Column<TypeInformation>> columns = tblBuilder.getColumns(true,true);
         return Optional.of(Types.ROW_NAMED(
-                columns.stream().map(TableBuilder.Column::getName).map(Name::getCanonical).toArray(i -> new String[i]),
-                columns.stream().map(TableBuilder.Column::getType).toArray(i -> new TypeInformation[i])));
+                columns.stream().map(SimpleTableBuilder.Column::getId).map(Name::getCanonical).toArray(i -> new String[i]),
+                columns.stream().map(SimpleTableBuilder.Column::getType).toArray(i -> new TypeInformation[i])));
     }
 
     @Override
-    public TypeInformation nullable(TypeInformation type, boolean notnull) {
+    public TypeInformation nullable(TypeInformation type, boolean nullable) {
         return type; //Does not support nullability
     }
 
@@ -38,7 +39,7 @@ public class FlinkTypeInfoSchemaGenerator extends AbstractFlexibleTableConverter
     }
 
     @Override
-    public TypeInformation wrapArray(TypeInformation type, boolean notnull) {
+    public TypeInformation wrapArray(TypeInformation type, boolean nullable) {
         return Types.OBJECT_ARRAY(type);
     }
 
