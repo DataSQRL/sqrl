@@ -814,4 +814,13 @@ class AnalyzerTest extends AbstractSQRLIT {
 //    node = gen("Customer.test := SELECT customerid+1 FROM _;");
 //    System.out.println(node);
 //  }
+  //
+//  @Test
+//  public void warnCrossJoinTest() {
+//    SqlNode node;
+//    node = gen("IMPORT ecommerce-data.Orders;\n");
+//    node = gen("Orders.warn := SELECT * FROM _ CROSS JOIN _.entries;");
+//    System.out.println(node);
+//  }
+  //
 }
