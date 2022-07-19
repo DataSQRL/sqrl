@@ -18,7 +18,7 @@ import ai.datasqrl.schema.input.InputTableSchema;
 import ai.datasqrl.schema.input.RelationType;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaImport;
-import ai.datasqrl.schema.table.TableProxyFactory;
+import ai.datasqrl.schema.table.VirtualTableFactory;
 import ai.datasqrl.util.TestDataset;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -119,7 +119,7 @@ public class FlexibleSchemaHandlingTest extends AbstractSQRLIT {
                         assertTrue(result.isPresent());
                         RelDataType table = result.get();
                         assertTrue(table.getFieldCount()>0);
-                        TableProxyFactory.TableBuilder tbl = calciteVisitor.getRootTable();
+                        VirtualTableFactory.TableBuilder tbl = calciteVisitor.getRootTable();
                         assertTrue(tbl.getAllFields().size()>0);
                         System.out.println(table);
                     }));

@@ -3,7 +3,6 @@ package ai.datasqrl.plan.calcite;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.schema.input.TableBuilderFlexibleTableConverterVisitor;
-import ai.datasqrl.schema.table.TableProxyFactory;
 import ai.datasqrl.schema.table.builder.NestedTableBuilder;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
@@ -13,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Value
-public class CalciteSchemaGenerator extends TableBuilderFlexibleTableConverterVisitor<RelDataType, TableProxyFactory.TableBuilder<RelDataType>> {
+public class CalciteSchemaGenerator extends TableBuilderFlexibleTableConverterVisitor<RelDataType, CalciteTableFactory.TableBuilder<RelDataType>> {
 
     RelDataTypeFactory typeFactory;
     SqrlType2Calcite typeConverter;
@@ -27,11 +26,11 @@ public class CalciteSchemaGenerator extends TableBuilderFlexibleTableConverterVi
     }
 
     @Override
-    protected Optional<RelDataType> createTable(TableProxyFactory.TableBuilder<RelDataType> tblBuilder) {
+    protected Optional<RelDataType> createTable(CalciteTableFactory.TableBuilder<RelDataType> tblBuilder) {
         return Optional.of(convertTable(tblBuilder,true));
     }
 
-    public RelDataType convertTable(TableProxyFactory.TableBuilder<RelDataType> tblBuilder, boolean forNested) {
+    public RelDataType convertTable(CalciteTableFactory.TableBuilder<RelDataType> tblBuilder, boolean forNested) {
         CalciteUtil.RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
         List<NestedTableBuilder.Column<RelDataType>> columns = tblBuilder.getColumns(forNested,forNested);
         for (NestedTableBuilder.Column<RelDataType> column : columns) {

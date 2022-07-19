@@ -1,30 +1,12 @@
 package ai.datasqrl.plan.local.generate;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
-import ai.datasqrl.parse.tree.DistinctAssignment;
-import ai.datasqrl.parse.tree.ExpressionAssignment;
-import ai.datasqrl.parse.tree.ImportDefinition;
-import ai.datasqrl.parse.tree.JoinAssignment;
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.QueryAssignment;
-import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
+import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
-import ai.datasqrl.plan.calcite.OptimizationStage;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
-import ai.datasqrl.plan.calcite.SqrlOperatorTable;
-import ai.datasqrl.plan.calcite.SqrlType2Calcite;
+import ai.datasqrl.plan.calcite.*;
 import ai.datasqrl.plan.calcite.sqrl.rules.Sqrl2SqlLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.sqrl.table.ImportedSqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.QueryCalciteTable;
-import ai.datasqrl.plan.calcite.sqrl.table.QuerySqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.TimestampHolder;
-import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
+import ai.datasqrl.plan.calcite.sqrl.table.*;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.local.analyze.Analysis;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
@@ -33,14 +15,8 @@ import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SourceTableImportMeta;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
-import ai.datasqrl.schema.table.TableProxy;
-import ai.datasqrl.schema.table.TableProxyFactory;
+import ai.datasqrl.schema.table.VirtualTableFactory;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
@@ -49,16 +25,14 @@ import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.StructKind;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlTableRef;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.RelBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
@@ -98,11 +72,13 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
         analysis.getImportTableTypes()
         .get(node);
 
+
+
     SourceTableImport tableImport = sourceTableImports.get(0);//todo: support import *;
     CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(planner.getTypeFactory(), calciteFactory);
     RelDataType rootType = new FlexibleTableConverter(tableImport.getSchema()).apply(schemaGen).get();
 
-    TableProxyFactory.TableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
+    VirtualTableFactory.TableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
 
     ImportedSqrlTable impTable = new ImportedSqrlTable(tableImport.getTable().getName(), tableImport, rootType);
 
