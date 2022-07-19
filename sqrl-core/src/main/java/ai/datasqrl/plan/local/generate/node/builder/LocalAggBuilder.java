@@ -8,6 +8,7 @@ import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.generate.node.SqlResolvedIdentifier;
 import ai.datasqrl.plan.local.generate.node.util.AliasGenerator;
 import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Table;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +27,9 @@ import org.apache.calcite.sql.util.SqlShuttle;
 @AllArgsConstructor
 public class LocalAggBuilder {
   final AliasGenerator aliasGenerator = new AliasGenerator();
-  Map<Name, AbstractSqrlTable> tables;
   JoinPathBuilder joinPathBuilder;
   Map<Field, String> fieldNames;
+  Map<Table, AbstractSqrlTable> tableMap;
 
 
   /**
@@ -55,8 +56,7 @@ public class LocalAggBuilder {
 
     //Namepath is relative: sum(_.entries.total)
     if (namePath.getBase().isPresent()) {
-      Name originTable = namePath.getBase().get().getToTable().getId();
-      List<String> primaryKeys = this.tables.get(originTable).getPrimaryKeys();
+      List<String> primaryKeys = tableMap.get(namePath.getBase().get().getToTable()).getPrimaryKeys();
 
       List<SqlNode> pks = primaryKeys.stream().map(pk -> new SqlIdentifier(List.of("_", pk), SqlParserPos.ZERO)).collect(
           Collectors.toList());

@@ -20,7 +20,7 @@ public class BridgedCalciteSchema extends AbstractSqrlSchema {
 
   @Override
   public Table getTable(String table) {
-    Table calciteTable = bridge.getTable(Name.system(table));
+    Table calciteTable = bridge.getTable(table);
     if (calciteTable == null) {
       log.error("Could not find calcite table {}", table);
     }
