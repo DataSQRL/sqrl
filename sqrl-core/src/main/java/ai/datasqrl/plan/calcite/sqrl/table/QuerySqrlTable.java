@@ -12,10 +12,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.util.ImmutableBitSet;
@@ -52,7 +50,7 @@ public class QuerySqrlTable extends AbstractSqrlTable {
   }
 
   private static RelDataTypeField getField(FieldIndexPath path, RelDataType rowType) {
-    Preconditions.checkArgument(path.getLength() > 0);
+    Preconditions.checkArgument(path.size() > 0);
     Preconditions.checkArgument(rowType.isStruct(), "Expected relational data type but found: %s",
         rowType);
     int firstIndex = path.get(0);
@@ -80,8 +78,8 @@ public class QuerySqrlTable extends AbstractSqrlTable {
   }
 
   public boolean isPrimaryKey(FieldIndexPath path) {
-    Preconditions.checkArgument(path.getLength() > 0);
-    if (path.getLength() == 1) {
+    Preconditions.checkArgument(path.size() > 0);
+    if (path.size() == 1) {
       return path.get(0) < numPrimaryKeys;
     } else {
       if (path.getLast() != 0) {

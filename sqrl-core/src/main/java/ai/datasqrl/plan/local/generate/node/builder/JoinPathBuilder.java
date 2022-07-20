@@ -8,9 +8,8 @@ import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.RootTableField;
-import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.VarTable;
 import com.google.common.base.Preconditions;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,9 +46,9 @@ public class JoinPathBuilder {
   private String currentAlias;
   public SqlNode sqlNode;
   public Optional<SqlNode> trailingCondition = Optional.empty();
-  private Map<Table, AbstractSqrlTable> tableMap;
+  private Map<VarTable, AbstractSqrlTable> tableMap;
 
-  public JoinPathBuilder(Map<Relationship, SqlJoinDeclaration> joinDeclarations, Map<Table, AbstractSqrlTable> tableMap) {
+  public JoinPathBuilder(Map<Relationship, SqlJoinDeclaration> joinDeclarations, Map<VarTable, AbstractSqrlTable> tableMap) {
     this.joinDeclarations = joinDeclarations;
     this.tableMap = tableMap;
   }

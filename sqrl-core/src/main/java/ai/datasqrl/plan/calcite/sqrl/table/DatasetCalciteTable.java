@@ -8,12 +8,12 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 @Getter
-public class ImportedSqrlTable extends AbstractSqrlTable {
+public class DatasetCalciteTable extends AbstractSqrlTable {
 
   private final SourceTableImport sourceTableImport;
   private final RelDataType rowType;
 
-  public ImportedSqrlTable(@NonNull Name rootTableId,
+  public DatasetCalciteTable(@NonNull Name rootTableId,
                            SourceTableImport sourceTableImport, RelDataType rowType) {
     super(getTableId(rootTableId));
     this.sourceTableImport = sourceTableImport;

@@ -147,7 +147,7 @@ public class JoinTable implements Comparable<JoinTable> {
         public int map(int index) {
             Preconditions.checkArgument(index>=0);
             int delta = index;
-            for (int i = 0; i < getLength(); i++) {
+            for (int i = 0; i < size(); i++) {
                 JoinTable t = get(i);
                 if (delta < t.numColumns()) {
                     return t.offset + delta;

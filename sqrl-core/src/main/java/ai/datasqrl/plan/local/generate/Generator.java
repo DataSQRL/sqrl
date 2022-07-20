@@ -1,30 +1,33 @@
 package ai.datasqrl.plan.local.generate;
 
-import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.*;
 import ai.datasqrl.plan.calcite.sqrl.rules.Sqrl2SqlLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.sqrl.table.*;
+import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn.Simple;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.local.analyze.Analysis;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
+import ai.datasqrl.schema.DatasetTable;
+import ai.datasqrl.schema.DelegateRelRelationship;
+import ai.datasqrl.schema.DelegateVTable;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SourceTableImportMeta;
-import ai.datasqrl.schema.Table;
-import ai.datasqrl.schema.input.FlexibleTableConverter;
-import ai.datasqrl.schema.builder.AbstractTableFactory;
+import ai.datasqrl.schema.VarTable;
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
+import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.StructKind;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
@@ -32,7 +35,6 @@ import org.apache.calcite.tools.RelBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class Generator extends QueryGenerator implements SqrlCalciteBridge {
@@ -68,68 +70,110 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
    */
   @Override
   public SqlNode visitImportDefinition(ImportDefinition node, Scope context) {
-    List<SourceTableImport> sourceTableImports = analysis.getImportSourceTables().get(node);
-    Map<ai.datasqrl.schema.Table, SourceTableImportMeta.RowType> tableTypes =
-        analysis.getImportTableTypes()
-        .get(node);
+    List<DatasetTable> dt = analysis.getImportDataset().get(node);
 
-    SourceTableImport tableImport = sourceTableImports.get(0);//todo: support import *;
-    CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(planner.getTypeFactory(), calciteFactory);
-    RelDataType rootType = new FlexibleTableConverter(tableImport.getSchema()).apply(schemaGen).get();
+    for (DatasetTable d : dt) {
+      this.tables.put(d.getName().getCanonical(), d.getImpTable());
+      this.tables.putAll(d.getShredTables());
 
-    AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
+      this.tableMap.put(d.getTable(), d.getImpTable());
+      this.tableMap.putAll(d.getShredTableMap());
 
-    ImportedSqrlTable impTable = new ImportedSqrlTable(tableImport.getTable().getName(), tableImport, rootType);
+      this.fieldNames.putAll(d.getFieldNameMap());
 
-    Name datasetName = Name.system(tableImport.getTable().qualifiedName());
-
-    this.tables.put(datasetName.getCanonical(), impTable);
-
-    List<ai.datasqrl.schema.Table> tables = new ArrayList<>();
-    //Produce a Calcite row schema for each table in the nested hierarchy
-    for (Map.Entry<ai.datasqrl.schema.Table, SourceTableImportMeta.RowType> tableImp :
-        tableTypes.entrySet()) {
-      RelDataType logicalTableType = getLogicalTableType(tableImp.getKey(), tableImp.getValue());
-      ai.datasqrl.schema.Table table = tableImp.getKey();
-
-      RelBuilder relBuilder = planner.getRelBuilder();
-      relBuilder.scan(datasetName.getCanonical());
-      RelNode relNode = relBuilder.build(); //?
-
-      for (int i = 0; i < logicalTableType.getFieldList().size(); i++) {
-        this.fieldNames.put(table.getFields().toList().get(i),
-            logicalTableType.getFieldList().get(i).getName());
-      }
-      System.out.println(this.fieldNames);
-
-      TimestampHolder timeHolder = new TimestampHolder();
-      QuerySqrlTable queryTable = new QuerySqrlTable(rootTable.getName(), QuerySqrlTable.Type.STREAM, logicalTableType,
-          timeHolder, rootTable.getNumPrimaryKeys());
-//      Set timestamp candidates
-      calciteFactory.getTimestampCandidateScores(rootTable).entrySet().stream().forEach( e -> {
-        RelDataTypeField field = impTable.getField(e.getKey().getId());
-        timeHolder.addCandidate(field.getIndex(),e.getValue());
-      });
-
-      //?
-//      List<VirtualSqrlTable> vtables = calciteFactory.createProxyTables(rootTable, queryTable, schemaGen).stream()
-//          .map(TableProxy::getVirtualTable).collect(Collectors.toList());
-//      vtables.stream().forEach(vt -> this.tables.put(Name.system(vt.getNameId()), vt));
-      this.tableMap.put(table, queryTable);
-      this.tables.put(queryTable.getNameId(), queryTable);
-
-      tables.add(table);
+      d.getShredTableMap().keySet().stream().flatMap(t->t.getAllRelationships())
+          .forEach(this::createParentChildJoinDeclaration);
     }
-    for (ai.datasqrl.schema.Table table : tables) {
-      table.getAllRelationships().forEach(this::createParentChildJoinDeclaration);
-    }
+//
+//
+//    List<SourceTableImport> sourceTableImports = analysis.getImportSourceTables().get(node);
+//    Map<VarTable, SourceTableImportMeta.RowType> tableTypes =
+//        analysis.getImportTableTypes()
+//        .get(node);
+//
+//    SourceTableImport tableImport = sourceTableImports.get(0);//todo: support import *;
+//    CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(planner.getTypeFactory(), calciteFactory);
+//    RelDataType rootType = new FlexibleTableConverter(tableImport.getSchema()).apply(schemaGen).get();
+//
+//    AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
+//
+//    ImportedSqrlTable impTable = new ImportedSqrlTable(tableImport.getTable().getName(), tableImport, rootType);
+//
+//    Name datasetName = Name.system(tableImport.getTable().qualifiedName());
+//
+//    this.tables.put(datasetName.getCanonical(), impTable);
+//
+//    List<VarTable> tables = new ArrayList<>();
+//    //Produce a Calcite row schema for each table in the nested hierarchy
+//    for (Map.Entry<VarTable, SourceTableImportMeta.RowType> tableImp :
+//        tableTypes.entrySet()) {
+//      RelDataType logicalTableType = getLogicalTableType(tableImp.getKey(), tableImp.getValue());
+//      VarTable table = tableImp.getKey();
+//
+//      RelBuilder relBuilder = planner.getRelBuilder();
+//      relBuilder.scan(datasetName.getCanonical());
+//      RelNode relNode = relBuilder.build(); //?
+//
+//      for (int i = 0; i < logicalTableType.getFieldList().size(); i++) {
+//        this.fieldNames.put(table.getFields().toList().get(i),
+//            logicalTableType.getFieldList().get(i).getName());
+//      }
+//      System.out.println(this.fieldNames);
+//
+//      TimestampHolder timeHolder = new TimestampHolder();
+//      QuerySqrlTable queryTable = new QuerySqrlTable(rootTable.getName(), QuerySqrlTable.Type.STREAM, logicalTableType,
+//          timeHolder, rootTable.getNumPrimaryKeys());
+////      Set timestamp candidates
+//      calciteFactory.getTimestampCandidateScores(rootTable).entrySet().stream().forEach( e -> {
+//        RelDataTypeField field = impTable.getField(e.getKey().getId());
+//        timeHolder.addCandidate(field.getIndex(),e.getValue());
+//      });
+//
+//      //?
+////      List<VirtualSqrlTable> vtables = calciteFactory.createProxyTables(rootTable, queryTable, schemaGen).stream()
+////          .map(TableProxy::getVirtualTable).collect(Collectors.toList());
+////      vtables.stream().forEach(vt -> this.tables.put(Name.system(vt.getNameId()), vt));
+//      this.tables.put(queryTable.getNameId(), queryTable);
+//
+//      tables.add(table);
+//    }
+//    for (VarTable table : tables) {
+//      table.getAllRelationships().forEach(this::createParentChildJoinDeclaration);
+//    }
 
     return null;
   }
-//  private TableProxy<VirtualSqrlTable> toTableProxy(Table table) {
+
+  private void createShreddedTables(VarTable dt, DatasetCalciteTable t) {
+    for (Field field : dt.getFields().toList()) {
+      if (field instanceof DelegateRelRelationship) {
+        DelegateRelRelationship rel = (DelegateRelRelationship) field;
+
+        //1. We plan the shredded table for calcite (adds pks etc)
+        RelBuilder relBuilder = planner.getRelBuilder();
+        relBuilder.scan(rel.getToTable().getName().getCanonical());
+        RelNode relNode = relBuilder.build(); //?
+
+        TimestampHolder timeHolder = new TimestampHolder();
+        QuerySqrlTable queryTable = new QuerySqrlTable(Name.system(t.getNameId()),
+            QuerySqrlTable.Type.STREAM,
+            relNode.getRowType(), timeHolder, 1);
+
+        tableMap.put(rel.getToTable(), queryTable);
+        if (rel.getToTable() instanceof DelegateVTable) {
+          createShreddedTables(rel.getToTable(), t);
+        }
+
+        createParentChildJoinDeclaration(rel);
+      }
+    }
+
+  }
+
+  //  private TableProxy<VirtualSqrlTable> toTableProxy(Table table) {
 //    return tableFactory.walkTable(table.getPath()).orElseThrow();
 //  }
-  private RelDataType getLogicalTableType(ai.datasqrl.schema.Table table, SourceTableImportMeta.RowType rowType) {
+  private RelDataType getLogicalTableType(VarTable table, SourceTableImportMeta.RowType rowType) {
     SqrlType2Calcite typeConverter = planner.getTypeConverter();
 
     FieldInfoBuilder fieldBuilder = planner.getTypeFactory().builder()
@@ -149,7 +193,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   public SqlNode visitDistinctAssignment(DistinctAssignment node, Scope context) {
     SqlNode sqlNode = generateDistinctQuery(node);
     //Field names are the same...
-    Table table = analysis.getProducedTable().get(node);
+    VarTable table = analysis.getProducedTable().get(node);
 
     RelNode relNode = plan(sqlNode);
     for (int i = 0; i < analysis.getProducedFieldList().get(node).size(); i++) {
@@ -166,7 +210,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   @Override
   public SqlNode visitJoinAssignment(JoinAssignment node, Scope context) {
     //Create join declaration, recursively expand paths.
-    Table table = analysis.getParentTable().get(node);
+    VarTable table = analysis.getParentTable().get(node);
     AbstractSqrlTable tbl = tableMap.get(table);
     Scope scope = new Scope(Optional.ofNullable(tbl), true);
     SqlJoin sqlNode = (SqlJoin) node.getJoinDeclaration().getRelation().accept(this, scope);
@@ -183,8 +227,8 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
   @Override
   public SqlNode visitExpressionAssignment(ExpressionAssignment node, Scope context) {
-    Table v = analysis.getProducedTable().get(node);
-    Table ta = analysis.getParentTable().get(node);
+    VarTable v = analysis.getProducedTable().get(node);
+    VarTable ta = analysis.getParentTable().get(node);
     AbstractSqrlTable tbl = tableMap.get(ta);
     Scope ctx = new Scope(Optional.ofNullable(tbl), true);
     SqlNode sqlNode = node.getExpression().accept(this, ctx);
@@ -219,6 +263,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     } else {
       //Simple
       AbstractSqrlTable t = tableMap.get(v);
+      Preconditions.checkNotNull(t, "Could not find table", v);
       Field field = analysis.getProducedField().get(node);
 
       SqlCall call = new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{sqlNode,
@@ -235,19 +280,21 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
       RelNode relNode = plan(select);
       this.fieldNames.put(field, relNode.getRowType().getFieldList()
           .get(relNode.getRowType().getFieldCount()-1).getName());
-      AbstractSqrlTable table = this.tableMap.get(v);
+      VirtualSqrlTable table = (VirtualSqrlTable)this.tableMap.get(v);
       RelDataTypeField produced = relNode.getRowType().getFieldList().get(0);
       RelDataTypeField newExpr = new RelDataTypeFieldImpl(produced.getName(),
           table.getRowType(null).getFieldList().size(), produced.getType());
 
-      table.addField(newExpr);
+      RexNode rexNode = ((LogicalProject)relNode).getProjects().get(0);
+      AddedColumn addedColumn = new Simple(newExpr.getName(), rexNode, false);
+      table.addColumn(addedColumn, new SqrlTypeFactory(new SqrlTypeSystem()));
 
       return select.getSelectList().get(0); //fully validated node
     }
   }
 
   private String getUniqueName(AbstractSqrlTable t, String newName) {
-    List<String> toUnique = new ArrayList(t.getRowType().getFieldNames());
+    List<String> toUnique = new ArrayList<>(t.getRowType().getFieldNames());
     toUnique.add(newName);
     List<String> uniqued = SqlValidatorUtil.uniquify(toUnique, false);
     return uniqued.get(uniqued.size()-1);
@@ -255,7 +302,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
   @Override
   public SqlNode visitQueryAssignment(QueryAssignment node, Scope context) {
-    Table ta = analysis.getParentTable().get(node);
+    VarTable ta = analysis.getParentTable().get(node);
     Optional<AbstractSqrlTable> tbl = (ta == null) ? Optional.empty() :
         Optional.ofNullable(tableMap.get(ta));
 
@@ -268,7 +315,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     }
     relNode = optimize(relNode);
 
-    Table table = analysis.getProducedTable().get(node);
+    VarTable table = analysis.getProducedTable().get(node);
 
     if (analysis.getExpressionStatements().contains(node)) {
       Preconditions.checkNotNull(table);

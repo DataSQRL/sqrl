@@ -1,14 +1,11 @@
 package ai.datasqrl.config;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -47,17 +44,17 @@ public abstract class AbstractPath<E extends Comparable,P extends AbstractPath<E
   }
 
 
-  public int getLength() {
+  public int size() {
     return elements.length;
   }
 
   public E get(int index) {
-    Preconditions.checkArgument(index >= 0 && index < getLength());
+    Preconditions.checkArgument(index >= 0 && index < size());
     return elements[index];
   }
 
   public Optional<E> getOptional(int index) {
-    if (index >= 0 && index < getLength()) {
+    if (index >= 0 && index < size()) {
       return Optional.of(elements[index]);
     } else {
       return Optional.empty();
@@ -120,13 +117,13 @@ public abstract class AbstractPath<E extends Comparable,P extends AbstractPath<E
   }
 
   public P popFirst() {
-    Preconditions.checkArgument(getLength()>0);
+    Preconditions.checkArgument(size()>0);
     E[] newNames = Arrays.copyOfRange(elements, 1, elements.length);
     return constructor().create(newNames);
   }
 
   public P popLast() {
-    Preconditions.checkArgument(getLength()>0);
+    Preconditions.checkArgument(size()>0);
     E[] newNames = Arrays.copyOfRange(elements, 0, elements.length - 1);
     return constructor().create(newNames);
   }

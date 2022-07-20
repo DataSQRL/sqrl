@@ -6,12 +6,12 @@ import lombok.Getter;
 @Getter
 public class Relationship extends Field {
 
-  private final Table fromTable;
-  private final Table toTable;
+  private final VarTable fromTable;
+  private final VarTable toTable;
   private final JoinType joinType;
   private final Multiplicity multiplicity;
 
-  public Relationship(Name name, int version, Table fromTable, Table toTable, JoinType joinType,
+  public Relationship(Name name, int version, VarTable fromTable, VarTable toTable, JoinType joinType,
                       Multiplicity multiplicity) {
     super(name, version);
     this.fromTable = fromTable;

@@ -80,7 +80,7 @@ class GeneratorTest extends AbstractSQRLIT {
     gen("IMPORT ecommerce-data.Orders;\n");
     SqlNode node;
 
-    node = gen("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
+//    node = gen("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
 //    assertEquals(
 //        "SELECT `EXPR$0`.`_uuid`, `EXPR$0`.`_ingest_time`, `EXPR$0`.`customerid`, `EXPR$0`"
 //            + ".`email`, `EXPR$0`.`name`\n"
@@ -92,7 +92,7 @@ class GeneratorTest extends AbstractSQRLIT {
 //            + "WHERE `EXPR$0`.`_row_num` = 1",
 //        node.toString());
 
-    node = gen("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n");
+//    node = gen("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n");
 //    assertEquals(
 //        "SELECT `EXPR$0`.`_uuid`, `EXPR$0`.`_ingest_time`, `EXPR$0`.`productid`, `EXPR$0`.`name`,"
 //            + " `EXPR$0`.`description`, `EXPR$0`.`category`\n"
@@ -105,6 +105,7 @@ class GeneratorTest extends AbstractSQRLIT {
 //        node.toString());
 
     node = gen("Orders.entries.discount := coalesce(discount, 0.0);\n");
+    System.out.println(node);
 //    assertEquals(
 //        "CASE WHEN `entries$4`.`discount` IS NOT NULL THEN `entries$4`.`discount` ELSE 0.0 END AS"
 //            + " `discount$1`",

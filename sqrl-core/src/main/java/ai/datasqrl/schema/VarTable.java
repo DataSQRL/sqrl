@@ -3,6 +3,8 @@ package ai.datasqrl.schema;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Relationship.JoinType;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -13,14 +15,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Getter
-public class Table {
+public class VarTable {
 
   @NonNull
   final NamePath path;
   @NonNull
   final FieldList fields = new FieldList();
 
-  public Table(@NonNull NamePath path) {
+  public VarTable(@NonNull NamePath path) {
     this.path = path;
   }
 
@@ -47,7 +49,7 @@ public class Table {
     return col;
   }
 
-  public Relationship addRelationship(Name name, Table toTable, Relationship.JoinType joinType,
+  public Relationship addRelationship(Name name, VarTable toTable, Relationship.JoinType joinType,
                                                                Relationship.Multiplicity multiplicity) {
     Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity);
     fields.addField(rel);
@@ -62,7 +64,7 @@ public class Table {
     return fields.getAccessibleField(name);
   }
 
-  public Optional<Table> walkTable(NamePath namePath) {
+  public Optional<VarTable> walkTable(NamePath namePath) {
     if (namePath.isEmpty()) {
       return Optional.of(this);
     }
@@ -71,7 +73,7 @@ public class Table {
       return Optional.empty();
     }
     Relationship rel = (Relationship) field.get();
-    Table target = rel.getToTable();
+    VarTable target = rel.getToTable();
     return target.walkTable(namePath.popFirst());
   }
 
@@ -91,11 +93,11 @@ public class Table {
 //  }
 
 
-  public Optional<Table> getParent() {
+  public Optional<VarTable> getParent() {
     return getAllRelationships().filter(r -> r.getJoinType() == JoinType.PARENT).map(Relationship::getToTable).findFirst();
   }
 
-  public Collection<Table> getChildren() {
+  public Collection<VarTable> getChildren() {
     return getAllRelationships().filter(r -> r.getJoinType() == JoinType.CHILD).map(Relationship::getToTable).collect(Collectors.toList());
   }
 
@@ -113,5 +115,23 @@ public class Table {
 //    }
   }
 
+  public Map<? extends Field, String> getFieldNameMap() {
+    Map<Field, String> map = new HashMap<>();
+    for (Field field : this.fields.fields) {
+      if (field instanceof Column) {
+        map.put(field, field.name.getCanonical());
+      } else if (field instanceof DelegateRelRelationship) {
+        VarTable toTable = ((DelegateRelRelationship) field).getToTable();
+        map.putAll(toTable.getFieldNameMap());
+      } else if (field instanceof Relationship) {
+        //add field, don't walk
+        //todo: fix this
+        VarTable toTable = ((Relationship) field).getToTable();
+        map.put(field, field.name.getCanonical());
+      }
+    }
+
+    return map;
+  }
 
 }

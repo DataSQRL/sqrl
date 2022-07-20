@@ -71,7 +71,7 @@ import ai.datasqrl.plan.local.generate.node.builder.LocalAggBuilder;
 import ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.VarTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -120,8 +120,24 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   protected final Analysis analysis;
   private final Map<Relationship, SqlJoinDeclaration> joins = new HashMap<>();
   protected Map<String, AbstractSqrlTable> tables = new HashMap<>();
-  protected Map<Field, String> fieldNames = new HashMap<>();
-  protected Map<Table, AbstractSqrlTable> tableMap = new HashMap<>();
+  protected FieldNames fieldNames = new FieldNames();
+  protected Map<VarTable, AbstractSqrlTable> tableMap = new HashMap<>();
+
+  public static class FieldNames {
+    Map<Field, String> fieldNames = new HashMap<>();
+    public String get(Field field) {
+      Preconditions.checkState(fieldNames.containsKey(field), "Could not find field ", field);
+      return fieldNames.get(field);
+    }
+
+    public void put(Field field, String name) {
+      fieldNames.put(field, name);
+    }
+
+    public void putAll(Map<Field, String> fieldNameMap) {
+      fieldNames.putAll(fieldNameMap);
+    }
+  }
 
   SqlParserPosFactory pos = new SqlParserPosFactory();
 
@@ -944,7 +960,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
   }
   static int i = 0;
 
-  protected SqlNode createTableRef(Table table, String alias) {
+  protected SqlNode createTableRef(VarTable table, String alias) {
     return new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
         new SqlIdentifier(tableMap.get(table).getNameId(), SqlParserPos.ZERO), SqlNodeList.EMPTY),
         new SqlIdentifier(alias, SqlParserPos.ZERO)}, SqlParserPos.ZERO);

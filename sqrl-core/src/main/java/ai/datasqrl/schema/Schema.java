@@ -10,7 +10,7 @@ import java.util.*;
 
 public class Schema {
 
-  private final Map<Name, Table> tables = new HashMap<>();
+  private final Map<Name, VarTable> tables = new HashMap<>();
 
   //TODO: unpack this
   @Getter
@@ -20,21 +20,21 @@ public class Schema {
   === Retrieval Methods ===
    */
 
-  protected Table get(Name name) {
+  protected VarTable get(Name name) {
     return tables.get(name);
   }
 
-  public void add(Table table) {
-    Preconditions.checkArgument(table.getPath().getLength()==1,"Only add root tables to schema");
+  public void add(VarTable table) {
+    Preconditions.checkArgument(table.getPath().size()==1,"Only add root tables to schema");
     tables.put(table.getName(),table);
   }
 
-  public Optional<Table> getTable(Name name) {
+  public Optional<VarTable> getTable(Name name) {
     return Optional.ofNullable(get(name));
   }
 
-  public Table walkTable(NamePath tablePath) {
-    if (tablePath.getLength() == 1) {
+  public VarTable walkTable(NamePath tablePath) {
+    if (tablePath.size() == 1) {
       return get(tablePath.getFirst());
     } else {
       return get(tablePath.getFirst())
@@ -42,22 +42,22 @@ public class Schema {
     }
   }
 
-  public List<Table> allTables() {
-    List<Table> tableList = new ArrayList<>();
-    for (Table t : tables.values()) addTableAndChildren(t,tableList);
+  public List<VarTable> allTables() {
+    List<VarTable> tableList = new ArrayList<>();
+    for (VarTable t : tables.values()) addTableAndChildren(t,tableList);
     return tableList;
   }
 
-  private void addTableAndChildren(Table t, List<Table> tables) {
+  private void addTableAndChildren(VarTable t, List<VarTable> tables) {
     tables.add(t);
-    for (Table child : t.getChildren()) {
+    for (VarTable child : t.getChildren()) {
       addTableAndChildren(child, tables);
     }
   }
 
   public String toString() {
     StringBuilder s = new StringBuilder();
-    for (Table t : allTables()) {
+    for (VarTable t : allTables()) {
       s.append(t).append("\n");
     }
     return s.toString();

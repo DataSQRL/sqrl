@@ -1,14 +1,14 @@
 package ai.datasqrl.plan.local.generate.node.builder;
 
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
+import ai.datasqrl.plan.local.generate.QueryGenerator.FieldNames;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.generate.node.SqlResolvedIdentifier;
 import ai.datasqrl.plan.local.generate.node.util.AliasGenerator;
 import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.VarTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +28,8 @@ import org.apache.calcite.sql.util.SqlShuttle;
 public class LocalAggBuilder {
   final AliasGenerator aliasGenerator = new AliasGenerator();
   JoinPathBuilder joinPathBuilder;
-  Map<Field, String> fieldNames;
-  Map<Table, AbstractSqrlTable> tableMap;
+  FieldNames fieldNames;
+  Map<VarTable, AbstractSqrlTable> tableMap;
 
 
   /**

@@ -1,9 +1,10 @@
 package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
+import lombok.Getter;
 import lombok.Value;
 
-@Value
+@Getter
 public class Column extends Field {
 
   final boolean isVisible;

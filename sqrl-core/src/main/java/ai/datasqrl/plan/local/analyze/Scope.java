@@ -1,6 +1,5 @@
 package ai.datasqrl.plan.local.analyze;
 
-import ai.datasqrl.parse.tree.Identifier;
 import ai.datasqrl.parse.tree.SingleColumn;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -10,8 +9,7 @@ import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.RootTableField;
-import ai.datasqrl.schema.Schema;
-import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.VarTable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,8 +23,8 @@ import lombok.Setter;
 @Getter
 public class Scope {
 
-  private final Schema schema;
-  private final Optional<Table> contextTable;
+  private final Namespace namespace;
+  private final Optional<VarTable> contextTable;
   private final Optional<Boolean> isExpression;
   private final Optional<Name> targetName;
 
@@ -56,13 +54,13 @@ public class Scope {
 
   @Setter
   private boolean allowIdentifierPaths = true;
-  public Scope(Schema schema, Optional<Table> contextTable, boolean isExpression, Name targetName) {
-    this(schema, contextTable, Optional.of(isExpression), Optional.of(targetName));
+  public Scope(Namespace namespace, Optional<VarTable> contextTable, boolean isExpression, Name targetName) {
+    this(namespace, contextTable, Optional.of(isExpression), Optional.of(targetName));
   }
 
-  public Scope(Schema schema, Optional<Table> contextTable, Optional<Boolean> isExpression,
+  public Scope(Namespace namespace, Optional<VarTable> contextTable, Optional<Boolean> isExpression,
       Optional<Name> targetName) {
-    this.schema = schema;
+    this.namespace = namespace;
     this.contextTable = contextTable;
     this.isExpression = isExpression;
     this.targetName = targetName;
@@ -99,10 +97,10 @@ public class Scope {
     Optional<ResolvedNamePath> explicitAlias = Optional.ofNullable(
         joinScopes.get(namePath.getFirst()));
 
-    if (explicitAlias.isPresent() && (namePath.getLength() == 1 || walk(
+    if (explicitAlias.isPresent() && (namePath.size() == 1 || walk(
         namePath.getFirst().getCanonical(), explicitAlias.get(),
         namePath.popFirst()).isPresent())) { //Alias take priority
-      if (namePath.getLength() == 1) {
+      if (namePath.size() == 1) {
         return explicitAlias.map(List::of);
       } else {
         resolved.add(walk(namePath.getFirst().getCanonical(), explicitAlias.get(),
@@ -132,7 +130,7 @@ public class Scope {
   }
 
   private Optional<ResolvedNamePath> walkSchema(NamePath namePath) {
-    Optional<Table> table = schema.getTable(namePath.getFirst());
+    Optional<VarTable> table = namespace.getTable(namePath.getFirst());
     List<Field> fields = new ArrayList<>();
     if (table.isPresent()) {
       Field root = new RootTableField(table.get());
@@ -159,7 +157,7 @@ public class Scope {
   private Optional<ResolvedNamePath> walk(String alias, ResolvedNamePath resolvedNamePath,
       NamePath namePath) {
     Field field = resolvedNamePath.getPath().get(resolvedNamePath.getPath().size() - 1);
-    Optional<Table> table = getTableOfField(field);
+    Optional<VarTable> table = getTableOfField(field);
     if (table.isEmpty()) {
       return Optional.empty();
     }
@@ -172,8 +170,8 @@ public class Scope {
     return Optional.of(new ResolvedNamePath(alias, Optional.of(resolvedNamePath), fields.get()));
   }
 
-  private Optional<List<Field>> walk(Table tbl, NamePath namePath) {
-    Optional<Table> table = Optional.of(tbl);
+  private Optional<List<Field>> walk(VarTable tbl, NamePath namePath) {
+    Optional<VarTable> table = Optional.of(tbl);
     List<Field> fields = new ArrayList<>();
     for (Name name : namePath) {
       if (table.isEmpty()) {
@@ -190,7 +188,7 @@ public class Scope {
     return Optional.of(fields);
   }
 
-  private Optional<Table> getTableOfField(Field field) {
+  private Optional<VarTable> getTableOfField(Field field) {
     if (field instanceof RootTableField) {
       return Optional.of(((RootTableField) field).getTable());
     } else if (field instanceof Relationship) {
@@ -201,19 +199,19 @@ public class Scope {
   }
 
 
-  protected static Scope createLocalScope(NamePath namePath, boolean isExpression, Schema schema, Optional<Table> contextTable) {
-    Scope scope = new Scope(schema, contextTable, isExpression, namePath.getLast());
+  protected static Scope createLocalScope(NamePath namePath, boolean isExpression, Namespace namespace, Optional<VarTable> contextTable) {
+    Scope scope = new Scope(namespace, contextTable, isExpression, namePath.getLast());
     addSelfToScope(scope);
     scope.setSelfInScope(true);
     return scope;
   }
 
-  public static Scope createScope(NamePath namePath, boolean isExpression, Schema schema, Optional<Table> contextTable) {
-    return new Scope(schema, contextTable, isExpression, namePath.getLast());
+  public static Scope createScope(NamePath namePath, boolean isExpression, Namespace namespace, Optional<VarTable> contextTable) {
+    return new Scope(namespace, contextTable, isExpression, namePath.getLast());
   }
 
-  public static Scope createSingleTableScope(Schema schema, ResolvedTable resolvedTable) {
-    Scope scope = new Scope(schema, Optional.empty(), Optional.empty(),
+  public static Scope createSingleTableScope(Namespace namespace, ResolvedTable resolvedTable) {
+    Scope scope = new Scope(namespace, Optional.empty(), Optional.empty(),
         Optional.empty());
     scope.setAllowIdentifierPaths(false);
     scope.getJoinScopes().put(resolvedTable.getToTable().getName(), resolvedTable);
@@ -227,7 +225,7 @@ public class Scope {
   }
 
   public static Scope createGroupOrSortScope(Scope scope) {
-    Scope newScope = new Scope(scope.schema, scope.contextTable, scope.isExpression,
+    Scope newScope = new Scope(scope.namespace, scope.contextTable, scope.isExpression,
         scope.targetName);
     newScope.setSelfInScope(scope.isSelfInScope);
     newScope.setFieldNames(scope.fieldNames);

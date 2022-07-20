@@ -24,7 +24,7 @@ public class Analysis {
   /**
    * The schema (as a metadata object for the analyzer)
    */
-  private SchemaBuilder schema = new SchemaBuilder();
+  private VariableFactory schema = new VariableFactory();
 
   /* Assignment statements that add a column rather than a new query */
   private Set<Assignment> expressionStatements = new HashSet<>();
@@ -48,7 +48,7 @@ public class Analysis {
   /**
    * Assignments create or modify a table
    */
-  private Map<Assignment, Table> producedTable = new HashMap<>();
+  private Map<Assignment, VarTable> producedTable = new HashMap<>();
 
   /**
    * Created fields (in order)
@@ -65,14 +65,15 @@ public class Analysis {
    * Import resolution definitions
    */
   private Map<ImportDefinition, List<SourceTableImport>> importSourceTables = new HashMap<>();
-  private Map<ImportDefinition, Map<ai.datasqrl.schema.Table, SourceTableImportMeta.RowType>> importTableTypes = new HashMap<>();
+  private Map<ImportDefinition, Map<VarTable, SourceTableImportMeta.RowType>> importTableTypes = new HashMap<>();
 
   private Map<Node, Field> producedField = new HashMap<>();
 
   public Map<Node, Name> tableAliases = new HashMap<>();
 
   public Map<Node, String> fieldAlias = new HashMap<>();
-  public Map<Node, Table> parentTable = new HashMap<>();
+  public Map<Node, VarTable> parentTable = new HashMap<>();
+  public Map<Node, List<DatasetTable>> importDataset = new HashMap<>();
 
   @Setter
   public List<Integer> groupByOrdinals = new ArrayList<>();
@@ -130,7 +131,7 @@ public class Analysis {
       this.path = path;
     }
 
-    public Table getToTable() {
+    public VarTable getToTable() {
       Field field = path.get(path.size() - 1);
       if (field instanceof RootTableField) {
         return ((RootTableField) field).getTable();

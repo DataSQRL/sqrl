@@ -4,6 +4,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Field;
 import java.util.List;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.linq4j.QueryProvider;
 import org.apache.calcite.linq4j.Queryable;

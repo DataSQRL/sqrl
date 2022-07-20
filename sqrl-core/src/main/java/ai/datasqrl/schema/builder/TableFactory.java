@@ -5,7 +5,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.VarTable;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.RelationType;
 import ai.datasqrl.schema.input.TableBuilderFlexibleTableConverterVisitor;
@@ -20,7 +20,7 @@ public final class TableFactory extends AbstractTableFactory {
 
     public final Name parentRelationshipName = ReservedName.PARENT;
 
-    public List<Table> importTables(ImportManager.SourceTableImport importSource, Optional<Name> nameAlias) {
+    public List<VarTable> importTables(ImportManager.SourceTableImport importSource, Optional<Name> nameAlias) {
         ImportSchemaVisitor importVisitor = getImportVisitor();
         new FlexibleTableConverter(importSource.getSchema(), nameAlias).apply(importVisitor);
         AbstractTableFactory.UniversalTableBuilder<Type> tableBuilder = importVisitor.getRootTable();
@@ -39,16 +39,16 @@ public final class TableFactory extends AbstractTableFactory {
      * @param <T> type parameter for the column data type - ignored by this method
      * @return List of SQRL schema tables that are built
      */
-    public<T> List<Table> build(UniversalTableBuilder<T> builder) {
-        List<Table> createdTables = new ArrayList<>();
+    public<T> List<VarTable> build(UniversalTableBuilder<T> builder) {
+        List<VarTable> createdTables = new ArrayList<>();
         build(builder,null,null,createdTables);
         return createdTables;
     }
 
-    private<T> void build(UniversalTableBuilder<T> builder, Table parent,
+    private<T> void build(UniversalTableBuilder<T> builder, VarTable parent,
                           NestedTableBuilder.ChildRelationship<T, UniversalTableBuilder<T>> childRel,
-                          List<Table> createdTables) {
-        Table tbl = new Table(builder.getPath());
+                          List<VarTable> createdTables) {
+        VarTable tbl = new VarTable(builder.getPath());
         createdTables.add(tbl);
         if (parent!=null) {
             //Add child relationship
@@ -71,7 +71,7 @@ public final class TableFactory extends AbstractTableFactory {
         }
     }
 
-    public Optional<Relationship> createParentRelationship(Table childTable, Table parentTable) {
+    public Optional<Relationship> createParentRelationship(VarTable childTable, VarTable parentTable) {
         //Avoid overwriting an existing "parent" column on the child
         if (childTable.getField(parentRelationshipName).isEmpty()) {
             return Optional.of(childTable.addRelationship(parentRelationshipName, parentTable, Relationship.JoinType.PARENT,
@@ -81,7 +81,7 @@ public final class TableFactory extends AbstractTableFactory {
     }
 
 
-    public Relationship createChildRelationship(Name childName, Table childTable, Table parentTable,
+    public Relationship createChildRelationship(Name childName, VarTable childTable, VarTable parentTable,
                                                 Relationship.Multiplicity multiplicity) {
         return parentTable.addRelationship(childName, childTable,
                 Relationship.JoinType.CHILD, multiplicity);

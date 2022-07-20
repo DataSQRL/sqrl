@@ -1,6 +1,6 @@
 package ai.datasqrl.physical.stream.flink.plan;
 
-import ai.datasqrl.schema.Table;
+import ai.datasqrl.schema.VarTable;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Schema.UnresolvedColumn;
 
@@ -9,7 +9,7 @@ import java.util.List;
 
 public class FlinkPipelineUtils {
 
-  public static Schema addPrimaryKey(Schema toSchema, Table sqrlTable) {
+  public static Schema addPrimaryKey(Schema toSchema, VarTable sqrlTable) {
     Schema.Builder builder = Schema.newBuilder();
     List<String> pks = new ArrayList<>();
     List<UnresolvedColumn> columns = toSchema.getColumns();
