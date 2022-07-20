@@ -15,7 +15,7 @@ import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SourceTableImportMeta;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
-import ai.datasqrl.schema.table.VirtualTableFactory;
+import ai.datasqrl.schema.builder.AbstractTableFactory;
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
@@ -77,7 +77,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(planner.getTypeFactory(), calciteFactory);
     RelDataType rootType = new FlexibleTableConverter(tableImport.getSchema()).apply(schemaGen).get();
 
-    VirtualTableFactory.TableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
+    AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
 
     ImportedSqrlTable impTable = new ImportedSqrlTable(tableImport.getTable().getName(), tableImport, rootType);
 
@@ -97,13 +97,13 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
       RelNode relNode = relBuilder.build(); //?
 
       for (int i = 0; i < logicalTableType.getFieldList().size(); i++) {
-        this.fieldNames.put(table.getFields().values().get(i),
+        this.fieldNames.put(table.getFields().toList().get(i),
             logicalTableType.getFieldList().get(i).getName());
       }
       System.out.println(this.fieldNames);
 
       TimestampHolder timeHolder = new TimestampHolder();
-      QuerySqrlTable queryTable = new QuerySqrlTable(rootTable.getId(), QuerySqrlTable.Type.STREAM, logicalTableType,
+      QuerySqrlTable queryTable = new QuerySqrlTable(rootTable.getName(), QuerySqrlTable.Type.STREAM, logicalTableType,
           timeHolder, rootTable.getNumPrimaryKeys());
 //      Set timestamp candidates
       calciteFactory.getTimestampCandidateScores(rootTable).entrySet().stream().forEach( e -> {

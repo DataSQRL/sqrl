@@ -1,8 +1,8 @@
-package ai.datasqrl.schema.table.builder;
+package ai.datasqrl.schema.builder;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.table.Relationship;
+import ai.datasqrl.schema.Relationship;
 import lombok.NonNull;
 
 public interface TableBuilder<T, X extends TableBuilder<T,X>> {

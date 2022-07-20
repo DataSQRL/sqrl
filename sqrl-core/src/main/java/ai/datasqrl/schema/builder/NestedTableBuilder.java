@@ -1,12 +1,11 @@
-package ai.datasqrl.schema.table.builder;
+package ai.datasqrl.schema.builder;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.table.Field;
-import ai.datasqrl.schema.table.FieldList;
-import ai.datasqrl.schema.table.Relationship;
+import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.FieldList;
+import ai.datasqrl.schema.Relationship;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -75,10 +74,10 @@ public abstract class NestedTableBuilder<T, X extends NestedTableBuilder<T,X>> i
 
         final X childTable;
         final T type;
-        final ai.datasqrl.schema.table.Relationship.Multiplicity multiplicity;
+        final Relationship.Multiplicity multiplicity;
 
         public ChildRelationship(Name name, int version, X childTable, T type,
-                                 ai.datasqrl.schema.table.Relationship.Multiplicity multiplicity) {
+                                 Relationship.Multiplicity multiplicity) {
             super(name,version);
             this.childTable = childTable;
             this.type = type;

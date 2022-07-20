@@ -14,14 +14,15 @@ import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
-import java.io.IOException;
-import java.util.Optional;
 import org.apache.calcite.sql.SqlNode;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.util.Optional;
 
 @Disabled
 class AnalyzerTest extends AbstractSQRLIT {
@@ -122,7 +123,7 @@ class AnalyzerTest extends AbstractSQRLIT {
     Assertions.assertTrue(productTable.isPresent());
 
     Assertions.assertTrue(productTable.get().getField(Name.system("descriptionLength")).isPresent());
-    Assertions.assertEquals(productTable.get().getFields().size(), 8);
+    Assertions.assertEquals(productTable.get().getFields().numFields(), 8);
   }
 
   @Test

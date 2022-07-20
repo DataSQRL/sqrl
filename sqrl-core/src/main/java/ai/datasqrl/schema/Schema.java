@@ -1,48 +1,51 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-
-import ai.datasqrl.plan.local.BundleTableFactory;
-import ai.datasqrl.schema.SourceTableImportMeta.RowType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import ai.datasqrl.schema.builder.TableFactory;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
-import org.apache.commons.lang3.tuple.Pair;
 
-public class Schema extends ShadowingContainer<Table> {
+import java.util.*;
+
+public class Schema {
+
+  private final Map<Name, Table> tables = new HashMap<>();
 
   //TODO: unpack this
   @Getter
-  final BundleTableFactory tableFactory = new BundleTableFactory();
+  protected final TableFactory tableFactory = new TableFactory();
 
-  public Map<Table, RowType> addImportTable(SourceTableImport importSource, Optional<Name> nameAlias) {
-    Pair<Table, Map<Table, RowType>> resolvedImport = tableFactory.importTable(importSource, nameAlias);
-    Table table = resolvedImport.getKey();
-    add(table);
-    return resolvedImport.getRight();
+  /*
+  === Retrieval Methods ===
+   */
+
+  protected Table get(Name name) {
+    return tables.get(name);
+  }
+
+  public void add(Table table) {
+    Preconditions.checkArgument(table.getPath().getLength()==1,"Only add root tables to schema");
+    tables.put(table.getName(),table);
   }
 
   public Optional<Table> getTable(Name name) {
-    return this.getVisibleByName(name);
+    return Optional.ofNullable(get(name));
   }
 
   public Table walkTable(NamePath tablePath) {
     if (tablePath.getLength() == 1) {
-      return this.getVisibleByName(tablePath.getFirst()).get();
+      return get(tablePath.getFirst());
     } else {
-      return this.getVisibleByName(tablePath.getFirst()).get()
-          .walkTable(tablePath.popFirst()).get();
+      return get(tablePath.getFirst())
+              .walkTable(tablePath.popFirst()).get();
     }
   }
 
   public List<Table> allTables() {
-    List<Table> tables = new ArrayList<>();
-    for (Table t : this) addTableAndChildren(t,tables);
-    return tables;
+    List<Table> tableList = new ArrayList<>();
+    for (Table t : tables.values()) addTableAndChildren(t,tableList);
+    return tableList;
   }
 
   private void addTableAndChildren(Table t, List<Table> tables) {
@@ -59,4 +62,7 @@ public class Schema extends ShadowingContainer<Table> {
     }
     return s.toString();
   }
+
+
+
 }

@@ -11,9 +11,9 @@ public class Relationship extends Field {
   private final JoinType joinType;
   private final Multiplicity multiplicity;
 
-  public Relationship(Name name, Table fromTable, Table toTable, JoinType joinType,
+  public Relationship(Name name, int version, Table fromTable, Table toTable, JoinType joinType,
                       Multiplicity multiplicity) {
-    super(name);
+    super(name, version);
     this.fromTable = fromTable;
     this.toTable = toTable;
     this.joinType = joinType;

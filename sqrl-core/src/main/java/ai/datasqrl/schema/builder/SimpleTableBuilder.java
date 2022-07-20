@@ -1,4 +1,4 @@
-package ai.datasqrl.schema.table.builder;
+package ai.datasqrl.schema.builder;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;

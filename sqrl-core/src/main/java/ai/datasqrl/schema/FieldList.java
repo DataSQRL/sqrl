@@ -1,8 +1,7 @@
-package ai.datasqrl.schema.table;
+package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import lombok.NonNull;
 
 import java.util.*;
@@ -18,6 +17,18 @@ public class FieldList {
     public int nextVersion(Name name) {
         return fields.stream().filter(f -> f.getName().equals(name)).map(Field::getVersion)
                 .max(Integer::compareTo).map(i -> i+1).orElse(0);
+    }
+
+    public List<Field> toList() {
+        return new ArrayList<>(fields);
+    }
+
+    public Field atIndex(int index) {
+        return fields.get(index);
+    }
+
+    public int numFields() {
+        return fields.size();
     }
 
     public void addField(Field field) {
@@ -41,7 +52,7 @@ public class FieldList {
     public Optional<Field> getAccessibleField(@NonNull Name name) {
         return fields.stream().filter(f -> f.getName().equals(name))
                 .filter(Field::isVisible)
-                .max((a,b) -> Integer.compare(a.version,b.version));
+                .max((a,b) -> Integer.compare(a.getVersion(),b.getVersion()));
     }
 
 

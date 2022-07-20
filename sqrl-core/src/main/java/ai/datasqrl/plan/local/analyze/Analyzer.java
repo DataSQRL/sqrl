@@ -1,22 +1,11 @@
 package ai.datasqrl.plan.local.analyze;
 
-import static ai.datasqrl.parse.util.SqrlNodeUtil.isExpression;
-
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.environment.ImportManager.TableImport;
 import ai.datasqrl.parse.Check;
-import ai.datasqrl.parse.tree.DefaultTraversalVisitor;
-import ai.datasqrl.parse.tree.DistinctAssignment;
-import ai.datasqrl.parse.tree.ExpressionAssignment;
-import ai.datasqrl.parse.tree.ImportDefinition;
-import ai.datasqrl.parse.tree.JoinAssignment;
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.QueryAssignment;
-import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
-import ai.datasqrl.parse.tree.TableNode;
+import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
@@ -27,16 +16,16 @@ import ai.datasqrl.plan.local.analyze.util.AstUtil;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.SourceTableImportMeta.RowType;
 import ai.datasqrl.schema.Table;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
+import lombok.Getter;
+import org.apache.commons.lang3.tuple.Triple;
+
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.Getter;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
+
+import static ai.datasqrl.parse.util.SqrlNodeUtil.isExpression;
 
 @Getter
 public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
@@ -54,7 +43,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     this.schemaSettings = schemaSettings;
     this.errors = errors;
     this.analysis = new Analysis();
-    this.schemaBuilder = new SchemaBuilder(analysis);
+    this.schemaBuilder = analysis.getSchema();
     this.namespace = new Namespace(analysis.getSchema());
   }
 
@@ -98,10 +87,10 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     for (ImportManager.TableImport tblImport : importTables) {
       if (tblImport.isSource()) {
         SourceTableImport importSource = (SourceTableImport) tblImport;
-        Map<Table, RowType> types = analysis.getSchema().addImportTable(importSource, nameAlias);
+        List<Table> tables = analysis.getSchema().addImportTable(importSource, nameAlias);
 
         analysis.getImportSourceTables().put(node, List.of(importSource));
-        analysis.getImportTableTypes().put(node, types);
+//        analysis.getImportTableTypes().put(node, types);
       } else {
         throw new UnsupportedOperationException("Script imports are not yet supported");
       }
@@ -126,7 +115,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     List<ResolvedNamePath> pks = node.getPartitionKeyNodes().stream()
         .map(pk -> analysis.getResolvedNamePath().get(pk)).collect(Collectors.toList());
     Table distinctTable = schemaBuilder.createDistinctTable(resolvedTable, pks);
-    analysis.getProducedFieldList().put(node, distinctTable.getFields().values());
+    analysis.getProducedFieldList().put(node, distinctTable.getFields().toList());
     analysis.getResolvedNamePath().put(node.getTableNode(), resolvedTable);
     analysis.getSchema().add(distinctTable);
     analysis.getProducedTable().put(node, distinctTable);
@@ -230,7 +219,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     if (namePath.getLength() == 0) {
       return Optional.empty();
     }
-    Table table = analysis.getSchema().getVisibleByName(namePath.getFirst()).get();
+    Table table = schemaBuilder.getTable(namePath.getFirst()).get();
     return table.walkTable(namePath.popFirst());
   }
 

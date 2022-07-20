@@ -5,20 +5,17 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
-import ai.datasqrl.plan.local.BundleTableFactory;
 import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.InputTableSchema;
-import ai.datasqrl.schema.input.RelationType;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaImport;
-import ai.datasqrl.schema.table.VirtualTableFactory;
+import ai.datasqrl.schema.builder.AbstractTableFactory;
 import ai.datasqrl.util.TestDataset;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -101,25 +98,13 @@ public class FlexibleSchemaHandlingTest extends AbstractSQRLIT {
         public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {
             List<SchemaConverter> converters = new ArrayList<>();
 
-            //BundleTableFactory
-            converters.add(SchemaConverter.of(() -> new BundleTableFactoryTester().getVisitor(),
-                    (result, name, btfVisitor)-> {
-                        assertTrue(result.isPresent());
-                        assertTrue(result.get() instanceof RelationType);
-                        BundleTableFactory.TableBuilder tb = btfVisitor.getTableBuilder();
-                        assertNotNull(tb);
-                        NamePath np = tb.getPath();
-                        assertEquals(1, np.getLength());
-                        assertEquals(name, np.getLast());
-                        assertTrue(tb.fields.size()>0);
-                    }));
             //Calcite
             converters.add(SchemaConverter.of(() -> new CalciteSchemaGenerator(new JavaTypeFactoryImpl(),new CalciteTableFactory()),
                     (result, name, calciteVisitor)-> {
                         assertTrue(result.isPresent());
                         RelDataType table = result.get();
                         assertTrue(table.getFieldCount()>0);
-                        VirtualTableFactory.TableBuilder tbl = calciteVisitor.getRootTable();
+                        AbstractTableFactory.UniversalTableBuilder tbl = calciteVisitor.getRootTable();
                         assertTrue(tbl.getAllFields().size()>0);
                         System.out.println(table);
                     }));
@@ -159,23 +144,6 @@ public class FlexibleSchemaHandlingTest extends AbstractSQRLIT {
     static interface SchemaConverterValidator<T, V extends FlexibleTableConverter.Visitor<T>> {
 
         void validate(Optional<T> result, Name tableName, V visitor);
-
-    }
-
-
-    static class BundleTableFactoryTester extends BundleTableFactory {
-
-        Visitor getVisitor() {
-            return new Visitor();
-        }
-
-        class Visitor extends ImportVisitor {
-
-            TableBuilder getTableBuilder() {
-                return lastCreatedTable;
-            }
-
-        }
 
     }
 

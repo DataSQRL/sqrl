@@ -2,7 +2,7 @@ package ai.datasqrl.plan.calcite.sqrl.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.schema.table.VirtualTable;
+import ai.datasqrl.schema.builder.VirtualTable;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
