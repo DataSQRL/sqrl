@@ -32,11 +32,17 @@ class NowTest {
   }
 
   @Test
-  public void NumToTSTest() {
+  public void NumTSConversionTest() {
     NumToTimestampFunction numToTimestamp = new NumToTimestampFunction();
+    TimestampToEpochFunction timestampToEpoch = new TimestampToEpochFunction();
+
     SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
-    RelDataType type = numToTimestamp.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(type, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+
+    RelDataType typeTS = numToTimestamp.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeTS, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+
+    RelDataType typeNum = timestampToEpoch.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeNum, typeFactory.createSqlType(SqlTypeName.BIGINT));
   }
 
   @Test
@@ -81,5 +87,43 @@ class NowTest {
 
     RelDataType typeYear = roundToYear.inferReturnType(typeFactory, new ArrayList<>());
     assertEquals(typeYear, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+  }
+
+  @Test
+  public void GetterTest() {
+    SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
+
+    GetSecondFunction getSecond = new GetSecondFunction();
+    GetMinuteFunction getMinute = new GetMinuteFunction();
+    GetHourFunction getHour = new GetHourFunction();
+    GetDayOfWeekFunction getDayOfWeek = new GetDayOfWeekFunction();
+    GetDayOfMonthFunction getDayOfMonth = new GetDayOfMonthFunction();
+    GetDayOfYearFunction getDayOfYear = new GetDayOfYearFunction();
+    GetMonthFunction getMonth = new GetMonthFunction();
+    GetYearFunction getYear = new GetYearFunction();
+
+    RelDataType typeSecond = getSecond.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeSecond, typeFactory.createSqlType(SqlTypeName.INTEGER));
+
+    RelDataType typeMinute = getMinute.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeMinute, typeFactory.createSqlType(SqlTypeName.INTEGER));
+
+    RelDataType typeHour = getHour.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeHour, typeFactory.createSqlType(SqlTypeName.INTEGER));
+
+    RelDataType typeDow = getDayOfWeek.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeDow, typeFactory.createSqlType(SqlTypeName.INTEGER));
+
+    RelDataType typeDom = getDayOfMonth.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeDom, typeFactory.createSqlType(SqlTypeName.INTEGER));
+
+    RelDataType typeDoy = getDayOfYear.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeDoy, typeFactory.createSqlType(SqlTypeName.INTEGER));
+
+    RelDataType typeMonth = getMonth.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeMonth, typeFactory.createSqlType(SqlTypeName.INTEGER));
+
+    RelDataType typeYear = getYear.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeYear, typeFactory.createSqlType(SqlTypeName.INTEGER));
   }
 }
