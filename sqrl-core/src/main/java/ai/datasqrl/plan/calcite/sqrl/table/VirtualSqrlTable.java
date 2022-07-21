@@ -4,15 +4,16 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.schema.builder.VirtualTable;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 public abstract class VirtualSqrlTable extends AbstractSqrlTable implements VirtualTable {
@@ -140,14 +141,6 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
       Child child = new Child(nameId, rowType, parent, shredField.getIndex(), type);
       parent.addChild(shredFieldName, child);
       return child;
-    }
-
-    private static RelDataType extractQueryDataType(VirtualSqrlTable parent, int shredIndex) {
-      Preconditions.checkArgument(shredIndex >= 0);
-      RelDataType type = parent.getQueryRowType().getFieldList().get(shredIndex).getType();
-      Preconditions.checkArgument(CalciteUtil.isNestedTable(type));
-      type = CalciteUtil.getArrayElementType(type).orElse(type);
-      return type;
     }
 
     @Override
