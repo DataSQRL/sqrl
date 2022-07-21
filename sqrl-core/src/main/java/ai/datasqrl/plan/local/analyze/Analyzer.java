@@ -228,10 +228,11 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       Column column = variableFactory.addQueryExpression(namePath, table);
       analysis.getProducedField().put(node, column);
       analysis.getProducedTable().put(node, scope.getContextTable().get());
+      analysis.getProducedFieldList().put(node, List.of(column));
     } else {
       Triple<Optional<Relationship>, VarTable, List<Field>> table = variableFactory.addQuery(
           namePath, queryScope.getFieldNames(), scope.getContextTable());
-      analysis.getProducedFieldList().put(node, table.getRight());
+      analysis.getProducedFieldList().put(node, table.getMiddle().getFields().toList());
       analysis.getProducedTable().put(node, table.getMiddle());
       table.getLeft().ifPresent(r -> analysis.getProducedField().put(node, r));
       if (namePath.size() == 1) {

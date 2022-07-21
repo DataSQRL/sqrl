@@ -126,7 +126,7 @@ public class VarTable {
       } else if (field instanceof Relationship) {
         //add field, don't walk
         //todo: fix this
-        VarTable toTable = ((Relationship) field).getToTable();
+//        VarTable toTable = ((Relationship) field).getToTable();
         map.put(field, field.name.getCanonical());
       }
     }

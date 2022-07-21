@@ -138,7 +138,7 @@ public class JoinPathBuilder {
       Optional<Name> lastAlias) {
     //_.orders.entries
     if (namePath.getBase().isPresent()) {
-      currentAlias = namePath.getBase().get().getAlias();
+      currentAlias = namePath.getAlias();
     } else {
       currentAlias = namePath.getAlias();
     }

@@ -141,7 +141,7 @@ class GeneratorTest extends AbstractSQRLIT {
         "Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp"
             + ".category=_.category;\n");
     node = gen("Customer._spending_by_month_category :="
-        + "                     SELECT time.roundToMonth(parent.time) AS month,"
+        + "                     SELECT time.roundToMonth(e.parent.time) AS month,"
         + "                            e.product.category AS category,"
         + "                            sum(total) AS total,"
         + "                            sum(discount) AS savings"
@@ -167,21 +167,23 @@ class GeneratorTest extends AbstractSQRLIT {
         "Category.trending := JOIN Product p ON _.name = p.category AND p._last_week_increase >"
             + " 0"
             + "                     ORDER BY p._last_week_increase DESC LIMIT 10;\n");
-    node = gen("Customer.favorite_categories := SELECT s.category as category_name,"
-        + "                                        sum(s.total) AS total"
-        + "                                FROM _._spending_by_month_category s"
-        + "                                WHERE s.month >= now() - INTERVAL 1 YEAR"
-        + "                                GROUP BY category_name ORDER BY total DESC LIMIT 5;\n");
+//    node = gen("Customer.favorite_categories := SELECT s.category as category_name,"
+//        + "                                        sum(s.total) AS total"
+//        + "                                FROM _._spending_by_month_category s"
+//        + "                                WHERE s.month >= now() - INTERVAL 1 YEAR"
+//        + "                                GROUP BY category_name ORDER BY total DESC LIMIT 5;\n");
 //    node = gen("Customer.favorite_categories.category := JOIN Category ON _.category_name = Category.name;\n");
 ////            + "CREATE SUBSCRIPTION NewCustomerPromotion ON ADD AS "
 ////            + "SELECT customerid, email, name, total_orders FROM Customer WHERE total_orders >=
 ////            100;\n";
+    System.out.println();
   }
 
   private SqlNode gen(String query) {
     SqrlStatement imp = parse(query);
     analyzer.analyze(imp);
     return generator.generate(imp);
+//    return null;
   }
 
   private SqrlStatement parse(String query) {

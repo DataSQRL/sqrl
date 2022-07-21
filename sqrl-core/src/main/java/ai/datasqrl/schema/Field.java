@@ -8,8 +8,7 @@ import lombok.NonNull;
 import lombok.ToString;
 
 @Getter
-@EqualsAndHashCode
-@ToString
+//@EqualsAndHashCode do not use
 public abstract class Field {
 
   @NonNull
