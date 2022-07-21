@@ -227,7 +227,6 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
         this.fieldNames.put(analysis.getProducedFieldList().get(node).get(i),
             relNode.getRowType().getFieldList().get(i + scope.getPPKOffset()).getName());
       }
-      int numPKs = context.getPPKOffset();
       QueryCalciteTable queryTable = new QueryCalciteTable(relNode);
       this.tables.put(queryTable.getNameId(), queryTable);
       this.tableMap.put(table, queryTable);
