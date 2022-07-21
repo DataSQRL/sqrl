@@ -2,6 +2,7 @@ package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.schema.builder.AbstractTableFactory;
+import ai.datasqrl.schema.input.SqrlTypeConverter;
 import ai.datasqrl.schema.input.TableBuilderFlexibleTableConverterVisitor;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;

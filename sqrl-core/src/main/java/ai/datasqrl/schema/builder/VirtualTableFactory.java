@@ -1,9 +1,13 @@
 package ai.datasqrl.schema.builder;
 
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.VarTable;
+import ai.datasqrl.schema.input.SqrlTypeConverter;
+import ai.datasqrl.schema.type.basic.IntegerType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import lombok.NonNull;
@@ -81,6 +85,47 @@ public abstract class VirtualTableFactory<T,V extends VirtualTable> extends Abst
         if (parent!=null) {
             createParentRelationship(tbl, parent);
         }
+    }
+
+    protected<F> UniversalTableBuilder<T> createBuilder(@NonNull NamePath path, UniversalTableBuilder<T> parent,
+                                                            T type, int numPrimaryKeys, TypeIntrospector<T,F> introspector) {
+        UniversalTableBuilder<T> tblBuilder;
+        if (parent == null) {
+            tblBuilder = new UniversalTableBuilder<>(path.getLast(),path,numPrimaryKeys);
+        } else {
+            tblBuilder = new UniversalTableBuilder<>(path.getLast(),path,parent,numPrimaryKeys==0);
+            tblBuilder.addColumn(ReservedName.ARRAY_IDX, introspector.getTypeConverter().visitIntegerType(IntegerType.INSTANCE,null), false);
+        }
+        //Add fields
+        for (F field : introspector.getFields(type)) {
+            Name name = introspector.getName(field);
+            Optional<Pair<T, Relationship.Multiplicity>> nested = introspector.getNested(field);
+            if (nested.isPresent()) {
+                Pair<T, Relationship.Multiplicity> rel = nested.get();
+                UniversalTableBuilder<T> child = createBuilder(path.concat(name),tblBuilder,
+                        rel.getKey(), rel.getValue() == Relationship.Multiplicity.MANY?1:0, introspector);
+                tblBuilder.addChild(name,child,rel.getKey(),rel.getValue());
+            } else {
+                tblBuilder.addColumn(name, introspector.getType(field), introspector.isNullable(field));
+            }
+        }
+        return tblBuilder;
+    }
+
+    public interface TypeIntrospector<Type,Field> {
+
+        Iterable<Field> getFields(Type type);
+
+        Name getName(Field field);
+
+        Type getType(Field field);
+
+        boolean isNullable(Field field);
+
+        Optional<Pair<Type, Relationship.Multiplicity>> getNested(Field field);
+
+        SqrlTypeConverter<Type> getTypeConverter();
+
     }
 
 }

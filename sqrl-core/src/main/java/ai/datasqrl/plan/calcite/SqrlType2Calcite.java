@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.calcite;
 
-import ai.datasqrl.schema.input.TableBuilderFlexibleTableConverterVisitor;
+import ai.datasqrl.schema.input.SqrlTypeConverter;
 import ai.datasqrl.schema.type.ArrayType;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.*;
@@ -13,7 +13,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 @Value
-public class SqrlType2Calcite implements TableBuilderFlexibleTableConverterVisitor.SqrlTypeConverter<RelDataType> {
+public class SqrlType2Calcite implements SqrlTypeConverter<RelDataType> {
 
     RelDataTypeFactory typeFactory;
 

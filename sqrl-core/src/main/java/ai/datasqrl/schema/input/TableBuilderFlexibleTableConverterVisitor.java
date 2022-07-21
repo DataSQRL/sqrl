@@ -5,7 +5,6 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.builder.TableBuilder;
-import ai.datasqrl.schema.type.SqrlTypeVisitor;
 import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.basic.DateTimeType;
 import ai.datasqrl.schema.type.basic.IntegerType;
@@ -45,14 +44,14 @@ public abstract class TableBuilderFlexibleTableConverterVisitor<T,X extends Tabl
 
     protected void augmentTable(boolean isNested, boolean isSingleton, boolean hasSourceTimestamp) {
         if (!isNested) {
-            addField(ReservedName.UUID,UuidType.INSTANCE,true);
-            addField(ReservedName.INGEST_TIME,DateTimeType.INSTANCE,true);
+            addField(ReservedName.UUID,UuidType.INSTANCE,false);
+            addField(ReservedName.INGEST_TIME,DateTimeType.INSTANCE,false);
             if (hasSourceTimestamp) {
-                addField(ReservedName.SOURCE_TIME, DateTimeType.INSTANCE, true);
+                addField(ReservedName.SOURCE_TIME, DateTimeType.INSTANCE, false);
             }
         }
         if (isNested && !isSingleton) {
-            addField(ReservedName.ARRAY_IDX, IntegerType.INSTANCE, true);
+            addField(ReservedName.ARRAY_IDX, IntegerType.INSTANCE, false);
         }
     }
 
@@ -86,9 +85,5 @@ public abstract class TableBuilderFlexibleTableConverterVisitor<T,X extends Tabl
     }
 
     protected abstract SqrlTypeConverter<T> getTypeConverter();
-
-    public interface SqrlTypeConverter<T> extends SqrlTypeVisitor<T,Void> {
-
-    }
 
 }

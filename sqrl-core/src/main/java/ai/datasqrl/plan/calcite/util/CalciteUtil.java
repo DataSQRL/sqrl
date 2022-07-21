@@ -4,23 +4,13 @@ import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;
-import org.apache.calcite.plan.RelOptUtil;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.type.ArraySqlType;
-import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class CalciteUtil {
 

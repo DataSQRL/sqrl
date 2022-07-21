@@ -6,6 +6,7 @@ import ai.datasqrl.schema.input.SimpleFlexibleTableConverterVisitor;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.builder.NestedTableBuilder;
 import ai.datasqrl.schema.builder.SimpleTableBuilder;
+import ai.datasqrl.schema.input.SqrlTypeConverter;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.*;
 import com.google.common.base.Preconditions;
