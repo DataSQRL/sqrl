@@ -3,13 +3,13 @@ package ai.datasqrl.schema.builder;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.VarTable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import lombok.NonNull;
 import org.apache.calcite.util.Pair;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -41,8 +41,6 @@ public abstract class VirtualTableFactory<T,V extends VirtualTable> extends Abst
     }
 
 
-
-
     public interface VirtualTableBuilder<T,V> {
 
         V make(@NonNull AbstractTableFactory.UniversalTableBuilder<T> tblBuilder);
@@ -50,26 +48,38 @@ public abstract class VirtualTableFactory<T,V extends VirtualTable> extends Abst
         V make(@NonNull AbstractTableFactory.UniversalTableBuilder<T> tblBuilder, V parent, Name shredFieldName);
     }
 
-    public List<V> build(UniversalTableBuilder<T> builder, VirtualTableBuilder<T,V> vtableBuilder) {
-        List<V> createdTables = new ArrayList<>();
-        build(builder,null,null,vtableBuilder,createdTables);
+    public Map<VarTable,V> build(UniversalTableBuilder<T> builder, VirtualTableBuilder<T,V> vtableBuilder) {
+        Map<VarTable,V> createdTables = new HashMap<>();
+        build(builder,null,null,null,vtableBuilder,createdTables);
         return createdTables;
     }
 
-    private void build(UniversalTableBuilder<T> builder, V parent,
-                       NestedTableBuilder.ChildRelationship<T, UniversalTableBuilder<T>> childRel,
+    private void build(UniversalTableBuilder<T> builder, VarTable parent, V vParent,
+                       NestedTableBuilder.ChildRelationship<T,UniversalTableBuilder<T>> childRel,
                        VirtualTableBuilder<T,V> vtableBuilder,
-                       List<V> createdTables) {
+                       Map<VarTable,V> createdTables) {
         V vTable;
         if (parent==null) vTable = vtableBuilder.make(builder);
-        else vTable = vtableBuilder.make(builder,parent,childRel.getId());
-        createdTables.add(vTable);
+        else vTable = vtableBuilder.make(builder,vParent,childRel.getId());
+        VarTable tbl = new VarTable(builder.getPath());
+        createdTables.put(tbl,vTable);
+        if (parent!=null) {
+            //Add child relationship
+            createChildRelationship(childRel.getName(), tbl, parent, childRel.getMultiplicity());
+        }
         //Add all fields to proxy
         for (Field field : builder.getAllFields()) {
-            if (field instanceof NestedTableBuilder.ChildRelationship) {
-                NestedTableBuilder.ChildRelationship<T, UniversalTableBuilder<T>> child = (NestedTableBuilder.ChildRelationship)field;
-                build(child.getChildTable(),vTable,child,vtableBuilder,createdTables);
+            if (field instanceof NestedTableBuilder.Column) {
+                NestedTableBuilder.Column<T> c = (NestedTableBuilder.Column)field;
+                tbl.addColumn(c.getName(),c.isVisible());
+            } else {
+                NestedTableBuilder.ChildRelationship<T,UniversalTableBuilder<T>> child = (NestedTableBuilder.ChildRelationship)field;
+                build(child.getChildTable(),tbl,vTable,child,vtableBuilder,createdTables);
             }
+        }
+        //Add parent relationship if not overwriting column
+        if (parent!=null) {
+            createParentRelationship(tbl, parent);
         }
     }
 

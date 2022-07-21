@@ -1,54 +1,40 @@
 package ai.datasqrl.plan.local.analyze;
 
-import static ai.datasqrl.parse.util.SqrlNodeUtil.isExpression;
-
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.environment.ImportManager.TableImport;
 import ai.datasqrl.parse.Check;
-import ai.datasqrl.parse.tree.DefaultTraversalVisitor;
-import ai.datasqrl.parse.tree.DistinctAssignment;
-import ai.datasqrl.parse.tree.ExpressionAssignment;
-import ai.datasqrl.parse.tree.ImportDefinition;
-import ai.datasqrl.parse.tree.JoinAssignment;
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.QueryAssignment;
-import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
-import ai.datasqrl.parse.tree.TableNode;
+import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.sqrl.table.DatasetCalciteTable;
-import ai.datasqrl.plan.calcite.sqrl.table.QuerySqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.TimestampHolder;
-import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
+import ai.datasqrl.plan.calcite.sqrl.table.*;
 import ai.datasqrl.plan.local.Errors;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.plan.local.analyze.util.AstUtil;
-import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.DatasetTable;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.VarTable;
+import ai.datasqrl.schema.*;
 import ai.datasqrl.schema.builder.AbstractTableFactory;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
-import java.util.List;
-import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.commons.lang3.tuple.Triple;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static ai.datasqrl.parse.util.SqrlNodeUtil.isExpression;
+
 @Getter
 public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
 
+  protected final CalciteTableFactory tableFactory;
   protected final VariableFactory variableFactory;
   protected final Namespace namespace;
   private final ImportManager importManager;
@@ -61,6 +47,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     this.importManager = importManager;
     this.schemaSettings = schemaSettings;
     this.errors = errors;
+    this.tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
     this.analysis = new Analysis();
     this.variableFactory = new VariableFactory();
     this.namespace = new Namespace();
@@ -104,8 +91,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
         throw new RuntimeException("TBD");
       }
 
-      CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(
-          new SqrlTypeFactory(new SqrlTypeSystem()), new CalciteTableFactory());
+      CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(tableFactory);
       RelDataType rootType = new FlexibleTableConverter(sourceTableImport.getSchema()).apply(
           schemaGen).get();
       DatasetCalciteTable impTable = new DatasetCalciteTable(sourceTableImport.getTable().getName(),
@@ -118,14 +104,12 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
           QuerySqrlTable.Type.STREAM, rootType,
           timeHolder, rootTable.getNumPrimaryKeys());
 
-      List<VirtualSqrlTable> tables = new CalciteTableFactory()
-          .createVirtualTables(rootTable,
-              queryTable, new CalciteSchemaGenerator(new SqrlTypeFactory(new SqrlTypeSystem()),
-                  new CalciteTableFactory()));
+      Map<VarTable,VirtualSqrlTable> tables = tableFactory
+          .createVirtualTables(rootTable, queryTable);
 
       DatasetTable datasetTable = new DatasetTable(
           sourceDataset.toNamePath(), impTable,
-          tables.get(0)); //todo: assumption the first is the root table, fix
+          tables.values().stream().filter(VirtualSqrlTable::isRoot).findFirst().get());
       nameAlias = node.getAliasName();
 
       namespace.scopeDataset(datasetTable, nameAlias);

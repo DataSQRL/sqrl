@@ -2,19 +2,13 @@ package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.builder.TableFactory;
 import com.google.common.base.Preconditions;
-import lombok.Getter;
 
 import java.util.*;
 
 public class Schema {
 
   private final Map<Name, VarTable> tables = new HashMap<>();
-
-  //TODO: unpack this
-  @Getter
-  protected final TableFactory tableFactory = new TableFactory();
 
   /*
   === Retrieval Methods ===

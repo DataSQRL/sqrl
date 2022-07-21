@@ -1,20 +1,8 @@
 package ai.datasqrl.plan.local.generate;
 
-import ai.datasqrl.parse.tree.DistinctAssignment;
-import ai.datasqrl.parse.tree.ExpressionAssignment;
-import ai.datasqrl.parse.tree.ImportDefinition;
-import ai.datasqrl.parse.tree.JoinAssignment;
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.QueryAssignment;
-import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
+import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.OptimizationStage;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
-import ai.datasqrl.plan.calcite.SqrlOperatorTable;
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
+import ai.datasqrl.plan.calcite.*;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
 import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn;
 import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn.Complex;
@@ -28,9 +16,6 @@ import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.VarTable;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
@@ -38,16 +23,13 @@ import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlTableRef;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
@@ -110,6 +92,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
           relNode.getRowType().getFieldList().get(i).getName());
     }
 
+    int numPKs = node.getPartitionKeyNodes().size();
     QueryCalciteTable queryTable = new QueryCalciteTable(relNode);
     this.tables.put(queryTable.getNameId(), queryTable);
     this.tableMap.put(table, queryTable);
@@ -244,6 +227,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
         this.fieldNames.put(analysis.getProducedFieldList().get(node).get(i),
             relNode.getRowType().getFieldList().get(i + scope.getPPKOffset()).getName());
       }
+      int numPKs = context.getPPKOffset();
       QueryCalciteTable queryTable = new QueryCalciteTable(relNode);
       this.tables.put(queryTable.getNameId(), queryTable);
       this.tableMap.put(table, queryTable);

@@ -4,10 +4,13 @@ import ai.datasqrl.parse.tree.Limit;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
-import ai.datasqrl.schema.*;
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
-import ai.datasqrl.schema.builder.TableFactory;
+import ai.datasqrl.schema.VarTable;
+import ai.datasqrl.schema.builder.AbstractTableFactory;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -69,10 +72,10 @@ public class VariableFactory {
 //          multiplicity = Multiplicity.ONE;
 //        }
 
-      new TableFactory().createParentRelationship(table, parentTable.get());
+      AbstractTableFactory.createParentRelationship(table, parentTable.get());
 
-      Relationship childRel = new TableFactory()
-          .createChildRelationship(relationshipName, table, parentTable.get(), multiplicity);
+      Relationship childRel = AbstractTableFactory
+              .createChildRelationship(relationshipName, table, parentTable.get(), multiplicity);
       return Triple.of(Optional.of(childRel), table, fields);
     }
 //    return Triple.of(Optional.empty(), table, fields);

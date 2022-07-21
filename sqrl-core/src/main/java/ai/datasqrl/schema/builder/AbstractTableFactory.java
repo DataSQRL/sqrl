@@ -2,10 +2,14 @@ package ai.datasqrl.schema.builder;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.parse.tree.name.ReservedName;
+import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.VarTable;
 import lombok.Getter;
 import lombok.NonNull;
 
 import java.util.Iterator;
+import java.util.Optional;
 
 public class AbstractTableFactory {
 
@@ -55,6 +59,23 @@ public class AbstractTableFactory {
         }
     }
 
+    public static final Name parentRelationshipName = ReservedName.PARENT;
+
+    public static Optional<Relationship> createParentRelationship(VarTable childTable, VarTable parentTable) {
+        //Avoid overwriting an existing "parent" column on the child
+        if (childTable.getField(parentRelationshipName).isEmpty()) {
+            return Optional.of(childTable.addRelationship(parentRelationshipName, parentTable, Relationship.JoinType.PARENT,
+                    Relationship.Multiplicity.ONE));
+        }
+        return Optional.empty();
+    }
+
+
+    public static Relationship createChildRelationship(Name childName, VarTable childTable, VarTable parentTable,
+                                                Relationship.Multiplicity multiplicity) {
+        return parentTable.addRelationship(childName, childTable,
+                Relationship.JoinType.CHILD, multiplicity);
+    }
 
 
 }

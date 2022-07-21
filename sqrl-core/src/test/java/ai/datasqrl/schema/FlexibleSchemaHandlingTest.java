@@ -99,7 +99,7 @@ public class FlexibleSchemaHandlingTest extends AbstractSQRLIT {
             List<SchemaConverter> converters = new ArrayList<>();
 
             //Calcite
-            converters.add(SchemaConverter.of(() -> new CalciteSchemaGenerator(new JavaTypeFactoryImpl(),new CalciteTableFactory()),
+            converters.add(SchemaConverter.of(() -> new CalciteSchemaGenerator(new CalciteTableFactory(new JavaTypeFactoryImpl())),
                     (result, name, calciteVisitor)-> {
                         assertTrue(result.isPresent());
                         RelDataType table = result.get();
