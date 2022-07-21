@@ -3,21 +3,22 @@ package ai.datasqrl.schema;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.DatasetCalciteTable;
+import ai.datasqrl.plan.calcite.sqrl.table.ImportedSqrlTable;
 import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Getter;
 import lombok.NonNull;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 public class DatasetTable extends VarTable {
 
   private final VirtualSqrlTable vtable;
-  private final DatasetCalciteTable impTable;
+  private final ImportedSqrlTable impTable;
   private DelegateVTable table;
 
-  public DatasetTable(@NonNull NamePath path, DatasetCalciteTable impTable,
+  public DatasetTable(@NonNull NamePath path, ImportedSqrlTable impTable,
       VirtualSqrlTable vtable) {
     super(path);
     this.impTable = impTable;

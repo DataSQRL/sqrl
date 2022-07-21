@@ -106,11 +106,6 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
     public int getNumParentPks() {
       return 0;
     }
-
-    @Override
-    public void addField(RelDataTypeField relDataTypeField) {
-
-    }
   }
 
   @Getter
@@ -166,12 +161,6 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
     @Override
     public int getNumParentPks() {
       return parent.getNumPrimaryKeys();
-    }
-
-
-    @Override
-    public void addField(RelDataTypeField relDataTypeField) {
-
     }
   }
 

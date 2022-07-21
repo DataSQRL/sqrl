@@ -2,9 +2,7 @@ package ai.datasqrl.plan.calcite.sqrl.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Field;
-import java.util.List;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.linq4j.QueryProvider;
 import org.apache.calcite.linq4j.Queryable;
@@ -16,6 +14,8 @@ import org.apache.calcite.schema.QueryableTable;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Schemas;
 import org.apache.calcite.schema.impl.AbstractTable;
+
+import java.util.List;
 
 @EqualsAndHashCode
 public abstract class AbstractSqrlTable extends AbstractTable implements QueryableTable {
@@ -78,6 +78,4 @@ public abstract class AbstractSqrlTable extends AbstractTable implements Queryab
     }
     throw new RuntimeException("Could not find sqrl timestamp in calcite table");
   }
-
-  public abstract void addField(RelDataTypeField relDataTypeField);
 }

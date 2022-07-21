@@ -9,20 +9,19 @@ import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import ai.datasqrl.plan.calcite.sqrl.table.*;
+import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
+import ai.datasqrl.plan.calcite.sqrl.table.ImportedSqrlTable;
+import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
 import ai.datasqrl.plan.local.Errors;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.plan.local.analyze.util.AstUtil;
 import ai.datasqrl.schema.*;
-import ai.datasqrl.schema.builder.AbstractTableFactory;
-import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import lombok.Getter;
-import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.util.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.List;
@@ -77,7 +76,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     Name sourceTable = node.getNamePath().get(1);
 
     List<TableImport> importTables;
-    Optional<Name> nameAlias;
+    Optional<Name> nameAlias = node.getAliasName();
 
     if (sourceTable.equals(ReservedName.ALL)) { //import all tables from dataset
       importTables = importManager.importAllTables(sourceDataset, schemaSettings, errors);
@@ -85,33 +84,18 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       throw new RuntimeException("TBD");
     } else { //importing a single table
       //todo: Check if table exists
-      SourceTableImport sourceTableImport = importManager.importTable(sourceDataset, sourceTable,
+      TableImport tblImport = importManager.importTable(sourceDataset, sourceTable,
           schemaSettings, errors);
-      if (!sourceTableImport.isSource()) {
+      if (!tblImport.isSource()) {
         throw new RuntimeException("TBD");
       }
+      SourceTableImport sourceTableImport = (SourceTableImport)tblImport;
 
-      CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(tableFactory);
-      RelDataType rootType = new FlexibleTableConverter(sourceTableImport.getSchema()).apply(
-          schemaGen).get();
-      DatasetCalciteTable impTable = new DatasetCalciteTable(sourceTableImport.getTable().getName(),
-          sourceTableImport, rootType);
-
-      AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
-
-      TimestampHolder timeHolder = new TimestampHolder();
-      QuerySqrlTable queryTable = new QuerySqrlTable(rootTable.getName(),
-          QuerySqrlTable.Type.STREAM, rootType,
-          timeHolder, rootTable.getNumPrimaryKeys());
-
-      Map<VarTable,VirtualSqrlTable> tables = tableFactory
-          .createVirtualTables(rootTable, queryTable);
+      Pair<ImportedSqrlTable, Map<VarTable,VirtualSqrlTable>> imports = tableFactory.importTable(sourceTableImport, nameAlias);
 
       DatasetTable datasetTable = new DatasetTable(
-          sourceDataset.toNamePath(), impTable,
-          tables.values().stream().filter(VirtualSqrlTable::isRoot).findFirst().get());
-      nameAlias = node.getAliasName();
-
+          sourceDataset.toNamePath(), imports.getKey(),
+          imports.getValue().values().stream().filter(VirtualSqrlTable::isRoot).findFirst().get());
       namespace.scopeDataset(datasetTable, nameAlias);
       analysis.getImportDataset().put(node, List.of(datasetTable));
     }

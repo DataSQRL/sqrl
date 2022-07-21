@@ -5,27 +5,23 @@ import ai.datasqrl.parse.tree.name.Name;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
 
-@Getter
-public class DatasetCalciteTable extends AbstractSqrlTable {
+public class ImportedSqrlTable extends QuerySqrlTable {
 
+  @Getter
   private final SourceTableImport sourceTableImport;
-  private final RelDataType rowType;
+  private final RelDataType baseRowType;
 
-  public DatasetCalciteTable(@NonNull Name rootTableId,
+  public ImportedSqrlTable(@NonNull Name rootTableId, @NonNull TimestampHolder timestamp,
                            SourceTableImport sourceTableImport, RelDataType rowType) {
-    super(getTableId(rootTableId));
+    super(rootTableId, Type.STREAM, null, timestamp, 1);
     this.sourceTableImport = sourceTableImport;
-    this.rowType = rowType;
+    this.baseRowType = rowType;
   }
 
-  public static Name getTableId(Name rootTableId) {
-    return rootTableId.suffix("I");
+  public RelDataType getRowType() {
+    if (relNode==null) return baseRowType;
+    else return super.getRowType();
   }
 
-  @Override
-  public void addField(RelDataTypeField relDataTypeField) {
-
-  }
 }

@@ -1,8 +1,10 @@
 package ai.datasqrl.plan.calcite.sqrl.table;
 
+import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.SqrlType2Calcite;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.schema.Relationship;
@@ -10,6 +12,7 @@ import ai.datasqrl.schema.VarTable;
 import ai.datasqrl.schema.builder.AbstractTableFactory;
 import ai.datasqrl.schema.builder.NestedTableBuilder;
 import ai.datasqrl.schema.builder.VirtualTableFactory;
+import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.SqrlTypeConverter;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -39,6 +42,20 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
 
     private Name getTableId(Name name) {
         return name.suffix(Integer.toString(tableIdCounter.incrementAndGet()));
+    }
+
+    public Pair<ImportedSqrlTable, Map<VarTable,VirtualSqrlTable>> importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias) {
+        CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(this);
+        RelDataType rootType = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
+                schemaGen).get();
+        AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
+
+        TimestampHolder timeHolder = new TimestampHolder();
+        ImportedSqrlTable impTable = new ImportedSqrlTable(getTableId(rootTable.getName()), timeHolder,
+                sourceTable, rootType);
+
+        Map<VarTable,VirtualSqrlTable> tables = createVirtualTables(rootTable, impTable);
+        return Pair.of(impTable, tables);
     }
 
     public Map<VarTable,VirtualSqrlTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,

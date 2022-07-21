@@ -5,7 +5,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.memory.table.DataTable;
-import ai.datasqrl.plan.calcite.sqrl.table.DatasetCalciteTable;
+import ai.datasqrl.plan.calcite.sqrl.table.ImportedSqrlTable;
 import ai.datasqrl.plan.calcite.sqrl.table.QuerySqrlTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import org.apache.calcite.plan.RelOptRule;
@@ -46,8 +46,8 @@ public class SqrlExpansionRelRule extends RelOptRule {
   @Override
   public void onMatch(RelOptRuleCall call) {
     LogicalTableScan table = call.rel(0);
-    DatasetCalciteTable baseTable = table.getTable()
-        .unwrap(DatasetCalciteTable.class);
+    ImportedSqrlTable baseTable = table.getTable()
+        .unwrap(ImportedSqrlTable.class);
     QuerySqrlTable query = table.getTable().unwrap(QuerySqrlTable.class);
     DataTable dt = table.getTable().unwrap(DataTable.class);
 

@@ -1,22 +1,20 @@
 package ai.datasqrl.plan.calcite.sqrl.table;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.calcite.util.CalciteUtil.RelDataTypeFieldBuilder;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.util.ImmutableBitSet;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 public class QuerySqrlTable extends AbstractSqrlTable {
@@ -28,25 +26,25 @@ public class QuerySqrlTable extends AbstractSqrlTable {
   @NonNull
   private final int numPrimaryKeys;
   //added through expressions, queries
-  private final List<RelDataTypeField> addedFields = new ArrayList<>();
-  //    @NonNull private final RelNode relNode;
-  RelDataType relDataType;
+  private final List<AddedColumn.Simple> addedFields = new ArrayList<>();
+
+  protected RelNode relNode;
   @Setter
   private TableStatistic statistic = null;
 
   public QuerySqrlTable(@NonNull Name rootTableId, @NonNull Type type,
-      @NonNull RelDataType relDataType,
+      RelNode relNode,
       @NonNull TimestampHolder timestamp,
       @NonNull int numPrimaryKeys) {
-    super(getTableId(rootTableId));
+    super(rootTableId);
     this.type = type;
-    this.relDataType = relDataType;
     this.timestamp = timestamp;
     this.numPrimaryKeys = numPrimaryKeys;
   }
 
-  public static Name getTableId(Name rootTableId) {
-    return rootTableId.suffix("Q");
+  public RelNode getRelNode() {
+    Preconditions.checkState(relNode!=null,"Not yet initialized");
+    return relNode;
   }
 
   private static RelDataTypeField getField(FieldIndexPath path, RelDataType rowType) {
@@ -66,15 +64,7 @@ public class QuerySqrlTable extends AbstractSqrlTable {
 
   @Override
   public RelDataType getRowType() {
-    RelDataTypeFieldBuilder fieldBuilder = new RelDataTypeFieldBuilder(new FieldInfoBuilder(new SqrlTypeFactory(new SqrlTypeSystem())));
-    relDataType.getFieldList().forEach(fieldBuilder::add);
-    addedFields.forEach(fieldBuilder::add);
-    return fieldBuilder.build();
-  }
-
-  @Override
-  public void addField(RelDataTypeField relDataTypeField) {
-    addedFields.add(relDataTypeField);
+    return relNode.getRowType();
   }
 
   public boolean isPrimaryKey(FieldIndexPath path) {
