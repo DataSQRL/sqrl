@@ -5,6 +5,7 @@ import ai.datasqrl.function.builtin.example.SqlMyFunction;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.fun.Now;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.checkerframework.checker.index.qual.PolyUpperBound;
 
 public class SqrlOperatorTable extends SqlStdOperatorTable {
 
@@ -18,6 +19,9 @@ public class SqrlOperatorTable extends SqlStdOperatorTable {
   public static final TimestampToEpochFunction TIMESTAMP_TO_EPOCH = new TimestampToEpochFunction();
   public static final StringToTimestampFunction STRING_TO_TIMESTAMP = new StringToTimestampFunction();
   public static final TimestampToStringFunction TIMESTAMP_TO_STRING = new TimestampToStringFunction();
+  public static final ToUtcFunction TO_UTC = new ToUtcFunction();
+  public static final AtZoneFunction AT_ZONE = new AtZoneFunction();
+  public static final MakeTimestampFunction MAKE_TIMESTAMP = new MakeTimestampFunction();
   // rounding
   public static final RoundToSecondFunction ROUND_TO_SECOND = new RoundToSecondFunction();
   public static final RoundToMinuteFunction ROUND_TO_MINUTE = new RoundToMinuteFunction();
