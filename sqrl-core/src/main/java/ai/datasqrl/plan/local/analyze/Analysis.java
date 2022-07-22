@@ -67,7 +67,6 @@ public class Analysis {
    * Import resolution definitions
    */
   private Map<ImportDefinition, List<SourceTableImport>> importSourceTables = new HashMap<>();
-  private Map<ImportDefinition, Map<ScriptTable, SourceTableImportMeta.RowType>> importTableTypes = new HashMap<>();
 
   private Map<Node, Field> producedField = new HashMap<>();
 
