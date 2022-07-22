@@ -126,4 +126,18 @@ class NowTest {
     RelDataType typeYear = getYear.inferReturnType(typeFactory, new ArrayList<>());
     assertEquals(typeYear, typeFactory.createSqlType(SqlTypeName.INTEGER));
   }
+
+  @Test
+  public void TZConversionTest() {
+    SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
+
+    ToUtcFunction toUtc = new ToUtcFunction();
+    AtZoneFunction atZone = new AtZoneFunction();
+
+    RelDataType typeUTC = toUtc.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeUTC, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+
+    RelDataType typeZone = atZone.inferReturnType(typeFactory, new ArrayList<>());
+    assertEquals(typeZone, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+  }
 }
