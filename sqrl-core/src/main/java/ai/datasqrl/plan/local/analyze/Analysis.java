@@ -2,39 +2,19 @@ package ai.datasqrl.plan.local.analyze;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.function.SqrlAwareFunction;
-import ai.datasqrl.parse.tree.Assignment;
-import ai.datasqrl.parse.tree.Expression;
-import ai.datasqrl.parse.tree.FunctionCall;
-import ai.datasqrl.parse.tree.ImportDefinition;
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.QuerySpecification;
-import ai.datasqrl.parse.tree.Select;
-import ai.datasqrl.parse.tree.SelectItem;
-import ai.datasqrl.parse.tree.SingleColumn;
-import ai.datasqrl.parse.tree.SortItem;
-import ai.datasqrl.parse.tree.TableNode;
+import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.Column;
+import ai.datasqrl.plan.local.ImportedTable;
+import ai.datasqrl.plan.local.RootTableField;
+import ai.datasqrl.schema.*;
 import ai.datasqrl.schema.Relationship.Multiplicity;
-import ai.datasqrl.schema.SourceTableImportMeta;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.RootTableField;
-import ai.datasqrl.schema.Schema;
-import ai.datasqrl.schema.Table;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The analysis holds all extra information about a query for the generator.
@@ -46,7 +26,7 @@ public class Analysis {
   /**
    * The schema (as a metadata object for the analyzer)
    */
-  private Schema schema = new Schema();
+  private VariableFactory schema = new VariableFactory();
 
   /* Assignment statements that add a column rather than a new query */
   private Set<Assignment> expressionStatements = new HashSet<>();
@@ -70,7 +50,12 @@ public class Analysis {
   /**
    * Assignments create or modify a table
    */
-  private Map<Assignment, Table> producedTable = new HashMap<>();
+  private Map<Assignment, ScriptTable> producedTable = new HashMap<>();
+
+  /**
+   * Created fields (in order)
+   */
+  private Map<Assignment, List<Field>> producedFieldList = new HashMap<>();
 
   /**
    * Some queries don't have a self query defined for nested queries so
@@ -82,14 +67,14 @@ public class Analysis {
    * Import resolution definitions
    */
   private Map<ImportDefinition, List<SourceTableImport>> importSourceTables = new HashMap<>();
-  private Map<ImportDefinition, Map<ai.datasqrl.schema.Table, SourceTableImportMeta.RowType>> importTableTypes = new HashMap<>();
 
   private Map<Node, Field> producedField = new HashMap<>();
 
   public Map<Node, Name> tableAliases = new HashMap<>();
 
   public Map<Node, String> fieldAlias = new HashMap<>();
-  public Map<Node, Table> parentTable = new HashMap<>();
+  public Map<Node, ScriptTable> parentTable = new HashMap<>();
+  public Map<Node, List<ImportedTable>> importDataset = new HashMap<>();
 
   @Setter
   public List<Integer> groupByOrdinals = new ArrayList<>();
@@ -147,7 +132,7 @@ public class Analysis {
       this.path = path;
     }
 
-    public Table getToTable() {
+    public ScriptTable getToTable() {
       Field field = path.get(path.size() - 1);
       if (field instanceof RootTableField) {
         return ((RootTableField) field).getTable();

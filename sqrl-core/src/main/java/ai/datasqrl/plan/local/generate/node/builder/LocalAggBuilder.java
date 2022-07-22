@@ -1,12 +1,13 @@
 package ai.datasqrl.plan.local.generate.node.builder;
 
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
+import ai.datasqrl.plan.local.generate.QueryGenerator.FieldNames;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.generate.node.SqlResolvedIdentifier;
 import ai.datasqrl.plan.local.generate.node.util.AliasGenerator;
+import ai.datasqrl.schema.ScriptTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +26,9 @@ import org.apache.calcite.sql.util.SqlShuttle;
 @AllArgsConstructor
 public class LocalAggBuilder {
   final AliasGenerator aliasGenerator = new AliasGenerator();
-  Map<Name, AbstractSqrlTable> tables;
   JoinPathBuilder joinPathBuilder;
+  FieldNames fieldNames;
+  Map<ScriptTable, AbstractSqrlTable> tableMap;
 
 
   /**
@@ -53,8 +55,7 @@ public class LocalAggBuilder {
 
     //Namepath is relative: sum(_.entries.total)
     if (namePath.getBase().isPresent()) {
-      Name originTable = namePath.getBase().get().getToTable().getId();
-      List<String> primaryKeys = this.tables.get(originTable).getPrimaryKeys();
+      List<String> primaryKeys = tableMap.get(namePath.getBase().get().getToTable()).getPrimaryKeys();
 
       List<SqlNode> pks = primaryKeys.stream().map(pk -> new SqlIdentifier(List.of("_", pk), SqlParserPos.ZERO)).collect(
           Collectors.toList());
@@ -66,7 +67,7 @@ public class LocalAggBuilder {
     //Add new
     //May be alias
     SqlIdentifier newArg = new SqlIdentifier(List.of(from.getToTableAlias(),
-        namePath.getPath().get(namePath.getPath().size() - 1).getId().getCanonical()), SqlParserPos.ZERO);
+        fieldNames.get(namePath.getPath().get(namePath.getPath().size() - 1))), SqlParserPos.ZERO);
     SqlCall rewrittenCall = (SqlCall)call.accept(new SqlShuttle(){
       @Override
       public SqlNode visit(SqlIdentifier id) {

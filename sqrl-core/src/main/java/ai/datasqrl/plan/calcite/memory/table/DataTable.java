@@ -1,9 +1,10 @@
 package ai.datasqrl.plan.calcite.memory.table;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.DataContext;
 import org.apache.calcite.linq4j.AbstractEnumerable;
@@ -15,9 +16,7 @@ import org.apache.calcite.linq4j.Queryable;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.schema.QueryableTable;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Schemas;
@@ -31,12 +30,9 @@ public class DataTable extends AbstractTable implements QueryableTable {
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory) {
-    FieldInfoBuilder builder = relDataTypeFactory.builder();
-    builder.kind(StructKind.FULLY_QUALIFIED);
-
+    CalciteUtil.RelDataTypeBuilder builder = CalciteUtil.getRelTypeBuilder(relDataTypeFactory);
     header
         .forEach(builder::add);
-
     return builder.build();
   }
 

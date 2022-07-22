@@ -2,11 +2,13 @@ package ai.datasqrl.plan.local.generate.node.builder;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
+import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.RootTableField;
+import ai.datasqrl.plan.local.RootTableField;
+import ai.datasqrl.schema.ScriptTable;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Map;
@@ -44,9 +46,11 @@ public class JoinPathBuilder {
   private String currentAlias;
   public SqlNode sqlNode;
   public Optional<SqlNode> trailingCondition = Optional.empty();
+  private Map<ScriptTable, AbstractSqrlTable> tableMap;
 
-  public JoinPathBuilder(Map<Relationship, SqlJoinDeclaration> joinDeclarations) {
+  public JoinPathBuilder(Map<Relationship, SqlJoinDeclaration> joinDeclarations, Map<ScriptTable, AbstractSqrlTable> tableMap) {
     this.joinDeclarations = joinDeclarations;
+    this.tableMap = tableMap;
   }
 
   private void join(Relationship rel) {
@@ -98,7 +102,7 @@ public class JoinPathBuilder {
         String t2 = namePath.getAlias();
         this.sqlNode =  new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
             new SqlTableRef(SqlParserPos.ZERO,
-                new SqlIdentifier(root.getTable().getId().getCanonical(),
+                new SqlIdentifier(tableMap.get(root.getTable()).getNameId(),
                     SqlParserPos.ZERO), SqlNodeList.EMPTY),
             new SqlIdentifier(t2, SqlParserPos.ZERO)
         }, SqlParserPos.ZERO);
@@ -114,10 +118,11 @@ public class JoinPathBuilder {
     SqlLiteral conditionType = SqlLiteral.createSymbol(JoinConditionType.ON, SqlParserPos.ZERO);
     SqlLiteral joinType = SqlLiteral.createSymbol(org.apache.calcite.sql.JoinType.LEFT, SqlParserPos.ZERO);
 
+    AbstractSqrlTable toTable = tableMap.get(namePath.getBase().get().getToTable());
     return new SqlJoinDeclaration(new SqlJoin(SqlParserPos.ZERO,
         new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
             new SqlTableRef(SqlParserPos.ZERO,
-                new SqlIdentifier(namePath.getBase().get().getToTable().getId().getCanonical(),
+                new SqlIdentifier(toTable.getNameId(),
                     SqlParserPos.ZERO), SqlNodeList.EMPTY),
             new SqlIdentifier(tableAlias, SqlParserPos.ZERO)
           }, SqlParserPos.ZERO),
@@ -133,7 +138,7 @@ public class JoinPathBuilder {
       Optional<Name> lastAlias) {
     //_.orders.entries
     if (namePath.getBase().isPresent()) {
-      currentAlias = namePath.getBase().get().getAlias();
+      currentAlias = namePath.getAlias();
     } else {
       currentAlias = namePath.getAlias();
     }
@@ -146,7 +151,7 @@ public class JoinPathBuilder {
         String tableAlias = namePath.getAlias();
         this.sqlNode = new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
             new SqlTableRef(SqlParserPos.ZERO,
-                new SqlIdentifier(root.getTable().getId().getCanonical(),
+                new SqlIdentifier(tableMap.get(root.getTable()).getNameId(),
                     SqlParserPos.ZERO), SqlNodeList.EMPTY),
             new SqlIdentifier(tableAlias, SqlParserPos.ZERO)
         }, SqlParserPos.ZERO);

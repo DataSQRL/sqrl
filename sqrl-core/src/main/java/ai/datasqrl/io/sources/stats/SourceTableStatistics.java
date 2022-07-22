@@ -6,7 +6,6 @@ import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import com.google.common.base.Preconditions;
-import lombok.Getter;
 import lombok.ToString;
 
 @ToString
@@ -42,7 +41,7 @@ public class SourceTableStatistics implements
 
   public RelationStats getRelationStats(NamePath path) {
     RelationStats current = relation;
-    for (int i = 0; i < path.getLength(); i++) {
+    for (int i = 0; i < path.size(); i++) {
       Name n = path.get(i);
       FieldStats field = current.fieldStats.get(n);
       if (field == null) return RelationStats.EMPTY;

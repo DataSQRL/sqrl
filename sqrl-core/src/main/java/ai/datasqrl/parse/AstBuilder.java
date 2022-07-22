@@ -1117,7 +1117,7 @@ class AstBuilder
   private NamePath getNamePath(QualifiedNameContext context) {
     List<Name> parts = visit(context.identifier(), Identifier.class).stream()
         .map(Identifier::getNamePath) // TODO: preserve quotedness
-        .flatMap(e -> Arrays.stream(e.getNames()))
+        .flatMap(e -> e.stream())
         .collect(Collectors.toList());
     if (context.all != null) {
       parts = new ArrayList<>(parts);

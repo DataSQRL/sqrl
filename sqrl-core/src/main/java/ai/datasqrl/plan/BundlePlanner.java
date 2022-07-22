@@ -13,6 +13,7 @@ import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.local.analyze.Analyzer;
+import ai.datasqrl.plan.local.analyze.Namespace;
 import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
@@ -39,18 +40,19 @@ public class BundlePlanner {
   }
 
   public PhysicalPlan processBundle(ScriptBundle bundle) {
-    Schema schema = planMain(bundle.getMainScript());
+    Namespace schema = planMain(bundle.getMainScript());
 
 //    Optimizer optimizer = new Optimizer(bundle.getQueries(), true);
-    LogicalPlan plan = new LogicalPlan(List.of(), List.of(), schema);
+//    LogicalPlan plan = new LogicalPlan(List.of(), List.of(), schema);
 
-    PhysicalPlanner physicalPlanner = new PhysicalPlanner(options.getImportManager(),
-        options.getDbConnection(),
-        options.getStreamEngine());
-    return physicalPlanner.plan(plan);
+//    PhysicalPlanner physicalPlanner = new PhysicalPlanner(options.getImportManager(),
+//        options.getDbConnection(),
+//        options.getStreamEngine());
+//    return physicalPlanner.plan(plan);
+    return null;
   }
 
-  private Schema planMain(SqrlScript mainScript) {
+  private Namespace planMain(SqrlScript mainScript) {
     ConfiguredSqrlParser parser = ConfiguredSqrlParser.newParser(errorCollector);
     ScriptNode scriptAst = parser.parse(mainScript.getContent());
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
@@ -72,6 +74,6 @@ public class BundlePlanner {
       generator.generate((SqrlStatement) node);
     }
 
-    return analyzer.getAnalysis().getSchema();
+    return analyzer.getNamespace();
   }
 }

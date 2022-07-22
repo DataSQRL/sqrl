@@ -8,6 +8,7 @@ import lombok.Value;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.plan.RelTrait;
 import org.apache.calcite.rel.metadata.DefaultRelMetadataProvider;
+import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
 
@@ -47,6 +48,13 @@ public class OptimizationStage {
     ====== DEFINITION OF ACTUAL STAGES
      */
 
+    public static final OptimizationStage PUSH_FILTER_INTO_JOIN = new OptimizationStage("PushDownProjections",
+            Programs.hep(List.of(
+                    CoreRules.FILTER_INTO_JOIN
+                    ), false, DefaultRelMetadataProvider.INSTANCE),
+            Optional.empty());
+
+    //Enumerable
     public static final OptimizationStage SQRL_ENUMERABLE_HEP = new OptimizationStage("SQRL2Enumerable",
             Programs.hep(List.of(new SqrlExpansionRelRule()), false, DefaultRelMetadataProvider.INSTANCE),
             Optional.empty());

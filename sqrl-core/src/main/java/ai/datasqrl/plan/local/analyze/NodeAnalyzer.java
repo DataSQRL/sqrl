@@ -41,7 +41,7 @@ import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.RootTableField;
+import ai.datasqrl.plan.local.RootTableField;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -175,7 +175,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
       } else if (selectItem instanceof AllColumns) {
         if (((AllColumns) selectItem).getPrefix().isPresent()) {
           NamePath aliasPath = ((AllColumns) selectItem).getPrefix().get();
-          Check.state(aliasPath.getLength() == 1, selectItem, Errors.INVALID_STAR_ALIAS);
+          Check.state(aliasPath.size() == 1, selectItem, Errors.INVALID_STAR_ALIAS);
 
           ResolvedNamePath namePath = context.getJoinScopes().get(aliasPath.getFirst());
           List<SingleColumn> resolvedItems = namePath.getToTable().getVisibleColumns().stream()
@@ -237,7 +237,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
       if (expression instanceof Identifier) {
         Identifier identifier = (Identifier) expression;
         //Aliased identifier
-        if (identifier.getNamePath().getLength() == 1 && scope.getFieldNames()
+        if (identifier.getNamePath().size() == 1 && scope.getFieldNames()
             .contains(identifier.getNamePath().getFirst())) {
           Integer index = scope.getFieldNames().indexOf(identifier.getNamePath().getFirst());
           groupByOrdinals.add(index);
@@ -274,7 +274,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
       if (sortItem.getSortKey() instanceof Identifier) {
         Identifier identifier = (Identifier) sortItem.getSortKey();
         //Aliased identifier
-        if (identifier.getNamePath().getLength() == 1 && scope.getFieldNames()
+        if (identifier.getNamePath().size() == 1 && scope.getFieldNames()
             .contains(identifier.getNamePath().getFirst())) {
           int index = scope.getFieldNames().indexOf(identifier.getNamePath().getFirst());
           LongLiteral ordinal = new LongLiteral(Integer.toString(index + 1));
@@ -349,7 +349,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
   public Scope visitTableNode(TableNode node, Scope scope) {
     //TODO: Handle `_ CROSS JOIN _.entries;`
 
-    if (node.getNamePath().getLength() == 1 && node.getNamePath().getFirst()
+    if (node.getNamePath().size() == 1 && node.getNamePath().getFirst()
         .equals(ReservedName.SELF_IDENTIFIER)) {
       scope.setSelfInScope(true);
     }
@@ -452,7 +452,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
 
       @Override
       public Object visitTableNode(TableNode node, Object context) {
-        if (node.getNamePath().getLength() == 1 && node.getNamePath().getFirst()
+        if (node.getNamePath().size() == 1 && node.getNamePath().getFirst()
             .equals(ReservedName.SELF_IDENTIFIER)) {
           atomicBoolean.set(true);
         }
@@ -465,7 +465,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
 
   private Name getTableName(TableNode node, Scope scope) {
     return node.getAlias()
-        .or(() -> node.getNamePath().getLength() == 1 ? Optional.of(node.getNamePath().getFirst())
+        .or(() -> node.getNamePath().size() == 1 ? Optional.of(node.getNamePath().getFirst())
             : Optional.empty())
         //If we're in a table path, the fields cannot be referenced using the path syntax
         .orElseGet(
