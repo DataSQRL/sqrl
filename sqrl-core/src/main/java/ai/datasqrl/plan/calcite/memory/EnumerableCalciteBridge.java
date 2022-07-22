@@ -2,17 +2,13 @@
 //
 //import ai.datasqrl.environment.ImportManager.SourceTableImport;
 //import ai.datasqrl.io.sources.util.StreamInputPreparer;
-//import ai.datasqrl.parse.tree.name.Name;
 //import ai.datasqrl.physical.stream.StreamEngine;
 //import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine;
-//import ai.datasqrl.plan.calcite.*;
+//import ai.datasqrl.plan.calcite.BasicSqrlCalciteBridge;
+//import ai.datasqrl.plan.calcite.OptimizationStage;
+//import ai.datasqrl.plan.calcite.Planner;
 //import ai.datasqrl.plan.calcite.memory.table.DataTable;
-//import ai.datasqrl.plan.local.operations.AddColumnOp;
-//import ai.datasqrl.plan.local.operations.AddNestedTableOp;
-//import ai.datasqrl.plan.local.operations.AddRootTableOp;
-//import ai.datasqrl.plan.local.operations.SourceTableImportOp;
-//import ai.datasqrl.schema.Table;
-//import ai.datasqrl.schema.input.FlexibleTableConverter;
+//import ai.datasqrl.plan.calcite.sqrl.table.*;
 //import lombok.Getter;
 //import lombok.SneakyThrows;
 //import org.apache.calcite.adapter.enumerable.EnumerableInterpretable;
@@ -20,7 +16,7 @@
 //import org.apache.calcite.adapter.enumerable.EnumerableRel.Prefer;
 //import org.apache.calcite.jdbc.CalciteSchema;
 //import org.apache.calcite.rel.RelNode;
-//import org.apache.calcite.rel.type.RelDataType;
+//import org.apache.calcite.rel.type.RelDataTypeField;
 //import org.apache.calcite.runtime.Bindable;
 //import org.apache.calcite.schema.SchemaPlus;
 //import org.apache.calcite.tools.RelBuilder;
@@ -45,8 +41,9 @@
 //  @Getter
 //  private final InMemoryCalciteSchema inMemorySchema;
 //
-//  public EnumerableCalciteBridge(Planner planner, StreamEngine streamEngine, StreamInputPreparer streamPreparer) {
-//    super(planner);
+//  public EnumerableCalciteBridge(Planner planner, CalciteTableFactory tableFactory,
+//                                 StreamEngine streamEngine, StreamInputPreparer streamPreparer) {
+//    super(planner, tableFactory);
 //    this.streamEngine = streamEngine;
 //    this.streamPreparer = streamPreparer;
 //    this.inMemorySchema = new InMemoryCalciteSchema();
@@ -57,18 +54,13 @@
 //  @Override
 //  @SneakyThrows
 //  public <T> T visit(SourceTableImportOp op) {
-//    List<Table> createdTables = super.visit(op);
+//    List<AbstractSqrlTable> createdTables = super.visit(op);
 //
-//    RelDataType rootType = new FlexibleTableConverter(op.getSourceTableImport().getSchema()).apply(
-//        new CalciteSchemaGenerator(planner.getTypeFactory())).get();
+//    ImportedSqrlTable impTable = (ImportedSqrlTable) createdTables.get(0);
+//    setData(impTable.getNameId(), impTable.getRowType().getFieldList(), getDataFromImport(impTable.getSourceTableImport()));
 //
-//    inMemorySchema.registerSourceTable(op.getSourceTableImport().getTable().qualifiedName(),
-//        rootType.getFieldList(), getDataFromImport(op.getSourceTableImport()));
-//
-//    for (Table table : createdTables) {
-//      executeAndRegister(table.getId().getCanonical());
-//    }
-//
+//    QuerySqrlTable queryTable = (QuerySqrlTable) createdTables.get(1);
+//    executeAndRegister(queryTable.getNameId());
 //    return null;
 //  }
 //
@@ -118,12 +110,14 @@
 //
 //    List<Object[]> data = execute(rel);
 //
-//    inMemorySchema.registerDataTable(tableName,
-//        rel.getRowType().getFieldList(),
-//        data);
+//    setData(tableName, rel.getRowType().getFieldList(), data);
+//  }
 //
-//    //Override the installed table to indicate that we don't need to expand the query table anymore
-//    this.tableMap.put(Name.system(tableName), new DataTable(rel.getRowType().getFieldList(), data));
+//  private void setData(String name, List<RelDataTypeField> header, Collection<Object[]> data) {
+//    DataTable dataTable = new DataTable(header, data);
+//    this.inMemorySchema.registerDataTable(name, dataTable);
+//    this.tableMap.put(name, dataTable);
+//
 //  }
 //
 //  @SneakyThrows

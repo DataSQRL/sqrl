@@ -36,7 +36,7 @@ public class FlinkTableAPIIT extends AbstractSQRLIT {
     ImportManager imports = new ImportManager(sourceRegistry);
 
     ErrorCollector schemaErrs = ErrorCollector.root();
-    ImportManager.SourceTableImport ordersImp = imports.importTable(Name.system(example.getName()),Name.system("orders"),
+    ImportManager.SourceTableImport ordersImp = (ImportManager.SourceTableImport) imports.importTable(Name.system(example.getName()),Name.system("orders"),
             SchemaAdjustmentSettings.DEFAULT,schemaErrs);
     ImportManager.SourceTableImport imp = ordersImp;
 

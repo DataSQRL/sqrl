@@ -5,14 +5,9 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.memory.table.DataTable;
-import ai.datasqrl.plan.calcite.sqrl.table.LogicalBaseTableCalciteTable;
-import ai.datasqrl.plan.calcite.sqrl.table.QueryCalciteTable;
-import ai.datasqrl.plan.calcite.sqrl.table.SourceTableCalciteTable;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import ai.datasqrl.plan.calcite.sqrl.table.ImportedSqrlTable;
+import ai.datasqrl.plan.calcite.sqrl.table.QuerySqrlTable;
+import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptTable;
@@ -22,11 +17,9 @@ import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.logical.LogicalCorrelate;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.RelRecordType;
-import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -34,6 +27,12 @@ import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  *
@@ -47,9 +46,9 @@ public class SqrlExpansionRelRule extends RelOptRule {
   @Override
   public void onMatch(RelOptRuleCall call) {
     LogicalTableScan table = call.rel(0);
-    LogicalBaseTableCalciteTable baseTable = table.getTable()
-        .unwrap(LogicalBaseTableCalciteTable.class);
-    QueryCalciteTable query = table.getTable().unwrap(QueryCalciteTable.class);
+    ImportedSqrlTable baseTable = table.getTable()
+        .unwrap(ImportedSqrlTable.class);
+    QuerySqrlTable query = table.getTable().unwrap(QuerySqrlTable.class);
     DataTable dt = table.getTable().unwrap(DataTable.class);
 
     /*
@@ -59,13 +58,13 @@ public class SqrlExpansionRelRule extends RelOptRule {
       RelOptTable baseDatasetRelOptTable = table.getTable().getRelOptSchema()
           .getTableForMember(List.of(baseTable.getSourceTableImport().getTable().qualifiedName()));
 
-      RelNode relNode = shred(baseTable.getShredPath(), baseTable.getSourceTableImport(),
-          baseDatasetRelOptTable, table);
+      RelNode relNode = null; /*shred(baseTable.getNamePath(), baseTable.getSourceTableImport(),
+          baseDatasetRelOptTable, table); */
 
       call.transformTo(relNode);
 
     } else if (query != null) {//A query backed table
-      call.transformTo(query.getRelNode());
+//      call.transformTo(query.getRelNode());
     } else {
 //      throw new RuntimeException("Unknown table type :" + table.getTable().getClass().getName());
     }
@@ -78,7 +77,7 @@ public class SqrlExpansionRelRule extends RelOptRule {
         table.getHints());
 
     if (sourceTableImport.getTable().getName().equals(Name.system("orders"))) {
-      if (shredPath.getLength() == 1) {
+      if (shredPath.size() == 1) {
         RelBuilder builder = relBuilderFactory.create(table.getCluster(), table.getTable().getRelOptSchema());
         RexBuilder rexBuilder = builder.getRexBuilder();
 
@@ -114,14 +113,14 @@ public class SqrlExpansionRelRule extends RelOptRule {
       }
 
     }
-    if (shredPath.getLength() == 1) {
+    if (shredPath.size() == 1) {
       RelBuilder builder = relBuilderFactory.create(table.getCluster(), table.getTable().getRelOptSchema());
 
-      RelDataTypeFactory.FieldInfoBuilder fieldBuilder = table.getTable().getRelOptSchema().getTypeFactory()
-          .builder().kind(StructKind.FULLY_QUALIFIED);
+      CalciteUtil.RelDataTypeBuilder fieldBuilder = CalciteUtil.getRelTypeBuilder(table.getTable().getRelOptSchema().getTypeFactory());
+
       for (RelDataTypeField field : table.getRowType().getFieldList()) {
         if (field.getType() instanceof BasicSqlType && !(field.getType() instanceof ArraySqlType)) {
-          fieldBuilder.add(field.getName(), field.getType());
+          fieldBuilder.add(field);
         }
       }
 

@@ -16,14 +16,10 @@ import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaImport;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import lombok.NonNull;
 import lombok.Value;
+
+import java.util.*;
 
 public class ImportManager {
 
@@ -85,7 +81,7 @@ public class ImportManager {
     return imports;
   }
 
-  public SourceTableImport importTable(@NonNull Name datasetName, @NonNull Name tableName,
+  public TableImport importTable(@NonNull Name datasetName, @NonNull Name tableName,
       SchemaAdjustmentSettings schemaAdjustmentSettings,
       ErrorCollector errors) {
     if (scriptSchemas.containsKey(datasetName)) {

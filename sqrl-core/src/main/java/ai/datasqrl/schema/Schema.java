@@ -1,62 +1,63 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import com.google.common.base.Preconditions;
 
-import ai.datasqrl.plan.local.BundleTableFactory;
-import ai.datasqrl.schema.SourceTableImportMeta.RowType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import lombok.Getter;
-import org.apache.commons.lang3.tuple.Pair;
+import java.util.*;
 
-public class Schema extends ShadowingContainer<Table> {
+//TODO: to be removed
+public class Schema {
 
-  //TODO: unpack this
-  @Getter
-  final BundleTableFactory tableFactory = new BundleTableFactory();
+  private final Map<Name, ScriptTable> tables = new HashMap<>();
 
-  public Map<Table, RowType> addImportTable(SourceTableImport importSource, Optional<Name> nameAlias) {
-    Pair<Table, Map<Table, RowType>> resolvedImport = tableFactory.importTable(importSource, nameAlias);
-    Table table = resolvedImport.getKey();
-    add(table);
-    return resolvedImport.getRight();
+  /*
+  === Retrieval Methods ===
+   */
+
+  protected ScriptTable get(Name name) {
+    return tables.get(name);
   }
 
-  public Optional<Table> getTable(Name name) {
-    return this.getVisibleByName(name);
+  public void add(ScriptTable table) {
+    Preconditions.checkArgument(table.getPath().size()==1,"Only add root tables to schema");
+    tables.put(table.getName(),table);
   }
 
-  public Table walkTable(NamePath tablePath) {
-    if (tablePath.getLength() == 1) {
-      return this.getVisibleByName(tablePath.getFirst()).get();
+  public Optional<ScriptTable> getTable(Name name) {
+    return Optional.ofNullable(get(name));
+  }
+
+  public ScriptTable walkTable(NamePath tablePath) {
+    if (tablePath.size() == 1) {
+      return get(tablePath.getFirst());
     } else {
-      return this.getVisibleByName(tablePath.getFirst()).get()
-          .walkTable(tablePath.popFirst()).get();
+      return get(tablePath.getFirst())
+              .walkTable(tablePath.popFirst()).get();
     }
   }
 
-  public List<Table> allTables() {
-    List<Table> tables = new ArrayList<>();
-    for (Table t : this) addTableAndChildren(t,tables);
-    return tables;
+  public List<ScriptTable> allTables() {
+    List<ScriptTable> tableList = new ArrayList<>();
+    for (ScriptTable t : tables.values()) addTableAndChildren(t,tableList);
+    return tableList;
   }
 
-  private void addTableAndChildren(Table t, List<Table> tables) {
+  private void addTableAndChildren(ScriptTable t, List<ScriptTable> tables) {
     tables.add(t);
-    for (Table child : t.getChildren()) {
+    for (ScriptTable child : t.getChildren()) {
       addTableAndChildren(child, tables);
     }
   }
 
   public String toString() {
     StringBuilder s = new StringBuilder();
-    for (Table t : allTables()) {
+    for (ScriptTable t : allTables()) {
       s.append(t).append("\n");
     }
     return s.toString();
   }
+
+
+
 }

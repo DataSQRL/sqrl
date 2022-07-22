@@ -1,0 +1,59 @@
+package ai.datasqrl.schema;
+
+import ai.datasqrl.parse.tree.name.Name;
+import com.google.common.base.Preconditions;
+import lombok.NonNull;
+
+import java.util.*;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class FieldList {
+
+    List<Field> fields = new ArrayList<>();
+
+    public int nextVersion(Name name) {
+        return fields.stream().filter(f -> f.getName().equals(name)).map(Field::getVersion)
+                .max(Integer::compareTo).map(i -> i+1).orElse(0);
+    }
+
+    public List<Field> toList() {
+        return new ArrayList<>(fields);
+    }
+
+    public Field atIndex(int index) {
+        return fields.get(index);
+    }
+
+    public int numFields() {
+        return fields.size();
+    }
+
+    public void addField(Field field) {
+        Preconditions.checkArgument(field.getVersion()>=nextVersion(field.getName()));
+        fields.add(field);
+    }
+
+    public Stream<Field> getFields(boolean onlyVisible) {
+        Stream<Field> s = fields.stream();
+        if (onlyVisible) s = s.filter(Field::isVisible);
+        return s;
+    }
+
+    public List<Field> getAccessibleFields() {
+        Map<Name, Field> fieldsByName = getFields(true)
+                .collect(Collectors.toMap(Field::getName, Function.identity(),
+                        BinaryOperator.maxBy(Comparator.comparing(Field::getVersion))));
+        return getFields(true).filter(f -> fieldsByName.get(f.getName()).equals(f)).collect(Collectors.toList());
+    }
+
+    public Optional<Field> getAccessibleField(@NonNull Name name) {
+        return fields.stream().filter(f -> f.getName().equals(name))
+                .filter(Field::isVisible)
+                .max((a,b) -> Integer.compare(a.getVersion(),b.getVersion()));
+    }
+
+
+}
