@@ -10,8 +10,8 @@ import lombok.Value;
 
 @Value
 public class SourceTableImportMeta {
-  VarTable rootTable;
-  Map<VarTable, RowType> tableTypes;
+  ScriptTable rootTable;
+  Map<ScriptTable, RowType> tableTypes;
   SourceTableImport sourceTableImport;
 
   @Value

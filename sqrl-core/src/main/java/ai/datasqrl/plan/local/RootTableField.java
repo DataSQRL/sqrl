@@ -1,14 +1,16 @@
-package ai.datasqrl.schema;
+package ai.datasqrl.plan.local;
 
+import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.ScriptTable;
 import lombok.Getter;
 
 public class RootTableField extends Field {
 
   @Getter
-  private final VarTable table;
+  private final ScriptTable table;
 
   //Todo: migrate to versioned table
-  public RootTableField(VarTable table) {
+  public RootTableField(ScriptTable table) {
     super(table.getName(),0); //TODO: what should the version be?
     this.table = table;
   }

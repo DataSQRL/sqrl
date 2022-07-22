@@ -9,7 +9,7 @@ import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
-import ai.datasqrl.schema.VarTable;
+import ai.datasqrl.schema.ScriptTable;
 import ai.datasqrl.schema.builder.AbstractTableFactory;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Triple;
@@ -21,14 +21,14 @@ import java.util.Optional;
 @AllArgsConstructor
 public class VariableFactory {
 
-  public VarTable createDistinctTable(ResolvedTable resolvedTable) {
-    VarTable table = new VarTable(resolvedTable.getNamePath());
+  public ScriptTable createDistinctTable(ResolvedTable resolvedTable) {
+    ScriptTable table = new ScriptTable(resolvedTable.getNamePath());
     resolvedTable.getToTable().getVisibleColumns().forEach(
         c -> table.addColumn(c.getName(), c.isVisible()));
     return table;
   }
 
-  public Relationship addJoinDeclaration(NamePath namePath, VarTable parentTable, VarTable target, Optional<Limit> limit) {
+  public Relationship addJoinDeclaration(NamePath namePath, ScriptTable parentTable, ScriptTable target, Optional<Limit> limit) {
     //determine if
     Multiplicity multiplicity = limit.map(
         l -> l.getIntValue().filter(i -> i == 1).map(i -> Multiplicity.ONE)
@@ -39,13 +39,13 @@ public class VariableFactory {
     return relationship;
   }
 
-  public Column addExpression(NamePath namePath, VarTable table) {
+  public Column addExpression(NamePath namePath, ScriptTable table) {
     Name columnName = namePath.getLast();
     Column column = table.addColumn(columnName, true);
     return column;
   }
 
-  public Column addQueryExpression(NamePath namePath, VarTable table) {
+  public Column addQueryExpression(NamePath namePath, ScriptTable table) {
     //do not create table, add column
     Name columnName = namePath.getLast();
 
@@ -53,10 +53,10 @@ public class VariableFactory {
     return column;
   }
 
-  public Triple<Optional<Relationship>, VarTable, List<Field>> addQuery(NamePath namePath, List<Name> fieldNames, Optional<VarTable> parentTable) {
+  public Triple<Optional<Relationship>, ScriptTable, List<Field>> addQuery(NamePath namePath, List<Name> fieldNames, Optional<ScriptTable> parentTable) {
 
     List<Field> fields = new ArrayList<>();
-    VarTable table = new VarTable(namePath);
+    ScriptTable table = new ScriptTable(namePath);
 
     //todo: column names:
     fieldNames.forEach(n -> {

@@ -8,8 +8,8 @@ import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.RootTableField;
-import ai.datasqrl.schema.VarTable;
+import ai.datasqrl.plan.local.RootTableField;
+import ai.datasqrl.schema.ScriptTable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +24,7 @@ import lombok.Setter;
 public class Scope {
 
   private final Namespace namespace;
-  private final Optional<VarTable> contextTable;
+  private final Optional<ScriptTable> contextTable;
   private final Optional<Boolean> isExpression;
   private final Optional<Name> targetName;
 
@@ -54,12 +54,12 @@ public class Scope {
 
   @Setter
   private boolean allowIdentifierPaths = true;
-  public Scope(Namespace namespace, Optional<VarTable> contextTable, boolean isExpression, Name targetName) {
+  public Scope(Namespace namespace, Optional<ScriptTable> contextTable, boolean isExpression, Name targetName) {
     this(namespace, contextTable, Optional.of(isExpression), Optional.of(targetName));
   }
 
-  public Scope(Namespace namespace, Optional<VarTable> contextTable, Optional<Boolean> isExpression,
-      Optional<Name> targetName) {
+  public Scope(Namespace namespace, Optional<ScriptTable> contextTable, Optional<Boolean> isExpression,
+               Optional<Name> targetName) {
     this.namespace = namespace;
     this.contextTable = contextTable;
     this.isExpression = isExpression;
@@ -130,7 +130,7 @@ public class Scope {
   }
 
   private Optional<ResolvedNamePath> walkSchema(NamePath namePath) {
-    Optional<VarTable> table = namespace.getTable(namePath.getFirst());
+    Optional<ScriptTable> table = namespace.getTable(namePath.getFirst());
     List<Field> fields = new ArrayList<>();
     if (table.isPresent()) {
       Field root = new RootTableField(table.get());
@@ -157,7 +157,7 @@ public class Scope {
   private Optional<ResolvedNamePath> walk(String alias, ResolvedNamePath resolvedNamePath,
       NamePath namePath) {
     Field field = resolvedNamePath.getPath().get(resolvedNamePath.getPath().size() - 1);
-    Optional<VarTable> table = getTableOfField(field);
+    Optional<ScriptTable> table = getTableOfField(field);
     if (table.isEmpty()) {
       return Optional.empty();
     }
@@ -170,8 +170,8 @@ public class Scope {
     return Optional.of(new ResolvedNamePath(alias, Optional.of(resolvedNamePath), fields.get()));
   }
 
-  private Optional<List<Field>> walk(VarTable tbl, NamePath namePath) {
-    Optional<VarTable> table = Optional.of(tbl);
+  private Optional<List<Field>> walk(ScriptTable tbl, NamePath namePath) {
+    Optional<ScriptTable> table = Optional.of(tbl);
     List<Field> fields = new ArrayList<>();
     for (Name name : namePath) {
       if (table.isEmpty()) {
@@ -188,7 +188,7 @@ public class Scope {
     return Optional.of(fields);
   }
 
-  private Optional<VarTable> getTableOfField(Field field) {
+  private Optional<ScriptTable> getTableOfField(Field field) {
     if (field instanceof RootTableField) {
       return Optional.of(((RootTableField) field).getTable());
     } else if (field instanceof Relationship) {
@@ -199,14 +199,14 @@ public class Scope {
   }
 
 
-  protected static Scope createLocalScope(NamePath namePath, boolean isExpression, Namespace namespace, Optional<VarTable> contextTable) {
+  protected static Scope createLocalScope(NamePath namePath, boolean isExpression, Namespace namespace, Optional<ScriptTable> contextTable) {
     Scope scope = new Scope(namespace, contextTable, isExpression, namePath.getLast());
     addSelfToScope(scope);
     scope.setSelfInScope(true);
     return scope;
   }
 
-  public static Scope createScope(NamePath namePath, boolean isExpression, Namespace namespace, Optional<VarTable> contextTable) {
+  public static Scope createScope(NamePath namePath, boolean isExpression, Namespace namespace, Optional<ScriptTable> contextTable) {
     return new Scope(namespace, contextTable, isExpression, namePath.getLast());
   }
 

@@ -7,8 +7,7 @@ import ai.datasqrl.plan.local.generate.QueryGenerator.FieldNames;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.generate.node.SqlResolvedIdentifier;
 import ai.datasqrl.plan.local.generate.node.util.AliasGenerator;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.VarTable;
+import ai.datasqrl.schema.ScriptTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +28,7 @@ public class LocalAggBuilder {
   final AliasGenerator aliasGenerator = new AliasGenerator();
   JoinPathBuilder joinPathBuilder;
   FieldNames fieldNames;
-  Map<VarTable, AbstractSqrlTable> tableMap;
+  Map<ScriptTable, AbstractSqrlTable> tableMap;
 
 
   /**

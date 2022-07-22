@@ -5,7 +5,7 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.VarTable;
+import ai.datasqrl.schema.ScriptTable;
 import ai.datasqrl.schema.input.SqrlTypeConverter;
 import ai.datasqrl.schema.type.basic.IntegerType;
 import com.google.common.base.Preconditions;
@@ -52,20 +52,20 @@ public abstract class VirtualTableFactory<T,V extends VirtualTable> extends Abst
         V make(@NonNull AbstractTableFactory.UniversalTableBuilder<T> tblBuilder, V parent, Name shredFieldName);
     }
 
-    public Map<VarTable,V> build(UniversalTableBuilder<T> builder, VirtualTableBuilder<T,V> vtableBuilder) {
-        Map<VarTable,V> createdTables = new HashMap<>();
+    public Map<ScriptTable,V> build(UniversalTableBuilder<T> builder, VirtualTableBuilder<T,V> vtableBuilder) {
+        Map<ScriptTable,V> createdTables = new HashMap<>();
         build(builder,null,null,null,vtableBuilder,createdTables);
         return createdTables;
     }
 
-    private void build(UniversalTableBuilder<T> builder, VarTable parent, V vParent,
+    private void build(UniversalTableBuilder<T> builder, ScriptTable parent, V vParent,
                        NestedTableBuilder.ChildRelationship<T,UniversalTableBuilder<T>> childRel,
                        VirtualTableBuilder<T,V> vtableBuilder,
-                       Map<VarTable,V> createdTables) {
+                       Map<ScriptTable,V> createdTables) {
         V vTable;
         if (parent==null) vTable = vtableBuilder.make(builder);
         else vTable = vtableBuilder.make(builder,vParent,childRel.getId());
-        VarTable tbl = new VarTable(builder.getPath());
+        ScriptTable tbl = new ScriptTable(builder.getPath());
         createdTables.put(tbl,vTable);
         if (parent!=null) {
             //Add child relationship

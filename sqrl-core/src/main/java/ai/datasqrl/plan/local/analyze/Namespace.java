@@ -8,9 +8,9 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
-import ai.datasqrl.schema.DatasetTable;
-import ai.datasqrl.schema.RootTableField;
-import ai.datasqrl.schema.VarTable;
+import ai.datasqrl.plan.local.ImportedTable;
+import ai.datasqrl.plan.local.RootTableField;
+import ai.datasqrl.schema.ScriptTable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,19 +21,19 @@ public class Namespace {
   /**
    * Allow resolution of dataset name: ecommerce-data.Orders
    */
-  Map<Name, DatasetTable> scopedDatasets = new HashMap<>();
+  Map<Name, ImportedTable> scopedDatasets = new HashMap<>();
 
   /**
    * Allow resolution of tables by name: Orders
    */
-  Map<Name, VarTable> scopedTables = new HashMap<>();
+  Map<Name, ScriptTable> scopedTables = new HashMap<>();
 
   private static final FunctionMetadataProvider functionMetadataProvider =
       new CalciteFunctionMetadataProvider(
           SqrlOperatorTable.instance());
 
   public Optional<ResolvedTable> resolveTable(TableNode tableNode) {
-    Optional<VarTable> tableOpt = getTable(tableNode.getNamePath());
+    Optional<ScriptTable> tableOpt = getTable(tableNode.getNamePath());
     if (tableOpt.isEmpty()) {
       return Optional.empty();
     }
@@ -48,26 +48,26 @@ public class Namespace {
     return functionMetadataProvider.lookup(namePath);
   }
 
-  public void scopeDataset(DatasetTable datasetTable, Optional<Name> nameAlias) {
-    scopedDatasets.put(nameAlias.orElse(datasetTable.getName()), datasetTable);
+  public void scopeDataset(ImportedTable importedTable, Optional<Name> nameAlias) {
+    scopedDatasets.put(nameAlias.orElse(importedTable.getName()), importedTable);
 
-    scopedTables.put(datasetTable.getTable().getName(), datasetTable.getTable());
+    scopedTables.put(importedTable.getTable().getName(), importedTable.getTable());
   }
 
-  public void addTable(VarTable varTable) {
-    scopedTables.put(varTable.getName(), varTable);
+  public void addTable(ScriptTable table) {
+    scopedTables.put(table.getName(), table);
   }
 
-  public Optional<VarTable> getTable(Name name) {
+  public Optional<ScriptTable> getTable(Name name) {
     return Optional.ofNullable(scopedTables.get(name));
   }
 
-  public Optional<VarTable> getTable(NamePath namePath) {
+  public Optional<ScriptTable> getTable(NamePath namePath) {
     Name first = namePath.getFirst();
     if (scopedDatasets.get(first) != null) {
       return scopedDatasets.get(first).walkTable(namePath);
     }
-    Optional<VarTable> table = Optional.ofNullable(scopedTables.get(first));
+    Optional<ScriptTable> table = Optional.ofNullable(scopedTables.get(first));
     if (namePath.popFirst().size() == 0) {
       return table;
     }

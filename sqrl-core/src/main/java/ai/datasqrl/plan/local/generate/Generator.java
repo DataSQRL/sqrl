@@ -11,10 +11,10 @@ import ai.datasqrl.plan.calcite.sqrl.table.QueryCalciteTable;
 import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
 import ai.datasqrl.plan.local.analyze.Analysis;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
-import ai.datasqrl.schema.DatasetTable;
+import ai.datasqrl.plan.local.ImportedTable;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.VarTable;
+import ai.datasqrl.schema.ScriptTable;
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
@@ -62,15 +62,16 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
    */
   @Override
   public SqlNode visitImportDefinition(ImportDefinition node, Scope context) {
-    List<DatasetTable> dt = analysis.getImportDataset().get(node);
+    List<ImportedTable> dt = analysis.getImportDataset().get(node);
 
-    for (DatasetTable d : dt) {
-      this.tables.put(d.getName().getCanonical(), d.getImpTable());
-      this.tables.putAll(d.getShredTables());
+    for (ImportedTable d : dt) {
+      //Add all Calcite tables to the schema
+      this.tables.put(d.getImpTable().getNameId(), d.getImpTable());
+      d.getShredTableMap().values().stream().forEach(vt -> this.tables.put(vt.getNameId(),vt));
 
-      this.tableMap.put(d.getTable(), d.getImpTable());
+      //Update table mapping from SQRL table to Calcite table...
       this.tableMap.putAll(d.getShredTableMap());
-
+      //and also map all fields
       this.fieldNames.putAll(d.getFieldNameMap());
 
       d.getShredTableMap().keySet().stream().flatMap(t->t.getAllRelationships())
@@ -84,7 +85,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   public SqlNode visitDistinctAssignment(DistinctAssignment node, Scope context) {
     SqlNode sqlNode = generateDistinctQuery(node);
     //Field names are the same...
-    VarTable table = analysis.getProducedTable().get(node);
+    ScriptTable table = analysis.getProducedTable().get(node);
 
     RelNode relNode = plan(sqlNode);
     for (int i = 0; i < analysis.getProducedFieldList().get(node).size(); i++) {
@@ -102,7 +103,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
   @Override
   public SqlNode visitJoinAssignment(JoinAssignment node, Scope context) {
     //Create join declaration, recursively expand paths.
-    VarTable table = analysis.getParentTable().get(node);
+    ScriptTable table = analysis.getParentTable().get(node);
     AbstractSqrlTable tbl = tableMap.get(table);
     Scope scope = new Scope(Optional.ofNullable(tbl), true);
     SqlJoin sqlNode = (SqlJoin) node.getJoinDeclaration().getRelation().accept(this, scope);
@@ -119,8 +120,8 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
   @Override
   public SqlNode visitExpressionAssignment(ExpressionAssignment node, Scope context) {
-    VarTable v = analysis.getProducedTable().get(node);
-    VarTable ta = analysis.getParentTable().get(node);
+    ScriptTable v = analysis.getProducedTable().get(node);
+    ScriptTable ta = analysis.getParentTable().get(node);
     AbstractSqrlTable tbl = tableMap.get(ta);
     Scope ctx = new Scope(Optional.ofNullable(tbl), true);
     SqlNode sqlNode = node.getExpression().accept(this, ctx);
@@ -194,7 +195,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
   @Override
   public SqlNode visitQueryAssignment(QueryAssignment node, Scope context) {
-    VarTable ta = analysis.getParentTable().get(node);
+    ScriptTable ta = analysis.getParentTable().get(node);
     Optional<AbstractSqrlTable> tbl = (ta == null) ? Optional.empty() :
         Optional.ofNullable(tableMap.get(ta));
 
@@ -202,7 +203,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     SqlNode sqlNode = node.getQuery().accept(this, scope);
     RelNode relNode = plan(sqlNode);
 
-    VarTable table = analysis.getProducedTable().get(node);
+    ScriptTable table = analysis.getProducedTable().get(node);
 
     if (analysis.getExpressionStatements().contains(node)) {
       Preconditions.checkNotNull(table);

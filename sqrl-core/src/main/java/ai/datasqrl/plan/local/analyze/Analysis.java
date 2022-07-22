@@ -5,6 +5,8 @@ import ai.datasqrl.function.SqrlAwareFunction;
 import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.plan.local.ImportedTable;
+import ai.datasqrl.plan.local.RootTableField;
 import ai.datasqrl.schema.*;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import lombok.Getter;
@@ -48,7 +50,7 @@ public class Analysis {
   /**
    * Assignments create or modify a table
    */
-  private Map<Assignment, VarTable> producedTable = new HashMap<>();
+  private Map<Assignment, ScriptTable> producedTable = new HashMap<>();
 
   /**
    * Created fields (in order)
@@ -65,15 +67,15 @@ public class Analysis {
    * Import resolution definitions
    */
   private Map<ImportDefinition, List<SourceTableImport>> importSourceTables = new HashMap<>();
-  private Map<ImportDefinition, Map<VarTable, SourceTableImportMeta.RowType>> importTableTypes = new HashMap<>();
+  private Map<ImportDefinition, Map<ScriptTable, SourceTableImportMeta.RowType>> importTableTypes = new HashMap<>();
 
   private Map<Node, Field> producedField = new HashMap<>();
 
   public Map<Node, Name> tableAliases = new HashMap<>();
 
   public Map<Node, String> fieldAlias = new HashMap<>();
-  public Map<Node, VarTable> parentTable = new HashMap<>();
-  public Map<Node, List<DatasetTable>> importDataset = new HashMap<>();
+  public Map<Node, ScriptTable> parentTable = new HashMap<>();
+  public Map<Node, List<ImportedTable>> importDataset = new HashMap<>();
 
   @Setter
   public List<Integer> groupByOrdinals = new ArrayList<>();
@@ -131,7 +133,7 @@ public class Analysis {
       this.path = path;
     }
 
-    public VarTable getToTable() {
+    public ScriptTable getToTable() {
       Field field = path.get(path.size() - 1);
       if (field instanceof RootTableField) {
         return ((RootTableField) field).getTable();

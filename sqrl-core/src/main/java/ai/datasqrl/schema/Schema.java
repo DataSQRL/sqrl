@@ -8,26 +8,26 @@ import java.util.*;
 
 public class Schema {
 
-  private final Map<Name, VarTable> tables = new HashMap<>();
+  private final Map<Name, ScriptTable> tables = new HashMap<>();
 
   /*
   === Retrieval Methods ===
    */
 
-  protected VarTable get(Name name) {
+  protected ScriptTable get(Name name) {
     return tables.get(name);
   }
 
-  public void add(VarTable table) {
+  public void add(ScriptTable table) {
     Preconditions.checkArgument(table.getPath().size()==1,"Only add root tables to schema");
     tables.put(table.getName(),table);
   }
 
-  public Optional<VarTable> getTable(Name name) {
+  public Optional<ScriptTable> getTable(Name name) {
     return Optional.ofNullable(get(name));
   }
 
-  public VarTable walkTable(NamePath tablePath) {
+  public ScriptTable walkTable(NamePath tablePath) {
     if (tablePath.size() == 1) {
       return get(tablePath.getFirst());
     } else {
@@ -36,22 +36,22 @@ public class Schema {
     }
   }
 
-  public List<VarTable> allTables() {
-    List<VarTable> tableList = new ArrayList<>();
-    for (VarTable t : tables.values()) addTableAndChildren(t,tableList);
+  public List<ScriptTable> allTables() {
+    List<ScriptTable> tableList = new ArrayList<>();
+    for (ScriptTable t : tables.values()) addTableAndChildren(t,tableList);
     return tableList;
   }
 
-  private void addTableAndChildren(VarTable t, List<VarTable> tables) {
+  private void addTableAndChildren(ScriptTable t, List<ScriptTable> tables) {
     tables.add(t);
-    for (VarTable child : t.getChildren()) {
+    for (ScriptTable child : t.getChildren()) {
       addTableAndChildren(child, tables);
     }
   }
 
   public String toString() {
     StringBuilder s = new StringBuilder();
-    for (VarTable t : allTables()) {
+    for (ScriptTable t : allTables()) {
       s.append(t).append("\n");
     }
     return s.toString();

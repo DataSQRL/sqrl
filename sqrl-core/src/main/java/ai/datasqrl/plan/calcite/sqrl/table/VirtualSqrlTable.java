@@ -11,9 +11,7 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Getter
 public abstract class VirtualSqrlTable extends AbstractSqrlTable implements VirtualTable {
@@ -33,7 +31,6 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
    */
   @NonNull
   protected RelDataType queryRowType;
-  Map<String, Child> children = new HashMap<>();
 
   protected VirtualSqrlTable(Name nameId, @NonNull RelDataType rowType,
       @NonNull RelDataType queryRowType, int numLocalPks) {
@@ -77,9 +74,6 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
     return queryRowType.getFieldCount();
   }
 
-  private void addChild(@NonNull String shredFieldName, Child child) {
-    children.put(shredFieldName, child);
-  }
 
   @Getter
   public static class Root extends VirtualSqrlTable {
@@ -134,7 +128,6 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
       Preconditions.checkArgument(CalciteUtil.isNestedTable(type));
       type = CalciteUtil.getArrayElementType(type).orElse(type);
       Child child = new Child(nameId, rowType, parent, shredField.getIndex(), type);
-      parent.addChild(shredFieldName, child);
       return child;
     }
 

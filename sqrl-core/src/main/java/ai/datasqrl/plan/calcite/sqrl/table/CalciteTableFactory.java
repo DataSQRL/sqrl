@@ -7,8 +7,9 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.SqrlType2Calcite;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
+import ai.datasqrl.plan.local.ImportedTable;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.VarTable;
+import ai.datasqrl.schema.ScriptTable;
 import ai.datasqrl.schema.builder.AbstractTableFactory;
 import ai.datasqrl.schema.builder.NestedTableBuilder;
 import ai.datasqrl.schema.builder.VirtualTableFactory;
@@ -44,7 +45,7 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
         return name.suffix(Integer.toString(tableIdCounter.incrementAndGet()));
     }
 
-    public Pair<ImportedSqrlTable, Map<VarTable,VirtualSqrlTable>> importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias) {
+    public ImportedTable importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias) {
         CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(this);
         RelDataType rootType = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
                 schemaGen).get();
@@ -54,12 +55,12 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
         ImportedSqrlTable impTable = new ImportedSqrlTable(getTableId(rootTable.getName()), timeHolder,
                 sourceTable, rootType);
 
-        Map<VarTable,VirtualSqrlTable> tables = createVirtualTables(rootTable, impTable);
-        return Pair.of(impTable, tables);
+        Map<ScriptTable,VirtualSqrlTable> tables = createVirtualTables(rootTable, impTable);
+        return new ImportedTable(impTable, tables);
     }
 
-    public Map<VarTable,VirtualSqrlTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,
-                                                              QuerySqrlTable baseTable) {
+    public Map<ScriptTable,VirtualSqrlTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,
+                                                                 QuerySqrlTable baseTable) {
         return build(rootTable, new VirtualTableConstructor(baseTable));
     }
 

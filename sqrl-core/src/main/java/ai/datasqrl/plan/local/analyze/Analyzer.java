@@ -12,20 +12,17 @@ import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.sqrl.table.ImportedSqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
 import ai.datasqrl.plan.local.Errors;
+import ai.datasqrl.plan.local.ImportedTable;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.plan.local.analyze.util.AstUtil;
 import ai.datasqrl.schema.*;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import lombok.Getter;
-import org.apache.calcite.util.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static ai.datasqrl.parse.util.SqrlNodeUtil.isExpression;
@@ -91,13 +88,9 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       }
       SourceTableImport sourceTableImport = (SourceTableImport)tblImport;
 
-      Pair<ImportedSqrlTable, Map<VarTable,VirtualSqrlTable>> imports = tableFactory.importTable(sourceTableImport, nameAlias);
-
-      DatasetTable datasetTable = new DatasetTable(
-          sourceDataset.toNamePath(), imports.getKey(),
-          imports.getValue().values().stream().filter(VirtualSqrlTable::isRoot).findFirst().get());
-      namespace.scopeDataset(datasetTable, nameAlias);
-      analysis.getImportDataset().put(node, List.of(datasetTable));
+      ImportedTable importedTable = tableFactory.importTable(sourceTableImport, nameAlias);
+      namespace.scopeDataset(importedTable, nameAlias);
+      analysis.getImportDataset().put(node, List.of(importedTable));
     }
 
     return null;
@@ -116,7 +109,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     Scope scope = Scope.createSingleTableScope(namespace, resolvedTable);
     analyzeNode(node, scope);
 
-    VarTable distinctTable = variableFactory.createDistinctTable(resolvedTable);
+    ScriptTable distinctTable = variableFactory.createDistinctTable(resolvedTable);
     namespace.addTable(distinctTable);
 
     analysis.getProducedFieldList().put(node, distinctTable.getFields().toList());
@@ -136,7 +129,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
 
     TableNode targetTableNode = AstUtil.getTargetTable(node.getJoinDeclaration());
     ResolvedNamePath resolvedTable = analysis.getResolvedNamePath().get(targetTableNode);
-    VarTable parentTable = scope.getContextTable().get();
+    ScriptTable parentTable = scope.getContextTable().get();
     Relationship relationship = variableFactory.addJoinDeclaration(node.getNamePath(), parentTable,
         resolvedTable.getToTable(), node.getJoinDeclaration().getLimit());
 
@@ -152,7 +145,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
 
     Scope scope = createLocalScope(node.getNamePath(), true);
     analyzeNode(node, scope);
-    VarTable table = scope.getContextTable().get();
+    ScriptTable table = scope.getContextTable().get();
 
     Column column = variableFactory.addExpression(node.getNamePath(), table);
 
@@ -191,14 +184,14 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       Check.state(node.getNamePath().size() > 1, node, Errors.QUERY_EXPRESSION_ON_ROOT);
 
       analysis.getExpressionStatements().add(node);
-      VarTable table = scope.getContextTable().get();
+      ScriptTable table = scope.getContextTable().get();
 
       Column column = variableFactory.addQueryExpression(namePath, table);
       analysis.getProducedField().put(node, column);
       analysis.getProducedTable().put(node, scope.getContextTable().get());
       analysis.getProducedFieldList().put(node, List.of(column));
     } else {
-      Triple<Optional<Relationship>, VarTable, List<Field>> table = variableFactory.addQuery(
+      Triple<Optional<Relationship>, ScriptTable, List<Field>> table = variableFactory.addQuery(
           namePath, queryScope.getFieldNames(), scope.getContextTable());
       analysis.getProducedFieldList().put(node, table.getMiddle().getFields().toList());
       analysis.getProducedTable().put(node, table.getMiddle());
@@ -222,7 +215,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
         Optional.of(getContextOrThrow(namePath.popLast())));
   }
 
-  private VarTable getContextOrThrow(NamePath namePath) {
+  private ScriptTable getContextOrThrow(NamePath namePath) {
     return getContext(namePath).orElseThrow(()->new RuntimeException(""));
   }
 
@@ -231,7 +224,7 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
     return node.accept(analyzer, scope);
   }
 
-  private Optional<VarTable> getContext(NamePath namePath) {
+  private Optional<ScriptTable> getContext(NamePath namePath) {
     if (namePath.size() == 0) {
       return Optional.empty();
     }

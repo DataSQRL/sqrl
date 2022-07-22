@@ -3,26 +3,22 @@ package ai.datasqrl.schema;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.Relationship.JoinType;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Getter;
 import lombok.NonNull;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Getter
-public class VarTable {
+public class ScriptTable {
 
   @NonNull
   final NamePath path;
   @NonNull
   final FieldList fields = new FieldList();
 
-  public VarTable(@NonNull NamePath path) {
+  public ScriptTable(@NonNull NamePath path) {
     this.path = path;
   }
 
@@ -49,8 +45,8 @@ public class VarTable {
     return col;
   }
 
-  public Relationship addRelationship(Name name, VarTable toTable, Relationship.JoinType joinType,
-                                                               Relationship.Multiplicity multiplicity) {
+  public Relationship addRelationship(Name name, ScriptTable toTable, Relationship.JoinType joinType,
+                                      Relationship.Multiplicity multiplicity) {
     Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity);
     fields.addField(rel);
     return rel;
@@ -64,7 +60,7 @@ public class VarTable {
     return fields.getAccessibleField(name);
   }
 
-  public Optional<VarTable> walkTable(NamePath namePath) {
+  public Optional<ScriptTable> walkTable(NamePath namePath) {
     if (namePath.isEmpty()) {
       return Optional.of(this);
     }
@@ -73,7 +69,7 @@ public class VarTable {
       return Optional.empty();
     }
     Relationship rel = (Relationship) field.get();
-    VarTable target = rel.getToTable();
+    ScriptTable target = rel.getToTable();
     return target.walkTable(namePath.popFirst());
   }
 
@@ -81,28 +77,20 @@ public class VarTable {
     return fields.getFields(true).filter(Relationship.class::isInstance).map(Relationship.class::cast);
   }
 
-  public int getNextColumnIndex() {
-    return fields.numFields();
-  }
-
-//  public List<Column> getPrimaryKeys() {
-//    return fields.stream()
-//            .filter(c->c instanceof Column)
-//            .map(c->(Column)c)
-//            .filter(c-> c.isPrimaryKey()).collect(Collectors.toList());
-//  }
-
-
-  public Optional<VarTable> getParent() {
+  public Optional<ScriptTable> getParent() {
     return getAllRelationships().filter(r -> r.getJoinType() == JoinType.PARENT).map(Relationship::getToTable).findFirst();
   }
 
-  public Collection<VarTable> getChildren() {
+  public Collection<ScriptTable> getChildren() {
     return getAllRelationships().filter(r -> r.getJoinType() == JoinType.CHILD).map(Relationship::getToTable).collect(Collectors.toList());
   }
 
   public List<Column> getVisibleColumns() {
-    return fields.getFields(true).filter(Column.class::isInstance).map(Column.class::cast).collect(Collectors.toList());
+    return getColumns(true);
+  }
+
+  public List<Column> getColumns(boolean onlyVisible) {
+    return fields.getFields(onlyVisible).filter(Column.class::isInstance).map(Column.class::cast).collect(Collectors.toList());
   }
 
   public NamePath getPath() {
@@ -113,25 +101,6 @@ public class VarTable {
 //    } else {
 //      return getName().toNamePath();
 //    }
-  }
-
-  public Map<? extends Field, String> getFieldNameMap() {
-    Map<Field, String> map = new HashMap<>();
-    for (Field field : this.fields.fields) {
-      if (field instanceof Column) {
-        map.put(field, field.name.getCanonical());
-      } else if (field instanceof DelegateRelRelationship) {
-        VarTable toTable = ((DelegateRelRelationship) field).getToTable();
-        map.putAll(toTable.getFieldNameMap());
-      } else if (field instanceof Relationship) {
-        //add field, don't walk
-        //todo: fix this
-//        VarTable toTable = ((Relationship) field).getToTable();
-        map.put(field, field.name.getCanonical());
-      }
-    }
-
-    return map;
   }
 
 }

@@ -41,7 +41,7 @@ import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.RootTableField;
+import ai.datasqrl.plan.local.RootTableField;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
