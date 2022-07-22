@@ -93,14 +93,4 @@ public class ScriptTable {
     return fields.getFields(onlyVisible).filter(Column.class::isInstance).map(Column.class::cast).collect(Collectors.toList());
   }
 
-  public NamePath getPath() {
-    return path; //TODO: is this what this method is supposed to return??
-//    if (getField(ReservedName.PARENT).isPresent()) {
-//      return ((Relationship) getField(ReservedName.PARENT).get())
-//          .getToTable().getPath().concat(getName());
-//    } else {
-//      return getName().toNamePath();
-//    }
-  }
-
 }

@@ -4,6 +4,10 @@ import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.ScriptTable;
 import lombok.Getter;
 
+/**
+ * Used in the resolution of join paths to indicate that a field in
+ * the path refers to a table that is the root of the path.
+ */
 public class RootTableField extends Field {
 
   @Getter

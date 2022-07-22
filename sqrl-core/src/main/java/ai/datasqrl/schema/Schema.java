@@ -6,6 +6,7 @@ import com.google.common.base.Preconditions;
 
 import java.util.*;
 
+//TODO: to be removed
 public class Schema {
 
   private final Map<Name, ScriptTable> tables = new HashMap<>();
