@@ -1,21 +1,31 @@
 package ai.datasqrl.plan.calcite.sqrl.table;
 
 import com.google.common.base.Preconditions;
+import lombok.Getter;
 import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-
+@Getter
 public class TimestampHolder {
 
     private boolean candidatesLocked;
     private List<Candidate> candidates;
-
+    private TimestampHolder base = null;
 
     private TimestampHolder(Candidate timestamp) {
         this.candidatesLocked = true;
         this.candidates = List.of(timestamp);
+    }
+
+    public TimestampHolder(TimestampHolder base, List<Candidate> candidates) {
+        Preconditions.checkArgument(base.candidates.stream().map(c -> c.id).collect(Collectors.toSet())
+                .containsAll(candidates.stream().map(c -> c.id).collect(Collectors.toSet())));
+        this.base = base;
+        this.candidatesLocked = base.candidatesLocked;
+        this.candidates = candidates;
     }
 
     public TimestampHolder() {
@@ -30,6 +40,10 @@ public class TimestampHolder {
         final int id;
         final int index;
         final int score;
+
+        public Candidate withIndex(int newIndex) {
+            return new Candidate(id, newIndex, score);
+        }
 
     }
 

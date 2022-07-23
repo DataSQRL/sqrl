@@ -16,7 +16,6 @@ import ai.datasqrl.plan.local.analyze.Analyzer;
 import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
-import java.io.IOException;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
@@ -24,6 +23,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
 
 class LogicalPlanRewritingTest extends AbstractSQRLIT {
 
@@ -74,7 +75,7 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
             "IMPORT ecommerce-data.Orders;\n"
           + "IMPORT ecommerce-data.Product;\n"
           + "IMPORT ecommerce-data.Customer;\n"
-        //  + "EntryCount := SELECT o.id, e.quantity * e.unit_price - e.discount as price FROM Orders o JOIN o.entries e;\n"
+          + "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;\n"
     );
   }
 

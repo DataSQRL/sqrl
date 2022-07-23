@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite.sqrl.rules;
 
 import ai.datasqrl.plan.calcite.sqrl.hints.ExplicitInnerJoinTypeHint;
+import ai.datasqrl.plan.calcite.sqrl.hints.NumColumnsHint;
 import ai.datasqrl.plan.calcite.sqrl.hints.SqrlHint;
 import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn;
 import ai.datasqrl.plan.calcite.sqrl.table.QuerySqrlTable;
@@ -10,8 +11,11 @@ import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
 import lombok.Value;
+import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelNode;
@@ -109,7 +113,8 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
             builder = relBuilderFactory.get();
             builder.scan(root.getBase().getNameId());
             //Since inlined columns can be added to the base table, we need to project to the current size
-            builder.project(rexUtil.getIdentityProject(builder.peek()));
+            //Add as hint since identity projections are filtered out by builder
+            builder.hints(new NumColumnsHint(root.getNumQueryColumns()).getHint());
             joinTable = JoinTable.ofRoot(root);
             columns2Add = vtable.getAddedColumns().stream()
                     .filter(Predicate.not(AddedColumn::isInlined))
@@ -135,7 +140,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
                                             builder.getRexBuilder().makeCorrel(base, id),
                                             indexOfShredField)))
                     .uncollect(List.of(), false)
-                    .correlate(JoinRelType.INNER, id, RexInputRef.of(indexOfShredField,  builder.peek().getRowType()));
+                    .correlate(JoinRelType.INNER, id, RexInputRef.of(indexOfShredField,  base));
             joinTable = new JoinTable(vtable, parentJoinTable, offset);
             columns2Add = vtable.getAddedColumns();
         }
@@ -224,10 +229,70 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
 
     @Override
     public RelNode visit(LogicalProject logicalProject) {
-        //If it's a trivial project, we remove it and replace only update the indexMap
         Metadata input = getRelHolder(logicalProject.getInput().accept(this));
+        //TODO: Detect if this is a distinct/top-n pattern and pull out
 
-        return null;
+        ContinuousIndexMap trivialMap = getTrivialMapping(logicalProject, input.indexMap);
+        if (trivialMap!=null) {
+            //If it's a trivial project, we remove it and replace only update the indexMap
+            return setRelHolder(new Metadata(input.relNode,input.type,input.primaryKey, input.timestamp,
+                    trivialMap, input.joinTables));
+        }
+        List<RexNode> updatedProjects = new ArrayList<>();
+        Multimap<Integer,Integer> mappedProjects = HashMultimap.create();
+        for (Ord<RexNode> exp : Ord.<RexNode>zip(logicalProject.getProjects())) {
+            RexNode mapRex = SqrlRexUtil.mapIndexes(exp.e,input.indexMap);
+            updatedProjects.add(exp.i,mapRex);
+            if (mapRex instanceof RexInputRef) {
+                int index = (((RexInputRef) mapRex)).getIndex();
+                mappedProjects.put(index,exp.i);
+            }
+        }
+        //Make sure we pull the primary keys and timestamp (candidates) through (i.e. append those to the projects
+        //if not already present)
+        ContinuousIndexMap.Builder primaryKey = ContinuousIndexMap.builder(input.primaryKey.getSourceLength());
+        input.primaryKey.getMapping().forEach(p -> {
+            Collection<Integer> target = mappedProjects.get(p.getTarget());
+            if (target.size()>1) throw new IllegalArgumentException("Cannot select a primary key column multiple times");
+            else if (target.size()==1) primaryKey.add(Iterables.getOnlyElement(target));
+            else {
+                //Need to add it
+                int index = updatedProjects.size();
+                updatedProjects.add(index,RexInputRef.of(p.getTarget(),input.relNode.getRowType()));
+                primaryKey.add(index);
+            }
+        });
+        List<TimestampHolder.Candidate> timeCandidates = new ArrayList<>();
+        for (TimestampHolder.Candidate candidate : input.timestamp.getCandidates()) {
+            Collection<Integer> target = mappedProjects.get(candidate.getIndex());
+            if (target.isEmpty()) {
+                //Need to add candidate
+                int index = updatedProjects.size();
+                updatedProjects.add(index,RexInputRef.of(candidate.getIndex(),input.relNode.getRowType()));
+                timeCandidates.add(candidate.withIndex(index));
+            } else {
+                target.forEach(t -> timeCandidates.add(candidate.withIndex(t)));
+            }
+        }
+        TimestampHolder timestamp = new TimestampHolder(input.timestamp,timeCandidates);
+
+        RelBuilder relB = relBuilderFactory.get();
+        relB.push(input.relNode);
+        relB.project(updatedProjects);
+        relB.hints(logicalProject.getHints());
+        RelNode newProject = relB.build();
+        int fieldCount = updatedProjects.size();
+        return setRelHolder(new Metadata(newProject,input.type,primaryKey.build(fieldCount),
+                timestamp, ContinuousIndexMap.identity(logicalProject.getProjects().size(),fieldCount),null));
+    }
+
+    private ContinuousIndexMap getTrivialMapping(LogicalProject project, ContinuousIndexMap baseMap) {
+        ContinuousIndexMap.Builder b = ContinuousIndexMap.builder(project.getProjects().size());
+        for (RexNode rex : project.getProjects()) {
+            if (!(rex instanceof RexInputRef)) return null;
+            b.add(baseMap.map((((RexInputRef) rex)).getIndex()));
+        }
+        return b.build(baseMap.getTargetLength());
     }
 
     @Override
@@ -257,28 +322,35 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
                     List<JoinTable> joinTables = new ArrayList<>(leftInput.joinTables);
                     if (!right2left.containsKey(rightLeaf)) {
                         //Find closest ancestor that was mapped and shred from there
-                        JoinTable ancestor = rightLeaf.parent;
-                        int numAddedPks = rightLeaf.getNumLocalPk();
+                        List<JoinTable> ancestorPath = new ArrayList<>();
+                        int numAddedPks = 0;
+                        ancestorPath.add(rightLeaf);
+                        JoinTable ancestor = rightLeaf;
                         while (!right2left.containsKey(ancestor)) {
                             numAddedPks += ancestor.getNumLocalPk();
                             ancestor = ancestor.parent;
+                            ancestorPath.add(ancestor);
                         }
+                        Collections.reverse(ancestorPath); //To match the order of addedTables when shredding (i.e. from root to leaf)
                         ContinuousIndexMap.Builder addedPk = ContinuousIndexMap.builder(newPk, numAddedPks);
                         List<JoinTable> addedTables = new ArrayList<>();
                         relBuilder = shredTable(rightLeaf.table, addedPk, addedTables,
                                 Pair.of(right2left.get(ancestor),relBuilder));
                         newPk = addedPk.build(relBuilder.peek().getRowType().getFieldCount());
-                        for (int i = 1; i < addedTables.size(); i++) { //First table is the already mapped ancestor
+                        Preconditions.checkArgument(ancestorPath.size() == addedTables.size());
+                        for (int i = 1; i < addedTables.size(); i++) { //First table is the already mapped root ancestor
                             joinTables.add(addedTables.get(i));
+                            right2left.put(ancestorPath.get(i), addedTables.get(i));
                         }
                     }
                     RelNode relNode = relBuilder.build();
                     //Update indexMap based on the mapping of join tables
-                    ContinuousIndexMap indexMap = joinedIndexMap.remap(leftTargetLength, relNode.getRowType().getFieldCount(),
+                    ContinuousIndexMap remapedRight = rightInput.indexMap.remap(relNode.getRowType().getFieldCount(),
                             index -> {
                                 JoinTable jt = JoinTable.find(rightInput.joinTables,index).get();
                                 return right2left.get(jt).getGlobalIndex(jt.getLocalIndex(index));
                             });
+                    ContinuousIndexMap indexMap = leftInput.indexMap.append(remapedRight);
                     return setRelHolder(new Metadata(relNode, leftInput.type,
                             newPk, leftInput.timestamp, indexMap, joinTables));
 
@@ -303,15 +375,15 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
     public RelNode visit(LogicalSort logicalSort) {
         //TODO: Extract sort when top level and convert to window otherwise
         Preconditions.checkArgument(logicalSort.offset == null && logicalSort.fetch == null, "OFFSET and LIMIT not yet supported");
-        Metadata child = getRelHolder(logicalSort.getInput().accept(this));
+        Metadata input = getRelHolder(logicalSort.getInput().accept(this));
         RelCollation collation = logicalSort.getCollation();
         //Map the collation fields
-        ContinuousIndexMap indexMap = child.indexMap;
+        ContinuousIndexMap indexMap = input.indexMap;
         RelCollation newCollation = RelCollations.of(collation.getFieldCollations().stream()
                 .map(fc -> fc.withFieldIndex(indexMap.map(fc.getFieldIndex()))).collect(Collectors.toList()));
-        RelNode newSort = logicalSort.copy(logicalSort.getTraitSet(),child.relNode,newCollation, logicalSort.offset, logicalSort.fetch);
-        return setRelHolder(new Metadata(newSort,child.type,child.primaryKey,
-                child.timestamp,child.indexMap,child.joinTables));
+        RelNode newSort = logicalSort.copy(logicalSort.getTraitSet(),input.relNode,newCollation, logicalSort.offset, logicalSort.fetch);
+        return setRelHolder(new Metadata(newSort,input.type,input.primaryKey,
+                input.timestamp,input.indexMap,input.joinTables));
     }
 
 

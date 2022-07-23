@@ -78,8 +78,6 @@ public abstract class TableBuilderFlexibleTableConverterVisitor<T,X extends Tabl
         }
     }
 
-    public abstract T nullable(T type, boolean nullable);
-
     public T convertBasicType(BasicType type) {
         return type.accept(getTypeConverter(),null);
     }

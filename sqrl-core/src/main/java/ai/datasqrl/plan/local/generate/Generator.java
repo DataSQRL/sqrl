@@ -3,15 +3,17 @@ package ai.datasqrl.plan.local.generate;
 import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.*;
+import ai.datasqrl.plan.calcite.sqrl.rules.Sqrl2SqlLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
 import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn;
 import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn.Complex;
 import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn.Simple;
 import ai.datasqrl.plan.calcite.sqrl.table.QueryCalciteTable;
 import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
+import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
+import ai.datasqrl.plan.local.ImportedTable;
 import ai.datasqrl.plan.local.analyze.Analysis;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
-import ai.datasqrl.plan.local.ImportedTable;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ScriptTable;
@@ -272,10 +274,10 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     //self-joins (including nested self-joins) as well as infer primary keys,
     //table types, and timestamps in the process
 
-//    Sqrl2SqlLogicalPlanConverter sqrl2sql = new Sqrl2SqlLogicalPlanConverter(() -> planner.getRelBuilder(),
-//            new SqrlRexUtil(planner.getRelBuilder().getRexBuilder()));
-//    relNode = relNode.accept(sqrl2sql);
-//    System.out.println("LP$2: \n"+relNode.explain());
+    Sqrl2SqlLogicalPlanConverter sqrl2sql = new Sqrl2SqlLogicalPlanConverter(() -> planner.getRelBuilder(),
+            new SqrlRexUtil(planner.getRelBuilder().getRexBuilder()));
+    relNode = relNode.accept(sqrl2sql);
+    System.out.println("LP$2: \n"+relNode.explain());
     return relNode;
   }
 
@@ -303,4 +305,5 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     }
     throw new RuntimeException("Could not find table " + tableName);
   }
+
 }
