@@ -9,15 +9,16 @@ import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.local.Errors;
 import ai.datasqrl.plan.local.ImportedTable;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.plan.local.analyze.util.AstUtil;
-import ai.datasqrl.schema.*;
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.ScriptTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Triple;
@@ -39,11 +40,11 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
   private final Analysis analysis;
 
   public Analyzer(ImportManager importManager, SchemaAdjustmentSettings schemaSettings,
-      ErrorCollector errors) {
+                  CalciteTableFactory tableFactory, ErrorCollector errors) {
     this.importManager = importManager;
     this.schemaSettings = schemaSettings;
     this.errors = errors;
-    this.tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
+    this.tableFactory = tableFactory;
     this.analysis = new Analysis();
     this.variableFactory = new VariableFactory();
     this.namespace = new Namespace();

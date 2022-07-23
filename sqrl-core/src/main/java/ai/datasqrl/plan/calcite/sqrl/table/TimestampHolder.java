@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.calcite.sqrl.table;
 
+import ai.datasqrl.plan.calcite.util.IndexMap;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.Value;
@@ -20,11 +21,11 @@ public class TimestampHolder {
         this.candidates = List.of(timestamp);
     }
 
-    public TimestampHolder(TimestampHolder base, List<Candidate> candidates) {
-        Preconditions.checkArgument(base.candidates.stream().map(c -> c.id).collect(Collectors.toSet())
+    public TimestampHolder(TimestampHolder from, List<Candidate> candidates) {
+        Preconditions.checkArgument(from.candidates.stream().map(c -> c.id).collect(Collectors.toSet())
                 .containsAll(candidates.stream().map(c -> c.id).collect(Collectors.toSet())));
-        this.base = base;
-        this.candidatesLocked = base.candidatesLocked;
+        this.base = from.getBase();
+        this.candidatesLocked = from.candidatesLocked;
         this.candidates = candidates;
     }
 
@@ -50,6 +51,17 @@ public class TimestampHolder {
     @Override
     public String toString() {
         return "TIMESTAMP=";
+    }
+
+    public TimestampHolder getBase() {
+        if (base==null) return this;
+        else return base;
+    }
+
+    public TimestampHolder remapIndexes(IndexMap map) {
+        return new TimestampHolder(this,candidates.stream()
+                .map(c -> c.withIndex(map.map(c.getIndex())))
+                .collect(Collectors.toList()));
     }
 
     public boolean isCandidateLocked() {

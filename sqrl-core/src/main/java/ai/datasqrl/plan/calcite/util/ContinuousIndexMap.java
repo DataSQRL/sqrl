@@ -59,6 +59,10 @@ public class ContinuousIndexMap implements IndexMap {
         return b.build(newTargetLength);
     }
 
+    public ContinuousIndexMap remap(IndexMap remap) {
+        return remap(targetLength, remap);
+    }
+
     public Optional<ContinuousIndexMap> project(LogicalProject project) {
         List<RexNode> projects = project.getProjects();
         int[] newMap = new int[projects.size()];

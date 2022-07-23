@@ -9,10 +9,12 @@ import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.SqrlStatement;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.calcite.SqrlTypeFactory;
+import ai.datasqrl.plan.calcite.SqrlTypeSystem;
+import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
-import java.io.IOException;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
@@ -20,6 +22,8 @@ import org.apache.calcite.sql.SqlNode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
 
 class GeneratorTest extends AbstractSQRLIT {
 
@@ -47,7 +51,8 @@ class GeneratorTest extends AbstractSQRLIT {
     Assertions.assertTrue(importManager.registerUserSchema(bundle.getMainScript().getSchema(),
         ErrorCollector.root()));
     parser = ConfiguredSqrlParser.newParser(errorCollector);
-    analyzer = new Analyzer(importManager, SchemaAdjustmentSettings.DEFAULT,
+    CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
+    analyzer = new Analyzer(importManager, SchemaAdjustmentSettings.DEFAULT, tableFactory,
         errorCollector);
 
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
@@ -59,7 +64,7 @@ class GeneratorTest extends AbstractSQRLIT {
     Planner planner = plannerFactory.createPlanner(schemaName);
     this.planner = planner;
 
-    generator = new Generator(planner, analyzer.getAnalysis());
+    generator = new Generator(planner, tableFactory, analyzer.getAnalysis());
     subSchema.setBridge(generator);
   }
 
