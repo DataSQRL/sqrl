@@ -13,12 +13,20 @@ import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.local.generate.Generator;
+import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Set;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.sql.JoinDeclarationContainerImpl;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeBuilderImpl;
+import org.apache.calcite.sql.TableMapperImpl;
+import org.apache.calcite.sql.UniqueAliasGeneratorImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,8 +72,23 @@ class GeneratorTest extends AbstractSQRLIT {
     Planner planner = plannerFactory.createPlanner(schemaName);
     this.planner = planner;
 
-    generator = new Generator(planner, tableFactory, analyzer.getAnalysis());
-    subSchema.setBridge(generator);
+    TableMapperImpl tableMapper = new TableMapperImpl(new HashMap<>());
+    UniqueAliasGeneratorImpl uniqueAliasGenerator = new UniqueAliasGeneratorImpl(Set.of());
+    JoinDeclarationContainerImpl joinDecs = new JoinDeclarationContainerImpl();
+    SqlNodeBuilderImpl sqlNodeBuilder = new SqlNodeBuilderImpl();
+
+
+    generator = new Generator(new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem())),
+        SchemaAdjustmentSettings.DEFAULT,
+        planner,
+        importManager,
+        uniqueAliasGenerator,
+        joinDecs,
+        sqlNodeBuilder,
+        tableMapper,
+        errorCollector,
+        new VariableFactory()
+      );
   }
 
 
@@ -119,7 +142,7 @@ class GeneratorTest extends AbstractSQRLIT {
 //    assertEquals(
 //        "`entries$4`.`quantity` * `entries$4`.`unit_price` - `entries$4`.`discount$1` AS `total`",
 //        node.toString());
-    node = gen("Orders.total := sum(entries.total);\n");
+    node = gen("Orders.total := sum(entries.unit_price); \n");
 //    assertEquals(
 //        "SELECT `_`.`_uuid`, SUM(`t`.`total`) AS `__t0`\n"
 //            + "FROM `test`.`orders$3` AS `_`\n"
@@ -131,40 +154,40 @@ class GeneratorTest extends AbstractSQRLIT {
     node = gen("Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n");
     node = gen("Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n");
     node = gen( "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n");
-    node = gen("Customer.recent_products := SELECT productid, e.product.category AS category,"
-        + "                                   sum(quantity) AS quantity, count(*) AS num_orders"
-        + "                            FROM _.orders.entries e"
-        + "                            WHERE parent.time > now() - INTERVAL 2 YEAR"
+    node = gen("Customer.recent_products := SELECT productid, e.product.category AS category,\n"
+        + "                                   sum(quantity) AS quantity, count(e._idx) AS num_orders\n"
+        + "                            FROM _.orders.entries e\n"
+        + "                            WHERE parent.\"time\" > now() - INTERVAL '2' YEAR\n"
         + "                            GROUP BY productid, category ORDER BY num_orders DESC, "
         + "quantity DESC;\n");
 
     node = gen("Customer.recent_products_categories :="
-        + "                     SELECT category, count(*) AS num_products"
+        + "                     SELECT category, count(e.productid) AS num_products"
         + "                     FROM _.recent_products"
         + "                     GROUP BY category ORDER BY num_products;\n");
     node = gen(
         "Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp"
             + ".category=_.category;\n");
     node = gen("Customer._spending_by_month_category :="
-        + "                     SELECT time.roundToMonth(e.parent.time) AS month,"
+        + "                     SELECT time.roundToMonth(e.parent.\"time\") AS \"month\","
         + "                            e.product.category AS category,"
         + "                            sum(total) AS total,"
         + "                            sum(discount) AS savings"
         + "                     FROM _.orders.entries e"
-        + "                     GROUP BY month, category ORDER BY month DESC;\n");
+        + "                     GROUP BY \"month\", category ORDER BY \"month\" DESC;\n");
 
     node = gen("Customer.spending_by_month :="
         + "                    SELECT month, sum(total) AS total, sum(savings) AS savings"
         + "                    FROM _._spending_by_month_category"
         + "                    GROUP BY month ORDER BY month DESC;\n");
     node = gen("Customer.spending_by_month.categories :="
-        + "    JOIN _.parent._spending_by_month_category c ON c.month=_.month;\n");
+        + "    JOIN _.parent._spending_by_month_category c ON c.\"month\"=_.\"month\";\n");
     node = gen("Product._sales_last_week := SELECT SUM(e.quantity)"
         + "                          FROM _.order_entries e"
-        + "                          WHERE e.parent.time > now() - INTERVAL 7 DAY;\n");
+        + "                          WHERE e.parent.\"time\" > now() - INTERVAL '7' DAY;\n");
     node = gen("Product._sales_last_month := SELECT SUM(e.quantity)"
         + "                          FROM _.order_entries e"
-        + "                          WHERE e.parent.time > now() - INTERVAL 1 MONTH;\n");
+        + "                          WHERE e.parent.\"time\" > now() - INTERVAL '1' MONTH;\n");
     node = gen("Product._last_week_increase := _sales_last_week * 4 / _sales_last_month;\n");
     node = gen("Category := SELECT DISTINCT category AS name FROM Product;\n");
     node = gen("Category.products := JOIN Product ON _.name = Product.category;\n");
@@ -186,9 +209,7 @@ class GeneratorTest extends AbstractSQRLIT {
 
   private SqlNode gen(String query) {
     SqrlStatement imp = parse(query);
-    analyzer.analyze(imp);
     return generator.generate(imp);
-//    return null;
   }
 
   private SqrlStatement parse(String query) {

@@ -4,6 +4,7 @@ import ai.datasqrl.config.BundleOptions;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
+import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
@@ -22,6 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.sql.JoinDeclarationContainerImpl;
+import org.apache.calcite.sql.SqlNodeBuilderImpl;
+import org.apache.calcite.sql.TableMapperImpl;
+import org.apache.calcite.sql.UniqueAliasGeneratorImpl;
 
 /**
  * Creates a logical and physical plan for a SQRL {@link ScriptBundle} submitted to the DataSQRL server for
@@ -66,13 +71,14 @@ public class BundlePlanner {
     Analyzer analyzer = new Analyzer(options.getImportManager(), SchemaAdjustmentSettings.DEFAULT,
         tableFactory, errorCollector);
 
-    Generator generator = new Generator(planner, tableFactory, analyzer.getAnalysis());
-    subSchema.setBridge(generator);
+//    CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
+//    Generator generator = new Generator(planner, analyzer.getAnalysis());
+//    subSchema.setBridge(generator);
 
-    for (Node node : scriptAst.getStatements()) {
-      analyzer.analyze((SqrlStatement) node);
-      generator.generate((SqrlStatement) node);
-    }
+//    for (Node node : scriptAst.getStatements()) {
+//      analyzer.analyze((SqrlStatement) node);
+//      generator.generate((SqrlStatement) node);
+//    }
 
     return analyzer.getNamespace();
   }

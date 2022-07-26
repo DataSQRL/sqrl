@@ -4,6 +4,8 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.prepare.PlannerImpl;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.calcite.tools.RelBuilder;
 
@@ -27,6 +29,12 @@ public class Planner extends PlannerImpl {
     close();
     reset();
     ready();
+  }
+
+  public void setValidator(SqlNode sqlNode, SqlValidator validator) {
+    state = State.STATE_4_VALIDATED;
+    this.validatedSqlNode = sqlNode;
+    this.validator = validator;
   }
 
   public RelBuilder getRelBuilder() {

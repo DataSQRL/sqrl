@@ -953,6 +953,11 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     Map<Field, String> fieldNames = new HashMap<>();
 
     public String get(Field field) {
+      //for debug
+      if (!fieldNames.containsKey(field)) {
+        System.out.println("Could not map field during transpilation: " + field);
+        return field.getName().getDisplay();
+      }
       Preconditions.checkState(fieldNames.containsKey(field), "Could not find field ", field);
       return fieldNames.get(field);
     }

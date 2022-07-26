@@ -2,6 +2,8 @@ package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
 import lombok.Getter;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 
 @Getter
 public class Relationship extends Field {

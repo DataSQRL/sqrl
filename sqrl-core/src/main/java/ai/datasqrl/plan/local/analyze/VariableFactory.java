@@ -36,6 +36,7 @@ public class VariableFactory {
 
     Relationship relationship = parentTable.addRelationship(namePath.getLast(), target,
         JoinType.JOIN, multiplicity);
+    parentTable.buildType();
     return relationship;
   }
 

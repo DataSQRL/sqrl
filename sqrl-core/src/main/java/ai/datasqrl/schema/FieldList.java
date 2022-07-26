@@ -34,7 +34,7 @@ public class FieldList {
     }
 
     public void addField(Field field) {
-        Preconditions.checkArgument(field.getVersion()>=nextVersion(field.getName()));
+//        Preconditions.checkArgument(field.getVersion()>=nextVersion(field.getName()));
         fields.add(field);
     }
 
