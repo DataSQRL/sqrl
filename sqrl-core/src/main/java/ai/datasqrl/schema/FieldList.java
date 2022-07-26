@@ -3,11 +3,13 @@ package ai.datasqrl.schema;
 import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
+import lombok.Value;
 
 import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class FieldList {
@@ -42,6 +44,12 @@ public class FieldList {
         return s;
     }
 
+    public Stream<IndexedField> getIndexedFields(boolean onlyVisible) {
+        IntStream s = IntStream.range(0,fields.size());
+        if (onlyVisible) s = s.filter(i -> fields.get(i).isVisible());
+        return s.mapToObj(i -> new IndexedField(i,fields.get(i)));
+    }
+
     public List<Field> getAccessibleFields() {
         Map<Name, Field> fieldsByName = getFields(true)
                 .collect(Collectors.toMap(Field::getName, Function.identity(),
@@ -53,6 +61,12 @@ public class FieldList {
         return fields.stream().filter(f -> f.getName().equals(name))
                 .filter(Field::isVisible)
                 .max((a,b) -> Integer.compare(a.getVersion(),b.getVersion()));
+    }
+
+    @Value
+    public static class IndexedField {
+        final int index;
+        final Field field;
     }
 
 

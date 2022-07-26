@@ -52,8 +52,7 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
                 schemaGen).get();
         AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
 
-        TimestampHolder timeHolder = new TimestampHolder();
-        ImportedSqrlTable impTable = new ImportedSqrlTable(getTableId(rootTable.getName()), timeHolder,
+        ImportedSqrlTable impTable = new ImportedSqrlTable(getTableId(rootTable.getName()), getTimestampHolder(rootTable),
                 sourceTable, rootType);
 
         Map<ScriptTable,VirtualSqrlTable> tables = createVirtualTables(rootTable, impTable);
@@ -61,7 +60,9 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
     }
 
     public QuerySqrlTable getQueryTable(Name tableName, Sqrl2SqlLogicalPlanConverter.ProcessedRel rel) {
-        return new QuerySqrlTable(getTableId(tableName),rel.getType(),rel.getRelNode(),rel.getTimestamp(),rel.getTopN(),rel.getPrimaryKey().getSourceLength());
+        return new QuerySqrlTable(getTableId(tableName),rel.getType(),rel.getRelNode(),
+                TimestampHolder.Base.ofDerived(rel.getTimestamp()),
+                rel.getTopN(),rel.getPrimaryKey().getSourceLength());
     }
 
     public Map<ScriptTable,VirtualSqrlTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,

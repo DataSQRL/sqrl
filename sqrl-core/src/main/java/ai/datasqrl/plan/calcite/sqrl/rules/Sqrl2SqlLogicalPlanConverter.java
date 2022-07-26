@@ -51,7 +51,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
         RelNode relNode;
         QuerySqrlTable.Type type;
         ContinuousIndexMap primaryKey;
-        TimestampHolder timestamp;
+        TimestampHolder.Derived timestamp;
         ContinuousIndexMap indexMap;
 
         List<JoinTable> joinTables;
@@ -134,7 +134,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
         int mapToLength = relNode.getRowType().getFieldCount();
         ProcessedRel result = new ProcessedRel(relNode, queryTable.getType(),
                 primaryKey.build(mapToLength),
-                queryTable.getTimestamp(),
+                new TimestampHolder.Derived(queryTable.getTimestamp()),
                 indexMap.build(mapToLength), joinTables, queryTable.getTopN());
         return setRelHolder(result);
     }
@@ -244,7 +244,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
         condition = SqrlRexUtil.mapIndexes(condition,input.indexMap);
         //Check if it has a now() predicate and pull out or throw an exception if malformed
         LogicalFilter filter;
-        TimestampHolder timestamp = input.timestamp;
+        TimestampHolder.Derived timestamp = input.timestamp;
         if (FIND_NOW.contains(condition)) {
             //TODO: redo this part
             RelBuilder builder = relBuilderFactory.get();
@@ -336,7 +336,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
                 target.forEach(t -> timeCandidates.add(candidate.withIndex(t)));
             }
         }
-        TimestampHolder timestamp = new TimestampHolder(input.timestamp,timeCandidates);
+        TimestampHolder.Derived timestamp = input.timestamp.propagate(timeCandidates);
 
         RelBuilder relB = relBuilderFactory.get();
         relB.push(input.relNode);

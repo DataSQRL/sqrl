@@ -12,7 +12,7 @@ public class ImportedSqrlTable extends QuerySqrlTable {
   private final SourceTableImport sourceTableImport;
   private final RelDataType baseRowType;
 
-  public ImportedSqrlTable(@NonNull Name rootTableId, @NonNull TimestampHolder timestamp,
+  public ImportedSqrlTable(@NonNull Name rootTableId, @NonNull TimestampHolder.Base timestamp,
                            SourceTableImport sourceTableImport, RelDataType rowType) {
     super(rootTableId, Type.STREAM, null, timestamp, TopNConstraint.EMPTY,1);
     this.sourceTableImport = sourceTableImport;
