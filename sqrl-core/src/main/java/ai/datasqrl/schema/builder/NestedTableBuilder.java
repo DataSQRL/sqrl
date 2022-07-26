@@ -32,6 +32,10 @@ public abstract class NestedTableBuilder<T, X extends NestedTableBuilder<T,X>> i
                 .collect(Collectors.toList());
     }
 
+    public Stream<FieldList.IndexedField> getAllIndexedFields() {
+        return fields.getIndexedFields(false);
+    }
+
     public List<Field> getAllFields() {
         return fields.getFields(false).collect(Collectors.toList());
     }

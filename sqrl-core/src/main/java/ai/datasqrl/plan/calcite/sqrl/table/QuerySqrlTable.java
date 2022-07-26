@@ -22,7 +22,9 @@ public class QuerySqrlTable extends AbstractSqrlTable {
   @NonNull
   private final Type type;
   @NonNull
-  private final TimestampHolder timestamp;
+  private final TimestampHolder.Base timestamp;
+  @NonNull
+  private final TopNConstraint topN;
   @NonNull
   private final int numPrimaryKeys;
   //added through expressions, queries
@@ -34,11 +36,13 @@ public class QuerySqrlTable extends AbstractSqrlTable {
 
   public QuerySqrlTable(@NonNull Name rootTableId, @NonNull Type type,
       RelNode relNode,
-      @NonNull TimestampHolder timestamp,
+      @NonNull TimestampHolder.Base timestamp, @NonNull TopNConstraint topN,
       @NonNull int numPrimaryKeys) {
     super(rootTableId);
     this.type = type;
     this.timestamp = timestamp;
+    this.topN = topN;
+    this.relNode = relNode;
     this.numPrimaryKeys = numPrimaryKeys;
   }
 

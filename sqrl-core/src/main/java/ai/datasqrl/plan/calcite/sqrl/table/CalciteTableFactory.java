@@ -6,6 +6,7 @@ import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.SqrlType2Calcite;
+import ai.datasqrl.plan.calcite.sqrl.rules.Sqrl2SqlLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.ImportedTable;
 import ai.datasqrl.schema.Relationship;
@@ -51,12 +52,17 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
                 schemaGen).get();
         AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
 
-        TimestampHolder timeHolder = new TimestampHolder();
-        ImportedSqrlTable impTable = new ImportedSqrlTable(getTableId(rootTable.getName()), timeHolder,
+        ImportedSqrlTable impTable = new ImportedSqrlTable(getTableId(rootTable.getName()), getTimestampHolder(rootTable),
                 sourceTable, rootType);
 
         Map<ScriptTable,VirtualSqrlTable> tables = createVirtualTables(rootTable, impTable);
         return new ImportedTable(impTable, tables);
+    }
+
+    public QuerySqrlTable getQueryTable(Name tableName, Sqrl2SqlLogicalPlanConverter.ProcessedRel rel) {
+        return new QuerySqrlTable(getTableId(tableName),rel.getType(),rel.getRelNode(),
+                TimestampHolder.Base.ofDerived(rel.getTimestamp()),
+                rel.getTopN(),rel.getPrimaryKey().getSourceLength());
     }
 
     public Map<ScriptTable,VirtualSqrlTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,

@@ -3,6 +3,7 @@ package ai.datasqrl.schema.builder;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
+import ai.datasqrl.plan.calcite.sqrl.table.TimestampHolder;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ScriptTable;
@@ -16,7 +17,6 @@ import org.apache.calcite.util.Pair;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public abstract class VirtualTableFactory<T,V extends VirtualTable> extends AbstractTableFactory {
 
@@ -36,12 +36,13 @@ public abstract class VirtualTableFactory<T,V extends VirtualTable> extends Abst
 
     protected abstract boolean isTimestamp(T datatype);
 
-    public Map<NestedTableBuilder.Column<T>, Integer> getTimestampCandidateScores(UniversalTableBuilder<T> tblBuilder) {
+    public TimestampHolder.Base getTimestampHolder(UniversalTableBuilder<T> tblBuilder) {
         Preconditions.checkArgument(tblBuilder.getParent()==null,"Can only be invoked on root table");
-        return tblBuilder.getColumns(false,false).stream()
-                .filter(c -> isTimestamp(c.getType()))
-                .map(c -> Pair.of(c,getTimestampScore(c.getName())))
-                .collect(Collectors.toMap(Pair::getKey,Pair::getValue));
+        TimestampHolder.Base tsh = new TimestampHolder.Base();
+        tblBuilder.getAllIndexedFields().filter(f -> f.getField() instanceof NestedTableBuilder.Column)
+                .filter(f -> isTimestamp(((NestedTableBuilder.Column<T>)f.getField()).getType()))
+                .forEach(f -> tsh.addCandidate(f.getIndex(),getTimestampScore(f.getField().getName())));
+        return tsh;
     }
 
 

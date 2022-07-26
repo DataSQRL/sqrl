@@ -110,12 +110,8 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
     final int shredIndex;
 
     private Child(Name nameId, @NonNull RelDataType rowType, @NonNull VirtualSqrlTable parent,
-        int shredIndex, RelDataType queryDataType) {
-      super(nameId, rowType, CalciteUtil.getArrayElementType(queryDataType).orElse(queryDataType),
-          //unwrap if type is in array
-          CalciteUtil.getArrayElementType(queryDataType).isPresent() ? 1 : 0);
-      //We currently make the hard-coded assumption that children have at most one local primary
-      // key column
+        int shredIndex, RelDataType queryDataType, int numLocalPks) {
+      super(nameId, rowType, queryDataType, numLocalPks);
       this.parent = parent;
       this.shredIndex = shredIndex;
     }
@@ -126,8 +122,11 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
       Preconditions.checkArgument(shredField != null);
       RelDataType type = shredField.getType();
       Preconditions.checkArgument(CalciteUtil.isNestedTable(type));
+      //We currently make the hard-coded assumption that children have at most one local primary
+      int numLocalPks = CalciteUtil.getArrayElementType(type).isPresent() ? 1 : 0;
+      //unwrap if type is in array
       type = CalciteUtil.getArrayElementType(type).orElse(type);
-      Child child = new Child(nameId, rowType, parent, shredField.getIndex(), type);
+      Child child = new Child(nameId, rowType, parent, shredField.getIndex(), type, numLocalPks);
       return child;
     }
 

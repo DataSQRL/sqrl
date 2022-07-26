@@ -40,7 +40,7 @@ public class FlinkTypeInfoSchemaGenerator extends SimpleFlexibleTableConverterVi
     }
 
     @Override
-    public TypeInformation wrapArray(TypeInformation type, boolean nullable) {
+    public TypeInformation wrapArray(TypeInformation type) {
         return Types.OBJECT_ARRAY(type);
     }
 

@@ -3,25 +3,19 @@ package ai.datasqrl.plan.local.generate.node.builder;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
-import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
+import ai.datasqrl.plan.local.RootTableField;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
+import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.plan.local.RootTableField;
 import ai.datasqrl.schema.ScriptTable;
 import com.google.common.base.Preconditions;
+import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.parser.SqlParserPos;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.apache.calcite.sql.JoinConditionType;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlTableRef;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 /**
  * SQRL allows constructing bushy join trees using a simpler syntax than conventional
@@ -73,7 +67,7 @@ public class JoinPathBuilder {
         conditionType = SqlLiteral.createSymbol(JoinConditionType.NONE, SqlParserPos.ZERO);
       }
 
-      SqlLiteral joinType = SqlLiteral.createSymbol(org.apache.calcite.sql.JoinType.LEFT, SqlParserPos.ZERO);
+      SqlLiteral joinType = SqlLiteral.createSymbol(JoinType.INNER, SqlParserPos.ZERO);
       sqlNode = new SqlJoin(SqlParserPos.ZERO, sqlNode, SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
           joinType, declaration.getRel(), conditionType, declaration.getTrailingCondition().orElse(null));
     }

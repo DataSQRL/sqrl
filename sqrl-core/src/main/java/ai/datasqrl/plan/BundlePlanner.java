@@ -9,15 +9,15 @@ import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.parse.tree.SqrlStatement;
 import ai.datasqrl.physical.PhysicalPlan;
-import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.calcite.SqrlTypeFactory;
+import ai.datasqrl.plan.calcite.SqrlTypeSystem;
+import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.local.analyze.Analyzer;
 import ai.datasqrl.plan.local.analyze.Namespace;
 import ai.datasqrl.plan.local.generate.Generator;
-import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
@@ -62,11 +62,11 @@ public class BundlePlanner {
 
     PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
     Planner planner = plannerFactory.createPlanner(mainScript.getName().getCanonical());
-
+    CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
     Analyzer analyzer = new Analyzer(options.getImportManager(), SchemaAdjustmentSettings.DEFAULT,
-        errorCollector);
+        tableFactory, errorCollector);
 
-    Generator generator = new Generator(planner, analyzer.getAnalysis());
+    Generator generator = new Generator(planner, tableFactory, analyzer.getAnalysis());
     subSchema.setBridge(generator);
 
     for (Node node : scriptAst.getStatements()) {

@@ -1,41 +1,99 @@
 package ai.datasqrl.plan.calcite.sqrl.table;
 
+import ai.datasqrl.plan.calcite.util.IndexMap;
 import com.google.common.base.Preconditions;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
+@Getter
+@AllArgsConstructor
+public abstract class TimestampHolder {
+
+    protected boolean candidatesLocked;
+    protected final List<Candidate> candidates;
 
 
-public class TimestampHolder {
 
-    private boolean candidatesLocked;
-    private List<Candidate> candidates;
+    public static class Base extends TimestampHolder {
 
+        private final List<TimestampHolder.Base> dependents;
 
-    private TimestampHolder(Candidate timestamp) {
-        this.candidatesLocked = true;
-        this.candidates = List.of(timestamp);
+        public Base() {
+            super(false, new ArrayList<>());
+            this.dependents = new ArrayList<>();
+        }
+
+        public static Base ofDerived(TimestampHolder.Derived derived) {
+            Base newBase = new Base();
+            newBase.candidates.addAll(derived.candidates);
+            newBase.dependents.add(derived.base);
+            derived.base.dependents.add(newBase);
+            //We created a new query table - candidates must be locked now
+            newBase.lockCandidates();
+            return newBase;
+        }
+
+        public void addCandidate(int columnIndex, int score) {
+            Preconditions.checkArgument(!candidatesLocked);
+            Preconditions.checkArgument(!candidates.stream().anyMatch(c -> c.index == columnIndex));
+            int nextId = candidates.stream().mapToInt(Candidate::getId).max().orElse(0) + 1;
+            candidates.add(new Candidate(nextId, columnIndex, score));
+        }
+
+        @Override
+        public void lockCandidates() {
+            super.lockCandidates();
+            //Notify all dependents
+            dependents.forEach(t -> {
+                if (!t.isCandidatesLocked()) t.lockCandidates();
+            });
+        }
     }
 
-    public TimestampHolder() {
-        this.candidatesLocked = false;
-        this.candidates = new ArrayList<>();
-//        this.changeListeners = new ArrayList<>();
-    }
+    @Getter
+    public static class Derived extends TimestampHolder {
 
-    @Value
-    public static class Candidate {
+        private final TimestampHolder.Base base;
 
-        final int id;
-        final int index;
-        final int score;
+        private Derived(boolean candidatesLocked, List<Candidate> candidates, TimestampHolder.Base base) {
+            super(candidatesLocked,candidates);
+            this.base = base;
+        }
+
+        public Derived(TimestampHolder.Base base) {
+            super(base.isCandidatesLocked(), List.copyOf(base.getCandidates()));
+            this.base = base;
+        }
+
+        public TimestampHolder.Derived remapIndexes(IndexMap map) {
+            return new TimestampHolder.Derived(this.candidatesLocked,candidates.stream()
+                    .map(c -> c.withIndex(map.map(c.getIndex())))
+                    .collect(Collectors.toList()),base);
+        }
+
+        public TimestampHolder.Derived propagate(List<Candidate> updatedCandidates) {
+            Preconditions.checkArgument(this.candidates.stream().map(c -> c.id).collect(Collectors.toSet())
+                    .containsAll(updatedCandidates.stream().map(c -> c.id).collect(Collectors.toSet())));
+            //Only used during LP rewriting - hence we assume single dependent for from
+            return new TimestampHolder.Derived(this.candidatesLocked, updatedCandidates, this.base);
+        }
+
+        public TimestampHolder.Derived fixTimestamp(int columnIndex) {
+            Preconditions.checkArgument(isCandidate(columnIndex));
+            if (hasTimestamp()) return this;
+            return new Derived(true, List.of(getCandidateByIndex(columnIndex)), base);
+        }
 
     }
 
     @Override
     public String toString() {
-        return "TIMESTAMP=";
+        return "TIMESTAMP="+candidates.toString();
     }
 
     public boolean isCandidateLocked() {
@@ -50,56 +108,25 @@ public class TimestampHolder {
         return getCandidateByIndex(columnIndex)!=null;
     }
 
-    public void addCandidate(int columnIndex, int score) {
-        Preconditions.checkArgument(!candidatesLocked);
-        Preconditions.checkArgument(!candidates.stream().anyMatch(c -> c.index == columnIndex));
-        int nextId = candidates.stream().mapToInt(Candidate::getId).max().orElse(0);
-        candidates.add(new Candidate(nextId, columnIndex, score));
-    }
-
     public boolean hasTimestamp() {
         return candidatesLocked && candidates.size()==1;
     }
 
-    private Candidate getCandidateByIndex(int columnIndex) {
+    protected Candidate getCandidateByIndex(int columnIndex) {
         return candidates.stream().filter(c -> c.index == columnIndex).findFirst().orElse(null);
     }
 
-    public TimestampHolder fixTimestamp(int columnIndex) {
-        Preconditions.checkArgument(isCandidate(columnIndex));
-        if (hasTimestamp()) return this;
-        return new TimestampHolder(getCandidateByIndex(columnIndex));
-    }
+    @Value
+    public static class Candidate {
 
-//    public int getTimestamp() {
-//        if (isLocked()) return timestampColumn;
-//        //else find best candidate
-//        Preconditions.checkArgument(!candidateScores.isEmpty());
-//        return candidateScores.entrySet().stream()
-//                .max((a,b) -> a.getValue().compareTo(b.getValue()))
-//                .map(Map.Entry::getKey).get();
-//    }
-//
-//    public void setTimestamp(int columnIndex) {
-//        Preconditions.checkArgument(!isLocked());
-//        Preconditions.checkArgument(candidateScores.containsKey(columnIndex),"Not a valid timestamp candidate: %s",columnIndex);
-//        timestampColumn = columnIndex;
-//        candidatesLocked = true;
-//        //Notify listeners
-//        changeListeners.stream().forEach(l -> l.changeTimestamp(columnIndex));
-//    }
-//
-//    private List<ChangeListener> changeListeners;
-//
-//
-//    public void registerChangeListener(ChangeListener listener) {
-//        if (!isLocked()) changeListeners.add(listener);
-//    }
-//
-//    interface ChangeListener {
-//
-//        public void changeTimestamp(int columnIndex);
-//
-//    }
+        final int id;
+        final int index;
+        final int score;
+
+        public Candidate withIndex(int newIndex) {
+            return new Candidate(id, newIndex, score);
+        }
+
+    }
 
 }

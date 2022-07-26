@@ -3,15 +3,14 @@ package ai.datasqrl.plan.local.generate;
 import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.*;
-import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn;
+import ai.datasqrl.plan.calcite.sqrl.rules.Sqrl2SqlLogicalPlanConverter;
+import ai.datasqrl.plan.calcite.sqrl.table.*;
 import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn.Complex;
 import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn.Simple;
-import ai.datasqrl.plan.calcite.sqrl.table.QueryCalciteTable;
-import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
+import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
+import ai.datasqrl.plan.local.ImportedTable;
 import ai.datasqrl.plan.local.analyze.Analysis;
 import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
-import ai.datasqrl.plan.local.ImportedTable;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ScriptTable;
@@ -34,10 +33,12 @@ import java.util.Optional;
 public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
   Planner planner;
+  protected final CalciteTableFactory tableFactory;
 
-  public Generator(Planner planner, Analysis analysis) {
+  public Generator(Planner planner, CalciteTableFactory tableFactory, Analysis analysis) {
     super(analysis);
     this.planner = planner;
+    this.tableFactory = tableFactory;
   }
 
   public void generate(ScriptNode scriptNode) {
@@ -224,15 +225,19 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
 
       return sqlNode;
     } else {
-      for (int i = 0; i < relNode.getRowType().getFieldCount() - scope.getPPKOffset(); i++) {
-        this.fieldNames.put(analysis.getProducedFieldList().get(node).get(i),
-            relNode.getRowType().getFieldList().get(i + scope.getPPKOffset()).getName());
+      List<Field> tableFields = analysis.getProducedFieldList().get(node); //Fields that the user explicitly defined
+      Sqrl2SqlLogicalPlanConverter.ProcessedRel processedRel = optimize(relNode);
+      List<RelDataTypeField> relFields = processedRel.getRelNode().getRowType().getFieldList();
+
+      for (int i = 0; i < tableFields.size(); i++) {
+        this.fieldNames.put(tableFields.get(i), relFields.get(processedRel.getIndexMap().map(i)).getName());
       }
-      QueryCalciteTable queryTable = new QueryCalciteTable(relNode);
+
+      QuerySqrlTable queryTable = tableFactory.getQueryTable(table.getName(), processedRel);
       this.tables.put(queryTable.getNameId(), queryTable);
       this.tableMap.put(table, queryTable);
     }
-    relNode = optimize(relNode);
+
 
     Relationship rel = (Relationship) analysis.getProducedField().get(node);
     if (rel == null) return null;
@@ -261,7 +266,7 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     return null;
   }
 
-  public RelNode optimize(RelNode relNode) {
+  public Sqrl2SqlLogicalPlanConverter.ProcessedRel optimize(RelNode relNode) {
     System.out.println("LP$0: \n"+relNode.explain());
 
     //Step 1: Push filters into joins so we can correctly identify self-joins
@@ -272,11 +277,11 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     //self-joins (including nested self-joins) as well as infer primary keys,
     //table types, and timestamps in the process
 
-//    Sqrl2SqlLogicalPlanConverter sqrl2sql = new Sqrl2SqlLogicalPlanConverter(() -> planner.getRelBuilder(),
-//            new SqrlRexUtil(planner.getRelBuilder().getRexBuilder()));
-//    relNode = relNode.accept(sqrl2sql);
-//    System.out.println("LP$2: \n"+relNode.explain());
-    return relNode;
+    Sqrl2SqlLogicalPlanConverter sqrl2sql = new Sqrl2SqlLogicalPlanConverter(() -> planner.getRelBuilder(),
+            new SqrlRexUtil(planner.getRelBuilder().getRexBuilder()));
+    relNode = relNode.accept(sqrl2sql);
+    System.out.println("LP$2: \n"+relNode.explain());
+    return sqrl2sql.putPrimaryKeysUpfront(sqrl2sql.getRelHolder(relNode));
   }
 
   @SneakyThrows
@@ -303,4 +308,5 @@ public class Generator extends QueryGenerator implements SqrlCalciteBridge {
     }
     throw new RuntimeException("Could not find table " + tableName);
   }
+
 }

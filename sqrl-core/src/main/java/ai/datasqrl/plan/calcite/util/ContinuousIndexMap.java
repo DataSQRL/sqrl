@@ -6,13 +6,12 @@ import lombok.Getter;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.util.mapping.IntPair;
-import org.apache.calcite.util.mapping.Mappings;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @AllArgsConstructor
 @Getter
@@ -26,16 +25,12 @@ public class ContinuousIndexMap implements IndexMap {
         return targets[index];
     }
 
-    public Mappings.TargetMapping getMapping() {
-        List<IntPair> mapping = new ArrayList<>();
-        for (int i = 0; i < targets.length; i++) {
-            mapping.add(IntPair.of(i,targets[i]));
-        }
-        return Mappings.target(mapping,targets.length,targetLength);
-    }
-
     public int getSourceLength() {
         return targets.length;
+    }
+
+    public Stream<Pair> getMapping() {
+        return IntStream.range(0,targets.length).mapToObj(i -> new Pair(i,targets[i]));
     }
 
     public ContinuousIndexMap join(ContinuousIndexMap right) {
@@ -49,13 +44,23 @@ public class ContinuousIndexMap implements IndexMap {
         return new ContinuousIndexMap(combined, targetLength + right.targetLength);
     }
 
-    public ContinuousIndexMap remap(int fromIndex, int newTargetLength, IndexMap remap) {
+    public ContinuousIndexMap append(ContinuousIndexMap add) {
+        int[] combined = new int[targets.length + add.targets.length];
+        System.arraycopy(targets, 0, combined, 0, targets.length);
+        System.arraycopy(add.targets, 0, combined, targets.length, add.targets.length);
+        return new ContinuousIndexMap(combined, Math.max(targetLength, add.targetLength));
+    }
+
+    public ContinuousIndexMap remap(int newTargetLength, IndexMap remap) {
         Builder b = new Builder(targets.length);
         for (int i = 0; i < targets.length; i++) {
-            if (i < fromIndex) b.add(map(i));
-            else b.add(remap.map(map(i)));
+            b.add(remap.map(map(i)));
         }
         return b.build(newTargetLength);
+    }
+
+    public ContinuousIndexMap remap(IndexMap remap) {
+        return remap(targetLength, remap);
     }
 
     public Optional<ContinuousIndexMap> project(LogicalProject project) {
@@ -77,6 +82,14 @@ public class ContinuousIndexMap implements IndexMap {
     public static Builder builder(ContinuousIndexMap base, int addedLength) {
         Builder b = new Builder(base.getSourceLength() + addedLength);
         return b.addAll(base);
+    }
+
+    public static ContinuousIndexMap identity(int numSources, int targetLength) {
+        Builder b = builder(numSources);
+        for (int i = 0; i < numSources; i++) {
+            b.add(i);
+        }
+        return b.build(targetLength);
     }
 
     public static final class Builder {
@@ -109,10 +122,10 @@ public class ContinuousIndexMap implements IndexMap {
             return this;
         }
 
-        public ContinuousIndexMap build(int mapToLength) {
+        public ContinuousIndexMap build(int targetLength) {
             Preconditions.checkArgument(offset == map.length);
-            Preconditions.checkArgument(!Arrays.stream(map).anyMatch(i -> i >= mapToLength));
-            return new ContinuousIndexMap(map, mapToLength);
+            Preconditions.checkArgument(!Arrays.stream(map).anyMatch(i -> i >= targetLength));
+            return new ContinuousIndexMap(map, targetLength);
         }
 
 

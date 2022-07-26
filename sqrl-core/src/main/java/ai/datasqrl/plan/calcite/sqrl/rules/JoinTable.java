@@ -67,7 +67,7 @@ public class JoinTable implements Comparable<JoinTable> {
     }
 
     public static Optional<JoinTable> find(List<JoinTable> joinTables, int index) {
-        return joinTables.stream().filter(jt -> jt.offset>=index && jt.offset+jt.numColumns()<index).findFirst();
+        return joinTables.stream().filter(jt -> jt.offset<=index && jt.offset+jt.numColumns()>index).findFirst();
     }
 
     /**
