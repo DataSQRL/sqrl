@@ -624,13 +624,7 @@ class AstBuilder
   public Join.Type toJoinType(JoinTypeContext joinTypeContext) {
 
     Join.Type joinType;
-    if (joinTypeContext.LEFT() != null) {
-      joinType = Join.Type.LEFT;
-    } else if (joinTypeContext.RIGHT() != null) {
-      joinType = Join.Type.RIGHT;
-    } else if (joinTypeContext.FULL() != null) {
-      joinType = Join.Type.FULL;
-    } else if (joinTypeContext.INNER() != null) {
+    if (joinTypeContext.INNER() != null) {
       joinType = Join.Type.INNER;
     } else if (joinTypeContext.TEMPORAL() != null) {
       joinType = Join.Type.TEMPORAL;

@@ -5880,7 +5880,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl implements SqlValidatorW
 
     public RelDataType visit(SqlCall call) {
       final SqlOperator operator = call.getOperator();
-      return operator.deriveType(this, scope, call);
+      return operator.deriveType(SqrlValidatorImpl.this, scope, call);
     }
 
     public RelDataType visit(SqlNodeList nodeList) {
@@ -5897,7 +5897,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl implements SqlValidatorW
       final SqlCall call = makeNullaryCall(id);
       if (call != null) {
         return call.getOperator().validateOperands(
-            this,
+            SqrlValidatorImpl.this,
             scope,
             call);
       }
@@ -5982,7 +5982,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl implements SqlValidatorW
       // A. When it appears in an expression. (Say as the 2nd arg to the
       //    CAST operator.)
       validateDataType(dataType);
-      return dataType.deriveType(this);
+      return dataType.deriveType(SqrlValidatorImpl.this);
     }
 
     public RelDataType visit(SqlDynamicParam param) {
