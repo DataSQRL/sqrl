@@ -49,4 +49,9 @@ public class JoinAssignment extends Assignment {
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitJoinAssignment(this, context);
   }
+
+  public String getSqlQuery() {
+    //add hints
+    return "SELECT * FROM _ " + getQuery();
+  }
 }

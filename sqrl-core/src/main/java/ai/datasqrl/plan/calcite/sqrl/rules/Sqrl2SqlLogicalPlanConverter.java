@@ -430,7 +430,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
     }
 
     @Override
-    public RelNode visit(LogicalAggregate logicalAggregate) {
+    public RelNode visit(LogicalAggregate input) {
         return null;
     }
 

@@ -12,6 +12,7 @@ import ai.datasqrl.schema.type.basic.IntegerType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import lombok.NonNull;
+import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.util.Pair;
 
 import java.util.HashMap;
@@ -76,7 +77,7 @@ public abstract class VirtualTableFactory<T,V extends VirtualTable> extends Abst
         for (Field field : builder.getAllFields()) {
             if (field instanceof NestedTableBuilder.Column) {
                 NestedTableBuilder.Column<T> c = (NestedTableBuilder.Column)field;
-                tbl.addColumn(c.getName(),c.isVisible());
+                tbl.addColumn(c.getName(),c.isVisible(), (BasicSqlType)c.getType());
             } else {
                 NestedTableBuilder.ChildRelationship<T,UniversalTableBuilder<T>> child = (NestedTableBuilder.ChildRelationship)field;
                 build(child.getChildTable(),tbl,vTable,child,vtableBuilder,createdTables);

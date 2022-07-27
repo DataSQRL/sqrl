@@ -5,9 +5,7 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
@@ -16,7 +14,6 @@ import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.local.analyze.Analyzer;
 import ai.datasqrl.plan.local.analyze.Namespace;
-import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -61,18 +58,19 @@ public class BundlePlanner {
     rootSchema.add(mainScript.getName().getCanonical(), subSchema);
 
     PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
-    Planner planner = plannerFactory.createPlanner(mainScript.getName().getCanonical());
+    Planner planner = plannerFactory.createPlanner();
     CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
     Analyzer analyzer = new Analyzer(options.getImportManager(), SchemaAdjustmentSettings.DEFAULT,
         tableFactory, errorCollector);
 
-    Generator generator = new Generator(planner, tableFactory, analyzer.getAnalysis());
-    subSchema.setBridge(generator);
+//    CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
+//    Generator generator = new Generator(planner, analyzer.getAnalysis());
+//    subSchema.setBridge(generator);
 
-    for (Node node : scriptAst.getStatements()) {
-      analyzer.analyze((SqrlStatement) node);
-      generator.generate((SqrlStatement) node);
-    }
+//    for (Node node : scriptAst.getStatements()) {
+//      analyzer.analyze((SqrlStatement) node);
+//      generator.generate((SqrlStatement) node);
+//    }
 
     return analyzer.getNamespace();
   }

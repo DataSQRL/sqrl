@@ -16,18 +16,24 @@ import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.local.analyze.Analysis;
 import ai.datasqrl.plan.local.analyze.Analyzer;
+import ai.datasqrl.plan.local.analyze.VariableFactory;
 import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Set;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.sql.JoinDeclarationContainerImpl;
+import org.apache.calcite.sql.SqlNodeBuilderImpl;
+import org.apache.calcite.sql.TableMapperImpl;
+import org.apache.calcite.sql.UniqueAliasGeneratorImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 class LogicalPlanRewritingTest extends AbstractSQRLIT {
 
@@ -65,11 +71,26 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
     rootSchema.add(schemaName, subSchema); //also give the subschema access
 
     PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
-    Planner planner = plannerFactory.createPlanner(schemaName);
+    Planner planner = plannerFactory.createPlanner();
     this.planner = planner;
 
-    generator = new Generator(planner, tableFactory, analyzer.getAnalysis());
-    subSchema.setBridge(generator);
+
+    TableMapperImpl tableMapper = new TableMapperImpl(new HashMap<>());
+    UniqueAliasGeneratorImpl uniqueAliasGenerator = new UniqueAliasGeneratorImpl(Set.of());
+    JoinDeclarationContainerImpl joinDecs = new JoinDeclarationContainerImpl();
+    SqlNodeBuilderImpl sqlNodeBuilder = new SqlNodeBuilderImpl();
+
+    generator = new Generator(new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem())),
+        SchemaAdjustmentSettings.DEFAULT,
+        planner,
+        importManager,
+        uniqueAliasGenerator,
+        joinDecs,
+        sqlNodeBuilder,
+        tableMapper,
+        errorCollector,
+        new VariableFactory()
+    );
   }
 
 

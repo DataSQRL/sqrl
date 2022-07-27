@@ -18,7 +18,7 @@ import org.apache.calcite.schema.impl.AbstractTable;
 import java.util.List;
 
 @EqualsAndHashCode
-public abstract class AbstractSqrlTable extends AbstractTable implements QueryableTable {
+public abstract class AbstractSqrlTable extends AbstractTable implements QueryableTable, TableWithPK {
 
   protected final String nameId;
 

@@ -3,20 +3,15 @@ package org.apache.calcite.sql.validate;
 import static org.apache.calcite.util.Static.RESOURCE;
 
 import com.google.common.base.Preconditions;
-import java.util.List;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperatorTable;
-import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.util.Util;
 
-public class SqrlValidator extends SqlValidatorImpl {
+public class SqrlValidator extends SqrlValidatorImpl {
 
   /**
    * Creates a validator.
