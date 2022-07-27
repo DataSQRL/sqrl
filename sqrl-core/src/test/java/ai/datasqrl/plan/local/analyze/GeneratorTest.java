@@ -156,14 +156,14 @@ class GeneratorTest extends AbstractSQRLIT {
     node = gen( "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n");
     node = gen("Customer.recent_products := SELECT productid, e.product.category AS category,\n"
         + "                                   sum(quantity) AS quantity, count(e._idx) AS num_orders\n"
-        + "                            FROM _.orders.entries e\n"
+        + "                            FROM _ JOIN _.orders.entries e\n"
         + "                            WHERE parent.\"time\" > now() - INTERVAL '2' YEAR\n"
         + "                            GROUP BY productid, category ORDER BY num_orders DESC, "
         + "quantity DESC;\n");
 
     node = gen("Customer.recent_products_categories :="
         + "                     SELECT category, count(e.productid) AS num_products"
-        + "                     FROM _.recent_products"
+        + "                     FROM _ JOIN _.recent_products"
         + "                     GROUP BY category ORDER BY num_products;\n");
     node = gen(
         "Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp"
@@ -173,7 +173,7 @@ class GeneratorTest extends AbstractSQRLIT {
         + "                            e.product.category AS category,"
         + "                            sum(total) AS total,"
         + "                            sum(discount) AS savings"
-        + "                     FROM _.orders.entries e"
+        + "                     FROM _ JOIN _.orders.entries e"
         + "                     GROUP BY \"month\", category ORDER BY \"month\" DESC;\n");
 
     node = gen("Customer.spending_by_month :="
@@ -209,7 +209,8 @@ class GeneratorTest extends AbstractSQRLIT {
 
   private SqlNode gen(String query) {
     SqrlStatement imp = parse(query);
-    return generator.generate(imp);
+    generator.generate(imp);
+    return null;
   }
 
   private SqrlStatement parse(String query) {

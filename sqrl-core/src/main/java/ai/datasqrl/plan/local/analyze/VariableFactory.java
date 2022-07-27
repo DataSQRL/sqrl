@@ -11,7 +11,9 @@ import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.ScriptTable;
 import ai.datasqrl.schema.builder.AbstractTableFactory;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.ArrayList;
@@ -54,15 +56,14 @@ public class VariableFactory {
     return column;
   }
 
-  public Triple<Optional<Relationship>, ScriptTable, List<Field>> addQuery(NamePath namePath, List<Name> fieldNames, Optional<ScriptTable> parentTable) {
+  public Triple<Optional<Relationship>, ScriptTable, List<Field>> addQuery(NamePath namePath, List<RelDataTypeField> fieldNames, Optional<ScriptTable> parentTable) {
 
-    List<Field> fields = new ArrayList<>();
     ScriptTable table = new ScriptTable(namePath);
 
     //todo: column names:
-    fieldNames.forEach(n -> {
-      table.addColumn(n,  true);
-    });
+    List<Field> fields = fieldNames.stream().map(n ->
+      table.addColumn(Name.system(n.getName()),  true, n.getType())
+    ).collect(Collectors.toList());
 
     if (namePath.size() == 1) {
       return Triple.of(Optional.empty(), table, fields);

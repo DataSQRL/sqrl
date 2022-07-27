@@ -27,6 +27,7 @@ import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -109,7 +110,7 @@ class CalciteParserTest extends AbstractSQRLIT {
 
     CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
     ImportedTable importedTable = tableFactory.importTable((SourceTableImport)tblImport, Optional.empty());
-    tableMapper = new TableMapperImpl(importedTable.getShredTableMap());
+    tableMapper = new TableMapperImpl((Map)importedTable.getShredTableMap());
     uniqueAliasGenerator = new UniqueAliasGeneratorImpl(Set.of());
     joinDecs = new JoinDeclarationContainerImpl();
     sqlNodeBuilder = new SqlNodeBuilderImpl();
@@ -164,7 +165,6 @@ class CalciteParserTest extends AbstractSQRLIT {
 
   @Test
   public void test6() throws SqlParseException {
-
     validate("SELECT * FROM _ JOIN Orders ON Orders.customerid = _.customerid", schema,
         Optional.of(orders), new FieldNames());
   }

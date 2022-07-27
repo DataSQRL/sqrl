@@ -78,4 +78,13 @@ public class DistinctAssignment extends Assignment {
     return visitor.visitDistinctAssignment(this, context);
   }
 
+  /**
+   * SELECT * /#hint: top 1#/
+   * FROM node.tableName
+   * GROUP BY node.pks
+   * ORDER BY node.pks
+   */
+  public String getSqlQuery() {
+    return null;
+  }
 }

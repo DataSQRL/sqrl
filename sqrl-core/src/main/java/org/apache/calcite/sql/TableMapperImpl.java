@@ -1,5 +1,6 @@
 package org.apache.calcite.sql;
 
+import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
 import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
 import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
 import ai.datasqrl.schema.ScriptTable;
@@ -11,7 +12,7 @@ import lombok.Getter;
 public class TableMapperImpl implements TableMapper {
 
   @Getter
-  Map<ScriptTable, VirtualSqrlTable> tableMap;
+  Map<ScriptTable, AbstractSqrlTable> tableMap;
 
   @Override
   public TableWithPK getTable(ScriptTable table) {

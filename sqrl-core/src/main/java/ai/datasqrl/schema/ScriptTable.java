@@ -84,9 +84,6 @@ public class ScriptTable implements Table, org.apache.calcite.schema.Schema, Sca
     Column col = new Column(name, getNextFieldVersion(name), visible, type);
     fields.addField(col);
     return col;
-
-//    this.relFields.add(new RelDataTypeFieldImpl(name.getDisplay(), relFields.size(), sqlType));
-//    return null;
   }
 
   public Column addColumn(Name name, boolean visible) {

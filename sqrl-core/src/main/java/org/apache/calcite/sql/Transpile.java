@@ -56,14 +56,11 @@ public class Transpile {
     rewriteOrder(select, scope);
 
     rewriteSelectList(select, scope);
+    rewriteWhere(select, scope);
 
     SqlNode from = rewriteFrom(select.getFrom(), scope);
     from = extraFromItems(from, scope);
     select.setFrom(from);
-
-    SqlNode where = rewriteWhere(select.getWhere(), scope);
-    select.setWhere(where);
-
   }
 
   private void createParentPrimaryKeys(SqlValidatorScope scope) {
@@ -162,15 +159,12 @@ public class Transpile {
     }
   }
 
-  private SqlNode rewriteFieldIdentifier(SqlNode item) {
-    return null;
-  }
-
-  private SqlNode rewriteWhere(SqlNode where, SqlValidatorScope scope) {
-    if (where == null) {
-      return null;
+  private void rewriteWhere(SqlSelect select, SqlValidatorScope scope) {
+    if (select.getWhere() == null) {
+      return;
     }
-    return convertExpression(where, scope);
+    SqlNode rewritten = convertExpression(select.getWhere(), scope);
+    select.setWhere(rewritten);
   }
 
   private void rewriteGroup(SqlSelect select, SqlValidatorScope scope) {
