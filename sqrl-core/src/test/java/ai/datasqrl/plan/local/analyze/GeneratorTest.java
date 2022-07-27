@@ -109,7 +109,6 @@ class GeneratorTest extends AbstractSQRLIT {
     System.out.println(node);
   }
 
-
   @Test
   public void fullTest() {
     gen("IMPORT ecommerce-data.Customer;\n");

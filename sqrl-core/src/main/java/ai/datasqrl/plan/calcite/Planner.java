@@ -51,24 +51,4 @@ public class Planner extends PlannerImpl {
     outputTraits = stage.getTrait().map(outputTraits::replace).orElse(outputTraits);
     return super.transform(stage.getIndex(), outputTraits, node);
   }
-
-  public SqlNode transpile(SqlNode sqlNode) {
-    return null;
-  }
-
-  public RelNode optimize(RelNode relNode) {
-    return null;
-  }
-
-  public RelNode getRelNode() {
-    return null;
-  }
-
-  public SqlNode getSqlNode() {
-    return null;
-  }
-
-  public SqlValidator getSqlValidator() {
-    return null;
-  }
 }

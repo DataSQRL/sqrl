@@ -43,7 +43,6 @@ import ai.datasqrl.plan.local.ImportedTable;
 import ai.datasqrl.plan.local.analyze.VariableFactory;
 import ai.datasqrl.plan.local.generate.Generator.Scope;
 import ai.datasqrl.plan.local.generate.QueryGenerator.FieldNames;
-import ai.datasqrl.plan.local.generate.node.SqlJoinDeclaration;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
@@ -55,7 +54,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -65,7 +63,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
-import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.JoinBuilder;
 import org.apache.calcite.sql.JoinDeclaration;
@@ -465,8 +462,7 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
       Sqrl2SqlLogicalPlanConverter.ProcessedRel processedRel = optimize(relNode);
       List<RelDataTypeField> relFields = processedRel.getRelNode().getRowType().getFieldList();
       for (int i = 0; i < tableFields.size(); i++) {
-        this.fieldNames.put(tableFields.get(i), relFields.get(processedRel.getIndexMap().map(i)
-        ).getName());
+        this.fieldNames.put(tableFields.get(i), relFields.get(processedRel.getIndexMap().map(i)).getName());
       }
 
       QuerySqrlTable queryTable = tableFactory.getQueryTable(table.getMiddle().getName(), processedRel);
@@ -540,15 +536,6 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
         SqlNodeList.EMPTY),
         new SqlIdentifier(alias, SqlParserPos.ZERO)}, SqlParserPos.ZERO);
   }
-//
-//  @Override
-//  public org.apache.calcite.schema.Table getTable(String tableName) {
-//    org.apache.calcite.schema.Table table = this.tables.get(tableName);
-//    if (table != null) {
-//      return table;
-//    }
-//    throw new RuntimeException("Could not find table " + tableName);
-//  }
 
   protected SqlNode createParentChildCondition(Relationship rel, String alias,
       TableMapperImpl tableMapper) {
@@ -571,18 +558,6 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
     }
 
     return and(conditions);
-  }
-
-  @SneakyThrows
-  private RelNode processQuery(String query) {
-    SqlNode sqlNode;
-    sqlNode = planner.parse(query);
-    sqlNode = planner.validate(sqlNode);
-    sqlNode = planner.transpile(sqlNode);
-    RelNode relNode;
-    relNode = planner.convert(sqlNode);
-    relNode = planner.optimize(relNode);
-    return relNode;
   }
 
   @Override
