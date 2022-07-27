@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -29,7 +28,7 @@ public class PlannerFactory {
       .withDecorrelationEnabled(false)
       .withTrimUnusedFields(false);
 
-  public Planner createPlanner(String schemaName) {
+  public Planner createPlanner() {
     FrameworkConfig config = Frameworks
         .newConfigBuilder()
         .parserConfig(SqlParser.Config.DEFAULT.withConformance(SqrlConformance.INSTANCE))
@@ -37,7 +36,7 @@ public class PlannerFactory {
         .operatorTable(SqrlOperatorTable.instance())
         .programs(OptimizationStage.getAllPrograms())
         .typeSystem(SqrlTypeSystem.INSTANCE)
-        .defaultSchema(rootSchema.getSubSchema(schemaName))
+        .defaultSchema(rootSchema) //todo: may need proper subschema for enum
         .sqlToRelConverterConfig(sqlToRelConverterConfig)
         .sqlValidatorConfig(sqlValidatorConfig)
         .build();

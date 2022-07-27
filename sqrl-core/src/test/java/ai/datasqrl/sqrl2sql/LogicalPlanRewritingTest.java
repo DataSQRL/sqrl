@@ -35,8 +35,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 class LogicalPlanRewritingTest extends AbstractSQRLIT {
 
   ConfiguredSqrlParser parser;
@@ -73,7 +71,7 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
     rootSchema.add(schemaName, subSchema); //also give the subschema access
 
     PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
-    Planner planner = plannerFactory.createPlanner(schemaName);
+    Planner planner = plannerFactory.createPlanner();
     this.planner = planner;
 
 

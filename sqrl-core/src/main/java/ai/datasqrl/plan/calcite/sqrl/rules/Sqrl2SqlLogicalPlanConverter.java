@@ -430,8 +430,10 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
     }
 
     @Override
-    public RelNode visit(LogicalAggregate logicalAggregate) {
-        return null;
+    public RelNode visit(LogicalAggregate input) {
+        ProcessedRel in = getRelHolder(input.getInput().accept(this));
+
+        return setRelHolder(in);
     }
 
     @Override

@@ -4,11 +4,8 @@ import ai.datasqrl.config.BundleOptions;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
-import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
@@ -17,16 +14,11 @@ import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.local.analyze.Analyzer;
 import ai.datasqrl.plan.local.analyze.Namespace;
-import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.sql.JoinDeclarationContainerImpl;
-import org.apache.calcite.sql.SqlNodeBuilderImpl;
-import org.apache.calcite.sql.TableMapperImpl;
-import org.apache.calcite.sql.UniqueAliasGeneratorImpl;
 
 /**
  * Creates a logical and physical plan for a SQRL {@link ScriptBundle} submitted to the DataSQRL server for
@@ -66,7 +58,7 @@ public class BundlePlanner {
     rootSchema.add(mainScript.getName().getCanonical(), subSchema);
 
     PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
-    Planner planner = plannerFactory.createPlanner(mainScript.getName().getCanonical());
+    Planner planner = plannerFactory.createPlanner();
     CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
     Analyzer analyzer = new Analyzer(options.getImportManager(), SchemaAdjustmentSettings.DEFAULT,
         tableFactory, errorCollector);

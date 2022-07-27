@@ -24,6 +24,7 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
+import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.avatica.util.Casing;
@@ -89,7 +91,8 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.commons.lang3.tuple.Triple;
 
-public class Generator extends DefaultTraversalVisitor<Void, Scope> {
+@Getter
+public class Generator extends DefaultTraversalVisitor<Void, Scope> implements SqrlCalciteBridge {
 
   protected final Map<ScriptTable, AbstractSqrlTable> tableMap = new HashMap<>();
   final FieldNames fieldNames = new FieldNames();
@@ -184,12 +187,11 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> {
       //Add all Calcite tables to the schema
 //      this.tables.put(d.getImpTable().getNameId(), d.getImpTable());
       d.getShredTableMap().values().stream().forEach(vt -> relSchema.add(vt.getNameId(),vt));
-
+      relSchema.add(d.getImpTable().getNameId(), d.getImpTable());
       //Update table mapping from SQRL table to Calcite table...
 //      this.tableMap.putAll(d.getShredTableMap());
       //and also map all fields
       this.tableMapper.getTableMap().putAll(d.getShredTableMap());
-
       this.fieldNames.putAll(d.getFieldNameMap());
 
       d.getShredTableMap().keySet().stream().flatMap(t->t.getAllRelationships())
@@ -581,6 +583,11 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> {
     relNode = planner.convert(sqlNode);
     relNode = planner.optimize(relNode);
     return relNode;
+  }
+
+  @Override
+  public Table getTable(String tableName) {
+    return relSchema.getTable(tableName, false).getTable();
   }
 
   @Value

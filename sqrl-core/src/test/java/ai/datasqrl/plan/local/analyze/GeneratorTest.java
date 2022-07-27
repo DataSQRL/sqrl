@@ -13,15 +13,23 @@ import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.local.generate.Generator;
-import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlSimpleCalciteSchema;
+import org.apache.calcite.linq4j.tree.Expression;
+import org.apache.calcite.rel.core.Calc;
+import org.apache.calcite.rel.type.RelProtoDataType;
 import org.apache.calcite.schema.BridgedCalciteSchema;
+import org.apache.calcite.schema.Function;
+import org.apache.calcite.schema.Schema;
 import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.schema.SchemaVersion;
+import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.JoinDeclarationContainerImpl;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeBuilderImpl;
@@ -64,12 +72,13 @@ class GeneratorTest extends AbstractSQRLIT {
         errorCollector);
 
     SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
-    String schemaName = "test";
-    BridgedCalciteSchema subSchema = new BridgedCalciteSchema();
-    rootSchema.add(schemaName, subSchema); //also give the subschema access
+//    String schemaName = "test";
+//
+//
+//    rootSchema.add(schemaName, generator.getRelSchema().schema); //also give the subschema access
 
     PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
-    Planner planner = plannerFactory.createPlanner(schemaName);
+    Planner planner = plannerFactory.createPlanner();
     this.planner = planner;
 
     TableMapperImpl tableMapper = new TableMapperImpl(new HashMap<>());
