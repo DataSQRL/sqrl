@@ -95,7 +95,7 @@ class GeneratorTest extends AbstractSQRLIT {
   public void tableDefinitionTest() {
     gen("IMPORT ecommerce-data.Orders;\n");
     gen("EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;");
-    validateQueryTable("EntryCount",5, 2); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
+    validateQueryTable("entrycount",5, 2); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
   }
 
   private void validateQueryTable(String name, int numCols, int numPrimaryKeys) {

@@ -46,9 +46,13 @@ public abstract class NestedTableBuilder<T, X extends NestedTableBuilder<T,X>> i
 
     @Override
     public void addColumn(final Name colName, T type, boolean nullable) {
+        addColumn(colName, type, nullable, true);
+    }
+
+    public void addColumn(final Name colName, T type, boolean nullable, boolean visible) {
         //A name may clash with a previously added name, hence we increase the version
         int version = fields.nextVersion(colName);
-        fields.addField(new Column(colName, version, type, nullable, true));
+        fields.addField(new Column(colName, version, type, nullable, visible));
     }
 
     @Override

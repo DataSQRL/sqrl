@@ -7,21 +7,17 @@ import ai.datasqrl.parse.tree.TableNode;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
-import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
-import ai.datasqrl.plan.local.ImportedTable;
+import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.RootTableField;
+import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.schema.ScriptTable;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 public class Namespace {
-
-  /**
-   * Allow resolution of dataset name: ecommerce-data.Orders
-   */
-  Map<Name, ImportedTable> scopedDatasets = new HashMap<>();
 
   /**
    * Allow resolution of tables by name: Orders
@@ -48,10 +44,9 @@ public class Namespace {
     return functionMetadataProvider.lookup(namePath);
   }
 
-  public void scopeDataset(ImportedTable importedTable, Optional<Name> nameAlias) {
-    scopedDatasets.put(nameAlias.orElse(importedTable.getName()), importedTable);
-
-    scopedTables.put(importedTable.getTable().getName(), importedTable.getTable());
+  public void scopeDataset(ScriptTableDefinition tableDefinition) {
+    ScriptTable rootTable = tableDefinition.getTable();
+    scopedTables.put(rootTable.getName(), rootTable);
   }
 
   public void addTable(ScriptTable table) {
@@ -64,9 +59,6 @@ public class Namespace {
 
   public Optional<ScriptTable> getTable(NamePath namePath) {
     Name first = namePath.getFirst();
-    if (scopedDatasets.get(first) != null) {
-      return scopedDatasets.get(first).walkTable(namePath);
-    }
     Optional<ScriptTable> table = Optional.ofNullable(scopedTables.get(first));
     if (namePath.popFirst().size() == 0) {
       return table;

@@ -18,7 +18,7 @@ import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
-import ai.datasqrl.plan.local.ImportedTable;
+import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.generate.QueryGenerator.FieldNames;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
@@ -58,9 +58,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.SqlScopedShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqrlValidator;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
@@ -109,7 +107,7 @@ class CalciteParserTest extends AbstractSQRLIT {
         SchemaAdjustmentSettings.DEFAULT, errorCollector);
 
     CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
-    ImportedTable importedTable = tableFactory.importTable((SourceTableImport)tblImport, Optional.empty());
+    ScriptTableDefinition importedTable = tableFactory.importTable((SourceTableImport)tblImport, Optional.empty());
     tableMapper = new TableMapperImpl((Map)importedTable.getShredTableMap());
     uniqueAliasGenerator = new UniqueAliasGeneratorImpl(Set.of());
     joinDecs = new JoinDeclarationContainerImpl();

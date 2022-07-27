@@ -5,19 +5,13 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.ScriptTable;
 import ai.datasqrl.schema.builder.AbstractTableFactory;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.commons.lang3.tuple.Triple;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -56,30 +50,19 @@ public class VariableFactory {
     return column;
   }
 
-  public Triple<Optional<Relationship>, ScriptTable, List<Field>> addQuery(NamePath namePath, List<RelDataTypeField> fieldNames, Optional<ScriptTable> parentTable) {
-
-    ScriptTable table = new ScriptTable(namePath);
-
-    //todo: column names:
-    List<Field> fields = fieldNames.stream().map(n ->
-      table.addColumn(Name.system(n.getName()),  true, n.getType())
-    ).collect(Collectors.toList());
-
-    if (namePath.size() == 1) {
-      return Triple.of(Optional.empty(), table, fields);
-    } else {
-      Name relationshipName = namePath.getLast();
+  public Optional<Relationship> linkParentChild(NamePath namePath, ScriptTable child, Optional<ScriptTable> parentTable) {
+    if (namePath.size() > 1) {
       Relationship.Multiplicity multiplicity = Multiplicity.MANY;
+      Name relationshipName = namePath.getLast();
 //        if (specNorm.getLimit().flatMap(Limit::getIntValue).orElse(2) == 1) {
 //          multiplicity = Multiplicity.ONE;
 //        }
 
-      AbstractTableFactory.createParentRelationship(table, parentTable.get());
+      AbstractTableFactory.createParentRelationship(child, parentTable.get());
 
       Relationship childRel = AbstractTableFactory
-              .createChildRelationship(relationshipName, table, parentTable.get(), multiplicity);
-      return Triple.of(Optional.of(childRel), table, fields);
-    }
-//    return Triple.of(Optional.empty(), table, fields);
+              .createChildRelationship(relationshipName, child, parentTable.get(), multiplicity);
+      return Optional.of(childRel);
+    } else return Optional.empty();
   }
 }

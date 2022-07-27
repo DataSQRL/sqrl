@@ -1,59 +1,29 @@
 package ai.datasqrl.plan.local.generate;
 
-import static ai.datasqrl.parse.util.SqrlNodeUtil.isExpression;
-import static ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil.and;
-
-import ai.datasqrl.SqrlSchema;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.environment.ImportManager.TableImport;
 import ai.datasqrl.parse.Check;
-import ai.datasqrl.parse.tree.Assignment;
-import ai.datasqrl.parse.tree.DefaultTraversalVisitor;
-import ai.datasqrl.parse.tree.DistinctAssignment;
-import ai.datasqrl.parse.tree.ExpressionAssignment;
-import ai.datasqrl.parse.tree.ImportDefinition;
-import ai.datasqrl.parse.tree.JoinAssignment;
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.QueryAssignment;
-import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
+import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.OptimizationStage;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
-import ai.datasqrl.plan.calcite.SqrlOperatorTable;
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import ai.datasqrl.plan.calcite.TranspilerFactory;
+import ai.datasqrl.plan.calcite.*;
 import ai.datasqrl.plan.calcite.sqrl.rules.Sqrl2SqlLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn;
+import ai.datasqrl.plan.calcite.sqrl.table.*;
 import ai.datasqrl.plan.calcite.sqrl.table.AddedColumn.Complex;
-import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.sqrl.table.QuerySqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
-import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.local.Errors;
-import ai.datasqrl.plan.local.ImportedTable;
+import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.analyze.VariableFactory;
 import ai.datasqrl.plan.local.generate.Generator.Scope;
 import ai.datasqrl.plan.local.generate.QueryGenerator.FieldNames;
 import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ScriptTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -64,29 +34,20 @@ import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.schema.Table;
-import org.apache.calcite.sql.JoinBuilder;
 import org.apache.calcite.sql.JoinDeclaration;
-import org.apache.calcite.sql.JoinDeclarationContainerImpl;
-import org.apache.calcite.sql.JoinDeclarationImpl;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeBuilderImpl;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOrderBy;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlTableRef;
-import org.apache.calcite.sql.TableMapperImpl;
-import org.apache.calcite.sql.Transpile;
-import org.apache.calcite.sql.UniqueAliasGeneratorImpl;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
-import org.apache.commons.lang3.tuple.Triple;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static ai.datasqrl.parse.util.SqrlNodeUtil.isExpression;
+import static ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil.and;
 
 @Getter
 public class Generator extends DefaultTraversalVisitor<Void, Scope> implements SqrlCalciteBridge {
@@ -162,7 +123,7 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
 
     List<TableImport> importTables;
     Optional<Name> nameAlias = node.getAliasName();
-    List<ImportedTable> dt = new ArrayList<>();
+    List<ScriptTableDefinition> dt = new ArrayList<>();
     if (sourceTable.equals(ReservedName.ALL)) { //import all tables from dataset
       importTables = importManager.importAllTables(sourceDataset, schemaSettings, errors);
       nameAlias = Optional.empty();
@@ -176,34 +137,35 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
       }
       SourceTableImport sourceTableImport = (SourceTableImport)tblImport;
 
-      ImportedTable importedTable = tableFactory.importTable(sourceTableImport, nameAlias);
+      ScriptTableDefinition importedTable = tableFactory.importTable(sourceTableImport, nameAlias);
       dt.add(importedTable);
     }
 
-    for (ImportedTable d : dt) {
-      //Add all Calcite tables to the schema
-//      this.tables.put(d.getImpTable().getNameId(), d.getImpTable());
-      d.getShredTableMap().values().stream().forEach(vt -> relSchema.add(vt.getNameId(),vt));
-      relSchema.add(d.getImpTable().getNameId(), d.getImpTable());
-      //Update table mapping from SQRL table to Calcite table...
-//      this.tableMap.putAll(d.getShredTableMap());
-      //and also map all fields
-      this.tableMapper.getTableMap().putAll(d.getShredTableMap());
-      this.fieldNames.putAll(d.getFieldNameMap());
-
-      d.getShredTableMap().keySet().stream().flatMap(t->t.getAllRelationships())
-          .forEach(r->{
-            JoinDeclaration dec = createParentChildJoinDeclaration(r, tableMapper, uniqueAliasGenerator);
-            joinDecs.add(r, dec);
-          });
-
-      SqrlSchema datasets = new SqrlSchema();
-      sqrlSchema.add(d.getName().getDisplay(), datasets);
-      sqrlSchema.add(d.getTable().getName().getDisplay(),
-          (Table)d.getTable());
+    for (ScriptTableDefinition d : dt) {
+      registerScriptTable(d);
     }
 
     return null;
+  }
+
+  private void registerScriptTable(ScriptTableDefinition tblDef) {
+    //Update table mapping from SQRL table to Calcite table...
+    tblDef.getShredTableMap().values().stream().forEach(vt -> relSchema.add(vt.getNameId(),vt));
+    relSchema.add(tblDef.getBaseTable().getNameId(), tblDef.getBaseTable());
+    this.tableMapper.getTableMap().putAll(tblDef.getShredTableMap());
+    //and also map all fields
+    this.fieldNames.putAll(tblDef.getFieldNameMap());
+
+    //Add all join declarations
+    tblDef.getShredTableMap().keySet().stream().flatMap(t->t.getAllRelationships())
+            .forEach(r->{
+              JoinDeclaration dec = createParentChildJoinDeclaration(r, tableMapper, uniqueAliasGenerator);
+              joinDecs.add(r, dec);
+            });
+    if (tblDef.getTable().getPath().size() == 1) {
+      sqrlSchema.add(tblDef.getTable().getName().getDisplay(),
+              (Table) tblDef.getTable());
+    }
   }
 
   @SneakyThrows
@@ -449,41 +411,16 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
       t.addColumn(addedColumn, new SqrlTypeFactory(new SqrlTypeSystem()));
 
     } else {
-
-
-      Triple<Optional<Relationship>, ScriptTable, List<Field>> table = variableFactory.addQuery(
-          namePath, relNode.getRowType().getFieldList(), ctx);
-
-      if (namePath.size() == 1) {
-        sqrlSchema.add(namePath.getFirst().getDisplay(), (Table) table.getMiddle());
-      }
-      List<Field> tableFields = table.getRight();
-
+      List<Name> fieldNames = relNode.getRowType().getFieldList().stream().map(f -> Name.system(f.getName())).collect(Collectors.toList());
       Sqrl2SqlLogicalPlanConverter.ProcessedRel processedRel = optimize(relNode);
-      List<RelDataTypeField> relFields = processedRel.getRelNode().getRowType().getFieldList();
-      for (int i = 0; i < tableFields.size(); i++) {
-        this.fieldNames.put(tableFields.get(i), relFields.get(processedRel.getIndexMap().map(i)).getName());
-      }
-
-      QuerySqrlTable queryTable = tableFactory.getQueryTable(table.getMiddle().getName(), processedRel);
-      this.tableMapper.getTableMap().put(table.getMiddle(), queryTable);
-
-      table.getLeft().ifPresent(rel -> joinDecs.add(rel, new JoinDeclarationImpl(
-          Optional.empty(),
-          createParentChildCondition(rel, "x", this.tableMapper),
-          "_",
-          "x")));
-//      if (table.getField(ReservedName.PARENT).isPresent()) {
-//      Relationship relationship = (Relationship) table.getField(ReservedName.PARENT).get();
-//      this.fieldNames.put(relationship, ReservedName.PARENT.getCanonical());
-//      this.getJoins().put(relationship, new SqlJoinDeclaration(
-//          new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
-//              new SqlIdentifier(tableMap.get(relationship.getToTable()).getNameId(),
-//                  SqlParserPos.ZERO), SqlNodeList.EMPTY),
-//              new SqlIdentifier(ReservedName.PARENT.getCanonical(), SqlParserPos.ZERO)},
-//              SqlParserPos.ZERO), Optional.empty()));
-//    }
-
+      ScriptTableDefinition queryTable = tableFactory.defineTable(namePath, processedRel, fieldNames);
+      registerScriptTable(queryTable);
+      Optional<Relationship> childRel = variableFactory.linkParentChild(namePath,queryTable.getTable(),ctx);
+      childRel.ifPresent(rel -> joinDecs.add(rel, new JoinDeclarationImpl(
+              Optional.empty(),
+              createParentChildCondition(rel, "x", this.tableMapper),
+              "_",
+              "x")));
     }
 
     return null;

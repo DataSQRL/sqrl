@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.local;
 
-import ai.datasqrl.plan.calcite.sqrl.table.ImportedSqrlTable;
+import ai.datasqrl.plan.calcite.sqrl.table.QuerySqrlTable;
 import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.ScriptTable;
@@ -12,15 +12,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Getter
-public class ImportedTable extends ScriptTable {
+public class ScriptTableDefinition {
 
-  private final ImportedSqrlTable impTable;
+  private final QuerySqrlTable baseTable;
   private final Map<ScriptTable, VirtualSqrlTable> shredTableMap;
 
-  public ImportedTable(@NonNull ImportedSqrlTable impTable,
-                       @NonNull Map<ScriptTable, VirtualSqrlTable> shredTableMap) {
-    super(impTable.getSourceTableImport().getTable().getDataset().getName().toNamePath()); //TODO: Why the dataset name here?
-    this.impTable = impTable;
+  public ScriptTableDefinition(@NonNull QuerySqrlTable baseTable,
+                               @NonNull Map<ScriptTable, VirtualSqrlTable> shredTableMap) {
+    this.baseTable = baseTable;
     this.shredTableMap = shredTableMap;
   }
 

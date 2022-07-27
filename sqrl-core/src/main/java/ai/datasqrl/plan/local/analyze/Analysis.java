@@ -5,7 +5,7 @@ import ai.datasqrl.function.SqrlAwareFunction;
 import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.local.ImportedTable;
+import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.RootTableField;
 import ai.datasqrl.schema.*;
 import ai.datasqrl.schema.Relationship.Multiplicity;
@@ -74,7 +74,7 @@ public class Analysis {
 
   public Map<Node, String> fieldAlias = new HashMap<>();
   public Map<Node, ScriptTable> parentTable = new HashMap<>();
-  public Map<Node, List<ImportedTable>> importDataset = new HashMap<>();
+  public Map<Node, List<ScriptTableDefinition>> importDataset = new HashMap<>();
 
   @Setter
   public List<Integer> groupByOrdinals = new ArrayList<>();

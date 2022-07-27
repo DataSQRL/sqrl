@@ -11,17 +11,15 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.local.Errors;
-import ai.datasqrl.plan.local.ImportedTable;
+import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedNamePath;
 import ai.datasqrl.plan.local.analyze.Analysis.ResolvedTable;
 import ai.datasqrl.plan.local.analyze.util.AstUtil;
 import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ScriptTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import lombok.Getter;
-import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.List;
 import java.util.Optional;
@@ -89,8 +87,8 @@ public class Analyzer extends DefaultTraversalVisitor<Scope, Scope> {
       }
       SourceTableImport sourceTableImport = (SourceTableImport)tblImport;
 
-      ImportedTable importedTable = tableFactory.importTable(sourceTableImport, nameAlias);
-      namespace.scopeDataset(importedTable, nameAlias);
+      ScriptTableDefinition importedTable = tableFactory.importTable(sourceTableImport, nameAlias);
+      namespace.scopeDataset(importedTable);
       analysis.getImportDataset().put(node, List.of(importedTable));
     }
 

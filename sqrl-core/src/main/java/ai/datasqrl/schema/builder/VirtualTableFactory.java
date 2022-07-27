@@ -8,7 +8,6 @@ import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ScriptTable;
 import ai.datasqrl.schema.input.SqrlTypeConverter;
-import ai.datasqrl.schema.type.basic.IntegerType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import lombok.NonNull;
@@ -16,6 +15,7 @@ import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.util.Pair;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -89,27 +89,37 @@ public abstract class VirtualTableFactory<T,V extends VirtualTable> extends Abst
         }
     }
 
+
     protected<F> UniversalTableBuilder<T> createBuilder(@NonNull NamePath path, UniversalTableBuilder<T> parent,
-                                                            T type, int numPrimaryKeys, TypeIntrospector<T,F> introspector) {
+                                                        T type, int numPrimaryKeys, LinkedHashMap<Integer,Name> index2Name,
+                                                        TypeIntrospector<T, F> introspector) {
         UniversalTableBuilder<T> tblBuilder;
         if (parent == null) {
             tblBuilder = new UniversalTableBuilder<>(path.getLast(),path,numPrimaryKeys);
         } else {
+            //We assume that the first field is the primary key for the nested table (and don't add an explicit IDX column
+            //like we do for imports)
             tblBuilder = new UniversalTableBuilder<>(path.getLast(),path,parent,numPrimaryKeys==0);
-            tblBuilder.addColumn(ReservedName.ARRAY_IDX, introspector.getTypeConverter().visitIntegerType(IntegerType.INSTANCE,null), false);
         }
         //Add fields
+        int index = 0;
         for (F field : introspector.getFields(type)) {
+            boolean isVisible = (index2Name==null);
             Name name = introspector.getName(field);
+            if (index2Name!=null && index2Name.containsKey(index)) {
+                name = index2Name.get(index);
+                isVisible = true;
+            }
             Optional<Pair<T, Relationship.Multiplicity>> nested = introspector.getNested(field);
             if (nested.isPresent()) {
                 Pair<T, Relationship.Multiplicity> rel = nested.get();
                 UniversalTableBuilder<T> child = createBuilder(path.concat(name),tblBuilder,
-                        rel.getKey(), rel.getValue() == Relationship.Multiplicity.MANY?1:0, introspector);
+                        rel.getKey(), rel.getValue() == Relationship.Multiplicity.MANY?1:0, null, introspector);
                 tblBuilder.addChild(name,child,rel.getKey(),rel.getValue());
             } else {
-                tblBuilder.addColumn(name, introspector.getType(field), introspector.isNullable(field));
+                tblBuilder.addColumn(name, introspector.getType(field), introspector.isNullable(field), isVisible);
             }
+            index++;
         }
         return tblBuilder;
     }

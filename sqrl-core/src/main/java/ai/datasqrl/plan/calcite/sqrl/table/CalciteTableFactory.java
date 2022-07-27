@@ -8,7 +8,8 @@ import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.SqrlType2Calcite;
 import ai.datasqrl.plan.calcite.sqrl.rules.Sqrl2SqlLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.local.ImportedTable;
+import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
+import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ScriptTable;
 import ai.datasqrl.schema.builder.AbstractTableFactory;
@@ -26,9 +27,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Pair;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CalciteTableFactory extends VirtualTableFactory<RelDataType,VirtualSqrlTable> {
@@ -46,7 +45,7 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
         return name.suffix(Integer.toString(tableIdCounter.incrementAndGet()));
     }
 
-    public ImportedTable importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias) {
+    public ScriptTableDefinition importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias) {
         CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(this);
         RelDataType rootType = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
                 schemaGen).get();
@@ -56,13 +55,29 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
                 sourceTable, rootType);
 
         Map<ScriptTable,VirtualSqrlTable> tables = createVirtualTables(rootTable, impTable);
-        return new ImportedTable(impTable, tables);
+        return new ScriptTableDefinition(impTable, tables);
     }
 
-    public QuerySqrlTable getQueryTable(Name tableName, Sqrl2SqlLogicalPlanConverter.ProcessedRel rel) {
-        return new QuerySqrlTable(getTableId(tableName),rel.getType(),rel.getRelNode(),
+    public ScriptTableDefinition defineTable(NamePath tablePath, Sqrl2SqlLogicalPlanConverter.ProcessedRel rel,
+                                      List<Name> fieldNames) {
+        ContinuousIndexMap indexmap = rel.getIndexMap();
+        Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());
+        QuerySqrlTable baseTable =  new QuerySqrlTable(getTableId(tablePath.getLast()),
+                rel.getType(),rel.getRelNode(),
                 TimestampHolder.Base.ofDerived(rel.getTimestamp()),
                 rel.getTopN(),rel.getPrimaryKey().getSourceLength());
+        LinkedHashMap<Integer,Name> index2Name = new LinkedHashMap<>();
+        for (int i = 0; i < fieldNames.size(); i++) {
+            index2Name.put(indexmap.map(i), fieldNames.get(i));
+        }
+        AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = convert2TableBuilder(tablePath, baseTable.getRowType(),
+                baseTable.getNumPrimaryKeys(), index2Name);
+        Map<ScriptTable,VirtualSqrlTable> tables = createVirtualTables(rootTable, baseTable);
+        ScriptTableDefinition tblDef = new ScriptTableDefinition(baseTable, tables);
+        //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
+        //This may not be an issue, but if we need to preserve the order, it is probably easiest to re-order the fields
+        //of tblDef.getTable() based on the provided list of fieldNames
+        return tblDef;
     }
 
     public Map<ScriptTable,VirtualSqrlTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,
@@ -103,8 +118,10 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
     }
 
     public UniversalTableBuilder<RelDataType> convert2TableBuilder(@NonNull NamePath path,
-                                                                   RelDataType type, int numPrimaryKeys) {
-        return createBuilder(path, null, type, numPrimaryKeys, new CalciteTypeIntrospector());
+                                                                   RelDataType type, int numPrimaryKeys,
+                                                                   LinkedHashMap<Integer,Name> index2Name) {
+        return createBuilder(path, null, type, numPrimaryKeys, index2Name,
+                new CalciteTypeIntrospector());
     }
 
     public class CalciteTypeIntrospector implements TypeIntrospector<RelDataType,RelDataTypeField> {
