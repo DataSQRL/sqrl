@@ -6,14 +6,14 @@ import lombok.Getter;
 @Getter
 public class Relationship extends Field {
 
-  private final Table fromTable;
-  private final Table toTable;
+  private final SQRLTable fromTable;
+  private final SQRLTable toTable;
   private final JoinType joinType;
   private final Multiplicity multiplicity;
 
-  public Relationship(Name name, Table fromTable, Table toTable, JoinType joinType,
+  public Relationship(Name name, int version, SQRLTable fromTable, SQRLTable toTable, JoinType joinType,
                       Multiplicity multiplicity) {
-    super(name);
+    super(name, version);
     this.fromTable = fromTable;
     this.toTable = toTable;
     this.joinType = joinType;
@@ -21,18 +21,8 @@ public class Relationship extends Field {
   }
 
   @Override
-  public Name getId() {
-    return name;
-  }
-
-  @Override
-  public int getVersion() {
-    return 0;
-  }
-
-  @Override
   public String toString() {
-    return getId() + ": " + fromTable.getId() + " -> " + toTable.getId()
+    return fromTable.getName() + " -> " + toTable.getName()
             + " [" + joinType + "," + multiplicity + "]";
   }
 

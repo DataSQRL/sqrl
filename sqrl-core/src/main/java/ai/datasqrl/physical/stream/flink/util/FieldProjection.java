@@ -119,7 +119,7 @@ public interface FieldProjection extends Serializable {
     private final int depth;
 
     public NamePathProjection(NamePath path, int depth) {
-      Preconditions.checkArgument(path.getLength() > 0);
+      Preconditions.checkArgument(path.size() > 0);
       this.path = path;
       this.depth = depth;
     }
@@ -132,7 +132,7 @@ public interface FieldProjection extends Serializable {
     @Override
     public Object getData(Map<Name, Object> data) {
       Map<Name, Object> base = data;
-      for (int i = 0; i < path.getLength() - 2; i++) {
+      for (int i = 0; i < path.size() - 2; i++) {
         Object map = base.get(path.get(i));
         Preconditions.checkArgument(map instanceof Map, "Illegal field projection");
         base = (Map) map;

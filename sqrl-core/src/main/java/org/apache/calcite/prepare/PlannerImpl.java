@@ -16,15 +16,18 @@
  */
 package org.apache.calcite.prepare;
 
+import static java.util.Objects.requireNonNull;
+
+import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
+import java.io.Reader;
+import java.util.List;
 import lombok.Getter;
-import org.apache.calcite.adapter.java.JavaTypeFactory;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.config.CalciteSystemProperty;
 import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.plan.Context;
 import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.plan.RelOptCluster;
@@ -49,9 +52,8 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
-import org.apache.calcite.sql.util.SqlOperatorTables;
 import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqrlValidator;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.RelDecorrelator;
 import org.apache.calcite.sql2rel.SqlRexConvertletTable;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -61,18 +63,9 @@ import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.ValidationException;
 import org.apache.calcite.util.Pair;
-
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
-
-import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-
-import java.io.Reader;
-import java.util.List;
-
-import static java.util.Objects.requireNonNull;
 
 /*
  * Copied from Calcite.
@@ -349,17 +342,12 @@ public class PlannerImpl implements Planner, ViewExpander {
   }
 
   protected SqlValidator createSqlValidator(CalciteCatalogReader catalogReader) {
-    final SqlOperatorTable opTab =
-        SqlOperatorTables.chain(operatorTable, catalogReader);
-    return new SqrlValidator(opTab,
+    return SqlValidatorUtil.newValidator(
+        SqrlOperatorTable.instance(),
         catalogReader,
         getTypeFactory(),
         sqlValidatorConfig
-//            .withDefaultNullCollation(connectionConfig.defaultNullCollation())
-//            .withLenientOperatorLookup(connectionConfig.lenientOperatorLookup())
-//            .withSqlConformance(connectionConfig.conformance())
-//            .withIdentifierExpansion(true)
-            );
+    );
   }
 
   protected static SchemaPlus rootSchema(SchemaPlus schema) {

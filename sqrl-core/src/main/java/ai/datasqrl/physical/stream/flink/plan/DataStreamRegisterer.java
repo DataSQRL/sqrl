@@ -1,17 +1,17 @@
 package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.physical.stream.flink.FlinkStreamEngine.Builder;
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
-import java.util.List;
-
+import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.physical.stream.flink.FlinkStreamEngine.Builder;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+
+import java.util.List;
 
 @AllArgsConstructor
 public class DataStreamRegisterer extends RelShuttleImpl {
@@ -38,7 +38,7 @@ public class DataStreamRegisterer extends RelShuttleImpl {
     }
 //        NamePath path = NamePath.parse(streamName);
     //TODO: resolve imports - this is broken and needs to be fixed
-    SourceTableImport sourceTable = importManager.importTable(Name.system("ecommerce-data"),
+    SourceTableImport sourceTable = (SourceTableImport) importManager.importTable(Name.system("ecommerce-data"),
         Name.system(tableName), null, errors);
 
     //TODO: rework based on FlinkIngestSchemaTest

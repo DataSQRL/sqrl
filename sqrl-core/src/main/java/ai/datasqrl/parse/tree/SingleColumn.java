@@ -20,26 +20,28 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import lombok.Getter;
 
+@Getter
 public class SingleColumn
     extends SelectItem {
 
   private final Optional<Identifier> alias;
-  private final Expression expression;
+  private final String expression;
 
-  public SingleColumn(Expression expression) {
+  public SingleColumn(String expression) {
     this(Optional.empty(), expression, Optional.empty());
   }
 
-  public SingleColumn(Expression expression, Optional<Identifier> alias) {
+  public SingleColumn(String expression, Optional<Identifier> alias) {
     this(Optional.empty(), expression, alias);
   }
 
-  public SingleColumn(NodeLocation location, Expression expression, Optional<Identifier> alias) {
+  public SingleColumn(NodeLocation location, String expression, Optional<Identifier> alias) {
     this(Optional.of(location), expression, alias);
   }
 
-  public SingleColumn(Optional<NodeLocation> location, Expression expression,
+  public SingleColumn(Optional<NodeLocation> location, String expression,
       Optional<Identifier> alias) {
     super(location);
     requireNonNull(expression, "expression is null");
@@ -47,23 +49,6 @@ public class SingleColumn
 
     this.expression = expression;
     this.alias = alias;
-  }
-
-  public static Optional<Identifier> alias(String name) {
-    return alias(Name.system(name));
-  }
-
-  public static Optional<Identifier> alias(Name name) {
-    if (name == null) return Optional.empty();
-    return Optional.of(new Identifier(name));
-  }
-
-  public Optional<Identifier> getAlias() {
-    return alias;
-  }
-
-  public Expression getExpression() {
-    return expression;
   }
 
   @Override
@@ -96,10 +81,5 @@ public class SingleColumn
   @Override
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
     return visitor.visitSingleColumn(this, context);
-  }
-
-  @Override
-  public List<Node> getChildren() {
-    return ImmutableList.of(expression);
   }
 }

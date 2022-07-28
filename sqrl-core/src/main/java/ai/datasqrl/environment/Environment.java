@@ -1,7 +1,6 @@
 package ai.datasqrl.environment;
 
 import ai.datasqrl.config.BundleOptions;
-import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.metadata.MetadataStore;
@@ -17,8 +16,8 @@ import ai.datasqrl.io.sinks.registry.DataSinkRegistry;
 import ai.datasqrl.io.sources.dataset.DatasetRegistry;
 import ai.datasqrl.io.sources.dataset.SourceTableMonitor;
 import ai.datasqrl.physical.PhysicalPlan;
-import ai.datasqrl.plan.BundlePlanner;
 import ai.datasqrl.environment.ScriptDeployment.Result;
+import ai.datasqrl.plan.BundlePlanner;
 import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
@@ -26,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import ai.datasqrl.plan.calcite.CalciteEnvironment;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -120,7 +118,6 @@ public class Environment implements Closeable {
     }
     BundleOptions options = BundleOptions.builder()
         .importManager(importManager)
-        .calciteEnv(new CalciteEnvironment())
         .schemaSettings(SchemaAdjustmentSettings.DEFAULT)
         .dbConnection((JDBCConnectionProvider) settings.getDatabaseEngineProvider().getDatabase(bundle.getId()))
         .streamEngine(settings.getStreamEngineProvider().create())

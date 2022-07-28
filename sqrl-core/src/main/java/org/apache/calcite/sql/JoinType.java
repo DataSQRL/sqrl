@@ -68,7 +68,8 @@ public enum JoinType implements Symbolizable {
   /**
    * SQRL temporal join
    */
-  TEMPORAL;
+  TEMPORAL,
+  DEFAULT;
 
   /** Lower-case name. */
   public final String lowerName = name().toLowerCase(Locale.ROOT);

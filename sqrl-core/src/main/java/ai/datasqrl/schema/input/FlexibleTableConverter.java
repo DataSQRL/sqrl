@@ -46,26 +46,30 @@ public class FlexibleTableConverter {
 
     private<T> void visitFieldType(NamePath path, Name fieldName, FlexibleDatasetSchema.FieldType ftype,
                                 boolean isMixedType, Visitor<T> visitor) {
-        boolean notnull = !isMixedType && ConstraintHelper.isNonNull(ftype.getConstraints());
+        boolean nullable = isMixedType || !ConstraintHelper.isNonNull(ftype.getConstraints());
 
+        boolean isNested = false;
+        boolean isSingleton = false;
         T resultType;
         if (ftype.getType() instanceof RelationType) {
-            boolean isSingleton = isSingleton(ftype);
+            isNested = true;
+            isSingleton = isSingleton(ftype);
             Optional<T> relType = visitRelation(path, fieldName, (RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType(), true,
                     isSingleton, false, visitor);
             Preconditions.checkArgument(relType.isPresent());
             resultType = relType.get();
             if (!isSingleton(ftype)) {
-                resultType = visitor.wrapArray(resultType,true);
+                resultType = visitor.wrapArray(resultType);
             }
-            notnull = !isMixedType && !hasZeroOneMultiplicity(ftype);
+            nullable = isMixedType || hasZeroOneMultiplicity(ftype);
         } else if (ftype.getType() instanceof ArrayType) {
             resultType = wrapArrayType(path.concat(fieldName), (ArrayType) ftype.getType(), visitor);
         } else {
             assert ftype.getType() instanceof BasicType;
             resultType = visitor.convertBasicType((BasicType) ftype.getType());
         }
-        visitor.addField(fieldName, resultType, notnull);
+        resultType = visitor.nullable(resultType,nullable);
+        visitor.addField(fieldName, resultType, nullable, isNested, isSingleton);
     }
 
     private static<T> T wrapArrayType(NamePath path, ArrayType arrType, Visitor<T> visitor) {
@@ -77,7 +81,7 @@ public class FlexibleTableConverter {
             assert subType instanceof BasicType;
             result = visitor.convertBasicType((BasicType) subType);
         }
-        return visitor.wrapArray(result,false);
+        return visitor.wrapArray(result);
     }
 
     private static boolean isSingleton(FlexibleDatasetSchema.FieldType ftype) {
@@ -98,15 +102,17 @@ public class FlexibleTableConverter {
 
         Optional<T> endTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton);
 
-        void addField(Name name, T type, boolean notnull);
+        void addField(Name name, T type, boolean nullable, boolean isNested, boolean isSingleTon);
 
-        default void addField(Name name, BasicType type, boolean notnull) {
-            addField(name,convertBasicType(type),notnull);
+        default void addField(Name name, BasicType type, boolean nullable) {
+            addField(name,convertBasicType(type),nullable,false, false);
         }
+
+        T nullable(T type, boolean nullable);
 
         T convertBasicType(BasicType type);
 
-        T wrapArray(T type, boolean notnull);
+        T wrapArray(T type);
     }
 
 }

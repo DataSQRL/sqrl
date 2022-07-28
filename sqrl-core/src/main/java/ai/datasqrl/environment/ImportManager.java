@@ -8,7 +8,6 @@ import ai.datasqrl.io.sources.stats.SchemaGenerator;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.InputTableSchema;
@@ -16,14 +15,11 @@ import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaImport;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import lombok.NonNull;
 import lombok.Value;
+
+import java.util.*;
+import org.apache.calcite.schema.Schema;
 
 public class ImportManager {
 
@@ -85,7 +81,7 @@ public class ImportManager {
     return imports;
   }
 
-  public SourceTableImport importTable(@NonNull Name datasetName, @NonNull Name tableName,
+  public TableImport importTable(@NonNull Name datasetName, @NonNull Name tableName,
       SchemaAdjustmentSettings schemaAdjustmentSettings,
       ErrorCollector errors) {
     if (scriptSchemas.containsKey(datasetName)) {

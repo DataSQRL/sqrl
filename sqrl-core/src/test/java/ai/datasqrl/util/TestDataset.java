@@ -43,7 +43,7 @@ public interface TestDataset {
     }
 
     static List<TestDataset> getAll() {
-        return List.of(BookClub.INSTANCE, C360.INSTANCE);
+        return List.of(BookClub.INSTANCE, C360.INSTANCE, C360.INSTANCE_V2);
     }
 
     static Stream<? extends Arguments> generateAsArguments(List<? extends Object>... otherArgs) {

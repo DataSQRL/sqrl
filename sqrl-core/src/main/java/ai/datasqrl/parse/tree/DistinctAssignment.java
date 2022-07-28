@@ -1,59 +1,34 @@
 package ai.datasqrl.parse.tree;
 
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import org.apache.logging.log4j.util.Strings;
 
+@Getter
 public class DistinctAssignment extends Assignment {
 
-  private final TableNode table;
-  private final List<Name> partitionKeys;
-  private final List<SortItem> order;
+  private final String table;
+  private final Optional<String> alias;
+  private final List<String> partitionKeys;
+  private final String order;
   private final List<Hint> hints;
-  private final List<Identifier> partitionKeyNodes;
 
-  public DistinctAssignment(Optional<NodeLocation> location,
-      NamePath name, TableNode table, List<Identifier> fields, List<SortItem> order, List<Hint> hints) {
+  public DistinctAssignment(Optional<NodeLocation> location, NamePath name, String table,
+      Optional<String> alias, List<String> partitionKeys, String order, List<Hint> hints) {
     super(location, name);
     this.table = table;
-    this.partitionKeys = fields.stream().map(e->e.getNamePath().getLast()).collect(Collectors.toList());
-    this.partitionKeyNodes = fields;
+    this.alias = alias;
+    this.partitionKeys = partitionKeys;
     this.order = order;
     this.hints = hints;
   }
 
-  @Deprecated
-  public Name getTable() {
-    return table.getNamePath().getFirst();
-  }
-
-  public TableNode getTableNode() {
-    return table;
-  }
-
-  public List<Hint> getHints() {
-    return hints;
-  }
-
-  @Deprecated
-  public List<Name> getPartitionKeys() {
-    return partitionKeys;
-  }
-
-  public List<Identifier> getPartitionKeyNodes() {
-    return partitionKeyNodes;
-  }
-
-  public List<SortItem> getOrder() {
-    return order;
-  }
-
-  @Override
-  public List<? extends Node> getChildren() {
-    return null;
+  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
+    return visitor.visitDistinctAssignment(this, context);
   }
 
   @Override
@@ -65,17 +40,22 @@ public class DistinctAssignment extends Assignment {
       return false;
     }
     DistinctAssignment that = (DistinctAssignment) o;
-    return Objects.equals(table, that.table) && Objects.equals(partitionKeys,
-        that.partitionKeys) && Objects.equals(order, that.order);
+    return Objects.equals(table, that.table) && Objects.equals(alias, that.alias) && Objects.equals(
+        partitionKeys, that.partitionKeys) && Objects.equals(order, that.order) && Objects.equals(
+        hints, that.hints);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(table, partitionKeys, order);
+    return Objects.hash(table, alias, partitionKeys, order, hints);
   }
 
-  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
-    return visitor.visitDistinctAssignment(this, context);
+  public String getSqlQuery() {
+    String pk = getPartitionKeys().stream().map(e -> "\"" + e + "\"")
+        .collect(Collectors.joining(", "));
+    String order = Strings.isEmpty(getOrder()) ? "" : "ORDER BY " + getOrder();
+    String table = getTable();
+    return String.format("SELECT /*+ DISTINCT_ON(%s) */ * FROM %s %s %s LIMIT 1", pk, table,
+        alias.orElse(""), order);
   }
-
 }

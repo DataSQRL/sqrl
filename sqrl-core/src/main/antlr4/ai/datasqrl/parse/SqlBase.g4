@@ -45,16 +45,22 @@ assignment
     : hint? qualifiedName ':=' inlineJoin                                                    # joinAssignment
     | hint? qualifiedName ':=' expression                                                    # expressionAssign
     | hint? qualifiedName ':=' query                                                         # queryAssign
-    | hint? qualifiedName ':=' DISTINCT table=identifier ON '('? identifier (',' identifier)* ')'?
+    | hint? qualifiedName ':=' DISTINCT table=identifier (AS? identifier)?
+      ON '('? qualifiedName (',' qualifiedName)* ')'?
       (ORDER BY sortItem (',' sortItem)*)?                          # distinctAssignment
     ;
 
 hint
-   : '/+' hintItem (',' hintItem)* '+/'
+   : '/*+' hintItem (',' hintItem)* '*/'
    ;
 
+// NO_HASH_JOIN, RESOURCE(mem='128mb', parallelism='24')
 hintItem
-   : qualifiedName
+   : identifier ('(' keyValue (',' keyValue)* ')')?
+   ;
+
+keyValue
+   : identifier ('=' string)?
    ;
 
 subscriptionType
@@ -98,7 +104,7 @@ sortItem
     ;
 
 querySpecification
-    : SELECT setQuantifier? selectItem (',' selectItem)*
+    : SELECT hint? setQuantifier? selectItem (',' selectItem)*
       FROM relation (',' relation)*
       (WHERE where=booleanExpression)?
       (GROUP BY groupBy)?
@@ -133,23 +139,26 @@ relation
       ( CROSS JOIN right=relationPrimary
       | joinType JOIN rightRelation=relation (joinCriteria)?
       )                                           #joinRelation
-    | relationPrimary                             #relationDefault
+    | aliasedRelation                             #relationDefault
     ;
 
 joinType
     : INNER?
-//    | LEFT OUTER?
-//    | RIGHT OUTER?
-//    | FULL OUTER?
-    | TEMPORAL
+    | TEMPORAL?
     ;
 
 joinCriteria
     : ON booleanExpression
     ;
 
+aliasedRelation
+    : relationPrimary (AS? identifier)?
+    ;
+
 relationPrimary
     : qualifiedName hint? (AS? identifier)? #tableName
+    | '(' query ')'   #subqueryRelation
+    | '(' relation ')'                                                #parenthesizedRelation
     ;
 
 expression
@@ -190,7 +199,7 @@ primaryExpression
     | string                                                                              #stringLiteral
     | qualifiedName '(' ASTERISK ')'                                                      #functionCall
     | qualifiedName '(' (setQuantifier? expression (',' expression)*)? ')'                #functionCall
-//    | '(' query ')'                                                                       #subqueryExpression
+    | '(' query ')'                                                                       #subqueryExpression
     | CASE whenClause+ (ELSE elseExpression=expression)? END                              #simpleCase
     | CAST '(' expression AS type ')'                                                     #cast
     | qualifiedName                                                                       #columnReference

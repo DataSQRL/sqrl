@@ -2,8 +2,11 @@ package ai.datasqrl.physical.stream.flink.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.input.AbstractFlexibleTableConverterVisitor;
+import ai.datasqrl.schema.input.SimpleFlexibleTableConverterVisitor;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
+import ai.datasqrl.schema.builder.NestedTableBuilder;
+import ai.datasqrl.schema.builder.SimpleTableBuilder;
+import ai.datasqrl.schema.input.SqrlTypeConverter;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.*;
 import com.google.common.base.Preconditions;
@@ -12,6 +15,7 @@ import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.types.DataType;
 
+import java.util.List;
 import java.util.Optional;
 
 /*
@@ -21,37 +25,38 @@ schemaBuilder.watermark(ReservedName.INGEST_TIME.getCanonical(),
 ReservedName.INGEST_TIME.getCanonical() + " - INTERVAL '10' SECOND");
  */
 @Value
-public class FlinkTableSchemaGenerator extends AbstractFlexibleTableConverterVisitor<DataType> {
+public class FlinkTableSchemaGenerator extends SimpleFlexibleTableConverterVisitor<DataType> {
 
     private final Schema.Builder schemaBuilder = Schema.newBuilder();
 
     @Override
     public Optional<DataType> endTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
-        TableBuilder<DataType> tblBuilder = stack.removeFirst();
+        SimpleTableBuilder<DataType> tblBuilder = stack.removeFirst();
         if (isNested) {
             return createTable(tblBuilder);
         } else {
-            for (TableBuilder.Column<DataType> column : tblBuilder.getColumns()) {
-                schemaBuilder.column(column.getName().getCanonical(),column.getType());
+            for (SimpleTableBuilder.Column<DataType> column : tblBuilder.getColumns(true,true)) {
+                schemaBuilder.column(column.getId().getCanonical(),column.getType());
             };
             return Optional.empty();
         }
     }
 
     @Override
-    protected Optional<DataType> createTable(TableBuilder<DataType> tblBuilder) {
-        DataTypes.Field[] fields = new DataTypes.Field[tblBuilder.getColumns().size()];
+    protected Optional<DataType> createTable(SimpleTableBuilder<DataType> tblBuilder) {
+        List<NestedTableBuilder.Column<DataType>> columns = tblBuilder.getColumns(true,true);
+        DataTypes.Field[] fields = new DataTypes.Field[columns.size()];
         for (int i = 0; i < fields.length; i++) {
-            TableBuilder.Column<DataType> column = tblBuilder.getColumns().get(i);
-            fields[i] = DataTypes.FIELD(column.getName().getCanonical(),column.getType());
+            NestedTableBuilder.Column<DataType> column = columns.get(i);
+            fields[i] = DataTypes.FIELD(column.getId().getCanonical(),column.getType());
         }
         return Optional.of(DataTypes.ROW(fields));
     }
 
     @Override
-    public DataType nullable(DataType type, boolean notnull) {
-        if (notnull) return type.notNull();
-        else return type.nullable();
+    public DataType nullable(DataType type, boolean nullable) {
+        if (nullable) return type.nullable();
+        else return type.notNull();
     }
 
     @Override
@@ -60,8 +65,8 @@ public class FlinkTableSchemaGenerator extends AbstractFlexibleTableConverterVis
     }
 
     @Override
-    public DataType wrapArray(DataType type, boolean notnull) {
-        return DataTypes.ARRAY(nullable(type,notnull));
+    public DataType wrapArray(DataType type) {
+        return DataTypes.ARRAY(type);
     }
 
     public Schema getSchema() {

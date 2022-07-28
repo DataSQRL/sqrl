@@ -1,12 +1,10 @@
 package ai.datasqrl.plan.calcite;
 
-import ai.datasqrl.function.builtin.time.RoundMonth;
 import ai.datasqrl.function.builtin.example.SqlMyFunction;
+import ai.datasqrl.function.builtin.time.RoundMonth;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.fun.Now;
-import org.apache.calcite.sql.fun.SqlAbstractTimeFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.type.SqlTypeName;
 
 public class SqrlOperatorTable extends SqlStdOperatorTable {
 
