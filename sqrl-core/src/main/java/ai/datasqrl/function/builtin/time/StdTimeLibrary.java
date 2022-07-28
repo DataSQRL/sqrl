@@ -11,7 +11,7 @@ public class StdTimeLibrary extends AbstractSchema {
   private final Multimap<String, Function> functions = ArrayListMultimap.create();
 
   public StdTimeLibrary() {
-    functions.put("ROUNDTOMONTH", RoundMonth.fnc);
+    //functions.put("ROUNDTOMONTH", RoundMonth.fnc);
   }
 
   @Override
