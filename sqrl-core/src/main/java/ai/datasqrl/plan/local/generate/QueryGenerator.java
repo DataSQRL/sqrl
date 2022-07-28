@@ -872,7 +872,7 @@ public class QueryGenerator extends DefaultTraversalVisitor<SqlNode, Scope> {
     AbstractSqrlTable table = tableMap.get(path.getToTable());
     Preconditions.checkNotNull(table, "Could not find table");
 
-    List<SqlNode> partition = node.getPartitionKeyNodes().stream().map(p -> p.accept(this, null))
+    List<SqlNode> partition = node.getPartitionKeys().stream().map(p -> p.accept(this, null))
         .collect(Collectors.toList());
 
     List<SqlNode> orderList = node.getOrder().stream().map(p -> p.accept(this, null))

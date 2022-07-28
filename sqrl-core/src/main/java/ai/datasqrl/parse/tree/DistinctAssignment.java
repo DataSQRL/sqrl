@@ -10,17 +10,18 @@ import java.util.stream.Collectors;
 public class DistinctAssignment extends Assignment {
 
   private final TableNode table;
-  private final List<Name> partitionKeys;
+  private final Optional<Identifier> alias;
+  private final List<Identifier> partitionKeys;
   private final List<SortItem> order;
   private final List<Hint> hints;
-  private final List<Identifier> partitionKeyNodes;
 
-  public DistinctAssignment(Optional<NodeLocation> location,
-      NamePath name, TableNode table, List<Identifier> fields, List<SortItem> order, List<Hint> hints) {
+  public DistinctAssignment(Optional<NodeLocation> location, NamePath name, TableNode table,
+      Optional<Identifier> alias,
+      List<Identifier> partitionKeys, List<SortItem> order, List<Hint> hints) {
     super(location, name);
     this.table = table;
-    this.partitionKeys = fields.stream().map(e->e.getNamePath().getLast()).collect(Collectors.toList());
-    this.partitionKeyNodes = fields;
+    this.alias = alias;
+    this.partitionKeys = partitionKeys;
     this.order = order;
     this.hints = hints;
   }
@@ -38,13 +39,8 @@ public class DistinctAssignment extends Assignment {
     return hints;
   }
 
-  @Deprecated
-  public List<Name> getPartitionKeys() {
+  public List<Identifier> getPartitionKeys() {
     return partitionKeys;
-  }
-
-  public List<Identifier> getPartitionKeyNodes() {
-    return partitionKeyNodes;
   }
 
   public List<SortItem> getOrder() {
@@ -65,8 +61,8 @@ public class DistinctAssignment extends Assignment {
       return false;
     }
     DistinctAssignment that = (DistinctAssignment) o;
-    return Objects.equals(table, that.table) && Objects.equals(partitionKeys,
-        that.partitionKeys) && Objects.equals(order, that.order);
+    return Objects.equals(table, that.table) && Objects.equals(partitionKeys, that.partitionKeys)
+        && Objects.equals(order, that.order);
   }
 
   @Override
@@ -79,12 +75,15 @@ public class DistinctAssignment extends Assignment {
   }
 
   /**
-   * SELECT * /#hint: top 1#/
-   * FROM node.tableName
-   * GROUP BY node.pks
-   * ORDER BY node.pks
+   * SELECT * /#hint: top 1#/ FROM node.tableName GROUP BY node.pks ORDER BY node.pks
    */
   public String getSqlQuery() {
-    return null;
+    return String.format(
+        "SELECT /*+ DISTINCT_ON(%s) */ * FROM %s %s ORDER BY %s LIMIT 1",
+        getPartitionKeys().stream().map(NodeFormatter::accept)
+            .map(p->"\""+p+"\"")
+            .collect(Collectors.joining(", ")), getTable(),
+        alias.map(NodeFormatter::accept).orElse(""),
+        order.stream().map(NodeFormatter::accept).collect(Collectors.joining(", ")));
   }
 }

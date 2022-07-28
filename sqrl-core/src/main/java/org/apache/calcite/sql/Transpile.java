@@ -3,6 +3,7 @@ package org.apache.calcite.sql;
 import static ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil.and;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
+import ai.datasqrl.plan.calcite.sqrl.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
 import ai.datasqrl.plan.local.generate.QueryGenerator.FieldNames;
 import ai.datasqrl.schema.ScriptTable;
@@ -19,12 +20,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.AbsoluteTableNamespace;
 import org.apache.calcite.sql.validate.DelegatingScope;
-import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorNamespace;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
+import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
 import org.apache.flink.util.Preconditions;
@@ -61,6 +61,38 @@ public class Transpile {
     SqlNode from = rewriteFrom(select.getFrom(), scope);
     from = extraFromItems(from, scope);
     select.setFrom(from);
+
+    rewriteHints(select, scope);
+  }
+
+  private void rewriteHints(SqlSelect select, SqlValidatorScope scope) {
+    SqlNodeList hints = select.getHints();
+    List<SqlNode> list = hints.getList();
+
+    for (int i = 0; i < list.size(); i++) {
+      SqlHint hint = (SqlHint) list.get(i);
+      if (hint.getName().equals(SqrlHintStrategyTable.DISTINCT_ON_HINT_NAME)) {
+        SqlHint newHint = rewriteDistinctHint(select, hint, scope);
+        hints.set(i, newHint);
+      }
+    }
+
+    select.setHints(hints);
+  }
+
+  private SqlHint rewriteDistinctHint(SqlSelect select, SqlHint hint, SqlValidatorScope scope) {
+    List<SqlNode> asIdentifiers = hint.getOptionList().stream()
+        .map(o ->new SqlIdentifier(List.of(o.split("\\.")), hint.pos))
+        .collect(Collectors.toList());
+
+    List<SqlNode> partitionKeyIndices = getSelectListOrdinals(select, asIdentifiers, 0)
+        .stream().map(e->new SqlIdentifier(((SqlNumericLiteral)e).getValue().toString(), SqlParserPos.ZERO))
+        .collect(Collectors.toList());
+
+    SqlHint newHint = new SqlHint(hint.getParserPosition(),
+        new SqlIdentifier(hint.getName(), hint.pos),
+        new SqlNodeList(partitionKeyIndices, hint.pos), hint.getOptionFormat());
+    return newHint;
   }
 
   private void createParentPrimaryKeys(SqlValidatorScope scope) {
@@ -117,7 +149,7 @@ public class Transpile {
 
   private SqlNode convertExpression(SqlNode expr, SqlValidatorScope scope) {
     ExpressionRewriter expressionRewriter = new ExpressionRewriter(scope,
-        tableMapper, uniqueAliasGenerator, joinDecs, sqlNodeBuilder, names);
+        tableMapper, uniqueAliasGenerator, joinDecs, sqlNodeBuilder, names, this);
     SqlNode rewritten = expr.accept(expressionRewriter);
 
     this.inlineAgg.putAll(scope, expressionRewriter.getInlineAggResults());
@@ -178,7 +210,8 @@ public class Transpile {
 
     //Find the new rewritten select items, replace with alias
     SqlNodeList group = select.getGroup() == null ? SqlNodeList.EMPTY : select.getGroup();
-    List<SqlNode> ordinals = getSelectListOrdinals(select, group.getList(), mutableGroupItems.size());
+    List<SqlNode> ordinals = getSelectListOrdinals(select, group.getList(),
+        mutableGroupItems.size());
     mutableGroupItems.addAll(ordinals);
 
     if (!mutableGroupItems.isEmpty()) {
@@ -188,7 +221,8 @@ public class Transpile {
 
   private List<SqlNode> getSelectListOrdinals(SqlSelect select, List<SqlNode> toCheck, int offset) {
     List<SqlNode> ordinals = new ArrayList<>();
-    outer: for (SqlNode groupNode : toCheck) {
+    outer:
+    for (SqlNode groupNode : toCheck) {
       List<SqlNode> list = validator.getRawSelectScope(select).getExpandedSelectList();
       for (int i = 0; i < list.size(); i++) {
         SqlNode selectNode = list.get(i);
@@ -197,13 +231,15 @@ public class Transpile {
             SqlCall call = (SqlCall) selectNode;
             if (groupNode.equalsDeep(call.getOperandList().get(0), Litmus.IGNORE) ||
                 groupNode.equalsDeep(call.getOperandList().get(1), Litmus.IGNORE)) {
-              ordinals.add(SqlLiteral.createExactNumeric(Long.toString(i + offset + 1), groupNode.getParserPosition()));
+              ordinals.add(SqlLiteral.createExactNumeric(Long.toString(i + offset + 1),
+                  groupNode.getParserPosition()));
               continue outer;
             }
             break;
           default:
             if (groupNode.equalsDeep(selectNode, Litmus.IGNORE)) {
-              ordinals.add(SqlLiteral.createExactNumeric(Long.toString(i + offset + 1), groupNode.getParserPosition()));
+              ordinals.add(SqlLiteral.createExactNumeric(Long.toString(i + offset + 1),
+                  groupNode.getParserPosition()));
               continue outer;
             }
             break;
@@ -231,14 +267,15 @@ public class Transpile {
     List<SqlNode> mutableOrders = new ArrayList<>();
     extraPPKItems(select, scope, mutableOrders);
     List<SqlNode> cleaned = select.getOrderList().getList().stream()
-        .map(o ->      {
-          if (o.getKind() == SqlKind.DESCENDING || o.getKind() == SqlKind.NULLS_FIRST || o.getKind() == SqlKind.NULLS_LAST) {
+        .map(o -> {
+          if (o.getKind() == SqlKind.DESCENDING || o.getKind() == SqlKind.NULLS_FIRST
+              || o.getKind() == SqlKind.NULLS_LAST) {
             //is DESCENDING, nulls first, nulls last
             return ((SqlCall) o).getOperandList().get(0);
           }
           return o;
         })
-        .map(o->validator.expandOrderExpr(select, o))
+        .map(o -> validator.expandOrderExpr(select, o))
         .collect(Collectors.toList());
 
     //If aggregating, replace each select item with ordinal
@@ -248,7 +285,8 @@ public class Transpile {
       //Readd w/ order
       for (int i = 0; i < select.getOrderList().size(); i++) {
         SqlNode o = select.getOrderList().get(i);
-        if (o.getKind() == SqlKind.DESCENDING || o.getKind() == SqlKind.NULLS_FIRST || o.getKind() == SqlKind.NULLS_LAST) {
+        if (o.getKind() == SqlKind.DESCENDING || o.getKind() == SqlKind.NULLS_FIRST
+            || o.getKind() == SqlKind.NULLS_LAST) {
           SqlCall call = ((SqlCall) o);
           call.setOperand(0, ordinals.get(i));
           mutableOrders.add(call);
@@ -260,35 +298,40 @@ public class Transpile {
       select.setOrderBy(new SqlNodeList(mutableOrders, select.getOrderList().getParserPosition()));
       return;
     } else {
-      //Otherwise, we want to check the select list first for ordinal, but if its not there then we expand it
+      //Otherwise, we want to check the select list first for ordinal, but if its not there then
+      // we expand it
       List<SqlNode> expanded = validator.getRawSelectScope(select).getExpandedSelectList();
-      for (SqlNode orderItem : cleaned) {
+      outer:
+      for (SqlNode orderNode : cleaned) {
+        //look for order in select list
         for (int i = 0; i < expanded.size(); i++) {
           SqlNode selectItem = expanded.get(i);
           selectItem = stripAs(selectItem);
           //Found an ordinal
-          if (orderItem.equalsDeep(selectItem, Litmus.IGNORE)) {
-            SqlNode orderNode = select.getOrderList().get(i);
-            SqlNode ordinal = SqlLiteral.createExactNumeric(Long.toString(i + mutableOrders.size() + 1), SqlParserPos.ZERO);
-            if (orderNode.getKind() == SqlKind.DESCENDING || orderNode.getKind() == SqlKind.NULLS_FIRST || orderNode.getKind() == SqlKind.NULLS_LAST) {
+          if (orderNode.equalsDeep(selectItem, Litmus.IGNORE)) {
+            SqlNode ordinal = SqlLiteral.createExactNumeric(
+                Long.toString(i + mutableOrders.size() + 1), SqlParserPos.ZERO);
+            if (orderNode.getKind() == SqlKind.DESCENDING
+                || orderNode.getKind() == SqlKind.NULLS_FIRST
+                || orderNode.getKind() == SqlKind.NULLS_LAST) {
               SqlCall call = ((SqlCall) orderNode);
               call.setOperand(0, ordinal);
               mutableOrders.add(call);
             } else {
               mutableOrders.add(ordinal);
             }
-          } else {
-            //No Ordinal, need to expand and set
-            SqlNode orderNode = select.getOrderList().get(i);
-            SqlNode ordinal = convertExpression(orderItem, scope);
-            if (orderNode.getKind() == SqlKind.DESCENDING || orderNode.getKind() == SqlKind.NULLS_FIRST || orderNode.getKind() == SqlKind.NULLS_LAST) {
-              SqlCall call = ((SqlCall) orderNode);
-              call.setOperand(0, ordinal);
-              mutableOrders.add(call);
-            } else {
-              mutableOrders.add(ordinal);
-            }
+            continue outer;
           }
+        }
+        //otherwise, process it
+        SqlNode ordinal = convertExpression(orderNode, scope);
+        if (orderNode.getKind() == SqlKind.DESCENDING || orderNode.getKind() == SqlKind.NULLS_FIRST
+            || orderNode.getKind() == SqlKind.NULLS_LAST) {
+          SqlCall call = ((SqlCall) orderNode);
+          call.setOperand(0, ordinal);
+          mutableOrders.add(call);
+        } else {
+          mutableOrders.add(ordinal);
         }
       }
     }
@@ -316,7 +359,7 @@ public class Transpile {
           from = convertTableName((SqlIdentifier) firstOperand,
               ((SqlIdentifier) call.getOperandList().get(1)).names.get(0), scope);
         } else {
-          from = rewriteFrom(firstOperand, scope);
+          rewriteFrom(firstOperand, scope);
         }
       case TABLE_REF:
         break;
@@ -328,6 +371,9 @@ public class Transpile {
         rewriteJoin((SqlJoin) from, scope);
         break;
       case SELECT:
+        SqlValidatorScope subScope = validator.getFromScope((SqlSelect) from);
+        rewriteQuery((SqlSelect) from, subScope);
+        break;
       case INTERSECT:
       case EXCEPT:
       case UNION:
@@ -412,7 +458,8 @@ public class Transpile {
     ScriptTable table = ns.getTable().unwrap(ScriptTable.class);
     TableWithPK t = tableMapper.getTable(table);
 
-    return sqlNodeBuilder.as(new SqlIdentifier(t.getNameId(), SqlParserPos.ZERO), Util.last(id.names));
+    return sqlNodeBuilder.as(new SqlIdentifier(t.getNameId(), SqlParserPos.ZERO),
+        Util.last(id.names));
   }
 
   private void rewriteJoin(SqlJoin join, SqlValidatorScope rootScope) {

@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.calcite;
 
+import ai.datasqrl.plan.calcite.sqrl.hints.SqrlHintStrategyTable;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.rel.RelCollationTraitDef;
@@ -26,7 +27,8 @@ public class PlannerFactory {
       .config()
       .withExpand(false)
       .withDecorrelationEnabled(false)
-      .withTrimUnusedFields(false);
+      .withTrimUnusedFields(false)
+      .withHintStrategyTable(SqrlHintStrategyTable.getHintStrategyTable());
 
   public Planner createPlanner() {
     FrameworkConfig config = Frameworks

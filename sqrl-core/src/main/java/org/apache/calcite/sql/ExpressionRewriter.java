@@ -1,5 +1,7 @@
 package org.apache.calcite.sql;
 
+import static org.apache.calcite.util.Static.RESOURCE;
+
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
@@ -18,6 +20,7 @@ import lombok.Getter;
 import org.apache.calcite.sql.fun.ConvertableFunction;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.IdentifierNamespace;
+import org.apache.calcite.sql.validate.SelectNamespace;
 import org.apache.calcite.sql.validate.SqlQualified;
 import org.apache.calcite.sql.validate.SqlScopedShuttle;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
@@ -29,6 +32,7 @@ public class ExpressionRewriter extends SqlScopedShuttle {
   UniqueAliasGeneratorImpl uniqueAliasGenerator;
   JoinDeclarationContainerImpl joinDecs;
   SqlNodeBuilderImpl sqlNodeBuilder;
+  private final Transpile transpile;
   FieldNames names;
   private final JoinBuilderFactory joinBuilderFactory;
   @Getter
@@ -39,12 +43,14 @@ public class ExpressionRewriter extends SqlScopedShuttle {
 
   public ExpressionRewriter(SqlValidatorScope initialScope,
       TableMapperImpl tableMapper, UniqueAliasGeneratorImpl uniqueAliasGenerator,
-      JoinDeclarationContainerImpl joinDecs, SqlNodeBuilderImpl sqlNodeBuilder, FieldNames names) {
+      JoinDeclarationContainerImpl joinDecs, SqlNodeBuilderImpl sqlNodeBuilder, FieldNames names,
+      Transpile transpile) {
     super(initialScope);
     this.tableMapper = tableMapper;
     this.uniqueAliasGenerator = uniqueAliasGenerator;
     this.joinDecs = joinDecs;
     this.sqlNodeBuilder = sqlNodeBuilder;
+    this.transpile = transpile;
     this.joinBuilderFactory = ()-> new JoinBuilder(uniqueAliasGenerator, joinDecs, tableMapper, sqlNodeBuilder);
     this.names = names;
   }
@@ -67,14 +73,13 @@ public class ExpressionRewriter extends SqlScopedShuttle {
   @Override
   public SqlNode visit(SqlIdentifier id) {
     SqlQualified qualified = getScope().fullyQualify(id);
+    if (qualified.namespace instanceof SelectNamespace) {
+      //Column from subquery
+      return id;
+    }
+
     IdentifierNamespace identifierNamespace = (IdentifierNamespace)qualified.namespace;
-    if (identifierNamespace == null) {
-      System.out.println(id);
-    }
     ScriptTable st = identifierNamespace.getTable().unwrap(ScriptTable.class);
-    if (st == null) {
-      System.out.println(id);
-    }
     List<Relationship> toOneRels = isToOne(qualified.suffix(), st);
     if (!toOneRels.isEmpty()) {
       TableWithPK table = tableMapper.getTable(toOneRels.get(toOneRels.size()-1).getToTable());
@@ -88,6 +93,16 @@ public class ExpressionRewriter extends SqlScopedShuttle {
 
     //not a to-one identifier, get field name and rewrite.
     Optional<Field> fieldOptional = st.getField(Name.system(Util.last(qualified.suffix())));
+    if (fieldOptional.isEmpty()) {
+      throw this.getScope().getValidator().newValidationError(id,
+          RESOURCE.columnNotFound(Util.last(qualified.suffix())));
+    }
+
+    if (fieldOptional.isPresent() && fieldOptional.get() instanceof Relationship) {
+      throw this.getScope().getValidator().newValidationError(id,
+          SqrlErrors.SQRL_ERRORS.columnRequiresInlineAgg());
+    }
+
     Column column = (Column)fieldOptional.get();
     String newName = names.get(column);
     return id.setName(id.names.size() - 1, newName);

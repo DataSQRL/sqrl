@@ -17,6 +17,7 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
+import ai.datasqrl.parse.SqlBaseParser.AliasedRelationContext;
 import ai.datasqrl.parse.SqlBaseParser.ArithmeticBinaryContext;
 import ai.datasqrl.parse.SqlBaseParser.ArithmeticUnaryContext;
 import ai.datasqrl.parse.SqlBaseParser.AssignContext;
@@ -62,8 +63,10 @@ import ai.datasqrl.parse.SqlBaseParser.QualifiedNameContext;
 import ai.datasqrl.parse.SqlBaseParser.QueryAssignContext;
 import ai.datasqrl.parse.SqlBaseParser.QueryContext;
 import ai.datasqrl.parse.SqlBaseParser.QueryNoWithContext;
+import ai.datasqrl.parse.SqlBaseParser.QueryPrimaryDefaultContext;
 import ai.datasqrl.parse.SqlBaseParser.QuerySpecificationContext;
 import ai.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
+import ai.datasqrl.parse.SqlBaseParser.RelationDefaultContext;
 import ai.datasqrl.parse.SqlBaseParser.ScriptContext;
 import ai.datasqrl.parse.SqlBaseParser.SelectAllContext;
 import ai.datasqrl.parse.SqlBaseParser.SelectSingleContext;
@@ -74,6 +77,8 @@ import ai.datasqrl.parse.SqlBaseParser.SingleGroupingSetContext;
 import ai.datasqrl.parse.SqlBaseParser.SingleStatementContext;
 import ai.datasqrl.parse.SqlBaseParser.SortItemContext;
 import ai.datasqrl.parse.SqlBaseParser.SubqueryContext;
+import ai.datasqrl.parse.SqlBaseParser.SubqueryExpressionContext;
+import ai.datasqrl.parse.SqlBaseParser.SubqueryRelationContext;
 import ai.datasqrl.parse.SqlBaseParser.TableNameContext;
 import ai.datasqrl.parse.SqlBaseParser.TypeContext;
 import ai.datasqrl.parse.SqlBaseParser.TypeParameterContext;
@@ -653,10 +658,10 @@ class AstBuilder
         .collect(toList());
   }
 
-  @Override
-  public Node visitHintItem(HintItemContext ctx) {
-    return new Hint(Optional.of(getLocation(ctx)), getNamePath(ctx.qualifiedName()).getLast().getDisplay());
-  }
+//  @Override
+//  public Node visitHintItem(HintItemContext ctx) {
+//    return new Hint(Optional.of(getLocation(ctx)), getNamePath(ctx.qualifiedName()).getLast().getDisplay());
+//  }
 
   @Override
   public Node visitInlineJoinBody(InlineJoinBodyContext ctx) {
@@ -955,15 +960,22 @@ class AstBuilder
 
   @Override
   public Node visitDistinctAssignment(DistinctAssignmentContext ctx) {
-    NamePath name = getNamePath(ctx.qualifiedName());
+    NamePath name = getNamePath(ctx.qualifiedName(0));
+    Optional<Identifier> alias =
+        ctx.identifier().size() > 1 ?
+        Optional.ofNullable(((Identifier)visit(ctx.identifier(1))))
+        : Optional.empty();
+
+    List partitionkeys = ctx.identifier() == null ? List.of() :
+        ctx.qualifiedName().stream().skip(1)
+            .map(s -> ((Identifier)visit(s)))
+            .collect(toList());
     return new DistinctAssignment(
         Optional.of(getLocation(ctx)),
         name,
         new TableNode(getLocation(ctx.table), ((Identifier)visit(ctx.table)).getNamePath(), Optional.empty(), List.of()),
-        ctx.identifier() == null ? List.of() :
-            ctx.identifier().stream().skip(1)
-                .map(s -> ((Identifier)visit(s)))
-                .collect(toList()),
+        alias,
+        partitionkeys,
         ctx.sortItem() == null ? List.of() : ctx.sortItem().stream()
             .map(s -> (SortItem) s.accept(this)).collect(toList()),
         getHints(ctx.hint())
@@ -1026,8 +1038,9 @@ class AstBuilder
         ctx.query().start.getStartIndex(),
         ctx.query().stop.getStopIndex());
     String query = ctx.query().start.getInputStream().getText(interval);
+//    Query query1 =  (Query) visitQuery(ctx.query()); no longer walk query, use sql
     return new QueryAssignment(Optional.of(getLocation(ctx)), getNamePath(ctx.qualifiedName()),
-        (Query) visitQuery(ctx.query()), query,
+        null, query,
         getHints(ctx.hint()));
   }
 
@@ -1038,9 +1051,9 @@ class AstBuilder
         ctx.expression().start.getStartIndex(),
         ctx.expression().stop.getStopIndex());
     String expression = ctx.expression().start.getInputStream().getText(interval);
-
+//    Expression expr = (Expression) visitExpression(ctx.expression()); no longer walk query, use sql
     return new ExpressionAssignment(Optional.of(getLocation(ctx)), name,
-        (Expression) visitExpression(ctx.expression()), expression,
+        null, expression,
         getHints(ctx.hint()));
   }
 
@@ -1166,6 +1179,8 @@ class AstBuilder
 
     throw new IllegalArgumentException("Unsupported type specification: " + type.getText());
   }
+
+
 
   private String typeParameterToString(TypeParameterContext typeParameter) {
     if (typeParameter.INTEGER_VALUE() != null) {

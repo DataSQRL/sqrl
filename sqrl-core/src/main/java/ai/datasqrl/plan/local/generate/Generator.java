@@ -4,6 +4,7 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.environment.ImportManager.TableImport;
+import ai.datasqrl.function.builtin.time.StdTimeLibrary;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
@@ -46,7 +47,6 @@ import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ai.datasqrl.parse.util.SqrlNodeUtil.isExpression;
 import static ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil.and;
 
 @Getter
@@ -85,6 +85,10 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
     this.variableFactory = variableFactory;
     this.relSchema = planner.getDefaultSchema().unwrap(CalciteSchema.class);
     this.sqrlSchema = CalciteSchema.createRootSchema(true);
+
+    //Time functions as a library poc
+    sqrlSchema.add("time", new StdTimeLibrary());
+    relSchema.add("time", new StdTimeLibrary());
   }
 
   public void generate(ScriptNode scriptNode) {
@@ -145,6 +149,16 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
       registerScriptTable(d);
     }
 
+    Check.state(!(node.getTimestamp().isPresent() && sourceTable.equals(ReservedName.ALL)), node,
+        Errors.TIMESTAMP_NOT_ALLOWED);
+    if (node.getTimestamp().isPresent()) {
+      String query = String.format("SELECT %s FROM %s",
+          NodeFormatter.accept(node.getTimestamp().get()),
+          dt.get(0).getTable().getName().getDisplay());
+      TranspiledResult result = transpile(query, Optional.empty());
+      System.out.println(result.getRelNode().explain());
+    }
+
     return null;
   }
 
@@ -171,8 +185,8 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
   @SneakyThrows
   @Override
   public Void visitDistinctAssignment(DistinctAssignment node, Scope context) {
-//    RelNode relNode = processQuery(node.getSqlQuery());
-
+    TranspiledResult result = transpile(node.getSqlQuery(), Optional.empty());
+    System.out.println(result.relNode.explain());
 //    mapping.addQuery(relNode, context.getTable(), node.getNamePath());
     return null;
   }
@@ -273,6 +287,7 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
         sqlNodeBuilder,
         () -> new JoinBuilder(uniqueAliasGenerator, joinDecs, tableMapper, sqlNodeBuilder),
         fieldNames);
+    System.out.println("Original: " + select);
 
     transpile.rewriteQuery(select, scope);
 
@@ -385,12 +400,12 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
     Optional<ScriptTable> ctx = getContext(node.getNamePath().popLast());
     TranspiledResult result = transpile(node.getSql(), ctx);
     RelNode relNode = result.getRelNode();
-    System.out.println(result);
+    System.out.println(result.relNode.explain());
 //    Check.state(canAssign(node.getNamePath()), node, Errors.UNASSIGNABLE_QUERY_TABLE);
 
     NamePath namePath = node.getNamePath();
 
-    boolean isExpression = isExpression(node.getQuery());
+    boolean isExpression = false;
 
     if (isExpression) {
       Check.state(node.getNamePath().size() > 1, node, Errors.QUERY_EXPRESSION_ON_ROOT);

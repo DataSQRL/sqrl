@@ -14,6 +14,7 @@ import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.calcite.sqrl.table.QuerySqrlTable;
 import ai.datasqrl.plan.local.generate.Generator;
+import ai.datasqrl.plan.local.generate.GeneratorBuilder;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -35,60 +36,24 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 class GeneratorTest extends AbstractSQRLIT {
 
   ConfiguredSqrlParser parser;
-
-  ErrorCollector errorCollector;
-  ImportManager importManager;
-  Analyzer analyzer;
-  Analysis analysis;
-  private Planner planner;
-  //  private ScriptNode script;
+  ErrorCollector error;
   private Generator generator;
 
   @BeforeEach
   public void setup() throws IOException {
-    errorCollector = ErrorCollector.root();
+    error = ErrorCollector.root();
     initialize(IntegrationTestSettings.getInMemory(false));
     C360 example = C360.INSTANCE;
-
     example.registerSource(env);
 
-    importManager = sqrlSettings.getImportManagerProvider()
+    ImportManager importManager = sqrlSettings.getImportManagerProvider()
         .createImportManager(env.getDatasetRegistry());
     ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
     Assertions.assertTrue(importManager.registerUserSchema(bundle.getMainScript().getSchema(),
-        ErrorCollector.root()));
-    parser = ConfiguredSqrlParser.newParser(errorCollector);
-    CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
-    analyzer = new Analyzer(importManager, SchemaAdjustmentSettings.DEFAULT, tableFactory,
-        errorCollector);
+        error));
 
-    SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
-//    String schemaName = "test";
-//
-//
-//    rootSchema.add(schemaName, generator.getRelSchema().schema); //also give the subschema access
-
-    PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
-    Planner planner = plannerFactory.createPlanner();
-    this.planner = planner;
-
-    TableMapperImpl tableMapper = new TableMapperImpl(new HashMap<>());
-    UniqueAliasGeneratorImpl uniqueAliasGenerator = new UniqueAliasGeneratorImpl(Set.of());
-    JoinDeclarationContainerImpl joinDecs = new JoinDeclarationContainerImpl();
-    SqlNodeBuilderImpl sqlNodeBuilder = new SqlNodeBuilderImpl();
-
-
-    generator = new Generator(new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem())),
-        SchemaAdjustmentSettings.DEFAULT,
-        planner,
-        importManager,
-        uniqueAliasGenerator,
-        joinDecs,
-        sqlNodeBuilder,
-        tableMapper,
-        errorCollector,
-        new VariableFactory()
-      );
+    this.generator = GeneratorBuilder.build(importManager, error);
+    this.parser = new ConfiguredSqrlParser(error);
   }
 
   @Test
@@ -113,10 +78,38 @@ class GeneratorTest extends AbstractSQRLIT {
 
   @Test
   public void distinctTest() {
+    imports();
+    SqlNode node;
+    node = gen("Orders := DISTINCT Orders o ON (o._uuid) ORDER BY o._ingest_time DESC;\n");
+    System.out.println(node);
+  }
+
+  private void imports() {
     SqlNode node;
     node = gen("IMPORT ecommerce-data.Customer;\n");
-    node = gen("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
-    System.out.println(node);
+    node = gen("IMPORT ecommerce-data.Orders;\n");
+    node = gen("IMPORT ecommerce-data.Product;\n");
+  }
+
+  @Test
+  public void timestampTest() {
+    gen("IMPORT ecommerce-data.Orders TIMESTAMP \"time\" + INTERVAL '5' YEAR AS x;\n");
+  }
+
+  @Test
+  public void standardLibraryTest() {
+    imports();
+    gen("Orders.fnc_test := SELECT \"time\".ROUNDTOMONTH(\"time\") FROM _;");
+  }
+
+  @Test
+  public void subqueryTest() {
+    SqlNode node;
+    node = gen("IMPORT ecommerce-data.Orders;\n");
+    node = gen("Orders := "
+        + "SELECT o._uuid, discount "
+        + "FROM Orders o2 "
+        + "INNER JOIN (SELECT _uuid FROM Orders) o ON o._uuid = o2._uuid;\n");
   }
 
   @Test
@@ -172,13 +165,13 @@ class GeneratorTest extends AbstractSQRLIT {
     node = gen("Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n");
     node = gen("Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n");
     node = gen( "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n");
-    node = gen("Customer.recent_products := SELECT productid, e.product.category AS category,\n"
-        + "                                   sum(quantity) AS quantity, count(e._idx) AS num_orders\n"
+    node = gen("Customer.recent_products := SELECT productid, e.product.category AS category\n"
+//        + "                                   sum(quantity) AS quantity, count(e._idx) AS num_orders\n"
         + "                            FROM _ JOIN _.orders.entries e\n"
-        + "                            WHERE parent.\"time\" > now() - INTERVAL '2' YEAR\n"
-        + "                            GROUP BY productid, category ORDER BY num_orders DESC, "
-        + "quantity DESC;\n");
-
+//        + "                            WHERE parent.\"time\" > now() - INTERVAL '2' YEAR\n"
+//        + "                            GROUP BY productid, category ORDER BY num_orders DESC, "
+//        + "quantity DESC;\n");
+    );
     node = gen("Customer.recent_products_categories :="
         + "                     SELECT category, count(e.productid) AS num_products"
         + "                     FROM _ JOIN _.recent_products"

@@ -71,7 +71,7 @@ public class NodeAnalyzer extends DefaultTraversalVisitor<Scope, Scope> {
   @Override
   public Scope visitDistinctAssignment(DistinctAssignment node, Scope scope) {
     Scope tableScope = node.getTableNode().accept(this, scope);
-    node.getPartitionKeyNodes().forEach(pk -> pk.accept(this, tableScope));
+    node.getPartitionKeys().forEach(pk -> pk.accept(this, tableScope));
     node.getOrder().forEach(o -> o.accept(this, tableScope));
     return null;
   }

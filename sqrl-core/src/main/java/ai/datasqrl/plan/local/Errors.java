@@ -5,6 +5,7 @@ import ai.datasqrl.parse.tree.Expression;
 import ai.datasqrl.parse.tree.ExpressionAssignment;
 import ai.datasqrl.parse.tree.FunctionCall;
 import ai.datasqrl.parse.tree.Identifier;
+import ai.datasqrl.parse.tree.ImportDefinition;
 import ai.datasqrl.parse.tree.JoinAssignment;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.QueryAssignment;
@@ -18,7 +19,8 @@ public class Errors {
   public static final Error<? super NamePath> DISTINCT_NOT_ON_ROOT = new Error<>();
   public static final Error<? super TableNode> TABLE_NOT_FOUND = new Error<>();
   public static final Error<? super ExpressionAssignment> EXPRESSION_ON_ROOT = new Error<>();
-  public static Error<? super ExpressionAssignment> UNASSIGNABLE_EXPRESSION  ;
+  public static Error<? super ImportDefinition> TIMESTAMP_NOT_ALLOWED;
+  public static Error<? super ExpressionAssignment> UNASSIGNABLE_EXPRESSION;
   public static Error<? super JoinAssignment> UNASSIGNABLE_TABLE;
   public static Error<? super QueryAssignment> UNASSIGNABLE_QUERY_TABLE;
   public static Error<? super QueryAssignment> QUERY_EXPRESSION_ON_ROOT;
