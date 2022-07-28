@@ -4,7 +4,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.SQRLTable;
+import ai.datasqrl.schema.ScriptTable;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -61,7 +61,7 @@ public class AbstractTableFactory {
 
     public static final Name parentRelationshipName = ReservedName.PARENT;
 
-    public static Optional<Relationship> createParentRelationship(SQRLTable childTable, SQRLTable parentTable) {
+    public static Optional<Relationship> createParentRelationship(ScriptTable childTable, ScriptTable parentTable) {
         //Avoid overwriting an existing "parent" column on the child
         if (childTable.getField(parentRelationshipName).isEmpty()) {
             return Optional.of(childTable.addRelationship(parentRelationshipName, parentTable, Relationship.JoinType.PARENT,
@@ -71,7 +71,7 @@ public class AbstractTableFactory {
     }
 
 
-    public static Relationship createChildRelationship(Name childName, SQRLTable childTable, SQRLTable parentTable,
+    public static Relationship createChildRelationship(Name childName, ScriptTable childTable, ScriptTable parentTable,
                                                        Relationship.Multiplicity multiplicity) {
         return parentTable.addRelationship(childName, childTable,
                 Relationship.JoinType.CHILD, multiplicity);

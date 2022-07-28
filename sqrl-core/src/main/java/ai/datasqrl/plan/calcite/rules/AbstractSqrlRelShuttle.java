@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.rules;
+package ai.datasqrl.plan.calcite.sqrl.rules;
 
 import com.google.common.base.Preconditions;
 import org.apache.calcite.rel.RelNode;
@@ -12,7 +12,7 @@ public abstract class AbstractSqrlRelShuttle<V extends AbstractSqrlRelShuttle.Re
         return relHolder.getRelNode();
     }
 
-    public V getRelHolder(RelNode node) {
+    protected V getRelHolder(RelNode node) {
         Preconditions.checkArgument(this.relHolder.getRelNode().equals(node));
         V relHolder = this.relHolder;
         this.relHolder = null;

@@ -3,18 +3,15 @@ package ai.datasqrl.schema;
 import ai.datasqrl.parse.tree.name.Name;
 import lombok.Getter;
 import lombok.Value;
-import org.apache.calcite.rel.type.RelDataType;
 
 @Getter
 public class Column extends Field {
 
   final boolean isVisible;
-  private final RelDataType type;
 
-  Column(Name name, int version, boolean isVisible, RelDataType type) {
+  Column(Name name, int version, boolean isVisible) {
     super(name, version);
     this.isVisible = isVisible;
-    this.type = type;
   }
 
   @Override

@@ -1,7 +1,7 @@
-package ai.datasqrl.plan.calcite.rules;
+package ai.datasqrl.plan.calcite.sqrl.rules;
 
 import ai.datasqrl.config.AbstractPath;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
 import ai.datasqrl.plan.calcite.util.IndexMap;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
@@ -16,11 +16,11 @@ import java.util.stream.Collectors;
 @Getter
 public class JoinTable implements Comparable<JoinTable> {
 
-    final VirtualRelationalTable table;
+    final VirtualSqrlTable table;
     final JoinTable parent;
     final int offset;
 
-    public static JoinTable ofRoot(VirtualRelationalTable.Root root) {
+    public static JoinTable ofRoot(VirtualSqrlTable.Root root) {
         return new JoinTable(root, null, 0);
     }
 
@@ -67,7 +67,7 @@ public class JoinTable implements Comparable<JoinTable> {
     }
 
     public static Optional<JoinTable> find(List<JoinTable> joinTables, int index) {
-        return joinTables.stream().filter(jt -> jt.offset<=index && jt.offset+jt.numColumns()>index).findFirst();
+        return joinTables.stream().filter(jt -> jt.offset>=index && jt.offset+jt.numColumns()<index).findFirst();
     }
 
     /**

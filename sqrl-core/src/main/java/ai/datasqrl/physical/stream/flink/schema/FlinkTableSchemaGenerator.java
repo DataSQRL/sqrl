@@ -65,8 +65,8 @@ public class FlinkTableSchemaGenerator extends SimpleFlexibleTableConverterVisit
     }
 
     @Override
-    public DataType wrapArray(DataType type) {
-        return DataTypes.ARRAY(type);
+    public DataType wrapArray(DataType type, boolean nullable) {
+        return DataTypes.ARRAY(nullable(type,nullable));
     }
 
     public Schema getSchema() {

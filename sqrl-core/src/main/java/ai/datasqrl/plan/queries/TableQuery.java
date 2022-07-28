@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.queries;
 
-import ai.datasqrl.schema.SQRLTable;
+import ai.datasqrl.schema.ScriptTable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.RelNode;
@@ -12,6 +12,6 @@ import org.apache.calcite.rel.RelNode;
 @Getter
 public class TableQuery {
 
-  SQRLTable table;
+  ScriptTable table;
   RelNode relNode;
 }

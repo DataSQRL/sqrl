@@ -1,14 +1,9 @@
 package ai.datasqrl.plan.calcite.memory;
 
 import ai.datasqrl.plan.calcite.memory.table.DataTable;
-import java.util.Collection;
-import java.util.List;
 import org.apache.calcite.linq4j.tree.Expression;
-import org.apache.calcite.rel.type.RelProtoDataType;
-import org.apache.calcite.schema.Function;
-import org.apache.calcite.schema.Schema;
+import org.apache.calcite.schema.AbstractSqrlSchema;
 import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.schema.SchemaVersion;
 import org.apache.calcite.schema.Schemas;
 import org.apache.calcite.schema.Table;
 
@@ -19,7 +14,7 @@ import java.util.Set;
 /**
  * An schema that holds data in-memory
  */
-public class InMemoryCalciteSchema implements Schema {
+public class InMemoryCalciteSchema extends AbstractSqrlSchema {
 
   Map<String, DataTable> dataTableMap = new HashMap<>();
 
@@ -42,43 +37,4 @@ public class InMemoryCalciteSchema implements Schema {
     return Schemas.subSchemaExpression(schemaPlus, s, this.getClass());
   }
 
-  @Override
-  public RelProtoDataType getType(String s) {
-    return null;
-  }
-
-  @Override
-  public Set<String> getTypeNames() {
-    return Set.of();
-  }
-
-  @Override
-  public Collection<Function> getFunctions(String s) {
-    return List.of();
-  }
-
-  @Override
-  public Set<String> getFunctionNames() {
-    return Set.of();
-  }
-
-  @Override
-  public Schema getSubSchema(String s) {
-    return null;
-  }
-
-  @Override
-  public Set<String> getSubSchemaNames() {
-    return Set.of();
-  }
-
-  @Override
-  public boolean isMutable() {
-    return false;
-  }
-
-  @Override
-  public Schema snapshot(SchemaVersion schemaVersion) {
-    return this;
-  }
 }

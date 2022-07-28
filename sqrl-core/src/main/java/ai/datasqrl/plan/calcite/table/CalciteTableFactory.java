@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.table;
+package ai.datasqrl.plan.calcite.sqrl.table;
 
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.tree.name.Name;
@@ -6,12 +6,10 @@ import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.SqrlType2Calcite;
-import ai.datasqrl.plan.calcite.rules.Sqrl2SqlLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
-import ai.datasqrl.plan.local.ScriptTableDefinition;
+import ai.datasqrl.plan.local.ImportedTable;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.SQRLTable;
+import ai.datasqrl.schema.ScriptTable;
 import ai.datasqrl.schema.builder.AbstractTableFactory;
 import ai.datasqrl.schema.builder.NestedTableBuilder;
 import ai.datasqrl.schema.builder.VirtualTableFactory;
@@ -27,10 +25,12 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Pair;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CalciteTableFactory extends VirtualTableFactory<RelDataType, VirtualRelationalTable> {
+public class CalciteTableFactory extends VirtualTableFactory<RelDataType,VirtualSqrlTable> {
 
     private final AtomicInteger tableIdCounter = new AtomicInteger(0);
     private final NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM; //TODO: make constructor argument and configure correctly
@@ -45,43 +45,22 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         return name.suffix(Integer.toString(tableIdCounter.incrementAndGet()));
     }
 
-    public ScriptTableDefinition importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias) {
+    public ImportedTable importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias) {
         CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(this);
         RelDataType rootType = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
                 schemaGen).get();
         AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
 
-        ImportedRelationalTable impTable = new ImportedRelationalTable(getTableId(rootTable.getName()), getTimestampHolder(rootTable),
+        TimestampHolder timeHolder = new TimestampHolder();
+        ImportedSqrlTable impTable = new ImportedSqrlTable(getTableId(rootTable.getName()), timeHolder,
                 sourceTable, rootType);
 
-        Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable);
-        return new ScriptTableDefinition(impTable, tables);
+        Map<ScriptTable,VirtualSqrlTable> tables = createVirtualTables(rootTable, impTable);
+        return new ImportedTable(impTable, tables);
     }
 
-    public ScriptTableDefinition defineTable(NamePath tablePath, Sqrl2SqlLogicalPlanConverter.ProcessedRel rel,
-                                      List<Name> fieldNames) {
-        ContinuousIndexMap indexmap = rel.getIndexMap();
-        Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());
-        QueryRelationalTable baseTable =  new QueryRelationalTable(getTableId(tablePath.getLast()),
-                rel.getType(),rel.getRelNode(),
-                TimestampHolder.Base.ofDerived(rel.getTimestamp()),
-                rel.getTopN(),rel.getPrimaryKey().getSourceLength());
-        LinkedHashMap<Integer,Name> index2Name = new LinkedHashMap<>();
-        for (int i = 0; i < fieldNames.size(); i++) {
-            index2Name.put(indexmap.map(i), fieldNames.get(i));
-        }
-        AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = convert2TableBuilder(tablePath, baseTable.getRowType(),
-                baseTable.getNumPrimaryKeys(), index2Name);
-        Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable);
-        ScriptTableDefinition tblDef = new ScriptTableDefinition(baseTable, tables);
-        //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
-        //This may not be an issue, but if we need to preserve the order, it is probably easiest to re-order the fields
-        //of tblDef.getTable() based on the provided list of fieldNames
-        return tblDef;
-    }
-
-    public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,
-                                                                      QueryRelationalTable baseTable) {
+    public Map<ScriptTable,VirtualSqrlTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,
+                                                                 QuerySqrlTable baseTable) {
         return build(rootTable, new VirtualTableConstructor(baseTable));
     }
 
@@ -100,28 +79,26 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
     }
 
     @Value
-    private final class VirtualTableConstructor implements VirtualTableBuilder<RelDataType, VirtualRelationalTable> {
+    private final class VirtualTableConstructor implements VirtualTableBuilder<RelDataType,VirtualSqrlTable> {
 
-        QueryRelationalTable baseTable;
+        QuerySqrlTable baseTable;
 
         @Override
-        public VirtualRelationalTable make(@NonNull AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder) {
+        public VirtualSqrlTable make(@NonNull AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder) {
             RelDataType rowType = convertTable(tblBuilder,false);
-            return new VirtualRelationalTable.Root(getTableId(tblBuilder.getName()), rowType, baseTable);
+            return new VirtualSqrlTable.Root(getTableId(tblBuilder.getName()), rowType, baseTable);
         }
 
         @Override
-        public VirtualRelationalTable make(@NonNull AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder, VirtualRelationalTable parent, Name shredFieldName) {
+        public VirtualSqrlTable make(@NonNull AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder, VirtualSqrlTable parent, Name shredFieldName) {
             RelDataType rowType = convertTable(tblBuilder,false);
-            return VirtualRelationalTable.Child.of(getTableId(tblBuilder.getName()),rowType,parent,shredFieldName.getCanonical());
+            return VirtualSqrlTable.Child.of(getTableId(tblBuilder.getName()),rowType,parent,shredFieldName.getCanonical());
         }
     }
 
     public UniversalTableBuilder<RelDataType> convert2TableBuilder(@NonNull NamePath path,
-                                                                   RelDataType type, int numPrimaryKeys,
-                                                                   LinkedHashMap<Integer,Name> index2Name) {
-        return createBuilder(path, null, type, numPrimaryKeys, index2Name,
-                new CalciteTypeIntrospector());
+                                                                   RelDataType type, int numPrimaryKeys) {
+        return createBuilder(path, null, type, numPrimaryKeys, new CalciteTypeIntrospector());
     }
 
     public class CalciteTypeIntrospector implements TypeIntrospector<RelDataType,RelDataTypeField> {

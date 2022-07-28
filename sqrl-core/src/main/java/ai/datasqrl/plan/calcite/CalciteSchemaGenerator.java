@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.calcite;
 
-import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
+import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.schema.builder.AbstractTableFactory;
 import ai.datasqrl.schema.input.SqrlTypeConverter;
 import ai.datasqrl.schema.input.TableBuilderFlexibleTableConverterVisitor;
@@ -29,6 +29,8 @@ public class CalciteSchemaGenerator extends TableBuilderFlexibleTableConverterVi
         return Optional.of(tblFactory.convertTable(tblBuilder,true));
     }
 
+
+
     @Override
     public RelDataType nullable(RelDataType type, boolean nullable) {
         return typeFactory.createTypeWithNullability(type, nullable);
@@ -40,8 +42,8 @@ public class CalciteSchemaGenerator extends TableBuilderFlexibleTableConverterVi
     }
 
     @Override
-    public RelDataType wrapArray(RelDataType type) {
-        return typeFactory.createArrayType(type,-1L);
+    public RelDataType wrapArray(RelDataType type, boolean nullable) {
+        return typeFactory.createArrayType(nullable(type,nullable),-1L);
     }
 
 

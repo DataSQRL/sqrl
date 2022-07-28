@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.table;
+package ai.datasqrl.plan.calcite.sqrl.table;
 
 import ai.datasqrl.config.AbstractPath;
 import lombok.NonNull;

@@ -3,13 +3,11 @@ package ai.datasqrl.schema;
 import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
-import lombok.Value;
 
 import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class FieldList {
@@ -34,7 +32,7 @@ public class FieldList {
     }
 
     public void addField(Field field) {
-//        Preconditions.checkArgument(field.getVersion()>=nextVersion(field.getName()));
+        Preconditions.checkArgument(field.getVersion()>=nextVersion(field.getName()));
         fields.add(field);
     }
 
@@ -42,12 +40,6 @@ public class FieldList {
         Stream<Field> s = fields.stream();
         if (onlyVisible) s = s.filter(Field::isVisible);
         return s;
-    }
-
-    public Stream<IndexedField> getIndexedFields(boolean onlyVisible) {
-        IntStream s = IntStream.range(0,fields.size());
-        if (onlyVisible) s = s.filter(i -> fields.get(i).isVisible());
-        return s.mapToObj(i -> new IndexedField(i,fields.get(i)));
     }
 
     public List<Field> getAccessibleFields() {
@@ -61,12 +53,6 @@ public class FieldList {
         return fields.stream().filter(f -> f.getName().equals(name))
                 .filter(Field::isVisible)
                 .max((a,b) -> Integer.compare(a.getVersion(),b.getVersion()));
-    }
-
-    @Value
-    public static class IndexedField {
-        final int index;
-        final Field field;
     }
 
 

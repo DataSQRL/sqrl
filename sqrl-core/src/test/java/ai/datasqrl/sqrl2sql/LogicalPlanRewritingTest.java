@@ -9,20 +9,32 @@ import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.parse.tree.SqrlStatement;
-import ai.datasqrl.plan.local.generate.GeneratorBuilder;
+import ai.datasqrl.plan.calcite.Planner;
+import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.local.analyze.Analysis;
+import ai.datasqrl.plan.local.analyze.Analyzer;
 import ai.datasqrl.plan.local.generate.Generator;
+import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
 import java.io.IOException;
-
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.schema.BridgedCalciteSchema;
+import org.apache.calcite.schema.SchemaPlus;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class LogicalPlanRewritingTest extends AbstractSQRLIT {
-  private ConfiguredSqrlParser parser;
-  private ErrorCollector errorCollector;
-  private ImportManager importManager;
+
+  ConfiguredSqrlParser parser;
+
+  ErrorCollector errorCollector;
+  ImportManager importManager;
+  Analyzer analyzer;
+  Analysis analysis;
+  private Planner planner;
+  //  private ScriptNode script;
   private Generator generator;
 
   @BeforeEach
@@ -38,9 +50,21 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
     ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
     Assertions.assertTrue(importManager.registerUserSchema(bundle.getMainScript().getSchema(),
         ErrorCollector.root()));
-
     parser = ConfiguredSqrlParser.newParser(errorCollector);
-    generator = GeneratorBuilder.build(importManager, errorCollector);
+    analyzer = new Analyzer(importManager, SchemaAdjustmentSettings.DEFAULT,
+        errorCollector);
+
+    SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
+    String schemaName = "test";
+    BridgedCalciteSchema subSchema = new BridgedCalciteSchema();
+    rootSchema.add(schemaName, subSchema); //also give the subschema access
+
+    PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
+    Planner planner = plannerFactory.createPlanner(schemaName);
+    this.planner = planner;
+
+    generator = new Generator(planner, analyzer.getAnalysis());
+    subSchema.setBridge(generator);
   }
 
 
@@ -50,7 +74,7 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
             "IMPORT ecommerce-data.Orders;\n"
           + "IMPORT ecommerce-data.Product;\n"
           + "IMPORT ecommerce-data.Customer;\n"
-          + "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;\n"
+        //  + "EntryCount := SELECT o.id, e.quantity * e.unit_price - e.discount as price FROM Orders o JOIN o.entries e;\n"
     );
   }
 
@@ -81,6 +105,7 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
     ScriptNode node = parser.parse(script);
 
     for (Node n : node.getStatements()) {
+      analyzer.analyze((SqrlStatement) n);
       generator.generate((SqrlStatement)n);
     }
   }
