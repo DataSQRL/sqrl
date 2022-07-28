@@ -1,8 +1,5 @@
 package ai.datasqrl.plan.local.analyze;
 
-import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
@@ -15,55 +12,40 @@ import ai.datasqrl.plan.calcite.SqrlConformance;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
+import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
+import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.generate.FieldNames;
+import ai.datasqrl.plan.local.transpile.*;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.ScriptTable;
+import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.prepare.CalciteCatalogReader;
-import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Table;
-import ai.datasqrl.plan.local.transpile.JoinBuilder;
-import ai.datasqrl.plan.local.transpile.JoinDeclaration;
-import ai.datasqrl.plan.local.transpile.JoinDeclarationContainerImpl;
-import ai.datasqrl.plan.local.transpile.JoinDeclarationImpl;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
-import ai.datasqrl.plan.local.transpile.SqlNodeBuilderImpl;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOrderBy;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlTableRef;
-import ai.datasqrl.plan.local.transpile.TableMapperImpl;
-import ai.datasqrl.plan.local.transpile.Transpile;
-import ai.datasqrl.plan.local.transpile.UniqueAliasGeneratorImpl;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
+import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.*;
+
+import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class CalciteParserTest extends AbstractSQRLIT {
 
@@ -75,7 +57,7 @@ class CalciteParserTest extends AbstractSQRLIT {
   SqlNodeBuilderImpl sqlNodeBuilder;
   TableMapperImpl tableMapper;
   private CalciteSchema shredSchema;
-  ScriptTable orders;
+  SQRLTable orders;
 
   @BeforeEach
   public void each() {
@@ -117,7 +99,7 @@ class CalciteParserTest extends AbstractSQRLIT {
     importedTable.getShredTableMap().values().stream().forEach(vt -> shredSchema.add(vt.getNameId(),vt));
 
     this.shredSchema = shredSchema;
-    orders = (ScriptTable) schema.getTable("Orders", false).getTable();
+    orders = (SQRLTable) schema.getTable("Orders", false).getTable();
 
   }
 
@@ -285,7 +267,7 @@ class CalciteParserTest extends AbstractSQRLIT {
 //        "SELECT e.parent.id, sum(e.parent.id) s "
 //            + "FROM Orders.entries e "
 //            + "GROUP BY 1 ", schema);
-    ScriptTable scriptTable = (ScriptTable) schema.getTable("Orders", false).getTable();
+    SQRLTable SQRLTable = (SQRLTable) schema.getTable("Orders", false).getTable();
 
 //
 //    //TODO: don't duplicate
@@ -294,7 +276,7 @@ class CalciteParserTest extends AbstractSQRLIT {
             + "FROM _ JOIN _.entries.parent p "
             + "LEFT JOIN p.entries e "
             + "GROUP BY 1, s "
-            + "ORDER BY p.id, sum(p.entries.quantity)", schema, Optional.of(scriptTable), new FieldNames());
+            + "ORDER BY p.id, sum(p.entries.quantity)", schema, Optional.of(SQRLTable), new FieldNames());
 
 
 
@@ -305,13 +287,13 @@ class CalciteParserTest extends AbstractSQRLIT {
 
     FieldNames names = new FieldNames();
     Field discount =
-        ((Relationship)scriptTable.getField(Name.system("entries")).get()).getToTable().getField(Name.system("discount")).get();
+        ((Relationship) SQRLTable.getField(Name.system("entries")).get()).getToTable().getField(Name.system("discount")).get();
     names.put(discount, "discount1");
 
 //    validate(
 //        "SELECT _._uuid x "
 //            + "FROM _ JOIN _.entries e "
-//            + "ORDER BY _._uuid", schema, Optional.of(scriptTable), names);
+//            + "ORDER BY _._uuid", schema, Optional.of(SQRLTable), names);
 
   }
 
@@ -324,7 +306,7 @@ class CalciteParserTest extends AbstractSQRLIT {
         createTableRef(rel.getToTable(), alias, tableMapper), "_", alias);
   }
 
-  protected SqlNode createTableRef(ScriptTable table, String alias, TableMapperImpl tableMapper) {
+  protected SqlNode createTableRef(SQRLTable table, String alias, TableMapperImpl tableMapper) {
     return new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
         new SqlIdentifier(tableMapper.getTable(table).getNameId(), SqlParserPos.ZERO), SqlNodeList.EMPTY),
         new SqlIdentifier(alias, SqlParserPos.ZERO)}, SqlParserPos.ZERO);
@@ -365,8 +347,8 @@ class CalciteParserTest extends AbstractSQRLIT {
 //    //o.entries
 //    TablePath tablePath = new TablePath() {
 //      @Override
-//      public ScriptTable getBaseTable() {
-//        return new ScriptTable(NamePath.of("entries"));
+//      public SQRLTable getBaseTable() {
+//        return new SQRLTable(NamePath.of("entries"));
 //      }
 //
 //      @Override
@@ -408,7 +390,7 @@ class CalciteParserTest extends AbstractSQRLIT {
     return validate(query, schema, Optional.empty(), new FieldNames());
   }
 
-  private Pair<SqlNode, SqrlValidatorImpl> validate(String query, CalciteSchema schema, Optional<ScriptTable> ctx, FieldNames names)
+  private Pair<SqlNode, SqrlValidatorImpl> validate(String query, CalciteSchema schema, Optional<SQRLTable> ctx, FieldNames names)
       throws SqlParseException {
     SqlNode node = SqlParser.create(query, SqlParser.config().withCaseSensitive(false)
         .withUnquotedCasing(Casing.UNCHANGED)).parseQuery();

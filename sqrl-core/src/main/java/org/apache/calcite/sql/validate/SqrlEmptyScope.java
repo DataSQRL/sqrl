@@ -22,24 +22,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import ai.datasqrl.schema.SQRLTable;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.plan.RelOptSchema;
-import org.apache.calcite.prepare.Prepare;
 import org.apache.calcite.prepare.RelOptTableImpl;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.StructKind;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.ScriptTable;
 import com.google.common.base.Preconditions;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.CalciteSchema.TableEntry;
 import org.apache.calcite.jdbc.SqrlSimpleCalciteSchema;
-import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.prepare.Prepare.PreparingTable;
-import org.apache.calcite.prepare.RelOptTableImpl;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.schema.Schema;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.Wrapper;
@@ -56,14 +51,7 @@ import org.apache.calcite.util.Util;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableMap;
-
-import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
  * Deviant implementation of {@link SqlValidatorScope} for the top of the scope
@@ -167,10 +155,10 @@ class SqrlEmptyScope implements SqlValidatorScope {
       SqlValidatorNamespace namespace, SqlNameMatcher nameMatcher, Path path,
       Resolved resolved) {
     List<Relationship> relationships = new ArrayList<>();
-    ScriptTable baseTable = null;
+    SQRLTable baseTable = null;
 
     SqlValidatorTable relOptTable = namespace.getTable();
-    ScriptTable t = relOptTable.unwrap(ScriptTable.class);
+    SQRLTable t = relOptTable.unwrap(SQRLTable.class);
     Preconditions.checkNotNull(t);
     CalciteSchema schema1 = new SqrlSimpleCalciteSchema((Schema)t);
     CalciteSchema schema = schema1;
@@ -192,7 +180,7 @@ class SqrlEmptyScope implements SqlValidatorScope {
         return;
       }
       if (i == 0) {
-        baseTable = (ScriptTable) entry.getTable();
+        baseTable = (SQRLTable) entry.getTable();
       }
 
       //Add in rels
@@ -200,7 +188,7 @@ class SqrlEmptyScope implements SqlValidatorScope {
           .map(f->(Relationship) f)
           .get();
       relationships.add(rel);
-      t = (ScriptTable) entry.getTable();
+      t = (SQRLTable) entry.getTable();
 
       CalciteSchema schema3 = new SqrlSimpleCalciteSchema((Schema)entry.getTable());
       path = path.plus(null, -1, schema3.name, StructKind.NONE);
@@ -231,8 +219,8 @@ class SqrlEmptyScope implements SqlValidatorScope {
     List<String> remainingNames = concat;
     int size = concat.size();
     List<Relationship> relationships = new ArrayList<>();
-    ScriptTable baseTable = null;
-    ScriptTable walkTable = null;
+    SQRLTable baseTable = null;
+    SQRLTable walkTable = null;
     for (int i = 0; i < size; i++) {
       String schemaName = concat.get(i);
       if (schema == rootSchema
@@ -262,14 +250,14 @@ class SqrlEmptyScope implements SqlValidatorScope {
         // calcite can't tell when a schema ends and a table begins
         // These are absolute tables from a schema so append to a list of tables for later resolution
         if (baseTable == null) {
-          baseTable = (ScriptTable) table;
+          baseTable = (SQRLTable) table;
           walkTable = baseTable;
         } else {
           Relationship rel = walkTable.getField(Name.system(schemaName))
               .map(f->(Relationship)f)
               .get();
           relationships.add(rel);
-          walkTable = (ScriptTable)table;
+          walkTable = (SQRLTable)table;
         }
         if (table instanceof Schema && i != size - 1) {
           CalciteSchema schema1 = new SqrlSimpleCalciteSchema((Schema)table);

@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.table;
+package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
@@ -16,8 +16,13 @@ import org.apache.calcite.util.ImmutableBitSet;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A relational table that is defined by the user query in the SQRL script.
+ *
+ * This is a physical relation that gets materialized in the write DAG or computed in the read DAG.
+ */
 @Getter
-public class QuerySqrlTable extends AbstractSqrlTable {
+public class QueryRelationalTable extends AbstractRelationalTable {
 
   @NonNull
   private final Type type;
@@ -34,10 +39,10 @@ public class QuerySqrlTable extends AbstractSqrlTable {
   @Setter
   private TableStatistic statistic = null;
 
-  public QuerySqrlTable(@NonNull Name rootTableId, @NonNull Type type,
-      RelNode relNode,
-      @NonNull TimestampHolder.Base timestamp, @NonNull TopNConstraint topN,
-      @NonNull int numPrimaryKeys) {
+  public QueryRelationalTable(@NonNull Name rootTableId, @NonNull Type type,
+                              RelNode relNode,
+                              @NonNull TimestampHolder.Base timestamp, @NonNull TopNConstraint topN,
+                              @NonNull int numPrimaryKeys) {
     super(rootTableId);
     this.type = type;
     this.timestamp = timestamp;

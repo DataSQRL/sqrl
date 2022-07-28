@@ -1,11 +1,11 @@
 package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.ScriptTable;
+import ai.datasqrl.schema.SQRLTable;
 import java.util.Optional;
 
 public interface TablePath {
-    ScriptTable getBaseTable();
+    SQRLTable getBaseTable();
     Optional<String> getBaseAlias();
 
     boolean isRelative();

@@ -16,8 +16,8 @@
  */
 package org.apache.calcite.sql.validate;
 
+import ai.datasqrl.schema.SQRLTable;
 import org.apache.calcite.linq4j.Ord;
-import org.apache.calcite.linq4j.function.Function2;
 import org.apache.calcite.linq4j.function.Functions;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelOptUtil;
@@ -25,7 +25,6 @@ import org.apache.calcite.prepare.Prepare;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 import static org.apache.calcite.util.Static.RESOURCE;
 
-import ai.datasqrl.schema.ScriptTable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -57,13 +56,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import lombok.Getter;
-import org.apache.calcite.linq4j.Ord;
-import org.apache.calcite.linq4j.function.Function2;
-import org.apache.calcite.linq4j.function.Functions;
 import org.apache.calcite.plan.RelOptSchema;
-import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.plan.RelOptUtil;
-import org.apache.calcite.prepare.Prepare;
 import org.apache.calcite.prepare.RelOptTableImpl;
 import org.apache.calcite.rel.type.DynamicRecordType;
 import org.apache.calcite.rel.type.RelDataType;
@@ -149,42 +142,6 @@ import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Static;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.trace.CalciteTrace;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-
-import org.slf4j.Logger;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.AbstractList;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import static org.apache.calcite.sql.SqlUtil.stripAs;
-import static org.apache.calcite.util.Static.RESOURCE;
 
 import org.slf4j.Logger;
 
@@ -306,7 +263,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
   private TypeCoercion typeCoercion;
 
   @Getter
-  private Optional<ScriptTable> ctx;
+  private Optional<SQRLTable> ctx;
 
   //~ Constructors -----------------------------------------------------------
 
@@ -347,7 +304,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
     }
   }
 
-  public void setContext(Optional<ScriptTable> ctx) {
+  public void setContext(Optional<SQRLTable> ctx) {
     this.ctx = ctx;
   }
 
@@ -5115,7 +5072,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
 //        .collect(Collectors.toMap(e->e.name, e->e.namespace));
   }
 
-  public Optional<ScriptTable> getContextTable(SqlValidatorScope scope) {
+  public Optional<SQRLTable> getContextTable(SqlValidatorScope scope) {
     return ctx;
   }
 

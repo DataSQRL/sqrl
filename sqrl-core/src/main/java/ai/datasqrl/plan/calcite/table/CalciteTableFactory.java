@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.table;
+package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.tree.name.Name;
@@ -6,12 +6,12 @@ import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.SqrlType2Calcite;
-import ai.datasqrl.plan.calcite.sqrl.rules.Sqrl2SqlLogicalPlanConverter;
+import ai.datasqrl.plan.calcite.rules.Sqrl2SqlLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.ScriptTable;
+import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.builder.AbstractTableFactory;
 import ai.datasqrl.schema.builder.NestedTableBuilder;
 import ai.datasqrl.schema.builder.VirtualTableFactory;
@@ -30,7 +30,7 @@ import org.apache.calcite.util.Pair;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CalciteTableFactory extends VirtualTableFactory<RelDataType,VirtualSqrlTable> {
+public class CalciteTableFactory extends VirtualTableFactory<RelDataType, VirtualRelationalTable> {
 
     private final AtomicInteger tableIdCounter = new AtomicInteger(0);
     private final NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM; //TODO: make constructor argument and configure correctly
@@ -51,10 +51,10 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
                 schemaGen).get();
         AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
 
-        ImportedSqrlTable impTable = new ImportedSqrlTable(getTableId(rootTable.getName()), getTimestampHolder(rootTable),
+        ImportedRelationalTable impTable = new ImportedRelationalTable(getTableId(rootTable.getName()), getTimestampHolder(rootTable),
                 sourceTable, rootType);
 
-        Map<ScriptTable,VirtualSqrlTable> tables = createVirtualTables(rootTable, impTable);
+        Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable);
         return new ScriptTableDefinition(impTable, tables);
     }
 
@@ -62,7 +62,7 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
                                       List<Name> fieldNames) {
         ContinuousIndexMap indexmap = rel.getIndexMap();
         Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());
-        QuerySqrlTable baseTable =  new QuerySqrlTable(getTableId(tablePath.getLast()),
+        QueryRelationalTable baseTable =  new QueryRelationalTable(getTableId(tablePath.getLast()),
                 rel.getType(),rel.getRelNode(),
                 TimestampHolder.Base.ofDerived(rel.getTimestamp()),
                 rel.getTopN(),rel.getPrimaryKey().getSourceLength());
@@ -72,7 +72,7 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
         }
         AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = convert2TableBuilder(tablePath, baseTable.getRowType(),
                 baseTable.getNumPrimaryKeys(), index2Name);
-        Map<ScriptTable,VirtualSqrlTable> tables = createVirtualTables(rootTable, baseTable);
+        Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable);
         ScriptTableDefinition tblDef = new ScriptTableDefinition(baseTable, tables);
         //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
         //This may not be an issue, but if we need to preserve the order, it is probably easiest to re-order the fields
@@ -80,8 +80,8 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
         return tblDef;
     }
 
-    public Map<ScriptTable,VirtualSqrlTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,
-                                                                 QuerySqrlTable baseTable) {
+    public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,
+                                                                      QueryRelationalTable baseTable) {
         return build(rootTable, new VirtualTableConstructor(baseTable));
     }
 
@@ -100,20 +100,20 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType,Virtual
     }
 
     @Value
-    private final class VirtualTableConstructor implements VirtualTableBuilder<RelDataType,VirtualSqrlTable> {
+    private final class VirtualTableConstructor implements VirtualTableBuilder<RelDataType, VirtualRelationalTable> {
 
-        QuerySqrlTable baseTable;
+        QueryRelationalTable baseTable;
 
         @Override
-        public VirtualSqrlTable make(@NonNull AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder) {
+        public VirtualRelationalTable make(@NonNull AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder) {
             RelDataType rowType = convertTable(tblBuilder,false);
-            return new VirtualSqrlTable.Root(getTableId(tblBuilder.getName()), rowType, baseTable);
+            return new VirtualRelationalTable.Root(getTableId(tblBuilder.getName()), rowType, baseTable);
         }
 
         @Override
-        public VirtualSqrlTable make(@NonNull AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder, VirtualSqrlTable parent, Name shredFieldName) {
+        public VirtualRelationalTable make(@NonNull AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder, VirtualRelationalTable parent, Name shredFieldName) {
             RelDataType rowType = convertTable(tblBuilder,false);
-            return VirtualSqrlTable.Child.of(getTableId(tblBuilder.getName()),rowType,parent,shredFieldName.getCanonical());
+            return VirtualRelationalTable.Child.of(getTableId(tblBuilder.getName()),rowType,parent,shredFieldName.getCanonical());
         }
     }
 

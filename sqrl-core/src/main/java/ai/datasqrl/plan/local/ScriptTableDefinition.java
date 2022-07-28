@@ -1,9 +1,9 @@
 package ai.datasqrl.plan.local;
 
-import ai.datasqrl.plan.calcite.sqrl.table.QuerySqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.VirtualSqrlTable;
+import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.ScriptTable;
+import ai.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -14,16 +14,16 @@ import java.util.Map;
 @Getter
 public class ScriptTableDefinition {
 
-  private final QuerySqrlTable baseTable;
-  private final Map<ScriptTable, VirtualSqrlTable> shredTableMap;
+  private final QueryRelationalTable baseTable;
+  private final Map<SQRLTable, VirtualRelationalTable> shredTableMap;
 
-  public ScriptTableDefinition(@NonNull QuerySqrlTable baseTable,
-                               @NonNull Map<ScriptTable, VirtualSqrlTable> shredTableMap) {
+  public ScriptTableDefinition(@NonNull QueryRelationalTable baseTable,
+                               @NonNull Map<SQRLTable, VirtualRelationalTable> shredTableMap) {
     this.baseTable = baseTable;
     this.shredTableMap = shredTableMap;
   }
 
-  public ScriptTable getTable() {
+  public SQRLTable getTable() {
     return shredTableMap.entrySet().stream().filter(e -> e.getValue().isRoot()).map(Map.Entry::getKey).findFirst().get();
   }
 
@@ -46,7 +46,7 @@ public class ScriptTableDefinition {
     return fieldMap;
   }
 
-  public Map<ScriptTable, VirtualSqrlTable> getShredTableMap() {
+  public Map<SQRLTable, VirtualRelationalTable> getShredTableMap() {
     return shredTableMap;
   }
 

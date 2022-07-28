@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
+import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.schema.Relationship;
 import com.google.common.base.Preconditions;
 import java.util.Optional;

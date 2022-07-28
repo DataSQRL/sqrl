@@ -1,8 +1,8 @@
 package ai.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.calcite.sqrl.table.AbstractSqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
-import ai.datasqrl.schema.ScriptTable;
+import ai.datasqrl.plan.calcite.table.AbstractRelationalTable;
+import ai.datasqrl.plan.calcite.table.TableWithPK;
+import ai.datasqrl.schema.SQRLTable;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,10 +11,10 @@ import lombok.Getter;
 public class TableMapperImpl implements TableMapper {
 
   @Getter
-  Map<ScriptTable, AbstractSqrlTable> tableMap;
+  Map<SQRLTable, AbstractRelationalTable> tableMap;
 
   @Override
-  public TableWithPK getTable(ScriptTable table) {
+  public TableWithPK getTable(SQRLTable table) {
     return tableMap.get(table);
   }
 }

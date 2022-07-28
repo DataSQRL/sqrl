@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.table;
+package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.plan.calcite.util.IndexMap;
 import lombok.Value;

@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.rules;
+package ai.datasqrl.plan.calcite.rules;
 
 import com.google.common.base.Preconditions;
 import org.apache.calcite.rel.RelNode;

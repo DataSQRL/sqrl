@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
+import ai.datasqrl.plan.calcite.table.TableWithPK;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlNode;
 

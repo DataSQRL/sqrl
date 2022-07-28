@@ -54,12 +54,12 @@
 //  @Override
 //  @SneakyThrows
 //  public <T> T visit(SourceTableImportOp op) {
-//    List<AbstractSqrlTable> createdTables = super.visit(op);
+//    List<AbstractRelationalTable> createdTables = super.visit(op);
 //
-//    ImportedSqrlTable impTable = (ImportedSqrlTable) createdTables.get(0);
+//    ImportedRelationalTable impTable = (ImportedRelationalTable) createdTables.get(0);
 //    setData(impTable.getNameId(), impTable.getRowType().getFieldList(), getDataFromImport(impTable.getSourceTableImport()));
 //
-//    QuerySqrlTable queryTable = (QuerySqrlTable) createdTables.get(1);
+//    QueryRelationalTable queryTable = (QueryRelationalTable) createdTables.get(1);
 //    executeAndRegister(queryTable.getNameId());
 //    return null;
 //  }

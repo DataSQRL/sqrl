@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.table;
+package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Field;
@@ -17,12 +17,18 @@ import org.apache.calcite.schema.impl.AbstractTable;
 
 import java.util.List;
 
+/**
+ * A relational table is a Calcite table that represents a relation in standard relational algebra.
+ *
+ * This is the base class for all relational tables that the transpiler creates to represent the logical SQRL tables
+ * that users import or define in their scripts.
+ */
 @EqualsAndHashCode
-public abstract class AbstractSqrlTable extends AbstractTable implements QueryableTable, TableWithPK {
+public abstract class AbstractRelationalTable extends AbstractTable implements QueryableTable, TableWithPK {
 
   protected final String nameId;
 
-  protected AbstractSqrlTable(@NonNull Name nameId) {
+  protected AbstractRelationalTable(@NonNull Name nameId) {
     this.nameId = nameId.getCanonical();
   }
 

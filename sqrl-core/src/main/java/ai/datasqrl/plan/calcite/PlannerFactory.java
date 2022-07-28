@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.calcite;
 
-import ai.datasqrl.plan.calcite.sqrl.hints.SqrlHintStrategyTable;
+import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.rel.RelCollationTraitDef;

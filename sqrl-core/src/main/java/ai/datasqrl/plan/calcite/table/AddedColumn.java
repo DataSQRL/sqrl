@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.table;
+package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.plan.calcite.util.IndexMap;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
@@ -16,7 +16,7 @@ import java.util.List;
 public abstract class AddedColumn {
 
     final String nameId;
-    //Being inlined means that the column has been added to the base QuerySqrlTable
+    //Being inlined means that the column has been added to the base QueryRelationalTable
     final boolean isInlined;
 
     public abstract RelDataType getDataType();

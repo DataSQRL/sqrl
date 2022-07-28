@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.hints;
+package ai.datasqrl.plan.calcite.hints;
 
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;

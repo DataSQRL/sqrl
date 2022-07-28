@@ -4,13 +4,13 @@ import static org.apache.calcite.util.Static.RESOURCE;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
-import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
+import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.local.generate.FieldNames;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
-import ai.datasqrl.schema.ScriptTable;
+import ai.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +81,7 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     }
 
     IdentifierNamespace identifierNamespace = (IdentifierNamespace)qualified.namespace;
-    ScriptTable st = identifierNamespace.getTable().unwrap(ScriptTable.class);
+    SQRLTable st = identifierNamespace.getTable().unwrap(SQRLTable.class);
     List<Relationship> toOneRels = isToOne(qualified.suffix(), st);
     if (!toOneRels.isEmpty()) {
       TableWithPK table = tableMapper.getTable(toOneRels.get(toOneRels.size()-1).getToTable());
@@ -110,12 +110,12 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     return id.setName(id.names.size() - 1, newName);
   }
 
-  private List<Relationship> isToOne(List<String> suffix, ScriptTable st) {
+  private List<Relationship> isToOne(List<String> suffix, SQRLTable st) {
     if (suffix.size() < 2) {
       return List.of();
     }
     List<Relationship> relationships = new ArrayList<>();
-    ScriptTable walk = st;
+    SQRLTable walk = st;
     for (String name : suffix) {
       Field field = walk.getField(Name.system(name)).get();
       if (field instanceof Relationship) {
@@ -142,9 +142,9 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     //namespace:
     //  resolveNamespace: (TableNamespace, RelativeTableNamespace)
     //   table:relopttable
-    //     table: ScriptTable
+    //     table: SQRLTable
 //    SqlValidatorNamespace tn = scope.getValidator().getNamespace(arg);//ns.getResolvedNamespace();
-    ScriptTable baseTable = qualifiedArg.namespace.getTable().unwrap(ScriptTable.class);
+    SQRLTable baseTable = qualifiedArg.namespace.getTable().unwrap(SQRLTable.class);
     Optional<String> baseAlias = Optional.ofNullable(qualifiedArg.prefix())
         .filter(p -> p.size() == 1).map(p->p.get(0));
 

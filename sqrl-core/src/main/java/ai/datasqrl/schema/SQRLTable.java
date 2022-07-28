@@ -7,33 +7,30 @@ import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.schema.Relationship.JoinType;
 import lombok.Getter;
 import lombok.NonNull;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.calcite.DataContext;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.tree.Expression;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.*;
 import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelProtoDataType;
-import org.apache.calcite.rel.type.RelRecordType;
-import org.apache.calcite.rel.type.StructKind;
-import org.apache.calcite.schema.Function;
-import org.apache.calcite.schema.ScannableTable;
-import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.schema.SchemaVersion;
-import org.apache.calcite.schema.Statistic;
-import org.apache.calcite.schema.Statistics;
-import org.apache.calcite.schema.Table;
+import org.apache.calcite.schema.*;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
 
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+/**
+ * A {@link SQRLTable} represents a logical table in the SQRL script which contains fields that are
+ * either columns or relationships.
+ *
+ * Note, that SQRLTables are always flat and hierarchical data is represented as multiple SQRLTables
+ * with parent-child relationships between them.
+ *
+ */
 @Getter
-public class ScriptTable implements Table, org.apache.calcite.schema.Schema, ScannableTable {
+public class SQRLTable implements Table, org.apache.calcite.schema.Schema, ScannableTable {
 
   @NonNull
   NamePath path;
@@ -41,25 +38,24 @@ public class ScriptTable implements Table, org.apache.calcite.schema.Schema, Sca
   final FieldList fields = new FieldList();
 
   private RelDataType dataType;
-  private Optional<ScriptTable> parent;
-//  private RelDataType type;
+  private Optional<SQRLTable> parent;
 
-  public ScriptTable() {
+  public SQRLTable() {
 
   }
 
-  public ScriptTable(RelDataType dataType) {
+  public SQRLTable(RelDataType dataType) {
     this.dataType = dataType;
     this.parent = Optional.empty();
   }
 
-  public ScriptTable(RelDataType dataType, ScriptTable parent) {
+  public SQRLTable(RelDataType dataType, SQRLTable parent) {
 
     this.dataType = dataType;
     this.parent = Optional.of(parent);
   }
 
-  public ScriptTable(@NonNull NamePath path) {
+  public SQRLTable(@NonNull NamePath path) {
     this.path = path;
   }
 
@@ -92,7 +88,7 @@ public class ScriptTable implements Table, org.apache.calcite.schema.Schema, Sca
 //  public void addRelationship(Relationship relationship) {
 //    fields.addField(relationship);
 //  }
-  public Relationship addRelationship(Name name, ScriptTable toTable, Relationship.JoinType joinType,
+  public Relationship addRelationship(Name name, SQRLTable toTable, Relationship.JoinType joinType,
                                       Relationship.Multiplicity multiplicity) {
     Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity);
     fields.addField(rel);
@@ -171,7 +167,7 @@ public class ScriptTable implements Table, org.apache.calcite.schema.Schema, Sca
 //    if (s.equalsIgnoreCase(ReservedName.PARENT.getCanonical()) && parent.isPresent()) {
 //      return parent.get();
 //    }
-    Optional<ScriptTable> rel = this.getAllRelationships().filter(e->e.getName().getCanonical().equalsIgnoreCase(s))
+    Optional<SQRLTable> rel = this.getAllRelationships().filter(e->e.getName().getCanonical().equalsIgnoreCase(s))
         .map(r->r.getToTable())
         .findAny();
 
@@ -183,7 +179,7 @@ public class ScriptTable implements Table, org.apache.calcite.schema.Schema, Sca
 //        .map(f->f.getType() instanceof ArraySqlType ? f.getType().getComponentType() : f.getType())
 //        ;
 //    if (field.isPresent()) {
-//      return new ScriptTable(field.get(), this);
+//      return new SQRLTable(field.get(), this);
 //    }
 //    return null;
   }
@@ -260,7 +256,7 @@ public class ScriptTable implements Table, org.apache.calcite.schema.Schema, Sca
     return fields.getAccessibleField(name);
   }
 
-  public Optional<ScriptTable> walkTable(NamePath namePath) {
+  public Optional<SQRLTable> walkTable(NamePath namePath) {
     if (namePath.isEmpty()) {
       return Optional.of(this);
     }
@@ -269,7 +265,7 @@ public class ScriptTable implements Table, org.apache.calcite.schema.Schema, Sca
       return Optional.empty();
     }
     Relationship rel = (Relationship) field.get();
-    ScriptTable target = rel.getToTable();
+    SQRLTable target = rel.getToTable();
     return target.walkTable(namePath.popFirst());
   }
 
@@ -277,11 +273,11 @@ public class ScriptTable implements Table, org.apache.calcite.schema.Schema, Sca
     return fields.getFields(true).filter(Relationship.class::isInstance).map(Relationship.class::cast);
   }
 
-//  public Optional<ScriptTable> getParent() {
+//  public Optional<SQRLTable> getParent() {
 //    return getAllRelationships().filter(r -> r.getJoinType() == JoinType.PARENT).map(Relationship::getToTable).findFirst();
 //  }
 
-  public Collection<ScriptTable> getChildren() {
+  public Collection<SQRLTable> getChildren() {
     return getAllRelationships().filter(r -> r.getJoinType() == JoinType.CHILD).map(Relationship::getToTable).collect(Collectors.toList());
   }
 
@@ -295,7 +291,7 @@ public class ScriptTable implements Table, org.apache.calcite.schema.Schema, Sca
 
   public List<Field> walkField(List<String> names) {
     List<Field> fields = new ArrayList<>();
-    ScriptTable t = this;
+    SQRLTable t = this;
     for (String n : names) {
       Field field = t.getField(Name.system(n)).get();
       fields.add(field);

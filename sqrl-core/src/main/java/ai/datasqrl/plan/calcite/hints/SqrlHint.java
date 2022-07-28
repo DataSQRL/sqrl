@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.hints;
+package ai.datasqrl.plan.calcite.hints;
 
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Join;

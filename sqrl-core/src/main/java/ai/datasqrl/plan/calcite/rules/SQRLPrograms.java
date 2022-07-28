@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.rules;
+package ai.datasqrl.plan.calcite.rules;
 
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.rel.RelNode;

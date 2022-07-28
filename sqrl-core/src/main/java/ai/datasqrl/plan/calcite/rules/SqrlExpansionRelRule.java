@@ -1,12 +1,12 @@
-package ai.datasqrl.plan.calcite.sqrl.rules;
+package ai.datasqrl.plan.calcite.rules;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.memory.table.DataTable;
-import ai.datasqrl.plan.calcite.sqrl.table.ImportedSqrlTable;
-import ai.datasqrl.plan.calcite.sqrl.table.QuerySqrlTable;
+import ai.datasqrl.plan.calcite.table.ImportedRelationalTable;
+import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
@@ -46,9 +46,9 @@ public class SqrlExpansionRelRule extends RelOptRule {
   @Override
   public void onMatch(RelOptRuleCall call) {
     LogicalTableScan table = call.rel(0);
-    ImportedSqrlTable baseTable = table.getTable()
-        .unwrap(ImportedSqrlTable.class);
-    QuerySqrlTable query = table.getTable().unwrap(QuerySqrlTable.class);
+    ImportedRelationalTable baseTable = table.getTable()
+        .unwrap(ImportedRelationalTable.class);
+    QueryRelationalTable query = table.getTable().unwrap(QueryRelationalTable.class);
     DataTable dt = table.getTable().unwrap(DataTable.class);
 
     /*

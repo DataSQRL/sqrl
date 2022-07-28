@@ -1,9 +1,9 @@
 package ai.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
-import ai.datasqrl.schema.ScriptTable;
+import ai.datasqrl.plan.calcite.table.TableWithPK;
+import ai.datasqrl.schema.SQRLTable;
 
 public interface TableMapper {
-    TableWithPK getTable(ScriptTable table);
+    TableWithPK getTable(SQRLTable table);
   }
 

@@ -1,7 +1,7 @@
 package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
-import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
+import ai.datasqrl.plan.calcite.table.TableWithPK;
 import java.util.List;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;

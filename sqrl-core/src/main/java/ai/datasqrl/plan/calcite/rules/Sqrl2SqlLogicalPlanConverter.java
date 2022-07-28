@@ -1,9 +1,9 @@
-package ai.datasqrl.plan.calcite.sqrl.rules;
+package ai.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.plan.calcite.sqrl.hints.ExplicitInnerJoinTypeHint;
-import ai.datasqrl.plan.calcite.sqrl.hints.NumColumnsHint;
-import ai.datasqrl.plan.calcite.sqrl.hints.SqrlHint;
-import ai.datasqrl.plan.calcite.sqrl.table.*;
+import ai.datasqrl.plan.calcite.hints.ExplicitInnerJoinTypeHint;
+import ai.datasqrl.plan.calcite.hints.NumColumnsHint;
+import ai.datasqrl.plan.calcite.hints.SqrlHint;
+import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import ai.datasqrl.plan.calcite.util.IndexMap;
@@ -49,7 +49,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
     public static class ProcessedRel implements RelHolder {
 
         RelNode relNode;
-        QuerySqrlTable.Type type;
+        QueryRelationalTable.Type type;
         ContinuousIndexMap primaryKey;
         TimestampHolder.Derived timestamp;
         ContinuousIndexMap indexMap;
@@ -117,8 +117,8 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
 
     @Override
     public RelNode visit(TableScan tableScan) {
-        //The base scan tables for all SQRL queries are VirtualSqrlTable
-        VirtualSqrlTable vtable = tableScan.getTable().unwrap(VirtualSqrlTable.class);
+        //The base scan tables for all SQRL queries are VirtualRelationalTable
+        VirtualRelationalTable vtable = tableScan.getTable().unwrap(VirtualRelationalTable.class);
         Preconditions.checkArgument(vtable != null);
 
         //Shred the virtual table all the way to root:
@@ -129,8 +129,8 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
         //Now, we shred
         RelNode relNode = shredTable(vtable, primaryKey, indexMap, joinTables, true).build();
         //Finally, we assemble the result
-        VirtualSqrlTable.Root root = vtable.getRoot();
-        QuerySqrlTable queryTable = root.getBase();
+        VirtualRelationalTable.Root root = vtable.getRoot();
+        QueryRelationalTable queryTable = root.getBase();
         int mapToLength = relNode.getRowType().getFieldCount();
         ProcessedRel result = new ProcessedRel(relNode, queryTable.getType(),
                 primaryKey.build(mapToLength),
@@ -139,20 +139,20 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
         return setRelHolder(result);
     }
 
-    private RelBuilder shredTable(VirtualSqrlTable vtable, ContinuousIndexMap.Builder primaryKey,
+    private RelBuilder shredTable(VirtualRelationalTable vtable, ContinuousIndexMap.Builder primaryKey,
                                   ContinuousIndexMap.Builder indexMap, List<JoinTable> joinTables,
                                   boolean isLeaf) {
         Preconditions.checkArgument(joinTables.isEmpty());
         return shredTable(vtable, primaryKey, indexMap, joinTables, null, isLeaf);
     }
 
-    private RelBuilder shredTable(VirtualSqrlTable vtable, ContinuousIndexMap.Builder primaryKey,
+    private RelBuilder shredTable(VirtualRelationalTable vtable, ContinuousIndexMap.Builder primaryKey,
                                   List<JoinTable> joinTables, Pair<JoinTable,RelBuilder> startingBase) {
         Preconditions.checkArgument(joinTables.isEmpty());
         return shredTable(vtable, primaryKey, null, joinTables, startingBase, false);
     }
 
-    private RelBuilder shredTable(VirtualSqrlTable vtable, ContinuousIndexMap.Builder primaryKey,
+    private RelBuilder shredTable(VirtualRelationalTable vtable, ContinuousIndexMap.Builder primaryKey,
                                   ContinuousIndexMap.Builder indexMap, List<JoinTable> joinTables,
                                   Pair<JoinTable,RelBuilder> startingBase, boolean isLeaf) {
         RelBuilder builder;
@@ -165,7 +165,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
             return builder;
         }
         if (vtable.isRoot()) {
-            VirtualSqrlTable.Root root = (VirtualSqrlTable.Root) vtable;
+            VirtualRelationalTable.Root root = (VirtualRelationalTable.Root) vtable;
             offset = 0;
             builder = relBuilderFactory.get();
             builder.scan(root.getBase().getNameId());
@@ -177,7 +177,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
                     .filter(Predicate.not(AddedColumn::isInlined))
                     .collect(Collectors.toList());
         } else {
-            VirtualSqrlTable.Child child = (VirtualSqrlTable.Child) vtable;
+            VirtualRelationalTable.Child child = (VirtualRelationalTable.Child) vtable;
             builder = shredTable(child.getParent(), primaryKey, indexMap, joinTables, startingBase,false);
             JoinTable parentJoinTable = Iterables.getLast(joinTables);
             int indexOfShredField = parentJoinTable.getOffset() + child.getShredIndex();

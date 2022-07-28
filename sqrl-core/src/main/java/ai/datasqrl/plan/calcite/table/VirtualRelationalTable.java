@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.sqrl.table;
+package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
@@ -13,8 +13,17 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A relational table that represents the relational equivalent of a {@link ai.datasqrl.schema.SQRLTable}.
+ *
+ * While the SQRLTable represents the logical table that a user defines in an SQRL script, the associated
+ * {@link VirtualRelationalTable} represents the relational representation of that same table (i.e. with
+ * primary keys, relational data type, etc). The transpiler manages the mapping between the two and updates
+ * both according to the script statements. Specifically, relationships on SQRLTables are converted to
+ * JOINs between virtual tables.
+ */
 @Getter
-public abstract class VirtualSqrlTable extends AbstractSqrlTable implements VirtualTable {
+public abstract class VirtualRelationalTable extends AbstractRelationalTable implements VirtualTable {
 
   protected final int numLocalPks;
   @NonNull
@@ -25,15 +34,15 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
   @NonNull
   protected RelDataType rowType;
   /**
-   * The row type of the underlying {@link QuerySqrlTable} at the shredding level of this virtual
+   * The row type of the underlying {@link QueryRelationalTable} at the shredding level of this virtual
    * table including any nested relations. This is distinct from the rowType of the virtual table
    * which is padded with parent primary keys and does not contain nested relations.
    */
   @NonNull
   protected RelDataType queryRowType;
 
-  protected VirtualSqrlTable(Name nameId, @NonNull RelDataType rowType,
-      @NonNull RelDataType queryRowType, int numLocalPks) {
+  protected VirtualRelationalTable(Name nameId, @NonNull RelDataType rowType,
+                                   @NonNull RelDataType queryRowType, int numLocalPks) {
     super(nameId);
     this.rowType = rowType;
     this.queryRowType = queryRowType;
@@ -42,7 +51,7 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
 
   public abstract boolean isRoot();
 
-  public abstract VirtualSqrlTable.Root getRoot();
+  public abstract VirtualRelationalTable.Root getRoot();
 
   public void addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
     //Ensure that all previously added columns are inlined if the column to be added is
@@ -76,12 +85,12 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
 
 
   @Getter
-  public static class Root extends VirtualSqrlTable {
+  public static class Root extends VirtualRelationalTable {
 
     @NonNull
-    final QuerySqrlTable base;
+    final QueryRelationalTable base;
 
-    protected Root(Name nameId, @NonNull RelDataType rowType, @NonNull QuerySqrlTable base) {
+    protected Root(Name nameId, @NonNull RelDataType rowType, @NonNull QueryRelationalTable base) {
       super(nameId, rowType, base.getRowType(), base.getNumPrimaryKeys());
       this.base = base;
     }
@@ -103,13 +112,13 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
   }
 
   @Getter
-  public static class Child extends VirtualSqrlTable {
+  public static class Child extends VirtualRelationalTable {
 
     @NonNull
-    final VirtualSqrlTable parent;
+    final VirtualRelationalTable parent;
     final int shredIndex;
 
-    private Child(Name nameId, @NonNull RelDataType rowType, @NonNull VirtualSqrlTable parent,
+    private Child(Name nameId, @NonNull RelDataType rowType, @NonNull VirtualRelationalTable parent,
         int shredIndex, RelDataType queryDataType, int numLocalPks) {
       super(nameId, rowType, queryDataType, numLocalPks);
       this.parent = parent;
@@ -117,7 +126,7 @@ public abstract class VirtualSqrlTable extends AbstractSqrlTable implements Virt
     }
 
     public static Child of(Name nameId, @NonNull RelDataType rowType,
-        @NonNull VirtualSqrlTable parent, @NonNull String shredFieldName) {
+                           @NonNull VirtualRelationalTable parent, @NonNull String shredFieldName) {
       RelDataTypeField shredField = parent.getQueryRowType().getField(shredFieldName, true, false);
       Preconditions.checkArgument(shredField != null);
       RelDataType type = shredField.getType();

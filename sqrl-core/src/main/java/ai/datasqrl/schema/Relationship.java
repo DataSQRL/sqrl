@@ -2,18 +2,16 @@ package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
 import lombok.Getter;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
 
 @Getter
 public class Relationship extends Field {
 
-  private final ScriptTable fromTable;
-  private final ScriptTable toTable;
+  private final SQRLTable fromTable;
+  private final SQRLTable toTable;
   private final JoinType joinType;
   private final Multiplicity multiplicity;
 
-  public Relationship(Name name, int version, ScriptTable fromTable, ScriptTable toTable, JoinType joinType,
+  public Relationship(Name name, int version, SQRLTable fromTable, SQRLTable toTable, JoinType joinType,
                       Multiplicity multiplicity) {
     super(name, version);
     this.fromTable = fromTable;

@@ -1,14 +1,14 @@
 package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.ScriptTable;
+import ai.datasqrl.schema.SQRLTable;
 import java.util.List;
 import java.util.Optional;
 import lombok.Value;
 
 @Value
 public class TablePathImpl implements TablePath {
-  ScriptTable baseTable;
+  SQRLTable baseTable;
   Optional<String> baseAlias;
 
   boolean relative;

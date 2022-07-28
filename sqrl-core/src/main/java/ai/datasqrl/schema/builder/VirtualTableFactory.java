@@ -3,10 +3,10 @@ package ai.datasqrl.schema.builder;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.sqrl.table.TimestampHolder;
+import ai.datasqrl.plan.calcite.table.TimestampHolder;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.ScriptTable;
+import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SqrlTypeConverter;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -54,20 +54,20 @@ public abstract class VirtualTableFactory<T,V extends VirtualTable> extends Abst
         V make(@NonNull AbstractTableFactory.UniversalTableBuilder<T> tblBuilder, V parent, Name shredFieldName);
     }
 
-    public Map<ScriptTable,V> build(UniversalTableBuilder<T> builder, VirtualTableBuilder<T,V> vtableBuilder) {
-        Map<ScriptTable,V> createdTables = new HashMap<>();
+    public Map<SQRLTable,V> build(UniversalTableBuilder<T> builder, VirtualTableBuilder<T,V> vtableBuilder) {
+        Map<SQRLTable,V> createdTables = new HashMap<>();
         build(builder,null,null,null,vtableBuilder,createdTables);
         return createdTables;
     }
 
-    private void build(UniversalTableBuilder<T> builder, ScriptTable parent, V vParent,
+    private void build(UniversalTableBuilder<T> builder, SQRLTable parent, V vParent,
                        NestedTableBuilder.ChildRelationship<T,UniversalTableBuilder<T>> childRel,
                        VirtualTableBuilder<T,V> vtableBuilder,
-                       Map<ScriptTable,V> createdTables) {
+                       Map<SQRLTable,V> createdTables) {
         V vTable;
         if (parent==null) vTable = vtableBuilder.make(builder);
         else vTable = vtableBuilder.make(builder,vParent,childRel.getId());
-        ScriptTable tbl = new ScriptTable(builder.getPath());
+        SQRLTable tbl = new SQRLTable(builder.getPath());
         createdTables.put(tbl,vTable);
         if (parent!=null) {
             //Add child relationship

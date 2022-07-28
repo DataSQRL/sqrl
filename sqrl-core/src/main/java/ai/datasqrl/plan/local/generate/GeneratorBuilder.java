@@ -5,7 +5,7 @@ import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
+import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import java.util.HashMap;
 import java.util.HashSet;

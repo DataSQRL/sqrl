@@ -3,10 +3,10 @@ package ai.datasqrl.plan.local.transpile;
 import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
-import ai.datasqrl.plan.calcite.sqrl.hints.SqrlHintStrategyTable;
-import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
+import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
+import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.local.generate.FieldNames;
-import ai.datasqrl.schema.ScriptTable;
+import ai.datasqrl.schema.SQRLTable;
 import com.google.common.collect.ArrayListMultimap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -109,7 +109,7 @@ public class Transpile {
   }
 
   private void createParentPrimaryKeys(SqlValidatorScope scope) {
-    Optional<ScriptTable> context = validator.getContextTable(scope);
+    Optional<SQRLTable> context = validator.getContextTable(scope);
     List<SqlNode> nodes = new ArrayList<>();
     List<String> names = new ArrayList<>();
     if (context.isPresent()) {
@@ -127,7 +127,7 @@ public class Transpile {
   }
 
   private void rewriteSelectList(SqlSelect select, SqlValidatorScope scope) {
-    Optional<ScriptTable> ctx = ((SqrlValidatorImpl) scope.getValidator()).getCtx();
+    Optional<SQRLTable> ctx = ((SqrlValidatorImpl) scope.getValidator()).getCtx();
 //    SqlNodeList selectList = select.getSelectList();
 
     List<SqlNode> selectList = validator.getRawSelectScope(select).getExpandedSelectList();
@@ -417,14 +417,14 @@ public class Transpile {
       return declaration.getJoinTree();
     } else {
       //just do a simple mapping from table
-      ScriptTable baseTable = fromNamespace.getTable().unwrap(ScriptTable.class);
+      SQRLTable baseTable = fromNamespace.getTable().unwrap(SQRLTable.class);
       TableWithPK basePkTable = tableMapper.getTable(baseTable);
       return sqlNodeBuilder.createTableNode(basePkTable, Util.last(id.names));
     }
 
 //      SqlQualified qualified = validator.getEmptyScope().fullyQualify(id);
 ////      SqlQualified qualified = scope.fullyQualify(id);
-//      ScriptTable baseTable = fromNamespace.getTable().unwrap(ScriptTable.class);
+//      SQRLTable baseTable = fromNamespace.getTable().unwrap(SQRLTable.class);
 //      Optional<String> baseAlias = Optional.ofNullable(qualified.prefix())
 //          .filter(p -> p.size() == 1).map(p->p.get(0));
 ////      boolean isRelative = ns.getResolvedNamespace() instanceof RelativeTableNamespace;
@@ -439,7 +439,7 @@ public class Transpile {
 //
 //
 //
-//      ScriptTable base = fromNamespace.getTable().unwrap(ScriptTable.class);
+//      SQRLTable base = fromNamespace.getTable().unwrap(SQRLTable.class);
 //
 //      final String datasetName = null;
 ////          datasetStack.isEmpty() ? null : datasetStack.peek();
@@ -469,7 +469,7 @@ public class Transpile {
     //Expand
     validator.getNamespace(id).resolve();
     SqlValidatorNamespace ns = validator.getNamespace(id).resolve();
-    ScriptTable table = ns.getTable().unwrap(ScriptTable.class);
+    SQRLTable table = ns.getTable().unwrap(SQRLTable.class);
     TableWithPK t = tableMapper.getTable(table);
 
     return sqlNodeBuilder.as(new SqlIdentifier(t.getNameId(), SqlParserPos.ZERO),
@@ -550,7 +550,7 @@ public class Transpile {
   class TranspileScope {
 
     SqlValidatorScope validatorScope;
-    Optional<ScriptTable> context;
+    Optional<SQRLTable> context;
   }
 
 

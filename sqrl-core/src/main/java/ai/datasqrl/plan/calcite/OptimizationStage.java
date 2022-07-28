@@ -1,8 +1,8 @@
 package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.plan.calcite.memory.rule.SqrlDataSourceToEnumerableConverterRule;
-import ai.datasqrl.plan.calcite.sqrl.rules.SQRLPrograms;
-import ai.datasqrl.plan.calcite.sqrl.rules.SqrlExpansionRelRule;
+import ai.datasqrl.plan.calcite.rules.SQRLPrograms;
+import ai.datasqrl.plan.calcite.rules.SqrlExpansionRelRule;
 import com.google.common.collect.ImmutableList;
 import lombok.Value;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;

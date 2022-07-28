@@ -1,13 +1,7 @@
-package ai.datasqrl.plan.calcite.sqrl.hints;
+package ai.datasqrl.plan.calcite.hints;
 
 import com.google.common.base.Preconditions;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.Join;
-import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.hint.RelHint;
-
-import java.util.List;
-import java.util.Optional;
 
 public enum ExplicitInnerJoinTypeHint implements SqrlHint {
 

@@ -17,7 +17,7 @@
 package org.apache.calcite.sql.validate;
 
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.ScriptTable;
+import ai.datasqrl.schema.SQRLTable;
 import java.util.List;
 import java.util.Optional;
 import ai.datasqrl.plan.local.transpile.TablePath;
@@ -26,11 +26,11 @@ import ai.datasqrl.plan.local.transpile.TablePathImpl;
 /** Namespace based on a table from a table scope. */
 public class RelativeTableNamespace extends TableNamespace implements ExpandableTableNamespace {
 
-  private final ScriptTable baseTable;
+  private final SQRLTable baseTable;
   private final String baseAlias;
   private final List<Relationship> relationships;
 
-  RelativeTableNamespace(SqrlValidatorImpl validator, SqlValidatorTable table, ScriptTable baseTable,
+  RelativeTableNamespace(SqrlValidatorImpl validator, SqlValidatorTable table, SQRLTable baseTable,
       String baseAlias, List<Relationship> relationships) {
     super(validator, table);
     this.baseTable = baseTable;

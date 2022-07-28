@@ -7,27 +7,18 @@ import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.SqrlStatement;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.sqrl.table.QuerySqrlTable;
+import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
 import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.plan.local.generate.GeneratorBuilder;
-import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
 import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -67,10 +58,10 @@ class GeneratorTest extends AbstractSQRLIT {
     CalciteSchema relSchema = generator.getRelSchema();
     //Table names have an appended uuid - find the right tablename first. We assume tables are in the order in which they were created
     List<String> tblNames = relSchema.getTableNames().stream().filter(s -> s.startsWith(name))
-            .filter(s -> relSchema.getTable(s,false).getTable() instanceof QuerySqrlTable)
+            .filter(s -> relSchema.getTable(s,false).getTable() instanceof QueryRelationalTable)
             .collect(Collectors.toList());
     assertFalse(tblNames.isEmpty());
-    QuerySqrlTable table = (QuerySqrlTable) relSchema.getTable(tblNames.get(0),false).getTable();
+    QueryRelationalTable table = (QueryRelationalTable) relSchema.getTable(tblNames.get(0),false).getTable();
     assertEquals(numPrimaryKeys, table.getNumPrimaryKeys());
     assertEquals(numCols, table.getRowType().getFieldCount());
   }
