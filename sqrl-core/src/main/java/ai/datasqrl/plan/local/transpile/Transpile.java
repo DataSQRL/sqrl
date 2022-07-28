@@ -84,7 +84,7 @@ public class Transpile {
 
     for (int i = 0; i < list.size(); i++) {
       SqlHint hint = (SqlHint) list.get(i);
-      if (hint.getName().equals(SqrlHintStrategyTable.DISTINCT_ON_HINT_NAME)) {
+      if (hint.getName().equals(SqrlHintStrategyTable.TOP_N)) {
         SqlHint newHint = rewriteDistinctHint(select, hint, scope);
         hints.set(i, newHint);
       }

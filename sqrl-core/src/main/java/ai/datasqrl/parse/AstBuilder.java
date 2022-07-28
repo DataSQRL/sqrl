@@ -185,15 +185,15 @@ class AstBuilder
     if (ctx.identifier().size() > 1) {
       Interval aliasI = new Interval(
           ctx.identifier(1).start.getStartIndex(),
-          ctx.identifier(ctx.identifier().size() - 1).stop.getStopIndex());
+          ctx.identifier(1).stop.getStopIndex());
       alias = Optional.of(ctx.identifier(1).start.getInputStream().getText(aliasI));
     }
 
     List<String> pk = new ArrayList<>();
-    for (int i = 1; i < ctx.qualifiedName().size() - 1; i++) {
+    for (int i = 1; i < ctx.qualifiedName().size(); i++) {
       Interval pkI = new Interval(
           ctx.qualifiedName(i).start.getStartIndex(),
-          ctx.qualifiedName(i + 1).stop.getStopIndex());
+          ctx.qualifiedName(i).stop.getStopIndex());
       String p = ctx.qualifiedName(i).start.getInputStream().getText(pkI);
       pk.add(p);
     }

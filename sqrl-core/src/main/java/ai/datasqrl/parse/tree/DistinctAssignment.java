@@ -1,6 +1,7 @@
 package ai.datasqrl.parse.tree;
 
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -55,7 +56,7 @@ public class DistinctAssignment extends Assignment {
         .collect(Collectors.joining(", "));
     String order = Strings.isEmpty(getOrder()) ? "" : "ORDER BY " + getOrder();
     String table = getTable();
-    return String.format("SELECT /*+ DISTINCT_ON(%s) */ * FROM %s %s %s LIMIT 1", pk, table,
-        alias.orElse(""), order);
+    return String.format("SELECT /*+ %s(%s) */ * FROM %s %s %s LIMIT 1",
+        SqrlHintStrategyTable.TOP_N, pk, table, alias.orElse(""), order);
   }
 }

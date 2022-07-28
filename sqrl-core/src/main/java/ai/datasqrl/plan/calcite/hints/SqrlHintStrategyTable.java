@@ -5,10 +5,10 @@ import org.apache.calcite.rel.hint.HintPredicates;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 
 public class SqrlHintStrategyTable {
-  public static final String DISTINCT_ON_HINT_NAME = "DISTINCT_ON";
+  public static final String TOP_N = "TOP_N";
   @Getter
   static HintStrategyTable hintStrategyTable = HintStrategyTable.builder()
-      .hintStrategy(DISTINCT_ON_HINT_NAME, HintPredicates.TABLE_SCAN)
+      .hintStrategy(TOP_N, HintPredicates.PROJECT)
       .build();
 
 }
