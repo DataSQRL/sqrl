@@ -7,10 +7,11 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ArrayListMultim
 import org.apache.flink.calcite.shaded.com.google.common.collect.Multimap;
 
 public class StdTimeLibrary extends AbstractSchema {
+
   private final Multimap<String, Function> functions = ArrayListMultimap.create();
 
   public StdTimeLibrary() {
-    functions.put("ROUNDTOMONTH", RoundMonth.fnc);
+    //functions.put("ROUNDTOMONTH", RoundMonth.fnc);
   }
 
   @Override
