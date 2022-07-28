@@ -3,7 +3,7 @@ package ai.datasqrl.plan.calcite;
 import ai.datasqrl.function.builtin.example.SqlMyFunction;
 import ai.datasqrl.function.builtin.time.AtZoneFunction;
 import ai.datasqrl.function.builtin.time.NumToTimestampFunction;
-import ai.datasqrl.function.builtin.time.SqrlGettersFunction;
+import ai.datasqrl.function.builtin.time.ExtractTimeFieldFunction;
 import ai.datasqrl.function.builtin.time.SqrlRoundingFunction;
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import ai.datasqrl.function.builtin.time.StringToTimestampFunction;
@@ -24,14 +24,12 @@ public class SqrlOperatorTable extends SqlStdOperatorTable {
   //SQRL functions here:
   public static final SqlMyFunction MY_FUNCTION = new SqlMyFunction();
   public static final SqlFunction NOW = new Now();
-  // conversion
   public static final NumToTimestampFunction NUM_TO_TIMESTAMP = new NumToTimestampFunction();
   public static final TimestampToEpochFunction TIMESTAMP_TO_EPOCH = new TimestampToEpochFunction();
   public static final StringToTimestampFunction STRING_TO_TIMESTAMP = new StringToTimestampFunction();
   public static final TimestampToStringFunction TIMESTAMP_TO_STRING = new TimestampToStringFunction();
   public static final ToUtcFunction TO_UTC = new ToUtcFunction();
   public static final AtZoneFunction AT_ZONE = new AtZoneFunction();
-  // rounding
   public static final SqrlRoundingFunction ROUND_TO_SECOND = new SqrlRoundingFunction("ROUND_TO_SECOND",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)));
   public static final SqrlRoundingFunction ROUND_TO_MINUTE = new SqrlRoundingFunction("ROUND_TO_MINUTE",
@@ -44,22 +42,21 @@ public class SqrlOperatorTable extends SqlStdOperatorTable {
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMonth", Instant.class)));
   public static final SqrlRoundingFunction ROUND_TO_YEAR = new SqrlRoundingFunction("ROUND_TO_YEAR",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToYear", Instant.class)));
-  // getters
-  public static final SqrlGettersFunction GET_SECOND = new SqrlGettersFunction("GET_SECOND",
+  public static final ExtractTimeFieldFunction GET_SECOND = new ExtractTimeFieldFunction("GET_SECOND",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getSecond", Instant.class)));
-  public static final SqrlGettersFunction GET_MINUTE = new SqrlGettersFunction("GET_MINUTE",
+  public static final ExtractTimeFieldFunction GET_MINUTE = new ExtractTimeFieldFunction("GET_MINUTE",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getMinute", Instant.class)));
-  public static final SqrlGettersFunction GET_HOUR = new SqrlGettersFunction("GET_HOUR",
+  public static final ExtractTimeFieldFunction GET_HOUR = new ExtractTimeFieldFunction("GET_HOUR",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getHour", Instant.class)));
-  public static final SqrlGettersFunction GET_DAY_OF_WEEK = new SqrlGettersFunction("GET_DAY_OF_WEEK",
+  public static final ExtractTimeFieldFunction GET_DAY_OF_WEEK = new ExtractTimeFieldFunction("GET_DAY_OF_WEEK",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getDayOfWeek", Instant.class)));
-  public static final SqrlGettersFunction GET_DAY_OF_MONTH = new SqrlGettersFunction("GET_DAY_OF_MONTH",
+  public static final ExtractTimeFieldFunction GET_DAY_OF_MONTH = new ExtractTimeFieldFunction("GET_DAY_OF_MONTH",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getDayOfMonth", Instant.class)));
-  public static final SqrlGettersFunction GET_DAY_OF_YEAR = new SqrlGettersFunction("GET_DAY_OF_YEAR",
+  public static final ExtractTimeFieldFunction GET_DAY_OF_YEAR = new ExtractTimeFieldFunction("GET_DAY_OF_YEAR",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getDayOfYear", Instant.class)));
-  public static final SqrlGettersFunction GET_MONTH = new SqrlGettersFunction("GET_MONTH",
+  public static final ExtractTimeFieldFunction GET_MONTH = new ExtractTimeFieldFunction("GET_MONTH",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getMonth", Instant.class)));
-  public static final SqrlGettersFunction GET_YEAR = new SqrlGettersFunction("GET_YEAR",
+  public static final ExtractTimeFieldFunction GET_YEAR = new ExtractTimeFieldFunction("GET_YEAR",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getYear", Instant.class)));
 
   public static synchronized SqrlOperatorTable instance() {

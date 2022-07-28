@@ -12,9 +12,9 @@ import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
 
-public class SqrlGettersFunction extends SqrlScalarFunction {
+public class ExtractTimeFieldFunction extends SqrlScalarFunction {
 
-  public SqrlGettersFunction(String sqlIdentifier, ScalarFunction scalarFunction) {
+  public ExtractTimeFieldFunction(String sqlIdentifier, ScalarFunction scalarFunction) {
     super(
         new SqlIdentifier(sqlIdentifier, SqlParserPos.ZERO),
         SqlKind.OTHER,

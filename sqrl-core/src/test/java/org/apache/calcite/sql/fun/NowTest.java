@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import ai.datasqrl.function.builtin.example.SqlMyFunction;
 import ai.datasqrl.function.builtin.time.AtZoneFunction;
 import ai.datasqrl.function.builtin.time.NumToTimestampFunction;
-import ai.datasqrl.function.builtin.time.SqrlGettersFunction;
+import ai.datasqrl.function.builtin.time.ExtractTimeFieldFunction;
 import ai.datasqrl.function.builtin.time.SqrlRoundingFunction;
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import ai.datasqrl.function.builtin.time.StringToTimestampFunction;
@@ -108,21 +108,21 @@ class NowTest {
   public void GetterTest() {
     SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
 
-    SqrlGettersFunction getSecond = new SqrlGettersFunction("GET_SECOND",
+    ExtractTimeFieldFunction getSecond = new ExtractTimeFieldFunction("GET_SECOND",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getSecond", Instant.class)));
-    SqrlGettersFunction getMinute = new SqrlGettersFunction("GET_MINUTE",
+    ExtractTimeFieldFunction getMinute = new ExtractTimeFieldFunction("GET_MINUTE",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getMinute", Instant.class)));
-    SqrlGettersFunction getHour = new SqrlGettersFunction("GET_HOUR",
+    ExtractTimeFieldFunction getHour = new ExtractTimeFieldFunction("GET_HOUR",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getHour", Instant.class)));
-    SqrlGettersFunction getDayOfWeek = new SqrlGettersFunction("GET_DAY_OF_WEEK",
+    ExtractTimeFieldFunction getDayOfWeek = new ExtractTimeFieldFunction("GET_DAY_OF_WEEK",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getDayOfWeek", Instant.class)));
-    SqrlGettersFunction getDayOfMonth = new SqrlGettersFunction("GET_DAY_OF_MONTH",
+    ExtractTimeFieldFunction getDayOfMonth = new ExtractTimeFieldFunction("GET_DAY_OF_MONTH",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getDayOfMonth", Instant.class)));
-    SqrlGettersFunction getDayOfYear = new SqrlGettersFunction("GET_DAY_OF_YEAR",
+    ExtractTimeFieldFunction getDayOfYear = new ExtractTimeFieldFunction("GET_DAY_OF_YEAR",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getDayOfYear", Instant.class)));
-    SqrlGettersFunction getMonth = new SqrlGettersFunction("GET_MONTH",
+    ExtractTimeFieldFunction getMonth = new ExtractTimeFieldFunction("GET_MONTH",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getMonth", Instant.class)));
-    SqrlGettersFunction getYear = new SqrlGettersFunction("GET_YEAR",
+    ExtractTimeFieldFunction getYear = new ExtractTimeFieldFunction("GET_YEAR",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getYear", Instant.class)));
 
     RelDataType typeSecond = getSecond.inferReturnType(typeFactory, new ArrayList<>());
