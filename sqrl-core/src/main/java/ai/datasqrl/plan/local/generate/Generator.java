@@ -93,10 +93,7 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
 
   public void generate(ScriptNode scriptNode) {
     for (Node statement : scriptNode.getStatements()) {
-      Optional<ScriptTable> context =
-          (statement instanceof Assignment) ? getContext(((Assignment) statement).getNamePath())
-              : Optional.empty();
-      statement.accept(this, new Scope(context));
+      statement.accept(this, new Scope());
     }
   }
 
@@ -536,7 +533,5 @@ public class Generator extends DefaultTraversalVisitor<Void, Scope> implements S
 
   @Value
   class Scope {
-
-    Optional<ScriptTable> table;
   }
 }

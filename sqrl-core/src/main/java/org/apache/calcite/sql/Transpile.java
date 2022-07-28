@@ -215,7 +215,8 @@ public class Transpile {
     mutableGroupItems.addAll(ordinals);
 
     if (!mutableGroupItems.isEmpty()) {
-      select.setGroupBy(new SqlNodeList(mutableGroupItems, select.getGroup().getParserPosition()));
+      select.setGroupBy(new SqlNodeList(mutableGroupItems,select.getGroup() == null ?
+          select.getParserPosition() : select.getGroup().getParserPosition()));
     }
   }
 

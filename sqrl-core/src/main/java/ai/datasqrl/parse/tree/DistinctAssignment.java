@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.util.Strings;
 
 public class DistinctAssignment extends Assignment {
 
@@ -78,12 +79,16 @@ public class DistinctAssignment extends Assignment {
    * SELECT * /#hint: top 1#/ FROM node.tableName GROUP BY node.pks ORDER BY node.pks
    */
   public String getSqlQuery() {
+
+    String orders = order.stream().map(NodeFormatter::accept).collect(Collectors.joining(", "));
+
     return String.format(
-        "SELECT /*+ DISTINCT_ON(%s) */ * FROM %s %s ORDER BY %s LIMIT 1",
+        "SELECT /*+ DISTINCT_ON(%s) */ * FROM %s %s %s LIMIT 1",
         getPartitionKeys().stream().map(NodeFormatter::accept)
             .map(p->"\""+p+"\"")
             .collect(Collectors.joining(", ")), getTable(),
         alias.map(NodeFormatter::accept).orElse(""),
-        order.stream().map(NodeFormatter::accept).collect(Collectors.joining(", ")));
+        Strings.isEmpty(orders) ? "" : "ORDER BY " + orders
+       );
   }
 }
