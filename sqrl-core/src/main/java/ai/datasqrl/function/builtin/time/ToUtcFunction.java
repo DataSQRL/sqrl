@@ -22,9 +22,6 @@ import org.apache.calcite.sql.validate.SqlUserDefinedFunction;
 
 public class ToUtcFunction extends SqlUserDefinedFunction implements SqrlAwareFunction {
 
-//    static final ScalarFunction fnc = ScalarFunctionImpl.create(Types.lookupMethod(
-//            ToUtc.class, "toUtc", ZonedDateTime.class, OffsetDateTime.class));
-
   static final ScalarFunction fnc = ScalarFunctionImpl.create(Types.lookupMethod(
       ToUtc.class, "toUtc", ZonedDateTime.class));
 

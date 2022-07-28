@@ -30,8 +30,6 @@ public class AtZoneFunction extends SqlUserDefinedFunction implements SqrlAwareF
         new SqlIdentifier("AT_ZONE", SqlParserPos.ZERO),
         SqlKind.OTHER,
         ReturnTypes.TIMESTAMP,
-        //ReturnTypes.explicit(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE),
-        // want to return TIMESTAMP_WITH_TIME_ZONE but that is not an option in calcite?
         InferTypes.ANY_NULLABLE,
         OperandTypes.operandMetadata(
             List.of(SqlTypeFamily.TIMESTAMP, SqlTypeFamily.CHARACTER),

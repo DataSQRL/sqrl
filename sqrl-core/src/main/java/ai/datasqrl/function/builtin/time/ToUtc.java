@@ -8,8 +8,4 @@ public class ToUtc {
   public Instant toUtc(ZonedDateTime zonedDateTime) {
     return zonedDateTime.toInstant();
   }
-
-//    public Instant toUtc(OffsetDateTime offsetDateTime) {
-//        return offsetDateTime.toInstant();
-//    }
 }

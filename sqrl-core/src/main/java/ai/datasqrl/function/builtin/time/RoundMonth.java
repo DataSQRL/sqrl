@@ -21,8 +21,10 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedFunction;
 
 public class RoundMonth extends SqlUserDefinedFunction implements SqrlAwareFunction {
+
   static final ScalarFunction fnc =
-      ScalarFunctionImpl.create(Types.lookupMethod(RoundMonthFunction.class, "eval", Instant.class));
+      ScalarFunctionImpl.create(
+          Types.lookupMethod(RoundMonthFunction.class, "eval", Instant.class));
 
   public RoundMonth() {
     super(
