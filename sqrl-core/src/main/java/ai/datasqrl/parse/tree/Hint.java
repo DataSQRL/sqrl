@@ -17,11 +17,6 @@ public class Hint extends Node {
   }
 
   @Override
-  public List<? extends Node> getChildren() {
-    return null;
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;

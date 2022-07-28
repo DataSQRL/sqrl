@@ -15,6 +15,7 @@ package ai.datasqrl.parse.tree;
 
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,7 +38,9 @@ public abstract class Node {
     return location;
   }
 
-  public abstract List<? extends Node> getChildren();
+  public List<? extends Node> getChildren() {
+    return ImmutableList.of();
+  }
 
   // Force subclasses to have a proper equals and hashcode implementation
   @Override

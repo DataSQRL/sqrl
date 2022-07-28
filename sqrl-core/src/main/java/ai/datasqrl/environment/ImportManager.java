@@ -8,7 +8,6 @@ import ai.datasqrl.io.sources.stats.SchemaGenerator;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.schema.Schema;
 import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.InputTableSchema;
@@ -20,6 +19,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 import java.util.*;
+import org.apache.calcite.schema.Schema;
 
 public class ImportManager {
 

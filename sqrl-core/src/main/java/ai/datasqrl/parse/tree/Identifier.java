@@ -21,7 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class Identifier
-    extends Expression {
+    extends Node {
 
   private final NamePath namePath;
 

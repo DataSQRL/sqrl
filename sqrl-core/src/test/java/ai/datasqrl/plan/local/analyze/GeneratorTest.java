@@ -75,13 +75,10 @@ class GeneratorTest extends AbstractSQRLIT {
     assertEquals(numCols, table.getRowType().getFieldCount());
   }
 
-
   @Test
   public void distinctTest() {
     imports();
-    SqlNode node;
-    node = gen("Orders := DISTINCT Orders o ON (o._uuid) ORDER BY o._ingest_time DESC;\n");
-    System.out.println(node);
+    gen("Orders := DISTINCT Orders o ON (o._uuid) ORDER BY o._ingest_time DESC;\n");
   }
 
   private void imports() {
@@ -107,7 +104,7 @@ class GeneratorTest extends AbstractSQRLIT {
     SqlNode node;
     node = gen("IMPORT ecommerce-data.Orders;\n");
     node = gen("Orders := "
-        + "SELECT o._uuid, discount "
+        + "SELECT o._uuid "
         + "FROM Orders o2 "
         + "INNER JOIN (SELECT _uuid FROM Orders) o ON o._uuid = o2._uuid;\n");
   }

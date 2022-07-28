@@ -1,11 +1,10 @@
 package ai.datasqrl.plan.local.analyze;
 
-import static ai.datasqrl.plan.local.generate.node.util.SqlNodeUtil.and;
+import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.SqrlSchema;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
@@ -19,7 +18,7 @@ import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
 import ai.datasqrl.plan.calcite.sqrl.table.TableWithPK;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
-import ai.datasqrl.plan.local.generate.QueryGenerator.FieldNames;
+import ai.datasqrl.plan.local.generate.FieldNames;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ScriptTable;
@@ -36,24 +35,23 @@ import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.prepare.CalciteCatalogReader;
-import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Table;
-import org.apache.calcite.sql.JoinBuilder;
-import org.apache.calcite.sql.JoinDeclaration;
-import org.apache.calcite.sql.JoinDeclarationContainerImpl;
-import org.apache.calcite.sql.JoinDeclarationImpl;
+import ai.datasqrl.plan.local.transpile.JoinBuilder;
+import ai.datasqrl.plan.local.transpile.JoinDeclaration;
+import ai.datasqrl.plan.local.transpile.JoinDeclarationContainerImpl;
+import ai.datasqrl.plan.local.transpile.JoinDeclarationImpl;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeBuilderImpl;
+import ai.datasqrl.plan.local.transpile.SqlNodeBuilderImpl;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlTableRef;
-import org.apache.calcite.sql.TableMapperImpl;
-import org.apache.calcite.sql.Transpile;
-import org.apache.calcite.sql.UniqueAliasGeneratorImpl;
+import ai.datasqrl.plan.local.transpile.TableMapperImpl;
+import ai.datasqrl.plan.local.transpile.Transpile;
+import ai.datasqrl.plan.local.transpile.UniqueAliasGeneratorImpl;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
@@ -92,15 +90,6 @@ class CalciteParserTest extends AbstractSQRLIT {
     ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
     Assertions.assertTrue(importManager.registerUserSchema(bundle.getMainScript().getSchema(),
         ErrorCollector.root()));
-//    parser = ConfiguredSqrlParser.newParser(errorCollector);
-//    analyzer = new Analyzer(importManager, SchemaAdjustmentSettings.DEFAULT,
-//        errorCollector);
-
-    SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
-    String schemaName = "test";
-    BridgedCalciteSchema subSchema = new BridgedCalciteSchema();
-    rootSchema.add(schemaName, subSchema); //also give the subschema access
-
 
     TableImport tblImport = importManager.importTable(Name.system("ecommerce-data"),
         Name.system("Orders"),
@@ -120,8 +109,6 @@ class CalciteParserTest extends AbstractSQRLIT {
         });
 
     CalciteSchema schema = CalciteSchema.createRootSchema(true);
-    SqrlSchema datasets = new SqrlSchema();
-    schema.add("ecommerce-data", datasets);
     schema.add(importedTable.getTable().getName().getDisplay(),
         (Table)importedTable.getTable());
     this.schema = schema;

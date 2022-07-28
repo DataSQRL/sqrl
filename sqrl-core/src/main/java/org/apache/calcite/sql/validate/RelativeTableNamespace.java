@@ -20,9 +20,8 @@ import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.ScriptTable;
 import java.util.List;
 import java.util.Optional;
-import org.apache.calcite.sql.ExpandableTableNamespace;
-import org.apache.calcite.sql.TablePath;
-import org.apache.calcite.sql.TablePathImpl;
+import ai.datasqrl.plan.local.transpile.TablePath;
+import ai.datasqrl.plan.local.transpile.TablePathImpl;
 
 /** Namespace based on a table from a table scope. */
 public class RelativeTableNamespace extends TableNamespace implements ExpandableTableNamespace {

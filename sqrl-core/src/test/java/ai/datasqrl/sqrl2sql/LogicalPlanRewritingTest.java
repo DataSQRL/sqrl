@@ -14,9 +14,8 @@ import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
-import ai.datasqrl.plan.local.analyze.Analysis;
-import ai.datasqrl.plan.local.analyze.Analyzer;
-import ai.datasqrl.plan.local.analyze.VariableFactory;
+import ai.datasqrl.plan.local.generate.GeneratorBuilder;
+import ai.datasqrl.plan.local.generate.VariableFactory;
 import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.data.C360;
@@ -24,27 +23,20 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Set;
 import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.sql.JoinDeclarationContainerImpl;
-import org.apache.calcite.sql.SqlNodeBuilderImpl;
-import org.apache.calcite.sql.TableMapperImpl;
-import org.apache.calcite.sql.UniqueAliasGeneratorImpl;
+import ai.datasqrl.plan.local.transpile.JoinDeclarationContainerImpl;
+import ai.datasqrl.plan.local.transpile.SqlNodeBuilderImpl;
+import ai.datasqrl.plan.local.transpile.TableMapperImpl;
+import ai.datasqrl.plan.local.transpile.UniqueAliasGeneratorImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class LogicalPlanRewritingTest extends AbstractSQRLIT {
-
-  ConfiguredSqrlParser parser;
-
-  ErrorCollector errorCollector;
-  ImportManager importManager;
-  Analyzer analyzer;
-  Analysis analysis;
-  private Planner planner;
-  //  private ScriptNode script;
+  private ConfiguredSqrlParser parser;
+  private ErrorCollector errorCollector;
+  private ImportManager importManager;
   private Generator generator;
 
   @BeforeEach
@@ -60,37 +52,9 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
     ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
     Assertions.assertTrue(importManager.registerUserSchema(bundle.getMainScript().getSchema(),
         ErrorCollector.root()));
+
     parser = ConfiguredSqrlParser.newParser(errorCollector);
-    CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
-    analyzer = new Analyzer(importManager, SchemaAdjustmentSettings.DEFAULT, tableFactory,
-        errorCollector);
-
-    SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
-    String schemaName = "test";
-    BridgedCalciteSchema subSchema = new BridgedCalciteSchema();
-    rootSchema.add(schemaName, subSchema); //also give the subschema access
-
-    PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
-    Planner planner = plannerFactory.createPlanner();
-    this.planner = planner;
-
-
-    TableMapperImpl tableMapper = new TableMapperImpl(new HashMap<>());
-    UniqueAliasGeneratorImpl uniqueAliasGenerator = new UniqueAliasGeneratorImpl(Set.of());
-    JoinDeclarationContainerImpl joinDecs = new JoinDeclarationContainerImpl();
-    SqlNodeBuilderImpl sqlNodeBuilder = new SqlNodeBuilderImpl();
-
-    generator = new Generator(new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem())),
-        SchemaAdjustmentSettings.DEFAULT,
-        planner,
-        importManager,
-        uniqueAliasGenerator,
-        joinDecs,
-        sqlNodeBuilder,
-        tableMapper,
-        errorCollector,
-        new VariableFactory()
-    );
+    generator = GeneratorBuilder.build(importManager, errorCollector);
   }
 
 
@@ -131,7 +95,6 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
     ScriptNode node = parser.parse(script);
 
     for (Node n : node.getStatements()) {
-      analyzer.analyze((SqrlStatement) n);
       generator.generate((SqrlStatement)n);
     }
   }

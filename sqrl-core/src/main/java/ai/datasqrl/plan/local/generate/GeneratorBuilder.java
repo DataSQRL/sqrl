@@ -6,16 +6,15 @@ import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
-import ai.datasqrl.plan.local.analyze.VariableFactory;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import java.util.HashMap;
 import java.util.HashSet;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.sql.JoinDeclarationContainerImpl;
-import org.apache.calcite.sql.SqlNodeBuilderImpl;
-import org.apache.calcite.sql.TableMapperImpl;
-import org.apache.calcite.sql.UniqueAliasGeneratorImpl;
+import ai.datasqrl.plan.local.transpile.JoinDeclarationContainerImpl;
+import ai.datasqrl.plan.local.transpile.SqlNodeBuilderImpl;
+import ai.datasqrl.plan.local.transpile.TableMapperImpl;
+import ai.datasqrl.plan.local.transpile.UniqueAliasGeneratorImpl;
 
 public class GeneratorBuilder {
 

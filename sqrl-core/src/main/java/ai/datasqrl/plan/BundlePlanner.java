@@ -12,12 +12,8 @@ import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.sqrl.table.CalciteTableFactory;
-import ai.datasqrl.plan.local.analyze.Analyzer;
-import ai.datasqrl.plan.local.analyze.Namespace;
-import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.schema.BridgedCalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
 
 /**
@@ -37,41 +33,10 @@ public class BundlePlanner {
   }
 
   public PhysicalPlan processBundle(ScriptBundle bundle) {
-    Namespace schema = planMain(bundle.getMainScript());
-
-//    Optimizer optimizer = new Optimizer(bundle.getQueries(), true);
-//    LogicalPlan plan = new LogicalPlan(List.of(), List.of(), schema);
-
-//    PhysicalPlanner physicalPlanner = new PhysicalPlanner(options.getImportManager(),
-//        options.getDbConnection(),
-//        options.getStreamEngine());
-//    return physicalPlanner.plan(plan);
+    planMain(bundle.getMainScript());
     return null;
   }
 
-  private Namespace planMain(SqrlScript mainScript) {
-    ConfiguredSqrlParser parser = ConfiguredSqrlParser.newParser(errorCollector);
-    ScriptNode scriptAst = parser.parse(mainScript.getContent());
-    SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, false).plus();
-
-    BridgedCalciteSchema subSchema = new BridgedCalciteSchema();
-    rootSchema.add(mainScript.getName().getCanonical(), subSchema);
-
-    PlannerFactory plannerFactory = new PlannerFactory(rootSchema);
-    Planner planner = plannerFactory.createPlanner();
-    CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
-    Analyzer analyzer = new Analyzer(options.getImportManager(), SchemaAdjustmentSettings.DEFAULT,
-        tableFactory, errorCollector);
-
-//    CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
-//    Generator generator = new Generator(planner, analyzer.getAnalysis());
-//    subSchema.setBridge(generator);
-
-//    for (Node node : scriptAst.getStatements()) {
-//      analyzer.analyze((SqrlStatement) node);
-//      generator.generate((SqrlStatement) node);
-//    }
-
-    return analyzer.getNamespace();
+  private void planMain(SqrlScript mainScript) {
   }
 }

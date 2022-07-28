@@ -5,31 +5,21 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import lombok.Getter;
 
+@Getter
 public class CreateSubscription extends Node {
 
   private final SubscriptionType subscriptionType;
   private final NamePath name;
-  private final Query query;
+  private final String query;
 
   public CreateSubscription(Optional<NodeLocation> location, SubscriptionType subscriptionType,
-      NamePath name, Query query) {
+      NamePath name, String query) {
     super(location);
     this.subscriptionType = subscriptionType;
     this.name = name;
     this.query = query;
-  }
-
-  public SubscriptionType getSubscriptionType() {
-    return subscriptionType;
-  }
-
-  public NamePath getNamePath() {
-    return name;
-  }
-
-  public Query getQuery() {
-    return query;
   }
 
   public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
@@ -47,11 +37,6 @@ public class CreateSubscription extends Node {
     CreateSubscription that = (CreateSubscription) o;
     return subscriptionType == that.subscriptionType && Objects.equals(name, that.name)
         && Objects.equals(query, that.query);
-  }
-
-  @Override
-  public List<Node> getChildren() {
-    return ImmutableList.of(query);
   }
 
   @Override
