@@ -91,6 +91,13 @@ class GeneratorTest extends AbstractSQRLIT {
   }
 
   @Test
+  public void joinDeclarationTest() {
+    imports();
+    gen("Product.p := JOIN Product p ORDER BY p.category LIMIT 1");
+    gen("Product.p2 := SELECT * FROM _ JOIN _.p");
+  }
+
+  @Test
   public void subqueryTest() {
     SqlNode node;
     node = gen("IMPORT ecommerce-data.Orders;\n");

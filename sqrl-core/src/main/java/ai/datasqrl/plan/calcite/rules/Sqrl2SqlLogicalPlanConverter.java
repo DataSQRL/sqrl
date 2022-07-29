@@ -46,7 +46,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
     public final SqrlRexUtil rexUtil;
 
     @Value
-    public static class ProcessedRel implements RelHolder {
+    public class ProcessedRel implements RelHolder {
 
         RelNode relNode;
         QueryRelationalTable.Type type;
@@ -56,6 +56,16 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
 
         List<JoinTable> joinTables;
         TopNConstraint topN;
+
+        /**
+         * Called to inline the TopNConstraint on top of the input relation
+         * @return
+         */
+        public ProcessedRel inlineTopN() {
+            Preconditions.checkArgument(topN.isEmpty(),"Not yet implemented");
+            //Redo the pattern extracted in extractTopNConstraint
+            return this;
+        }
     }
 
     public ProcessedRel putPrimaryKeysUpfront(ProcessedRel input) {
@@ -88,15 +98,6 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
 
     }
 
-    /**
-     * Called to inline the TopNConstraint on top of the input relation
-     * @return
-     */
-    private ProcessedRel inlineTopN(ProcessedRel input) {
-        Preconditions.checkArgument(input.topN.isEmpty(),"Not yet implemented");
-        //Redo the pattern extracted in extractTopNConstraint
-        return input;
-    }
 
     private ProcessedRel extractTopNConstraint(ProcessedRel input, LogicalProject project) {
         /*
@@ -135,7 +136,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
         ProcessedRel result = new ProcessedRel(relNode, queryTable.getType(),
                 primaryKey.build(mapToLength),
                 new TimestampHolder.Derived(queryTable.getTimestamp()),
-                indexMap.build(mapToLength), joinTables, queryTable.getTopN());
+                indexMap.build(mapToLength), joinTables, TopNConstraint.EMPTY);
         return setRelHolder(result);
     }
 
@@ -239,7 +240,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
     @Override
     public RelNode visit(LogicalFilter logicalFilter) {
         ProcessedRel input = getRelHolder(logicalFilter.getInput().accept(this));
-        if (input.topN.hasLimit()) input = inlineTopN(input); //Filtering doesn't preserve limits
+        if (input.topN.hasLimit()) input = input.inlineTopN(); //Filtering doesn't preserve limits
         RexNode condition = logicalFilter.getCondition();
         condition = SqrlRexUtil.mapIndexes(condition,input.indexMap);
         //Check if it has a now() predicate and pull out or throw an exception if malformed
@@ -298,7 +299,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
             return setRelHolder(new ProcessedRel(rawInput.relNode,rawInput.type,rawInput.primaryKey, rawInput.timestamp,
                     trivialMap, rawInput.joinTables, rawInput.topN));
         }
-        ProcessedRel input = inlineTopN(rawInput);
+        ProcessedRel input = rawInput.inlineTopN();
         Preconditions.checkArgument(input.topN.isEmpty());
         List<RexNode> updatedProjects = new ArrayList<>();
         Multimap<Integer,Integer> mappedProjects = HashMultimap.create();
@@ -441,7 +442,7 @@ public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2Sq
         Preconditions.checkArgument(!input.topN.hasPartition(),"Sorting on top of a partitioned relation is invalid");
         if (input.topN.isDistinct() || input.topN.hasLimit()) {
             //Need to inline before we can sort on top
-            input = inlineTopN(input);
+            input = input.inlineTopN();
         } //else there is only a sort which we replace by this sort if present
 
         RelCollation collation = logicalSort.getCollation();

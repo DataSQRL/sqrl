@@ -29,8 +29,6 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   @NonNull
   private final TimestampHolder.Base timestamp;
   @NonNull
-  private final TopNConstraint topN;
-  @NonNull
   private final int numPrimaryKeys;
   //added through expressions, queries
   private final List<AddedColumn.Simple> addedFields = new ArrayList<>();
@@ -38,15 +36,20 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   protected RelNode relNode;
   @Setter
   private TableStatistic statistic = null;
+  /**
+   * Whether this tables get materialized (i.e. is part of the write DAG and pre-computed in the stream engine)
+   * This is determined by the {@link ai.datasqrl.plan.global.DAGPlanner}.
+   */
+  @Setter
+  private boolean materialize = false;
 
   public QueryRelationalTable(@NonNull Name rootTableId, @NonNull Type type,
                               RelNode relNode,
-                              @NonNull TimestampHolder.Base timestamp, @NonNull TopNConstraint topN,
+                              @NonNull TimestampHolder.Base timestamp,
                               @NonNull int numPrimaryKeys) {
     super(rootTableId);
     this.type = type;
     this.timestamp = timestamp;
-    this.topN = topN;
     this.relNode = relNode;
     this.numPrimaryKeys = numPrimaryKeys;
   }
@@ -54,6 +57,10 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   public RelNode getRelNode() {
     Preconditions.checkState(relNode!=null,"Not yet initialized");
     return relNode;
+  }
+
+  public void setOptimizedRelNode(@NonNull RelNode relNode) {
+    this.relNode = relNode;
   }
 
   private static RelDataTypeField getField(FieldIndexPath path, RelDataType rowType) {

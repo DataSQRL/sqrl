@@ -20,7 +20,7 @@ public class ImportedRelationalTable extends QueryRelationalTable {
 
   public ImportedRelationalTable(@NonNull Name rootTableId, @NonNull TimestampHolder.Base timestamp,
                                  SourceTableImport sourceTableImport, RelDataType rowType) {
-    super(rootTableId, Type.STREAM, null, timestamp, TopNConstraint.EMPTY,1);
+    super(rootTableId, Type.STREAM, null, timestamp, 1);
     this.sourceTableImport = sourceTableImport;
     this.baseRowType = rowType;
   }

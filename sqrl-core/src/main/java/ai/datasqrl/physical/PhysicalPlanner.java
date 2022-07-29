@@ -1,17 +1,17 @@
 package ai.datasqrl.physical;
 
-import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.physical.stream.StreamEngine;
+import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.physical.database.MaterializedTableDDLBuilder;
 import ai.datasqrl.physical.database.ViewDDLBuilder;
 import ai.datasqrl.physical.database.ddl.SqlDDLStatement;
+import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.flink.plan.CreateStreamJobResult;
 import ai.datasqrl.physical.stream.flink.plan.StreamGraphBuilder;
-import ai.datasqrl.plan.LogicalPlan;
-import ai.datasqrl.environment.ImportManager;
-import java.util.List;
+import ai.datasqrl.plan.global.OptimizedDAG;
 import lombok.AllArgsConstructor;
+
+import java.util.List;
 
 @AllArgsConstructor
 public class PhysicalPlanner {
@@ -20,7 +20,7 @@ public class PhysicalPlanner {
   JDBCConnectionProvider dbConnection;
   StreamEngine streamEngine;
 
-  public PhysicalPlan plan(LogicalPlan plan) {
+  public PhysicalPlan plan(OptimizedDAG plan) {
     CreateStreamJobResult result = new StreamGraphBuilder(streamEngine, importManager,
             dbConnection)
         .createStreamGraph(plan.getStreamQueries());
