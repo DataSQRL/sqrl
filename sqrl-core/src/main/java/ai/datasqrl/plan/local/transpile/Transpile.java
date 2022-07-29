@@ -3,6 +3,7 @@ package ai.datasqrl.plan.local.transpile;
 import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
+import ai.datasqrl.plan.TranspileOptions;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.local.generate.FieldNames;
@@ -60,6 +61,7 @@ public class Transpile {
   SqlNodeBuilderImpl sqlNodeBuilder;
   JoinBuilderFactory joinBuilderFactory;
   FieldNames names;
+  TranspileOptions options;
 
   public void rewriteQuery(SqlSelect select, SqlValidatorScope scope) {
     createParentPrimaryKeys(scope);
@@ -318,23 +320,25 @@ public class Transpile {
       outer:
       for (SqlNode orderNode : cleaned) {
         //look for order in select list
-        for (int i = 0; i < expanded.size(); i++) {
-          SqlNode selectItem = expanded.get(i);
-          selectItem = stripAs(selectItem);
-          //Found an ordinal
-          if (orderNode.equalsDeep(selectItem, Litmus.IGNORE)) {
-            SqlNode ordinal = SqlLiteral.createExactNumeric(
-                Long.toString(i + mutableOrders.size() + 1), SqlParserPos.ZERO);
-            if (orderNode.getKind() == SqlKind.DESCENDING
-                || orderNode.getKind() == SqlKind.NULLS_FIRST
-                || orderNode.getKind() == SqlKind.NULLS_LAST) {
-              SqlCall call = ((SqlCall) orderNode);
-              call.setOperand(0, ordinal);
-              mutableOrders.add(call);
-            } else {
-              mutableOrders.add(ordinal);
+        if (options.orderToOrdinals) {
+          for (int i = 0; i < expanded.size(); i++) {
+            SqlNode selectItem = expanded.get(i);
+            selectItem = stripAs(selectItem);
+            //Found an ordinal
+            if (orderNode.equalsDeep(selectItem, Litmus.IGNORE)) {
+              SqlNode ordinal = SqlLiteral.createExactNumeric(
+                  Long.toString(i + mutableOrders.size() + 1), SqlParserPos.ZERO);
+              if (orderNode.getKind() == SqlKind.DESCENDING
+                  || orderNode.getKind() == SqlKind.NULLS_FIRST
+                  || orderNode.getKind() == SqlKind.NULLS_LAST) {
+                SqlCall call = ((SqlCall) orderNode);
+                call.setOperand(0, ordinal);
+                mutableOrders.add(call);
+              } else {
+                mutableOrders.add(ordinal);
+              }
+              continue outer;
             }
-            continue outer;
           }
         }
         //otherwise, process it
@@ -378,7 +382,8 @@ public class Transpile {
       case TABLE_REF:
         break;
       case IDENTIFIER:
-        from = rewriteTable((SqlIdentifier) from, scope);
+        from = convertTableName((SqlIdentifier) from, Util.last(((SqlIdentifier) from).names),
+            scope);
         break;
       case JOIN:
         //from gets reassigned instead of replaced
@@ -403,6 +408,10 @@ public class Transpile {
 
     if (fromNamespace.getNode() != null) {
       return rewriteFrom(fromNamespace.getNode(), scope);
+    }
+
+    if (id.names.size() == 1 && id.names.get(0).equalsIgnoreCase("_")) {
+      return rewriteTable(id, scope);
     }
 
     if (fromNamespace instanceof ExpandableTableNamespace) {

@@ -8,6 +8,7 @@ import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.environment.ImportManager.TableImport;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.plan.TranspileOptions;
 import ai.datasqrl.plan.calcite.SqrlConformance;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
@@ -423,7 +424,8 @@ class CalciteParserTest extends AbstractSQRLIT {
 
     Transpile transpile = new Transpile(
         validator,tableMapper, uniqueAliasGenerator, joinDecs,
-        sqlNodeBuilder, () -> new JoinBuilder(uniqueAliasGenerator, joinDecs, tableMapper, sqlNodeBuilder), names);
+        sqlNodeBuilder, () -> new JoinBuilder(uniqueAliasGenerator, joinDecs, tableMapper, sqlNodeBuilder), names,
+        TranspileOptions.builder().build());
 
     transpile.rewriteQuery(select, scope);
     System.out.println("\nRewritten: " + select);

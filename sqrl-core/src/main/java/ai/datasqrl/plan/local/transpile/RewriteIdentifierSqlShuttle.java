@@ -8,6 +8,7 @@ import java.util.*;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
@@ -34,6 +35,10 @@ public class RewriteIdentifierSqlShuttle extends SqlShuttle {
     }
     @Override
     public SqlNode visit(SqlCall call) {
+      if (call.getKind() == SqlKind.SELECT) {
+        return call;
+      }
+
       if (call.getOperator() == SqrlOperatorTable.AS) {
         String alias = ((SqlIdentifier)call.getOperandList().get(1)).getSimple();
         SqlNode[] operands = new SqlNode[] {

@@ -21,6 +21,7 @@ import ai.datasqrl.parse.tree.SqrlStatement;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
+import ai.datasqrl.plan.TranspileOptions;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
@@ -28,11 +29,13 @@ import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
+import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.rules.Sqrl2SqlLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.table.AbstractRelationalTable;
 import ai.datasqrl.plan.calcite.table.AddedColumn;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
+import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
+import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.local.Errors;
@@ -59,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -72,6 +76,8 @@ import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlBasicCall;
+import org.apache.calcite.sql.SqlHint;
+import org.apache.calcite.sql.SqlHint.HintOptionFormat;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
@@ -85,6 +91,7 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
+import org.apache.calcite.util.Util;
 
 @Getter
 public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBridge {
@@ -189,7 +196,8 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
       String query = String.format("SELECT %s FROM %s",
           NodeFormatter.accept(node.getTimestamp().get()),
           dt.get(0).getTable().getName().getDisplay());
-      TranspiledResult result = transpile(query, Optional.empty());
+      TranspiledResult result = transpile(query, Optional.empty(),
+          TranspileOptions.builder().build());
       System.out.println(result.getRelNode().explain());
     }
 
@@ -220,7 +228,8 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
   @SneakyThrows
   @Override
   public Void visitDistinctAssignment(DistinctAssignment node, Scope context) {
-    TranspiledResult result = transpile(node.getSqlQuery(), Optional.empty());
+    TranspiledResult result = transpile(node.getSqlQuery(), Optional.empty(),
+        TranspileOptions.builder().build());
     System.out.println(result.relNode.explain());
 //    mapping.addQuery(relNode, context.getTable(), node.getNamePath());
     return null;
@@ -234,8 +243,27 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
     Check.state(node.getNamePath().size() > 1, node, Errors.JOIN_ON_ROOT);
     Optional<SQRLTable> table = getContext(node.getNamePath().popLast());
     Preconditions.checkState(table.isPresent());
-    String query = "SELECT * FROM _ " + node.getQuery();
-    TranspiledResult result = transpile(query, table);
+    String queryT = "SELECT * FROM _ " + node.getQuery();
+    TableWithPK pkTable = tableMapper.getTable(table.get());
+    String query = String.format(queryT, pkTable.getPrimaryKeys().stream()
+        .map(e -> "_." + e)
+        .collect(Collectors.joining(", ")));
+
+    TranspiledResult result = transpile(query, table,
+        TranspileOptions.builder().orderToOrdinals(false).build());
+    Optional<SqlHint> hint = Optional.empty();
+    if (result.getRelNode() instanceof LogicalSort &&
+        ((LogicalSort) result.getRelNode()).fetch != null) {
+      List<SqlNode> pksOrdinals = IntStream.range(0, pkTable.getPrimaryKeys().size())
+          .mapToObj(i -> new SqlIdentifier(
+              Long.toString(i + 1),
+              SqlParserPos.ZERO))
+          .collect(Collectors.toList());
+      hint = Optional.of(new SqlHint(SqlParserPos.ZERO,
+          new SqlIdentifier(SqrlHintStrategyTable.TOP_N, SqlParserPos.ZERO),
+          new SqlNodeList(pksOrdinals, SqlParserPos.ZERO),
+          HintOptionFormat.ID_LIST));
+    }
 
     SqlBasicCall tRight = (SqlBasicCall) getRightDeepTable(result.getSqlNode());
     VirtualRelationalTable vt = result.getSqlValidator().getNamespace(tRight).getTable()
@@ -243,6 +271,7 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
     SQRLTable toTable = getScriptTable(vt);
 
     Multiplicity multiplicity = result.getRelNode() instanceof LogicalSort &&
+        ((LogicalSort) result.getRelNode()).fetch != null &&
         ((LogicalSort) result.getRelNode()).fetch.equals(
             new RexBuilder(planner.getTypeFactory()).makeExactLiteral(
                 BigDecimal.ONE)) ?
@@ -257,17 +286,57 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
     SqlNode join = unwrapSelect(result.getSqlNode()).getFrom();
 
     SqlJoin join1 = (SqlJoin) join;
+    String lastAlias = Util.last(((SqlIdentifier) tRight.getOperandList().get(1)).names);
+    if (result.getRelNode() instanceof LogicalSort &&
+        ((LogicalSort) result.getRelNode()).fetch != null) {
+      SqlOrderBy order = (SqlOrderBy) result.getSqlNode();
+      SqlSelect select = (SqlSelect) order.query;
+      hint.ifPresent(h -> select.setHints(new SqlNodeList(List.of(h), SqlParserPos.ZERO)));
+      select.setSelectList(new SqlNodeList(List.of(
+          //todo: more than 1 pk
+          select.getSelectList().get(0),
+          new SqlIdentifier(List.of(lastAlias, ""), SqlParserPos.ZERO)),
+          SqlParserPos.ZERO));
+      String a = uniqueAliasGenerator.generateFieldName();
+      SqlBasicCall alias = new SqlBasicCall(SqrlOperatorTable.AS,
+          new SqlNode[]{
+              select,
+              new SqlIdentifier(a, SqlParserPos.ZERO)
+          }, SqlParserPos.ZERO);
+      //change condition to be on pk
+      List<SqlNode> pks = new ArrayList<>();
+      for (String pk : pkTable.getPrimaryKeys()) {
+        pks.add(new SqlBasicCall(SqrlOperatorTable.EQUALS,
+            new SqlNode[]{
+                new SqlIdentifier(List.of("_", pk), SqlParserPos.ZERO),
+                new SqlIdentifier(List.of(a,
+                    Util.last(((SqlIdentifier) ((SqlBasicCall) select.getSelectList()
+                        .get(0)).getOperandList().get(1))
+                        .names)
+                ), SqlParserPos.ZERO)
+            }, SqlParserPos.ZERO
+        ));
+      }
 
-    this.joinDecs.add(relationship, new JoinDeclarationImpl(
-        Optional.of(join1.getCondition()),
-        join1.getRight(),
-        "_",
-        ((SqlIdentifier) tRight.getOperandList().get(1)).names.get(0)));
+      this.joinDecs.add(relationship, new JoinDeclarationImpl(
+          Optional.ofNullable(and(pks)),
+          alias,
+          "_",
+          a)
+      );
+    } else {
+      this.joinDecs.add(relationship, new JoinDeclarationImpl(
+          Optional.of(join1.getCondition()),
+          join1.getRight(),
+          "_",
+          ((SqlIdentifier) tRight.getOperandList().get(1)).names.get(0)));
+    }
     return null;
   }
 
   private SQRLTable getScriptTable(VirtualRelationalTable vt) {
-    for (Map.Entry<SQRLTable, AbstractRelationalTable> t : this.tableMapper.getTableMap().entrySet()) {
+    for (Map.Entry<SQRLTable, AbstractRelationalTable> t : this.tableMapper.getTableMap()
+        .entrySet()) {
       if (t.getValue().equals(vt)) {
         return t.getKey();
       }
@@ -310,17 +379,19 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
   }
 
   @SneakyThrows
-  private TranspiledResult transpile(String query, Optional<SQRLTable> context) {
-    System.out.println(query);
+  private TranspiledResult transpile(String query, Optional<SQRLTable> context,
+      TranspileOptions options) {
     SqlNode node = SqlParser.create(query, SqlParser.config().withCaseSensitive(false)
         .withUnquotedCasing(Casing.UNCHANGED)).parseQuery();
 
     SqrlValidateResult result = validate(node, context);
-    TranspiledResult transpiledResult = transpile(result.getValidated(), result.getValidator());
+    TranspiledResult transpiledResult = transpile(result.getValidated(), result.getValidator(),
+        options);
     return transpiledResult;
   }
 
-  private TranspiledResult transpile(SqlNode node, SqrlValidatorImpl validator) {
+  private TranspiledResult transpile(SqlNode node, SqrlValidatorImpl validator,
+      TranspileOptions options) {
     SqlSelect select =
         node instanceof SqlSelect ? (SqlSelect) node : (SqlSelect) ((SqlOrderBy) node).query;
     SqlValidatorScope scope = validator.getSelectScope(select);
@@ -329,7 +400,7 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
         validator, tableMapper, uniqueAliasGenerator, joinDecs,
         sqlNodeBuilder,
         () -> new JoinBuilder(uniqueAliasGenerator, joinDecs, tableMapper, sqlNodeBuilder),
-        fieldNames);
+        fieldNames, options);
     System.out.println("Original: " + select);
 
     transpile.rewriteQuery(select, scope);
@@ -354,7 +425,8 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
   public Void visitExpressionAssignment(ExpressionAssignment node, Scope context) {
     Optional<SQRLTable> table = getContext(node.getNamePath().popLast());
     Preconditions.checkState(table.isPresent());
-    TranspiledResult result = transpile("SELECT " + node.getSql() + " FROM _", table);
+    TranspiledResult result = transpile("SELECT " + node.getSql() + " FROM _", table,
+        TranspileOptions.builder().build());
 
     System.out.println(result);
 
@@ -388,7 +460,8 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
 //            table.getRowType(null).getFieldList().size(), produced.getType());
 //
 //        AddedColumn addedColumn = new Complex(newExpr.getName(), relNode);
-//        ((VirtualRelationalTable)table).addColumn(addedColumn, new SqrlTypeFactory(new SqrlTypeSystem
+//        ((VirtualRelationalTable)table).addColumn(addedColumn, new SqrlTypeFactory(new
+//        SqrlTypeSystem
 //        ()));
 //
 //        return ctx.getAddlJoins().get(0).getRel();
@@ -441,7 +514,7 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
   @Override
   public Void visitQueryAssignment(QueryAssignment node, Scope context) {
     Optional<SQRLTable> ctx = getContext(node.getNamePath().popLast());
-    TranspiledResult result = transpile(node.getSql(), ctx);
+    TranspiledResult result = transpile(node.getSql(), ctx, TranspileOptions.builder().build());
     RelNode relNode = result.getRelNode();
     System.out.println(result.relNode.explain());
 //    Check.state(canAssign(node.getNamePath()), node, Errors.UNASSIGNABLE_QUERY_TABLE);
