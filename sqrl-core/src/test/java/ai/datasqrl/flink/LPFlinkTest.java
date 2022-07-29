@@ -75,7 +75,9 @@ public class LPFlinkTest extends AbstractSQRLIT {
 
     RelBuilder relBuilder = generator.getPlanner().getRelBuilder();
     RelNode testQuery = relBuilder.scan("product$1")
-              .project(RexInputRef.of(1, relBuilder.peek().getRowType()), RexInputRef.of(2, relBuilder.peek().getRowType()))
+              .project(RexInputRef.of(0, relBuilder.peek().getRowType()),
+                  RexInputRef.of(1, relBuilder.peek().getRowType()),
+                  RexInputRef.of(2, relBuilder.peek().getRowType()))
               .build();
     TableQuery tableQuery = new TableQuery(sourceTable, testQuery);
 
@@ -90,6 +92,7 @@ public class LPFlinkTest extends AbstractSQRLIT {
     ResultSet resultSet = this.jdbc.getConnection().createStatement()
         .executeQuery("SELECT * FROM product$1;");
 
+    System.out.println("Results: ");
     ResultSetPrinter.print(resultSet, System.out);
   }
 }
