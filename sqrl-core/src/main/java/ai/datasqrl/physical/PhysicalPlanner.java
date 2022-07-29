@@ -30,6 +30,6 @@ public class PhysicalPlanner {
     statements.addAll(new ViewDDLBuilder()
         .create(plan.getDatabaseQueries()));
 
-    return new PhysicalPlan(dbConnection, statements, result.getStreamQueries(), plan.getSchema());
+    return new PhysicalPlan(dbConnection, statements, result.getStreamQueries());
   }
 }

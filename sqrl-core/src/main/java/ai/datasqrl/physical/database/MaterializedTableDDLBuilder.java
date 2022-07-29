@@ -43,8 +43,12 @@ public class MaterializedTableDDLBuilder {
 
     List<String> columns = new ArrayList<>();
     for (UnresolvedColumn col : schema.getColumns()) {
-      String column = toSql((UnresolvedPhysicalColumn) col);
-      columns.add(column);
+      try {
+        String column = toSql((UnresolvedPhysicalColumn) col);
+        columns.add(column);
+      } catch (Exception e) {
+//        e.printStackTrace();
+      }
     }
 
     return new CreateTableDDL(table.getOptions().get("table-name"), columns, pk);

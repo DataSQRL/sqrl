@@ -97,7 +97,8 @@ public class IntegrationTestSettings {
     }
 
     public static IntegrationTestSettings getEngines(StreamEngine stream, DatabaseEngine database) {
-        return IntegrationTestSettings.builder().stream(stream).database(database).build();
+        return IntegrationTestSettings.builder().stream(stream).database(database)
+            .monitorSources(false).build();
     }
 
     @Value

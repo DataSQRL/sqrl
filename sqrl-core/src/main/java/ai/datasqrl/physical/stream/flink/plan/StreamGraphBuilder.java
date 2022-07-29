@@ -19,6 +19,7 @@ import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImp
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.api.config.ExecutionConfigOptions.NotNullEnforcer;
 import org.apache.flink.table.api.internal.FlinkEnvProxy;
+import org.apache.flink.table.planner.delegation.StreamPlanner;
 
 @AllArgsConstructor
 public class StreamGraphBuilder {
@@ -29,8 +30,7 @@ public class StreamGraphBuilder {
 
   public CreateStreamJobResult createStreamGraph(List<TableQuery> streamQueries) {
     final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder) streamEngine.createJob();
-    final StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)
-        StreamTableEnvironment.create(streamBuilder.getEnvironment());
+    final StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)streamBuilder.getTableEnvironment();
     final DataStreamRegisterer dataStreamRegisterer = new DataStreamRegisterer(tEnv,
         this.importManager, streamBuilder);
 
@@ -41,13 +41,13 @@ public class StreamGraphBuilder {
     StreamStatementSet stmtSet = tEnv.createStatementSet();
     List<TableDescriptor> createdTables = new ArrayList<>();
     for (TableQuery sink : streamQueries) {
-      String name = sink.getTable().getName().getCanonical() + "_sink";
+      String name = sink.getTable().getNameId() + "_sink";
       if (List.of(tEnv.listTables()).contains(name)) {
         continue;
       }
       dataStreamRegisterer.register(sink.getRelNode());
 
-      RelNode relNode = InjectFlinkCluster.injectFlinkRelOptCluster(tEnv,
+      RelNode relNode = InjectFlinkCluster.injectFlinkRelOptCluster(tEnv, ((StreamPlanner) tEnv.getPlanner()).getRelBuilder().getCluster(),
           sink.getRelNode().getInput(0));
 
       Table tbl = FlinkEnvProxy.relNodeQuery(relNode, tEnv);
@@ -55,7 +55,7 @@ public class StreamGraphBuilder {
       TableDescriptor descriptor = TableDescriptor.forConnector("jdbc")
           .schema(FlinkPipelineUtils.addPrimaryKey(tbl.getSchema().toSchema(), sink.getTable()))
           .option("url", jdbcConfiguration.getDbURL())
-          .option("table-name", sink.getTable().getName().getCanonical())
+          .option("table-name", sink.getTable().getNameId())
           .option("username", jdbcConfiguration.getUser())
           .option("password", jdbcConfiguration.getPassword())
           .build();

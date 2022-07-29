@@ -11,10 +11,4 @@ public class OptimizedDAG {
 
   List<TableQuery> streamQueries;
   List<TableQuery> databaseQueries;
-  Schema schema;
-
-
-
-
-
 }
