@@ -81,7 +81,14 @@ public class DAGPlanner {
         for (TableDAGNode tableNode : Iterables.filter(dag.getSources(),TableDAGNode.class)) {
             Preconditions.checkArgument(tableNode.table instanceof ImportedRelationalTable);
             ImportedRelationalTable impTable = (ImportedRelationalTable) tableNode.table;
+            impTable.getTimestamp().setBestTimestamp();
+            //TODO: replace with table that can be used by flink
         }
+        //Validate every non-state table has a timestamp now
+        Preconditions.checkState(Iterables.all(Iterables.transform(
+                                    Iterables.filter(dag,TableDAGNode.class),t -> t.asTable().table),
+                                    t -> t.getType()== QueryRelationalTable.Type.STATE || t.getTimestamp().hasTimestamp()));
+
 
         //6. Produce an LP-tree for each query with all tables inlined and push down filters to determine indexes
 

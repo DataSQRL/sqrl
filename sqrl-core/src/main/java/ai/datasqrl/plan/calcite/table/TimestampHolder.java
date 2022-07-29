@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public abstract class TimestampHolder {
 
     protected boolean candidatesLocked;
-    protected final List<Candidate> candidates;
+    protected List<Candidate> candidates;
 
 
 
@@ -54,7 +54,21 @@ public abstract class TimestampHolder {
             });
         }
 
+        public void setBestTimestamp() {
+            if (hasTimestamp()) return;
+            setTimestamp(candidates.stream().max((a,b) -> Integer.compare(a.score,b.score)).get().id);
+        }
 
+        public void setTimestamp(int candidateId) {
+            Candidate timestamp = candidates.stream().filter(c -> c.id==candidateId).findFirst().orElseThrow(
+                    () -> new IllegalArgumentException("Not a valid candidate id: " + candidateId));
+            //Remove all others
+            candidates = List.of(timestamp);
+            candidatesLocked = true;
+            dependents.forEach(t -> {
+                if (!t.hasTimestamp()) t.setTimestamp(candidateId);
+            });
+        }
 
     }
 
@@ -124,10 +138,6 @@ public abstract class TimestampHolder {
         return candidates.stream().filter(c -> c.index == columnIndex).findFirst().orElse(null);
     }
 
-    protected void setTimestamp(int candidateId) {
-        Candidate timestamp = candidates.stream().filter(c -> c.id==candidateId).findFirst().orElseThrow();
-
-    }
 
     @Value
     public static class Candidate {

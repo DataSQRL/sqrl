@@ -12,7 +12,7 @@ import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.plan.local.generate.GeneratorBuilder;
 import ai.datasqrl.util.data.C360;
 import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.SqlNode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
