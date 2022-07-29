@@ -53,6 +53,9 @@ public abstract class TimestampHolder {
                 if (!t.isCandidatesLocked()) t.lockCandidates();
             });
         }
+
+
+
     }
 
     @Getter
@@ -112,8 +115,18 @@ public abstract class TimestampHolder {
         return candidatesLocked && candidates.size()==1;
     }
 
+    public int getTimestampIndex() {
+        Preconditions.checkArgument(hasTimestamp(),"Timestamp has not yet been determined");
+        return candidates.get(0).index;
+    }
+
     protected Candidate getCandidateByIndex(int columnIndex) {
         return candidates.stream().filter(c -> c.index == columnIndex).findFirst().orElse(null);
+    }
+
+    protected void setTimestamp(int candidateId) {
+        Candidate timestamp = candidates.stream().filter(c -> c.id==candidateId).findFirst().orElseThrow();
+
     }
 
     @Value

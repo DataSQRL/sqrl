@@ -21,13 +21,17 @@ import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Pair;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CalciteTableFactory extends VirtualTableFactory<RelDataType, VirtualRelationalTable> {
@@ -62,10 +66,20 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
                                       List<Name> fieldNames) {
         ContinuousIndexMap indexmap = rel.getIndexMap();
         Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());
-        QueryRelationalTable baseTable =  new QueryRelationalTable(getTableId(tablePath.getLast()),
-                rel.getType(),rel.getRelNode(),
-                TimestampHolder.Base.ofDerived(rel.getTimestamp()),
-                rel.getTopN(),rel.getPrimaryKey().getSourceLength());
+        RelNode baseRel = rel.getRelNode();
+        TopNConstraint topN = rel.getTopN();
+        Name tableid = getTableId(tablePath.getLast());
+        TimestampHolder.Base timestamp = TimestampHolder.Base.ofDerived(rel.getTimestamp());
+        QueryRelationalTable baseTable;
+        if (!topN.isEmpty()) {
+            rel = rel.inlineTopN();
+            baseTable = new TopNRelationalTable(tableid, rel.getType(),rel.getRelNode(),
+                    timestamp, rel.getPrimaryKey().getSourceLength(),
+                    topN, baseRel);
+        } else {
+            baseTable = new QueryRelationalTable(tableid, rel.getType(),rel.getRelNode(),
+                    timestamp, rel.getPrimaryKey().getSourceLength());
+        }
         LinkedHashMap<Integer,Name> index2Name = new LinkedHashMap<>();
         for (int i = 0; i < fieldNames.size(); i++) {
             index2Name.put(indexmap.map(i), fieldNames.get(i));
