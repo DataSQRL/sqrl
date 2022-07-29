@@ -4,7 +4,11 @@ import ai.datasqrl.config.BundleOptions;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
+import ai.datasqrl.parse.ConfiguredSqrlParser;
+import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.physical.PhysicalPlan;
+import ai.datasqrl.plan.local.generate.Generator;
+import ai.datasqrl.plan.local.generate.GeneratorBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,5 +33,9 @@ public class BundlePlanner {
   }
 
   private void planMain(SqrlScript mainScript) {
+    Generator generator = GeneratorBuilder.build(options.getImportManager(), errorCollector);
+    ConfiguredSqrlParser parser = new ConfiguredSqrlParser(errorCollector);
+    ScriptNode scriptNode = parser.parse(mainScript.getContent());
+    generator.generate(scriptNode);
   }
 }
