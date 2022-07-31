@@ -1,10 +1,9 @@
 package ai.datasqrl.plan.local.transpile;
 
+import static ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable.TOP_N;
 import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
-import ai.datasqrl.plan.TranspileOptions;
-import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.local.generate.FieldNames;
 import ai.datasqrl.schema.SQRLTable;
@@ -86,7 +85,7 @@ public class Transpile {
 
     for (int i = 0; i < list.size(); i++) {
       SqlHint hint = (SqlHint) list.get(i);
-      if (hint.getName().equals(SqrlHintStrategyTable.TOP_N)) {
+      if (hint.getName().equals(TOP_N)) {
         SqlHint newHint = rewriteDistinctHint(select, hint, scope);
         hints.set(i, newHint);
       }

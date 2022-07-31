@@ -19,7 +19,7 @@ import ai.datasqrl.parse.tree.SqrlStatement;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.TranspileOptions;
+import ai.datasqrl.plan.local.transpile.TranspileOptions;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
