@@ -41,11 +41,11 @@ import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.local.Errors;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.generate.Generator.Scope;
-import ai.datasqrl.plan.local.transpile.JoinBuilder;
-import ai.datasqrl.plan.local.transpile.JoinDeclaration;
+import ai.datasqrl.plan.local.transpile.JoinBuilderImpl;
+import ai.datasqrl.plan.local.transpile.SqlJoinDeclaration;
 import ai.datasqrl.plan.local.transpile.JoinDeclarationContainerImpl;
-import ai.datasqrl.plan.local.transpile.JoinDeclarationImpl;
-import ai.datasqrl.plan.local.transpile.SqlNodeBuilderImpl;
+import ai.datasqrl.plan.local.transpile.SqlJoinDeclarationImpl;
+import ai.datasqrl.plan.local.transpile.SqlNodeBuilder;
 import ai.datasqrl.plan.local.transpile.TableMapperImpl;
 import ai.datasqrl.plan.local.transpile.Transpile;
 import ai.datasqrl.plan.local.transpile.UniqueAliasGeneratorImpl;
@@ -108,14 +108,14 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
   ImportManager importManager;
   UniqueAliasGeneratorImpl uniqueAliasGenerator;
   JoinDeclarationContainerImpl joinDecs;
-  SqlNodeBuilderImpl sqlNodeBuilder;
+  SqlNodeBuilder sqlNodeBuilder;
   TableMapperImpl tableMapper;
   VariableFactory variableFactory;
 
 
   public Generator(CalciteTableFactory tableFactory, SchemaAdjustmentSettings schemaSettings,
       Planner planner, ImportManager importManager, UniqueAliasGeneratorImpl uniqueAliasGenerator,
-      JoinDeclarationContainerImpl joinDecs, SqlNodeBuilderImpl sqlNodeBuilder,
+      JoinDeclarationContainerImpl joinDecs, SqlNodeBuilder sqlNodeBuilder,
       TableMapperImpl tableMapper, ErrorCollector errors, VariableFactory variableFactory) {
     this.tableFactory = tableFactory;
     this.schemaSettings = schemaSettings;
@@ -215,7 +215,7 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
     //Add all join declarations
     tblDef.getShredTableMap().keySet().stream().flatMap(t -> t.getAllRelationships())
         .forEach(r -> {
-          JoinDeclaration dec = createParentChildJoinDeclaration(r, tableMapper,
+          SqlJoinDeclaration dec = createParentChildJoinDeclaration(r, tableMapper,
               uniqueAliasGenerator);
           joinDecs.add(r, dec);
         });
@@ -317,19 +317,19 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
             }, SqlParserPos.ZERO
         ));
       }
-
-      this.joinDecs.add(relationship, new JoinDeclarationImpl(
+      SqlJoinDeclaration dec = new SqlJoinDeclarationImpl(
           Optional.ofNullable(and(pks)),
           alias,
           "_",
-          a)
-      );
+          a);
+      this.joinDecs.add(relationship, dec);
     } else {
-      this.joinDecs.add(relationship, new JoinDeclarationImpl(
+      SqlJoinDeclaration dec = new SqlJoinDeclarationImpl(
           Optional.of(join1.getCondition()),
           join1.getRight(),
           "_",
-          ((SqlIdentifier) tRight.getOperandList().get(1)).names.get(0)));
+          ((SqlIdentifier) tRight.getOperandList().get(1)).names.get(0));
+      this.joinDecs.add(relationship, dec);
     }
     return null;
   }
@@ -399,13 +399,11 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
     Transpile transpile = new Transpile(
         validator, tableMapper, uniqueAliasGenerator, joinDecs,
         sqlNodeBuilder,
-        () -> new JoinBuilder(uniqueAliasGenerator, joinDecs, tableMapper, sqlNodeBuilder),
+        () -> new JoinBuilderImpl(uniqueAliasGenerator, joinDecs, tableMapper),
         fieldNames, options);
-    System.out.println("Original: " + select);
 
     transpile.rewriteQuery(select, scope);
 
-    System.out.println("Rewritten: " + select);
     SqlValidator sqlValidator = TranspilerFactory.createSqlValidator(
         relSchema);
     SqlNode validated = sqlValidator.validate(select);
@@ -550,7 +548,7 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
       registerScriptTable(queryTable);
       Optional<Relationship> childRel = variableFactory.linkParentChild(namePath,
           queryTable.getTable(), ctx);
-      childRel.ifPresent(rel -> joinDecs.add(rel, new JoinDeclarationImpl(
+      childRel.ifPresent(rel -> joinDecs.add(rel, new SqlJoinDeclarationImpl(
           Optional.empty(),
           createParentChildCondition(rel, "x", this.tableMapper),
           "_",
@@ -591,12 +589,12 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
     return relNode;
   }
 
-  protected JoinDeclaration createParentChildJoinDeclaration(Relationship rel,
+  protected SqlJoinDeclaration createParentChildJoinDeclaration(Relationship rel,
       TableMapperImpl tableMapper,
       UniqueAliasGeneratorImpl uniqueAliasGenerator) {
     TableWithPK pk = tableMapper.getTable(rel.getToTable());
     String alias = uniqueAliasGenerator.generate(pk);
-    return new JoinDeclarationImpl(
+    return new SqlJoinDeclarationImpl(
         Optional.of(createParentChildCondition(rel, alias, tableMapper)),
         createTableRef(rel.getToTable(), alias, tableMapper), "_", alias);
   }

@@ -1,4 +1,4 @@
-package ai.datasqrl.physical.util;
+package ai.datasqrl.plan.calcite.util;
 
 import java.util.function.UnaryOperator;
 import org.apache.calcite.rel.RelNode;

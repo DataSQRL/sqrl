@@ -55,7 +55,7 @@ class CalciteParserTest extends AbstractSQRLIT {
   ImportManager importManager;
   UniqueAliasGeneratorImpl uniqueAliasGenerator;
   JoinDeclarationContainerImpl joinDecs;
-  SqlNodeBuilderImpl sqlNodeBuilder;
+  SqlNodeBuilder sqlNodeBuilder;
   TableMapperImpl tableMapper;
   private CalciteSchema shredSchema;
   SQRLTable orders;
@@ -81,13 +81,13 @@ class CalciteParserTest extends AbstractSQRLIT {
     CalciteTableFactory tableFactory = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()));
     ScriptTableDefinition importedTable = tableFactory.importTable((SourceTableImport)tblImport, Optional.empty());
     tableMapper = new TableMapperImpl((Map)importedTable.getShredTableMap());
-    uniqueAliasGenerator = new UniqueAliasGeneratorImpl(Set.of());
+    uniqueAliasGenerator = new UniqueAliasGeneratorImpl();
     joinDecs = new JoinDeclarationContainerImpl();
-    sqlNodeBuilder = new SqlNodeBuilderImpl();
+    sqlNodeBuilder = new SqlNodeBuilder();
 
     importedTable.getShredTableMap().keySet().stream().flatMap(t->t.getAllRelationships())
         .forEach(r->{
-          JoinDeclaration d = createParentChildJoinDeclaration(r, tableMapper, uniqueAliasGenerator);
+          SqlJoinDeclaration d = createParentChildJoinDeclaration(r, tableMapper, uniqueAliasGenerator);
           joinDecs.add(r, d);
         });
 
@@ -298,11 +298,11 @@ class CalciteParserTest extends AbstractSQRLIT {
 
   }
 
-  protected JoinDeclaration createParentChildJoinDeclaration(Relationship rel, TableMapperImpl tableMapper,
+  protected SqlJoinDeclaration createParentChildJoinDeclaration(Relationship rel, TableMapperImpl tableMapper,
       UniqueAliasGeneratorImpl uniqueAliasGenerator) {
     TableWithPK pk = tableMapper.getTable(rel.getToTable());
     String alias = uniqueAliasGenerator.generate(pk);
-    return new JoinDeclarationImpl(
+    return new SqlJoinDeclarationImpl(
         Optional.of(createParentChildCondition(rel, alias, tableMapper)),
         createTableRef(rel.getToTable(), alias, tableMapper), "_", alias);
   }
@@ -424,7 +424,7 @@ class CalciteParserTest extends AbstractSQRLIT {
 
     Transpile transpile = new Transpile(
         validator,tableMapper, uniqueAliasGenerator, joinDecs,
-        sqlNodeBuilder, () -> new JoinBuilder(uniqueAliasGenerator, joinDecs, tableMapper, sqlNodeBuilder), names,
+        sqlNodeBuilder, () -> new JoinBuilderImpl(uniqueAliasGenerator, joinDecs, tableMapper), names,
         TranspileOptions.builder().build());
 
     transpile.rewriteQuery(select, scope);

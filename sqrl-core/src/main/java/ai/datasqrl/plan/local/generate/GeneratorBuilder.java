@@ -8,11 +8,10 @@ import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import java.util.HashMap;
-import java.util.HashSet;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import ai.datasqrl.plan.local.transpile.JoinDeclarationContainerImpl;
-import ai.datasqrl.plan.local.transpile.SqlNodeBuilderImpl;
+import ai.datasqrl.plan.local.transpile.SqlNodeBuilder;
 import ai.datasqrl.plan.local.transpile.TableMapperImpl;
 import ai.datasqrl.plan.local.transpile.UniqueAliasGeneratorImpl;
 
@@ -27,9 +26,9 @@ public class GeneratorBuilder {
         new PlannerFactory(CalciteSchema.createRootSchema(false, false).plus())
             .createPlanner(),
         importManager,
-        new UniqueAliasGeneratorImpl(new HashSet<>()),
+        new UniqueAliasGeneratorImpl(),
         new JoinDeclarationContainerImpl(),
-        new SqlNodeBuilderImpl(),
+        new SqlNodeBuilder(),
         new TableMapperImpl(new HashMap<>()),
         error,
         new VariableFactory()
