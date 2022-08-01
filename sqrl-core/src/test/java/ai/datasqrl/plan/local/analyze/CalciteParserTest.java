@@ -8,7 +8,6 @@ import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.environment.ImportManager.TableImport;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.plan.TranspileOptions;
 import ai.datasqrl.plan.calcite.*;
 import ai.datasqrl.plan.local.transpile.TranspileOptions;
 import ai.datasqrl.plan.calcite.SqrlConformance;

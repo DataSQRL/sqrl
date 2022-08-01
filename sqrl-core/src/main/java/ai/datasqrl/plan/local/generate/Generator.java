@@ -6,57 +6,25 @@ import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.environment.ImportManager.TableImport;
 import ai.datasqrl.function.builtin.time.StdTimeLibrary;
 import ai.datasqrl.parse.Check;
-import ai.datasqrl.parse.tree.AstVisitor;
-import ai.datasqrl.parse.tree.DistinctAssignment;
-import ai.datasqrl.parse.tree.ExpressionAssignment;
-import ai.datasqrl.parse.tree.ImportDefinition;
-import ai.datasqrl.parse.tree.JoinAssignment;
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.NodeFormatter;
-import ai.datasqrl.parse.tree.QueryAssignment;
-import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
+import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.local.transpile.TranspileOptions;
-import ai.datasqrl.plan.calcite.OptimizationStage;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import ai.datasqrl.plan.calcite.TranspilerFactory;
+import ai.datasqrl.plan.calcite.*;
 import ai.datasqrl.plan.calcite.rules.Sqrl2SqlLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.table.AbstractRelationalTable;
-import ai.datasqrl.plan.calcite.table.AddedColumn;
+import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
-import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.table.TableWithPK;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.local.Errors;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.generate.Generator.Scope;
-import ai.datasqrl.plan.local.transpile.JoinBuilderImpl;
-import ai.datasqrl.plan.local.transpile.JoinDeclarationContainer;
-import ai.datasqrl.plan.local.transpile.JoinDeclarationFactory;
-import ai.datasqrl.plan.local.transpile.SqlJoinDeclaration;
-import ai.datasqrl.plan.local.transpile.SqlNodeBuilder;
-import ai.datasqrl.plan.local.transpile.TableMapper;
-import ai.datasqrl.plan.local.transpile.Transpile;
-import ai.datasqrl.plan.local.transpile.UniqueAliasGenerator;
+import ai.datasqrl.plan.local.transpile.*;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -76,6 +44,9 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBridge {
@@ -168,7 +139,7 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
       }
       SourceTableImport sourceTableImport = (SourceTableImport) tblImport;
 
-      ScriptTableDefinition importedTable = tableFactory.importTable(sourceTableImport, nameAlias);
+      ScriptTableDefinition importedTable = tableFactory.importTable(sourceTableImport, nameAlias, planner.getRelBuilder());
       dt.add(importedTable);
     }
 
