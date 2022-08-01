@@ -2,6 +2,7 @@ package ai.datasqrl.plan.calcite;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -14,11 +15,17 @@ import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.runtime.Geometries;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
+import org.apache.calcite.util.ConversionUtil;
 
 public class SqrlTypeFactory extends JavaTypeFactoryImpl {
 
   public SqrlTypeFactory(RelDataTypeSystem typeSystem) {
     super(typeSystem);
+  }
+
+  @Override
+  public Charset getDefaultCharset() {
+    return Charset.forName(ConversionUtil.NATIVE_UTF16_CHARSET_NAME);
   }
 
   @Override public Type getJavaClass(RelDataType type) {

@@ -11,6 +11,7 @@ import ai.datasqrl.schema.builder.AbstractTableFactory;
 import lombok.AllArgsConstructor;
 
 import java.util.Optional;
+import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor
 public class VariableFactory {
@@ -35,7 +36,7 @@ public class VariableFactory {
     return column;
   }
 
-  public Optional<Relationship> linkParentChild(NamePath namePath, SQRLTable child, Optional<SQRLTable> parentTable) {
+  public Optional<Pair<Relationship, Relationship>> linkParentChild(NamePath namePath, SQRLTable child, Optional<SQRLTable> parentTable) {
     if (namePath.size() > 1) {
       Relationship.Multiplicity multiplicity = Multiplicity.MANY;
       Name relationshipName = namePath.getLast();
@@ -43,11 +44,11 @@ public class VariableFactory {
 //          multiplicity = Multiplicity.ONE;
 //        }
 
-      AbstractTableFactory.createParentRelationship(child, parentTable.get());
+      Optional<Relationship> parent = AbstractTableFactory.createParentRelationship(child, parentTable.get());
 
       Relationship childRel = AbstractTableFactory
               .createChildRelationship(relationshipName, child, parentTable.get(), multiplicity);
-      return Optional.of(childRel);
+      return Optional.of(Pair.of(parent.get(), childRel));
     } else return Optional.empty();
   }
 }

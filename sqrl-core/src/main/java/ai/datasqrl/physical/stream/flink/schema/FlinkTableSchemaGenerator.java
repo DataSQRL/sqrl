@@ -122,7 +122,7 @@ public class FlinkTableSchemaGenerator extends SimpleFlexibleTableConverterVisit
 
         @Override
         public DataType visitUuidType(UuidType type, Void context) {
-            return DataTypes.STRING();
+            return DataTypes.CHAR(36);
         }
 
         @Override

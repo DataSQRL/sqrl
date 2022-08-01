@@ -48,7 +48,7 @@ public class StreamGraphBuilder {
       dataStreamRegisterer.register(sink.getRelNode());
 
       RelNode relNode = InjectFlinkCluster.injectFlinkRelOptCluster(tEnv, ((StreamPlanner) tEnv.getPlanner()).getRelBuilder().getCluster(),
-          sink.getRelNode().getInput(0));
+          sink.getRelNode());
 
       Table tbl = FlinkEnvProxy.relNodeQuery(relNode, tEnv);
 
