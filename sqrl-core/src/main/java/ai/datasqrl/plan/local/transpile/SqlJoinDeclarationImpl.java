@@ -14,7 +14,7 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 
 @Value
-public class JoinDeclarationImpl implements JoinDeclaration {
+public class SqlJoinDeclarationImpl implements SqlJoinDeclaration {
   Optional<Relationship> relationship;
   Optional<SqlNode> pullupCondition;
   SqlNode joinTree;
@@ -23,7 +23,7 @@ public class JoinDeclarationImpl implements JoinDeclaration {
 
   private final Set<String> aliases = new HashSet<>();
 
-  public JoinDeclarationImpl(Optional<SqlNode> pullupCondition, SqlNode joinTree, String firstAlias,
+  public SqlJoinDeclarationImpl(Optional<SqlNode> pullupCondition, SqlNode joinTree, String firstAlias,
       String lastAlias) {
     this.pullupCondition = pullupCondition;
     this.joinTree = joinTree;
@@ -51,7 +51,7 @@ public class JoinDeclarationImpl implements JoinDeclaration {
   }
 
   @Override
-  public JoinDeclaration rewriteSqlNode(String newSelfAlias, Optional<String> endAlias,
+  public SqlJoinDeclaration rewriteSqlNode(String newSelfAlias, Optional<String> endAlias,
       UniqueAliasGenerator aliasGenerator) {
     Map<String, String> aliasMap = new HashMap<>();
     String newLastAlias = null;
@@ -72,7 +72,7 @@ public class JoinDeclarationImpl implements JoinDeclaration {
     Optional<SqlNode> newCondition = this.pullupCondition.map(
         con -> con.accept(new RewriteIdentifierSqlShuttle(aliasMap)));
 
-    return new JoinDeclarationImpl(newCondition, newJoinTree, aliasMap.get(newSelfAlias),
+    return new SqlJoinDeclarationImpl(newCondition, newJoinTree, aliasMap.get(newSelfAlias),
         newLastAlias);
   }
 }

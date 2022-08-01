@@ -5,14 +5,16 @@ import ai.datasqrl.schema.SQRLTable;
 import java.util.Optional;
 
 public interface TablePath {
-    SQRLTable getBaseTable();
-    Optional<String> getBaseAlias();
 
-    boolean isRelative();
+  SQRLTable getBaseTable();
 
-    int size();
+  Optional<String> getBaseAlias();
 
-    Relationship getRelationship(int i);
+  boolean isRelative();
 
-    String getAlias();
-  }
+  int size();
+
+  Relationship getRelationship(int i);
+
+  String getAlias();
+}

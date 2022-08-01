@@ -27,7 +27,6 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableSet;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
-import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.planner.operations.PlannerQueryOperation;
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
 import org.apache.flink.table.planner.plan.trait.FlinkRelDistribution;
@@ -41,13 +40,12 @@ import org.apache.flink.table.planner.plan.trait.UpdateKindTrait;
  */
 @AllArgsConstructor
 public class InjectFlinkCluster extends RelShuttleImpl {
-
-  TableEnvironmentImpl tEnv;
+  StreamTableEnvironmentImpl tEnv;
   RelOptCluster cluster;
   RelTraitSet defaultTrait;
 
-  public static RelNode injectFlinkRelOptCluster(StreamTableEnvironmentImpl tEnv, RelNode input) {
-    RelOptCluster cluster = RelOptClusterExtractor.extract(tEnv.listTables()[0], tEnv);
+  public static RelNode injectFlinkRelOptCluster(StreamTableEnvironmentImpl tEnv, RelOptCluster cluster, RelNode input) {
+//    RelOptCluster cluster = RelOptClusterExtractor.extract(tEnv.listTables()[0], tEnv);
     return injectFlinkRelOptCluster(tEnv, input, cluster);
   }
 

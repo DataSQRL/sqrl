@@ -24,6 +24,7 @@ public class ScriptExecutor {
   public void executeDml(List<SqlDDLStatement> dmlQueries, JDBCConnectionProvider dbConnection) {
     String dmls = dmlQueries.stream().map(ddl -> ddl.toSql()).collect(Collectors.joining("\n"));
     try (Connection conn = dbConnection.getConnection(); Statement stmt = conn.createStatement()) {
+      System.out.println("Creating: "+ dmls);
       stmt.executeUpdate(dmls);
     } catch (SQLException e) {
       throw new RuntimeException("Could not execute SQL query", e);

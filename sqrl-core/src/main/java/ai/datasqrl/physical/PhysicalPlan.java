@@ -13,5 +13,4 @@ public class PhysicalPlan {
   JDBCConnectionProvider dbConnection;
   List<SqlDDLStatement> databaseDDL;
   StreamStatementSet streamQueries;
-  Schema schema;
 }

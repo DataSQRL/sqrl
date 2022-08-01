@@ -34,6 +34,10 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   private final List<AddedColumn.Simple> addedFields = new ArrayList<>();
 
   protected RelNode relNode;
+
+  @Setter
+  private DatabasePullup.Container dbPullups = DatabasePullup.Container.EMPTY;
+
   @Setter
   private TableStatistic statistic = null;
   /**

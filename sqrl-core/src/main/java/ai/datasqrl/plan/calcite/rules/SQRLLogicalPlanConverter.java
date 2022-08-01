@@ -40,7 +40,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Value
-public class Sqrl2SqlLogicalPlanConverter extends AbstractSqrlRelShuttle<Sqrl2SqlLogicalPlanConverter.ProcessedRel> {
+public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogicalPlanConverter.ProcessedRel> {
 
     public final Supplier<RelBuilder> relBuilderFactory;
     public final SqrlRexUtil rexUtil;

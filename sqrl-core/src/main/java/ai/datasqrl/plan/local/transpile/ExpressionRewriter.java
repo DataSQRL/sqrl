@@ -34,26 +34,26 @@ import org.apache.calcite.util.Util;
 
 public class ExpressionRewriter extends SqlScopedShuttle {
 
-  TableMapperImpl tableMapper;
-  UniqueAliasGeneratorImpl uniqueAliasGenerator;
-  JoinDeclarationContainerImpl joinDecs;
-  SqlNodeBuilderImpl sqlNodeBuilder;
-  FieldNames names;
   private final JoinBuilderFactory joinBuilderFactory;
-  @Getter
-  private List<InlineAggExtractResult> inlineAggResults = new ArrayList<>();
-  @Getter
-  private List<JoinDeclaration> toOneResults = new ArrayList<>();
+  private final TableMapper tableMapper;
+  private final UniqueAliasGenerator uniqueAliasGenerator;
+  private final JoinDeclarationContainer joinDecs;
+  private final FieldNames names;
 
-  public ExpressionRewriter(SqlValidatorScope initialScope,
-      TableMapperImpl tableMapper, UniqueAliasGeneratorImpl uniqueAliasGenerator,
-      JoinDeclarationContainerImpl joinDecs, SqlNodeBuilderImpl sqlNodeBuilder, FieldNames names) {
+  @Getter
+  private final List<InlineAggExtractResult> inlineAggResults = new ArrayList<>();
+  @Getter
+  private final List<SqlJoinDeclaration> toOneResults = new ArrayList<>();
+
+  public ExpressionRewriter(SqlValidatorScope initialScope, TableMapper tableMapper,
+      UniqueAliasGenerator uniqueAliasGenerator, JoinDeclarationContainer joinDecs,
+      FieldNames names) {
     super(initialScope);
     this.tableMapper = tableMapper;
     this.uniqueAliasGenerator = uniqueAliasGenerator;
     this.joinDecs = joinDecs;
-    this.sqlNodeBuilder = sqlNodeBuilder;
-    this.joinBuilderFactory = ()-> new JoinBuilder(uniqueAliasGenerator, joinDecs, tableMapper, sqlNodeBuilder);
+    this.joinBuilderFactory = () -> new JoinBuilderImpl(uniqueAliasGenerator, joinDecs,
+        tableMapper);
     this.names = names;
   }
 
@@ -80,32 +80,34 @@ public class ExpressionRewriter extends SqlScopedShuttle {
       return id;
     }
 
-    IdentifierNamespace identifierNamespace = (IdentifierNamespace)qualified.namespace;
+    IdentifierNamespace identifierNamespace = (IdentifierNamespace) qualified.namespace;
     SQRLTable st = identifierNamespace.getTable().unwrap(SQRLTable.class);
     List<Relationship> toOneRels = isToOne(qualified.suffix(), st);
     if (!toOneRels.isEmpty()) {
-      TableWithPK table = tableMapper.getTable(toOneRels.get(toOneRels.size()-1).getToTable());
+      TableWithPK table = tableMapper.getTable(toOneRels.get(toOneRels.size() - 1).getToTable());
       String newTableAlias = uniqueAliasGenerator.generate(table);
-      TablePath tablePath = new TablePathImpl(st, Optional.of(qualified.prefix().get(0)), true, toOneRels, newTableAlias);
-      JoinDeclaration declaration = JoinBuilder.expandPath(tablePath, false, ()->new JoinBuilder(uniqueAliasGenerator, joinDecs,
-          tableMapper, sqlNodeBuilder));
+      TablePath tablePath = new TablePathImpl(st, Optional.of(qualified.prefix().get(0)), true,
+          toOneRels, newTableAlias);
+      SqlJoinDeclaration declaration = JoinBuilderImpl.expandPath(tablePath, false,
+          () -> new JoinBuilderImpl(uniqueAliasGenerator, joinDecs, tableMapper));
       this.toOneResults.add(declaration);
-      return new SqlIdentifier(List.of(declaration.getLastAlias(), Util.last(qualified.suffix())), SqlParserPos.ZERO);
+      return new SqlIdentifier(List.of(declaration.getLastAlias(), Util.last(qualified.suffix())),
+          SqlParserPos.ZERO);
     }
 
     //not a to-one identifier, get field name and rewrite.
     Optional<Field> fieldOptional = st.getField(Name.system(Util.last(qualified.suffix())));
     if (fieldOptional.isEmpty()) {
-      throw this.getScope().getValidator().newValidationError(id,
-          RESOURCE.columnNotFound(Util.last(qualified.suffix())));
+      throw this.getScope().getValidator()
+          .newValidationError(id, RESOURCE.columnNotFound(Util.last(qualified.suffix())));
     }
 
     if (fieldOptional.isPresent() && fieldOptional.get() instanceof Relationship) {
-      throw this.getScope().getValidator().newValidationError(id,
-          SqrlErrors.SQRL_ERRORS.columnRequiresInlineAgg());
+      throw this.getScope().getValidator()
+          .newValidationError(id, SqrlErrors.SQRL_ERRORS.columnRequiresInlineAgg());
     }
 
-    Column column = (Column)fieldOptional.get();
+    Column column = (Column) fieldOptional.get();
     String newName = names.get(column);
     return id.setName(id.names.size() - 1, newName);
   }
@@ -119,11 +121,11 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     for (String name : suffix) {
       Field field = walk.getField(Name.system(name)).get();
       if (field instanceof Relationship) {
-        if (((Relationship)field).getMultiplicity() == Multiplicity.MANY) {
+        if (((Relationship) field).getMultiplicity() == Multiplicity.MANY) {
           return List.of();
         }
         relationships.add((Relationship) field);
-        walk = ((Relationship)field).getToTable();
+        walk = ((Relationship) field).getToTable();
       }
     }
 
@@ -132,10 +134,10 @@ public class ExpressionRewriter extends SqlScopedShuttle {
 
 
   private SqlNode convertToSubquery(SqlCall call, SqlValidatorScope scope) {
-    ConvertableFunction function = (ConvertableFunction)call.getOperator();
-    SqlIdentifier arg = (SqlIdentifier)call.getOperandList().get(0);
+    ConvertableFunction function = (ConvertableFunction) call.getOperator();
+    SqlIdentifier arg = (SqlIdentifier) call.getOperandList().get(0);
     SqlQualified qualifiedArg = scope.fullyQualify(arg);
-    IdentifierNamespace ns = (IdentifierNamespace)qualifiedArg.namespace;
+    IdentifierNamespace ns = (IdentifierNamespace) qualifiedArg.namespace;
     //p.entires.quantity
     //prefix: p (the thing we need to build the condition for)
     //suffix: entries, quantity (the path)
@@ -146,35 +148,35 @@ public class ExpressionRewriter extends SqlScopedShuttle {
 //    SqlValidatorNamespace tn = scope.getValidator().getNamespace(arg);//ns.getResolvedNamespace();
     SQRLTable baseTable = qualifiedArg.namespace.getTable().unwrap(SQRLTable.class);
     Optional<String> baseAlias = Optional.ofNullable(qualifiedArg.prefix())
-        .filter(p -> p.size() == 1).map(p->p.get(0));
+        .filter(p -> p.size() == 1).map(p -> p.get(0));
 
     List<Field> fields = baseTable.walkField(qualifiedArg.suffix());
-    List<Relationship> rels = fields.stream().filter(f->f instanceof Relationship).map( f->(Relationship)f).collect(
-        Collectors.toList());
+    List<Relationship> rels = fields.stream().filter(f -> f instanceof Relationship)
+        .map(f -> (Relationship) f).collect(Collectors.toList());
 
     TableWithPK basePkTable = tableMapper.getTable(baseTable);
     String subqAlias = uniqueAliasGenerator.generate("s");
     TablePathImpl tablePath = new TablePathImpl(baseTable, baseAlias, false, rels, subqAlias);
-    JoinDeclaration declaration = JoinBuilder.expandPath(tablePath, true, joinBuilderFactory);
+    SqlJoinDeclaration declaration = JoinBuilderImpl.expandPath(tablePath, true,
+        joinBuilderFactory);
 
     Preconditions.checkState(declaration.getPullupCondition().isEmpty());
 
-    SqlNode condition = sqlNodeBuilder.createSelfEquality(basePkTable, subqAlias, baseAlias.get());
+    SqlNode condition = SqlNodeBuilder.createSelfEquality(basePkTable, subqAlias, baseAlias.get());
 
     //Choose PK if there is no field name
-    String fieldName = fields.get(fields.size() - 1) instanceof Column ? fields.get(fields.size() - 1).getName().getDisplay()
-        :  tableMapper.getTable(rels.get(rels.size() - 1).getToTable()).getPrimaryKeys().get(0);
-
+    String fieldName =
+        fields.get(fields.size() - 1) instanceof Column ? fields.get(fields.size() - 1).getName()
+            .getDisplay()
+            : tableMapper.getTable(rels.get(rels.size() - 1).getToTable()).getPrimaryKeys().get(0);
 
     //Call gets an identifier
-    SqlBasicCall newCall = new SqlBasicCall(
-        function.convertToInlineAgg().get(),
-        new SqlNode[]{
-            new SqlIdentifier(List.of(declaration.getLastAlias(), fieldName), SqlParserPos.ZERO)
-        }, call.getParserPosition());
+    SqlBasicCall newCall = new SqlBasicCall(function.convertToInlineAgg().get(), new SqlNode[]{
+        new SqlIdentifier(List.of(declaration.getLastAlias(), fieldName), SqlParserPos.ZERO)},
+        call.getParserPosition());
 
     List<SqlNode> groups = basePkTable.getPrimaryKeys().stream()
-        .map(e->new SqlIdentifier(List.of(declaration.getFirstAlias(), e), SqlParserPos.ZERO))
+        .map(e -> new SqlIdentifier(List.of(declaration.getFirstAlias(), e), SqlParserPos.ZERO))
         .collect(Collectors.toList());
 
     List<SqlNode> selectList = new ArrayList<>(groups);
@@ -182,24 +184,21 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     //Add grouping conditions of pk
     //LEFT JOIN (SELECT sq FROM condition) x ON x.a = y.a;
     String fieldAlias = uniqueAliasGenerator.generateFieldName();
-    SqlBasicCall asField = new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
-        newCall,
-        new SqlIdentifier(fieldAlias, SqlParserPos.ZERO)
-    }, SqlParserPos.ZERO);
+    SqlBasicCall asField = new SqlBasicCall(SqrlOperatorTable.AS,
+        new SqlNode[]{newCall, new SqlIdentifier(fieldAlias, SqlParserPos.ZERO)},
+        SqlParserPos.ZERO);
     selectList.add(asField);
 
     SqlBasicCall as = new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
         new SqlSelect(SqlParserPos.ZERO, SqlNodeList.EMPTY,
-            new SqlNodeList(selectList, SqlParserPos.ZERO),
-            declaration.getJoinTree(), null, new SqlNodeList(groups, SqlParserPos.ZERO), null, null, null, null, null, SqlNodeList.EMPTY
-        ),
-        new SqlIdentifier(subqAlias, SqlParserPos.ZERO)
-    }, SqlParserPos.ZERO);
+            new SqlNodeList(selectList, SqlParserPos.ZERO), declaration.getJoinTree(), null,
+            new SqlNodeList(groups, SqlParserPos.ZERO), null, null, null, null, null,
+            SqlNodeList.EMPTY), new SqlIdentifier(subqAlias, SqlParserPos.ZERO)},
+        SqlParserPos.ZERO);
 
     SqlIdentifier identifier = new SqlIdentifier(List.of(subqAlias, fieldAlias), SqlParserPos.ZERO);
-    System.out.println("Subquery: " + as + " ON "+ condition);
-    System.out.println("Identifier: " + identifier);
-    this.inlineAggResults.add(new InlineAggExtractResult(identifier, as, condition, scope.getNode(), qualifiedArg));
+    this.inlineAggResults.add(
+        new InlineAggExtractResult(identifier, as, condition, scope.getNode(), qualifiedArg));
     return identifier;
   }
 

@@ -7,9 +7,14 @@ import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.physical.PhysicalPlan;
+import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
+import ai.datasqrl.plan.global.DAGPlanner;
 import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.plan.local.generate.GeneratorBuilder;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Creates a logical and physical plan for a SQRL {@link ScriptBundle} submitted to the DataSQRL server for
@@ -37,5 +42,11 @@ public class BundlePlanner {
     ConfiguredSqrlParser parser = new ConfiguredSqrlParser(errorCollector);
     ScriptNode scriptNode = parser.parse(mainScript.getContent());
     generator.generate(scriptNode);
+    List<QueryRelationalTable> tables = generator.getTableMapper().getTableMap().values().stream().filter(QueryRelationalTable.class::isInstance)
+            .map(QueryRelationalTable.class::cast).collect(Collectors.toList());
+
+    //
+
+    DAGPlanner dagPlanner = new DAGPlanner();
   }
 }

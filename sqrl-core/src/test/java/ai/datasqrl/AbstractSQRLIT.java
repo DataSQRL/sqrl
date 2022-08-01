@@ -5,6 +5,7 @@ import ai.datasqrl.environment.Environment;
 import ai.datasqrl.io.sinks.registry.DataSinkRegistry;
 import ai.datasqrl.io.sources.dataset.DatasetRegistry;
 import ai.datasqrl.util.DatabaseHandle;
+import graphql.com.google.common.base.Preconditions;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 

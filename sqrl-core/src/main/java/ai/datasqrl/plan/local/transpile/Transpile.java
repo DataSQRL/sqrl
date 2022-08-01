@@ -1,10 +1,9 @@
 package ai.datasqrl.plan.local.transpile;
 
+import static ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable.TOP_N;
 import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
-import ai.datasqrl.plan.TranspileOptions;
-import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.local.generate.FieldNames;
 import ai.datasqrl.schema.SQRLTable;
@@ -20,7 +19,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.sql.validate.ExpandableTableNamespace;
+import lombok.Value;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
@@ -35,6 +34,7 @@ import org.apache.calcite.sql.SqlNumericLiteral;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.DelegatingScope;
+import org.apache.calcite.sql.validate.ExpandableTableNamespace;
 import org.apache.calcite.sql.validate.SqlValidatorNamespace;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
@@ -46,19 +46,18 @@ import org.apache.flink.util.Preconditions;
 @AllArgsConstructor
 public class Transpile {
 
-  final Stack<SqlNode> pullupConditions = new Stack();
-  final Map<SqlNode, SqlNode> replaced = new HashMap<>();
+  private final Stack<SqlNode> pullupConditions = new Stack<>();
   private final ArrayListMultimap<SqlValidatorScope, InlineAggExtractResult> inlineAgg =
       ArrayListMultimap.create();
-  private final ArrayListMultimap<SqlValidatorScope, JoinDeclaration> toOne =
+  private final ArrayListMultimap<SqlValidatorScope, SqlJoinDeclaration> toOne =
       ArrayListMultimap.create();
-  private final Map<SqlValidatorScope, List<SqlNode>> parentPrimaryKeys = new HashMap<>();
-  private final Map<SqlValidatorScope, List<String>> parentPrimaryKeyNames = new HashMap<>();
+  private final Map<SqlValidatorScope, List<NamedKey>> generatedKeys = new HashMap<>();
+
   SqrlValidatorImpl validator;
-  TableMapperImpl tableMapper;
-  UniqueAliasGeneratorImpl uniqueAliasGenerator;
-  JoinDeclarationContainerImpl joinDecs;
-  SqlNodeBuilderImpl sqlNodeBuilder;
+  TableMapper tableMapper;
+  UniqueAliasGenerator uniqueAliasGenerator;
+  JoinDeclarationContainer joinDecs;
+  SqlNodeBuilder sqlNodeBuilder;
   JoinBuilderFactory joinBuilderFactory;
   FieldNames names;
   TranspileOptions options;
@@ -86,7 +85,7 @@ public class Transpile {
 
     for (int i = 0; i < list.size(); i++) {
       SqlHint hint = (SqlHint) list.get(i);
-      if (hint.getName().equals(SqrlHintStrategyTable.TOP_N)) {
+      if (hint.getName().equals(TOP_N)) {
         SqlHint newHint = rewriteDistinctHint(select, hint, scope);
         hints.set(i, newHint);
       }
@@ -97,12 +96,12 @@ public class Transpile {
 
   private SqlHint rewriteDistinctHint(SqlSelect select, SqlHint hint, SqlValidatorScope scope) {
     List<SqlNode> asIdentifiers = hint.getOptionList().stream()
-        .map(o ->new SqlIdentifier(List.of(o.split("\\.")), hint.getParserPosition()))
+        .map(o -> new SqlIdentifier(List.of(o.split("\\.")), hint.getParserPosition()))
         .collect(Collectors.toList());
 
-    List<SqlNode> partitionKeyIndices = getSelectListOrdinals(select, asIdentifiers, 0)
-        .stream().map(e->new SqlIdentifier(((SqlNumericLiteral)e).getValue().toString(), SqlParserPos.ZERO))
-        .collect(Collectors.toList());
+    List<SqlNode> partitionKeyIndices = getSelectListOrdinals(select, asIdentifiers, 0).stream()
+        .map(e -> new SqlIdentifier(((SqlNumericLiteral) e).getValue().toString(),
+            SqlParserPos.ZERO)).collect(Collectors.toList());
 
     SqlHint newHint = new SqlHint(hint.getParserPosition(),
         new SqlIdentifier(hint.getName(), hint.getParserPosition()),
@@ -112,26 +111,21 @@ public class Transpile {
 
   private void createParentPrimaryKeys(SqlValidatorScope scope) {
     Optional<SQRLTable> context = validator.getContextTable(scope);
-    List<SqlNode> nodes = new ArrayList<>();
-    List<String> names = new ArrayList<>();
+    List<NamedKey> nodes = new ArrayList<>();
     if (context.isPresent()) {
       TableWithPK t = tableMapper.getTable(context.get());
       //self table could be aliased
       String contextAlias = validator.getContextAlias();
       for (String key : t.getPrimaryKeys()) {
         String pk = uniqueAliasGenerator.generatePK();
-        nodes.add(new SqlIdentifier(List.of(contextAlias, key), SqlParserPos.ZERO));
-        names.add(pk);
+        nodes.add(
+            new NamedKey(pk, new SqlIdentifier(List.of(contextAlias, key), SqlParserPos.ZERO)));
       }
     }
-    this.parentPrimaryKeys.put(scope, nodes);
-    this.parentPrimaryKeyNames.put(scope, names);
+    this.generatedKeys.put(scope, nodes);
   }
 
   private void rewriteSelectList(SqlSelect select, SqlValidatorScope scope) {
-    Optional<SQRLTable> ctx = ((SqrlValidatorImpl) scope.getValidator()).getCtx();
-//    SqlNodeList selectList = select.getSelectList();
-
     List<SqlNode> selectList = validator.getRawSelectScope(select).getExpandedSelectList();
 
     List<String> fieldNames = new ArrayList<>();
@@ -140,10 +134,7 @@ public class Transpile {
 
     // Project any system/nested fields. (Must be done before regular select items,
     // because offsets may be affected.)
-    extraSelectItems(
-        exprs,
-        fieldNames,
-        scope);
+    extraSelectItems(exprs, fieldNames, scope);
 
     // Project select clause.
     int i = -1;
@@ -156,15 +147,15 @@ public class Transpile {
     List<String> newFieldNames = SqlValidatorUtil.uniquify(fieldNames, false);
 
     List<SqlNode> newSelect = IntStream.range(0, exprs.size())
-        .mapToObj(j -> sqlNodeBuilder.as(exprs.get(j), newFieldNames.get(j)))
+        .mapToObj(j -> SqlNodeBuilder.as(exprs.get(j), newFieldNames.get(j)))
         .collect(Collectors.toList());
 
     select.setSelectList(new SqlNodeList(newSelect, select.getSelectList().getParserPosition()));
   }
 
   private SqlNode convertExpression(SqlNode expr, SqlValidatorScope scope) {
-    ExpressionRewriter expressionRewriter = new ExpressionRewriter(scope,
-        tableMapper, uniqueAliasGenerator, joinDecs, sqlNodeBuilder, names);
+    ExpressionRewriter expressionRewriter = new ExpressionRewriter(scope, tableMapper,
+        uniqueAliasGenerator, joinDecs, names);
     SqlNode rewritten = expr.accept(expressionRewriter);
 
     this.inlineAgg.putAll(scope, expressionRewriter.getInlineAggResults());
@@ -173,10 +164,7 @@ public class Transpile {
     return rewritten;
   }
 
-  private String deriveAlias(
-      final SqlNode node,
-      Collection<String> aliases,
-      final int ordinal) {
+  private String deriveAlias(final SqlNode node, Collection<String> aliases, final int ordinal) {
     String alias = validator.deriveAlias(node, ordinal);
     if ((alias == null) || aliases.contains(alias)) {
       String aliasBase = (alias == null) ? "EXPR$" : alias;
@@ -191,17 +179,16 @@ public class Transpile {
     return alias;
   }
 
-  private void extraSelectItems(List<SqlNode> exprs,
-      List<String> fieldNames, SqlValidatorScope scope) {
+  private void extraSelectItems(List<SqlNode> exprs, List<String> fieldNames,
+      SqlValidatorScope scope) {
     //Must uniquely add names relative to the existing select list names
     // e.g. (_pk1, _pk2)
 
-    List<SqlNode> ppk = parentPrimaryKeys.get(scope);
+    List<NamedKey> ppk = generatedKeys.get(scope);
     if (ppk != null) {
-      List<String> keyNames = parentPrimaryKeyNames.get(scope);
-      for (int i = 0; i < ppk.size(); i++) {
-        exprs.add(ppk.get(i));
-        fieldNames.add(keyNames.get(i));
+      for (NamedKey key : ppk) {
+        exprs.add(key.getNode());
+        fieldNames.add(key.getName());
       }
     }
   }
@@ -221,7 +208,7 @@ public class Transpile {
     }
 
     List<SqlNode> mutableGroupItems = new ArrayList<>();
-    extraPPKItems(select, scope, mutableGroupItems);
+    extraPPKItems(scope, mutableGroupItems);
 
     //Find the new rewritten select items, replace with alias
     SqlNodeList group = select.getGroup() == null ? SqlNodeList.EMPTY : select.getGroup();
@@ -230,8 +217,9 @@ public class Transpile {
     mutableGroupItems.addAll(ordinals);
 
     if (!mutableGroupItems.isEmpty()) {
-      select.setGroupBy(new SqlNodeList(mutableGroupItems,select.getGroup() == null ?
-          select.getParserPosition() : select.getGroup().getParserPosition()));
+      select.setGroupBy(new SqlNodeList(mutableGroupItems,
+          select.getGroup() == null ? select.getParserPosition()
+              : select.getGroup().getParserPosition()));
     }
   }
 
@@ -245,8 +233,8 @@ public class Transpile {
         switch (selectNode.getKind()) {
           case AS:
             SqlCall call = (SqlCall) selectNode;
-            if (groupNode.equalsDeep(call.getOperandList().get(0), Litmus.IGNORE) ||
-                groupNode.equalsDeep(call.getOperandList().get(1), Litmus.IGNORE)) {
+            if (groupNode.equalsDeep(call.getOperandList().get(0), Litmus.IGNORE)
+                || groupNode.equalsDeep(call.getOperandList().get(1), Litmus.IGNORE)) {
               ordinals.add(SqlLiteral.createExactNumeric(Long.toString(i + offset + 1),
                   groupNode.getParserPosition()));
               continue outer;
@@ -266,11 +254,10 @@ public class Transpile {
     return ordinals;
   }
 
-  private void extraPPKItems(SqlSelect select, SqlValidatorScope scope,
-      List<SqlNode> groupItems) {
-    List<String> names = this.parentPrimaryKeyNames.get(scope);
-    for (String name : names) {
-      groupItems.add(new SqlIdentifier(List.of(name), SqlParserPos.ZERO));
+  private void extraPPKItems(SqlValidatorScope scope, List<SqlNode> groupItems) {
+    List<NamedKey> names = this.generatedKeys.get(scope);
+    for (NamedKey key : names) {
+      groupItems.add(new SqlIdentifier(List.of(key.getName()), SqlParserPos.ZERO));
     }
   }
 
@@ -281,18 +268,15 @@ public class Transpile {
     }
 
     List<SqlNode> mutableOrders = new ArrayList<>();
-    extraPPKItems(select, scope, mutableOrders);
-    List<SqlNode> cleaned = select.getOrderList().getList().stream()
-        .map(o -> {
-          if (o.getKind() == SqlKind.DESCENDING || o.getKind() == SqlKind.NULLS_FIRST
-              || o.getKind() == SqlKind.NULLS_LAST) {
-            //is DESCENDING, nulls first, nulls last
-            return ((SqlCall) o).getOperandList().get(0);
-          }
-          return o;
-        })
-        .map(o -> validator.expandOrderExpr(select, o))
-        .collect(Collectors.toList());
+    extraPPKItems(scope, mutableOrders);
+    List<SqlNode> cleaned = select.getOrderList().getList().stream().map(o -> {
+      if (o.getKind() == SqlKind.DESCENDING || o.getKind() == SqlKind.NULLS_FIRST
+          || o.getKind() == SqlKind.NULLS_LAST) {
+        //is DESCENDING, nulls first, nulls last
+        return ((SqlCall) o).getOperandList().get(0);
+      }
+      return o;
+    }).map(o -> validator.expandOrderExpr(select, o)).collect(Collectors.toList());
 
     //If aggregating, replace each select item with ordinal
     if (validator.isAggregate(select)) {
@@ -359,15 +343,8 @@ public class Transpile {
     }
   }
 
-  private SqlNode appendSubqueries(SqlNode from, SqlValidatorScope scope) {
-
-    return null;
-  }
-
   SqlNode rewriteFrom(SqlNode from, SqlValidatorScope scope) {
-    //1. if SELF not in scope, add it (allow alias?)
     final SqlCall call;
-//      final SqlNode[] operands;
 
     switch (from.getKind()) {
       case AS:
@@ -396,15 +373,14 @@ public class Transpile {
       case INTERSECT:
       case EXCEPT:
       case UNION:
-        break;
+        throw new RuntimeException("TBD");
     }
 
     return from;
   }
 
   private SqlNode convertTableName(SqlIdentifier id, String alias, SqlValidatorScope scope) {
-    final SqlValidatorNamespace fromNamespace =
-        validator.getNamespace(id).resolve();
+    final SqlValidatorNamespace fromNamespace = validator.getNamespace(id).resolve();
 
     if (fromNamespace.getNode() != null) {
       return rewriteFrom(fromNamespace.getNode(), scope);
@@ -419,55 +395,27 @@ public class Transpile {
 
       TablePath tablePath = tn.createTablePath(alias);
 
-//        TablePathImpl tablePath = new TablePathImpl(baseTable, firstAlias, relative,
-//        relationships, alias);
-      JoinDeclaration declaration = JoinBuilder.expandPath(tablePath, false, joinBuilderFactory);
+      SqlJoinDeclaration declaration = JoinBuilderImpl.expandPath(tablePath, false,
+          joinBuilderFactory);
       declaration.getPullupCondition().ifPresent(pullupConditions::push);
       return declaration.getJoinTree();
     } else {
       //just do a simple mapping from table
       SQRLTable baseTable = fromNamespace.getTable().unwrap(SQRLTable.class);
       TableWithPK basePkTable = tableMapper.getTable(baseTable);
-      return sqlNodeBuilder.createTableNode(basePkTable, Util.last(id.names));
+      return SqlNodeBuilder.createTableNode(basePkTable, Util.last(id.names));
     }
-
-//      SqlQualified qualified = validator.getEmptyScope().fullyQualify(id);
-////      SqlQualified qualified = scope.fullyQualify(id);
-//      SQRLTable baseTable = fromNamespace.getTable().unwrap(SQRLTable.class);
-//      Optional<String> baseAlias = Optional.ofNullable(qualified.prefix())
-//          .filter(p -> p.size() == 1).map(p->p.get(0));
-////      boolean isRelative = ns.getResolvedNamespace() instanceof RelativeTableNamespace;
-//      List<Field> fields = baseTable.walkField(qualified.suffix());
-//      List<Relationship> rels = fields.stream().filter(f->f instanceof Relationship).map( f->
-//      (Relationship)f).collect(
-//          Collectors.toList());
-
-//      TableWithPK basePkTable = tableMapper.getTable(baseTable);
-//      TablePathImpl tablePath = new TablePathImpl(baseTable, baseAlias, false, rels, alias);
-//      JoinDeclaration declaration = expandPath(tablePath, false, joinBuilderFactory);
-//
-//
-//
-//      SQRLTable base = fromNamespace.getTable().unwrap(SQRLTable.class);
-//
-//      final String datasetName = null;
-////          datasetStack.isEmpty() ? null : datasetStack.peek();
-//      final boolean[] usedDataset = {false};
-//      RelOptTable table =
-//          SqlValidatorUtil.getRelOptTable(fromNamespace, catalogReader,
-//              datasetName, usedDataset);
-
   }
 
   private SqlNode extraFromItems(SqlNode from, SqlValidatorScope scope) {
     List<InlineAggExtractResult> inlineAggs = inlineAgg.get(scope);
     for (InlineAggExtractResult agg : inlineAggs) {
-      from = sqlNodeBuilder.createJoin(JoinType.LEFT, from, agg.getQuery(), agg.getCondition());
+      from = SqlNodeBuilder.createJoin(JoinType.LEFT, from, agg.getQuery(), agg.getCondition());
     }
 
-    List<JoinDeclaration> joinDecs = toOne.get(scope);
-    for (JoinDeclaration agg : joinDecs) {
-      from = sqlNodeBuilder.createJoin(JoinType.LEFT, from, agg.getJoinTree(),
+    List<SqlJoinDeclaration> joinDecs = toOne.get(scope);
+    for (SqlJoinDeclaration agg : joinDecs) {
+      from = SqlNodeBuilder.createJoin(JoinType.LEFT, from, agg.getJoinTree(),
           agg.getPullupCondition().orElse(SqlLiteral.createBoolean(true, SqlParserPos.ZERO)));
     }
 
@@ -481,21 +429,18 @@ public class Transpile {
     SQRLTable table = ns.getTable().unwrap(SQRLTable.class);
     TableWithPK t = tableMapper.getTable(table);
 
-    return sqlNodeBuilder.as(new SqlIdentifier(t.getNameId(), SqlParserPos.ZERO),
+    return SqlNodeBuilder.as(new SqlIdentifier(t.getNameId(), SqlParserPos.ZERO),
         Util.last(id.names));
   }
 
   private void rewriteJoin(SqlJoin join, SqlValidatorScope rootScope) {
-    final SqlValidatorScope scope = validator.getJoinScope(join);
     SqlNode left = join.getLeft();
     SqlNode right = join.getRight();
-    final SqlValidatorScope leftScope =
-        Util.first(validator.getJoinScope(left),
-            ((DelegatingScope) rootScope).getParent());
+    final SqlValidatorScope leftScope = Util.first(validator.getJoinScope(left),
+        ((DelegatingScope) rootScope).getParent());
 
-    final SqlValidatorScope rightScope =
-        Util.first(validator.getJoinScope(right),
-            ((DelegatingScope) rootScope).getParent());
+    final SqlValidatorScope rightScope = Util.first(validator.getJoinScope(right),
+        ((DelegatingScope) rootScope).getParent());
 
     SqlNode l = rewriteFrom(left, leftScope);
     join.setLeft(l);
@@ -525,9 +470,6 @@ public class Transpile {
           join.setOperand(2, SqlLiteral.createSymbol(JoinType.INNER, SqlParserPos.ZERO));
           join.setOperand(4, SqlLiteral.createSymbol(JoinConditionType.ON, SqlParserPos.ZERO));
           join.setOperand(5, newNoneCondition);
-          //TODO: Convert condition to ON w/ TRUE or an appended condition
-//            condition = rexBuilder.makeLiteral(true);
-//            rightRel = tempRightRel;
           break;
         case USING:
           //todo: Using
@@ -537,18 +479,9 @@ public class Transpile {
 //            rightRel = tempRightRel;
           break;
         case ON:
-          SqlNode newOnCondition = condition
-              .map(c -> and(join.getCondition(), c))
+          SqlNode newOnCondition = condition.map(c -> and(join.getCondition(), c))
               .orElse(join.getCondition());
           join.setOperand(5, newOnCondition);
-          //todo: append on
-//            org.apache.calcite.util.Pair<RexNode, RelNode> conditionAndRightNode =
-//            convertOnCondition(fromBlackboard,
-//                join,
-//                leftRel,
-//                tempRightRel);
-//            condition = conditionAndRightNode.left;
-//            rightRel = conditionAndRightNode.right;
           break;
         default:
           throw Util.unexpected(conditionType);
@@ -556,11 +489,10 @@ public class Transpile {
     }
   }
 
-  class TranspileScope {
+  @Value
+  static class NamedKey {
 
-    SqlValidatorScope validatorScope;
-    Optional<SQRLTable> context;
+    String name;
+    SqlNode node;
   }
-
-
 }

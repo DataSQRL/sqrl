@@ -12,7 +12,7 @@ import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.plan.local.generate.GeneratorBuilder;
 import ai.datasqrl.util.data.C360;
 import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.SqlNode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +46,17 @@ class GeneratorTest extends AbstractSQRLIT {
     this.generator = GeneratorBuilder.build(importManager, error);
     this.parser = new ConfiguredSqrlParser(error);
   }
+
+  @Test
+  public void tableImportTest() {
+    gen("IMPORT ecommerce-data.Customer;\n");
+    gen("IMPORT ecommerce-data.Product;\n");
+    gen("IMPORT ecommerce-data.Orders;\n");
+    validateQueryTable("customer",5, 1);
+    validateQueryTable("product",6, 1);
+    validateQueryTable("orders",6, 1);
+  }
+
 
   @Test
   public void tableDefinitionTest() {
