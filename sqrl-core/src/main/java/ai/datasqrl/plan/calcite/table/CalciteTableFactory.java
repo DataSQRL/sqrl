@@ -6,7 +6,7 @@ import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.SqrlType2Calcite;
-import ai.datasqrl.plan.calcite.rules.Sqrl2SqlLogicalPlanConverter;
+import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
@@ -62,7 +62,7 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         return new ScriptTableDefinition(impTable, tables);
     }
 
-    public ScriptTableDefinition defineTable(NamePath tablePath, Sqrl2SqlLogicalPlanConverter.ProcessedRel rel,
+    public ScriptTableDefinition defineTable(NamePath tablePath, SQRLLogicalPlanConverter.ProcessedRel rel,
                                       List<Name> fieldNames) {
         ContinuousIndexMap indexmap = rel.getIndexMap();
         Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());

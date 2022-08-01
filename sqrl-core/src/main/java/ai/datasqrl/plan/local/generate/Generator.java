@@ -11,7 +11,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.*;
-import ai.datasqrl.plan.calcite.rules.Sqrl2SqlLogicalPlanConverter;
+import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
@@ -308,7 +308,7 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
     } else {
       List<Name> fieldNames = relNode.getRowType().getFieldList().stream()
           .map(f -> Name.system(f.getName())).collect(Collectors.toList());
-      Sqrl2SqlLogicalPlanConverter.ProcessedRel processedRel = optimize(relNode);
+      SQRLLogicalPlanConverter.ProcessedRel processedRel = optimize(relNode);
       ScriptTableDefinition queryTable = tableFactory.defineTable(namePath, processedRel,
           fieldNames);
       registerScriptTable(queryTable);
@@ -325,7 +325,7 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
     return null;
   }
 
-  public Sqrl2SqlLogicalPlanConverter.ProcessedRel optimize(RelNode relNode) {
+  public SQRLLogicalPlanConverter.ProcessedRel optimize(RelNode relNode) {
     System.out.println("LP$0: \n" + relNode.explain());
 
     //Step 1: Push filters into joins so we can correctly identify self-joins
@@ -336,7 +336,7 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
     //self-joins (including nested self-joins) as well as infer primary keys,
     //table types, and timestamps in the process
 
-    Sqrl2SqlLogicalPlanConverter sqrl2sql = new Sqrl2SqlLogicalPlanConverter(
+    SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(
         () -> planner.getRelBuilder(), new SqrlRexUtil(planner.getRelBuilder().getRexBuilder()));
     relNode = relNode.accept(sqrl2sql);
     System.out.println("LP$2: \n" + relNode.explain());

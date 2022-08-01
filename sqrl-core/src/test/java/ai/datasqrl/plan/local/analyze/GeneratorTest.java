@@ -48,6 +48,17 @@ class GeneratorTest extends AbstractSQRLIT {
   }
 
   @Test
+  public void tableImportTest() {
+    gen("IMPORT ecommerce-data.Customer;\n");
+    gen("IMPORT ecommerce-data.Product;\n");
+    gen("IMPORT ecommerce-data.Orders;\n");
+    validateQueryTable("customer",5, 1);
+    validateQueryTable("product",6, 1);
+    validateQueryTable("orders",6, 1);
+  }
+
+
+  @Test
   public void tableDefinitionTest() {
     gen("IMPORT ecommerce-data.Orders;\n");
     gen("EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;");
