@@ -4,13 +4,16 @@ import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;
+import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.sql.type.ArraySqlType;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class CalciteUtil {
 
@@ -72,6 +75,13 @@ public class CalciteUtil {
         builder.addAll(relation.getFieldList());
         builder.add(fieldId,fieldType);
         return builder.build();
+    }
+
+    public static<C extends org.apache.calcite.schema.Table> List<C> getTables(CalciteSchema schema, Class<C> clazz) {
+        return schema.getTableNames().stream()
+                .map(s -> schema.getTable(s,true).getTable())
+                .filter(clazz::isInstance).map(clazz::cast)
+                .collect(Collectors.toList());
     }
 
     @Value

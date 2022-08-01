@@ -8,6 +8,7 @@ import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.SqrlStatement;
 import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
+import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.local.generate.Generator;
 import ai.datasqrl.plan.local.generate.GeneratorBuilder;
 import ai.datasqrl.util.data.C360;
@@ -63,6 +64,7 @@ class GeneratorTest extends AbstractSQRLIT {
     gen("IMPORT ecommerce-data.Orders;\n");
     gen("EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;");
     validateQueryTable("entrycount",5, 2); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
+    OptimizedDAG optDag = generator.planDAG();
   }
 
   private void validateQueryTable(String name, int numCols, int numPrimaryKeys) {

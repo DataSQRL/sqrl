@@ -1,17 +1,16 @@
 package ai.datasqrl.plan.global;
 
-public enum MaterializationStrategy {
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-    MUST, SHOULD, SHOULD_NOT, CANNOT;
+@NoArgsConstructor
+@Setter
+@Getter
+public class MaterializationStrategy {
 
-
-    public boolean isMaterialize() {
-        switch (this) {
-            case MUST:
-            case SHOULD:
-                return true;
-            default: return false;
-        }
-    }
+    public boolean materialize = true;
+    public String persistedAs = null;
+    public boolean pullup = false;
 
 }

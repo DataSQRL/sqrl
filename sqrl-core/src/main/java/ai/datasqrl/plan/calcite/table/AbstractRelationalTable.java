@@ -1,7 +1,6 @@
 package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.Field;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import org.apache.calcite.linq4j.QueryProvider;
@@ -67,21 +66,5 @@ public abstract class AbstractRelationalTable extends AbstractTable implements Q
     return List.of("_uuid");
   }
 
-  public RelDataTypeField getField(Field field) {
-    for (RelDataTypeField field1 : this.getRowType(null).getFieldList()) {
-      if (field1.getName().equalsIgnoreCase(field.getName().getCanonical())) {
-        return field1;
-      }
-    }
-    throw new RuntimeException("Could not find sqrl field in calcite table");
-  }
 
-  public RelDataTypeField getTimestampColumn() {
-    for (RelDataTypeField field1 : this.getRowType(null).getFieldList()) {
-      if (field1.getName().equalsIgnoreCase("_ingest_time")) {
-        return field1;
-      }
-    }
-    throw new RuntimeException("Could not find sqrl timestamp in calcite table");
-  }
 }

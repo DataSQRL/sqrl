@@ -7,10 +7,9 @@ import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.SourceRecord.Raw;
 import ai.datasqrl.io.sources.util.StreamInputPreparer;
 import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.physical.stream.flink.FlinkStreamEngine.Builder;
-import ai.datasqrl.plan.calcite.table.ImportedRelationalTable;
+import ai.datasqrl.plan.calcite.table.ImportedSourceTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.schema.input.SchemaValidator;
 import lombok.AllArgsConstructor;
@@ -47,7 +46,7 @@ public class DataStreamRegisterer extends RelShuttleImpl {
 
     //TODO: rework based on FlinkIngestSchemaTest
 
-    ImportedRelationalTable t = scan.getTable().unwrap(ImportedRelationalTable.class);
+    ImportedSourceTable t = scan.getTable().unwrap(ImportedSourceTable.class);
     SourceTableImport imp = t.getSourceTableImport();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 

@@ -55,8 +55,9 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         RelDataType rootType = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
                 schemaGen).get();
         AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
-        ImportedRelationalTable impTable = new ImportedRelationalTable(getTableId(rootTable.getName()), getTimestampHolder(rootTable),
-                sourceTable, relBuilder.values(rootType).build());
+        ImportedSourceTable source = new ImportedSourceTable(getTableId(rootTable.getName().suffix("imp")),rootType,sourceTable);
+        ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(getTableId(rootTable.getName()), getTimestampHolder(rootTable),
+                relBuilder.values(rootType).build(), source);
 
         Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable);
         return new ScriptTableDefinition(impTable, tables);

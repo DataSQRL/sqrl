@@ -56,7 +56,7 @@
 //  public <T> T visit(SourceTableImportOp op) {
 //    List<AbstractRelationalTable> createdTables = super.visit(op);
 //
-//    ImportedRelationalTable impTable = (ImportedRelationalTable) createdTables.get(0);
+//    ProxyImportRelationalTable impTable = (ProxyImportRelationalTable) createdTables.get(0);
 //    setData(impTable.getNameId(), impTable.getRowType().getFieldList(), getDataFromImport(impTable.getSourceTableImport()));
 //
 //    QueryRelationalTable queryTable = (QueryRelationalTable) createdTables.get(1);
