@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Value
-public class TopNConstraint {
+public class TopNConstraint implements DatabasePullup {
 
     public static TopNConstraint EMPTY = new TopNConstraint(RelCollations.EMPTY,List.of(),Optional.empty(),false);
 

@@ -25,6 +25,11 @@ public class CalciteUtil {
         } else return Optional.empty();
     }
 
+    public static boolean hasNesting(RelDataType type) {
+        Preconditions.checkState(type.getFieldCount()>0);
+        return type.getFieldList().stream().map(t -> t.getType()).anyMatch(CalciteUtil::isNestedTable);
+    }
+
     public static boolean isArray(RelDataType type) {
         return type instanceof ArraySqlType;
     }

@@ -1,68 +1,32 @@
 package ai.datasqrl.plan.local.generate;
 
-import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
-
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.environment.ImportManager.TableImport;
 import ai.datasqrl.function.builtin.time.StdTimeLibrary;
 import ai.datasqrl.parse.Check;
-import ai.datasqrl.parse.tree.AstVisitor;
-import ai.datasqrl.parse.tree.DistinctAssignment;
-import ai.datasqrl.parse.tree.ExpressionAssignment;
-import ai.datasqrl.parse.tree.ImportDefinition;
-import ai.datasqrl.parse.tree.JoinAssignment;
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.NodeFormatter;
-import ai.datasqrl.parse.tree.QueryAssignment;
-import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
+import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.TranspileOptions;
-import ai.datasqrl.plan.calcite.OptimizationStage;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.SqrlCalciteBridge;
-import ai.datasqrl.plan.calcite.SqrlOperatorTable;
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import ai.datasqrl.plan.calcite.TranspilerFactory;
+import ai.datasqrl.plan.calcite.*;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.rules.Sqrl2SqlLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.table.AbstractRelationalTable;
-import ai.datasqrl.plan.calcite.table.AddedColumn;
+import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
-import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.table.TableWithPK;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.local.Errors;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.generate.Generator.Scope;
-import ai.datasqrl.plan.local.transpile.JoinBuilder;
-import ai.datasqrl.plan.local.transpile.JoinDeclaration;
-import ai.datasqrl.plan.local.transpile.JoinDeclarationContainerImpl;
-import ai.datasqrl.plan.local.transpile.JoinDeclarationImpl;
-import ai.datasqrl.plan.local.transpile.SqlNodeBuilderImpl;
-import ai.datasqrl.plan.local.transpile.TableMapperImpl;
-import ai.datasqrl.plan.local.transpile.Transpile;
-import ai.datasqrl.plan.local.transpile.UniqueAliasGeneratorImpl;
+import ai.datasqrl.plan.local.transpile.*;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -75,16 +39,8 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.schema.Table;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlHint;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOrderBy;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlTableRef;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -93,10 +49,19 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.util.Util;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
+
 @Getter
 public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBridge {
 
-  protected final Map<SQRLTable, AbstractRelationalTable> tableMap = new HashMap<>();
   final FieldNames fieldNames = new FieldNames();
   private final CalciteSchema sqrlSchema;
   private final CalciteSchema relSchema;
@@ -182,7 +147,7 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
       }
       SourceTableImport sourceTableImport = (SourceTableImport) tblImport;
 
-      ScriptTableDefinition importedTable = tableFactory.importTable(sourceTableImport, nameAlias);
+      ScriptTableDefinition importedTable = tableFactory.importTable(sourceTableImport, nameAlias, planner.getRelBuilder());
       dt.add(importedTable);
     }
 

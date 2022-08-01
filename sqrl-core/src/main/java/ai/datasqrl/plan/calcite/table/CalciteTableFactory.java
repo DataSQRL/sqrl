@@ -26,6 +26,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Pair;
 
 import java.util.LinkedHashMap;
@@ -49,14 +50,13 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         return name.suffix(Integer.toString(tableIdCounter.incrementAndGet()));
     }
 
-    public ScriptTableDefinition importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias) {
+    public ScriptTableDefinition importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias, RelBuilder relBuilder) {
         CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(this);
         RelDataType rootType = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
                 schemaGen).get();
         AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
-
         ImportedRelationalTable impTable = new ImportedRelationalTable(getTableId(rootTable.getName()), getTimestampHolder(rootTable),
-                sourceTable, rootType);
+                sourceTable, relBuilder.values(rootType).build());
 
         Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable);
         return new ScriptTableDefinition(impTable, tables);
@@ -68,17 +68,14 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());
         RelNode baseRel = rel.getRelNode();
         TopNConstraint topN = rel.getTopN();
+        rel = rel.inlineTopN();
         Name tableid = getTableId(tablePath.getLast());
         TimestampHolder.Base timestamp = TimestampHolder.Base.ofDerived(rel.getTimestamp());
-        QueryRelationalTable baseTable;
-        if (!topN.isEmpty()) {
-            rel = rel.inlineTopN();
-            baseTable = new TopNRelationalTable(tableid, rel.getType(),rel.getRelNode(),
-                    timestamp, rel.getPrimaryKey().getSourceLength(),
-                    topN, baseRel);
-        } else {
-            baseTable = new QueryRelationalTable(tableid, rel.getType(),rel.getRelNode(),
-                    timestamp, rel.getPrimaryKey().getSourceLength());
+        QueryRelationalTable baseTable = new QueryRelationalTable(tableid, rel.getType(),rel.getRelNode(),
+                timestamp, rel.getPrimaryKey().getSourceLength());
+        if (!CalciteUtil.hasNesting(baseRel.getRowType()) && !topN.isEmpty()) { //Database pullups only work for non-nested tables
+            DatabasePullup.Container pullups = new DatabasePullup.Container(baseRel,List.of(topN),true);
+            baseTable.setDbPullups(pullups);
         }
         LinkedHashMap<Integer,Name> index2Name = new LinkedHashMap<>();
         for (int i = 0; i < fieldNames.size(); i++) {

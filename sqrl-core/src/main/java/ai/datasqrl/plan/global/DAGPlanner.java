@@ -4,7 +4,7 @@ import ai.datasqrl.config.AbstractDAG;
 import ai.datasqrl.plan.calcite.table.ImportedRelationalTable;
 import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
 import ai.datasqrl.plan.calcite.table.TableStatistic;
-import ai.datasqrl.plan.calcite.table.TopNRelationalTable;
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
@@ -27,18 +27,18 @@ public class DAGPlanner {
 
     public OptimizedDAG plan(Collection<QueryRelationalTable> tables, Collection<APIQuery> queries) {
         //Build the actual DAG
-        LogicalDAG dag = LogicalDAG.of(Stream.concat(tables.stream().map(t -> new TableDAGNode(t)),
-                                                     queries.stream().map(q -> new QueryDAGNode(q))));
+        LogicalDAG dag = LogicalDAG.of(Stream.concat(tables.stream().map(t -> new StreamTableNode(t)),
+                                                     queries.stream().map(q -> new QueryNode(q))));
         dag = dag.trimToSinks(); //Remove unreachable parts of the DAG
 
-        for (TableDAGNode tableNode : Iterables.filter(dag,TableDAGNode.class)) {
+        for (StreamTableNode tableNode : Iterables.filter(dag, StreamTableNode.class)) {
             QueryRelationalTable table = tableNode.table;
             //1. Optimize the logical plan and compute statistic
             optimizeTable(table);
             //2. Determine if we should materialize this table
             tableNode.materialize = determineMaterialization(tableNode.table);
             // make sure materialization strategy is compatible with inputs, else try to adjust
-            Iterable<TableDAGNode> allinputs = Iterables.filter(dag.getAllInputsFromSource(tableNode),TableDAGNode.class);
+            Iterable<StreamTableNode> allinputs = Iterables.filter(dag.getAllInputsFromSource(tableNode), StreamTableNode.class);
             if (tableNode.materialize==MaterializationStrategy.MUST) {
                 if (Iterables.filter(allinputs,t -> t.materialize==MaterializationStrategy.CANNOT).iterator().hasNext()) {
                     throw new IllegalStateException("Incompatible materialization strategies");
@@ -56,7 +56,7 @@ public class DAGPlanner {
         }
         //3. If we don't materialize, input tables need to be persisted (i.e. determine where we cut the DAG)
         //   and if we do, then we need to set the flag on the QueryRelationalTable
-        for (TableDAGNode tableNode : Iterables.filter(dag,TableDAGNode.class)) {
+        for (StreamTableNode tableNode : Iterables.filter(dag, StreamTableNode.class)) {
             if (!tableNode.materialize.isMaterialize()) {
                 dag.getInputs(tableNode).stream().forEach(i -> {
                     if (i.asTable().materialize.isMaterialize()) i.asTable().persisted = true;
@@ -66,19 +66,18 @@ public class DAGPlanner {
             }
         }
         //4. Determine if we can postpone TopN inlining if table is persisted and not consumed by materialized nodes
-        for (TableDAGNode tableNode : Iterables.filter(dag,TableDAGNode.class)) {
-            if (!tableNode.persisted || !(tableNode.table instanceof TopNRelationalTable)) continue;
-            TopNRelationalTable table = (TopNRelationalTable)tableNode.table;
+        for (StreamTableNode tableNode : Iterables.filter(dag, StreamTableNode.class)) {
+            if (!tableNode.persisted || tableNode.table.getDbPullups().isEmpty()) continue;
             if (dag.getOutputs(tableNode).stream().allMatch(i -> i.asTable()==null
                     || !i.asTable().materialize.isMaterialize())) {
                 //All tables that consume this table are computed in the database, hence it is more efficient
                 //to compute the topN constraint for this table in the database as well
-                table.setInlinedTopN(false);
+                tableNode.table.getDbPullups().setInlined(false);
             }
         }
         //5. Expand tables using rules and produce one write-DAG
         //As a pre-processing step, make sure all timestamps are determined and imported tables are restructured accordingly
-        for (TableDAGNode tableNode : Iterables.filter(dag.getSources(),TableDAGNode.class)) {
+        for (StreamTableNode tableNode : Iterables.filter(dag.getSources(), StreamTableNode.class)) {
             Preconditions.checkArgument(tableNode.table instanceof ImportedRelationalTable);
             ImportedRelationalTable impTable = (ImportedRelationalTable) tableNode.table;
             impTable.getTimestamp().setBestTimestamp();
@@ -86,7 +85,7 @@ public class DAGPlanner {
         }
         //Validate every non-state table has a timestamp now
         Preconditions.checkState(Iterables.all(Iterables.transform(
-                                    Iterables.filter(dag,TableDAGNode.class),t -> t.asTable().table),
+                                    Iterables.filter(dag, StreamTableNode.class), t -> t.asTable().table),
                                     t -> t.getType()== QueryRelationalTable.Type.STATE || t.getTimestamp().hasTimestamp()));
 
 
@@ -101,11 +100,10 @@ public class DAGPlanner {
         RelNode optimizedRel = table.getRelNode();
         table.setOptimizedRelNode(optimizedRel);
         table.setStatistic(TableStatistic.of(1));
-        if (table instanceof TopNRelationalTable) {
-            TopNRelationalTable topNtable = (TopNRelationalTable) table;
+        if (!table.getDbPullups().isEmpty()) {
             //TODO: run volcano again for base rel
-            optimizedRel = topNtable.getBaseRel();
-            topNtable.setOptimizedBaseRel(optimizedRel);
+            optimizedRel = table.getDbPullups().getBaseRelnode();
+            table.getDbPullups().setOptimizedRelNode(optimizedRel);
         }
     }
 
@@ -125,21 +123,21 @@ public class DAGPlanner {
 
         RelNode getRelNode();
 
-        default TableDAGNode asTable() {
+        default StreamTableNode asTable() {
             return null;
         }
 
     }
 
     @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-    private static class TableDAGNode implements DAGNode {
+    private static class StreamTableNode implements DAGNode {
 
         @EqualsAndHashCode.Include
         private final QueryRelationalTable table;
         private MaterializationStrategy materialize;
         private boolean persisted = false;
 
-        private TableDAGNode(QueryRelationalTable table) {
+        private StreamTableNode(QueryRelationalTable table) {
             this.table = table;
         }
 
@@ -153,7 +151,7 @@ public class DAGPlanner {
         }
 
         @Override
-        public TableDAGNode asTable() {
+        public StreamTableNode asTable() {
             return this;
         }
 
@@ -165,7 +163,7 @@ public class DAGPlanner {
     }
 
     @Value
-    private static class QueryDAGNode implements DAGNode {
+    private static class QueryNode implements DAGNode {
 
         private final APIQuery query;
 
@@ -199,7 +197,7 @@ public class DAGPlanner {
                 if (relNode!=null) {
                     scanTables = VisitTableScans.findScanTables(relNode);
                 }
-                scanTables.forEach(t -> inputs.put(node,new TableDAGNode(t)));
+                scanTables.forEach(t -> inputs.put(node,new StreamTableNode(t)));
             });
             return new LogicalDAG(inputs);
         }
@@ -219,6 +217,9 @@ public class DAGPlanner {
         @Override
         public RelNode visit(TableScan scan) {
             QueryRelationalTable table = scan.getTable().unwrap(QueryRelationalTable.class);
+            if (table==null) { //It's a database query
+                table = scan.getTable().unwrap(VirtualRelationalTable.class).getRoot().getBase();
+            }
             scanTables.add(table);
             return super.visit(scan);
         }
