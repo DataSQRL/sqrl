@@ -350,7 +350,9 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
         () -> planner.getRelBuilder(), new SqrlRexUtil(planner.getRelBuilder().getRexBuilder()));
     relNode = relNode.accept(sqrl2sql);
     System.out.println("LP$2: \n" + relNode.explain());
-    return sqrl2sql.putPrimaryKeysUpfront(sqrl2sql.getRelHolder(relNode));
+    SQRLLogicalPlanConverter.ProcessedRel prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode));
+    System.out.println("LP$3: \n" + prel.getRelNode().explain());
+    return prel;
   }
 
   @SneakyThrows
