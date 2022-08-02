@@ -12,11 +12,8 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.*;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.table.AddedColumn;
+import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
-import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.table.TableWithPK;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.global.DAGPlanner;
@@ -172,7 +169,12 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
   private void registerScriptTable(ScriptTableDefinition tblDef) {
     //Update table mapping from SQRL table to Calcite table...
     tblDef.getShredTableMap().values().stream().forEach(vt -> relSchema.add(vt.getNameId(), vt));
-    relSchema.add(tblDef.getBaseTable().getNameId(), tblDef.getBaseTable());
+    QueryRelationalTable baseTable = tblDef.getBaseTable();
+    relSchema.add(baseTable.getNameId(), baseTable);
+    if (baseTable instanceof ProxyImportRelationalTable) {
+      ImportedSourceTable sourceTable = ((ProxyImportRelationalTable)baseTable).getSourceTable();
+      relSchema.add(sourceTable.getNameId(),sourceTable);
+    }
     this.tableMapper.getTableMap().putAll(tblDef.getShredTableMap());
     //and also map all fields
     this.fieldNames.putAll(tblDef.getFieldNameMap());

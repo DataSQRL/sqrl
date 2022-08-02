@@ -23,7 +23,7 @@ public class PhysicalPlanner {
   public PhysicalPlan plan(OptimizedDAG plan) {
     CreateStreamJobResult result = new StreamGraphBuilder(streamEngine, importManager,
             dbConnection)
-        .createStreamGraph(plan.getStreamQueries());
+        .createStreamGraph(plan.getStreamTables());
 
     List<SqlDDLStatement> statements = new MaterializedTableDDLBuilder()
         .create(result.getCreatedTables(), true);

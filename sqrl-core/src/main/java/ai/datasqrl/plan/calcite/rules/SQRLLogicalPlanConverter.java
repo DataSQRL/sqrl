@@ -1,7 +1,6 @@
 package ai.datasqrl.plan.calcite.rules;
 
 import ai.datasqrl.plan.calcite.hints.ExplicitInnerJoinTypeHint;
-import ai.datasqrl.plan.calcite.hints.NumColumnsHint;
 import ai.datasqrl.plan.calcite.hints.SqrlHint;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
@@ -170,9 +169,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             offset = 0;
             builder = relBuilderFactory.get();
             builder.scan(root.getBase().getNameId());
-            //Since inlined columns can be added to the base table, we need to project to the current size
-            //Add as hint since identity projections are filtered out by builder
-            builder.hints(new NumColumnsHint(root.getNumQueryColumns()).getHint());
+            CalciteUtil.addIdentityProjection(builder,root.getNumQueryColumns());
             joinTable = JoinTable.ofRoot(root);
             columns2Add = vtable.getAddedColumns().stream()
                     .filter(Predicate.not(AddedColumn::isInlined))

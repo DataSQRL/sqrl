@@ -27,6 +27,7 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
     }
 
     public D addNodes(Multimap<E, E> inputs) {
+        if (inputs.isEmpty()) return (D)this;
         HashMultimap<E,E> newInputs = HashMultimap.create(this.inputs);
         inputs.entries().forEach(e -> newInputs.put(e.getKey(),e.getValue()));
         return create(newInputs);
@@ -43,15 +44,15 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
      * @return
      */
     public D trimToSinks() {
-        Set<E> reached = (Set<E>) getAllInputsFromSource(getSinks());
+        Set<E> reached = (Set<E>) getAllInputsFromSource(getSinks(),true);
         return create(Multimaps.filterKeys(inputs,e -> reached.contains(e)));
     }
 
-    public Collection<E> getAllInputsFromSource(E element) {
-        return getAllInputsFromSource(List.of(element));
+    public Set<E> getAllInputsFromSource(E element, boolean includeElement) {
+        return getAllInputsFromSource(List.of(element), includeElement);
     }
 
-    public Collection<E> getAllInputsFromSource(Collection<E> elements) {
+    public Set<E> getAllInputsFromSource(Collection<E> elements, boolean includeElements) {
         Set<E> reached = new HashSet<>();
         Deque<E> next = new ArrayDeque<>(elements);
         while (!next.isEmpty()) {
@@ -61,6 +62,7 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
                 next.addAll(inputs.get(n));
             }
         }
+        if (!includeElements) reached.removeAll(elements);
         return reached;
     }
 

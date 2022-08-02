@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.plan.calcite.memory.rule.SqrlDataSourceToEnumerableConverterRule;
+import ai.datasqrl.plan.calcite.rules.DAGExpansionRule;
 import ai.datasqrl.plan.calcite.rules.SQRLPrograms;
 import ai.datasqrl.plan.calcite.rules.SqrlExpansionRelRule;
 import com.google.common.collect.ImmutableList;
@@ -53,6 +54,15 @@ public class OptimizationStage {
                     CoreRules.FILTER_INTO_JOIN
                     ), false, DefaultRelMetadataProvider.INSTANCE),
             Optional.empty());
+
+    //DAG
+    public static final OptimizationStage WRITE_DAG_EXPANSION = new OptimizationStage("WriteDAGExpansion",
+            Programs.hep(List.of(new DAGExpansionRule.Write()), false, DefaultRelMetadataProvider.INSTANCE),
+            Optional.empty());
+    public static final OptimizationStage READ_DAG_EXPANSION = new OptimizationStage("WriteDAGExpansion",
+            Programs.hep(List.of(new DAGExpansionRule.Read()), false, DefaultRelMetadataProvider.INSTANCE),
+            Optional.empty());
+
 
     //Enumerable
     public static final OptimizationStage SQRL_ENUMERABLE_HEP = new OptimizationStage("SQRL2Enumerable",
