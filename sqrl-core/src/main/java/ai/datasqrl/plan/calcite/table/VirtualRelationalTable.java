@@ -75,6 +75,15 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     return getNumParentPks() + numLocalPks;
   }
 
+  public List<String> getPrimaryKeyNames() {
+    List<String> pkNames = new ArrayList<>(getNumPrimaryKeys());
+    List<RelDataTypeField> fields = rowType.getFieldList();
+    for (int i = 0; i < getNumPrimaryKeys(); i++) {
+      pkNames.add(i,fields.get(i).getName());
+    }
+    return pkNames;
+  }
+
   public int getNumColumns() {
     return rowType.getFieldCount();
   }
