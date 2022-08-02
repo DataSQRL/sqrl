@@ -12,13 +12,20 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.*;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.table.*;
+import ai.datasqrl.plan.calcite.table.AddedColumn;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
+import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
+import ai.datasqrl.plan.calcite.table.TableWithPK;
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
+import ai.datasqrl.plan.global.DAGPlanner;
+import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.local.Errors;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.generate.Generator.Scope;
 import ai.datasqrl.plan.local.transpile.*;
+import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
@@ -45,13 +52,14 @@ import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Getter
 public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBridge {
 
-  protected final Map<SQRLTable, AbstractRelationalTable> tableMap = new HashMap<>();
   final FieldNames fieldNames = new FieldNames();
   private final CalciteSchema sqrlSchema;
   private final CalciteSchema relSchema;
@@ -358,6 +366,16 @@ public class Generator extends AstVisitor<Void, Scope> implements SqrlCalciteBri
   @Override
   public Table getTable(String tableName) {
     return relSchema.getTable(tableName, false).getTable();
+  }
+
+  public OptimizedDAG planDAG() {
+    DAGPlanner dagPlanner = new DAGPlanner();
+    //For now, we are going to generate simple scan queries for each virtual table
+    //TODO: this needs to be replaced by the queries generated from the GraphQL API
+    List<APIQuery> apiQueries = CalciteUtil.getTables(relSchema,VirtualRelationalTable.class).stream()
+            .map(vt -> new APIQuery("query_"+vt.getNameId(),planner.getRelBuilder().scan(vt.getNameId()).build()))
+            .collect(Collectors.toList());
+    return dagPlanner.plan(relSchema, planner, apiQueries);
   }
 
   @Value

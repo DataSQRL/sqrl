@@ -2,6 +2,7 @@ package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
+import ai.datasqrl.plan.global.MaterializationStrategy;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -40,12 +41,9 @@ public class QueryRelationalTable extends AbstractRelationalTable {
 
   @Setter
   private TableStatistic statistic = null;
-  /**
-   * Whether this tables get materialized (i.e. is part of the write DAG and pre-computed in the stream engine)
-   * This is determined by the {@link ai.datasqrl.plan.global.DAGPlanner}.
-   */
-  @Setter
-  private boolean materialize = false;
+
+  @NonNull
+  private final MaterializationStrategy matStrategy = new MaterializationStrategy();
 
   public QueryRelationalTable(@NonNull Name rootTableId, @NonNull Type type,
                               RelNode relNode,

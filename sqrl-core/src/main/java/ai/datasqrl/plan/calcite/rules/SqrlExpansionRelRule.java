@@ -5,7 +5,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.memory.table.DataTable;
-import ai.datasqrl.plan.calcite.table.ImportedRelationalTable;
+import ai.datasqrl.plan.calcite.table.ProxyImportRelationalTable;
 import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import org.apache.calcite.plan.RelOptRule;
@@ -46,8 +46,8 @@ public class SqrlExpansionRelRule extends RelOptRule {
   @Override
   public void onMatch(RelOptRuleCall call) {
     LogicalTableScan table = call.rel(0);
-    ImportedRelationalTable baseTable = table.getTable()
-        .unwrap(ImportedRelationalTable.class);
+    ProxyImportRelationalTable baseTable = table.getTable()
+        .unwrap(ProxyImportRelationalTable.class);
     QueryRelationalTable query = table.getTable().unwrap(QueryRelationalTable.class);
     DataTable dt = table.getTable().unwrap(DataTable.class);
 
@@ -56,7 +56,7 @@ public class SqrlExpansionRelRule extends RelOptRule {
      */
     if (baseTable != null) { //A logical table that may need shredding, such as Products$1
       RelOptTable baseDatasetRelOptTable = table.getTable().getRelOptSchema()
-          .getTableForMember(List.of(baseTable.getSourceTableImport().getTable().qualifiedName()));
+          .getTableForMember(List.of(baseTable.getSourceTable().getNameId()));
 
       RelNode relNode = null; /*shred(baseTable.getNamePath(), baseTable.getSourceTableImport(),
           baseDatasetRelOptTable, table); */

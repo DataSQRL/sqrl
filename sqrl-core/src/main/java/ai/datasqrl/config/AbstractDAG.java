@@ -26,6 +26,12 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
         });
     }
 
+    public D addNodes(Multimap<E, E> inputs) {
+        HashMultimap<E,E> newInputs = HashMultimap.create(this.inputs);
+        inputs.entries().forEach(e -> newInputs.put(e.getKey(),e.getValue()));
+        return create(newInputs);
+    }
+
     protected abstract D create(Multimap<E, E> inputs);
 
     public Set<E> getSinks() {
