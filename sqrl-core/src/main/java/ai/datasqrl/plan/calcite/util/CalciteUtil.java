@@ -9,8 +9,12 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.type.ArraySqlType;
+import org.apache.calcite.tools.RelBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -66,6 +70,17 @@ public class CalciteUtil {
 
     public static RelDataTypeBuilder getRelTypeBuilder(@NonNull RelDataTypeFactory factory) {
         return new RelDataTypeFieldBuilder(factory.builder().kind(StructKind.FULLY_QUALIFIED));
+    }
+
+    public static void addIdentityProjection(RelBuilder relBuilder, int numColumns) {
+        List<RexNode> rex = new ArrayList<>(numColumns);
+        List<String> fieldNames = new ArrayList<>(numColumns);
+        RelDataType inputType = relBuilder.peek().getRowType();
+        for (int i = 0; i < numColumns; i++) {
+            rex.add(i, RexInputRef.of(i,inputType));
+            fieldNames.add(i,null);
+        }
+        relBuilder.project(rex,fieldNames,true); //Need to force otherwise Calcite eliminates the project
     }
 
     public static RelDataType appendField(@NonNull RelDataType relation, @NonNull String fieldId, @NonNull RelDataType fieldType,

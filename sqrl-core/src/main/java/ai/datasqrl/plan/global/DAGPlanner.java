@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.global;
 
 import ai.datasqrl.config.AbstractDAG;
+import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
@@ -9,7 +10,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
-import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -33,40 +33,42 @@ public class DAGPlanner {
         LogicalDAG dag = LogicalDAG.of(queryTables, queries);
         dag = dag.trimToSinks(); //Remove unreachable parts of the DAG
 
+        Map<StreamTableNode, MaterializationPreference> materialization = new HashMap<>();
         for (StreamTableNode tableNode : Iterables.filter(dag, StreamTableNode.class)) {
             QueryRelationalTable table = tableNode.table;
             //1. Optimize the logical plan and compute statistic
             optimizeTable(table);
             //2. Determine if we should materialize this table
-            tableNode.materialize = determineMaterialization(table);
+            MaterializationPreference materialize = determineMaterialization(table);
             // make sure materialization strategy is compatible with inputs, else try to adjust
-            Iterable<StreamTableNode> allinputs = Iterables.filter(dag.getAllInputsFromSource(tableNode), StreamTableNode.class);
-            if (tableNode.materialize== MaterializationPreference.MUST) {
-                if (Iterables.filter(allinputs,t -> t.materialize== MaterializationPreference.CANNOT).iterator().hasNext()) {
+            Iterable<StreamTableNode> allinputs = Iterables.filter(dag.getAllInputsFromSource(tableNode, false), StreamTableNode.class);
+            if (materialize == MaterializationPreference.MUST) {
+                if (!Iterables.isEmpty(Iterables.filter(allinputs,t -> materialization.get(t) == MaterializationPreference.CANNOT))) {
                     throw new IllegalStateException("Incompatible materialization strategies");
                 } else {
                     //Convert all inputs to "SHOULD"
-                    Iterables.filter(allinputs, t-> t.materialize== MaterializationPreference.SHOULD_NOT)
-                            .forEach(t -> t.materialize= MaterializationPreference.SHOULD);
+                    Iterables.filter(allinputs, t-> materialization.get(t) == MaterializationPreference.SHOULD_NOT)
+                            .forEach(t -> materialization.put(t, MaterializationPreference.SHOULD));
                 }
-            } else if (tableNode.materialize== MaterializationPreference.SHOULD) {
-                if (Iterables.filter(allinputs,t -> !t.materialize.isMaterialize()).iterator().hasNext()) {
+            } else if (materialize == MaterializationPreference.SHOULD) {
+                if (!Iterables.isEmpty(Iterables.filter(allinputs,t -> !materialization.get(t).isMaterialize()))) {
                     //At least one input should or can not be materialized, and hence neither should this table
-                    tableNode.materialize = MaterializationPreference.SHOULD_NOT;
+                    materialize = MaterializationPreference.SHOULD_NOT;
                 }
             }
+            materialization.put(tableNode,materialize);
         }
         //3. If we don't materialize, input tables need to be persisted (i.e. determine where we cut the DAG)
         //   and if we do, then we need to set the flag on the QueryRelationalTable
         List<DBTableNode> nodes2Add = new ArrayList<>();
         for (StreamTableNode tableNode : Iterables.filter(dag, StreamTableNode.class)) {
-            tableNode.table.getMatStrategy().setMaterialize(tableNode.materialize.isMaterialize());
-            if (tableNode.materialize.isMaterialize()) {
+            tableNode.table.getMatStrategy().setMaterialize(materialization.get(tableNode).isMaterialize());
+            if (materialization.get(tableNode).isMaterialize()) {
                 boolean isPersisted = dag.getOutputs(tableNode).stream().anyMatch(DBTableNode.class::isInstance);
                 //If this node is materialized but some streamtable outputs aren't (i.e. they are computed in the database)
                 //we need to persist this table and set a flag to indicate how to expand this table
                 if (dag.getOutputs(tableNode).stream().filter(StreamTableNode.class::isInstance).map(DAGNode::asTable)
-                        .anyMatch(n -> !n.materialize.isMaterialize())) {
+                        .anyMatch(n -> !materialization.get(n).isMaterialize())) {
                     VirtualRelationalTable vtable = Iterables.getOnlyElement(toVirtual.get(tableNode.table));
                     Preconditions.checkState(vtable.isRoot());
                     nodes2Add.add(new DBTableNode(vtable));
@@ -76,7 +78,7 @@ public class DAGPlanner {
                 //Determine if we can postpone TopN inlining if table is persisted and not consumed by materialized nodes
                 if (isPersisted && !tableNode.table.getDbPullups().isEmpty()) {
                     if (dag.getOutputs(tableNode).stream().filter(StreamTableNode.class::isInstance).map(DAGNode::asTable)
-                            .allMatch(n -> !n.materialize.isMaterialize())) {
+                            .allMatch(n -> !materialization.get(n).isMaterialize())) {
                         tableNode.table.getMatStrategy().setPullup(true);
                     }
                 }
@@ -94,6 +96,7 @@ public class DAGPlanner {
             //Set timestamp on source table
             int timestampIdx = impTable.getTimestamp().getTimestampIndex();
             int offset = timestampIdx - sourceTable.getBaseRowType().getFieldCount();
+            AddedColumn.Simple timestampCol = null;
             if (offset<0) {
                 sourceTable.setTimestampIndex(timestampIdx);
             } else {
@@ -103,28 +106,43 @@ public class DAGPlanner {
                 //TODO: This is a current limitation so we don't have to implement the re-ordering of fields when we
                 //pull the timestamp column out (requires re-mapping field indexes for other added simple columns and putting projection on top to preserve original order
                 Preconditions.checkArgument(offset==0, "Timestamp column must be added first");
-                AddedColumn.Simple timeCol = impTable.getAddedFields().get(offset);
-                sourceTable.setTimestampColumn(timeCol, planner.getTypeFactory());
-                RelBuilder relBuilder = planner.getRelBuilder();
-                relBuilder.scan(sourceTable.getNameId());
-                for (AddedColumn.Simple col : impTable.getAddedFields()) {
-                    if (col!=timeCol) {
-                        col.appendTo(relBuilder);
-                    }
-                }
-                impTable.setOptimizedRelNode(relBuilder.build());
+                timestampCol = impTable.getAddedFields().get(offset);
+                sourceTable.setTimestampColumn(timestampCol, planner.getTypeFactory());
             }
+            //Rebuild relNode against sourceTabel
+            RelBuilder relBuilder = planner.getRelBuilder();
+            relBuilder.scan(sourceTable.getNameId());
+            for (AddedColumn.Simple col : impTable.getAddedFields()) {
+                if (col!=timestampCol) {
+                    col.appendTo(relBuilder);
+                }
+            }
+            impTable.setOptimizedRelNode(relBuilder.build());
         }
         //Validate every non-state table has a timestamp now
         Preconditions.checkState(Iterables.all(Iterables.transform(
                                     Iterables.filter(dag, StreamTableNode.class), t -> t.asTable().table),
                                     t -> t.getType()== QueryRelationalTable.Type.STATE || t.getTimestamp().hasTimestamp()));
-        //TODO: shred nested VirtualRelationalTable sinks in DBTableNode
 
         //6. Produce an LP-tree for each query with all tables inlined and push down filters to determine indexes
+        List<OptimizedDAG.WriteDB> writeDAG = new ArrayList<>();
+        for (DBTableNode dbNode : Iterables.filter(dag, DBTableNode.class)) {
+            if (dbNode.table.getRoot().getBase().getMatStrategy().isMaterialize()) {
+                VirtualRelationalTable dbTable = dbNode.table;
+                RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
+                RelNode expanded = planner.transform(OptimizationStage.WRITE_DAG_EXPANSION,scanTable);
+                writeDAG.add(new OptimizedDAG.WriteDB(dbTable,expanded));
+            }
+        }
 
-        //TODO: Push down filters into queries to determine indexes needed on tables
-        return null;
+        List<OptimizedDAG.ReadQuery> readDAG = new ArrayList<>();
+        for (QueryNode qNode : Iterables.filter(dag, QueryNode.class)) {
+            RelNode expanded = planner.transform(OptimizationStage.READ_DAG_EXPANSION,qNode.query.getRelNode());
+            //TODO: Push down filters into queries to determine indexes needed on tables
+            readDAG.add(new OptimizedDAG.ReadQuery(qNode.query,expanded));
+        }
+
+        return new OptimizedDAG(writeDAG,readDAG);
     }
 
     private void optimizeTable(QueryRelationalTable table) {
@@ -163,13 +181,10 @@ public class DAGPlanner {
 
     }
 
-    @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+    @Value
     private static class StreamTableNode implements DAGNode {
 
-        @EqualsAndHashCode.Include
         private final QueryRelationalTable table;
-        private MaterializationPreference materialize;
-        private boolean persisted = false;
 
         private StreamTableNode(QueryRelationalTable table) {
             this.table = table;

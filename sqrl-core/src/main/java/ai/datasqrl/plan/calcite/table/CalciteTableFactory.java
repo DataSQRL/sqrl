@@ -28,6 +28,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Pair;
+import org.h2.util.StringUtils;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,7 +47,12 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         this.typeFactory = typeFactory;
     }
 
-    private Name getTableId(Name name) {
+    private Name getTableId(@NonNull Name name) {
+        return getTableId(name,null);
+    }
+
+    private Name getTableId(@NonNull Name name, String type) {
+        if (!StringUtils.isNullOrEmpty(type)) name = name.suffix(type);
         return name.suffix(Integer.toString(tableIdCounter.incrementAndGet()));
     }
 
@@ -55,8 +61,8 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         RelDataType rootType = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
                 schemaGen).get();
         AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
-        ImportedSourceTable source = new ImportedSourceTable(getTableId(rootTable.getName().suffix("imp")),rootType,sourceTable);
-        ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(getTableId(rootTable.getName()), getTimestampHolder(rootTable),
+        ImportedSourceTable source = new ImportedSourceTable(getTableId(rootTable.getName(),"i"),rootType,sourceTable);
+        ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(getTableId(rootTable.getName(),"q"), getTimestampHolder(rootTable),
                 relBuilder.values(rootType).build(), source);
 
         Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable);
@@ -70,7 +76,7 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         RelNode baseRel = rel.getRelNode();
         TopNConstraint topN = rel.getTopN();
         rel = rel.inlineTopN();
-        Name tableid = getTableId(tablePath.getLast());
+        Name tableid = getTableId(tablePath.getLast(),"q");
         TimestampHolder.Base timestamp = TimestampHolder.Base.ofDerived(rel.getTimestamp());
         QueryRelationalTable baseTable = new QueryRelationalTable(tableid, rel.getType(),rel.getRelNode(),
                 timestamp, rel.getPrimaryKey().getSourceLength());

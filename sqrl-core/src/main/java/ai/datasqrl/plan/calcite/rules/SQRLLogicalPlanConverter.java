@@ -1,7 +1,6 @@
 package ai.datasqrl.plan.calcite.rules;
 
 import ai.datasqrl.plan.calcite.hints.ExplicitInnerJoinTypeHint;
-import ai.datasqrl.plan.calcite.hints.NumColumnsHint;
 import ai.datasqrl.plan.calcite.hints.SqrlHint;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
@@ -68,19 +67,33 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         }
     }
 
-    public ProcessedRel putPrimaryKeysUpfront(ProcessedRel input) {
+    /**
+     * Moves the primary key columns to the front and adds projection to only return
+     * columns that the user selected, are part of the primary key, or a timestamp candidate
+     *
+     * @param input
+     * @return
+     */
+    public ProcessedRel postProcess(ProcessedRel input) {
         ContinuousIndexMap indexMap = input.indexMap;
         HashMap<Integer,Integer> remapping = new HashMap<>();
         int index = 0;
         for (int i = 0; i < input.primaryKey.getSourceLength(); i++) {
             remapping.put(input.primaryKey.map(i),index++);
         }
-        for (int i = 0; i < input.indexMap.getTargetLength(); i++) {
-            if (!remapping.containsKey(i)) {
-                remapping.put(i,index++);
+        for (int i = 0; i < input.indexMap.getSourceLength(); i++) {
+            int target = input.indexMap.map(i);
+            if (!remapping.containsKey(target)) {
+                remapping.put(target,index++);
             }
         }
-        Preconditions.checkArgument(index==indexMap.getTargetLength() && remapping.size() == index);
+        for (TimestampHolder.Candidate c : input.timestamp.getCandidates()) {
+            if (!remapping.containsKey(c.getIndex())) {
+                remapping.put(c.getIndex(),index++);
+            }
+        }
+
+        Preconditions.checkArgument(index<=indexMap.getTargetLength() && remapping.size() == index);
         List<RexNode> projects = new ArrayList<>(indexMap.getTargetLength());
         remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(),e.getValue()))
                 .sorted((a, b)-> Integer.compare(a.getTarget(),b.getTarget()))
@@ -170,9 +183,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             offset = 0;
             builder = relBuilderFactory.get();
             builder.scan(root.getBase().getNameId());
-            //Since inlined columns can be added to the base table, we need to project to the current size
-            //Add as hint since identity projections are filtered out by builder
-            builder.hints(new NumColumnsHint(root.getNumQueryColumns()).getHint());
+            CalciteUtil.addIdentityProjection(builder,root.getNumQueryColumns());
             joinTable = JoinTable.ofRoot(root);
             columns2Add = vtable.getAddedColumns().stream()
                     .filter(Predicate.not(AddedColumn::isInlined))
