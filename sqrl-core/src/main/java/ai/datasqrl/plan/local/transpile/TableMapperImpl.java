@@ -1,6 +1,5 @@
 package ai.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.calcite.table.AbstractRelationalTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.schema.SQRLTable;
@@ -12,7 +11,7 @@ import lombok.Getter;
 public class TableMapperImpl implements TableMapper {
 
   @Getter
-  Map<SQRLTable, AbstractRelationalTable> tableMap;
+  Map<SQRLTable, VirtualRelationalTable> tableMap;
 
   @Override
   public TableWithPK getTable(SQRLTable table) {
@@ -21,7 +20,7 @@ public class TableMapperImpl implements TableMapper {
 
   @Override
   public SQRLTable getScriptTable(VirtualRelationalTable vt) {
-    for (Map.Entry<SQRLTable, AbstractRelationalTable> t : getTableMap()
+    for (Map.Entry<SQRLTable, VirtualRelationalTable> t : getTableMap()
         .entrySet()) {
       if (t.getValue().equals(vt)) {
         return t.getKey();

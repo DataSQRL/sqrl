@@ -21,7 +21,8 @@ public class PlannerFactory {
       .withColumnReferenceExpansion(true)
       .withTypeCoercionEnabled(false)
       .withLenientOperatorLookup(true)
-      .withSqlConformance(SqrlConformance.INSTANCE);
+      .withSqlConformance(SqrlConformance.INSTANCE)
+      ;
 
   final SqlToRelConverter.Config sqlToRelConverterConfig = SqlToRelConverter
       .config()

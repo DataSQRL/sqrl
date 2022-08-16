@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
+import org.apache.calcite.sql.SqlNode;
 
 @Getter
 public class SingleColumn
@@ -28,6 +29,7 @@ public class SingleColumn
 
   private final Optional<Identifier> alias;
   private final String expression;
+  SqlNode sqlNode = null;
 
   public SingleColumn(String expression) {
     this(Optional.empty(), expression, Optional.empty());

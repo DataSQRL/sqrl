@@ -31,6 +31,26 @@ public class NodeFormatter extends AstVisitor<String, Object> {
   }
 
   @Override
+  public String visitQueryAssignment(QueryAssignment node, Object context) {
+    return node.getQuery().toString();
+  }
+
+  @Override
+  public String visitCreateSubscription(CreateSubscription node, Object context) {
+    return node.getQuery().toString();
+  }
+
+  @Override
+  public String visitJoinAssignment(JoinAssignment node, Object context) {
+    return node.getQuery().toString();
+  }
+
+  @Override
+  public String visitExpressionAssignment(ExpressionAssignment node, Object context) {
+    return node.getQuery().toString();
+  }
+
+  @Override
   public String visitAllColumns(AllColumns node, Object context) {
     return node.getPrefix().map(p -> p + ".").orElse("") + "*";
   }

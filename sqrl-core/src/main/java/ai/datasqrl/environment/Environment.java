@@ -43,19 +43,18 @@ public class Environment implements Closeable {
 
   private Environment(SqrlSettings settings) {
     this.settings = settings;
-    DatabaseConnectionProvider dbConnection = settings.getDatabaseEngineProvider().getDatabase(
-        settings.getEnvironmentConfiguration().getMetastore().getDatabaseName());
-    metadataStore = settings.getMetadataStoreProvider()
-        .openStore(dbConnection, settings.getSerializerProvider());
+    DatabaseConnectionProvider dbConnection = settings.getDatabaseEngineProvider()
+        .getDatabase(settings.getEnvironmentConfiguration().getMetastore().getDatabaseName());
+    metadataStore = settings.getMetadataStoreProvider().openStore(dbConnection, settings.getSerializerProvider());
     streamEngine = settings.getStreamEngineProvider().create();
-    persistence = settings.getEnvironmentPersistenceProvider()
-        .createEnvironmentPersistence(metadataStore);
+    persistence = settings.getEnvironmentPersistenceProvider().createEnvironmentPersistence(metadataStore);
 
-    TableStatisticsStoreProvider.Encapsulated statsStore = new TableStatisticsStoreProvider.EncapsulatedImpl(dbConnection,
-            settings.getMetadataStoreProvider(), settings.getSerializerProvider(), settings.getTableStatisticsStoreProvider());
+    TableStatisticsStoreProvider.Encapsulated statsStore = new TableStatisticsStoreProvider.EncapsulatedImpl(
+        dbConnection, settings.getMetadataStoreProvider(), settings.getSerializerProvider(),
+        settings.getTableStatisticsStoreProvider());
     SourceTableMonitor monitor = settings.getSourceTableMonitorProvider().create(streamEngine, statsStore);
-    datasetRegistry = new DatasetRegistry(settings.getDatasetRegistryPersistenceProvider()
-        .createRegistryPersistence(metadataStore), monitor);
+    datasetRegistry = new DatasetRegistry(
+        settings.getDatasetRegistryPersistenceProvider().createRegistryPersistence(metadataStore), monitor);
     dataSinkRegistry = new DataSinkRegistry(
         settings.getDataSinkRegistryPersistenceProvider().createRegistryPersistence(metadataStore));
   }
@@ -64,15 +63,14 @@ public class Environment implements Closeable {
     return new Environment(settings);
   }
 
-  public Result deployScript(@NonNull ScriptBundle.Config scriptConfig,
-      @NonNull ErrorCollector errors) {
+  public Result deployScript(@NonNull ScriptBundle.Config scriptConfig, @NonNull ErrorCollector errors) {
     ScriptBundle bundle = scriptConfig.initialize(errors);
-
 
     if (bundle == null) {
       return null;
     }
-    //TODO: Need to collect errors from compile() and return them in compilation object
+    // TODO: Need to collect errors from compile() and return them in compilation
+    // object
     Instant compileStart = Instant.now();
     ScriptDeployment deployment;
     try {
@@ -85,7 +83,7 @@ public class Environment implements Closeable {
       e.printStackTrace();
       return null;
     }
-    //TODO: Need to put the actual compilation results in here
+    // TODO: Need to put the actual compilation results in here
     CompilationResult compilationResult = CompilationResult.generateDefault(bundle,
         Duration.between(compileStart, Instant.now()).toMillis());
     persistence.saveDeployment(deployment);
@@ -106,22 +104,17 @@ public class Environment implements Closeable {
         .map(s -> s.getStatusResult(streamEngine, Optional.empty())).collect(Collectors.toList());
   }
 
-  //Option: drop table before create
+  // Option: drop table before create
   public PhysicalPlan compile(ScriptBundle bundle, @NonNull ErrorCollector errors) throws Exception {
-    ImportManager importManager = settings.getImportManagerProvider()
-        .createImportManager(datasetRegistry);
+    ImportManager importManager = settings.getImportManagerProvider().createImportManager(datasetRegistry);
 
-    ;
-
-    if (!importManager.registerUserSchema(bundle.getMainScript().getSchema(),errors)) {
+    if (!importManager.registerUserSchema(bundle.getMainScript().getSchema(), errors)) {
       return null;
     }
-    BundleOptions options = BundleOptions.builder()
-        .importManager(importManager)
+    BundleOptions options = BundleOptions.builder().importManager(importManager)
         .schemaSettings(SchemaAdjustmentSettings.DEFAULT)
         .dbConnection((JDBCConnectionProvider) settings.getDatabaseEngineProvider().getDatabase(bundle.getId()))
-        .streamEngine(settings.getStreamEngineProvider().create())
-        .build();
+        .streamEngine(settings.getStreamEngineProvider().create()).build();
     BundlePlanner bundlePlanner = new BundlePlanner(options);
     return bundlePlanner.processBundle(bundle);
   }
@@ -136,7 +129,7 @@ public class Environment implements Closeable {
 
   @Override
   public void close() {
-    //Clean up stuff
+    // Clean up stuff
     metadataStore.close();
   }
 }

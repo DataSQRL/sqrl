@@ -26,15 +26,16 @@ import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * An {@link ScriptBundle} contains the main SQML script that defines the dataset to be exposed as
- * an API as well as all supporting SQML scripts that are imported (directly or indirectly) by the
- * main script.
+ * An {@link ScriptBundle} contains the main SQML script that defines the
+ * dataset to be exposed as an API as well as all supporting SQML scripts that
+ * are imported (directly or indirectly) by the main script.
  * <p>
- * In addition, the bundle may include an optional schema file that defines the schema of the input
- * data, API, and can provide additional hints that guide the optimizer on how to generate the
- * denormalizations.
+ * In addition, the bundle may include an optional schema file that defines the
+ * schema of the input data, API, and can provide additional hints that guide
+ * the optimizer on how to generate the denormalizations.
  * <p>
- * Production {@link ScriptBundle} must also contain the queries that get deployed in the API.
+ * Production {@link ScriptBundle} must also contain the queries that get
+ * deployed in the API.
  */
 
 @Value
@@ -89,16 +90,14 @@ public class ScriptBundle implements Serializable {
 
       errors = errors.resolve(name);
       ErrorCollector scriptErrors = errors.resolve("scripts");
-      List<SqrlScript> validScripts = scripts.stream()
-          .map(s -> s.initialize(scriptErrors, CANONICALIZER))
+      List<SqrlScript> validScripts = scripts.stream().map(s -> s.initialize(scriptErrors, CANONICALIZER))
           .filter(Objects::nonNull).collect(Collectors.toList());
 
       ErrorCollector queryErrors = errors.resolve("queries");
-      List<SqrlQuery> validQueries = queries.stream()
-          .map(s -> s.initialize(queryErrors, CANONICALIZER))
+      List<SqrlQuery> validQueries = queries.stream().map(s -> s.initialize(queryErrors, CANONICALIZER))
           .filter(Objects::nonNull).collect(Collectors.toList());
 
-      //See if we encountered any errors
+      // See if we encountered any errors
       if (validScripts.size() != scripts.size() || validQueries.size() != queries.size()) {
         return null;
       }
@@ -108,41 +107,31 @@ public class ScriptBundle implements Serializable {
       }
 
       boolean isvalid = true;
-      List<Name> duplicates =
-          validScripts.stream()
-              .collect(Collectors.groupingBy(SqrlScript::getName, Collectors.counting()))
-              .entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey)
-              .collect(Collectors.toList());
+      List<Name> duplicates = validScripts.stream()
+          .collect(Collectors.groupingBy(SqrlScript::getName, Collectors.counting())).entrySet().stream()
+          .filter(e -> e.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toList());
       if (!duplicates.isEmpty()) {
-        errors.fatal(
-            "Script names must be unique within a bundle, but found the following duplicates: [%s]",
+        errors.fatal("Script names must be unique within a bundle, but found the following duplicates: [%s]",
             duplicates);
         isvalid = false;
       }
 
-      duplicates =
-          validQueries.stream()
-              .collect(Collectors.groupingBy(SqrlQuery::getName, Collectors.counting()))
-              .entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey)
-              .collect(Collectors.toList());
+      duplicates = validQueries.stream().collect(Collectors.groupingBy(SqrlQuery::getName, Collectors.counting()))
+          .entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toList());
       if (!duplicates.isEmpty()) {
-        errors.fatal(
-            "Query names must be unique within a bundle, but found the following duplicates: [%s]",
+        errors.fatal("Query names must be unique within a bundle, but found the following duplicates: [%s]",
             duplicates);
         isvalid = false;
       }
 
       if (validScripts.size() > 1) {
-        List<Name> mainScripts = validScripts.stream().filter(SqrlScript::isMain)
-            .map(SqrlScript::getName).collect(Collectors.toList());
+        List<Name> mainScripts = validScripts.stream().filter(SqrlScript::isMain).map(SqrlScript::getName)
+            .collect(Collectors.toList());
         if (mainScripts.isEmpty()) {
-          errors.fatal(
-              "Need to set one script as `main` when there are multiple scripts in the bundle");
+          errors.fatal("Need to set one script as `main` when there are multiple scripts in the bundle");
           isvalid = false;
         } else if (mainScripts.size() > 1) {
-          errors.fatal(
-              "Only one script can be set as `main`, but found the following main scripts: [%s]",
-              mainScripts);
+          errors.fatal("Only one script can be set as `main`, but found the following main scripts: [%s]", mainScripts);
           isvalid = false;
         }
       }
@@ -156,17 +145,13 @@ public class ScriptBundle implements Serializable {
 
       if (isvalid) {
         return new ScriptBundle(Name.of(name, CANONICALIZER), vid,
-            validScripts.stream()
-                .collect(Collectors.toMap(SqrlScript::getName, Function.identity())),
-            validQueries.stream().collect(Collectors.toMap(SqrlQuery::getName, Function.identity()))
-        );
+            validScripts.stream().collect(Collectors.toMap(SqrlScript::getName, Function.identity())),
+            validQueries.stream().collect(Collectors.toMap(SqrlQuery::getName, Function.identity())));
       } else {
         return null;
       }
     }
 
-
   }
-
 
 }

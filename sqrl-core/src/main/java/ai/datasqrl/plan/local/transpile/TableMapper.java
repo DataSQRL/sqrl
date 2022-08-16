@@ -8,7 +8,7 @@ import java.util.Map;
 
 public interface TableMapper {
 
-  Map<SQRLTable, AbstractRelationalTable> getTableMap();
+  Map<SQRLTable, VirtualRelationalTable> getTableMap();
 
   TableWithPK getTable(SQRLTable table);
 
