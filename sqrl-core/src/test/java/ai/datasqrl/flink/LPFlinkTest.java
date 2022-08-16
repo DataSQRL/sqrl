@@ -14,8 +14,6 @@ import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.physical.stream.Job;
 import ai.datasqrl.physical.stream.ScriptExecutor;
 import ai.datasqrl.plan.global.OptimizedDAG;
-import ai.datasqrl.plan.local.generate.Generator;
-import ai.datasqrl.plan.local.generate.GeneratorBuilder;
 import ai.datasqrl.util.ResultSetPrinter;
 import ai.datasqrl.util.data.C360;
 import lombok.SneakyThrows;
@@ -30,7 +28,6 @@ public class LPFlinkTest extends AbstractSQRLIT {
 
   private ErrorCollector error;
   private PhysicalPlanner physicalPlanner;
-  private Generator generator;
   private ConfiguredSqrlParser parser;
   private JDBCConnectionProvider jdbc;
 
@@ -48,7 +45,7 @@ public class LPFlinkTest extends AbstractSQRLIT {
         importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
 
     this.parser = new ConfiguredSqrlParser(error);
-    this.generator = GeneratorBuilder.build(importManager, error);
+//    this.generator = GeneratorBuilder.build(importManager, error);
 
     DatabaseConnectionProvider db = sqrlSettings.getDatabaseEngineProvider().getDatabase(MetaData.DEFAULT_DATABASE);
     jdbc = (JDBCConnectionProvider) db;
@@ -60,20 +57,27 @@ public class LPFlinkTest extends AbstractSQRLIT {
   @SneakyThrows
   @Test
   public void testLP() {
-    generator.generate(parser.parse(
-            "IMPORT ecommerce-data.Product;\n" +
-            "ProductSub := SELECT productid, name, description FROM Product;"));
+//    generator.generate(parser.parse("IMPORT ecommerce-data.Product;"));
+    // AbstractRelationalTable sourceTable = (AbstractRelationalTable)generator.getRelSchema().getTable("product$1", false).getTable();
 
-    OptimizedDAG optimizedDAG = generator.planDAG();
-    PhysicalPlan plan = physicalPlanner.plan(optimizedDAG);
-    ScriptExecutor scriptExecutor = new ScriptExecutor();
-    Job job = scriptExecutor.execute(plan);
-    System.out.println(job.getExecutionId());
+    // RelBuilder relBuilder = generator.getPlanner().getRelBuilder();
+    // RelNode testQuery = relBuilder.scan("product$1")
+    //           .project(RexInputRef.of(0, relBuilder.peek().getRowType()),
+    //               RexInputRef.of(1, relBuilder.peek().getRowType()),
+    //               RexInputRef.of(2, relBuilder.peek().getRowType()))
+    //           .build();
+    // TableQuery tableQuery = new TableQuery(sourceTable, testQuery);
 
-    ResultSet resultSet = this.jdbc.getConnection().createStatement()
-        .executeQuery("SELECT * FROM productsub$5;");
+    // OptimizedDAG optimizedDAG = new OptimizedDAG(List.of(tableQuery), List.of());
+    // PhysicalPlan plan = physicalPlanner.plan(optimizedDAG);
+    // ScriptExecutor scriptExecutor = new ScriptExecutor();
+    // Job job = scriptExecutor.execute(plan);
+    // System.out.println(job.getExecutionId());
 
-    System.out.println("Results: ");
-    ResultSetPrinter.print(resultSet, System.out);
+    // ResultSet resultSet = this.jdbc.getConnection().createStatement()
+    //     .executeQuery("SELECT * FROM product$1;");
+
+    // System.out.println("Results: ");
+    // ResultSetPrinter.print(resultSet, System.out);
   }
 }

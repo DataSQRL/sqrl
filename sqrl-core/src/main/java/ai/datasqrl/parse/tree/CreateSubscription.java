@@ -1,21 +1,20 @@
 package ai.datasqrl.parse.tree;
 
 import ai.datasqrl.parse.tree.name.NamePath;
-import com.google.common.collect.ImmutableList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
+import org.apache.calcite.sql.SqlNode;
 
 @Getter
 public class CreateSubscription extends Node {
 
   private final SubscriptionType subscriptionType;
   private final NamePath name;
-  private final String query;
+  private final SqlNode query;
 
   public CreateSubscription(Optional<NodeLocation> location, SubscriptionType subscriptionType,
-      NamePath name, String query) {
+      NamePath name, SqlNode query) {
     super(location);
     this.subscriptionType = subscriptionType;
     this.name = name;

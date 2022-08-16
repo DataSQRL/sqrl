@@ -3,7 +3,7 @@ package ai.datasqrl.plan.calcite.rules;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.rel.RelNode;
 
-public abstract class AbstractSqrlRelShuttle<V extends AbstractSqrlRelShuttle.RelHolder> implements SqrlRelShuttle {
+public abstract class AbstractSqrlRelShuttle<V extends RelHolder> implements SqrlRelShuttle {
 
     protected V relHolder = null;
 
@@ -19,10 +19,6 @@ public abstract class AbstractSqrlRelShuttle<V extends AbstractSqrlRelShuttle.Re
         return relHolder;
     }
 
-    public interface RelHolder {
 
-        RelNode getRelNode();
-
-    }
 
 }

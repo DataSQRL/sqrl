@@ -1,13 +1,11 @@
 package ai.datasqrl.parse.tree;
 
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.Getter;
-import org.apache.logging.log4j.util.Strings;
+import org.apache.calcite.sql.SqlNode;
 
 @Getter
 public class DistinctAssignment extends Assignment {
@@ -16,15 +14,17 @@ public class DistinctAssignment extends Assignment {
   private final Optional<String> alias;
   private final List<String> partitionKeys;
   private final String order;
+  private final SqlNode query;
   private final List<Hint> hints;
 
   public DistinctAssignment(Optional<NodeLocation> location, NamePath name, String table,
-      Optional<String> alias, List<String> partitionKeys, String order, List<Hint> hints) {
+      Optional<String> alias, List<String> partitionKeys, String order, SqlNode query, List<Hint> hints) {
     super(location, name);
     this.table = table;
     this.alias = alias;
     this.partitionKeys = partitionKeys;
     this.order = order;
+    this.query = query;
     this.hints = hints;
   }
 
@@ -49,14 +49,5 @@ public class DistinctAssignment extends Assignment {
   @Override
   public int hashCode() {
     return Objects.hash(table, alias, partitionKeys, order, hints);
-  }
-
-  public String getSqlQuery() {
-    String pk = getPartitionKeys().stream().map(e -> "\"" + e + "\"")
-        .collect(Collectors.joining(", "));
-    String order = Strings.isEmpty(getOrder()) ? "" : "ORDER BY " + getOrder();
-    String table = getTable();
-    return String.format("SELECT /*+ %s(%s) */ * FROM %s %s %s LIMIT 1",
-        SqrlHintStrategyTable.TOP_N, pk, table, alias.orElse(""), order);
   }
 }

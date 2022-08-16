@@ -5,7 +5,8 @@ import static org.apache.calcite.util.Static.RESOURCE;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
-import ai.datasqrl.plan.local.generate.FieldNames;
+import ai.datasqrl.plan.local.generate.Resolve.Env;
+import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
@@ -34,27 +35,17 @@ import org.apache.calcite.util.Util;
 
 public class ExpressionRewriter extends SqlScopedShuttle {
 
-  private final JoinBuilderFactory joinBuilderFactory;
-  private final TableMapper tableMapper;
-  private final UniqueAliasGenerator uniqueAliasGenerator;
-  private final JoinDeclarationContainer joinDecs;
-  private final FieldNames names;
-
   @Getter
   private final List<InlineAggExtractResult> inlineAggResults = new ArrayList<>();
   @Getter
   private final List<SqlJoinDeclaration> toOneResults = new ArrayList<>();
+  private final Env env;
+  private final StatementOp op;
 
-  public ExpressionRewriter(SqlValidatorScope initialScope, TableMapper tableMapper,
-      UniqueAliasGenerator uniqueAliasGenerator, JoinDeclarationContainer joinDecs,
-      FieldNames names) {
-    super(initialScope);
-    this.tableMapper = tableMapper;
-    this.uniqueAliasGenerator = uniqueAliasGenerator;
-    this.joinDecs = joinDecs;
-    this.joinBuilderFactory = () -> new JoinBuilderImpl(uniqueAliasGenerator, joinDecs,
-        tableMapper);
-    this.names = names;
+  public ExpressionRewriter(SqlValidatorScope scope, Env env, StatementOp op) {
+    super(scope);
+    this.env = env;
+    this.op = op;
   }
 
   @Override
@@ -84,12 +75,12 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     SQRLTable st = identifierNamespace.getTable().unwrap(SQRLTable.class);
     List<Relationship> toOneRels = isToOne(qualified.suffix(), st);
     if (!toOneRels.isEmpty()) {
-      TableWithPK table = tableMapper.getTable(toOneRels.get(toOneRels.size() - 1).getToTable());
-      String newTableAlias = uniqueAliasGenerator.generate(table);
+      TableWithPK table = env.getTableMap().get(toOneRels.get(toOneRels.size() - 1).getToTable());
+      String newTableAlias = env.getAliasGenerator().generate(table);
       TablePath tablePath = new TablePathImpl(st, Optional.of(qualified.prefix().get(0)), true,
           toOneRels, newTableAlias);
       SqlJoinDeclaration declaration = JoinBuilderImpl.expandPath(tablePath, false,
-          () -> new JoinBuilderImpl(uniqueAliasGenerator, joinDecs, tableMapper));
+          () -> new JoinBuilderImpl(env, op));
       this.toOneResults.add(declaration);
       return new SqlIdentifier(List.of(declaration.getLastAlias(), Util.last(qualified.suffix())),
           SqlParserPos.ZERO);
@@ -108,7 +99,7 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     }
 
     Column column = (Column) fieldOptional.get();
-    String newName = names.get(column);
+    String newName = env.getFieldMap().get(column);
     return id.setName(id.names.size() - 1, newName);
   }
 
@@ -154,11 +145,11 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     List<Relationship> rels = fields.stream().filter(f -> f instanceof Relationship)
         .map(f -> (Relationship) f).collect(Collectors.toList());
 
-    TableWithPK basePkTable = tableMapper.getTable(baseTable);
-    String subqAlias = uniqueAliasGenerator.generate("s");
+    TableWithPK basePkTable = env.getTableMap().get(baseTable);
+    String subqAlias = env.getAliasGenerator().generate("s");
     TablePathImpl tablePath = new TablePathImpl(baseTable, baseAlias, false, rels, subqAlias);
     SqlJoinDeclaration declaration = JoinBuilderImpl.expandPath(tablePath, true,
-        joinBuilderFactory);
+        () -> new JoinBuilderImpl(env, op));
 
     Preconditions.checkState(declaration.getPullupCondition().isEmpty());
 
@@ -168,7 +159,7 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     String fieldName =
         fields.get(fields.size() - 1) instanceof Column ? fields.get(fields.size() - 1).getName()
             .getDisplay()
-            : tableMapper.getTable(rels.get(rels.size() - 1).getToTable()).getPrimaryKeys().get(0);
+            : env.getTableMap().get(rels.get(rels.size() - 1).getToTable()).getPrimaryKeys().get(0);
 
     //Call gets an identifier
     SqlBasicCall newCall = new SqlBasicCall(function.convertToInlineAgg().get(), new SqlNode[]{
@@ -183,7 +174,7 @@ public class ExpressionRewriter extends SqlScopedShuttle {
 
     //Add grouping conditions of pk
     //LEFT JOIN (SELECT sq FROM condition) x ON x.a = y.a;
-    String fieldAlias = uniqueAliasGenerator.generateFieldName();
+    String fieldAlias = env.getAliasGenerator().generateFieldName();
     SqlBasicCall asField = new SqlBasicCall(SqrlOperatorTable.AS,
         new SqlNode[]{newCall, new SqlIdentifier(fieldAlias, SqlParserPos.ZERO)},
         SqlParserPos.ZERO);

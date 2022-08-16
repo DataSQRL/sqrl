@@ -48,14 +48,23 @@ import ai.datasqrl.parse.tree.SubscriptionType;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
+import ai.datasqrl.plan.calcite.SqrlConformance;
+import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.calcite.avatica.util.Casing;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOrderBy;
+import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.logging.log4j.util.Strings;
 
 /**
  * Builds the abstract syntax tree for an SQRL script using the classes in
@@ -65,6 +74,16 @@ class AstBuilder
     extends SqlBaseBaseVisitor<Node> {
 
   AstBuilder(ParsingOptions parsingOptions) {
+  }
+
+  @SneakyThrows
+  private SqlNode parseSql(String sql) {
+    SqlNode node = SqlParser.create(sql,
+        SqlParser.config().withCaseSensitive(false)
+            .withConformance(SqrlConformance.INSTANCE)
+            .withUnquotedCasing(Casing.UNCHANGED)
+        ).parseQuery();
+    return node;
   }
 
   private static String unquote(String value) {
@@ -203,6 +222,9 @@ class AstBuilder
         ctx.sortItem(ctx.sortItem().size() - 1).stop.getStopIndex());
     String sort = ctx.sortItem(0).start.getInputStream().getText(sortI);
 
+    String queryStr = createDistinctQuery(pk, sort, alias, tableName);
+    SqlNode query = parseSql(queryStr);
+
     return new DistinctAssignment(
         Optional.of(getLocation(ctx)),
         namePath,
@@ -210,8 +232,19 @@ class AstBuilder
         alias,
         pk,
         sort,
+        query,
         getHints(ctx.hint())
     );
+  }
+
+  private String createDistinctQuery(List<String> partitionKeys, String sort,
+      Optional<String> alias, String table) {
+
+    String pk = partitionKeys.stream().map(e -> "\"" + e + "\"")
+        .collect(Collectors.joining(", "));
+    String order = Strings.isEmpty(sort) ? "" : "ORDER BY " + sort;
+    return String.format("SELECT /*+ %s(%s) */ * FROM %s %s %s LIMIT 1",
+        SqrlHintStrategyTable.TOP_N, pk, table, alias.orElse(""), order);
   }
 
   @Override
@@ -221,9 +254,25 @@ class AstBuilder
         ctx.inlineJoin().start.getStartIndex(),
         ctx.inlineJoin().stop.getStopIndex());
     String query = ctx.inlineJoin().start.getInputStream().getText(interval);
+    String queryStr = "SELECT * FROM _ " + query;
+    SqlNode queryNode = mergeOuterOrderWithSelect(parseSql(queryStr));
+
     return new JoinAssignment(Optional.of(getLocation(ctx)), name,
-        query,
+        queryNode,
         getHints(ctx.hint()));
+  }
+
+  private SqlNode mergeOuterOrderWithSelect(SqlNode parseSql) {
+    if (parseSql instanceof SqlOrderBy) {
+      SqlOrderBy order = (SqlOrderBy) parseSql;
+      if (order.query instanceof SqlSelect) {
+        SqlSelect select = (SqlSelect) order.query;
+        select.setOrderBy(order.orderList);
+        select.setFetch(order.fetch);
+        return select;
+      }
+    }
+    return parseSql;
   }
 
   @Override
@@ -231,7 +280,8 @@ class AstBuilder
     Interval interval = new Interval(
         ctx.query().start.getStartIndex(),
         ctx.query().stop.getStopIndex());
-    String query = ctx.query().start.getInputStream().getText(interval);
+    String queryStr = ctx.query().start.getInputStream().getText(interval);
+    SqlNode query = mergeOuterOrderWithSelect(parseSql(queryStr));
     return new QueryAssignment(Optional.of(getLocation(ctx)), getNamePath(ctx.qualifiedName()),
         query,
         getHints(ctx.hint()));
@@ -244,8 +294,10 @@ class AstBuilder
         ctx.expression().start.getStartIndex(),
         ctx.expression().stop.getStopIndex());
     String expression = ctx.expression().start.getInputStream().getText(interval);
+    String queryStr = "SELECT " + expression + " FROM _";
+    SqlNode query = parseSql(queryStr);
     return new ExpressionAssignment(Optional.of(getLocation(ctx)), name,
-        expression,
+        query,
         getHints(ctx.hint()));
   }
 
@@ -254,8 +306,8 @@ class AstBuilder
     Interval interval = new Interval(
         ctx.query().start.getStartIndex(),
         ctx.query().stop.getStopIndex());
-    String query = ctx.query().start.getInputStream().getText(interval);
-
+    String queryStr = ctx.query().start.getInputStream().getText(interval);
+    SqlNode query = parseSql(queryStr);
     return new CreateSubscription(
         Optional.of(getLocation(ctx)),
         SubscriptionType.valueOf(ctx.subscriptionType().getText()),

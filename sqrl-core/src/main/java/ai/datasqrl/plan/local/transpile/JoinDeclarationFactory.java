@@ -6,8 +6,9 @@ import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.local.generate.FieldNames;
-import ai.datasqrl.plan.local.generate.Generator.TranspiledResult;
+//import ai.datasqrl.plan.local.generate.Generator.TranspiledResult;
+import ai.datasqrl.plan.calcite.util.CalciteUtil;
+import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
@@ -37,16 +38,23 @@ import org.apache.calcite.util.Util;
 
 @AllArgsConstructor
 public class JoinDeclarationFactory {
-  TableMapper tableMapper;
-  UniqueAliasGenerator uniqueAliasGenerator;
-  RexBuilder rexBuilder;
-  FieldNames fieldNames;
 
-  public SqlJoinDeclaration create(TableWithPK pkTable, TranspiledResult result) {
+  private final Env env;
+//  TableMapper tableMapper;
+//  UniqueAliasGenerator uniqueAliasGenerator;
+  RexBuilder rexBuilder;
+//  FieldNames fieldNames;
+
+  public JoinDeclarationFactory(Env env) {
+    this.env = env;
+    this.rexBuilder = env.getSession().getPlanner().getRelBuilder().getRexBuilder();
+  }
+
+  public SqlJoinDeclaration create(TableWithPK pkTable, RelNode relNode, SqlNode sqlNode) {
 
     Optional<SqlHint> hint = Optional.empty();
-    if (result.getRelNode() instanceof LogicalSort &&
-        ((LogicalSort) result.getRelNode()).fetch != null) {
+    if (relNode instanceof LogicalSort &&
+        ((LogicalSort) relNode).fetch != null) {
       List<SqlNode> pksOrdinals = IntStream.range(0, pkTable.getPrimaryKeys().size())
           .mapToObj(i -> new SqlIdentifier(
               Long.toString(i + 1),
@@ -58,23 +66,22 @@ public class JoinDeclarationFactory {
           HintOptionFormat.ID_LIST));
     }
 
-    SqlBasicCall tRight = (SqlBasicCall) getRightDeepTable(result.getSqlNode());
+    SqlBasicCall tRight = (SqlBasicCall) getRightDeepTable(sqlNode);
 
-    SqlNode join = unwrapSelect(result.getSqlNode()).getFrom();
+    SqlNode join = unwrapSelect(sqlNode).getFrom();
 
     SqlJoin join1 = (SqlJoin) join;
     String lastAlias = Util.last(((SqlIdentifier) tRight.getOperandList().get(1)).names);
-    if (result.getRelNode() instanceof LogicalSort &&
-        ((LogicalSort) result.getRelNode()).fetch != null) {
-      SqlOrderBy order = (SqlOrderBy) result.getSqlNode();
-      SqlSelect select = (SqlSelect) order.query;
+    if (relNode instanceof LogicalSort &&
+        ((LogicalSort) relNode).fetch != null) {
+      SqlSelect select = unwrapSelect(sqlNode);
       hint.ifPresent(h -> select.setHints(new SqlNodeList(List.of(h), SqlParserPos.ZERO)));
       select.setSelectList(new SqlNodeList(List.of(
           //todo: more than 1 pk
           select.getSelectList().get(0),
           new SqlIdentifier(List.of(lastAlias, ""), SqlParserPos.ZERO)),
           SqlParserPos.ZERO));
-      String a = uniqueAliasGenerator.generateFieldName();
+      String a = env.getAliasGenerator().generateFieldName();
       SqlBasicCall alias = new SqlBasicCall(SqrlOperatorTable.AS,
           new SqlNode[]{
               select,
@@ -149,17 +156,17 @@ public class JoinDeclarationFactory {
     return multiplicity;
   }
 
-  public SqlJoinDeclaration createChild(Relationship rel) {
-    return new SqlJoinDeclarationImpl(Optional.empty(),
-        createParentChildCondition(rel, "x", this.tableMapper), "_", "x");
-  }
+//  public SqlJoinDeclaration createChild(Relationship rel) {
+//    return new SqlJoinDeclarationImpl(Optional.empty(),
+//        createParentChildCondition(rel, "x", this.tableMapper), "_", "x");
+//  }
 
   protected SqlNode createParentChildCondition(Relationship rel, String alias,
-      TableMapper tableMapper) {
-    TableWithPK lhs = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? tableMapper.getTable(
-        rel.getFromTable()) : tableMapper.getTable(rel.getToTable());
-    TableWithPK rhs = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? tableMapper.getTable(
-        rel.getToTable()) : tableMapper.getTable(rel.getFromTable());
+      Env env) {
+    TableWithPK lhs = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? env.getTableMap().get(
+        rel.getFromTable()) : env.getTableMap().get(rel.getToTable());
+    TableWithPK rhs = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? env.getTableMap().get(
+        rel.getToTable()) : env.getTableMap().get(rel.getFromTable());
 
     List<SqlNode> conditions = new ArrayList<>();
     for (int i = 0; i < lhs.getPrimaryKeys().size(); i++) {
@@ -174,22 +181,22 @@ public class JoinDeclarationFactory {
   }
 
   public SqlJoinDeclaration createParentChildJoinDeclaration(Relationship rel) {
-    TableWithPK pk = tableMapper.getTable(rel.getToTable());
-    String alias = uniqueAliasGenerator.generate(pk);
+    TableWithPK pk = env.getTableMap().get(rel.getToTable());
+    String alias = env.getAliasGenerator().generate(pk);
     return new SqlJoinDeclarationImpl(
-        Optional.of(createParentChildCondition(rel, alias, tableMapper)),
-        createTableRef(rel.getToTable(), alias, tableMapper), "_", alias);
+        Optional.of(createParentChildCondition(rel, alias, env)),
+        createTableRef(rel.getToTable(), alias, env), "_", alias);
   }
 
 
-  private SqlNode createTableRef(SQRLTable table, String alias, TableMapper tableMapper) {
+  private SqlNode createTableRef(SQRLTable table, String alias, Env tableMapper) {
     return new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
-        new SqlIdentifier(tableMapper.getTable(table).getNameId(), SqlParserPos.ZERO),
+        new SqlIdentifier(env.getTableMap().get(table).getNameId(), SqlParserPos.ZERO),
         SqlNodeList.EMPTY), new SqlIdentifier(alias, SqlParserPos.ZERO)}, SqlParserPos.ZERO);
   }
 
-  public SqlJoinDeclaration createParent(Relationship rel) {
-    return new SqlJoinDeclarationImpl(Optional.empty(),
-        createParentChildCondition(rel, "x", this.tableMapper), "_", "x");
-  }
+//  public SqlJoinDeclaration createParent(Relationship rel) {
+//    return new SqlJoinDeclarationImpl(Optional.empty(),
+//        createParentChildCondition(rel, "x", this.tableMapper), "_", "x");
+//  }
 }

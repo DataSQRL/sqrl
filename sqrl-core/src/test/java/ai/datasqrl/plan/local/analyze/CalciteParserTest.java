@@ -425,12 +425,12 @@ class CalciteParserTest extends AbstractSQRLIT {
     SqlSelect select = node instanceof SqlSelect ? (SqlSelect)node : (SqlSelect) ((SqlOrderBy)node).query;
     SqlValidatorScope scope = validator.getSelectScope(select);
 
-    Transpile transpile = new Transpile(
-        validator,tableMapper, uniqueAliasGenerator, joinDecs,
-        sqlNodeBuilder, () -> new JoinBuilderImpl(uniqueAliasGenerator, joinDecs, tableMapper), names,
-        TranspileOptions.builder().build());
-
-    transpile.rewriteQuery(select, scope);
+//    Transpile transpile = new Transpile(
+//        validator,tableMapper, uniqueAliasGenerator, joinDecs,
+//        sqlNodeBuilder, () -> new JoinBuilderImpl(uniqueAliasGenerator, joinDecs, tableMapper), names,
+//        TranspileOptions.builder().build());
+//
+//    transpile.rewriteQuery(select, scope);
     System.out.println("\nRewritten: " + select);
 
 

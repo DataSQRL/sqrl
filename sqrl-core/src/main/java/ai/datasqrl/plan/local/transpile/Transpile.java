@@ -5,7 +5,8 @@ import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import ai.datasqrl.plan.calcite.table.TableWithPK;
-import ai.datasqrl.plan.local.generate.FieldNames;
+import ai.datasqrl.plan.local.generate.Resolve.Env;
+import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
 import ai.datasqrl.schema.SQRLTable;
 import com.google.common.collect.ArrayListMultimap;
 import java.util.ArrayList;
@@ -18,7 +19,6 @@ import java.util.Stack;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
@@ -35,15 +35,15 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.DelegatingScope;
 import org.apache.calcite.sql.validate.ExpandableTableNamespace;
+import org.apache.calcite.sql.validate.SelectScope;
+import org.apache.calcite.sql.validate.SqlQualified;
 import org.apache.calcite.sql.validate.SqlValidatorNamespace;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
-import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
 import org.apache.flink.util.Preconditions;
 
-@AllArgsConstructor
 public class Transpile {
 
   private final Stack<SqlNode> pullupConditions = new Stack<>();
@@ -53,14 +53,17 @@ public class Transpile {
       ArrayListMultimap.create();
   private final Map<SqlValidatorScope, List<NamedKey>> generatedKeys = new HashMap<>();
 
-  SqrlValidatorImpl validator;
-  TableMapper tableMapper;
-  UniqueAliasGenerator uniqueAliasGenerator;
-  JoinDeclarationContainer joinDecs;
-  SqlNodeBuilder sqlNodeBuilder;
-  JoinBuilderFactory joinBuilderFactory;
-  FieldNames names;
-  TranspileOptions options;
+  private final Env env;
+  private final StatementOp op;
+  private final TranspileOptions options;
+  private final JoinBuilderFactory joinBuilderFactory;
+
+  public Transpile(Env env, StatementOp op, TranspileOptions options) {
+    this.env = env;
+    this.op = op;
+    this.options = options;
+    this.joinBuilderFactory = () -> new JoinBuilderImpl(env, op);
+  }
 
   public void rewriteQuery(SqlSelect select, SqlValidatorScope scope) {
     createParentPrimaryKeys(scope);
@@ -110,14 +113,14 @@ public class Transpile {
   }
 
   private void createParentPrimaryKeys(SqlValidatorScope scope) {
-    Optional<SQRLTable> context = validator.getContextTable(scope);
+    Optional<SQRLTable> context = op.getSqrlValidator().getContextTable(scope);
     List<NamedKey> nodes = new ArrayList<>();
     if (context.isPresent()) {
-      TableWithPK t = tableMapper.getTable(context.get());
+      TableWithPK t = env.getTableMap().get(context.get());
       //self table could be aliased
-      String contextAlias = validator.getContextAlias();
+      String contextAlias = op.getSqrlValidator().getContextAlias();
       for (String key : t.getPrimaryKeys()) {
-        String pk = uniqueAliasGenerator.generatePK();
+        String pk = env.getAliasGenerator().generatePK();
         nodes.add(
             new NamedKey(pk, new SqlIdentifier(List.of(contextAlias, key), SqlParserPos.ZERO)));
       }
@@ -126,7 +129,7 @@ public class Transpile {
   }
 
   private void rewriteSelectList(SqlSelect select, SqlValidatorScope scope) {
-    List<SqlNode> selectList = validator.getRawSelectScope(select).getExpandedSelectList();
+    List<SqlNode> selectList = op.getSqrlValidator().getRawSelectScope(select).getExpandedSelectList();
 
     List<String> fieldNames = new ArrayList<>();
     final List<SqlNode> exprs = new ArrayList<>();
@@ -154,8 +157,7 @@ public class Transpile {
   }
 
   private SqlNode convertExpression(SqlNode expr, SqlValidatorScope scope) {
-    ExpressionRewriter expressionRewriter = new ExpressionRewriter(scope, tableMapper,
-        uniqueAliasGenerator, joinDecs, names);
+    ExpressionRewriter expressionRewriter = new ExpressionRewriter(scope, env, op);
     SqlNode rewritten = expr.accept(expressionRewriter);
 
     this.inlineAgg.putAll(scope, expressionRewriter.getInlineAggResults());
@@ -165,7 +167,7 @@ public class Transpile {
   }
 
   private String deriveAlias(final SqlNode node, Collection<String> aliases, final int ordinal) {
-    String alias = validator.deriveAlias(node, ordinal);
+    String alias = op.getSqrlValidator().deriveAlias(node, ordinal);
     if ((alias == null) || aliases.contains(alias)) {
       String aliasBase = (alias == null) ? "EXPR$" : alias;
       for (int j = 0; ; j++) {
@@ -202,7 +204,7 @@ public class Transpile {
   }
 
   private void rewriteGroup(SqlSelect select, SqlValidatorScope scope) {
-    if (!validator.isAggregate(select)) {
+    if (!op.getSqrlValidator().isAggregate(select)) {
       Preconditions.checkState(select.getGroup() == null);
       return;
     }
@@ -227,7 +229,8 @@ public class Transpile {
     List<SqlNode> ordinals = new ArrayList<>();
     outer:
     for (SqlNode groupNode : toCheck) {
-      List<SqlNode> list = validator.getRawSelectScope(select).getExpandedSelectList();
+      SelectScope selectScope = op.getSqrlValidator().getRawSelectScope(select);
+      List<SqlNode> list = selectScope.getExpandedSelectList();
       for (int i = 0; i < list.size(); i++) {
         SqlNode selectNode = list.get(i);
         switch (selectNode.getKind()) {
@@ -241,7 +244,10 @@ public class Transpile {
             }
             break;
           default:
-            if (groupNode.equalsDeep(selectNode, Litmus.IGNORE)) {
+            if (groupNode.equalsDeep(selectNode, Litmus.IGNORE) ||
+                (groupNode instanceof SqlIdentifier && selectScope.fullyQualify((SqlIdentifier) groupNode)
+                    .identifier.equalsDeep(selectNode, Litmus.IGNORE))
+            ) {
               ordinals.add(SqlLiteral.createExactNumeric(Long.toString(i + offset + 1),
                   groupNode.getParserPosition()));
               continue outer;
@@ -276,10 +282,10 @@ public class Transpile {
         return ((SqlCall) o).getOperandList().get(0);
       }
       return o;
-    }).map(o -> validator.expandOrderExpr(select, o)).collect(Collectors.toList());
+    }).map(o -> op.getSqrlValidator().expandOrderExpr(select, o)).collect(Collectors.toList());
 
     //If aggregating, replace each select item with ordinal
-    if (validator.isAggregate(select)) {
+    if (op.getSqrlValidator().isAggregate(select)) {
       List<SqlNode> ordinals = getSelectListOrdinals(select, cleaned, mutableOrders.size());
 
       //Readd w/ order
@@ -300,7 +306,7 @@ public class Transpile {
     } else {
       //Otherwise, we want to check the select list first for ordinal, but if its not there then
       // we expand it
-      List<SqlNode> expanded = validator.getRawSelectScope(select).getExpandedSelectList();
+      List<SqlNode> expanded = op.getSqrlValidator().getRawSelectScope(select).getExpandedSelectList();
       outer:
       for (SqlNode orderNode : cleaned) {
         //look for order in select list
@@ -367,7 +373,7 @@ public class Transpile {
         rewriteJoin((SqlJoin) from, scope);
         break;
       case SELECT:
-        SqlValidatorScope subScope = validator.getFromScope((SqlSelect) from);
+        SqlValidatorScope subScope = op.getSqrlValidator().getFromScope((SqlSelect) from);
         rewriteQuery((SqlSelect) from, subScope);
         break;
       case INTERSECT:
@@ -380,7 +386,7 @@ public class Transpile {
   }
 
   private SqlNode convertTableName(SqlIdentifier id, String alias, SqlValidatorScope scope) {
-    final SqlValidatorNamespace fromNamespace = validator.getNamespace(id).resolve();
+    final SqlValidatorNamespace fromNamespace = op.getSqrlValidator().getNamespace(id).resolve();
 
     if (fromNamespace.getNode() != null) {
       return rewriteFrom(fromNamespace.getNode(), scope);
@@ -402,7 +408,7 @@ public class Transpile {
     } else {
       //just do a simple mapping from table
       SQRLTable baseTable = fromNamespace.getTable().unwrap(SQRLTable.class);
-      TableWithPK basePkTable = tableMapper.getTable(baseTable);
+      TableWithPK basePkTable = env.getTableMap().get(baseTable);
       return SqlNodeBuilder.createTableNode(basePkTable, Util.last(id.names));
     }
   }
@@ -424,10 +430,10 @@ public class Transpile {
 
   private SqlNode rewriteTable(SqlIdentifier id, SqlValidatorScope scope) {
     //Expand
-    validator.getNamespace(id).resolve();
-    SqlValidatorNamespace ns = validator.getNamespace(id).resolve();
+    op.getSqrlValidator().getNamespace(id).resolve();
+    SqlValidatorNamespace ns = op.getSqrlValidator().getNamespace(id).resolve();
     SQRLTable table = ns.getTable().unwrap(SQRLTable.class);
-    TableWithPK t = tableMapper.getTable(table);
+    TableWithPK t = env.getTableMap().get(table);
 
     return SqlNodeBuilder.as(new SqlIdentifier(t.getNameId(), SqlParserPos.ZERO),
         Util.last(id.names));
@@ -436,10 +442,10 @@ public class Transpile {
   private void rewriteJoin(SqlJoin join, SqlValidatorScope rootScope) {
     SqlNode left = join.getLeft();
     SqlNode right = join.getRight();
-    final SqlValidatorScope leftScope = Util.first(validator.getJoinScope(left),
+    final SqlValidatorScope leftScope = Util.first(op.getSqrlValidator().getJoinScope(left),
         ((DelegatingScope) rootScope).getParent());
 
-    final SqlValidatorScope rightScope = Util.first(validator.getJoinScope(right),
+    final SqlValidatorScope rightScope = Util.first(op.getSqrlValidator().getJoinScope(right),
         ((DelegatingScope) rootScope).getParent());
 
     SqlNode l = rewriteFrom(left, leftScope);
@@ -458,8 +464,8 @@ public class Transpile {
     if (join.isNatural()) {
       //todo:
       // Need to see if there is an extra join condition I need to append and then convert
-//        condition = convertNaturalCondition(validator.getNamespace(left),
-//            validator.getNamespace(right));
+//        condition = convertNaturalCondition(op.getSqrlValidator().getNamespace(left),
+//            op.getSqrlValidator().getNamespace(right));
 //        rightRel = tempRightRel;
     } else {
       switch (conditionType) {
@@ -474,8 +480,8 @@ public class Transpile {
         case USING:
           //todo: Using
 //            condition = convertUsingCondition(join,
-//                validator.getNamespace(left),
-//                validator.getNamespace(right));
+//                op.getSqrlValidator().getNamespace(left),
+//                op.getSqrlValidator().getNamespace(right));
 //            rightRel = tempRightRel;
           break;
         case ON:

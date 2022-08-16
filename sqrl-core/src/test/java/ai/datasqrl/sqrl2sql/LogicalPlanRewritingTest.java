@@ -6,24 +6,24 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
-import ai.datasqrl.plan.local.generate.GeneratorBuilder;
-import ai.datasqrl.plan.local.generate.Generator;
+import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.local.generate.Resolve;
+import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.data.C360;
 import java.io.IOException;
 
+import org.apache.calcite.jdbc.CalciteSchema;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class LogicalPlanRewritingTest extends AbstractSQRLIT {
   private ConfiguredSqrlParser parser;
   private ErrorCollector errorCollector;
   private ImportManager importManager;
-  private Generator generator;
+  private Resolve resolve;
+  private Session session;
 
   @BeforeEach
   public void setup() throws IOException {
@@ -40,9 +40,10 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
         ErrorCollector.root()));
 
     parser = ConfiguredSqrlParser.newParser(errorCollector);
-    generator = GeneratorBuilder.build(importManager, errorCollector);
+    this.session = new Session(errorCollector, importManager,
+        new PlannerFactory(CalciteSchema.createRootSchema(false, false).plus()).createPlanner());
+    this.resolve = new Resolve();
   }
-
 
   @Test
   public void testSimpleQuery() {
@@ -55,33 +56,29 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void testSimpleTemporalJoin() {
     runScript(
             "IMPORT ecommerce-data.Orders;\n"
           + "IMPORT ecommerce-data.Product;\n"
           + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
-          + "EntryCategories := SELECT e.productid, e.quantity * e.unit_price - e.discount as price, p.name FROM Orders.entries e JOIN Product p ON e.productid = p.productid;\n"
+          + "EntryCategories := SELECT e.productid, e.quantity * e.unit_price - e.discount as price, p.name "
+          + "                   FROM Orders.entries e "
+          + "                   JOIN Product p ON e.productid = p.productid;\n"
     );
   }
 
   @Test
-  @Disabled
   public void testNestingTemporalJoin() {
-    //This currently fails because an ON condition is missing
     runScript(
             "IMPORT ecommerce-data.Orders;\n"
           + "IMPORT ecommerce-data.Product;\n"
           + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
-          + "EntryCategories := SELECT o.id, o.time, e.productid, e.quantity, p.name FROM Orders o JOIN o.entries e JOIN Product p ON e.productid = p.productid;\n"
+          + "EntryCategories := SELECT o.id, o.\"time\", e.productid, e.quantity, p.name FROM Orders o JOIN o.entries e JOIN Product p ON e.productid = p.productid;\n"
     );
   }
 
   public void runScript(String script) {
     ScriptNode node = parser.parse(script);
-
-    for (Node n : node.getStatements()) {
-      generator.generate((SqrlStatement)n);
-    }
+    resolve.planDag(session, node);
   }
 }

@@ -5,15 +5,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
+import org.apache.calcite.sql.SqlNode;
 
 @Getter
 public class JoinAssignment extends Assignment {
 
-  private final String query;
+  private final SqlNode query;
   private final List<Hint> hints;
 
   public JoinAssignment(Optional<NodeLocation> location,
-      NamePath name, String query, List<Hint> hints) {
+      NamePath name, SqlNode query, List<Hint> hints) {
     super(location, name);
     this.query = query;
     this.hints = hints;
