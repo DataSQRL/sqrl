@@ -72,9 +72,9 @@ class ResolveTest extends AbstractSQRLIT {
   @Test
   public void tableJoinTest() {
     StringBuilder builder = imports();
-    builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid, o.time FROM Orders o JOIN Customer c on o.customerid = c.customerid");
+    builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");
     process(builder.toString());
-    validateQueryTable("entrycount", 5, 2); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
+    validateQueryTable("ordercustomer", 5, 2); //numCols = 3 selected cols + 2 uuid cols for pk
   }
 
   private void validateQueryTable(String name, int numCols, int numPrimaryKeys) {

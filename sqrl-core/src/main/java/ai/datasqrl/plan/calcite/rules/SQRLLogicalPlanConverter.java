@@ -383,6 +383,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         ContinuousIndexMap joinedIndexMap = leftInput.indexMap.join(rightInput.indexMap);
         RexNode condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(),joinedIndexMap);
 
+
         //Identify if this is an identical self-join for a nested tree
         if (leftInput.joinTables!=null && rightInput.joinTables!=null && leftInput.topN.isEmpty() && rightInput.topN.isEmpty()) {
             SqrlRexUtil.EqualityComparisonDecomposition eqDecomp = rexUtil.decomposeEqualityComparison(condition);
@@ -435,7 +436,18 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             }
         }
 
-        return null;
+
+        //Default inner join creates a state table
+        ProcessedRel leftInputTopN = leftInput.inlineTopN();
+        ProcessedRel rightInputTopN = rightInput.inlineTopN();
+        RelBuilder relB = relBuilderFactory.get();
+        RelNode newJoin = relB.push(leftInputTopN.relNode).push(rightInputTopN.getRelNode())
+                .join(JoinRelType.INNER, condition).build();
+        ContinuousIndexMap.Builder concatPk = ContinuousIndexMap.builder(leftInput.primaryKey,rightInput.primaryKey.getSourceLength());
+        concatPk.addAll(rightInput.primaryKey.remap(joinedIndexMap.getTargetLength(), idx -> idx + leftInput.indexMap.getTargetLength()));
+        return setRelHolder(new ProcessedRel(newJoin, QueryRelationalTable.Type.STATE,
+                concatPk.build(joinedIndexMap.getTargetLength()), TimestampHolder.Derived.NONE,
+                joinedIndexMap, null, TopNConstraint.EMPTY));
     }
 
     @Override

@@ -4,6 +4,7 @@ import lombok.Value;
 
 import java.util.Map;
 
+@FunctionalInterface
 public interface IndexMap {
 
     int map(int index);
