@@ -1,8 +1,5 @@
 package ai.datasqrl.plan.local.analyze;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
@@ -16,14 +13,18 @@ import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.data.C360;
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class ResolveTest extends AbstractSQRLIT {
 
@@ -65,6 +66,14 @@ class ResolveTest extends AbstractSQRLIT {
     String sqrl = "IMPORT ecommerce-data.Orders;\n"
         + "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;";
     process(sqrl);
+    validateQueryTable("entrycount", 5, 2); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
+  }
+
+  @Test
+  public void tableJoinTest() {
+    StringBuilder builder = imports();
+    builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid, o.time FROM Orders o JOIN Customer c on o.customerid = c.customerid");
+    process(builder.toString());
     validateQueryTable("entrycount", 5, 2); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
   }
 
@@ -122,6 +131,7 @@ class ResolveTest extends AbstractSQRLIT {
     builder.append("Orders := " + "SELECT o._uuid " + "FROM Orders o2 "
         + "INNER JOIN (SELECT _uuid FROM Orders) o ON o._uuid = o2._uuid;\n");
     process(builder.toString());
+    validateQueryTable("orders", 3, 1);
   }
 
   @Test

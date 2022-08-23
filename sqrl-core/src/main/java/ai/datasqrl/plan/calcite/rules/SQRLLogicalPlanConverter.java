@@ -306,12 +306,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
         ContinuousIndexMap trivialMap = getTrivialMapping(logicalProject, rawInput.indexMap);
         if (trivialMap!=null) {
-            //If it's a trivial project, we remove it and replace only update the indexMap
+            //If it's a trivial project, we remove it and only update the indexMap
             return setRelHolder(new ProcessedRel(rawInput.relNode,rawInput.type,rawInput.primaryKey, rawInput.timestamp,
                     trivialMap, rawInput.joinTables, rawInput.topN));
         }
         ProcessedRel input = rawInput.inlineTopN();
         Preconditions.checkArgument(input.topN.isEmpty());
+        //Update index mappings
         List<RexNode> updatedProjects = new ArrayList<>();
         Multimap<Integer,Integer> mappedProjects = HashMultimap.create();
         for (Ord<RexNode> exp : Ord.<RexNode>zip(logicalProject.getProjects())) {
@@ -322,7 +323,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 mappedProjects.put(index,exp.i);
             }
         }
-        //Make sure we pull the primary keys and timestamp (candidates) through (i.e. append those to the projects
+        //Make sure we pull the primary keys and timestamp candidates through (i.e. append those to the projects
         //if not already present)
         ContinuousIndexMap.Builder primaryKey = ContinuousIndexMap.builder(input.primaryKey.getSourceLength());
         input.primaryKey.getMapping().forEach(p -> {
@@ -350,6 +351,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         }
         TimestampHolder.Derived timestamp = input.timestamp.propagate(timeCandidates);
 
+        //Build new project
         RelBuilder relB = relBuilderFactory.get();
         relB.push(input.relNode);
         relB.project(updatedProjects);

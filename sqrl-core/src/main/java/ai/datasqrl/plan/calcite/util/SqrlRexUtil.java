@@ -13,7 +13,6 @@ import org.apache.calcite.util.mapping.IntPair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -45,7 +44,9 @@ public class SqrlRexUtil {
             Optional<Integer> leftIndex = getInputRefIndex(equality.getOperands().get(0));
             Optional<Integer> rightIndex = getInputRefIndex(equality.getOperands().get(1));
             if (leftIndex.isPresent() && rightIndex.isPresent()) {
-                return Optional.of(IntPair.of(leftIndex.get(), rightIndex.get()));
+                int leftIdx = Math.min(leftIndex.get(), rightIndex.get());
+                int rightIdx = Math.max(leftIndex.get(), rightIndex.get());
+                return Optional.of(IntPair.of(leftIdx, rightIdx));
             }
         }
         return Optional.empty();
