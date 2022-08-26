@@ -25,7 +25,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Pair;
 import org.h2.util.StringUtils;
@@ -74,14 +73,14 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         ContinuousIndexMap indexmap = rel.getIndexMap();
         Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());
         RelNode baseRel = rel.getRelNode();
-        TopNConstraint topN = rel.getTopN();
-        rel = rel.inlineTopN();
+        List<DatabasePullup> pullupList = rel.getPullups();
+        rel = rel.inlinePullups();
         Name tableid = getTableId(tablePath.getLast(),"q");
         TimestampHolder.Base timestamp = TimestampHolder.Base.ofDerived(rel.getTimestamp());
         QueryRelationalTable baseTable = new QueryRelationalTable(tableid, rel.getType(),rel.getRelNode(),
                 timestamp, rel.getPrimaryKey().getSourceLength());
-        if (!CalciteUtil.hasNesting(baseRel.getRowType()) && !topN.isEmpty()) { //Database pullups only work for non-nested tables
-            DatabasePullup.Container pullups = new DatabasePullup.Container(baseRel,List.of(topN),true);
+        if (!CalciteUtil.hasNesting(baseRel.getRowType()) && !pullupList.isEmpty()) { //Database pullups only work for non-nested tables
+            DatabasePullup.Container pullups = new DatabasePullup.Container(baseRel,pullupList,true);
             baseTable.setDbPullups(pullups);
         }
         LinkedHashMap<Integer,Name> index2Name = new LinkedHashMap<>();
@@ -114,7 +113,7 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
 
     @Override
     protected boolean isTimestamp(RelDataType datatype) {
-        return !datatype.isStruct() && datatype.getSqlTypeName() == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE;
+        return CalciteUtil.isTimestamp(datatype);
     }
 
     @Value

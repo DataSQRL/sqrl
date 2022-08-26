@@ -1,5 +1,8 @@
 package ai.datasqrl.plan.calcite.util;
 
+import ai.datasqrl.function.SqrlAwareFunction;
+import ai.datasqrl.plan.calcite.table.TimestampHolder;
+import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -7,6 +10,7 @@ import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
 
@@ -121,5 +125,41 @@ public class SqrlRexUtil {
         }
     }
 
+    public Optional<TimestampHolder.Candidate> getPreservedTimestamp(@NonNull RexNode rexNode, @NonNull TimestampHolder.Derived timestamp) {
+        if (!(CalciteUtil.isTimestamp(rexNode.getType()))) return Optional.empty();
+        if (rexNode instanceof RexInputRef) {
+            return timestamp.getCandidateByIndex(((RexInputRef)rexNode).getIndex());
+        } else if (rexNode instanceof RexCall) {
+            //Determine recursively but ensure there is only one timestamp
+            RexCall call = (RexCall) rexNode;
+            if (!isTimestampPreservingFunction(call)) return Optional.empty();
+            //The above check guarantees that the call only has one timestamp operand which allows us to return the first (if any)
+            return call.getOperands().stream().map(param -> getPreservedTimestamp(param, timestamp))
+                    .filter(Optional::isPresent).findFirst().orElse(Optional.empty());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private boolean isTimestampPreservingFunction(RexCall call) {
+        SqlOperator operator = call.getOperator();
+        if (!(operator instanceof SqrlAwareFunction)) return false; //TODO: generalize to allow other SQL functions
+        if (((SqrlAwareFunction)operator).isTimestampPreserving()) {
+            //Internal validation that this is a legit timestamp-preserving function
+            long numTimeParams = call.getOperands().stream().map(param -> param.getType()).filter(CalciteUtil::isTimestamp).count();
+            Preconditions.checkArgument(numTimeParams==1,
+                    "%s is an invalid time-preserving function as it allows %d number of timestamp arguments", operator, numTimeParams);
+            return true;
+        } else return false;
+    }
+
+    public Optional<TimeBucketFunctionCall> getTimeBucketingFunction(RexNode rexNode) {
+        if (!(rexNode instanceof RexCall)) return Optional.empty();
+        RexCall call = (RexCall)rexNode;
+        if (!(call.getOperator() instanceof SqrlAwareFunction)) return Optional.empty();
+        SqrlAwareFunction bucketFct = (SqrlAwareFunction) call.getOperator();
+        if (!bucketFct.isTimeBucketingFunction()) return Optional.empty();
+        return Optional.of(TimeBucketFunctionCall.from(call));
+    }
 
 }

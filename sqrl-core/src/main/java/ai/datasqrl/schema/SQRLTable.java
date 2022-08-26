@@ -1,5 +1,6 @@
 package ai.datasqrl.schema;
 
+import ai.datasqrl.config.util.StreamUtil;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
@@ -270,7 +271,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   }
 
   public Stream<Relationship> getAllRelationships() {
-    return fields.getFields(true).filter(Relationship.class::isInstance).map(Relationship.class::cast);
+    return StreamUtil.filterByClass(fields.getFields(true),Relationship.class);
   }
 
 //  public Optional<SQRLTable> getParent() {
@@ -286,7 +287,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   }
 
   public List<Column> getColumns(boolean onlyVisible) {
-    return fields.getFields(onlyVisible).filter(Column.class::isInstance).map(Column.class::cast).collect(Collectors.toList());
+    return StreamUtil.filterByClass(fields.getFields(onlyVisible),Column.class).collect(Collectors.toList());
   }
 
   public List<Field> walkField(List<String> names) {

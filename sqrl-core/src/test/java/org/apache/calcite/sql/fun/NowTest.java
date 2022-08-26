@@ -6,7 +6,7 @@ import ai.datasqrl.function.builtin.example.SqlMyFunction;
 import ai.datasqrl.function.builtin.time.AtZoneFunction;
 import ai.datasqrl.function.builtin.time.NumToTimestampFunction;
 import ai.datasqrl.function.builtin.time.ExtractTimeFieldFunction;
-import ai.datasqrl.function.builtin.time.SqrlRoundingFunction;
+import ai.datasqrl.function.builtin.time.SqrlTimeRoundingFunction;
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import ai.datasqrl.function.builtin.time.StringToTimestampFunction;
 import ai.datasqrl.function.builtin.time.TimestampToEpochFunction;
@@ -72,17 +72,17 @@ class NowTest {
   public void RoundTest() {
     SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
 
-    SqrlRoundingFunction roundToSecond = new SqrlRoundingFunction("ROUND_TO_SECOND",
+    SqrlTimeRoundingFunction roundToSecond = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)));
-    SqrlRoundingFunction roundToMinute = new SqrlRoundingFunction("ROUND_TO_MINUTE",
+    SqrlTimeRoundingFunction roundToMinute = new SqrlTimeRoundingFunction("ROUND_TO_MINUTE",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMinute", Instant.class)));
-    SqrlRoundingFunction roundToHour = new SqrlRoundingFunction("ROUND_TO_HOUR",
+    SqrlTimeRoundingFunction roundToHour = new SqrlTimeRoundingFunction("ROUND_TO_HOUR",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToHour", Instant.class)));
-    SqrlRoundingFunction roundToDay = new SqrlRoundingFunction("ROUND_TO_DAY",
+    SqrlTimeRoundingFunction roundToDay = new SqrlTimeRoundingFunction("ROUND_TO_DAY",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToDay", Instant.class)));
-    SqrlRoundingFunction roundToMonth = new SqrlRoundingFunction("ROUND_TO_MONTH",
+    SqrlTimeRoundingFunction roundToMonth = new SqrlTimeRoundingFunction("ROUND_TO_MONTH",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMonth", Instant.class)));
-    SqrlRoundingFunction roundToYear = new SqrlRoundingFunction("ROUND_TO_YEAR",
+    SqrlTimeRoundingFunction roundToYear = new SqrlTimeRoundingFunction("ROUND_TO_YEAR",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToYear", Instant.class)));
 
     RelDataType typeSecond = roundToSecond.inferReturnType(typeFactory, new ArrayList<>());

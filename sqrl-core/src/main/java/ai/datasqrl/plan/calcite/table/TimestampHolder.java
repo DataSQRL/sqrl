@@ -9,6 +9,7 @@ import lombok.Value;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Getter
@@ -118,9 +119,12 @@ public abstract class TimestampHolder {
         }
 
         public TimestampHolder.Derived fixTimestamp(int columnIndex) {
+            return fixTimestamp(columnIndex, columnIndex);
+        }
+
+        public TimestampHolder.Derived fixTimestamp(int columnIndex, int newIndex) {
             Preconditions.checkArgument(isCandidate(columnIndex));
-            if (hasTimestamp()) return this;
-            return new Derived(true, List.of(getCandidateByIndex(columnIndex)), base);
+            return new Derived(true, List.of(getCandidateByIndex(columnIndex).get().withIndex(newIndex)), base);
         }
 
     }
@@ -146,13 +150,18 @@ public abstract class TimestampHolder {
         return candidatesLocked && candidates.size()==1;
     }
 
+    public Optional<Candidate> getCandidateByIndex(int index) {
+        return candidates.stream().filter(c -> c.index == index).findFirst();
+    }
+
+    public Candidate getBestCandidate() {
+        Preconditions.checkArgument(!candidates.isEmpty());
+        return candidates.stream().max((a,b) -> Integer.compare(a.score,b.score)).get();
+    }
+
     public int getTimestampIndex() {
         Preconditions.checkArgument(hasTimestamp(),"Timestamp has not yet been determined");
         return candidates.get(0).index;
-    }
-
-    protected Candidate getCandidateByIndex(int columnIndex) {
-        return candidates.stream().filter(c -> c.index == columnIndex).findFirst().orElse(null);
     }
 
 
