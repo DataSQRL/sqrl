@@ -26,7 +26,7 @@ import java.util.List;
 public class QueryRelationalTable extends AbstractRelationalTable {
 
   @NonNull
-  private final Type type;
+  private final TableType type;
   @NonNull
   private final TimestampHolder.Base timestamp;
   @NonNull
@@ -45,7 +45,7 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   @NonNull
   private final MaterializationStrategy matStrategy = new MaterializationStrategy();
 
-  public QueryRelationalTable(@NonNull Name rootTableId, @NonNull Type type,
+  public QueryRelationalTable(@NonNull Name rootTableId, @NonNull TableType type,
                               RelNode relNode,
                               @NonNull TimestampHolder.Base timestamp,
                               @NonNull int numPrimaryKeys) {
@@ -111,13 +111,5 @@ public class QueryRelationalTable extends AbstractRelationalTable {
     }
   }
 
-
-  public enum Type {
-    STREAM, //a stream of records with synthetic (i.e. uuid) primary key ordered by timestamp
-    TEMPORAL_STATE, //table with natural primary key that ensures uniqueness and timestamp for
-    // change-stream
-    STATE //table with natural primary key that ensures uniqueness but no timestamp (i.e.
-    // represents timeless state)
-  }
 
 }

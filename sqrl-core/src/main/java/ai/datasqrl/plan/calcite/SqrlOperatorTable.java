@@ -1,21 +1,14 @@
 package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.function.builtin.example.SqlMyFunction;
-import ai.datasqrl.function.builtin.time.AtZoneFunction;
-import ai.datasqrl.function.builtin.time.NumToTimestampFunction;
-import ai.datasqrl.function.builtin.time.ExtractTimeFieldFunction;
-import ai.datasqrl.function.builtin.time.SqrlRoundingFunction;
-import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
-import ai.datasqrl.function.builtin.time.StringToTimestampFunction;
-import ai.datasqrl.function.builtin.time.TimestampToEpochFunction;
-import ai.datasqrl.function.builtin.time.TimestampToStringFunction;
-import ai.datasqrl.function.builtin.time.ToUtcFunction;
-import java.time.Instant;
+import ai.datasqrl.function.builtin.time.*;
 import org.apache.calcite.linq4j.tree.Types;
 import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.fun.Now;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+
+import java.time.Instant;
 
 public class SqrlOperatorTable extends SqlStdOperatorTable {
 
@@ -30,17 +23,17 @@ public class SqrlOperatorTable extends SqlStdOperatorTable {
   public static final TimestampToStringFunction TIMESTAMP_TO_STRING = new TimestampToStringFunction();
   public static final ToUtcFunction TO_UTC = new ToUtcFunction();
   public static final AtZoneFunction AT_ZONE = new AtZoneFunction();
-  public static final SqrlRoundingFunction ROUND_TO_SECOND = new SqrlRoundingFunction("ROUND_TO_SECOND",
+  public static final SqrlTimeRoundingFunction ROUND_TO_SECOND = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)));
-  public static final SqrlRoundingFunction ROUND_TO_MINUTE = new SqrlRoundingFunction("ROUND_TO_MINUTE",
+  public static final SqrlTimeRoundingFunction ROUND_TO_MINUTE = new SqrlTimeRoundingFunction("ROUND_TO_MINUTE",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMinute", Instant.class)));
-  public static final SqrlRoundingFunction ROUND_TO_HOUR = new SqrlRoundingFunction("ROUND_TO_HOUR",
+  public static final SqrlTimeRoundingFunction ROUND_TO_HOUR = new SqrlTimeRoundingFunction("ROUND_TO_HOUR",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToHour", Instant.class)));
-  public static final SqrlRoundingFunction ROUND_TO_DAY = new SqrlRoundingFunction("ROUND_TO_DAY",
+  public static final SqrlTimeRoundingFunction ROUND_TO_DAY = new SqrlTimeRoundingFunction("ROUND_TO_DAY",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToDay", Instant.class)));
-  public static final SqrlRoundingFunction ROUND_TO_MONTH = new SqrlRoundingFunction("ROUND_TO_MONTH",
+  public static final SqrlTimeRoundingFunction ROUND_TO_MONTH = new SqrlTimeRoundingFunction("ROUND_TO_MONTH",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMonth", Instant.class)));
-  public static final SqrlRoundingFunction ROUND_TO_YEAR = new SqrlRoundingFunction("ROUND_TO_YEAR",
+  public static final SqrlTimeRoundingFunction ROUND_TO_YEAR = new SqrlTimeRoundingFunction("ROUND_TO_YEAR",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToYear", Instant.class)));
   public static final ExtractTimeFieldFunction GET_SECOND = new ExtractTimeFieldFunction("GET_SECOND",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getSecond", Instant.class)));

@@ -56,6 +56,11 @@ public class SqrlScalarFunction extends SqlUserDefinedFunction implements SqrlAw
   }
 
   @Override
+  public boolean isTimeBucketingFunction() {
+    return false;
+  }
+
+  @Override
   public SqlOperator getOp() {
     return this;
   }

@@ -16,17 +16,16 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.type.ArraySqlType;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.AggregatingScope;
+import org.apache.calcite.sql.validate.SqlValidatorScope;
+import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.tools.RelBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.calcite.sql.validate.AggregatingScope;
-import org.apache.calcite.sql.validate.SelectScope;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorScope;
-import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 
 public class CalciteUtil {
 
@@ -66,6 +65,11 @@ public class CalciteUtil {
     }
 
     return false;
+  }
+
+  public static boolean isTimestamp(RelDataType datatype) {
+    return !datatype.isStruct() && datatype.getSqlTypeName() == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE
+            && !datatype.isNullable();
   }
 
   private static SqlSelect stripOrderBy(SqlNode query) {

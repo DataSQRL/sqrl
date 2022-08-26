@@ -6,29 +6,31 @@ import lombok.Getter;
 import org.apache.calcite.rel.hint.RelHint;
 
 @AllArgsConstructor
-public class NumColumnsHint implements SqrlHint {
+public class TimeAggregationHint implements SqrlHint {
+
+    public enum Type { TUMBLE, SLIDING }
 
     @Getter
-    final int numColumns;
+    final Type type;
 
     @Override
     public RelHint getHint() {
-        return RelHint.builder(CONSTRUCTOR.getName()).hintOption(Integer.toString(numColumns)).build();
+        return RelHint.builder(CONSTRUCTOR.getName()).hintOption(type.toString()).build();
     }
 
     public static final Constructor CONSTRUCTOR = new Constructor();
 
-    public static final class Constructor implements SqrlHint.Constructor<NumColumnsHint> {
+    public static final class Constructor implements SqrlHint.Constructor<TimeAggregationHint> {
 
         @Override
         public String getName() {
-            return NumColumnsHint.class.getSimpleName();
+            return TimeAggregationHint.class.getSimpleName();
         }
 
         @Override
-        public NumColumnsHint fromHint(RelHint hint) {
+        public TimeAggregationHint fromHint(RelHint hint) {
             Preconditions.checkArgument(hint.listOptions.size()==1,"Invalid hint: %s",hint);
-            return new NumColumnsHint(Integer.parseInt(hint.listOptions.get(0)));
+            return new TimeAggregationHint(Type.valueOf(hint.listOptions.get(0)));
         }
     }
 

@@ -7,7 +7,9 @@ import lombok.Getter;
 import lombok.Value;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Getter
@@ -17,22 +19,31 @@ public abstract class TimestampHolder {
     protected boolean candidatesLocked;
     protected List<Candidate> candidates;
 
-
-
     public static class Base extends TimestampHolder {
+
+        public static final Base NONE = new Base(true,Collections.EMPTY_LIST, Collections.EMPTY_LIST);
 
         private final List<TimestampHolder.Base> dependents;
 
+        private Base(boolean candidatesLocked, List<Candidate> candidates, List<TimestampHolder.Base> dependents) {
+            super(candidatesLocked, candidates);
+            this.dependents = dependents;
+        }
+
         public Base() {
-            super(false, new ArrayList<>());
-            this.dependents = new ArrayList<>();
+            this(false, new ArrayList<>(), new ArrayList<>());
+        }
+
+        private void addDependent(TimestampHolder.Base dependent) {
+            this.dependents.add(dependent);
         }
 
         public static Base ofDerived(TimestampHolder.Derived derived) {
+            if (derived.candidates.isEmpty()) return Base.NONE;
             Base newBase = new Base();
             newBase.candidates.addAll(derived.candidates);
-            newBase.dependents.add(derived.base);
-            derived.base.dependents.add(newBase);
+            newBase.addDependent(derived.base);
+            derived.base.addDependent(newBase);
             //We created a new query table - candidates must be locked now
             newBase.lockCandidates();
             return newBase;
@@ -75,7 +86,14 @@ public abstract class TimestampHolder {
     @Getter
     public static class Derived extends TimestampHolder {
 
+        public static final Derived NONE = new Derived();
+
         private final TimestampHolder.Base base;
+
+        private Derived() {
+            super(true, Collections.EMPTY_LIST);
+            this.base = null;
+        }
 
         private Derived(boolean candidatesLocked, List<Candidate> candidates, TimestampHolder.Base base) {
             super(candidatesLocked,candidates);
@@ -101,9 +119,12 @@ public abstract class TimestampHolder {
         }
 
         public TimestampHolder.Derived fixTimestamp(int columnIndex) {
+            return fixTimestamp(columnIndex, columnIndex);
+        }
+
+        public TimestampHolder.Derived fixTimestamp(int columnIndex, int newIndex) {
             Preconditions.checkArgument(isCandidate(columnIndex));
-            if (hasTimestamp()) return this;
-            return new Derived(true, List.of(getCandidateByIndex(columnIndex)), base);
+            return new Derived(true, List.of(getCandidateByIndex(columnIndex).get().withIndex(newIndex)), base);
         }
 
     }
@@ -129,13 +150,18 @@ public abstract class TimestampHolder {
         return candidatesLocked && candidates.size()==1;
     }
 
+    public Optional<Candidate> getCandidateByIndex(int index) {
+        return candidates.stream().filter(c -> c.index == index).findFirst();
+    }
+
+    public Candidate getBestCandidate() {
+        Preconditions.checkArgument(!candidates.isEmpty());
+        return candidates.stream().max((a,b) -> Integer.compare(a.score,b.score)).get();
+    }
+
     public int getTimestampIndex() {
         Preconditions.checkArgument(hasTimestamp(),"Timestamp has not yet been determined");
         return candidates.get(0).index;
-    }
-
-    protected Candidate getCandidateByIndex(int columnIndex) {
-        return candidates.stream().filter(c -> c.index == columnIndex).findFirst().orElse(null);
     }
 
 

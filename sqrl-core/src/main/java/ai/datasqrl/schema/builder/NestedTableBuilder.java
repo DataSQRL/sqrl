@@ -1,5 +1,6 @@
 package ai.datasqrl.schema.builder;
 
+import ai.datasqrl.config.util.StreamUtil;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.FieldList;
@@ -28,7 +29,7 @@ public abstract class NestedTableBuilder<T, X extends NestedTableBuilder<T,X>> i
             } else return f;
         });
 
-        return s.filter(Column.class::isInstance).map(x -> (Column<T>)x)
+        return (List)StreamUtil.filterByClass(s,Column.class)
                 .collect(Collectors.toList());
     }
 

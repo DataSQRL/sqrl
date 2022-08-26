@@ -122,7 +122,7 @@ public class DAGPlanner {
         //Validate every non-state table has a timestamp now
         Preconditions.checkState(Iterables.all(Iterables.transform(
                                     Iterables.filter(dag, StreamTableNode.class), t -> t.asTable().table),
-                                    t -> t.getType()== QueryRelationalTable.Type.STATE || t.getTimestamp().hasTimestamp()));
+                                    t -> t.getType()== TableType.STATE || t.getTimestamp().hasTimestamp()));
 
         //6. Produce an LP-tree for each query with all tables inlined and push down filters to determine indexes
         List<OptimizedDAG.WriteDB> writeDAG = new ArrayList<>();
