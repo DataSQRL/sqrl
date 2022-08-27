@@ -23,7 +23,7 @@ public class StringToTimestampFunction extends SqrlScalarFunction {
     super(
         new SqlIdentifier("STRING_TO_TIMESTAMP", SqlParserPos.ZERO),
         SqlKind.OTHER,
-        ReturnTypes.TIMESTAMP,
+        ReturnTypes.explicit(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
         //ReturnTypes.explicit(SqlTypeName.TIMESTAMP),
         InferTypes.ANY_NULLABLE,
         OperandTypes.operandMetadata(
