@@ -100,6 +100,13 @@ class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
+  public void timeFunctionFixTest() {
+    StringBuilder builder = imports();
+    builder.append("TimeTest := SELECT ROUND_TO_MONTH(ROUND_TO_MONTH(\"time\")) FROM orders;");
+    process(builder.toString());
+  }
+
+  @Test
   public void streamStateAggregateTest() {
     StringBuilder builder = imports();
     builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
