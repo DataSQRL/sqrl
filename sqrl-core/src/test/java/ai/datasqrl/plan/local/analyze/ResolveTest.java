@@ -129,9 +129,10 @@ class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void distinctTest() {
     StringBuilder builder = imports();
-    builder.append("Orders := DISTINCT Orders ON id+5 ORDER BY _ingest_time DESC;\n");
+    builder.append("Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n");
     process(builder.toString());
   }
 
