@@ -24,12 +24,12 @@ public class ToUtcFunction extends SqrlScalarFunction {
     super(
         new SqlIdentifier("TO_UTC", SqlParserPos.ZERO),
         SqlKind.OTHER,
-        ReturnTypes.TIMESTAMP,
+        ReturnTypes.explicit(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
         InferTypes.ANY_NULLABLE,
         OperandTypes.operandMetadata(
             List.of(SqlTypeFamily.TIMESTAMP),
             typeFactory -> List.of(
-                typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE),
+                typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
                 typeFactory.createSqlType(SqlTypeName.TIMESTAMP)),
             i -> "arg" + i,
             i -> false),

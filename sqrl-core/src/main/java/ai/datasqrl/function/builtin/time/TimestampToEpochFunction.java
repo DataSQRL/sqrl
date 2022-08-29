@@ -29,7 +29,7 @@ public class TimestampToEpochFunction extends SqrlScalarFunction {
         OperandTypes.operandMetadata(
             List.of(SqlTypeFamily.TIMESTAMP),
             typeFactory -> List.of(
-                typeFactory.createSqlType(SqlTypeName.TIMESTAMP)),
+                typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3)),
             i -> "arg" + i,
             i -> false),
         fnc,

@@ -93,8 +93,17 @@ class ResolveTest extends AbstractSQRLIT {
   public void streamTimeAggregateTest() {
     StringBuilder builder = imports();
     builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;\n");
+    //Test that we can pull a now() filter through
+    //builder.append("OrderAgg2 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.time > now() - INTERVAL 1 YEAR GROUP BY customer, bucket;\n");
     process(builder.toString());
     validateQueryTable("orderagg1", TableType.STREAM,3, 2);
+  }
+
+  @Test
+  public void timeFunctionFixTest() {
+    StringBuilder builder = imports();
+    builder.append("TimeTest := SELECT ROUND_TO_MONTH(ROUND_TO_MONTH(\"time\")) FROM orders;");
+    process(builder.toString());
   }
 
   @Test
@@ -123,7 +132,7 @@ class ResolveTest extends AbstractSQRLIT {
   @Disabled
   public void distinctTest() {
     StringBuilder builder = imports();
-    builder.append("Orders := DISTINCT Orders o ON (o._uuid) ORDER BY o._ingest_time DESC;\n");
+    builder.append("Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n");
     process(builder.toString());
   }
 

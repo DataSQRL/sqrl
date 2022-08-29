@@ -17,7 +17,7 @@ public class TranspilerFactory {
     Properties p = new Properties();
     p.put(CalciteConnectionProperty.CASE_SENSITIVE.name(), false);
     SqrlValidatorImpl validator = new SqrlValidatorImpl(
-        SqlStdOperatorTable.instance(),
+        SqrlOperatorTable.instance(),
         new CalciteCatalogReader(schema, List.of(), new SqrlTypeFactory(new SqrlTypeSystem()),
             new CalciteConnectionConfigImpl(p).set(CalciteConnectionProperty.CASE_SENSITIVE,
                 "false")),
@@ -33,7 +33,7 @@ public class TranspilerFactory {
 
   public static SqlValidator createSqlValidator(CalciteSchema schema) {
     SqlValidator validator = SqlValidatorUtil.newValidator(
-        SqlStdOperatorTable.instance(),
+        SqrlOperatorTable.instance(),
         new CalciteCatalogReader(schema, List.of(), new SqrlTypeFactory(new SqrlTypeSystem()),
             new CalciteConnectionConfigImpl(new Properties()).set(CalciteConnectionProperty.CASE_SENSITIVE,
                 "false")),
