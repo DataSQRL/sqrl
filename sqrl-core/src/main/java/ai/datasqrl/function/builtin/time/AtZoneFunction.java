@@ -24,12 +24,12 @@ public class AtZoneFunction extends SqrlScalarFunction {
     super(
         new SqlIdentifier("AT_ZONE", SqlParserPos.ZERO),
         SqlKind.OTHER,
-        ReturnTypes.TIMESTAMP,
+        ReturnTypes.explicit(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
         InferTypes.ANY_NULLABLE,
         OperandTypes.operandMetadata(
             List.of(SqlTypeFamily.TIMESTAMP, SqlTypeFamily.CHARACTER),
             typeFactory -> List.of(
-                typeFactory.createSqlType(SqlTypeName.TIMESTAMP),
+                typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
                 typeFactory.createSqlType(SqlTypeName.VARCHAR)),
             i -> "arg" + i,
             i -> false),
