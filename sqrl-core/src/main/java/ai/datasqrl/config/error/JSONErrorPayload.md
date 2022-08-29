@@ -13,7 +13,7 @@ Diagnostics have the following format:
 /* A unique identifier for the error */
 "code": "",
 /* The severity of the error.
- Values may take on of:
+ Values may take one of:
  - "error": A fatal error that prevents compilation
  - "warning": A non-fatal concern
  - "help": A suggestion for improvement
