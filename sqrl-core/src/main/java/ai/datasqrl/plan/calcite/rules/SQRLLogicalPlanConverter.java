@@ -622,7 +622,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
     @Override
     public RelNode visit(LogicalSort logicalSort) {
-        Preconditions.checkArgument(logicalSort.offset == null && logicalSort.fetch == null, "OFFSET not yet supported");
+        Preconditions.checkArgument(logicalSort.offset == null, "OFFSET not yet supported");
         ProcessedRel input = getRelHolder(logicalSort.getInput().accept(this));
         Preconditions.checkArgument(!input.topN.hasPartition(),"Sorting on top of a partitioned relation is invalid");
         if (input.topN.isDistinct() || input.topN.hasLimit()) {
