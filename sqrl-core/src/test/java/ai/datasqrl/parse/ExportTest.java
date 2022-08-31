@@ -1,18 +1,26 @@
 package ai.datasqrl.parse;
 
-import ai.datasqrl.parse.tree.NodeFormatter;
-import ai.datasqrl.parse.tree.SqrlStatement;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import ai.datasqrl.parse.tree.name.NamePath;
+import org.apache.calcite.sql.ExportDefinition;
+import org.apache.calcite.sql.SqrlStatement;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class ExportTest {
 
-    @Test
-    public void exportTest() {
-        SqrlParser parser = new SqrlParser(new SqrlParserOptions());
-        // cannot use ANTLR defined keywords e.g. 'table' or 'source'
-        SqrlStatement sqrlStatement = parser.createStatement("EXPORT UserAlerts TO file-output.Alerts", ParsingOptions.builder().build());
-        //System.out.println(NodeFormatter.accept(sqrlStatement));
-        Assertions.assertEquals("EXPORT UserAlerts TO file-output.Alerts", NodeFormatter.accept(sqrlStatement));
-    }
+  @Test
+  public void exportTest() {
+    SqrlParser parser = new SqrlParser(new SqrlParserOptions());
+    // cannot use ANTLR defined keywords e.g. 'table' or 'source'
+    SqrlStatement sqrlStatement = parser.createStatement("EXPORT UserAlerts TO file-output.Alerts",
+        ParsingOptions.builder().build());
+    assertTrue(sqrlStatement instanceof ExportDefinition);
+    ExportDefinition exportDefinition = (ExportDefinition) sqrlStatement;
+
+    assertEquals(exportDefinition.getTablePath(), NamePath.of("UserAlerts"));
+    assertEquals(exportDefinition.getSinkPath(), NamePath.of("file-output", "Alerts"));
+  }
 }

@@ -15,9 +15,10 @@ package ai.datasqrl.parse;
 
 import static java.util.Objects.requireNonNull;
 
-import ai.datasqrl.parse.tree.Node;
-import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
+import ai.datasqrl.parse.SqlBaseParser.BetweenContext;
+import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqrlStatement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -83,7 +84,7 @@ class SqrlParser {
         parsingOptions);
   }
 
-  private Node invokeParser(String name, String sql,
+  private SqlNode invokeParser(String name, String sql,
       Function<SqlBaseParser, ParserRuleContext> parseFunction, ParsingOptions parsingOptions) {
     try {
       SqlBaseLexer lexer = new SqlBaseLexer(new CaseInsensitiveStream(CharStreams.fromString(sql)));
@@ -125,6 +126,7 @@ class SqrlParser {
 
       return new AstBuilder(parsingOptions).visit(tree);
     } catch (StackOverflowError e) {
+      e.printStackTrace();
       throw new ParsingException(name + " is too large (stack overflow while parsing)");
     }
   }
@@ -139,7 +141,12 @@ class SqrlParser {
       this.ruleNames = ruleNames;
       this.warningConsumer = requireNonNull(warningConsumer, "warningConsumer is null");
     }
-//
+
+    @Override
+    public void exitBetween(BetweenContext ctx) {
+      super.exitBetween(ctx);
+    }
+    //
 //    @Override
 //    public void exitUnquotedIdentifier(SqlBaseParser.UnquotedIdentifierContext context) {
 ////      String identifier = context.IDENTIFIER().getText();

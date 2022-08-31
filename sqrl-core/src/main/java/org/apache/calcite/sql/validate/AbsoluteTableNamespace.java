@@ -41,4 +41,13 @@ public class AbsoluteTableNamespace extends TableNamespace implements Expandable
   public TablePath createTablePath(String alias) {
     return new TablePathImpl(baseTable, Optional.empty(), false, relationships, alias);
   }
+
+  @Override
+  public SQRLTable getDestinationTable() {
+    if (relationships.size() > 0) {
+      return relationships.get(relationships.size()-1).getToTable();
+    } else {
+      return baseTable;
+    }
+  }
 }

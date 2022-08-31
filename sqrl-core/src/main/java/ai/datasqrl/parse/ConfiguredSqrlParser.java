@@ -2,8 +2,8 @@ package ai.datasqrl.parse;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.ParsingOptions.DecimalLiteralTreatment;
-import ai.datasqrl.parse.tree.ScriptNode;
-import ai.datasqrl.parse.tree.SqrlStatement;
+import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqrlStatement;
 
 /**
  * Parses SQRL scripts or statements using {@link SqrlParser} and holds the {@link ParsingOptions} configuration

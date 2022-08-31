@@ -42,4 +42,9 @@ public class RelativeTableNamespace extends TableNamespace implements Expandable
   public TablePath createTablePath(String alias) {
     return new TablePathImpl(baseTable, Optional.of(baseAlias), true, relationships, alias);
   }
+
+  @Override
+  public SQRLTable getDestinationTable() {
+    return relationships.get(relationships.size()-1).getToTable();
+  }
 }

@@ -1,4 +1,4 @@
-package ai.datasqrl.parse.tree;
+package org.apache.calcite.sql;
 
 public enum SubscriptionType {
   ADD

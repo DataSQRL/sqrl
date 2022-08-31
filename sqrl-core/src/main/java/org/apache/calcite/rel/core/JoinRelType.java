@@ -74,7 +74,8 @@ public enum JoinRelType {
    */
   ANTI,
 
-  TEMPORAL;
+  TEMPORAL,
+  DEFAULT;
 
   /** Lower-case name. */
   public final String lowerName = name().toLowerCase(Locale.ROOT);

@@ -415,8 +415,6 @@ class CalciteParserTest extends AbstractSQRLIT {
 
     //I don't want to add it to the schema b/c it should only be valid on the root query
 //    ctx.map(t -> schema.add("_", (Table) t));
-    //TODO: Explicit or non-explicit self table
-    validator.setContext(ctx);
     System.out.println(node);
     validator.validate(node);
 //    ctx.map(t -> schema.removeTable("_"));

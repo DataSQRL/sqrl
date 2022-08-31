@@ -6,7 +6,6 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
@@ -14,6 +13,7 @@ import ai.datasqrl.util.data.C360;
 import java.io.IOException;
 
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
