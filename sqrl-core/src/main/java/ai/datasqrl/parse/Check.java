@@ -1,10 +1,6 @@
 package ai.datasqrl.parse;
 
-import ai.datasqrl.parse.tree.Identifier;
-import ai.datasqrl.parse.tree.Node;
 import ai.datasqrl.plan.local.Errors.Error;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class Check {

@@ -1,6 +1,5 @@
 package ai.datasqrl.config.error;
 
-import ai.datasqrl.parse.tree.NodeLocation;
 import ai.datasqrl.parse.tree.name.Name;
 import io.vertx.json.schema.ValidationException;
 import java.util.ArrayList;
@@ -9,6 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
@@ -89,8 +89,8 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
             ErrorMessage.Severity.FATAL));
   }
 
-  public void fatal(NodeLocation location, String msg, Object... args) {
-    fatal(location.getLineNumber(), location.getColumnNumber(), msg, args);
+  public void fatal(SqlParserPos location, String msg, Object... args) {
+    fatal(location.getLineNum(), location.getColumnNum(), msg, args);
   }
 
   public void fatal(ValidationException exception) {

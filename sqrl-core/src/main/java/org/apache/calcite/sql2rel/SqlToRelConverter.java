@@ -3027,6 +3027,8 @@ public class SqlToRelConverter {
         return JoinRelType.RIGHT;
       case TEMPORAL:
         return JoinRelType.TEMPORAL;
+      case DEFAULT:
+        return JoinRelType.DEFAULT;
       default:
         throw Util.unexpected(joinType);
     }

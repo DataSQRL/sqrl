@@ -6,7 +6,6 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.parse.tree.ScriptNode;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
@@ -14,8 +13,16 @@ import ai.datasqrl.plan.calcite.table.TableType;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.data.C360;
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.sql.QueryAssignment;
+import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -147,13 +154,13 @@ class ResolveTest extends AbstractSQRLIT {
   @Test
   @Disabled
   public void timestampTest() {
-    process("IMPORT ecommerce-data.Orders TIMESTAMP \"time\" + INTERVAL '5' YEAR AS x;\n");
+    process("IMPORT ecommerce-data.Orders TIMESTAMP time + INTERVAL 5 YEAR AS x;\n");
   }
 
   @Test
   public void standardLibraryTest() {
     StringBuilder builder = imports();
-    builder.append("Orders.fnc_test := SELECT \"time\".ROUNDTOMONTH(\"time\") FROM _;");
+    builder.append("Orders.fnc_test := SELECT time.ROUNDTOMONTH(time) FROM _;");
     process(builder.toString());
   }
 
@@ -170,8 +177,8 @@ class ResolveTest extends AbstractSQRLIT {
   public void subqueryTest() {
     StringBuilder builder = imports();
     builder.append("IMPORT ecommerce-data.Orders;\n");
-    builder.append("Orders := " + "SELECT o._uuid " + "FROM Orders o2 "
-        + "INNER JOIN (SELECT _uuid FROM Orders) o ON o._uuid = o2._uuid;\n");
+    builder.append("Orders := " + "SELECT o2._uuid " + "FROM Orders o2 "
+        + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid;\n");
     process(builder.toString());
     validateQueryTable("orders", TableType.STREAM, 3, 1);
   }
@@ -182,7 +189,7 @@ class ResolveTest extends AbstractSQRLIT {
     StringBuilder builder = imports();
     builder.append("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
     builder.append("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n");
-    builder.append("Orders.entries.discount := coalesce(discount, 0.0);\n");
+//    builder.append("Orders.entries.discount := coalesce(discount, 0.0);\n");
     builder.append("Orders.entries.total := quantity * unit_price - discount;\n");
     builder.append("Orders.total := sum(entries.unit_price); \n");
     builder.append("Orders.total_savings := sum(entries.discount);\n");
@@ -195,7 +202,7 @@ class ResolveTest extends AbstractSQRLIT {
     builder.append("Customer.recent_products := SELECT productid, e.product.category AS category,\n"
         + "                                   sum(quantity) AS quantity, count(e._idx) AS num_orders\n"
         + "                            FROM _ JOIN _.orders.entries e\n"
-        + "                            WHERE parent.\"time\" > now() - INTERVAL '2' YEAR\n"
+        + "                            WHERE parent.time > now() - INTERVAL 2 YEAR\n"
         + "                            GROUP BY productid, category ORDER BY num_orders DESC, "
         + "quantity DESC;\n");
 
@@ -207,25 +214,25 @@ class ResolveTest extends AbstractSQRLIT {
         "Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp"
             + ".category=_.category;\n");
     builder.append("Customer._spending_by_month_category :="
-        + "                     SELECT \"time\".roundToMonth(e.parent.\"time\") AS \"month\","
+        + "                     SELECT time.roundToMonth(e.parent.time) AS month,"
         + "                            e.product.category AS category,"
         + "                            sum(total) AS total,"
         + "                            sum(discount) AS savings"
         + "                     FROM _ JOIN _.orders.entries e"
-        + "                     GROUP BY \"month\", category ORDER BY \"month\" DESC;\n");
+        + "                     GROUP BY month, category ORDER BY month DESC;\n");
 
     builder.append("Customer.spending_by_month :="
-        + "                    SELECT \"month\", sum(total) AS total, sum(savings) AS savings"
+        + "                    SELECT month, sum(total) AS total, sum(savings) AS savings"
         + "                    FROM _._spending_by_month_category"
-        + "                    GROUP BY \"month\" ORDER BY \"month\" DESC;\n");
+        + "                    GROUP BY month ORDER BY month DESC;\n");
     builder.append("Customer.spending_by_month.categories :="
-        + "    JOIN _.parent._spending_by_month_category c ON c.\"month\"=_.\"month\";\n");
+        + "    JOIN _.parent._spending_by_month_category c ON c.month=_.month;\n");
     builder.append("Product._sales_last_week := SELECT SUM(e.quantity)"
         + "                          FROM _.order_entries e"
-        + "                          WHERE e.parent.\"time\" > now() - INTERVAL '7' DAY;\n");
+        + "                          WHERE e.parent.time > now() - INTERVAL 7 DAY;\n");
     builder.append("Product._sales_last_month := SELECT SUM(e.quantity)"
         + "                          FROM _.order_entries e"
-        + "                          WHERE e.parent.\"time\" > now() - INTERVAL '1' MONTH;\n");
+        + "                          WHERE e.parent.time > now() - INTERVAL 1 MONTH;\n");
     builder.append("Product._last_week_increase := _sales_last_week * 4 / _sales_last_month;\n");
     builder.append("Category := SELECT DISTINCT category AS name FROM Product;\n");
     builder.append("Category.products := JOIN Product ON _.name = Product.category;\n");
@@ -235,15 +242,22 @@ class ResolveTest extends AbstractSQRLIT {
     builder.append("Customer.favorite_categories := SELECT s.category as category_name,"
         + "                                        sum(s.total) AS total"
         + "                                FROM _._spending_by_month_category s"
-        + "                                WHERE s.\"month\" >= now() - INTERVAL 1 YEAR"
+        + "                                WHERE s.month >= now() - INTERVAL 1 YEAR"
         + "                                GROUP BY category_name ORDER BY total DESC LIMIT 5;\n");
     builder.append(
         "Customer.favorite_categories.category := JOIN Category ON _.category_name = Category.name;\n");
     process(builder.toString());
   }
 
+  @SneakyThrows
   private void process(String query) {
     ScriptNode node = parse(query);
+//    SqlNode parsed = SqlParser.create("SELECT o2._uuid FROM Orders o2 \n"
+//        + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid\n")
+//        .parseQuery();
+//    System.out.println(((QueryAssignment) node.getStatements().get(4)).getQuery());
+//    System.out.println(parsed);
+
     resolve.planDag(session, node);
   }
 

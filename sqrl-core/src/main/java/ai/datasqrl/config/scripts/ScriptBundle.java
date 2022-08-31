@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -48,6 +49,7 @@ public class ScriptBundle implements Serializable {
   private final NamedIdentifier version;
   private final Map<Name, SqrlScript> scripts;
   private final Map<Name, SqrlQuery> queries;
+  private final Optional<String> graphqlSchema;
 
   public String getId() {
     return name.suffix(version.getId()).getCanonical();
@@ -146,7 +148,9 @@ public class ScriptBundle implements Serializable {
       if (isvalid) {
         return new ScriptBundle(Name.of(name, CANONICALIZER), vid,
             validScripts.stream().collect(Collectors.toMap(SqrlScript::getName, Function.identity())),
-            validQueries.stream().collect(Collectors.toMap(SqrlQuery::getName, Function.identity())));
+            validQueries.stream().collect(Collectors.toMap(SqrlQuery::getName, Function.identity())),
+            Optional.empty()
+            );
       } else {
         return null;
       }

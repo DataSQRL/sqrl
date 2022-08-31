@@ -12,8 +12,8 @@
 ////import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
 ////import ai.datasqrl.function.builtin.example.MyFunction;
 ////import ai.datasqrl.parse.ConfiguredSqrlParser;
-////import ai.datasqrl.parse.tree.Node;
-////import ai.datasqrl.parse.tree.NodeFormatter;
+////import org.apache.calcite.sql.Node;
+////import org.apache.calcite.sql.NodeFormatter;
 ////import ai.datasqrl.parse.tree.ScriptNode;
 ////import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine;
 ////import ai.datasqrl.plan.calcite.*;
@@ -373,8 +373,8 @@
 //import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
 //import ai.datasqrl.function.builtin.example.MyFunction;
 //import ai.datasqrl.parse.ConfiguredSqrlParser;
-//import ai.datasqrl.parse.tree.Node;
-//import ai.datasqrl.parse.tree.NodeFormatter;
+//import org.apache.calcite.sql.Node;
+//import org.apache.calcite.sql.NodeFormatter;
 //import ai.datasqrl.parse.tree.ScriptNode;
 //import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine;
 //import ai.datasqrl.plan.calcite.*;

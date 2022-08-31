@@ -32,11 +32,11 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlNumericLiteral;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlTableRef;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.DelegatingScope;
 import org.apache.calcite.sql.validate.ExpandableTableNamespace;
 import org.apache.calcite.sql.validate.SelectScope;
-import org.apache.calcite.sql.validate.SqlQualified;
 import org.apache.calcite.sql.validate.SqlValidatorNamespace;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
@@ -64,6 +64,14 @@ public class Transpile {
     this.options = options;
     this.joinBuilderFactory = () -> new JoinBuilderImpl(env, op);
   }
+/*
+
+  public void rewriteExpression(SqlNode expr, ListScope scope) {
+    SqlNode newExpr = convertExpression(expr, scope);
+    String fieldName = deriveAlias(expr, new TreeSet<>(), 0);
+    System.out.println();
+  }
+*/
 
   public void rewriteQuery(SqlSelect select, SqlValidatorScope scope) {
     createParentPrimaryKeys(scope);
@@ -75,7 +83,7 @@ public class Transpile {
     rewriteSelectList(select, scope);
     rewriteWhere(select, scope);
 
-    SqlNode from = rewriteFrom(select.getFrom(), scope);
+    SqlNode from = rewriteFrom(select.getFrom(), scope, Optional.empty());
     from = extraFromItems(from, scope);
     select.setFrom(from);
 
@@ -84,6 +92,9 @@ public class Transpile {
 
   private void rewriteHints(SqlSelect select, SqlValidatorScope scope) {
     SqlNodeList hints = select.getHints();
+    if (hints == null) {
+      return;
+    }
     List<SqlNode> list = hints.getList();
 
     for (int i = 0; i < list.size(); i++) {
@@ -113,7 +124,7 @@ public class Transpile {
   }
 
   private void createParentPrimaryKeys(SqlValidatorScope scope) {
-    Optional<SQRLTable> context = op.getSqrlValidator().getContextTable(scope);
+    Optional<SQRLTable> context = Optional.empty();//op.getSqrlValidator().getContextTable(scope);
     List<NamedKey> nodes = new ArrayList<>();
     if (context.isPresent()) {
       TableWithPK t = env.getTableMap().get(context.get());
@@ -349,23 +360,26 @@ public class Transpile {
     }
   }
 
-  SqlNode rewriteFrom(SqlNode from, SqlValidatorScope scope) {
+  SqlNode rewriteFrom(SqlNode from, SqlValidatorScope scope, Optional<String> aliasOpt) {
     final SqlCall call;
 
     switch (from.getKind()) {
       case AS:
         call = (SqlCall) from;
         SqlNode firstOperand = call.operand(0);
-        if (firstOperand instanceof SqlIdentifier) {
-          from = convertTableName((SqlIdentifier) firstOperand,
-              ((SqlIdentifier) call.getOperandList().get(1)).names.get(0), scope);
-        } else {
-          rewriteFrom(firstOperand, scope);
-        }
+        String alias = Util.last(((SqlIdentifier) call.getOperandList().get(1)).names);
+        SqlNode newFrom = rewriteFrom(firstOperand, scope, Optional.of(alias));
+        //always preserve alias
+        call.setOperand(0, newFrom);
+        break;
       case TABLE_REF:
+        //todo: fix  drops table hints
+        SqlTableRef ref = ((SqlTableRef)from);
+        from = rewriteFrom(ref.getOperandList().get(0), scope, aliasOpt);
         break;
       case IDENTIFIER:
-        from = convertTableName((SqlIdentifier) from, Util.last(((SqlIdentifier) from).names),
+        from = convertTableName((SqlIdentifier) from, aliasOpt
+                  .orElse(Util.last(((SqlIdentifier) from).names)),
             scope);
         break;
       case JOIN:
@@ -389,7 +403,7 @@ public class Transpile {
     final SqlValidatorNamespace fromNamespace = op.getSqrlValidator().getNamespace(id).resolve();
 
     if (fromNamespace.getNode() != null) {
-      return rewriteFrom(fromNamespace.getNode(), scope);
+      return rewriteFrom(fromNamespace.getNode(), scope, Optional.empty());
     }
 
     if (id.names.size() == 1 && id.names.get(0).equalsIgnoreCase("_")) {
@@ -448,9 +462,9 @@ public class Transpile {
     final SqlValidatorScope rightScope = Util.first(op.getSqrlValidator().getJoinScope(right),
         ((DelegatingScope) rootScope).getParent());
 
-    SqlNode l = rewriteFrom(left, leftScope);
+    SqlNode l = rewriteFrom(left, leftScope, Optional.empty());
     join.setLeft(l);
-    SqlNode r = rewriteFrom(right, rightScope);
+    SqlNode r = rewriteFrom(right, rightScope, Optional.empty());
     join.setRight(r);
 
     Optional<SqlNode> condition;
