@@ -1,8 +1,10 @@
 package org.apache.calcite.sql;
 
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.schema.TableFunctionArgument;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlVisitor;
@@ -13,12 +15,14 @@ import org.apache.calcite.util.Litmus;
 @Getter
 public class ExpressionAssignment extends Assignment {
 
+  private final Optional<List<TableFunctionArgument>> tableArgs;
   private final SqlNode expression;
   private final SqlNodeList hints;
 
   public ExpressionAssignment(SqlParserPos location,
-      NamePath name, SqlNode expression, SqlNodeList hints) {
+      NamePath name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode expression, SqlNodeList hints) {
     super(location, name);
+    this.tableArgs = tableArgs;
     this.expression = expression;
     this.hints = hints;
   }

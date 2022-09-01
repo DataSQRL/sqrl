@@ -1,6 +1,7 @@
 package org.apache.calcite.sql;
 
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.schema.TableFunctionArgument;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -10,12 +11,14 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 @Getter
 public class JoinAssignment extends Assignment {
 
+  private final Optional<List<TableFunctionArgument>> tableArgs;
   private final SqlNode query;
   private final SqlNodeList hints;
 
   public JoinAssignment(SqlParserPos location,
-      NamePath name, SqlNode query, SqlNodeList hints) {
+      NamePath name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, SqlNodeList hints) {
     super(location, name);
+    this.tableArgs = tableArgs;
     this.query = query;
     this.hints = hints;
   }

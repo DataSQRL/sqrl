@@ -40,6 +40,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
 
   private RelDataType dataType;
   private Optional<SQRLTable> parent;
+  private Optional<List<TableFunctionArgument>> tableArguments = Optional.empty();
 
   public SQRLTable() {
 

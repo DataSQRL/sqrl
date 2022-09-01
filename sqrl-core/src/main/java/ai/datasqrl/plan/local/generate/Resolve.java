@@ -26,6 +26,7 @@ import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
+import ai.datasqrl.schema.TableFunctionArgument;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -225,7 +226,11 @@ public class Resolve {
 
   private OpKind getKind(Env env, StatementOp op) {
     if (op.statement instanceof JoinAssignment) {
-      return OpKind.JOIN;
+      if (op.getStatement().getNamePath().size() == 1) {
+        return OpKind.QUERY;
+      } else {
+        return OpKind.JOIN;
+      }
     } else if (op.statement instanceof ExpressionAssignment) {
       return OpKind.EXPR;
     } else if (op.statement instanceof QueryAssignment
@@ -295,7 +300,11 @@ public class Resolve {
     SqlSelect select =
       op.query instanceof SqlSelect ? (SqlSelect) op.query : (SqlSelect) ((SqlOrderBy)
           op.query).query;
-    transpile.rewriteQuery(select, sqrlValidator.getSelectScope(select));
+    try {
+      transpile.rewriteQuery(select, sqrlValidator.getSelectScope(select));
+    } catch (Exception e) {
+      System.out.println(select);
+    }
 
     validateSql(env, op);
   }
@@ -386,7 +395,6 @@ public class Resolve {
     //op is a join, we need to discover the /to/ relationship
     Optional<SQRLTable> table = getContext(env, op.statement);
     JoinDeclarationFactory joinDeclarationFactory = new JoinDeclarationFactory(env);
-
     SqlJoinDeclaration joinDeclaration = joinDeclarationFactory.create(t.get(),
         op.relNode, op.validatedSql);
     VirtualRelationalTable vt =

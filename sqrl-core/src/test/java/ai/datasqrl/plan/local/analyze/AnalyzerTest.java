@@ -18,6 +18,7 @@ import java.io.IOException;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParser;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -473,6 +474,32 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Ignore
+  public void queryTableFunctionTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Product;\n"
+            + "Product.search(text: Int) := "
+            + "  SELECT name FROM _ WHERE name = :text;\n"));
+  }
+
+  @Test
+  @Ignore
+  public void joinTableFunctionTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Product;\n"
+            + "search(text: Int) := "
+            + "  JOIN Product ON name = :text;\n"));
+  }
+
+  @Test
+  @Ignore
+  public void expressionTableFunctionTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Product;\n"
+            + "Product.example(text: Int) := COALESCE(name, :text);\n"));
+  }
+
+  @Test
   public void starAliasPrefixTest() {
     String query = "SELECT t.* FROM Product j JOIN Product h ON "
         + "true;";
@@ -484,7 +511,8 @@ class AnalyzerTest extends AbstractSQRLIT {
 
   @Test
   public void invalidAliasJoinOrder() {
-    generateInvalid(parser.parse("X := SELECT * From Orders o JOIN o;"));
+    generateInvalid(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT * From Orders o JOIN o;"));
   }
 
   @Test
