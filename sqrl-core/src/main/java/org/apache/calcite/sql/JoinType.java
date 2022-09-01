@@ -69,6 +69,7 @@ public enum JoinType implements Symbolizable {
    * SQRL temporal join
    */
   TEMPORAL,
+  INTERVAL,
   DEFAULT;
 
   /** Lower-case name. */

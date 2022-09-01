@@ -18,12 +18,14 @@ package org.apache.calcite.sql.validate;
 
 import static org.apache.calcite.util.Static.RESOURCE;
 
+import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import ai.datasqrl.schema.SQRLTable;
+import java.util.Optional;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.prepare.RelOptTableImpl;
@@ -70,11 +72,18 @@ class SqrlEmptyScope implements SqlValidatorScope {
   //~ Instance fields --------------------------------------------------------
 
   protected final SqrlValidatorImpl validator;
+  private final Optional<StatementOp> op;
 
   //~ Constructors -----------------------------------------------------------
 
   SqrlEmptyScope(SqrlValidatorImpl validator) {
     this.validator = validator;
+    this.op = Optional.empty();
+  }
+
+  SqrlEmptyScope(SqrlValidatorImpl validator, StatementOp op) {
+    this.validator = validator;
+    this.op = Optional.of(op);
   }
 
   //~ Methods ----------------------------------------------------------------
@@ -109,10 +118,11 @@ class SqrlEmptyScope implements SqlValidatorScope {
     final List<Resolve> resolves = ((ResolvedImpl) resolved).resolves;
 
     //SQLR: First look for a table scope: o.entries
-    Map<String, SqlValidatorNamespace> scopes = validator.getTableScopes();
+    Map<String, SqlValidatorNamespace> scopes = validator.getJoinScopes();
     //special case: self is also a concrete table
-    if (names.get(0).equalsIgnoreCase("_") && names.size() == 1 && scopes.containsKey(names.get(0).toUpperCase())) {
-      resolved.found(scopes.get(names.get(0).toUpperCase()), false, null, path, List.of());
+    if (names.get(0).equalsIgnoreCase("_") && names.size() == 1) {
+      resolved.found(validator.getContextTable().get(),
+          false, null, path, List.of());
       return;
     }
 

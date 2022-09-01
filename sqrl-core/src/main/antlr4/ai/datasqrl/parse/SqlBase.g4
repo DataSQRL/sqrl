@@ -38,17 +38,25 @@ exportDefinition
     ;
 
 importDefinition
-    : qualifiedName (AS? alias=identifier)? (TIMESTAMP expression (AS? timestampAlias=identifier)?)?
+    : qualifiedName (AS? alias=identifier)? (TIMESTAMP expression AS? timestampAlias=identifier?)?
     ;
 
 assignment
-    : hint? qualifiedName ':=' inlineJoin                                                    # joinAssignment
-    | hint? qualifiedName ':=' expression                                                    # expressionAssign
-    | hint? qualifiedName ':=' query                                                         # queryAssign
-    | hint? qualifiedName ':=' DISTINCT table=identifier (AS? identifier)?
-      ON '('? qualifiedName (',' qualifiedName)* ')'?
-      (ORDER BY sortItem (',' sortItem)*)?                          # distinctAssignment
+    : hint? qualifiedName tableFunction? ':=' inlineJoin                          # joinAssignment
+    | hint? qualifiedName tableFunction? ':=' expression                          # expressionAssign
+    | hint? qualifiedName tableFunction? ':=' query                               # queryAssign
+    | hint? qualifiedName ':=' DISTINCT table=identifier (AS? distinctAlias=identifier)?
+                               ON '('? expression (',' expression)* ')'?
+                               (ORDER BY orderExpr=expression ordering=DESC?)?              # distinctAssignment
     ;
+
+tableFunction
+   : '(' functionArgument (',' functionArgument)* ')'
+   ;
+
+functionArgument
+   : name=identifier ':' typeName=type
+   ;
 
 hint
    : '/*+' hintItem (',' hintItem)* '*/'
@@ -68,14 +76,19 @@ subscriptionType
     ;
 
 inlineJoin
-    : inlineJoinBody+
+    : inlineJoinSpec
       (ORDER BY sortItem (',' sortItem)*)?
       (LIMIT limit=INTEGER_VALUE)?
-      (INVERSE inv=identifier)?
+      //(INVERSE inv=identifier)?
     ;
 
-inlineJoinBody
-    : joinType JOIN relationPrimary (joinCriteria)?
+inlineJoinSpec
+    : left=inlineJoinSpec operator=UNION setQuantifier right=inlineJoinSpec       #inlineSetOperation
+    | (joinType JOIN inlineAliasedJoinRelation (joinCriteria)?)+                            #inlineQueryTermDefault
+    ;
+
+inlineAliasedJoinRelation
+    : qualifiedName hint? (AS? identifier)? #inlineTableName
     ;
 
 query
@@ -90,8 +103,7 @@ queryNoWith:
 
 queryTerm
     : queryPrimary                                                             #queryTermDefault
-    | left=queryTerm operator=INTERSECT setQuantifier? right=queryTerm         #setOperation
-    | left=queryTerm operator=(UNION | EXCEPT) setQuantifier? right=queryTerm  #setOperation
+    | left=queryTerm operator=(UNION | INTERSECT | EXCEPT) setQuantifier right=queryTerm  #setOperation
     ;
 
 queryPrimary
@@ -145,6 +157,7 @@ relation
 joinType
     : INNER?
     | TEMPORAL?
+    | INTERVAL?
     ;
 
 joinCriteria
@@ -156,7 +169,7 @@ aliasedRelation
     ;
 
 relationPrimary
-    : qualifiedName hint? (AS? identifier)? #tableName
+    : qualifiedName  #tableName
     | '(' query ')'   #subqueryRelation
     | '(' relation ')'                                                #parenthesizedRelation
     ;
@@ -203,7 +216,8 @@ primaryExpression
     | CASE whenClause+ (ELSE elseExpression=expression)? END                              #simpleCase
     | CAST '(' expression AS type ')'                                                     #cast
     | qualifiedName                                                                       #columnReference
-    | '(' expression ')'                                                                 #parenthesizedExpression
+    | '(' expression ')'                                                                  #parenthesizedExpression
+    | ':' identifier                                                                      #parameter
     ;
 
 string
@@ -237,7 +251,7 @@ typeParameter
     ;
 
 baseType
-    : qualifiedName
+    : identifier
     ;
 
 whenClause

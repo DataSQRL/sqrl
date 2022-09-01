@@ -1,0 +1,30 @@
+IMPORT starwars.Human;
+IMPORT starwars.Droid;
+IMPORT starwars.Episode;
+IMPORT starwars.Starship;
+
+-- Generating an interface/union via Join Declaration
+Character :=
+  JOIN Human;
+  --UNION
+  --JOIN Droid;
+
+Human.appearsIn :=
+  JOIN Episode.characters c ON c.name = _.name
+  JOIN c.parent;
+
+Droid.appearsIn :=
+  JOIN Episode.characters c ON c.name = _.name
+  JOIN c.parent;
+
+Human.friend :=
+  JOIN _.friend f
+  JOIN Character c ON c.name = f.name;
+-- Human.friendConnection := JOIN _.friend;
+
+Droid.friend :=
+  JOIN _.friend f
+  JOIN Character c ON c.name = f.name;
+-- Droid.friendConnection := JOIN _.friend;
+
+-- Human.starships := JOIN Starship s ON s.pilots.name = _.name;

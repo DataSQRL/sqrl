@@ -1,28 +1,31 @@
-package ai.datasqrl.parse.tree;
+package org.apache.calcite.sql;
 
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.schema.TableFunctionArgument;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
-import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 @Getter
 public class JoinAssignment extends Assignment {
 
+  private final Optional<List<TableFunctionArgument>> tableArgs;
   private final SqlNode query;
-  private final List<Hint> hints;
+  private final SqlNodeList hints;
 
-  public JoinAssignment(Optional<NodeLocation> location,
-      NamePath name, SqlNode query, List<Hint> hints) {
+  public JoinAssignment(SqlParserPos location,
+      NamePath name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, SqlNodeList hints) {
     super(location, name);
+    this.tableArgs = tableArgs;
     this.query = query;
     this.hints = hints;
   }
 
-  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
-    return visitor.visitJoinAssignment(this, context);
-  }
+//  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
+//    return visitor.visitJoinAssignment(this, context);
+//  }
 
   @Override
   public boolean equals(Object o) {
@@ -39,10 +42,5 @@ public class JoinAssignment extends Assignment {
   @Override
   public int hashCode() {
     return Objects.hash(query, hints);
-  }
-
-  public String getSqlQuery() {
-    //add hints
-    return "SELECT * FROM _ " + getQuery();
   }
 }

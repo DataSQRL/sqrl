@@ -15,8 +15,8 @@ package ai.datasqrl.parse;
 
 import static java.lang.String.format;
 
-import ai.datasqrl.parse.tree.NodeLocation;
 import org.antlr.v4.runtime.RecognitionException;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class ParsingException
     extends RuntimeException {
@@ -36,10 +36,10 @@ public class ParsingException
     this(message, null, 1, 0);
   }
 
-  public ParsingException(String message, NodeLocation nodeLocation) {
+  public ParsingException(String message, SqlParserPos nodeLocation) {
     // charPositionInLine is 0-based whereas columnNumber is 1-based.
     // We need to decrement the columnNumber by 1 here since we are storing charPositionInLine.
-    this(message, null, nodeLocation.getLineNumber(), nodeLocation.getColumnNumber() - 1);
+    this(message, null, nodeLocation.getLineNum(), nodeLocation.getColumnNum() - 1);
   }
 
   public int getLineNumber() {

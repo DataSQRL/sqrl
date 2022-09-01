@@ -2,7 +2,6 @@ package ai.datasqrl.plan.local.generate;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.parse.Check;
-import ai.datasqrl.parse.tree.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.OptimizationStage;
@@ -27,16 +26,31 @@ import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
+import ai.datasqrl.schema.TableFunctionArgument;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.sql.Assignment;
+import org.apache.calcite.sql.CreateSubscription;
+import org.apache.calcite.sql.DistinctAssignment;
+import org.apache.calcite.sql.ExpressionAssignment;
+import org.apache.calcite.sql.ImportDefinition;
+import org.apache.calcite.sql.JoinAssignment;
+import org.apache.calcite.sql.QueryAssignment;
+import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 
@@ -73,11 +87,12 @@ public class Resolve {
     }
   }
 
-  public void planDag(Session session, ScriptNode script) {
+  public Env planDag(Session session, ScriptNode script) {
     Env env = createEnv(session, script);
     resolveImports(env);
     mapOperations(env);
     planQueries(env);
+    return env;
   }
 
   public Env createEnv(Session session, ScriptNode script) {
@@ -92,7 +107,7 @@ public class Resolve {
 
   private void validateImportInHeader(Env env) {
     boolean inHeader = true;
-    for (Node statement : env.scriptNode.getStatements()) {
+    for (SqlNode statement : env.scriptNode.getStatements()) {
       if (statement instanceof ImportDefinition) {
         Preconditions.checkState(inHeader, "Import statements must be in header");
       } else {
@@ -108,7 +123,7 @@ public class Resolve {
   }
 
   void resolveImportDefinitions(Env env) {
-    for (Node statement : env.scriptNode.getStatements()) {
+    for (SqlNode statement : env.scriptNode.getStatements()) {
       if (statement instanceof ImportDefinition) {
         resolveImportDefinition(env, (ImportDefinition) statement);
       }
@@ -116,7 +131,7 @@ public class Resolve {
   }
 
   void mapOperations(Env env) {
-    for (Node statement : env.scriptNode.getStatements()) {
+    for (SqlNode statement : env.scriptNode.getStatements()) {
       if (!(statement instanceof ImportDefinition)) {
         env.queryOperations.add((SqrlStatement) statement);
       }
@@ -127,7 +142,7 @@ public class Resolve {
     SourceTableImport tblImport = lookupDatasetModule(env, node.getNamePath());
 
     ScriptTableDefinition importedTable = createScriptTableDefinition(env, tblImport,
-        node.getAliasName());
+        node.getAlias());
 
     registerScriptTable(env, importedTable);
 
@@ -135,8 +150,8 @@ public class Resolve {
   }
 
   private void addTimestampColumn(Env env, ScriptTableDefinition importedTable,
-      SingleColumn timestamp) {
-    StatementOp statementOp = new StatementOp(null, timestamp.getSqlNode());
+      SqlNode timestamp) {
+    StatementOp statementOp = new StatementOp(null, timestamp, StatementKind.IMPORT);
     transpile(env, statementOp);
     applyOp(env, statementOp);
   }
@@ -211,7 +226,11 @@ public class Resolve {
 
   private OpKind getKind(Env env, StatementOp op) {
     if (op.statement instanceof JoinAssignment) {
-      return OpKind.JOIN;
+      if (op.getStatement().getNamePath().size() == 1) {
+        return OpKind.QUERY;
+      } else {
+        return OpKind.JOIN;
+      }
     } else if (op.statement instanceof ExpressionAssignment) {
       return OpKind.EXPR;
     } else if (op.statement instanceof QueryAssignment
@@ -240,34 +259,29 @@ public class Resolve {
   }
 
   private StatementOp createStatementOp(SqrlStatement statement) {
-    SqlNode sqlNode = statement.accept(new AstVisitor<SqlNode, Void>() {
-      @Override
-      public SqlNode visitExpressionAssignment(ExpressionAssignment node, Void context) {
-        return node.getQuery();
-      }
+    SqlNode sqlNode = null;
 
-      @Override
-      public SqlNode visitQueryAssignment(QueryAssignment node, Void context) {
-        return node.getQuery();
-      }
+    StatementKind statementKind;
+    if (statement instanceof ExpressionAssignment) {
+      sqlNode = ((ExpressionAssignment) statement).getExpression();
+      statementKind = StatementKind.EXPR;
+    } else if  (statement instanceof QueryAssignment) {
+      sqlNode = ((QueryAssignment) statement).getQuery();
+      statementKind = StatementKind.QUERY;
+    } else if  (statement instanceof CreateSubscription) {
+      sqlNode = ((CreateSubscription) statement).getQuery();
+      statementKind = StatementKind.SUBSCRIPTION;
+    } else if  (statement instanceof DistinctAssignment) {
+      sqlNode = ((DistinctAssignment) statement).getQuery();
+      statementKind = StatementKind.QUERY;
+    } else if  (statement instanceof JoinAssignment) {
+      sqlNode = ((JoinAssignment) statement).getQuery();
+      statementKind = StatementKind.JOIN;
+    } else {
+      throw new RuntimeException("Unrecognized assignment type");
+    }
 
-      @Override
-      public SqlNode visitCreateSubscription(CreateSubscription node, Void context) {
-        return node.getQuery();
-      }
-
-      @Override
-      public SqlNode visitDistinctAssignment(DistinctAssignment node, Void context) {
-        return node.getQuery();
-      }
-
-      @Override
-      public SqlNode visitJoinAssignment(JoinAssignment node, Void context) {
-        return node.getQuery();
-      }
-    }, null);
-
-    return new StatementOp((Assignment) statement, sqlNode);
+    return new StatementOp((Assignment) statement, sqlNode, statementKind);
   }
 
   public void validate(Env env, StatementOp op) {
@@ -277,16 +291,20 @@ public class Resolve {
 
   public void transpile(Env env, StatementOp op) {
     SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.sqrlSchema);
-    sqrlValidator.setContext(getContext(env, op.statement));
-    sqrlValidator.validate(op.query);
+    SqlNode newNode = sqrlValidator.validate(op);
+    op.setQuery(newNode);
     op.setSqrlValidator(sqrlValidator);
 
-    SqlSelect select =
-        op.query instanceof SqlSelect ? (SqlSelect) op.query : (SqlSelect) ((SqlOrderBy)
-            op.query).query;
     Transpile transpile = new Transpile(env, op,
         TranspileOptions.builder().orderToOrdinals(true).build());
-    transpile.rewriteQuery(select, sqrlValidator.getSelectScope(select));
+    SqlSelect select =
+      op.query instanceof SqlSelect ? (SqlSelect) op.query : (SqlSelect) ((SqlOrderBy)
+          op.query).query;
+    try {
+      transpile.rewriteQuery(select, sqrlValidator.getSelectScope(select));
+    } catch (Exception e) {
+      System.out.println(select);
+    }
 
     validateSql(env, op);
   }
@@ -377,7 +395,6 @@ public class Resolve {
     //op is a join, we need to discover the /to/ relationship
     Optional<SQRLTable> table = getContext(env, op.statement);
     JoinDeclarationFactory joinDeclarationFactory = new JoinDeclarationFactory(env);
-
     SqlJoinDeclaration joinDeclaration = joinDeclarationFactory.create(t.get(),
         op.relNode, op.validatedSql);
     VirtualRelationalTable vt =
@@ -425,6 +442,10 @@ public class Resolve {
     return context.map(c -> env.getTableMap().get(c));
   }
 
+  public enum StatementKind {
+    EXPR, QUERY, JOIN, SUBSCRIPTION, IMPORT, EXPORT
+  }
+
   enum OpKind {
     EXPR, QUERY, ROOT_QUERY, EXPR_QUERY, JOIN, SUBSCRIPTION
   }
@@ -434,6 +455,8 @@ public class Resolve {
   public class StatementOp {
 
     RelNode relNode;
+    StatementKind statementKind;
+
     OpKind kind;
     Assignment statement;
     boolean expression;
@@ -445,9 +468,10 @@ public class Resolve {
     SqlNode query;
     SqlNode validatedSql;
 
-    StatementOp(Assignment statement, SqlNode query) {
+    StatementOp(Assignment statement, SqlNode query, StatementKind statementKind) {
       this.statement = statement;
       this.query = query;
+      this.statementKind = statementKind;
     }
   }
 
