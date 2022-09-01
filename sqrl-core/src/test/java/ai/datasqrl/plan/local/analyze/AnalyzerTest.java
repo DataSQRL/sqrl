@@ -185,7 +185,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
   @Test
   public void joinDeclarationOnRootTet() {
-    generateInvalid(parser.parse("IMPORT ecommerce-data.Product;\n"
+    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := JOIN Product;"));
   }
 
@@ -289,7 +289,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   public void unionTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product2 := SELECT * FROM Product UNION SELECT * FROM Product;"));
+        + "Product2 := SELECT * FROM Product UNION DISTINCT SELECT * FROM Product;"));
   }
 
   @Test
@@ -383,7 +383,7 @@ class AnalyzerTest extends AbstractSQRLIT {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = "
         + "Product.productid LIMIT 1;\n"
-        + "Product.total := MIN(joinDeclaration.productid, 1000);\n"));
+        + "Product.total := COALESCE(joinDeclaration.productid, 1000);\n"));
   }
 
   @Test
@@ -496,7 +496,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void expressionTableFunctionTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.example(text: Int) := COALESCE(name, :text);\n"));
+            + "Product.example(text: Int) := COALESCE(name, CAST('false' AS BOOLEAN));\n"));
   }
 
   @Test
@@ -522,8 +522,20 @@ class AnalyzerTest extends AbstractSQRLIT {
             + "IMPORT ecommerce-data.Product;"
         + "X := SELECT * FROM Product AS p "
             + " INTERVAL JOIN Orders AS o "
-            + "  ON p._ingest_time - o._ingest_time BETWEEN -10 AND 10;"
+            + "  ON true;"
     ));
+  }
+
+  @Test
+  public void castTest() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT CAST(1 AS String) From Orders;"));
+  }
+
+  @Test
+  public void castExpression() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "Orders.x := CAST(1 AS String);"));
   }
 
   @Test
