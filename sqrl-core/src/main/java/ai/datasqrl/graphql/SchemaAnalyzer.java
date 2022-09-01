@@ -63,7 +63,7 @@ public class SchemaAnalyzer {
   }
 
   private void resolveField(FieldDefinition fieldDefinition, SchemaContext context) {
-    System.out.printf("");
+    System.out.println(fieldDefinition);
   }
 
   private SchemaContext createContext(String typeName, SQRLTable table) {

@@ -22,6 +22,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
+import ai.datasqrl.schema.TableFunctionArgument;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -456,6 +457,14 @@ class AstBuilder
   }
 
   // ********************* primary expressions **********************
+
+  @Override
+  public SqlNode visitParameter(ParameterContext ctx) {
+    return new SqlNamedDynamicParam(
+        (SqlIdentifier) visit(ctx.identifier()),
+        getLocation(ctx)
+    );
+  }
 
   @Override
   public SqlNode visitLogicalNot(LogicalNotContext context) {
@@ -956,7 +965,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitDistinctAssignment(DistinctAssignmentContext ctx) {
-    NamePath namePath = getNamePath(ctx.qualifiedName(0));
+    NamePath namePath = getNamePath(ctx.qualifiedName());
     SqlIdentifier tableName = (SqlIdentifier) visit(ctx.table);
 
     Optional<SqlIdentifier> alias = Optional.empty();
@@ -971,13 +980,12 @@ class AstBuilder
 
     List<SqlNode> pk = new ArrayList<>();
     //starts at 1
-    for (int i = 1; i < ctx.qualifiedName().size(); i++) {
-      pk.add(visit(ctx.qualifiedName(i)));
+    for (int i = 1; i < ctx.identifier().size(); i++) {
+      pk.add(visit(ctx.identifier(i)));
     }
 
-    List<SqlNode> sort = visit(ctx.sortItem(), SqlNode.class);
-//    String.format("SELECT /*+ %s(%s) */ * FROM %s %s %s LIMIT 1",
-//        SqrlHintStrategyTable.TOP_N, pk, table, alias.orElse(""), order);
+    SqlNode order = visit(ctx.orderExpr);
+    SqlCall sort = SqlStdOperatorTable.DESC.createCall(getLocation(ctx.orderExpr), order);
 
     SqlParserPos loc = getLocation(ctx);
     SqlNode query =
@@ -1005,7 +1013,7 @@ class AstBuilder
         namePath,
         aliasedName,
         pk,
-        sort,
+        List.of(sort),
         getHints(ctx.hint()),
         query
     );
@@ -1037,10 +1045,28 @@ class AstBuilder
     SqlNode join = visit(ctx.inlineJoin());
 
     return new JoinAssignment(getLocation(ctx), name,
+        getTableArgs(ctx.tableFunction()),
         join,
         getHints(ctx.hint()));
   }
 
+  private Optional<List<TableFunctionArgument>> getTableArgs(TableFunctionContext ctx) {
+    if (ctx == null) {
+      return Optional.empty();
+    }
+    List<TableFunctionArgument> args = ctx.functionArgument().stream()
+        .map(arg -> toFunctionArg(arg))
+        .collect(toList());
+
+    return Optional.of(args);
+  }
+
+  private TableFunctionArgument toFunctionArg(FunctionArgumentContext ctx) {
+    return new TableFunctionArgument(
+        (SqlIdentifier)visit(ctx.name),
+        getType(ctx.typeName)
+    );
+  }
 
   @Override
   public SqlNode visitInlineJoin(InlineJoinContext ctx) {
@@ -1144,6 +1170,7 @@ class AstBuilder
   public SqlNode visitQueryAssign(QueryAssignContext ctx) {
     SqlNode query = visit(ctx.query());
     return new QueryAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
+        getTableArgs(ctx.tableFunction()),
         query,
         getHints(ctx.hint()));
   }
@@ -1153,6 +1180,7 @@ class AstBuilder
     NamePath name = getNamePath(ctx.qualifiedName());
     SqlNode expr = visit(ctx.expression());
     return new ExpressionAssignment(getLocation(ctx), name,
+        getTableArgs(ctx.tableFunction()),
         expr,
         getHints(ctx.hint()));
   }
@@ -1214,63 +1242,17 @@ class AstBuilder
     return SqlLiteral.createCharString(ctx.getText(), getLocation(ctx));
   }
 
-
-  private SqlDataTypeSpec getType(TypeContext type) {
-//
-//    if (type.baseType() != null) {
-//      String signature = type.baseType().getText();
-//      if (!type.typeParameter().isEmpty()) {
-//        String typeParameterSignature = type
-//            .typeParameter()
-//            .stream()
-//            .map(this::typeParameterToString)
-//            .collect(Collectors.joining(","));
-//        signature += "(" + typeParameterSignature + ")";
-//      }
-//
-//      return signature;
-//    }
-//
-//    if (type.ARRAY() != null) {
-//      return "ARRAY(" + getType(type.type(0)) + ")";
-//    }
-//
-//    if (type.MAP() != null) {
-//      return "MAP(" + getType(type.type(0)) + "," + getType(type.type(1)) + ")";
-//    }
-//
-//    if (type.ROW() != null) {
-//      StringBuilder builder = new StringBuilder("(");
-//      for (int i = 0; i < type.identifier().size(); i++) {
-//        if (i != 0) {
-//          builder.append(",");
-//        }
-//        builder.append(visit(type.identifier(i)))
-//            .append(" ")
-//            .append(getType(type.type(i)));
-//      }
-//      builder.append(")");
-//      return "ROW" + builder;
-//    }
-//
-//    if (type.INTERVAL() != null) {
-//      return "INTERVAL " + getIntervalFieldType((Token) type.from.getChild(0).getPayload()) +
-//          " TO " + getIntervalFieldType((Token) type.to.getChild(0).getPayload());
-//    }
-//
-    throw new IllegalArgumentException("Unsupported type specification: " + type.getText());
+  private SqlDataTypeSpec getType(TypeContext ctx) {
+    return new SqlDataTypeSpec(getTypeName(ctx.baseType()), getLocation(ctx));
   }
-//
-//  private String typeParameterToString(TypeParameterContext typeParameter) {
-//    if (typeParameter.INTEGER_VALUE() != null) {
-//      return typeParameter.INTEGER_VALUE().toString();
-//    }
-//    if (typeParameter.type() != null) {
-//      return getType(typeParameter.type());
-//    }
-//    throw new IllegalArgumentException("Unsupported typeParameter: " + typeParameter.getText());
-//  }
 
+  private SqlTypeNameSpec getTypeName(BaseTypeContext baseType) {
+    //todo: Collections, params, etc
+    return new SqlUserDefinedTypeNameSpec(
+        (SqlIdentifier) visit(baseType.identifier()),
+        getLocation(baseType)
+    );
+  }
 
   @Override
   public SqlNode visitQueryTermDefault(QueryTermDefaultContext ctx) {

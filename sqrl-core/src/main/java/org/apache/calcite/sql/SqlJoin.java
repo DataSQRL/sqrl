@@ -223,6 +223,12 @@ public class SqlJoin extends SqlCall {
       case RIGHT:
         writer.sep(join.isNatural() ? "NATURAL RIGHT JOIN" : "RIGHT JOIN");
         break;
+        case DEFAULT:
+        writer.sep(join.isNatural() ? "NATURAL DEFAULT JOIN" : "DEFAULT JOIN");
+        break;
+        case TEMPORAL:
+        writer.sep(join.isNatural() ? "NATURAL TEMPORAL JOIN" : "TEMPORAL JOIN");
+        break;
       default:
         throw Util.unexpected(join.getJoinType());
       }

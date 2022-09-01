@@ -42,13 +42,21 @@ importDefinition
     ;
 
 assignment
-    : hint? qualifiedName ':=' inlineJoin                                                    # joinAssignment
-    | hint? qualifiedName ':=' expression                                                    # expressionAssign
-    | hint? qualifiedName ':=' query                                                         # queryAssign
-    | hint? qualifiedName ':=' DISTINCT table=identifier (AS? identifier)?
-      ON '('? expression (',' expression)* ')'?
-      (ORDER BY expression ordering=DESC?)?                          # distinctAssignment
+    : hint? qualifiedName tableFunction? ':=' inlineJoin                          # joinAssignment
+    | hint? qualifiedName tableFunction? ':=' expression                          # expressionAssign
+    | hint? qualifiedName tableFunction? ':=' query                               # queryAssign
+    | hint? qualifiedName ':=' DISTINCT table=identifier (AS? distinctAlias=identifier)?
+                               ON '('? expression (',' expression)* ')'?
+                               (ORDER BY orderExpr=expression ordering=DESC?)?              # distinctAssignment
     ;
+
+tableFunction
+   : '(' functionArgument (',' functionArgument)* ')'
+   ;
+
+functionArgument
+   : name=identifier ':' typeName=type
+   ;
 
 hint
    : '/*+' hintItem (',' hintItem)* '*/'
@@ -207,7 +215,8 @@ primaryExpression
     | CASE whenClause+ (ELSE elseExpression=expression)? END                              #simpleCase
     | CAST '(' expression AS type ')'                                                     #cast
     | qualifiedName                                                                       #columnReference
-    | '(' expression ')'                                                                 #parenthesizedExpression
+    | '(' expression ')'                                                                  #parenthesizedExpression
+    | ':' identifier                                                                      #parameter
     ;
 
 string
@@ -241,7 +250,7 @@ typeParameter
     ;
 
 baseType
-    : qualifiedName
+    : identifier
     ;
 
 whenClause
