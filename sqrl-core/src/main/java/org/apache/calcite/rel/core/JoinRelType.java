@@ -75,6 +75,7 @@ public enum JoinRelType {
   ANTI,
 
   TEMPORAL,
+  INTERVAL,
   DEFAULT;
 
   /** Lower-case name. */

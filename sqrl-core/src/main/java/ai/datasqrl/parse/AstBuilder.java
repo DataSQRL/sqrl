@@ -559,6 +559,8 @@ class AstBuilder
       joinType = JoinType.INNER;
     } else if (joinTypeContext.TEMPORAL() != null) {
       joinType = JoinType.TEMPORAL;
+    } else if (joinTypeContext.INTERVAL() != null) {
+      joinType = JoinType.INTERVAL;
     } else {
       joinType = JoinType.DEFAULT;
     }
@@ -568,27 +570,28 @@ class AstBuilder
 
   @Override
   public SqlNode visitTableName(TableNameContext context) {
-    Optional<SqlNode> alias = Optional.empty();
-    if (context.identifier() != null) {
-      alias = Optional.of(visit(context.identifier()));
-    }
+//    Optional<SqlNode> alias = Optional.empty();
+//    if (context.identifier() != null) {
+//      alias = Optional.of(visit(context.identifier()));
+//    }
 
     Pair<List<String>, List<SqlParserPos>> name = getQualified(context.qualifiedName());
     SqlIdentifier tableName = new SqlIdentifier(name.getLeft(), null,
         getLocation(context), name.getRight());
 
-    SqlNodeList hints = getHints(context.hint());
+//    SqlNodeList hints = getHints(context.hint());
 
     SqlNode from = tableName;
-    if (hints != null) {
-      from = new SqlTableRef(getLocation(context), tableName, hints);
-    }
+//    if (hints != null) {
+//      from = new SqlTableRef(getLocation(context), tableName, hints);
+//    }
 
-    final SqlNode lastFrom = from;
+//    final SqlNode lastFrom = from;
 
-    return alias.map(
-            a -> (SqlNode) SqlStdOperatorTable.AS.createCall(getLocation(context), lastFrom, a))
-        .orElse(from);
+//    return alias.map(
+//            a -> (SqlNode) SqlStdOperatorTable.AS.createCall(getLocation(context), lastFrom, a))
+//        .orElse(from);
+    return from;
   }
 
   private Pair<List<String>, List<SqlParserPos>> getQualified(QualifiedNameContext context) {

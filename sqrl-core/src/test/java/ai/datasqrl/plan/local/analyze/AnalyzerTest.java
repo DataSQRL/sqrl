@@ -516,6 +516,17 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  public void intervalJoinTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Orders;"
+            + "IMPORT ecommerce-data.Product;"
+        + "X := SELECT * FROM Product AS p "
+            + " INTERVAL JOIN Orders AS o "
+            + "  ON p._ingest_time - o._ingest_time BETWEEN -10 AND 10;"
+    ));
+  }
+
+  @Test
   @Ignore
   public void invalidDistinctTest1() {
     SqlNode node;
