@@ -1,6 +1,8 @@
 package ai.datasqrl.plan.local.analyze;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
@@ -12,12 +14,19 @@ import ai.datasqrl.parse.ParsingException;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.local.generate.Resolve;
+import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.data.C360;
 import java.io.IOException;
+import java.math.BigDecimal;
+import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.rel.logical.LogicalProject;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.type.IntervalSqlType;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,8 +62,8 @@ class AnalyzerTest extends AbstractSQRLIT {
     this.resolve = new Resolve();
   }
 
-  private void generate(ScriptNode node) {
-    resolve.planDag(session, node);
+  private Env generate(ScriptNode node) {
+    return resolve.planDag(session, node);
   }
 
   private void generateInvalid(ScriptNode node) {
@@ -313,8 +322,18 @@ class AnalyzerTest extends AbstractSQRLIT {
 
   @Test
   public void intervalTest() {
-    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
+    Env env = generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT _ingest_time + INTERVAL 2 YEAR AS x FROM Product;"));
+    LogicalProject project = (LogicalProject)env.getOps().get(0).getRelNode();
+    RexCall call = (RexCall)project.getNamedProjects().get(0).left;
+    RexLiteral rexLiteral = (RexLiteral)call.getOperands().get(1);
+    assertTrue(rexLiteral.getValue() instanceof BigDecimal);
+    assertEquals(((BigDecimal)rexLiteral.getValue()), BigDecimal.valueOf(2));
+    assertTrue(rexLiteral.getType() instanceof IntervalSqlType);
+    assertEquals(
+        rexLiteral.getType().getIntervalQualifier().getUnit(),
+        TimeUnit.YEAR);
+
   }
 
   @Test

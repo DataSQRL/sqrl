@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.local.generate;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
+import ai.datasqrl.io.sources.stats.Accumulator;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -26,7 +27,6 @@ import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
-import ai.datasqrl.schema.TableFunctionArgument;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -64,6 +64,7 @@ public class Resolve {
   @Getter
   public class Env {
 
+    List<StatementOp> ops = new ArrayList<>();
     Map<Relationship, SqlJoinDeclaration> resolvedJoinDeclarations = new HashMap<>();
     List<SqrlStatement> queryOperations = new ArrayList<>();
 
@@ -207,7 +208,7 @@ public class Resolve {
 
   void planQuery(Env env, SqrlStatement statement) {
     // Plans query
-    StatementOp op = createStatementOp(statement);
+    StatementOp op = createStatementOp(env, statement);
     validate(env, op);
     transpile(env, op);
     computeOpKind(env, op);
@@ -258,7 +259,7 @@ public class Resolve {
     return false;
   }
 
-  private StatementOp createStatementOp(SqrlStatement statement) {
+  private StatementOp createStatementOp(Env env, SqrlStatement statement) {
     SqlNode sqlNode = null;
 
     StatementKind statementKind;
@@ -281,7 +282,9 @@ public class Resolve {
       throw new RuntimeException("Unrecognized assignment type");
     }
 
-    return new StatementOp((Assignment) statement, sqlNode, statementKind);
+    StatementOp op = new StatementOp((Assignment) statement, sqlNode, statementKind);
+    env.ops.add(op);
+    return op;
   }
 
   public void validate(Env env, StatementOp op) {
