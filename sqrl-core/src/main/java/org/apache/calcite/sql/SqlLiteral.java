@@ -20,6 +20,8 @@ import org.apache.calcite.avatica.util.TimeUnitRange;
 import org.apache.calcite.rel.metadata.NullSentinel;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeSystem;
+import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.sql.fun.SqlLiteralChainOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -45,10 +47,12 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.Calendar;
 import java.util.Objects;
 import javax.annotation.Nonnull;
+import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
 
 import static org.apache.calcite.util.Static.RESOURCE;
 /**
  * SQRL: Remove date casting
+ * See commit 7ea921bd6b5061c2cd6b8059e72f1bb21d2ab3f6
  */
 
 /**
@@ -343,7 +347,7 @@ public class SqlLiteral extends SqlNode {
           (SqlIntervalLiteral.IntervalValue) value;
       if (clazz == Long.class) {
         return clazz.cast(valMonth.getSign()
-            * SqlParserUtil.intervalToMonths(valMonth));
+            * intervalToLong(valMonth));
       } else if (clazz == BigDecimal.class) {
         return clazz.cast(BigDecimal.valueOf(getValueAs(Long.class)));
       } else if (clazz == TimeUnitRange.class) {
@@ -366,7 +370,7 @@ public class SqlLiteral extends SqlNode {
           (SqlIntervalLiteral.IntervalValue) value;
       if (clazz == Long.class) {
         return clazz.cast(valTime.getSign()
-            * SqlParserUtil.intervalToMillis(valTime));
+            * intervalToLong(valTime));
       } else if (clazz == BigDecimal.class) {
         return clazz.cast(BigDecimal.valueOf(getValueAs(Long.class)));
       } else if (clazz == TimeUnitRange.class) {
@@ -377,6 +381,33 @@ public class SqlLiteral extends SqlNode {
       break;
     }
     throw new AssertionError("cannot cast " + value + " as " + clazz);
+  }
+
+  public static long intervalToLong(SqlIntervalLiteral.IntervalValue interval) {
+    return intervalToLong(interval.getIntervalLiteral(), interval.getIntervalQualifier());
+  }
+
+  public static long intervalToLong(String literal, SqlIntervalQualifier intervalQualifier) {
+    Preconditions.checkArgument(intervalQualifier.isYearMonth(), "interval must be year month");
+
+    int[] ret;
+    try {
+      ret = intervalQualifier.evaluateIntervalLiteral(literal, intervalQualifier.getParserPosition(), RelDataTypeSystem.DEFAULT);
+
+      assert ret != null;
+    } catch (CalciteContextException var7) {
+      throw new RuntimeException("Error while parsing year-to-month interval " + literal, var7);
+    }
+
+    long l = 0L;
+    long[] conv = new long[]{0L, 1L};
+    conv[0] = conv[1];
+
+    for(int i = 1; i < ret.length; ++i) {
+      l += conv[i - 1] * (long)ret[i];
+    }
+
+    return (long)ret[0] * l;
   }
 
   /** Returns the value as a symbol. */
