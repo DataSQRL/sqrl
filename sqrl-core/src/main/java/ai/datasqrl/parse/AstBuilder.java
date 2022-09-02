@@ -887,7 +887,7 @@ class AstBuilder
     int sign = Optional.ofNullable(context.sign)
         .map(AstBuilder::getIntervalSign)
         .orElse(1);
-    SqlNode expr = visit(context.expression());
+    SqlNode expr = visit(context.number());
     TimeUnit timeUnit = getIntervalFieldType(
         (Token) context.intervalField().getChild(0).getPayload());
     return SqlLiteral.createInterval(sign,

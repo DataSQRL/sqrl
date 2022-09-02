@@ -312,6 +312,12 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  public void intervalTest() {
+    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
+        + "Product2 := SELECT _ingest_time + INTERVAL 2 YEAR AS x FROM Product;"));
+  }
+
+  @Test
   @Disabled
   public void distinctStarTest() {
     generate(parser.parse(
