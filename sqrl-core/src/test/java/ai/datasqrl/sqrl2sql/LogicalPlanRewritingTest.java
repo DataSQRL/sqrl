@@ -14,8 +14,10 @@ import java.io.IOException;
 
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
+import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class LogicalPlanRewritingTest extends AbstractSQRLIT {
@@ -56,6 +58,7 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void testSimpleTemporalJoin() {
     runScript(
             "IMPORT ecommerce-data.Orders;\n"
@@ -68,6 +71,7 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void testNestingTemporalJoin() {
     runScript(
             "IMPORT ecommerce-data.Orders;\n"

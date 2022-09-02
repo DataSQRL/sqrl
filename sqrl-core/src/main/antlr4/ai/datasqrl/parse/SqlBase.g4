@@ -157,6 +157,7 @@ relation
 joinType
     : INNER?
     | TEMPORAL?
+    | INTERVAL?
     ;
 
 joinCriteria
@@ -168,7 +169,7 @@ aliasedRelation
     ;
 
 relationPrimary
-    : qualifiedName hint? (AS? identifier)? #tableName
+    : qualifiedName  #tableName
     | '(' query ')'   #subqueryRelation
     | '(' relation ')'                                                #parenthesizedRelation
     ;

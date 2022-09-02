@@ -3331,6 +3331,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case FULL:
     case DEFAULT:
     case TEMPORAL:
+    case INTERVAL:
       if ((condition == null) && !natural) {
         throw newValidationError(join, RESOURCE.joinRequiresCondition());
       }

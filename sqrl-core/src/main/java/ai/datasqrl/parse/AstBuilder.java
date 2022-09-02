@@ -343,16 +343,16 @@ class AstBuilder
 
   @Override
   public SqlNode visitQuerySpecification(QuerySpecificationContext context) {
-    SqlCall from;
+    SqlNode from;
     List<SqlNode> selectItems = visit(context.selectItem(), SqlNode.class);
 
-    List<SqlCall> relations = visit(context.relation(), SqlCall.class);
+    List<SqlNode> relations = visit(context.relation(), SqlNode.class);
     if (relations.isEmpty()) {
       throw new RuntimeException("FROM required");
     } else {
       // synthesize implicit join nodes
-      Iterator<SqlCall> iterator = relations.iterator();
-      SqlCall relation = iterator.next();
+      Iterator<SqlNode> iterator = relations.iterator();
+      SqlNode relation = iterator.next();
 
       while (iterator.hasNext()) {
         relation = new SqlJoin(getLocation(context),
@@ -559,6 +559,8 @@ class AstBuilder
       joinType = JoinType.INNER;
     } else if (joinTypeContext.TEMPORAL() != null) {
       joinType = JoinType.TEMPORAL;
+    } else if (joinTypeContext.INTERVAL() != null) {
+      joinType = JoinType.INTERVAL;
     } else {
       joinType = JoinType.DEFAULT;
     }
@@ -568,27 +570,28 @@ class AstBuilder
 
   @Override
   public SqlNode visitTableName(TableNameContext context) {
-    Optional<SqlNode> alias = Optional.empty();
-    if (context.identifier() != null) {
-      alias = Optional.of(visit(context.identifier()));
-    }
+//    Optional<SqlNode> alias = Optional.empty();
+//    if (context.identifier() != null) {
+//      alias = Optional.of(visit(context.identifier()));
+//    }
 
     Pair<List<String>, List<SqlParserPos>> name = getQualified(context.qualifiedName());
     SqlIdentifier tableName = new SqlIdentifier(name.getLeft(), null,
         getLocation(context), name.getRight());
 
-    SqlNodeList hints = getHints(context.hint());
+//    SqlNodeList hints = getHints(context.hint());
 
     SqlNode from = tableName;
-    if (hints != null) {
-      from = new SqlTableRef(getLocation(context), tableName, hints);
-    }
+//    if (hints != null) {
+//      from = new SqlTableRef(getLocation(context), tableName, hints);
+//    }
 
-    final SqlNode lastFrom = from;
+//    final SqlNode lastFrom = from;
 
-    return alias.map(
-            a -> (SqlNode) SqlStdOperatorTable.AS.createCall(getLocation(context), lastFrom, a))
-        .orElse(from);
+//    return alias.map(
+//            a -> (SqlNode) SqlStdOperatorTable.AS.createCall(getLocation(context), lastFrom, a))
+//        .orElse(from);
+    return from;
   }
 
   private Pair<List<String>, List<SqlParserPos>> getQualified(QualifiedNameContext context) {
@@ -984,8 +987,11 @@ class AstBuilder
       pk.add(visit(ctx.identifier(i)));
     }
 
-    SqlNode order = visit(ctx.orderExpr);
-    SqlCall sort = SqlStdOperatorTable.DESC.createCall(getLocation(ctx.orderExpr), order);
+    List<SqlNode> sort = null;
+    if (ctx.orderExpr != null) {
+      SqlNode order = visit(ctx.orderExpr);
+      sort = List.of(SqlStdOperatorTable.DESC.createCall(getLocation(ctx.orderExpr), order));
+    }
 
     SqlParserPos loc = getLocation(ctx);
     SqlNode query =
@@ -1013,7 +1019,7 @@ class AstBuilder
         namePath,
         aliasedName,
         pk,
-        List.of(sort),
+        sort,
         getHints(ctx.hint()),
         query
     );

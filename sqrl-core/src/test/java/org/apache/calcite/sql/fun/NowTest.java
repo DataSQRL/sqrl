@@ -48,7 +48,7 @@ class NowTest {
     SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
 
     RelDataType typeTS = numToTimestamp.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeTS, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+    assertEquals(typeTS, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
 
     RelDataType typeNum = timestampToEpoch.inferReturnType(typeFactory, new ArrayList<>());
     assertEquals(typeNum, typeFactory.createSqlType(SqlTypeName.BIGINT));
@@ -62,7 +62,7 @@ class NowTest {
     TimestampToStringFunction timestampToString = new TimestampToStringFunction();
 
     RelDataType typeTS = stringToTimestamp.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeTS, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+    assertEquals(typeTS, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
 
     RelDataType typeString = timestampToString.inferReturnType(typeFactory, new ArrayList<>());
     assertEquals(typeString, typeFactory.createSqlType(SqlTypeName.VARCHAR, 2000));
@@ -85,23 +85,24 @@ class NowTest {
     SqrlTimeRoundingFunction roundToYear = new SqrlTimeRoundingFunction("ROUND_TO_YEAR",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToYear", Instant.class)));
 
+    RelDataType TZ = typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3);
     RelDataType typeSecond = roundToSecond.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeSecond, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+    assertEquals(typeSecond, TZ);
 
     RelDataType typeMinute = roundToMinute.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeMinute, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+    assertEquals(typeMinute, TZ);
 
     RelDataType typeHour = roundToHour.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeHour, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+    assertEquals(typeHour, TZ);
 
     RelDataType typeDay = roundToDay.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeDay, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+    assertEquals(typeDay, TZ);
 
     RelDataType typeMonth = roundToMonth.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeMonth, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+    assertEquals(typeMonth, TZ);
 
     RelDataType typeYear = roundToYear.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeYear, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+    assertEquals(typeYear, TZ);
   }
 
   @Test
@@ -158,9 +159,9 @@ class NowTest {
     AtZoneFunction atZone = new AtZoneFunction();
 
     RelDataType typeUTC = toUtc.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeUTC, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+    assertEquals(typeUTC, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
 
     RelDataType typeZone = atZone.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeZone, typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3));
+    assertEquals(typeZone, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
   }
 }

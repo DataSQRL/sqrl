@@ -12,6 +12,13 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 
 public class TranspilerFactory {
+  static final SqlValidator.Config config = SqlValidator.Config.DEFAULT
+      .withSqlConformance(SqrlConformance.INSTANCE)
+      .withCallRewrite(true)
+      .withIdentifierExpansion(false)
+      .withColumnReferenceExpansion(false)
+      .withTypeCoercionEnabled(false)
+      .withLenientOperatorLookup(false);
 
   public static SqrlValidatorImpl createSqrlValidator(CalciteSchema schema) {
     Properties p = new Properties();
@@ -22,12 +29,8 @@ public class TranspilerFactory {
             new CalciteConnectionConfigImpl(p).set(CalciteConnectionProperty.CASE_SENSITIVE,
                 "false")),
         new SqrlTypeFactory(new SqrlTypeSystem()),
-        SqlValidator.Config.DEFAULT.withSqlConformance(SqrlConformance.INSTANCE)
-            .withCallRewrite(true)
-            .withIdentifierExpansion(false)
-            .withColumnReferenceExpansion(false)
-            .withTypeCoercionEnabled(false)
-            .withLenientOperatorLookup(true));
+        config
+        );
     return validator;
   }
 
@@ -38,12 +41,7 @@ public class TranspilerFactory {
             new CalciteConnectionConfigImpl(new Properties()).set(CalciteConnectionProperty.CASE_SENSITIVE,
                 "false")),
         new SqrlTypeFactory(new SqrlTypeSystem()),
-        SqlValidator.Config.DEFAULT.withSqlConformance(SqrlConformance.INSTANCE)
-            .withCallRewrite(true)
-            .withIdentifierExpansion(false)
-            .withColumnReferenceExpansion(false)
-            .withTypeCoercionEnabled(false)
-            .withLenientOperatorLookup(true));
+        config);
 
     return validator;
   }

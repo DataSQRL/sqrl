@@ -28,3 +28,13 @@ Droid.friend :=
 -- Droid.friendConnection := JOIN _.friend;
 
 -- Human.starships := JOIN Starship s ON s.pilots.name = _.name;
+
+Episode.hero :=
+  JOIN Character AS c ON true;
+
+hero(episode: String) :=
+  JOIN Episode AS e ON e.name = :episode
+  JOIN e.hero;
+
+search(text: String) :=
+  JOIN Human AS h ON h.name = :text;

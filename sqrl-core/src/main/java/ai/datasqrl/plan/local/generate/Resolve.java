@@ -300,11 +300,7 @@ public class Resolve {
     SqlSelect select =
       op.query instanceof SqlSelect ? (SqlSelect) op.query : (SqlSelect) ((SqlOrderBy)
           op.query).query;
-    try {
-      transpile.rewriteQuery(select, sqrlValidator.getSelectScope(select));
-    } catch (Exception e) {
-      System.out.println(select);
-    }
+    transpile.rewriteQuery(select, sqrlValidator.getSelectScope(select));
 
     validateSql(env, op);
   }

@@ -2,12 +2,12 @@ package ai.datasqrl.graphql;
 
 import static graphql.schema.FieldCoordinates.coordinates;
 
-import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.SQRLTable;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.ScalarTypeDefinition;
+import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.schema.DataFetcher;
 import graphql.schema.GraphQLCodeRegistry;
@@ -44,8 +44,7 @@ public class SchemaAnalyzer {
 
     processScalars(schema.scalars());
 
-    processQuery(queryDef);
-    System.out.printf("");
+    processQuery(schema, queryDef);
 
 //    Preconditions.checkState(schema.getMutationType() == null);
 //    processDirectives(schema.getSchemaDirectives());
@@ -54,20 +53,25 @@ public class SchemaAnalyzer {
 
   }
 
-  private void processQuery(ObjectTypeDefinition queryDef) {
+  private void processQuery(TypeDefinitionRegistry schema, ObjectTypeDefinition queryDef) {
     for (FieldDefinition fieldDefinition : queryDef.getFieldDefinitions()) {
-      SQRLTable table = (SQRLTable)env.getSqrlSchema().plus().getTable(queryDef.getName());
-      SchemaContext context = createContext("Query", table);
-      resolveField(fieldDefinition, context);
+      Optional<SQRLTable> tableOpt = Optional.ofNullable((SQRLTable)env.getSqrlSchema()
+          .getTable(fieldDefinition.getName(), false).getTable());
+      SQRLTable table = tableOpt
+          .orElseThrow(()->new RuntimeException("Could not find table: " +fieldDefinition));
+      SchemaContext context = createContext("Query", schema, table);
+      resolveRootField(fieldDefinition, context);
     }
   }
 
-  private void resolveField(FieldDefinition fieldDefinition, SchemaContext context) {
-    System.out.println(fieldDefinition);
+  private void resolveRootField(FieldDefinition fieldDefinition, SchemaContext context) {
+    Type type = fieldDefinition.getType();
+    TypeDefinition typeDef = context.schema.getType(type).get();
+    System.out.println(typeDef);
   }
 
-  private SchemaContext createContext(String typeName, SQRLTable table) {
-    return new SchemaContext(typeName, table);
+  private SchemaContext createContext(String typeName, TypeDefinitionRegistry schema, SQRLTable table) {
+    return new SchemaContext(typeName, schema, table);
   }
 
   private void processScalars(Map<String, ScalarTypeDefinition> scalars) {
@@ -100,6 +104,7 @@ public class SchemaAnalyzer {
   @Value
   private class SchemaContext {
     String typeName;
+    TypeDefinitionRegistry schema;
     SQRLTable table;
   }
 }

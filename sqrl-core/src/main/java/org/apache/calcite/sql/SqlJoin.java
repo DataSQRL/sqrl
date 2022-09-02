@@ -229,6 +229,9 @@ public class SqlJoin extends SqlCall {
         case TEMPORAL:
         writer.sep(join.isNatural() ? "NATURAL TEMPORAL JOIN" : "TEMPORAL JOIN");
         break;
+        case INTERVAL:
+        writer.sep(join.isNatural() ? "NATURAL INTERVAL JOIN" : "INTERVAL JOIN");
+        break;
       default:
         throw Util.unexpected(join.getJoinType());
       }

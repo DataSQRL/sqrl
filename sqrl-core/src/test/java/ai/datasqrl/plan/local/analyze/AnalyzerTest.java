@@ -18,14 +18,12 @@ import java.io.IOException;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.parser.SqlParser;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-@Disabled
 class AnalyzerTest extends AbstractSQRLIT {
 
   ConfiguredSqrlParser parser;
@@ -85,21 +83,25 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void importAllTest() {
     generate(parser.parse("IMPORT ecommerce-data.*;"));
   }
 
   @Test
+  @Disabled
   public void importAllWithAliasTest() {
     generate(parser.parse("IMPORT ecommerce-data.* AS ecommerce;"));
   }
 
   @Test
+  @Disabled
   public void importWithTimestamp() {
     generate(parser.parse("IMPORT ecommerce-data.Product TIMESTAMP uuid;"));
   }
 
   @Test
+  @Disabled
   public void invalidImportDuplicateAliasTest() {
     generateInvalid(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -148,6 +150,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void fullyQualifiedQueryName() {
     generate(parser.parse(
         "IMPORT ecommerce-data;\n"
@@ -155,6 +158,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void invalidShadowRelationshipTest() {
     generateInvalid(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -163,6 +167,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void testJoinDeclaration() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -171,6 +176,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void testOrderedJoinDeclaration() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -185,11 +191,12 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
   @Test
   public void joinDeclarationOnRootTet() {
-    generateInvalid(parser.parse("IMPORT ecommerce-data.Product;\n"
+    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := JOIN Product;"));
   }
 
   @Test
+  @Disabled
   public void invalidExpressionAssignmentOnRelationshipTest() {
     generateInvalid(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
@@ -204,6 +211,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void invalidShadowJoinDeclarationTest() {
     generateInvalid(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
@@ -218,6 +226,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void inlinePathTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
@@ -225,6 +234,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void parentTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
@@ -258,6 +268,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void subQueryExpressionTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
@@ -287,18 +298,21 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void unionTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product2 := SELECT * FROM Product UNION SELECT * FROM Product;"));
+        + "Product2 := SELECT * FROM Product UNION DISTINCT SELECT * FROM Product;"));
   }
 
   @Test
+  @Disabled
   public void unionAllTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT * FROM Product UNION ALL SELECT * FROM Product;"));
   }
 
   @Test
+  @Disabled
   public void distinctStarTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -312,7 +326,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void localAggregateExpressionTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -340,6 +354,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void localAggregateInQueryTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product"
@@ -363,6 +378,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void localAggregateCountStarTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product"
@@ -383,7 +399,7 @@ class AnalyzerTest extends AbstractSQRLIT {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = "
         + "Product.productid LIMIT 1;\n"
-        + "Product.total := MIN(joinDeclaration.productid, 1000);\n"));
+        + "Product.total := COALESCE(joinDeclaration.productid, 1000);\n"));
   }
 
   @Test
@@ -404,6 +420,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void inlinePathMultiplicityTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON true LIMIT 1;\n"
@@ -412,6 +429,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void distinctOnTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -419,6 +437,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void nestedLocalDistinctTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -439,6 +458,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void uniqueOrderByTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT * FROM Product ORDER BY productid / 10;"
@@ -466,6 +486,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void queryAsExpressionSameNamedTest4() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -474,7 +495,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void queryTableFunctionTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -492,11 +513,11 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void expressionTableFunctionTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.example(text: Int) := COALESCE(name, :text);\n"));
+            + "Product.example(text: Int) := COALESCE(name, CAST('false' AS BOOLEAN));\n"));
   }
 
   @Test
@@ -513,6 +534,32 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void invalidAliasJoinOrder() {
     generateInvalid(parser.parse("IMPORT ecommerce-data.Orders;"
         + "X := SELECT * From Orders o JOIN o;"));
+  }
+
+  @Test
+  @Disabled
+  public void intervalJoinTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Orders;"
+            + "IMPORT ecommerce-data.Product;"
+        + "X := SELECT * FROM Product AS p "
+            + " INTERVAL JOIN Orders AS o "
+            + "  ON true;"
+    ));
+  }
+
+  @Test
+  @Disabled
+  public void castTest() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT CAST(1 AS String) From Orders;"));
+  }
+
+  @Test
+  @Disabled
+  public void castExpression() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "Orders.x := CAST(1 AS String);"));
   }
 
   @Test
