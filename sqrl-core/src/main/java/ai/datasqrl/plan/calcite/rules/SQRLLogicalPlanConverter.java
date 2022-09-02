@@ -1,7 +1,5 @@
 package ai.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.plan.calcite.hints.ExplicitInnerJoinTypeHint;
-import ai.datasqrl.plan.calcite.hints.SqrlHint;
 import ai.datasqrl.plan.calcite.hints.TimeAggregationHint;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.*;
@@ -28,11 +26,13 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.ImmutableBitSet;
+import org.apache.calcite.util.mapping.IntPair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -405,78 +405,116 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
     public RelNode visit(LogicalJoin logicalJoin) {
         ProcessedRel leftInput = getRelHolder(logicalJoin.getLeft().accept(this));
         ProcessedRel rightInput = getRelHolder(logicalJoin.getRight().accept(this));
+        JoinRelType joinType = logicalJoin.getJoinType();
 
-        Preconditions.checkArgument(logicalJoin.getJoinType() == JoinRelType.INNER, "Unsupported join type: %s", logicalJoin);
-        Optional<ExplicitInnerJoinTypeHint> joinTypeHint = SqrlHint.fromRel(logicalJoin, ExplicitInnerJoinTypeHint.CONSTRUCTOR);
 
         ContinuousIndexMap joinedIndexMap = leftInput.indexMap.join(rightInput.indexMap);
         RexNode condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(),joinedIndexMap);
-
-        //Detect temporal join
-
-        //Detect interval join
+        SqrlRexUtil.EqualityComparisonDecomposition eqDecomp = rexUtil.decomposeEqualityComparison(condition);
 
         //Identify if this is an identical self-join for a nested tree
-        if (leftInput.joinTables!=null && rightInput.joinTables!=null && !leftInput.hasPullups() && !rightInput.hasPullups()) {
-            SqrlRexUtil.EqualityComparisonDecomposition eqDecomp = rexUtil.decomposeEqualityComparison(condition);
-            if (eqDecomp.getRemainingPredicates().isEmpty()) {
-                int leftTargetLength = leftInput.indexMap.getTargetLength();
-                Map<JoinTable, JoinTable> right2left = JoinTable.joinTreeMap(leftInput.joinTables,
-                       leftTargetLength , rightInput.joinTables, eqDecomp.getEqualities());
-                if (!right2left.isEmpty()) {
-                    //We currently expect a single path from leaf to right as a self-join
-                    Preconditions.checkArgument(JoinTable.getRoots(rightInput.joinTables).size() == 1, "Current simplifying assumption");
-                    JoinTable rightLeaf = Iterables.getOnlyElement(JoinTable.getLeafs(rightInput.joinTables));
-                    RelBuilder relBuilder = relBuilderFactory.get().push(leftInput.getRelNode());
-                    ContinuousIndexMap newPk = leftInput.primaryKey;
-                    List<JoinTable> joinTables = new ArrayList<>(leftInput.joinTables);
-                    if (!right2left.containsKey(rightLeaf)) {
-                        //Find closest ancestor that was mapped and shred from there
-                        List<JoinTable> ancestorPath = new ArrayList<>();
-                        int numAddedPks = 0;
-                        ancestorPath.add(rightLeaf);
-                        JoinTable ancestor = rightLeaf;
-                        while (!right2left.containsKey(ancestor)) {
-                            numAddedPks += ancestor.getNumLocalPk();
-                            ancestor = ancestor.parent;
-                            ancestorPath.add(ancestor);
-                        }
-                        Collections.reverse(ancestorPath); //To match the order of addedTables when shredding (i.e. from root to leaf)
-                        ContinuousIndexMap.Builder addedPk = ContinuousIndexMap.builder(newPk, numAddedPks);
-                        List<JoinTable> addedTables = new ArrayList<>();
-                        relBuilder = shredTable(rightLeaf.table, addedPk, addedTables,
-                                Pair.of(right2left.get(ancestor),relBuilder));
-                        newPk = addedPk.build(relBuilder.peek().getRowType().getFieldCount());
-                        Preconditions.checkArgument(ancestorPath.size() == addedTables.size());
-                        for (int i = 1; i < addedTables.size(); i++) { //First table is the already mapped root ancestor
-                            joinTables.add(addedTables.get(i));
-                            right2left.put(ancestorPath.get(i), addedTables.get(i));
-                        }
+        if ((joinType==JoinRelType.DEFAULT || joinType==JoinRelType.INNER) && leftInput.joinTables!=null && rightInput.joinTables!=null
+                && !leftInput.hasPullups() && !rightInput.hasPullups() && eqDecomp.getRemainingPredicates().isEmpty()) {
+            //Determine if we can map the tables from both branches of the join onto each-other
+            int leftTargetLength = leftInput.indexMap.getTargetLength();
+            Map<JoinTable, JoinTable> right2left = JoinTable.joinTreeMap(leftInput.joinTables,
+                    leftTargetLength , rightInput.joinTables, eqDecomp.getEqualities());
+            if (!right2left.isEmpty()) {
+                //We currently expect a single path from leaf to right as a self-join
+                Preconditions.checkArgument(JoinTable.getRoots(rightInput.joinTables).size() == 1, "Current simplifying assumption");
+                JoinTable rightLeaf = Iterables.getOnlyElement(JoinTable.getLeafs(rightInput.joinTables));
+                RelBuilder relBuilder = relBuilderFactory.get().push(leftInput.getRelNode());
+                ContinuousIndexMap newPk = leftInput.primaryKey;
+                List<JoinTable> joinTables = new ArrayList<>(leftInput.joinTables);
+                if (!right2left.containsKey(rightLeaf)) {
+                    //Find closest ancestor that was mapped and shred from there
+                    List<JoinTable> ancestorPath = new ArrayList<>();
+                    int numAddedPks = 0;
+                    ancestorPath.add(rightLeaf);
+                    JoinTable ancestor = rightLeaf;
+                    while (!right2left.containsKey(ancestor)) {
+                        numAddedPks += ancestor.getNumLocalPk();
+                        ancestor = ancestor.parent;
+                        ancestorPath.add(ancestor);
                     }
-                    RelNode relNode = relBuilder.build();
-                    //Update indexMap based on the mapping of join tables
-                    ContinuousIndexMap remapedRight = rightInput.indexMap.remap(relNode.getRowType().getFieldCount(),
-                            index -> {
-                                JoinTable jt = JoinTable.find(rightInput.joinTables,index).get();
-                                return right2left.get(jt).getGlobalIndex(jt.getLocalIndex(index));
-                            });
-                    ContinuousIndexMap indexMap = leftInput.indexMap.append(remapedRight);
-                    return setRelHolder(new ProcessedRel(relNode, leftInput.type,
-                            newPk, leftInput.timestamp, indexMap, joinTables, NowFilter.EMPTY, TopNConstraint.EMPTY));
-
+                    Collections.reverse(ancestorPath); //To match the order of addedTables when shredding (i.e. from root to leaf)
+                    ContinuousIndexMap.Builder addedPk = ContinuousIndexMap.builder(newPk, numAddedPks);
+                    List<JoinTable> addedTables = new ArrayList<>();
+                    relBuilder = shredTable(rightLeaf.table, addedPk, addedTables,
+                            Pair.of(right2left.get(ancestor),relBuilder));
+                    newPk = addedPk.build(relBuilder.peek().getRowType().getFieldCount());
+                    Preconditions.checkArgument(ancestorPath.size() == addedTables.size());
+                    for (int i = 1; i < addedTables.size(); i++) { //First table is the already mapped root ancestor
+                        joinTables.add(addedTables.get(i));
+                        right2left.put(ancestorPath.get(i), addedTables.get(i));
+                    }
                 }
+                RelNode relNode = relBuilder.build();
+                //Update indexMap based on the mapping of join tables
+                final ProcessedRel rightInputfinal = rightInput;
+                ContinuousIndexMap remapedRight = rightInput.indexMap.remap(relNode.getRowType().getFieldCount(),
+                        index -> {
+                            JoinTable jt = JoinTable.find(rightInputfinal.joinTables,index).get();
+                            return right2left.get(jt).getGlobalIndex(jt.getLocalIndex(index));
+                        });
+                ContinuousIndexMap indexMap = leftInput.indexMap.append(remapedRight);
+                return setRelHolder(new ProcessedRel(relNode, leftInput.type,
+                        newPk, leftInput.timestamp, indexMap, joinTables, NowFilter.EMPTY, TopNConstraint.EMPTY));
+
             }
         }
 
-
-        //Default inner join creates a state table
-        ProcessedRel leftInputTopN = leftInput.inlineTopN();
-        ProcessedRel rightInputTopN = rightInput.inlineTopN();
+        final ProcessedRel leftInputF = leftInput.inlinePullups();
+        final ProcessedRel rightInputF = rightInput.inlinePullups();
         RelBuilder relB = relBuilderFactory.get();
-        RelNode newJoin = relB.push(leftInputTopN.relNode).push(rightInputTopN.getRelNode())
+
+        //Detect temporal join
+        if (joinType==JoinRelType.DEFAULT || joinType==JoinRelType.TEMPORAL) {
+            if ((leftInputF.type==TableType.STREAM && rightInputF.type==TableType.TEMPORAL_STATE) ||
+                    (rightInputF.type==TableType.STREAM && leftInputF.type==TableType.TEMPORAL_STATE)) {
+                //Check for primary keys equalities on the state-side of the join
+                final Function<IntPair,Integer> pkAccess;
+                final ContinuousIndexMap pk;
+                if (rightInputF.type==TableType.TEMPORAL_STATE) {
+                    pkAccess = (p -> p.target);
+                    pk = rightInputF.primaryKey;
+                } else {
+                    pkAccess = (p -> p.source);
+                    pk = leftInputF.primaryKey;
+                }
+                Set<Integer> pkIndexes = pk.getMapping().map(p-> p.getTarget()).collect(Collectors.toSet());
+                Set<Integer> pkEqualities = eqDecomp.getEqualities().stream().map(pkAccess).collect(Collectors.toSet());
+                if (pkIndexes.equals(pkEqualities) && eqDecomp.getRemainingPredicates().isEmpty()) {
+                    joinType = JoinRelType.TEMPORAL;
+                    //Construct temporal correlate join
+                    return null;
+                } else if (joinType==JoinRelType.TEMPORAL) {
+                    throw new IllegalArgumentException("Expected join condition to be equality condition on state's primary key: " + logicalJoin);
+                }
+            } else if (joinType==JoinRelType.TEMPORAL) {
+                throw new IllegalArgumentException("Expect one side of the join to be stream and the other temporal state: " + logicalJoin);
+            }
+
+        }
+
+        //Detect interval join
+        if (joinType==JoinRelType.DEFAULT || joinType ==JoinRelType.INNER /*|| joinType==JoinRelType.INTERVAL*/) {
+            if (leftInputF.type==TableType.STREAM && rightInputF.type==TableType.STREAM) {
+
+            }
+        }
+
+        //If we don't detect a special time-based join, a DEFAULT join is an INNER join
+        if (joinType==JoinRelType.DEFAULT) {
+            joinType = JoinRelType.INNER;
+        }
+
+        Preconditions.checkArgument(joinType == JoinRelType.INNER, "Unsupported join type: %s", logicalJoin);
+        //Default inner join creates a state table
+        RelNode newJoin = relB.push(leftInputF.relNode).push(rightInputF.getRelNode())
                 .join(JoinRelType.INNER, condition).build();
-        ContinuousIndexMap.Builder concatPk = ContinuousIndexMap.builder(leftInput.primaryKey,rightInput.primaryKey.getSourceLength());
-        concatPk.addAll(rightInput.primaryKey.remap(joinedIndexMap.getTargetLength(), idx -> idx + leftInput.indexMap.getTargetLength()));
+        ContinuousIndexMap.Builder concatPk = ContinuousIndexMap.builder(leftInputF.primaryKey,rightInputF.primaryKey.getSourceLength());
+        concatPk.addAll(rightInputF.primaryKey.remap(joinedIndexMap.getTargetLength(), idx -> idx + leftInputF.indexMap.getTargetLength()));
         return setRelHolder(new ProcessedRel(newJoin, TableType.STATE,
                 concatPk.build(joinedIndexMap.getTargetLength()), TimestampHolder.Derived.NONE,
                 joinedIndexMap, null, NowFilter.EMPTY, TopNConstraint.EMPTY));
