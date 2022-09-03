@@ -328,12 +328,40 @@ class AnalyzerTest extends AbstractSQRLIT {
     RexCall call = (RexCall)project.getNamedProjects().get(0).left;
     RexLiteral rexLiteral = (RexLiteral)call.getOperands().get(1);
     assertTrue(rexLiteral.getValue() instanceof BigDecimal);
-    assertEquals(((BigDecimal)rexLiteral.getValue()), BigDecimal.valueOf(2));
+    assertEquals(BigDecimal.valueOf(24), rexLiteral.getValue());
     assertTrue(rexLiteral.getType() instanceof IntervalSqlType);
     assertEquals(
-        rexLiteral.getType().getIntervalQualifier().getUnit(),
-        TimeUnit.YEAR);
+        TimeUnit.MONTH,
+        rexLiteral.getType().getIntervalQualifier().getUnit());
+  }
 
+  @Test
+  public void intervalSecondTest() {
+    Env env = generate(parser.parse("IMPORT ecommerce-data.Product;\n"
+        + "Product2 := SELECT _ingest_time + INTERVAL 2 HOUR AS x FROM Product;"));
+    LogicalProject project = (LogicalProject)env.getOps().get(0).getRelNode();
+    RexCall call = (RexCall)project.getNamedProjects().get(0).left;
+    RexLiteral rexLiteral = (RexLiteral)call.getOperands().get(1);
+    assertTrue(rexLiteral.getValue() instanceof BigDecimal);
+    assertEquals(BigDecimal.valueOf(7200000), rexLiteral.getValue());
+    assertTrue(rexLiteral.getType() instanceof IntervalSqlType);
+    assertEquals(TimeUnit.SECOND,
+        rexLiteral.getType().getIntervalQualifier().getUnit());
+  }
+
+
+  @Test
+  public void intervalSecondTest2() {
+    Env env = generate(parser.parse("IMPORT ecommerce-data.Product;\n"
+        + "Product2 := SELECT _ingest_time + INTERVAL 120 SECOND AS x FROM Product;"));
+    LogicalProject project = (LogicalProject)env.getOps().get(0).getRelNode();
+    RexCall call = (RexCall)project.getNamedProjects().get(0).left;
+    RexLiteral rexLiteral = (RexLiteral)call.getOperands().get(1);
+    assertTrue(rexLiteral.getValue() instanceof BigDecimal);
+    assertEquals(BigDecimal.valueOf(120000), rexLiteral.getValue());
+    assertTrue(rexLiteral.getType() instanceof IntervalSqlType);
+    assertEquals(TimeUnit.SECOND,
+        rexLiteral.getType().getIntervalQualifier().getUnit());
   }
 
   @Test

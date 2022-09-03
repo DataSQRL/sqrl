@@ -243,7 +243,6 @@ intervalField
 
 type
     : baseType ('(' typeParameter (',' typeParameter)* ')')?
-    | INTERVAL from=intervalField TO to=intervalField
     ;
 
 typeParameter

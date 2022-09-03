@@ -23,6 +23,8 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.schema.TableFunctionArgument;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -40,6 +42,8 @@ import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.util.Util;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.util.Strings;
 
@@ -887,11 +891,49 @@ class AstBuilder
     int sign = Optional.ofNullable(context.sign)
         .map(AstBuilder::getIntervalSign)
         .orElse(1);
-    SqlNode expr = visit(context.number());
+    SqlLiteral expr = (SqlLiteral)visit(context.number());
     TimeUnit timeUnit = getIntervalFieldType(
         (Token) context.intervalField().getChild(0).getPayload());
+    //YEAR | MONTH | WEEK | DAY | HOUR | MINUTE | SECOND
+    //Calcite adjusts dates to either months or milliseconds, otherwise it produces invalid semantics
+    // However, there is no SqlTypeName.INTERVAL_MILLISECOND so we use seconds, even though
+    // it gets converted to milliseconds when it gets converted to a relation
+
+    switch (timeUnit) {
+      case DECADE:
+      case CENTURY:
+      case MILLENNIUM:
+      case YEAR:
+      case MONTH:
+        BigDecimal newValue = expr.bigDecimalValue()
+            .multiply(timeUnit.multiplier);
+        expr = SqlLiteral.createExactNumeric(newValue.toString(), expr.getParserPosition());
+        timeUnit = TimeUnit.MONTH;
+        break;
+      case DAY:
+      case HOUR:
+      case MINUTE:
+      case SECOND:
+      case QUARTER:
+      case ISOYEAR:
+      case WEEK:
+      case MILLISECOND:
+      case MICROSECOND:
+      case NANOSECOND:
+      case DOW:
+      case ISODOW:
+      case DOY:
+      case EPOCH:
+        BigDecimal newValue2 = expr.bigDecimalValue()
+            .multiply(timeUnit.multiplier)
+            .divide(BigDecimal.valueOf(1000));
+        expr = SqlLiteral.createExactNumeric(newValue2.toString(), expr.getParserPosition());
+        timeUnit = TimeUnit.SECOND;
+      //normalized in sqltorel convert to seconds
+    }
+
     return SqlLiteral.createInterval(sign,
-        expr.toString(),
+        expr.toValue(),
         new SqlIntervalQualifier(timeUnit, null, getLocation(context.intervalField())),
         getLocation(context)
     );
