@@ -16,28 +16,25 @@ import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.List;
 import org.apache.calcite.linq4j.tree.Types;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.junit.jupiter.api.Test;
 
-class TimeLibraryTest {
-
-  static final SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
+class NowTest {
 
   @Test
   public void test() {
     Now now = new Now();
-
+    SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
     RelDataType type = now.inferReturnType(typeFactory, new ArrayList<>());
     assertEquals(type, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 0));
   }
   @Test
   public void myFunctionTest() {
     SqlMyFunction myFunction = new SqlMyFunction();
-
+    SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
     RelDataType type = myFunction.inferReturnType(typeFactory, new ArrayList<>());
     // precision scale arg breaks test, removed for now
     assertEquals(type, typeFactory.createSqlType(SqlTypeName.BIGINT));
@@ -48,7 +45,7 @@ class TimeLibraryTest {
     NumToTimestampFunction numToTimestamp = new NumToTimestampFunction();
     TimestampToEpochFunction timestampToEpoch = new TimestampToEpochFunction();
 
-
+    SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
 
     RelDataType typeTS = numToTimestamp.inferReturnType(typeFactory, new ArrayList<>());
     assertEquals(typeTS, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
@@ -59,7 +56,7 @@ class TimeLibraryTest {
 
   @Test
   public void StringTSConversionTest() {
-
+    SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
 
     StringToTimestampFunction stringToTimestamp = new StringToTimestampFunction();
     TimestampToStringFunction timestampToString = new TimestampToStringFunction();
@@ -73,7 +70,7 @@ class TimeLibraryTest {
 
   @Test
   public void RoundTest() {
-
+    SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
 
     SqrlTimeRoundingFunction roundToSecond = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)));
@@ -110,7 +107,7 @@ class TimeLibraryTest {
 
   @Test
   public void GetterTest() {
-
+    SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
 
     ExtractTimeFieldFunction getSecond = new ExtractTimeFieldFunction("GET_SECOND",
         ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getSecond", Instant.class)));
@@ -156,7 +153,7 @@ class TimeLibraryTest {
 
   @Test
   public void TZConversionTest() {
-
+    SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
 
     ToUtcFunction toUtc = new ToUtcFunction();
     AtZoneFunction atZone = new AtZoneFunction();
@@ -166,34 +163,5 @@ class TimeLibraryTest {
 
     RelDataType typeZone = atZone.inferReturnType(typeFactory, new ArrayList<>());
     assertEquals(typeZone, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
-  }
-
-  @Test
-  public void NotNullPreservationTest () {
-
-    SqrlTimeRoundingFunction roundToSecond = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)));
-
-    RelDataType TSNonNullable = typeFactory.createTypeWithNullability(
-        typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3), false);
-
-    RelDataType typeSecond = roundToSecond.inferReturnType(typeFactory, List.of(TSNonNullable));
-
-    assertEquals(typeSecond, TSNonNullable);
-  }
-
-  @Test
-  public void NullPreservationTest() {
-
-    SqrlTimeRoundingFunction roundToSecond = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)));
-
-    RelDataType TSNullable = typeFactory.createTypeWithNullability(
-        typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3), true);
-
-    RelDataType typeSecond = roundToSecond.inferReturnType(typeFactory, List.of(TSNullable));
-
-    assertEquals(typeSecond, TSNullable);
-
   }
 }
