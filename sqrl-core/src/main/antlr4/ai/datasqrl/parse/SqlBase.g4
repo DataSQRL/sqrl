@@ -234,7 +234,7 @@ booleanValue
     ;
 
 interval
-    : INTERVAL sign=(PLUS | MINUS)? expression intervalField
+    : INTERVAL sign=(PLUS | MINUS)? number intervalField
     ;
 
 intervalField
@@ -242,8 +242,7 @@ intervalField
     ;
 
 type
-    :  baseType ('(' typeParameter (',' typeParameter)* ')')?
-    | INTERVAL from=intervalField TO to=intervalField
+    : baseType ('(' typeParameter (',' typeParameter)* ')')?
     ;
 
 typeParameter

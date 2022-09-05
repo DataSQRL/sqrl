@@ -42,6 +42,8 @@ datasets:
         columns:
           - name: id
             type: integer
+          - name: name
+            type: string
           - name: hero
             type: string
           - name: characters

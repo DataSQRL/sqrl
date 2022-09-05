@@ -18,8 +18,10 @@ import lombok.SneakyThrows;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled
 public class FlinkTableAPIIT extends AbstractSQRLIT {
 
   @BeforeEach
