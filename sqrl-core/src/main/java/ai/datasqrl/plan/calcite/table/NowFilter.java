@@ -1,7 +1,13 @@
 package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.plan.calcite.util.IndexMap;
+import ai.datasqrl.plan.calcite.util.TimePredicate;
+import com.google.common.base.Preconditions;
 import lombok.Value;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A {@link NowFilter} represents a filter condition on a single timestamp column which requires
@@ -16,45 +22,30 @@ import lombok.Value;
  *
  */
 
-public interface NowFilter extends DatabasePullup {
+@Value
+public class NowFilter implements DatabasePullup {
 
-    NowFilter EMPTY = new NowFilter() {
+    public static final NowFilter EMPTY = new NowFilter(List.of());
 
-        @Override
-        public boolean isEmpty() {
-            return true;
-        }
+    private final List<TimePredicate> timePredicates;
 
-        @Override
-        public NowFilter remap(IndexMap map) {
-            return EMPTY;
-        }
-
-        @Override
-        public int getColumnIndex() {
-            throw new UnsupportedOperationException();
-        }
-
-    };
-
-    default boolean isEmpty() {
-        return false;
+    public NowFilter(List<TimePredicate> timePredicates) {
+        this.timePredicates = timePredicates;
+        timePredicates.forEach(tp -> Preconditions.checkArgument(tp.isNowFilter(),"Not a valid now-filter: %s",tp));
     }
 
-    NowFilter remap(IndexMap map);
+    public boolean isEmpty() {
+        return timePredicates.isEmpty();
+    }
 
-    int getColumnIndex();
+    public NowFilter remap(IndexMap map) {
+        return new NowFilter(timePredicates.stream().map(tp -> tp.remap(map)).collect(Collectors.toList()));
+    }
 
-    @Value
-    public class Impl implements NowFilter {
-
-        private final int columnIndex;
-        //private final Interval interval;
-
-        public NowFilter remap(IndexMap map) {
-            return new NowFilter.Impl(map.map(columnIndex));
-        }
-
+    public NowFilter addAll(List<TimePredicate> other) {
+        ArrayList<TimePredicate> newList = new ArrayList<>(timePredicates);
+        newList.addAll(other);
+        return new NowFilter(newList);
     }
 
 }

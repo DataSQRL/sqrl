@@ -32,6 +32,7 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -39,6 +40,8 @@ import java.util.stream.Collectors;
 
 @Value
 public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogicalPlanConverter.ProcessedRel> {
+
+    private static final long UPPER_BOUND_INTERVAL_MS = 999l*365l*24l*3600l; //999 years
 
     public final Supplier<RelBuilder> relBuilderFactory;
     public final SqrlRexUtil rexUtil;
@@ -68,7 +71,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
         public ProcessedRel inlineNowFilter() {
             if (nowFilter.isEmpty()) return this;
-            throw new UnsupportedOperationException("Not yet implemented");
+            RelBuilder relB = relBuilderFactory.get();
+            RexBuilder rexB = rexUtil.getBuilder();
+            relB.push(relNode);
+            relB.filter(nowFilter.getTimePredicates().stream()
+                    .map(tp -> tp.createRexNode(rexB,i -> rexB.makeInputRef(relB.peek(),i)))
+                    .collect(Collectors.toList()));
+            return new ProcessedRel(relB.build(),type,primaryKey,timestamp,indexMap,joinTables,NowFilter.EMPTY,topN);
         }
 
         public boolean hasPullups() {
@@ -220,15 +229,15 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             offset = base.getFieldCount();
 
             builder
-                    .values(List.of(List.of(builder.getRexBuilder().makeExactLiteral(BigDecimal.ZERO))),
+                    .values(List.of(List.of(rexUtil.getBuilder().makeExactLiteral(BigDecimal.ZERO))),
                             new RelRecordType(List.of(new RelDataTypeFieldImpl(
                                     "ZERO",
                                     0,
                                     builder.getTypeFactory().createSqlType(SqlTypeName.INTEGER)))))
                     .project(
-                            List.of(builder.getRexBuilder()
+                            List.of(rexUtil.getBuilder()
                                     .makeFieldAccess(
-                                            builder.getRexBuilder().makeCorrel(base, id),
+                                            rexUtil.getBuilder().makeCorrel(base, id),
                                             indexOfShredField)))
                     .uncollect(List.of(), false)
                     .correlate(JoinRelType.INNER, id, RexInputRef.of(indexOfShredField,  base));
@@ -276,49 +285,47 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         if (input.topN.hasLimit()) input = input.inlineTopN(); //Filtering doesn't preserve limits
         RexNode condition = logicalFilter.getCondition();
         condition = SqrlRexUtil.mapIndexes(condition,input.indexMap);
-        //Check if it has a now() predicate and pull out or throw an exception if malformed
         LogicalFilter filter;
         TimestampHolder.Derived timestamp = input.timestamp;
+        NowFilter nowFilter = input.nowFilter;
+
+        //Check if it has a now() predicate and pull out or throw an exception if malformed
         if (FIND_NOW.contains(condition)) {
-            //TODO: redo this part
-            RelBuilder builder = relBuilderFactory.get();
+            RelBuilder relB = relBuilderFactory.get();
             List<RexNode> conjunctions = rexUtil.getConjunctions(condition);
-            List<RexNode> nowConjunctions = new ArrayList<>();
-            Optional<Integer> timestampIndex = Optional.empty();
+            List<TimePredicate> timeFunctions = new ArrayList<>();
             Iterator<RexNode> iter = conjunctions.iterator();
             while (iter.hasNext()) {
-                RexNode conjunction = iter.next();
-                Optional<Integer> tsi = getRecencyFilterTimestampIndex(conjunction);
-                if (tsi.isPresent() && timestamp.isCandidate(tsi.get()) &&
-                        (timestampIndex.isEmpty() || timestampIndex.get().equals(tsi.get()))) {
-                    timestampIndex = tsi;
-                    nowConjunctions.add(condition);
-                    iter.remove();
+                RexNode conj = iter.next();
+                if (FIND_NOW.contains(conj)) {
+                    Optional<TimePredicate> tp = TimePredicate.ANALYZER.extractTimePredicate(conj, rexUtil.getBuilder(),
+                                    timestamp.isCandidatePredicate())
+                            .filter(TimePredicate::hasTimestampFunction);
+                    if (tp.isPresent() && tp.get().isNowFilter()) {
+                        timeFunctions.add(tp.get());
+                        iter.remove();
+                    } else {
+                        throw new IllegalArgumentException("Invalid timestamp function condition: " + conj);
+                    }
                 }
             }
-
-            if (timestampIndex.isPresent()) {
-                //Break out now() filter with hint and set timestamp
-                filter = logicalFilter.copy(logicalFilter.getTraitSet(),logicalFilter.getInput(), RexUtil.composeConjunction(builder.getRexBuilder(), conjunctions));
-                filter = logicalFilter.copy(logicalFilter.getTraitSet(),filter,RexUtil.composeConjunction(builder.getRexBuilder(), nowConjunctions));
-                //TODO: upgrade Calcite to make this possible
-                //filter = filter.withHints(List.of(SqrlHints.recencyFilter()));
-                timestamp = timestamp.fixTimestamp(timestampIndex.get());
-            } else {
-                throw new IllegalArgumentException("");
+            assert !timeFunctions.isEmpty();
+            List<Integer> timestampIndexes = timeFunctions.stream().flatMap(tf -> tf.getIndexes().stream()).filter(i -> i < 0)
+                    .collect(Collectors.toList());
+            for (int ti : timestampIndexes) {
+                Preconditions.checkArgument(timestamp.isCandidate(ti),"Not a valid timestamp column: %s",ti);
             }
+            Preconditions.checkArgument(timestampIndexes.size() == 1, "Cannot reference multiple timestamp columns in now() conditions: %s", timestampIndexes);
+            int timestampIdx = Iterables.getOnlyElement(timestampIndexes);
+            timestamp = timestamp.fixTimestamp(timestampIdx);
+            filter = logicalFilter.copy(logicalFilter.getTraitSet(),logicalFilter.getInput(), RexUtil.composeConjunction(rexUtil.getBuilder(), conjunctions));
+            nowFilter.addAll(timeFunctions);
         } else {
             filter = logicalFilter.copy(logicalFilter.getTraitSet(),logicalFilter.getInput(),condition);
         }
         return setRelHolder(new ProcessedRel(filter,input.type,input.primaryKey,
-                timestamp,input.indexMap,input.joinTables, input.nowFilter, input.topN));
+                timestamp,input.indexMap,input.joinTables, nowFilter, input.topN));
     }
-
-    private static Optional<Integer> getRecencyFilterTimestampIndex(RexNode condition) {
-        //TODO: implement, reuse Flink code to determine interval
-        return Optional.empty();
-    }
-
 
     @Override
     public RelNode visit(LogicalProject logicalProject) {
@@ -410,7 +417,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
         ContinuousIndexMap joinedIndexMap = leftInput.indexMap.join(rightInput.indexMap);
         RexNode condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(),joinedIndexMap);
+        //TODO: pull now() conditions up as a nowFilter and move nested now filters through
+        Preconditions.checkArgument(!FIND_NOW.contains(condition),"now() is not allowed in join conditions");
         SqrlRexUtil.EqualityComparisonDecomposition eqDecomp = rexUtil.decomposeEqualityComparison(condition);
+
+        int leftSideMaxIdx = leftInput.indexMap.getTargetLength();
 
         //Identify if this is an identical self-join for a nested tree
         if ((joinType==JoinRelType.DEFAULT || joinType==JoinRelType.INNER) && leftInput.joinTables!=null && rightInput.joinTables!=null
@@ -464,9 +475,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             }
         }
 
+        //TODO: pull now filters through
         final ProcessedRel leftInputF = leftInput.inlinePullups();
         final ProcessedRel rightInputF = rightInput.inlinePullups();
         RelBuilder relB = relBuilderFactory.get();
+        relB.push(leftInputF.relNode); relB.push(rightInputF.relNode);
 
         //Detect temporal join
         if (joinType==JoinRelType.DEFAULT || joinType==JoinRelType.TEMPORAL) {
@@ -497,10 +510,58 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
         }
 
-        //Detect interval join
-        if (joinType==JoinRelType.DEFAULT || joinType ==JoinRelType.INNER /*|| joinType==JoinRelType.INTERVAL*/) {
-            if (leftInputF.type==TableType.STREAM && rightInputF.type==TableType.STREAM) {
+        ContinuousIndexMap.Builder concatPkBuilder = ContinuousIndexMap.builder(leftInputF.primaryKey,rightInputF.primaryKey.getSourceLength());
+        concatPkBuilder.addAll(rightInputF.primaryKey.remap(joinedIndexMap.getTargetLength(), idx -> idx + leftInputF.indexMap.getTargetLength()));
+        ContinuousIndexMap concatPk = concatPkBuilder.build(joinedIndexMap.getTargetLength());
 
+        //Detect interval join
+        if (joinType==JoinRelType.DEFAULT || joinType ==JoinRelType.INNER || joinType==JoinRelType.INTERVAL) {
+            if (leftInputF.type==TableType.STREAM && rightInputF.type==TableType.STREAM) {
+                //Validate that the join condition includes time bounds on both sides
+                List<RexNode> conjunctions = rexUtil.getConjunctions(condition);
+                Predicate<Integer> isTimestampColumn = idx -> idx<leftSideMaxIdx?leftInputF.timestamp.isCandidate(idx):
+                                                                                rightInputF.timestamp.isCandidate(idx-leftSideMaxIdx);
+                List<TimePredicate> timePredicates = conjunctions.stream().map(rex ->
+                                TimePredicate.ANALYZER.extractTimePredicate(rex, rexUtil.getBuilder(),isTimestampColumn))
+                        .flatMap(tp -> tp.stream()).filter(tp -> !tp.hasTimestampFunction())
+                        //making sure predicate contains columns from both sides of the join
+                        .filter(tp -> (tp.getSmallerIndex() < leftSideMaxIdx) ^ (tp.getLargerIndex() < leftSideMaxIdx))
+                        .collect(Collectors.toList());
+                if (!timePredicates.isEmpty()) {
+                    Set<Integer> timestampIndexes = timePredicates.stream().flatMap(tp -> tp.getIndexes().stream()).collect(Collectors.toSet());
+                    Preconditions.checkArgument(timestampIndexes.size() == 2, "Invalid interval condition - more than 2 timestamp columns: %s", condition);
+                    Preconditions.checkArgument(timePredicates.stream().filter(TimePredicate::isUpperBound).count() == 1,
+                            "Expected exactly one upper bound time predicate, but got: %s", condition);
+                    int upperBoundTimestampIndex = timePredicates.stream().filter(TimePredicate::isUpperBound)
+                            .findFirst().get().getLargerIndex();
+                    TimestampHolder.Derived joinTimestamp = null;
+                    //Lock in timestamp candidates for both sides and propagate timestamp
+                    for (int tidx : timestampIndexes) {
+                        TimestampHolder.Derived newTimestamp = apply2JoinSide(tidx, leftSideMaxIdx, leftInputF, rightInputF,
+                                (prel, idx) -> prel.timestamp.fixTimestamp(idx, tidx));
+                        if (tidx == upperBoundTimestampIndex) joinTimestamp = newTimestamp;
+                    }
+                    assert joinTimestamp != null;
+
+                    if (timePredicates.size() == 1 && !timePredicates.get(0).isEquality()) {
+                        //We only have an upper bound, add (very loose) bound in other direction - Flink requires this
+                        conjunctions = new ArrayList<>(conjunctions);
+                        final RexNode findInCondition = condition;
+                        conjunctions.add(Iterables.getOnlyElement(timePredicates)
+                                .inverseWithInterval(UPPER_BOUND_INTERVAL_MS).createRexNode(rexUtil.getBuilder(),
+                                        idx -> SqrlRexUtil.findRexInputRefByIndex(idx).find(findInCondition).get()));
+                        condition = RexUtil.composeConjunction(rexUtil.getBuilder(), conjunctions);
+                    }
+                    joinType = JoinRelType.INTERVAL;
+                    relB.join(joinType, condition);
+                    return setRelHolder(new ProcessedRel(relB.build(), TableType.STREAM,
+                            concatPk, joinTimestamp, joinedIndexMap,
+                            null, NowFilter.EMPTY, TopNConstraint.EMPTY));
+                } else if (joinType==JoinRelType.INTERVAL) {
+                    throw new IllegalArgumentException("Interval joins require time bounds in the join condition: " + logicalJoin);
+                }
+            } else if (joinType==JoinRelType.INTERVAL) {
+                throw new IllegalArgumentException("Interval joins are only supported between two streams: " + logicalJoin);
             }
         }
 
@@ -513,11 +574,20 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         //Default inner join creates a state table
         RelNode newJoin = relB.push(leftInputF.relNode).push(rightInputF.getRelNode())
                 .join(JoinRelType.INNER, condition).build();
-        ContinuousIndexMap.Builder concatPk = ContinuousIndexMap.builder(leftInputF.primaryKey,rightInputF.primaryKey.getSourceLength());
-        concatPk.addAll(rightInputF.primaryKey.remap(joinedIndexMap.getTargetLength(), idx -> idx + leftInputF.indexMap.getTargetLength()));
         return setRelHolder(new ProcessedRel(newJoin, TableType.STATE,
-                concatPk.build(joinedIndexMap.getTargetLength()), TimestampHolder.Derived.NONE,
-                joinedIndexMap, null, NowFilter.EMPTY, TopNConstraint.EMPTY));
+                concatPk, TimestampHolder.Derived.NONE, joinedIndexMap,
+                null, NowFilter.EMPTY, TopNConstraint.EMPTY));
+    }
+
+    private static<T,R> R apply2JoinSide(int joinIndex, int leftSideMaxIdx, T left, T right, BiFunction<T,Integer,R> function) {
+        int idx;
+        if (joinIndex>=leftSideMaxIdx) {
+            idx = joinIndex-leftSideMaxIdx;
+            return function.apply(right,idx);
+        } else {
+            idx = joinIndex;
+            return function.apply(left,idx);
+        }
     }
 
     @Override
@@ -623,7 +693,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             //Add aggregate functions
             for (int i = 0; i < aggregateCalls.size(); i++) {
                 AggregateCall call = aggregateCalls.get(i);
-                RexNode agg = relB.getRexBuilder().makeOver(call.getType(),call.getAggregation(),
+                RexNode agg = rexUtil.getBuilder().makeOver(call.getType(),call.getAggregation(),
                         call.getArgList().stream()
                                 .map(idx -> RexInputRef.of(idx,inputRel.getRowType()))
                                 .collect(Collectors.toList()),

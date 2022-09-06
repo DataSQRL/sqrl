@@ -13,16 +13,10 @@ import ai.datasqrl.plan.calcite.table.TableType;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.data.C360;
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.sql.QueryAssignment;
 import org.apache.calcite.sql.ScriptNode;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.parser.SqlParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -79,12 +73,20 @@ class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void tableJoinTest() {
     StringBuilder builder = imports();
     builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
     process(builder.toString());
     validateQueryTable("ordercustomer", TableType.STATE,5, 2); //numCols = 3 selected cols + 2 uuid cols for pk
+  }
+
+  @Test
+  public void tableIntervalJoinTest() {
+    StringBuilder builder = imports();
+    builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o INTERVAL JOIN Customer c on o.customerid = c.customerid "+
+            "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH;");
+    process(builder.toString());
+    validateQueryTable("ordercustomer", TableType.STREAM,6, 2); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
   }
 
   @Test

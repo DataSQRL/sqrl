@@ -3,16 +3,18 @@ package ai.datasqrl.plan.calcite.util;
 import ai.datasqrl.function.SqrlAwareFunction;
 import ai.datasqrl.plan.calcite.table.TimestampHolder;
 import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
+import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
+import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,13 +22,26 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@AllArgsConstructor
 public class SqrlRexUtil {
 
     private final RexBuilder rexBuilder;
 
+    public SqrlRexUtil(RelDataTypeFactory typeFactory) {
+        rexBuilder = new FlinkRexBuilder(typeFactory);
+    }
+
+    public RexBuilder getBuilder() {
+        return rexBuilder;
+    }
+
     public List<RexNode> getConjunctions(RexNode condition) {
-        //condition = FlinkRexUtil.toCnf(rexBuilder,1000, condition); TODO: add back in and make configurable
+        RexNode cnfCondition = FlinkRexUtil.toCnf(rexBuilder, Short.MAX_VALUE, condition); //TODO: make configurable
+        List<RexNode> conditions = new ArrayList<>();
+        if (cnfCondition instanceof RexCall && cnfCondition.isA(SqlKind.AND)) {
+            conditions.addAll(((RexCall)cnfCondition).getOperands());
+        } else { //Single condition
+            conditions.add(cnfCondition);
+        }
         return RelOptUtil.conjunctions(condition);
     }
 
@@ -72,12 +87,23 @@ public class SqrlRexUtil {
     }
 
     public static RexFinder findFunctionByName(final String name) {
-        return new RexFinder() {
+        return new RexFinder<Void>() {
             @Override public Void visitCall(RexCall call) {
                 if (call.getOperator().getName().equals(name)) {
                     throw Util.FoundOne.NULL;
                 }
                 return super.visitCall(call);
+            }
+        };
+    }
+
+    public static RexFinder<RexInputRef> findRexInputRefByIndex(final int index) {
+        return new RexFinder<RexInputRef>() {
+            @Override public Void visitInputRef(RexInputRef ref) {
+                if (ref.getIndex()==index) {
+                    throw new Util.FoundOne(ref);
+                }
+                return super.visitInputRef(ref);
             }
         };
     }
@@ -89,13 +115,10 @@ public class SqrlRexUtil {
         return node.accept(new RexIndexMapShuttle(map));
     }
 
+    @Value
     private static class RexIndexMapShuttle extends RexShuttle {
 
         private final IndexMap map;
-
-        private RexIndexMapShuttle(IndexMap map) {
-            this.map = map;
-        }
 
         @Override public RexNode visitInputRef(RexInputRef input) {
             return new RexInputRef(map.map(input.getIndex()), input.getType());
@@ -110,7 +133,7 @@ public class SqrlRexUtil {
         return IntStream.range(0,size).mapToObj(i -> rexBuilder.makeInputRef(input,i)).collect(Collectors.toList());
     }
 
-    public abstract static class RexFinder extends RexVisitorImpl<Void> {
+    public abstract static class RexFinder<R> extends RexVisitorImpl<Void> {
         public RexFinder() {
             super(true);
         }
@@ -121,6 +144,15 @@ public class SqrlRexUtil {
                 return false;
             } catch (Util.FoundOne e) {
                 return true;
+            }
+        }
+
+        public Optional<R> find(RexNode node) {
+            try {
+                node.accept(this);
+                return Optional.empty();
+            } catch (Util.FoundOne e) {
+                return Optional.of((R)e.getNode());
             }
         }
     }

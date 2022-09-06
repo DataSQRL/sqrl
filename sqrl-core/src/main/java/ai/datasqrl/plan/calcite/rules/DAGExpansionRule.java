@@ -76,7 +76,7 @@ public abstract class DAGExpansionRule extends RelOptRule {
       if (dbTable!=null) {
         //Need to shred
         SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(
-                () -> getBuilder(table), new SqrlRexUtil(getBuilder(table).getRexBuilder()));
+                () -> getBuilder(table), new SqrlRexUtil(getBuilder(table).getRexBuilder().getTypeFactory()));
         RelNode expanded = table.accept(sqrl2sql);
         expanded = sqrl2sql.postProcess(sqrl2sql.getRelHolder(expanded)).getRelNode();
         call.transformTo(expanded);

@@ -16,43 +16,23 @@ import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
-import ai.datasqrl.plan.local.transpile.JoinDeclarationFactory;
-import ai.datasqrl.plan.local.transpile.SqlJoinDeclaration;
-import ai.datasqrl.plan.local.transpile.Transpile;
-import ai.datasqrl.plan.local.transpile.TranspileOptions;
-import ai.datasqrl.plan.local.transpile.UniqueAliasGenerator;
-import ai.datasqrl.plan.local.transpile.UniqueAliasGeneratorImpl;
+import ai.datasqrl.plan.local.transpile.*;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
-import ai.datasqrl.schema.TableFunctionArgument;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.Assignment;
-import org.apache.calcite.sql.CreateSubscription;
-import org.apache.calcite.sql.DistinctAssignment;
-import org.apache.calcite.sql.ExpressionAssignment;
-import org.apache.calcite.sql.ImportDefinition;
-import org.apache.calcite.sql.JoinAssignment;
-import org.apache.calcite.sql.QueryAssignment;
-import org.apache.calcite.sql.ScriptNode;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlOrderBy;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqrlStatement;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 public class Resolve {
@@ -350,7 +330,7 @@ public class Resolve {
 
     SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(
         () -> env.session.planner.getRelBuilder(),
-        new SqrlRexUtil(env.session.planner.getRelBuilder().getRexBuilder()));
+        new SqrlRexUtil(env.session.planner.getRelBuilder().getRexBuilder().getTypeFactory()));
     relNode = relNode.accept(sqrl2sql);
 //    System.out.println("LP$2: \n" + relNode.explain());
     SQRLLogicalPlanConverter.ProcessedRel prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode));
