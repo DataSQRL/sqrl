@@ -117,7 +117,6 @@ class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void streamStateAggregateTest() {
     StringBuilder builder = imports();
     builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
@@ -140,6 +139,7 @@ class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void distinctTest() {
     StringBuilder builder = imports();
     builder.append("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC;\n");
