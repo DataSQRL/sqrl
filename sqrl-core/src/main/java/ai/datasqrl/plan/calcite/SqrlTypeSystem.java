@@ -21,6 +21,11 @@ public class SqrlTypeSystem implements RelDataTypeSystem {
       case TIMESTAMP:
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
         return TIMESTAMP_PRECISION;
+      case INTERVAL_DAY:
+      case INTERVAL_HOUR:
+      case INTERVAL_MINUTE:
+      case INTERVAL_SECOND:
+        return 10;
       default:
         return RelDataTypeSystem.DEFAULT.getDefaultPrecision(typeName);
     }
