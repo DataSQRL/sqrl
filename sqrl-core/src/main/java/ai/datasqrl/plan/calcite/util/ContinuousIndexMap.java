@@ -6,12 +6,13 @@ import lombok.Getter;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 @AllArgsConstructor
 @Getter
@@ -29,8 +30,12 @@ public class ContinuousIndexMap implements IndexMap {
         return targets.length;
     }
 
-    public Stream<Pair> getMapping() {
-        return IntStream.range(0,targets.length).mapToObj(i -> new Pair(i,targets[i]));
+    public List<Pair> getMapping() {
+        return IntStream.range(0,targets.length).mapToObj(i -> new Pair(i,targets[i])).collect(Collectors.toList());
+    }
+
+    public boolean containsTarget(int targetIndex) {
+        return ArrayUtils.contains(targets,targetIndex);
     }
 
     public ContinuousIndexMap join(ContinuousIndexMap right) {

@@ -11,8 +11,6 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.table.api.TableConfig;
-import org.apache.flink.table.planner.codegen.ExpressionReducer;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -123,23 +121,15 @@ public class TimePredicate {
             for (int ref : new int[]{leftRef, rightRef}) {
                 if (ref>0 && !isTimestampColumn.test(ref)) return Optional.empty();
             }
-            ExpressionReducer reducer = new ExpressionReducer(TableConfig.getDefault(), true);
-            ArrayList<RexNode> original = new ArrayList<>(), reduced = new ArrayList<>();
-            original.add(processLeft.getRight());
-            original.add(processRight.getRight());
-            reducer.reduce(rexBuilder, original, reduced);
-            assert reduced.size()==2;
-            long interval_ms = 0;
-            for (int i = 0; i < 2; i++) {
-                RexNode reduce = reduced.get(i);
-                if (!(reduce instanceof RexLiteral)) return Optional.empty();
-                Object value = ((RexLiteral)reduce).getValue2();
-                if (!(value instanceof Number)) return Optional.empty();
-                long interval = ((Number) value).longValue();
-                //Subtract 1st value from 2nd
-                if (i==0) interval_ms = -interval;
-                else interval_ms += interval;
+            ExpressionReducer reducer = new ExpressionReducer();
+            long[] reduced;
+            try {
+                reduced = reducer.reduce2Long(rexBuilder, List.of(processLeft.getValue(),processRight.getValue()));
+            } catch (IllegalArgumentException exception) {
+                return Optional.empty();
             }
+            assert reduced.length==2;
+            long interval_ms = reduced[1] - reduced[0];
 
             int smallerIndex = flip?rightRef:leftRef;
             int largerIndex = flip?leftRef:rightRef;

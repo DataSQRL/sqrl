@@ -1,20 +1,22 @@
 package ai.datasqrl.function.builtin.time;
 
-import java.util.List;
+import ai.datasqrl.function.SqrlTimeTumbleFunction;
+import com.google.common.base.Preconditions;
 import org.apache.calcite.schema.ScalarFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.InferTypes;
-import org.apache.calcite.sql.type.OperandTypes;
-import org.apache.calcite.sql.type.ReturnTypes;
-import org.apache.calcite.sql.type.SqlTypeFamily;
-import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.type.*;
 
-public class SqrlTimeRoundingFunction extends SqrlScalarFunction {
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
-  public SqrlTimeRoundingFunction(String sqlIdentifier, ScalarFunction scalarFunction) {
+public class SqrlTimeRoundingFunction extends SqrlScalarFunction implements SqrlTimeTumbleFunction {
+
+  private final ChronoUnit timeUnit;
+
+  public SqrlTimeRoundingFunction(String sqlIdentifier, ScalarFunction scalarFunction, ChronoUnit timeUnit) {
     super(
         new SqlIdentifier(sqlIdentifier, SqlParserPos.ZERO),
         SqlKind.OTHER,
@@ -29,9 +31,8 @@ public class SqrlTimeRoundingFunction extends SqrlScalarFunction {
         scalarFunction,
         SqlFunctionCategory.USER_DEFINED_FUNCTION
     );
+    this.timeUnit = timeUnit;
   }
-
-
 
   @Override
   public boolean isTimestampPreserving() {
@@ -39,8 +40,17 @@ public class SqrlTimeRoundingFunction extends SqrlScalarFunction {
   }
 
   @Override
-  public boolean isTimeBucketingFunction() {
-    return true;
+  public Specification getSpecification(long[] arguments) {
+    Preconditions.checkArgument(arguments.length==0);
+    return new Specification();
+  }
+
+  private class Specification implements SqrlTimeTumbleFunction.Specification {
+
+    @Override
+    public long getBucketWidthMillis() {
+      return timeUnit.getDuration().toMillis();
+    }
   }
 
 }

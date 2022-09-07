@@ -21,12 +21,11 @@ import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.h2.util.StringUtils;
 
 import java.util.LinkedHashMap;
@@ -72,16 +71,16 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
                                       List<Name> fieldNames) {
         ContinuousIndexMap indexmap = rel.getIndexMap();
         Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());
-        RelNode baseRel = rel.getRelNode();
-        List<DatabasePullup> pullupList = rel.getPullups();
-        rel = rel.inlinePullups();
+        Pair<PullupOperator.Container, SQRLLogicalPlanConverter.ProcessedRel> inlinedPullups = rel.finalizeRelation();
+        rel = inlinedPullups.getValue();
         Name tableid = getTableId(tablePath.getLast(),"q");
         TimestampHolder.Base timestamp = TimestampHolder.Base.ofDerived(rel.getTimestamp());
         QueryRelationalTable baseTable = new QueryRelationalTable(tableid, rel.getType(),rel.getRelNode(),
                 timestamp, rel.getPrimaryKey().getSourceLength());
-        if (!CalciteUtil.hasNesting(baseRel.getRowType()) && !pullupList.isEmpty()) { //Database pullups only work for non-nested tables
-            DatabasePullup.Container pullups = new DatabasePullup.Container(baseRel,pullupList,true);
-            baseTable.setDbPullups(pullups);
+
+        PullupOperator.Container pullups = inlinedPullups.getKey();
+        if (!CalciteUtil.hasNesting(rel.getRelNode().getRowType()) && !pullups.isEmpty()) { //Database pullups only work for non-nested tables
+            baseTable.setPullups(pullups);
         }
         LinkedHashMap<Integer,Name> index2Name = new LinkedHashMap<>();
         for (int i = 0; i < fieldNames.size(); i++) {

@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.calcite.util;
 
+import com.google.common.base.Preconditions;
 import lombok.Value;
 
 import java.util.Map;
@@ -16,11 +17,13 @@ public interface IndexMap {
     }
 
     static IndexMap of(final Map<Integer,Integer> mapping) {
-        return new IndexMap() {
-            @Override
-            public int map(int index) {
-                return mapping.get(index);
-            }
+        return idx -> mapping.get(idx);
+    }
+
+    static IndexMap singleton(final int source, final int target) {
+        return idx -> {
+            Preconditions.checkArgument(idx == source,"Only maps a single source [%d] but given: %d",source,idx);
+            return target;
         };
     }
 

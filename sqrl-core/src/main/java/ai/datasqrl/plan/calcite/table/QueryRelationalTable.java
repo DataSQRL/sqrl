@@ -37,7 +37,7 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   protected RelNode relNode;
 
   @Setter
-  private DatabasePullup.Container dbPullups = DatabasePullup.Container.EMPTY;
+  private PullupOperator.Container pullups = PullupOperator.Container.EMPTY;
 
   @Setter
   private TableStatistic statistic = null;

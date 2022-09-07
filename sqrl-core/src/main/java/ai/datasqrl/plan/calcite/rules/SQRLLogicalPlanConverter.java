@@ -1,12 +1,11 @@
 package ai.datasqrl.plan.calcite.rules;
 
+import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.hints.TimeAggregationHint;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.*;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimap;
 import lombok.Value;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.rel.RelCollation;
@@ -84,11 +83,18 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             return !topN.isEmpty() || !nowFilter.isEmpty();
         }
 
-        public List<DatabasePullup> getPullups() {
-            List<DatabasePullup> pullups = new ArrayList<>();
-            if (!nowFilter.isEmpty()) pullups.add(nowFilter);
-            if (!topN.isEmpty()) pullups.add(topN);
-            return pullups;
+        public Pair<PullupOperator.Container,ProcessedRel> finalizeRelation() {
+            PullupOperator.Container pullups = new PullupOperator.Container();
+            ProcessedRel prel = this;
+            if (!prel.nowFilter.isEmpty()) {
+                pullups.addLast(new PullupOperator.Holder(prel.nowFilter, prel.relNode));
+                prel = prel.inlineNowFilter();
+            }
+            if (!prel.topN.isEmpty()) {
+                pullups.addLast(new PullupOperator.Holder(prel.topN, prel.relNode));
+                prel = prel.inlineTopN();
+            }
+            return Pair.of(pullups,prel);
         }
 
         public ProcessedRel inlinePullups() {
@@ -177,10 +183,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         VirtualRelationalTable.Root root = vtable.getRoot();
         QueryRelationalTable queryTable = root.getBase();
         int mapToLength = relNode.getRowType().getFieldCount();
+        //We pull up nowfilters if possible
+        NowFilter nowFilter = queryTable.getPullups().getLast(NowFilter.class)
+                .map(nf -> new NowFilter(nf.getTimePredicates())).orElse(NowFilter.EMPTY);
         ProcessedRel result = new ProcessedRel(relNode, queryTable.getType(),
                 primaryKey.build(mapToLength),
                 new TimestampHolder.Derived(queryTable.getTimestamp()),
-                indexMap.build(mapToLength), joinTables, NowFilter.EMPTY, TopNConstraint.EMPTY);
+                indexMap.build(mapToLength), joinTables, nowFilter, TopNConstraint.EMPTY);
         return setRelHolder(result);
     }
 
@@ -277,7 +286,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         return builder;
     }
 
-    private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunctionByName("now");
+    private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(SqrlOperatorTable.NOW);
 
     @Override
     public RelNode visit(LogicalFilter logicalFilter) {
@@ -290,10 +299,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         NowFilter nowFilter = input.nowFilter;
 
         //Check if it has a now() predicate and pull out or throw an exception if malformed
+        List<TimePredicate> timeFunctions = new ArrayList<>();
+        List<RexNode> conjunctions = null;
         if (FIND_NOW.contains(condition)) {
-            RelBuilder relB = relBuilderFactory.get();
-            List<RexNode> conjunctions = rexUtil.getConjunctions(condition);
-            List<TimePredicate> timeFunctions = new ArrayList<>();
+            conjunctions = rexUtil.getConjunctions(condition);
             Iterator<RexNode> iter = conjunctions.iterator();
             while (iter.hasNext()) {
                 RexNode conj = iter.next();
@@ -305,21 +314,21 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                         timeFunctions.add(tp.get());
                         iter.remove();
                     } else {
-                        throw new IllegalArgumentException("Invalid timestamp function condition: " + conj);
+                        /*Filter is not on a timestamp or not parsable, we leave it as is. In the future we can consider
+                        pulling up now-filters on non-timestamp columns since we need to push those into the database
+                        anyways. However, we cannot do much else with those (e.g. convert to time-windows or TTL) since
+                        they are not based on the timeline.
+                         */
+                        //TODO: issue warning
                     }
                 }
             }
-            assert !timeFunctions.isEmpty();
-            List<Integer> timestampIndexes = timeFunctions.stream().flatMap(tf -> tf.getIndexes().stream()).filter(i -> i < 0)
-                    .collect(Collectors.toList());
-            for (int ti : timestampIndexes) {
-                Preconditions.checkArgument(timestamp.isCandidate(ti),"Not a valid timestamp column: %s",ti);
-            }
-            Preconditions.checkArgument(timestampIndexes.size() == 1, "Cannot reference multiple timestamp columns in now() conditions: %s", timestampIndexes);
-            int timestampIdx = Iterables.getOnlyElement(timestampIndexes);
+        }
+        if (!timeFunctions.isEmpty()) {
+            nowFilter = nowFilter.addAll(timeFunctions); //Checks that timestamp column is identical across all predicates
+            int timestampIdx = nowFilter.getTimestampIndex();
             timestamp = timestamp.fixTimestamp(timestampIdx);
             filter = logicalFilter.copy(logicalFilter.getTraitSet(),logicalFilter.getInput(), RexUtil.composeConjunction(rexUtil.getBuilder(), conjunctions));
-            nowFilter.addAll(timeFunctions);
         } else {
             filter = logicalFilter.copy(logicalFilter.getTraitSet(),logicalFilter.getInput(),condition);
         }
@@ -343,49 +352,78 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         Preconditions.checkArgument(input.topN.isEmpty());
         //Update index mappings
         List<RexNode> updatedProjects = new ArrayList<>();
-        Multimap<Integer,Integer> mappedProjects = HashMultimap.create();
+        //We only keep track of the first mapped project and consider it to be the "preserving one" for primary keys and timestamps
+        Map<Integer,Integer> mappedProjects = new HashMap<>();
         List<TimestampHolder.Candidate> timeCandidates = new ArrayList<>();
+        NowFilter nowFilter = NowFilter.EMPTY;
         for (Ord<RexNode> exp : Ord.<RexNode>zip(logicalProject.getProjects())) {
             RexNode mapRex = SqrlRexUtil.mapIndexes(exp.e,input.indexMap);
             updatedProjects.add(exp.i,mapRex);
-            if (mapRex instanceof RexInputRef) {
-                int index = (((RexInputRef) mapRex)).getIndex();
-                mappedProjects.put(index,exp.i);
+            int originalIndex = -1;
+            if (mapRex instanceof RexInputRef) { //Direct mapping
+                originalIndex = (((RexInputRef) mapRex)).getIndex();
+            } else { //Check for preserved timestamps
+                Optional<TimestampHolder.Candidate> preservedCandidate = rexUtil.getPreservedTimestamp(mapRex, input.timestamp);
+                if (preservedCandidate.isPresent()) {
+                    originalIndex = preservedCandidate.get().getIndex();
+                    timeCandidates.add(preservedCandidate.get().withIndex(exp.i));
+                    //See if we can preserve the now-filter as well or need to inline it
+                    if (!input.nowFilter.isEmpty() && input.nowFilter.getTimestampIndex()==originalIndex) {
+                        Optional<TimeTumbleFunctionCall> bucketFct = rexUtil.getTimeBucketingFunction(mapRex);
+                        if (bucketFct.isPresent()) {
+                            long intervalExpansion = bucketFct.get().getSpecification().getBucketWidthMillis();
+                            nowFilter = new NowFilter(input.nowFilter.getTimePredicates().stream()
+                                    .map(tp -> new TimePredicate(tp.getSmallerIndex(),exp.i,tp.isSmaller(),tp.getInterval_ms()+intervalExpansion))
+                                    .collect(Collectors.toList()));
+                        } else {
+                            input = input.inlineNowFilter();
+                        }
+                    }
+                }
             }
-            //Check for preserved timestamps
-            rexUtil.getPreservedTimestamp(mapRex, input.timestamp)
-                    .map(candidate -> timeCandidates.add(candidate.withIndex(exp.i)));
+            if (originalIndex>0) {
+                if (mappedProjects.putIfAbsent(originalIndex,exp.i)!=null) {
+                    //We are ignoring this mapping because the prior one takes precedence, let's see if we should warn the user
+                    if (input.primaryKey.containsTarget(originalIndex) || input.timestamp.isCandidate(originalIndex)) {
+                        //TODO: convert to warning and ignore
+                        throw new IllegalArgumentException("Cannot project primary key or timestamp columns multiple times");
+                    }
+                }
+            }
         }
         //Make sure we pull the primary keys and timestamp candidates through (i.e. append those to the projects
         //if not already present)
         ContinuousIndexMap.Builder primaryKey = ContinuousIndexMap.builder(input.primaryKey.getSourceLength());
-        input.primaryKey.getMapping().forEach(p -> {
-            Collection<Integer> target = mappedProjects.get(p.getTarget());
-            if (target.size()>1) throw new IllegalArgumentException("Cannot select a primary key column multiple times");
-            else if (target.size()==1) primaryKey.add(Iterables.getOnlyElement(target));
+        for (IndexMap.Pair p: input.primaryKey.getMapping()) {
+            Integer target = mappedProjects.get(p.getTarget());
+            if (target!=null) primaryKey.add(target);
             else {
                 //Need to add it
                 int index = updatedProjects.size();
                 updatedProjects.add(index,RexInputRef.of(p.getTarget(),input.relNode.getRowType()));
                 primaryKey.add(index);
             }
-        });
+        }
         for (TimestampHolder.Candidate candidate : input.timestamp.getCandidates()) {
             //Check if candidate is already mapped through timestamp preserving function
             if (timeCandidates.stream().anyMatch(c -> c.getId() == candidate.getId())) continue;
-            Collection<Integer> target = mappedProjects.get(candidate.getIndex());
-            if (target.isEmpty()) {
+            Integer target = mappedProjects.get(candidate.getIndex());
+            if (target==null) {
                 //Need to add candidate
                 int index = updatedProjects.size();
                 updatedProjects.add(index,RexInputRef.of(candidate.getIndex(),input.relNode.getRowType()));
                 timeCandidates.add(candidate.withIndex(index));
             } else {
-                target.forEach(t -> timeCandidates.add(candidate.withIndex(t)));
+                timeCandidates.add(candidate.withIndex(target));
+                //Update now-filter if it matches candidate
+                if (!input.nowFilter.isEmpty() && input.nowFilter.getTimestampIndex()== candidate.getIndex()) {
+                    nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(), target));
+                }
             }
         }
         TimestampHolder.Derived timestamp = input.timestamp.propagate(timeCandidates);
-        //TODO: need to ensure pullup columns are preseved!!
-
+        //NowFilter must have been preserved
+        assert !nowFilter.isEmpty() || input.nowFilter.isEmpty();
 
         //Build new project
         RelBuilder relB = relBuilderFactory.get();
@@ -396,7 +434,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         int fieldCount = updatedProjects.size();
         return setRelHolder(new ProcessedRel(newProject,input.type,primaryKey.build(fieldCount),
                 timestamp, ContinuousIndexMap.identity(logicalProject.getProjects().size(),fieldCount),null,
-                input.nowFilter, input.topN));
+                nowFilter, TopNConstraint.EMPTY));
     }
 
     private ContinuousIndexMap getTrivialMapping(LogicalProject project, ContinuousIndexMap baseMap) {
@@ -495,7 +533,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     pkAccess = (p -> p.source);
                     pk = leftInputF.primaryKey;
                 }
-                Set<Integer> pkIndexes = pk.getMapping().map(p-> p.getTarget()).collect(Collectors.toSet());
+                Set<Integer> pkIndexes = pk.getMapping().stream().map(p-> p.getTarget()).collect(Collectors.toSet());
                 Set<Integer> pkEqualities = eqDecomp.getEqualities().stream().map(pkAccess).collect(Collectors.toSet());
                 if (pkIndexes.equals(pkEqualities) && eqDecomp.getRemainingPredicates().isEmpty()) {
                     joinType = JoinRelType.TEMPORAL;
@@ -628,16 +666,15 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             }
             if (keyCandidate!=null) {
                 LogicalProject inputProject = (LogicalProject)input.getRelNode();
-                Optional<TimeBucketFunctionCall> bucketFct = rexUtil.getTimeBucketingFunction(inputProject.getProjects().get(inputColIdx));
-                Preconditions.checkArgument(!bucketFct.isEmpty());
+                RexNode timeAgg = inputProject.getProjects().get(inputColIdx);
+                Optional<TimeTumbleFunctionCall> bucketFct = rexUtil.getTimeBucketingFunction(timeAgg);
+                Preconditions.checkArgument(!bucketFct.isEmpty(), "Not a valid time aggregation function: %s", timeAgg);
 
                 //Fix timestamp (if not already fixed)
                 TimestampHolder.Derived newTimestamp = input.timestamp.fixTimestamp(keyCandidate.getIndex(), keyIdx);
-
-                //TODO: support moving now-filters through since those are guaranteed to be on the same timestamp
-                //and can be converted to filters on the time bucket post-aggregation,
-                // i.e. time_bucket_col > time_bucket_function(now()) - INTERVAL X;  for now-filter: time_col > now() - INTERVAL X
-                Preconditions.checkArgument(input.nowFilter.isEmpty(), "Now-filters in combination with timestamp aggregation aren't yet supported");
+                //Now filters must be on the timestamp - this is an internal check
+                Preconditions.checkArgument(input.nowFilter.isEmpty() || input.nowFilter.getTimestampIndex()==keyCandidate.getIndex());
+                NowFilter nowFilter = input.nowFilter.remap(IndexMap.singleton(keyCandidate.getIndex(),keyIdx));
 
                 RelBuilder relB = relBuilderFactory.get();
                 relB.push(input.relNode);
@@ -647,8 +684,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength, targetLength);
 
                 return setRelHolder(new ProcessedRel(relB.build(), TableType.STREAM, pk,
-                        newTimestamp, indexMap,null, NowFilter.EMPTY, TopNConstraint.EMPTY));
-                //TODO: this type of streaming aggregation requires a post-filter in the database (in physical model) to filter out "open" time buckets,
+                        newTimestamp, indexMap,null, nowFilter, TopNConstraint.EMPTY));
+                // TODO: this type of streaming aggregation requires a post-filter in the database (in physical model) to filter out "open" time buckets,
                 //i.e. time_bucket_col < time_bucket_function(now()) [if now() lands in a time bucket, that bucket is still open and shouldn't be shown]
             }
         }
@@ -659,12 +696,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         if (!input.nowFilter.isEmpty()) {
             nowInput = input.inlineNowFilter();
             isSlidingAggregate = true;
-            //TODO: extract slide-width from hint
+            // TODO: extract slide-width from hint
         }
 
         //Check if we need to propagate timestamps
         if (nowInput.type == TableType.STREAM || nowInput.type == TableType.TEMPORAL_STATE) {
-            //TODO: Convert to window-over in order to preserve timestamp
             targetLength += 1;
 
             //Fix best timestamp (if not already fixed) and add as final project

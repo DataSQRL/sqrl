@@ -76,7 +76,7 @@ public class DAGPlanner {
                     isPersisted = true;
                 }
                 //Determine if we can postpone TopN inlining if table is persisted and not consumed by materialized nodes
-                if (isPersisted && !tableNode.table.getDbPullups().isEmpty()) {
+                if (isPersisted && !tableNode.table.getPullups().isEmpty()) {
                     if (dag.getOutputs(tableNode).stream().filter(StreamTableNode.class::isInstance).map(DAGNode::asTable)
                             .allMatch(n -> !materialization.get(n).isMaterialize())) {
                         tableNode.table.getMatStrategy().setPullup(true);
@@ -150,11 +150,11 @@ public class DAGPlanner {
         RelNode optimizedRel = table.getRelNode();
         table.setOptimizedRelNode(optimizedRel);
         table.setStatistic(TableStatistic.of(1));
-        if (!table.getDbPullups().isEmpty()) {
+        table.getPullups().forEach(p -> {
             //TODO: run volcano again for base rel
-            optimizedRel = table.getDbPullups().getBaseRelnode();
-            table.getDbPullups().setOptimizedRelNode(optimizedRel);
-        }
+            RelNode optimized = p.getBaseRelNode();
+            p.setOptimizedRelNode(optimized);
+        });
     }
 
     private MaterializationPreference determineMaterialization(QueryRelationalTable table) {

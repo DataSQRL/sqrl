@@ -39,10 +39,10 @@ public abstract class DAGExpansionRule extends RelOptRule {
         QueryRelationalTable baseTable = dbTable.getRoot().getBase();
         if (baseTable.getMatStrategy().isMaterialize()) {
           if (baseTable.getMatStrategy().isPullup()) {
-            //TODO: inline database pullups into relNode
+            //TODO: inline database pullups on top of relNode
             throw new UnsupportedOperationException("Not yet implemented");
           } else {
-            //Nothing to do since we table is materialized
+            //Nothing to do since the table is materialized
           }
         } else {
           Preconditions.checkArgument(dbTable.isRoot() && !CalciteUtil.isNestedTable(baseTable.getRowType()));
@@ -83,7 +83,7 @@ public abstract class DAGExpansionRule extends RelOptRule {
       }
       if (queryTable!=null) {
         if (queryTable.getMatStrategy().isPullup()) {
-          call.transformTo(queryTable.getDbPullups().getBaseRelnode());
+          call.transformTo(queryTable.getPullups().getFirst().getBaseRelNode());
         } else {
           call.transformTo(queryTable.getRelNode());
         }

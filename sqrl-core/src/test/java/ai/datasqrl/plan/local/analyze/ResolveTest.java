@@ -8,6 +8,8 @@ import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.calcite.table.NowFilter;
+import ai.datasqrl.plan.calcite.table.PullupOperator;
 import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
 import ai.datasqrl.plan.calcite.table.TableType;
 import ai.datasqrl.plan.local.generate.Resolve;
@@ -17,17 +19,16 @@ import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.ScriptNode;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ResolveTest extends AbstractSQRLIT {
 
@@ -46,7 +47,7 @@ class ResolveTest extends AbstractSQRLIT {
     ImportManager importManager = sqrlSettings.getImportManagerProvider()
         .createImportManager(env.getDatasetRegistry());
     ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
-    Assertions.assertTrue(
+    assertTrue(
         importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
     Planner planner = new PlannerFactory(
         CalciteSchema.createRootSchema(false, false).plus()).createPlanner();
@@ -103,8 +104,6 @@ class ResolveTest extends AbstractSQRLIT {
   public void streamTimeAggregateTest() {
     StringBuilder builder = imports();
     builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;\n");
-    //Test that we can pull a now() filter through
-    //builder.append("OrderAgg2 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.time > now() - INTERVAL 1 YEAR GROUP BY customer, bucket;\n");
     process(builder.toString());
     validateQueryTable("orderagg1", TableType.STREAM,3, 2);
   }
@@ -125,7 +124,27 @@ class ResolveTest extends AbstractSQRLIT {
     validateQueryTable("agg1", TableType.STATE,2, 1);
   }
 
+  @Test
+  public void nowFilterTest() {
+    StringBuilder builder = imports();
+    builder.append("OrderFilter := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 YEAR;\n");
+
+    builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM OrderFilter o GROUP BY customer, bucket;\n");
+//    //The following should be equivalent
+    builder.append("OrderAgg2 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 YEAR GROUP BY customer, bucket;\n");
+    process(builder.toString());
+    validateQueryTable("orderfilter", TableType.STREAM,5, 1, Optional.of(4), List.of(NowFilter.class));
+    validateQueryTable("orderagg1", TableType.STREAM,3, 2, Optional.of(1), List.of(NowFilter.class));
+    validateQueryTable("orderagg2", TableType.STREAM,3, 2, Optional.of(1), List.of(NowFilter.class));
+  }
+
   private void validateQueryTable(String name, TableType tableType, int numCols, int numPrimaryKeys) {
+    validateQueryTable(name,tableType,numCols,numPrimaryKeys,Optional.empty(),List.of());
+  }
+
+  private void validateQueryTable(String name, TableType tableType, int numCols, int numPrimaryKeys,
+                                  Optional<Integer> timestampIdx,
+                                  List<Class> pullupTypes) {
     SchemaPlus relSchema = session.getPlanner().getDefaultSchema();
     //Table names have an appended uuid - find the right tablename first. We assume tables are in the order in which they were created
     List<String> tblNames = relSchema.getTableNames().stream().filter(s -> s.startsWith(name))
@@ -136,6 +155,16 @@ class ResolveTest extends AbstractSQRLIT {
     assertEquals(tableType, table.getType());
     assertEquals(numPrimaryKeys, table.getNumPrimaryKeys());
     assertEquals(numCols, table.getRowType().getFieldCount());
+    if (timestampIdx.isPresent()) {
+      assertTrue(table.getTimestamp().hasTimestamp());
+      assertEquals(timestampIdx.get(),table.getTimestamp().getTimestampIndex());
+    }
+    assertEquals(pullupTypes.size(),table.getPullups().size());
+    int i=0;
+    for (PullupOperator.Holder h : table.getPullups()) {
+      assertTrue(pullupTypes.get(i).isInstance(h.getPullup()));
+      i++;
+    }
   }
 
   @Test

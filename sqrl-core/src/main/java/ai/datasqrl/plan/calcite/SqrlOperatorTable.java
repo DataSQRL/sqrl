@@ -9,6 +9,7 @@ import org.apache.calcite.sql.fun.Now;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 public class SqrlOperatorTable extends SqlStdOperatorTable {
 
@@ -24,17 +25,17 @@ public class SqrlOperatorTable extends SqlStdOperatorTable {
   public static final ToUtcFunction TO_UTC = new ToUtcFunction();
   public static final AtZoneFunction AT_ZONE = new AtZoneFunction();
   public static final SqrlTimeRoundingFunction ROUND_TO_SECOND = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
-      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)));
+      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)), ChronoUnit.SECONDS);
   public static final SqrlTimeRoundingFunction ROUND_TO_MINUTE = new SqrlTimeRoundingFunction("ROUND_TO_MINUTE",
-      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMinute", Instant.class)));
+      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMinute", Instant.class)), ChronoUnit.MINUTES);
   public static final SqrlTimeRoundingFunction ROUND_TO_HOUR = new SqrlTimeRoundingFunction("ROUND_TO_HOUR",
-      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToHour", Instant.class)));
+      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToHour", Instant.class)), ChronoUnit.HOURS);
   public static final SqrlTimeRoundingFunction ROUND_TO_DAY = new SqrlTimeRoundingFunction("ROUND_TO_DAY",
-      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToDay", Instant.class)));
+      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToDay", Instant.class)), ChronoUnit.DAYS);
   public static final SqrlTimeRoundingFunction ROUND_TO_MONTH = new SqrlTimeRoundingFunction("ROUND_TO_MONTH",
-      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMonth", Instant.class)));
+      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMonth", Instant.class)), ChronoUnit.MONTHS);
   public static final SqrlTimeRoundingFunction ROUND_TO_YEAR = new SqrlTimeRoundingFunction("ROUND_TO_YEAR",
-      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToYear", Instant.class)));
+      ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToYear", Instant.class)), ChronoUnit.YEARS);
   public static final ExtractTimeFieldFunction GET_SECOND = new ExtractTimeFieldFunction("GET_SECOND",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getSecond", Instant.class)));
   public static final ExtractTimeFieldFunction GET_MINUTE = new ExtractTimeFieldFunction("GET_MINUTE",

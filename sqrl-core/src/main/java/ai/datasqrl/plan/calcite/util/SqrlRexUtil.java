@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite.util;
 
 import ai.datasqrl.function.SqrlAwareFunction;
+import ai.datasqrl.function.SqrlTimeTumbleFunction;
 import ai.datasqrl.plan.calcite.table.TimestampHolder;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
@@ -86,10 +87,10 @@ public class SqrlRexUtil {
 
     }
 
-    public static RexFinder findFunctionByName(final String name) {
+    public static RexFinder findFunction(SqlOperator operator) {
         return new RexFinder<Void>() {
             @Override public Void visitCall(RexCall call) {
-                if (call.getOperator().getName().equals(name)) {
+                if (call.getOperator().equals(operator)) {
                     throw Util.FoundOne.NULL;
                 }
                 return super.visitCall(call);
@@ -185,13 +186,13 @@ public class SqrlRexUtil {
         } else return false;
     }
 
-    public Optional<TimeBucketFunctionCall> getTimeBucketingFunction(RexNode rexNode) {
+    public Optional<TimeTumbleFunctionCall> getTimeBucketingFunction(RexNode rexNode) {
         if (!(rexNode instanceof RexCall)) return Optional.empty();
         RexCall call = (RexCall)rexNode;
         if (!(call.getOperator() instanceof SqrlAwareFunction)) return Optional.empty();
         SqrlAwareFunction bucketFct = (SqrlAwareFunction) call.getOperator();
-        if (!bucketFct.isTimeBucketingFunction()) return Optional.empty();
-        return Optional.of(TimeBucketFunctionCall.from(call));
+        if (!(bucketFct instanceof SqrlTimeTumbleFunction)) return Optional.empty();
+        return Optional.of(TimeTumbleFunctionCall.from(call,getBuilder()));
     }
 
 }

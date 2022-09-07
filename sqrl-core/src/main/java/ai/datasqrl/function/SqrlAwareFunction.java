@@ -11,7 +11,8 @@ public interface SqrlAwareFunction {
   boolean isAggregate();
   boolean requiresOver();
   boolean isDeterministic();
-  boolean isTimestampPreserving();
-  boolean isTimeBucketingFunction();
   SqlOperator getOp();
+
+  boolean isTimestampPreserving();
+
 }

@@ -12,7 +12,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import lombok.NonNull;
 import org.apache.calcite.sql.type.BasicSqlType;
-import org.apache.calcite.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;

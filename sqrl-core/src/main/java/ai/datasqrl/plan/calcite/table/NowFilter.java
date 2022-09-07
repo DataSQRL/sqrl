@@ -7,7 +7,9 @@ import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A {@link NowFilter} represents a filter condition on a single timestamp column which requires
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
  */
 
 @Value
-public class NowFilter implements DatabasePullup {
+public class NowFilter implements PullupOperator {
 
     public static final NowFilter EMPTY = new NowFilter(List.of());
 
@@ -32,11 +34,22 @@ public class NowFilter implements DatabasePullup {
     public NowFilter(List<TimePredicate> timePredicates) {
         this.timePredicates = timePredicates;
         timePredicates.forEach(tp -> Preconditions.checkArgument(tp.isNowFilter(),"Not a valid now-filter: %s",tp));
+        Set<Integer> indexes = streamTimestampIndexes().collect(Collectors.toSet());
+        Preconditions.checkArgument(indexes.size()<=1,"Now filters must be on the same timestamp index: %s",indexes);
+    }
+
+    private Stream<Integer> streamTimestampIndexes() {
+        return timePredicates.stream().flatMap(tp -> tp.getIndexes().stream()).filter(idx -> idx>=0);
+    }
+
+    public int getTimestampIndex() {
+        return streamTimestampIndexes().findFirst().get();
     }
 
     public boolean isEmpty() {
         return timePredicates.isEmpty();
     }
+
 
     public NowFilter remap(IndexMap map) {
         return new NowFilter(timePredicates.stream().map(tp -> tp.remap(map)).collect(Collectors.toList()));

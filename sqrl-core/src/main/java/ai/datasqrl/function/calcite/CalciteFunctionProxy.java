@@ -41,11 +41,6 @@ public class CalciteFunctionProxy implements SqrlAwareFunction {
   }
 
   @Override
-  public boolean isTimeBucketingFunction() {
-    return false;
-  }
-
-  @Override
   public SqlOperator getOp() {
     return op;
   }

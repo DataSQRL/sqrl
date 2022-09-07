@@ -1,27 +1,21 @@
 package org.apache.calcite.sql.fun;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import ai.datasqrl.function.builtin.example.SqlMyFunction;
-import ai.datasqrl.function.builtin.time.AtZoneFunction;
-import ai.datasqrl.function.builtin.time.NumToTimestampFunction;
-import ai.datasqrl.function.builtin.time.ExtractTimeFieldFunction;
-import ai.datasqrl.function.builtin.time.SqrlTimeRoundingFunction;
-import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
-import ai.datasqrl.function.builtin.time.StringToTimestampFunction;
-import ai.datasqrl.function.builtin.time.TimestampToEpochFunction;
-import ai.datasqrl.function.builtin.time.TimestampToStringFunction;
-import ai.datasqrl.function.builtin.time.ToUtcFunction;
+import ai.datasqrl.function.builtin.time.*;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.calcite.linq4j.tree.Types;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TimeLibraryTest {
 
@@ -76,17 +70,17 @@ class TimeLibraryTest {
 
 
     SqrlTimeRoundingFunction roundToSecond = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)));
+        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)), ChronoUnit.SECONDS);
     SqrlTimeRoundingFunction roundToMinute = new SqrlTimeRoundingFunction("ROUND_TO_MINUTE",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMinute", Instant.class)));
+        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMinute", Instant.class)), ChronoUnit.MINUTES);
     SqrlTimeRoundingFunction roundToHour = new SqrlTimeRoundingFunction("ROUND_TO_HOUR",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToHour", Instant.class)));
+        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToHour", Instant.class)), ChronoUnit.HOURS);
     SqrlTimeRoundingFunction roundToDay = new SqrlTimeRoundingFunction("ROUND_TO_DAY",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToDay", Instant.class)));
+        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToDay", Instant.class)), ChronoUnit.DAYS);
     SqrlTimeRoundingFunction roundToMonth = new SqrlTimeRoundingFunction("ROUND_TO_MONTH",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMonth", Instant.class)));
+        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMonth", Instant.class)), ChronoUnit.MONTHS);
     SqrlTimeRoundingFunction roundToYear = new SqrlTimeRoundingFunction("ROUND_TO_YEAR",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToYear", Instant.class)));
+        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToYear", Instant.class)), ChronoUnit.YEARS);
 
     RelDataType TZ = typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3);
     RelDataType typeSecond = roundToSecond.inferReturnType(typeFactory, new ArrayList<>());
@@ -172,7 +166,7 @@ class TimeLibraryTest {
   public void NotNullPreservationTest () {
 
     SqrlTimeRoundingFunction roundToSecond = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)));
+        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)), ChronoUnit.SECONDS);
 
     RelDataType TSNonNullable = typeFactory.createTypeWithNullability(
         typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3), false);
@@ -186,7 +180,7 @@ class TimeLibraryTest {
   public void NullPreservationTest() {
 
     SqrlTimeRoundingFunction roundToSecond = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)));
+        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)), ChronoUnit.SECONDS);
 
     RelDataType TSNullable = typeFactory.createTypeWithNullability(
         typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3), true);
