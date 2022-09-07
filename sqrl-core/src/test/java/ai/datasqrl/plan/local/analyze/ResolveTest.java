@@ -86,8 +86,22 @@ class ResolveTest extends AbstractSQRLIT {
     StringBuilder builder = imports();
     builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o INTERVAL JOIN Customer c on o.customerid = c.customerid "+
             "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH;");
+    builder.append("OrderCustomer2 := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
+            "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH;");
     process(builder.toString());
     validateQueryTable("ordercustomer", TableType.STREAM,6, 2); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
+    validateQueryTable("ordercustomer2", TableType.STREAM,6, 2); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
+  }
+
+  @Test
+  public void tableTemporalJoinTest() {
+    StringBuilder builder = imports();
+    builder.append("CustomerCount := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer;\n");
+    builder.append("OrderWithCount := SELECT o.id, c.order_count, o.customerid FROM Orders o TEMPORAL JOIN CustomerCount c on o.customerid = c.customer;");
+    builder.append("OrderWithCount2 := SELECT o.id, c.order_count, o.customerid FROM CustomerCount c TEMPORAL JOIN Orders o on o.customerid = c.customer;");
+    process(builder.toString());
+    validateQueryTable("orderwithcount", TableType.STREAM,5, 1); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
+    validateQueryTable("orderwithcount2", TableType.STREAM,5, 1); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
   }
 
   @Test

@@ -34,6 +34,10 @@ public class ContinuousIndexMap implements IndexMap {
         return IntStream.range(0,targets.length).mapToObj(i -> new Pair(i,targets[i])).collect(Collectors.toList());
     }
 
+    public int[] asArray() {
+        return targets.clone();
+    }
+
     public boolean containsTarget(int targetIndex) {
         return ArrayUtils.contains(targets,targetIndex);
     }

@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite.rules;
 
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
+import ai.datasqrl.plan.calcite.hints.TemporalJoinHint;
 import ai.datasqrl.plan.calcite.hints.TimeAggregationHint;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.*;
@@ -25,14 +26,12 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.ImmutableBitSet;
-import org.apache.calcite.util.mapping.IntPair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -429,7 +428,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         RelBuilder relB = relBuilderFactory.get();
         relB.push(input.relNode);
         relB.project(updatedProjects);
-        relB.hints(logicalProject.getHints());
         RelNode newProject = relB.build();
         int fieldCount = updatedProjects.size();
         return setRelHolder(new ProcessedRel(newProject,input.type,primaryKey.build(fieldCount),
@@ -513,32 +511,48 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             }
         }
 
-        //TODO: pull now filters through
-        final ProcessedRel leftInputF = leftInput.inlinePullups();
-        final ProcessedRel rightInputF = rightInput.inlinePullups();
-        RelBuilder relB = relBuilderFactory.get();
-        relB.push(leftInputF.relNode); relB.push(rightInputF.relNode);
+        //TODO: pull now-filters through if possible
+        leftInput = leftInput.inlinePullups();
+        rightInput = rightInput.inlinePullups();
 
         //Detect temporal join
         if (joinType==JoinRelType.DEFAULT || joinType==JoinRelType.TEMPORAL) {
-            if ((leftInputF.type==TableType.STREAM && rightInputF.type==TableType.TEMPORAL_STATE) ||
-                    (rightInputF.type==TableType.STREAM && leftInputF.type==TableType.TEMPORAL_STATE)) {
-                //Check for primary keys equalities on the state-side of the join
-                final Function<IntPair,Integer> pkAccess;
-                final ContinuousIndexMap pk;
-                if (rightInputF.type==TableType.TEMPORAL_STATE) {
-                    pkAccess = (p -> p.target);
-                    pk = rightInputF.primaryKey;
-                } else {
-                    pkAccess = (p -> p.source);
-                    pk = leftInputF.primaryKey;
+            if ((leftInput.type==TableType.STREAM && rightInput.type==TableType.TEMPORAL_STATE) ||
+                    (rightInput.type==TableType.STREAM && leftInput.type==TableType.TEMPORAL_STATE)) {
+                //Make sure the stream is left and state is right
+                if (rightInput.type==TableType.STREAM) {
+                    //Switch sides
+                    ProcessedRel tmp = rightInput;
+                    rightInput = leftInput;
+                    leftInput = tmp;
+                    joinedIndexMap = leftInput.indexMap.join(rightInput.indexMap);
+                    int tmpLeftSideMaxIdx = leftInput.indexMap.getTargetLength();
+                    condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(),
+                            idx -> idx<leftSideMaxIdx?tmpLeftSideMaxIdx+idx:idx-leftSideMaxIdx);
+                    eqDecomp = rexUtil.decomposeEqualityComparison(condition);
                 }
-                Set<Integer> pkIndexes = pk.getMapping().stream().map(p-> p.getTarget()).collect(Collectors.toSet());
-                Set<Integer> pkEqualities = eqDecomp.getEqualities().stream().map(pkAccess).collect(Collectors.toSet());
+                int newLeftSideMaxIdx = leftInput.indexMap.getTargetLength();
+                //Check for primary keys equalities on the state-side of the join
+                Set<Integer> pkIndexes = rightInput.primaryKey.getMapping().stream().map(p-> p.getTarget()+newLeftSideMaxIdx).collect(Collectors.toSet());
+                Set<Integer> pkEqualities = eqDecomp.getEqualities().stream().map(p -> p.target).collect(Collectors.toSet());
                 if (pkIndexes.equals(pkEqualities) && eqDecomp.getRemainingPredicates().isEmpty()) {
                     joinType = JoinRelType.TEMPORAL;
-                    //Construct temporal correlate join
-                    return null;
+                    RelBuilder relB = relBuilderFactory.get();
+                    relB.push(leftInput.relNode); relB.push(rightInput.relNode);
+                    Preconditions.checkArgument(rightInput.timestamp.hasTimestamp());
+                    TimestampHolder.Candidate candidate = leftInput.timestamp.getBestCandidate();
+                    TimestampHolder.Derived joinTimestamp = leftInput.timestamp.fixTimestamp(candidate.getIndex());
+
+                    ContinuousIndexMap pk = ContinuousIndexMap.builder(leftInput.primaryKey,0)
+                            .build(joinedIndexMap.getTargetLength());
+                    TemporalJoinHint hint = new TemporalJoinHint(joinTimestamp.getTimestampIndex(),
+                            rightInput.timestamp.getTimestampIndex()+newLeftSideMaxIdx,
+                            pk.asArray());
+                    relB.join(joinType, condition);
+                    relB.hints(hint.getHint());
+                    return setRelHolder(new ProcessedRel(relB.build(), TableType.STREAM,
+                            pk, joinTimestamp, joinedIndexMap,
+                            null, NowFilter.EMPTY, TopNConstraint.EMPTY));
                 } else if (joinType==JoinRelType.TEMPORAL) {
                     throw new IllegalArgumentException("Expected join condition to be equality condition on state's primary key: " + logicalJoin);
                 }
@@ -547,6 +561,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             }
 
         }
+
+        final ProcessedRel leftInputF = leftInput;
+        final ProcessedRel rightInputF = rightInput;
+        RelBuilder relB = relBuilderFactory.get();
+        relB.push(leftInputF.relNode); relB.push(rightInputF.relNode);
 
         ContinuousIndexMap.Builder concatPkBuilder = ContinuousIndexMap.builder(leftInputF.primaryKey,rightInputF.primaryKey.getSourceLength());
         concatPkBuilder.addAll(rightInputF.primaryKey.remap(joinedIndexMap.getTargetLength(), idx -> idx + leftInputF.indexMap.getTargetLength()));
