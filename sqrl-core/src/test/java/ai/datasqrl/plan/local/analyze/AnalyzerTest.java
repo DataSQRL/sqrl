@@ -141,7 +141,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void nestedCrossJoinQueryTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.productCopy := SELECT * FROM Product;"));
+            + "Product.productCopy := SELECT * FROM _ JOIN Product;"));
   }
 
   @Test
@@ -216,7 +216,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void invalidQueryAssignmentOnRelationshipTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
-        + "Product.joinDeclaration.column := SELECT * FROM Product;"));
+        + "Product.joinDeclaration.column := SELECT * FROM _ JOIN Product;"));
   }
 
   @Test
@@ -506,6 +506,33 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  public void nestedGroupByTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Orders;\n"
+            + "Orders.entries_2 := SELECT e.discount, count(1) AS cnt "
+            + "                    FROM _ JOIN _.entries e"
+            + "                    GROUP BY e.discount;\n"));
+  }
+
+  @Test
+  public void nestedAggregateNoGroupTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Orders;\n"
+            + "Orders.entries_2 := SELECT count(1) AS cnt "
+            + "                    FROM _ JOIN _.entries e"));
+  }
+
+  @Test
+  @Disabled
+  public void countFncTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Orders;\n"
+            + "Orders.entries_2 := SELECT discount, count() AS cnt "
+            + "                    FROM _ JOIN _.entries "
+            + "                    GROUP BY discount;\n"));
+  }
+
+  @Test
   @Disabled
   public void nestedLocalDistinctTest() {
     generate(parser.parse(
@@ -530,14 +557,34 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Disabled
   public void uniqueOrderByTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product2 := SELECT * FROM Product ORDER BY productid / 10;"
-        + "\n"));
+        + "Product2 := SELECT * FROM Product ORDER BY productid / 10;"));
+  }
+
+  @Test
+  public void invalidOrderTest() {
+    generateInvalid(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT e.* FROM Orders.entries AS e ORDER BY e.parent;"));
+  }
+
+  @Test
+  public void invalidGroupTest() {
+    generateInvalid(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT e.parent._uuid AS gp, min(e.unit_price) "
+        + "     FROM Orders.entries AS e "
+        + "     GROUP BY e.parent._uuid;"));
+  }
+
+  @Test
+  @Disabled
+  public void orderTest() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "Orders.ordered_entries := SELECT e.* FROM _ JOIN _.entries AS e ORDER BY _._uuid;"));
   }
 
   @Test
   public void queryNotAsExpressionTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product.example := SELECT productid FROM Product;\n"));
+        + "Product.example := SELECT p.productid FROM _ JOIN Product p;\n"));
   }
 
   @Test

@@ -126,6 +126,23 @@ public class CalciteUtil {
     return false;
   }
 
+  public static void prependGroupByNodes(SqlSelect select, List<SqlNode> nodes) {
+    if (nodes.isEmpty()) return;
+    select.setOperand(4, prependToList(select.getGroup(), nodes));
+  }
+
+  public static void prependOrderByNodes(SqlSelect select, List<SqlNode> nodes) {
+    if (nodes.isEmpty()) return;
+    select.setOperand(7, prependToList(select.getOrderList(), nodes));
+  }
+
+  public static SqlNodeList prependToList(SqlNodeList list, List<SqlNode> nodes) {
+    List<SqlNode> newGroup = new ArrayList<>(nodes);
+    if (list != null) {
+      newGroup.addAll(list.getList());
+    }
+    return new SqlNodeList(newGroup, nodes.get(0).getParserPosition());
+  }
 
   public interface RelDataTypeBuilder {
 

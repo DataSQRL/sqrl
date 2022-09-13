@@ -2,7 +2,6 @@ package ai.datasqrl.plan.local.transpile;
 
 import static ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable.DISTINCT_ON;
 import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
-import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
@@ -38,11 +37,9 @@ import org.apache.calcite.sql.SqlTableRef;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.DelegatingScope;
 import org.apache.calcite.sql.validate.ExpandableTableNamespace;
-import org.apache.calcite.sql.validate.SelectScope;
 import org.apache.calcite.sql.validate.SqlValidatorNamespace;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
-import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
 import org.apache.flink.util.Preconditions;
 
@@ -66,17 +63,12 @@ public class Transpile {
     this.options = options;
     this.joinBuilderFactory = () -> new JoinBuilderImpl(env, op);
   }
-/*
-
-  public void rewriteExpression(SqlNode expr, ListScope scope) {
-    SqlNode newExpr = convertExpression(expr, scope);
-    String fieldName = deriveAlias(expr, new TreeSet<>(), 0);
-    System.out.println();
-  }
-*/
 
   public void rewriteQuery(SqlSelect select, SqlValidatorScope scope) {
     createParentPrimaryKeys(scope);
+
+    validateNoPaths(select.getGroup(), scope);
+    validateNoPaths(select.getOrderList(), scope);
 
     //Before any transformation, replace group by with ordinals
     rewriteGroup(select, scope);
@@ -149,7 +141,8 @@ public class Transpile {
   }
 
   private void createParentPrimaryKeys(SqlValidatorScope scope) {
-    Optional<SQRLTable> context = Optional.empty();//op.getSqrlValidator().getContextTable(scope);
+    Optional<SQRLTable> context = op.getSqrlValidator().getContextTable()
+        .map(e->((ExpandableTableNamespace)e).getDestinationTable());
     List<NamedKey> nodes = new ArrayList<>();
     if (context.isPresent()) {
       TableWithPK t = env.getTableMap().get(context.get());
@@ -245,19 +238,28 @@ public class Transpile {
       return;
     }
 
-    List<SqlNode> mutableGroupItems = new ArrayList<>();
-    extraPPKItems(scope, mutableGroupItems);
+    List<SqlNode> ppkNodes = getPPKNodes(scope);
+    CalciteUtil.prependGroupByNodes(select, ppkNodes);
+  }
 
-    //Find the new rewritten select items, replace with alias
-    SqlNodeList group = select.getGroup() == null ? SqlNodeList.EMPTY : select.getGroup();
-    List<SqlNode> ordinals = getSelectListIndex(select, group.getList(),
-        mutableGroupItems.size(), scope);
-    mutableGroupItems.addAll(ordinals);
+  /**
+   * Validate there are no path expressions, group by and order should use select list aliases
+   * or create a hidden one if one is not found
+   */
+  private void validateNoPaths(SqlNodeList nodeList, SqlValidatorScope scope) {
+    if (nodeList == null) {
+      return;
+    }
+    for (SqlNode node : nodeList) {
+      validateNoPaths(node, scope);
+    }
+  }
 
-    if (!mutableGroupItems.isEmpty()) {
-      select.setGroupBy(new SqlNodeList(mutableGroupItems,
-          select.getGroup() == null ? select.getParserPosition()
-              : select.getGroup().getParserPosition()));
+  private void validateNoPaths(SqlNode node, SqlValidatorScope scope) {
+    PathDetectionVisitor pathDetectionVisitor = new PathDetectionVisitor(scope);
+    node.accept(pathDetectionVisitor);
+    if (pathDetectionVisitor.hasPath()) {
+      throw new RuntimeException("Node cannot contain a path, use select alias: " + node);
     }
   }
 
@@ -288,11 +290,11 @@ public class Transpile {
     return -1;
   }
 
-  private void extraPPKItems(SqlValidatorScope scope, List<SqlNode> groupItems) {
+  private List<SqlNode> getPPKNodes(SqlValidatorScope scope) {
     List<NamedKey> names = this.generatedKeys.get(scope);
-    for (NamedKey key : names) {
-      groupItems.add(new SqlIdentifier(List.of(key.getName()), SqlParserPos.ZERO));
-    }
+    return names.stream()
+        .map(key -> key.node)
+        .collect(Collectors.toList());
   }
 
   private void rewriteOrder(SqlSelect select, SqlValidatorScope scope) {
@@ -301,80 +303,8 @@ public class Transpile {
       return;
     }
 
-    List<SqlNode> mutableOrders = new ArrayList<>();
-    extraPPKItems(scope, mutableOrders);
-    List<SqlNode> cleaned = select.getOrderList().getList().stream().map(o -> {
-      if (o.getKind() == SqlKind.DESCENDING || o.getKind() == SqlKind.NULLS_FIRST
-          || o.getKind() == SqlKind.NULLS_LAST) {
-        //is DESCENDING, nulls first, nulls last
-        return ((SqlCall) o).getOperandList().get(0);
-      }
-      return o;
-    }).map(o -> op.getSqrlValidator().expandOrderExpr(select, o)).collect(Collectors.toList());
-
-    //If aggregating, replace each select item with ordinal
-    if (op.getSqrlValidator().isAggregate(select)) {
-      List<SqlNode> ordinals = getSelectListIndex(select, cleaned, mutableOrders.size(), scope);
-
-      //Readd w/ order
-      for (int i = 0; i < select.getOrderList().size(); i++) {
-        SqlNode o = select.getOrderList().get(i);
-        if (o.getKind() == SqlKind.DESCENDING || o.getKind() == SqlKind.NULLS_FIRST
-            || o.getKind() == SqlKind.NULLS_LAST) {
-          SqlCall call = ((SqlCall) o);
-          call.setOperand(0, ordinals.get(i));
-          mutableOrders.add(call);
-        } else {
-          mutableOrders.add(ordinals.get(i));
-        }
-      }
-
-      select.setOrderBy(new SqlNodeList(mutableOrders, select.getOrderList().getParserPosition()));
-      return;
-    } else {
-      //Otherwise, we want to check the select list first for ordinal, but if its not there then
-      // we expand it
-      List<SqlNode> expanded = op.getSqrlValidator().getRawSelectScope(select).getExpandedSelectList();
-      outer:
-      for (SqlNode orderNode : cleaned) {
-        //look for order in select list
-        if (options.orderToOrdinals) {
-          for (int i = 0; i < expanded.size(); i++) {
-            SqlNode selectItem = expanded.get(i);
-            selectItem = stripAs(selectItem);
-            //Found an ordinal
-            if (orderNode.equalsDeep(selectItem, Litmus.IGNORE)) {
-              SqlNode ordinal = SqlLiteral.createExactNumeric(
-                  Long.toString(i + mutableOrders.size() + 1), SqlParserPos.ZERO);
-              if (orderNode.getKind() == SqlKind.DESCENDING
-                  || orderNode.getKind() == SqlKind.NULLS_FIRST
-                  || orderNode.getKind() == SqlKind.NULLS_LAST) {
-                SqlCall call = ((SqlCall) orderNode);
-                call.setOperand(0, ordinal);
-                mutableOrders.add(call);
-              } else {
-                mutableOrders.add(ordinal);
-              }
-              continue outer;
-            }
-          }
-        }
-        //otherwise, process it
-        SqlNode ordinal = convertExpression(orderNode, scope);
-        if (orderNode.getKind() == SqlKind.DESCENDING || orderNode.getKind() == SqlKind.NULLS_FIRST
-            || orderNode.getKind() == SqlKind.NULLS_LAST) {
-          SqlCall call = ((SqlCall) orderNode);
-          call.setOperand(0, ordinal);
-          mutableOrders.add(call);
-        } else {
-          mutableOrders.add(ordinal);
-        }
-      }
-    }
-
-    if (!mutableOrders.isEmpty()) {
-      select.setOrderBy(new SqlNodeList(mutableOrders, select.getOrderList().getParserPosition()));
-    }
+    List<SqlNode> ppkNodes = getPPKNodes(scope);
+    CalciteUtil.prependOrderByNodes(select, ppkNodes);
   }
 
   SqlNode rewriteFrom(SqlNode from, SqlValidatorScope scope, Optional<String> aliasOpt) {

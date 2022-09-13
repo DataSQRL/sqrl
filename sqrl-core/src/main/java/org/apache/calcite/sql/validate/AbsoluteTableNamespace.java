@@ -23,8 +23,10 @@ import java.util.List;
 import java.util.Optional;
 import ai.datasqrl.plan.local.transpile.TablePath;
 import ai.datasqrl.plan.local.transpile.TablePathImpl;
+import lombok.Getter;
 
 /** Namespace based on a table with a path. */
+@Getter
 public class AbsoluteTableNamespace extends TableNamespace implements ExpandableTableNamespace {
 
   private final SQRLTable baseTable;
