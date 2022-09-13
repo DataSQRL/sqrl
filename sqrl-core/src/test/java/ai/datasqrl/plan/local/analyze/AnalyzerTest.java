@@ -491,6 +491,22 @@ class AnalyzerTest extends AbstractSQRLIT {
 
   @Test
   @Disabled
+  public void distinctOnWithExpressionTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Product;\n"
+            + "Product2 := DISTINCT Product ON productid / 10;\n"));
+  }
+
+  @Test
+  @Disabled
+  public void distinctOnWithExpressionAliasTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Product;\n"
+            + "Product2 := DISTINCT Product ON Product.productid / 10;\n"));
+  }
+
+  @Test
+  @Disabled
   public void nestedLocalDistinctTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"

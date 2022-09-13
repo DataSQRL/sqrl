@@ -11,8 +11,12 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlHint;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.type.ArraySqlType;
@@ -26,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.calcite.util.Litmus;
 
 public class CalciteUtil {
 
@@ -86,6 +91,41 @@ public class CalciteUtil {
 
     return scope instanceof AggregatingScope;
   }
+
+  public static List<SqlNode> getHintOptions(SqlHint hint) {
+    SqlNodeList nodeList = (SqlNodeList)hint.getOperandList().get(1);
+    if (nodeList == null) return List.of();
+    return nodeList.getList();
+  }
+
+  public static void appendSelectListItem(SqlSelect select, SqlNode node) {
+    List<SqlNode> list = new ArrayList<>(select.getSelectList().getList());
+    list.add(node);
+    SqlNodeList nodeList = new SqlNodeList(list, select.getSelectList().getParserPosition());
+    select.setOperand(1, nodeList);
+  }
+
+
+  public static boolean selectListExpressionEquals(SqlNode selectItem, SqlNode exp, SqlValidatorScope scope) {
+
+    switch (selectItem.getKind()) {
+      case AS:
+        SqlCall call = (SqlCall) selectItem;
+        if (selectListExpressionEquals(call.getOperandList().get(0), exp, scope)) {
+          return true;
+        }
+        //intentional fallthrough
+      default:
+        if (exp.equalsDeep(selectItem, Litmus.IGNORE) ||
+            (exp instanceof SqlIdentifier && scope.fullyQualify((SqlIdentifier) exp)
+                .identifier.equalsDeep(selectItem, Litmus.IGNORE))
+        ) {
+          return true;
+        }
+    }
+    return false;
+  }
+
 
   public interface RelDataTypeBuilder {
 

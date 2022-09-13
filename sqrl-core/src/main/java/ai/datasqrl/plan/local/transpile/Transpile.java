@@ -4,7 +4,9 @@ import static ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable.DISTINCT_ON;
 import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
+import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
+import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
 import ai.datasqrl.schema.SQRLTable;
@@ -109,11 +111,11 @@ public class Transpile {
   }
 
   private SqlHint rewriteDistinctHint(SqlSelect select, SqlHint hint, SqlValidatorScope scope) {
-    List<SqlNode> asIdentifiers = hint.getOptionList().stream()
-        .map(o -> new SqlIdentifier(List.of(o.split("\\.")), hint.getParserPosition()))
-        .collect(Collectors.toList());
+    List<SqlNode> options = CalciteUtil.getHintOptions(hint);
 
-    List<SqlNode> partitionKeyIndices = getSelectListindex(select, asIdentifiers, 0).stream()
+    appendUniqueToSelectList(select, options, scope);
+
+    List<SqlNode> partitionKeyIndices = getSelectListIndex(select, options, 0, scope).stream()
         .map(e -> new SqlIdentifier(((SqlNumericLiteral) e).getValue().toString(),
             SqlParserPos.ZERO)).collect(Collectors.toList());
 
@@ -121,6 +123,29 @@ public class Transpile {
         new SqlIdentifier(hint.getName(), hint.getParserPosition()),
         new SqlNodeList(partitionKeyIndices, hint.getParserPosition()), hint.getOptionFormat());
     return newHint;
+  }
+
+  private void appendUniqueToSelectList(SqlSelect select, List<SqlNode> options,
+      SqlValidatorScope scope) {
+    for (int i = 0; i < options.size(); i++) {
+      SqlNode option = options.get(i);
+      if (!expressionInSelectList(select, option, scope)) {
+        SqlCall call = SqrlOperatorTable.AS.createCall(option.getParserPosition(),
+            List.of(
+                option,
+                new SqlIdentifier("_option_" + i, SqlParserPos.ZERO)));
+        CalciteUtil.appendSelectListItem(select, call);
+      }
+    }
+  }
+
+  private boolean expressionInSelectList(SqlSelect select, SqlNode exp, SqlValidatorScope scope) {
+    for (SqlNode selectItem : select.getSelectList()) {
+      if (CalciteUtil.selectListExpressionEquals(selectItem, exp, scope)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void createParentPrimaryKeys(SqlValidatorScope scope) {
@@ -225,8 +250,8 @@ public class Transpile {
 
     //Find the new rewritten select items, replace with alias
     SqlNodeList group = select.getGroup() == null ? SqlNodeList.EMPTY : select.getGroup();
-    List<SqlNode> ordinals = getSelectListindex(select, group.getList(),
-        mutableGroupItems.size());
+    List<SqlNode> ordinals = getSelectListIndex(select, group.getList(),
+        mutableGroupItems.size(), scope);
     mutableGroupItems.addAll(ordinals);
 
     if (!mutableGroupItems.isEmpty()) {
@@ -236,39 +261,31 @@ public class Transpile {
     }
   }
 
-  private List<SqlNode> getSelectListindex(SqlSelect select, List<SqlNode> toCheck, int offset) {
-    List<SqlNode> indicies = new ArrayList<>();
-    outer:
-    for (SqlNode groupNode : toCheck) {
-      SelectScope selectScope = op.getSqrlValidator().getRawSelectScope(select);
-      List<SqlNode> list = selectScope.getExpandedSelectList();
-      for (int i = 0; i < list.size(); i++) {
-        SqlNode selectNode = list.get(i);
-        switch (selectNode.getKind()) {
-          case AS:
-            SqlCall call = (SqlCall) selectNode;
-            if (groupNode.equalsDeep(call.getOperandList().get(0), Litmus.IGNORE)
-                || groupNode.equalsDeep(call.getOperandList().get(1), Litmus.IGNORE)) {
-              indicies.add(SqlLiteral.createExactNumeric(Long.toString(i + offset),
-                  groupNode.getParserPosition()));
-              continue outer;
-            }
-            break;
-          default:
-            if (groupNode.equalsDeep(selectNode, Litmus.IGNORE) ||
-                (groupNode instanceof SqlIdentifier && selectScope.fullyQualify((SqlIdentifier) groupNode)
-                    .identifier.equalsDeep(selectNode, Litmus.IGNORE))
-            ) {
-              indicies.add(SqlLiteral.createExactNumeric(Long.toString(i + offset),
-                  groupNode.getParserPosition()));
-              continue outer;
-            }
-            break;
-        }
+  private List<SqlNode> getSelectListIndex(SqlSelect select, List<SqlNode> operands, int offset,
+      SqlValidatorScope scope) {
+    List<SqlNode> nodeList = new ArrayList<>();
+    for (SqlNode operand : operands) {
+      int index = getIndexOfExpression(select, operand, scope);
+      if (index == -1) {
+        throw new RuntimeException("Could not find expression in select list: " + operand);
       }
-      throw new RuntimeException("Could not find in select list " + groupNode);
+
+      nodeList.add(SqlLiteral.createExactNumeric(Long.toString(index + offset),
+          operand.getParserPosition()));
     }
-    return indicies;
+
+    return nodeList;
+  }
+
+  private int getIndexOfExpression(SqlSelect select, SqlNode operand, SqlValidatorScope scope) {
+    List<SqlNode> list = select.getSelectList().getList();
+    for (int i = 0; i < list.size(); i++) {
+      SqlNode selectItem = list.get(i);
+      if (CalciteUtil.selectListExpressionEquals(selectItem, operand, scope)) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private void extraPPKItems(SqlValidatorScope scope, List<SqlNode> groupItems) {
@@ -297,7 +314,7 @@ public class Transpile {
 
     //If aggregating, replace each select item with ordinal
     if (op.getSqrlValidator().isAggregate(select)) {
-      List<SqlNode> ordinals = getSelectListindex(select, cleaned, mutableOrders.size());
+      List<SqlNode> ordinals = getSelectListIndex(select, cleaned, mutableOrders.size(), scope);
 
       //Readd w/ order
       for (int i = 0; i < select.getOrderList().size(); i++) {

@@ -1019,7 +1019,8 @@ class AstBuilder
     List<SqlNode> pk = new ArrayList<>();
     //starts at 1
     for (int i = 0; i < ctx.expression().size(); i++) {
-      pk.add(visit(ctx.expression(i)));
+      SqlNode pkNode = visit(ctx.expression(i));
+      pk.add(pkNode);
     }
 
     List<SqlNode> sort = new ArrayList<>();
