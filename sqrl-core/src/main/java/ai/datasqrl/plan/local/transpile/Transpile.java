@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.local.transpile;
 
-import static ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable.TOP_N;
+import static ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable.DISTINCT_ON;
 import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
@@ -99,7 +99,7 @@ public class Transpile {
 
     for (int i = 0; i < list.size(); i++) {
       SqlHint hint = (SqlHint) list.get(i);
-      if (hint.getName().equals(TOP_N)) {
+      if (hint.getName().equals(DISTINCT_ON)) {
         SqlHint newHint = rewriteDistinctHint(select, hint, scope);
         hints.set(i, newHint);
       }
@@ -113,7 +113,7 @@ public class Transpile {
         .map(o -> new SqlIdentifier(List.of(o.split("\\.")), hint.getParserPosition()))
         .collect(Collectors.toList());
 
-    List<SqlNode> partitionKeyIndices = getSelectListOrdinals(select, asIdentifiers, 0).stream()
+    List<SqlNode> partitionKeyIndices = getSelectListindex(select, asIdentifiers, 0).stream()
         .map(e -> new SqlIdentifier(((SqlNumericLiteral) e).getValue().toString(),
             SqlParserPos.ZERO)).collect(Collectors.toList());
 
@@ -225,7 +225,7 @@ public class Transpile {
 
     //Find the new rewritten select items, replace with alias
     SqlNodeList group = select.getGroup() == null ? SqlNodeList.EMPTY : select.getGroup();
-    List<SqlNode> ordinals = getSelectListOrdinals(select, group.getList(),
+    List<SqlNode> ordinals = getSelectListindex(select, group.getList(),
         mutableGroupItems.size());
     mutableGroupItems.addAll(ordinals);
 
@@ -236,8 +236,8 @@ public class Transpile {
     }
   }
 
-  private List<SqlNode> getSelectListOrdinals(SqlSelect select, List<SqlNode> toCheck, int offset) {
-    List<SqlNode> ordinals = new ArrayList<>();
+  private List<SqlNode> getSelectListindex(SqlSelect select, List<SqlNode> toCheck, int offset) {
+    List<SqlNode> indicies = new ArrayList<>();
     outer:
     for (SqlNode groupNode : toCheck) {
       SelectScope selectScope = op.getSqrlValidator().getRawSelectScope(select);
@@ -249,7 +249,7 @@ public class Transpile {
             SqlCall call = (SqlCall) selectNode;
             if (groupNode.equalsDeep(call.getOperandList().get(0), Litmus.IGNORE)
                 || groupNode.equalsDeep(call.getOperandList().get(1), Litmus.IGNORE)) {
-              ordinals.add(SqlLiteral.createExactNumeric(Long.toString(i + offset + 1),
+              indicies.add(SqlLiteral.createExactNumeric(Long.toString(i + offset),
                   groupNode.getParserPosition()));
               continue outer;
             }
@@ -259,7 +259,7 @@ public class Transpile {
                 (groupNode instanceof SqlIdentifier && selectScope.fullyQualify((SqlIdentifier) groupNode)
                     .identifier.equalsDeep(selectNode, Litmus.IGNORE))
             ) {
-              ordinals.add(SqlLiteral.createExactNumeric(Long.toString(i + offset + 1),
+              indicies.add(SqlLiteral.createExactNumeric(Long.toString(i + offset),
                   groupNode.getParserPosition()));
               continue outer;
             }
@@ -268,7 +268,7 @@ public class Transpile {
       }
       throw new RuntimeException("Could not find in select list " + groupNode);
     }
-    return ordinals;
+    return indicies;
   }
 
   private void extraPPKItems(SqlValidatorScope scope, List<SqlNode> groupItems) {
@@ -297,7 +297,7 @@ public class Transpile {
 
     //If aggregating, replace each select item with ordinal
     if (op.getSqrlValidator().isAggregate(select)) {
-      List<SqlNode> ordinals = getSelectListOrdinals(select, cleaned, mutableOrders.size());
+      List<SqlNode> ordinals = getSelectListindex(select, cleaned, mutableOrders.size());
 
       //Readd w/ order
       for (int i = 0; i < select.getOrderList().size(); i++) {

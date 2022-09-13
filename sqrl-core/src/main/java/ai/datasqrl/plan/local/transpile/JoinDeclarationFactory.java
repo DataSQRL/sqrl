@@ -7,7 +7,6 @@ import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 //import ai.datasqrl.plan.local.generate.Generator.TranspiledResult;
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
@@ -51,7 +50,6 @@ public class JoinDeclarationFactory {
   }
 
   public SqlJoinDeclaration create(TableWithPK pkTable, RelNode relNode, SqlNode sqlNode) {
-
     Optional<SqlHint> hint = Optional.empty();
     if (relNode instanceof LogicalSort &&
         ((LogicalSort) relNode).fetch != null) {
@@ -61,7 +59,7 @@ public class JoinDeclarationFactory {
               SqlParserPos.ZERO))
           .collect(Collectors.toList());
       hint = Optional.of(new SqlHint(SqlParserPos.ZERO,
-          new SqlIdentifier(SqrlHintStrategyTable.TOP_N, SqlParserPos.ZERO),
+          new SqlIdentifier(SqrlHintStrategyTable.DISTINCT_ON, SqlParserPos.ZERO),
           new SqlNodeList(pksOrdinals, SqlParserPos.ZERO),
           HintOptionFormat.ID_LIST));
     }

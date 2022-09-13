@@ -569,7 +569,7 @@ public class APIServerIT extends AbstractSQRLIT {
     testContext.completeNow();
   }
 
-//    @Test
+    @Test
 
   /**
    * This runs the server for external testing from command line. Do not include in normal test

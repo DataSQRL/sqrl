@@ -24,7 +24,6 @@ import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.schema.TableFunctionArgument;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -32,20 +31,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.util.Util;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.util.Strings;
 
 /**
  * Builds the abstract syntax tree for an SQRL script using the classes in
@@ -1025,11 +1018,11 @@ class AstBuilder
 
     List<SqlNode> pk = new ArrayList<>();
     //starts at 1
-    for (int i = 1; i < ctx.identifier().size(); i++) {
-      pk.add(visit(ctx.identifier(i)));
+    for (int i = 0; i < ctx.expression().size(); i++) {
+      pk.add(visit(ctx.expression(i)));
     }
 
-    List<SqlNode> sort = null;
+    List<SqlNode> sort = new ArrayList<>();
     if (ctx.orderExpr != null) {
       SqlNode order = visit(ctx.orderExpr);
       sort = List.of(SqlStdOperatorTable.DESC.createCall(getLocation(ctx.orderExpr), order));
@@ -1046,13 +1039,13 @@ class AstBuilder
             null,
             null,
             null,
-            new SqlNodeList(pk, getLocation(ctx)),
+            new SqlNodeList(sort, getLocation(ctx)),
             null,
             SqlLiteral.createExactNumeric("1", getLocation(ctx)),
             new SqlNodeList(List.of(new SqlHint(loc,
-                new SqlIdentifier(SqrlHintStrategyTable.TOP_N, loc),
-                SqlNodeList.EMPTY,
-                HintOptionFormat.EMPTY
+                new SqlIdentifier(SqrlHintStrategyTable.DISTINCT_ON, loc),
+                new SqlNodeList(pk, loc),
+                HintOptionFormat.ID_LIST
             )), loc)
         );
 
