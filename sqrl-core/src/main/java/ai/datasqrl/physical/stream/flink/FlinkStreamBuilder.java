@@ -1,21 +1,6 @@
 package ai.datasqrl.physical.stream.flink;
 
-import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.Predicate;
-
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
-import ai.datasqrl.physical.stream.StreamHolder;
-import ai.datasqrl.physical.stream.flink.monitor.KeyedSourceRecordStatistics;
-import ai.datasqrl.physical.stream.flink.monitor.SaveTableStatistics;
-import ai.datasqrl.physical.stream.flink.schema.FlinkRowConstructor;
-import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
-import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
-import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
 import ai.datasqrl.io.formats.TextLineFormat;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.io.impl.file.FilePath;
@@ -24,10 +9,15 @@ import ai.datasqrl.io.sources.*;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
+import ai.datasqrl.physical.stream.StreamHolder;
+import ai.datasqrl.physical.stream.flink.monitor.KeyedSourceRecordStatistics;
+import ai.datasqrl.physical.stream.flink.monitor.SaveTableStatistics;
+import ai.datasqrl.physical.stream.flink.schema.FlinkRowConstructor;
+import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
+import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
+import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
@@ -52,12 +42,19 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Predicate;
 
 @Getter
 //TODO: Do output tags (errors, monitor) need a globally unique name or just local to the job?
@@ -157,8 +154,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
     //TODO: error handling when mapping doesn't work?
     SingleOutputStreamOperator<Row> rows = flinkStream.getStream().map(r -> mapper.apply(r),typeInformation);
     Schema tableSchema = FlinkTableSchemaGenerator.convert(converter);
-    Table table = tableEnvironment.fromDataStream(rows, tableSchema);
-    tableEnvironment.createTemporaryView(qualifiedTableName, table);
+    tableEnvironment.createTemporaryView(qualifiedTableName, rows, tableSchema);
   }
 
   public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(SourceTable table) {

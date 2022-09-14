@@ -130,7 +130,7 @@ public class Transpile {
       TableWithPK t = env.getTableMap().get(context.get());
       //self table could be aliased
       String contextAlias = op.getSqrlValidator().getContextAlias();
-      for (String key : t.getPrimaryKeys()) {
+      for (String key : t.getPrimaryKeyNames()) {
         String pk = env.getAliasGenerator().generatePK();
         nodes.add(
             new NamedKey(pk, new SqlIdentifier(List.of(contextAlias, key), SqlParserPos.ZERO)));

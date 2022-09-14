@@ -14,8 +14,6 @@ import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Schemas;
 import org.apache.calcite.schema.impl.AbstractTable;
 
-import java.util.List;
-
 /**
  * A relational table is a Calcite table that represents a relation in standard relational algebra.
  *
@@ -60,10 +58,6 @@ public abstract class AbstractRelationalTable extends AbstractTable implements Q
   @Override
   public java.lang.reflect.Type getElementType() {
     return Object[].class;
-  }
-
-  public List<String> getPrimaryKeys() {
-    return List.of("_uuid");
   }
 
 

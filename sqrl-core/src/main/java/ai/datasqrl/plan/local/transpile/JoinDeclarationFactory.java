@@ -7,7 +7,6 @@ import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 //import ai.datasqrl.plan.local.generate.Generator.TranspiledResult;
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
@@ -55,7 +54,7 @@ public class JoinDeclarationFactory {
     Optional<SqlHint> hint = Optional.empty();
     if (relNode instanceof LogicalSort &&
         ((LogicalSort) relNode).fetch != null) {
-      List<SqlNode> pksOrdinals = IntStream.range(0, pkTable.getPrimaryKeys().size())
+      List<SqlNode> pksOrdinals = IntStream.range(0, pkTable.getPrimaryKeyNames().size())
           .mapToObj(i -> new SqlIdentifier(
               Long.toString(i + 1),
               SqlParserPos.ZERO))
@@ -89,7 +88,7 @@ public class JoinDeclarationFactory {
           }, SqlParserPos.ZERO);
       //change condition to be on pk
       List<SqlNode> pks = new ArrayList<>();
-      for (String pk : pkTable.getPrimaryKeys()) {
+      for (String pk : pkTable.getPrimaryKeyNames()) {
         pks.add(new SqlBasicCall(SqrlOperatorTable.EQUALS,
             new SqlNode[]{
                 new SqlIdentifier(List.of("_", pk), SqlParserPos.ZERO),
@@ -169,9 +168,9 @@ public class JoinDeclarationFactory {
         rel.getToTable()) : env.getTableMap().get(rel.getFromTable());
 
     List<SqlNode> conditions = new ArrayList<>();
-    for (int i = 0; i < lhs.getPrimaryKeys().size(); i++) {
-      String lpk = lhs.getPrimaryKeys().get(i);
-      String rpk = rhs.getPrimaryKeys().get(i);
+    for (int i = 0; i < lhs.getPrimaryKeyNames().size(); i++) {
+      String lpk = lhs.getPrimaryKeyNames().get(i);
+      String rpk = rhs.getPrimaryKeyNames().get(i);
       conditions.add(new SqlBasicCall(SqrlOperatorTable.EQUALS,
           new SqlNode[]{new SqlIdentifier(List.of("_", lpk), SqlParserPos.ZERO),
               new SqlIdentifier(List.of(alias, rpk), SqlParserPos.ZERO)}, SqlParserPos.ZERO));

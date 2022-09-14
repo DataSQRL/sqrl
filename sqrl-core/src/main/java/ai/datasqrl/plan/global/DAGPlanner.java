@@ -37,7 +37,7 @@ public class DAGPlanner {
         for (StreamTableNode tableNode : Iterables.filter(dag, StreamTableNode.class)) {
             QueryRelationalTable table = tableNode.table;
             //1. Optimize the logical plan and compute statistic
-            optimizeTable(table);
+            optimizeTable(table); //TODO: should this add inlined columns to all relnodes?
             //2. Determine if we should materialize this table
             MaterializationPreference materialize = determineMaterialization(table);
             // make sure materialization strategy is compatible with inputs, else try to adjust
@@ -125,13 +125,13 @@ public class DAGPlanner {
                                     t -> t.getType()== TableType.STATE || t.getTimestamp().hasTimestamp()));
 
         //6. Produce an LP-tree for each query with all tables inlined and push down filters to determine indexes
-        List<OptimizedDAG.WriteDB> writeDAG = new ArrayList<>();
+        List<OptimizedDAG.MaterializeQuery> writeDAG = new ArrayList<>();
         for (DBTableNode dbNode : Iterables.filter(dag, DBTableNode.class)) {
             if (dbNode.table.getRoot().getBase().getMatStrategy().isMaterialize()) {
                 VirtualRelationalTable dbTable = dbNode.table;
                 RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
                 RelNode expanded = planner.transform(OptimizationStage.WRITE_DAG_EXPANSION,scanTable);
-                writeDAG.add(new OptimizedDAG.WriteDB(dbTable,expanded));
+                writeDAG.add(new OptimizedDAG.MaterializeQuery(new OptimizedDAG.TableSink(dbTable),expanded));
             }
         }
 

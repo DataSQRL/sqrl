@@ -26,7 +26,9 @@ public class FlinkTableAPIIT extends AbstractSQRLIT {
 
   @BeforeEach
   public void setup() {
-      initialize(IntegrationTestSettings.getFlinkWithDB());
+      initialize(IntegrationTestSettings.builder().monitorSources(true)
+              .stream(IntegrationTestSettings.StreamEngine.FLINK)
+              .database(IntegrationTestSettings.DatabaseEngine.POSTGRES).build());
   }
 
   @SneakyThrows

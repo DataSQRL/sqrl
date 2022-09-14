@@ -1,7 +1,5 @@
 package ai.datasqrl.plan.local.transpile;
 
-import static org.apache.calcite.util.Static.RESOURCE;
-
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
@@ -13,25 +11,19 @@ import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
+import lombok.Getter;
+import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.fun.ConvertableFunction;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.*;
+import org.apache.calcite.util.Util;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.Getter;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.fun.ConvertableFunction;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.IdentifierNamespace;
-import org.apache.calcite.sql.validate.SelectNamespace;
-import org.apache.calcite.sql.validate.SqlQualified;
-import org.apache.calcite.sql.validate.SqlScopedShuttle;
-import org.apache.calcite.sql.validate.SqlValidatorScope;
-import org.apache.calcite.util.Util;
+
+import static org.apache.calcite.util.Static.RESOURCE;
 
 public class ExpressionRewriter extends SqlScopedShuttle {
 
@@ -159,14 +151,14 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     String fieldName =
         fields.get(fields.size() - 1) instanceof Column ? fields.get(fields.size() - 1).getName()
             .getDisplay()
-            : env.getTableMap().get(rels.get(rels.size() - 1).getToTable()).getPrimaryKeys().get(0);
+            : env.getTableMap().get(rels.get(rels.size() - 1).getToTable()).getPrimaryKeyNames().get(0);
 
     //Call gets an identifier
     SqlBasicCall newCall = new SqlBasicCall(function.convertToInlineAgg().get(), new SqlNode[]{
         new SqlIdentifier(List.of(declaration.getLastAlias(), fieldName), SqlParserPos.ZERO)},
         call.getParserPosition());
 
-    List<SqlNode> groups = basePkTable.getPrimaryKeys().stream()
+    List<SqlNode> groups = basePkTable.getPrimaryKeyNames().stream()
         .map(e -> new SqlIdentifier(List.of(declaration.getFirstAlias(), e), SqlParserPos.ZERO))
         .collect(Collectors.toList());
 

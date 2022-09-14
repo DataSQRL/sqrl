@@ -112,4 +112,8 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   }
 
 
+  @Override
+  public List<String> getPrimaryKeyNames() {
+    throw new UnsupportedOperationException();
+  }
 }

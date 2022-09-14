@@ -70,15 +70,15 @@ public abstract class AddedColumn {
 
         //Logical plan that produces the added column value in the last field. All previous fields
         //are primary key columns of the table (in the same order as for the table) to which this column is added.
-        final RelNode leftJoin;
+        final RelNode rightJoin;
 
-        public Complex(String nameId, RelNode leftJoin) {
+        public Complex(String nameId, RelNode rightJoin) {
             super(nameId, false); //For now, we never inline complex columns
-            this.leftJoin = leftJoin;
+            this.rightJoin = rightJoin;
         }
 
         RelDataTypeField getAddedColumnField() {
-            List<RelDataTypeField> fields = leftJoin.getRowType().getFieldList();
+            List<RelDataTypeField> fields = rightJoin.getRowType().getFieldList();
             return fields.get(fields.size()-1);
         }
 

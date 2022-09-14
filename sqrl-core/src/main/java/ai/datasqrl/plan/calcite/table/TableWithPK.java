@@ -6,5 +6,5 @@ public interface TableWithPK {
 
   String getNameId();
 
-  List<String> getPrimaryKeys();
+  List<String> getPrimaryKeyNames();
 }

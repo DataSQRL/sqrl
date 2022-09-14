@@ -10,7 +10,7 @@ import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.util.NamedIdentifier;
 import ai.datasqrl.physical.stream.Job;
-import ai.datasqrl.physical.stream.ScriptExecutor;
+import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.io.sinks.registry.DataSinkRegistry;
 import ai.datasqrl.io.sources.dataset.DatasetRegistry;
@@ -75,7 +75,7 @@ public class Environment implements Closeable {
     ScriptDeployment deployment;
     try {
       PhysicalPlan plan = compile(bundle, errors);
-      ScriptExecutor executor = new ScriptExecutor();
+      PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
       Job job = executor.execute(plan);
       deployment = ScriptDeployment.of(bundle);
       deployment.setExecutionId(job.getExecutionId());

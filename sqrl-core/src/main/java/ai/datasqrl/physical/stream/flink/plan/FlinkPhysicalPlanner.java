@@ -4,7 +4,9 @@ import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.global.OptimizedDAG;
+import graphql.com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.flink.table.api.Table;
@@ -16,17 +18,16 @@ import org.apache.flink.table.api.config.ExecutionConfigOptions.NotNullEnforcer;
 import org.apache.flink.table.api.internal.FlinkEnvProxy;
 import org.apache.flink.table.planner.delegation.StreamPlanner;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
-public class StreamGraphBuilder {
+public class FlinkPhysicalPlanner {
 
   private final StreamEngine streamEngine;
   private final ImportManager importManager;
   private final JDBCConnectionProvider jdbcConfiguration;
 
-  public CreateStreamJobResult createStreamGraph(List<OptimizedDAG.WriteDB> streamQueries) {
+  public FlinkStreamPhysicalPlan createStreamGraph(List<OptimizedDAG.MaterializeQuery> streamQueries) {
     final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder) streamEngine.createJob();
     final StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)streamBuilder.getTableEnvironment();
     final DataStreamRegisterer dataStreamRegisterer = new DataStreamRegisterer(tEnv,
@@ -37,33 +38,34 @@ public class StreamGraphBuilder {
         .set(ExecutionConfigOptions.TABLE_EXEC_SINK_NOT_NULL_ENFORCER, NotNullEnforcer.ERROR);
 
     StreamStatementSet stmtSet = tEnv.createStatementSet();
-    List<TableDescriptor> createdTables = new ArrayList<>();
-    for (OptimizedDAG.WriteDB sink : streamQueries) {
-      String name = sink.getTable().getNameId() + "_sink";
+    for (OptimizedDAG.MaterializeQuery query : streamQueries) {
+      Preconditions.checkArgument(query.getSink() instanceof OptimizedDAG.TableSink, "Subscriptions not yet implemented");
+      VirtualRelationalTable tblsink = ((OptimizedDAG.TableSink) query.getSink()).getTable();
+
+      String name = tblsink.getNameId() + "_sink";
       if (List.of(tEnv.listTables()).contains(name)) {
         continue;
       }
-      dataStreamRegisterer.register(sink.getRelNode());
+      dataStreamRegisterer.register(query.getRelNode());
 
       RelNode relNode = InjectFlinkCluster.injectFlinkRelOptCluster(tEnv, ((StreamPlanner) tEnv.getPlanner()).getRelBuilder().getCluster(),
-          sink.getRelNode());
+          query.getRelNode());
 
       Table tbl = FlinkEnvProxy.relNodeQuery(relNode, tEnv);
 
       TableDescriptor descriptor = TableDescriptor.forConnector("jdbc")
-          .schema(FlinkPipelineUtils.addPrimaryKey(tbl.getSchema().toSchema(), sink.getTable()))
+          .schema(FlinkPipelineUtils.addPrimaryKey(tbl.getSchema().toSchema(), tblsink))
           .option("url", jdbcConfiguration.getDbURL())
-          .option("table-name", sink.getTable().getNameId())
+          .option("table-name", tblsink.getNameId())
           .option("username", jdbcConfiguration.getUser())
           .option("password", jdbcConfiguration.getPassword())
           .build();
 
       tEnv.createTable(name, descriptor);
-
       stmtSet.addInsert(name, tbl);
-      createdTables.add(descriptor);
+
     }
 
-    return new CreateStreamJobResult(stmtSet, createdTables);
+    return new FlinkStreamPhysicalPlan(stmtSet);
   }
 }

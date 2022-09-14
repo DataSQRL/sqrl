@@ -3,21 +3,23 @@ package ai.datasqrl.physical.stream;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.database.ddl.SqlDDLStatement;
+import ai.datasqrl.physical.stream.flink.plan.FlinkStreamPhysicalPlan;
+import lombok.AllArgsConstructor;
+import org.apache.flink.table.api.StatementSet;
+import org.apache.flink.table.api.TableResult;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import org.apache.flink.table.api.TableResult;
-import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 
 @AllArgsConstructor
-public class ScriptExecutor {
+public class PhysicalPlanExecutor {
 
   public Job execute(PhysicalPlan physicalPlan) {
     executeDml(physicalPlan.getDatabaseDDL(), physicalPlan.getDbConnection());
-    String executionId = executeFlink(physicalPlan.getStreamQueries());
+    String executionId = executeFlink((FlinkStreamPhysicalPlan) physicalPlan.getStreamQueries());
     return new Job(executionId);
   }
 
@@ -33,7 +35,8 @@ public class ScriptExecutor {
     }
   }
 
-  public String executeFlink(StreamStatementSet statementSet) {
+  public String executeFlink(FlinkStreamPhysicalPlan flinkPlan) {
+    StatementSet statementSet = flinkPlan.getStatementSet();
     TableResult rslt = statementSet.execute();
     rslt.print(); //todo: this just forces print to wait for the async
     return rslt.getJobClient().get()

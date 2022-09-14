@@ -1,7 +1,6 @@
 package ai.datasqrl.plan.local.generate;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
-import ai.datasqrl.io.sources.stats.Accumulator;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -13,6 +12,7 @@ import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.AddedColumn;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
 import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
+import ai.datasqrl.plan.calcite.table.ProxyImportRelationalTable;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
@@ -159,6 +159,10 @@ public class Resolve {
     tblDef.getShredTableMap().values().stream().forEach(vt ->
         env.relSchema.add(vt.getNameId(), vt));
     env.relSchema.add(tblDef.getBaseTable().getNameId(), tblDef.getBaseTable());
+    if (tblDef.getBaseTable() instanceof ProxyImportRelationalTable) {
+      ProxyImportRelationalTable impTable = (ProxyImportRelationalTable) tblDef.getBaseTable();
+      env.relSchema.add(impTable.getNameId(),impTable);
+    }
     env.tableMap.putAll(tblDef.getShredTableMap());
     //and also map all fields
     env.fieldMap.putAll(tblDef.getFieldNameMap());

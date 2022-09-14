@@ -24,7 +24,7 @@ public class SqlNodeBuilder {
   }
 
   public static SqlNode createSelfEquality(TableWithPK table, String lhsAlias, String rhsAlias) {
-    for (String name : table.getPrimaryKeys()) {
+    for (String name : table.getPrimaryKeyNames()) {
       return new SqlBasicCall(SqrlOperatorTable.EQUALS,
           new SqlNode[]{new SqlIdentifier(List.of(lhsAlias, name), SqlParserPos.ZERO),
               new SqlIdentifier(List.of(rhsAlias, name), SqlParserPos.ZERO)}, SqlParserPos.ZERO);

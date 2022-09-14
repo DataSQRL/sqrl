@@ -1,16 +1,21 @@
 package ai.datasqrl.physical;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
+import ai.datasqrl.physical.database.QueryTemplate;
 import ai.datasqrl.physical.database.ddl.SqlDDLStatement;
-import java.util.List;
+import ai.datasqrl.physical.stream.StreamPhysicalPlan;
+import ai.datasqrl.plan.queries.APIQuery;
 import lombok.Value;
-import org.apache.calcite.schema.Schema;
-import org.apache.flink.table.api.bridge.java.StreamStatementSet;
+
+import java.util.List;
+import java.util.Map;
 
 @Value
 public class PhysicalPlan {
 
   JDBCConnectionProvider dbConnection;
   List<SqlDDLStatement> databaseDDL;
-  StreamStatementSet streamQueries;
+  StreamPhysicalPlan streamQueries;
+  Map<APIQuery, QueryTemplate> databaseQueries;
+
 }

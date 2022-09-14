@@ -10,15 +10,32 @@ import java.util.List;
 @Value
 public class OptimizedDAG {
 
-  List<WriteDB> streamTables;
-  //TODO: Subscription tables
+  List<MaterializeQuery> streamQueries;
   List<ReadQuery> databaseQueries;
 
   @Value
-  public static class WriteDB {
+  public static class MaterializeQuery {
+
+    final MaterializeSink sink;
+    final RelNode relNode;
+
+  }
+
+  public interface MaterializeSink {
+
+  }
+
+  @Value
+  public static class TableSink implements MaterializeSink {
 
     final VirtualRelationalTable table;
-    final RelNode relNode;
+
+  }
+
+  @Value
+  public static class StreamSink implements MaterializeSink {
+
+
 
   }
 
