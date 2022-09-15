@@ -54,6 +54,11 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         return name.suffix(Integer.toString(tableIdCounter.incrementAndGet()));
     }
 
+    public static int getTableOrdinal(String tableId) {
+        int idx = tableId.lastIndexOf(Name.NAME_DELIMITER);
+        return Integer.parseInt(tableId.substring(idx+1,tableId.length()));
+    }
+
     public ScriptTableDefinition importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias, RelBuilder relBuilder) {
         CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(this);
         RelDataType rootType = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
@@ -71,17 +76,17 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
                                       List<Name> fieldNames) {
         ContinuousIndexMap indexmap = rel.getIndexMap();
         Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());
-        Pair<PullupOperator.Container, SQRLLogicalPlanConverter.ProcessedRel> inlinedPullups = rel.finalizeRelation();
-        rel = inlinedPullups.getValue();
+
+        if (CalciteUtil.hasNesting(rel.getRelNode().getRowType()) && !rel.getDedup().isEmpty()) {
+            //Need to inline deduplication for nested tables
+            rel = rel.inlineDedup();
+        }
         Name tableid = getTableId(tablePath.getLast(),"q");
         TimestampHolder.Base timestamp = TimestampHolder.Base.ofDerived(rel.getTimestamp());
-        QueryRelationalTable baseTable = new QueryRelationalTable(tableid, rel.getType(),rel.getRelNode(),
+        QueryRelationalTable baseTable = new QueryRelationalTable(tableid, rel.getType(),
+                rel.getRelNode(), rel.getPullups(),
                 timestamp, rel.getPrimaryKey().getSourceLength());
 
-        PullupOperator.Container pullups = inlinedPullups.getKey();
-        if (!CalciteUtil.hasNesting(rel.getRelNode().getRowType()) && !pullups.isEmpty()) { //Database pullups only work for non-nested tables
-            baseTable.setPullups(pullups);
-        }
         LinkedHashMap<Integer,Name> index2Name = new LinkedHashMap<>();
         for (int i = 0; i < fieldNames.size(); i++) {
             index2Name.put(indexmap.map(i), fieldNames.get(i));

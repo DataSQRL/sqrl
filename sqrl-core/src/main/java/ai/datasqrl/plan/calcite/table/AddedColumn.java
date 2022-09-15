@@ -22,8 +22,6 @@ import java.util.List;
 public abstract class AddedColumn {
 
     final String nameId;
-    //Being inlined means that the column has been added to the base QueryRelationalTable
-    final boolean isInlined;
 
     public abstract RelDataType getDataType();
 
@@ -35,8 +33,8 @@ public abstract class AddedColumn {
 
         final RexNode expression;
 
-        public Simple(String nameId, RexNode expression, boolean isInlined) {
-            super(nameId, isInlined);
+        public Simple(String nameId, RexNode expression) {
+            super(nameId);
             this.expression = expression;
         }
 
@@ -49,7 +47,7 @@ public abstract class AddedColumn {
             return SqrlRexUtil.mapIndexes(expression, indexMap);
         }
 
-        public void appendTo(@NonNull RelBuilder relBuilder) {
+        public RelBuilder appendTo(@NonNull RelBuilder relBuilder) {
             RelDataType baseType = relBuilder.peek().getRowType();
             int noBaseFields = baseType.getFieldCount();
             List<String> fieldNames = new ArrayList<>(noBaseFields+1);
@@ -62,6 +60,7 @@ public abstract class AddedColumn {
             rexNodes.add(expression);
 
             relBuilder.project(rexNodes,fieldNames);
+            return relBuilder;
         }
     }
 
@@ -73,7 +72,7 @@ public abstract class AddedColumn {
         final RelNode rightJoin;
 
         public Complex(String nameId, RelNode rightJoin) {
-            super(nameId, false); //For now, we never inline complex columns
+            super(nameId); //For now, we never inline complex columns
             this.rightJoin = rightJoin;
         }
 

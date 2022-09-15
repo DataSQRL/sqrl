@@ -29,6 +29,7 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -70,6 +71,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void importTableTest() {
     process(imports().toString());
 
@@ -87,7 +89,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   private void process(String script) {
     ScriptNode node = parse(script);
     Resolve.Env resolvedDag = resolve.planDag(session, node);
-    DAGPlanner dagPlanner = new DAGPlanner();
+    DAGPlanner dagPlanner = new DAGPlanner(planner);
     //We add a scan query for every table in the API
     List<APIQuery> queries = new ArrayList<APIQuery>();
     CalciteSchema relSchema = resolvedDag.getRelSchema();
@@ -96,7 +98,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
       RelNode rel = planner.getRelBuilder().scan(tblName).build();
       queries.add(new APIQuery(tblName + "_query", rel));
     });
-    OptimizedDAG dag = dagPlanner.plan(relSchema,planner,queries);
+    OptimizedDAG dag = dagPlanner.plan(relSchema,queries);
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     Job job = executor.execute(physicalPlan);

@@ -19,7 +19,7 @@ public class ProxyImportRelationalTable extends QueryRelationalTable {
 
   public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull TimestampHolder.Base timestamp,
                                     RelNode relNode, ImportedSourceTable sourceTable) {
-    super(rootTableId, TableType.STREAM, relNode, timestamp, 1);
+    super(rootTableId, TableType.STREAM, relNode, PullupOperator.Container.EMPTY, timestamp, 1);
     this.sourceTable = sourceTable;
   }
 

@@ -9,9 +9,12 @@ import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.tools.RelBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * A relational table that represents the relational equivalent of a {@link ai.datasqrl.schema.SQRLTable}.
@@ -53,12 +56,15 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
 
   public abstract VirtualRelationalTable.Root getRoot();
 
-  public void addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
-    //Ensure that all previously added columns are inlined if the column to be added is
-    Preconditions.checkArgument(
-        !column.isInlined || addedColumns.stream().allMatch(AddedColumn::isInlined),
-        "Cannot add inlined column when previous columns aren't inlined: %s", addedColumns);
-    addedColumns.add(column);
+  public void addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory,
+                        Supplier<RelBuilder> relBuilderFactory, Optional<Integer> timestampScore) {
+    if (isRoot() && column instanceof AddedColumn.Simple && addedColumns.isEmpty()) {
+      //We can inline this column on the parent table
+      ((VirtualRelationalTable.Root)this).getBase().addInlinedColumn((AddedColumn.Simple) column,
+              relBuilderFactory, timestampScore);
+    } else {
+      addedColumns.add(column);
+    }
     //Update the row types
     RelDataType colType = column.getDataType();
     if (!CalciteUtil.isNestedTable(colType)) {
@@ -118,6 +124,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     public int getNumParentPks() {
       return 0;
     }
+
   }
 
   @Getter
@@ -156,16 +163,6 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     @Override
     public Root getRoot() {
       return parent.getRoot();
-    }
-
-    @Override
-    public void addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
-      //It's not currently supported to inline child columns since that requires un- and
-      // re-collecting tables
-      //which introduces a lot of complexity that we currently avoid because the benefit doesn't
-      // seem high
-      Preconditions.checkArgument(!column.isInlined, "Cannot inline column on child tables");
-      super.addColumn(column, typeFactory);
     }
 
     @Override

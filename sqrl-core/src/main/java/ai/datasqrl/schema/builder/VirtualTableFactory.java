@@ -37,6 +37,11 @@ public abstract class VirtualTableFactory<T,V extends VirtualTable> extends Abst
 
     protected abstract boolean isTimestamp(T datatype);
 
+    public Optional<Integer> getTimestampScore(Name columnName, T datatype) {
+        if (!isTimestamp(datatype)) return Optional.empty();
+        return Optional.of(getTimestampScore(columnName));
+    }
+
     public TimestampHolder.Base getTimestampHolder(UniversalTableBuilder<T> tblBuilder) {
         Preconditions.checkArgument(tblBuilder.getParent()==null,"Can only be invoked on root table");
         TimestampHolder.Base tsh = new TimestampHolder.Base();

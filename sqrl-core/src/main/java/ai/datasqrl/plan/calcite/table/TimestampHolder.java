@@ -135,10 +135,6 @@ public abstract class TimestampHolder {
         return "TIMESTAMP="+candidates.toString();
     }
 
-    public boolean isCandidateLocked() {
-        return candidatesLocked;
-    }
-
     public void lockCandidates() {
         candidatesLocked = true;
     }

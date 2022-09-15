@@ -2,6 +2,7 @@ package ai.datasqrl.plan.calcite.util;
 
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import com.google.common.collect.Iterables;
+import graphql.com.google.common.base.Preconditions;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rex.*;
@@ -41,7 +42,7 @@ public class TimePredicate {
         return smallerIndex<0 || largerIndex<0;
     }
 
-    public boolean isNowFilter() {
+    public boolean isNowPredicate() {
         return smallerIndex == NOW_INDEX && interval_ms > 0;
     }
 
@@ -51,6 +52,23 @@ public class TimePredicate {
 
     public boolean isEquality() {
         return smaller==false;
+    }
+
+    public Optional<TimePredicate> and(TimePredicate other) {
+        Preconditions.checkArgument(smallerIndex==other.smallerIndex && largerIndex == other.largerIndex,
+                "Incompatible indexes: [%s] vs [%s]",this,other);
+        if (!smaller && !other.smaller) {
+            if (interval_ms == other.interval_ms) return Optional.of(this);
+            else return Optional.empty();
+        } else if (!smaller) {
+            if (interval_ms <= other.interval_ms) return Optional.of(this);
+            else return Optional.empty();
+        } else if (!other.smaller) {
+            if (other.interval_ms <= interval_ms) return Optional.of(other);
+            else return Optional.empty();
+        } else { //both are inequalities
+            return Optional.of(new TimePredicate(smallerIndex,largerIndex,true,Long.min(interval_ms,other.interval_ms)));
+        }
     }
 
     public TimePredicate inverseWithInterval(long interval_ms) {

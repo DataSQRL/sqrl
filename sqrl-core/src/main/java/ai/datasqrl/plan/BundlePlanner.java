@@ -5,7 +5,6 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.physical.PhysicalPlan;
-import ai.datasqrl.plan.global.DAGPlanner;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -39,6 +38,6 @@ public class BundlePlanner {
 
     //
 
-    DAGPlanner dagPlanner = new DAGPlanner();
+
   }
 }

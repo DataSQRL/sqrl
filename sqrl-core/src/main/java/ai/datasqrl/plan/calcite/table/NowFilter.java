@@ -4,12 +4,12 @@ import ai.datasqrl.plan.calcite.util.IndexMap;
 import ai.datasqrl.plan.calcite.util.TimePredicate;
 import com.google.common.base.Preconditions;
 import lombok.Value;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.tools.RelBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * A {@link NowFilter} represents a filter condition on a single timestamp column which requires
@@ -24,41 +24,94 @@ import java.util.stream.Stream;
  *
  */
 
-@Value
-public class NowFilter implements PullupOperator {
 
-    public static final NowFilter EMPTY = new NowFilter(List.of());
+public interface NowFilter extends PullupOperator {
 
-    private final List<TimePredicate> timePredicates;
+    public static final NowFilter EMPTY = new NowFilter(){};
 
-    public NowFilter(List<TimePredicate> timePredicates) {
-        this.timePredicates = timePredicates;
-        timePredicates.forEach(tp -> Preconditions.checkArgument(tp.isNowFilter(),"Not a valid now-filter: %s",tp));
-        Set<Integer> indexes = streamTimestampIndexes().collect(Collectors.toSet());
-        Preconditions.checkArgument(indexes.size()<=1,"Now filters must be on the same timestamp index: %s",indexes);
+    default TimePredicate getPredicate() {
+        throw new IllegalStateException();
     }
 
-    private Stream<Integer> streamTimestampIndexes() {
-        return timePredicates.stream().flatMap(tp -> tp.getIndexes().stream()).filter(idx -> idx>=0);
+    default int getTimestampIndex() {
+        return getPredicate().getLargerIndex();
     }
 
-    public int getTimestampIndex() {
-        return streamTimestampIndexes().findFirst().get();
+    default boolean isEmpty() {
+        return true;
     }
 
-    public boolean isEmpty() {
-        return timePredicates.isEmpty();
+    default NowFilter remap(IndexMap map) {
+        return this;
+    }
+
+    default Optional<NowFilter> merge(TimePredicate other) {
+        return Optional.of(new NowFilterImpl(other));
+    }
+
+    default Optional<NowFilter> addAll(List<TimePredicate> others) {
+        Optional<NowFilter> result = Optional.of(this);
+        for (TimePredicate other : others) {
+            result = result.get().merge(other);
+            if (result.isEmpty()) return result;
+        }
+        return result;
+    }
+
+    default NowFilter map(Function<TimePredicate,TimePredicate> mapping) {
+        return this;
+    }
+
+    default RelBuilder addFilter(RelBuilder relBuilder) {
+        return relBuilder;
+    }
+
+    static NowFilter of(TimePredicate nowPredicate) {
+        return new NowFilterImpl(nowPredicate);
     }
 
 
-    public NowFilter remap(IndexMap map) {
-        return new NowFilter(timePredicates.stream().map(tp -> tp.remap(map)).collect(Collectors.toList()));
-    }
+    @Value
+    public static class NowFilterImpl implements NowFilter {
 
-    public NowFilter addAll(List<TimePredicate> other) {
-        ArrayList<TimePredicate> newList = new ArrayList<>(timePredicates);
-        newList.addAll(other);
-        return new NowFilter(newList);
+        private final TimePredicate nowPredicate;
+
+        public NowFilterImpl(TimePredicate nowPredicate) {
+            Preconditions.checkArgument(nowPredicate.isNowPredicate());
+            this.nowPredicate = nowPredicate;
+        }
+
+        @Override
+        public TimePredicate getPredicate() {
+            return nowPredicate;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+
+        @Override
+        public NowFilter remap(IndexMap map) {
+            return new NowFilterImpl(nowPredicate.remap(map));
+        }
+
+        @Override
+        public NowFilter map(Function<TimePredicate,TimePredicate> mapping) {
+            return new NowFilterImpl(mapping.apply(nowPredicate));
+        }
+
+        @Override
+        public RelBuilder addFilter(RelBuilder relBuilder) {
+            RexBuilder rexB = relBuilder.getRexBuilder();
+            relBuilder.filter(getPredicate().createRexNode(rexB,i -> rexB.makeInputRef(relBuilder.peek(),i)));
+            return relBuilder;
+        }
+
+        @Override
+        public Optional<NowFilter> merge(TimePredicate other) {
+            return nowPredicate.and(other).map(p -> new NowFilterImpl(p));
+        }
     }
 
 }

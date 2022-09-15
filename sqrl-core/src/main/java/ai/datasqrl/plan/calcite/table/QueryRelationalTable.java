@@ -2,7 +2,6 @@ package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.global.MaterializationStrategy;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -12,10 +11,12 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.Statistics;
+import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.ImmutableBitSet;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * A relational table that is defined by the user query in the SQRL script.
@@ -31,28 +32,26 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   private final TimestampHolder.Base timestamp;
   @NonNull
   private final int numPrimaryKeys;
-  //added through expressions, queries
-  private final List<AddedColumn.Simple> addedFields = new ArrayList<>();
 
   protected RelNode relNode;
-
-  @Setter
-  private PullupOperator.Container pullups = PullupOperator.Container.EMPTY;
+  /* Additional operators at the root of the relNode logical plan that we want to pull-up as much as possible
+  and execute in the database because they are expensive or impossible to execute in a stream
+   */
+  private final PullupOperator.Container pullups;
 
   @Setter
   private TableStatistic statistic = null;
 
-  @NonNull
-  private final MaterializationStrategy matStrategy = new MaterializationStrategy();
 
   public QueryRelationalTable(@NonNull Name rootTableId, @NonNull TableType type,
-                              RelNode relNode,
+                              RelNode relNode, PullupOperator.Container pullups,
                               @NonNull TimestampHolder.Base timestamp,
                               @NonNull int numPrimaryKeys) {
     super(rootTableId);
     this.type = type;
     this.timestamp = timestamp;
     this.relNode = relNode;
+    this.pullups = pullups;
     this.numPrimaryKeys = numPrimaryKeys;
   }
 
@@ -61,8 +60,18 @@ public class QueryRelationalTable extends AbstractRelationalTable {
     return relNode;
   }
 
-  public void setOptimizedRelNode(@NonNull RelNode relNode) {
+  public void updateRelNode(@NonNull RelNode relNode) {
     this.relNode = relNode;
+  }
+
+  public void addInlinedColumn(AddedColumn.Simple column, Supplier<RelBuilder> relBuilderFactory,
+                               Optional<Integer> timestampScore) {
+    this.relNode = column.appendTo(relBuilderFactory.get().push(relNode)).build();
+    //Check if this adds a timestamp candidate
+    if (timestampScore.isPresent() && !timestamp.isCandidatesLocked()) {
+      int index = relNode.getRowType().getFieldCount()-1; //Index of the field we just added
+      timestamp.addCandidate(index, timestampScore.get());
+    }
   }
 
   private static RelDataTypeField getField(FieldIndexPath path, RelDataType rowType) {

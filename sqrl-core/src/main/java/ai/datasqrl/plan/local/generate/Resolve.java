@@ -31,12 +31,17 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
+import org.apache.calcite.tools.RelBuilder;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Getter
 public class Resolve {
+
+  private final CalciteTableFactory tableFactory = new CalciteTableFactory(
+          new SqrlTypeFactory(new SqrlTypeSystem()));
 
   enum ImportState {
     UNRESOLVED, RESOLVING, RESOLVED;
@@ -146,9 +151,6 @@ public class Resolve {
 
   private ScriptTableDefinition createScriptTableDefinition(Env env, SourceTableImport tblImport,
       Optional<Name> alias) {
-    CalciteTableFactory tableFactory = new CalciteTableFactory(
-        new SqrlTypeFactory(new SqrlTypeSystem()));
-
     return tableFactory.importTable(tblImport, alias,
         env.session.planner.getRelBuilder());
   }
@@ -337,13 +339,17 @@ public class Resolve {
     //table types, and timestamps in the process
 
     SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(
-        () -> env.session.planner.getRelBuilder(),
+        getRelBuilderFactory(env),
         new SqrlRexUtil(env.session.planner.getRelBuilder().getRexBuilder().getTypeFactory()));
     relNode = relNode.accept(sqrl2sql);
 //    System.out.println("LP$2: \n" + relNode.explain());
     SQRLLogicalPlanConverter.ProcessedRel prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode));
 //    System.out.println("LP$3: \n" + prel.getRelNode().explain());
     return prel;
+  }
+
+  private Supplier<RelBuilder> getRelBuilderFactory(Env env) {
+    return () -> env.session.planner.getRelBuilder();
   }
 
   public void applyOp(Env env, StatementOp op) {
@@ -355,7 +361,8 @@ public class Resolve {
         Check.state(t.isPresent(), null, null);
 
         AddedColumn c = createColumnAddOp(env, op);
-        t.ifPresent(tbl -> tbl.addColumn(c, new SqrlTypeFactory(new SqrlTypeSystem())));
+        Optional<Integer> timestampScore = tableFactory.getTimestampScore(op.statement.getNamePath().getLast(),c.getDataType());
+        t.ifPresent(tbl -> tbl.addColumn(c, tableFactory.getTypeFactory(), getRelBuilderFactory(env), timestampScore));
         break;
       case ROOT_QUERY:
         createTable(env, op);
@@ -410,10 +417,7 @@ public class Resolve {
 
     SQRLLogicalPlanConverter.ProcessedRel processedRel = optimize(env, op);
 
-    ScriptTableDefinition queryTable = new CalciteTableFactory(new SqrlTypeFactory(new SqrlTypeSystem()))
-        .defineTable(op.statement.getNamePath(),
-        processedRel,
-        fieldNames);
+    ScriptTableDefinition queryTable = tableFactory.defineTable(op.statement.getNamePath(), processedRel, fieldNames);
     registerScriptTable(env, queryTable);
   }
 

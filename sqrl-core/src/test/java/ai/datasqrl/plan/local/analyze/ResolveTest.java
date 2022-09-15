@@ -8,7 +8,7 @@ import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.calcite.table.NowFilter;
+import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
 import ai.datasqrl.plan.calcite.table.PullupOperator;
 import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
 import ai.datasqrl.plan.calcite.table.TableType;
@@ -16,6 +16,7 @@ import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.data.C360;
 import lombok.SneakyThrows;
+import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.ScriptNode;
@@ -147,25 +148,27 @@ class ResolveTest extends AbstractSQRLIT {
 //    //The following should be equivalent
     builder.append("OrderAgg2 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 YEAR GROUP BY customer, bucket;\n");
     process(builder.toString());
-    validateQueryTable("orderfilter", TableType.STREAM,5, 1, Optional.of(4), List.of(NowFilter.class));
-    validateQueryTable("orderagg1", TableType.STREAM,3, 2, Optional.of(1), List.of(NowFilter.class));
-    validateQueryTable("orderagg2", TableType.STREAM,3, 2, Optional.of(1), List.of(NowFilter.class));
+    validateQueryTable("orderfilter", TableType.STREAM,5, 1, Optional.of(4), new PullupTest(true,false));
+    validateQueryTable("orderagg1", TableType.STREAM,3, 2, Optional.of(1), new PullupTest(true,false));
+    validateQueryTable("orderagg2", TableType.STREAM,3, 2, Optional.of(1), new PullupTest(true,false));
   }
 
   private void validateQueryTable(String name, TableType tableType, int numCols, int numPrimaryKeys) {
-    validateQueryTable(name,tableType,numCols,numPrimaryKeys,Optional.empty(),List.of());
+    validateQueryTable(name,tableType,numCols,numPrimaryKeys,Optional.empty(),PullupTest.EMPTY);
   }
 
   private void validateQueryTable(String name, TableType tableType, int numCols, int numPrimaryKeys,
                                   Optional<Integer> timestampIdx,
-                                  List<Class> pullupTypes) {
+                                  PullupTest pullupTest) {
     SchemaPlus relSchema = session.getPlanner().getDefaultSchema();
     //Table names have an appended uuid - find the right tablename first. We assume tables are in the order in which they were created
     List<String> tblNames = relSchema.getTableNames().stream().filter(s -> s.startsWith(name))
         .filter(s -> relSchema.getTable(s) instanceof QueryRelationalTable)
-        .collect(Collectors.toList());
+            .sorted((a,b) -> Integer.compare(CalciteTableFactory.getTableOrdinal(a),CalciteTableFactory.getTableOrdinal(b)))
+            .collect(Collectors.toList());
     assertFalse(tblNames.isEmpty());
-    QueryRelationalTable table = (QueryRelationalTable) relSchema.getTable(tblNames.get(0));
+    //Get most recently added table
+    QueryRelationalTable table = (QueryRelationalTable) relSchema.getTable(tblNames.get(tblNames.size()-1));
     assertEquals(tableType, table.getType());
     assertEquals(numPrimaryKeys, table.getNumPrimaryKeys());
     assertEquals(numCols, table.getRowType().getFieldCount());
@@ -173,12 +176,7 @@ class ResolveTest extends AbstractSQRLIT {
       assertTrue(table.getTimestamp().hasTimestamp());
       assertEquals(timestampIdx.get(),table.getTimestamp().getTimestampIndex());
     }
-    assertEquals(pullupTypes.size(),table.getPullups().size());
-    int i=0;
-    for (PullupOperator.Holder h : table.getPullups()) {
-      assertTrue(pullupTypes.get(i).isInstance(h.getPullup()));
-      i++;
-    }
+    pullupTest.test(table.getPullups());
   }
 
   @Test
@@ -224,7 +222,7 @@ class ResolveTest extends AbstractSQRLIT {
   public void subqueryTest() {
     StringBuilder builder = imports();
     builder.append("IMPORT ecommerce-data.Orders;\n");
-    builder.append("Orders := " + "SELECT o2._uuid " + "FROM Orders o2 "
+    builder.append("Orders := SELECT o2._uuid FROM Orders o2 "
         + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid;\n");
     process(builder.toString());
     validateQueryTable("orders", TableType.STREAM, 3, 1);
@@ -310,5 +308,20 @@ class ResolveTest extends AbstractSQRLIT {
 
   private ScriptNode parse(String query) {
     return parser.parse(query);
+  }
+
+  @Value
+  public static class PullupTest {
+
+    public static final PullupTest EMPTY = new PullupTest(false, false);
+
+    boolean hasNowFilter;
+    boolean hasDeduplication;
+
+    public void test(PullupOperator.Container pullups) {
+      assertEquals(hasNowFilter, !pullups.getNowFilter().isEmpty());
+      assertEquals(hasDeduplication, !pullups.getDeduplication().isEmpty());
+    }
+
   }
 }

@@ -1,39 +1,33 @@
 package ai.datasqrl.plan.local.transpile;
 
-import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
-
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-//import ai.datasqrl.plan.local.generate.Generator.TranspiledResult;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
+import lombok.AllArgsConstructor;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.logical.LogicalSort;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.SqlHint.HintOptionFormat;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.util.Util;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import lombok.AllArgsConstructor;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.logical.LogicalSort;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlHint;
-import org.apache.calcite.sql.SqlHint.HintOptionFormat;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOrderBy;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlTableRef;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.util.Util;
+
+import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
+
+//import ai.datasqrl.plan.local.generate.Generator.TranspiledResult;
 
 @AllArgsConstructor
 public class JoinDeclarationFactory {
@@ -162,18 +156,18 @@ public class JoinDeclarationFactory {
 
   protected SqlNode createParentChildCondition(Relationship rel, String alias,
       Env env) {
-    TableWithPK lhs = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? env.getTableMap().get(
+    TableWithPK child = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? env.getTableMap().get(
         rel.getFromTable()) : env.getTableMap().get(rel.getToTable());
-    TableWithPK rhs = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? env.getTableMap().get(
+    TableWithPK parent = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? env.getTableMap().get(
         rel.getToTable()) : env.getTableMap().get(rel.getFromTable());
 
     List<SqlNode> conditions = new ArrayList<>();
-    for (int i = 0; i < lhs.getPrimaryKeyNames().size(); i++) {
-      String lpk = lhs.getPrimaryKeyNames().get(i);
-      String rpk = rhs.getPrimaryKeyNames().get(i);
+    for (int i = 0; i < parent.getPrimaryKeyNames().size(); i++) {
+      String childPk = child.getPrimaryKeyNames().get(i);
+      String parentPk = parent.getPrimaryKeyNames().get(i);
       conditions.add(new SqlBasicCall(SqrlOperatorTable.EQUALS,
-          new SqlNode[]{new SqlIdentifier(List.of("_", lpk), SqlParserPos.ZERO),
-              new SqlIdentifier(List.of(alias, rpk), SqlParserPos.ZERO)}, SqlParserPos.ZERO));
+          new SqlNode[]{new SqlIdentifier(List.of("_", childPk), SqlParserPos.ZERO),
+              new SqlIdentifier(List.of(alias, parentPk), SqlParserPos.ZERO)}, SqlParserPos.ZERO));
     }
 
     return and(conditions);
