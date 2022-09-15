@@ -15,7 +15,6 @@ import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
 import ai.datasqrl.plan.calcite.table.ProxyImportRelationalTable;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.transpile.*;
 import ai.datasqrl.schema.Field;
@@ -338,9 +337,7 @@ public class Resolve {
     //self-joins (including nested self-joins) as well as infer primary keys,
     //table types, and timestamps in the process
 
-    SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(
-        getRelBuilderFactory(env),
-        new SqrlRexUtil(env.session.planner.getRelBuilder().getRexBuilder().getTypeFactory()));
+    SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(getRelBuilderFactory(env));
     relNode = relNode.accept(sqrl2sql);
 //    System.out.println("LP$2: \n" + relNode.explain());
     SQRLLogicalPlanConverter.ProcessedRel prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode));

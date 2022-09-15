@@ -48,7 +48,7 @@ public class FlinkPhysicalPlanner {
       }
       dataStreamRegisterer.register(query.getRelNode());
 
-      RelNode relNode = InjectFlinkCluster.injectFlinkRelOptCluster(tEnv, ((StreamPlanner) tEnv.getPlanner()).getRelBuilder().getCluster(),
+      RelNode relNode = FlinkPhysicalPlanRewriter.rewrite(tEnv, ((StreamPlanner) tEnv.getPlanner()).getRelBuilder().getCluster(),
           query.getRelNode());
 
       Table tbl = FlinkEnvProxy.relNodeQuery(relNode, tEnv);

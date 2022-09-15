@@ -3,8 +3,8 @@ package ai.datasqrl.physical.database;
 import ai.datasqrl.physical.database.ddl.CreateTableDDL;
 import ai.datasqrl.physical.database.ddl.DropTableDDL;
 import ai.datasqrl.physical.database.ddl.SqlDDLStatement;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.RelToSql;
+import ai.datasqrl.plan.global.OptimizedDAG;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 import java.util.ArrayList;
@@ -12,9 +12,9 @@ import java.util.List;
 
 public class MaterializedTableDDLBuilder {
 
-  public List<SqlDDLStatement> createTables(List<VirtualRelationalTable> createdTables, boolean drop) {
+  public List<SqlDDLStatement> createTables(List<OptimizedDAG.TableSink> createdTables, boolean drop) {
     List<SqlDDLStatement> statements = new ArrayList<>();
-    for (VirtualRelationalTable table : createdTables) {
+    for (OptimizedDAG.TableSink table : createdTables) {
       if (drop) {
         DropTableDDL dropTableDDL = new DropTableDDL(table.getNameId());
         statements.add(dropTableDDL);
@@ -26,7 +26,7 @@ public class MaterializedTableDDLBuilder {
     return statements;
   }
 
-  private CreateTableDDL create(VirtualRelationalTable table) {
+  private CreateTableDDL create(OptimizedDAG.TableSink table) {
     List<String> pk = new ArrayList<>();
     List<String> columns = new ArrayList<>();
 

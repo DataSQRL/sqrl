@@ -5,17 +5,14 @@ import ai.datasqrl.plan.calcite.table.PullupOperator;
 import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.global.MaterializationStrategy;
 import com.google.common.base.Preconditions;
-import lombok.Getter;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.tools.RelBuilder;
 import org.h2.util.StringUtils;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -23,31 +20,30 @@ import java.util.Map;
  */
 public abstract class DAGExpansionRule extends RelOptRule {
 
-  private final Map<QueryRelationalTable, MaterializationStrategy> materializeStrategies;
-  @Getter
-  protected final Map<VirtualRelationalTable, PullupOperator.Container> pullups;
-
-  public DAGExpansionRule(Map<QueryRelationalTable, MaterializationStrategy> materializeStrategies,
-          Map<VirtualRelationalTable, PullupOperator.Container> pullups) {
+  public DAGExpansionRule() {
     super(operand(LogicalTableScan.class, any()));
-    this.materializeStrategies = materializeStrategies;
-    this.pullups = pullups;
+
   }
 
   public RelBuilder getBuilder(LogicalTableScan table) {
     return relBuilderFactory.create(table.getCluster(), table.getTable().getRelOptSchema());
   }
 
-  protected MaterializationStrategy getStrategy(QueryRelationalTable table) {
-    if (!materializeStrategies.containsKey(table)) return MaterializationStrategy.NONE;
-    else return materializeStrategies.get(table);
-  }
 
   public static class Read extends DAGExpansionRule {
 
+    private final Map<QueryRelationalTable, MaterializationStrategy> materializeStrategies;
+    private final Map<VirtualRelationalTable, PullupOperator.Container> pullups;
+
     public Read(Map<QueryRelationalTable, MaterializationStrategy> materializeStrategies,
                 Map<VirtualRelationalTable, PullupOperator.Container> pullups) {
-      super(materializeStrategies, pullups);
+      this.materializeStrategies = materializeStrategies;
+      this.pullups = pullups;
+    }
+
+    private MaterializationStrategy getStrategy(QueryRelationalTable table) {
+      if (!materializeStrategies.containsKey(table)) return MaterializationStrategy.NONE;
+      else return materializeStrategies.get(table);
     }
 
     @Override
@@ -94,29 +90,13 @@ public abstract class DAGExpansionRule extends RelOptRule {
 
   public static class Write extends DAGExpansionRule {
 
-    public Write(Map<QueryRelationalTable, MaterializationStrategy> materializeStrategies) {
-      super(materializeStrategies, new HashMap<>());
-    }
-
     @Override
     public void onMatch(RelOptRuleCall call) {
       final LogicalTableScan table = call.rel(0);
-      VirtualRelationalTable dbTable = table.getTable()
-              .unwrap(VirtualRelationalTable.class);
       QueryRelationalTable queryTable = table.getTable().unwrap(QueryRelationalTable.class);
       ImportedSourceTable sourceTable = table.getTable().unwrap(ImportedSourceTable.class);
-      Preconditions.checkArgument(dbTable!=null ^ queryTable!=null ^ sourceTable!=null);
-      if (dbTable!=null) {
-        Preconditions.checkArgument(!pullups.containsKey(dbTable));
-        //Need to shred
-        SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(
-                () -> getBuilder(table), new SqrlRexUtil(getBuilder(table).getRexBuilder().getTypeFactory()));
-        SQRLLogicalPlanConverter.ProcessedRel processedRel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(table.accept(sqrl2sql)));
-        pullups.put(dbTable, processedRel.getPullups());
-        call.transformTo(processedRel.getRelNode());
-      }
+      Preconditions.checkArgument(queryTable!=null ^ sourceTable!=null);
       if (queryTable!=null) {
-        assert getStrategy(queryTable).isMaterialize();
         call.transformTo(queryTable.getRelNode());
       }
       if (sourceTable != null) {

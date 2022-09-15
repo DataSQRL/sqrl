@@ -42,6 +42,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
     public final Supplier<RelBuilder> relBuilderFactory;
     public final SqrlRexUtil rexUtil;
 
+    public SQRLLogicalPlanConverter(Supplier<RelBuilder> relBuilderFactory) {
+        this.relBuilderFactory = relBuilderFactory;
+        this.rexUtil = new SqrlRexUtil(relBuilderFactory.get().getTypeFactory());
+    }
+
     @Value
     public class ProcessedRel implements RelHolder {
 

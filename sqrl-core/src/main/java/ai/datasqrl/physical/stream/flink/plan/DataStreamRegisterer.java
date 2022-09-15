@@ -36,17 +36,12 @@ public class DataStreamRegisterer extends RelShuttleImpl {
 
   @Override
   public RelNode visit(TableScan scan) {
-
-    String streamName = String.join(".", scan.getTable().getQualifiedName());
-    String tableName = scan.getTable().getQualifiedName()
-        .get(scan.getTable().getQualifiedName().size() - 1);
+    ImportedSourceTable t = scan.getTable().unwrap(ImportedSourceTable.class);
+    String tableName = t.getNameId();
     if ((List.of(tEnv.listTables()).contains(tableName))) {
-      return super.visit(scan);
+      return super.visit(scan); //Ensure we only register each table ones
     }
 
-    //TODO: rework based on FlinkIngestSchemaTest
-
-    ImportedSourceTable t = scan.getTable().unwrap(ImportedSourceTable.class);
     SourceTableImport imp = t.getSourceTableImport();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 

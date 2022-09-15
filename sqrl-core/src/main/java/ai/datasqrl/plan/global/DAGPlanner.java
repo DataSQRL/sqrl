@@ -6,6 +6,7 @@ import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.hints.WatermarkHint;
 import ai.datasqrl.plan.calcite.rules.DAGExpansionRule;
+import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.queries.APIQuery;
@@ -97,16 +98,23 @@ public class DAGPlanner {
 
         //4. Produce an LP-tree for each persisted table
         List<OptimizedDAG.MaterializeQuery> writeDAG = new ArrayList<>();
-        DAGExpansionRule.Write writeExpansion = new DAGExpansionRule.Write(materializeStrategies);
+        Map<VirtualRelationalTable, PullupOperator.Container> pullupMapping = new HashMap<>();
+        SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(() -> planner.getRelBuilder());
         OptimizationStage writeDAGOptimization = new OptimizationStage("WriteDAGExpansion",
-                Programs.hep(List.of(writeExpansion), false, DefaultRelMetadataProvider.INSTANCE),
+                Programs.hep(List.of(new DAGExpansionRule.Write()), false, DefaultRelMetadataProvider.INSTANCE),
                 Optional.empty());
         for (DBTableNode dbNode : Iterables.filter(dag, DBTableNode.class)) {
             if (materializeStrategies.containsKey(dbNode.table.getRoot().getBase())) {
                 VirtualRelationalTable dbTable = dbNode.table;
                 RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
-                RelNode expanded = planner.transform(writeDAGOptimization,scanTable);
-                writeDAG.add(new OptimizedDAG.MaterializeQuery(new OptimizedDAG.TableSink(dbTable),expanded));
+                RelNode expandedScan = scanTable.accept(sqrl2sql);
+                SQRLLogicalPlanConverter.ProcessedRel processedRel = sqrl2sql.getRelHolder(expandedScan);
+                processedRel = sqrl2sql.postProcess(processedRel);
+                pullupMapping.put(dbTable, processedRel.getPullups());
+                expandedScan = planner.transform(writeDAGOptimization,processedRel.getRelNode());
+                Optional<Integer> timestampIdx = processedRel.getType().hasTimestamp()?
+                        Optional.of(processedRel.getTimestamp().getTimestampIndex()):Optional.empty();
+                writeDAG.add(new OptimizedDAG.MaterializeQuery(new OptimizedDAG.TableSink(dbTable,timestampIdx),expandedScan));
             }
         }
         //5. Produce an LP-tree for each subscription
@@ -115,7 +123,7 @@ public class DAGPlanner {
         //6. Produce an LP-tree for each query with all tables inlined and push down filters to determine indexes
         List<OptimizedDAG.ReadQuery> readDAG = new ArrayList<>();
         OptimizationStage readDAGOptimization = new OptimizationStage("ReadDAGExpansion",
-                Programs.hep(List.of(new DAGExpansionRule.Read(materializeStrategies, writeExpansion.getPullups())),
+                Programs.hep(List.of(new DAGExpansionRule.Read(materializeStrategies, pullupMapping)),
                         false, DefaultRelMetadataProvider.INSTANCE), Optional.empty());
         for (QueryNode qNode : Iterables.filter(dag, QueryNode.class)) {
             RelNode expanded = planner.transform(readDAGOptimization,qNode.query.getRelNode());
