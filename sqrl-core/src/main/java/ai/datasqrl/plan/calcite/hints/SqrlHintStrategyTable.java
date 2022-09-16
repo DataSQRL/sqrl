@@ -3,6 +3,11 @@ package ai.datasqrl.plan.calcite.hints;
 import lombok.Getter;
 import org.apache.calcite.rel.hint.HintPredicates;
 import org.apache.calcite.rel.hint.HintStrategyTable;
+import org.apache.calcite.sql.SqlHint;
+import org.apache.calcite.sql.SqlHint.HintOptionFormat;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class SqrlHintStrategyTable {
 
@@ -14,4 +19,7 @@ public class SqrlHintStrategyTable {
       .hintStrategy(DISTINCT_ON, HintPredicates.PROJECT)
       .build();
 
+  public static SqlHint createSelectDistinctHintNode(SqlNodeList columns, SqlParserPos pos) {
+    return new SqlHint(pos, new SqlIdentifier(SELECT_DISTINCT, pos), columns, HintOptionFormat.ID_LIST);
+  }
 }

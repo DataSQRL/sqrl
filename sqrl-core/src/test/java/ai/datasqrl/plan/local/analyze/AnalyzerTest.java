@@ -373,6 +373,17 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
+  public void distinctWithGroupNotInSelectTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Product;\n"
+            + "Product.nested := "
+            + "  SELECT DISTINCT count(1) "
+            + "  FROM _ JOIN Product p "
+            + "  GROUP BY p.category;"));
+  }
+
+  @Test
   public void distinctSingleColumnTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT DISTINCT productid FROM Product;"));
