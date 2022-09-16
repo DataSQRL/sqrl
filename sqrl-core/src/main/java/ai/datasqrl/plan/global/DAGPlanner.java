@@ -105,7 +105,8 @@ public class DAGPlanner {
                 SQRLLogicalPlanConverter.ProcessedRel processedRel = sqrl2sql.getRelHolder(expandedScan);
                 processedRel = sqrl2sql.postProcess(processedRel);
                 dbTable.setDbPullups(processedRel.getPullups());
-                expandedScan = planner.transform(WRITE_DAG_OPTIMIZATION,processedRel.getRelNode());
+                expandedScan = processedRel.getRelNode();
+                expandedScan = planner.transform(WRITE_DAG_OPTIMIZATION,expandedScan);
                 Optional<Integer> timestampIdx = processedRel.getType().hasTimestamp()?
                         Optional.of(processedRel.getTimestamp().getTimestampIndex()):Optional.empty();
                 writeDAG.add(new OptimizedDAG.MaterializeQuery(new OptimizedDAG.TableSink(dbTable,timestampIdx),expandedScan));

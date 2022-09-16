@@ -62,6 +62,7 @@ public class ResolveTest extends AbstractSQRLIT {
     validateQueryTable("customer", TableType.STREAM, 5, 1);
     validateQueryTable("product", TableType.STREAM,6, 1);
     validateQueryTable("orders", TableType.STREAM,6, 1);
+    validateQueryTable("entries", TableType.STREAM,6, 2);
   }
 
   @Test
