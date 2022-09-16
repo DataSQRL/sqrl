@@ -19,6 +19,7 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.tools.RelBuilder;
 
@@ -285,7 +286,7 @@ public class DAGPlanner {
             int timestampIdx = table.getTimestamp().getTimestampIndex();
             Preconditions.checkArgument(timestampIdx<updated.getRowType().getFieldCount());
             WatermarkHint watermarkHint = new WatermarkHint(timestampIdx);
-            //updated = ((Hintable)updated).attachHints(List.of(watermarkHint.getHint()));
+            updated = ((Hintable)updated).attachHints(List.of(watermarkHint.getHint()));
             table.updateRelNode(updated);
         }
 

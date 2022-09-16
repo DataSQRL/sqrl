@@ -16,11 +16,13 @@ public class SqrlHintStrategyTable {
   public static final String SELECT_DISTINCT = "SELECT_DISTINCT";
 
   public static final String TOP_N = "TOP_N";
+
   @Getter
   static HintStrategyTable hintStrategyTable = HintStrategyTable.builder()
       .hintStrategy(DISTINCT_ON, HintPredicates.PROJECT)
       .hintStrategy(SELECT_DISTINCT, HintPredicates.PROJECT)
       .hintStrategy(TOP_N, HintPredicates.PROJECT)
+      .hintStrategy(WatermarkHint.CONSTRUCTOR.getName(), HintPredicates.or(HintPredicates.PROJECT,HintPredicates.TABLE_SCAN))
       .build();
 
   public static SqlHint createSelectDistinctHintNode(SqlNodeList columns, SqlParserPos pos) {
