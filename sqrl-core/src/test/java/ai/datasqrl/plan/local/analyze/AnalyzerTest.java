@@ -464,8 +464,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   public void localAggregateInAggregateTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON _.productid = Product"
-        + ".productid;\n"
+        + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
         + "Product.total := SUM(COUNT(joinDeclaration));"));
   }
 

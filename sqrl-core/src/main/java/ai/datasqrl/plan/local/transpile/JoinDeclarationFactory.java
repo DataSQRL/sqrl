@@ -43,14 +43,14 @@ public class JoinDeclarationFactory {
     Optional<SqlHint> hint = Optional.empty();
     if (relNode instanceof LogicalSort &&
         ((LogicalSort) relNode).fetch != null) {
-      List<SqlNode> pksOrdinals = IntStream.range(0, pkTable.getPrimaryKeyNames().size())
+      List<SqlNode> pksIndices = IntStream.range(0, pkTable.getPrimaryKeyNames().size())
           .mapToObj(i -> new SqlIdentifier(
-              Long.toString(i + 1),
+              Long.toString(i),
               SqlParserPos.ZERO))
           .collect(Collectors.toList());
       hint = Optional.of(new SqlHint(SqlParserPos.ZERO,
-          new SqlIdentifier(SqrlHintStrategyTable.DISTINCT_ON, SqlParserPos.ZERO),
-          new SqlNodeList(pksOrdinals, SqlParserPos.ZERO),
+          new SqlIdentifier(SqrlHintStrategyTable.TOP_N, SqlParserPos.ZERO),
+          new SqlNodeList(pksIndices, SqlParserPos.ZERO),
           HintOptionFormat.ID_LIST));
     }
 
