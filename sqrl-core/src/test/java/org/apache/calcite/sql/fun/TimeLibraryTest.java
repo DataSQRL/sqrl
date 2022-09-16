@@ -1,193 +1,110 @@
 package org.apache.calcite.sql.fun;
 
-import ai.datasqrl.function.builtin.example.SqlMyFunction;
-import ai.datasqrl.function.builtin.time.*;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
-import org.apache.calcite.linq4j.tree.Types;
+import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.schema.impl.ScalarFunctionImpl;
+import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DynamicTest;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.TestFactory;
 
+import static ai.datasqrl.plan.calcite.SqrlOperatorTable.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TimeLibraryTest {
-
   static final SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
 
-  @Test
-  public void test() {
-    Now now = new Now();
+  static final RelDataType TSNonNullable = typeFactory.createTypeWithNullability(
+      typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3), false);
 
-    RelDataType type = now.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(type, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 0));
-  }
-  @Test
-  public void myFunctionTest() {
-    SqlMyFunction myFunction = new SqlMyFunction();
+  static final RelDataType TSNullable = typeFactory.createTypeWithNullability(
+      TSNonNullable, true);
 
-    RelDataType type = myFunction.inferReturnType(typeFactory, new ArrayList<>());
-    // precision scale arg breaks test, removed for now
-    assertEquals(type, typeFactory.createSqlType(SqlTypeName.BIGINT));
-  }
+  final RelDataType StringNonNullable = typeFactory.createTypeWithNullability(
+      typeFactory.createSqlType(SqlTypeName.VARCHAR, 2000), false);
 
-  @Test
-  public void NumTSConversionTest() {
-    NumToTimestampFunction numToTimestamp = new NumToTimestampFunction();
-    TimestampToEpochFunction timestampToEpoch = new TimestampToEpochFunction();
+  final RelDataType StringNullable = typeFactory.createTypeWithNullability(
+      StringNonNullable, true);
 
+  static final RelDataType BigIntNonNullable = typeFactory.createTypeWithNullability(
+      typeFactory.createSqlType(SqlTypeName.BIGINT), false);
 
+  static final RelDataType BigIntNullable = typeFactory.createTypeWithNullability(
+      BigIntNonNullable, true);
 
-    RelDataType typeTS = numToTimestamp.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeTS, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
-
-    RelDataType typeNum = timestampToEpoch.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeNum, typeFactory.createSqlType(SqlTypeName.BIGINT));
+  @Value
+  class FunctionToTest {
+    SqlFunction function;
+    List<RelDataType> args;
+    RelDataType expected;
   }
 
-  @Test
-  public void StringTSConversionTest() {
+  List<FunctionToTest> tests = List.of(
+    new FunctionToTest(NOW, List.of(), TSNonNullable),
+    new FunctionToTest(NUM_TO_TIMESTAMP, List.of(BigIntNonNullable), TSNonNullable),
+    new FunctionToTest(NUM_TO_TIMESTAMP, List.of(BigIntNullable), TSNullable),
+    new FunctionToTest(TIMESTAMP_TO_EPOCH, List.of(TSNonNullable), BigIntNonNullable),
+    new FunctionToTest(TIMESTAMP_TO_EPOCH, List.of(TSNullable), BigIntNullable),
+    new FunctionToTest(TIMESTAMP_TO_STRING, List.of(TSNonNullable), StringNonNullable),
+    new FunctionToTest(TIMESTAMP_TO_STRING, List.of(TSNullable), StringNullable),
+    new FunctionToTest(STRING_TO_TIMESTAMP, List.of(TSNonNullable), TSNonNullable),
+    new FunctionToTest(STRING_TO_TIMESTAMP, List.of(TSNullable), TSNullable),
+    new FunctionToTest(TO_UTC, List.of(TSNonNullable, StringNonNullable), TSNonNullable),
+    new FunctionToTest(TO_UTC, List.of(TSNullable, StringNonNullable), TSNullable),
+    new FunctionToTest(AT_ZONE, List.of(TSNonNullable, StringNonNullable), TSNonNullable),
+    new FunctionToTest(AT_ZONE, List.of(TSNullable, StringNonNullable), TSNullable),
+    new FunctionToTest(ROUND_TO_SECOND, List.of(TSNonNullable), TSNonNullable),
+    new FunctionToTest(ROUND_TO_SECOND, List.of(TSNullable), TSNullable),
+    new FunctionToTest(ROUND_TO_MINUTE, List.of(TSNonNullable), TSNonNullable),
+    new FunctionToTest(ROUND_TO_MINUTE, List.of(TSNullable), TSNullable),
+    new FunctionToTest(ROUND_TO_HOUR, List.of(TSNonNullable), TSNonNullable),
+    new FunctionToTest(ROUND_TO_HOUR, List.of(TSNullable), TSNullable),
+    new FunctionToTest(ROUND_TO_DAY, List.of(TSNonNullable), TSNonNullable),
+    new FunctionToTest(ROUND_TO_DAY, List.of(TSNullable), TSNullable),
+    new FunctionToTest(ROUND_TO_MONTH, List.of(TSNonNullable), TSNonNullable),
+    new FunctionToTest(ROUND_TO_MONTH, List.of(TSNullable), TSNullable),
+    new FunctionToTest(ROUND_TO_YEAR, List.of(TSNonNullable), TSNonNullable),
+    new FunctionToTest(ROUND_TO_YEAR, List.of(TSNullable), TSNullable),
+    new FunctionToTest(GET_SECOND, List.of(TSNonNullable), BigIntNonNullable),
+    new FunctionToTest(GET_SECOND, List.of(TSNullable), BigIntNullable),
+    new FunctionToTest(GET_MINUTE, List.of(TSNonNullable), BigIntNonNullable),
+    new FunctionToTest(GET_MINUTE, List.of(TSNullable), BigIntNullable),
+    new FunctionToTest(GET_HOUR, List.of(TSNonNullable), BigIntNonNullable),
+    new FunctionToTest(GET_HOUR, List.of(TSNullable), BigIntNullable),
+    new FunctionToTest(GET_DAY_OF_WEEK, List.of(TSNonNullable), BigIntNonNullable),
+    new FunctionToTest(GET_DAY_OF_WEEK, List.of(TSNullable), BigIntNullable),
+    new FunctionToTest(GET_DAY_OF_MONTH, List.of(TSNonNullable), BigIntNonNullable),
+    new FunctionToTest(GET_DAY_OF_MONTH, List.of(TSNullable), BigIntNullable),
+    new FunctionToTest(GET_DAY_OF_YEAR, List.of(TSNonNullable), BigIntNonNullable),
+    new FunctionToTest(GET_DAY_OF_YEAR, List.of(TSNullable), BigIntNullable),
+    new FunctionToTest(GET_MONTH, List.of(TSNonNullable), BigIntNonNullable),
+    new FunctionToTest(GET_MONTH, List.of(TSNullable), BigIntNullable),
+    new FunctionToTest(GET_YEAR, List.of(TSNonNullable), BigIntNonNullable),
+    new FunctionToTest(GET_YEAR, List.of(TSNullable), BigIntNullable)
+  );
 
+  //extra TO_UTC / at zone test for null second arg
+  @TestFactory
+  Iterable<DynamicTest> testExpectedFunctions() {
+    List<DynamicTest> gen = new ArrayList<>();
+    for (FunctionToTest f : tests) {
+      gen.add(DynamicTest.dynamicTest(String.format(
+          "Fnc %s Args %s Expected %s Nullable %s Test",
+              f.getFunction().getClass().getSimpleName(),
+              f.args, f.expected.getSqlTypeName(), f.expected.isNullable()),
+          () -> {
+            RelDataType type = f.function.inferReturnType(typeFactory, f.args);
+            assertEquals(f.expected+":"+f.expected.isNullable(), type+":"+type.isNullable(), String.format(
+                "Found %s nullable %s",
+                type.getSqlTypeName(), type.isNullable()));
+          }));
+    }
 
-    StringToTimestampFunction stringToTimestamp = new StringToTimestampFunction();
-    TimestampToStringFunction timestampToString = new TimestampToStringFunction();
-
-    RelDataType typeTS = stringToTimestamp.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeTS, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
-
-    RelDataType typeString = timestampToString.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeString, typeFactory.createSqlType(SqlTypeName.VARCHAR, 2000));
-  }
-
-  @Test
-  public void RoundTest() {
-
-
-    SqrlTimeRoundingFunction roundToSecond = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)), ChronoUnit.SECONDS);
-    SqrlTimeRoundingFunction roundToMinute = new SqrlTimeRoundingFunction("ROUND_TO_MINUTE",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMinute", Instant.class)), ChronoUnit.MINUTES);
-    SqrlTimeRoundingFunction roundToHour = new SqrlTimeRoundingFunction("ROUND_TO_HOUR",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToHour", Instant.class)), ChronoUnit.HOURS);
-    SqrlTimeRoundingFunction roundToDay = new SqrlTimeRoundingFunction("ROUND_TO_DAY",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToDay", Instant.class)), ChronoUnit.DAYS);
-    SqrlTimeRoundingFunction roundToMonth = new SqrlTimeRoundingFunction("ROUND_TO_MONTH",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToMonth", Instant.class)), ChronoUnit.MONTHS);
-    SqrlTimeRoundingFunction roundToYear = new SqrlTimeRoundingFunction("ROUND_TO_YEAR",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToYear", Instant.class)), ChronoUnit.YEARS);
-
-    RelDataType TZ = typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3);
-    RelDataType typeSecond = roundToSecond.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeSecond, TZ);
-
-    RelDataType typeMinute = roundToMinute.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeMinute, TZ);
-
-    RelDataType typeHour = roundToHour.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeHour, TZ);
-
-    RelDataType typeDay = roundToDay.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeDay, TZ);
-
-    RelDataType typeMonth = roundToMonth.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeMonth, TZ);
-
-    RelDataType typeYear = roundToYear.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeYear, TZ);
-  }
-
-  @Test
-  public void GetterTest() {
-
-
-    ExtractTimeFieldFunction getSecond = new ExtractTimeFieldFunction("GET_SECOND",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getSecond", Instant.class)));
-    ExtractTimeFieldFunction getMinute = new ExtractTimeFieldFunction("GET_MINUTE",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getMinute", Instant.class)));
-    ExtractTimeFieldFunction getHour = new ExtractTimeFieldFunction("GET_HOUR",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getHour", Instant.class)));
-    ExtractTimeFieldFunction getDayOfWeek = new ExtractTimeFieldFunction("GET_DAY_OF_WEEK",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getDayOfWeek", Instant.class)));
-    ExtractTimeFieldFunction getDayOfMonth = new ExtractTimeFieldFunction("GET_DAY_OF_MONTH",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getDayOfMonth", Instant.class)));
-    ExtractTimeFieldFunction getDayOfYear = new ExtractTimeFieldFunction("GET_DAY_OF_YEAR",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getDayOfYear", Instant.class)));
-    ExtractTimeFieldFunction getMonth = new ExtractTimeFieldFunction("GET_MONTH",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getMonth", Instant.class)));
-    ExtractTimeFieldFunction getYear = new ExtractTimeFieldFunction("GET_YEAR",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "getYear", Instant.class)));
-
-    RelDataType typeSecond = getSecond.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeSecond, typeFactory.createSqlType(SqlTypeName.INTEGER));
-
-    RelDataType typeMinute = getMinute.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeMinute, typeFactory.createSqlType(SqlTypeName.INTEGER));
-
-    RelDataType typeHour = getHour.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeHour, typeFactory.createSqlType(SqlTypeName.INTEGER));
-
-    RelDataType typeDow = getDayOfWeek.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeDow, typeFactory.createSqlType(SqlTypeName.INTEGER));
-
-    RelDataType typeDom = getDayOfMonth.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeDom, typeFactory.createSqlType(SqlTypeName.INTEGER));
-
-    RelDataType typeDoy = getDayOfYear.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeDoy, typeFactory.createSqlType(SqlTypeName.INTEGER));
-
-    RelDataType typeMonth = getMonth.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeMonth, typeFactory.createSqlType(SqlTypeName.INTEGER));
-
-    RelDataType typeYear = getYear.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeYear, typeFactory.createSqlType(SqlTypeName.INTEGER));
-  }
-
-  @Test
-  public void TZConversionTest() {
-
-
-    ToUtcFunction toUtc = new ToUtcFunction();
-    AtZoneFunction atZone = new AtZoneFunction();
-
-    RelDataType typeUTC = toUtc.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeUTC, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
-
-    RelDataType typeZone = atZone.inferReturnType(typeFactory, new ArrayList<>());
-    assertEquals(typeZone, typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3));
-  }
-
-  @Test
-  public void NotNullPreservationTest () {
-
-    SqrlTimeRoundingFunction roundToSecond = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)), ChronoUnit.SECONDS);
-
-    RelDataType TSNonNullable = typeFactory.createTypeWithNullability(
-        typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3), false);
-
-    RelDataType typeSecond = roundToSecond.inferReturnType(typeFactory, List.of(TSNonNullable));
-
-    assertEquals(typeSecond, TSNonNullable);
-  }
-
-  @Test
-  public void NullPreservationTest() {
-
-    SqrlTimeRoundingFunction roundToSecond = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
-        ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)), ChronoUnit.SECONDS);
-
-    RelDataType TSNullable = typeFactory.createTypeWithNullability(
-        typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3), true);
-
-    RelDataType typeSecond = roundToSecond.inferReturnType(typeFactory, List.of(TSNullable));
-
-    assertEquals(typeSecond, TSNullable);
-
+    return gen;
   }
 }

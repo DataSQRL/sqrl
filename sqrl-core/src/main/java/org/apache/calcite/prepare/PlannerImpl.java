@@ -110,6 +110,7 @@ public class PlannerImpl implements Planner, ViewExpander {
   protected @Nullable SqlValidator validator;
   protected @Nullable SqlNode validatedSqlNode;
 
+  final RelOptCluster cluster;
   /** Creates a planner. Not a public API; call
    * {@link org.apache.calcite.tools.Frameworks#getPlanner} instead. */
   @SuppressWarnings("method.invocation.invalid")
@@ -129,6 +130,11 @@ public class PlannerImpl implements Planner, ViewExpander {
     this.connectionConfig = connConfig(context, parserConfig);
     this.typeSystem = config.getTypeSystem();
     this.planner = new VolcanoPlanner(costFactory, context);
+    this.typeFactory = new SqrlTypeFactory(typeSystem);
+    final RexBuilder rexBuilder = createRexBuilder();
+    cluster = RelOptCluster.create(
+        requireNonNull(planner, "planner"),
+        rexBuilder);
     reset();
   }
 
@@ -169,7 +175,6 @@ public class PlannerImpl implements Planner, ViewExpander {
 
   @Override public void close() {
     open = false;
-    typeFactory = null;
     state = State.STATE_0_CLOSED;
   }
 
@@ -189,7 +194,6 @@ public class PlannerImpl implements Planner, ViewExpander {
     }
     ensure(State.STATE_1_RESET);
 
-    typeFactory = new SqrlTypeFactory(typeSystem);
     RelOptPlanner planner = this.planner;
     RelOptUtil.registerDefaultRules(planner,
         connectionConfig.materializationsEnabled(),
@@ -258,10 +262,6 @@ public class PlannerImpl implements Planner, ViewExpander {
     ensure(State.STATE_4_VALIDATED);
     SqlNode validatedSqlNode = requireNonNull(this.validatedSqlNode,
         "validatedSqlNode is null. Need to call #validate() first");
-    final RexBuilder rexBuilder = createRexBuilder();
-    final RelOptCluster cluster = RelOptCluster.create(
-        requireNonNull(planner, "planner"),
-        rexBuilder);
     final SqlToRelConverter.Config config =
         sqlToRelConverterConfig.withTrimUnusedFields(false);
     final SqlToRelConverter sqlToRelConverter =

@@ -16,8 +16,7 @@ public class SqrlOperatorTable extends SqlStdOperatorTable {
   private static SqrlOperatorTable instance;
 
   //SQRL functions here:
-  public static final SqlMyFunction MY_FUNCTION = new SqlMyFunction();
-  public static final SqlFunction NOW = new Now();
+  public static final SqlFunction NOW = new NowFunction();
   public static final NumToTimestampFunction NUM_TO_TIMESTAMP = new NumToTimestampFunction();
   public static final TimestampToEpochFunction TIMESTAMP_TO_EPOCH = new TimestampToEpochFunction();
   public static final StringToTimestampFunction STRING_TO_TIMESTAMP = new StringToTimestampFunction();

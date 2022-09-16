@@ -92,6 +92,13 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  public void extraNowArgs() {
+    generateInvalid(
+        parser.parse("IMPORT ecommerce-data.Product;\n"
+            + "Product.test := STRING_TO_TIMESTAMP(100);\n"));
+  }
+
+  @Test
   @Disabled
   public void importAllTest() {
     generate(parser.parse("IMPORT ecommerce-data.*;"));
@@ -432,16 +439,14 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Disabled
   public void localAggregateInQueryTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON _.productid = Product"
-        + ".productid;\n"
+        + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
         + "Product.total := SELECT SUM(joinDeclaration.productid) FROM _;"));
   }
 
   @Test
   public void localAggregateCountTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON _.productid = Product"
-        + ".productid;\n"
+        + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
         + "Product.total := COUNT(joinDeclaration);"));
   }
 
@@ -456,8 +461,6 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Disabled
   public void localAggregateCountStarTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON _.productid = Product"
-        + ".productid;\n"
         + "Product.total := COUNT(*);"));
   }
 
@@ -471,18 +474,15 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   public void parameterizedLocalAggregateTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON _.productid = "
-        + "Product.productid LIMIT 1;\n"
+        + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid LIMIT 1;\n"
         + "Product.total := COALESCE(joinDeclaration.productid, 1000);\n"));
   }
 
   @Test
   public void invalidParameterizedLocalAggregateTest() {
     generateInvalid(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON _.productid = "
-        + "Product.productid;\n"
-        + "Product.total := MIN(joinDeclaration.productid, "
-        + "joinDeclaration.parent.productid);\n"));
+        + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
+        + "Product.total := MIN(joinDeclaration.productid, joinDeclaration.parent.productid);\n"));
   }
 
   @Test
@@ -498,8 +498,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void inlinePathMultiplicityTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON true LIMIT 1;\n"
-        + "Product2 := SELECT joinDeclaration.productid, productid FROM"
-        + " Product;\n"));
+        + "Product2 := SELECT joinDeclaration.productid, productid FROM Product;\n"));
   }
 
   @Test
@@ -618,8 +617,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   public void queryAsExpressionUnnamedTest3() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product.example := SELECT _.productid + 1 FROM _ INNER "
-        + "JOIN Product ON true;\n"));
+        + "Product.example := SELECT _.productid + 1 FROM _ INNER JOIN Product ON true;\n"));
   }
 
   @Test
@@ -627,8 +625,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void queryAsExpressionSameNamedTest4() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.example := SELECT sum(productid) AS example "
-            + "FROM _ HAVING example > 10;\n"));
+            + "Product.example := SELECT sum(productid) AS example FROM _ HAVING example > 10;\n"));
   }
 
   @Test

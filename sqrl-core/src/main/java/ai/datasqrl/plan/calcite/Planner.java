@@ -38,8 +38,7 @@ public class Planner extends PlannerImpl {
   }
 
   public RelBuilder getRelBuilder() {
-    RelOptCluster cluster = RelOptCluster.create(this.planner, createRexBuilder());
-    return sqlToRelConverterConfig.getRelBuilderFactory().create(cluster, createCatalogReader());
+    return sqlToRelConverterConfig.getRelBuilderFactory().create(this.getCluster(), createCatalogReader());
   }
 
   public SqrlType2Calcite getTypeConverter() {

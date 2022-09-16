@@ -1,7 +1,9 @@
 package ai.datasqrl.function.builtin.time;
 
 import ai.datasqrl.function.SqrlTimeTumbleFunction;
+import ai.datasqrl.function.calcite.FirstArgNullPreservingInference;
 import com.google.common.base.Preconditions;
+import org.apache.calcite.rel.type.RelDataTypeImpl;
 import org.apache.calcite.schema.ScalarFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -16,11 +18,14 @@ public class SqrlTimeRoundingFunction extends SqrlScalarFunction implements Sqrl
 
   private final ChronoUnit timeUnit;
 
-  public SqrlTimeRoundingFunction(String sqlIdentifier, ScalarFunction scalarFunction, ChronoUnit timeUnit) {
+  public SqrlTimeRoundingFunction(String sqlIdentifier, ScalarFunction scalarFunction,
+      ChronoUnit timeUnit) {
     super(
         new SqlIdentifier(sqlIdentifier, SqlParserPos.ZERO),
         SqlKind.OTHER,
-        ReturnTypes.explicit(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
+        new FirstArgNullPreservingInference(
+            RelDataTypeImpl.proto(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE,
+                3, false)),
         InferTypes.RETURN_TYPE,
         OperandTypes.operandMetadata(
             List.of(SqlTypeFamily.TIMESTAMP),
@@ -41,7 +46,7 @@ public class SqrlTimeRoundingFunction extends SqrlScalarFunction implements Sqrl
 
   @Override
   public Specification getSpecification(long[] arguments) {
-    Preconditions.checkArgument(arguments.length==0);
+    Preconditions.checkArgument(arguments.length == 0);
     return new Specification();
   }
 

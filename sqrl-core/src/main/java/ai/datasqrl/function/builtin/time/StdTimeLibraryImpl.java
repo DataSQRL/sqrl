@@ -88,13 +88,14 @@ public class StdTimeLibraryImpl {
   }
 
   public long timestampToEpoch(Instant instant) {
-
     return instant.toEpochMilli();
   }
 
   public Instant numToTimestamp(Long l) {
-
     return Instant.ofEpochSecond(l);
   }
 
+  public Instant now() {
+    return Instant.now();
+  }
 }
