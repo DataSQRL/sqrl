@@ -59,7 +59,7 @@ public class FlexibleTableConverter {
             Preconditions.checkArgument(relType.isPresent());
             resultType = relType.get();
             if (!isSingleton(ftype)) {
-                resultType = visitor.wrapArray(resultType);
+                resultType = visitor.wrapArray(visitor.nullable(resultType,false));
             }
             nullable = isMixedType || hasZeroOneMultiplicity(ftype);
         } else if (ftype.getType() instanceof ArrayType) {

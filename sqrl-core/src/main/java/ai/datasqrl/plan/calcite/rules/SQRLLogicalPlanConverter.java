@@ -239,16 +239,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             primaryKey.add(offset+i);
             if (!isLeaf && startingBase==null) indexMap.add(offset+i);
         }
-        if (isLeaf && startingBase==null) { //Construct indexMap
-            //All non-nested fields are part of the virtual table row type
-            List<RelDataTypeField> queryRowType = vtable.getQueryRowType().getFieldList();
-            for (int i = 0; i < queryRowType.size(); i++) {
-                RelDataTypeField field = queryRowType.get(i);
-                if (!CalciteUtil.isNestedTable(field.getType())) {
-                    indexMap.add(offset+i);
-                }
-            }
-        }
         //Add additional columns
         JoinTable.Path path = JoinTable.Path.of(joinTable);
         for (AddedColumn column : vtable.getAddedColumns()) {
@@ -265,6 +255,17 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             builder.project(projects);
         }
         joinTables.add(joinTable);
+        //Construct indexMap if this shred table is the leaf (i.e. the one we are expanding)
+        if (isLeaf && startingBase==null) {
+            //All non-nested fields are part of the virtual table query row type
+            List<RelDataTypeField> queryRowType = vtable.getQueryRowType().getFieldList();
+            for (int i = 0; i < queryRowType.size(); i++) {
+                RelDataTypeField field = queryRowType.get(i);
+                if (!CalciteUtil.isNestedTable(field.getType())) {
+                    indexMap.add(offset+i);
+                }
+            }
+        }
         return builder;
     }
 

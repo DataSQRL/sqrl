@@ -51,6 +51,7 @@ public abstract class DAGExpansionRule extends RelOptRule {
           if (!pullup.getDeduplication().isEmpty()) {
             //This is taken care of by UPSERTING against the primary key
           }
+
           call.transformTo(relBuilder.build());
         } else {
           Preconditions.checkArgument(dbTable.isRoot() && !CalciteUtil.isNestedTable(baseTable.getRowType()));

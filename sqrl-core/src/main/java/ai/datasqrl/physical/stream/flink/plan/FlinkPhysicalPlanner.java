@@ -4,7 +4,6 @@ import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import graphql.com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
@@ -39,7 +38,7 @@ public class FlinkPhysicalPlanner {
     StreamStatementSet stmtSet = tEnv.createStatementSet();
     for (OptimizedDAG.MaterializeQuery query : streamQueries) {
       Preconditions.checkArgument(query.getSink() instanceof OptimizedDAG.TableSink, "Subscriptions not yet implemented");
-      VirtualRelationalTable tblsink = ((OptimizedDAG.TableSink) query.getSink()).getTable();
+      OptimizedDAG.TableSink tblsink = ((OptimizedDAG.TableSink) query.getSink());
 
       String name = tblsink.getNameId() + "_sink";
       if (List.of(tEnv.listTables()).contains(name)) {

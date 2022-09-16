@@ -76,11 +76,9 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     //Update the row types
     RelDataType colType = column.getDataType();
     if (!CalciteUtil.isNestedTable(colType)) {
-      rowType = CalciteUtil.appendField(rowType, column.getNameId(), column.getDataType(),
-          typeFactory);
+      rowType = CalciteUtil.appendField(rowType, column.getNameId(), colType, typeFactory);
     }
-    queryRowType = CalciteUtil.appendField(queryRowType, column.getNameId(), column.getDataType(),
-        typeFactory);
+    queryRowType = CalciteUtil.appendField(queryRowType, column.getNameId(), colType, typeFactory);
   }
 
   public abstract int getNumParentPks();
@@ -176,6 +174,10 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     @Override
     public int getNumParentPks() {
       return parent.getNumPrimaryKeys();
+    }
+
+    public void appendTimestampColumn(@NonNull RelDataTypeField timestampField, @NonNull RelDataTypeFactory typeFactory) {
+      rowType = CalciteUtil.appendField(rowType, timestampField.getName(), timestampField.getType(), typeFactory);
     }
   }
 

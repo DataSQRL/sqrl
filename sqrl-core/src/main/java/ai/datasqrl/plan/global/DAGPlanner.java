@@ -109,7 +109,17 @@ public class DAGPlanner {
                 expandedScan = planner.transform(WRITE_DAG_OPTIMIZATION,expandedScan);
                 Optional<Integer> timestampIdx = processedRel.getType().hasTimestamp()?
                         Optional.of(processedRel.getTimestamp().getTimestampIndex()):Optional.empty();
-                writeDAG.add(new OptimizedDAG.MaterializeQuery(new OptimizedDAG.TableSink(dbTable,timestampIdx),expandedScan));
+                if (!dbTable.isRoot() && timestampIdx.isPresent()) {
+                    //Append timestamp to the end of table columns
+                    assert dbTable.getRowType().getFieldCount()==timestampIdx.get();
+                    ((VirtualRelationalTable.Child)dbTable).appendTimestampColumn(expandedScan.getRowType().getFieldList().get(timestampIdx.get()),
+                            planner.getRelBuilder().getTypeFactory());
+                }
+                assert dbTable.getRowType().equals(expandedScan.getRowType()) :
+                        "Rowtypes do not match: " + dbTable.getRowType() + " vs " + expandedScan.getRowType();
+                writeDAG.add(new OptimizedDAG.MaterializeQuery(
+                        new OptimizedDAG.TableSink(dbTable, timestampIdx),
+                        expandedScan));
             }
         }
         //5. Produce an LP-tree for each subscription
@@ -118,7 +128,8 @@ public class DAGPlanner {
         //6. Produce an LP-tree for each query with all tables inlined and push down filters to determine indexes
         List<OptimizedDAG.ReadQuery> readDAG = new ArrayList<>();
         for (QueryNode qNode : Iterables.filter(dag, QueryNode.class)) {
-            RelNode expanded = planner.transform(READ_DAG_OPTIMIZATION,qNode.query.getRelNode());
+            RelNode expanded = VirtualTableQueryRewriter.updateScan(planner.getRelBuilder(),qNode.query.getRelNode());
+            expanded = planner.transform(READ_DAG_OPTIMIZATION,expanded);
             //TODO: Push down filters into queries to determine indexes needed on tables
             readDAG.add(new OptimizedDAG.ReadQuery(qNode.query,expanded));
         }
@@ -295,6 +306,30 @@ public class DAGPlanner {
         public RelNode visit(LogicalValues values) {
             //The Values are a place-holder for the tablescan
             return relBuilder.scan(table.getSourceTable().getNameId()).build();
+        }
+    }
+
+    @AllArgsConstructor
+    private static class VirtualTableQueryRewriter extends RelShuttleImpl {
+
+        final RelBuilder relBuilder;
+
+        public static RelNode updateScan(RelBuilder relBuilder, RelNode query) {
+            VirtualTableQueryRewriter rewriter = new VirtualTableQueryRewriter(relBuilder);
+            return query.accept(rewriter);
+        }
+
+        @Override
+        public RelNode visit(TableScan scan) {
+            VirtualRelationalTable vtable = scan.getTable().unwrap(VirtualRelationalTable.class);
+            if (!vtable.isRoot() && vtable.getRoot().getBase().getTimestamp().hasTimestamp()) {
+                //Child tables had their parent timestamp added (if such exists). We need to update table and project that column out
+                relBuilder.scan(vtable.getNameId());
+                CalciteUtil.addIdentityProjection(relBuilder,relBuilder.peek().getRowType().getFieldCount()-1);
+                return relBuilder.build();
+            } else {
+                return super.visit(scan);
+            }
         }
     }
 

@@ -9,9 +9,8 @@ import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.core.Uncollect;
-import org.apache.calcite.rel.hint.Hintable;
-import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.logical.*;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
@@ -22,7 +21,6 @@ import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 import org.apache.flink.table.planner.delegation.StreamPlanner;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -100,7 +98,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   @Override
   public RelNode visit(LogicalValues values) {
-    return getBuilder().values(values.getRowType(),values.tuples).build();
+    return getBuilder().values(values.tuples, values.getRowType()).build();
   }
 
   @Override
@@ -136,10 +134,13 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   @Override
   public RelNode visit(LogicalCorrelate correlate) {
-    throw new UnsupportedOperationException("Should not be part of physical plan");
-//    return new LogicalCorrelate(cluster,
-//        defaultTrait, correlate.getLeft().accept(this), correlate.getRight().accept(this),
-//        correlate.getCorrelationId(), correlate.getRequiredColumns(), correlate.getJoinType());
+    FlinkRelBuilder relBuilder = getBuilder();
+    relBuilder.push(correlate.getLeft().accept(this));
+    RelDataType base = relBuilder.peek().getRowType();
+    relBuilder.push(correlate.getRight().accept(this));
+    relBuilder.correlate(correlate.getJoinType(), correlate.getCorrelationId(),
+            correlate.getRequiredColumns().asList().stream().map(i -> relBuilder.getRexBuilder().makeInputRef(base,i)).collect(Collectors.toList()));
+    return relBuilder.build();
   }
 
   @Override

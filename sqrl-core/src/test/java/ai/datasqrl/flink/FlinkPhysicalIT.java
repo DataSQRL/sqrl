@@ -8,6 +8,7 @@ import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
+import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.physical.database.QueryTemplate;
@@ -34,7 +35,11 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FlinkPhysicalIT extends AbstractSQRLIT {
 
@@ -70,21 +75,29 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
+  @SneakyThrows
   public void importTableTest() {
-    process(imports().toString(),List.of("customer","product"));
-
+    Map<String,ResultSet> results = process(imports().toString(),List.of("customer","product","entries"));
+    for (Map.Entry<String,ResultSet> res : results.entrySet()) {
+      Integer numExpectedRows = C360.INSTANCE.getTableCounts().get(res.getKey());
+      System.out.println("Results for table: " + res.getKey());
+      int numRows = ResultSetPrinter.print(res.getValue(), System.out);
+      if (numExpectedRows!=null) {
+        assertEquals(numRows,numRows);
+      }
+    }
   }
 
   private StringBuilder imports() {
     StringBuilder builder = new StringBuilder();
     builder.append("IMPORT ecommerce-data.Customer;\n");
-//    builder.append("IMPORT ecommerce-data.Orders;\n");
+    builder.append("IMPORT ecommerce-data.Orders;\n");
     builder.append("IMPORT ecommerce-data.Product;\n");
     return builder;
   }
 
   @SneakyThrows
-  private void process(String script, List<String> queryTables) {
+  private Map<String,ResultSet> process(String script, List<String> queryTables) {
     ScriptNode node = parse(script);
     Resolve.Env resolvedDag = resolve.planDag(session, node);
     DAGPlanner dagPlanner = new DAGPlanner(planner);
@@ -95,21 +108,21 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
             .map(t -> t.get()).forEach(vt -> {
       String tblName =  vt.getNameId();
       RelNode rel = planner.getRelBuilder().scan(tblName).build();
-      queries.add(new APIQuery(tblName + "_query", rel));
+      queries.add(new APIQuery(tblName.substring(0,tblName.indexOf(Name.NAME_DELIMITER)), rel));
     });
     OptimizedDAG dag = dagPlanner.plan(relSchema,queries);
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     Job job = executor.execute(physicalPlan);
     System.out.println("Started Flink Job: " + job.getExecutionId());
-
-    for (QueryTemplate query : physicalPlan.getDatabaseQueries().values()) {
+    Map<String,ResultSet> results = new HashMap<>();
+    for (Map.Entry<APIQuery,QueryTemplate> query : physicalPlan.getDatabaseQueries().entrySet()) {
+      System.out.println("Executing query: " + query.getValue().getSql());
       ResultSet resultSet = jdbc.getConnection().createStatement()
-              .executeQuery(query.getSql());
-
-      System.out.println("Results for ["+query.getSql()+"]: ");
-      ResultSetPrinter.print(resultSet, System.out);
+              .executeQuery(query.getValue().getSql());
+      results.put(query.getKey().getNameId(),resultSet);
     }
+    return results;
   }
 
   private ScriptNode parse(String query) {

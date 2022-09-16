@@ -2,6 +2,7 @@ package ai.datasqrl.plan.global;
 
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.queries.APIQuery;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
@@ -28,21 +29,16 @@ public class OptimizedDAG {
   }
 
   @Value
+  @AllArgsConstructor
   public static class TableSink implements MaterializeSink {
 
-    final VirtualRelationalTable table;
+    final String nameId;
+    final int numPrimaryKeys;
+    final RelDataType rowType;
     final Optional<Integer> timestampIdx;
 
-    public String getNameId() {
-      return table.getNameId();
-    }
-
-    public RelDataType getRowType() {
-      return table.getRowType();
-    }
-
-    public int getNumPrimaryKeys() {
-      return table.getNumPrimaryKeys();
+    public TableSink(VirtualRelationalTable table, Optional<Integer> timestampIdx) {
+      this(table.getNameId(),table.getNumPrimaryKeys(),table.getRowType(),timestampIdx);
     }
 
   }
