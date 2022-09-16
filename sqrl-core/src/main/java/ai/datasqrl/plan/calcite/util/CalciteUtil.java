@@ -2,6 +2,10 @@ package ai.datasqrl.plan.calcite.util;
 
 import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -19,18 +23,15 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.AggregatingScope;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.tools.RelBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import org.apache.calcite.util.Litmus;
+import org.apache.calcite.util.Util;
 
 public class CalciteUtil {
 
@@ -142,6 +143,71 @@ public class CalciteUtil {
       newGroup.addAll(list.getList());
     }
     return new SqlNodeList(newGroup, nodes.get(0).getParserPosition());
+  }
+
+  public static void removeKeywords(SqlSelect select) {
+    select.setOperand(0, SqlNodeList.EMPTY);
+  }
+
+  public static List<SqlIdentifier> getColumnNames(SqlSelect select, SqlValidatorScope scope) {
+    //Get names from select list directly
+    return select.getSelectList().getList().stream()
+        .map(i -> toIdentifierName(i))
+        .collect(Collectors.toList());
+  }
+
+  private static SqlIdentifier toIdentifierName(SqlNode node) {
+    switch (node.getKind()) {
+      case AS:
+        SqlCall call = (SqlCall) node;
+        SqlNode alias = call.getOperandList().get(1);
+        return (SqlIdentifier) alias;
+      default:
+        SqlIdentifier identifier = (SqlIdentifier) node;
+        String name = Util.last(identifier.names);
+        return new SqlIdentifier(name, SqlParserPos.ZERO);
+    }
+  }
+
+  public static void wrapSelectInProject(SqlSelect select, SqlValidatorScope scope) {
+    SqlSelect innerSelect = (SqlSelect)select.clone(select.getParserPosition());
+
+    List<SqlIdentifier> names = CalciteUtil.getColumnNames(select, scope);
+    SqlNodeList columnNames = new SqlNodeList(names, select.getSelectList().getParserPosition());
+
+    select.setOperand(0, SqlNodeList.EMPTY);
+    select.setOperand(1, columnNames);
+    select.setOperand(2, innerSelect);
+    select.setOperand(3, null);
+    select.setOperand(4, null);
+    select.setOperand(5, null);
+    select.setOperand(6, SqlNodeList.EMPTY);
+    select.setOperand(7, null);
+    select.setOperand(8, null);
+    select.setOperand(9, null);
+  }
+
+  public static void setHint(SqlSelect select, SqlHint hint) {
+    select.setHints(new SqlNodeList(List.of(hint), SqlParserPos.ZERO));
+  }
+
+  public static boolean deepContainsNodeName(List<SqlNode> nodes, SqlNode sqlNode) {
+    for (SqlNode node : nodes) {
+      if (sqlNode.getKind() == SqlKind.AS) {
+        SqlCall call = (SqlCall) sqlNode;
+        if (call.getOperandList().get(0).equalsDeep(node, Litmus.IGNORE)) {
+          return true;
+        }
+        if (call.getOperandList().get(1).equalsDeep(node, Litmus.IGNORE)) {
+          return true;
+        }
+      }
+
+      if (node.equalsDeep(sqlNode, Litmus.IGNORE)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public interface RelDataTypeBuilder {

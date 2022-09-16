@@ -5,6 +5,7 @@ import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.OptimizationStage;
+import ai.datasqrl.plan.calcite.RelPrinter;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
@@ -319,6 +320,8 @@ public class Resolve {
     env.session.planner.setValidator(op.validatedSql, op.sqlValidator);
 
     RelNode relNode = env.session.planner.rel(op.validatedSql).rel;
+
+    System.out.println(RelPrinter.explain(relNode));
     op.setRelNode(relNode);
   }
 

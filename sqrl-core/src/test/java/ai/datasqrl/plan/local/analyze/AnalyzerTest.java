@@ -373,6 +373,28 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
+  public void distinctWithGroupNotInSelectTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Product;\n"
+            + "Product.nested := "
+            + "  SELECT DISTINCT count(1) "
+            + "  FROM _ JOIN Product p "
+            + "  GROUP BY p.category;"));
+  }
+
+
+  @Test
+  @Disabled
+  public void topNTest() {
+    generate(parser.parse(
+        "IMPORT ecommerce-data.Product;\n"
+            + "Product.nested := "
+            + "  SELECT * "
+            + "  FROM _ JOIN Product p "
+            + "  LIMIT 5;"));
+  }
+  @Test
   public void distinctSingleColumnTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT DISTINCT productid FROM Product;"));
@@ -442,8 +464,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   public void localAggregateInAggregateTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON _.productid = Product"
-        + ".productid;\n"
+        + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
         + "Product.total := SUM(COUNT(joinDeclaration));"));
   }
 
@@ -638,8 +659,8 @@ class AnalyzerTest extends AbstractSQRLIT {
 
   @Test
   public void starAliasPrefixTest() {
-    String query = "SELECT t.* FROM Product j JOIN Product h ON "
-        + "true;";
+    generate(parser.parse("IMPORT ecommerce-data.Product;" +
+        "X := SELECT j.* FROM Product j JOIN Product h ON true;"));
   }
 
   @Test
