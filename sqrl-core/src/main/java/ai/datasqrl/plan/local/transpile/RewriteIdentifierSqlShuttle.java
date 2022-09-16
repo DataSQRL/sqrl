@@ -21,7 +21,7 @@ public class RewriteIdentifierSqlShuttle extends SqlShuttle {
 
       this.aliasMap = aliasMap;
     }
-    //todo: how to check if we're at an identifier & not somethign else?
+
     @Override
     public SqlNode visit(SqlIdentifier id) {
       if (id.names.size() == 2) {

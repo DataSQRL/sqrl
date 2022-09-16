@@ -19,6 +19,8 @@ public class SqrlHintStrategyTable {
   @Getter
   static HintStrategyTable hintStrategyTable = HintStrategyTable.builder()
       .hintStrategy(DISTINCT_ON, HintPredicates.PROJECT)
+      .hintStrategy(SELECT_DISTINCT, HintPredicates.PROJECT)
+      .hintStrategy(TOP_N, HintPredicates.PROJECT)
       .build();
 
   public static SqlHint createSelectDistinctHintNode(SqlNodeList columns, SqlParserPos pos) {

@@ -28,16 +28,11 @@ import java.util.stream.IntStream;
 
 import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
 
-//import ai.datasqrl.plan.local.generate.Generator.TranspiledResult;
-
 @AllArgsConstructor
 public class JoinDeclarationFactory {
 
   private final Env env;
-//  TableMapper tableMapper;
-//  UniqueAliasGenerator uniqueAliasGenerator;
   RexBuilder rexBuilder;
-//  FieldNames fieldNames;
 
   public JoinDeclarationFactory(Env env) {
     this.env = env;
@@ -149,11 +144,6 @@ public class JoinDeclarationFactory {
     return multiplicity;
   }
 
-//  public SqlJoinDeclaration createChild(Relationship rel) {
-//    return new SqlJoinDeclarationImpl(Optional.empty(),
-//        createParentChildCondition(rel, "x", this.tableMapper), "_", "x");
-//  }
-
   protected SqlNode createParentChildCondition(Relationship rel, String alias,
       Env env) {
     TableWithPK child = rel.getJoinType().equals(Relationship.JoinType.PARENT) ? env.getTableMap().get(
@@ -187,9 +177,4 @@ public class JoinDeclarationFactory {
         new SqlIdentifier(env.getTableMap().get(table).getNameId(), SqlParserPos.ZERO),
         SqlNodeList.EMPTY), new SqlIdentifier(alias, SqlParserPos.ZERO)}, SqlParserPos.ZERO);
   }
-
-//  public SqlJoinDeclaration createParent(Relationship rel) {
-//    return new SqlJoinDeclarationImpl(Optional.empty(),
-//        createParentChildCondition(rel, "x", this.tableMapper), "_", "x");
-//  }
 }

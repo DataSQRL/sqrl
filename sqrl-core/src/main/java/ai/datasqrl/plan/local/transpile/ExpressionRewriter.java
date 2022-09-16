@@ -120,15 +120,7 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     ConvertableFunction function = (ConvertableFunction) call.getOperator();
     SqlIdentifier arg = (SqlIdentifier) call.getOperandList().get(0);
     SqlQualified qualifiedArg = scope.fullyQualify(arg);
-    IdentifierNamespace ns = (IdentifierNamespace) qualifiedArg.namespace;
-    //p.entires.quantity
-    //prefix: p (the thing we need to build the condition for)
-    //suffix: entries, quantity (the path)
-    //namespace:
-    //  resolveNamespace: (TableNamespace, RelativeTableNamespace)
-    //   table:relopttable
-    //     table: SQRLTable
-//    SqlValidatorNamespace tn = scope.getValidator().getNamespace(arg);//ns.getResolvedNamespace();
+
     SQRLTable baseTable = qualifiedArg.namespace.getTable().unwrap(SQRLTable.class);
     Optional<String> baseAlias = Optional.ofNullable(qualifiedArg.prefix())
         .filter(p -> p.size() == 1).map(p -> p.get(0));
