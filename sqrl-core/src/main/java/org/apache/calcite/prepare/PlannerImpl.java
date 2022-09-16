@@ -135,6 +135,9 @@ public class PlannerImpl implements Planner, ViewExpander {
     cluster = RelOptCluster.create(
         requireNonNull(planner, "planner"),
         rexBuilder);
+    final SqlToRelConverter.Config sqlToRelConfig =
+        sqlToRelConverterConfig.withTrimUnusedFields(false);
+    cluster.setHintStrategies(sqlToRelConfig.getHintStrategyTable());
     reset();
   }
 
@@ -312,8 +315,6 @@ public class PlannerImpl implements Planner, ViewExpander {
         createCatalogReader().withSchemaPath(schemaPath);
     final SqlValidator validator = createSqlValidator(catalogReader);
 
-    final RexBuilder rexBuilder = createRexBuilder();
-    final RelOptCluster cluster = RelOptCluster.create(planner, rexBuilder);
     final SqlToRelConverter.Config config =
         sqlToRelConverterConfig.withTrimUnusedFields(false);
     final SqlToRelConverter sqlToRelConverter =
