@@ -7,6 +7,7 @@ import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
+import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
 import ai.datasqrl.schema.SQRLTable;
@@ -83,9 +84,14 @@ public class Transpile {
 
     if (select.isDistinct()) {
       rewriteSelectDistinct(select, scope);
+    } else if (isNested(op)) {
+      rewriteTopN(select, scope);
     }
-
     rewriteHints(select, scope);
+  }
+
+  private boolean isNested(StatementOp op) {
+    return op.getSqrlValidator().getContextTable().isPresent();
   }
 
   private void rewriteHints(SqlSelect select, SqlValidatorScope scope) {
@@ -115,6 +121,14 @@ public class Transpile {
     List<SqlNode> ppkNodeIndex = mapIndexOfNodeList(innerSelectList, innerPPKNodes);
     SqlNodeList ppkNode = new SqlNodeList(ppkNodeIndex, SqlParserPos.ZERO);
     SqlHint selectDistinctHint = SqrlHintStrategyTable.createSelectDistinctHintNode(ppkNode, SqlParserPos.ZERO);
+    CalciteUtil.setHint(select, selectDistinctHint);
+  }
+
+  private void rewriteTopN(SqlSelect select, SqlValidatorScope scope) {
+    List<SqlNode> innerPPKNodes = getPPKNodes(scope);
+    List<SqlNode> ppkNodeIndex = mapIndexOfNodeList(select.getSelectList(), innerPPKNodes);
+    SqlNodeList ppkNode = new SqlNodeList(ppkNodeIndex, SqlParserPos.ZERO);
+    SqlHint selectDistinctHint = SqrlHintStrategyTable.createTopNHintNode(ppkNode, SqlParserPos.ZERO);
     CalciteUtil.setHint(select, selectDistinctHint);
   }
 

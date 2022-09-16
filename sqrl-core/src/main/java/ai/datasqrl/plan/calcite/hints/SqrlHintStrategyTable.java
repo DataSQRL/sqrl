@@ -14,6 +14,8 @@ public class SqrlHintStrategyTable {
   public static final String DISTINCT_ON = "DISTINCT_ON";
 
   public static final String SELECT_DISTINCT = "SELECT_DISTINCT";
+
+  public static final String TOP_N = "TOP_N";
   @Getter
   static HintStrategyTable hintStrategyTable = HintStrategyTable.builder()
       .hintStrategy(DISTINCT_ON, HintPredicates.PROJECT)
@@ -21,5 +23,9 @@ public class SqrlHintStrategyTable {
 
   public static SqlHint createSelectDistinctHintNode(SqlNodeList columns, SqlParserPos pos) {
     return new SqlHint(pos, new SqlIdentifier(SELECT_DISTINCT, pos), columns, HintOptionFormat.ID_LIST);
+  }
+
+  public static SqlHint createTopNHintNode(SqlNodeList columns, SqlParserPos pos) {
+    return new SqlHint(pos, new SqlIdentifier(TOP_N, pos), columns, HintOptionFormat.ID_LIST);
   }
 }
