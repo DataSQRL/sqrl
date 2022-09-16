@@ -1,11 +1,16 @@
 package ai.datasqrl.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.environment.ScriptDeployment;
+import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.server.ApiVerticle;
 import ai.datasqrl.config.util.StringNamedId;
+import ai.datasqrl.environment.ScriptDeployment;
 import ai.datasqrl.io.formats.JsonLineFormat;
 import ai.datasqrl.io.impl.file.DirectorySinkImplementation;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
@@ -17,15 +22,12 @@ import ai.datasqrl.io.sources.DataSourceUpdate;
 import ai.datasqrl.io.sources.SourceTableConfiguration;
 import ai.datasqrl.io.sources.dataset.DatasetRegistry;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
-import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.util.TestResources;
 import ai.datasqrl.util.data.BookClub;
 import com.google.common.collect.ImmutableSet;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
@@ -33,20 +35,15 @@ import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
 public class APIServerIT extends AbstractSQRLIT {
@@ -569,8 +566,8 @@ public class APIServerIT extends AbstractSQRLIT {
     testContext.completeNow();
   }
 
-    @Test
-
+  @Test
+  @Disabled
   /**
    * This runs the server for external testing from command line. Do not include in normal test
    * suite since this test runs for a long time.
