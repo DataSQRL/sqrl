@@ -659,8 +659,8 @@ class AnalyzerTest extends AbstractSQRLIT {
 
   @Test
   public void starAliasPrefixTest() {
-    String query = "SELECT t.* FROM Product j JOIN Product h ON "
-        + "true;";
+    generate(parser.parse("IMPORT ecommerce-data.Product;" +
+        "X := SELECT j.* FROM Product j JOIN Product h ON true;"));
   }
 
   @Test

@@ -84,7 +84,7 @@ public class Transpile {
 
     if (select.isDistinct()) {
       rewriteSelectDistinct(select, scope);
-    } else if (isNested(op)) {
+    } else if (isNested(op) && select.getFetch() != null) {
       rewriteTopN(select, scope);
     }
     rewriteHints(select, scope);
