@@ -71,7 +71,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
 
   @Test
   public void importTableTest() {
-    process(imports().toString(),List.of("customer"));
+    process(imports().toString(),List.of("customer","product"));
 
   }
 
@@ -79,7 +79,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     StringBuilder builder = new StringBuilder();
     builder.append("IMPORT ecommerce-data.Customer;\n");
 //    builder.append("IMPORT ecommerce-data.Orders;\n");
-//    builder.append("IMPORT ecommerce-data.Product;\n");
+    builder.append("IMPORT ecommerce-data.Product;\n");
     return builder;
   }
 
