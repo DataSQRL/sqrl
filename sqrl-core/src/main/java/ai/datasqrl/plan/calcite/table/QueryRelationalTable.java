@@ -2,6 +2,7 @@ package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
+import ai.datasqrl.plan.global.MaterializationStrategy;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -41,6 +42,13 @@ public class QueryRelationalTable extends AbstractRelationalTable {
 
   @Setter
   private TableStatistic statistic = null;
+
+  /*
+   The materialization strategy for this table as determined by the optimizer. This is used when cutting
+   the DAG and expanding the RelNodes.
+   */
+  @Setter
+  private MaterializationStrategy materialization = MaterializationStrategy.NONE;
 
 
   public QueryRelationalTable(@NonNull Name rootTableId, @NonNull TableType type,

@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.calcite;
 
+import ai.datasqrl.plan.calcite.rules.DAGExpansionRule;
 import lombok.Value;
 import org.apache.calcite.plan.RelTrait;
 import org.apache.calcite.rel.metadata.DefaultRelMetadataProvider;
@@ -49,6 +50,13 @@ public class OptimizationStage {
                     ), false, DefaultRelMetadataProvider.INSTANCE),
             Optional.empty());
 
+    public static final OptimizationStage READ_DAG_OPTIMIZATION = new OptimizationStage("ReadDAGExpansion",
+            Programs.hep(List.of(new DAGExpansionRule.Read()),
+                    false, DefaultRelMetadataProvider.INSTANCE), Optional.empty());
+
+    public static final OptimizationStage WRITE_DAG_OPTIMIZATION = new OptimizationStage("WriteDAGExpansion",
+            Programs.hep(List.of(new DAGExpansionRule.Write()), false, DefaultRelMetadataProvider.INSTANCE),
+            Optional.empty());
 
 
     //Enumerable

@@ -1,29 +1,29 @@
 package ai.datasqrl.physical.stream.flink.plan;
 
+import ai.datasqrl.plan.calcite.hints.SqrlHint;
+import ai.datasqrl.plan.calcite.hints.WatermarkHint;
+import ai.datasqrl.plan.calcite.table.ImportedSourceTable;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.plan.Convention;
-import org.apache.calcite.plan.RelOptCluster;
-import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.core.Uncollect;
+import org.apache.calcite.rel.hint.Hintable;
+import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.logical.*;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableSet;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
-import org.apache.flink.table.planner.operations.PlannerQueryOperation;
-import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
-import org.apache.flink.table.planner.plan.trait.FlinkRelDistribution;
-import org.apache.flink.table.planner.plan.trait.MiniBatchIntervalTrait;
-import org.apache.flink.table.planner.plan.trait.ModifyKindSetTrait;
-import org.apache.flink.table.planner.plan.trait.UpdateKindTrait;
+import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
+import org.apache.flink.table.planner.delegation.StreamPlanner;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -38,82 +38,69 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   StreamTableEnvironmentImpl tEnv;
-  RelOptCluster cluster;
-  RelTraitSet defaultTrait;
+  Supplier<FlinkRelBuilder> relBuilderFactory;
 
-  public static RelNode rewrite(StreamTableEnvironmentImpl tEnv, RelOptCluster cluster, RelNode input) {
-    RelTraitSet defaultTraits = RelTraitSet.createEmpty().plus(Convention.NONE)
-        .plus(FlinkRelDistribution.ANY())
-        .plus(MiniBatchIntervalTrait.NONE())
-        .plus(ModifyKindSetTrait.EMPTY())
-        .plus(UpdateKindTrait.NONE());
-
-    return input.accept(new FlinkPhysicalPlanRewriter(tEnv, cluster, defaultTraits));
+  public static RelNode rewrite(StreamTableEnvironmentImpl tEnv, RelNode input) {
+    return input.accept(new FlinkPhysicalPlanRewriter(tEnv, () -> ((StreamPlanner) tEnv.getPlanner()).getRelBuilder()));
   }
 
   private FlinkRelBuilder getBuilder() {
-    return FlinkRelBuilder.of(cluster,null);
+    return relBuilderFactory.get();
   }
 
   @Override
   public RelNode visit(TableScan scan) {
-    //Lookup TableSourceTable in flink, add statistics over
-    PlannerQueryOperation op = (PlannerQueryOperation) tEnv.getParser().parse("select * from "
-            + scan.getTable().getQualifiedName().get(scan.getTable().getQualifiedName().size() - 1))
-        .get(0);
-
-    return op.getCalciteTree().getInput(0);
-  }
-
-  @Override
-  public RelNode visit(TableFunctionScan scan) {
-    List<RelNode> inputs = scan.getInputs().stream()
-        .map(this::visit)
-        .collect(Collectors.toList());
-    return new LogicalTableFunctionScan(cluster, defaultTrait, inputs, scan.getCall(),
-        scan.getElementType(), scan.getRowType(), scan.getColumnMappings());
-  }
-
-  @Override
-  public RelNode visit(LogicalValues values) {
-    return new LogicalValues(cluster, defaultTrait, values.getRowType(), values.tuples);
-  }
-
-  @Override
-  public RelNode visit(LogicalCorrelate correlate) {
-    return new LogicalCorrelate(cluster,
-        defaultTrait, correlate.getLeft().accept(this), correlate.getRight().accept(this),
-        correlate.getCorrelationId(), correlate.getRequiredColumns(), correlate.getJoinType());
+    ImportedSourceTable t = scan.getTable().unwrap(ImportedSourceTable.class);
+    String tableName = t.getNameId();
+    FlinkRelBuilder relBuilder = getBuilder();
+    relBuilder.scan(tableName);
+    SqrlHint.fromRel(scan, WatermarkHint.CONSTRUCTOR).ifPresent(watermark -> addWatermark(relBuilder,watermark.getTimestampIdx()));
+    return relBuilder.build();
   }
 
   @Override
   public RelNode visit(LogicalProject project) {
-    return new LogicalProject(cluster, defaultTrait, project.getHints(),
-        project.getInput().accept(this),
-        project.getProjects(), project.getRowType());
+    FlinkRelBuilder relBuilder = getBuilder();
+    relBuilder.push(project.getInput().accept(this));
+    relBuilder.project(project.getProjects().stream().map(rex -> rewrite(rex,relBuilder)).collect(Collectors.toList()),
+            project.getRowType().getFieldList().stream().map(f -> f.getName()).collect(Collectors.toList()));
+    SqrlHint.fromRel(project, WatermarkHint.CONSTRUCTOR).ifPresent(watermark -> addWatermark(relBuilder,watermark.getTimestampIdx()));
+    return relBuilder.build();
   }
 
-  @Override
-  public RelNode visit(LogicalAggregate aggregate) {
-    return new LogicalAggregate(cluster, defaultTrait, aggregate.getHints(),
-        aggregate.getInput().accept(this),
-        aggregate.getGroupSet(),
-        aggregate.getGroupSets(), aggregate.getAggCallList());
+  private void addWatermark(FlinkRelBuilder relBuilder, int timestampIndex) {
+    relBuilder.watermark(timestampIndex,getRexBuilder(relBuilder).makeInputRef(relBuilder.peek(), timestampIndex));
   }
 
   @Override
   public RelNode visit(LogicalFilter filter) {
-    return new LogicalFilter(cluster, defaultTrait, filter.getInput().accept(this),
-        filter.getCondition(),
-        (ImmutableSet<CorrelationId>) filter.getVariablesSet());
+    FlinkRelBuilder relBuilder = getBuilder();
+    relBuilder.push(filter.getInput().accept(this));
+    relBuilder.filter(filter.getVariablesSet(),rewrite(filter.getCondition(),relBuilder));
+    return relBuilder.build();
   }
 
   @Override
   public RelNode visit(LogicalJoin join) {
-    return new LogicalJoin(cluster,
-        defaultTrait, join.getHints(), join.getLeft().accept(this), join.getRight().accept(this),
-        join.getCondition(), join.getVariablesSet(), join.getJoinType(), join.isSemiJoinDone(),
-        (ImmutableList<RelDataTypeField>) join.getSystemFieldList());
+    throw new UnsupportedOperationException("Not yet implemented");
+//    return new LogicalJoin(cluster,
+//            defaultTrait, join.getHints(), join.getLeft().accept(this), join.getRight().accept(this),
+//            join.getCondition(), join.getVariablesSet(), join.getJoinType(), join.isSemiJoinDone(),
+//            (ImmutableList<RelDataTypeField>) join.getSystemFieldList());
+  }
+
+  @Override
+  public RelNode visit(LogicalAggregate aggregate) {
+    throw new UnsupportedOperationException("Not yet implemented");
+//    return new LogicalAggregate(cluster, defaultTrait, aggregate.getHints(),
+//        aggregate.getInput().accept(this),
+//        aggregate.getGroupSet(),
+//        aggregate.getGroupSets(), aggregate.getAggCallList());
+  }
+
+  @Override
+  public RelNode visit(LogicalValues values) {
+    return getBuilder().values(values.getRowType(),values.tuples).build();
   }
 
   @Override
@@ -138,17 +125,67 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   }
 
   @Override
+  public RelNode visit(TableFunctionScan scan) {
+    throw new UnsupportedOperationException("Not yet supported");
+//    List<RelNode> inputs = scan.getInputs().stream()
+//        .map(this::visit)
+//        .collect(Collectors.toList());
+//    return new LogicalTableFunctionScan(cluster, defaultTrait, inputs, scan.getCall(),
+//        scan.getElementType(), scan.getRowType(), scan.getColumnMappings());
+  }
+
+  @Override
+  public RelNode visit(LogicalCorrelate correlate) {
+    throw new UnsupportedOperationException("Should not be part of physical plan");
+//    return new LogicalCorrelate(cluster,
+//        defaultTrait, correlate.getLeft().accept(this), correlate.getRight().accept(this),
+//        correlate.getCorrelationId(), correlate.getRequiredColumns(), correlate.getJoinType());
+  }
+
+  @Override
   public RelNode visit(RelNode other) {
     if (other instanceof Uncollect) {
       Uncollect uncollect = (Uncollect) other;
-      return new Uncollect(cluster, defaultTrait, uncollect.getInput().accept(this),
-          uncollect.withOrdinality, List.of());
-    } else if (other instanceof LogicalWatermarkAssigner) {
+      RelBuilder relBuilder = getBuilder();
+      relBuilder.push(uncollect.getInput().accept(this));
+      relBuilder.uncollect(List.of(),uncollect.withOrdinality);
+      return relBuilder.build();
+    } /* else if (other instanceof LogicalWatermarkAssigner) {
       LogicalWatermarkAssigner watermarkAssigner = (LogicalWatermarkAssigner) other;
       return new LogicalWatermarkAssigner(cluster, defaultTrait,
           watermarkAssigner.getInput().accept(this),
           watermarkAssigner.rowtimeFieldIndex(), watermarkAssigner.watermarkExpr());
-    }
+    } */
     throw new RuntimeException("not yet implemented:" + other.getClass());
   }
+
+
+  /*
+  ====== Rewriting RexNodes
+   */
+
+  private static FlinkRexBuilder getRexBuilder(FlinkRelBuilder relBuilder) {
+    return new FlinkRexBuilder(relBuilder.getTypeFactory());
+  }
+
+  private RexNode rewrite(RexNode node, FlinkRelBuilder relBuilder) {
+    return node.accept(new RexRewriter(relBuilder));
+  }
+
+  private static class RexRewriter extends RexShuttle {
+
+    private final RelNode input;
+    private final FlinkRexBuilder rexBuilder;
+
+    public RexRewriter(FlinkRelBuilder relBuilder) {
+      input = relBuilder.peek();
+      rexBuilder = FlinkPhysicalPlanRewriter.getRexBuilder(relBuilder);
+    }
+
+    @Override
+    public RexNode visitInputRef(RexInputRef ref) {
+      return rexBuilder.makeInputRef(input,ref.getIndex());
+    }
+  }
+
 }

@@ -35,7 +35,7 @@ public class RelToSql {
 
   public static String toSql(RelDataTypeField field) {
     RelDataType datatype = field.getType();
-    Preconditions.checkArgument(CalciteUtil.isNestedTable(datatype),
+    Preconditions.checkArgument(!CalciteUtil.isNestedTable(datatype),
             "Collection column encountered");
     return toSql(field.getName(), getSQLType(datatype), datatype.isNullable());
   }

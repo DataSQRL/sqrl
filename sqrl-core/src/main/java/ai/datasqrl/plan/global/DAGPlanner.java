@@ -2,10 +2,8 @@ package ai.datasqrl.plan.global;
 
 import ai.datasqrl.config.AbstractDAG;
 import ai.datasqrl.config.util.StreamUtil;
-import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.hints.WatermarkHint;
-import ai.datasqrl.plan.calcite.rules.DAGExpansionRule;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
@@ -21,15 +19,15 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.logical.LogicalValues;
-import org.apache.calcite.rel.metadata.DefaultRelMetadataProvider;
-import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static ai.datasqrl.plan.calcite.OptimizationStage.READ_DAG_OPTIMIZATION;
+import static ai.datasqrl.plan.calcite.OptimizationStage.WRITE_DAG_OPTIMIZATION;
 
 @AllArgsConstructor
 public class DAGPlanner {
@@ -75,7 +73,6 @@ public class DAGPlanner {
         //3. If we don't materialize, input tables need to be persisted (i.e. determine where we cut the DAG)
         //   and if we do, then we need to add an extra DBTableNode.
         //  This determines the materialization strategy for materialized tables.
-        Map<QueryRelationalTable,MaterializationStrategy> materializeStrategies = new HashMap<>();
         List<DBTableNode> nodes2Add = new ArrayList<>();
         for (StreamTableNode tableNode : Iterables.filter(dag, StreamTableNode.class)) {
 //            tableNode.table.getMatStrategy().setMaterialize(materialization.get(tableNode).isMaterialize());
@@ -91,27 +88,23 @@ public class DAGPlanner {
                     nodes2Add.add(new DBTableNode(vtable));
                     persistedAs = vtable.getNameId();
                 }
-                materializeStrategies.put(tableNode.table, new MaterializationStrategy(persistedAs));
+                tableNode.table.setMaterialization(new MaterializationStrategy(persistedAs));
             }
         }
         dag = dag.addNodes(nodes2Add);
 
         //4. Produce an LP-tree for each persisted table
         List<OptimizedDAG.MaterializeQuery> writeDAG = new ArrayList<>();
-        Map<VirtualRelationalTable, PullupOperator.Container> pullupMapping = new HashMap<>();
         SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(() -> planner.getRelBuilder());
-        OptimizationStage writeDAGOptimization = new OptimizationStage("WriteDAGExpansion",
-                Programs.hep(List.of(new DAGExpansionRule.Write()), false, DefaultRelMetadataProvider.INSTANCE),
-                Optional.empty());
         for (DBTableNode dbNode : Iterables.filter(dag, DBTableNode.class)) {
-            if (materializeStrategies.containsKey(dbNode.table.getRoot().getBase())) {
+            if (dbNode.table.getRoot().getBase().getMaterialization().isMaterialize()) {
                 VirtualRelationalTable dbTable = dbNode.table;
                 RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
                 RelNode expandedScan = scanTable.accept(sqrl2sql);
                 SQRLLogicalPlanConverter.ProcessedRel processedRel = sqrl2sql.getRelHolder(expandedScan);
                 processedRel = sqrl2sql.postProcess(processedRel);
-                pullupMapping.put(dbTable, processedRel.getPullups());
-                expandedScan = planner.transform(writeDAGOptimization,processedRel.getRelNode());
+                dbTable.setDbPullups(processedRel.getPullups());
+                expandedScan = planner.transform(WRITE_DAG_OPTIMIZATION,processedRel.getRelNode());
                 Optional<Integer> timestampIdx = processedRel.getType().hasTimestamp()?
                         Optional.of(processedRel.getTimestamp().getTimestampIndex()):Optional.empty();
                 writeDAG.add(new OptimizedDAG.MaterializeQuery(new OptimizedDAG.TableSink(dbTable,timestampIdx),expandedScan));
@@ -122,11 +115,8 @@ public class DAGPlanner {
 
         //6. Produce an LP-tree for each query with all tables inlined and push down filters to determine indexes
         List<OptimizedDAG.ReadQuery> readDAG = new ArrayList<>();
-        OptimizationStage readDAGOptimization = new OptimizationStage("ReadDAGExpansion",
-                Programs.hep(List.of(new DAGExpansionRule.Read(materializeStrategies, pullupMapping)),
-                        false, DefaultRelMetadataProvider.INSTANCE), Optional.empty());
         for (QueryNode qNode : Iterables.filter(dag, QueryNode.class)) {
-            RelNode expanded = planner.transform(readDAGOptimization,qNode.query.getRelNode());
+            RelNode expanded = planner.transform(READ_DAG_OPTIMIZATION,qNode.query.getRelNode());
             //TODO: Push down filters into queries to determine indexes needed on tables
             readDAG.add(new OptimizedDAG.ReadQuery(qNode.query,expanded));
         }
@@ -295,8 +285,8 @@ public class DAGPlanner {
             int timestampIdx = table.getTimestamp().getTimestampIndex();
             Preconditions.checkArgument(timestampIdx<updated.getRowType().getFieldCount());
             WatermarkHint watermarkHint = new WatermarkHint(timestampIdx);
-            updated = ((Hintable)updated).attachHints(List.of(watermarkHint.getHint()));
-            table.updateRelNode(table.getRelNode().accept(this));
+            //updated = ((Hintable)updated).attachHints(List.of(watermarkHint.getHint()));
+            table.updateRelNode(updated);
         }
 
         @Override

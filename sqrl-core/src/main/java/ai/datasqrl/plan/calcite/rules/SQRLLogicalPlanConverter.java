@@ -533,7 +533,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                             rightInput.timestamp.getTimestampIndex()+newLeftSideMaxIdx,
                             pk.asArray());
                     relB.join(joinType, condition);
-                    relB.hints(hint.getHint());
+                    hint.addTo(relB);
                     return setRelHolder(new ProcessedRel(relB.build(), TableType.STREAM,
                             pk, joinTimestamp, joinedIndexMap,
                             null, NowFilter.EMPTY, Deduplication.EMPTY));
@@ -682,7 +682,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 RelBuilder relB = relBuilderFactory.get();
                 relB.push(input.relNode);
                 relB.aggregate(relB.groupKey(ImmutableBitSet.of(groupByIdx)),aggregateCalls);
-                relB.hints(new TimeAggregationHint(TimeAggregationHint.Type.TUMBLE).getHint());
+                new TimeAggregationHint(TimeAggregationHint.Type.TUMBLE).addTo(relB);
                 ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
                 ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength, targetLength);
 
@@ -749,7 +749,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             projectNames.add(null);
 
             relB.project(projects,projectNames);
-            if (isSlidingAggregate) relB.hints(new TimeAggregationHint(TimeAggregationHint.Type.SLIDING).getHint());
+            if (isSlidingAggregate) new TimeAggregationHint(TimeAggregationHint.Type.SLIDING).addTo(relB);
             ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
             ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength-1, targetLength);
             return setRelHolder(new ProcessedRel(relB.build(), TableType.TEMPORAL_STATE, pk,
@@ -760,7 +760,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         RelBuilder relB = relBuilderFactory.get();
         relB.push(nowInput.relNode);
         relB.aggregate(relB.groupKey(ImmutableBitSet.of(groupByIdx)),aggregateCalls);
-        if (isSlidingAggregate) relB.hints(new TimeAggregationHint(TimeAggregationHint.Type.SLIDING).getHint());
+        if (isSlidingAggregate) new TimeAggregationHint(TimeAggregationHint.Type.SLIDING).addTo(relB);
         ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
         ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength, targetLength);
         return setRelHolder(new ProcessedRel(relB.build(), TableType.STATE, pk,

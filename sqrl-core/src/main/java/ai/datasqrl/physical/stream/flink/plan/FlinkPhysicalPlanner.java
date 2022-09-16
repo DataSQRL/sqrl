@@ -16,7 +16,6 @@ import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImp
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.api.config.ExecutionConfigOptions.NotNullEnforcer;
 import org.apache.flink.table.api.internal.FlinkEnvProxy;
-import org.apache.flink.table.planner.delegation.StreamPlanner;
 
 import java.util.List;
 
@@ -48,8 +47,7 @@ public class FlinkPhysicalPlanner {
       }
       dataStreamRegisterer.register(query.getRelNode());
 
-      RelNode relNode = FlinkPhysicalPlanRewriter.rewrite(tEnv, ((StreamPlanner) tEnv.getPlanner()).getRelBuilder().getCluster(),
-          query.getRelNode());
+      RelNode relNode = FlinkPhysicalPlanRewriter.rewrite(tEnv, query.getRelNode());
 
       Table tbl = FlinkEnvProxy.relNodeQuery(relNode, tEnv);
 
@@ -63,7 +61,6 @@ public class FlinkPhysicalPlanner {
 
       tEnv.createTable(name, descriptor);
       stmtSet.addInsert(name, tbl);
-
     }
 
     return new FlinkStreamPhysicalPlan(stmtSet);

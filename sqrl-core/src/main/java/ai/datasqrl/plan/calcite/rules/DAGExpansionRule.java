@@ -13,8 +13,6 @@ import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.tools.RelBuilder;
 import org.h2.util.StringUtils;
 
-import java.util.Map;
-
 /**
  *
  */
@@ -32,20 +30,6 @@ public abstract class DAGExpansionRule extends RelOptRule {
 
   public static class Read extends DAGExpansionRule {
 
-    private final Map<QueryRelationalTable, MaterializationStrategy> materializeStrategies;
-    private final Map<VirtualRelationalTable, PullupOperator.Container> pullups;
-
-    public Read(Map<QueryRelationalTable, MaterializationStrategy> materializeStrategies,
-                Map<VirtualRelationalTable, PullupOperator.Container> pullups) {
-      this.materializeStrategies = materializeStrategies;
-      this.pullups = pullups;
-    }
-
-    private MaterializationStrategy getStrategy(QueryRelationalTable table) {
-      if (!materializeStrategies.containsKey(table)) return MaterializationStrategy.NONE;
-      else return materializeStrategies.get(table);
-    }
-
     @Override
     public void onMatch(RelOptRuleCall call) {
       LogicalTableScan table = call.rel(0);
@@ -55,9 +39,9 @@ public abstract class DAGExpansionRule extends RelOptRule {
       Preconditions.checkArgument(dbTable!=null ^ queryTable!=null);
       if (dbTable!=null) {
         QueryRelationalTable baseTable = dbTable.getRoot().getBase();
-        MaterializationStrategy strategy = getStrategy(baseTable);
+        MaterializationStrategy strategy = baseTable.getMaterialization();
         if (strategy.isMaterialize()) {
-          PullupOperator.Container pullup = pullups.get(dbTable);
+          PullupOperator.Container pullup = dbTable.getDbPullups();
           RelBuilder relBuilder = getBuilder(table);
           relBuilder.push(table);
           if (!pullup.getNowFilter().isEmpty()) {
@@ -75,7 +59,7 @@ public abstract class DAGExpansionRule extends RelOptRule {
       }
       if (queryTable!=null) {
         Preconditions.checkArgument(!CalciteUtil.isNestedTable(queryTable.getRowType()));
-        MaterializationStrategy strategy = getStrategy(queryTable);
+        MaterializationStrategy strategy = queryTable.getMaterialization();
         if (strategy.isMaterialize()) {
           Preconditions.checkArgument(!StringUtils.isNullOrEmpty(strategy.getPersistedAs()));
           RelBuilder builder = getBuilder(table);

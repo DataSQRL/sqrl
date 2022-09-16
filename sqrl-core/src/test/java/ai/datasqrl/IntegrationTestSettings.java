@@ -10,15 +10,9 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.metadata.InMemoryMetadataStore;
 import ai.datasqrl.util.DatabaseHandle;
 import ai.datasqrl.util.JDBCTestDatabase;
-import ai.datasqrl.util.TestDataset;
 import lombok.Builder;
 import lombok.Value;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.ArgumentsProvider;
-
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -93,12 +87,20 @@ public class IntegrationTestSettings {
     }
 
     public static IntegrationTestSettings getFlinkWithDB() {
-        return getEngines(StreamEngine.FLINK,DatabaseEngine.POSTGRES);
+        return getFlinkWithDB(false);
+    }
+
+    public static IntegrationTestSettings getFlinkWithDB(boolean monitorSources) {
+        return getEngines(StreamEngine.FLINK,DatabaseEngine.POSTGRES,monitorSources);
     }
 
     public static IntegrationTestSettings getEngines(StreamEngine stream, DatabaseEngine database) {
+        return getEngines(stream,database,false);
+    }
+
+    public static IntegrationTestSettings getEngines(StreamEngine stream, DatabaseEngine database, boolean monitorSources) {
         return IntegrationTestSettings.builder().stream(stream).database(database)
-            .monitorSources(false).build();
+            .monitorSources(monitorSources).build();
     }
 
     @Value

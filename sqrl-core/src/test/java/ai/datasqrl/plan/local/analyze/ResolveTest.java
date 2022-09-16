@@ -6,37 +6,35 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
+import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.table.PullupOperator;
-import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
-import ai.datasqrl.plan.calcite.table.TableType;
+import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.data.C360;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class ResolveTest extends AbstractSQRLIT {
+public class ResolveTest extends AbstractSQRLIT {
 
   ConfiguredSqrlParser parser;
   ErrorCollector error;
   private Resolve resolve;
   private Session session;
+
+  private Resolve.Env resolvedDag = null;
 
   @BeforeEach
   public void setup() throws IOException {
@@ -153,31 +151,6 @@ class ResolveTest extends AbstractSQRLIT {
     validateQueryTable("orderagg2", TableType.STREAM,3, 2, Optional.of(1), new PullupTest(true,false));
   }
 
-  private void validateQueryTable(String name, TableType tableType, int numCols, int numPrimaryKeys) {
-    validateQueryTable(name,tableType,numCols,numPrimaryKeys,Optional.empty(),PullupTest.EMPTY);
-  }
-
-  private void validateQueryTable(String name, TableType tableType, int numCols, int numPrimaryKeys,
-                                  Optional<Integer> timestampIdx,
-                                  PullupTest pullupTest) {
-    SchemaPlus relSchema = session.getPlanner().getDefaultSchema();
-    //Table names have an appended uuid - find the right tablename first. We assume tables are in the order in which they were created
-    List<String> tblNames = relSchema.getTableNames().stream().filter(s -> s.startsWith(name))
-        .filter(s -> relSchema.getTable(s) instanceof QueryRelationalTable)
-            .sorted((a,b) -> Integer.compare(CalciteTableFactory.getTableOrdinal(a),CalciteTableFactory.getTableOrdinal(b)))
-            .collect(Collectors.toList());
-    assertFalse(tblNames.isEmpty());
-    //Get most recently added table
-    QueryRelationalTable table = (QueryRelationalTable) relSchema.getTable(tblNames.get(tblNames.size()-1));
-    assertEquals(tableType, table.getType());
-    assertEquals(numPrimaryKeys, table.getNumPrimaryKeys());
-    assertEquals(numCols, table.getRowType().getFieldCount());
-    if (timestampIdx.isPresent()) {
-      assertTrue(table.getTimestamp().hasTimestamp());
-      assertEquals(timestampIdx.get(),table.getTimestamp().getTimestampIndex());
-    }
-    pullupTest.test(table.getPullups());
-  }
 
   @Test
   @Disabled
@@ -295,19 +268,49 @@ class ResolveTest extends AbstractSQRLIT {
   }
 
   @SneakyThrows
-  private void process(String query) {
+  private Resolve.Env process(String query) {
     ScriptNode node = parse(query);
 //    SqlNode parsed = SqlParser.create("SELECT o2._uuid FROM Orders o2 \n"
 //        + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid\n")
 //        .parseQuery();
 //    System.out.println(((QueryAssignment) node.getStatements().get(4)).getQuery());
 //    System.out.println(parsed);
-
-    resolve.planDag(session, node);
+    resolvedDag = resolve.planDag(session, node);
+    return resolvedDag;
   }
 
   private ScriptNode parse(String query) {
     return parser.parse(query);
+  }
+
+
+  private void validateQueryTable(String name, TableType tableType, int numCols, int numPrimaryKeys) {
+    validateQueryTable(name,tableType,numCols,numPrimaryKeys,Optional.empty(),PullupTest.EMPTY);
+  }
+
+  private void validateQueryTable(String tableName, TableType tableType, int numCols, int numPrimaryKeys,
+                                  Optional<Integer> timestampIdx,
+                                  PullupTest pullupTest) {
+    CalciteSchema relSchema = resolvedDag.getRelSchema();
+    QueryRelationalTable table = getLatestTable(relSchema,tableName,QueryRelationalTable.class).get();
+    assertEquals(tableType, table.getType());
+    assertEquals(numPrimaryKeys, table.getNumPrimaryKeys());
+    assertEquals(numCols, table.getRowType().getFieldCount());
+    if (timestampIdx.isPresent()) {
+      assertTrue(table.getTimestamp().hasTimestamp());
+      assertEquals(timestampIdx.get(),table.getTimestamp().getTimestampIndex());
+    }
+    pullupTest.test(table.getPullups());
+  }
+
+  public static<T extends AbstractRelationalTable> Optional<T> getLatestTable(CalciteSchema relSchema, String tableName, Class<T> tableClass) {
+    String normalizedName = Name.system(tableName).getCanonical();
+    //Table names have an appended uuid - find the right tablename first. We assume tables are in the order in which they were created
+    return relSchema.getTableNames().stream().filter(s -> s.startsWith(normalizedName))
+            .filter(s -> tableClass.isInstance(relSchema.getTable(s,true).getTable()))
+            //Get most recently added table
+            .sorted((a,b) -> -Integer.compare(CalciteTableFactory.getTableOrdinal(a),CalciteTableFactory.getTableOrdinal(b)))
+            .findFirst().map(s -> tableClass.cast(relSchema.getTable(s,true).getTable()));
   }
 
   @Value

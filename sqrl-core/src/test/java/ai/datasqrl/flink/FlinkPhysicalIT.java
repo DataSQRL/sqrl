@@ -16,9 +16,9 @@ import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.global.DAGPlanner;
 import ai.datasqrl.plan.global.OptimizedDAG;
+import ai.datasqrl.plan.local.analyze.ResolveTest;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.plan.queries.APIQuery;
@@ -29,7 +29,6 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -51,7 +50,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   @BeforeEach
   public void setup() throws IOException {
     error = ErrorCollector.root();
-    initialize(IntegrationTestSettings.getInMemory(false));
+    initialize(IntegrationTestSettings.getFlinkWithDB(true));
     C360 example = C360.INSTANCE;
     example.registerSource(env);
 
@@ -71,9 +70,8 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void importTableTest() {
-    process(imports().toString());
+    process(imports().toString(),List.of("customer"));
 
   }
 
@@ -86,14 +84,15 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @SneakyThrows
-  private void process(String script) {
+  private void process(String script, List<String> queryTables) {
     ScriptNode node = parse(script);
     Resolve.Env resolvedDag = resolve.planDag(session, node);
     DAGPlanner dagPlanner = new DAGPlanner(planner);
-    //We add a scan query for every table in the API
+    //We add a scan query for every query table
     List<APIQuery> queries = new ArrayList<APIQuery>();
     CalciteSchema relSchema = resolvedDag.getRelSchema();
-    CalciteUtil.getTables(relSchema, VirtualRelationalTable.class).forEach(vt -> {
+    queryTables.stream().map(t -> ResolveTest.getLatestTable(relSchema,t,VirtualRelationalTable.class))
+            .map(t -> t.get()).forEach(vt -> {
       String tblName =  vt.getNameId();
       RelNode rel = planner.getRelBuilder().scan(tblName).build();
       queries.add(new APIQuery(tblName + "_query", rel));

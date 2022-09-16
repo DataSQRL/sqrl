@@ -9,11 +9,8 @@ import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.table.AddedColumn;
+import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
-import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.table.ProxyImportRelationalTable;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.transpile.*;
@@ -161,7 +158,7 @@ public class Resolve {
         env.relSchema.add(vt.getNameId(), vt));
     env.relSchema.add(tblDef.getBaseTable().getNameId(), tblDef.getBaseTable());
     if (tblDef.getBaseTable() instanceof ProxyImportRelationalTable) {
-      ProxyImportRelationalTable impTable = (ProxyImportRelationalTable) tblDef.getBaseTable();
+      ImportedSourceTable impTable = ((ProxyImportRelationalTable) tblDef.getBaseTable()).getSourceTable();
       env.relSchema.add(impTable.getNameId(),impTable);
     }
     env.tableMap.putAll(tblDef.getShredTableMap());
