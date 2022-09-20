@@ -22,4 +22,9 @@ public class Column extends Field {
     return super.toString();
   }
 
+  @Override
+  public FieldKind getKind() {
+    return FieldKind.COLUMN;
+  }
+
 }

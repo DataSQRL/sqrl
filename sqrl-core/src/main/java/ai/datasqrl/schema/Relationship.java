@@ -26,6 +26,11 @@ public class Relationship extends Field {
             + " [" + joinType + "," + multiplicity + "]";
   }
 
+  @Override
+  public FieldKind getKind() {
+    return FieldKind.RELATIONSHIP;
+  }
+
   public enum JoinType {
     PARENT, CHILD, JOIN
   }
