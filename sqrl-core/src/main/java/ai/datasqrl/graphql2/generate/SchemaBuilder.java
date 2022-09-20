@@ -16,14 +16,13 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 
 public class SchemaBuilder {
-  private final  Map<SQRLTable, String> seenSqrlTables = new HashMap<>();
-  private final  List<ObjectTypeBuilder> objectTypeBuilderList = new ArrayList<>();
+  private final Map<SQRLTable, String> seenSqrlTables = new HashMap<>();
+  private final List<ObjectTypeBuilder> objectTypeBuilderList = new ArrayList<>();
 
   @Getter
   private final ObjectTypeBuilder query = new ObjectTypeBuilder("Query");

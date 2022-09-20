@@ -35,7 +35,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Relationship;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.jdbc.CalciteSchema.TableEntry;
-import org.apache.calcite.jdbc.SqrlSimpleCalciteSchema;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.prepare.Prepare.PreparingTable;
 import org.apache.calcite.schema.Schema;
 import org.apache.calcite.schema.Table;
@@ -170,7 +170,7 @@ class SqrlEmptyScope implements SqlValidatorScope {
     SqlValidatorTable relOptTable = namespace.getTable();
     SQRLTable t = relOptTable.unwrap(SQRLTable.class);
     Preconditions.checkNotNull(t);
-    CalciteSchema schema1 = new SqrlSimpleCalciteSchema((Schema)t);
+    CalciteSchema schema1 = new SqrlCalciteSchema((Schema)t);
     CalciteSchema schema = schema1;
     List<String> remainingNames = names;
     remainingNames = Util.skip(remainingNames); //skip alias
@@ -200,7 +200,7 @@ class SqrlEmptyScope implements SqlValidatorScope {
       relationships.add(rel);
       t = (SQRLTable) entry.getTable();
 
-      CalciteSchema schema3 = new SqrlSimpleCalciteSchema((Schema)entry.getTable());
+      CalciteSchema schema3 = new SqrlCalciteSchema((Schema)entry.getTable());
       path = path.plus(null, -1, schema3.name, StructKind.NONE);
       remainingNames = Util.skip(remainingNames);
       schema = schema3;
@@ -270,7 +270,7 @@ class SqrlEmptyScope implements SqlValidatorScope {
           walkTable = (SQRLTable)table;
         }
         if (table instanceof Schema && i != size - 1) {
-          CalciteSchema schema1 = new SqrlSimpleCalciteSchema((Schema)table);
+          CalciteSchema schema1 = new SqrlCalciteSchema((Schema)table);
           path = path.plus(null, -1, schema1.name, StructKind.NONE);
           remainingNames = Util.skip(remainingNames);
           schema = schema1;

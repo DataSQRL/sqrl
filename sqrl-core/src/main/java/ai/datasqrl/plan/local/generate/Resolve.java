@@ -12,6 +12,7 @@ import ai.datasqrl.plan.calcite.TranspilerFactory;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
+import ai.datasqrl.plan.calcite.table.AddedColumn.Simple;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.transpile.*;
@@ -24,7 +25,11 @@ import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
@@ -56,13 +61,13 @@ public class Resolve {
     Map<Field, String> fieldMap = new HashMap<>();
     UniqueAliasGenerator aliasGenerator = new UniqueAliasGeneratorImpl();
 
-    CalciteSchema sqrlSchema;
+    SqrlCalciteSchema sqrlSchema;
     CalciteSchema relSchema;
 
     Session session;
     ScriptNode scriptNode;
 
-    public Env(CalciteSchema sqrlSchema, CalciteSchema relSchema, Session session,
+    public Env(SqrlCalciteSchema sqrlSchema, CalciteSchema relSchema, Session session,
         ScriptNode scriptNode) {
       this.sqrlSchema = sqrlSchema;
       this.relSchema = relSchema;
@@ -82,7 +87,7 @@ public class Resolve {
   public Env createEnv(Session session, ScriptNode script) {
     // All operations are applied to this env
     return new Env(
-        CalciteSchema.createRootSchema(true),
+        new SqrlCalciteSchema(CalciteSchema.createRootSchema(true).schema),
         session.planner.getDefaultSchema().unwrap(CalciteSchema.class),
         session,
         script
@@ -288,7 +293,6 @@ public class Resolve {
       op.query instanceof SqlSelect ? (SqlSelect) op.query : (SqlSelect) ((SqlOrderBy)
           op.query).query;
     transpile.rewriteQuery(select, sqrlValidator.getSelectScope(select));
-
     validateSql(env, op);
   }
 
@@ -321,7 +325,6 @@ public class Resolve {
 
     RelNode relNode = env.session.planner.rel(op.validatedSql).rel;
 
-    System.out.println(RelPrinter.explain(relNode));
     op.setRelNode(relNode);
   }
 
@@ -419,7 +422,19 @@ public class Resolve {
   }
 
   private AddedColumn createColumnAddOp(Env env, StatementOp op) {
-    return new Complex(op.statement.getNamePath().getLast().getCanonical(), op.relNode);
+    String columnName = op.statement.getNamePath().getLast().getCanonical();
+
+    if (isSimple(op)) {
+      Project project = (Project) op.getRelNode();
+      return new Simple(columnName, project.getProjects().get(project.getProjects().size() - 1));
+    }
+
+    return new Complex(columnName, op.relNode);
+  }
+
+  private boolean isSimple(StatementOp op) {
+    RelNode relNode = op.getRelNode();
+    return relNode instanceof Project && relNode.getInput(0) instanceof TableScan;
   }
 
   private Optional<VirtualRelationalTable> getTargetRelTable(Env env, StatementOp op) {
