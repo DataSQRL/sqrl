@@ -66,6 +66,7 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void simpleColumnDefinition() {
     String script = "IMPORT ecommerce-data.Customer;\n"
             + "Customer.timestamp := EPOCH_TO_TIMESTAMP(customerid);\n";
@@ -109,8 +110,8 @@ public class ResolveTest extends AbstractSQRLIT {
     builder.append("OrderWithCount := SELECT o.id, c.order_count, o.customerid FROM Orders o TEMPORAL JOIN CustomerCount c on o.customerid = c.customer;");
     builder.append("OrderWithCount2 := SELECT o.id, c.order_count, o.customerid FROM CustomerCount c TEMPORAL JOIN Orders o on o.customerid = c.customer;");
     process(builder.toString());
-    validateQueryTable("orderwithcount", TableType.STREAM,5, 1); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
-    validateQueryTable("orderwithcount2", TableType.STREAM,5, 1); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
+    validateQueryTable("orderwithcount", TableType.STREAM,5, 1, TimestampTest.fixed(4)); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
+    validateQueryTable("orderwithcount2", TableType.STREAM,5, 1, TimestampTest.fixed(4)); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
   }
 
   @Test
@@ -119,8 +120,8 @@ public class ResolveTest extends AbstractSQRLIT {
     builder.append("OrderAgg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer;\n");
     builder.append("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o;");
     process(builder.toString());
-    validateQueryTable("orderagg1", TableType.TEMPORAL_STATE,3, 1); //timestamp column is added
-    validateQueryTable("orderagg2", TableType.TEMPORAL_STATE,2, 0);
+    validateQueryTable("orderagg1", TableType.TEMPORAL_STATE,3, 1, TimestampTest.fixed(2)); //timestamp column is added
+    validateQueryTable("orderagg2", TableType.TEMPORAL_STATE,2, 0, TimestampTest.fixed(1));
   }
 
   @Test
@@ -128,7 +129,7 @@ public class ResolveTest extends AbstractSQRLIT {
     StringBuilder builder = imports();
     builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;\n");
     process(builder.toString());
-    validateQueryTable("orderagg1", TableType.STREAM,3, 2);
+    validateQueryTable("orderagg1", TableType.STREAM,3, 2, TimestampTest.fixed(1));
   }
 
   @Test
@@ -144,7 +145,7 @@ public class ResolveTest extends AbstractSQRLIT {
     builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
     builder.append("agg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM OrderCustomer o GROUP BY customer;\n");
     process(builder.toString());
-    validateQueryTable("agg1", TableType.STATE,2, 1);
+    validateQueryTable("agg1", TableType.STATE,2, 1, TimestampTest.NONE);
   }
 
   @Test
