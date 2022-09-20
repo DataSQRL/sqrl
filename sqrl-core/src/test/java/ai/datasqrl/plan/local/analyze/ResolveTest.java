@@ -17,15 +17,16 @@ import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
+import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ResolveTest extends AbstractSQRLIT {
 
@@ -59,9 +60,9 @@ public class ResolveTest extends AbstractSQRLIT {
   @Test
   public void tableImportTest() {
     process(imports().toString());
-    validateQueryTable("customer", TableType.STREAM, 5, 1);
-    validateQueryTable("product", TableType.STREAM,6, 1);
-    validateQueryTable("orders", TableType.STREAM,6, 1);
+    validateQueryTable("customer", TableType.STREAM, 6, 1, TimestampTest.best(1));
+    validateQueryTable("product", TableType.STREAM,6, 1, TimestampTest.best(1));
+    validateQueryTable("orders", TableType.STREAM,6, 1, TimestampTest.best(4));
   }
 
   @Test
@@ -69,7 +70,7 @@ public class ResolveTest extends AbstractSQRLIT {
     String script = "IMPORT ecommerce-data.Customer;\n"
             + "Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated);\n";
     process(script);
-    validateQueryTable("customer", TableType.STREAM, 6, 1, Optional.of(5), PullupTest.EMPTY);
+    validateQueryTable("customer", TableType.STREAM, 7, 1, TimestampTest.best(6));
   }
 
 
@@ -78,7 +79,7 @@ public class ResolveTest extends AbstractSQRLIT {
     String sqrl = "IMPORT ecommerce-data.Orders;\n"
         + "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;";
     process(sqrl);
-    validateQueryTable("entrycount", TableType.STREAM,5, 2); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
+    validateQueryTable("entrycount", TableType.STREAM,5, 2, TimestampTest.candidates(3,4)); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
   }
 
   @Test
@@ -86,7 +87,7 @@ public class ResolveTest extends AbstractSQRLIT {
     StringBuilder builder = imports();
     builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
     process(builder.toString());
-    validateQueryTable("ordercustomer", TableType.STATE,5, 2); //numCols = 3 selected cols + 2 uuid cols for pk
+    validateQueryTable("ordercustomer", TableType.STATE,5, 2, TimestampTest.NONE); //numCols = 3 selected cols + 2 uuid cols for pk
   }
 
   @Test
@@ -97,8 +98,8 @@ public class ResolveTest extends AbstractSQRLIT {
     builder.append("OrderCustomer2 := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
             "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH;");
     process(builder.toString());
-    validateQueryTable("ordercustomer", TableType.STREAM,6, 2); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
-    validateQueryTable("ordercustomer2", TableType.STREAM,6, 2); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
+    validateQueryTable("ordercustomer", TableType.STREAM,6, 2, TimestampTest.fixed(5)); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
+    validateQueryTable("ordercustomer2", TableType.STREAM,6, 2, TimestampTest.fixed(5)); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
   }
 
   @Test
@@ -155,9 +156,9 @@ public class ResolveTest extends AbstractSQRLIT {
 //    //The following should be equivalent
     builder.append("OrderAgg2 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 YEAR GROUP BY customer, bucket;\n");
     process(builder.toString());
-    validateQueryTable("orderfilter", TableType.STREAM,5, 1, Optional.of(4), new PullupTest(true,false));
-    validateQueryTable("orderagg1", TableType.STREAM,3, 2, Optional.of(1), new PullupTest(true,false));
-    validateQueryTable("orderagg2", TableType.STREAM,3, 2, Optional.of(1), new PullupTest(true,false));
+    validateQueryTable("orderfilter", TableType.STREAM,5, 1, TimestampTest.fixed(4), new PullupTest(true,false));
+    validateQueryTable("orderagg1", TableType.STREAM,3, 2, TimestampTest.fixed(1), new PullupTest(true,false));
+    validateQueryTable("orderagg2", TableType.STREAM,3, 2, TimestampTest.fixed(1), new PullupTest(true,false));
   }
 
 
@@ -294,21 +295,23 @@ public class ResolveTest extends AbstractSQRLIT {
 
 
   private void validateQueryTable(String name, TableType tableType, int numCols, int numPrimaryKeys) {
-    validateQueryTable(name,tableType,numCols,numPrimaryKeys,Optional.empty(),PullupTest.EMPTY);
+    validateQueryTable(name,tableType,numCols,numPrimaryKeys,TimestampTest.NO_TEST,PullupTest.EMPTY);
+  }
+
+  private void validateQueryTable(String name, TableType tableType, int numCols, int numPrimaryKeys,
+                                  TimestampTest timestampTest) {
+    validateQueryTable(name,tableType,numCols,numPrimaryKeys,timestampTest,PullupTest.EMPTY);
   }
 
   private void validateQueryTable(String tableName, TableType tableType, int numCols, int numPrimaryKeys,
-                                  Optional<Integer> timestampIdx,
+                                  TimestampTest timestampTest,
                                   PullupTest pullupTest) {
     CalciteSchema relSchema = resolvedDag.getRelSchema();
     QueryRelationalTable table = getLatestTable(relSchema,tableName,QueryRelationalTable.class).get();
     assertEquals(tableType, table.getType());
     assertEquals(numPrimaryKeys, table.getNumPrimaryKeys());
     assertEquals(numCols, table.getRowType().getFieldCount());
-    if (timestampIdx.isPresent()) {
-      assertTrue(table.getTimestamp().hasTimestamp());
-      assertEquals(timestampIdx.get(),table.getTimestamp().getTimestampIndex());
-    }
+    timestampTest.test(table.getTimestamp());
     pullupTest.test(table.getPullups());
   }
 
@@ -336,4 +339,50 @@ public class ResolveTest extends AbstractSQRLIT {
     }
 
   }
+
+  @Value
+  public static class TimestampTest {
+
+    public static final TimestampTest NONE = new TimestampTest(Type.NONE,new Integer[0]);
+    public static final TimestampTest NO_TEST = new TimestampTest(Type.NO_TEST,new Integer[0]);
+
+    enum Type {NO_TEST, NONE, FIXED, CANDIDATES, BEST }
+
+    final Type type;
+    final Integer[] candidates;
+
+    public static TimestampTest best(Integer best) {
+      return new TimestampTest(Type.BEST,new Integer[]{best});
+    }
+
+    public static TimestampTest fixed(Integer fixed) {
+      return new TimestampTest(Type.FIXED,new Integer[]{fixed});
+    }
+
+    public static TimestampTest candidates(Integer... candidates) {
+      return new TimestampTest(Type.CANDIDATES,candidates);
+    }
+
+    public void test(TimestampHolder timeHolder) {
+      if (type==Type.NO_TEST) return;
+      if (type==Type.NONE) {
+        assertFalse(timeHolder.hasTimestamp());
+        assertEquals(0,timeHolder.getCandidates().size());
+      } else if (type==Type.FIXED) {
+        assertTrue(timeHolder.hasTimestamp());
+        assertEquals(1,candidates.length);
+        assertEquals(candidates[0],timeHolder.getTimestampIndex());
+      } else if (type==Type.BEST) {
+        assertFalse(timeHolder.hasTimestamp());
+        assertEquals(1,candidates.length);
+        assertEquals(candidates[0],timeHolder.getBestCandidate().getIndex());
+      } else if (type==Type.CANDIDATES) {
+        assertFalse(timeHolder.hasTimestamp());
+        assertEquals(Sets.newHashSet(candidates),
+                timeHolder.getCandidates().stream().map(TimestampHolder.Candidate::getIndex).collect(Collectors.toSet()));
+      }
+    }
+
+  }
+
 }
