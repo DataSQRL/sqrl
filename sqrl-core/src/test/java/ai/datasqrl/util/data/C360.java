@@ -11,8 +11,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-
 public class C360 implements TestDataset {
 
     public static final Path RETAIL_DIR_BASE = Path.of("../sqml-examples/retail/");
@@ -57,12 +55,21 @@ public class C360 implements TestDataset {
 
     @Override
     public Map<String, Integer> getTableCounts() {
-        return ImmutableMap.of("orders",4, "customer",4, "product",6);
+        return ImmutableMap.of("orders",4, "customer",4, "product",6, "entries", 7);
     }
 
     @Override
     public String getScriptContent(ScriptComplexity complexity) {
         return "IMPORT "+datasetName+".Orders;";
+    }
+
+    @Override
+    public StringBuilder getImports() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("IMPORT ecommerce-data.Customer;\n");
+        builder.append("IMPORT ecommerce-data.Orders;\n");
+        builder.append("IMPORT ecommerce-data.Product;\n");
+        return builder;
     }
 
     @Override

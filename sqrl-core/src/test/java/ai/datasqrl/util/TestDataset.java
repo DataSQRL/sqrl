@@ -1,8 +1,6 @@
 package ai.datasqrl.util;
 
-import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.Environment;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.util.data.BookClub;
@@ -35,6 +33,8 @@ public interface TestDataset {
     Map<String, Integer> getTableCounts();
 
     String getScriptContent(ScriptComplexity complexity);
+
+    StringBuilder getImports();
 
     Optional<String> getInputSchema();
 

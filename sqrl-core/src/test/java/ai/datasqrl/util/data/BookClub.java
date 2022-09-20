@@ -1,16 +1,12 @@
 package ai.datasqrl.util.data;
 
-import ai.datasqrl.config.scripts.ScriptBundle;
-import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.util.ScriptComplexity;
 import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.TestResources;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -41,6 +37,14 @@ public class BookClub implements TestDataset {
     @Override
     public String getScriptContent(ScriptComplexity complexity) {
         return "IMPORT data.book;";
+    }
+
+    @Override
+    public StringBuilder getImports() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("IMPORT data.book;\n");
+        builder.append("IMPORT data.person;\n");
+        return builder;
     }
 
     public Optional<String> getInputSchema() {

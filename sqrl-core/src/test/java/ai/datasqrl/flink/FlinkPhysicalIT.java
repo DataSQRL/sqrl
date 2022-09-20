@@ -24,12 +24,14 @@ import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.ResultSetPrinter;
+import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.C360;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class FlinkPhysicalIT extends AbstractSQRLIT {
 
@@ -50,13 +53,14 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   private Planner planner;
   private JDBCConnectionProvider jdbc;
   private PhysicalPlanner physicalPlanner;
+  private TestDataset example;
 
 
   @BeforeEach
   public void setup() throws IOException {
     error = ErrorCollector.root();
     initialize(IntegrationTestSettings.getFlinkWithDB(true));
-    C360 example = C360.INSTANCE;
+    example = C360.INSTANCE;
     example.registerSource(env);
 
     ImportManager importManager = sqrlSettings.getImportManagerProvider()
@@ -75,25 +79,30 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
-  @SneakyThrows
   public void importTableTest() {
-    Map<String,ResultSet> results = process(imports().toString(),List.of("customer","product","entries"));
-    for (Map.Entry<String,ResultSet> res : results.entrySet()) {
-      Integer numExpectedRows = C360.INSTANCE.getTableCounts().get(res.getKey());
-      System.out.println("Results for table: " + res.getKey());
-      int numRows = ResultSetPrinter.print(res.getValue(), System.out);
-      if (numExpectedRows!=null) {
-        assertEquals(numRows,numRows);
-      }
-    }
+    String script = example.getImports().toString();
+    Map<String,ResultSet> results = process(script,List.of("customer","product","entries","orders"));
+    validateRowCounts(C360.INSTANCE.getTableCounts(), results);
   }
 
-  private StringBuilder imports() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("IMPORT ecommerce-data.Customer;\n");
-    builder.append("IMPORT ecommerce-data.Orders;\n");
-    builder.append("IMPORT ecommerce-data.Product;\n");
-    return builder;
+  @Test
+  @Disabled
+  public void simpleColumnDefinition() {
+    String script = "IMPORT ecommerce-data.Customer;\n"
+            + "Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated);\n";
+    Map<String,ResultSet> results = process(script,List.of("customer"));
+    validateRowCounts(C360.INSTANCE.getTableCounts(), results);
+  }
+
+  @SneakyThrows
+  private void validateRowCounts(Map<String,Integer> rowCounts, Map<String,ResultSet> results) {
+    for (Map.Entry<String,ResultSet> res : results.entrySet()) {
+      Integer numExpectedRows = rowCounts.get(res.getKey());
+      assertNotNull(numExpectedRows);
+      System.out.println("Results for table: " + res.getKey());
+      int numRows = ResultSetPrinter.print(res.getValue(), System.out);
+      assertEquals(numRows,numRows);
+    }
   }
 
   @SneakyThrows
