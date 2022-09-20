@@ -68,7 +68,7 @@ public class ResolveTest extends AbstractSQRLIT {
   @Test
   public void simpleColumnDefinition() {
     String script = "IMPORT ecommerce-data.Customer;\n"
-            + "Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated);\n";
+            + "Customer.timestamp := EPOCH_TO_TIMESTAMP(customerid);\n";
     process(script);
     validateQueryTable("customer", TableType.STREAM, 7, 1, TimestampTest.best(6));
   }

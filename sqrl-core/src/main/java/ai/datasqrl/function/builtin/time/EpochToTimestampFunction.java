@@ -30,9 +30,8 @@ public class EpochToTimestampFunction extends SqrlScalarFunction {
                 3, false)),
         InferTypes.ANY_NULLABLE,
         OperandTypes.operandMetadata(
-            List.of(SqlTypeFamily.INTEGER),
+            List.of(SqlTypeFamily.NUMERIC),
             typeFactory -> List.of(
-                typeFactory.createSqlType(SqlTypeName.INTEGER),
                 typeFactory.createSqlType(SqlTypeName.BIGINT)),
             i -> "arg" + i,
             i -> false),
