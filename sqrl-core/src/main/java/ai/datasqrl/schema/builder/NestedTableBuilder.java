@@ -3,6 +3,7 @@ package ai.datasqrl.schema.builder;
 import ai.datasqrl.config.util.StreamUtil;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.FieldKind;
 import ai.datasqrl.schema.FieldList;
 import ai.datasqrl.schema.Relationship;
 import lombok.*;
@@ -76,6 +77,10 @@ public abstract class NestedTableBuilder<T, X extends NestedTableBuilder<T,X>> i
             this.visible = visible;
         }
 
+        @Override
+        public FieldKind getKind() {
+            return FieldKind.COLUMN;
+        }
     }
 
     @Getter
@@ -95,6 +100,11 @@ public abstract class NestedTableBuilder<T, X extends NestedTableBuilder<T,X>> i
 
         Column<T> toColumn() {
             return new Column<>(name,version,type,multiplicity== Relationship.Multiplicity.ZERO_ONE,isVisible());
+        }
+
+        @Override
+        public FieldKind getKind() {
+            return FieldKind.RELATIONSHIP;
         }
     }
 
