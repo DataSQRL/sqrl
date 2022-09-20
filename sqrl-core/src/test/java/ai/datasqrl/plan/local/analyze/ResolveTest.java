@@ -65,6 +65,15 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
+  public void simpleColumnDefinition() {
+    String script = "IMPORT ecommerce-data.Customer;\n"
+            + "Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated);\n";
+    process(script);
+    validateQueryTable("customer", TableType.STREAM, 6, 1, Optional.of(5), PullupTest.EMPTY);
+  }
+
+
+  @Test
   public void tableDefinitionTest() {
     String sqrl = "IMPORT ecommerce-data.Orders;\n"
         + "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;";

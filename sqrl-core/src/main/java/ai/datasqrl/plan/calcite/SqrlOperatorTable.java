@@ -1,11 +1,9 @@
 package ai.datasqrl.plan.calcite;
 
-import ai.datasqrl.function.builtin.example.SqlMyFunction;
 import ai.datasqrl.function.builtin.time.*;
 import org.apache.calcite.linq4j.tree.Types;
 import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.apache.calcite.sql.SqlFunction;
-import org.apache.calcite.sql.fun.Now;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import java.time.Instant;
@@ -17,7 +15,7 @@ public class SqrlOperatorTable extends SqlStdOperatorTable {
 
   //SQRL functions here:
   public static final SqlFunction NOW = new NowFunction();
-  public static final NumToTimestampFunction NUM_TO_TIMESTAMP = new NumToTimestampFunction();
+  public static final EpochToTimestampFunction EPOCH_TO_TIMESTAMP = new EpochToTimestampFunction();
   public static final TimestampToEpochFunction TIMESTAMP_TO_EPOCH = new TimestampToEpochFunction();
   public static final StringToTimestampFunction STRING_TO_TIMESTAMP = new StringToTimestampFunction();
   public static final TimestampToStringFunction TIMESTAMP_TO_STRING = new TimestampToStringFunction();

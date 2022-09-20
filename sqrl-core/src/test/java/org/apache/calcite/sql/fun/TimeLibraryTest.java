@@ -7,14 +7,13 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.TestFactory;
 
 import static ai.datasqrl.plan.calcite.SqrlOperatorTable.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TimeLibraryTest {
   static final SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
@@ -46,8 +45,8 @@ class TimeLibraryTest {
 
   List<FunctionToTest> tests = List.of(
     new FunctionToTest(NOW, List.of(), TSNonNullable),
-    new FunctionToTest(NUM_TO_TIMESTAMP, List.of(BigIntNonNullable), TSNonNullable),
-    new FunctionToTest(NUM_TO_TIMESTAMP, List.of(BigIntNullable), TSNullable),
+    new FunctionToTest(EPOCH_TO_TIMESTAMP, List.of(BigIntNonNullable), TSNonNullable),
+    new FunctionToTest(EPOCH_TO_TIMESTAMP, List.of(BigIntNullable), TSNullable),
     new FunctionToTest(TIMESTAMP_TO_EPOCH, List.of(TSNonNullable), BigIntNonNullable),
     new FunctionToTest(TIMESTAMP_TO_EPOCH, List.of(TSNullable), BigIntNullable),
     new FunctionToTest(TIMESTAMP_TO_STRING, List.of(TSNonNullable), StringNonNullable),

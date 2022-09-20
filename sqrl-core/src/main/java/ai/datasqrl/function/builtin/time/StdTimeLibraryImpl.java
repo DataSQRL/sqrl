@@ -91,7 +91,7 @@ public class StdTimeLibraryImpl {
     return instant.toEpochMilli();
   }
 
-  public Instant numToTimestamp(Long l) {
+  public Instant epochToTimestamp(Long l) {
     return Instant.ofEpochSecond(l);
   }
 
