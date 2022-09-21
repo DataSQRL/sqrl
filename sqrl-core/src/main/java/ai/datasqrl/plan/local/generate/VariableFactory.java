@@ -11,6 +11,7 @@ import ai.datasqrl.schema.builder.AbstractTableFactory;
 import lombok.AllArgsConstructor;
 
 import java.util.Optional;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor
@@ -18,22 +19,12 @@ public class VariableFactory {
   public Relationship addJoinDeclaration(NamePath namePath, SQRLTable parentTable, SQRLTable target, Multiplicity multiplicity) {
     Relationship relationship = parentTable.addRelationship(namePath.getLast(), target,
         JoinType.JOIN, multiplicity);
-    parentTable.buildType();
+    parentTable.rebuildType();
     return relationship;
   }
 
-  public Column addExpression(NamePath namePath, SQRLTable table) {
-    Name columnName = namePath.getLast();
-    Column column = table.addColumn(columnName, true);
-    return column;
-  }
-
-  public Column addQueryExpression(NamePath namePath, SQRLTable table) {
-    //do not create table, add column
-    Name columnName = namePath.getLast();
-
-    Column column = table.addColumn(columnName, true);
-    return column;
+  public Column addColumn(Name columnName, SQRLTable table, RelDataType type) {
+    return table.addColumn(columnName, true, type);
   }
 
   public Optional<Pair<Relationship, Relationship>> linkParentChild(NamePath namePath, SQRLTable child, Optional<SQRLTable> parentTable) {

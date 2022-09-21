@@ -15,6 +15,7 @@ import ai.datasqrl.plan.calcite.table.AddedColumn.Simple;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.transpile.*;
+import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
@@ -49,7 +50,7 @@ public class Resolve {
 
   @Getter
   public class Env {
-
+    VariableFactory variableFactory = new VariableFactory();
     List<StatementOp> ops = new ArrayList<>();
     Map<Relationship, SqlJoinDeclaration> resolvedJoinDeclarations = new HashMap<>();
     List<SqrlStatement> queryOperations = new ArrayList<>();
@@ -351,16 +352,11 @@ public class Resolve {
   }
 
   public void applyOp(Env env, StatementOp op) {
-    Optional<VirtualRelationalTable> t = getTargetRelTable(env, op);
-
     switch (op.kind) {
       case EXPR:
       case EXPR_QUERY:
-        Check.state(t.isPresent(), null, null);
-
         AddedColumn c = createColumnAddOp(env, op);
-        Optional<Integer> timestampScore = tableFactory.getTimestampScore(op.statement.getNamePath().getLast(),c.getDataType());
-        t.ifPresent(tbl -> tbl.addColumn(c, tableFactory.getTypeFactory(), getRelBuilderFactory(env), timestampScore));
+        addColumn(env, op, c);
         break;
       case ROOT_QUERY:
         createTable(env, op);
@@ -374,13 +370,32 @@ public class Resolve {
 //        updateRelMapping(env, op, s, v);
         break;
       case JOIN:
-        updateJoinMapping(env, op, t);
+        updateJoinMapping(env, op);
     }
 
 //    env.fieldMap.putAll(op.getFieldMapping());
   }
 
-  private void updateJoinMapping(Env env, StatementOp op, Optional<VirtualRelationalTable> t) {
+  private void addColumn(Env env, StatementOp op, AddedColumn c) {
+    Optional<VirtualRelationalTable> t = getTargetRelTable(env, op);
+
+    Check.state(t.isPresent(), null, null);
+
+    Optional<Integer> timestampScore = tableFactory.getTimestampScore(op.statement.getNamePath().getLast(),c.getDataType());
+    t.ifPresent(tbl -> tbl.addColumn(c, tableFactory.getTypeFactory(), getRelBuilderFactory(env), timestampScore));
+
+    SQRLTable table = getContext(env, op.statement)
+        .orElseThrow(()->new RuntimeException("Cannot resolve table"));
+    Column column = env.variableFactory.addColumn(op.getStatement().getNamePath().getLast(),
+        table, c.getDataType());
+    //todo shadowing
+    env.fieldMap.put(column, op.getStatement().getNamePath().getLast().getCanonical());
+  }
+
+  private void updateJoinMapping(Env env, StatementOp op) {
+    Optional<VirtualRelationalTable> t = getTargetRelTable(env, op);
+    Check.state(t.isPresent(), null, null);
+
     //op is a join, we need to discover the /to/ relationship
     Optional<SQRLTable> table = getContext(env, op.statement);
     JoinDeclarationFactory joinDeclarationFactory = new JoinDeclarationFactory(env);
@@ -393,7 +408,7 @@ public class Resolve {
         joinDeclarationFactory.deriveMultiplicity(op.relNode);
     SQRLTable toTable = getSQRLTableFromVt(env, vt);
     Relationship relationship =
-        new VariableFactory().addJoinDeclaration(op.statement.getNamePath(), table.get(),
+        env.variableFactory.addJoinDeclaration(op.statement.getNamePath(), table.get(),
             toTable, multiplicity);
 
     env.fieldMap.put(relationship, relationship.getName().getCanonical());
