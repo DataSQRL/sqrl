@@ -81,23 +81,19 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   public Column addColumn(Name name, boolean visible, RelDataType type) {
     Column col = new Column(name, getNextFieldVersion(name), visible, type);
     fields.addField(col);
+    rebuildType();
     return col;
   }
 
-  public Column addColumn(Name name, boolean visible) {
-    throw new RuntimeException("no");
-  }
-//  public void addRelationship(Relationship relationship) {
-//    fields.addField(relationship);
-//  }
   public Relationship addRelationship(Name name, SQRLTable toTable, Relationship.JoinType joinType,
                                       Relationship.Multiplicity multiplicity) {
     Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity);
     fields.addField(rel);
+    rebuildType();
     return rel;
   }
 
-  public void buildType() {
+  public void rebuildType() {
     SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
     FieldInfoBuilder b = new FieldInfoBuilder(typeFactory);
     for (Column field : getColumns(true)) {
@@ -123,7 +119,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory) {
     if (dataType == null) {
-      buildType();
+      rebuildType();
     }
 
    return dataType;
