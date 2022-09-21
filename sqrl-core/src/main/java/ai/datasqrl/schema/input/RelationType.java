@@ -4,15 +4,11 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema.AbstractField;
 import ai.datasqrl.schema.type.Type;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import lombok.NonNull;
+
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.NonNull;
 
 public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
 
@@ -58,6 +54,25 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
   @Override
   public String toString() {
     return "{" + fields.stream().map(f -> f.toString()).collect(Collectors.joining("; ")) + "}";
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RelationType<?> that = (RelationType<?>) o;
+    return fieldsOrderedByName().equals(that.fieldsOrderedByName());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(fieldsOrderedByName());
+  }
+
+  private List<F> fieldsOrderedByName() {
+    List<F> ordered = new ArrayList<>(fields);
+    ordered.sort((a,b) -> a.getName().compareTo(b.getName()));
+    return ordered;
   }
 
   public static <F extends AbstractField> Builder<F> build() {

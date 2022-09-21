@@ -14,7 +14,6 @@ import java.io.IOException;
 
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
-import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -31,7 +30,7 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
   public void setup() throws IOException {
     errorCollector = ErrorCollector.root();
     initialize(IntegrationTestSettings.getInMemory(false));
-    C360 example = C360.INSTANCE;
+    C360 example = C360.BASIC;
 
     example.registerSource(env);
 

@@ -46,7 +46,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void setup() throws IOException {
     error = ErrorCollector.root();
     initialize(IntegrationTestSettings.getInMemory(false));
-    C360 example = C360.INSTANCE;
+    C360 example = C360.BASIC;
     example.registerSource(env);
 
     ImportManager importManager = sqrlSettings.getImportManagerProvider()

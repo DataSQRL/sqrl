@@ -45,7 +45,7 @@ public class SchemaGeneratorTest extends AbstractSQRLIT {
   public void setup(TestInfo testInfo) throws IOException {
     error = ErrorCollector.root();
     initialize(IntegrationTestSettings.getInMemory(false));
-    C360 example = C360.INSTANCE;
+    C360 example = C360.BASIC;
     example.registerSource(env);
 
     ImportManager importManager = sqrlSettings.getImportManagerProvider()

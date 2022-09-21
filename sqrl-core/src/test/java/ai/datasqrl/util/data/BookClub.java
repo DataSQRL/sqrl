@@ -9,7 +9,6 @@ import com.google.common.collect.ImmutableMap;
 
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 
 public class BookClub implements TestDataset {
 
@@ -48,7 +47,4 @@ public class BookClub implements TestDataset {
         return builder;
     }
 
-    public Optional<String> getInputSchema() {
-        return Optional.empty();
-    }
 }

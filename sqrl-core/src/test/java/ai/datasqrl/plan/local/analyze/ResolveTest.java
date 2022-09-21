@@ -42,7 +42,7 @@ public class ResolveTest extends AbstractSQRLIT {
   public void setup() throws IOException {
     error = ErrorCollector.root();
     initialize(IntegrationTestSettings.getInMemory(false));
-    C360 example = C360.INSTANCE;
+    C360 example = C360.BASIC;
     example.registerSource(env);
 
     ImportManager importManager = sqrlSettings.getImportManagerProvider()
@@ -175,7 +175,7 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   private ScriptBuilder imports() {
-    return C360.INSTANCE.getImports();
+    return C360.BASIC.getImports();
   }
 
   @Test

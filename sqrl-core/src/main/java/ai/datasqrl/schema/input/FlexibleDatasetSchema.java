@@ -1,20 +1,17 @@
 package ai.datasqrl.schema.input;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.constraint.Constraint;
+import ai.datasqrl.schema.type.Type;
+import lombok.*;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.ToString;
+import java.util.Objects;
 
 @Getter
+@ToString(callSuper = true)
 public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.TableField> {
 
   public static final FlexibleDatasetSchema EMPTY = new FlexibleDatasetSchema(
@@ -27,6 +24,19 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
       @NonNull SchemaElementDescription description) {
     super(fields);
     this.description = description;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    FlexibleDatasetSchema that = (FlexibleDatasetSchema) o;
+    return Objects.equals(description,that.description) && super.equals(that);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(description)*17 + super.hashCode();
   }
 
   @Setter
@@ -49,6 +59,7 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
   @ToString
   @AllArgsConstructor
   @NoArgsConstructor
+  @EqualsAndHashCode
   public static abstract class AbstractField implements SchemaField {
 
     @NonNull
@@ -74,8 +85,9 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
   }
 
   @Getter
-  @ToString
+  @ToString(callSuper = true)
   @NoArgsConstructor
+  @EqualsAndHashCode(callSuper = true)
   public static class TableField extends AbstractField {
 
     private boolean isPartialSchema;
@@ -122,8 +134,9 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
   }
 
   @Getter
-  @ToString
+  @ToString(callSuper = true)
   @NoArgsConstructor
+  @EqualsAndHashCode(callSuper = true)
   public static class FlexibleField extends AbstractField implements SchemaField {
 
     @NonNull

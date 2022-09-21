@@ -34,7 +34,7 @@ public class FlinkTableAPIIT extends AbstractSQRLIT {
   @SneakyThrows
   @Test
   public void testFlinkTableAPIIntegration() {
-    C360 example = C360.INSTANCE;
+    C360 example = C360.BASIC;
     example.registerSource(env);
 
     ImportManager imports = new ImportManager(sourceRegistry);

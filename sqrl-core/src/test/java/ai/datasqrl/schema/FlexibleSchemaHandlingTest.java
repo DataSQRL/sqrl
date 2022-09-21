@@ -1,23 +1,16 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
-import ai.datasqrl.schema.constraint.Constraint;
+import ai.datasqrl.schema.builder.AbstractTableFactory;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.InputTableSchema;
-import ai.datasqrl.schema.input.external.SchemaDefinition;
-import ai.datasqrl.schema.input.external.SchemaImport;
-import ai.datasqrl.schema.builder.AbstractTableFactory;
 import ai.datasqrl.util.TestDataset;
-import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataType;
@@ -31,33 +24,18 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class FlexibleSchemaHandlingTest extends AbstractSQRLIT {
-
-    @SneakyThrows
-    public FlexibleDatasetSchema getSchema(TestDataset example) {
-        ErrorCollector errors = ErrorCollector.root();
-        sourceRegistry.addOrUpdateSource(example.getName(), example.getSource(), errors);
-        assertFalse(errors.isFatal(), errors.toString());
-
-        SchemaDefinition schemaDef = SqrlScript.Config.parseSchema(example.getInputSchema().get());
-        SchemaImport importer = new SchemaImport(sourceRegistry, Constraint.FACTORY_LOOKUP);
-        errors = ErrorCollector.root();
-        Map<Name, FlexibleDatasetSchema> schema = importer.convertImportSchema(schemaDef, errors);
-
-        assertFalse(errors.isFatal(),errors.toString());
-        assertFalse(schema.isEmpty());
-        assertTrue(schema.size()==1);
-        FlexibleDatasetSchema dsSchema = schema.get(Name.system(example.getName()));
-        assertNotNull(dsSchema);
-        return dsSchema;
-    }
+/**
+ * Tests the generation of schemas for various consumers based on the central {@link FlexibleDatasetSchema}
+ * using the {@link FlexibleTableConverter}.
+ */
+public class FlexibleSchemaHandlingTest extends AbstractSchemaIT {
 
     @BeforeEach
     public void setup() {
@@ -68,7 +46,8 @@ public class FlexibleSchemaHandlingTest extends AbstractSQRLIT {
     @ArgumentsSource(SchemaConverterProvider.class)
     public<T, V extends FlexibleTableConverter.Visitor<T>> void conversionTest(TestDataset example, SchemaConverter<T,V> visitorTest) {
         Name tableAlias = Name.system("TestTable");
-        FlexibleDatasetSchema schema = getSchema(example);
+        registerDataset(example);
+        FlexibleDatasetSchema schema = getPreSchema(example);
         for (FlexibleDatasetSchema.TableField table : schema.getFields()) {
             for (boolean hasSourceTimestamp : new boolean[]{true, false}) {
                 for (Optional<Name> alias : new Optional[]{Optional.empty(), Optional.of(tableAlias)}) {

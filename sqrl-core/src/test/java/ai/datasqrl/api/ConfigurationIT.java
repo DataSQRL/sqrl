@@ -64,7 +64,7 @@ public class ConfigurationIT extends AbstractSQRLIT {
 
     @Test
     public void testDatasetRegistryC360() {
-        testDatasetRegistry(C360.INSTANCE);
+        testDatasetRegistry(C360.BASIC);
     }
 
     public void testDatasetRegistry(TestDataset example) {

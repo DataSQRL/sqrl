@@ -36,14 +36,20 @@ public interface TestDataset {
 
     ScriptBuilder getImports();
 
-    Optional<String> getInputSchema();
+    default Optional<String> getInputSchema() {
+        return Optional.empty();
+    }
+
+    default Optional<String> getDiscoveredSchema() {
+        return Optional.empty();
+    }
 
     default TestScriptBundleBuilder buildBundle() {
         return new TestScriptBundleBuilder(this);
     }
 
     static List<TestDataset> getAll() {
-        return List.of(BookClub.INSTANCE, C360.INSTANCE, C360.INSTANCE_V2);
+        return List.of(BookClub.INSTANCE, C360.BASIC, C360.NESTED_CATEGORIES);
     }
 
     static Stream<? extends Arguments> generateAsArguments(List<? extends Object>... otherArgs) {
@@ -52,6 +58,10 @@ public interface TestDataset {
 
     static Stream<? extends Arguments> generateAsArguments(Predicate<TestDataset> filter, List<? extends Object>... otherArgs) {
         List<TestDataset> datasets = getAll().stream().filter(filter).collect(Collectors.toList());
+        return generateAsArguments(datasets,otherArgs);
+    }
+
+    static Stream<? extends Arguments> generateAsArguments(List<TestDataset> datasets, List<? extends Object>... otherArgs) {
         List<List<? extends Object>> argumentLists = new ArrayList<>();
         argumentLists.add(datasets);
         if (otherArgs.length>0) argumentLists.addAll(Arrays.asList(otherArgs));

@@ -57,7 +57,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   public void setup() throws IOException {
     error = ErrorCollector.root();
     initialize(IntegrationTestSettings.getFlinkWithDB(true));
-    example = C360.INSTANCE;
+    example = C360.BASIC;
     example.registerSource(env);
 
     ImportManager importManager = sqrlSettings.getImportManagerProvider()
@@ -88,18 +88,17 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     Map<String,Integer> rowCounts = new HashMap<>();
     rowCounts.putAll(example.getTableCounts());
 
-    builder.add("Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)"); //This is line 4 in the script
-    builder.add("EntryPrice := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e");
+    builder.add("EntryPrice := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e"); //This is line 4 in the script
     rowCounts.put("entryprice",rowCounts.get("entries"));
-    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");
-    rowCounts.put("ordercustomer",5); //One order joins twice because customer record isn't deduplicated yet
-    builder.add("OrderCustomerInterval := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
-            "AND o.\"time\" > c.\"timestamp\" AND o.\"time\" <= c.\"timestamp\" + INTERVAL 2 MONTH");
-    rowCounts.put("ordercustomerinterval",4);
-    builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 5 YEAR");
-    rowCounts.put("historicorders",rowCounts.get("orders"));
-    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 WEEK");
-    rowCounts.put("recentorders",0);
+//    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");
+//    rowCounts.put("ordercustomer",5); //One order joins twice because customer record isn't deduplicated yet
+//    builder.add("OrderCustomerInterval := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
+//            "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH");
+//    rowCounts.put("ordercustomerinterval",4);
+//    builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 5 YEAR");
+//    rowCounts.put("historicorders",rowCounts.get("orders"));
+//    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 WEEK");
+//    rowCounts.put("recentorders",0);
 
     Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
 

@@ -3,25 +3,23 @@ package ai.datasqrl.io.sources.stats;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.SpecialName;
+import ai.datasqrl.schema.constraint.Cardinality;
+import ai.datasqrl.schema.constraint.Constraint;
+import ai.datasqrl.schema.constraint.NotNull;
+import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.RelationType;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.basic.BasicTypeManager;
-import ai.datasqrl.schema.type.basic.StringType;
-import ai.datasqrl.schema.constraint.Cardinality;
-import ai.datasqrl.schema.constraint.Constraint;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import lombok.NonNull;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.Serializable;
 import java.util.*;
-
-import lombok.NonNull;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 /**
  *
@@ -56,16 +54,17 @@ public class SchemaGenerator implements Serializable {
       @NonNull RelationType<FlexibleDatasetSchema.FlexibleField> fields,
       @NonNull ErrorCollector errors) {
     Set<Name> coveredNames = new HashSet<>();
+    long numRecords = relation.getCount();
     RelationType.Builder<FlexibleDatasetSchema.FlexibleField> builder = RelationType.build();
     for (FlexibleDatasetSchema.FlexibleField f : fields) {
       builder.add(
-          merge(relation.fieldStats.get(f.getName()), f, f.getName(), errors.resolve(f.getName())));
+          merge(relation.fieldStats.get(f.getName()), f, f.getName(), numRecords, errors.resolve(f.getName())));
       coveredNames.add(f.getName());
     }
     if (!isComplete) {
       for (Map.Entry<Name, FieldStats> e : relation.fieldStats.entrySet()) {
         if (!coveredNames.contains(e.getKey())) {
-          builder.add(merge(e.getValue(), null, e.getKey(), errors.resolve(e.getKey())));
+          builder.add(merge(e.getValue(), null, e.getKey(), numRecords, errors.resolve(e.getKey())));
         }
       }
     }
@@ -74,7 +73,7 @@ public class SchemaGenerator implements Serializable {
 
   FlexibleDatasetSchema.FlexibleField merge(FieldStats fieldStats,
       FlexibleDatasetSchema.FlexibleField fieldDef,
-      @NonNull Name fieldName, @NonNull ErrorCollector errors) {
+      @NonNull Name fieldName, long numRecords, @NonNull ErrorCollector errors) {
     Preconditions.checkArgument(fieldDef != null || !isComplete);
     FlexibleDatasetSchema.FlexibleField.Builder builder = new FlexibleDatasetSchema.FlexibleField.Builder();
     if (fieldDef != null) {
@@ -82,15 +81,19 @@ public class SchemaGenerator implements Serializable {
     } else {
       builder.setName(Name.changeDisplayName(fieldName, fieldStats.getDisplayName()));
     }
+    boolean statsNotNull = false;
+    if (fieldStats !=null) {
+      statsNotNull = fieldStats.numNulls==0 && fieldStats.count==numRecords;
+    }
     List<FlexibleDatasetSchema.FieldType> types = merge(
         fieldStats != null ? fieldStats.types.keySet() : Collections.EMPTY_SET,
-        fieldDef != null ? fieldDef.getTypes() : Collections.EMPTY_LIST, errors);
+        fieldDef != null ? fieldDef.getTypes() : Collections.EMPTY_LIST, statsNotNull, errors);
     builder.setTypes(types);
     return builder.build();
   }
 
   List<FlexibleDatasetSchema.FieldType> merge(@NonNull Set<FieldTypeStats> statTypes,
-      @NonNull List<FlexibleDatasetSchema.FieldType> fieldTypes, @NonNull ErrorCollector errors) {
+      @NonNull List<FlexibleDatasetSchema.FieldType> fieldTypes, boolean statsNotNull, @NonNull ErrorCollector errors) {
     if (fieldTypes.isEmpty()) {
       /* Need to generate single type from statistics. First, we check if there is one family of detected types.
          If not (or if there is ambiguity), we combine all of the raw types.
@@ -99,6 +102,7 @@ public class SchemaGenerator implements Serializable {
        */
       Preconditions.checkArgument(!statTypes.isEmpty() && !isComplete);
       FlexibleDatasetSchema.FieldType result = null;
+      List<Constraint> constraints = statsNotNull?List.of(NotNull.INSTANCE):Collections.EMPTY_LIST;
       int maxArrayDepth = 0;
       BasicType type = null;
       for (FieldTypeStats fts : statTypes) {
@@ -119,8 +123,7 @@ public class SchemaGenerator implements Serializable {
       }
       if (type != null) {
         //We have found a shared detected type
-        result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth,
-            Collections.EMPTY_LIST);
+        result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth, constraints);
       } else {
         //Combine all of the encountered raw types
         maxArrayDepth = 0;
@@ -147,8 +150,7 @@ public class SchemaGenerator implements Serializable {
           }
         }
         if (type != null) {
-          result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth,
-              Collections.EMPTY_LIST);
+          result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth, constraints);
         }
         if (nested != null) {
           RelationType<FlexibleDatasetSchema.FlexibleField> nestedType = merge(nested,
@@ -163,8 +165,8 @@ public class SchemaGenerator implements Serializable {
                 .add(b.build())
                 .build();
           }
-          List<Constraint> constraints = Collections.EMPTY_LIST;
           if (nestedRelationArrayDepth == 0) {
+            constraints = new ArrayList<>(constraints);
             constraints.add(new Cardinality(0, 1));
           }
           result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, nestedType,
@@ -178,7 +180,7 @@ public class SchemaGenerator implements Serializable {
          In this case, we need to honor the types as defined by the user in the schema. All we are doing here is checking
          that all of the types in the statistics have a place to match and alert the user if not (because that would lead to
          records being filtered out).
-         We first try to match on raw type witin type families with the closest relative. If that doesn't match, we try
+         We first try to match on raw type within type families with the closest relative. If that doesn't match, we try
          the same with the detected type. If all fails, we forcefully combine the raw type.
        */
       List<FlexibleDatasetSchema.FieldType> result = new ArrayList<>(fieldTypes.size());

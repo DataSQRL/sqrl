@@ -315,7 +315,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             timestamp = timestamp.fixTimestamp(timestampIdx);
             filter = logicalFilter.copy(logicalFilter.getTraitSet(),logicalFilter.getInput(), RexUtil.composeConjunction(rexUtil.getBuilder(), conjunctions));
         } else {
-            filter = logicalFilter.copy(logicalFilter.getTraitSet(),logicalFilter.getInput(),condition);
+            filter = logicalFilter.copy(logicalFilter.getTraitSet(),logicalFilter.getInput(), condition);
         }
         return setRelHolder(new ProcessedRel(filter,input.type,input.primaryKey,
                 timestamp,input.indexMap,input.joinTables, nowFilter, input.dedup));
