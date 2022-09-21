@@ -34,7 +34,7 @@ public interface TestDataset {
 
     String getScriptContent(ScriptComplexity complexity);
 
-    StringBuilder getImports();
+    ScriptBuilder getImports();
 
     Optional<String> getInputSchema();
 

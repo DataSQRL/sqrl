@@ -5,7 +5,6 @@ import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.OptimizationStage;
-import ai.datasqrl.plan.calcite.RelPrinter;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
@@ -29,7 +28,6 @@ import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
@@ -424,6 +422,7 @@ public class Resolve {
   private AddedColumn createColumnAddOp(Env env, StatementOp op) {
     String columnName = op.statement.getNamePath().getLast().getCanonical();
 
+    //TODO: check for sub-queries
     if (isSimple(op)) {
       Project project = (Project) op.getRelNode();
       return new Simple(columnName, project.getProjects().get(project.getProjects().size() - 1));

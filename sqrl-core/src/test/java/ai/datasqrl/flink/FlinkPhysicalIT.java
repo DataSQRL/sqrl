@@ -24,6 +24,7 @@ import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.ResultSetPrinter;
+import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.C360;
 import lombok.SneakyThrows;
@@ -31,15 +32,11 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -82,16 +79,31 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   public void importTableTest() {
     String script = example.getImports().toString();
     Map<String,ResultSet> results = process(script,List.of("customer","product","entries","orders"));
-    validateRowCounts(C360.INSTANCE.getTableCounts(), results);
+    validateRowCounts(example.getTableCounts(), results);
   }
 
   @Test
-  @Disabled
-  public void simpleColumnDefinition() {
-    String script = "IMPORT ecommerce-data.Customer;\n"
-            + "Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated);\n";
-    Map<String,ResultSet> results = process(script,List.of("customer"));
-    validateRowCounts(C360.INSTANCE.getTableCounts(), results);
+  public void fullTest() {
+    ScriptBuilder builder = example.getImports();
+    Map<String,Integer> rowCounts = new HashMap<>();
+    rowCounts.putAll(example.getTableCounts());
+
+    builder.add("Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)"); //This is line 4 in the script
+    builder.add("EntryPrice := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e");
+    rowCounts.put("entryprice",rowCounts.get("entries"));
+    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");
+    rowCounts.put("ordercustomer",5); //One order joins twice because customer record isn't deduplicated yet
+    builder.add("OrderCustomerInterval := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
+            "AND o.\"time\" > c.\"timestamp\" AND o.\"time\" <= c.\"timestamp\" + INTERVAL 2 MONTH");
+    rowCounts.put("ordercustomerinterval",4);
+    builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 5 YEAR");
+    rowCounts.put("historicorders",rowCounts.get("orders"));
+    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 WEEK");
+    rowCounts.put("recentorders",0);
+
+    Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
+
+    validateRowCounts(rowCounts, results);
   }
 
   @SneakyThrows
@@ -106,7 +118,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @SneakyThrows
-  private Map<String,ResultSet> process(String script, List<String> queryTables) {
+  private Map<String,ResultSet> process(String script, Collection<String> queryTables) {
     ScriptNode node = parse(script);
     Resolve.Env resolvedDag = resolve.planDag(session, node);
     DAGPlanner dagPlanner = new DAGPlanner(planner);

@@ -13,6 +13,7 @@ import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.data.C360;
+import ai.datasqrl.util.ScriptBuilder;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -67,34 +68,36 @@ public class ResolveTest extends AbstractSQRLIT {
 
   @Test
   @Disabled
-  public void simpleColumnDefinition() {
-    String script = "IMPORT ecommerce-data.Customer;\n"
-            + "Customer.timestamp := EPOCH_TO_TIMESTAMP(customerid);\n";
+  public void timestampColumnDefinition() {
+    String script = ScriptBuilder.of("IMPORT ecommerce-data.Customer",
+            "Customer.timestamp := EPOCH_TO_TIMESTAMP(customerid)",
+            "CustomerCopy := SELECT timestamp FROM Customer");
     process(script);
     validateQueryTable("customer", TableType.STREAM, 7, 1, TimestampTest.candidates(1,6));
+    validateQueryTable("customercopy", TableType.STREAM, 3, 1, TimestampTest.candidates(1,2));
   }
 
 
   @Test
   public void tableDefinitionTest() {
-    String sqrl = "IMPORT ecommerce-data.Orders;\n"
-        + "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;";
+    String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
+        "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;");
     process(sqrl);
     validateQueryTable("entrycount", TableType.STREAM,5, 2, TimestampTest.candidates(3,4)); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
   }
 
   @Test
   public void tableJoinTest() {
-    StringBuilder builder = imports();
-    builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
+    ScriptBuilder builder = imports();
+    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
     process(builder.toString());
     validateQueryTable("ordercustomer", TableType.STATE,5, 2, TimestampTest.NONE); //numCols = 3 selected cols + 2 uuid cols for pk
   }
 
   @Test
   public void tableIntervalJoinTest() {
-    StringBuilder builder = imports();
-    builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o INTERVAL JOIN Customer c on o.customerid = c.customerid "+
+    ScriptBuilder builder = imports();
+    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o INTERVAL JOIN Customer c on o.customerid = c.customerid "+
             "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH;");
     builder.append("OrderCustomer2 := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
             "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH;");
@@ -105,7 +108,7 @@ public class ResolveTest extends AbstractSQRLIT {
 
   @Test
   public void tableTemporalJoinTest() {
-    StringBuilder builder = imports();
+    ScriptBuilder builder = imports();
     builder.append("CustomerCount := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer;\n");
     builder.append("OrderWithCount := SELECT o.id, c.order_count, o.customerid FROM Orders o TEMPORAL JOIN CustomerCount c on o.customerid = c.customer;");
     builder.append("OrderWithCount2 := SELECT o.id, c.order_count, o.customerid FROM CustomerCount c TEMPORAL JOIN Orders o on o.customerid = c.customer;");
@@ -116,7 +119,7 @@ public class ResolveTest extends AbstractSQRLIT {
 
   @Test
   public void streamAggregateTest() {
-    StringBuilder builder = imports();
+    ScriptBuilder builder = imports();
     builder.append("OrderAgg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer;\n");
     builder.append("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o;");
     process(builder.toString());
@@ -126,7 +129,7 @@ public class ResolveTest extends AbstractSQRLIT {
 
   @Test
   public void streamTimeAggregateTest() {
-    StringBuilder builder = imports();
+    ScriptBuilder builder = imports();
     builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;\n");
     process(builder.toString());
     validateQueryTable("orderagg1", TableType.STREAM,3, 2, TimestampTest.fixed(1));
@@ -134,14 +137,14 @@ public class ResolveTest extends AbstractSQRLIT {
 
   @Test
   public void timeFunctionFixTest() {
-    StringBuilder builder = imports();
+    ScriptBuilder builder = imports();
     builder.append("TimeTest := SELECT ROUND_TO_MONTH(ROUND_TO_MONTH(\"time\")) FROM orders;");
     process(builder.toString());
   }
 
   @Test
   public void streamStateAggregateTest() {
-    StringBuilder builder = imports();
+    ScriptBuilder builder = imports();
     builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
     builder.append("agg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM OrderCustomer o GROUP BY customer;\n");
     process(builder.toString());
@@ -150,7 +153,7 @@ public class ResolveTest extends AbstractSQRLIT {
 
   @Test
   public void nowFilterTest() {
-    StringBuilder builder = imports();
+    ScriptBuilder builder = imports();
     builder.append("OrderFilter := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 YEAR;\n");
 
     builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM OrderFilter o GROUP BY customer, bucket;\n");
@@ -166,17 +169,13 @@ public class ResolveTest extends AbstractSQRLIT {
   @Test
   @Disabled
   public void distinctTest() {
-    StringBuilder builder = imports();
-    builder.append("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC;\n");
+    ScriptBuilder builder = imports();
+    builder.add("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC");
     process(builder.toString());
   }
 
-  private StringBuilder imports() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("IMPORT ecommerce-data.Customer;\n");
-    builder.append("IMPORT ecommerce-data.Orders;\n");
-    builder.append("IMPORT ecommerce-data.Product;\n");
-    return builder;
+  private ScriptBuilder imports() {
+    return C360.INSTANCE.getImports();
   }
 
   @Test
@@ -188,7 +187,7 @@ public class ResolveTest extends AbstractSQRLIT {
   @Test
   @Disabled
   public void standardLibraryTest() {
-    StringBuilder builder = imports();
+    ScriptBuilder builder = imports();
     builder.append("Orders.fnc_test := SELECT time.ROUNDTOMONTH(time) FROM _;");
     process(builder.toString());
   }
@@ -196,7 +195,7 @@ public class ResolveTest extends AbstractSQRLIT {
   @Test
   @Disabled
   public void joinDeclarationTest() {
-    StringBuilder builder = imports();
+    ScriptBuilder builder = imports();
     builder.append("Product.p := JOIN Product p ORDER BY p.category LIMIT 1");
     builder.append("Product.p2 := SELECT * FROM _ JOIN _.p");
     process(builder.toString());
@@ -204,7 +203,7 @@ public class ResolveTest extends AbstractSQRLIT {
 
   @Test
   public void subqueryTest() {
-    StringBuilder builder = imports();
+    ScriptBuilder builder = imports();
     builder.append("IMPORT ecommerce-data.Orders;\n");
     builder.append("Orders := SELECT o2._uuid FROM Orders o2 "
         + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid;\n");
@@ -215,7 +214,7 @@ public class ResolveTest extends AbstractSQRLIT {
   @Test
   @Disabled
   public void fullTest() {
-    StringBuilder builder = imports();
+    ScriptBuilder builder = imports();
     builder.append("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
     builder.append("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n");
 //    builder.append("Orders.entries.discount := coalesce(discount, 0.0);\n");
@@ -319,7 +318,7 @@ public class ResolveTest extends AbstractSQRLIT {
   public static<T extends AbstractRelationalTable> Optional<T> getLatestTable(CalciteSchema relSchema, String tableName, Class<T> tableClass) {
     String normalizedName = Name.system(tableName).getCanonical();
     //Table names have an appended uuid - find the right tablename first. We assume tables are in the order in which they were created
-    return relSchema.getTableNames().stream().filter(s -> s.startsWith(normalizedName))
+    return relSchema.getTableNames().stream().filter(s -> s.substring(0,s.indexOf(Name.NAME_DELIMITER)).equals(normalizedName))
             .filter(s -> tableClass.isInstance(relSchema.getTable(s,true).getTable()))
             //Get most recently added table
             .sorted((a,b) -> -Integer.compare(CalciteTableFactory.getTableOrdinal(a),CalciteTableFactory.getTableOrdinal(b)))

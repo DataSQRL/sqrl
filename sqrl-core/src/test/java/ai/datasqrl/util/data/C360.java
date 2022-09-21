@@ -1,6 +1,7 @@
 package ai.datasqrl.util.data;
 
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
+import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.ScriptComplexity;
 import ai.datasqrl.util.TestDataset;
 import com.google.common.collect.ImmutableMap;
@@ -64,11 +65,11 @@ public class C360 implements TestDataset {
     }
 
     @Override
-    public StringBuilder getImports() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("IMPORT ecommerce-data.Customer;\n");
-        builder.append("IMPORT ecommerce-data.Orders;\n");
-        builder.append("IMPORT ecommerce-data.Product;\n");
+    public ScriptBuilder getImports() {
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.append("IMPORT ecommerce-data.Customer");
+        builder.append("IMPORT ecommerce-data.Orders");
+        builder.append("IMPORT ecommerce-data.Product");
         return builder;
     }
 

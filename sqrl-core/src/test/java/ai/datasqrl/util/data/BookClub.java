@@ -1,6 +1,7 @@
 package ai.datasqrl.util.data;
 
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
+import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.ScriptComplexity;
 import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.TestResources;
@@ -40,10 +41,10 @@ public class BookClub implements TestDataset {
     }
 
     @Override
-    public StringBuilder getImports() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("IMPORT data.book;\n");
-        builder.append("IMPORT data.person;\n");
+    public ScriptBuilder getImports() {
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.append("IMPORT data.book");
+        builder.append("IMPORT data.person");
         return builder;
     }
 
