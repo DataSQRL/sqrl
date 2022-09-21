@@ -4,13 +4,11 @@ datasets:
   - name: ecommerce-datav2
     tables:
       - name: Customer
-        description: customer records from online shop
+        partial_schema: false
         columns:
           - name: customerid
-            description: the unique id for each customer
             type: integer
             tests:
-              - unique
               - not_null
           - name: email
             type: string
@@ -18,17 +16,18 @@ datasets:
               - not_null
           - name: name
             type: string
+            tests:
+              - not_null
           - name: lastUpdated
             type: integer
             tests:
               - not_null
       - name: Product
-        description: Catalog of all products
+        partial_schema: false
         columns:
           - name: productid
             type: integer
             tests:
-              - unique
               - not_null
           - name: name
             type: string
@@ -36,6 +35,8 @@ datasets:
               - not_null
           - name: description
             type: string
+            tests:
+              - not_null
           - name: categories
             columns:
               - name: categoryid
@@ -46,16 +47,19 @@ datasets:
                 type: string
                 tests:
                   - not_null
+            tests:
+              - not_null
       - name: Orders
-        description: Order records placed online
+        partial_schema: false
         columns:
           - name: id
             type: integer
             tests:
-              - unique
               - not_null
           - name: customerid
             type: integer
+            tests:
+              - not_null
           - name: time
             type: datetime
             tests:
@@ -64,6 +68,8 @@ datasets:
             columns:
               - name: productid
                 type: integer
+                tests:
+                  - not_null
               - name: quantity
                 type: integer
                 tests:
@@ -74,3 +80,5 @@ datasets:
                   - not_null
               - name: discount
                 type: float
+            tests:
+              - not_null

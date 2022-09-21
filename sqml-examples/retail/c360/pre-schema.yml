@@ -18,6 +18,10 @@ datasets:
               - not_null
           - name: name
             type: string
+          - name: lastUpdated
+            type: integer
+            tests:
+              - not_null
       - name: Product
         description: Catalog of all products
         columns:
