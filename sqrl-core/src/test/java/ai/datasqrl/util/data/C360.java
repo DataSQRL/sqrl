@@ -56,7 +56,7 @@ public class C360 implements TestDataset {
 
     @Override
     public Map<String, Integer> getTableCounts() {
-        return ImmutableMap.of("orders",4, "customer",4, "product",6, "entries", 7);
+        return ImmutableMap.of("orders",4, "customer",5, "product",6);
     }
 
     @Override

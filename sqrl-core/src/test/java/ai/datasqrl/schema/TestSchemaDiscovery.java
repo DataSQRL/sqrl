@@ -1,10 +1,9 @@
-package ai.datasqrl.io;
+package ai.datasqrl.schema;
 
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.AbstractSchemaIT;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.util.TestDataset;
