@@ -100,10 +100,10 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     builder.add("EntryPrice := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e"); //This is line 4 in the script
     rowCounts.put("entryprice",rowCounts.get("entries"));
 
-    builder.add("Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)");
-    builder.add("Customer.month := ROUND_TO_MONTH(ROUND_TO_MONTH(timestamp))");
-    builder.add("CustomerCopy := SELECT timestamp, month FROM Customer");
-    rowCounts.put("customercopy",rowCounts.get("customer"));
+//    builder.add("Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)");
+//    builder.add("Customer.month := ROUND_TO_MONTH(ROUND_TO_MONTH(timestamp))");
+//    builder.add("CustomerCopy := SELECT timestamp, month FROM Customer");
+//    rowCounts.put("customercopy",rowCounts.get("customer"));
 
 
 //    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");
