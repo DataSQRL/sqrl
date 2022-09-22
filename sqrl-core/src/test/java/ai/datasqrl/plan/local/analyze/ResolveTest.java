@@ -82,7 +82,6 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void timestampTest() {
     process("IMPORT ecommerce-data.Customer TIMESTAMP EPOCH_TO_TIMESTAMP(lastUpdated) AS timestamp;\n");
     validateQueryTable("customer", TableType.STREAM, 7, 1, TimestampTest.fixed(6));

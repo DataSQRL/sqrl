@@ -6,10 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -45,8 +42,9 @@ public abstract class TimestampHolder {
             newBase.candidates.addAll(derived.candidates);
             newBase.addDependent(derived.base);
             derived.base.addDependent(newBase);
-            //We created a new query table - candidates must be locked now
+            //We created a new query table - candidates must be locked now and candidates limited
             newBase.lockCandidates();
+            derived.base.limitCandidates(newBase.candidates.stream().map(Candidate::getId).collect(Collectors.toSet()));
             return newBase;
         }
 
@@ -55,6 +53,20 @@ public abstract class TimestampHolder {
             Preconditions.checkArgument(!candidates.stream().anyMatch(c -> c.index == columnIndex));
             int nextId = candidates.stream().mapToInt(Candidate::getId).max().orElse(0) + 1;
             candidates.add(new Candidate(nextId, columnIndex, score));
+        }
+
+        private void limitCandidates(final Set<Integer> candidateIds) {
+            boolean removed = false;
+            Iterator<Candidate> candIter = candidates.iterator();
+            while (candIter.hasNext()) {
+                if (!candidateIds.contains(candIter.next().getId())) {
+                    candIter.remove();
+                }
+            }
+            assert !candidates.isEmpty();
+            if (removed) {
+                dependents.forEach(t -> t.limitCandidates(candidateIds));
+            }
         }
 
         @Override
@@ -66,19 +78,22 @@ public abstract class TimestampHolder {
             });
         }
 
-        public void setBestTimestamp() {
-            if (hasTimestamp()) return;
-            setTimestamp(candidates.stream().max((a,b) -> Integer.compare(a.score,b.score)).get().id);
+        public void fixTimestamp(int columnIndex) {
+            Preconditions.checkArgument(isCandidate(columnIndex));
+            setTimestamp(getCandidateByIndex(columnIndex).get());
         }
 
-        public void setTimestamp(int candidateId) {
-            Candidate timestamp = candidates.stream().filter(c -> c.id==candidateId).findFirst().orElseThrow(
-                    () -> new IllegalArgumentException("Not a valid candidate id: " + candidateId));
+        public void setBestTimestamp() {
+            if (hasTimestamp()) return;
+            setTimestamp(candidates.stream().max((a,b) -> Integer.compare(a.score,b.score)).get());
+        }
+
+        private void setTimestamp(Candidate timestamp) {
             //Remove all others
             candidates = List.of(timestamp);
             candidatesLocked = true;
             dependents.forEach(t -> {
-                if (!t.hasTimestamp()) t.setTimestamp(candidateId);
+                if (!t.hasTimestamp()) t.setTimestamp(timestamp);
             });
         }
 

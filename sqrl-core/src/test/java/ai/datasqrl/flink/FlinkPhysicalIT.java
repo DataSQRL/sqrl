@@ -33,6 +33,7 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -122,6 +123,18 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
+  public void topNTest() {
+    ScriptBuilder builder = example.getImports();
+    Map<String,Integer> rowCounts = getImportRowCounts();
+
+
+
+    Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
+    validateRowCounts(rowCounts, results);
+  }
+
+  @Test
   public void joinTest() {
     ScriptBuilder builder = example.getImports();
     Map<String,Integer> rowCounts = getImportRowCounts();
@@ -131,6 +144,30 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     builder.add("OrderCustomerInterval := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
             "AND o.\"time\" <= c.\"_ingest_time\" AND o.\"time\" >= c.\"_ingest_time\" - INTERVAL 1 YEAR");
     rowCounts.put("ordercustomerinterval",5);
+    //TODO: Add temporal join
+
+    Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
+    validateRowCounts(rowCounts, results);
+  }
+
+  @Test
+  public void aggregateTest() {
+    ScriptBuilder builder = example.getImports();
+    Map<String,Integer> rowCounts = getImportRowCounts();
+
+
+
+    Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
+    validateRowCounts(rowCounts, results);
+  }
+
+  @Test
+  @Disabled
+  public void filterTest() {
+    ScriptBuilder builder = example.getImports();
+    Map<String,Integer> rowCounts = getImportRowCounts();
+
+
 
     Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
     validateRowCounts(rowCounts, results);

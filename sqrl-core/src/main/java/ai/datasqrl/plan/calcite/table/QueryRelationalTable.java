@@ -68,18 +68,23 @@ public class QueryRelationalTable extends AbstractRelationalTable {
     return relNode;
   }
 
+  public int getNumColumns() {
+    return relNode.getRowType().getFieldCount();
+  }
+
   public void updateRelNode(@NonNull RelNode relNode) {
     this.relNode = relNode;
   }
 
-  public void addInlinedColumn(AddedColumn.Simple column, Supplier<RelBuilder> relBuilderFactory,
+  public int addInlinedColumn(AddedColumn.Simple column, Supplier<RelBuilder> relBuilderFactory,
                                Optional<Integer> timestampScore) {
+    int index = getNumColumns();
     this.relNode = column.appendTo(relBuilderFactory.get().push(relNode)).build();
     //Check if this adds a timestamp candidate
     if (timestampScore.isPresent() && !timestamp.isCandidatesLocked()) {
-      int index = relNode.getRowType().getFieldCount()-1; //Index of the field we just added
       timestamp.addCandidate(index, timestampScore.get());
     }
+    return index;
   }
 
   private static RelDataTypeField getField(FieldIndexPath path, RelDataType rowType) {

@@ -1,7 +1,5 @@
 package ai.datasqrl.plan.local.generate;
 
-import static ai.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
-
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
@@ -39,6 +37,8 @@ import org.apache.calcite.tools.RelBuilder;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static ai.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
 
 @Getter
 public class Resolve {
@@ -363,7 +363,7 @@ public class Resolve {
       case EXPR_QUERY:
       case IMPORT_TIMESTAMP:
         AddedColumn c = createColumnAddOp(env, op);
-        addColumn(env, op, c);
+        addColumn(env, op, c, op.kind==IMPORT_TIMESTAMP);
         break;
       case ROOT_QUERY:
         createTable(env, op);
@@ -383,13 +383,19 @@ public class Resolve {
 //    env.fieldMap.putAll(op.getFieldMapping());
   }
 
-  private void addColumn(Env env, StatementOp op, AddedColumn c) {
-    Optional<VirtualRelationalTable> t = getTargetRelTable(env, op);
+  private void addColumn(Env env, StatementOp op, AddedColumn c, boolean fixTimestamp) {
+    Optional<VirtualRelationalTable> optTable = getTargetRelTable(env, op);
+    Check.state(optTable.isPresent(), null, null);
 
-    Check.state(t.isPresent(), null, null);
-
+    VirtualRelationalTable vtable = optTable.get();
     Optional<Integer> timestampScore = tableFactory.getTimestampScore(op.statement.getNamePath().getLast(),c.getDataType());
-    t.ifPresent(tbl -> tbl.addColumn(c, tableFactory.getTypeFactory(), getRelBuilderFactory(env), timestampScore));
+    vtable.addColumn(c, tableFactory.getTypeFactory(), getRelBuilderFactory(env), timestampScore);
+    if (fixTimestamp) {
+      Check.state(timestampScore.isPresent(), null, null);
+      Check.state(vtable.isRoot() && vtable.getAddedColumns().isEmpty(), null, null);
+      QueryRelationalTable baseTbl = ((VirtualRelationalTable.Root)vtable).getBase();
+      baseTbl.getTimestamp().fixTimestamp(baseTbl.getNumColumns()-1); //Timestamp must be last column
+    }
 
     SQRLTable table = getContext(env, op.statement)
         .orElseThrow(()->new RuntimeException("Cannot resolve table"));
