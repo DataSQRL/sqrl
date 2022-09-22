@@ -1,13 +1,18 @@
 package ai.datasqrl.physical.stream.flink;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import lombok.Value;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@Value
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode
 public class ProcessError<Input> implements Serializable {
 
     private List<String> errors;

@@ -66,17 +66,38 @@ public class ResolveTest extends AbstractSQRLIT {
     validateQueryTable("orders", TableType.STREAM,6, 1, TimestampTest.best(4));
   }
 
+  /*
+  ===== TABLE & COLUMN DEFINITION ======
+   */
+
   @Test
-  @Disabled
   public void timestampColumnDefinition() {
     String script = ScriptBuilder.of("IMPORT ecommerce-data.Customer",
-            "Customer.timestamp := EPOCH_TO_TIMESTAMP(customerid)",
-            "CustomerCopy := SELECT timestamp FROM Customer");
+            "Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)",
+            "Customer.month := ROUND_TO_MONTH(ROUND_TO_MONTH(timestamp))",
+            "CustomerCopy := SELECT timestamp, month FROM Customer");
     process(script);
-    validateQueryTable("customer", TableType.STREAM, 7, 1, TimestampTest.candidates(1,6));
-    validateQueryTable("customercopy", TableType.STREAM, 3, 1, TimestampTest.candidates(1,2));
+    validateQueryTable("customer", TableType.STREAM, 8, 1, TimestampTest.candidates(1,6,7));
+    validateQueryTable("customercopy", TableType.STREAM, 4, 1, TimestampTest.candidates(1,2,3));
   }
 
+  @Test
+  @Disabled
+  public void timestampTest() {
+    process("IMPORT ecommerce-data.Customer TIMESTAMP EPOCH_TO_TIMESTAMP(lastUpdated) AS timestamp;\n");
+    validateQueryTable("customer", TableType.STREAM, 7, 1, TimestampTest.fixed(6));
+  }
+
+
+  @Test
+  public void selfJoinSubqueryTest() {
+    ScriptBuilder builder = imports();
+    builder.append("IMPORT ecommerce-data.Orders;\n");
+    builder.append("Orders := SELECT o2._uuid FROM Orders o2 "
+            + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid;\n");
+    process(builder.toString());
+    validateQueryTable("orders", TableType.STREAM, 3, 1);
+  }
 
   @Test
   public void tableDefinitionTest() {
@@ -85,6 +106,10 @@ public class ResolveTest extends AbstractSQRLIT {
     process(sqrl);
     validateQueryTable("entrycount", TableType.STREAM,5, 2, TimestampTest.candidates(3,4)); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
   }
+
+  /*
+  ===== JOINS ======
+   */
 
   @Test
   public void tableJoinTest() {
@@ -118,6 +143,20 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
+  public void relationshipDeclarationTest() {
+    ScriptBuilder builder = imports();
+    builder.append("Product.p := JOIN Product p ORDER BY p.category LIMIT 1");
+    builder.append("Product.p2 := SELECT * FROM _ JOIN _.p");
+    process(builder.toString());
+  }
+
+
+  /*
+  ===== AGGREGATE ======
+   */
+
+  @Test
   public void streamAggregateTest() {
     ScriptBuilder builder = imports();
     builder.append("OrderAgg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer;\n");
@@ -136,13 +175,6 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
-  public void timeFunctionFixTest() {
-    ScriptBuilder builder = imports();
-    builder.append("TimeTest := SELECT ROUND_TO_MONTH(ROUND_TO_MONTH(\"time\")) FROM orders;");
-    process(builder.toString());
-  }
-
-  @Test
   public void streamStateAggregateTest() {
     ScriptBuilder builder = imports();
     builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
@@ -150,6 +182,10 @@ public class ResolveTest extends AbstractSQRLIT {
     process(builder.toString());
     validateQueryTable("agg1", TableType.STATE,2, 1, TimestampTest.NONE);
   }
+
+  /*
+  ===== FILTER TESTS ======
+   */
 
   @Test
   public void nowFilterTest() {
@@ -165,6 +201,9 @@ public class ResolveTest extends AbstractSQRLIT {
     validateQueryTable("orderagg2", TableType.STREAM,3, 2, TimestampTest.fixed(1), new PullupTest(true,false));
   }
 
+  /*
+  ===== TOPN TESTS ======
+   */
 
   @Test
   @Disabled
@@ -174,42 +213,6 @@ public class ResolveTest extends AbstractSQRLIT {
     process(builder.toString());
   }
 
-  private ScriptBuilder imports() {
-    return C360.BASIC.getImports();
-  }
-
-  @Test
-  @Disabled
-  public void timestampTest() {
-    process("IMPORT ecommerce-data.Orders TIMESTAMP time + INTERVAL 5 YEAR AS x;\n");
-  }
-
-  @Test
-  @Disabled
-  public void standardLibraryTest() {
-    ScriptBuilder builder = imports();
-    builder.append("Orders.fnc_test := SELECT time.ROUNDTOMONTH(time) FROM _;");
-    process(builder.toString());
-  }
-
-  @Test
-  @Disabled
-  public void joinDeclarationTest() {
-    ScriptBuilder builder = imports();
-    builder.append("Product.p := JOIN Product p ORDER BY p.category LIMIT 1");
-    builder.append("Product.p2 := SELECT * FROM _ JOIN _.p");
-    process(builder.toString());
-  }
-
-  @Test
-  public void subqueryTest() {
-    ScriptBuilder builder = imports();
-    builder.append("IMPORT ecommerce-data.Orders;\n");
-    builder.append("Orders := SELECT o2._uuid FROM Orders o2 "
-        + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid;\n");
-    process(builder.toString());
-    validateQueryTable("orders", TableType.STREAM, 3, 1);
-  }
 
   @Test
   @Disabled
@@ -275,6 +278,10 @@ public class ResolveTest extends AbstractSQRLIT {
     builder.append(
         "Customer.favorite_categories.category := JOIN Category ON _.category_name = Category.name;\n");
     process(builder.toString());
+  }
+
+  private ScriptBuilder imports() {
+    return C360.BASIC.getImports();
   }
 
   @SneakyThrows

@@ -79,23 +79,33 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
-  public void importTableTest() {
+  public void tableImportTest() {
     String script = example.getImports().toString();
-    Map<String,ResultSet> results = process(script,List.of("customer","product","entries","orders"));
-    Map<String,Integer> rowCounts = new HashMap<>(example.getTableCounts());
-    rowCounts.put("entries",7);
+    Map<String,Integer> rowCounts = getImportRowCounts();
+    Map<String,ResultSet> results = process(script,rowCounts.keySet());
     validateRowCounts(rowCounts, results);
   }
 
-  @Test
-  public void fullTest() {
-    ScriptBuilder builder = example.getImports();
+  private Map<String,Integer> getImportRowCounts() {
     Map<String,Integer> rowCounts = new HashMap<>(example.getTableCounts());
-    rowCounts.putAll(example.getTableCounts());
     rowCounts.put("entries",7);
+    return rowCounts;
+  }
+
+  @Test
+  public void tableColumnDefinitionTest() {
+    ScriptBuilder builder = example.getImports();
+    Map<String,Integer> rowCounts = getImportRowCounts();
 
     builder.add("EntryPrice := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e"); //This is line 4 in the script
     rowCounts.put("entryprice",rowCounts.get("entries"));
+
+    builder.add("Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)");
+    builder.add("Customer.month := ROUND_TO_MONTH(ROUND_TO_MONTH(timestamp))");
+    builder.add("CustomerCopy := SELECT timestamp, month FROM Customer");
+    rowCounts.put("customercopy",rowCounts.get("customer"));
+
+
 //    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");
 //    rowCounts.put("ordercustomer",5); //One order joins twice because customer record isn't deduplicated yet
 //    builder.add("OrderCustomerInterval := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+

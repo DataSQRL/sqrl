@@ -1,13 +1,14 @@
 package ai.datasqrl.physical.stream.flink;
 
 import ai.datasqrl.physical.stream.StreamEngine;
+import lombok.NonNull;
+import org.apache.flink.api.common.RuntimeExecutionMode;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.NonNull;
-import org.apache.flink.api.common.RuntimeExecutionMode;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
 
@@ -21,6 +22,7 @@ public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
                 "taskmanager.memory.network.max", "1gb"
             )
         ));
+    //env.getConfig().disableGenericTypes(); TODO: use to ensure efficient serialization
     env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
 //        FlinkUtilities.enableCheckpointing(env);
     return new FlinkStreamBuilder(this, env);

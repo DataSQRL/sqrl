@@ -2,24 +2,28 @@ package ai.datasqrl.io.sources;
 
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.parse.tree.name.Name;
+import lombok.*;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import lombok.NonNull;
 
 /**
  * Raw records of a {@link SourceTable} are represented as {@link SourceRecord}
  * <p>
  * The generic parameter K is one of {@link java.lang.String} or {@link Name}.
  */
+@NoArgsConstructor
+@Getter
+@Setter
 public class SourceRecord<K> implements Serializable {
 
-  private final Map<K, Object> data;
-  private final Instant sourceTime;
-  private final Instant ingestTime;
-  private final UUID uuid;
+  private Map<K, Object> data;
+  private Instant sourceTime;
+  private Instant ingestTime;
+  private UUID uuid;
 
   public SourceRecord(@NonNull Map<K, Object> data, Instant sourceTime, @NonNull Instant ingestTime,
       UUID uuid) {
@@ -33,24 +37,8 @@ public class SourceRecord<K> implements Serializable {
     this(data, sourceTime, Instant.now(), UUID.randomUUID());
   }
 
-  public Map<K, Object> getData() {
-    return data;
-  }
-
-  public Instant getSourceTime() {
-    return sourceTime;
-  }
-
-  public Instant getIngestTime() {
-    return ingestTime;
-  }
-
   public boolean hasUUID() {
     return uuid != null;
-  }
-
-  public UUID getUuid() {
-    return uuid;
   }
 
   public SourceRecord.Named replaceData(Map<Name, Object> newData) {
@@ -84,6 +72,7 @@ public class SourceRecord<K> implements Serializable {
         '}';
   }
 
+  @NoArgsConstructor
   public static class Raw extends SourceRecord<String> {
 
     public Raw(@NonNull Map<String, Object> data, Instant sourceTime, @NonNull Instant ingestTime,
@@ -96,6 +85,7 @@ public class SourceRecord<K> implements Serializable {
     }
   }
 
+  @NoArgsConstructor
   public static class Named extends SourceRecord<Name> {
 
     public Named(@NonNull Map<Name, Object> data, Instant sourceTime, @NonNull Instant ingestTime,
