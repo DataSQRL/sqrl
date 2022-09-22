@@ -642,6 +642,8 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       top = addSelfTableToQuery(op, top);
     } else if (op.getStatementKind() == StatementKind.QUERY) {
       top = performQueryRewrites(op.getQuery());
+    } else if (op.getStatementKind() == StatementKind.IMPORT) {
+      top = addSelfTableToExpression(op.getQuery());
     }
 
     return top;
@@ -778,6 +780,20 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       default:
         throw new RuntimeException(query.getKind().toString());
     }
+  }
+
+  private SqlNode addSelfTableToImportTimestampExpression(StatementOp op) {
+    //TODO: Include full qualified identifier for table name
+    SqlIdentifier from = new SqlIdentifier(op.getStatement().getNamePath().getFirst().getDisplay(),
+        SqlParserPos.ZERO);
+    SqlNode top = new SqlSelect(SqlParserPos.ZERO,
+        null,
+        new SqlNodeList(List.of(op.getQuery()), SqlParserPos.ZERO),
+        from, null,
+        null, null,
+        null, null, null,
+        null,null);
+    return top;
   }
 
   private SqlNode addSelfTableToExpression(SqlNode query) {

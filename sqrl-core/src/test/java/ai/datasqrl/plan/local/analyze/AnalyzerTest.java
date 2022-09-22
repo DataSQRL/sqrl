@@ -11,11 +11,13 @@ import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.ParsingException;
+import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.local.generate.Session;
+import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.util.data.C360;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -117,9 +119,10 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void importWithTimestamp() {
-    generate(parser.parse("IMPORT ecommerce-data.Product TIMESTAMP uuid;"));
+    Env env1 = generate(parser.parse("IMPORT ecommerce-data.Customer TIMESTAMP customerid AS c_ts;"));
+    SQRLTable sqrlTable = (SQRLTable) env1.getSqrlSchema().getTable("Customer", false).getTable();
+    assertTrue(sqrlTable.getField(Name.system("c_ts")).isPresent(), "Timestamp column missing");
   }
 
   @Test

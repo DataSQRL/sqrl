@@ -1,5 +1,7 @@
 package ai.datasqrl.plan.local.generate;
 
+import static ai.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
+
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
@@ -120,28 +122,17 @@ public class Resolve {
 
   void mapOperations(Env env) {
     for (SqlNode statement : env.scriptNode.getStatements()) {
-      if (!(statement instanceof ImportDefinition)) {
-        env.queryOperations.add((SqrlStatement) statement);
-      }
+      env.queryOperations.add((SqrlStatement) statement);
     }
   }
 
   private void resolveImportDefinition(Env env, ImportDefinition node) {
-    SourceTableImport tblImport = lookupDatasetModule(env, node.getNamePath());
+    SourceTableImport tblImport = lookupDatasetModule(env, node.getImportPath());
 
     ScriptTableDefinition importedTable = createScriptTableDefinition(env, tblImport,
         node.getAlias());
 
     registerScriptTable(env, importedTable);
-
-    node.getTimestamp().ifPresent((t) -> addTimestampColumn(env, importedTable, t));
-  }
-
-  private void addTimestampColumn(Env env, ScriptTableDefinition importedTable,
-      SqlNode timestamp) {
-    StatementOp statementOp = new StatementOp(null, timestamp, StatementKind.IMPORT);
-    transpile(env, statementOp);
-    applyOp(env, statementOp);
   }
 
   private SourceTableImport lookupDatasetModule(Env env, NamePath namePath) {
@@ -195,8 +186,11 @@ public class Resolve {
   }
 
   void planQuery(Env env, SqrlStatement statement) {
-    // Plans query
-    StatementOp op = createStatementOp(env, statement);
+    createStatementOp(env, statement)
+        .ifPresent(op -> planOp(env, op));
+  }
+
+  private void planOp(Env env, StatementOp op) {
     validate(env, op);
     transpile(env, op);
     computeOpKind(env, op);
@@ -230,6 +224,8 @@ public class Resolve {
       }
 
       return isExpressionQuery(op) ? OpKind.EXPR_QUERY : OpKind.QUERY;
+    } else if (op.statement instanceof ImportDefinition) {
+      return IMPORT_TIMESTAMP;
     }
     return null;
   }
@@ -247,7 +243,7 @@ public class Resolve {
     return false;
   }
 
-  private StatementOp createStatementOp(Env env, SqrlStatement statement) {
+  private Optional<StatementOp> createStatementOp(Env env, SqrlStatement statement) {
     SqlNode sqlNode = null;
 
     StatementKind statementKind;
@@ -266,13 +262,22 @@ public class Resolve {
     } else if  (statement instanceof JoinAssignment) {
       sqlNode = ((JoinAssignment) statement).getQuery();
       statementKind = StatementKind.JOIN;
-    } else {
+    } else if (statement instanceof ImportDefinition) {
+      ImportDefinition importDef = (ImportDefinition) statement;
+      if (importDef.getTimestamp().isEmpty()) {
+        return Optional.empty();
+      }
+      sqlNode = importDef.getTimestamp().get();
+      statementKind = StatementKind.IMPORT;
+
+    }
+    else {
       throw new RuntimeException("Unrecognized assignment type");
     }
 
-    StatementOp op = new StatementOp((Assignment) statement, sqlNode, statementKind);
+    StatementOp op = new StatementOp(statement, sqlNode, statementKind);
     env.ops.add(op);
-    return op;
+    return Optional.of(op);
   }
 
   public void validate(Env env, StatementOp op) {
@@ -295,7 +300,7 @@ public class Resolve {
     validateSql(env, op);
   }
 
-  private Optional<SQRLTable> getContext(Env env, Assignment statement) {
+  private Optional<SQRLTable> getContext(Env env, SqrlStatement statement) {
     if (statement.getNamePath().size() <= 1) {
       return Optional.empty();
     }
@@ -356,6 +361,7 @@ public class Resolve {
     switch (op.kind) {
       case EXPR:
       case EXPR_QUERY:
+      case IMPORT_TIMESTAMP:
         AddedColumn c = createColumnAddOp(env, op);
         addColumn(env, op, c);
         break;
@@ -462,7 +468,7 @@ public class Resolve {
   }
 
   enum OpKind {
-    EXPR, QUERY, ROOT_QUERY, EXPR_QUERY, JOIN, SUBSCRIPTION
+    EXPR, QUERY, ROOT_QUERY, EXPR_QUERY, JOIN, SUBSCRIPTION, IMPORT_TIMESTAMP
   }
 
   @Getter
@@ -473,7 +479,7 @@ public class Resolve {
     StatementKind statementKind;
 
     OpKind kind;
-    Assignment statement;
+    SqrlStatement statement;
     boolean expression;
     Map fieldMapping;
 
@@ -483,7 +489,7 @@ public class Resolve {
     SqlNode query;
     SqlNode validatedSql;
 
-    StatementOp(Assignment statement, SqlNode query, StatementKind statementKind) {
+    StatementOp(SqrlStatement statement, SqlNode query, StatementKind statementKind) {
       this.statement = statement;
       this.query = query;
       this.statementKind = statementKind;

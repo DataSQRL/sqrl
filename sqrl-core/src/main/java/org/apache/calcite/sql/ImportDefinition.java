@@ -26,16 +26,28 @@ import org.apache.calcite.util.Litmus;
 @Getter
 public class ImportDefinition extends SqrlStatement {
 
-  protected final NamePath namePath;
   private final Optional<Name> alias;
   private final Optional<SqlNode> timestamp;
+  private final NamePath importPath;
 
   public ImportDefinition(SqlParserPos location,
-      NamePath namePath, Optional<Name> alias, Optional<SqlNode> timestamp) {
-    super(location);
-    this.namePath = namePath;
+      NamePath importPath, Optional<Name> alias, Optional<SqlNode> timestamp) {
+    super(location, createNamePath(importPath, alias, timestamp));
     this.alias = alias;
     this.timestamp = timestamp;
+    this.importPath = importPath;
+  }
+
+  private static NamePath createNamePath(NamePath importPath, Optional<Name> alias,
+      Optional<SqlNode> timestamp) {
+    NamePath first = alias.map(a->a.toNamePath()).orElse(importPath.popFirst());
+    return timestamp.map(ts -> first.concat(getTimestampColumnName(ts))).orElse(first);
+  }
+
+  private static Name getTimestampColumnName(SqlNode timestamp) {
+    SqlCall call = (SqlCall) timestamp;
+    SqlIdentifier columnName = (SqlIdentifier) call.getOperandList().get(1);
+    return Name.system(columnName.names.get(0));
   }
 
   @Override
