@@ -968,13 +968,9 @@ class AstBuilder
 //      String expr = ctx.expression().start.getInputStream().getText(tableI);
 
       SqlNode expr = visit(ctx.expression());
-      if (ctx.timestampAlias != null) {
-        SqlIdentifier timestampAlias = ((SqlIdentifier) visit(ctx.timestampAlias));
-        SqlCall call = SqlStdOperatorTable.AS.createCall(getLocation(ctx), expr, timestampAlias);
-        timestamp = Optional.of(call);
-      } else {
-        timestamp = Optional.of(expr);
-      }
+      SqlIdentifier timestampAlias = ((SqlIdentifier) visit(ctx.timestampAlias));
+      SqlCall call = SqlStdOperatorTable.AS.createCall(getLocation(ctx), expr, timestampAlias);
+      timestamp = Optional.of(call);
     } else {
       timestamp = Optional.empty();
     }

@@ -33,7 +33,7 @@ public abstract class AddedColumn {
 
         final RexNode expression;
 
-        public Simple(String nameId, RexNode expression) {
+        public Simple(@NonNull String nameId, @NonNull RexNode expression) {
             super(nameId);
             this.expression = expression;
         }
@@ -71,7 +71,7 @@ public abstract class AddedColumn {
         //are primary key columns of the table (in the same order as for the table) to which this column is added.
         final RelNode rightJoin;
 
-        public Complex(String nameId, RelNode rightJoin) {
+        public Complex(@NonNull String nameId, @NonNull RelNode rightJoin) {
             super(nameId); //For now, we never inline complex columns
             this.rightJoin = rightJoin;
         }

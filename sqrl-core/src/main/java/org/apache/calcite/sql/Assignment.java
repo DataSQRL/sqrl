@@ -11,12 +11,8 @@ import org.apache.calcite.util.Litmus;
 @Getter
 public abstract class Assignment extends SqrlStatement {
 
-  //Todo migrate to object
-  private final NamePath namePath;
-
   protected Assignment(SqlParserPos location, NamePath namePath) {
-    super(location);
-    this.namePath = namePath;
+    super(location, namePath);
   }
 
   @Override

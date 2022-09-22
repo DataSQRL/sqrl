@@ -15,7 +15,7 @@ public class ExportDefinition extends SqrlStatement {
   protected final NamePath sinkPath;
 
   public ExportDefinition(SqlParserPos location, NamePath tablePath, NamePath sinkPath) {
-    super(location);
+    super(location, tablePath);
     this.tablePath = tablePath;
     this.sinkPath = sinkPath;
   }
