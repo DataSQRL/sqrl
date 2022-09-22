@@ -5,21 +5,21 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriterConfig;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
 import java.util.function.UnaryOperator;
 
 public class RelToSql {
 
-  public static SqlNode convertToSqlNode(RelNode optimizedNode) {
-    RelToSqlConverter converter = new RelToSqlConverter(PostgresqlSqlDialect.DEFAULT);
+  public static SqlNode convertToSqlNode(RelNode optimizedNode, SqlDialect dialect) {
+    RelToSqlConverter converter = new RelToSqlConverter(dialect);
     final SqlNode sqlNode = converter.visitRoot(optimizedNode).asStatement();
     return sqlNode;
   }
 
-  public static String convertToSql(RelNode optimizedNode) {
+  public static String convertToSql(RelNode optimizedNode, SqlDialect dialect) {
     UnaryOperator<SqlWriterConfig> transform = c ->
         c.withAlwaysUseParentheses(false)
             .withSelectListItemsOnSeparateLines(false)
@@ -27,8 +27,8 @@ public class RelToSql {
             .withIndentation(1)
             .withSelectFolding(null);
 
-    String sql = convertToSqlNode(optimizedNode).toSqlString(
-            c -> transform.apply(c.withDialect(PostgresqlSqlDialect.DEFAULT)))
+    String sql = convertToSqlNode(optimizedNode, dialect).toSqlString(
+            c -> transform.apply(c.withDialect(dialect)))
         .getSql();
     return sql;
   }

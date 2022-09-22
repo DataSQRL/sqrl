@@ -283,11 +283,12 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         input = input.inlineDedup(); //Filtering doesn't preserve deduplication
         RexNode condition = logicalFilter.getCondition();
         condition = SqrlRexUtil.mapIndexes(condition,input.indexMap);
-        LogicalFilter filter;
         TimestampHolder.Derived timestamp = input.timestamp;
         NowFilter nowFilter = input.nowFilter;
 
         //Check if it has a now() predicate and pull out or throw an exception if malformed
+        RelBuilder relBuilder = relBuilderFactory.get();
+        relBuilder.push(input.relNode);
         List<TimePredicate> timeFunctions = new ArrayList<>();
         List<RexNode> conjunctions = null;
         if (FIND_NOW.contains(condition)) {
@@ -319,11 +320,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             nowFilter = resultFilter.get();
             int timestampIdx = nowFilter.getTimestampIndex();
             timestamp = timestamp.fixTimestamp(timestampIdx);
-            filter = logicalFilter.copy(logicalFilter.getTraitSet(),logicalFilter.getInput(), RexUtil.composeConjunction(rexUtil.getBuilder(), conjunctions));
+            relBuilder.filter(conjunctions);
         } else {
-            filter = logicalFilter.copy(logicalFilter.getTraitSet(),logicalFilter.getInput(), condition);
+            relBuilder.filter(condition);
         }
-        return setRelHolder(new ProcessedRel(filter,input.type,input.primaryKey,
+        return setRelHolder(new ProcessedRel(relBuilder.build(),input.type,input.primaryKey,
                 timestamp,input.indexMap,input.joinTables, nowFilter, input.dedup));
     }
 

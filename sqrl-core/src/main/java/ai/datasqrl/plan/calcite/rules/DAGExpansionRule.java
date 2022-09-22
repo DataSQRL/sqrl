@@ -1,7 +1,6 @@
 package ai.datasqrl.plan.calcite.rules;
 
 import ai.datasqrl.plan.calcite.table.ImportedSourceTable;
-import ai.datasqrl.plan.calcite.table.PullupOperator;
 import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
@@ -32,38 +31,20 @@ public abstract class DAGExpansionRule extends RelOptRule {
 
     @Override
     public void onMatch(RelOptRuleCall call) {
-      LogicalTableScan table = call.rel(0);
-      VirtualRelationalTable dbTable = table.getTable()
+      LogicalTableScan scan = call.rel(0);
+      VirtualRelationalTable dbTable = scan.getTable()
               .unwrap(VirtualRelationalTable.class);
-      QueryRelationalTable queryTable = table.getTable().unwrap(QueryRelationalTable.class);
+      QueryRelationalTable queryTable = scan.getTable().unwrap(QueryRelationalTable.class);
       Preconditions.checkArgument(dbTable!=null ^ queryTable!=null);
       if (dbTable!=null) {
-        QueryRelationalTable baseTable = dbTable.getRoot().getBase();
-        MaterializationStrategy strategy = baseTable.getMaterialization();
-        if (strategy.isMaterialize()) {
-          PullupOperator.Container pullup = dbTable.getDbPullups();
-          RelBuilder relBuilder = getBuilder(table);
-          relBuilder.push(table);
-          if (!pullup.getNowFilter().isEmpty()) {
-            //TODO: implement as TTL on table
-            pullup.getNowFilter().addFilter(relBuilder);
-          }
-          if (!pullup.getDeduplication().isEmpty()) {
-            //This is taken care of by UPSERTING against the primary key
-          }
-
-          call.transformTo(relBuilder.build());
-        } else {
-          Preconditions.checkArgument(dbTable.isRoot() && !CalciteUtil.isNestedTable(baseTable.getRowType()));
-          call.transformTo(baseTable.getRelNode());
-        }
+        //Do nothing
       }
       if (queryTable!=null) {
         Preconditions.checkArgument(!CalciteUtil.isNestedTable(queryTable.getRowType()));
         MaterializationStrategy strategy = queryTable.getMaterialization();
         if (strategy.isMaterialize()) {
           Preconditions.checkArgument(!StringUtils.isNullOrEmpty(strategy.getPersistedAs()));
-          RelBuilder builder = getBuilder(table);
+          RelBuilder builder = getBuilder(scan);
           call.transformTo(builder.scan(strategy.getPersistedAs()).build());
         } else {
           call.transformTo(queryTable.getRelNode());
@@ -72,6 +53,7 @@ public abstract class DAGExpansionRule extends RelOptRule {
     }
 
   }
+
 
   public static class Write extends DAGExpansionRule {
 

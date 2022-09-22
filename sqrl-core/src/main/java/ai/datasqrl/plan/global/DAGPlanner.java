@@ -129,7 +129,10 @@ public class DAGPlanner {
         List<OptimizedDAG.ReadQuery> readDAG = new ArrayList<>();
         for (QueryNode qNode : Iterables.filter(dag, QueryNode.class)) {
             RelNode expanded = VirtualTableQueryRewriter.updateScan(planner.getRelBuilder(),qNode.query.getRelNode());
+            //Inline pullups on
             expanded = planner.transform(READ_DAG_OPTIMIZATION,expanded);
+
+
             //TODO: Push down filters into queries to determine indexes needed on tables
             readDAG.add(new OptimizedDAG.ReadQuery(qNode.query,expanded));
         }
@@ -309,6 +312,9 @@ public class DAGPlanner {
         }
     }
 
+    /**
+     * Inlines pullups from the base table and removes timestamp columns on nested tables
+     */
     @AllArgsConstructor
     private static class VirtualTableQueryRewriter extends RelShuttleImpl {
 
@@ -322,14 +328,36 @@ public class DAGPlanner {
         @Override
         public RelNode visit(TableScan scan) {
             VirtualRelationalTable vtable = scan.getTable().unwrap(VirtualRelationalTable.class);
-            if (!vtable.isRoot() && vtable.getRoot().getBase().getTimestamp().hasTimestamp()) {
-                //Child tables had their parent timestamp added (if such exists). We need to update table and project that column out
-                relBuilder.scan(vtable.getNameId());
-                CalciteUtil.addIdentityProjection(relBuilder,relBuilder.peek().getRowType().getFieldCount()-1);
-                return relBuilder.build();
+            QueryRelationalTable baseTable = vtable.getRoot().getBase();
+            MaterializationStrategy strategy = baseTable.getMaterialization();
+            if (strategy.isMaterialize()) {
+                relBuilder.push(scan);
             } else {
-                return super.visit(scan);
+                Preconditions.checkArgument(vtable.isRoot() && !CalciteUtil.isNestedTable(baseTable.getRowType()));
+                relBuilder.push(baseTable.getRelNode());
             }
+
+            //Inline pullups
+            if (vtable.isRoot()) {
+                PullupOperator.Container pullup = baseTable.getPullups();
+                if (!pullup.getNowFilter().isEmpty()) {
+                    pullup.getNowFilter().addFilter(relBuilder);
+                    //TODO: implement as TTL on table if materialized
+                }
+                if (!pullup.getDeduplication().isEmpty()) {
+                    if (strategy.isMaterialize()) {
+                        //This is taken care of by UPSERTING against the primary key
+                    } else {
+                        pullup.getDeduplication().addDedup(relBuilder);
+                    }
+                }
+            } else {
+                if (vtable.getRoot().getBase().getTimestamp().hasTimestamp()) {
+                    //Child tables had their parent timestamp added (if such exists). We need to update table and project that column out
+                    CalciteUtil.addIdentityProjection(relBuilder,relBuilder.peek().getRowType().getFieldCount()-1);
+                }
+            }
+            return relBuilder.build();
         }
     }
 

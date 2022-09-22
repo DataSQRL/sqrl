@@ -10,6 +10,7 @@ import ai.datasqrl.physical.database.ddl.SqlDDLStatement;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.flink.plan.FlinkPhysicalPlanner;
 import ai.datasqrl.physical.stream.flink.plan.FlinkStreamPhysicalPlan;
+import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.queries.APIQuery;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,7 @@ public class PhysicalPlanner {
   ImportManager importManager;
   JDBCConnectionProvider dbConnection;
   StreamEngine streamEngine;
+  Planner planner;
 
   public PhysicalPlan plan(OptimizedDAG plan) {
     // 1. Create DDL for materialized tables
@@ -39,7 +41,8 @@ public class PhysicalPlanner {
         .createStreamGraph(plan.getStreamQueries());
 
     // 3. Create SQL queries
-    Map<APIQuery, QueryTemplate> databaseQueries = new QueryBuilder().planQueries(plan.getDatabaseQueries());
+    QueryBuilder queryBuilder = new QueryBuilder(dbConnection.getDialect(),planner.getRelBuilder().getRexBuilder());
+    Map<APIQuery, QueryTemplate> databaseQueries = queryBuilder.planQueries(plan.getDatabaseQueries());
 
     return new PhysicalPlan(dbConnection, statements, streamPlan, databaseQueries);
   }

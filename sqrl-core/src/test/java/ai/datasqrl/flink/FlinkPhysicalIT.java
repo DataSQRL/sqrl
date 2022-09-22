@@ -76,7 +76,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     jdbc = (JDBCConnectionProvider) db;
 
     physicalPlanner = new PhysicalPlanner(importManager, jdbc,
-            sqrlSettings.getStreamEngineProvider().create());
+            sqrlSettings.getStreamEngineProvider().create(), planner);
   }
 
   @Test
@@ -112,10 +112,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
 //    builder.add("OrderCustomerInterval := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
 //            "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH");
 //    rowCounts.put("ordercustomerinterval",4);
-//    builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 5 YEAR");
-//    rowCounts.put("historicorders",rowCounts.get("orders"));
-//    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 WEEK");
-//    rowCounts.put("recentorders",0);
+
 
     Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
 
@@ -151,6 +148,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void aggregateTest() {
     ScriptBuilder builder = example.getImports();
     Map<String,Integer> rowCounts = getImportRowCounts();
@@ -162,12 +160,16 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void filterTest() {
     ScriptBuilder builder = example.getImports();
     Map<String,Integer> rowCounts = getImportRowCounts();
 
-
+    builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 1 YEAR");
+    rowCounts.put("historicorders",rowCounts.get("orders"));
+    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 1 MONTH");
+    rowCounts.put("recentorders",0);
+//    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 SECOND");
+//    rowCounts.put("recentorders",0);
 
     Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
     validateRowCounts(rowCounts, results);
