@@ -121,6 +121,21 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     validateRowCounts(rowCounts, results);
   }
 
+  @Test
+  public void joinTest() {
+    ScriptBuilder builder = example.getImports();
+    Map<String,Integer> rowCounts = getImportRowCounts();
+
+    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");
+    rowCounts.put("ordercustomer",5); //One order joins twice because customer record isn't deduplicated yet
+    builder.add("OrderCustomerInterval := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
+            "AND o.\"time\" <= c.\"_ingest_time\" AND o.\"time\" >= c.\"_ingest_time\" - INTERVAL 1 YEAR");
+    rowCounts.put("ordercustomerinterval",5);
+
+    Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
+    validateRowCounts(rowCounts, results);
+  }
+
   @SneakyThrows
   private void validateRowCounts(Map<String,Integer> rowCounts, Map<String,ResultSet> results) {
     for (Map.Entry<String,ResultSet> res : results.entrySet()) {
@@ -128,7 +143,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
       assertNotNull(numExpectedRows);
       System.out.println("Results for table: " + res.getKey());
       int numRows = ResultSetPrinter.print(res.getValue(), System.out);
-      assertEquals(numRows,numRows);
+      assertEquals(numExpectedRows,numRows,res.getKey());
     }
   }
 

@@ -3,14 +3,17 @@ package ai.datasqrl.physical.stream.flink.plan;
 import ai.datasqrl.plan.calcite.hints.SqrlHint;
 import ai.datasqrl.plan.calcite.hints.WatermarkHint;
 import ai.datasqrl.plan.calcite.table.ImportedSourceTable;
+import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.core.Uncollect;
 import org.apache.calcite.rel.logical.*;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
@@ -20,6 +23,7 @@ import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 import org.apache.flink.table.planner.delegation.StreamPlanner;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -80,11 +84,17 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   @Override
   public RelNode visit(LogicalJoin join) {
-    throw new UnsupportedOperationException("Not yet implemented");
-//    return new LogicalJoin(cluster,
-//            defaultTrait, join.getHints(), join.getLeft().accept(this), join.getRight().accept(this),
-//            join.getCondition(), join.getVariablesSet(), join.getJoinType(), join.isSemiJoinDone(),
-//            (ImmutableList<RelDataTypeField>) join.getSystemFieldList());
+    FlinkRelBuilder relBuilder = getBuilder();
+    RelNode left = join.getLeft().accept(this), right = join.getRight().accept(this);
+    relBuilder.push(left);
+    relBuilder.push(right);
+    JoinRelType joinType = join.getJoinType();
+    if (joinType==JoinRelType.INTERVAL) {
+      //Any other validation we need to do here?
+      joinType = JoinRelType.INNER;
+    }
+    relBuilder.join(joinType,rewrite(join.getCondition(), relBuilder, left, right));
+    return relBuilder.build();
   }
 
   @Override
@@ -170,22 +180,33 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   }
 
   private RexNode rewrite(RexNode node, FlinkRelBuilder relBuilder) {
-    return node.accept(new RexRewriter(relBuilder));
+    return rewrite(node, relBuilder, relBuilder.peek());
   }
 
+  private RexNode rewrite(RexNode node, FlinkRelBuilder relBuilder, RelNode... inputNodes) {
+    Preconditions.checkArgument(inputNodes!=null && inputNodes.length>0);
+    List<RelDataTypeField> fields;
+    if (inputNodes.length==1) {
+      fields = inputNodes[0].getRowType().getFieldList();
+    } else {
+      fields = new ArrayList<>();
+      for (RelNode input : inputNodes) {
+        fields.addAll(input.getRowType().getFieldList());
+      }
+    }
+    return node.accept(new RexRewriter(fields,
+            FlinkPhysicalPlanRewriter.getRexBuilder(relBuilder)));
+  }
+
+  @AllArgsConstructor
   private static class RexRewriter extends RexShuttle {
 
-    private final RelNode input;
+    private final List<RelDataTypeField> inputFields;
     private final FlinkRexBuilder rexBuilder;
-
-    public RexRewriter(FlinkRelBuilder relBuilder) {
-      input = relBuilder.peek();
-      rexBuilder = FlinkPhysicalPlanRewriter.getRexBuilder(relBuilder);
-    }
 
     @Override
     public RexNode visitInputRef(RexInputRef ref) {
-      return rexBuilder.makeInputRef(input,ref.getIndex());
+      return rexBuilder.makeInputRef(inputFields.get(ref.getIndex()).getType(),ref.getIndex());
     }
   }
 
