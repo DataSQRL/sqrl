@@ -103,7 +103,7 @@ public class DAGPlanner {
                 RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
                 RelNode expandedScan = scanTable.accept(sqrl2sql);
                 SQRLLogicalPlanConverter.ProcessedRel processedRel = sqrl2sql.getRelHolder(expandedScan);
-                processedRel = sqrl2sql.postProcess(processedRel);
+                processedRel = sqrl2sql.postProcess(processedRel, dbTable.getRowType().getFieldNames());
                 dbTable.setDbPullups(processedRel.getPullups());
                 expandedScan = processedRel.getRelNode();
                 expandedScan = planner.transform(WRITE_DAG_OPTIMIZATION,expandedScan);

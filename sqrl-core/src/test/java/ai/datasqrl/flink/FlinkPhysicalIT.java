@@ -6,6 +6,7 @@ import ai.datasqrl.config.EnvironmentConfiguration;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
+import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.name.Name;
@@ -32,15 +33,13 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class FlinkPhysicalIT extends AbstractSQRLIT {
 
@@ -57,12 +56,15 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   @BeforeEach
   public void setup() throws IOException {
     error = ErrorCollector.root();
-    initialize(IntegrationTestSettings.getFlinkWithDB(true));
+    initialize(IntegrationTestSettings.getFlinkWithDB(false));
     example = C360.BASIC;
     example.registerSource(env);
 
     ImportManager importManager = sqrlSettings.getImportManagerProvider()
         .createImportManager(env.getDatasetRegistry());
+    ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
+    assertTrue(
+            importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
     planner = new PlannerFactory(
         CalciteSchema.createRootSchema(false, false).plus()).createPlanner();
     Session session = new Session(error, importManager, planner);
@@ -86,7 +88,6 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void fullTest() {
     ScriptBuilder builder = example.getImports();
     Map<String,Integer> rowCounts = new HashMap<>(example.getTableCounts());

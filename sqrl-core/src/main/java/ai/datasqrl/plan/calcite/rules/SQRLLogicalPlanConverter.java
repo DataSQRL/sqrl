@@ -99,7 +99,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
      * @param input
      * @return
      */
-    public ProcessedRel postProcess(ProcessedRel input) {
+    public ProcessedRel postProcess(ProcessedRel input, List<String> fieldNames) {
+        Preconditions.checkArgument(fieldNames.size()==input.indexMap.getSourceLength());
         ContinuousIndexMap indexMap = input.indexMap;
         HashMap<Integer,Integer> remapping = new HashMap<>();
         int index = 0;
@@ -119,6 +120,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         }
 
         Preconditions.checkArgument(index<=indexMap.getTargetLength() && remapping.size() == index);
+        IndexMap remap = IndexMap.of(remapping);
+        ContinuousIndexMap updatedIndexMap = input.indexMap.remap(remap);
         List<RexNode> projects = new ArrayList<>(indexMap.getTargetLength());
         remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(),e.getValue()))
                 .sorted((a, b)-> Integer.compare(a.getTarget(),b.getTarget()))
@@ -126,13 +129,16 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             projects.add(p.getTarget(),RexInputRef.of(p.getSource(),
                     input.relNode.getRowType()));
         });
-        IndexMap remap = IndexMap.of(remapping);
+        List<String> updatedFieldNames = Arrays.asList(new String[projects.size()]);
+        for (int i = 0; i < fieldNames.size(); i++) {
+            updatedFieldNames.set(updatedIndexMap.map(i),fieldNames.get(i));
+        }
         RelBuilder relBuilder = relBuilderFactory.get();
         relBuilder.push(input.relNode);
-        relBuilder.project(projects);
+        relBuilder.project(projects, updatedFieldNames);
 
         return new ProcessedRel(relBuilder.build(),input.type,input.primaryKey.remap(remap),
-                input.timestamp.remapIndexes(remap), input.indexMap.remap(remap), null,
+                input.timestamp.remapIndexes(remap), updatedIndexMap, null,
                 input.nowFilter.remap(remap), input.dedup.remap(remap));
     }
 

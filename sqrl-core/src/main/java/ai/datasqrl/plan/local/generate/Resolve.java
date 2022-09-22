@@ -328,6 +328,7 @@ public class Resolve {
   }
 
   public SQRLLogicalPlanConverter.ProcessedRel optimize(Env env, StatementOp op) {
+    List<String> fieldNames = op.relNode.getRowType().getFieldNames();
 //    System.out.println("LP$0: \n" + op.relNode.explain());
 
     //Step 1: Push filters into joins so we can correctly identify self-joins
@@ -342,7 +343,7 @@ public class Resolve {
     SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(getRelBuilderFactory(env));
     relNode = relNode.accept(sqrl2sql);
 //    System.out.println("LP$2: \n" + relNode.explain());
-    SQRLLogicalPlanConverter.ProcessedRel prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode));
+    SQRLLogicalPlanConverter.ProcessedRel prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode),fieldNames);
 //    System.out.println("LP$3: \n" + prel.getRelNode().explain());
     return prel;
   }
