@@ -2,6 +2,8 @@ package ai.datasqrl.api;
 
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
+import ai.datasqrl.config.server.HandlerUtil;
+import ai.datasqrl.config.server.SourceHandler;
 import ai.datasqrl.environment.ScriptDeployment;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.server.ApiVerticle;
@@ -25,6 +27,7 @@ import ai.datasqrl.util.data.BookClub;
 import com.google.common.collect.ImmutableSet;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -47,6 +50,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import ai.datasqrl.config.server.*;
 
 @ExtendWith(VertxExtension.class)
 public class APIServerIT extends AbstractSQRLIT {
@@ -57,7 +63,47 @@ public class APIServerIT extends AbstractSQRLIT {
   void deploy_verticle(Vertx vertx, VertxTestContext testContext) {
     initialize(IntegrationTestSettings.getInMemory(false));
 
-    vertx.deployVerticle(new ApiVerticle(env), testContext.succeedingThenComplete());
+    //String JSONResponse = "[{\"sources\":[\"testSource1\",\"testSource2\"]}]";
+
+    String JSONErrorOpenAPI = "[{\"message\":\"Column `id` ambiguous\","
+                              + "\"severity\":\"fatal\","
+                              + "\"location\":{"
+                              + "\"prefix\":\"file://\","
+                              + "\"path\":\"example/example.sqrl\","
+                              + "\"file\":{"
+                              + "\"line\":10,"
+                              + "\"offset\":42"
+                              + "}}}]";
+
+    String JSONErrorExtended = "[{\"message\":\"Column `id` ambiguous\","
+                              + "\"severity\":\"fatal\","
+                              + "\"location\":{"
+                              + "\"prefix\":\"file://\","
+                              + "\"path\":\"example/example.sqrl\","
+                              + "\"file\":{"
+                              + "\"line\":10,"
+                              + "\"offset\":7,"
+                              + "\"context\": {"
+                              + "\"text\": \"SELECT id, lastName, price, quantity, sku FROM customers c JOIN orders o ON c.orderNo = o.orderNo\","
+                              + "\"highlight_start\": 7,"
+                              + "\"highlight_end\": 9"
+                              + "}}}}]";
+
+    System.out.println("Mocked JSON response:\n"
+        + JSONErrorExtended);
+
+    SourceHandler sourceHandler = mock(SourceHandler.class);
+    when(sourceHandler.get()).thenReturn(routingContext -> {
+      routingContext
+          .response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json; charset=UTF-8")
+          .end(JSONErrorExtended);
+    });
+
+    vertx.deployVerticle(new ApiVerticle(env, sourceHandler),  testContext.succeeding(id -> {
+      System.out.println("Ready to accept requests");
+    }));
   }
 
   final BookClub bookClub = BookClub.INSTANCE;
@@ -569,7 +615,7 @@ public class APIServerIT extends AbstractSQRLIT {
     testContext.completeNow();
   }
 
-//    @Test
+   @Test
 
   /**
    * This runs the server for external testing from command line. Do not include in normal test
@@ -579,11 +625,34 @@ public class APIServerIT extends AbstractSQRLIT {
 //        registry.addOrUpdateSource(fileConfig,new ProcessMessage.ProcessBundle<>());
 //        assertNotNull(registry.getDataset(dsName));
 
-    vertx.deployVerticle(new ApiVerticle(env), testContext.succeeding(id -> {
-      System.out.println("Ready to accept requests");
-    }));
+     // can't unmarshal
+     // String JSONResponse = "{\"sources\":[{\"sourceType\":\"localDir\",\"uri\":\"path/to/dir\"}]}";
 
-    testContext.awaitCompletion(120, TimeUnit.SECONDS);
+//     when(sourceHandler.getSourceByName()).thenReturn(routingContext -> {
+//       routingContext
+//           .response()
+//           .setStatusCode(201)
+//           .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+//           .end("{\"testGetSBN\":true}");
+//     });
+
+     // not going to work w/o changing ApiVerticle.java
+//     DeploymentHandler deployHandler = mock(DeploymentHandler.class);
+//
+//     when(deployHandler.deploy()).thenReturn(routingContext -> {
+//       routingContext
+//           .response()
+//           .setStatusCode(201)
+//           .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+//           .end("{ \"testDeploy\":true}");
+//     });
+
+
+//    vertx.deployVerticle(new ApiVerticle(env, sourceHandler), testContext.succeeding(id -> {
+//      System.out.println("Ready to accept requests");
+//    }));
+
+    testContext.awaitCompletion(10000000, TimeUnit.SECONDS);
   }
 
 }

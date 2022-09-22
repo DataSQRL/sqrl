@@ -11,6 +11,7 @@ import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.parse.tree.name.Name;
 import io.vertx.core.Handler;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -48,14 +49,14 @@ public class SourceHandler {
     };
   }
 
-  Handler<RoutingContext> get() {
+  public Handler<RoutingContext> get() {
     return routingContext -> {
       HandlerUtil.returnResult(routingContext,
           HandlerUtil.getJsonArray(registry.getDatasets(), SourceHandler::source2Json));
     };
   }
 
-  Handler<RoutingContext> getSourceByName() {
+  public Handler<RoutingContext> getSourceByName() {
     return routingContext -> {
       SourceDataset ds = getDataset(routingContext);
       if (ds != null) {
