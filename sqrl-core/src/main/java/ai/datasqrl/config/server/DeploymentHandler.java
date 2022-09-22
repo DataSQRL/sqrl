@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
+public
 class DeploymentHandler {
 
   private final Environment environment;

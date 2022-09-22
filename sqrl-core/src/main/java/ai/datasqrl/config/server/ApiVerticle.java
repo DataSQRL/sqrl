@@ -31,19 +31,25 @@ public class ApiVerticle extends AbstractVerticle {
   );
 
   static final int VALIDATION_ERR_CODE = 400;
+  private final SourceHandler sourceHandler;
 
   private HttpServer server;
 
   private final Environment environment;
   private final int port = DEFAULT_PORT;
 
-  public ApiVerticle(Environment environment) {
+//  public ApiVerticle(Environment environment) {
+//    this.environment = environment;
+//    sourceHandler = new SourceHandler(environment.getDatasetRegistry());
+//  }
+
+  public ApiVerticle(Environment environment, SourceHandler sourceHandler) {
     this.environment = environment;
+    this.sourceHandler = sourceHandler;
   }
 
   @Override
   public void start(Promise<Void> startPromise) {
-    SourceHandler sourceHandler = new SourceHandler(environment.getDatasetRegistry());
     SinkHandler sinkHandler = new SinkHandler(environment.getDataSinkRegistry());
     DeploymentHandler deployHandler = new DeploymentHandler(environment);
     RouterBuilder.create(this.vertx, "datasqrl-openapi.yml")
@@ -102,7 +108,7 @@ public class ApiVerticle extends AbstractVerticle {
             });
           }
           server = vertx.createHttpServer(
-              new HttpServerOptions().setPort(port).setHost("localhost"));
+              new HttpServerOptions().setPort(port).setHost("0.0.0.0"));
           server.requestHandler(router).listen();
           startPromise.complete();
         })
