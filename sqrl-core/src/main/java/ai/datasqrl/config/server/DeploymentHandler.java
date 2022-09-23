@@ -42,27 +42,29 @@ class DeploymentHandler {
       // end go testing
       ScriptDeployment.Result result = environment.deployScript(bundleConfig, errors);
       if (errors.isFatal() || result == null) {
-//        for go testing, doesn't work
-//        routingContext.setBody(Buffer.buffer("[{\"message\":\"Column `id` ambiguous\","
-//            + "\"severity\":\"fatal\","
-//            + "\"location\":{"
-//            + "\"prefix\":\"file://\","
-//            + "\"path\":\"example/example.sqrl\","
-//            + "\"file\":{"
-//            + "\"line\":10,"
-//            + "\"offset\":42"
-//            + "}}}]"));
-        routingContext.fail(405, new Exception(errors.combineMessages(ErrorMessage.Severity.FATAL,
-           "Provided bundle has the following validation errors:\n", "\n")));
-        routingContext.setBody(Buffer.buffer("[{\"message\":\"Column `id` ambiguous\","
+        // original code, commented for testing
+//        routingContext.fail(405, new Exception(errors.combineMessages(ErrorMessage.Severity.FATAL,
+//           "Provided bundle has the following validation errors:\n", "\n")));
+        // for go testing - run with sqrl deploy [script] in main.go
+        String JSONErrorExtended = "[{\"message\":\"Column `id` ambiguous\","
             + "\"severity\":\"fatal\","
             + "\"location\":{"
             + "\"prefix\":\"file://\","
             + "\"path\":\"example/example.sqrl\","
             + "\"file\":{"
             + "\"line\":10,"
-            + "\"offset\":42"
-            + "}}}]"));
+            + "\"offset\":7,"
+            + "\"context\": {"
+            + "\"text\": \"SELECT id, lastName, price, quantity, sku FROM customers c JOIN orders o ON c.orderNo = o.orderNo\","
+            + "\"highlight_start\": 7,"
+            + "\"highlight_end\": 9"
+            + "}}}}]";
+        routingContext
+            .response()
+            .setStatusCode(405)
+            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .end(JSONErrorExtended);
+        // end go testing
       } else {
         JsonObject jsonResult = deploymentResult2Json(result);
         routingContext

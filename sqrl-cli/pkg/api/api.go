@@ -174,6 +174,7 @@ func DisplayError(results []Payload) {
 			}
 		} else {
 			fmt.Print("\n")
+
 		}
 	}
 }
