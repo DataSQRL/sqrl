@@ -1,16 +1,16 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/DataSQRL/datasqrl/cli/pkg/api"
 	"github.com/fatih/color"
-	"github.com/spf13/cobra"
 )
 
-func displayError(results []api.Payload, cmd *cobra.Command, toStringFct func(result api.Payload) string) {
+func DisplayError(results []api.Payload) {
+
+	// error message - text color based on severity
 
 	for _, result := range results {
-
-		// error message - text color based on severity
 
 		switch result["severity"] {
 		case "fatal":
@@ -26,21 +26,27 @@ func displayError(results []api.Payload, cmd *cobra.Command, toStringFct func(re
 
 		// file path, line, and offset
 
-		cmd.Printf("At: %v%v %v:%v\n",
-			result["location"].(map[string]interface{})["prefix"],
-			result["location"].(map[string]interface{})["path"],
-			result["location"].(map[string]interface{})["file"].(map[string]interface{})["line"],
-			result["location"].(map[string]interface{})["file"].(map[string]interface{})["offset"])
+		if result["location"] != nil {
+
+			fmt.Printf("At: %v%v %v:%v\n",
+				result["location"].(map[string]interface{})["prefix"],
+				result["location"].(map[string]interface{})["path"],
+				result["location"].(map[string]interface{})["file"].(map[string]interface{})["line"],
+				result["location"].(map[string]interface{})["file"].(map[string]interface{})["offset"])
+		}
 
 		// highlighting
 
-		hStart := int(result["location"].(map[string]interface{})["file"].(map[string]interface{})["context"].(map[string]interface{})["highlight_start"].(float64))
-		hEnd := int(result["location"].(map[string]interface{})["file"].(map[string]interface{})["context"].(map[string]interface{})["highlight_end"].(float64))
-		text := result["location"].(map[string]interface{})["file"].(map[string]interface{})["context"].(map[string]interface{})["text"].(string)
+		if result["location"].(map[string]interface{})["file"].(map[string]interface{})["context"] != nil {
 
-		cmd.Print(text[:hStart])
-		h := color.New(color.FgHiYellow, color.Bold, color.Underline)
-		h.Print(text[hStart:hEnd])
-		cmd.Print(text[hEnd:] + "\n")
+			hStart := int(result["location"].(map[string]interface{})["file"].(map[string]interface{})["context"].(map[string]interface{})["highlight_start"].(float64))
+			hEnd := int(result["location"].(map[string]interface{})["file"].(map[string]interface{})["context"].(map[string]interface{})["highlight_end"].(float64))
+			text := result["location"].(map[string]interface{})["file"].(map[string]interface{})["context"].(map[string]interface{})["text"].(string)
+
+			fmt.Print(text[:hStart])
+			h := color.New(color.FgHiYellow, color.Bold, color.Underline)
+			h.Print(text[hStart:hEnd])
+			fmt.Print(text[hEnd:] + "\n")
+		}
 	}
 }

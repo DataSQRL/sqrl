@@ -9,13 +9,14 @@ import lombok.Value;
 
 @Value
 @JsonSerialize(as = ErrorLocation.class)
+public
 class ErrorLocationImpl implements ErrorLocation {
 
   private final String prefix;
   private final String[] names;
   private final File file;
 
-  private ErrorLocationImpl(String prefix, File file, @NonNull String... names) {
+  public ErrorLocationImpl(String prefix, File file, @NonNull String... names) {
     this.prefix = prefix;
     this.names = names;
     this.file = file;

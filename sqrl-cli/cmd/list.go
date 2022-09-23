@@ -55,7 +55,7 @@ If additional argument names are provided, only sources with those names are sho
 			return err
 		}
 		//displayResults(results, args, cmd, getNameFunction("sourceName"), payload2StringTopLevel)
-		displayError(results, cmd, payload2StringTopLevel)
+		DisplayError(results)
 		return nil
 	},
 }

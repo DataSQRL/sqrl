@@ -653,6 +653,7 @@ public class APIServerIT extends AbstractSQRLIT {
 //    }));
 
     testContext.awaitCompletion(10000000, TimeUnit.SECONDS);
+    testContext.completeNow();
   }
 
 }

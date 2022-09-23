@@ -1,5 +1,9 @@
 package ai.datasqrl.config.server;
 
+import ai.datasqrl.config.error.ErrorLocation;
+import ai.datasqrl.config.error.ErrorLocation.File;
+import ai.datasqrl.config.error.ErrorLocationImpl;
+import ai.datasqrl.config.error.ErrorMessage.Severity;
 import ai.datasqrl.environment.Environment;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.error.ErrorMessage;
@@ -7,6 +11,7 @@ import ai.datasqrl.config.scripts.ScriptBundle.Config;
 import ai.datasqrl.config.util.StringNamedId;
 import ai.datasqrl.environment.ScriptDeployment;
 import io.vertx.core.Handler;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -30,10 +35,34 @@ class DeploymentHandler {
       JsonObject bundleJson = params.body().getJsonObject();
       Config bundleConfig = bundleJson.mapTo(Config.class);
       ErrorCollector errors = ErrorCollector.root();
+      // for go testing - doesn't work
+//      ErrorLocation testLoc = new ErrorLocationImpl("file://", new File(10, 7), "example.sqrl");
+//      ErrorMessage testMsg = new ErrorMessage.Implementation("Column `id` ambiguous", testLoc, Severity.FATAL);
+//      errors.add(testMsg);
+      // end go testing
       ScriptDeployment.Result result = environment.deployScript(bundleConfig, errors);
       if (errors.isFatal() || result == null) {
+//        for go testing, doesn't work
+//        routingContext.setBody(Buffer.buffer("[{\"message\":\"Column `id` ambiguous\","
+//            + "\"severity\":\"fatal\","
+//            + "\"location\":{"
+//            + "\"prefix\":\"file://\","
+//            + "\"path\":\"example/example.sqrl\","
+//            + "\"file\":{"
+//            + "\"line\":10,"
+//            + "\"offset\":42"
+//            + "}}}]"));
         routingContext.fail(405, new Exception(errors.combineMessages(ErrorMessage.Severity.FATAL,
-            "Provided bundle has the following validation errors:\n", "\n")));
+           "Provided bundle has the following validation errors:\n", "\n")));
+        routingContext.setBody(Buffer.buffer("[{\"message\":\"Column `id` ambiguous\","
+            + "\"severity\":\"fatal\","
+            + "\"location\":{"
+            + "\"prefix\":\"file://\","
+            + "\"path\":\"example/example.sqrl\","
+            + "\"file\":{"
+            + "\"line\":10,"
+            + "\"offset\":42"
+            + "}}}]"));
       } else {
         JsonObject jsonResult = deploymentResult2Json(result);
         routingContext

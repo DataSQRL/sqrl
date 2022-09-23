@@ -5,10 +5,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/PuerkitoBio/purell"
+	"github.com/fatih/color"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 type Payload map[string]interface{}
@@ -24,7 +27,7 @@ func GetFromAPI(cfg *ClientConfig, resource string) (Payload, error) {
 	if err != nil {
 		return nil, err
 	}
-	return response2JsonObject(body)
+	return Response2JsonObject(body)
 }
 
 func GetMultipleFromAPI(cfg *ClientConfig, resource string) ([]Payload, error) {
@@ -63,10 +66,10 @@ func Post2API(cfg *ClientConfig, resource string, payload Payload) (Payload, err
 	if err != nil {
 		return nil, err
 	}
-	return response2JsonObject(body)
+	return Response2JsonObject(body)
 }
 
-func response2JsonObject(body []byte) (Payload, error) {
+func Response2JsonObject(body []byte) (Payload, error) {
 	var result Payload
 	err := json.Unmarshal(body, &result)
 
@@ -114,6 +117,8 @@ func executeRequest(cfg *ClientConfig, request *http.Request) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		result, _ := response2JsonArray(message)
+		DisplayError(result)
 		return nil, errors.New("Error Calling Server API:\n" + string(message))
 	}
 	body, err := ioutil.ReadAll(response.Body)
@@ -122,4 +127,53 @@ func executeRequest(cfg *ClientConfig, request *http.Request) ([]byte, error) {
 		return nil, err
 	}
 	return body, nil
+}
+
+func DisplayError(results []Payload) {
+
+	for _, result := range results {
+
+		// error message - text color based on severity
+		switch strings.ToLower(result["severity"].(string)) {
+		case "fatal":
+			c := color.New(color.FgHiRed, color.Bold)
+			c.Println("Error: " + result["message"].(string))
+		case "warning":
+			c := color.New(color.FgHiYellow, color.Bold)
+			c.Println("Warning: " + result["message"].(string))
+		case "information":
+			c := color.New(color.FgBlue, color.Bold)
+			c.Println("Info: " + result["message"].(string))
+		}
+
+		// file path
+		if result["location"] != nil {
+			fmt.Printf("At: %v%v ",
+				result["location"].(map[string]interface{})["prefix"],
+				result["location"].(map[string]interface{})["path"])
+
+		}
+
+		// line and offset
+		if result["location"].(map[string]interface{})["file"] != nil {
+			fmt.Printf("%v:%v\n",
+				result["location"].(map[string]interface{})["file"].(map[string]interface{})["line"],
+				result["location"].(map[string]interface{})["file"].(map[string]interface{})["offset"])
+
+			// context and highlighting
+			if result["location"].(map[string]interface{})["file"].(map[string]interface{})["context"] != nil {
+
+				hStart := int(result["location"].(map[string]interface{})["file"].(map[string]interface{})["context"].(map[string]interface{})["highlight_start"].(float64))
+				hEnd := int(result["location"].(map[string]interface{})["file"].(map[string]interface{})["context"].(map[string]interface{})["highlight_end"].(float64))
+				text := result["location"].(map[string]interface{})["file"].(map[string]interface{})["context"].(map[string]interface{})["text"].(string)
+
+				fmt.Print(text[:hStart])
+				h := color.New(color.FgHiYellow, color.Bold, color.Underline)
+				h.Print(text[hStart:hEnd])
+				fmt.Print(text[hEnd:] + "\n")
+			}
+		} else {
+			fmt.Print("\n")
+		}
+	}
 }
