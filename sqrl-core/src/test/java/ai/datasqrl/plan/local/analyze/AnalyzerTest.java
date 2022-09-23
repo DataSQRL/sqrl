@@ -1,9 +1,5 @@
 package ai.datasqrl.plan.local.analyze;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
@@ -19,8 +15,6 @@ import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.util.data.C360;
-import java.io.IOException;
-import java.math.BigDecimal;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.logical.LogicalProject;
@@ -34,6 +28,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class AnalyzerTest extends AbstractSQRLIT {
 
@@ -120,7 +119,7 @@ class AnalyzerTest extends AbstractSQRLIT {
 
   @Test
   public void importWithTimestamp() {
-    Env env1 = generate(parser.parse("IMPORT ecommerce-data.Customer TIMESTAMP customerid AS c_ts;"));
+    Env env1 = generate(parser.parse("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time AS c_ts;"));
     SQRLTable sqrlTable = (SQRLTable) env1.getSqrlSchema().getTable("Customer", false).getTable();
     assertTrue(sqrlTable.getField(Name.system("c_ts")).isPresent(), "Timestamp column missing");
   }
