@@ -4,21 +4,16 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.config.engines.JDBCConfiguration.Dialect;
-import ai.datasqrl.util.PropertiesUtil;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.Properties;
-
 import com.google.common.base.Preconditions;
-import org.testcontainers.containers.GenericContainer;
+import java.util.Properties;
+import lombok.Getter;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
-import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.utility.DockerImageName;
 
-public class JDBCTestDatabase implements DatabaseHandle{
+public class JDBCTestDatabase implements DatabaseHandle {
 
   private final Properties properties;
+  @Getter
   private final PostgreSQLContainer postgreSQLContainer;
 
   public JDBCTestDatabase(IntegrationTestSettings.DatabaseEngine dbType) {

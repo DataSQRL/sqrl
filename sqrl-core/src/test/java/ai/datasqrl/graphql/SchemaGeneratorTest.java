@@ -8,7 +8,7 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.graphql2.generate.SchemaGenerator;
+import ai.datasqrl.graphql.generate.SchemaGenerator;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;

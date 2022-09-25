@@ -11,40 +11,32 @@ import org.junit.jupiter.api.AfterEach;
 
 public abstract class AbstractSQRLIT {
 
-    private DatabaseHandle database = null;
-    public SqrlSettings sqrlSettings = null;
-    public Environment env = null;
-    public DatasetRegistry sourceRegistry = null;
-    public DataSinkRegistry sinkRegistry = null;
+  public DatabaseHandle database = null;
+  public SqrlSettings sqrlSettings = null;
+  public Environment env = null;
+  public DatasetRegistry sourceRegistry = null;
+  public DataSinkRegistry sinkRegistry = null;
 
-    @AfterEach
-    public void tearDown() {
-        if (database!=null) {
-            database.cleanUp();
-            database = null;
-        }
-        if (env!=null) {
-            env.close();
-            env = null;
-            sourceRegistry = null;
-            sinkRegistry = null;
-        }
+  @AfterEach
+  public void tearDown() {
+    if (database != null) {
+      database.cleanUp();
+      database = null;
     }
-
-    protected void initialize(IntegrationTestSettings settings) {
-        Pair<DatabaseHandle, SqrlSettings> setup = settings.getSqrlSettings();
-        sqrlSettings = setup.getRight();
-        database = setup.getLeft();
-        env = Environment.create(sqrlSettings);
-        sourceRegistry = env.getDatasetRegistry();
-        sinkRegistry = env.getDataSinkRegistry();
+    if (env != null) {
+      env.close();
+      env = null;
+      sourceRegistry = null;
+      sinkRegistry = null;
     }
+  }
 
-
-
-
-
-
-
-
+  protected void initialize(IntegrationTestSettings settings) {
+    Pair<DatabaseHandle, SqrlSettings> setup = settings.getSqrlSettings();
+    sqrlSettings = setup.getRight();
+    database = setup.getLeft();
+    env = Environment.create(sqrlSettings);
+    sourceRegistry = env.getDatasetRegistry();
+    sinkRegistry = env.getDataSinkRegistry();
+  }
 }

@@ -1,6 +1,4 @@
-package ai.datasqrl.graphql;
-
-import static graphql.schema.FieldCoordinates.coordinates;
+package ai.datasqrl.graphql.inference;
 
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.SQRLTable;
@@ -9,12 +7,9 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.language.ScalarTypeDefinition;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
-import graphql.schema.DataFetcher;
-import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLSchema.Builder;
-import graphql.schema.idl.ScalarInfo;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.HashSet;
 import java.util.Map;
@@ -81,24 +76,12 @@ public class SchemaAnalyzer {
   }
 
   private void processAdditionalType(String key, ScalarTypeDefinition value) {
-    AdditionalTypeResolver typeResolver = new AdditionalTypeResolver();
-    GraphQLScalarType scalar = typeResolver.resolve(value);
+//    AdditionalTypeResolver typeResolver = new AdditionalTypeResolver();
+//    GraphQLScalarType scalar = typeResolver.resolve(value);
     //Ignore built in types
-    if (!ScalarInfo.GRAPHQL_SPECIFICATION_SCALARS_DEFINITIONS.containsKey(key)) {
-      schemaBuilder.additionalType(scalar);
-    }
-  }
-
-  class QueryDataFetcher {
-    GraphQLCodeRegistry codeRegistry = GraphQLCodeRegistry.newCodeRegistry()
-        .dataFetcher(
-            coordinates("ObjectType", "description"),
-            (DataFetcher<Object[]>) dataFetchingEnvironment -> {
-              return null;
-            })
-//            PropertyDataFetcher.fetching("desc"))
-        .build();
-
+//    if (!ScalarInfo.GRAPHQL_SPECIFICATION_SCALARS_DEFINITIONS.containsKey(key)) {
+//      schemaBuilder.additionalType(scalar);
+//    }
   }
 
   @Value

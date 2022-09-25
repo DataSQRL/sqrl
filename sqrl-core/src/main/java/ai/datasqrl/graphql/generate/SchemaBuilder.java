@@ -1,4 +1,4 @@
-package ai.datasqrl.graphql2.generate;
+package ai.datasqrl.graphql.generate;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Relationship.Multiplicity;

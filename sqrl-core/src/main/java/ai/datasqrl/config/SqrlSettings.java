@@ -5,7 +5,6 @@ import ai.datasqrl.config.metadata.InMemoryMetadataStore;
 import ai.datasqrl.config.metadata.JDBCMetadataStore;
 import ai.datasqrl.config.provider.*;
 import ai.datasqrl.config.serializer.KryoProvider;
-import ai.datasqrl.graphql.execution.SqlClientProvider;
 import ai.datasqrl.io.sinks.registry.MetadataSinkRegistryPersistence;
 import ai.datasqrl.io.sources.dataset.MetadataSourceRegistryPersistence;
 import ai.datasqrl.io.sources.dataset.SourceTableMonitorImpl;
@@ -34,8 +33,6 @@ public class SqrlSettings {
   EnvironmentPersistenceProvider environmentPersistenceProvider;
   SourceTableMonitorProvider sourceTableMonitorProvider;
   TableStatisticsStoreProvider tableStatisticsStoreProvider;
-
-  SqlClientProvider sqlClientProvider;
 
   public static SqrlSettings fromConfiguration(GlobalConfiguration config) {
     return builderFromConfiguration(config).build();

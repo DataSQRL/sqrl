@@ -1,6 +1,6 @@
-package ai.datasqrl.graphql2.generate;
+package ai.datasqrl.graphql.generate;
 
-import ai.datasqrl.graphql2.generate.SchemaBuilder.ObjectTypeBuilder;
+import ai.datasqrl.graphql.generate.SchemaBuilder.ObjectTypeBuilder;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
