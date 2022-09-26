@@ -1,6 +1,7 @@
 package ai.datasqrl.graphql;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
@@ -9,7 +10,8 @@ import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.ScriptBundle.Config;
 import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.graphql.inference.SchemaAnalyzer;
+import ai.datasqrl.graphql.inference.SchemaInference;
+import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.plan.calcite.Planner;
@@ -68,16 +70,15 @@ class SchemaAnalyzerTest extends AbstractSQRLIT {
     ScriptNode node = parser.parse(bundle.getMainScript().getContent());
     Env env2 = resolve.planDag(session, node);
 
-    SchemaAnalyzer analyzer = new SchemaAnalyzer(env2);
-
     String gql = Files.readString(Path.of("../sqml-examples/starwars")
         .resolve("starwars.graphql"));
 
     TypeDefinitionRegistry typeDefinitionRegistry =
         (new SchemaParser()).parse(gql);
-//    SchemaGenerator.Options.defaultOptions();
 
-    analyzer.walkSchema(typeDefinitionRegistry);
+    SchemaInference inference = new SchemaInference();
+    Root root = inference.visitTypeDefinitionRegistry(typeDefinitionRegistry, env2);
+    assertNotNull(root);
   }
 
   @SneakyThrows

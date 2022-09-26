@@ -89,6 +89,7 @@ public class Model {
 
   @Builder
   public static class ArgumentSet {
+    //The may be empty for no-args
     @Singular
     Set<Argument> arguments;
     QueryBase query;

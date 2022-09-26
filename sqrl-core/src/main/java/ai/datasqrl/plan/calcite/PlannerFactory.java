@@ -24,7 +24,7 @@ public class PlannerFactory {
       .withSqlConformance(SqrlConformance.INSTANCE)
       ;
 
-  final SqlToRelConverter.Config sqlToRelConverterConfig = SqlToRelConverter
+  public static final SqlToRelConverter.Config sqlToRelConverterConfig = SqlToRelConverter
       .config()
       .withExpand(false)
       .withDecorrelationEnabled(false)
