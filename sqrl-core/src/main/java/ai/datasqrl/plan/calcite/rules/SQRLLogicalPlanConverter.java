@@ -334,16 +334,17 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         rawInput = extractTopNConstraint(rawInput, logicalProject);
 
 
-        ContinuousIndexMap trivialMap = getTrivialMapping(logicalProject, rawInput.indexMap);
-        if (trivialMap!=null) {
-            //If it's a trivial project, we remove it and only update the indexMap
-            return setRelHolder(new ProcessedRel(rawInput.relNode,rawInput.type,rawInput.primaryKey, rawInput.timestamp,
-                    trivialMap, rawInput.joinTables, rawInput.nowFilter, rawInput.dedup));
-        }
+//        ContinuousIndexMap trivialMap = getTrivialMapping(logicalProject, rawInput.indexMap);
+//        if (trivialMap!=null) {
+//            //If it's a trivial project, we remove it and only update the indexMap
+//            return setRelHolder(new ProcessedRel(rawInput.relNode,rawInput.type,rawInput.primaryKey, rawInput.timestamp,
+//                    trivialMap, rawInput.joinTables, rawInput.nowFilter, rawInput.dedup));
+//        }
         ProcessedRel input = rawInput.inlineDedup();
         Preconditions.checkArgument(input.dedup.isEmpty());
         //Update index mappings
         List<RexNode> updatedProjects = new ArrayList<>();
+        List<String> updatedNames = new ArrayList<>();
         //We only keep track of the first mapped project and consider it to be the "preserving one" for primary keys and timestamps
         Map<Integer,Integer> mappedProjects = new HashMap<>();
         List<TimestampHolder.Candidate> timeCandidates = new ArrayList<>();
@@ -351,6 +352,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         for (Ord<RexNode> exp : Ord.<RexNode>zip(logicalProject.getProjects())) {
             RexNode mapRex = SqrlRexUtil.mapIndexes(exp.e,input.indexMap);
             updatedProjects.add(exp.i,mapRex);
+            updatedNames.add(exp.i,logicalProject.getRowType().getFieldNames().get(exp.i));
             int originalIndex = -1;
             if (mapRex instanceof RexInputRef) { //Direct mapping
                 originalIndex = (((RexInputRef) mapRex)).getIndex();
@@ -392,6 +394,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 //Need to add it
                 int index = updatedProjects.size();
                 updatedProjects.add(index,RexInputRef.of(p.getTarget(),input.relNode.getRowType()));
+                updatedNames.add(null);
                 primaryKey.add(index);
             }
         }
@@ -403,6 +406,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 //Need to add candidate
                 int index = updatedProjects.size();
                 updatedProjects.add(index,RexInputRef.of(candidate.getIndex(),input.relNode.getRowType()));
+                updatedNames.add(null);
                 timeCandidates.add(candidate.withIndex(index));
             } else {
                 timeCandidates.add(candidate.withIndex(target));
@@ -419,7 +423,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         //Build new project
         RelBuilder relB = relBuilderFactory.get();
         relB.push(input.relNode);
-        relB.project(updatedProjects);
+        relB.project(updatedProjects,updatedNames);
         RelNode newProject = relB.build();
         int fieldCount = updatedProjects.size();
         return setRelHolder(new ProcessedRel(newProject,input.type,primaryKey.build(fieldCount),
@@ -664,7 +668,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         if (input.type == TableType.STREAM && input.getRelNode() instanceof LogicalProject) {
             //Determine if one of the groupBy keys is a timestamp
             TimestampHolder.Candidate keyCandidate = null;
-            int keyIdx = -1, inputColIdx = -1;
+            int keyIdx = -1;
             for (int i = 0; i < groupByIdx.size(); i++) {
                 int idx = groupByIdx.get(i);
                 Optional<TimestampHolder.Candidate> candidate = input.timestamp.getCandidateByIndex(idx);
@@ -672,12 +676,12 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     Preconditions.checkArgument(keyCandidate==null, "Do not currently support aggregating by multiple timestamp columns");
                     keyCandidate = candidate.get();
                     keyIdx = i;
-                    inputColIdx = idx;
+                    assert keyCandidate.getIndex() == idx;
                 }
             }
             if (keyCandidate!=null) {
                 LogicalProject inputProject = (LogicalProject)input.getRelNode();
-                RexNode timeAgg = inputProject.getProjects().get(inputColIdx);
+                RexNode timeAgg = inputProject.getProjects().get(keyCandidate.getIndex());
                 Optional<TimeTumbleFunctionCall> bucketFct = rexUtil.getTimeBucketingFunction(timeAgg);
                 Preconditions.checkArgument(!bucketFct.isEmpty(), "Not a valid time aggregation function: %s", timeAgg);
 
@@ -690,7 +694,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 RelBuilder relB = relBuilderFactory.get();
                 relB.push(input.relNode);
                 relB.aggregate(relB.groupKey(ImmutableBitSet.of(groupByIdx)),aggregateCalls);
-                new TimeAggregationHint(TimeAggregationHint.Type.TUMBLE).addTo(relB);
+                new TimeAggregationHint(TimeAggregationHint.Type.TUMBLE,keyCandidate.getIndex()).addTo(relB);
                 ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
                 ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength, targetLength);
 
@@ -701,18 +705,17 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             }
         }
 
-        //Inline now-filter at this point
-        ProcessedRel nowInput = input;
-        boolean isSlidingAggregate = false;
-        if (!input.nowFilter.isEmpty()) {
-            nowInput = input.inlineNowFilter();
-            isSlidingAggregate = true;
-            // TODO: extract slide-width from hint
-        }
-
         //Check if we need to propagate timestamps
-        if (nowInput.type == TableType.STREAM || nowInput.type == TableType.TEMPORAL_STATE) {
+        if (input.type == TableType.STREAM || input.type == TableType.TEMPORAL_STATE) {
             targetLength += 1;
+
+            boolean isSlidingAggregate = false;
+            ProcessedRel nowInput = input;
+            if (!input.nowFilter.isEmpty()) {
+                nowInput = input.inlineNowFilter();
+                isSlidingAggregate = true;
+                // TODO: extract slide-width from hint
+            }
 
             //Fix best timestamp (if not already fixed) and add as final project
             TimestampHolder.Derived inputTimestamp = nowInput.timestamp;
@@ -757,22 +760,25 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             projectNames.add(null);
 
             relB.project(projects,projectNames);
-            if (isSlidingAggregate) new TimeAggregationHint(TimeAggregationHint.Type.SLIDING).addTo(relB);
+            if (isSlidingAggregate) new TimeAggregationHint(TimeAggregationHint.Type.SLIDING, candidate.getIndex()).addTo(relB);
             ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
             ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength-1, targetLength);
             return setRelHolder(new ProcessedRel(relB.build(), TableType.TEMPORAL_STATE, pk,
                     addedTimestamp, indexMap,null, NowFilter.EMPTY, Deduplication.EMPTY));
-        }
+        } else {
 
-        //Standard aggregation produces a state table
-        RelBuilder relB = relBuilderFactory.get();
-        relB.push(nowInput.relNode);
-        relB.aggregate(relB.groupKey(ImmutableBitSet.of(groupByIdx)),aggregateCalls);
-        if (isSlidingAggregate) new TimeAggregationHint(TimeAggregationHint.Type.SLIDING).addTo(relB);
-        ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
-        ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength, targetLength);
-        return setRelHolder(new ProcessedRel(relB.build(), TableType.STATE, pk,
-                TimestampHolder.Derived.NONE, indexMap,null, NowFilter.EMPTY, Deduplication.EMPTY));
+            //Standard aggregation produces a state table
+            Preconditions.checkArgument(input.nowFilter.isEmpty(),"State table cannot have now-filter since there is no timestamp");
+            RelBuilder relB = relBuilderFactory.get();
+            relB.push(input.relNode);
+            relB.aggregate(relB.groupKey(ImmutableBitSet.of(groupByIdx)), aggregateCalls);
+            //since there is no timestamp, we cannot propagate a sliding window
+            //if (isSlidingAggregate) new TimeAggregationHint(TimeAggregationHint.Type.SLIDING).addTo(relB);
+            ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
+            ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength, targetLength);
+            return setRelHolder(new ProcessedRel(relB.build(), TableType.STATE, pk,
+                    TimestampHolder.Derived.NONE, indexMap, null, NowFilter.EMPTY, Deduplication.EMPTY));
+        }
     }
 
     @Override

@@ -1,30 +1,37 @@
 package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.plan.calcite.hints.SqrlHint;
+import ai.datasqrl.plan.calcite.hints.TimeAggregationHint;
 import ai.datasqrl.plan.calcite.hints.WatermarkHint;
 import ai.datasqrl.plan.calcite.table.ImportedSourceTable;
+import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
+import ai.datasqrl.plan.calcite.util.TimePredicate;
+import ai.datasqrl.plan.calcite.util.TimeTumbleFunctionCall;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.JoinRelType;
-import org.apache.calcite.rel.core.TableFunctionScan;
-import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.core.Uncollect;
+import org.apache.calcite.rel.core.*;
 import org.apache.calcite.rel.logical.*;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.util.ImmutableBitSet;
+import org.apache.commons.collections.ListUtils;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 import org.apache.flink.table.planner.delegation.StreamPlanner;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -99,11 +106,82 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   @Override
   public RelNode visit(LogicalAggregate aggregate) {
-    throw new UnsupportedOperationException("Not yet implemented");
-//    return new LogicalAggregate(cluster, defaultTrait, aggregate.getHints(),
-//        aggregate.getInput().accept(this),
-//        aggregate.getGroupSet(),
-//        aggregate.getGroupSets(), aggregate.getAggCallList());
+    FlinkRelBuilder relBuilder = getBuilder();
+    Optional<TimeAggregationHint> timeHintOpt = SqrlHint.fromRel(aggregate,TimeAggregationHint.CONSTRUCTOR);
+    ImmutableBitSet groupBy = Iterables.getOnlyElement(aggregate.groupSets);
+    List<AggregateCall> aggCalls = aggregate.getAggCallList();
+    RelNode input = aggregate.getInput().accept(this);
+    if (timeHintOpt.isPresent()) {
+      TimeAggregationHint timeHint = timeHintOpt.get();
+      FlinkRexBuilder rexBuilder = getRexBuilder(relBuilder);
+      int inputFieldCount = input.getRowType().getFieldCount();
+      int timestampIdx = timeHint.getTimestampIdx();
+      Preconditions.checkArgument(input instanceof LogicalProject,"Expected projection as input");
+      List<RexNode> projects = new ArrayList<>(((LogicalProject) input).getProjects());
+      SqrlRexUtil rexUtil = new SqrlRexUtil(relBuilder.getTypeFactory());
+      TimeTumbleFunctionCall bucketFct = rexUtil.getTimeBucketingFunction(projects.get(timestampIdx)).get();
+      projects.set(timestampIdx,rexBuilder.makeInputRef(input.getInput(0),bucketFct.getTimestampColumnIndex()));
+      long intervalMs = bucketFct.getSpecification().getBucketWidthMillis();
+      RelDataType inputType = input.getRowType();
+      relBuilder.push(input.getInput(0));
+      relBuilder.project(projects, inputType.getFieldNames());
+      makeWindow(relBuilder,FlinkSqlOperatorTable.TUMBLE,timestampIdx,intervalMs);
+      //Need to add all 3 window columns that are added to groupBy and then project out all but window_time
+      int window_start = inputFieldCount, window_end = inputFieldCount+1, window_time = inputFieldCount+2;
+      List<Integer> groupByIdx = new ArrayList<>();
+      List<Integer> projectIdx = new ArrayList<>();
+      List<String> projectNames = new ArrayList<>();
+      int index = 0;
+      for (int idx : groupBy.asList()) {
+        if (idx==timestampIdx) {
+
+        } else {
+          groupByIdx.add(idx);
+          projectIdx.add(index++);
+          projectNames.add(inputType.getFieldNames().get(idx));
+        }
+      }
+      groupByIdx.add(window_start); groupByIdx.add(window_end);
+      index+=2;
+      groupByIdx.add(window_time); //Window_time is new timestamp
+      projectIdx.add(index++);
+      projectNames.add(inputType.getFieldNames().get(timestampIdx));
+
+      for (int i = 0; i < aggCalls.size(); i++) {
+        projectIdx.add(index++);
+        projectNames.add(null);
+      }
+      relBuilder.aggregate(relBuilder.groupKey(ImmutableBitSet.of(groupByIdx)),aggCalls);
+      relBuilder.project(projectIdx.stream().map(idx -> rexBuilder.makeInputRef(relBuilder.peek(), idx))
+              .collect(Collectors.toList()),projectNames);
+    } else {
+      //Normal aggregation
+      relBuilder.push(input);
+      relBuilder.aggregate(relBuilder.groupKey(groupBy),aggCalls);
+    }
+    return relBuilder.build();
+  }
+
+  private FlinkRelBuilder makeWindow(FlinkRelBuilder relBuilder, SqlOperator operator, int timestampIdx, long intervalMs) {
+    FlinkRexBuilder rexBuilder = getRexBuilder(relBuilder);
+    RelNode input = relBuilder.peek();
+
+    List<RexNode> operandList = List.of(
+            rexBuilder.makeRangeReference(input),
+            rexBuilder.makeCall(FlinkSqlOperatorTable.DESCRIPTOR,rexBuilder.makeInputRef(input,timestampIdx)),
+            TimePredicate.makeInterval(intervalMs, rexBuilder)
+    );
+    //this window functions adds 3 columns to end of relation: window_start/_end/_time
+    relBuilder.functionScan(FlinkSqlOperatorTable.TUMBLE,1,operandList);
+    LogicalTableFunctionScan tfs = (LogicalTableFunctionScan) relBuilder.build();
+
+    //Flink expects an inputref for the last column of the original relation
+    operandList = ListUtils.union(List.of(rexBuilder.makeInputRef(input,input.getRowType().getFieldCount()-1)),
+            operandList.subList(1,operandList.size()));
+    relBuilder.push(tfs.copy(tfs.getTraitSet(),tfs.getInputs(),
+            rexBuilder.makeCall(tfs.getRowType(), operator, operandList),
+            tfs.getElementType(),tfs.getRowType(),tfs.getColumnMappings()));
+    return relBuilder;
   }
 
   @Override

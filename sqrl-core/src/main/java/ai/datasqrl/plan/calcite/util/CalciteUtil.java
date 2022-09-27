@@ -25,6 +25,7 @@ import org.apache.calcite.util.Util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CalciteUtil {
@@ -254,13 +255,19 @@ public class CalciteUtil {
   }
 
   public static void addIdentityProjection(RelBuilder relBuilder, int numColumns) {
+    addIdentityProjection(relBuilder,numColumns,Set.of());
+  }
+
+  public static void addIdentityProjection(RelBuilder relBuilder, int numColumns, Set<Integer> skipIndexes) {
     List<RexNode> rex = new ArrayList<>(numColumns);
     List<String> fieldNames = new ArrayList<>(numColumns);
     RelDataType inputType = relBuilder.peek().getRowType();
     for (int i = 0; i < numColumns; i++) {
+      if (skipIndexes.contains(i)) continue;
       rex.add(i, RexInputRef.of(i,inputType));
       fieldNames.add(i,null);
     }
+    Preconditions.checkArgument(!rex.isEmpty(),"No columns slected");
     relBuilder.project(rex,fieldNames,true); //Need to force otherwise Calcite eliminates the project
   }
 

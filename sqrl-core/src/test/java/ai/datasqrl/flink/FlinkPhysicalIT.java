@@ -153,7 +153,8 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     ScriptBuilder builder = example.getImports();
     Map<String,Integer> rowCounts = getImportRowCounts();
 
-
+    builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_hour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;\n");
+    rowCounts.put("orderagg1",rowCounts.get("orders"));
 
     Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
     validateRowCounts(rowCounts, results);
@@ -164,7 +165,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     ScriptBuilder builder = example.getImports();
     Map<String,Integer> rowCounts = getImportRowCounts();
 
-    builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 1 YEAR");
+    builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 5 YEAR");
     rowCounts.put("historicorders",rowCounts.get("orders"));
     builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 1 MONTH");
     rowCounts.put("recentorders",0);

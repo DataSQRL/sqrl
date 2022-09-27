@@ -84,17 +84,21 @@ public class TimePredicate {
         RexNode smallerRef = createRef(smallerIndex, rexBuilder, createInputRef);
         RexNode largerRef = createRef(largerIndex, rexBuilder, createInputRef);
         SqlOperator op = smaller?SqlStdOperatorTable.LESS_THAN_OR_EQUAL:SqlStdOperatorTable.EQUALS;
-        SqlIntervalQualifier sqlIntervalQualifier =
-                new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO);
+
         if (interval_ms<0) {
             smallerRef = rexBuilder.makeCall(SqlStdOperatorTable.DATETIME_PLUS, smallerRef,
-                    rexBuilder.makeIntervalLiteral(new BigDecimal(interval_ms), sqlIntervalQualifier));
+                    makeInterval(interval_ms, rexBuilder));
         } else if (interval_ms > 0) {
             largerRef = rexBuilder.makeCall(SqlStdOperatorTable.DATETIME_PLUS, largerRef,
-                    rexBuilder.makeIntervalLiteral(new BigDecimal(interval_ms), sqlIntervalQualifier));
-
+                    makeInterval(interval_ms, rexBuilder));
         }
         return rexBuilder.makeCall(op,smallerRef,largerRef);
+    }
+
+    public static RexNode makeInterval(long interval_ms, RexBuilder rexBuilder) {
+        SqlIntervalQualifier sqlIntervalQualifier =
+                new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO);
+        return rexBuilder.makeIntervalLiteral(new BigDecimal(interval_ms), sqlIntervalQualifier);
     }
 
     private static RexNode createRef(int index, RexBuilder rexBuilder,

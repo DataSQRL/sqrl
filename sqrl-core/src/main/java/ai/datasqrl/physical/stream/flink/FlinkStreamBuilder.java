@@ -178,7 +178,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
 
       org.apache.flink.connector.file.src.FileSource.FileSourceBuilder<String> builder =
               org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
-                      new org.apache.flink.connector.file.src.reader.TextLineFormat(
+                      new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
                               sourceConfig.getCharset()), FilePath.toFlinkPath(filesource.getPath()));
 
       builder.setFileEnumerator(fileEnumerator);
