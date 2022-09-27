@@ -95,7 +95,7 @@ public class ResolveTest extends AbstractSQRLIT {
     builder.append("Orders2 := SELECT o2._uuid FROM Orders o2 "
             + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid;\n");
     process(builder.toString());
-    validateQueryTable("orders2", TableType.STREAM, 3, 1);
+    validateQueryTable("orders2", TableType.STREAM, 3, 1, TimestampTest.candidates(1,2));
   }
 
   @Test

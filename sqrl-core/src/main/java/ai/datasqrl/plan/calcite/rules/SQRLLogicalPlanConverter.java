@@ -334,12 +334,12 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         rawInput = extractTopNConstraint(rawInput, logicalProject);
 
 
-//        ContinuousIndexMap trivialMap = getTrivialMapping(logicalProject, rawInput.indexMap);
-//        if (trivialMap!=null) {
-//            //If it's a trivial project, we remove it and only update the indexMap
-//            return setRelHolder(new ProcessedRel(rawInput.relNode,rawInput.type,rawInput.primaryKey, rawInput.timestamp,
-//                    trivialMap, rawInput.joinTables, rawInput.nowFilter, rawInput.dedup));
-//        }
+        ContinuousIndexMap trivialMap = getTrivialMapping(logicalProject, rawInput.indexMap);
+        if (trivialMap!=null) {
+            //If it's a trivial project, we remove it and only update the indexMap. This is needed to eliminate self-joins
+            return setRelHolder(new ProcessedRel(rawInput.relNode,rawInput.type,rawInput.primaryKey, rawInput.timestamp,
+                    trivialMap, rawInput.joinTables, rawInput.nowFilter, rawInput.dedup));
+        }
         ProcessedRel input = rawInput.inlineDedup();
         Preconditions.checkArgument(input.dedup.isEmpty());
         //Update index mappings
