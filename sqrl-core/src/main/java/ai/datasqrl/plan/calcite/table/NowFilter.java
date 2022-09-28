@@ -62,7 +62,7 @@ public interface NowFilter extends PullupOperator {
         return this;
     }
 
-    default RelBuilder addFilter(RelBuilder relBuilder) {
+    default RelBuilder addFilterTo(RelBuilder relBuilder) {
         return relBuilder;
     }
 
@@ -102,7 +102,7 @@ public interface NowFilter extends PullupOperator {
         }
 
         @Override
-        public RelBuilder addFilter(RelBuilder relBuilder) {
+        public RelBuilder addFilterTo(RelBuilder relBuilder) {
             RexBuilder rexB = relBuilder.getRexBuilder();
             relBuilder.filter(getPredicate().createRexNode(rexB,i -> rexB.makeInputRef(relBuilder.peek(),i)));
             return relBuilder;

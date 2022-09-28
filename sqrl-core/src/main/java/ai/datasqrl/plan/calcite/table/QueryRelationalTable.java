@@ -4,6 +4,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.global.MaterializationStrategy;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ContiguousSet;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -40,27 +41,30 @@ public class QueryRelationalTable extends AbstractRelationalTable {
    */
   private final PullupOperator.Container pullups;
 
-  @Setter
-  private TableStatistic statistic = null;
+  private final TableStatistic statistic;
 
   /*
    The materialization strategy for this table as determined by the optimizer. This is used when cutting
    the DAG and expanding the RelNodes.
    */
   @Setter
-  private MaterializationStrategy materialization = MaterializationStrategy.NONE;
+  private MaterializationStrategy materialization;
 
 
   public QueryRelationalTable(@NonNull Name rootTableId, @NonNull TableType type,
                               RelNode relNode, PullupOperator.Container pullups,
                               @NonNull TimestampHolder.Base timestamp,
-                              @NonNull int numPrimaryKeys) {
+                              @NonNull int numPrimaryKeys,
+                              @NonNull TableStatistic stats,
+                              @NonNull MaterializationStrategy materialization) {
     super(rootTableId);
     this.type = type;
     this.timestamp = timestamp;
     this.relNode = relNode;
     this.pullups = pullups;
     this.numPrimaryKeys = numPrimaryKeys;
+    this.statistic = stats;
+    this.materialization = materialization;
   }
 
   public RelNode getRelNode() {
@@ -126,11 +130,9 @@ public class QueryRelationalTable extends AbstractRelationalTable {
 
   @Override
   public Statistic getStatistic() {
-    if (statistic != null) {
-      return Statistics.of(statistic.getRowCount(), List.of(ImmutableBitSet.of(numPrimaryKeys)));
-    } else {
-      return Statistics.UNKNOWN;
-    }
+    if (statistic.isUnknown()) return Statistics.UNKNOWN;
+    ImmutableBitSet key = ImmutableBitSet.of(ContiguousSet.closedOpen(0,numPrimaryKeys));
+    return Statistics.of(statistic.getRowCount(), List.of(key));
   }
 
 

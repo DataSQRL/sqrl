@@ -9,6 +9,7 @@ import ai.datasqrl.plan.calcite.SqrlType2Calcite;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
+import ai.datasqrl.plan.global.MaterializationStrategy;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SQRLTable;
@@ -72,20 +73,17 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         return new ScriptTableDefinition(impTable, tables);
     }
 
-    public ScriptTableDefinition defineTable(NamePath tablePath, SQRLLogicalPlanConverter.ProcessedRel rel,
+    public ScriptTableDefinition defineTable(NamePath tablePath, SQRLLogicalPlanConverter.RelMeta rel,
                                       List<Name> fieldNames) {
         ContinuousIndexMap indexmap = rel.getIndexMap();
         Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());
 
-        if (CalciteUtil.hasNesting(rel.getRelNode().getRowType()) && !rel.getDedup().isEmpty()) {
-            //Need to inline deduplication for nested tables
-            rel = rel.inlineDedup();
-        }
         Name tableid = getTableId(tablePath.getLast(),"q");
         TimestampHolder.Base timestamp = TimestampHolder.Base.ofDerived(rel.getTimestamp());
         QueryRelationalTable baseTable = new QueryRelationalTable(tableid, rel.getType(),
-                rel.getRelNode(), rel.getPullups(),
-                timestamp, rel.getPrimaryKey().getSourceLength());
+                rel.getRelNode(), rel.getPullups(), timestamp,
+                rel.getPrimaryKey().getSourceLength(), rel.getStatistic(),
+                new MaterializationStrategy(rel.getMaterialize().getPreference()));
 
         LinkedHashMap<Integer,Name> index2Name = new LinkedHashMap<>();
         for (int i = 0; i < fieldNames.size(); i++) {

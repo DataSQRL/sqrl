@@ -20,6 +20,7 @@ import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -88,9 +89,13 @@ public class SqrlRexUtil {
     }
 
     public static RexFinder findFunction(SqlOperator operator) {
+        return findFunction(o -> o.equals(operator));
+    }
+
+    public static RexFinder findFunction(Predicate<SqlOperator> operatorMatch) {
         return new RexFinder<Void>() {
             @Override public Void visitCall(RexCall call) {
-                if (call.getOperator().equals(operator)) {
+                if (operatorMatch.test(call.getOperator())) {
                     throw Util.FoundOne.NULL;
                 }
                 return super.visitCall(call);
@@ -139,13 +144,20 @@ public class SqrlRexUtil {
             super(true);
         }
 
-        public boolean contains(RexNode node) {
+        public boolean foundIn(RexNode node) {
             try {
                 node.accept(this);
                 return false;
             } catch (Util.FoundOne e) {
                 return true;
             }
+        }
+
+        public boolean foundIn(Iterable<RexNode> nodes) {
+            for (RexNode node : nodes) {
+                if (foundIn(node)) return true;
+            }
+            return false;
         }
 
         public Optional<R> find(RexNode node) {

@@ -1,6 +1,7 @@
 package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.plan.calcite.hints.SqrlHint;
+import ai.datasqrl.plan.calcite.hints.TemporalJoinHint;
 import ai.datasqrl.plan.calcite.hints.TimeAggregationHint;
 import ai.datasqrl.plan.calcite.hints.WatermarkHint;
 import ai.datasqrl.plan.calcite.table.ImportedSourceTable;
@@ -92,14 +93,12 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   @Override
   public RelNode visit(LogicalJoin join) {
     FlinkRelBuilder relBuilder = getBuilder();
+    Optional<TemporalJoinHint> temporalHintOpt = SqrlHint.fromRel(join,TemporalJoinHint.CONSTRUCTOR);
+    Preconditions.checkArgument(temporalHintOpt.isEmpty(),"Not yet implemented");
     RelNode left = join.getLeft().accept(this), right = join.getRight().accept(this);
     relBuilder.push(left);
     relBuilder.push(right);
     JoinRelType joinType = join.getJoinType();
-    if (joinType==JoinRelType.INTERVAL) {
-      //Any other validation we need to do here?
-      joinType = JoinRelType.INNER;
-    }
     relBuilder.join(joinType,rewrite(join.getCondition(), relBuilder, left, right));
     return relBuilder.build();
   }
@@ -175,7 +174,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     relBuilder.functionScan(FlinkSqlOperatorTable.TUMBLE,1,operandList);
     LogicalTableFunctionScan tfs = (LogicalTableFunctionScan) relBuilder.build();
 
-    //Flink expects an inputref for the last column of the original relation
+    //Flink expects an inputref for the last column of the original relation as the first operand
     operandList = ListUtils.union(List.of(rexBuilder.makeInputRef(input,input.getRowType().getFieldCount()-1)),
             operandList.subList(1,operandList.size()));
     relBuilder.push(tfs.copy(tfs.getTraitSet(),tfs.getInputs(),

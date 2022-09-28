@@ -332,7 +332,7 @@ public class Resolve {
     op.setRelNode(relNode);
   }
 
-  public SQRLLogicalPlanConverter.ProcessedRel optimize(Env env, StatementOp op) {
+  public SQRLLogicalPlanConverter.RelMeta optimize(Env env, StatementOp op) {
     List<String> fieldNames = op.relNode.getRowType().getFieldNames();
 //    System.out.println("LP$0: \n" + op.relNode.explain());
 
@@ -348,7 +348,8 @@ public class Resolve {
     SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(getRelBuilderFactory(env));
     relNode = relNode.accept(sqrl2sql);
 //    System.out.println("LP$2: \n" + relNode.explain());
-    SQRLLogicalPlanConverter.ProcessedRel prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode),fieldNames);
+    //TODO: extract materialization preference from hints if present
+    SQRLLogicalPlanConverter.RelMeta prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode),fieldNames, Optional.empty());
 //    System.out.println("LP$3: \n" + prel.getRelNode().explain());
     return prel;
   }
@@ -441,7 +442,7 @@ public class Resolve {
     List<Name> fieldNames = op.relNode.getRowType().getFieldList().stream()
         .map(f -> Name.system(f.getName())).collect(Collectors.toList());
 
-    SQRLLogicalPlanConverter.ProcessedRel processedRel = optimize(env, op);
+    SQRLLogicalPlanConverter.RelMeta processedRel = optimize(env, op);
 
     ScriptTableDefinition queryTable = tableFactory.defineTable(op.statement.getNamePath(), processedRel, fieldNames);
     registerScriptTable(env, queryTable);
@@ -741,7 +742,7 @@ public class Resolve {
   // } else {
   // List<Name> fieldNames = relNode.getRowType().getFieldList().stream()
   // .map(f -> Name.system(f.getName())).collect(Collectors.toList());
-  // SQRLLogicalPlanConverter.ProcessedRel processedRel = optimize(relNode);
+  // SQRLLogicalPlanConverter.RelMeta processedRel = optimize(relNode);
   // ScriptTableDefinition queryTable = tableFactory.defineTable(namePath,
   // processedRel,
   // fieldNames);
@@ -762,7 +763,7 @@ public class Resolve {
   // return null;
   // }
   //
-  // public SQRLLogicalPlanConverter.ProcessedRel optimize(RelNode relNode) {
+  // public SQRLLogicalPlanConverter.RelMeta optimize(RelNode relNode) {
   // System.out.println("LP$0: \n" + relNode.explain());
   //
   // //Step 1: Push filters into joins so we can correctly identify self-joins

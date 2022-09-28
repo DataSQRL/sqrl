@@ -52,7 +52,7 @@ public class DAGPlanner {
             //1. Optimize the logical plan and compute statistic
             optimizeTable(table); //TODO: should this add inlined columns to all relnodes?
             //2. Determine if we should materialize this table
-            MaterializationPreference materialize = determineMaterialization(table);
+            MaterializationPreference materialize = table.getMaterialization().getPreference();
             // make sure materialization strategy is compatible with inputs, else try to adjust
             Iterable<StreamTableNode> allinputs = Iterables.filter(dag.getAllInputsFromSource(tableNode, false), StreamTableNode.class);
             if (materialize == MaterializationPreference.MUST) {
@@ -77,7 +77,8 @@ public class DAGPlanner {
         List<DBTableNode> nodes2Add = new ArrayList<>();
         for (StreamTableNode tableNode : Iterables.filter(dag, StreamTableNode.class)) {
 //            tableNode.table.getMatStrategy().setMaterialize(materialization.get(tableNode).isMaterialize());
-            if (materialization.get(tableNode).isMaterialize()) {
+            MaterializationPreference materialize = materialization.get(tableNode);
+            if (materialize.isMaterialize()) {
 //                boolean isPersisted = dag.getOutputs(tableNode).stream().anyMatch(DBTableNode.class::isInstance);
                 String persistedAs = null;
                 //If this node is materialized but some streamtable outputs aren't (i.e. they are computed in the database)
@@ -89,7 +90,7 @@ public class DAGPlanner {
                     nodes2Add.add(new DBTableNode(vtable));
                     persistedAs = vtable.getNameId();
                 }
-                tableNode.table.setMaterialization(new MaterializationStrategy(persistedAs));
+                tableNode.table.setMaterialization(new MaterializationStrategy(materialize, persistedAs));
             }
         }
         dag = dag.addNodes(nodes2Add);
@@ -102,8 +103,9 @@ public class DAGPlanner {
                 VirtualRelationalTable dbTable = dbNode.table;
                 RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
                 RelNode expandedScan = scanTable.accept(sqrl2sql);
-                SQRLLogicalPlanConverter.ProcessedRel processedRel = sqrl2sql.getRelHolder(expandedScan);
-                processedRel = sqrl2sql.postProcess(processedRel, dbTable.getRowType().getFieldNames());
+                SQRLLogicalPlanConverter.RelMeta processedRel = sqrl2sql.getRelHolder(expandedScan);
+                processedRel = sqrl2sql.postProcess(processedRel, dbTable.getRowType().getFieldNames(),
+                        Optional.of(MaterializationPreference.MUST));
                 dbTable.setDbPullups(processedRel.getPullups());
                 expandedScan = processedRel.getRelNode();
                 expandedScan = planner.transform(WRITE_DAG_OPTIMIZATION,expandedScan);
@@ -153,22 +155,8 @@ public class DAGPlanner {
         Preconditions.checkArgument(!table.getType().hasTimestamp() || table.getTimestamp().hasTimestamp());
         //TODO: run volcano optimizer and get row estimate
         RelNode optimizedRel = table.getRelNode();
+        //If we need to do any optimization of the logical plan RelNode it would happen here
         table.updateRelNode(optimizedRel);
-        table.setStatistic(TableStatistic.of(1));
-    }
-
-    private MaterializationPreference determineMaterialization(QueryRelationalTable table) {
-        //TODO: implement based on following criteria:
-        //- if imported table => MUST
-        //- if subscription => MUST
-        //- if hint provided => MUST or CANNOT depending on hint
-        //- nested structure => MUST
-        //- contains function that cannot be executed in database => MUST
-        //- contains inner join where one side is high cardinality (with configurable threshold) => SHOULD NOT
-        //- else SHOULD
-        if (table instanceof ProxyImportRelationalTable) return MaterializationPreference.MUST;
-        if (CalciteUtil.hasNesting(table.getRowType())) return MaterializationPreference.MUST;
-        return MaterializationPreference.SHOULD;
     }
 
     private interface DAGNode extends AbstractDAG.Node {
@@ -341,7 +329,7 @@ public class DAGPlanner {
             if (vtable.isRoot()) {
                 PullupOperator.Container pullup = baseTable.getPullups();
                 if (!pullup.getNowFilter().isEmpty()) {
-                    pullup.getNowFilter().addFilter(relBuilder);
+                    pullup.getNowFilter().addFilterTo(relBuilder);
                     //TODO: implement as TTL on table if materialized
                 }
                 if (!pullup.getDeduplication().isEmpty()) {

@@ -1,6 +1,5 @@
 package ai.datasqrl.io.sources.dataset;
 
-import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.SourceTableConfiguration;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
