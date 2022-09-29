@@ -52,6 +52,10 @@ public class DirectorySourceImplementation implements DataSourceImplementation, 
   @Builder.Default
   boolean discoverFiles = true;
 
+  public String getSourceType() {
+    return "dir";
+  }
+
   @JsonIgnore
   public FilePath getPath() {
     return new FilePath(uri);

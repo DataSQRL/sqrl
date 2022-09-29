@@ -5,6 +5,7 @@ import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.database.ddl.SqlDDLStatement;
 import ai.datasqrl.physical.stream.flink.plan.FlinkStreamPhysicalPlan;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
+@Slf4j
 public class PhysicalPlanExecutor {
 
   public Job execute(PhysicalPlan physicalPlan) {
@@ -25,8 +27,10 @@ public class PhysicalPlanExecutor {
 
   public void executeDml(List<SqlDDLStatement> dmlQueries, JDBCConnectionProvider dbConnection) {
     String dmls = dmlQueries.stream().map(ddl -> ddl.toSql()).collect(Collectors.joining("\n"));
+
+
     try (Connection conn = dbConnection.getConnection(); Statement stmt = conn.createStatement()) {
-      System.out.println("Creating: "+ dmls);
+      log.info("Creating: "+ dmls);
       stmt.executeUpdate(dmls);
     } catch (SQLException e) {
       throw new RuntimeException("Could not execute SQL query", e);

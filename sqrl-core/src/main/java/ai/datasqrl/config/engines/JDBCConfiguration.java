@@ -36,7 +36,7 @@ public class JDBCConfiguration implements EngineConfiguration.Database {
     POSTGRES, MYSQL, H2
   }
 
-  public static Pattern validDBName = Pattern.compile("^[a-z][_a-z0-9]{2,}$");
+  public static Pattern validDBName = Pattern.compile("^[a-z][_a-z0-9$]{2,}$");
 
   public Database getDatabase(@NonNull String databaseName) {
     Preconditions.checkArgument(StringUtils.isNotEmpty(databaseName)

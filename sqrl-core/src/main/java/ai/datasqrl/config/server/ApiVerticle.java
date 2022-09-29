@@ -17,6 +17,7 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.json.schema.ValidationException;
 import io.vertx.json.schema.common.ValidationExceptionImpl;
 import java.util.Map;
+import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -73,13 +74,14 @@ public class ApiVerticle extends AbstractVerticle {
 
           Router router = routerBuilder.createRouter(); // <1>
           //Generate generic error handlers
-          for (Map.Entry<Integer, String> failure : ERROR2MESSAGE.entrySet()) {
+          for (Entry<Integer, String> failure : ERROR2MESSAGE.entrySet()) {
             int errorCode = failure.getKey();
             Preconditions.checkArgument(errorCode >= 400 && errorCode <= 500);
             String defaultMessage = failure.getValue();
 
             router.errorHandler(errorCode, routingContext -> {
               Throwable ex = routingContext.failure();
+              log.error("Routing error", ex);
               if (ex.getCause() != null && ex.getCause() instanceof ValidationException) {
                 //Validation error
                 ErrorCollector errors = ErrorCollector.root();
@@ -104,6 +106,7 @@ public class ApiVerticle extends AbstractVerticle {
           server = vertx.createHttpServer(
               new HttpServerOptions().setPort(port).setHost("localhost"));
           server.requestHandler(router).listen();
+          log.info("Server started");
           startPromise.complete();
         })
         .onFailure(startPromise::fail);

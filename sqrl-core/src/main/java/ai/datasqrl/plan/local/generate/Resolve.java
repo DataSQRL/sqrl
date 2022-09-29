@@ -136,6 +136,7 @@ public class Resolve {
   }
 
   private SourceTableImport lookupDatasetModule(Env env, NamePath namePath) {
+    Preconditions.checkState(namePath.size() == 2, "IMPORT malformed");
     return (SourceTableImport) env.session.importManager.importTable(namePath.get(0),
         namePath.get(1),
         SchemaAdjustmentSettings.DEFAULT, env.session.errors);
