@@ -345,11 +345,11 @@ public class Resolve {
     //self-joins (including nested self-joins) as well as infer primary keys,
     //table types, and timestamps in the process
 
-    SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(getRelBuilderFactory(env));
+    //TODO: extract materialization preference from hints if present
+    SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(getRelBuilderFactory(env), Optional.empty());
     relNode = relNode.accept(sqrl2sql);
 //    System.out.println("LP$2: \n" + relNode.explain());
-    //TODO: extract materialization preference from hints if present
-    SQRLLogicalPlanConverter.RelMeta prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode),fieldNames, Optional.empty());
+    SQRLLogicalPlanConverter.RelMeta prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode),fieldNames);
 //    System.out.println("LP$3: \n" + prel.getRelNode().explain());
     return prel;
   }

@@ -49,12 +49,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
     public final Supplier<RelBuilder> relBuilderFactory;
     public final SqrlRexUtil rexUtil;
-    public final MaterializationPreference defaultMaterialization = MaterializationPreference.SHOULD;
+    public final MaterializationPreference materializationPreference;
     public final double cardinalityJoinThreshold = HIGH_CARDINALITY_JOIN_THRESHOLD;
 
-    public SQRLLogicalPlanConverter(Supplier<RelBuilder> relBuilderFactory) {
+    public SQRLLogicalPlanConverter(Supplier<RelBuilder> relBuilderFactory, Optional<MaterializationPreference> materializationPreference) {
         this.relBuilderFactory = relBuilderFactory;
         this.rexUtil = new SqrlRexUtil(relBuilderFactory.get().getTypeFactory());
+        this.materializationPreference = materializationPreference.orElse(MaterializationPreference.SHOULD);
     }
 
     @Value
@@ -127,8 +128,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
      * @param input
      * @return
      */
-    public RelMeta postProcess(RelMeta input, List<String> fieldNames,
-                               Optional<MaterializationPreference> materializationPreference) {
+    public RelMeta postProcess(RelMeta input, List<String> fieldNames) {
         Preconditions.checkArgument(fieldNames.size()==input.indexMap.getSourceLength());
         if (CalciteUtil.hasNesting(input.getRelNode().getRowType()) && !input.getDedup().isEmpty()) {
             //Need to inline deduplication for nested tables
@@ -171,11 +171,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         relBuilder.project(projects, updatedFieldNames);
         RelNode relNode = relBuilder.build();
         TableStatistic statistic = TableStatistic.of(estimateRowCount(relNode));
-
         MaterializationInference materialize = input.materialize;
-        if (materializationPreference.isPresent()) {
-            materialize = materialize.update(materializationPreference.get(),"user defined");
-        }
 
         return new RelMeta(relNode,input.type,input.primaryKey.remap(remap),
                 input.timestamp.remapIndexes(remap), updatedIndexMap, null,
@@ -216,7 +212,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         ContinuousIndexMap.Builder indexMap = ContinuousIndexMap.builder(vtable.getNumColumns());
         List<JoinTable> joinTables = new ArrayList<>();
         ContinuousIndexMap.Builder primaryKey = ContinuousIndexMap.builder(vtable.getNumPrimaryKeys());
-        AtomicReference<MaterializationInference> materialize = new AtomicReference<>(new MaterializationInference(defaultMaterialization));
+        AtomicReference<MaterializationInference> materialize = new AtomicReference<>(new MaterializationInference(materializationPreference));
         //Now, we shred
         RelNode relNode = shredTable(vtable, primaryKey, indexMap, joinTables, materialize, true).build();
         //Finally, we assemble the result
@@ -263,9 +259,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             VirtualRelationalTable.Root root = (VirtualRelationalTable.Root) vtable;
             offset = 0;
             builder = relBuilderFactory.get();
+            QueryRelationalTable qTable = root.getBase();
             builder.scan(root.getBase().getNameId());
             CalciteUtil.addIdentityProjection(builder,root.getNumQueryColumns());
             joinTable = JoinTable.ofRoot(root);
+            if (qTable.getMaterialization().getPreference()==MaterializationPreference.CANNOT) {
+                materialize.getAndUpdate(m -> m.update(MaterializationPreference.CANNOT,"input table"));
+            }
         } else {
             VirtualRelationalTable.Child child = (VirtualRelationalTable.Child) vtable;
             builder = shredTable(child.getParent(), primaryKey, indexMap, joinTables, materialize, startingBase,false);
@@ -794,20 +794,21 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
         //Check if we need to propagate timestamps
         if (input.type == TableType.STREAM || input.type == TableType.TEMPORAL_STATE) {
-            targetLength += 1;
+
+            //Fix best timestamp (if not already fixed)
+            TimestampHolder.Derived inputTimestamp = input.timestamp;
+            TimestampHolder.Candidate candidate = inputTimestamp.getBestCandidate();
 
             boolean isSlidingAggregate = false;
             RelMeta nowInput = input;
-            if (!input.nowFilter.isEmpty()) {
+            if (!input.nowFilter.isEmpty() && input.materialize.getPreference().isMaterialize()) {
                 nowInput = input.inlineNowFilter();
                 isSlidingAggregate = true;
                 // TODO: extract slide-width from hint
             }
 
-            //Fix best timestamp (if not already fixed) and add as final project
-            TimestampHolder.Derived inputTimestamp = nowInput.timestamp;
-            TimestampHolder.Candidate candidate = inputTimestamp.getBestCandidate();
-            TimestampHolder.Derived addedTimestamp = inputTimestamp.fixTimestamp(candidate.getIndex(),targetLength-1);
+            targetLength += 1;
+
 
             RelNode inputRel = nowInput.relNode;
             RelBuilder relB = relBuilderFactory.get();
@@ -843,6 +844,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 projects.add(agg);
                 projectNames.add(aggregate.getNamedAggCalls().get(i).getValue());
             }
+
+            //Add timestamp as last project
+            TimestampHolder.Derived addedTimestamp = inputTimestamp.fixTimestamp(candidate.getIndex(),targetLength-1);
             projects.add(timestampRef);
             projectNames.add(null);
 

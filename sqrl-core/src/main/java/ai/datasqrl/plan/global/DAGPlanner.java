@@ -97,15 +97,15 @@ public class DAGPlanner {
 
         //4. Produce an LP-tree for each persisted table
         List<OptimizedDAG.MaterializeQuery> writeDAG = new ArrayList<>();
-        SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(() -> planner.getRelBuilder());
+        SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(() -> planner.getRelBuilder(),
+                Optional.of(MaterializationPreference.MUST));
         for (DBTableNode dbNode : Iterables.filter(dag, DBTableNode.class)) {
             if (dbNode.table.getRoot().getBase().getMaterialization().isMaterialize()) {
                 VirtualRelationalTable dbTable = dbNode.table;
                 RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
                 RelNode expandedScan = scanTable.accept(sqrl2sql);
                 SQRLLogicalPlanConverter.RelMeta processedRel = sqrl2sql.getRelHolder(expandedScan);
-                processedRel = sqrl2sql.postProcess(processedRel, dbTable.getRowType().getFieldNames(),
-                        Optional.of(MaterializationPreference.MUST));
+                processedRel = sqrl2sql.postProcess(processedRel, dbTable.getRowType().getFieldNames());
                 dbTable.setDbPullups(processedRel.getPullups());
                 expandedScan = processedRel.getRelNode();
                 expandedScan = planner.transform(WRITE_DAG_OPTIMIZATION,expandedScan);
