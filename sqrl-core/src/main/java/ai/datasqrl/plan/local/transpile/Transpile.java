@@ -7,7 +7,6 @@ import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
 import ai.datasqrl.schema.SQRLTable;
@@ -20,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Stack;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Value;
@@ -83,9 +83,11 @@ public class Transpile {
     select.setFrom(from);
 
     if (select.isDistinct()) {
-      rewriteSelectDistinct(select, scope);
+      rewriteDistinctingHint(select, scope, (ppkNode) ->
+          SqrlHintStrategyTable.createSelectDistinctHintNode(ppkNode, SqlParserPos.ZERO));
     } else if (isNested(op) && select.getFetch() != null) {
-      rewriteTopN(select, scope);
+      rewriteDistinctingHint(select, scope, (ppkNode) ->
+          SqrlHintStrategyTable.createTopNHintNode(ppkNode, SqlParserPos.ZERO));
     }
     rewriteHints(select, scope);
   }
@@ -112,7 +114,7 @@ public class Transpile {
     select.setHints(hints);
   }
 
-  private void rewriteSelectDistinct(SqlSelect select, SqlValidatorScope scope) {
+  private void rewriteDistinctingHint(SqlSelect select, SqlValidatorScope scope, Function<SqlNodeList, SqlHint> createFnc) {
     CalciteUtil.removeKeywords(select);
     SqlNodeList innerSelectList = select.getSelectList();
     CalciteUtil.wrapSelectInProject(select, scope);
@@ -120,15 +122,7 @@ public class Transpile {
     List<SqlNode> innerPPKNodes = getPPKNodes(scope);
     List<SqlNode> ppkNodeIndex = mapIndexOfNodeList(innerSelectList, innerPPKNodes);
     SqlNodeList ppkNode = new SqlNodeList(ppkNodeIndex, SqlParserPos.ZERO);
-    SqlHint selectDistinctHint = SqrlHintStrategyTable.createSelectDistinctHintNode(ppkNode, SqlParserPos.ZERO);
-    CalciteUtil.setHint(select, selectDistinctHint);
-  }
-
-  private void rewriteTopN(SqlSelect select, SqlValidatorScope scope) {
-    List<SqlNode> innerPPKNodes = getPPKNodes(scope);
-    List<SqlNode> ppkNodeIndex = mapIndexOfNodeList(select.getSelectList(), innerPPKNodes);
-    SqlNodeList ppkNode = new SqlNodeList(ppkNodeIndex, SqlParserPos.ZERO);
-    SqlHint selectDistinctHint = SqrlHintStrategyTable.createTopNHintNode(ppkNode, SqlParserPos.ZERO);
+    SqlHint selectDistinctHint = createFnc.apply(ppkNode);
     CalciteUtil.setHint(select, selectDistinctHint);
   }
 

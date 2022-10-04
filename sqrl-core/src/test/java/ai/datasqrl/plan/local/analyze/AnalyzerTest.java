@@ -432,6 +432,7 @@ class AnalyzerTest extends AbstractSQRLIT {
             + "  LIMIT 5;"));
 
     assertFalse(((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().isEmpty());
+    assertEquals(1, ((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().get(0).listOptions.size());
   }
 
   @Test
