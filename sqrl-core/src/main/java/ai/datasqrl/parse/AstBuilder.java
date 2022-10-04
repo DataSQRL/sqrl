@@ -326,6 +326,7 @@ class AstBuilder
       // to columns defined in the query specification)
       SqlSelect query = (SqlSelect) term;
       query.setOrderBy(orderBy);
+      query.setFetch(fetch);
       return query;
     }
 

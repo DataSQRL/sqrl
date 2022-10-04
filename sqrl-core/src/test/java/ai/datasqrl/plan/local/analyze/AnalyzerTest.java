@@ -421,17 +421,19 @@ class AnalyzerTest extends AbstractSQRLIT {
             + "  GROUP BY p.category;"));
   }
 
-
   @Test
   @Disabled
   public void topNTest() {
-    generate(parser.parse(
+    Env env1 = generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
             + "Product.nested := "
             + "  SELECT * "
             + "  FROM _ JOIN Product p "
             + "  LIMIT 5;"));
+
+    assertFalse(((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().isEmpty());
   }
+
   @Test
   public void distinctSingleColumnTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
