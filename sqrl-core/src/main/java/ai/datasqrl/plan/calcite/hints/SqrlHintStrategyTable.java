@@ -17,11 +17,14 @@ public class SqrlHintStrategyTable {
 
   public static final String TOP_N = "TOP_N";
 
+  public static final String NOOP = "NOOP";
+
   @Getter
   static HintStrategyTable hintStrategyTable = HintStrategyTable.builder()
       .hintStrategy(DISTINCT_ON, HintPredicates.PROJECT)
       .hintStrategy(SELECT_DISTINCT, HintPredicates.PROJECT)
       .hintStrategy(TOP_N, HintPredicates.PROJECT)
+      .hintStrategy(NOOP, HintPredicates.PROJECT)
       .hintStrategy(WatermarkHint.CONSTRUCTOR.getName(), HintPredicates.or(HintPredicates.PROJECT,HintPredicates.TABLE_SCAN))
       .build();
 

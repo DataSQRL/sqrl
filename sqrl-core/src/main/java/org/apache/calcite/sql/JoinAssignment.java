@@ -13,14 +13,12 @@ public class JoinAssignment extends Assignment {
 
   private final Optional<List<TableFunctionArgument>> tableArgs;
   private final SqlNode query;
-  private final SqlNodeList hints;
 
   public JoinAssignment(SqlParserPos location,
-      NamePath name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, SqlNodeList hints) {
-    super(location, name);
+      NamePath name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, Optional<SqlNodeList> hints) {
+    super(location, name, hints);
     this.tableArgs = tableArgs;
     this.query = query;
-    this.hints = hints;
   }
 
 //  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {

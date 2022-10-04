@@ -326,6 +326,7 @@ class AstBuilder
       // to columns defined in the query specification)
       SqlSelect query = (SqlSelect) term;
       query.setOrderBy(orderBy);
+      query.setFetch(fetch);
       return query;
     }
 
@@ -1052,7 +1053,7 @@ class AstBuilder
         aliasedName,
         pk,
         sort,
-        getHints(ctx.hint()),
+        emptyListToEmptyOptional(getHints(ctx.hint())),
         query
     );
   }
@@ -1085,7 +1086,7 @@ class AstBuilder
     return new JoinAssignment(getLocation(ctx), name,
         getTableArgs(ctx.tableFunction()),
         join,
-        getHints(ctx.hint()));
+        emptyListToEmptyOptional(getHints(ctx.hint())));
   }
 
   private Optional<List<TableFunctionArgument>> getTableArgs(TableFunctionContext ctx) {
@@ -1210,7 +1211,14 @@ class AstBuilder
     return new QueryAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
         getTableArgs(ctx.tableFunction()),
         query,
-        getHints(ctx.hint()));
+        emptyListToEmptyOptional(getHints(ctx.hint())));
+  }
+
+  private Optional<SqlNodeList> emptyListToEmptyOptional(SqlNodeList list) {
+    if (list.getList().isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(list);
   }
 
   @Override
@@ -1220,7 +1228,7 @@ class AstBuilder
     return new ExpressionAssignment(getLocation(ctx), name,
         getTableArgs(ctx.tableFunction()),
         expr,
-        getHints(ctx.hint()));
+        emptyListToEmptyOptional(getHints(ctx.hint())));
   }
 
   @Override

@@ -75,6 +75,29 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
+  public void noPathOrderByTest() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT e.* FROM Orders.entries e ORDER BY e.discount DESC;"));
+  }
+
+  @Test
+  public void assignmentHintTest() {
+    Env env = generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "/*+ NOOP */ X := SELECT e.* FROM Orders.entries e;"));
+
+    assertFalse(((LogicalProject) env.getOps().get(0).getRelNode()).getHints().isEmpty());
+  }
+
+  @Test
+  public void selectListHintTest() {
+    Env env = generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT /*+ NOOP */ e.* FROM Orders.entries AS e;"));
+
+    assertFalse(((LogicalProject) env.getOps().get(0).getRelNode()).getHints().isEmpty());
+  }
+
+  @Test
   public void pathTest() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"
         + "X := SELECT e.* FROM Orders.entries AS e JOIN e.parent p;"));
@@ -398,21 +421,24 @@ class AnalyzerTest extends AbstractSQRLIT {
             + "  GROUP BY p.category;"));
   }
 
-
   @Test
   @Disabled
   public void topNTest() {
-    generate(parser.parse(
+    Env env1 = generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
             + "Product.nested := "
             + "  SELECT * "
             + "  FROM _ JOIN Product p "
             + "  LIMIT 5;"));
+
+    assertFalse(((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().isEmpty());
   }
+
   @Test
   public void distinctSingleColumnTest() {
-    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
+    Env env1 = generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT DISTINCT productid FROM Product;"));
+    assertFalse(((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().isEmpty());
   }
 
   @Test

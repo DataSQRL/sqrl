@@ -48,8 +48,7 @@ public class ScriptBundle implements Serializable {
   private final Name name;
   private final NamedIdentifier version;
   private final Map<Name, SqrlScript> scripts;
-  private final Map<Name, SqrlQuery> queries;
-  private final Optional<String> graphqlSchema;
+//  private final Map<Name, SqrlQuery> queries;
 
   public String getId() {
     return name.suffix(version.getId()).getCanonical();
@@ -147,9 +146,8 @@ public class ScriptBundle implements Serializable {
 
       if (isvalid) {
         return new ScriptBundle(Name.of(name, CANONICALIZER), vid,
-            validScripts.stream().collect(Collectors.toMap(SqrlScript::getName, Function.identity())),
-            validQueries.stream().collect(Collectors.toMap(SqrlQuery::getName, Function.identity())),
-            Optional.empty()
+            validScripts.stream().collect(Collectors.toMap(SqrlScript::getName, Function.identity()))
+//            validQueries.stream().collect(Collectors.toMap(SqrlQuery::getName, Function.identity()))
             );
       } else {
         return null;

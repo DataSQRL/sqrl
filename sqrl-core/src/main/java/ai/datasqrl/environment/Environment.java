@@ -113,7 +113,8 @@ public class Environment implements Closeable {
     }
     BundleOptions options = BundleOptions.builder().importManager(importManager)
         .schemaSettings(SchemaAdjustmentSettings.DEFAULT)
-        .dbConnection((JDBCConnectionProvider) settings.getDatabaseEngineProvider().getDatabase(bundle.getId()))
+        .dbConnection((JDBCConnectionProvider) settings.getDatabaseEngineProvider()
+            .getDatabase(bundle.getId()))
         .streamEngine(settings.getStreamEngineProvider().create()).build();
     BundlePlanner bundlePlanner = new BundlePlanner(options);
     return bundlePlanner.processBundle(bundle);

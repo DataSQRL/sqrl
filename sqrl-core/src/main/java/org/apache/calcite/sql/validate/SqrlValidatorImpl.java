@@ -20,6 +20,8 @@ import static org.apache.calcite.sql.SqlUtil.stripAs;
 import static org.apache.calcite.util.Static.RESOURCE;
 
 import ai.datasqrl.parse.tree.name.ReservedName;
+import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
+import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.StatementKind;
 import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
 import ai.datasqrl.schema.SQRLTable;
@@ -646,7 +648,22 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       top = addSelfTableToExpression(op.getQuery());
     }
 
+    addAssignmentHintToSelect(op, top);
     return top;
+  }
+
+  private void addAssignmentHintToSelect(StatementOp op, SqlNode top) {
+    //todo hints on Union, etc
+    if (!(top instanceof SqlSelect)) {
+      return;
+    }
+    SqlSelect select = (SqlSelect) top;
+    if (op.getStatement().getHints().isPresent()) {
+      SqlNodeList hint = select.getHints();
+      SqlNodeList assignmentHints = op.getStatement().getHints().get();
+      SqlNodeList list = SqlNodeUtil.combine(hint, assignmentHints);
+      select.setHints(list);
+    }
   }
 
   private SqlNode addSelfTableToQuery(StatementOp op, SqlNode top) {

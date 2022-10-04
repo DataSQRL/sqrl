@@ -17,14 +17,12 @@ public class ExpressionAssignment extends Assignment {
 
   private final Optional<List<TableFunctionArgument>> tableArgs;
   private final SqlNode expression;
-  private final SqlNodeList hints;
 
   public ExpressionAssignment(SqlParserPos location,
-      NamePath name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode expression, SqlNodeList hints) {
-    super(location, name);
+      NamePath name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode expression, Optional<SqlNodeList> hints) {
+    super(location, name, hints);
     this.tableArgs = tableArgs;
     this.expression = expression;
-    this.hints = hints;
   }
 
   @Override

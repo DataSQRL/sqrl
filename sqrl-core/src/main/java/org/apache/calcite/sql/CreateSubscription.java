@@ -19,7 +19,7 @@ public class CreateSubscription extends Assignment {
 
   public CreateSubscription(SqlParserPos location, SubscriptionType subscriptionType,
       NamePath name, SqlNode query) {
-    super(location, name);
+    super(location, name, Optional.empty());
     this.subscriptionType = subscriptionType;
     this.name = name;
     this.query = query;
