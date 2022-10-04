@@ -58,7 +58,6 @@ public class JoinDeclarationFactory {
 
     SqlNode join = unwrapSelect(sqlNode).getFrom();
 
-    SqlJoin join1 = (SqlJoin) join;
     String lastAlias = Util.last(((SqlIdentifier) tRight.getOperandList().get(1)).names);
     if (relNode instanceof LogicalSort &&
         ((LogicalSort) relNode).fetch != null) {
@@ -96,6 +95,7 @@ public class JoinDeclarationFactory {
           a);
       return dec;
     } else {
+      SqlJoin join1 = (SqlJoin) join;
       SqlJoinDeclaration dec = new SqlJoinDeclarationImpl(
           Optional.of(join1.getCondition()),
           join1.getRight(),
