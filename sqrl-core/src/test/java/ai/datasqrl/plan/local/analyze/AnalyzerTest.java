@@ -436,8 +436,9 @@ class AnalyzerTest extends AbstractSQRLIT {
 
   @Test
   public void distinctSingleColumnTest() {
-    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
+    Env env1 = generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT DISTINCT productid FROM Product;"));
+    assertFalse(((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().isEmpty());
   }
 
   @Test
