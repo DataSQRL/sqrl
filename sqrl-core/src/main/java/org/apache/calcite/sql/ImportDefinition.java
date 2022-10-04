@@ -32,7 +32,7 @@ public class ImportDefinition extends SqrlStatement {
 
   public ImportDefinition(SqlParserPos location,
       NamePath importPath, Optional<Name> alias, Optional<SqlNode> timestamp) {
-    super(location, createNamePath(importPath, alias, timestamp));
+    super(location, createNamePath(importPath, alias, timestamp), Optional.empty());
     this.alias = alias;
     this.timestamp = timestamp;
     this.importPath = importPath;

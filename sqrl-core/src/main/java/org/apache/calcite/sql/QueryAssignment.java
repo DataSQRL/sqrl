@@ -13,14 +13,12 @@ public class QueryAssignment extends Assignment {
 
   private final Optional<List<TableFunctionArgument>> tableArgs;
   private final SqlNode query;
-  private final SqlNodeList hints;
 
   public QueryAssignment(SqlParserPos location, NamePath namePath,
-      Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, SqlNodeList hints) {
-    super(location, namePath);
+      Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, Optional<SqlNodeList> hints) {
+    super(location, namePath, hints);
     this.tableArgs = tableArgs;
     this.query = query;
-    this.hints = hints;
   }
 
   @Override

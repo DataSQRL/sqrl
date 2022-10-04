@@ -1,6 +1,7 @@
 package org.apache.calcite.sql;
 
 import ai.datasqrl.parse.tree.name.NamePath;
+import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlVisitor;
@@ -15,7 +16,7 @@ public class ExportDefinition extends SqrlStatement {
   protected final NamePath sinkPath;
 
   public ExportDefinition(SqlParserPos location, NamePath tablePath, NamePath sinkPath) {
-    super(location, tablePath);
+    super(location, tablePath, Optional.empty());
     this.tablePath = tablePath;
     this.sinkPath = sinkPath;
   }

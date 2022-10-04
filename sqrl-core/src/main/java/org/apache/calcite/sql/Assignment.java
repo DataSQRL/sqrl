@@ -1,6 +1,7 @@
 package org.apache.calcite.sql;
 
 import ai.datasqrl.parse.tree.name.NamePath;
+import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlVisitor;
@@ -11,8 +12,8 @@ import org.apache.calcite.util.Litmus;
 @Getter
 public abstract class Assignment extends SqrlStatement {
 
-  protected Assignment(SqlParserPos location, NamePath namePath) {
-    super(location, namePath);
+  protected Assignment(SqlParserPos location, NamePath namePath, Optional<SqlNodeList> hints) {
+    super(location, namePath, hints);
   }
 
   @Override

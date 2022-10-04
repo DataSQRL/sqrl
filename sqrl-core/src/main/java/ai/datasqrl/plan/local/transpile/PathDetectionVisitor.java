@@ -18,12 +18,7 @@ public class PathDetectionVisitor extends SqlScopedShuttle {
   public SqlNode visit(SqlIdentifier id) {
     SqlValidatorNamespace namespace = getScope().fullyQualify(id).namespace;
     IdentifierNamespace ins = (IdentifierNamespace) namespace;
-    if (ins.resolve() instanceof AbsoluteTableNamespace) {
-      AbsoluteTableNamespace ans = (AbsoluteTableNamespace) ins.resolve();
-      if (ans.getRelationships().size() > 0) {
-        this.path = true;
-      }
-    } else if (ins.resolve() instanceof RelativeTableNamespace) {
+    if (ins.resolve() instanceof RelativeTableNamespace) {
       RelativeTableNamespace ans = (RelativeTableNamespace) ins.resolve();
       if (ans.getRelationships().size() > 1) {
         this.path = true;

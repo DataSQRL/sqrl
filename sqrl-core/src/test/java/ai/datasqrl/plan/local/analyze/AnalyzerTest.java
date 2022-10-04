@@ -75,9 +75,24 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
+  public void noPathOrderByTest() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT e.* FROM Orders.entries e ORDER BY e.discount DESC;"));
+  }
+
+  @Test
   public void assignmentHintTest() {
     Env env = generate(parser.parse("IMPORT ecommerce-data.Orders;"
-        + "X := SELECT /*+ NOOP */ e.* FROM Orders.entries AS e JOIN e.parent p;"));
+        + "/*+ NOOP */ X := SELECT e.* FROM Orders.entries e;"));
+
+    assertFalse(((LogicalProject) env.getOps().get(0).getRelNode()).getHints().isEmpty());
+  }
+
+  @Test
+  public void selectListHintTest() {
+    Env env = generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT /*+ NOOP */ e.* FROM Orders.entries AS e;"));
 
     assertFalse(((LogicalProject) env.getOps().get(0).getRelNode()).getHints().isEmpty());
   }

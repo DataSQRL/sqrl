@@ -11,6 +11,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.codehaus.commons.nullanalysis.Nullable;
@@ -44,5 +45,12 @@ public class SqlNodeUtil {
             and(expressions.subList(1, expressions.size()))
         },
         SqlParserPos.ZERO);
+  }
+
+  public static SqlNodeList combine(SqlNodeList list1, SqlNodeList list2) {
+    List<SqlNode> l = new ArrayList<>(list1.size() + list2.size());
+    l.addAll(list1.getList());
+    l.addAll(list2.getList());
+    return new SqlNodeList(l, list1.getParserPosition());
   }
 }
