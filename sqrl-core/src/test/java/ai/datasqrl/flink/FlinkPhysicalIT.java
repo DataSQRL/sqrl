@@ -156,6 +156,9 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_hour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;\n");
     rowCounts.put("orderagg1",rowCounts.get("orders"));
 
+    builder.append("OrderAgg2 := SELECT round_to_hour(o.\"time\") as bucket, o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY bucket, customer;\n");
+    rowCounts.put("orderagg2",rowCounts.get("orders"));
+
     Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
     validateRowCounts(rowCounts, results);
   }

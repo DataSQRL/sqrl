@@ -2,13 +2,15 @@ package ai.datasqrl.plan.calcite.rules;
 
 import ai.datasqrl.function.SqrlAwareFunction;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
+import ai.datasqrl.plan.calcite.hints.SlidingAggregationHint;
 import ai.datasqrl.plan.calcite.hints.TemporalJoinHint;
-import ai.datasqrl.plan.calcite.hints.TimeAggregationHint;
+import ai.datasqrl.plan.calcite.hints.TumbleAggregationHint;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.*;
 import ai.datasqrl.plan.global.MaterializationPreference;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
+import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.Iterables;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -40,17 +42,20 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Value
 public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogicalPlanConverter.RelMeta> {
 
     private static final long UPPER_BOUND_INTERVAL_MS = 999l*365l*24l*3600l; //999 years
     public static final double HIGH_CARDINALITY_JOIN_THRESHOLD = 10000;
+    public static final double DEFAULT_SLIDING_WIDTH_PERCENTAGE = 0.02;
 
     public final Supplier<RelBuilder> relBuilderFactory;
     public final SqrlRexUtil rexUtil;
     public final MaterializationPreference materializationPreference;
     public final double cardinalityJoinThreshold = HIGH_CARDINALITY_JOIN_THRESHOLD;
+    public final double defaultSlidePercentage = DEFAULT_SLIDING_WIDTH_PERCENTAGE;
 
     public SQRLLogicalPlanConverter(Supplier<RelBuilder> relBuilderFactory, Optional<MaterializationPreference> materializationPreference) {
         this.relBuilderFactory = relBuilderFactory;
@@ -776,7 +781,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 RelBuilder relB = relBuilderFactory.get();
                 relB.push(input.relNode);
                 relB.aggregate(relB.groupKey(ImmutableBitSet.of(groupByIdx)),aggregateCalls);
-                new TimeAggregationHint(TimeAggregationHint.Type.TUMBLE,keyCandidate.getIndex()).addTo(relB);
+                new TumbleAggregationHint(keyCandidate.getIndex()).addTo(relB);
                 ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
                 ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength, targetLength);
 
@@ -798,64 +803,89 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             //Fix best timestamp (if not already fixed)
             TimestampHolder.Derived inputTimestamp = input.timestamp;
             TimestampHolder.Candidate candidate = inputTimestamp.getBestCandidate();
+            targetLength += 1; //Adding timestamp column to output relation
 
-            boolean isSlidingAggregate = false;
-            RelMeta nowInput = input;
             if (!input.nowFilter.isEmpty() && input.materialize.getPreference().isMaterialize()) {
-                nowInput = input.inlineNowFilter();
-                isSlidingAggregate = true;
+                NowFilter nowFilter = input.nowFilter;
+                //Determine timestamp, add to group-By and
+                Preconditions.checkArgument(nowFilter.getTimestampIndex()==candidate.getIndex(),"Timestamp indexes don't match");
+                List<Integer> groupByIdxTimestamp = new ArrayList<>(groupByIdx);
+                Preconditions.checkArgument(!groupByIdxTimestamp.contains(candidate.getIndex()),"Cannot group on timestamp");
+                groupByIdxTimestamp.add(candidate.getIndex());
+                Collections.sort(groupByIdxTimestamp);
+                int newTimestampIdx = groupByIdxTimestamp.indexOf(candidate.getIndex());
+                TimestampHolder.Derived outputTimestamp = inputTimestamp.fixTimestamp(candidate.getIndex(), newTimestampIdx);
+
+                RelBuilder relB = relBuilderFactory.get();
+                relB.push(input.relNode);
+                relB.aggregate(relB.groupKey(ImmutableBitSet.of(groupByIdxTimestamp)),aggregateCalls);
+
+                //Convert now-filter to sliding window and add as hint
+                long intervalWidthMs = nowFilter.getPredicate().getInterval_ms();
                 // TODO: extract slide-width from hint
-            }
+                long slideWidthMs = Math.round(Math.ceil(intervalWidthMs*defaultSlidePercentage));
+                Preconditions.checkArgument(slideWidthMs>0 && slideWidthMs<intervalWidthMs,"Invalid window widths: %s - %s",intervalWidthMs,slideWidthMs);
+                new SlidingAggregationHint(candidate.getIndex(),intervalWidthMs, slideWidthMs).addTo(relB);
 
-            targetLength += 1;
+                List<Integer> pkIndexes = IntStream.range(0,groupByIdxTimestamp.size())
+                        .filter(i -> i!=newTimestampIdx).boxed().collect(Collectors.toList());
+                ContinuousIndexMap pk = ContinuousIndexMap.builder(pkIndexes.size()).addAll(pkIndexes).build(targetLength);
+                ContinuousIndexMap indexMap =  ContinuousIndexMap.builder(targetLength-1).addAll(pkIndexes)
+                        .addAll(ContiguousSet.closedOpen(groupByIdxTimestamp.size(),targetLength)).build(targetLength);
+                Deduplication byTimestamp = new Deduplication(pkIndexes,newTimestampIdx);
+                return setRelHolder(new RelMeta(relB.build(), TableType.TEMPORAL_STATE, pk,
+                        outputTimestamp, indexMap, null, input.materialize.update(MaterializationPreference.MUST,"Sliding window"),
+                        NowFilter.EMPTY, byTimestamp));
+            } else {
+                //Convert aggregation to window-based aggregation in a project so we can preserve timestamp
+                RelMeta nowInput = input.inlineNowFilter();
 
+                RelNode inputRel = nowInput.relNode;
+                RelBuilder relB = relBuilderFactory.get();
+                relB.push(inputRel);
 
-            RelNode inputRel = nowInput.relNode;
-            RelBuilder relB = relBuilderFactory.get();
-            relB.push(inputRel);
+                RexInputRef timestampRef = RexInputRef.of(candidate.getIndex(), inputRel.getRowType());
 
-            RexInputRef timestampRef = RexInputRef.of(candidate.getIndex(), inputRel.getRowType());
+                List<RexNode> partitionKeys = new ArrayList<>(groupByIdx.size());
+                List<RexNode> projects = new ArrayList<>(targetLength);
+                List<String> projectNames = new ArrayList<>(targetLength);
+                //Add groupByKeys
+                for (Integer keyIdx : groupByIdx) {
+                    RexInputRef ref = RexInputRef.of(keyIdx, inputRel.getRowType());
+                    projects.add(ref);
+                    projectNames.add(null);
+                    partitionKeys.add(ref);
+                }
+                RexFieldCollation orderBy = new RexFieldCollation(timestampRef, Set.of(SqlKind.DESCENDING));
 
-            List<RexNode> partitionKeys = new ArrayList<>(groupByIdx.size());
-            List<RexNode> projects = new ArrayList<>(targetLength);
-            List<String> projectNames = new ArrayList<>(targetLength);
-            //Add groupByKeys
-            for (Integer keyIdx : groupByIdx) {
-                RexInputRef ref = RexInputRef.of(keyIdx, inputRel.getRowType());
-                projects.add(ref);
+                //Add aggregate functions
+                for (int i = 0; i < aggregateCalls.size(); i++) {
+                    AggregateCall call = aggregateCalls.get(i);
+                    RexNode agg = rexUtil.getBuilder().makeOver(call.getType(), call.getAggregation(),
+                            call.getArgList().stream()
+                                    .map(idx -> RexInputRef.of(idx, inputRel.getRowType()))
+                                    .collect(Collectors.toList()),
+                            partitionKeys,
+                            ImmutableList.of(orderBy),
+                            RexWindowBounds.UNBOUNDED_PRECEDING,
+                            RexWindowBounds.CURRENT_ROW,
+                            true, true, false, false, true
+                    );
+                    projects.add(agg);
+                    projectNames.add(aggregate.getNamedAggCalls().get(i).getValue());
+                }
+
+                //Add timestamp as last project
+                TimestampHolder.Derived outputTimestamp = inputTimestamp.fixTimestamp(candidate.getIndex(), targetLength - 1);
+                projects.add(timestampRef);
                 projectNames.add(null);
-                partitionKeys.add(ref);
+
+                relB.project(projects, projectNames);
+                ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
+                ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength - 1, targetLength);
+                return setRelHolder(new RelMeta(relB.build(), TableType.TEMPORAL_STATE, pk,
+                        outputTimestamp, indexMap, null, nowInput.materialize, NowFilter.EMPTY, Deduplication.EMPTY));
             }
-            RexFieldCollation orderBy = new RexFieldCollation(timestampRef, Set.of(SqlKind.DESCENDING));
-
-            //Add aggregate functions
-            for (int i = 0; i < aggregateCalls.size(); i++) {
-                AggregateCall call = aggregateCalls.get(i);
-                RexNode agg = rexUtil.getBuilder().makeOver(call.getType(),call.getAggregation(),
-                        call.getArgList().stream()
-                                .map(idx -> RexInputRef.of(idx,inputRel.getRowType()))
-                                .collect(Collectors.toList()),
-                        partitionKeys,
-                        ImmutableList.of(orderBy),
-                        RexWindowBounds.UNBOUNDED_PRECEDING,
-                        RexWindowBounds.CURRENT_ROW,
-                        true, true, false, false, true
-                        );
-                projects.add(agg);
-                projectNames.add(aggregate.getNamedAggCalls().get(i).getValue());
-            }
-
-            //Add timestamp as last project
-            TimestampHolder.Derived addedTimestamp = inputTimestamp.fixTimestamp(candidate.getIndex(),targetLength-1);
-            projects.add(timestampRef);
-            projectNames.add(null);
-
-            relB.project(projects,projectNames);
-            if (isSlidingAggregate) new TimeAggregationHint(TimeAggregationHint.Type.SLIDING, candidate.getIndex()).addTo(relB);
-            ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
-            ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength-1, targetLength);
-            return setRelHolder(new RelMeta(relB.build(), TableType.TEMPORAL_STATE, pk,
-                    addedTimestamp, indexMap,null, nowInput.materialize, NowFilter.EMPTY, Deduplication.EMPTY));
         } else {
 
             //Standard aggregation produces a state table
@@ -864,7 +894,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             relB.push(input.relNode);
             relB.aggregate(relB.groupKey(ImmutableBitSet.of(groupByIdx)), aggregateCalls);
             //since there is no timestamp, we cannot propagate a sliding window
-            //if (isSlidingAggregate) new TimeAggregationHint(TimeAggregationHint.Type.SLIDING).addTo(relB);
+            //if (isSlidingAggregate) new TumbleAggregationHint(TumbleAggregationHint.Type.SLIDING).addTo(relB);
             ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
             ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength, targetLength);
             return setRelHolder(new RelMeta(relB.build(), TableType.STATE, pk,

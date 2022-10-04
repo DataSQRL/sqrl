@@ -117,6 +117,11 @@ public class ContinuousIndexMap implements IndexMap {
             return this;
         }
 
+        public Builder addAll(Iterable<Integer> mapTo) {
+            mapTo.forEach(i-> add(i));
+            return this;
+        }
+
         public Builder add(int mapTo) {
             Preconditions.checkArgument(offset < map.length);
             map[offset] = mapTo;
