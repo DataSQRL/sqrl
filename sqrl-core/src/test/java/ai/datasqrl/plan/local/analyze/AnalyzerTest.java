@@ -75,6 +75,14 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  public void assignmentHintTest() {
+    Env env = generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT /*+ NOOP */ e.* FROM Orders.entries AS e JOIN e.parent p;"));
+
+    assertFalse(((LogicalProject) env.getOps().get(0).getRelNode()).getHints().isEmpty());
+  }
+
+  @Test
   public void pathTest() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"
         + "X := SELECT e.* FROM Orders.entries AS e JOIN e.parent p;"));

@@ -571,13 +571,16 @@ SIMPLE_COMMENT
     : '--' ~[\r\n]* '\r'? '\n'? -> channel(HIDDEN)
     ;
 
+// TODO: empty comment block (/**/) conflicts with hint syntax
 BRACKETED_COMMENT
-    : '/*' .*? '*/' -> channel(HIDDEN)
+    : '/*' ANY_EXCEPT_PLUS .*? '*/' -> channel(HIDDEN)
     ;
 
 WS
     : [ \r\n\t]+ -> channel(HIDDEN)
     ;
+
+ANY_EXCEPT_PLUS : ~'+' ;
 
 // Catch-all for anything we can't recognize.
 // We use this to be able to ignore and recover all the text
