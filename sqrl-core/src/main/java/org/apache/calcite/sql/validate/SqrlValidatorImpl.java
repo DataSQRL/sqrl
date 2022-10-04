@@ -642,7 +642,8 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
     } else if (op.getStatementKind() == StatementKind.JOIN) {
       top = performJoinRewrites(op.getQuery());
       top = addSelfTableToQuery(op, top);
-    } else if (op.getStatementKind() == StatementKind.QUERY) {
+    } else if (op.getStatementKind() == StatementKind.QUERY ||
+        op.getStatementKind() == StatementKind.DISTINCT_ON) {
       top = performQueryRewrites(op.getQuery());
     } else if (op.getStatementKind() == StatementKind.IMPORT) {
       top = addSelfTableToExpression(op.getQuery());

@@ -8,6 +8,7 @@ import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
+import ai.datasqrl.plan.local.generate.Resolve.StatementKind;
 import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
 import ai.datasqrl.schema.SQRLTable;
 import com.google.common.collect.ArrayListMultimap;
@@ -88,8 +89,18 @@ public class Transpile {
     } else if (isNested(op) && select.getFetch() != null) {
       rewriteDistinctingHint(select, scope, (ppkNode) ->
           SqrlHintStrategyTable.createTopNHintNode(ppkNode, SqlParserPos.ZERO));
+    } else if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
+      rewriteDistinctOnHint(select, scope);
     }
     rewriteHints(select, scope);
+  }
+
+  private void rewriteDistinctOnHint(SqlSelect select, SqlValidatorScope scope) {
+    CalciteUtil.wrapSelectInProject(select, scope);
+    SqlSelect inner = (SqlSelect)select.getFrom();
+    //pull up hints
+    select.setHints(inner.getHints());
+    inner.setHints(new SqlNodeList(SqlParserPos.ZERO));
   }
 
   private boolean isNested(StatementOp op) {
