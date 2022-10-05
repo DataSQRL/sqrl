@@ -1,0 +1,22 @@
+{
+  "$id": "customer.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Customer",
+  "type": "object",
+  "required": ["customerid", "email", "name", "lastUpdated"],
+  "properties": {
+    "customerid": {
+      "type": ["integer", "string"]
+    },
+    "email": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "lastUpdated": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

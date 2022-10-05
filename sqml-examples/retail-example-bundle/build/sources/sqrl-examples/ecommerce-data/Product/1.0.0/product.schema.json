@@ -1,0 +1,21 @@
+{
+  "$id": "product.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Product",
+  "type": "object",
+  "required": ["customerid", "email", "name", "lastUpdated"],
+  "properties": {
+    "productid": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    }
+  }
+}
