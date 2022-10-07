@@ -14,27 +14,24 @@ import java.util.Optional;
 
 public class C360 implements TestDataset {
 
-    public static final Path RETAIL_DIR_BASE = Path.of("../sqml-examples/retail/");
+    public static final Path RETAIL_DIR_BASE = Path.of("../sqml-examples/retail-example-bundle/");
 
     public static final String RETAIL_SCRIPT_NAME_BASE = "c360";
     public static final String RETAIL_DATASET_BASE = "ecommerce-data";
 
 
     private final String scriptName;
-    private final Path scriptDir;
-    private final Path importSchema;
+//    private final Path importSchema;
     private final Path discoveredSchema;
     private final String datasetName;
     private final Path dataDir;
 
     private C360(String version) {
         this.scriptName = RETAIL_SCRIPT_NAME_BASE + version;
-        this.scriptDir = RETAIL_DIR_BASE.resolve(scriptName);
-        this.importSchema = scriptDir.resolve("pre-schema.yml");
+//        this.importSchema = RETAIL_DIR_BASE.resolve("pre-schema.yml");
         this.datasetName = RETAIL_DATASET_BASE + version;
         this.dataDir = RETAIL_DIR_BASE.resolve(datasetName);
         this.discoveredSchema = dataDir.resolve("discovered-schema.yml");
-
     }
 
     @Override
@@ -76,7 +73,7 @@ public class C360 implements TestDataset {
     @Override
     @SneakyThrows
     public Optional<String> getInputSchema() {
-        return Optional.of(Files.readString(importSchema));
+        return Optional.empty();
     }
 
     @Override

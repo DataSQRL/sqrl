@@ -84,7 +84,7 @@ public class SchemaImport {
     return result;
   }
 
-  private FlexibleDatasetSchema convert(DatasetDefinition dataset, SourceDataset source,
+  public FlexibleDatasetSchema convert(DatasetDefinition dataset, SourceDataset source,
       @NonNull ErrorCollector errors) {
     FlexibleDatasetSchema.Builder builder = new FlexibleDatasetSchema.Builder();
     builder.setDescription(SchemaElementDescription.of(dataset.description));
@@ -97,7 +97,7 @@ public class SchemaImport {
     return builder.build();
   }
 
-  private Optional<FlexibleDatasetSchema.TableField> convert(TableDefinition table,
+  public Optional<FlexibleDatasetSchema.TableField> convert(TableDefinition table,
       SourceDataset source, @NonNull ErrorCollector errors) {
     FlexibleDatasetSchema.TableField.Builder builder = new FlexibleDatasetSchema.TableField.Builder();
     Optional<Name> nameOpt = convert(table, builder, source, errors);

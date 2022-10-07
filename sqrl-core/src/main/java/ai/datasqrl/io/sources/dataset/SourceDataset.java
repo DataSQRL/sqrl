@@ -6,6 +6,9 @@ import ai.datasqrl.io.sources.DataSource;
 import ai.datasqrl.io.sources.SourceTableConfiguration;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import java.util.Collection;
@@ -23,14 +26,17 @@ import lombok.Value;
  */
 public class SourceDataset {
 
-  final DatasetRegistry registry;
+  @JsonIgnore
+  final DatasetRegistry registry = null;
   private final DataSource source;
+  @JsonIgnore
   private final Map<Name, SourceTable> tables = new HashMap<>();
 
-  public SourceDataset(DatasetRegistry registry, DataSource source) {
-    this.registry = registry;
+  @JsonCreator
+  public SourceDataset(@JsonProperty("source") DataSource source) {
+//    this.registry = registry;
     this.source = source;
-    initializeTables();
+//    initializeTables();
   }
 
   void initializeTables() {
@@ -67,8 +73,8 @@ public class SourceDataset {
           tblName.getDisplay());
       return null;
     }
-    registry.persistence.putTable(getName(), tblName, tableConfig);
-    registry.tableMonitor.startTableMonitoring(table);
+//    registry.persistence.putTable(getName(), tblName, tableConfig);
+//    registry.tableMonitor.startTableMonitoring(table);
     return table;
   }
 
@@ -77,9 +83,9 @@ public class SourceDataset {
     if (table == null) {
       return null;
     }
-    registry.tableMonitor.stopTableMonitoring(table);
-    registry.persistence.removeTable(getName(), table.getName());
-    registry.persistence.removeTableStatistics(getName(), table.getName());
+//    registry.tableMonitor.stopTableMonitoring(table);
+//    registry.persistence.removeTable(getName(), table.getName());
+//    registry.persistence.removeTableStatistics(getName(), table.getName());
     return table;
   }
 

@@ -16,6 +16,7 @@ import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -35,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Tests the generation of schemas for various consumers based on the central {@link FlexibleDatasetSchema}
  * using the {@link FlexibleTableConverter}.
  */
+@Disabled
 public class FlexibleSchemaHandlingTest extends AbstractSchemaIT {
 
     @BeforeEach

@@ -1,5 +1,6 @@
 package ai.datasqrl.graphql;
 
+import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -50,7 +51,7 @@ public class SchemaGeneratorTest extends AbstractSQRLIT {
 
     ImportManager importManager = sqrlSettings.getImportManagerProvider()
         .createImportManager(env.getDatasetRegistry());
-    ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
+    ScriptBundle bundle = example.buildBundle().getBundle();
     Assertions.assertTrue(
         importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
     Planner planner = new PlannerFactory(
@@ -58,7 +59,7 @@ public class SchemaGeneratorTest extends AbstractSQRLIT {
     Session session = new Session(error, importManager, planner);
     this.session = session;
     this.parser = new ConfiguredSqrlParser(error);
-    this.resolve = new Resolve();
+    this.resolve = new Resolve(RETAIL_DIR_BASE);
     this.testInfo = testInfo;
   }
 

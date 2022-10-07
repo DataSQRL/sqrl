@@ -3,6 +3,8 @@ package ai.datasqrl.io.sources.dataset;
 import ai.datasqrl.io.sources.SourceTableConfiguration;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.parse.tree.name.Name;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.NonNull;
 
 /**
@@ -16,10 +18,21 @@ public class SourceTable {
   private final SourceTableConfiguration config;
   private final Name name;
 
-  public SourceTable(SourceDataset dataset, Name tableName, SourceTableConfiguration config) {
+  public SourceTable(SourceDataset dataset,
+      Name tableName,
+      SourceTableConfiguration config) {
     this.dataset = dataset;
     this.config = config;
     this.name = tableName;
+  }
+
+  @JsonCreator
+  public SourceTable(@JsonProperty("dataset") SourceDataset dataset,
+      @JsonProperty("name") String tableName,
+      @JsonProperty("configuration") SourceTableConfiguration config) {
+    this.dataset = dataset;
+    this.config = config;
+    this.name = Name.system(tableName); //todo fix by injecting NameCanonicalizer
   }
 
   public @NonNull SourceTableConfiguration getConfiguration() {
@@ -56,12 +69,13 @@ public class SourceTable {
   }
 
   public SourceTableStatistics getStatistics() {
-    SourceTableStatistics stats = dataset.registry.persistence.getTableStatistics(dataset.getName(),
-        getName());
-    if (stats == null) {
-      stats = new SourceTableStatistics();
-    }
-    return stats;
+//    SourceTableStatistics stats = dataset.registry.persistence.getTableStatistics(dataset.getName(),
+//        getName());
+//    if (stats == null) {
+//      stats = new SourceTableStatistics();
+//    }
+//    return stats;
+    return new SourceTableStatistics();
   }
 
 }

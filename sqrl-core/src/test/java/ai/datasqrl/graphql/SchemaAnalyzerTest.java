@@ -1,5 +1,6 @@
 package ai.datasqrl.graphql;
 
+import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -28,6 +29,7 @@ import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class SchemaAnalyzerTest extends AbstractSQRLIT {
@@ -65,8 +67,9 @@ class SchemaAnalyzerTest extends AbstractSQRLIT {
 
   @SneakyThrows
   @Test
+  @Disabled
   public void test() {
-    Resolve resolve = new Resolve();
+    Resolve resolve = new Resolve(DIR_BASE);
     ScriptNode node = parser.parse(bundle.getMainScript().getContent());
     Env env2 = resolve.planDag(session, node);
 

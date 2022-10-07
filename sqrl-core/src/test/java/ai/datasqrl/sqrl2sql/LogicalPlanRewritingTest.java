@@ -1,5 +1,7 @@
 package ai.datasqrl.sqrl2sql;
 
+import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
+
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
@@ -36,14 +38,14 @@ class LogicalPlanRewritingTest extends AbstractSQRLIT {
 
     importManager = sqrlSettings.getImportManagerProvider()
         .createImportManager(env.getDatasetRegistry());
-    ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
+    ScriptBundle bundle = example.buildBundle().getBundle();
     Assertions.assertTrue(importManager.registerUserSchema(bundle.getMainScript().getSchema(),
         ErrorCollector.root()));
 
     parser = ConfiguredSqrlParser.newParser(errorCollector);
     this.session = new Session(errorCollector, importManager,
         new PlannerFactory(CalciteSchema.createRootSchema(false, false).plus()).createPlanner());
-    this.resolve = new Resolve();
+    this.resolve = new Resolve(RETAIL_DIR_BASE);
   }
 
   @Test

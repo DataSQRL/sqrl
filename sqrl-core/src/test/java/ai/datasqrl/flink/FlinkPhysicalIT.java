@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.*;
 
+import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FlinkPhysicalIT extends AbstractSQRLIT {
@@ -63,7 +64,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
 
     ImportManager importManager = sqrlSettings.getImportManagerProvider()
         .createImportManager(env.getDatasetRegistry());
-    ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
+    ScriptBundle bundle = example.buildBundle().getBundle();
     assertTrue(
             importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
     planner = new PlannerFactory(
@@ -71,7 +72,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     Session session = new Session(error, importManager, planner);
     this.session = session;
     this.parser = new ConfiguredSqrlParser(error);
-    this.resolve = new Resolve();
+    this.resolve = new Resolve(RETAIL_DIR_BASE);
     DatabaseConnectionProvider db = sqrlSettings.getDatabaseEngineProvider().getDatabase(EnvironmentConfiguration.MetaData.DEFAULT_DATABASE);
     jdbc = (JDBCConnectionProvider) db;
 

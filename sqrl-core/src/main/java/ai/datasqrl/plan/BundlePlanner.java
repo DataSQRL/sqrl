@@ -86,7 +86,7 @@ public class BundlePlanner {
   private Env planMain(SqrlScript mainScript, Planner planner) {
     ConfiguredSqrlParser parser = new ConfiguredSqrlParser(errorCollector);
     ScriptNode scriptNode = parser.parse(mainScript.getContent());
-    Resolve resolve = new Resolve();
+    Resolve resolve = new Resolve(null);
 
     Session session = new Session(errorCollector, options.getImportManager(), planner);
 

@@ -21,9 +21,11 @@ import java.sql.Connection;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+@Disabled
 @ExtendWith(VertxExtension.class)
 public class SimpleE2E extends AbstractSQRLIT {
   WebClient webClient;
@@ -62,7 +64,6 @@ public class SimpleE2E extends AbstractSQRLIT {
                 .filename("c360.sqrl")
                 .name("c360")
                 .main(true)
-                .inputSchema(C360.BASIC.getInputSchema().get())
             .build()))
         .build();
     Future<HttpResponse<JsonObject>> step2 = step1.compose(o->this.submitScript(conf));

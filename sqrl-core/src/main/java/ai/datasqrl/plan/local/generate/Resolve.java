@@ -1,6 +1,9 @@
 package ai.datasqrl.plan.local.generate;
 
-import ai.datasqrl.environment.ImportManager.SourceTableImport;
+import ai.datasqrl.compile.loaders.DataSourceLoader;
+import ai.datasqrl.compile.loaders.JavaFunctionLoader;
+import ai.datasqrl.compile.loaders.Loader;
+import ai.datasqrl.compile.loaders.TypeLoader;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -22,6 +25,8 @@ import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
+import java.net.URI;
+import java.nio.file.Path;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -43,8 +48,11 @@ import static ai.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
 @Getter
 public class Resolve {
 
-  private final CalciteTableFactory tableFactory = new CalciteTableFactory(
-          new SqrlTypeFactory(new SqrlTypeSystem()));
+  private final Path basePath;
+
+  public Resolve(Path basePath) {
+    this.basePath = basePath;
+  }
 
   enum ImportState {
     UNRESOLVED, RESOLVING, RESOLVED;
@@ -52,6 +60,10 @@ public class Resolve {
 
   @Getter
   public class Env {
+    CalciteTableFactory tableFactory = new CalciteTableFactory(
+        new SqrlTypeFactory(new SqrlTypeSystem()));
+    SchemaAdjustmentSettings schemaAdjustmentSettings = SchemaAdjustmentSettings.DEFAULT;
+    List<Loader> loaders = List.of(new DataSourceLoader(), new JavaFunctionLoader(), new TypeLoader());
     VariableFactory variableFactory = new VariableFactory();
     List<StatementOp> ops = new ArrayList<>();
     Map<Relationship, SqlJoinDeclaration> resolvedJoinDeclarations = new HashMap<>();
@@ -67,13 +79,15 @@ public class Resolve {
 
     Session session;
     ScriptNode scriptNode;
+    URI packageUri;
 
     public Env(SqrlCalciteSchema sqrlSchema, CalciteSchema relSchema, Session session,
-        ScriptNode scriptNode) {
+        ScriptNode scriptNode, URI packageUri) {
       this.sqrlSchema = sqrlSchema;
       this.relSchema = relSchema;
       this.session = session;
       this.scriptNode = scriptNode;
+      this.packageUri = packageUri;
     }
   }
 
@@ -91,7 +105,8 @@ public class Resolve {
         new SqrlCalciteSchema(CalciteSchema.createRootSchema(true).schema),
         session.planner.getDefaultSchema().unwrap(CalciteSchema.class),
         session,
-        script
+        script,
+        basePath.toUri().resolve("build/")
     );
   }
 
@@ -127,28 +142,47 @@ public class Resolve {
   }
 
   private void resolveImportDefinition(Env env, ImportDefinition node) {
-    SourceTableImport tblImport = lookupDatasetModule(env, node.getImportPath());
+    NamePath path = node.getImportPath();
+    ImportType type = getImportType(env, path);
 
-    ScriptTableDefinition importedTable = createScriptTableDefinition(env, tblImport,
-        node.getAlias());
-
-    registerScriptTable(env, importedTable);
+    switch (type) {
+      case DIRECTORY:
+        break;
+      case MODULE:
+        loadSingleModule(env,
+            resolveModulePath(env, path.popLast()),
+            path.getLast().getCanonical());
+        break;
+    }
   }
 
-  private SourceTableImport lookupDatasetModule(Env env, NamePath namePath) {
-    Preconditions.checkState(namePath.size() == 2, "IMPORT malformed");
-    return (SourceTableImport) env.session.importManager.importTable(namePath.get(0),
-        namePath.get(1),
-        SchemaAdjustmentSettings.DEFAULT, env.session.errors);
+  private URI resolveModulePath(Env env, NamePath path) {
+    URI uri = env.getPackageUri();
+    for (Name name : path) {
+      uri = uri.resolve(name.getCanonical() + "/");
+    }
+    return uri;
   }
 
-  private ScriptTableDefinition createScriptTableDefinition(Env env, SourceTableImport tblImport,
-      Optional<Name> alias) {
-    return tableFactory.importTable(tblImport, alias,
-        env.session.planner.getRelBuilder());
+  private void loadSingleModule(Env env, URI uri, String name) {
+    for (Loader loader : env.getLoaders()) {
+      if (loader.handles(uri, name)) {
+        loader.load(env, uri, name);
+        return;
+      }
+    }
+    throw new RuntimeException("Cannot find loader for module");
   }
 
-  private void registerScriptTable(Env env, ScriptTableDefinition tblDef) {
+  private ImportType getImportType(Env env, NamePath path) {
+    return ImportType.MODULE;
+  }
+
+  enum ImportType {
+    DIRECTORY, MODULE
+  }
+
+  public static void registerScriptTable(Env env, ScriptTableDefinition tblDef) {
     //Update table mapping from SQRL table to Calcite table...
 
     tblDef.getShredTableMap().values().stream().forEach(vt ->
@@ -394,8 +428,8 @@ public class Resolve {
     Check.state(optTable.isPresent(), null, null);
 
     VirtualRelationalTable vtable = optTable.get();
-    Optional<Integer> timestampScore = tableFactory.getTimestampScore(op.statement.getNamePath().getLast(),c.getDataType());
-    vtable.addColumn(c, tableFactory.getTypeFactory(), getRelBuilderFactory(env), timestampScore);
+    Optional<Integer> timestampScore = env.tableFactory.getTimestampScore(op.statement.getNamePath().getLast(),c.getDataType());
+    vtable.addColumn(c, env.tableFactory.getTypeFactory(), getRelBuilderFactory(env), timestampScore);
     if (fixTimestamp) {
       Check.state(timestampScore.isPresent(), null, null);
       Check.state(vtable.isRoot() && vtable.getAddedColumns().isEmpty(), null, null);
@@ -451,7 +485,7 @@ public class Resolve {
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream().map(idx -> relFieldNames.get(idx))
             .map(n -> Name.system(n)).collect(Collectors.toList());
 
-    ScriptTableDefinition queryTable = tableFactory.defineTable(op.statement.getNamePath(), processedRel, fieldNames);
+    ScriptTableDefinition queryTable = env.tableFactory.defineTable(op.statement.getNamePath(), processedRel, fieldNames);
     registerScriptTable(env, queryTable);
   }
 
@@ -510,337 +544,4 @@ public class Resolve {
       this.statementKind = statementKind;
     }
   }
-
-  //
-  // /**
-  // * In order to expose a hierarchical table in Calcite, we need to register the
-  // source dataset with
-  // * the full calcite schema and a table for each nested record, which we can
-  // then query.
-  // * <p>
-  // * To do this, we use a process called table shredding. This involves removing
-  // the nested records
-  // * from the source dataset, and then registering the resulting table with the
-  // calcite schema.
-  // * <p>
-  // * We can then expand this into a full logical plan using the
-  // * {@link ai.datasqrl.plan.calcite.rules.SqrlExpansionRelRule}
-  // */
-  // @Override
-//   public Void visitImportDefinition(ImportDefinition node, Scope context) {
-//   if (node.getNamePath().size() != 2) {
-//   throw new RuntimeException(
-//   String.format("Invalid import identifier: %s", node.getNamePath()));
-//   }
-//
-//   //Check if this imports all or a single table
-//   Name sourceDataset = node.getNamePath().get(0);
-//   Name sourceTable = node.getNamePath().get(1);
-//
-//   List<TableImport> importTables;
-//   Optional<Name> nameAlias = node.getAliasName();
-//   List<ScriptTableDefinition> dt = new ArrayList<>();
-//   if (sourceTable.equals(ReservedName.ALL)) { //import all tables from dataset
-//   importTables = importManager.importAllTables(sourceDataset, schemaSettings,
-//   errors);
-//   nameAlias = Optional.empty();
-//   throw new RuntimeException("TBD");
-//   } else { //importing a single table
-//   //todo: Check if table exists
-//   TableImport tblImport = importManager.importTable(sourceDataset, sourceTable,
-//   schemaSettings,
-//   errors);
-//   if (!tblImport.isSource()) {
-//   throw new RuntimeException("TBD");
-//   }
-//   SourceTableImport sourceTableImport = (SourceTableImport) tblImport;
-//
-//   ScriptTableDefinition importedTable =
-//   tableFactory.importTable(sourceTableImport, nameAlias,
-//   planner.getRelBuilder());
-//   dt.add(importedTable);
-//   }
-//
-//   for (ScriptTableDefinition d : dt) {
-//   registerScriptTable(d);
-//   }
-//
-//   Check.state(!(node.getTimestamp().isPresent() &&
-//   sourceTable.equals(ReservedName.ALL)), node,
-//   Errors.TIMESTAMP_NOT_ALLOWED);
-//   if (node.getTimestamp().isPresent()) {
-//     String query = String.format("SELECT %s FROM %s",
-//     NodeFormatter.accept(node.getTimestamp().get()),
-//     dt.get(0).getTable().getName().getDisplay());
-//     TranspiledResult result = transpile(query, Optional.empty(),
-//     TranspileOptions.builder().build());
-//     System.out.println(result.getRelNode().explain());
-//   }
-//
-//   return null;
-//   }
-//
-//   private void registerScriptTable(ScriptTableDefinition tblDef) {
-//   //Update table mapping from SQRL table to Calcite table...
-//   tblDef.getShredTableMap().values().stream().forEach(vt ->
-//   relSchema.add(vt.getNameId(), vt));
-//   relSchema.add(tblDef.getBaseTable().getNameId(), tblDef.getBaseTable());
-//   this.tableMapper.getTableMap().putAll(tblDef.getShredTableMap());
-//   //and also map all fields
-//   this.fieldNames.putAll(tblDef.getFieldNameMap());
-//
-//   //Add all join declarations
-//   tblDef.getShredTableMap().keySet().stream().flatMap(t ->
-//   t.getAllRelationships()).forEach(r -> {
-//   SqlJoinDeclaration dec =
-//   joinDeclarationFactory.createParentChildJoinDeclaration(r);
-//   joinDecs.add(r, dec);
-//   });
-//   if (tblDef.getTable().getPath().size() == 1) {
-//   sqrlSchema.add(tblDef.getTable().getName().getDisplay(), (Table)
-//   tblDef.getTable());
-//   }
-//   }
-  //
-  // @SneakyThrows
-  // @Override
-  // public Void visitDistinctAssignment(DistinctAssignment node, Scope context) {
-  // TranspiledResult result = transpile(node.getSqlQuery(), Optional.empty(),
-  // TranspileOptions.builder().build());
-  // System.out.println(result.relNode.explain());
-  //// mapping.addQuery(relNode, context.getTable(), node.getNamePath());
-  // return null;
-  // }
-  //
-  //
-  // @SneakyThrows
-  // @Override
-  // public Void visitJoinAssignment(JoinAssignment node, Scope context) {
-  //// Check.state(canAssign(node.getNamePath()), node,
-  // Errors.UNASSIGNABLE_TABLE);
-  // Check.state(node.getNamePath().size() > 1, node, Errors.JOIN_ON_ROOT);
-  // Optional<SQRLTable> table = getContext(node.getNamePath().popLast());
-  // Preconditions.checkState(table.isPresent());
-  // String query = "SELECT * FROM _ " + node.getQuery();
-  // TableWithPK pkTable = tableMapper.getTable(table.get());
-  //
-  // TranspiledResult result = transpile(query, table,
-  // TranspileOptions.builder().orderToOrdinals(false).build());
-  //
-  // SqlJoinDeclaration joinDeclaration = joinDeclarationFactory.create(pkTable,
-  // result);
-  // VirtualRelationalTable vt =
-  // joinDeclarationFactory.getToTable(result.getSqlValidator(),
-  // result.getSqlNode());
-  // Multiplicity multiplicity =
-  // joinDeclarationFactory.deriveMultiplicity(result.getRelNode());
-  // SQRLTable toTable = tableMapper.getScriptTable(vt);
-  // Relationship relationship =
-  // variableFactory.addJoinDeclaration(node.getNamePath(), table.get(),
-  // toTable, multiplicity);
-  //
-  // //todo: assert non-shadowed
-  // this.fieldNames.put(relationship, relationship.getName().getCanonical());
-  // this.joinDecs.add(relationship, joinDeclaration);
-  // return null;
-  // }
-  //
-  // private Optional<SQRLTable> getContext(NamePath namePath) {
-  // if (namePath.size() == 0) {
-  // return Optional.empty();
-  // }
-  // SQRLTable table = (SQRLTable)
-  // sqrlSchema.getTable(namePath.get(0).getDisplay(), false)
-  // .getTable();
-  //
-  // return table.walkTable(namePath.popFirst());
-  // }
-  //
-  // @SneakyThrows
-  // private TranspiledResult transpile(String query, Optional<SQRLTable> context,
-  // TranspileOptions options) {
-  // SqlNode node = SqlParser.create(query,
-  // SqlParser.config().withCaseSensitive(false).withUnquotedCasing(Casing.UNCHANGED))
-  // .parseQuery();
-  //
-  // SqrlValidateResult result = validate(node, context);
-  // TranspiledResult transpiledResult = transpile(result.getValidated(),
-  // result.getValidator(),
-  // options);
-  // return transpiledResult;
-  // }
-  //
-  // private TranspiledResult transpile(SqlNode node, SqrlValidatorImpl validator,
-  // TranspileOptions options) {
-  // SqlSelect select =
-  // node instanceof SqlSelect ? (SqlSelect) node : (SqlSelect) ((SqlOrderBy)
-  // node).query;
-  // SqlValidatorScope scope = validator.getSelectScope(select);
-  //
-  // Transpile transpile = new Transpile(validator, tableMapper,
-  // uniqueAliasGenerator, joinDecs,
-  // sqlNodeBuilder, () -> new JoinBuilderImpl(uniqueAliasGenerator, joinDecs,
-  // tableMapper),
-  // fieldNames, options);
-  //
-  // transpile.rewriteQuery(select, scope);
-  //
-  // SqlValidator sqlValidator = TranspilerFactory.createSqlValidator(relSchema);
-  // SqlNode validated = sqlValidator.validate(select);
-  //
-  // return new TranspiledResult(select, validator, node, sqlValidator,
-  // plan(validated, sqlValidator));
-  // }
-  //
-  // private SqrlValidateResult validate(SqlNode node, Optional<SQRLTable>
-  // context) {
-  // SqrlValidatorImpl sqrlValidator =
-  // TranspilerFactory.createSqrlValidator(sqrlSchema);
-  // sqrlValidator.setContext(context);
-  // sqrlValidator.validate(node);
-  // return new SqrlValidateResult(node, sqrlValidator);
-  // }
-  //
-  // @Override
-  // public Void visitExpressionAssignment(ExpressionAssignment node, Scope
-  // context) {
-  // Optional<SQRLTable> table = getContext(node.getNamePath().popLast());
-  // Preconditions.checkState(table.isPresent());
-  // TranspiledResult result = transpile("SELECT " + node.getSql() + " FROM _",
-  // table,
-  // TranspileOptions.builder().build());
-  //
-  // return null;
-  // }
-  //
-  // @Override
-  // public Void visitQueryAssignment(QueryAssignment node, Scope context) {
-  // Optional<SQRLTable> ctx = getContext(node.getNamePath().popLast());
-  // TranspiledResult result = transpile(node.getSql(), ctx,
-  // TranspileOptions.builder().build());
-  // RelNode relNode = result.getRelNode();
-  // System.out.println(result.relNode.explain());
-  //// Check.state(canAssign(node.getNamePath()), node,
-  // Errors.UNASSIGNABLE_QUERY_TABLE);
-  //
-  // NamePath namePath = node.getNamePath();
-  //
-  // boolean isExpression = false;
-  //
-  // if (isExpression) {
-  // Check.state(node.getNamePath().size() > 1, node,
-  // Errors.QUERY_EXPRESSION_ON_ROOT);
-  // SQRLTable table = ctx.get();
-  // Column column = variableFactory.addQueryExpression(namePath, table);
-  // VirtualRelationalTable t = (VirtualRelationalTable) relSchema.getTable(
-  // this.tableMapper.getTable(table).getNameId(), false).getTable();
-  // RelDataTypeField field = relNode.getRowType().getFieldList()
-  // .get(relNode.getRowType().getFieldCount() - 1);
-  // RelDataTypeField newField = new RelDataTypeFieldImpl(
-  // node.getNamePath().getLast().getCanonical(),
-  // t.getRowType(null).getFieldCount(),
-  // field.getValue());
-  //
-  // this.fieldNames.put(column, newField.getName());
-  //
-  // AddedColumn addedColumn = new Complex(newField.getName(),
-  // result.getRelNode());
-  // t.addColumn(addedColumn, new SqrlTypeFactory(new SqrlTypeSystem()));
-  //
-  // } else {
-  // List<Name> fieldNames = relNode.getRowType().getFieldList().stream()
-  // .map(f -> Name.system(f.getName())).collect(Collectors.toList());
-  // SQRLLogicalPlanConverter.RelMeta processedRel = optimize(relNode);
-  // ScriptTableDefinition queryTable = tableFactory.defineTable(namePath,
-  // processedRel,
-  // fieldNames);
-  // registerScriptTable(queryTable);
-  // Optional<Pair<Relationship, Relationship>> childRel =
-  // variableFactory.linkParentChild(
-  // namePath,
-  // queryTable.getTable(), ctx);
-  //
-  // childRel.ifPresent(rel -> {
-  // joinDecs.add(rel.getLeft(),
-  // joinDeclarationFactory.createChild(rel.getLeft()));
-  // joinDecs.add(rel.getRight(),
-  // joinDeclarationFactory.createParent(rel.getRight()));
-  // });
-  // }
-  //
-  // return null;
-  // }
-  //
-  // public SQRLLogicalPlanConverter.RelMeta optimize(RelNode relNode) {
-  // System.out.println("LP$0: \n" + relNode.explain());
-  //
-  // //Step 1: Push filters into joins so we can correctly identify self-joins
-  // relNode = planner.transform(OptimizationStage.PUSH_FILTER_INTO_JOIN,
-  // relNode);
-  // System.out.println("LP$1: \n" + relNode.explain());
-  //
-  // //Step 2: Convert all special SQRL conventions into vanilla SQL and remove
-  // //self-joins (including nested self-joins) as well as infer primary keys,
-  // //table types, and timestamps in the process
-  //
-  // SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(
-  // () -> planner.getRelBuilder(), new
-  // SqrlRexUtil(planner.getRelBuilder().getRexBuilder()));
-  // relNode = relNode.accept(sqrl2sql);
-  // System.out.println("LP$2: \n" + relNode.explain());
-  // return sqrl2sql.putPrimaryKeysUpfront(sqrl2sql.getRelHolder(relNode));
-  // }
-  //
-  // @SneakyThrows
-  // private RelNode plan(SqlNode sqlNode, SqlValidator sqlValidator) {
-  // System.out.println(sqlNode);
-  // planner.refresh();
-  // planner.setValidator(sqlNode, sqlValidator);
-  //
-  // RelRoot root = planner.rel(sqlNode);
-  // RelNode relNode = root.rel;
-  //
-  // return relNode;
-  // }
-  //
-  // @Override
-  // public Table getTable(String tableName) {
-  // return relSchema.getTable(tableName, false).getTable();
-  // }
-  //
-  // public OptimizedDAG planDAG() {
-  // DAGPlanner dagPlanner = new DAGPlanner();
-  // //For now, we are going to generate simple scan queries for each virtual
-  // table
-  // //TODO: this needs to be replaced by the queries generated from the GraphQL
-  // API
-  // List<APIQuery> apiQueries =
-  // CalciteUtil.getTables(relSchema,VirtualRelationalTable.class).stream()
-  // .map(vt -> new
-  // APIQuery("query_"+vt.getNameId(),planner.getRelBuilder().scan(vt.getNameId()).build()))
-  // .collect(Collectors.toList());
-  // return dagPlanner.plan(relSchema, planner, apiQueries);
-  // }
-  //
-  // @Value
-  // class SqrlValidateResult {
-  //
-  // SqlNode validated;
-  // SqrlValidatorImpl validator;
-  // }
-  //
-  // @Value
-  // public class TranspiledResult {
-  //
-  // SqlNode sqrlNode;
-  // SqrlValidatorImpl sqrlValidator;
-  // SqlNode sqlNode;
-  // SqlValidator sqlValidator;
-  // RelNode relNode;
-  // }
-  //
-  // @Value
-  // class Scope {
-  //
-  // }
 }

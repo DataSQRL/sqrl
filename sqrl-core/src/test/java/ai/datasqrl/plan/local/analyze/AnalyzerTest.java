@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.math.BigDecimal;
 
+import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AnalyzerTest extends AbstractSQRLIT {
@@ -52,7 +53,7 @@ class AnalyzerTest extends AbstractSQRLIT {
 
     ImportManager importManager = sqrlSettings.getImportManagerProvider()
         .createImportManager(env.getDatasetRegistry());
-    ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
+    ScriptBundle bundle = example.buildBundle().getBundle();
     Assertions.assertTrue(
         importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
     Planner planner = new PlannerFactory(
@@ -60,7 +61,7 @@ class AnalyzerTest extends AbstractSQRLIT {
     Session session = new Session(error, importManager, planner);
     this.session = session;
     this.parser = new ConfiguredSqrlParser(error);
-    this.resolve = new Resolve();
+    this.resolve = new Resolve(RETAIL_DIR_BASE);
   }
 
   private Env generate(ScriptNode node) {
