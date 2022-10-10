@@ -259,7 +259,7 @@ public class Resolve {
       statementKind = StatementKind.SUBSCRIPTION;
     } else if  (statement instanceof DistinctAssignment) {
       sqlNode = ((DistinctAssignment) statement).getQuery();
-      statementKind = StatementKind.QUERY;
+      statementKind = StatementKind.DISTINCT_ON;
     } else if  (statement instanceof JoinAssignment) {
       sqlNode = ((JoinAssignment) statement).getQuery();
       statementKind = StatementKind.JOIN;
@@ -472,7 +472,7 @@ public class Resolve {
   }
 
   public enum StatementKind {
-    EXPR, QUERY, JOIN, SUBSCRIPTION, IMPORT, EXPORT
+    EXPR, QUERY, JOIN, SUBSCRIPTION, IMPORT, EXPORT, DISTINCT_ON
   }
 
   enum OpKind {

@@ -212,6 +212,7 @@ public class ResolveTest extends AbstractSQRLIT {
    */
 
   @Test
+  @Disabled
   public void topNTest() {
     ScriptBuilder builder = imports();
     builder.add("Customer.recentOrders := SELECT o.* FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");

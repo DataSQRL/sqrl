@@ -19,6 +19,7 @@ public class Model {
     R visitRoot(Root root, C context);
   }
 
+  @Getter
   @Builder
   public static class Root {
     @Singular
@@ -88,6 +89,7 @@ public class Model {
   }
 
   @Builder
+  @Getter
   public static class ArgumentSet {
     //The may be empty for no-args
     @Singular
