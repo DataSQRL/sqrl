@@ -10,12 +10,20 @@ import java.util.List;
 @AllArgsConstructor
 public class TumbleAggregationHint implements SqrlHint {
 
+
     @Getter
     final int timestampIdx;
 
     @Override
     public RelHint getHint() {
-        return RelHint.builder(CONSTRUCTOR.getName()).hintOptions(List.of(String.valueOf(timestampIdx))).build();
+        return RelHint.builder(getHintName()).hintOptions(List.of(String.valueOf(timestampIdx))).build();
+    }
+
+    public static final String HINT_NAME = TumbleAggregationHint.class.getSimpleName();
+
+    @Override
+    public String getHintName() {
+        return HINT_NAME;
     }
 
     public static final Constructor CONSTRUCTOR = new Constructor();
@@ -23,8 +31,8 @@ public class TumbleAggregationHint implements SqrlHint {
     public static final class Constructor implements SqrlHint.Constructor<TumbleAggregationHint> {
 
         @Override
-        public String getName() {
-            return TumbleAggregationHint.class.getSimpleName();
+        public boolean validName(String name) {
+            return name.equalsIgnoreCase(HINT_NAME);
         }
 
         @Override

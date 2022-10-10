@@ -45,29 +45,35 @@ public interface NowFilter extends PullupOperator {
         return this;
     }
 
-    default Optional<NowFilter> merge(TimePredicate other) {
-        return Optional.of(new NowFilterImpl(other));
-    }
-
-    default Optional<NowFilter> addAll(List<TimePredicate> others) {
-        Optional<NowFilter> result = Optional.of(this);
-        for (TimePredicate other : others) {
-            result = result.get().merge(other);
-            if (result.isEmpty()) return result;
-        }
-        return result;
-    }
-
     default NowFilter map(Function<TimePredicate,TimePredicate> mapping) {
         return this;
     }
 
     default RelBuilder addFilterTo(RelBuilder relBuilder) {
+        return addFilterTo(relBuilder,false);
+    }
+
+    default RelBuilder addFilterTo(RelBuilder relBuilder, boolean useCurrentTime) {
         return relBuilder;
     }
 
     static NowFilter of(TimePredicate nowPredicate) {
         return new NowFilterImpl(nowPredicate);
+    }
+
+    static Optional<NowFilter> of(List<TimePredicate> timePreds) {
+        if (timePreds.isEmpty()) return Optional.of(EMPTY);
+        Optional<TimePredicate> combined = Optional.of(timePreds.get(1));
+        for (int i = 1; i < timePreds.size(); i++) {
+            combined = combined.flatMap(timePreds.get(i)::and);
+        }
+        return combined.map(NowFilterImpl::new);
+    }
+
+    default Optional<NowFilter> merge(NowFilter other) {
+        if (isEmpty()) return Optional.of(other);
+        if (other.isEmpty()) return Optional.of(this);
+        return of(List.of(getPredicate(),other.getPredicate()));
     }
 
 
@@ -102,15 +108,10 @@ public interface NowFilter extends PullupOperator {
         }
 
         @Override
-        public RelBuilder addFilterTo(RelBuilder relBuilder) {
+        public RelBuilder addFilterTo(RelBuilder relBuilder, boolean useCurrentTime) {
             RexBuilder rexB = relBuilder.getRexBuilder();
-            relBuilder.filter(getPredicate().createRexNode(rexB,i -> rexB.makeInputRef(relBuilder.peek(),i)));
+            relBuilder.filter(getPredicate().createRexNode(rexB,i -> rexB.makeInputRef(relBuilder.peek(),i), useCurrentTime));
             return relBuilder;
-        }
-
-        @Override
-        public Optional<NowFilter> merge(TimePredicate other) {
-            return nowPredicate.and(other).map(p -> new NowFilterImpl(p));
         }
     }
 

@@ -7,19 +7,24 @@ import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptUtil;
+import org.apache.calcite.rel.RelCollation;
+import org.apache.calcite.rel.RelCollations;
+import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.*;
+import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -205,6 +210,43 @@ public class SqrlRexUtil {
         SqrlAwareFunction bucketFct = (SqrlAwareFunction) call.getOperator();
         if (!(bucketFct instanceof SqrlTimeTumbleFunction)) return Optional.empty();
         return Optional.of(TimeTumbleFunctionCall.from(call,getBuilder()));
+    }
+
+    public static RelCollation mapCollation(RelCollation collation, IndexMap map) {
+        return RelCollations.of(collation.getFieldCollations().stream().map(fc -> fc.withFieldIndex(map.map(fc.getFieldIndex()))).collect(Collectors.toList()));
+    }
+
+    public static List<RexFieldCollation> translateCollation(RelCollation collation, RelDataType inputType) {
+        return collation.getFieldCollations().stream().map(col -> new RexFieldCollation(
+                RexInputRef.of(col.getFieldIndex(),inputType),
+                translateOrder(col))).collect(Collectors.toList());
+    }
+
+    private static Set<SqlKind> translateOrder(RelFieldCollation collation) {
+        Set<SqlKind> result = new HashSet<>();
+        if (collation.direction.isDescending()) result.add(SqlKind.DESCENDING);
+        if (collation.nullDirection== RelFieldCollation.NullDirection.FIRST) result.add(SqlKind.NULLS_FIRST);
+        if (collation.nullDirection== RelFieldCollation.NullDirection.LAST) result.add(SqlKind.NULLS_LAST);
+        return result;
+    }
+
+    public RexNode createRowFunction(SqlAggFunction rowFunction, List<RexNode> partition, List<RexFieldCollation> fieldCollations) {
+        final RelDataType intType =
+                rexBuilder.getTypeFactory().createSqlType(SqlTypeName.INTEGER);
+        RexNode row_function = rexBuilder.makeOver(intType, rowFunction,
+                List.of(), partition, ImmutableList.copyOf(fieldCollations),
+                RexWindowBounds.UNBOUNDED_PRECEDING,
+                RexWindowBounds.UNBOUNDED_FOLLOWING, true, true, false,
+                false, false);
+        return row_function;
+    }
+
+    public static List<Integer> combineIndexes(Collection<Integer>... indexLists) {
+        List<Integer> result = new ArrayList<>();
+        for (Collection<Integer> indexes : indexLists) {
+            indexes.stream().filter(Predicate.not(result::contains)).forEach(result::add);
+        }
+        return result;
     }
 
 }

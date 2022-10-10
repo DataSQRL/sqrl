@@ -134,6 +134,10 @@ public abstract class TimestampHolder {
             return new TimestampHolder.Derived(this.candidatesLocked, updatedCandidates, this.base);
         }
 
+        public TimestampHolder.Derived fixTimestamp(Candidate candidate) {
+            return fixTimestamp(candidate.getIndex());
+        }
+
         public TimestampHolder.Derived fixTimestamp(int columnIndex) {
             return fixTimestamp(columnIndex, columnIndex);
         }
@@ -152,6 +156,10 @@ public abstract class TimestampHolder {
 
     public void lockCandidates() {
         candidatesLocked = true;
+    }
+
+    public boolean isEmpty() {
+        return candidates.isEmpty();
     }
 
     public boolean isCandidate(int columnIndex) {

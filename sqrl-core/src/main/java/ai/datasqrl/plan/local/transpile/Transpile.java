@@ -1,48 +1,26 @@
 package ai.datasqrl.plan.local.transpile;
 
-import static ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable.DISTINCT_ON;
-import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
-
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
-import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
+import ai.datasqrl.plan.calcite.hints.TopNHint;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
 import ai.datasqrl.schema.SQRLTable;
 import com.google.common.collect.ArrayListMultimap;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Stack;
-import java.util.TreeSet;
+import lombok.Value;
+import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.*;
+import org.apache.calcite.util.Util;
+import org.apache.flink.util.Preconditions;
+
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import lombok.Value;
-import org.apache.calcite.sql.JoinConditionType;
-import org.apache.calcite.sql.JoinType;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlHint;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlNumericLiteral;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlTableRef;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.DelegatingScope;
-import org.apache.calcite.sql.validate.ExpandableTableNamespace;
-import org.apache.calcite.sql.validate.SqlValidatorNamespace;
-import org.apache.calcite.sql.validate.SqlValidatorScope;
-import org.apache.calcite.sql.validate.SqlValidatorUtil;
-import org.apache.calcite.util.Util;
-import org.apache.flink.util.Preconditions;
+
+import static ai.datasqrl.plan.calcite.util.SqlNodeUtil.and;
 
 public class Transpile {
 
@@ -84,10 +62,10 @@ public class Transpile {
 
     if (select.isDistinct()) {
       rewriteDistinctingHint(select, scope, (ppkNode) ->
-          SqrlHintStrategyTable.createSelectDistinctHintNode(ppkNode, SqlParserPos.ZERO));
+          TopNHint.createSqlHint(TopNHint.Type.SELECT_DISTINCT, ppkNode, SqlParserPos.ZERO));
     } else if (isNested(op) && select.getFetch() != null) {
       rewriteDistinctingHint(select, scope, (ppkNode) ->
-          SqrlHintStrategyTable.createTopNHintNode(ppkNode, SqlParserPos.ZERO));
+              TopNHint.createSqlHint(TopNHint.Type.TOP_N, ppkNode, SqlParserPos.ZERO));
     }
     rewriteHints(select, scope);
   }
@@ -105,7 +83,7 @@ public class Transpile {
 
     for (int i = 0; i < list.size(); i++) {
       SqlHint hint = (SqlHint) list.get(i);
-      if (hint.getName().equals(DISTINCT_ON)) {
+      if (hint.getName().equals(TopNHint.Type.DISTINCT_ON.name())) {
         SqlHint newHint = rewriteDistinctHint(select, hint, scope);
         hints.set(i, newHint);
       }

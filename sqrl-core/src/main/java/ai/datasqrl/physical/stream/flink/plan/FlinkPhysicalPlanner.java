@@ -36,6 +36,7 @@ public class FlinkPhysicalPlanner {
         .set(ExecutionConfigOptions.TABLE_EXEC_SINK_NOT_NULL_ENFORCER, NotNullEnforcer.ERROR);
 
     StreamStatementSet stmtSet = tEnv.createStatementSet();
+    //TODO: push down filters across queries to determine if we can constraint sources by time for efficiency (i.e. only load the subset of the stream that is required)
     for (OptimizedDAG.MaterializeQuery query : streamQueries) {
       Preconditions.checkArgument(query.getSink() instanceof OptimizedDAG.TableSink, "Subscriptions not yet implemented");
       OptimizedDAG.TableSink tblsink = ((OptimizedDAG.TableSink) query.getSink());

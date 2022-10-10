@@ -12,6 +12,8 @@ public interface SqrlHint {
 
     RelHint getHint();
 
+    String getHintName();
+
     default RelNode addHint(Hintable node) {
         return node.attachHints(List.of(getHint()));
     }
@@ -23,7 +25,7 @@ public interface SqrlHint {
     static<H extends SqrlHint> Optional<H> fromRel(RelNode node, SqrlHint.Constructor<H> hintConstructor) {
         if (node instanceof Hintable) {
             return ((Hintable)node).getHints().stream()
-                    .filter(h -> h.hintName.equalsIgnoreCase(hintConstructor.getName()))
+                    .filter(h -> hintConstructor.validName(h.hintName))
                     .filter(h -> h.inheritPath.isEmpty()) //we only want the hint on that particular join, not inherited ones
                     .findFirst().map(hintConstructor::fromHint);
         }
@@ -33,9 +35,9 @@ public interface SqrlHint {
 
     public interface Constructor<H extends SqrlHint> {
 
-        public String getName();
+        boolean validName(String name);
 
-        public H fromHint(RelHint hint);
+        H fromHint(RelHint hint);
 
     }
 

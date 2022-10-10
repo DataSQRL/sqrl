@@ -1,10 +1,9 @@
 package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
-import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
+import ai.datasqrl.plan.calcite.hints.TopNHint;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-//import ai.datasqrl.plan.local.generate.Generator.TranspiledResult;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
@@ -49,7 +48,7 @@ public class JoinDeclarationFactory {
               SqlParserPos.ZERO))
           .collect(Collectors.toList());
       hint = Optional.of(new SqlHint(SqlParserPos.ZERO,
-          new SqlIdentifier(SqrlHintStrategyTable.TOP_N, SqlParserPos.ZERO),
+          new SqlIdentifier(TopNHint.Type.TOP_N.name(), SqlParserPos.ZERO),
           new SqlNodeList(pksIndices, SqlParserPos.ZERO),
           HintOptionFormat.ID_LIST));
     }

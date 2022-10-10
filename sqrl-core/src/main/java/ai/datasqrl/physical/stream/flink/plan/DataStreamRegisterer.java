@@ -42,9 +42,10 @@ public class DataStreamRegisterer extends RelShuttleImpl {
       return super.visit(scan); //Ensure we only register each table ones
     }
 
+    //TODO: if we are reading data in strict mode, we can use table API connectors directly which can be more efficient
     SourceTableImport imp = t.getSourceTableImport();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
-
+    //TODO: push down startup timestamp if determined in FlinkPhysicalPlanner
     StreamHolder<Raw> stream = streamPreparer.getRawInput(imp.getTable(),streamBuilder);
     SchemaValidator schemaValidator = new SchemaValidator(imp.getSchema(), SchemaAdjustmentSettings.DEFAULT, imp.getTable().getDataset().getDigest());
     StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),"schema", SourceRecord.Named.class);

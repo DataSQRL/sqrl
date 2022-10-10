@@ -12,10 +12,11 @@ public interface PullupOperator {
     @Value
     final class Container {
 
-        public static final Container EMPTY = new Container(Deduplication.EMPTY,NowFilter.EMPTY);
+        public static final Container EMPTY = new Container(NowFilter.EMPTY, TopNConstraint.EMPTY, SortOrder.EMPTY);
 
-        final Deduplication deduplication;
         final NowFilter nowFilter;
+        final TopNConstraint topN;
+        final SortOrder sort;
 
     }
 

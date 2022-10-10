@@ -5,7 +5,10 @@ import com.google.common.collect.Iterables;
 import graphql.com.google.common.base.Preconditions;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
-import org.apache.calcite.rex.*;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
@@ -14,7 +17,10 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -80,9 +86,9 @@ public class TimePredicate {
                 largerIndex<0?largerIndex:map.map(largerIndex), smaller, interval_ms);
     }
 
-    public RexNode createRexNode(RexBuilder rexBuilder, Function<Integer,RexInputRef> createInputRef) {
-        RexNode smallerRef = createRef(smallerIndex, rexBuilder, createInputRef);
-        RexNode largerRef = createRef(largerIndex, rexBuilder, createInputRef);
+    public RexNode createRexNode(RexBuilder rexBuilder, Function<Integer,RexInputRef> createInputRef, boolean useCurrentTime) {
+        RexNode smallerRef = createRef(smallerIndex, rexBuilder, createInputRef, useCurrentTime);
+        RexNode largerRef = createRef(largerIndex, rexBuilder, createInputRef, useCurrentTime);
         SqlOperator op = smaller?SqlStdOperatorTable.LESS_THAN_OR_EQUAL:SqlStdOperatorTable.EQUALS;
 
         if (interval_ms<0) {
@@ -102,9 +108,15 @@ public class TimePredicate {
     }
 
     private static RexNode createRef(int index, RexBuilder rexBuilder,
-                                     Function<Integer,RexInputRef> createInputRef) {
+                                     Function<Integer,RexInputRef> createInputRef, boolean useCurrentTime) {
         if (index>0) return createInputRef.apply(index);
-        else if (index==NOW_INDEX) return rexBuilder.makeCall(SqrlOperatorTable.NOW);
+        else if (index==NOW_INDEX) {
+            if (useCurrentTime) {
+                return rexBuilder.makeCall(SqlStdOperatorTable.CURRENT_TIMESTAMP);
+            } else {
+                return rexBuilder.makeCall(SqrlOperatorTable.NOW);
+            }
+        }
         throw new UnsupportedOperationException("Invalid index: " + index);
     }
 

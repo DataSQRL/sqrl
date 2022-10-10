@@ -1,11 +1,13 @@
 package ai.datasqrl.plan.calcite.util;
 
 import com.google.common.base.Preconditions;
+import com.google.common.primitives.Ints;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
@@ -34,8 +36,20 @@ public class ContinuousIndexMap implements IndexMap {
         return IntStream.range(0,targets.length).mapToObj(i -> new Pair(i,targets[i])).collect(Collectors.toList());
     }
 
-    public int[] asArray() {
+    public int[] targetsAsArray() {
         return targets.clone();
+    }
+
+    public ImmutableBitSet targetsAsBitSet() {
+        return ImmutableBitSet.of(targetsAsArray());
+    }
+
+    public List<Integer> targetsAsList() {
+        return Ints.asList(targetsAsArray());
+    }
+
+    public IndexMap inverseMap() {
+        return IndexMap.of(getMapping().stream().collect(Collectors.toMap(Pair::getTarget,Pair::getSource)));
     }
 
     public boolean containsTarget(int targetIndex) {

@@ -6,7 +6,6 @@ import ai.datasqrl.schema.builder.VirtualTable;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -44,13 +43,6 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
    */
   @NonNull
   protected RelDataType queryRowType;
-
-  /*
-  The pullups that should be executed in the database (i.e. after persistence) as determined
-  by the Optimizer. This is used to correctly expand the table in the DAG cutting.
-   */
-  @Setter
-  private PullupOperator.Container dbPullups = PullupOperator.Container.EMPTY;
 
   protected VirtualRelationalTable(Name nameId, @NonNull RelDataType rowType,
                                    @NonNull RelDataType queryRowType, int numLocalPks) {

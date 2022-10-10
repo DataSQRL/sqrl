@@ -13,22 +13,12 @@
  */
 package ai.datasqrl.parse;
 
-import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
-
 import ai.datasqrl.parse.SqlBaseParser.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
+import ai.datasqrl.plan.calcite.hints.TopNHint;
 import ai.datasqrl.schema.TableFunctionArgument;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -39,6 +29,17 @@ import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.commons.lang3.tuple.Pair;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Builds the abstract syntax tree for an SQRL script using the classes in
@@ -1041,7 +1042,7 @@ class AstBuilder
             null,
             SqlLiteral.createExactNumeric("1", getLocation(ctx)),
             new SqlNodeList(List.of(new SqlHint(loc,
-                new SqlIdentifier(SqrlHintStrategyTable.DISTINCT_ON, loc),
+                new SqlIdentifier(TopNHint.Type.DISTINCT_ON.name(), loc),
                 new SqlNodeList(pk, loc),
                 HintOptionFormat.ID_LIST
             )), loc)

@@ -75,7 +75,7 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
 
     public ScriptTableDefinition defineTable(NamePath tablePath, SQRLLogicalPlanConverter.RelMeta rel,
                                       List<Name> fieldNames) {
-        ContinuousIndexMap indexmap = rel.getIndexMap();
+        ContinuousIndexMap indexmap = rel.getSelect();
         Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());
 
         Name tableid = getTableId(tablePath.getLast(),"q");

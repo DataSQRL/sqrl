@@ -135,7 +135,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       } else {
         SlidingAggregationHint slideHint = slideHintOpt.get();
         timestampIdx = slideHint.getTimestampIdx();
-        intervalsMs = new long[]{slideHint.getSlideWidthMs(),slideHint.getIntervalWidthMs()};
+        intervalsMs = new long[]{slideHint.getSlideWidthMs(), slideHint.getIntervalWidthMs()};
         windowFunction = FlinkSqlOperatorTable.HOP;
       }
 
@@ -209,33 +209,8 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   @Override
   public RelNode visit(LogicalUnion union) {
-    return super.visit(union);
-  }
-
-  @Override
-  public RelNode visit(LogicalIntersect intersect) {
-    return super.visit(intersect);
-  }
-
-  @Override
-  public RelNode visit(LogicalMinus minus) {
-    return super.visit(minus);
-  }
-
-  @Override
-  public RelNode visit(LogicalSort sort) {
-    return sort.getInput().accept(this); //just remove sort atm
-//    throw new RuntimeException("sort todo");
-  }
-
-  @Override
-  public RelNode visit(TableFunctionScan scan) {
-    throw new UnsupportedOperationException("Not yet supported");
-//    List<RelNode> inputs = scan.getInputs().stream()
-//        .map(this::visit)
-//        .collect(Collectors.toList());
-//    return new LogicalTableFunctionScan(cluster, defaultTrait, inputs, scan.getCall(),
-//        scan.getElementType(), scan.getRowType(), scan.getColumnMappings());
+    throw new UnsupportedOperationException("Not yet implemented");
+    //return super.visit(union);
   }
 
   @Override
@@ -257,13 +232,33 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       relBuilder.push(uncollect.getInput().accept(this));
       relBuilder.uncollect(List.of(),uncollect.withOrdinality);
       return relBuilder.build();
-    } /* else if (other instanceof LogicalWatermarkAssigner) {
-      LogicalWatermarkAssigner watermarkAssigner = (LogicalWatermarkAssigner) other;
-      return new LogicalWatermarkAssigner(cluster, defaultTrait,
-          watermarkAssigner.getInput().accept(this),
-          watermarkAssigner.rowtimeFieldIndex(), watermarkAssigner.watermarkExpr());
-    } */
-    throw new RuntimeException("not yet implemented:" + other.getClass());
+    }
+    throw new UnsupportedOperationException("not yet implemented:" + other.getClass());
+  }
+
+  @Override
+  public RelNode visit(TableFunctionScan scan) {
+    throw new UnsupportedOperationException("Not yet supported");
+//    List<RelNode> inputs = scan.getInputs().stream()
+//        .map(this::visit)
+//        .collect(Collectors.toList());
+//    return new LogicalTableFunctionScan(cluster, defaultTrait, inputs, scan.getCall(),
+//        scan.getElementType(), scan.getRowType(), scan.getColumnMappings());
+  }
+
+  @Override
+  public RelNode visit(LogicalIntersect intersect) {
+    throw new UnsupportedOperationException("Not yet supported");
+  }
+
+  @Override
+  public RelNode visit(LogicalMinus minus) {
+    throw new UnsupportedOperationException("Not yet supported");
+  }
+
+  @Override
+  public RelNode visit(LogicalSort sort) {
+    throw new UnsupportedOperationException("Sorts are not supported during materialization");
   }
 
 

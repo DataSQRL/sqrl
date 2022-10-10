@@ -20,10 +20,17 @@ public class TemporalJoinHint implements SqrlHint {
 
     @Override
     public RelHint getHint() {
-        return RelHint.builder(CONSTRUCTOR.getName()).hintOptions(
+        return RelHint.builder(HINT_NAME).hintOptions(
                 IntStream.concat(IntStream.of(streamTimestampIdx, stateTimestampIdx), IntStream.of(streamPrimaryKeys))
                         .mapToObj(String::valueOf).collect(Collectors.toList())
         ).build();
+    }
+
+    public static final String HINT_NAME = TumbleAggregationHint.class.getSimpleName();
+
+    @Override
+    public String getHintName() {
+        return HINT_NAME;
     }
 
     public static final Constructor CONSTRUCTOR = new Constructor();
@@ -31,8 +38,8 @@ public class TemporalJoinHint implements SqrlHint {
     public static final class Constructor implements SqrlHint.Constructor<TemporalJoinHint> {
 
         @Override
-        public String getName() {
-            return TemporalJoinHint.class.getSimpleName();
+        public boolean validName(String name) {
+            return name.equalsIgnoreCase(HINT_NAME);
         }
 
         @Override

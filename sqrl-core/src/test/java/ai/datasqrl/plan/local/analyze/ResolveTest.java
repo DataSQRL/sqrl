@@ -14,6 +14,8 @@ import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.data.C360;
 import ai.datasqrl.util.ScriptBuilder;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -217,6 +219,13 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
+  public void selectDistinctTest() {
+    ScriptBuilder builder = imports();
+    builder.add("Customer.distinctOrders := SELECT DISTINCT o.id, o.\"time\" FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
+    process(builder.toString());
+  }
+
+  @Test
   @Disabled
   public void distinctTest() {
     ScriptBuilder builder = imports();
@@ -344,16 +353,24 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   @Value
+  @Builder
+  @AllArgsConstructor
   public static class PullupTest {
 
-    public static final PullupTest EMPTY = new PullupTest(false, false);
+    public static final PullupTest EMPTY = new PullupTest(false, false, false);
 
     boolean hasNowFilter;
-    boolean hasDeduplication;
+    boolean hasTopN;
+    boolean hasSort;
+
+    public PullupTest(boolean hasNowFilter, boolean hasTopN) {
+      this(hasNowFilter,hasTopN,false);
+    }
 
     public void test(PullupOperator.Container pullups) {
       assertEquals(hasNowFilter, !pullups.getNowFilter().isEmpty());
-      assertEquals(hasDeduplication, !pullups.getDeduplication().isEmpty());
+      assertEquals(hasTopN, !pullups.getTopN().isEmpty());
+      assertEquals(hasSort, !pullups.getSort().isEmpty());
     }
 
   }

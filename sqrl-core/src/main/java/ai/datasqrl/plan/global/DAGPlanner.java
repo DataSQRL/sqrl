@@ -4,9 +4,11 @@ import ai.datasqrl.config.AbstractDAG;
 import ai.datasqrl.config.util.StreamUtil;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.hints.WatermarkHint;
+import ai.datasqrl.plan.calcite.rules.MaterializationInference;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
+import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import ai.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
@@ -103,11 +105,12 @@ public class DAGPlanner {
             if (dbNode.table.getRoot().getBase().getMaterialization().isMaterialize()) {
                 VirtualRelationalTable dbTable = dbNode.table;
                 RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
+                //Shred the table if necessary before materialization
                 RelNode expandedScan = scanTable.accept(sqrl2sql);
                 SQRLLogicalPlanConverter.RelMeta processedRel = sqrl2sql.getRelHolder(expandedScan);
                 processedRel = sqrl2sql.postProcess(processedRel, dbTable.getRowType().getFieldNames());
-                dbTable.setDbPullups(processedRel.getPullups());
                 expandedScan = processedRel.getRelNode();
+                //Expand to full tree
                 expandedScan = planner.transform(WRITE_DAG_OPTIMIZATION,expandedScan);
                 Optional<Integer> timestampIdx = processedRel.getType().hasTimestamp()?
                         Optional.of(processedRel.getTimestamp().getTimestampIndex()):Optional.empty();
@@ -332,12 +335,26 @@ public class DAGPlanner {
                     pullup.getNowFilter().addFilterTo(relBuilder);
                     //TODO: implement as TTL on table if materialized
                 }
-                if (!pullup.getDeduplication().isEmpty()) {
+                SortOrder leftOverSort = SortOrder.EMPTY;
+                if (!pullup.getTopN().isEmpty()) {
+                    RelNode relnode = relBuilder.build();
+                    int targetLength = relnode.getRowType().getFieldCount();
+                    SQRLLogicalPlanConverter.RelMeta meta = new SQRLLogicalPlanConverter.RelMeta(
+                            relnode,null, ContinuousIndexMap.identity(0,targetLength),TimestampHolder.Derived.NONE,
+                            ContinuousIndexMap.identity(targetLength,targetLength),null,new MaterializationInference(MaterializationPreference.MUST),
+                            NowFilter.EMPTY, pullup.getTopN(), SortOrder.EMPTY);
+                    meta = meta.inlineTopN(relBuilder);
+                    leftOverSort = meta.getSort();
                     if (strategy.isMaterialize()) {
-                        //This is taken care of by UPSERTING against the primary key
+                        //This is taken care of by UPSERTING against the primary key, we just need to preserve the sort
+                        relBuilder.push(relnode);
                     } else {
-                        pullup.getDeduplication().addDedup(relBuilder);
+                        relBuilder.push(meta.getRelNode());
                     }
+                }
+                SortOrder sort = pullup.getSort().ifEmpty(leftOverSort);
+                if (!sort.isEmpty()) {
+                    sort.addTo(relBuilder);
                 }
             } else {
                 if (vtable.getRoot().getBase().getTimestamp().hasTimestamp()) {
