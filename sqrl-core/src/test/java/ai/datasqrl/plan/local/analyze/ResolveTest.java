@@ -227,7 +227,6 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void distinctTest() {
     ScriptBuilder builder = imports();
     builder.add("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC");

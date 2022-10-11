@@ -67,7 +67,6 @@ public class Transpile {
     } else if (isNested(op) && select.getFetch() != null) {
       rewriteDistinctingHint(select, scope, (ppkNode) ->
               TopNHint.createSqlHint(TopNHint.Type.TOP_N, ppkNode, SqlParserPos.ZERO));
-          SqrlHintStrategyTable.createTopNHintNode(ppkNode, SqlParserPos.ZERO));
     } else if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
       rewriteDistinctOnHint(select, scope);
     }

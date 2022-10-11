@@ -443,11 +443,16 @@ public class Resolve {
     List<Name> fieldNames = op.relNode.getRowType().getFieldList().stream()
         .map(f -> Name.system(f.getName())).collect(Collectors.toList());
 
-    SQRLLogicalPlanConverter.RelMeta processedRel = optimize(env, op);
-
+    final SQRLLogicalPlanConverter.RelMeta processedRel;
+    if (op.statementKind==StatementKind.DISTINCT_ON) {
+      processedRel = null;
+    } else {
+      processedRel = optimize(env, op);
+    }
     ScriptTableDefinition queryTable = tableFactory.defineTable(op.statement.getNamePath(), processedRel, fieldNames);
     registerScriptTable(env, queryTable);
   }
+
 
   private AddedColumn createColumnAddOp(Env env, StatementOp op) {
     String columnName = op.statement.getNamePath().getLast().getCanonical();
