@@ -46,9 +46,13 @@ assignment
     | hint? qualifiedName tableFunction? ':=' expression                          # expressionAssign
     | hint? qualifiedName tableFunction? ':=' query                               # queryAssign
     | hint? qualifiedName ':=' DISTINCT table=identifier (AS? distinctAlias=identifier)?
-                               ON '('? expression (',' expression)* ')'?
+                               ON onList
                                (ORDER BY orderExpr=expression ordering=DESC?)?              # distinctAssignment
     ;
+
+onList
+   : '('? expression (',' expression)* ')'?
+   ;
 
 tableFunction
    : '(' functionArgument (',' functionArgument)* ')'
