@@ -1014,9 +1014,9 @@ class AstBuilder
     )).orElse(tableName);
 
     List<SqlNode> pk = new ArrayList<>();
-    //starts at 1
-    for (int i = 0; i < ctx.expression().size(); i++) {
-      SqlNode pkNode = visit(ctx.expression(i));
+
+    for (int i = 0; i < ctx.onList().expression().size(); i++) {
+      SqlNode pkNode = visit(ctx.onList().expression(i));
       pk.add(pkNode);
     }
 
