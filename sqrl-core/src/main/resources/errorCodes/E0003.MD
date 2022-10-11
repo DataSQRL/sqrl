@@ -1,0 +1,13 @@
+IMPORT star (*) cannot have a timestamp.
+
+Erroneous code example:
+```
+IMPORT ecommerce-data.* TIMESTAMP time / 10 AS ts;
+```
+
+Setting a timestamp to all modules is not supported, try importing them one at a time. Example:
+```
+IMPORT ecommerce-data.Orders TIMESTAMP time / 10 AS ts;
+IMPORT ecommerce-data.Product TIMESTAMP time / 10 AS ts;
+IMPORT ecommerce-data.Customer TIMESTAMP time / 10 AS ts;
+```

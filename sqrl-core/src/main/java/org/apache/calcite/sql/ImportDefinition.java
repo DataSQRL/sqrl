@@ -57,7 +57,9 @@ public class ImportDefinition extends SqrlStatement {
 
   @Override
   public void unparse(SqlWriter sqlWriter, int i, int i1) {
-
+    sqlWriter.keyword("IMPORT");
+    sqlWriter.print(this.importPath.getDisplay());
+    //todo remaining
   }
 
   @Override

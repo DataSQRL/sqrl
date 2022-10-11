@@ -23,4 +23,12 @@ public class DistinctAssignment extends Assignment {
     this.order = order;
     this.query = query;
   }
+
+  @Override
+  public void unparse(SqlWriter sqlWriter, int i, int i1) {
+    super.unparse(sqlWriter, i, i1);
+    sqlWriter.keyword("DISTINCT");
+    table.unparse(sqlWriter, i, i1);
+    sqlWriter.print("ON ...");
+  }
 }

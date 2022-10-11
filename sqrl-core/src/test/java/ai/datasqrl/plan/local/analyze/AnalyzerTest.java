@@ -5,6 +5,8 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
+import ai.datasqrl.errors.ErrorCode;
+import ai.datasqrl.errors.SqrlException;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.ParsingException;
 import ai.datasqrl.parse.tree.name.Name;
@@ -69,14 +71,36 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   private void generateInvalid(ScriptNode node) {
-    assertThrows(Exception.class,
-        ()->resolve.planDag(session, node),
-        "Statement should throw exception"
-        );
+    generateInvalid(node,
+        ErrorCode.GENERIC_ERROR);
+//    assertThrows(Exception.class,
+//        ()->resolve.planDag(session, node),
+//        "Statement should throw exception"
+//        );
+  }
+
+  private void generateInvalid(ScriptNode node, ErrorCode expectedCode) {
+    try {
+      resolve.planDag(session, node);
+      fail();
+    } catch (Exception e) {
+      assertTrue(e instanceof SqrlException, "Should be SqrlException is: " + e.getClass().getName());
+      SqrlException exception = (SqrlException) e;
+      assertEquals(expectedCode, exception.getErrorCode());
+      System.out.println(exception.getMessage());
+    }
+  }
+
+  @Test
+  public void testCatchingCalciteErrorTest() {
+    generateInvalid(parser.parse(""
+        + "IMPORT ecommerce-data.Product;"
+        //Expression 'productid' is not being grouped
+        + "X := SELECT productid, SUM(productid) FROM Product GROUP BY name"),
+        ErrorCode.GENERIC_ERROR);
   }
 
   // IMPORTS
-
   @Test
   @Disabled
   public void functionImportTest() {
@@ -84,7 +108,6 @@ class AnalyzerTest extends AbstractSQRLIT {
         + "IMPORT system.functions;"
         + "IMPORT ecommerce-data.Orders;"));
   }
-
 
   @Test
   public void import1() {
@@ -110,7 +133,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void duplicateImportTest() {
     generateInvalid(
         parser.parse("IMPORT ecommerce-data.Product;\n"
-            + "IMPORT ecommerce-data.Product;\n"));
+            + "IMPORT ecommerce-data.Product;\n"), ErrorCode.IMPORT_NAMESPACE_CONFLICT);
   }
 
   @Test
@@ -144,7 +167,7 @@ class AnalyzerTest extends AbstractSQRLIT {
 
   @Test
   public void invalidFunctionDef() {
-    generateInvalid(
+    generate(
         parser.parse("IMPORT ecommerce-data.Product;\n"
             + "Product.test := NOW(100);\n"));
   }
@@ -156,9 +179,15 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void importAllWithAliasTest() {
-    generateInvalid(parser.parse("IMPORT ecommerce-data.* AS ecommerce;"));
+    generateInvalid(parser.parse("IMPORT ecommerce-data.* AS ecommerce;"),
+        ErrorCode.IMPORT_CANNOT_BE_ALIASED);
+  }
+
+  @Test
+  public void importAllWithTimestampTest() {
+    generateInvalid(parser.parse("IMPORT ecommerce-data.* TIMESTAMP _ingest_time AS c_ts;"),
+        ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP);
   }
 
   @Test

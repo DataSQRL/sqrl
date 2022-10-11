@@ -2,7 +2,9 @@ package ai.datasqrl.compile.loaders;
 
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
+import ai.datasqrl.errors.ErrorCode;
 import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.generate.Resolve;
@@ -58,15 +60,27 @@ public class DataSourceLoader implements Loader {
     DatasetDefinition definition = schemaDef.datasets.get(0);
 
     SchemaImport importer = new SchemaImport(null, Constraint.FACTORY_LOOKUP);
-    FlexibleDatasetSchema userDSSchema = importer.convert(definition, table.getDataset(), env.getSession().getErrors());
+    FlexibleDatasetSchema userDSSchema = importer.convert(definition, table.getDataset(),
+        env.getSession().getErrors());
 
     FlexibleDatasetSchema.TableField tbField = ImportManager.createTable(table,
-        userDSSchema.getFieldByName(table.getName()), env.getSchemaAdjustmentSettings(), env.getSession()
+        userDSSchema.getFieldByName(table.getName()), env.getSchemaAdjustmentSettings(),
+        env.getSession()
             .getErrors().resolve(table.getDataset().getName()));
 
-    SourceTableImport sourceTableImport = new SourceTableImport(table, tbField, env.getSchemaAdjustmentSettings());
+    SourceTableImport sourceTableImport = new SourceTableImport(table, tbField,
+        env.getSchemaAdjustmentSettings());
 
     ScriptTableDefinition def = createScriptTableDefinition(env, sourceTableImport, alias);
+
+    if (env.getUserSchema()
+        .getTable(def.getTable().getName().getCanonical(), false) != null) {
+      throw Check.newException(ErrorCode.IMPORT_NAMESPACE_CONFLICT,
+          env.getCurrentNode(),
+          env.getCurrentNode().getParserPosition(),
+          String.format("An item named `%s` is already in scope",
+              def.getTable().getName().getDisplay()));
+    }
 
     Resolve.registerScriptTable(env, def);
   }

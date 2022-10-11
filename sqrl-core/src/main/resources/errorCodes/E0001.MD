@@ -1,0 +1,13 @@
+You can't import a module with the same name in the current scope.
+
+Erroneous code example:
+```
+IMPORT ecommerce-data.Product;
+IMPORT ecommerce-data.Product; // error: an item named `Product` is already in scope
+```
+
+You can use aliases in order to fix this error. Example:
+```
+IMPORT ecommerce-data.Product;
+IMPORT ecommerce-data.Product AS Product2;
+```

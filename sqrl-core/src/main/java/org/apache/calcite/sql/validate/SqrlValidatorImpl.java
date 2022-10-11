@@ -19,6 +19,7 @@ package org.apache.calcite.sql.validate;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 import static org.apache.calcite.util.Static.RESOURCE;
 
+import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
 import ai.datasqrl.plan.local.generate.Resolve;
@@ -5178,7 +5179,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       Resources.ExInst<SqlValidatorException> e) {
     assert node != null;
     final SqlParserPos pos = node.getParserPosition();
-    return SqlUtil.newContextException(pos, e);
+    return Check.newContextException(pos, e);
   }
 
   protected SqlWindow getWindowByName(

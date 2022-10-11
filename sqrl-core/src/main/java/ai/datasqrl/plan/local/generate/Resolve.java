@@ -4,12 +4,12 @@ import ai.datasqrl.compile.loaders.DataSourceLoader;
 import ai.datasqrl.compile.loaders.JavaFunctionLoader;
 import ai.datasqrl.compile.loaders.Loader;
 import ai.datasqrl.compile.loaders.TypeLoader;
+import ai.datasqrl.errors.ErrorCode;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.OptimizationStage;
-import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
@@ -27,7 +27,6 @@ import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
-import graphql.schema.GraphQLType;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Path;
@@ -38,7 +37,6 @@ import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
@@ -48,6 +46,8 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static ai.datasqrl.errors.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
+import static ai.datasqrl.errors.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
 import static ai.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
 
 @Getter
@@ -85,6 +85,9 @@ public class Resolve {
     Session session;
     ScriptNode scriptNode;
     URI packageUri;
+
+    //Updated while processing each node
+    SqlNode currentNode = null;
 
     public Env(SqrlCalciteSchema userSchema, CalciteSchema relSchema, Session session,
         ScriptNode scriptNode, URI packageUri) {
@@ -150,7 +153,9 @@ public class Resolve {
     }
   }
 
+  //TODO: Allow modules to resolve other modules, for example a library package
   private void resolveImportDefinition(Env env, ImportDefinition node) {
+    setCurrentNode(env, node);
     NamePath path = node.getImportPath();
 
     //Walk path, check if last item is ALL.
@@ -165,7 +170,16 @@ public class Resolve {
      * Add all files to namespace
      */
     if (last.equals(ReservedName.ALL)) {
-      Preconditions.checkState(node.getTimestamp().isEmpty(), "Cannot use timestamp with import star");
+      Check.state(node.getAlias().isEmpty(), IMPORT_CANNOT_BE_ALIASED,
+          env.getCurrentNode(), () -> "Alias `" + node.getAlias().get().getCanonical() +
+              "` cannot be used here.");
+
+      Check.state(node.getTimestamp().isEmpty(),
+          IMPORT_STAR_CANNOT_HAVE_TIMESTAMP,
+          env.getCurrentNode(),
+          () -> node.getTimestamp().get().getParserPosition(),
+          () -> "Cannot use timestamp with import star");
+
       File file = new File(uri);
       Preconditions.checkState(file.isDirectory(), "Import * is not a directory");
 
@@ -183,46 +197,9 @@ public class Resolve {
           node.getAlias());
     }
   }
-  private void resolveImportDefinition2(Env env, ImportDefinition node) {
-    NamePath path = node.getImportPath();
-    //Walk path, check if last item is ALL.
-    URI uri = env.getPackageUri();
-    for (int i = 0; i < path.getNames().length - 1; i++) {
-      Name name = path.getNames()[i];
-      uri = uri.resolve(name.getCanonical() + "/");
-    }
 
-    Name last = path.getNames()[path.getNames().length - 1];
-
-    /*
-     * Add all files to namespace
-     */
-    if (last.equals(ReservedName.ALL)) {
-      Preconditions.checkState(node.getTimestamp().isEmpty(), "Cannot use timestamp with import star");
-      File file = new File(uri);
-      Preconditions.checkState(file.isDirectory(), "Import * is not a directory");
-
-      for (String f : file.list()) {
-        loadModuleFile(env, uri, f);
-      }
-
-      return;
-    }
-
-    //Check to see if we're loading a module into the namespace or the root schema
-    uri = uri.resolve(last.getCanonical());
-    File file = new File(uri);
-    if (file.isDirectory()) {
-      for (String f : file.list()) {
-        //todo load to namespace instead
-        loadModuleFile(env, uri, f);
-      }
-    } else {
-      //load a Named module
-      loadSingleModule(env,
-          uri,
-          path.getLast().getCanonical(), node.getAlias());
-    }
+  private void setCurrentNode(Env env, SqlNode node) {
+    env.currentNode = node;
   }
 
   private void loadModuleFile(Env env, URI uri, String name) {
@@ -267,6 +244,7 @@ public class Resolve {
       env.resolvedJoinDeclarations.put(r, dec);
     });
     if (tblDef.getTable().getPath().size() == 1) {
+
       env.userSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
           tblDef.getTable());
     } else {
@@ -279,6 +257,7 @@ public class Resolve {
   void planQueries(Env env) {
     // Go through each operation and resolve
     for (SqrlStatement q : env.queryOperations) {
+      setCurrentNode(env, q);
       planQuery(env, q);
       if (env.session.errors.hasErrors()) {
         return;
@@ -491,14 +470,14 @@ public class Resolve {
 
   private void addColumn(Env env, StatementOp op, AddedColumn c, boolean fixTimestamp) {
     Optional<VirtualRelationalTable> optTable = getTargetRelTable(env, op);
-    Check.state(optTable.isPresent(), null, null);
+//    Check.state(optTable.isPresent(), null, null);
 
     VirtualRelationalTable vtable = optTable.get();
     Optional<Integer> timestampScore = env.tableFactory.getTimestampScore(op.statement.getNamePath().getLast(),c.getDataType());
     vtable.addColumn(c, env.tableFactory.getTypeFactory(), getRelBuilderFactory(env), timestampScore);
     if (fixTimestamp) {
-      Check.state(timestampScore.isPresent(), null, null);
-      Check.state(vtable.isRoot() && vtable.getAddedColumns().isEmpty(), null, null);
+//      Check.state(timestampScore.isPresent(), null, null);
+//      Check.state(vtable.isRoot() && vtable.getAddedColumns().isEmpty(), null, null);
       QueryRelationalTable baseTbl = ((VirtualRelationalTable.Root)vtable).getBase();
       baseTbl.getTimestamp().fixTimestamp(baseTbl.getNumColumns()-1); //Timestamp must be last column
     }
@@ -513,7 +492,7 @@ public class Resolve {
 
   private void updateJoinMapping(Env env, StatementOp op) {
     Optional<VirtualRelationalTable> t = getTargetRelTable(env, op);
-    Check.state(t.isPresent(), null, null);
+//    Check.state(t.isPresent(), null, null);
 
     //op is a join, we need to discover the /to/ relationship
     Optional<SQRLTable> table = getContext(env, op.statement);

@@ -37,4 +37,9 @@ public class QueryAssignment extends Assignment {
   public int hashCode() {
     return Objects.hash(query, hints);
   }
+
+  @Override
+  public void unparse(SqlWriter sqlWriter, int i, int i1) {
+    super.unparse(sqlWriter, i, i1);
+  }
 }
