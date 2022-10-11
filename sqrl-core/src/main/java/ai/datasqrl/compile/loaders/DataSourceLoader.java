@@ -9,13 +9,10 @@ import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema.FlexibleField;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
 import ai.datasqrl.schema.input.external.DatasetDefinition;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaImport;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
@@ -35,12 +32,28 @@ public class DataSourceLoader implements Loader {
   }
 
   @Override
-  public void load(Env env, URI uri, String name) {
+  public boolean handlesFile(URI uri, String name) {
+    URI file = uri.resolve(name);
+    File f = (new File(file));
+    return f.exists() && PATTERN.matcher(name).find();
+  }
+
+  @Override
+  public void load(Env env, URI uri, String name, Optional<Name> alias) {
+    loadModule(env, uri, name + ".source.json", alias);
+  }
+
+  @Override
+  public void loadFile(Env env, URI uri, String name) {
+    loadModule(env, uri, name, Optional.empty());
+  }
+
+  public void loadModule(Env env, URI uri, String fileName, Optional<Name> alias) {
     //todo: namespace monoid to handle aliasing and exposing to global namespace
     ObjectMapper mapper = new ObjectMapper();
-    SourceTable table = resolveUri(uri, name + ".source.json", mapper, SourceTable.class);
+    SourceTable table = resolveUri(uri, fileName, mapper, SourceTable.class);
 
-    SchemaDefinition schemaDef = discoveredSchemaLoader.resolve(uri, name);
+    SchemaDefinition schemaDef = discoveredSchemaLoader.resolve(uri, fileName.split("\\.")[0]);
 
     DatasetDefinition definition = schemaDef.datasets.get(0);
 
@@ -53,7 +66,7 @@ public class DataSourceLoader implements Loader {
 
     SourceTableImport sourceTableImport = new SourceTableImport(table, tbField, env.getSchemaAdjustmentSettings());
 
-    ScriptTableDefinition def = createScriptTableDefinition(env, sourceTableImport, Optional.empty());
+    ScriptTableDefinition def = createScriptTableDefinition(env, sourceTableImport, alias);
 
     Resolve.registerScriptTable(env, def);
   }

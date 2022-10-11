@@ -70,6 +70,7 @@ import org.apache.calcite.runtime.Resources;
 import org.apache.calcite.schema.ColumnStrategy;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.ModifiableViewTable;
+import org.apache.calcite.sql.ImportDefinition;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlAccessEnum;
@@ -692,7 +693,8 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
         new SqlValidatorScope.ResolvedImpl();
     emptyScope.resolveTable(names, nameMatcher, Path.EMPTY, resolved);
     if (resolved.count() == 1) {
-      ExpandableTableNamespace namespace = (ExpandableTableNamespace)resolved.only().namespace;
+      SqlValidatorNamespace ns = resolved.only().namespace;
+      ExpandableTableNamespace namespace = (ExpandableTableNamespace)ns;
       return Optional.of(namespace);
     }
     return Optional.empty();

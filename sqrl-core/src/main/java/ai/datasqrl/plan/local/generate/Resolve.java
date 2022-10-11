@@ -7,6 +7,7 @@ import ai.datasqrl.compile.loaders.TypeLoader;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import ai.datasqrl.plan.calcite.SqrlTypeSystem;
@@ -25,6 +26,7 @@ import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
+import java.io.File;
 import java.net.URI;
 import java.nio.file.Path;
 import lombok.Getter;
@@ -74,16 +76,16 @@ public class Resolve {
     Map<Field, String> fieldMap = new HashMap<>();
     UniqueAliasGenerator aliasGenerator = new UniqueAliasGeneratorImpl();
 
-    SqrlCalciteSchema sqrlSchema;
+    SqrlCalciteSchema userSchema;
     CalciteSchema relSchema;
 
     Session session;
     ScriptNode scriptNode;
     URI packageUri;
 
-    public Env(SqrlCalciteSchema sqrlSchema, CalciteSchema relSchema, Session session,
+    public Env(SqrlCalciteSchema userSchema, CalciteSchema relSchema, Session session,
         ScriptNode scriptNode, URI packageUri) {
-      this.sqrlSchema = sqrlSchema;
+      this.userSchema = userSchema;
       this.relSchema = relSchema;
       this.session = session;
       this.scriptNode = scriptNode;
@@ -102,12 +104,16 @@ public class Resolve {
   public Env createEnv(Session session, ScriptNode script) {
     // All operations are applied to this env
     return new Env(
-        new SqrlCalciteSchema(CalciteSchema.createRootSchema(true).schema),
+        createUserSchema(),
         session.planner.getDefaultSchema().unwrap(CalciteSchema.class),
         session,
         script,
         basePath.toUri().resolve("build/")
     );
+  }
+
+  private SqrlCalciteSchema createUserSchema() {
+    return new SqrlCalciteSchema(CalciteSchema.createRootSchema(true).schema);
   }
 
   private void validateImportInHeader(Env env) {
@@ -143,43 +149,96 @@ public class Resolve {
 
   private void resolveImportDefinition(Env env, ImportDefinition node) {
     NamePath path = node.getImportPath();
-    ImportType type = getImportType(env, path);
 
-    switch (type) {
-      case DIRECTORY:
-        break;
-      case MODULE:
-        loadSingleModule(env,
-            resolveModulePath(env, path.popLast()),
-            path.getLast().getCanonical());
-        break;
-    }
-  }
-
-  private URI resolveModulePath(Env env, NamePath path) {
+    //Walk path, check if last item is ALL.
     URI uri = env.getPackageUri();
-    for (Name name : path) {
+    for (int i = 0; i < path.getNames().length - 1; i++) {
+      Name name = path.getNames()[i];
       uri = uri.resolve(name.getCanonical() + "/");
     }
-    return uri;
+
+    Name last = path.getNames()[path.getNames().length - 1];
+    /*
+     * Add all files to namespace
+     */
+    if (last.equals(ReservedName.ALL)) {
+      Preconditions.checkState(node.getTimestamp().isEmpty(), "Cannot use timestamp with import star");
+      File file = new File(uri);
+      Preconditions.checkState(file.isDirectory(), "Import * is not a directory");
+
+      for (String f : file.list()) {
+        loadModuleFile(env, uri, f);
+      }
+    } else {
+      uri = uri.resolve(last.getCanonical());
+      File file = new File(uri);
+      Preconditions.checkState(!file.isDirectory());
+      //load a Named module
+      loadSingleModule(env,
+          uri,
+          path.getLast().getCanonical(),
+          node.getAlias());
+    }
+  }
+  private void resolveImportDefinition2(Env env, ImportDefinition node) {
+    NamePath path = node.getImportPath();
+    //Walk path, check if last item is ALL.
+    URI uri = env.getPackageUri();
+    for (int i = 0; i < path.getNames().length - 1; i++) {
+      Name name = path.getNames()[i];
+      uri = uri.resolve(name.getCanonical() + "/");
+    }
+
+    Name last = path.getNames()[path.getNames().length - 1];
+
+    /*
+     * Add all files to namespace
+     */
+    if (last.equals(ReservedName.ALL)) {
+      Preconditions.checkState(node.getTimestamp().isEmpty(), "Cannot use timestamp with import star");
+      File file = new File(uri);
+      Preconditions.checkState(file.isDirectory(), "Import * is not a directory");
+
+      for (String f : file.list()) {
+        loadModuleFile(env, uri, f);
+      }
+
+      return;
+    }
+
+    //Check to see if we're loading a module into the namespace or the root schema
+    uri = uri.resolve(last.getCanonical());
+    File file = new File(uri);
+    if (file.isDirectory()) {
+      for (String f : file.list()) {
+        //todo load to namespace instead
+        loadModuleFile(env, uri, f);
+      }
+    } else {
+      //load a Named module
+      loadSingleModule(env,
+          uri,
+          path.getLast().getCanonical(), node.getAlias());
+    }
   }
 
-  private void loadSingleModule(Env env, URI uri, String name) {
+  private void loadModuleFile(Env env, URI uri, String name) {
+    for (Loader loader : env.getLoaders()) {
+      if (loader.handlesFile(uri, name)) {
+        loader.loadFile(env, uri, name);
+        return;
+      }
+    }
+  }
+
+  private void loadSingleModule(Env env, URI uri, String name, Optional<Name> alias) {
     for (Loader loader : env.getLoaders()) {
       if (loader.handles(uri, name)) {
-        loader.load(env, uri, name);
+        loader.load(env, uri, name, alias);
         return;
       }
     }
     throw new RuntimeException("Cannot find loader for module");
-  }
-
-  private ImportType getImportType(Env env, NamePath path) {
-    return ImportType.MODULE;
-  }
-
-  enum ImportType {
-    DIRECTORY, MODULE
   }
 
   public static void registerScriptTable(Env env, ScriptTableDefinition tblDef) {
@@ -205,8 +264,12 @@ public class Resolve {
       env.resolvedJoinDeclarations.put(r, dec);
     });
     if (tblDef.getTable().getPath().size() == 1) {
-      env.sqrlSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
+      env.userSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
           tblDef.getTable());
+    } else {
+      System.out.println();
+
+
     }
   }
 
@@ -321,7 +384,7 @@ public class Resolve {
   }
 
   public void transpile(Env env, StatementOp op) {
-    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.sqrlSchema);
+    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.userSchema);
     SqlNode newNode = sqrlValidator.validate(op);
     op.setQuery(newNode);
     op.setSqrlValidator(sqrlValidator);
@@ -340,7 +403,7 @@ public class Resolve {
       return Optional.empty();
     }
     SQRLTable table = (SQRLTable)
-        env.sqrlSchema.getTable(statement.getNamePath().get(0).getDisplay(), false)
+        env.userSchema.getTable(statement.getNamePath().get(0).getDisplay(), false)
             .getTable();
 
     if (statement.getNamePath().popFirst().size() == 1) {

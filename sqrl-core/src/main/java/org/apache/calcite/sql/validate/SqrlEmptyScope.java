@@ -56,17 +56,13 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableMap;
 
 /**
- * Deviant implementation of {@link SqlValidatorScope} for the top of the scope
- * stack.
+ * Deviant implementation of {@link SqlValidatorScope} for the top of the scope stack.
  *
  * <p>It is convenient, because we never need to check whether a scope's parent
  * is null. (This scope knows not to ask about its parents, just like Adam.)
- *
- *  * SQRL:
- *  * Copy of SqlValidatorImpl.
- *  * See from git hash:
- *  *
- *  * https://github.com/DataSQRL/sqml/compare/f66cb1b3f80b6ba5295ae688be36238694d13d10...main
+ * <p>
+ * * SQRL: * Copy of SqlValidatorImpl. * See from git hash: * *
+ * https://github.com/DataSQRL/sqml/compare/f66cb1b3f80b6ba5295ae688be36238694d13d10...main
  */
 class SqrlEmptyScope implements SqlValidatorScope {
   //~ Instance fields --------------------------------------------------------
@@ -126,10 +122,10 @@ class SqrlEmptyScope implements SqlValidatorScope {
       return;
     }
 
-    if (scopes.containsKey(names.get(0)) &&
-        scopes.get(names.get(0)).getTable() != null //could be in a state of unresolved (todo how to validate?)
-    ) {
-      resolve_rel_(validator.catalogReader.getRootSchema(), names, scopes.get(names.get(0)),
+    if (scopes.containsKey(names.get(0))) {
+      SqlValidatorNamespace ns = scopes.get(names.get(0));
+      Preconditions.checkNotNull(ns.getTable());
+      resolve_rel_(validator.catalogReader.getRootSchema(), names, ns,
           nameMatcher, path, resolved);
       for (Resolve resolve : resolves) {
         if (resolve.remainingNames.isEmpty()) {
@@ -170,7 +166,7 @@ class SqrlEmptyScope implements SqlValidatorScope {
     SqlValidatorTable relOptTable = namespace.getTable();
     SQRLTable t = relOptTable.unwrap(SQRLTable.class);
     Preconditions.checkNotNull(t);
-    CalciteSchema schema1 = new SqrlCalciteSchema((Schema)t);
+    CalciteSchema schema1 = new SqrlCalciteSchema(t);
     CalciteSchema schema = schema1;
     List<String> remainingNames = names;
     remainingNames = Util.skip(remainingNames); //skip alias
@@ -195,12 +191,12 @@ class SqrlEmptyScope implements SqlValidatorScope {
 
       //Add in rels
       Relationship rel = t.getField(Name.system(remainingNames.get(0)))
-          .map(f->(Relationship) f)
+          .map(f -> (Relationship) f)
           .get();
       relationships.add(rel);
       t = (SQRLTable) entry.getTable();
 
-      CalciteSchema schema3 = new SqrlCalciteSchema((Schema)entry.getTable());
+      CalciteSchema schema3 = new SqrlCalciteSchema((Schema) entry.getTable());
       path = path.plus(null, -1, schema3.name, StructKind.NONE);
       remainingNames = Util.skip(remainingNames);
       schema = schema3;
@@ -215,7 +211,8 @@ class SqrlEmptyScope implements SqlValidatorScope {
       final RelDataType rowType = entry.getTable().getRowType(validator.typeFactory);
       relOptTable = RelOptTableImpl.create(relOptSchema, rowType, entry, null);
     }
-    namespace = new RelativeTableNamespace(validator, relOptTable, baseTable, names.get(0), relationships);
+    namespace = new RelativeTableNamespace(validator, relOptTable, baseTable, names.get(0),
+        relationships);
     resolved.found(namespace, false, null, path, remainingNames);
   }
 
@@ -264,13 +261,13 @@ class SqrlEmptyScope implements SqlValidatorScope {
           walkTable = baseTable;
         } else {
           Relationship rel = walkTable.getField(Name.system(schemaName))
-              .map(f->(Relationship)f)
+              .map(f -> (Relationship) f)
               .get();
           relationships.add(rel);
-          walkTable = (SQRLTable)table;
+          walkTable = (SQRLTable) table;
         }
         if (table instanceof Schema && i != size - 1) {
-          CalciteSchema schema1 = new SqrlCalciteSchema((Schema)table);
+          CalciteSchema schema1 = new SqrlCalciteSchema((Schema) table);
           path = path.plus(null, -1, schema1.name, StructKind.NONE);
           remainingNames = Util.skip(remainingNames);
           schema = schema1;

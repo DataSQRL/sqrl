@@ -24,15 +24,20 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import org.apache.calcite.schema.Schema;
 
-/**
- * A no-op wrapper for SimpleCalciteSchema
- */
 public class SqrlCalciteSchema extends SimpleCalciteSchema {
+
+  /**
+   * Schema namespace for packages imported but not into the root namespace
+   */
+  @Getter
+  private final Schema namespace;
 
   public SqrlCalciteSchema(Schema schema) {
     super(CalciteSchema.createRootSchema(true), schema, "");
+    namespace = CalciteSchema.createRootSchema(false).schema;
   }
 
   public List<SQRLTable> getRootTables() {
