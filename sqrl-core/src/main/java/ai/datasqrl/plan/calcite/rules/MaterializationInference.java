@@ -12,11 +12,13 @@ import java.util.List;
 @AllArgsConstructor
 public class MaterializationInference {
 
+    public static final String DEFAULT_REASON = "default";
+
     final MaterializationPreference preference;
     final List<String> reasons;
 
     public MaterializationInference(MaterializationPreference defaultPreference) {
-        this(defaultPreference,"default");
+        this(defaultPreference,DEFAULT_REASON);
     }
 
     public MaterializationInference(MaterializationPreference defaultPreference, String reason) {

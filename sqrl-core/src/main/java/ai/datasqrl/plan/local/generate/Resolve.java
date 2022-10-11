@@ -350,7 +350,11 @@ public class Resolve {
     SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(getRelBuilderFactory(env), Optional.empty());
     relNode = relNode.accept(sqrl2sql);
 //    System.out.println("LP$2: \n" + relNode.explain());
-    SQRLLogicalPlanConverter.RelMeta prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode),fieldNames);
+    if (op.statementKind==StatementKind.DISTINCT_ON) {
+      //Get all field names from relnode
+      fieldNames = relNode.getRowType().getFieldNames();
+    }
+    SQRLLogicalPlanConverter.RelMeta prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode), fieldNames);
 //    System.out.println("LP$3: \n" + prel.getRelNode().explain());
     return prel;
   }
@@ -440,15 +444,13 @@ public class Resolve {
   }
 
   private void createTable(Env env, StatementOp op) {
-    List<Name> fieldNames = op.relNode.getRowType().getFieldList().stream()
-        .map(f -> Name.system(f.getName())).collect(Collectors.toList());
 
-    final SQRLLogicalPlanConverter.RelMeta processedRel;
-    if (op.statementKind==StatementKind.DISTINCT_ON) {
-      processedRel = null;
-    } else {
-      processedRel = optimize(env, op);
-    }
+    final SQRLLogicalPlanConverter.RelMeta processedRel = optimize(env, op);
+
+    List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
+    List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream().map(idx -> relFieldNames.get(idx))
+            .map(n -> Name.system(n)).collect(Collectors.toList());
+
     ScriptTableDefinition queryTable = tableFactory.defineTable(op.statement.getNamePath(), processedRel, fieldNames);
     registerScriptTable(env, queryTable);
   }

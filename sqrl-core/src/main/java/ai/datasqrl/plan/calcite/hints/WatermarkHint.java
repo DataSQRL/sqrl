@@ -23,7 +23,7 @@ public class WatermarkHint implements SqrlHint {
         ).build();
     }
 
-    public static final String HINT_NAME = TumbleAggregationHint.class.getSimpleName();
+    public static final String HINT_NAME = WatermarkHint.class.getSimpleName();
 
     @Override
     public String getHintName() {

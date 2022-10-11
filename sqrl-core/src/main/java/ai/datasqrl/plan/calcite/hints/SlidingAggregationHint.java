@@ -22,7 +22,7 @@ public class SlidingAggregationHint implements SqrlHint {
                 String.valueOf(intervalWidthMs),String.valueOf(slideWidthMs))).build();
     }
 
-    public static final String HINT_NAME = TumbleAggregationHint.class.getSimpleName();
+    public static final String HINT_NAME = SlidingAggregationHint.class.getSimpleName();
 
     @Override
     public String getHintName() {

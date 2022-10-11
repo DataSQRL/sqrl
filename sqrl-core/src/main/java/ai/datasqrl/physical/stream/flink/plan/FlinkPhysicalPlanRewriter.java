@@ -8,16 +8,19 @@ import ai.datasqrl.plan.calcite.util.TimeTumbleFunctionCall;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import lombok.AllArgsConstructor;
+import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.*;
 import org.apache.calcite.rel.logical.*;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.*;
+import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
@@ -27,6 +30,7 @@ import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 import org.apache.flink.table.planner.delegation.StreamPlanner;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -298,6 +302,33 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     @Override
     public RexNode visitInputRef(RexInputRef ref) {
       return rexBuilder.makeInputRef(inputFields.get(ref.getIndex()).getType(),ref.getIndex());
+    }
+
+    @Override
+    public RexNode visitCall(RexCall call) {
+      boolean[] update = new boolean[]{false};
+      List<RexNode> clonedOperands = this.visitList(call.operands, update);
+      SqlOperator operator = call.getOperator();
+      RelDataType datatype = call.getType();
+      if (operator.equals(SqlStdOperatorTable.CURRENT_TIMESTAMP)) {
+        update[0] = true;
+        operator = FlinkSqlOperatorTable.PROCTIME;
+        //TODO: remove this condition for now from the pipeline since Flink cannot handle the interval
+        return rexBuilder.makeZeroLiteral(call.getType());
+      }
+      return update[0] ? rexBuilder.makeCall(datatype,operator,clonedOperands) : call;
+    }
+
+    @Override
+    public RexNode visitLiteral(RexLiteral literal) {
+      if (literal.getTypeName()== SqlTypeName.INTERVAL_SECOND) {
+        BigDecimal intervalMs = literal.getValueAs(BigDecimal.class);
+        //This does not seem to work in Flink
+        SqlIntervalQualifier sqlIntervalQualifier =
+                new SqlIntervalQualifier(TimeUnit.YEAR, 3, TimeUnit.YEAR, 3, SqlParserPos.ZERO);
+        return rexBuilder.makeIntervalLiteral(intervalMs, sqlIntervalQualifier);
+      }
+      return literal;
     }
   }
 

@@ -222,6 +222,15 @@ public class ResolveTest extends AbstractSQRLIT {
   @Test
   public void selectDistinctTest() {
     ScriptBuilder builder = imports();
+    builder.add("CustomerId := SELECT DISTINCT customerid FROM Customer;");
+    process(builder.toString());
+    validateQueryTable("customerid", TableType.TEMPORAL_STATE,2, 1, TimestampTest.fixed(1), PullupTest.builder().hasTopN(true).build());
+  }
+
+  @Test
+  public void partitionSelectDistinctTest() {
+    ScriptBuilder builder = imports();
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
     builder.add("Customer.distinctOrders := SELECT DISTINCT o.id, o.\"time\" FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
     process(builder.toString());
   }
@@ -231,6 +240,7 @@ public class ResolveTest extends AbstractSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC");
     process(builder.toString());
+    validateQueryTable("orders", TableType.TEMPORAL_STATE,6, 1, TimestampTest.fixed(4));
   }
 
 

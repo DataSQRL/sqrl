@@ -75,8 +75,8 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
 
     public ScriptTableDefinition defineTable(NamePath tablePath, SQRLLogicalPlanConverter.RelMeta rel,
                                       List<Name> fieldNames) {
-        ContinuousIndexMap indexmap = rel.getSelect();
-        Preconditions.checkArgument(fieldNames.size()==indexmap.getSourceLength());
+        ContinuousIndexMap selectMap = rel.getSelect();
+        Preconditions.checkArgument(fieldNames.size()==selectMap.getSourceLength());
 
         Name tableid = getTableId(tablePath.getLast(),"q");
         TimestampHolder.Base timestamp = TimestampHolder.Base.ofDerived(rel.getTimestamp());
@@ -87,7 +87,7 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
 
         LinkedHashMap<Integer,Name> index2Name = new LinkedHashMap<>();
         for (int i = 0; i < fieldNames.size(); i++) {
-            index2Name.put(indexmap.map(i), fieldNames.get(i));
+            index2Name.put(selectMap.map(i), fieldNames.get(i));
         }
         AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = convert2TableBuilder(tablePath, baseTable.getRowType(),
                 baseTable.getNumPrimaryKeys(), index2Name);

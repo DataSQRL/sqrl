@@ -23,7 +23,7 @@ public class SortOrder implements PullupOperator {
     final RelCollation collation;
 
     public boolean isEmpty() {
-        return !collation.getFieldCollations().isEmpty();
+        return collation.getFieldCollations().isEmpty();
     }
 
     public SortOrder remap(IndexMap map) {

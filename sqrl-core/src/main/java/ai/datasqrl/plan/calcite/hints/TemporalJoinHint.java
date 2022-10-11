@@ -26,7 +26,7 @@ public class TemporalJoinHint implements SqrlHint {
         ).build();
     }
 
-    public static final String HINT_NAME = TumbleAggregationHint.class.getSimpleName();
+    public static final String HINT_NAME = TemporalJoinHint.class.getSimpleName();
 
     @Override
     public String getHintName() {

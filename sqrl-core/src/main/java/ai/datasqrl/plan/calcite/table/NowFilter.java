@@ -63,7 +63,7 @@ public interface NowFilter extends PullupOperator {
 
     static Optional<NowFilter> of(List<TimePredicate> timePreds) {
         if (timePreds.isEmpty()) return Optional.of(EMPTY);
-        Optional<TimePredicate> combined = Optional.of(timePreds.get(1));
+        Optional<TimePredicate> combined = Optional.of(timePreds.get(0));
         for (int i = 1; i < timePreds.size(); i++) {
             combined = combined.flatMap(timePreds.get(i)::and);
         }

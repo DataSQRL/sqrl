@@ -122,7 +122,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             if (topN.isEmpty()) return this;
             if (!nowFilter.isEmpty()) return inlineNowFilter(relBuilder).inlineTopN(relBuilder);
 
-            Preconditions.checkArgument(joinTables==null && nowFilter.isEmpty());
+            Preconditions.checkArgument(nowFilter.isEmpty());
 
             relBuilder.push(relNode);
 
@@ -171,7 +171,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 fieldCollations.addAll(SqrlRexUtil.translateCollation(topN.getCollation(),inputType));
                 if (topN.isDistinct() && topN.hasPartition()) {
                     //Add all other selects that are not partition indexes or collations to the sort
-                    List<Integer> remainingDistincts = primaryKey.targetsAsList();
+                    List<Integer> remainingDistincts = new ArrayList<>(primaryKey.targetsAsList());
                     topN.getCollation().getFieldCollations().stream().map(RelFieldCollation::getFieldIndex).forEach(remainingDistincts::remove);
                     topN.getPartition().stream().forEach(remainingDistincts::remove);
                     remainingDistincts.stream().map(idx -> new RexFieldCollation(RexInputRef.of(idx, inputType), Set.of()))
@@ -271,8 +271,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
      */
     public RelMeta postProcess(RelMeta input, List<String> fieldNames) {
         Preconditions.checkArgument(fieldNames.size()==input.select.getSourceLength());
-        if (CalciteUtil.hasNesting(input.getRelNode().getRowType()) && !input.getTopN().isEmpty()) {
-            //Need to inline deduplication for nested tables
+        List<RelDataTypeField> fields = input.getRelNode().getRowType().getFieldList();
+        if (!input.getTopN().isEmpty() && //If any selected field is nested we have to inline topN
+                input.select.targetsAsList().stream().map(fields::get).map(RelDataTypeField::getType).anyMatch(CalciteUtil::isNestedTable)) {
             input = input.inlineTopN(makeRelBuilder());
         }
         ContinuousIndexMap indexMap = input.select;
@@ -326,6 +327,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
     private double estimateRowCount(RelNode node) {
         final RelMetadataQuery mq = node.getCluster().getMetadataQuery();
         return mq.getRowCount(node);
+    }
+
+    public RelMeta distinctOn(RelMeta input) {
+        return input;
     }
 
     @Override
@@ -508,7 +513,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             timestamp = timestamp.fixTimestamp(timestampIdx);
             //Add as static time filter (to push down to source)
             NowFilter localNowFilter = combinedFilter.get();
-            localNowFilter.addFilterTo(relBuilder,true);
+            //TODO: add back in, push down to push into source, then remove
+            //localNowFilter.addFilterTo(relBuilder,true);
         } else {
             conjunctions = List.of(condition);
         }
@@ -536,31 +542,53 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             Optional<TopNHint> topNHintOpt = SqrlHint.fromRel(logicalProject, TopNHint.CONSTRUCTOR);
             if (topNHintOpt.isPresent()) {
                 TopNHint topNHint = topNHintOpt.get();
-                Preconditions.checkArgument(topNHint.getType() == TopNHint.Type.SELECT_DISTINCT ||
-                        topNHint.getType() == TopNHint.Type.TOP_N);
-                LogicalSort nestedSort = (LogicalSort) logicalProject.getInput();
 
-                RelMeta baseInput = getRelHolder(nestedSort.getInput().accept(this));
+                RelNode base = logicalProject.getInput();
+                RelCollation collation = RelCollations.EMPTY;
+                Optional<Integer> limit = Optional.empty();
+                if (base instanceof LogicalSort) {
+                    LogicalSort nestedSort = (LogicalSort)base;
+                    base = nestedSort.getInput();
+                    collation = nestedSort.getCollation();
+                    limit = getLimit(nestedSort.fetch);
+                }
+
+                RelMeta baseInput = getRelHolder(base.accept(this));
                 baseInput = baseInput.inlineNowFilter(makeRelBuilder()).inlineTopN(makeRelBuilder());
+                int targetLength = baseInput.select.getTargetLength();
 
-                Optional<Integer> limit = getLimit(nestedSort.fetch);
-                RelCollation collation = SqrlRexUtil.mapCollation(nestedSort.getCollation(), baseInput.select);
+                collation = SqrlRexUtil.mapCollation(collation, baseInput.select);
                 if (collation.getFieldCollations().isEmpty()) collation = baseInput.sort.getCollation();
                 List<Integer> partition = topNHint.getPartition().stream().map(baseInput.select::map).collect(Collectors.toList());
-                boolean isDistinct = topNHint.getType() == TopNHint.Type.SELECT_DISTINCT;
 
                 ContinuousIndexMap pk = baseInput.primaryKey;
                 ContinuousIndexMap select = trivialMap;
                 TimestampHolder.Derived timestamp = baseInput.timestamp;
                 TableType type = baseInput.type==TableType.STATE?TableType.STATE:TableType.TEMPORAL_STATE;
-                if (isDistinct) {
+                boolean isDistinct = false;
+                if (topNHint.getType() == TopNHint.Type.SELECT_DISTINCT) {
+                    isDistinct = true;
                     List<Integer> distincts = SqrlRexUtil.combineIndexes(partition, trivialMap.targetsAsList());
-                    pk = ContinuousIndexMap.builder(distincts.size()).addAll(distincts).build(pk.getTargetLength());
+                    pk = ContinuousIndexMap.builder(distincts.size()).addAll(distincts).build(targetLength);
                     if (partition.isEmpty()) {
-                        //Sort by time instead
+                        //If there is no partition, we can ignore the sort order plus limit and sort by time instead
                         timestamp = timestamp.fixTimestamp(timestamp.getBestCandidate());
                         collation = RelCollations.of(new RelFieldCollation(timestamp.getTimestampIndex(), RelFieldCollation.Direction.DESCENDING));
+                        limit = Optional.empty();
                     }
+                } else if (topNHint.getType() == TopNHint.Type.DISTINCT_ON) {
+                    //Partition is the new primary key and the underlying table must be a stream
+                    Preconditions.checkArgument(!partition.isEmpty() && collation.getFieldCollations().size()==1 && baseInput.type==TableType.STREAM);
+                    isDistinct = true;
+
+                    pk = ContinuousIndexMap.builder(partition.size()).addAll(partition).build(targetLength);
+                    select = ContinuousIndexMap.identity(targetLength,targetLength); //Select everything
+                    //Extract timestamp from collation
+                    RelFieldCollation fieldCol = Iterables.getOnlyElement(collation.getFieldCollations());
+                    Preconditions.checkArgument(fieldCol.direction== RelFieldCollation.Direction.DESCENDING);
+                    timestamp = timestamp.fixTimestamp(fieldCol.getFieldIndex());
+                    partition = Collections.EMPTY_LIST; //remove partition since we set primary key to partition
+                    limit = Optional.empty(); //distinct does not need a limit
                 }
 
                 TopNConstraint topN = new TopNConstraint(partition,isDistinct,collation,limit);
@@ -773,10 +801,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     RelMeta tmp = rightInput;
                     rightInput = leftInput;
                     leftInput = tmp;
-                    joinedIndexMap = leftInput.select.join(rightInput.select);
+
                     int tmpLeftSideMaxIdx = leftInput.select.getTargetLength();
-                    condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(),
-                            idx -> idx<leftSideMaxIdx?tmpLeftSideMaxIdx+idx:idx-leftSideMaxIdx);
+                    IndexMap leftRightFlip = idx -> idx<leftSideMaxIdx?tmpLeftSideMaxIdx+idx:idx-leftSideMaxIdx;
+                    condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(), leftRightFlip);
+                    joinedIndexMap = joinedIndexMap.remap(leftRightFlip);
                     eqDecomp = rexUtil.decomposeEqualityComparison(condition);
                 }
                 int newLeftSideMaxIdx = leftInput.select.getTargetLength();
