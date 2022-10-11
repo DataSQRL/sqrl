@@ -78,6 +78,15 @@ class AnalyzerTest extends AbstractSQRLIT {
   // IMPORTS
 
   @Test
+  @Disabled
+  public void functionImportTest() {
+    generate(parser.parse(""
+        + "IMPORT system.functions;"
+        + "IMPORT ecommerce-data.Orders;"));
+  }
+
+
+  @Test
   public void import1() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"));
   }

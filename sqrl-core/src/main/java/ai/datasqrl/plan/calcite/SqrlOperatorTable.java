@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.function.builtin.time.*;
+import lombok.Getter;
 import org.apache.calcite.linq4j.tree.Types;
 import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.apache.calcite.sql.SqlFunction;
@@ -11,6 +12,7 @@ import java.time.temporal.ChronoUnit;
 
 public class SqrlOperatorTable extends SqlStdOperatorTable {
 
+  @Getter
   private static SqrlOperatorTable instance;
 
   //SQRL functions here:
@@ -19,7 +21,7 @@ public class SqrlOperatorTable extends SqlStdOperatorTable {
   public static final TimestampToEpochFunction TIMESTAMP_TO_EPOCH = new TimestampToEpochFunction();
   public static final StringToTimestampFunction STRING_TO_TIMESTAMP = new StringToTimestampFunction();
   public static final TimestampToStringFunction TIMESTAMP_TO_STRING = new TimestampToStringFunction();
-  public static final ToUtcFunction TO_UTC = new ToUtcFunction();
+//  public static final ToUtcFunction TO_UTC = new ToUtcFunction();
   public static final AtZoneFunction AT_ZONE = new AtZoneFunction();
   public static final SqrlTimeRoundingFunction ROUND_TO_SECOND = new SqrlTimeRoundingFunction("ROUND_TO_SECOND",
       ScalarFunctionImpl.create(Types.lookupMethod(StdTimeLibraryImpl.class, "roundToSecond", Instant.class)), ChronoUnit.SECONDS);

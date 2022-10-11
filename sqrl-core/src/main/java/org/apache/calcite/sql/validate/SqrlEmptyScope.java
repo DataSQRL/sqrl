@@ -96,6 +96,7 @@ class SqrlEmptyScope implements SqlValidatorScope {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void resolve(List<String> names, SqlNameMatcher nameMatcher,
       boolean deep, Resolved resolved) {
   }
@@ -108,6 +109,7 @@ class SqrlEmptyScope implements SqlValidatorScope {
         : null;
   }
 
+  @Override
   public void resolveTable(List<String> names, SqlNameMatcher nameMatcher,
       Path path, Resolved resolved) {
     final List<Resolve> imperfectResolves = new ArrayList<>();

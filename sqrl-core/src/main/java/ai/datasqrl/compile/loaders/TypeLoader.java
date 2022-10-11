@@ -19,7 +19,7 @@ public class TypeLoader implements Loader {
 
   @Override
   public void load(Env env, URI uri, String name, Optional<Name> alias) {
-
+    //load type package: graphql, rel data type
   }
 
   @Override
