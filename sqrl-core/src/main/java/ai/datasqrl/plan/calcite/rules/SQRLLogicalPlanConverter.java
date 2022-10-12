@@ -589,6 +589,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     timestamp = timestamp.fixTimestamp(fieldCol.getFieldIndex());
                     partition = Collections.EMPTY_LIST; //remove partition since we set primary key to partition
                     limit = Optional.empty(); //distinct does not need a limit
+                } else if (topNHint.getType() == TopNHint.Type.TOP_N) {
+                    //Prepend partition to primary key
+                    List<Integer> pkIdx = SqrlRexUtil.combineIndexes(partition, pk.targetsAsList());
+                    pk = ContinuousIndexMap.builder(pkIdx.size()).addAll(pkIdx).build(targetLength);
                 }
 
                 TopNConstraint topN = new TopNConstraint(partition,isDistinct,collation,limit);

@@ -8,6 +8,7 @@ import ai.datasqrl.plan.global.OptimizedDAG;
 import graphql.com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
+import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableDescriptor;
 import org.apache.flink.table.api.bridge.java.StreamStatementSet;
@@ -41,8 +42,9 @@ public class FlinkPhysicalPlanner {
       Preconditions.checkArgument(query.getSink() instanceof OptimizedDAG.TableSink, "Subscriptions not yet implemented");
       OptimizedDAG.TableSink tblsink = ((OptimizedDAG.TableSink) query.getSink());
 
-      String name = tblsink.getNameId() + "_sink";
-      if (List.of(tEnv.listTables()).contains(name)) {
+      String dbSinkName = tblsink.getNameId() + "_sink";
+      String subSinkName = tblsink.getNameId() + "_sub";
+      if (List.of(tEnv.listTables()).contains(dbSinkName)) {
         continue;
       }
       dataStreamRegisterer.register(query.getRelNode());
@@ -51,16 +53,25 @@ public class FlinkPhysicalPlanner {
 
       Table tbl = FlinkEnvProxy.relNodeQuery(relNode, tEnv);
 
-      TableDescriptor descriptor = TableDescriptor.forConnector("jdbc")
-          .schema(FlinkPipelineUtils.addPrimaryKey(tbl.getSchema().toSchema(), tblsink))
+      Schema tblSchema = FlinkPipelineUtils.addPrimaryKey(tbl.getSchema().toSchema(), tblsink);
+      TableDescriptor dbDescriptor = TableDescriptor.forConnector("jdbc")
+          .schema(tblSchema)
           .option("url", jdbcConfiguration.getDbURL())
           .option("table-name", tblsink.getNameId())
           .option("username", jdbcConfiguration.getUser())
           .option("password", jdbcConfiguration.getPassword())
           .build();
+      tEnv.createTemporaryTable(dbSinkName, dbDescriptor);
+      stmtSet.addInsert(dbSinkName, tbl);
 
-      tEnv.createTable(name, descriptor);
-      stmtSet.addInsert(name, tbl);
+//      DataStream<Row> changeStream = tEnv.toChangelogStream(tbl);
+//      Table subTbl = tEnv.fromChangelogStream(changeStream,tblSchema, ChangelogMode.insertOnly());
+//
+//      TableDescriptor subDescriptor = TableDescriptor.forConnector("print")
+//              .option("print-identifier",subSinkName)
+//              .schema(tblSchema).build();
+//      tEnv.createTemporaryTable(subSinkName, subDescriptor);
+//      stmtSet.addInsert(subSinkName, subTbl);
     }
 
     return new FlinkStreamPhysicalPlan(stmtSet);

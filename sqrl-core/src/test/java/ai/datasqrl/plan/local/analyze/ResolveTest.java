@@ -60,6 +60,10 @@ public class ResolveTest extends AbstractSQRLIT {
     this.resolve = new Resolve();
   }
 
+  /*
+  ===== IMPORT TESTS ======
+   */
+
   @Test
   public void tableImportTest() {
     process(imports().toString());
@@ -69,7 +73,7 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   /*
-  ===== TABLE & COLUMN DEFINITION ======
+  ===== TABLE & COLUMN DEFINITION (PROJECT) ======
    */
 
   @Test
@@ -107,10 +111,6 @@ public class ResolveTest extends AbstractSQRLIT {
     process(sqrl);
     validateQueryTable("entrycount", TableType.STREAM,5, 2, TimestampTest.candidates(3,4)); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
   }
-
-  /*
-  ===== TopN ======
-   */
 
 
   /*
@@ -212,27 +212,41 @@ public class ResolveTest extends AbstractSQRLIT {
    */
 
   @Test
-  @Disabled
   public void topNTest() {
+    //TODO: add orderAgg test back in once this works in transpiler
     ScriptBuilder builder = imports();
-    builder.add("Customer.recentOrders := SELECT o.* FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
+    builder.add("Customer.recentOrders := SELECT o.id, o.time FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
+//    builder.add("Customer.orderAgg := SELECT COUNT(d.id) FROM _ JOIN _.distinctOrders d")
     process(builder.toString());
+    validateQueryTable("recentOrders", TableType.TEMPORAL_STATE,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
+//    validateQueryTable("orderAgg", TableType.TEMPORAL_STATE,3, 2, TimestampTest.fixed(2));
   }
 
   @Test
   public void selectDistinctTest() {
     ScriptBuilder builder = imports();
     builder.add("CustomerId := SELECT DISTINCT customerid FROM Customer;");
+    builder.add("CustomerOrders := SELECT o.id, c.customerid FROM CustomerId c JOIN Orders o ON o.customerid = c.customerid");
     process(builder.toString());
     validateQueryTable("customerid", TableType.TEMPORAL_STATE,2, 1, TimestampTest.fixed(1), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("customerorders", TableType.STREAM,4, 1, TimestampTest.fixed(3));
   }
 
   @Test
   public void partitionSelectDistinctTest() {
+    //TODO: add distinctAgg test back in once this works in transpiler
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
-    builder.add("Customer.distinctOrders := SELECT DISTINCT o.id, o.\"time\" FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
+    builder.add("Customer.distinctOrders := SELECT DISTINCT o.id FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
+    builder.add("Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.\"time\" FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
+//    builder.add("Customer.distinctAgg := SELECT COUNT(d.id) FROM _ JOIN _.distinctOrders d");
     process(builder.toString());
+    validateQueryTable("customer", TableType.TEMPORAL_STATE,6, 1, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
+    validateQueryTable("orders", TableType.STREAM,6, 1, TimestampTest.fixed(4)); //temporal join fixes timestamp
+    validateQueryTable("distinctorders", TableType.TEMPORAL_STATE,3, 2, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("distinctorderstime", TableType.TEMPORAL_STATE,3, 3, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
+//    validateQueryTable("distinctAgg", TableType.TEMPORAL_STATE,3, 2, TimestampTest.fixed(2));
   }
 
   @Test
@@ -240,7 +254,20 @@ public class ResolveTest extends AbstractSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC");
     process(builder.toString());
-    validateQueryTable("orders", TableType.TEMPORAL_STATE,6, 1, TimestampTest.fixed(4));
+    validateQueryTable("orders", TableType.TEMPORAL_STATE,6, 1, TimestampTest.fixed(4)); //pullup is inlined because nested
+  }
+
+  /*
+  ===== SET TESTS ======
+   */
+
+  @Test
+  @Disabled
+  public void testUnion() {
+    ScriptBuilder builder = imports();
+    builder.add("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC");
+    process(builder.toString());
+    validateQueryTable("orders", TableType.TEMPORAL_STATE,6, 1, TimestampTest.fixed(4)); //pullup is inlined because nested
   }
 
 
@@ -345,9 +372,9 @@ public class ResolveTest extends AbstractSQRLIT {
                                   PullupTest pullupTest) {
     CalciteSchema relSchema = resolvedDag.getRelSchema();
     QueryRelationalTable table = getLatestTable(relSchema,tableName,QueryRelationalTable.class).get();
-    assertEquals(tableType, table.getType());
-    assertEquals(numPrimaryKeys, table.getNumPrimaryKeys());
-    assertEquals(numCols, table.getRowType().getFieldCount());
+    assertEquals(tableType, table.getType(), "table type");
+    assertEquals(numPrimaryKeys, table.getNumPrimaryKeys(), "primary key size");
+    assertEquals(numCols, table.getRowType().getFieldCount(), "field count");
     timestampTest.test(table.getTimestamp());
     pullupTest.test(table.getPullups());
   }
@@ -378,9 +405,9 @@ public class ResolveTest extends AbstractSQRLIT {
     }
 
     public void test(PullupOperator.Container pullups) {
-      assertEquals(hasNowFilter, !pullups.getNowFilter().isEmpty());
-      assertEquals(hasTopN, !pullups.getTopN().isEmpty());
-      assertEquals(hasSort, !pullups.getSort().isEmpty());
+      assertEquals(hasNowFilter, !pullups.getNowFilter().isEmpty(), "now filter");
+      assertEquals(hasTopN, !pullups.getTopN().isEmpty(), "topN");
+      assertEquals(hasSort, !pullups.getSort().isEmpty(), "sort");
     }
 
   }
@@ -411,20 +438,20 @@ public class ResolveTest extends AbstractSQRLIT {
     public void test(TimestampHolder timeHolder) {
       if (type==Type.NO_TEST) return;
       if (type==Type.NONE) {
-        assertFalse(timeHolder.hasTimestamp());
-        assertEquals(0,timeHolder.getCandidates().size());
+        assertFalse(timeHolder.hasTimestamp(), "no timestamp");
+        assertEquals(0,timeHolder.getCandidates().size(), "candidate size");
       } else if (type==Type.FIXED) {
-        assertTrue(timeHolder.hasTimestamp());
-        assertEquals(1,candidates.length);
-        assertEquals(candidates[0],timeHolder.getTimestampIndex());
+        assertTrue(timeHolder.hasTimestamp(), "has timestamp");
+        assertEquals(1,candidates.length, "candidate size");
+        assertEquals(candidates[0],timeHolder.getTimestampIndex(), "timestamp index");
       } else if (type==Type.BEST) {
-        assertFalse(timeHolder.hasTimestamp());
-        assertEquals(1,candidates.length);
-        assertEquals(candidates[0],timeHolder.getBestCandidate().getIndex());
+        assertFalse(timeHolder.hasTimestamp(), "no timestamp");
+        assertEquals(1,candidates.length, "candidate size");
+        assertEquals(candidates[0],timeHolder.getBestCandidate().getIndex(), "best candidate");
       } else if (type==Type.CANDIDATES) {
-        assertFalse(timeHolder.hasTimestamp());
+        assertFalse(timeHolder.hasTimestamp(), "no timestamp");
         assertEquals(Sets.newHashSet(candidates),
-                timeHolder.getCandidates().stream().map(TimestampHolder.Candidate::getIndex).collect(Collectors.toSet()));
+                timeHolder.getCandidates().stream().map(TimestampHolder.Candidate::getIndex).collect(Collectors.toSet()), "candidate set");
       }
     }
 
