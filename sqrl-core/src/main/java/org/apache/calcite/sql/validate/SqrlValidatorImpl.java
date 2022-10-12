@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -621,10 +622,10 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
   }
 
   public SqlNode validate(StatementOp op) {
-    SqlValidatorScope scope = new SqrlEmptyScope(this, op);
+    setContextTable(op);
+    SqlValidatorScope scope = new SqrlEmptyScope(this);
     scope = new CatalogScope(scope, ImmutableList.of("CATALOG"));
     SqlNode top = performSqrlRewrites(op);
-    setContextTable(op);
 
     final SqlNode topNode2 = validateScopedExpression(top, scope);
     final RelDataType type = getValidatedNodeType(topNode2);
@@ -754,7 +755,43 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
   }
 
   private SqlNode performQueryRewrites(SqlNode query) {
+    if (contextTable.isPresent() && !hasSelfTable(query)) {
+      //Add as first table in join
+      //todo: other query types
+      SqlSelect select = (SqlSelect) query;
+      SqlNode from = select.getFrom();
+      select.setFrom(new SqlJoin(
+          from.getParserPosition(),
+          self, SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
+          JoinType.CROSS.symbol(SqlParserPos.ZERO),
+          from,
+          JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
+          null
+//          SqlLiteral.createBoolean(true, SqlParserPos.ZERO))
+
+      ));
+      return select;
+    }
+
     return query;
+  }
+
+  private boolean hasSelfTable(SqlNode query) {
+    SqlSelect select = (SqlSelect) query;
+    final AtomicBoolean hasSelf = new AtomicBoolean(false);
+
+    select.getFrom().accept(new SqlBasicVisitor<>() {
+
+      //TODO: Not right logic
+      @Override
+      public Void visit(SqlIdentifier id) {
+        if (self.equalsDeep(id, Litmus.IGNORE)) {
+          hasSelf.set(true);
+        }
+        return null;
+      }
+    });
+    return hasSelf.get();
   }
 
   private SqlNode performJoinRewrites(SqlNode query) {

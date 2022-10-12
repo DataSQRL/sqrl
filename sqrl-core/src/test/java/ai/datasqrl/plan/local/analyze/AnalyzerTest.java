@@ -71,12 +71,10 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   private void generateInvalid(ScriptNode node) {
-    generateInvalid(node,
-        ErrorCode.GENERIC_ERROR);
-//    assertThrows(Exception.class,
-//        ()->resolve.planDag(session, node),
-//        "Statement should throw exception"
-//        );
+    assertThrows(Exception.class,
+        ()->resolve.planDag(session, node),
+        "Statement should throw exception"
+        );
   }
 
   private void generateInvalid(ScriptNode node, ErrorCode expectedCode) {
@@ -137,6 +135,29 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  public void absoluteTest1() {
+    generate(parser.parse("IMPORT ecommerce-data.Product;"
+        + "X := SELECT productid FROM Product;"));
+  }
+  @Test
+  public void absoluteTest2() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT discount FROM Orders.entries;"));
+  }
+
+  @Test
+  public void relativeTest1() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "Orders.entries.d2 := SELECT discount FROM _;"));
+  }
+
+  @Test
+  public void relativeTest2() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "Orders.x := SELECT discount FROM _.entries;"));
+  }
+
+  @Test
   @Disabled
   public void noPathOrderByTest() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"
@@ -167,7 +188,7 @@ class AnalyzerTest extends AbstractSQRLIT {
 
   @Test
   public void invalidFunctionDef() {
-    generate(
+    generateInvalid(
         parser.parse("IMPORT ecommerce-data.Product;\n"
             + "Product.test := NOW(100);\n"));
   }
@@ -367,10 +388,12 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void crossJoinTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
-        + "Product2 := SELECT * FROM Product, Product.joinDeclaration;"));
+        + "Product2 := SELECT * FROM Product, Product.joinDeclaration;"
+    ));
   }
 
   @Test
@@ -453,6 +476,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void distinctWithGroupNotInSelectTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -579,12 +603,12 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void distinctOnTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
             + "Product2 := DISTINCT Product ON productid;\n"));
   }
+
   @Test
   @Disabled
   public void distinctOnWithExpression2Test() {
@@ -598,7 +622,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void distinctOnWithExpressionTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product2 := DISTINCT Product ON productid / 10;\n"));
+            + "Product2 := DISTINCT Product ON productid / 10 ORDER BY _ingest_time DESC;\n"));
   }
 
   @Test
@@ -641,8 +665,8 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void nestedLocalDistinctTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.nested := SELECT productid FROM Product;"
-            + "Product.nested := DISTINCT _ ON productid;"));
+            + "Product.nested := SELECT p.productid FROM Product p;"
+            + "Product.nested := DISTINCT _ ON _.productid;"));
   }
 
   @Test

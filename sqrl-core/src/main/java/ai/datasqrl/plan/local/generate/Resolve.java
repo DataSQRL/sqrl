@@ -59,10 +59,6 @@ public class Resolve {
     this.basePath = basePath;
   }
 
-  enum ImportState {
-    UNRESOLVED, RESOLVING, RESOLVED;
-  }
-
   @Getter
   public class Env {
     CalciteTableFactory tableFactory = new CalciteTableFactory(

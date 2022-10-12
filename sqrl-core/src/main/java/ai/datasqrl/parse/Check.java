@@ -26,7 +26,7 @@ public class Check {
   }
 
   public static void state(boolean check, ErrorCode code, SqlNode currentNode, Supplier<String> message) {
-    if (check) {
+    if (!check) {
       state(check, code, currentNode, ()->currentNode.getParserPosition(), message);
     }
   }
