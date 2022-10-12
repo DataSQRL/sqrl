@@ -603,6 +603,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void distinctOnTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
