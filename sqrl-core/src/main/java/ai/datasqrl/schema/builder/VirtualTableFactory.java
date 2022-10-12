@@ -59,9 +59,16 @@ public abstract class VirtualTableFactory<T,V extends VirtualTable> extends Abst
         V make(@NonNull AbstractTableFactory.UniversalTableBuilder<T> tblBuilder, V parent, Name shredFieldName);
     }
 
-    public Map<SQRLTable,V> build(UniversalTableBuilder<T> builder, VirtualTableBuilder<T,V> vtableBuilder) {
+    public Map<SQRLTable,V> build(UniversalTableBuilder<T> builder, VirtualTableBuilder<T,V> vtableBuilder,
+                                  Optional<Pair<SQRLTable, Relationship.Multiplicity>> parent) {
         Map<SQRLTable,V> createdTables = new HashMap<>();
         build(builder,null,null,null,vtableBuilder,createdTables);
+        if (parent.isPresent()) {
+            SQRLTable root = createdTables.keySet().stream().filter(t -> t.getParent().isEmpty()).findFirst().get();
+            SQRLTable parentTbl = parent.get().getKey();
+            createChildRelationship(root.getName(), root, parentTbl, parent.get().getValue());
+            createParentRelationship(root, parentTbl);
+        }
         return createdTables;
     }
 

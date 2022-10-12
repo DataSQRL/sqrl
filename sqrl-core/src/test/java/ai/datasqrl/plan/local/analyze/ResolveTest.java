@@ -219,7 +219,7 @@ public class ResolveTest extends AbstractSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
     builder.add("Customer.recentOrders := SELECT o.id, o.time FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
-//    builder.add("Customer.orderAgg := SELECT COUNT(d.id) FROM _ JOIN _.recentOrders d");
+    builder.add("Customer.orderAgg := SELECT COUNT(d.id) FROM _ JOIN _.recentOrders d");
     process(builder.toString());
     validateQueryTable("recentOrders", TableType.TEMPORAL_STATE,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
 //    validateQueryTable("orderAgg", TableType.TEMPORAL_STATE,3, 2, TimestampTest.fixed(2));

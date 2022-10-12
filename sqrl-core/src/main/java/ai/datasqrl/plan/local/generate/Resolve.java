@@ -4,7 +4,6 @@ import ai.datasqrl.compile.loaders.DataSourceLoader;
 import ai.datasqrl.compile.loaders.JavaFunctionLoader;
 import ai.datasqrl.compile.loaders.Loader;
 import ai.datasqrl.compile.loaders.TypeLoader;
-import ai.datasqrl.errors.ErrorCode;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -27,9 +26,6 @@ import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
-import java.io.File;
-import java.net.URI;
-import java.nio.file.Path;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -41,7 +37,11 @@ import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.File;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -447,12 +447,14 @@ public class Resolve {
         addColumn(env, op, c, op.kind==IMPORT_TIMESTAMP);
         break;
       case ROOT_QUERY:
-        createTable(env, op);
+        createTable(env, op, Optional.empty());
         // env.relSchema.add(q.getName(), q);
 //        updateTableMapping(env, op, q);
         break;
       case QUERY:
-        createTable(env, op);
+        Optional<SQRLTable> parentTable = getContext(env,op.getStatement());
+        assert parentTable.isPresent();
+        createTable(env, op, parentTable);
 
 //        updateTableMapping(env, op, q2);
 //        updateRelMapping(env, op, s, v);
@@ -523,7 +525,7 @@ public class Resolve {
     throw new RuntimeException();
   }
 
-  private void createTable(Env env, StatementOp op) {
+  private void createTable(Env env, StatementOp op, Optional<SQRLTable> parentTable) {
 
     final SQRLLogicalPlanConverter.RelMeta processedRel = optimize(env, op);
 
@@ -531,7 +533,10 @@ public class Resolve {
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream().map(idx -> relFieldNames.get(idx))
             .map(n -> Name.system(n)).collect(Collectors.toList());
 
-    ScriptTableDefinition queryTable = env.tableFactory.defineTable(op.statement.getNamePath(), processedRel, fieldNames);
+    Optional<Pair<SQRLTable,VirtualRelationalTable>> parentPair = parentTable.map(tbl ->
+            Pair.of(tbl,env.tableMap.get(tbl)));
+    ScriptTableDefinition queryTable = env.tableFactory.defineTable(op.statement.getNamePath(), processedRel,
+            fieldNames, parentPair);
     registerScriptTable(env, queryTable);
   }
 

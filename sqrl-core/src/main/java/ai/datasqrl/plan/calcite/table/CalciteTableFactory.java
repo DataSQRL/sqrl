@@ -69,12 +69,12 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(getTableId(rootTable.getName(),"q"), getTimestampHolder(rootTable),
                 relBuilder.values(rootType).build(), source);
 
-        Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable);
+        Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable, Optional.empty());
         return new ScriptTableDefinition(impTable, tables);
     }
 
     public ScriptTableDefinition defineTable(NamePath tablePath, SQRLLogicalPlanConverter.RelMeta rel,
-                                      List<Name> fieldNames) {
+                                      List<Name> fieldNames, Optional<Pair<SQRLTable,VirtualRelationalTable>> parentPair) {
         ContinuousIndexMap selectMap = rel.getSelect();
         Preconditions.checkArgument(fieldNames.size()==selectMap.getSourceLength());
 
@@ -91,7 +91,11 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         }
         AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = convert2TableBuilder(tablePath, baseTable.getRowType(),
                 baseTable.getNumPrimaryKeys(), index2Name);
-        Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable);
+        Optional<Pair<SQRLTable, Relationship.Multiplicity>> parent = parentPair.map(pp ->
+            Pair.of(pp.getLeft(), pp.getRight().getNumPrimaryKeys()==baseTable.getNumPrimaryKeys()?
+                    Relationship.Multiplicity.ZERO_ONE: Relationship.Multiplicity.MANY)
+        );
+        Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable, parent);
         ScriptTableDefinition tblDef = new ScriptTableDefinition(baseTable, tables);
         //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
         //This may not be an issue, but if we need to preserve the order, it is probably easiest to re-order the fields
@@ -100,8 +104,9 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
     }
 
     public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,
-                                                                      QueryRelationalTable baseTable) {
-        return build(rootTable, new VirtualTableConstructor(baseTable));
+                                                                      QueryRelationalTable baseTable,
+                                                                      Optional<Pair<SQRLTable, Relationship.Multiplicity>> parent) {
+        return build(rootTable, new VirtualTableConstructor(baseTable),parent);
     }
 
     public RelDataType convertTable(AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder, boolean forNested) {

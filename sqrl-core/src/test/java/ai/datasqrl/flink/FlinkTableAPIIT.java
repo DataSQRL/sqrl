@@ -51,14 +51,22 @@ public class FlinkTableAPIIT extends AbstractSQRLIT {
     StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(imp.getTable(),streamBuilder);
     SchemaValidator schemaValidator = new SchemaValidator(imp.getSchema(), SchemaAdjustmentSettings.DEFAULT, imp.getTable().getDataset().getDigest());
     StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),"schema", SourceRecord.Named.class);
-    streamBuilder.addAsTable(validate, imp.getSchema(), "thetable");
+    streamBuilder.addAsTable(validate, imp.getSchema(), "orders");
 
     StreamTableEnvironment tEnv = streamBuilder.getTableEnvironment();
 
-    Table tableShredding = tEnv.sqlQuery("SELECT  o._uuid, items._idx, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
-            "FROM thetable o CROSS JOIN UNNEST(o.entries) AS items");
+//    Table tableShredding = tEnv.sqlQuery("SELECT  o._uuid, items._idx, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
+//            "FROM orders o CROSS JOIN UNNEST(o.entries) AS items");
+//    tEnv.toChangelogStream(tableShredding).print();
 
-    tEnv.toChangelogStream(tableShredding).print();
+//    Table tableSelectUnnest = tEnv.sqlQuery("SELECT o.id, (SELECT SUM(items.unit_price*items.quantity-items.discount) FROM " //(Table o) CROSS JOIN
+//            + "UNNEST(o.entries) AS items) AS total FROM orders o");
+//    tEnv.toChangelogStream(tableSelectUnnest).print();
+
+    Table tableNest = tEnv.sqlQuery("SELECT o.id, SUM(o.item_total) AS total FROM (SELECT o.id, items.unit_price*items.quantity-items.discount AS item_total \n" +
+            "FROM orders o CROSS JOIN UNNEST(o.entries) AS items) o GROUP BY o.id");
+    tEnv.toChangelogStream(tableNest).print();
+
     streamBuilder.setJobType(FlinkStreamEngine.JobType.SCRIPT);
     streamBuilder.build().execute("test");
   }

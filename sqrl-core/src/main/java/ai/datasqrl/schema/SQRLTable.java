@@ -52,7 +52,6 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   }
 
   public SQRLTable(RelDataType dataType, SQRLTable parent) {
-
     this.dataType = dataType;
     this.parent = Optional.of(parent);
   }
@@ -277,6 +276,10 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
 
   public Collection<SQRLTable> getChildren() {
     return getAllRelationships().filter(r -> r.getJoinType() == JoinType.CHILD).map(Relationship::getToTable).collect(Collectors.toList());
+  }
+
+  public Optional<SQRLTable> getParent() {
+    return getAllRelationships().filter(r -> r.getJoinType() == JoinType.PARENT).map(Relationship::getFromTable).findFirst();
   }
 
   public List<Column> getVisibleColumns() {
