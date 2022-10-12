@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.local.transpile;
 
+import ai.datasqrl.parse.Check;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.hints.TopNHint;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
@@ -61,6 +62,10 @@ public class Transpile {
     from = extraFromItems(from, scope);
     select.setFrom(from);
 
+    if (select.isDistinct() && select.getGroup() != null) {
+      throw new RuntimeException("SELECT DISTINCT with a GROUP not yet supported");
+    }
+
     if (select.isDistinct()) {
       rewriteDistinctingHint(select, scope, (ppkNode) ->
           TopNHint.createSqlHint(TopNHint.Type.SELECT_DISTINCT, ppkNode, SqlParserPos.ZERO));
@@ -103,6 +108,21 @@ public class Transpile {
     select.setHints(hints);
   }
 
+  /**
+   * SELECT DISTINCT `_`.`customerid` AS `_pk_1`, `o`.`id` AS `id`, `o`.`time` AS `time`
+   * FROM `customer$12` AS `_`
+   * DEFAULT JOIN `orders$6` AS `o` AS `o` ON `_`.`customerid` = `o`.`customerid`
+   * ORDER BY `_`.`customerid`, `o`.`time` DESC
+   * FETCH NEXT 10 ROWS ONLY;
+   *
+   *  SELECT +`SELECT_DISTINCT`(`0`)+ `_pk_1`, `id`, `time`
+   * FROM (SELECT `_`.`customerid` AS `_pk_1`, `o`.`id` AS `id`, `o`.`time` AS `time`
+   *       FROM `customer$12` AS `_`
+   *       DEFAULT JOIN `orders$6` AS `o` AS `o` ON `_`.`customerid` = `o`.`customerid` )
+   *       ORDER BY `_`.`customerid`, `o`.`time` DESC
+   *       FETCH NEXT 10 ROWS ONLY)
+   *
+   */
   private void rewriteDistinctingHint(SqlSelect select, SqlValidatorScope scope, Function<SqlNodeList, SqlHint> createFnc) {
     CalciteUtil.removeKeywords(select);
     SqlNodeList innerSelectList = select.getSelectList();
@@ -258,6 +278,9 @@ public class Transpile {
   }
 
   private void rewriteGroup(SqlSelect select, SqlValidatorScope scope) {
+    if (select.isDistinct()) { //skip select distinct, we will unpack this differently
+      return;
+    }
     if (!op.getSqrlValidator().isAggregate(select)) {
       Preconditions.checkState(select.getGroup() == null);
       return;
@@ -323,6 +346,9 @@ public class Transpile {
   }
 
   private void rewriteOrder(SqlSelect select, SqlValidatorScope scope) {
+    if (select.isDistinct()) { //skip select distinct, we will unpack this differently
+      return;
+    }
     //If no orders, exit
     if (select.getOrderList() == null || select.getOrderList().getList().isEmpty()) {
       return;
