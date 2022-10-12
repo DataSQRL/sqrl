@@ -20,7 +20,6 @@ import static org.apache.calcite.util.Static.RESOURCE;
 
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.schema.Field;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -29,20 +28,11 @@ import ai.datasqrl.schema.SQRLTable;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Value;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.prepare.RelOptTableImpl;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.StructKind;
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Relationship;
-import com.google.common.base.Preconditions;
-import org.apache.calcite.jdbc.CalciteSchema.TableEntry;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
-import org.apache.calcite.prepare.Prepare.PreparingTable;
-import org.apache.calcite.schema.Schema;
-import org.apache.calcite.schema.Table;
-import org.apache.calcite.schema.Wrapper;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDynamicParam;
@@ -52,8 +42,6 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.util.Pair;
-import org.apache.calcite.util.Util;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableMap;
@@ -108,80 +96,56 @@ class SqrlEmptyScope implements SqlValidatorScope {
   @Override
   public void resolveTable(List<String> names, SqlNameMatcher nameMatcher,
       Path path, Resolved resolved) {
+    final RelOptSchema relOptSchema =
+        validator.catalogReader.unwrap(RelOptSchema.class);
+
     //    Check relative scope
-    Optional<SqlValidatorNamespace> joinNs = getJoinNs(names.get(0));
-    Optional<AbsoluteTableResolve> relTable = joinNs
+    getJoinNs(names.get(0))
         .map(ns -> ns.getTable())
         .map(ns -> ns.unwrap(SQRLTable.class))
-        .map(t -> new AbsoluteTableResolve(
-            t, t.walkField(names.subList(1, names.size()))));
+        .map(t -> new TableResolve(
+            t, t.walkField(names.subList(1, names.size()))))
+        .ifPresent(t -> {
+          if (t.getFields().isEmpty()) {
+            resolved.found(validator.getContextTable().get(),
+                false, null, path, List.of());
+            return;
+          }
 
-    relTable.ifPresent(t -> {
-      final RelOptSchema relOptSchema =
-          validator.catalogReader.unwrap(RelOptSchema.class);
-      if (t.getFields().isEmpty()) {
-        resolved.found(validator.getContextTable().get(),
-            false, null, path, List.of());
-        return;
-      }
-
-      SQRLTable baseTable = (t.fields.isEmpty())
-          ? t.getTable()
-          : ((Relationship) t.fields.get(t.getFields().size() - 1))
-              .getToTable();
-      SQRLTable fromTable = (t.fields.isEmpty())
-          ? t.getTable()
-          : ((Relationship) t.fields.get(t.getFields().size() - 1))
-              .getFromTable();
-
-      final RelDataType rowType = baseTable.getRowType(validator.typeFactory);
-      SqlValidatorTable relOptTable =
-          RelOptTableImpl.create(relOptSchema, rowType,
-              new SqrlCalciteSchema(fromTable)
-                  .getTable(t.fields.get(t.getFields().size() - 1)
-                      .getName().getCanonical(), false),
-              null);
-      RelativeTableNamespace namespace = new RelativeTableNamespace(validator,
-          relOptTable, baseTable, names.get(0), t.fields.stream()
-          .map(e -> (Relationship) e)
-          .collect(Collectors.toList()));
-      resolved.found(namespace, false, null, path, List.of());
-    });
+          final RelDataType rowType = t.getBaseTable().getRowType(validator.typeFactory);
+          SqlValidatorTable relOptTable =
+              RelOptTableImpl.create(relOptSchema, rowType,
+                  new SqrlCalciteSchema(t.getFromTable())
+                      .getTable(t.fields.get(t.getFields().size() - 1)
+                          .getName().getCanonical(), false),
+                  null);
+          RelativeTableNamespace namespace = new RelativeTableNamespace(validator,
+              relOptTable, t.getBaseTable(), names.get(0), t.fields.stream()
+              .map(e -> (Relationship) e)
+              .collect(Collectors.toList()));
+          resolved.found(namespace, false, null, path, List.of());
+        });
 
     //Check base schema
-    Optional<SQRLTable> table = Optional.ofNullable(validator.catalogReader.getRootSchema()
+    Optional.ofNullable(validator.catalogReader.getRootSchema()
             .getTable(names.get(0), false))
-        .map(t -> (SQRLTable) t.getTable());
-    Optional<AbsoluteTableResolve> absTable = table
-        .map(t -> new AbsoluteTableResolve(t, t.walkField(names.subList(1, names.size()))));
+        .map(t -> (SQRLTable) t.getTable())
+        .map(t -> new TableResolve(t, t.walkField(names.subList(1, names.size()))))
+        .ifPresent(t -> {
 
-    absTable.ifPresent(t -> {
-      final RelOptSchema relOptSchema =
-          validator.catalogReader.unwrap(RelOptSchema.class);
+          final RelDataType rowType = t.getBaseTable().getRowType(validator.typeFactory);
+          SqlValidatorTable relOptTable = RelOptTableImpl.create(relOptSchema, rowType,
+              (t.getFields().isEmpty() ? validator.catalogReader.getRootSchema()
+                  : new SqrlCalciteSchema(t.getFromTable()))
+                  .getTable(names.get(names.size() - 1), false),
+              null);
 
-      SQRLTable baseTable = (t.fields.isEmpty())
-          ? t.getTable()
-          : ((Relationship) t.fields.get(t.getFields().size() - 1))
-              .getToTable();
-
-      SQRLTable fromTable = (t.fields.isEmpty())
-          ? t.getTable()
-          : ((Relationship) t.fields.get(t.getFields().size() - 1))
-              .getFromTable();
-
-      final RelDataType rowType = baseTable.getRowType(validator.typeFactory);
-      SqlValidatorTable relOptTable = RelOptTableImpl.create(relOptSchema, rowType,
-          (t.getFields().isEmpty() ? validator.catalogReader.getRootSchema()
-              : new SqrlCalciteSchema(fromTable))
-              .getTable(names.get(names.size() - 1), false),
-          null);
-
-      AbsoluteTableNamespace namespace = new AbsoluteTableNamespace(validator,
-          relOptTable, baseTable, t.fields.stream()
-          .map(e -> (Relationship) e)
-          .collect(Collectors.toList()));
-      resolved.found(namespace, false, null, path, List.of());
-    });
+          AbsoluteTableNamespace namespace = new AbsoluteTableNamespace(validator,
+              relOptTable, t.getBaseTable(), t.fields.stream()
+              .map(e -> (Relationship) e)
+              .collect(Collectors.toList()));
+          resolved.found(namespace, false, null, path, List.of());
+        });
   }
 
   private Optional<SqlValidatorNamespace> getJoinNs(String name) {
@@ -255,10 +219,22 @@ class SqrlEmptyScope implements SqlValidatorScope {
   }
 
   @Value
-  private class AbsoluteTableResolve {
+  private class TableResolve {
 
     private final SQRLTable table;
     private final List<Field> fields;
 
+    public SQRLTable getBaseTable() {
+      return (fields.isEmpty())
+          ? getTable()
+          : ((Relationship) fields.get(getFields().size() - 1))
+              .getToTable();
+    }
+    public SQRLTable getFromTable() {
+      return (fields.isEmpty())
+          ? getTable()
+          : ((Relationship) fields.get(getFields().size() - 1))
+              .getFromTable();
+    }
   }
 }

@@ -467,6 +467,13 @@ public class Resolve {
   private void addColumn(Env env, StatementOp op, AddedColumn c, boolean fixTimestamp) {
     Optional<VirtualRelationalTable> optTable = getTargetRelTable(env, op);
 //    Check.state(optTable.isPresent(), null, null);
+    SQRLTable table = getContext(env, op.statement)
+        .orElseThrow(()->new RuntimeException("Cannot resolve table"));
+    Name name = op.getStatement().getNamePath().getLast();
+    if (table.getField(name).isPresent()) {
+      name = Name.system(op.getStatement().getNamePath().getLast().getCanonical() + "_");
+    }
+    c.setNameId(name.getCanonical());
 
     VirtualRelationalTable vtable = optTable.get();
     Optional<Integer> timestampScore = env.tableFactory.getTimestampScore(op.statement.getNamePath().getLast(),c.getDataType());
@@ -478,12 +485,10 @@ public class Resolve {
       baseTbl.getTimestamp().fixTimestamp(baseTbl.getNumColumns()-1); //Timestamp must be last column
     }
 
-    SQRLTable table = getContext(env, op.statement)
-        .orElseThrow(()->new RuntimeException("Cannot resolve table"));
-    Column column = env.variableFactory.addColumn(op.getStatement().getNamePath().getLast(),
+    Column column = env.variableFactory.addColumn(name,
         table, c.getDataType());
     //todo shadowing
-    env.fieldMap.put(column, op.getStatement().getNamePath().getLast().getCanonical());
+    env.fieldMap.put(column, name.getCanonical());
   }
 
   private void updateJoinMapping(Env env, StatementOp op) {
