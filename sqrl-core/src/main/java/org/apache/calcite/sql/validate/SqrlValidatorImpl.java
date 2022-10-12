@@ -19,6 +19,7 @@ package org.apache.calcite.sql.validate;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 import static org.apache.calcite.util.Static.RESOURCE;
 
+import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
 import ai.datasqrl.plan.local.generate.Resolve;
@@ -46,6 +47,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -70,6 +72,7 @@ import org.apache.calcite.runtime.Resources;
 import org.apache.calcite.schema.ColumnStrategy;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.ModifiableViewTable;
+import org.apache.calcite.sql.ImportDefinition;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlAccessEnum;
@@ -619,10 +622,10 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
   }
 
   public SqlNode validate(StatementOp op) {
-    SqlValidatorScope scope = new SqrlEmptyScope(this, op);
+    setContextTable(op);
+    SqlValidatorScope scope = new SqrlEmptyScope(this);
     scope = new CatalogScope(scope, ImmutableList.of("CATALOG"));
     SqlNode top = performSqrlRewrites(op);
-    setContextTable(op);
 
     final SqlNode topNode2 = validateScopedExpression(top, scope);
     final RelDataType type = getValidatedNodeType(topNode2);
@@ -692,7 +695,8 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
         new SqlValidatorScope.ResolvedImpl();
     emptyScope.resolveTable(names, nameMatcher, Path.EMPTY, resolved);
     if (resolved.count() == 1) {
-      ExpandableTableNamespace namespace = (ExpandableTableNamespace)resolved.only().namespace;
+      SqlValidatorNamespace ns = resolved.only().namespace;
+      ExpandableTableNamespace namespace = (ExpandableTableNamespace)ns;
       return Optional.of(namespace);
     }
     return Optional.empty();
@@ -751,7 +755,43 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
   }
 
   private SqlNode performQueryRewrites(SqlNode query) {
+    if (contextTable.isPresent() && !hasSelfTable(query)) {
+      //Add as first table in join
+      //todo: other query types
+      SqlSelect select = (SqlSelect) query;
+      SqlNode from = select.getFrom();
+      select.setFrom(new SqlJoin(
+          from.getParserPosition(),
+          self, SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
+          JoinType.CROSS.symbol(SqlParserPos.ZERO),
+          from,
+          JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
+          null
+//          SqlLiteral.createBoolean(true, SqlParserPos.ZERO))
+
+      ));
+      return select;
+    }
+
     return query;
+  }
+
+  private boolean hasSelfTable(SqlNode query) {
+    SqlSelect select = (SqlSelect) query;
+    final AtomicBoolean hasSelf = new AtomicBoolean(false);
+
+    select.getFrom().accept(new SqlBasicVisitor<>() {
+
+      //TODO: Not right logic
+      @Override
+      public Void visit(SqlIdentifier id) {
+        if (self.equalsDeep(id, Litmus.IGNORE)) {
+          hasSelf.set(true);
+        }
+        return null;
+      }
+    });
+    return hasSelf.get();
   }
 
   private SqlNode performJoinRewrites(SqlNode query) {
@@ -5176,7 +5216,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       Resources.ExInst<SqlValidatorException> e) {
     assert node != null;
     final SqlParserPos pos = node.getParserPosition();
-    return SqlUtil.newContextException(pos, e);
+    return Check.newContextException(pos, e);
   }
 
   protected SqlWindow getWindowByName(

@@ -1,26 +1,46 @@
 package ai.datasqrl.parse;
 
+import static ai.datasqrl.errors.ErrorCode.GENERIC_ERROR;
+
+import ai.datasqrl.errors.ErrorCode;
+import ai.datasqrl.errors.SqrlException;
 import ai.datasqrl.plan.local.Errors.Error;
+import java.util.Optional;
 import java.util.function.Supplier;
+import org.apache.calcite.runtime.CalciteContextException;
+import org.apache.calcite.runtime.Resources;
+import org.apache.calcite.runtime.Resources.ExInst;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlValidatorException;
 
 public class Check {
 
-  public static Exception newException() {
-    return new SqrlExceptions();
+  public static RuntimeException newException(ErrorCode code, SqlNode currentNode,
+      SqlParserPos pos, String message) {
+    return new SqrlException(code, currentNode, pos, message);
   }
 
-  public static <T> void state(boolean check, T node, Error<T> error) {
+  public static <T> void state(boolean check, ErrorCode code, SqlNode currentNode, String message) {
+    state(check, code, currentNode, () -> currentNode.getParserPosition(), () -> message);
+  }
+
+  public static void state(boolean check, ErrorCode code, SqlNode currentNode, Supplier<String> message) {
     if (!check) {
-      throw new RuntimeException(node.toString());
+      state(check, code, currentNode, ()->currentNode.getParserPosition(), message);
     }
   }
-  public static <T> void state_(boolean check, Supplier<T> node, Error<T> error) {
+
+  public static void state(boolean check, ErrorCode code, SqlNode currentNode,
+      Supplier<SqlParserPos> pos, Supplier<String> message) {
     if (!check) {
-      throw new RuntimeException(node.toString());
+      throw new SqrlException(code, currentNode, pos.get(), message.get());
     }
   }
 
-  public static class SqrlExceptions extends Exception {
-
+  public static CalciteContextException newContextException(SqlParserPos pos,
+      ExInst<SqlValidatorException> e) {
+    throw new SqrlException(GENERIC_ERROR,
+        Optional.empty(), pos, e.ex().getMessage());
   }
 }

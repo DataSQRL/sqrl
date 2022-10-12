@@ -52,8 +52,11 @@ public class Transpile {
     validateNoPaths(select.getOrderList(), scope);
 
     //Before any transformation, replace group by with ordinals
-    rewriteGroup(select, scope);
-    rewriteOrder(select, scope);
+    if (!select.isDistinct() &&
+        !(isNested(op) && select.getFetch() != null)) { //we add this to the hint instead of these keywords
+      rewriteGroup(select, scope);
+      rewriteOrder(select, scope);
+    }
 
     rewriteSelectList(select, scope);
     rewriteWhere(select, scope);
@@ -278,9 +281,6 @@ public class Transpile {
   }
 
   private void rewriteGroup(SqlSelect select, SqlValidatorScope scope) {
-    if (select.isDistinct()) { //skip select distinct, we will unpack this differently
-      return;
-    }
     if (!op.getSqrlValidator().isAggregate(select)) {
       Preconditions.checkState(select.getGroup() == null);
       return;
@@ -346,9 +346,6 @@ public class Transpile {
   }
 
   private void rewriteOrder(SqlSelect select, SqlValidatorScope scope) {
-    if (select.isDistinct()) { //skip select distinct, we will unpack this differently
-      return;
-    }
     //If no orders, exit
     if (select.getOrderList() == null || select.getOrderList().getList().isEmpty()) {
       return;

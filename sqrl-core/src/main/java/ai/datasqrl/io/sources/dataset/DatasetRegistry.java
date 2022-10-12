@@ -47,7 +47,7 @@ public class DatasetRegistry implements Closeable {
     if (source == null) {
       return null;
     }
-    SourceDataset dataset = new SourceDataset(this, source);
+    SourceDataset dataset = new SourceDataset( source);
     datasets.put(dataset.getName(), dataset);
     return dataset;
   }

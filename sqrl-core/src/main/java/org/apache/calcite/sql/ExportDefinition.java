@@ -3,6 +3,7 @@ package org.apache.calcite.sql;
 import ai.datasqrl.parse.tree.name.NamePath;
 import java.util.Optional;
 import lombok.Getter;
+import org.apache.calcite.sql.SqlWriter.FrameTypeEnum;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlVisitor;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -28,7 +29,8 @@ public class ExportDefinition extends SqrlStatement {
 
   @Override
   public void unparse(SqlWriter sqlWriter, int i, int i1) {
-
+    sqlWriter.keyword("EXPORT");
+    sqlWriter.print(sinkPath.getDisplay());
   }
 
   @Override

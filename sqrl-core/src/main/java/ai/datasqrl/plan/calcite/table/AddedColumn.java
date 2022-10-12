@@ -6,6 +6,7 @@ import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -20,8 +21,8 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 public abstract class AddedColumn {
-
-    final String nameId;
+    @Setter
+    String nameId;
 
     public abstract RelDataType getDataType();
 

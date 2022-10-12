@@ -10,6 +10,7 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
+import ai.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
 import ai.datasqrl.schema.input.InputTableSchema;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
@@ -102,8 +103,9 @@ public class ImportManager {
       if (userDSSchema == null) {
         userDSSchema = FlexibleDatasetSchema.EMPTY;
       }
-      FlexibleDatasetSchema.TableField tbField = createTable(table, datasetName,
-          userDSSchema.getFieldByName(table.getName()), schemaAdjustmentSettings, errors);
+      FlexibleDatasetSchema.TableField tbField = createTable(table,
+          userDSSchema.getFieldByName(table.getName()), schemaAdjustmentSettings,
+          errors.resolve(datasetName));
       System.out.println(errors);
       //schemaConverter.convert(tbField,imp.asName.orElse(table.getName()))
       return new SourceTableImport(table, tbField, schemaAdjustmentSettings);
@@ -153,12 +155,12 @@ public class ImportManager {
     //TODO: to be filled out
   }
 
-  private FlexibleDatasetSchema.TableField createTable(SourceTable table, Name datasetname,
-      FlexibleDatasetSchema.TableField userSchema,
+  public static FlexibleDatasetSchema.TableField createTable(SourceTable table,
+      TableField userSchema,
       SchemaAdjustmentSettings schemaAdjustmentSettings,
       ErrorCollector errors) {
     SourceTableStatistics stats = table.getStatistics();
-    errors = errors.resolve(datasetname);
+//    errors = errors.resolve(datasetname);
     if (userSchema == null) {
       if (stats.getCount() == 0) {
         errors.fatal(

@@ -36,21 +36,6 @@ public final class ScriptNode
     super(location);
     this.statements = statements;
   }
-//
-//
-//  @Override
-//  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
-//    return visitor.visitScript(this, context);
-//  }
-//
-//  @Override
-//  public List<? extends Node> getChildren() {
-//    return statements;
-//  }
-//
-//  public List<Node> getStatements() {
-//    return statements;
-//  }
 
   @Override
   public int hashCode() {

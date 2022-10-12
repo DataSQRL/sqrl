@@ -58,7 +58,7 @@ public class SchemaInference {
       seenNodes.add(type);
 
       for (FieldDefinition field : type.getFieldDefinitions()) {
-        SQRLTable table = (SQRLTable) env.getSqrlSchema().getTable(field.getName(), false)
+        SQRLTable table = (SQRLTable) env.getUserSchema().getTable(field.getName(), false)
             .getTable();
         //todo check if we've already registered the type
         VirtualTable vt = env.getTableMap().get(table);
@@ -124,7 +124,7 @@ public class SchemaInference {
   }
 
   private RelNode constructTableScan(SQRLTable table, VirtualTable vt, Env env) {
-    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.getSqrlSchema());
+    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.getUserSchema());
     RelBuilder relBuilder = PlannerFactory.sqlToRelConverterConfig.getRelBuilderFactory()
         .create(env.getSession().getPlanner().getCluster(),
             (CalciteCatalogReader)sqrlValidator.getCatalogReader()

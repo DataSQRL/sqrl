@@ -28,7 +28,7 @@ public class SchemaGenerator {
   }
 
   private void createTypes() {
-    for (SQRLTable table : env.getSqrlSchema().getAllTables()) {
+    for (SQRLTable table : env.getUserSchema().getAllTables()) {
       ObjectTypeBuilder builder = schemaBuilder.createObjectType(table);
       for (Field field : table.getFields().getAccessibleFields()) {
         switch (field.getKind()) {
@@ -49,7 +49,7 @@ public class SchemaGenerator {
 
   private void generateRootQueries() {
     ObjectTypeBuilder builder = schemaBuilder.getQuery();
-    for (SQRLTable table : env.getSqrlSchema().getRootTables()) {
+    for (SQRLTable table : env.getUserSchema().getRootTables()) {
       builder.createRelationshipField(table.getName(), table, Multiplicity.MANY);
     }
   }

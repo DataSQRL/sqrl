@@ -1,6 +1,7 @@
 package org.apache.calcite.sql;
 
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.plan.calcite.util.SqlNodePrinter;
 import ai.datasqrl.schema.TableFunctionArgument;
 import java.util.List;
 import java.util.Objects;
@@ -21,10 +22,6 @@ public class JoinAssignment extends Assignment {
     this.query = query;
   }
 
-//  public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
-//    return visitor.visitJoinAssignment(this, context);
-//  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -40,5 +37,11 @@ public class JoinAssignment extends Assignment {
   @Override
   public int hashCode() {
     return Objects.hash(query, hints);
+  }
+
+  @Override
+  public void unparse(SqlWriter sqlWriter, int i, int i1) {
+    super.unparse(sqlWriter, i, i1);
+    sqlWriter.print(SqlNodePrinter.printJoin(query));
   }
 }

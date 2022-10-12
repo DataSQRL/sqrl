@@ -4,6 +4,10 @@
 name = "c360"
 version = "1.0.0"
 main = "c360.sqrl" #Optional unless there is more than one sqrl script is found in the bundle
+#target = "flink"
+#api = "vertx"
+cloud = "aws"
+region = "us-east1"
 
 [dependencies] # Resolved from a package manager for production assets
 sqml-examples.ecommerce-data = "1.0.0"

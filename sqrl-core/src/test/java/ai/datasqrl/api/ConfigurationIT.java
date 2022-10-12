@@ -27,6 +27,7 @@ import ai.datasqrl.util.data.BookClub;
 import ai.datasqrl.util.data.C360;
 import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Disabled
 public class ConfigurationIT extends AbstractSQRLIT {
 
     @Test

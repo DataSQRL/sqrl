@@ -1,0 +1,3 @@
+IMPORT ecommerce-data.Customer;
+IMPORT ecommerce-data.Product;
+IMPORT ecommerce-data.Orders;

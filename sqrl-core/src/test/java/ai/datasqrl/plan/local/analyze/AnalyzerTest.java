@@ -5,6 +5,8 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
+import ai.datasqrl.errors.ErrorCode;
+import ai.datasqrl.errors.SqrlException;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.ParsingException;
 import ai.datasqrl.parse.tree.name.Name;
@@ -32,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.math.BigDecimal;
 
+import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AnalyzerTest extends AbstractSQRLIT {
@@ -52,7 +55,7 @@ class AnalyzerTest extends AbstractSQRLIT {
 
     ImportManager importManager = sqrlSettings.getImportManagerProvider()
         .createImportManager(env.getDatasetRegistry());
-    ScriptBundle bundle = example.buildBundle().setIncludeSchema(true).getBundle();
+    ScriptBundle bundle = example.buildBundle().getBundle();
     Assertions.assertTrue(
         importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
     Planner planner = new PlannerFactory(
@@ -60,7 +63,7 @@ class AnalyzerTest extends AbstractSQRLIT {
     Session session = new Session(error, importManager, planner);
     this.session = session;
     this.parser = new ConfiguredSqrlParser(error);
-    this.resolve = new Resolve();
+    this.resolve = new Resolve(RETAIL_DIR_BASE);
   }
 
   private Env generate(ScriptNode node) {
@@ -72,6 +75,86 @@ class AnalyzerTest extends AbstractSQRLIT {
         ()->resolve.planDag(session, node),
         "Statement should throw exception"
         );
+  }
+
+  private void generateInvalid(ScriptNode node, ErrorCode expectedCode) {
+    try {
+      resolve.planDag(session, node);
+      fail();
+    } catch (Exception e) {
+      assertTrue(e instanceof SqrlException, "Should be SqrlException is: " + e.getClass().getName());
+      SqrlException exception = (SqrlException) e;
+      assertEquals(expectedCode, exception.getErrorCode());
+      System.out.println(exception.getMessage());
+    }
+  }
+
+  @Test
+  public void testCatchingCalciteErrorTest() {
+    generateInvalid(parser.parse(""
+        + "IMPORT ecommerce-data.Product;"
+        //Expression 'productid' is not being grouped
+        + "X := SELECT productid, SUM(productid) FROM Product GROUP BY name"),
+        ErrorCode.GENERIC_ERROR);
+  }
+
+  // IMPORTS
+  @Test
+  @Disabled
+  public void functionImportTest() {
+    generate(parser.parse(""
+        + "IMPORT system.functions;"
+        + "IMPORT ecommerce-data.Orders;"));
+  }
+
+  @Test
+  public void import1() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"));
+  }
+
+  @Test
+  public void import2() {
+    generate(parser.parse("IMPORT ecommerce-data.*;"));
+  }
+
+  @Test
+  public void import3() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders AS O;"));
+  }
+
+  @Test
+  public void importInvalidPathTest() {
+    generateInvalid(parser.parse("IMPORT Product;"));
+  }
+
+  @Test
+  public void duplicateImportTest() {
+    generateInvalid(
+        parser.parse("IMPORT ecommerce-data.Product;\n"
+            + "IMPORT ecommerce-data.Product;\n"), ErrorCode.IMPORT_NAMESPACE_CONFLICT);
+  }
+
+  @Test
+  public void absoluteTest1() {
+    generate(parser.parse("IMPORT ecommerce-data.Product;"
+        + "X := SELECT productid FROM Product;"));
+  }
+  @Test
+  public void absoluteTest2() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "X := SELECT discount FROM Orders.entries;"));
+  }
+
+  @Test
+  public void relativeTest1() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "Orders.entries.d2 := SELECT discount FROM _;"));
+  }
+
+  @Test
+  public void relativeTest2() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "Orders.x := SELECT discount FROM _.entries;"));
   }
 
   @Test
@@ -104,28 +187,10 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  public void importTest() {
-    generate(parser.parse("IMPORT ecommerce-data.Product;"));
-  }
-
-  @Test
-  @Disabled
-  public void importInvalidPathTest() {
-    generateInvalid(parser.parse("IMPORT Product;"));
-  }
-
-  @Test
-  public void duplicateImportTest() {
-    generate(
-        parser.parse("IMPORT ecommerce-data.Product;\n"
-            + "IMPORT ecommerce-data.Product;\n"));
-  }
-
-  @Test
-  public void extraNowArgs() {
+  public void invalidFunctionDef() {
     generateInvalid(
         parser.parse("IMPORT ecommerce-data.Product;\n"
-            + "Product.test := STRING_TO_TIMESTAMP(100);\n"));
+            + "Product.test := NOW(100);\n"));
   }
 
   @Test
@@ -135,15 +200,21 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void importAllWithAliasTest() {
-    generate(parser.parse("IMPORT ecommerce-data.* AS ecommerce;"));
+    generateInvalid(parser.parse("IMPORT ecommerce-data.* AS ecommerce;"),
+        ErrorCode.IMPORT_CANNOT_BE_ALIASED);
+  }
+
+  @Test
+  public void importAllWithTimestampTest() {
+    generateInvalid(parser.parse("IMPORT ecommerce-data.* TIMESTAMP _ingest_time AS c_ts;"),
+        ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP);
   }
 
   @Test
   public void importWithTimestamp() {
     Env env1 = generate(parser.parse("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time AS c_ts;"));
-    SQRLTable sqrlTable = (SQRLTable) env1.getSqrlSchema().getTable("Customer", false).getTable();
+    SQRLTable sqrlTable = (SQRLTable) env1.getUserSchema().getTable("Customer", false).getTable();
     assertTrue(sqrlTable.getField(Name.system("c_ts")).isPresent(), "Timestamp column missing");
   }
 
@@ -198,14 +269,6 @@ class AnalyzerTest extends AbstractSQRLIT {
 
   @Test
   @Disabled
-  public void fullyQualifiedQueryName() {
-    generate(parser.parse(
-        "IMPORT ecommerce-data;\n"
-            + "Product2 := SELECT * FROM ecommerce-data.Product;"));
-  }
-
-  @Test
-  @Disabled
   public void invalidShadowRelationshipTest() {
     generateInvalid(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -236,6 +299,7 @@ class AnalyzerTest extends AbstractSQRLIT {
     generateInvalid(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := JOIN Product ON _.productid = Product.productid;"));
   }
+
   @Test
   public void joinDeclarationOnRootTet() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
@@ -276,7 +340,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Disabled
   public void inlinePathTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
+        + "Product.joinDeclaration := JOIN Product ON true;\n"
         + "NewProduct := SELECT joinDeclaration.productid FROM Product;"));
   }
 
@@ -324,10 +388,12 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void crossJoinTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
-        + "Product2 := SELECT * FROM Product, Product.joinDeclaration;"));
+        + "Product2 := SELECT * FROM Product, Product.joinDeclaration;"
+    ));
   }
 
   @Test
@@ -403,7 +469,6 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void distinctStarTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -445,7 +510,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   @Disabled
   public void localAggregateExpressionTest() {
-    generate(parser.parse(
+    generateInvalid(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
             + "Product.total := SUM(Product.productid);"));
   }
@@ -475,7 +540,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void localAggregateInQueryTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
-        + "Product.total := SELECT SUM(joinDeclaration.productid) FROM _;"));
+        + "Product.total := SELECT SUM(joinDeclaration.productid) AS totals FROM _;"));
   }
 
   @Test
@@ -544,6 +609,7 @@ class AnalyzerTest extends AbstractSQRLIT {
         "IMPORT ecommerce-data.Product;\n"
             + "Product2 := DISTINCT Product ON productid;\n"));
   }
+
   @Test
   @Disabled
   public void distinctOnWithExpression2Test() {
@@ -557,7 +623,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void distinctOnWithExpressionTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product2 := DISTINCT Product ON productid / 10;\n"));
+            + "Product2 := DISTINCT Product ON productid / 10 ORDER BY _ingest_time DESC;\n"));
   }
 
   @Test
@@ -600,8 +666,8 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void nestedLocalDistinctTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.nested := SELECT productid FROM Product;"
-            + "Product.nested := DISTINCT _ ON productid;"));
+            + "Product.nested := SELECT p.productid FROM Product p;"
+            + "Product.nested := DISTINCT _ ON _.productid;"));
   }
 
   @Test
@@ -737,6 +803,112 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void castExpression() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"
         + "Orders.x := CAST(1 AS String);"));
+  }
+
+  @Test
+  @Disabled
+  public void aggregateIsToOne() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "Orders.stats := SELECT COUNT(1) AS num, SUM(e.discount) AS total FROM _ JOIN _.entries e;\n"
+        + "X := SELECT o.id, o.customerid, o.stats.num FROM Orders o;"
+    ));
+  }
+
+  @Test
+  @Disabled
+  public void aggregateIsToOne2() {
+    generate(parser.parse("IMPORT ecommerce-data.Orders;"
+        + "Orders.stats := SELECT COUNT(e.price) AS num, SUM(e.discount) AS total FROM _.entries e;\n"
+        + "X := SELECT o.id, o.customerid, o.stats.num FROM Orders o;"));
+  }
+
+  @Test
+  @Disabled
+  public void testc360() {
+    generate(parser.parse("IMPORT ecommerce-data.Customer;\n"
+        + "IMPORT ecommerce-data.Product;\n"
+        + "IMPORT ecommerce-data.Orders;\n"
+        + "\n"
+        + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
+        + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
+        + "\n"
+        + "-- Compute useful statistics on orders\n"
+        + "Orders.entries.discount := coalesce(discount, 0.0);\n"
+        + "Orders.entries.total := quantity * unit_price - discount;\n"
+        + "Orders._stats := SELECT sum(total) AS total, sum(discount) AS total_savings, "
+        + "                 COUNT(1) AS total_entries "
+        + "                 FROM _.entries;\n"
+        + "Orders.total := _.stats.total;\n"
+        + "Orders.total_savings := _._stats.total_savings;\n"
+        + "Orders.total_entries := _._stats.total_entries;\n"
+        + "\n"
+        + "\n"
+        + "-- Relate Customer to Orders and compute a customer's total order spent\n"
+        + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
+        + "Customer._stats := SELECT sum(orders.total) AS total_orders FROM _;\n"
+        + "Customer.total_orders := _._stats.total_orders;\n"
+        + "\n"
+        + "-- Aggregate all products the customer has ordered for the 'order again' feature\n"
+        + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
+        + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
+        + "\n"
+        + "Customer.recent_products := SELECT productid, product.category AS category,\n"
+        + "                                   sum(quantity) AS quantity, count(*) AS num_orders\n"
+        + "                            FROM _.orders.entries\n"
+        + "                            WHERE parent.time > now() - INTERVAL 2 YEAR\n"
+        + "                            GROUP BY productid, category ORDER BY num_orders DESC, quantity DESC;\n"
+        + "\n"
+        + "Customer.recent_products_categories :=\n"
+        + "                     SELECT category, count(*) AS num_products\n"
+        + "                     FROM _.recent_products\n"
+        + "                     GROUP BY category ORDER BY num_products;\n"
+        + "\n"
+        + "Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp.category=_.category;\n"
+        + "\n"
+        + "-- Aggregate customer spending by month and product category for the 'spending history' feature\n"
+        + "Customer._spending_by_month_category :=\n"
+        + "                     SELECT time.roundToMonth(parent.time) AS month,\n"
+        + "                            product.category AS category,\n"
+        + "                            sum(total) AS total,\n"
+        + "                            sum(discount) AS savings\n"
+        + "                     FROM _.orders.entries\n"
+        + "                     GROUP BY month, category ORDER BY month DESC;\n"
+        + "\n"
+        + "Customer.spending_by_month :=\n"
+        + "                    SELECT month, sum(total) AS total, sum(savings) AS savings\n"
+        + "                    FROM _._spending_by_month_category\n"
+        + "                    GROUP BY month ORDER BY month DESC;\n"
+        + "Customer.spending_by_month.categories :=\n"
+        + "    JOIN _.parent._spending_by_month_category c ON c.month=month;\n"
+        + "\n"
+        + "/* Compute w/w product sales volume increase average over a month\n"
+        + "   These numbers are internal to determine trending products */\n"
+        + "Product._sales_last_week := SELECT SUM(e.quantity) AS total\n"
+        + "                          FROM _.order_entries e\n"
+        + "                          WHERE e.parent.time > now() - INTERVAL 7 DAY;\n"
+        + "\n"
+        + "Product._sales_last_month := SELECT SUM(e.quantity) AS total\n"
+        + "                          FROM _.order_entries e\n"
+        + "                          WHERE e.parent.time > now() - INTERVAL 1 MONTH;\n"
+        + "\n"
+        + "Product._last_week_increase := _sales_last_week.total * 4 / _sales_last_month.total;\n"
+        + "\n"
+        + "-- Determine trending products for each category\n"
+        + "Category := SELECT DISTINCT category AS name FROM Product;\n"
+        + "Category.products := JOIN Product ON _.name = Product.category;\n"
+        + "Category.trending := JOIN Product p ON _.name = p.category AND p._last_week_increase > 0\n"
+        + "                     ORDER BY p._last_week_increase DESC LIMIT 10;\n"
+        + "\n"
+        + "/* Determine customers favorite categories by total spent\n"
+        + "   In combination with trending products this is used for the product recommendation feature */\n"
+        + "Customer.favorite_categories := SELECT s.category as category_name,\n"
+        + "                                        sum(s.total) AS total\n"
+        + "                                FROM _._spending_by_month_category s\n"
+        + "                                WHERE s.month >= now() - INTERVAL 1 YEAR\n"
+        + "                                GROUP BY category_name ORDER BY total DESC LIMIT 5;\n"
+        + "\n"
+        + "Customer.favorite_categories.category := JOIN Category ON _.category_name = Category.name;\n"
+        + "\n"));
   }
 
   @Test
