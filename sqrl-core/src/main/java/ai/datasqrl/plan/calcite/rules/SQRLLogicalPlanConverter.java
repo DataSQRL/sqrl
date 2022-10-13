@@ -12,6 +12,7 @@ import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.Iterables;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.rel.RelCollation;
@@ -76,26 +77,30 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
     @Builder
     public static class RelMeta implements RelHolder {
 
-        RelNode relNode;
+        @NonNull RelNode relNode;
         TableType type;
-        ContinuousIndexMap primaryKey;
-        TimestampHolder.Derived timestamp;
-        ContinuousIndexMap select;
+        @NonNull ContinuousIndexMap primaryKey;
+        @NonNull TimestampHolder.Derived timestamp;
+        @NonNull ContinuousIndexMap select;
+        @NonNull MaterializationInference materialize;
 
-        List<JoinTable> joinTables;
-        MaterializationInference materialize;
+        @Builder.Default
+        List<JoinTable> joinTables = null;
 
-        NowFilter nowFilter; //Applies before dedup
-        TopNConstraint topN;
-        SortOrder sort;
+        @Builder.Default @NonNull
+        NowFilter nowFilter = NowFilter.EMPTY; //Applies before topN
+        @Builder.Default @NonNull
+        TopNConstraint topN = TopNConstraint.EMPTY; //Applies before sort
+        @Builder.Default @NonNull
+        SortOrder sort = SortOrder.EMPTY;
 
-        TableStatistic statistic;
+        @Builder.Default
+        TableStatistic statistic = null;
 
-        public RelMeta(RelNode relNode, TableType type, ContinuousIndexMap primaryKey,
-                       TimestampHolder.Derived timestamp, ContinuousIndexMap select,
-                       List<JoinTable> joinTables, MaterializationInference materialize,
-                       NowFilter nowFilter, TopNConstraint topN, SortOrder sort) {
-            this(relNode,type,primaryKey,timestamp, select,joinTables,materialize,nowFilter,topN, sort, null);
+        public static RelMetaBuilder build(RelNode relNode, TableType type, ContinuousIndexMap primaryKey,
+                TimestampHolder.Derived timestamp, ContinuousIndexMap select, MaterializationInference materialize) {
+            return RelMeta.builder().relNode(relNode).type(type).primaryKey(primaryKey).timestamp(timestamp)
+                    .select(select).materialize(materialize);
         }
 
         public RelMetaBuilder copy() {
@@ -139,8 +144,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 } else { //Lift up sort and prepend partition (if any)
                     newSort = newSort.ifEmpty(SortOrder.of(topN.getPartition(),collation));
                 }
-                return new RelMeta(relBuilder.build(),type,primaryKey,timestamp,select,null,newMaterialize,
-                        NowFilter.EMPTY, TopNConstraint.EMPTY, newSort);
+                return RelMeta.build(relBuilder.build(),type,primaryKey,timestamp,select,newMaterialize)
+                        .sort(newSort).build();
             } else { //distinct or (hasPartition and hasLimit)
                 final RelDataType inputType = relBuilder.peek().getRowType();
                 RexBuilder rexBuilder = relBuilder.getRexBuilder();
@@ -226,8 +231,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 }
                 ContinuousIndexMap newPk = primaryKey.remap(targetLength, IndexMap.IDENTITY);
                 ContinuousIndexMap newSelect = select.remap(targetLength, IndexMap.IDENTITY);
-                return new RelMeta(relBuilder.build(),type,newPk,timestamp,newSelect,null,newMaterialize,
-                        NowFilter.EMPTY, TopNConstraint.EMPTY, newSort);
+                return RelMeta.build(relBuilder.build(),type,newPk,timestamp,newSelect,newMaterialize)
+                        .sort(newSort).build();
             }
         }
 
@@ -322,8 +327,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         TableStatistic statistic = TableStatistic.of(estimateRowCount(relNode));
 
         return new RelMeta(relNode,input.type,input.primaryKey.remap(remap),
-                input.timestamp.remapIndexes(remap), updatedIndexMap, null,
-                input.materialize, input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap), statistic);
+                input.timestamp.remapIndexes(remap), updatedIndexMap, input.materialize, null,
+                input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap), statistic);
     }
 
     private RelMeta postProcess(RelMeta input) {
@@ -360,8 +365,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         RelMeta result = new RelMeta(relNode, queryTable.getType(),
                 primaryKey.build(mapToLength),
                 queryTable.getTimestamp().getDerived(),
-                indexMap.build(mapToLength), joinTables, materialize.get(),
-                queryTable.getPullups().getNowFilter(), queryTable.getPullups().getTopN(), queryTable.getPullups().getSort());
+                indexMap.build(mapToLength), materialize.get(), joinTables,
+                queryTable.getPullups().getNowFilter(), queryTable.getPullups().getTopN(),
+                queryTable.getPullups().getSort(), null);
         return setRelHolder(result);
     }
 
@@ -710,10 +716,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         relB.project(updatedProjects,updatedNames);
         RelNode newProject = relB.build();
         int fieldCount = updatedProjects.size();
-        return setRelHolder(new RelMeta(newProject,input.type,primaryKey.build(fieldCount),
-                timestamp, ContinuousIndexMap.identity(logicalProject.getProjects().size(),fieldCount),null,
-                analyzeRexNodesForMaterialize(input.materialize,updatedProjects),
-                nowFilter, TopNConstraint.EMPTY, sort));
+        return setRelHolder(RelMeta.build(newProject,input.type,primaryKey.build(fieldCount),
+                timestamp, ContinuousIndexMap.identity(logicalProject.getProjects().size(),fieldCount),
+                analyzeRexNodesForMaterialize(input.materialize,updatedProjects)).nowFilter(nowFilter)
+                        .sort(sort).build());
     }
 
     private ContinuousIndexMap getTrivialMapping(LogicalProject project, ContinuousIndexMap baseMap) {
@@ -788,8 +794,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                             return right2left.get(jt).getGlobalIndex(jt.getLocalIndex(index));
                         });
                 ContinuousIndexMap indexMap = leftInput.select.append(remapedRight);
-                return setRelHolder(new RelMeta(relNode, leftInput.type, newPk, leftInput.timestamp,
-                        indexMap, joinTables, materialize.get(), NowFilter.EMPTY, TopNConstraint.EMPTY, SortOrder.EMPTY));
+                return setRelHolder(RelMeta.build(relNode, leftInput.type, newPk, leftInput.timestamp,
+                        indexMap, materialize.get()).joinTables(joinTables).build());
 
             }
         }
@@ -836,10 +842,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                             pk.targetsAsArray());
                     relB.join(JoinRelType.INNER, condition);
                     hint.addTo(relB);
-                    return setRelHolder(new RelMeta(relB.build(), TableType.STREAM,
-                            pk, joinTimestamp, joinedIndexMap, null,
-                            combinedMaterialize.update(MaterializationPreference.MUST,"temporal join"),
-                            NowFilter.EMPTY, TopNConstraint.EMPTY, leftInput.sort, null));
+                    return setRelHolder(RelMeta.build(relB.build(), TableType.STREAM,
+                            pk, joinTimestamp, joinedIndexMap,
+                            combinedMaterialize.update(MaterializationPreference.MUST,"temporal join"))
+                                    .sort(leftInput.sort).build());
                 } else if (joinType==JoinRelType.TEMPORAL) {
                     throw new IllegalArgumentException("Expected join condition to be equality condition on state's primary key: " + logicalJoin);
                 }
@@ -901,9 +907,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     }
                     joinType = JoinRelType.INTERVAL;
                     relB.join(JoinRelType.INNER, condition); //Can treat as "standard" inner join since no modification is necessary in physical plan
-                    return setRelHolder(new RelMeta(relB.build(), TableType.STREAM,
-                            concatPk, joinTimestamp, joinedIndexMap,
-                            null, combinedMaterialize, NowFilter.EMPTY, TopNConstraint.EMPTY, joinedSort));
+                    return setRelHolder(RelMeta.build(relB.build(), TableType.STREAM,
+                            concatPk, joinTimestamp, joinedIndexMap,combinedMaterialize).sort(joinedSort).build());
                 } else if (joinType==JoinRelType.INTERVAL) {
                     throw new IllegalArgumentException("Interval joins require time bounds in the join condition: " + logicalJoin);
                 }
@@ -926,9 +931,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         //Default inner join creates a state table
         RelNode newJoin = relB.push(leftInputF.relNode).push(rightInputF.relNode)
                 .join(JoinRelType.INNER, condition).build();
-        return setRelHolder(new RelMeta(newJoin, TableType.STATE,
+        return setRelHolder(RelMeta.build(newJoin, TableType.STATE,
                 concatPk, TimestampHolder.Derived.NONE, joinedIndexMap,
-                null, combinedMaterialize, NowFilter.EMPTY, TopNConstraint.EMPTY, joinedSort));
+                combinedMaterialize).sort(joinedSort).build());
     }
 
     private static<T,R> R apply2JoinSide(int joinIndex, int leftSideMaxIdx, T left, T right, BiFunction<T,Integer,R> function) {
@@ -995,8 +1000,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             unionTimestamp.union(localTimestamp);
         }
         relBuilder.union(true,inputs.size());
-        return setRelHolder(new RelMeta(relBuilder.build(),TableType.STREAM,pk,unionTimestamp,select,null,materialize,
-                NowFilter.EMPTY, TopNConstraint.EMPTY, SortOrder.EMPTY));
+        return setRelHolder(RelMeta.build(relBuilder.build(),TableType.STREAM,pk,unionTimestamp,select,materialize).build());
     }
 
     @Override
@@ -1018,8 +1022,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         if (aggregateCalls.stream().anyMatch(agg -> STREAM_ONLY_AGG.test(agg.getAggregation()))) {
             materialize.update(MaterializationPreference.MUST,"stream-only aggregation function");
         }
-
-        SortOrder noSort = SortOrder.EMPTY; //Sorts are discarded by aggregation
 
         //Check if this is a time-window aggregation
         if (input.type == TableType.STREAM && input.getRelNode() instanceof LogicalProject) {
@@ -1060,8 +1062,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                   set to "SHOULD" once this is supported
                  */
 
-                return setRelHolder(new RelMeta(relB.build(), TableType.STREAM, pk,
-                        newTimestamp, indexMap,null, materialize, nowFilter, TopNConstraint.EMPTY, noSort));
+                return setRelHolder(RelMeta.build(relB.build(), TableType.STREAM, pk,
+                        newTimestamp, indexMap, materialize).nowFilter(nowFilter).build());
 
             }
         }
@@ -1102,9 +1104,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 ContinuousIndexMap indexMap =  ContinuousIndexMap.builder(targetLength-1).addAll(pkIndexes)
                         .addAll(ContiguousSet.closedOpen(groupByIdxTimestamp.size(),targetLength)).build(targetLength);
                 TopNConstraint dedup = TopNConstraint.dedup(pkIndexes,newTimestampIdx);
-                return setRelHolder(new RelMeta(relB.build(), TableType.TEMPORAL_STATE, pk,
-                        outputTimestamp, indexMap, null, input.materialize.update(MaterializationPreference.MUST,"Sliding window"),
-                        NowFilter.EMPTY, dedup, noSort));
+                return setRelHolder(RelMeta.build(relB.build(), TableType.TEMPORAL_STATE, pk,
+                        outputTimestamp, indexMap, input.materialize.update(MaterializationPreference.MUST,"Sliding window"))
+                        .topN(dedup).build());
             } else {
                 //Convert aggregation to window-based aggregation in a project so we can preserve timestamp
                 RelMeta nowInput = input.inlineNowFilter(makeRelBuilder());
@@ -1152,11 +1154,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 relB.project(projects, projectNames);
                 ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
                 ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength - 1, targetLength);
-                return setRelHolder(new RelMeta(relB.build(), TableType.TEMPORAL_STATE, pk,
-                        outputTimestamp, indexMap, null, nowInput.materialize, NowFilter.EMPTY, TopNConstraint.EMPTY, noSort));
+                return setRelHolder(RelMeta.build(relB.build(), TableType.TEMPORAL_STATE, pk,
+                        outputTimestamp, indexMap, nowInput.materialize).build());
             }
         } else {
-
             //Standard aggregation produces a state table
             Preconditions.checkArgument(input.nowFilter.isEmpty(),"State table cannot have now-filter since there is no timestamp");
             RelBuilder relB = relBuilderFactory.get();
@@ -1166,8 +1167,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             //if (isSlidingAggregate) new TumbleAggregationHint(TumbleAggregationHint.Type.SLIDING).addTo(relB);
             ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
             ContinuousIndexMap indexMap = ContinuousIndexMap.identity(targetLength, targetLength);
-            return setRelHolder(new RelMeta(relB.build(), TableType.STATE, pk,
-                    TimestampHolder.Derived.NONE, indexMap, null, input.materialize, NowFilter.EMPTY, TopNConstraint.EMPTY, noSort));
+            return setRelHolder(RelMeta.build(relB.build(), TableType.STATE, pk,
+                    TimestampHolder.Derived.NONE, indexMap, input.materialize).build());
         }
     }
 

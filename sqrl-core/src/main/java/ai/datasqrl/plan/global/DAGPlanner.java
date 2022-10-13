@@ -339,10 +339,10 @@ public class DAGPlanner {
                 if (!pullup.getTopN().isEmpty()) {
                     RelNode relnode = relBuilder.build();
                     int targetLength = relnode.getRowType().getFieldCount();
-                    SQRLLogicalPlanConverter.RelMeta meta = new SQRLLogicalPlanConverter.RelMeta(
+                    SQRLLogicalPlanConverter.RelMeta meta = SQRLLogicalPlanConverter.RelMeta.build(
                             relnode,null, ContinuousIndexMap.identity(0,targetLength),TimestampHolder.Derived.NONE,
-                            ContinuousIndexMap.identity(targetLength,targetLength),null,new MaterializationInference(MaterializationPreference.MUST),
-                            NowFilter.EMPTY, pullup.getTopN(), SortOrder.EMPTY);
+                            ContinuousIndexMap.identity(targetLength,targetLength),new MaterializationInference(MaterializationPreference.MUST))
+                            .topN(pullup.getTopN()).build();
                     meta = meta.inlineTopN(relBuilder);
                     leftOverSort = meta.getSort();
                     if (strategy.isMaterialize()) {
