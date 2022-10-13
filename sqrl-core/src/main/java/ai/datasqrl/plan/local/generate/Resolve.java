@@ -484,7 +484,8 @@ public class Resolve {
 //      Check.state(timestampScore.isPresent(), null, null);
 //      Check.state(vtable.isRoot() && vtable.getAddedColumns().isEmpty(), null, null);
       QueryRelationalTable baseTbl = ((VirtualRelationalTable.Root)vtable).getBase();
-      baseTbl.getTimestamp().fixTimestamp(baseTbl.getNumColumns()-1); //Timestamp must be last column
+      baseTbl.getTimestamp().getCandidateByIndex(baseTbl.getNumColumns()-1) //Timestamp must be last column
+              .fixAsTimestamp();
     }
 
     Column column = env.variableFactory.addColumn(name,

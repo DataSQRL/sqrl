@@ -2,6 +2,7 @@ package ai.datasqrl.plan.calcite.util;
 
 import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ContiguousSet;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -22,10 +23,7 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CalciteUtil {
@@ -255,20 +253,23 @@ public class CalciteUtil {
   }
 
   public static void addIdentityProjection(RelBuilder relBuilder, int numColumns) {
-    addIdentityProjection(relBuilder,numColumns,Set.of());
+    addProjection(relBuilder, ContiguousSet.closedOpen(0,numColumns).asList(), null, true);
   }
 
-  public static void addIdentityProjection(RelBuilder relBuilder, int numColumns, Set<Integer> skipIndexes) {
-    List<RexNode> rex = new ArrayList<>(numColumns);
-    List<String> fieldNames = new ArrayList<>(numColumns);
-    RelDataType inputType = relBuilder.peek().getRowType();
-    for (int i = 0; i < numColumns; i++) {
-      if (skipIndexes.contains(i)) continue;
-      rex.add(i, RexInputRef.of(i,inputType));
-      fieldNames.add(i,null);
+  public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx, List<String> fieldNames) {
+    addProjection(relBuilder,selectIdx,fieldNames,false);
+  }
+
+  public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx, List<String> fieldNames, boolean force) {
+    Preconditions.checkArgument(!selectIdx.isEmpty());
+    if (fieldNames==null || fieldNames.isEmpty()) {
+      fieldNames = Collections.nCopies(selectIdx.size(),null);
     }
-    Preconditions.checkArgument(!rex.isEmpty(),"No columns slected");
-    relBuilder.project(rex,fieldNames,true); //Need to force otherwise Calcite eliminates the project
+    Preconditions.checkArgument(selectIdx.size() == fieldNames.size());
+    List<RexNode> rex = new ArrayList<>(selectIdx.size());
+    RelDataType inputType = relBuilder.peek().getRowType();
+    selectIdx.forEach( idx -> rex.add(RexInputRef.of(idx,inputType)));
+    relBuilder.project(rex,fieldNames, force); //Need to force otherwise Calcite eliminates the project
   }
 
   @Value

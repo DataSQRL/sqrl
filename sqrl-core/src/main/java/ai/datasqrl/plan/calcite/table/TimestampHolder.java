@@ -2,151 +2,60 @@ package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.plan.calcite.util.IndexMap;
 import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Value;
+import lombok.*;
+import org.apache.commons.collections.ListUtils;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Getter
-@AllArgsConstructor
-public abstract class TimestampHolder {
+public abstract class TimestampHolder<C extends TimestampHolder.Candidate> {
 
-    protected boolean candidatesLocked;
-    protected List<Candidate> candidates;
+    protected List<C> candidates;
 
-    public static class Base extends TimestampHolder {
-
-        public static final Base NONE = new Base(true,Collections.EMPTY_LIST, Collections.EMPTY_LIST);
-
-        private final List<TimestampHolder.Base> dependents;
-
-        private Base(boolean candidatesLocked, List<Candidate> candidates, List<TimestampHolder.Base> dependents) {
-            super(candidatesLocked, candidates);
-            this.dependents = dependents;
-        }
-
-        public Base() {
-            this(false, new ArrayList<>(), new ArrayList<>());
-        }
-
-        private void addDependent(TimestampHolder.Base dependent) {
-            this.dependents.add(dependent);
-        }
-
-        public static Base ofDerived(TimestampHolder.Derived derived) {
-            if (derived.candidates.isEmpty()) return Base.NONE;
-            Base newBase = new Base();
-            newBase.candidates.addAll(derived.candidates);
-            newBase.addDependent(derived.base);
-            derived.base.addDependent(newBase);
-            //We created a new query table - candidates must be locked now and candidates limited
-            newBase.lockCandidates();
-            derived.base.limitCandidates(newBase.candidates.stream().map(Candidate::getId).collect(Collectors.toSet()));
-            return newBase;
-        }
-
-        public void addCandidate(int columnIndex, int score) {
-            Preconditions.checkArgument(!candidatesLocked);
-            Preconditions.checkArgument(!candidates.stream().anyMatch(c -> c.index == columnIndex));
-            int nextId = candidates.stream().mapToInt(Candidate::getId).max().orElse(0) + 1;
-            candidates.add(new Candidate(nextId, columnIndex, score));
-        }
-
-        private void limitCandidates(final Set<Integer> candidateIds) {
-            boolean removed = false;
-            Iterator<Candidate> candIter = candidates.iterator();
-            while (candIter.hasNext()) {
-                if (!candidateIds.contains(candIter.next().getId())) {
-                    candIter.remove();
-                }
-            }
-            assert !candidates.isEmpty();
-            if (removed) {
-                dependents.forEach(t -> t.limitCandidates(candidateIds));
-            }
-        }
-
-        @Override
-        public void lockCandidates() {
-            super.lockCandidates();
-            //Notify all dependents
-            dependents.forEach(t -> {
-                if (!t.isCandidatesLocked()) t.lockCandidates();
-            });
-        }
-
-        public void fixTimestamp(int columnIndex) {
-            Preconditions.checkArgument(isCandidate(columnIndex));
-            setTimestamp(getCandidateByIndex(columnIndex).get());
-        }
-
-        public void setBestTimestamp() {
-            if (hasTimestamp()) return;
-            setTimestamp(candidates.stream().max((a,b) -> Integer.compare(a.score,b.score)).get());
-        }
-
-        private void setTimestamp(Candidate timestamp) {
-            //Remove all others
-            candidates = List.of(timestamp);
-            candidatesLocked = true;
-            dependents.forEach(t -> {
-                if (!t.hasTimestamp()) t.setTimestamp(timestamp);
-            });
-        }
-
+    protected TimestampHolder(List<C> candidates) {
+        this.candidates = candidates;
     }
 
-    @Getter
-    public static class Derived extends TimestampHolder {
+    public Optional<C> getOptCandidateByIndex(int index) {
+        return candidates.stream().filter(c -> c.index == index).findFirst();
+    }
 
-        public static final Derived NONE = new Derived();
+    public boolean isCandidate(int columnIndex) {
+        return getOptCandidateByIndex(columnIndex).isPresent();
+    }
 
-        private final TimestampHolder.Base base;
+    public C getCandidateByIndex(int index) {
+        return getOptCandidateByIndex(index).get();
+    }
 
-        private Derived() {
-            super(true, Collections.EMPTY_LIST);
-            this.base = null;
-        }
+    public Predicate<Integer> isCandidatePredicate() {
+        return idx -> isCandidate(idx);
+    }
 
-        private Derived(boolean candidatesLocked, List<Candidate> candidates, TimestampHolder.Base base) {
-            super(candidatesLocked,candidates);
-            this.base = base;
-        }
+    public C getBestCandidate() {
+        Preconditions.checkArgument(!candidates.isEmpty());
+        return candidates.stream().max((a,b) -> Integer.compare(a.getScore(),b.getScore())).get();
+    }
 
-        public Derived(TimestampHolder.Base base) {
-            super(base.isCandidatesLocked(), List.copyOf(base.getCandidates()));
-            this.base = base;
-        }
+    public boolean hasFixedTimestamp() {
+        return candidates.size()==1;
+    }
 
-        public TimestampHolder.Derived remapIndexes(IndexMap map) {
-            return new TimestampHolder.Derived(this.candidatesLocked,candidates.stream()
-                    .map(c -> c.withIndex(map.map(c.getIndex())))
-                    .collect(Collectors.toList()),base);
-        }
+    public C getTimestampCandidate() {
+        Preconditions.checkArgument(hasFixedTimestamp());
+        return candidates.get(0);
+    }
 
-        public TimestampHolder.Derived propagate(List<Candidate> updatedCandidates) {
-            Preconditions.checkArgument(this.candidates.stream().map(c -> c.id).collect(Collectors.toSet())
-                    .containsAll(updatedCandidates.stream().map(c -> c.id).collect(Collectors.toSet())));
-            //Only used during LP rewriting - hence we assume single dependent for from
-            return new TimestampHolder.Derived(this.candidatesLocked, updatedCandidates, this.base);
-        }
+    public boolean hasCandidates() {
+        return !candidates.isEmpty();
+    }
 
-        public TimestampHolder.Derived fixTimestamp(Candidate candidate) {
-            return fixTimestamp(candidate.getIndex());
-        }
-
-        public TimestampHolder.Derived fixTimestamp(int columnIndex) {
-            return fixTimestamp(columnIndex, columnIndex);
-        }
-
-        public TimestampHolder.Derived fixTimestamp(int columnIndex, int newIndex) {
-            Preconditions.checkArgument(isCandidate(columnIndex));
-            return new Derived(true, List.of(getCandidateByIndex(columnIndex).get().withIndex(newIndex)), base);
-        }
-
+    public List<Integer> getCandidateIndexes() {
+        return candidates.stream().map(Candidate::getIndex).collect(Collectors.toList());
     }
 
     @Override
@@ -154,52 +63,176 @@ public abstract class TimestampHolder {
         return "TIMESTAMP="+candidates.toString();
     }
 
-    public void lockCandidates() {
-        candidatesLocked = true;
+    protected Map<Integer,C> candidatesByIndex() {
+        return candidates.stream().collect(Collectors.toMap(Candidate::getIndex, Function.identity()));
     }
 
-    public boolean isEmpty() {
-        return candidates.isEmpty();
-    }
+    @AllArgsConstructor
+    @Getter
+    @EqualsAndHashCode
+    @ToString
+    public static abstract class Candidate {
 
-    public boolean isCandidate(int columnIndex) {
-        return getCandidateByIndex(columnIndex).isPresent();
-    }
-
-    public Predicate<Integer> isCandidatePredicate() {
-        return idx -> isCandidate(idx);
-    }
-
-    public boolean hasTimestamp() {
-        return candidatesLocked && candidates.size()==1;
-    }
-
-    public Optional<Candidate> getCandidateByIndex(int index) {
-        return candidates.stream().filter(c -> c.index == index).findFirst();
-    }
-
-    public Candidate getBestCandidate() {
-        Preconditions.checkArgument(!candidates.isEmpty());
-        return candidates.stream().max((a,b) -> Integer.compare(a.score,b.score)).get();
-    }
-
-    public int getTimestampIndex() {
-        Preconditions.checkArgument(hasTimestamp(),"Timestamp has not yet been determined");
-        return candidates.get(0).index;
-    }
-
-
-    @Value
-    public static class Candidate {
-
-        final int id;
         final int index;
-        final int score;
 
-        public Candidate withIndex(int newIndex) {
-            return new Candidate(id, newIndex, score);
+        public abstract int getScore();
+
+    }
+
+    @Getter
+    public static class Base extends TimestampHolder<TimestampHolder.Base.Candidate> {
+
+        public static final TimestampHolder.Base NONE = new TimestampHolder.Base(true, List.of());
+
+        private boolean candidatesLocked; //If true, candidates can no longer be added
+
+        public Base() {
+            this(false,new ArrayList<>());
+        }
+
+        private Base(boolean candidatesLocked, List<Candidate> candidates) {
+            super(candidates);
+            this.candidatesLocked = candidatesLocked;
+        }
+
+        public static Base ofDerived(TimestampHolder.Derived derived) {
+            Base base = new Base();
+            base.candidatesLocked = true; //derived bases are always locked
+            derived.candidates.forEach(base::addCandidate);
+            return base;
+        }
+
+        private void addCandidate(TimestampHolder.Derived.Candidate derivedCand) {
+            Candidate cand = new Candidate(derivedCand.getIndex(), derivedCand.getScore());
+            cand.dependents.addAll(derivedCand.basedOn);
+            derivedCand.basedOn.forEach(d -> d.dependents.add(cand));
+            candidates.add(cand);
+        }
+
+
+        public void addCandidate(int columnIndex, int score) {
+            Preconditions.checkArgument(!candidatesLocked);
+            Preconditions.checkArgument(!candidates.stream().anyMatch(c -> c.index == columnIndex));
+            candidates.add(new Candidate(columnIndex, score));
+        }
+
+        public TimestampHolder.Derived getDerived() {
+            this.candidatesLocked = true; //Once we start deriving, we need to lock down the timestamp candidates
+            return new Derived(candidates.stream().map(c -> new Derived.Candidate(c.getIndex(),List.of(c)))
+                    .collect(Collectors.toList()));
+        }
+
+        public boolean hasFixedTimestamp() {
+            return super.hasFixedTimestamp() && candidatesLocked;
+        }
+
+
+        @Getter
+        public class Candidate extends TimestampHolder.Candidate {
+
+            final int score;
+            final Set<TimestampHolder.Base.Candidate> dependents = new HashSet<>();
+
+            private Candidate(int index, int score) {
+                super(index);
+                this.score = score;
+            }
+
+            public void fixAsTimestamp() {
+                candidatesLocked = true;
+                //Eliminate all other candidates
+                for (Candidate c : new ArrayList<>(candidates)) {
+                    if (c!=this) c.eliminate();
+                }
+            }
+
+            private void eliminate() {
+                if (candidates.remove(this)) {
+                    //Notify all dependents to remove all well
+                    dependents.forEach(Candidate::eliminate);
+                }
+            }
+
+        }
+    }
+
+
+    public static class Derived extends TimestampHolder<TimestampHolder.Derived.Candidate> {
+
+        public static final Derived NONE = new Derived(List.of());
+
+        private Derived(List<Candidate> candidates) {
+            super(candidates);
+        }
+
+        public Derived restrictTo(List<Candidate> subset) {
+            Preconditions.checkArgument(subset.stream().allMatch(c -> candidates.contains(c)),"Invalid candidates");
+            candidates.forEach(c -> {
+                if (!subset.contains(c)) c.eliminate();
+            });
+            return new Derived(subset);
+        }
+
+        public Derived remapIndexes(IndexMap map) {
+            return new TimestampHolder.Derived(candidates.stream()
+                    .map(c -> c.withIndex(map.map(c.getIndex())))
+                    .collect(Collectors.toList()));
+        }
+
+        public Derived union(Derived other) {
+            Map<Integer,Candidate> byIndex = this.candidatesByIndex(), otherByIndex = other.candidatesByIndex();
+            otherByIndex.forEach((idx, cand) -> byIndex.merge(idx, cand, (c1, c2) -> {
+                assert c1.index==c2.index;
+                return new Candidate(c1.index, ListUtils.union(c1.basedOn,c2.basedOn));
+            }));
+            return new Derived(ImmutableList.copyOf(byIndex.values()));
+        }
+
+        public static class Candidate extends TimestampHolder.Candidate {
+
+            final List<Base.Candidate> basedOn;
+
+            public Candidate(int index, @NonNull List<Base.Candidate> basedOn) {
+                super(index);
+                Preconditions.checkArgument(!basedOn.isEmpty());
+                this.basedOn = basedOn;
+            }
+
+            public Candidate withIndex(int newIndex) {
+                return new Candidate(newIndex, basedOn);
+            }
+
+            public Derived fixAsTimestamp() {
+                basedOn.forEach(Base.Candidate::fixAsTimestamp);
+                return new Derived(List.of(this));
+            }
+
+            private void eliminate() {
+                basedOn.forEach(Base.Candidate::eliminate);
+            }
+
+            @Override
+            public int getScore() {
+                return basedOn.stream().map(Base.Candidate::getScore).max(Integer::compareTo).get();
+            }
+
+            //Derived candidates are equal iff their dependents are
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+                Candidate candidate = (Candidate) o;
+                return basedOn.equals(candidate.basedOn);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(basedOn);
+            }
         }
 
     }
+
 
 }

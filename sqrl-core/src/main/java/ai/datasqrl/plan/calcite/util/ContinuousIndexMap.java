@@ -3,7 +3,9 @@ package ai.datasqrl.plan.calcite.util;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -18,6 +20,8 @@ import java.util.stream.IntStream;
 
 @AllArgsConstructor
 @Getter
+@EqualsAndHashCode
+@ToString
 public class ContinuousIndexMap implements IndexMap {
 
     final int[] targets;

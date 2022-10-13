@@ -113,7 +113,7 @@ public class DAGPlanner {
                 //Expand to full tree
                 expandedScan = planner.transform(WRITE_DAG_OPTIMIZATION,expandedScan);
                 Optional<Integer> timestampIdx = processedRel.getType().hasTimestamp()?
-                        Optional.of(processedRel.getTimestamp().getTimestampIndex()):Optional.empty();
+                        Optional.of(processedRel.getTimestamp().getTimestampCandidate().getIndex()):Optional.empty();
                 if (!dbTable.isRoot() && timestampIdx.isPresent()) {
                     //Append timestamp to the end of table columns
                     assert dbTable.getRowType().getFieldCount()==timestampIdx.get();
@@ -148,14 +148,14 @@ public class DAGPlanner {
     private void optimizeTable(QueryRelationalTable table) {
         if (table instanceof ProxyImportRelationalTable) {
             // Determine timestamp
-            if (!table.getTimestamp().hasTimestamp()) {
-                table.getTimestamp().setBestTimestamp();
+            if (!table.getTimestamp().hasFixedTimestamp()) {
+                table.getTimestamp().getBestCandidate().fixAsTimestamp();
             }
             // Rewrite LogicalValues to TableScan and add watermark hint
             new ImportTableRewriter((ProxyImportRelationalTable) table,planner.getRelBuilder()).replaceImport();
         }
         //Since we are iterating source->sink, every non-state table should have a timestamp at this point
-        Preconditions.checkArgument(!table.getType().hasTimestamp() || table.getTimestamp().hasTimestamp());
+        Preconditions.checkArgument(!table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp());
         //TODO: run volcano optimizer and get row estimate
         RelNode optimizedRel = table.getRelNode();
         //If we need to do any optimization of the logical plan RelNode it would happen here
@@ -289,7 +289,7 @@ public class DAGPlanner {
 
         public void replaceImport() {
             RelNode updated = table.getRelNode().accept(this);
-            int timestampIdx = table.getTimestamp().getTimestampIndex();
+            int timestampIdx = table.getTimestamp().getTimestampCandidate().getIndex();
             Preconditions.checkArgument(timestampIdx<updated.getRowType().getFieldCount());
             WatermarkHint watermarkHint = new WatermarkHint(timestampIdx);
             updated = ((Hintable)updated).attachHints(List.of(watermarkHint.getHint()));
@@ -357,7 +357,7 @@ public class DAGPlanner {
                     sort.addTo(relBuilder);
                 }
             } else {
-                if (vtable.getRoot().getBase().getTimestamp().hasTimestamp()) {
+                if (vtable.getRoot().getBase().getTimestamp().hasFixedTimestamp()) {
                     //Child tables had their parent timestamp added (if such exists). We need to update table and project that column out
                     CalciteUtil.addIdentityProjection(relBuilder,relBuilder.peek().getRowType().getFieldCount()-1);
                 }

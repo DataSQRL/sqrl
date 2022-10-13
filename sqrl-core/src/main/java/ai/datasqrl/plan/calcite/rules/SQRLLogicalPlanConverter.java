@@ -53,6 +53,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
     private static final long UPPER_BOUND_INTERVAL_MS = 999L*365L*24L*3600L; //999 years
     public static final double HIGH_CARDINALITY_JOIN_THRESHOLD = 10000;
     public static final double DEFAULT_SLIDING_WIDTH_PERCENTAGE = 0.02;
+    public static final String UNION_TIMESTAMP_COLUMN_NAME = "_timestamp";
 
     Supplier<RelBuilder> relBuilderFactory;
     SqrlRexUtil rexUtil;
@@ -262,7 +263,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
     /**
      * Moves the primary key columns to the front and adds projection to only return
-     * columns that the user selected, are part of the primary key, or a timestamp candidate.
+     * columns that the user selected, are part of the primary key, a timestamp candidate, or
+     * part of the sort order.
      *
      * Inlines deduplication in case of nested data.
      *
@@ -324,6 +326,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 input.materialize, input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap), statistic);
     }
 
+    private RelMeta postProcess(RelMeta input) {
+        return postProcess(input,Collections.nCopies(input.select.getSourceLength(),null));
+    }
+
     private double estimateRowCount(RelNode node) {
         final RelMetadataQuery mq = node.getCluster().getMetadataQuery();
         return mq.getRowCount(node);
@@ -353,7 +359,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         int mapToLength = relNode.getRowType().getFieldCount();
         RelMeta result = new RelMeta(relNode, queryTable.getType(),
                 primaryKey.build(mapToLength),
-                new TimestampHolder.Derived(queryTable.getTimestamp()),
+                queryTable.getTimestamp().getDerived(),
                 indexMap.build(mapToLength), joinTables, materialize.get(),
                 queryTable.getPullups().getNowFilter(), queryTable.getPullups().getTopN(), queryTable.getPullups().getSort());
         return setRelHolder(result);
@@ -510,7 +516,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             Preconditions.checkArgument(resultFilter.isPresent(),"Unsatisfiable now-filter detected");
             nowFilter = resultFilter.get();
             int timestampIdx = nowFilter.getTimestampIndex();
-            timestamp = timestamp.fixTimestamp(timestampIdx);
+            timestamp = timestamp.getCandidateByIndex(timestampIdx).fixAsTimestamp();
             //Add as static time filter (to push down to source)
             NowFilter localNowFilter = combinedFilter.get();
             //TODO: add back in, push down to push into source, then remove
@@ -572,8 +578,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     pk = ContinuousIndexMap.builder(distincts.size()).addAll(distincts).build(targetLength);
                     if (partition.isEmpty()) {
                         //If there is no partition, we can ignore the sort order plus limit and sort by time instead
-                        timestamp = timestamp.fixTimestamp(timestamp.getBestCandidate());
-                        collation = RelCollations.of(new RelFieldCollation(timestamp.getTimestampIndex(), RelFieldCollation.Direction.DESCENDING));
+                        timestamp = timestamp.getBestCandidate().fixAsTimestamp();
+                        collation = RelCollations.of(new RelFieldCollation(timestamp.getTimestampCandidate().getIndex(), RelFieldCollation.Direction.DESCENDING));
                         limit = Optional.empty();
                     }
                 } else if (topNHint.getType() == TopNHint.Type.DISTINCT_ON) {
@@ -586,7 +592,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     //Extract timestamp from collation
                     RelFieldCollation fieldCol = Iterables.getOnlyElement(collation.getFieldCollations());
                     Preconditions.checkArgument(fieldCol.direction== RelFieldCollation.Direction.DESCENDING);
-                    timestamp = timestamp.fixTimestamp(fieldCol.getFieldIndex());
+                    timestamp = timestamp.getCandidateByIndex(fieldCol.getFieldIndex()).fixAsTimestamp();
                     partition = Collections.EMPTY_LIST; //remove partition since we set primary key to partition
                     limit = Optional.empty(); //distinct does not need a limit
                 } else if (topNHint.getType() == TopNHint.Type.TOP_N) {
@@ -609,7 +615,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         List<String> updatedNames = new ArrayList<>();
         //We only keep track of the first mapped project and consider it to be the "preserving one" for primary keys and timestamps
         Map<Integer,Integer> mappedProjects = new HashMap<>();
-        List<TimestampHolder.Candidate> timeCandidates = new ArrayList<>();
+        List<TimestampHolder.Derived.Candidate> timeCandidates = new ArrayList<>();
         NowFilter nowFilter = NowFilter.EMPTY;
         for (Ord<RexNode> exp : Ord.<RexNode>zip(logicalProject.getProjects())) {
             RexNode mapRex = SqrlRexUtil.mapIndexes(exp.e,input.select);
@@ -619,7 +625,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             if (mapRex instanceof RexInputRef) { //Direct mapping
                 originalIndex = (((RexInputRef) mapRex)).getIndex();
             } else { //Check for preserved timestamps
-                Optional<TimestampHolder.Candidate> preservedCandidate = rexUtil.getPreservedTimestamp(mapRex, input.timestamp);
+                Optional<TimestampHolder.Derived.Candidate> preservedCandidate = rexUtil.getPreservedTimestamp(mapRex, input.timestamp);
                 if (preservedCandidate.isPresent()) {
                     originalIndex = preservedCandidate.get().getIndex();
                     timeCandidates.add(preservedCandidate.get().withIndex(exp.i));
@@ -660,9 +666,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             }
             primaryKey.add(target);
         }
-        for (TimestampHolder.Candidate candidate : input.timestamp.getCandidates()) {
+        for (TimestampHolder.Derived.Candidate candidate : input.timestamp.getCandidates()) {
             //Check if candidate is already mapped through timestamp preserving function
-            if (timeCandidates.stream().anyMatch(c -> c.getId() == candidate.getId())) continue;
+            if (timeCandidates.contains(candidate)) continue;
             Integer target = mappedProjects.get(candidate.getIndex());
             if (target==null) {
                 //Need to add candidate
@@ -678,7 +684,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             }
             timeCandidates.add(candidate.withIndex(target));
         }
-        TimestampHolder.Derived timestamp = input.timestamp.propagate(timeCandidates);
+        TimestampHolder.Derived timestamp = input.timestamp.restrictTo(timeCandidates);
         //NowFilter must have been preserved
         assert !nowFilter.isEmpty() || input.nowFilter.isEmpty();
 
@@ -820,13 +826,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     joinType = JoinRelType.TEMPORAL;
                     RelBuilder relB = relBuilderFactory.get();
                     relB.push(leftInput.relNode); relB.push(rightInput.relNode);
-                    Preconditions.checkArgument(rightInput.timestamp.hasTimestamp());
-                    TimestampHolder.Derived joinTimestamp = leftInput.timestamp.fixTimestamp(leftInput.timestamp.getBestCandidate());
+                    Preconditions.checkArgument(rightInput.timestamp.hasFixedTimestamp());
+                    TimestampHolder.Derived joinTimestamp = leftInput.timestamp.getBestCandidate().fixAsTimestamp();
 
                     ContinuousIndexMap pk = ContinuousIndexMap.builder(leftInput.primaryKey,0)
                             .build(joinedIndexMap.getTargetLength());
-                    TemporalJoinHint hint = new TemporalJoinHint(joinTimestamp.getTimestampIndex(),
-                            rightInput.timestamp.getTimestampIndex()+newLeftSideMaxIdx,
+                    TemporalJoinHint hint = new TemporalJoinHint(joinTimestamp.getTimestampCandidate().getIndex(),
+                            rightInput.timestamp.getTimestampCandidate().getIndex()+newLeftSideMaxIdx,
                             pk.targetsAsArray());
                     relB.join(JoinRelType.INNER, condition);
                     hint.addTo(relB);
@@ -879,7 +885,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     //Lock in timestamp candidates for both sides and propagate timestamp
                     for (int tidx : timestampIndexes) {
                         TimestampHolder.Derived newTimestamp = apply2JoinSide(tidx, leftSideMaxIdx, leftInputF, rightInputF,
-                                (prel, idx) -> prel.timestamp.fixTimestamp(idx, tidx));
+                                (prel, idx) -> prel.timestamp.getCandidateByIndex(idx).withIndex(tidx).fixAsTimestamp());
                         if (tidx == upperBoundTimestampIndex) joinTimestamp = newTimestamp;
                     }
                     assert joinTimestamp != null;
@@ -938,7 +944,59 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
     @Override
     public RelNode visit(LogicalUnion logicalUnion) {
-        throw new UnsupportedOperationException("Not yet supported");
+        Preconditions.checkArgument(logicalUnion.all,"Currently, only UNION ALL is supported. Combine with SELECT DISTINCT for UNION");
+
+        List<RelMeta> inputs = logicalUnion.getInputs().stream().map(in -> getRelHolder(in.accept(this)).inlineTopN(makeRelBuilder()))
+                .map(meta -> meta.copy().sort(SortOrder.EMPTY).build()) //We ignore the sorts of the inputs (if any) since they are streams and we union them the default sort is timestamp
+                .map(meta -> postProcess(meta)) //The post-process makes sure the input relations are aligned (pk,selects,timestamps)
+                .collect(Collectors.toList());
+        Preconditions.checkArgument(inputs.size()>0);
+
+        RelBuilder relBuilder = makeRelBuilder();
+        MaterializationInference materialize = null;
+        ContinuousIndexMap pk = inputs.get(0).primaryKey;
+        ContinuousIndexMap select = inputs.get(0).select;
+        int maxSelectIdx = Collections.max(select.targetsAsList());
+        List<Integer> selectIndexes = SqrlRexUtil.combineIndexes(pk.targetsAsList(),select.targetsAsList());
+        List<String> selectNames = Collections.nCopies(maxSelectIdx,null);
+        assert maxSelectIdx == selectIndexes.size() && ContiguousSet.closedOpen(0,maxSelectIdx).asList().equals(selectIndexes) : maxSelectIdx + " vs " + selectIndexes;
+
+        /* Timestamp determination works as follows: First, we collect all candidates that are part of the selected indexes
+          and are identical across all inputs. If this set is non-empty, it becomes the new timestamp. Otherwise, we pick
+          the best timestamp candidate for each input, fix it, and append it as timestamp.
+         */
+        Set<Integer> timestampIndexes = inputs.get(0).timestamp.getCandidateIndexes().stream()
+                .filter(idx -> idx<maxSelectIdx).collect(Collectors.toSet());
+        for (RelMeta input : inputs) {
+            Preconditions.checkArgument(input.type==TableType.STREAM,"Only stream tables can currently be unioned. Union tables before converting them to state.");
+            //Validate primary key and selects line up between the streams
+            Preconditions.checkArgument(pk.equals(input.primaryKey),"Input streams have different primary keys");
+            Preconditions.checkArgument(select.equals(input.select),"Input streams select different columns");
+            timestampIndexes.retainAll(input.timestamp.getCandidateIndexes());
+        }
+
+        TimestampHolder.Derived unionTimestamp = TimestampHolder.Derived.NONE;
+        for (RelMeta input : inputs) {
+            TimestampHolder.Derived localTimestamp;
+            List<Integer> localSelectIndexes = new ArrayList<>(selectIndexes);
+            List<String> localSelectNames = new ArrayList<>(selectNames);
+            if (timestampIndexes.isEmpty()) { //Pick best and append
+                TimestampHolder.Derived.Candidate bestCand = input.timestamp.getBestCandidate();
+                localSelectIndexes.add(bestCand.getIndex());
+                localSelectNames.add(UNION_TIMESTAMP_COLUMN_NAME);
+                localTimestamp = bestCand.withIndex(maxSelectIdx).fixAsTimestamp();
+            } else {
+                localTimestamp = input.timestamp.restrictTo(input.timestamp.getCandidates().stream()
+                        .filter(c -> timestampIndexes.contains(c.getIndex())).collect(Collectors.toList()));
+            }
+
+            relBuilder.push(input.relNode);
+            CalciteUtil.addProjection(relBuilder, selectIndexes, selectNames);
+            unionTimestamp.union(localTimestamp);
+        }
+        relBuilder.union(true,inputs.size());
+        return setRelHolder(new RelMeta(relBuilder.build(),TableType.STREAM,pk,unionTimestamp,select,null,materialize,
+                NowFilter.EMPTY, TopNConstraint.EMPTY, SortOrder.EMPTY));
     }
 
     @Override
@@ -966,14 +1024,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         //Check if this is a time-window aggregation
         if (input.type == TableType.STREAM && input.getRelNode() instanceof LogicalProject) {
             //Determine if one of the groupBy keys is a timestamp
-            TimestampHolder.Candidate keyCandidate = null;
+            TimestampHolder.Derived.Candidate keyCandidate = null;
             int keyIdx = -1;
             for (int i = 0; i < groupByIdx.size(); i++) {
                 int idx = groupByIdx.get(i);
-                Optional<TimestampHolder.Candidate> candidate = input.timestamp.getCandidateByIndex(idx);
-                if (candidate.isPresent()) {
+                if (input.timestamp.isCandidate(idx)) {
                     Preconditions.checkArgument(keyCandidate==null, "Do not currently support aggregating by multiple timestamp columns");
-                    keyCandidate = candidate.get();
+                    keyCandidate = input.timestamp.getCandidateByIndex(idx);
                     keyIdx = i;
                     assert keyCandidate.getIndex() == idx;
                 }
@@ -985,7 +1042,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 Preconditions.checkArgument(!bucketFct.isEmpty(), "Not a valid time aggregation function: %s", timeAgg);
 
                 //Fix timestamp (if not already fixed)
-                TimestampHolder.Derived newTimestamp = input.timestamp.fixTimestamp(keyCandidate.getIndex(), keyIdx);
+                TimestampHolder.Derived newTimestamp = keyCandidate.withIndex(keyIdx).fixAsTimestamp();
                 //Now filters must be on the timestamp - this is an internal check
                 Preconditions.checkArgument(input.nowFilter.isEmpty() || input.nowFilter.getTimestampIndex()==keyCandidate.getIndex());
                 NowFilter nowFilter = input.nowFilter.remap(IndexMap.singleton(keyCandidate.getIndex(),keyIdx));
@@ -1014,7 +1071,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
             //Fix best timestamp (if not already fixed)
             TimestampHolder.Derived inputTimestamp = input.timestamp;
-            TimestampHolder.Candidate candidate = inputTimestamp.getBestCandidate();
+            TimestampHolder.Derived.Candidate candidate = inputTimestamp.getBestCandidate();
             targetLength += 1; //Adding timestamp column to output relation
 
             if (!input.nowFilter.isEmpty() && input.materialize.getPreference().isMaterialize()) {
@@ -1026,7 +1083,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 groupByIdxTimestamp.add(candidate.getIndex());
                 Collections.sort(groupByIdxTimestamp);
                 int newTimestampIdx = groupByIdxTimestamp.indexOf(candidate.getIndex());
-                TimestampHolder.Derived outputTimestamp = inputTimestamp.fixTimestamp(candidate.getIndex(), newTimestampIdx);
+                TimestampHolder.Derived outputTimestamp = candidate.withIndex(newTimestampIdx).fixAsTimestamp();
 
                 RelBuilder relB = relBuilderFactory.get();
                 relB.push(input.relNode);
@@ -1088,7 +1145,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 }
 
                 //Add timestamp as last project
-                TimestampHolder.Derived outputTimestamp = inputTimestamp.fixTimestamp(candidate.getIndex(), targetLength - 1);
+                TimestampHolder.Derived outputTimestamp = candidate.withIndex(targetLength - 1).fixAsTimestamp();
                 projects.add(timestampRef);
                 projectNames.add(null);
 

@@ -219,7 +219,7 @@ public class ResolveTest extends AbstractSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
     builder.add("Customer.recentOrders := SELECT o.id, o.time FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
-    builder.add("Customer.orderAgg := SELECT COUNT(d.id) FROM _ JOIN _.recentOrders d");
+//    builder.add("Customer.orderAgg := SELECT COUNT(d.id) FROM _ JOIN _.recentOrders d");
     process(builder.toString());
     validateQueryTable("recentOrders", TableType.TEMPORAL_STATE,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
 //    validateQueryTable("orderAgg", TableType.TEMPORAL_STATE,3, 2, TimestampTest.fixed(2));
@@ -264,12 +264,13 @@ public class ResolveTest extends AbstractSQRLIT {
    */
 
   @Test
-  @Disabled
   public void testUnion() {
     ScriptBuilder builder = imports();
-    builder.add("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC");
+    builder.add("CombinedStream := (SELECT o.customerid, o.\"time\" AS rowtime FROM Orders o)" +
+            " UNION ALL " +
+            "(SELECT c.customerid, c.\"_ingest_time\" AS rowtime FROM Customer c);");
     process(builder.toString());
-    validateQueryTable("orders", TableType.TEMPORAL_STATE,6, 1, TimestampTest.fixed(4)); //pullup is inlined because nested
+    validateQueryTable("combinedstream", TableType.STREAM,3, 1, TimestampTest.fixed(2));
   }
 
 
@@ -437,21 +438,21 @@ public class ResolveTest extends AbstractSQRLIT {
       return new TimestampTest(Type.CANDIDATES,candidates);
     }
 
-    public void test(TimestampHolder timeHolder) {
+    public void test(TimestampHolder.Base timeHolder) {
       if (type==Type.NO_TEST) return;
       if (type==Type.NONE) {
-        assertFalse(timeHolder.hasTimestamp(), "no timestamp");
+        assertFalse(timeHolder.hasFixedTimestamp(), "no timestamp");
         assertEquals(0,timeHolder.getCandidates().size(), "candidate size");
       } else if (type==Type.FIXED) {
-        assertTrue(timeHolder.hasTimestamp(), "has timestamp");
+        assertTrue(timeHolder.hasFixedTimestamp(), "has timestamp");
         assertEquals(1,candidates.length, "candidate size");
-        assertEquals(candidates[0],timeHolder.getTimestampIndex(), "timestamp index");
+        assertEquals(candidates[0],timeHolder.getTimestampCandidate().getIndex(), "timestamp index");
       } else if (type==Type.BEST) {
-        assertFalse(timeHolder.hasTimestamp(), "no timestamp");
+        assertFalse(timeHolder.hasFixedTimestamp(), "no timestamp");
         assertEquals(1,candidates.length, "candidate size");
         assertEquals(candidates[0],timeHolder.getBestCandidate().getIndex(), "best candidate");
       } else if (type==Type.CANDIDATES) {
-        assertFalse(timeHolder.hasTimestamp(), "no timestamp");
+        assertFalse(timeHolder.hasFixedTimestamp(), "no timestamp");
         assertEquals(Sets.newHashSet(candidates),
                 timeHolder.getCandidates().stream().map(TimestampHolder.Candidate::getIndex).collect(Collectors.toSet()), "candidate set");
       }

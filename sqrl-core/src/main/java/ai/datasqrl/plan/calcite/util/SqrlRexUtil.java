@@ -175,10 +175,10 @@ public class SqrlRexUtil {
         }
     }
 
-    public Optional<TimestampHolder.Candidate> getPreservedTimestamp(@NonNull RexNode rexNode, @NonNull TimestampHolder.Derived timestamp) {
+    public Optional<TimestampHolder.Derived.Candidate> getPreservedTimestamp(@NonNull RexNode rexNode, @NonNull TimestampHolder.Derived timestamp) {
         if (!(CalciteUtil.isTimestamp(rexNode.getType()))) return Optional.empty();
         if (rexNode instanceof RexInputRef) {
-            return timestamp.getCandidateByIndex(((RexInputRef)rexNode).getIndex());
+            return timestamp.getOptCandidateByIndex(((RexInputRef)rexNode).getIndex());
         } else if (rexNode instanceof RexCall) {
             //Determine recursively but ensure there is only one timestamp
             RexCall call = (RexCall) rexNode;
