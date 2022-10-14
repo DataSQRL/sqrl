@@ -15,6 +15,10 @@ public enum MaterializationPreference {
         }
     }
 
+    public boolean canMaterialize() {
+        return this!=CANNOT;
+    }
+
     public boolean isCompatible(MaterializationPreference other) {
         if ((this==MUST && other==CANNOT) || (this==CANNOT && other==MUST)) return false;
         return true;

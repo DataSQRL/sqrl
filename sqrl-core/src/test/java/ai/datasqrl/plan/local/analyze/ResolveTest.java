@@ -109,11 +109,25 @@ public class ResolveTest extends AbstractSQRLIT {
   @Disabled //todo: Fix
   public void tableDefinitionTest() {
     String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
-        "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;");
+          "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;",
+          "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM _ JOIN _.entries e");
     process(sqrl);
     validateQueryTable("entrycount", TableType.STREAM,5, 2, TimestampTest.candidates(3,4)); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
   }
 
+  /*
+  ===== NESTED TABLES ======
+   */
+
+  @Test
+  public void intervalJoinAgggregateTest() {
+    String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
+            "OrdersTotal := SELECT o._uuid, SUM(o.id) as total FROM Orders o GROUP BY o._uuid;",
+            "OrderAgg := SELECT o.customerid, o.\"time\", o.id, t.total FROM Orders o JOIN OrdersTotal t ON o._uuid = t._uuid");
+    process(sqrl);
+    validateQueryTable("orderstotal", TableType.STREAM,3, 1, TimestampTest.fixed(2));
+    validateQueryTable("orderagg", TableType.STREAM,5, 1, TimestampTest.fixed(2));
+  }
 
   /*
   ===== JOINS ======
@@ -264,6 +278,7 @@ public class ResolveTest extends AbstractSQRLIT {
    */
 
   @Test
+  @Disabled
   public void testUnion() {
     ScriptBuilder builder = imports();
     builder.add("CombinedStream := (SELECT o.customerid, o.\"time\" AS rowtime FROM Orders o)" +

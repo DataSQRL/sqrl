@@ -2449,7 +2449,7 @@ public class SqlToRelConverter {
                 .map(field ->
                     aggConverter.addGroupExpr(
                         new SqlIdentifier(field.getName(), SqlParserPos.ZERO)))
-                .collect(ImmutableBitSet.toImmutableBitSet()));
+                    .mapToInt(Integer::intValue).toArray());
 
     // 2. Build axes, for example
     // FOR (axis1, axis2 ...) IN ...

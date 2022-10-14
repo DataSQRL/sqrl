@@ -10,13 +10,16 @@ import java.util.List;
 @AllArgsConstructor
 public class TumbleAggregationHint implements SqrlHint {
 
+    public enum Type { FUNCTION, INSTANT }
 
     @Getter
     final int timestampIdx;
+    @Getter
+    final Type type;
 
     @Override
     public RelHint getHint() {
-        return RelHint.builder(getHintName()).hintOptions(List.of(String.valueOf(timestampIdx))).build();
+        return RelHint.builder(getHintName()).hintOptions(List.of(String.valueOf(timestampIdx), String.valueOf(type))).build();
     }
 
     public static final String HINT_NAME = TumbleAggregationHint.class.getSimpleName();
@@ -37,8 +40,8 @@ public class TumbleAggregationHint implements SqrlHint {
 
         @Override
         public TumbleAggregationHint fromHint(RelHint hint) {
-            Preconditions.checkArgument(hint.listOptions.size()==1,"Invalid hint: %s",hint);
-            return new TumbleAggregationHint(Integer.valueOf(hint.listOptions.get(0)));
+            Preconditions.checkArgument(hint.listOptions.size()==2,"Invalid hint: %s",hint);
+            return new TumbleAggregationHint(Integer.valueOf(hint.listOptions.get(0)),Type.valueOf(hint.listOptions.get(1)));
         }
     }
 

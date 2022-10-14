@@ -7,6 +7,7 @@ import ai.datasqrl.plan.calcite.util.TimePredicate;
 import ai.datasqrl.plan.calcite.util.TimeTumbleFunctionCall;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
+import com.google.common.primitives.Ints;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelNode;
@@ -95,6 +96,9 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   public RelNode visit(LogicalJoin join) {
     FlinkRelBuilder relBuilder = getBuilder();
     Optional<TemporalJoinHint> temporalHintOpt = SqrlHint.fromRel(join,TemporalJoinHint.CONSTRUCTOR);
+    if (temporalHintOpt.isPresent()) {
+
+    }
     Preconditions.checkArgument(temporalHintOpt.isEmpty(),"Not yet implemented");
     RelNode left = join.getLeft().accept(this), right = join.getRight().accept(this);
     relBuilder.push(left);
@@ -126,16 +130,23 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       if (tumbleHintOpt.isPresent()) {
         TumbleAggregationHint tumbleHint = tumbleHintOpt.get();
         timestampIdx = tumbleHint.getTimestampIdx();
-        //Extract bucketing function from project
-        Preconditions.checkArgument(input instanceof LogicalProject, "Expected projection as input");
-        List<RexNode> projects = new ArrayList<>(((LogicalProject) input).getProjects());
-        SqrlRexUtil rexUtil = new SqrlRexUtil(relBuilder.getTypeFactory());
-        TimeTumbleFunctionCall bucketFct = rexUtil.getTimeBucketingFunction(projects.get(timestampIdx)).get();
-        projects.set(timestampIdx, rexBuilder.makeInputRef(input.getInput(0), bucketFct.getTimestampColumnIndex()));
-        long intervalMs = bucketFct.getSpecification().getBucketWidthMillis();
-        intervalsMs = new long[]{intervalMs};
         windowFunction = FlinkSqlOperatorTable.TUMBLE;
-        relBuilder.project(projects, inputType.getFieldNames());
+        if (tumbleHint.getType()== TumbleAggregationHint.Type.FUNCTION) {
+          //Extract bucketing function from project
+          Preconditions.checkArgument(input instanceof LogicalProject, "Expected projection as input");
+          List<RexNode> projects = new ArrayList<>(((LogicalProject) input).getProjects());
+          SqrlRexUtil rexUtil = new SqrlRexUtil(relBuilder.getTypeFactory());
+          TimeTumbleFunctionCall bucketFct = rexUtil.getTimeBucketingFunction(projects.get(timestampIdx)).get();
+          projects.set(timestampIdx, rexBuilder.makeInputRef(input.getInput(0), bucketFct.getTimestampColumnIndex()));
+          long intervalMs = bucketFct.getSpecification().getBucketWidthMillis();
+          intervalsMs = new long[]{intervalMs};
+
+          relBuilder.project(projects, inputType.getFieldNames());
+        } else if (tumbleHint.getType()== TumbleAggregationHint.Type.INSTANT) {
+          intervalsMs = new long[]{1};
+        } else {
+          throw new UnsupportedOperationException("Invalid tumble window type: " + tumbleHint.getType());
+        }
       } else {
         SlidingAggregationHint slideHint = slideHintOpt.get();
         timestampIdx = slideHint.getTimestampIdx();
@@ -170,7 +181,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
         projectIdx.add(index++);
         projectNames.add(null);
       }
-      relBuilder.aggregate(relBuilder.groupKey(ImmutableBitSet.of(groupByIdx)),aggCalls);
+      relBuilder.aggregate(relBuilder.groupKey(Ints.toArray(groupByIdx)),aggCalls);
       relBuilder.project(projectIdx.stream().map(idx -> rexBuilder.makeInputRef(relBuilder.peek(), idx))
               .collect(Collectors.toList()),projectNames);
     } else {

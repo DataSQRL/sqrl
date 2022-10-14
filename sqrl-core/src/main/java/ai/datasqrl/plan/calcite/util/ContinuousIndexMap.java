@@ -13,6 +13,7 @@ import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -117,6 +118,10 @@ public class ContinuousIndexMap implements IndexMap {
             b.add(i);
         }
         return b.build(targetLength);
+    }
+
+    public static ContinuousIndexMap of(Collection<Integer> indexes, int targetLength) {
+        return builder(indexes.size()).addAll(indexes).build(targetLength);
     }
 
     public static final class Builder {
