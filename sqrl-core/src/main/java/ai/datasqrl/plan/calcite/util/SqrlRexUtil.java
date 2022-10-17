@@ -11,12 +11,16 @@ import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.logical.LogicalFilter;
+import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlAggFunction;
+import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
@@ -24,6 +28,7 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -248,6 +253,73 @@ public class SqrlRexUtil {
             indexes.stream().filter(Predicate.not(result::contains)).forEach(result::add);
         }
         return result;
+    }
+
+    public static RexNode makeWindowLimitFilter(RexBuilder rexBuilder, int limit, int fieldIdx, RelDataType windowType) {
+        SqlBinaryOperator comparison = SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
+        if (limit == 1) comparison = SqlStdOperatorTable.EQUALS;
+        return rexBuilder.makeCall(comparison,RexInputRef.of(fieldIdx, windowType),
+                rexBuilder.makeExactLiteral(BigDecimal.valueOf(limit)));
+    }
+
+    public static Optional<Integer> parseWindowLimitOneFilter(RexNode node) {
+        if (node instanceof RexCall) {
+            RexCall call = (RexCall) node;
+            if (call.getOperator().equals(SqlStdOperatorTable.EQUALS)) {
+                if (call.getOperands().get(0) instanceof RexInputRef && call.getOperands().get(1) instanceof RexLiteral) {
+                    RexLiteral literal = (RexLiteral) call.getOperands().get(1);
+                    if (literal.getValueAs(BigDecimal.class).equals(BigDecimal.valueOf(1))) {
+                        return Optional.of(((RexInputRef)call.getOperands().get(0)).getIndex());
+                    }
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    public static boolean isSimpleProject(LogicalProject project) {
+        RexFinder<Void> findComplex = new RexFinder<Void>() {
+            @Override
+            public Void visitOver(RexOver over) {
+                throw Util.FoundOne.NULL;
+            }
+            @Override
+            public Void visitSubQuery(RexSubQuery subQuery) {
+                throw Util.FoundOne.NULL;
+            }
+        };
+        return !findComplex.foundIn(project.getProjects());
+    }
+
+    public static boolean hasDeduplicationWindow(RelNode relNode) {
+        if (relNode instanceof LogicalProject) {
+            if (SqrlRexUtil.isSimpleProject((LogicalProject) relNode)) return hasDeduplicationWindow(relNode.getInput(0));
+        }
+        if (relNode instanceof LogicalFilter) {
+            LogicalFilter filter = (LogicalFilter)relNode;
+            Optional<Integer> rowNumIdx = parseWindowLimitOneFilter(filter.getCondition());
+            if (rowNumIdx.isPresent()) {
+                if (filter.getInput() instanceof LogicalProject) {
+                    LogicalProject project = (LogicalProject) filter.getInput();
+                    if (project.getProjects().size()>rowNumIdx.get()) {
+                        RexFinder<RexOver> findOver = new RexFinder<RexOver>() {
+                            @Override
+                            public Void visitOver(RexOver over) {
+                                throw new Util.FoundOne(over);
+                            }
+                        };
+                        Optional<RexOver> over = findOver.find(project.getProjects().get(rowNumIdx.get()));
+                        if (over.isPresent()) {
+                            //TODO: this is a partial check but should be good enough since we only generate over-statements internally
+                            if (over.get().getOperator() == SqlStdOperatorTable.ROW_NUMBER) return true;
+                            else return false;
+                        }
+                    }
+                }
+            }
+            return hasDeduplicationWindow(filter.getInput());
+        }
+        return false;
     }
 
 }

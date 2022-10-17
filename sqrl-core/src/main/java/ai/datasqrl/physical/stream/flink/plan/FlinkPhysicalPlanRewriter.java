@@ -19,6 +19,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlIntervalQualifier;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -103,7 +104,10 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       Holder<RexCorrelVariable> correlVar = Holder.of(null);
       relBuilder.push(left).variable(correlVar);
       relBuilder.push(right);
-      CalciteUtil.addIdentityProjection(relBuilder, relBuilder.peek().getRowType().getFieldCount());
+      if (!SqrlRexUtil.hasDeduplicationWindow(right)) {
+        addDeduplicationWindow(relBuilder,temporalHint);
+      }
+      //CalciteUtil.addIdentityProjection(relBuilder, relBuilder.peek().getRowType().getFieldCount());
       relBuilder.snapshot(rexBuilder.makeFieldAccess(correlVar.get(),temporalHint.getStreamTimestampIdx()));
       CorrelateRexRewriter correlRewriter = new CorrelateRexRewriter(rexBuilder,left.getRowType().getFieldList(),
               correlVar, right.getRowType().getFieldList());
@@ -120,6 +124,24 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       relBuilder.join(joinType, rewrite(join.getCondition(), relBuilder, left, right));
       return relBuilder.build();
     }
+  }
+
+  private void addDeduplicationWindow(FlinkRelBuilder relBuilder, TemporalJoinHint temporalHint) {
+    final RelDataType inputType = relBuilder.peek().getRowType();
+    List<RexNode> partitionKeys = Arrays.stream(temporalHint.getStatePrimaryKeys())
+            .mapToObj(idx -> RexInputRef.of(idx,inputType)).collect(Collectors.toList());
+    List<RexFieldCollation> fieldCollations = List.of(new RexFieldCollation(RexInputRef.of(temporalHint.getStateTimestampIdx(), inputType),
+            Set.of(SqlKind.DESCENDING, SqlKind.NULLS_LAST)));
+    List<RexNode> projects = inputType.getFieldList().stream().map(f -> RexInputRef.of(f.getIndex(),inputType)).collect(Collectors.toList());
+    int rowNumberIdx = projects.size();
+    projects = new ArrayList(projects);
+    SqrlRexUtil rexUtil = new SqrlRexUtil(relBuilder.getTypeFactory());
+    //Add row_number (since it always applies)
+    projects.add(rexUtil.createRowFunction(SqlStdOperatorTable.ROW_NUMBER,partitionKeys,fieldCollations));
+    relBuilder.project(projects);
+    RelDataType windowType = relBuilder.peek().getRowType();
+    relBuilder.filter(SqrlRexUtil.makeWindowLimitFilter(getRexBuilder(relBuilder), 1, rowNumberIdx, windowType));
+    CalciteUtil.addIdentityProjection(relBuilder,rowNumberIdx); //project row_number back out
   }
 
   @Override

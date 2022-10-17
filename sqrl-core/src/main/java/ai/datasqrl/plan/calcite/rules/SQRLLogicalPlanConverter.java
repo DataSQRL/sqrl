@@ -32,7 +32,6 @@ import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlAggFunction;
-import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -212,7 +211,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     conditions.add(rexBuilder.makeCall(SqlStdOperatorTable.EQUALS, RexInputRef.of(rowNumberIdx, windowType),
                             RexInputRef.of(rankIdx, windowType)));
                     if (topN.hasLimit()) {
-                        conditions.add(makeWindowLimitFilter(rexBuilder, topN.getLimit(), denserankIdx, windowType));
+                        conditions.add(SqrlRexUtil.makeWindowLimitFilter(rexBuilder, topN.getLimit(), denserankIdx, windowType));
                     }
                 } else {
                     final int limit;
@@ -222,7 +221,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     } else {
                         limit = topN.getLimit();
                     }
-                    conditions.add(makeWindowLimitFilter(rexBuilder, limit, rowNumberIdx, windowType));
+                    conditions.add(SqrlRexUtil.makeWindowLimitFilter(rexBuilder, limit, rowNumberIdx, windowType));
                 }
 
 
@@ -238,13 +237,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 return RelMeta.build(relBuilder.build(),type,newPk,timestamp,newSelect,newMaterialize)
                         .sort(newSort).build();
             }
-        }
-
-        private static RexNode makeWindowLimitFilter(RexBuilder rexBuilder, int limit, int fieldIdx, RelDataType windowType) {
-            SqlBinaryOperator comparison = SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
-            if (limit == 1) comparison = SqlStdOperatorTable.EQUALS;
-            return rexBuilder.makeCall(comparison,RexInputRef.of(fieldIdx, windowType),
-                    rexBuilder.makeExactLiteral(BigDecimal.valueOf(limit)));
         }
 
         public RelMeta inlineNowFilter(RelBuilder relB) {
