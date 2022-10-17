@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled
 class LogicalPlanRewritingTest extends AbstractSQRLIT {
   private ConfiguredSqrlParser parser;
   private ErrorCollector errorCollector;

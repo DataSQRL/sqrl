@@ -30,6 +30,7 @@ import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.C360;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,12 +68,14 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     ScriptBundle bundle = example.buildBundle().getBundle();
     assertTrue(
             importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
-    planner = new PlannerFactory(
-        CalciteSchema.createRootSchema(false, false).plus()).createPlanner();
+
+    SqrlCalciteSchema schema = new SqrlCalciteSchema(
+        CalciteSchema.createRootSchema(false, false).plus());
+    planner = new PlannerFactory(schema.plus()).createPlanner();
     Session session = new Session(error, importManager, planner);
     this.session = session;
     this.parser = new ConfiguredSqrlParser(error);
-    this.resolve = new Resolve(RETAIL_DIR_BASE);
+    this.resolve = new Resolve(RETAIL_DIR_BASE.resolve("build/"));
     DatabaseConnectionProvider db = sqrlSettings.getDatabaseEngineProvider().getDatabase(EnvironmentConfiguration.MetaData.DEFAULT_DATABASE);
     jdbc = (JDBCConnectionProvider) db;
 
@@ -175,6 +178,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void filterTest() {
     ScriptBuilder builder = example.getImports();
     Map<String,Integer> rowCounts = getImportRowCounts();

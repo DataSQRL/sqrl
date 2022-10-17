@@ -1,0 +1,8 @@
+X := SELECT * FROM Orders;
+
+LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4])
+  LogicalTableScan(table=[[orders$12]])
+
+
+SELECT *
+FROM "orders$12"

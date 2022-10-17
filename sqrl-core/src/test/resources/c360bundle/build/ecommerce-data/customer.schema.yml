@@ -1,0 +1,24 @@
+version: 1
+
+datasets:
+  - name: ecommerce-data
+    tables:
+      - name: Customer
+        description: customer records from online shop
+        columns:
+          - name: customerid
+            description: the unique id for each customer
+            type: integer
+            tests:
+              - unique
+              - not_null
+          - name: email
+            type: string
+            tests:
+              - not_null
+          - name: name
+            type: string
+          - name: lastUpdated
+            type: integer
+            tests:
+              - not_null

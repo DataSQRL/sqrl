@@ -12,13 +12,15 @@ import lombok.AllArgsConstructor;
 
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor
 public class VariableFactory {
-  public Relationship addJoinDeclaration(NamePath namePath, SQRLTable parentTable, SQRLTable target, Multiplicity multiplicity) {
+  public Relationship addJoinDeclaration(NamePath namePath, SQRLTable parentTable, SQRLTable target, Multiplicity multiplicity,
+      SqlNode query) {
     Relationship relationship = parentTable.addRelationship(namePath.getLast(), target,
-        JoinType.JOIN, multiplicity);
+        JoinType.JOIN, multiplicity, query);
     parentTable.rebuildType();
     return relationship;
   }

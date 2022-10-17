@@ -6,6 +6,7 @@ import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.table.TimestampHolder;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SqrlTypeConverter;
 import com.google.common.base.Preconditions;
@@ -66,7 +67,8 @@ public abstract class VirtualTableFactory<T,V extends VirtualTable> extends Abst
         if (parent.isPresent()) {
             SQRLTable root = createdTables.keySet().stream().filter(t -> t.getParent().isEmpty()).findFirst().get();
             SQRLTable parentTbl = parent.get().getKey();
-            createChildRelationship(root.getName(), root, parentTbl, parent.get().getValue());
+//            createChildRelationship(root.getName(), root, parentTbl, parent.get().getValue());
+            createChildRelationship(root.getName(), root, parentTbl, Multiplicity.MANY);
             createParentRelationship(root, parentTbl);
         }
         return createdTables;

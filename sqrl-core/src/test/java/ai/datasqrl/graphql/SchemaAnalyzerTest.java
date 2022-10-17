@@ -32,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled
 class SchemaAnalyzerTest extends AbstractSQRLIT {
   Session session;
   ConfiguredSqrlParser parser;

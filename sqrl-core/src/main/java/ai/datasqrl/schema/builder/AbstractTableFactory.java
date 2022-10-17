@@ -65,7 +65,7 @@ public class AbstractTableFactory {
         //Avoid overwriting an existing "parent" column on the child
         if (childTable.getField(parentRelationshipName).isEmpty()) {
             return Optional.of(childTable.addRelationship(parentRelationshipName, parentTable, Relationship.JoinType.PARENT,
-                    Relationship.Multiplicity.ONE));
+                    Relationship.Multiplicity.ONE, null));
         }
         return Optional.empty();
     }
@@ -74,7 +74,7 @@ public class AbstractTableFactory {
     public static Relationship createChildRelationship(Name childName, SQRLTable childTable, SQRLTable parentTable,
                                                        Relationship.Multiplicity multiplicity) {
         return parentTable.addRelationship(childName, childTable,
-                Relationship.JoinType.CHILD, multiplicity);
+                Relationship.JoinType.CHILD, multiplicity, null);
     }
 
 

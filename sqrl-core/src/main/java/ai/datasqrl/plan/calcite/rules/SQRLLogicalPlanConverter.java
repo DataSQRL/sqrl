@@ -1286,6 +1286,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
     }
 
     public Optional<Integer> getLimit(RexNode limit) {
+        if (limit == null) return Optional.empty();
         Preconditions.checkArgument(limit instanceof RexLiteral);
         return Optional.of(((RexLiteral)limit).getValueAs(Integer.class));
     }

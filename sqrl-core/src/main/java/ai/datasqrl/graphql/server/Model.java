@@ -1,5 +1,10 @@
 package ai.datasqrl.graphql.server;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
@@ -21,16 +26,32 @@ public class Model {
 
   @Getter
   @Builder
+  @NoArgsConstructor
   public static class Root {
     @Singular
     List<Coords> coords;
     Schema schema;
+
+    @JsonCreator
+    public Root(
+        @JsonProperty("coords") List<Coords> coords,
+        @JsonProperty("schema") Schema schema) {
+      this.coords = coords;
+      this.schema = schema;
+    }
 
     public <R, C> R accept(RootVisitor<R, C> visitor, C context) {
       return visitor.visitRoot(this, context);
     }
   }
 
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME,
+      include = JsonTypeInfo.As.PROPERTY,
+      property = "type")
+  @JsonSubTypes({
+      @Type(value = StringSchema.class, name = "string")
+  })
   public interface Schema {
     <R, C> R accept(SchemaVisitor<R, C> visitor, C context);
   }
@@ -42,7 +63,10 @@ public class Model {
 
   @Builder
   @Getter
+  @NoArgsConstructor
+  @AllArgsConstructor
   public static class StringSchema implements Schema {
+    final String type = "string";
     String schema;
     public <R, C> R accept(SchemaVisitor<R, C> visitor, C context) {
       return visitor.visitStringDefinition(this, context);
@@ -65,6 +89,13 @@ public class Model {
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME,
+      include = JsonTypeInfo.As.PROPERTY,
+      property = "type")
+  @JsonSubTypes({
+      @Type(value = ArgumentLookupCoords.class, name = "args")
+  })
   public static abstract class Coords {
     String parentType;
     String fieldName;
@@ -74,7 +105,9 @@ public class Model {
   }
 
   @Getter
+  @NoArgsConstructor
   public static class ArgumentLookupCoords extends Coords {
+    final String type = "args";
     Set<ArgumentSet> matchs;
 
     @Builder
@@ -90,6 +123,8 @@ public class Model {
 
   @Builder
   @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
   public static class ArgumentSet {
     //The may be empty for no-args
     @Singular
@@ -101,13 +136,23 @@ public class Model {
     R visitPgQuery(PgQuery pgQuery, C context);
   }
 
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME,
+      include = JsonTypeInfo.As.PROPERTY,
+      property = "type")
+  @JsonSubTypes({
+      @Type(value = PgQuery.class, name = "pgQuery")
+  })
   public interface QueryBase {
     <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context);
   }
 
   @Builder
   @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
   public static class PgQuery implements QueryBase {
+    final String type = "pgQuery";
     String sql;
     @Singular
     List<PgParameterHandler> parameters;
@@ -118,6 +163,14 @@ public class Model {
     }
   }
 
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME,
+      include = JsonTypeInfo.As.PROPERTY,
+      property = "type")
+  @JsonSubTypes({
+      @Type(value = FixedArgument.class, name = "fixed"),
+      @Type(value = VariableArgument.class, name = "variable")
+  })
   public interface Argument {
     String getPath();
   }
@@ -129,7 +182,10 @@ public class Model {
 
   @Builder
   @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
   public static class VariableArgument implements Argument {
+    final String type = "variable";
     String path;
     Object value;
     public <R, C> R accept(VariableArgumentVisitor<R, C> visitor, C context) {
@@ -162,7 +218,11 @@ public class Model {
 
   @Builder
   @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
   public static class FixedArgument implements Argument {
+    final String type = "fixed";
+
     String path;
     Object value;
 
@@ -193,6 +253,14 @@ public class Model {
     }
   }
 
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME,
+      include = JsonTypeInfo.As.PROPERTY,
+      property = "type")
+  @JsonSubTypes({
+      @Type(value = SourcePgParameter.class, name = "source"),
+      @Type(value = ArgumentPgParameter.class, name = "arg")
+  })
   public interface PgParameterHandler {
     <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context);
   }
@@ -207,6 +275,7 @@ public class Model {
   @NoArgsConstructor
   @Builder
   public static class SourcePgParameter implements PgParameterHandler {
+    final String type = "source";
     String key;
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitSourcePgParameter(this, context);
@@ -218,6 +287,7 @@ public class Model {
   @NoArgsConstructor
   @Builder
   public static class ArgumentPgParameter implements PgParameterHandler {
+    final String type = "arg";
     String path;
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitArgumentPgParameter(this, context);
@@ -234,6 +304,7 @@ public class Model {
 
   @AllArgsConstructor
   @Getter
+  @NoArgsConstructor
   public static class ResolvedPgQuery implements ResolvedQuery {
     PgQuery query;
     PreparedQuery<RowSet<Row>> preparedQuery;
@@ -246,6 +317,7 @@ public class Model {
 
   @Getter
   @AllArgsConstructor
+  @NoArgsConstructor
   public static class GraphQLArgumentWrapper {
 
     Map<String, Object> args;

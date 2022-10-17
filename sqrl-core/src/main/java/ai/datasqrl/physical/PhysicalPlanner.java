@@ -13,6 +13,8 @@ import ai.datasqrl.physical.stream.flink.plan.FlinkStreamPhysicalPlan;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.queries.APIQuery;
+import ai.datasqrl.util.db.JDBCTempDatabase;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
@@ -28,6 +30,10 @@ public class PhysicalPlanner {
   Planner planner;
 
   public PhysicalPlan plan(OptimizedDAG plan) {
+    return plan(plan, Optional.empty());
+  }
+
+  public PhysicalPlan plan(OptimizedDAG plan, Optional<JDBCTempDatabase> jdbcTempDatabase) {
     // 1. Create DDL for materialized tables
     List<OptimizedDAG.TableSink> materializedTables = StreamUtil.filterByClass(
             plan.getStreamQueries().stream().map(q -> q.getSink()), OptimizedDAG.TableSink.class)
@@ -37,7 +43,7 @@ public class PhysicalPlanner {
 
     // 2. Plan Physical Stream Graph
     FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(streamEngine, importManager,
-            dbConnection)
+            dbConnection, jdbcTempDatabase)
         .createStreamGraph(plan.getStreamQueries());
 
     // 3. Create SQL queries

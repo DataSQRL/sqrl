@@ -63,8 +63,8 @@ public class FlinkTableAPIIT extends AbstractSQRLIT {
 //            + "UNNEST(o.entries) AS items) AS total FROM orders o");
 //    tEnv.toChangelogStream(tableSelectUnnest).print();
 
-    Table tableNest = tEnv.sqlQuery("SELECT o.id, SUM(o.item_total) AS total FROM (SELECT o.id, items.unit_price*items.quantity-items.discount AS item_total \n" +
-            "FROM orders o CROSS JOIN UNNEST(o.entries) AS items) o GROUP BY o.id");
+    Table tableNest = tEnv.sqlQuery("SELECT COALESCE(_uuid, '') FROM orders"
+        + "");
     tEnv.toChangelogStream(tableNest).print();
 
     streamBuilder.setJobType(FlinkStreamEngine.JobType.SCRIPT);

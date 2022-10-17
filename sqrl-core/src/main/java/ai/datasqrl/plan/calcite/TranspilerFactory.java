@@ -1,10 +1,12 @@
 package ai.datasqrl.plan.calcite;
 
+import ai.datasqrl.SqrlCalciteCatalogReader;
 import java.util.List;
 import java.util.Properties;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -20,15 +22,17 @@ public class TranspilerFactory {
       .withTypeCoercionEnabled(false)
       .withLenientOperatorLookup(false);
 
-  public static SqrlValidatorImpl createSqrlValidator(CalciteSchema schema) {
+  public static SqrlValidatorImpl createSqrlValidator(SqrlCalciteSchema schema) {
     Properties p = new Properties();
     p.put(CalciteConnectionProperty.CASE_SENSITIVE.name(), false);
+
+
     SqrlValidatorImpl validator = new SqrlValidatorImpl(
-        SqrlOperatorTable.instance(),
-        new CalciteCatalogReader(schema, List.of(), new SqrlTypeFactory(new SqrlTypeSystem()),
+        PlannerFactory.getOperatorTable(),
+        new SqrlCalciteCatalogReader(schema, List.of(), PlannerFactory.getTypeFactory(),
             new CalciteConnectionConfigImpl(p).set(CalciteConnectionProperty.CASE_SENSITIVE,
                 "false")),
-        new SqrlTypeFactory(new SqrlTypeSystem()),
+        PlannerFactory.getTypeFactory(),
         config
         );
     return validator;
@@ -37,10 +41,10 @@ public class TranspilerFactory {
   public static SqlValidator createSqlValidator(CalciteSchema schema) {
     SqlValidator validator = SqlValidatorUtil.newValidator(
         SqrlOperatorTable.instance(),
-        new CalciteCatalogReader(schema, List.of(), new SqrlTypeFactory(new SqrlTypeSystem()),
+        new CalciteCatalogReader(schema, List.of(), PlannerFactory.getTypeFactory(),
             new CalciteConnectionConfigImpl(new Properties()).set(CalciteConnectionProperty.CASE_SENSITIVE,
                 "false")),
-        new SqrlTypeFactory(new SqrlTypeSystem()),
+        PlannerFactory.getTypeFactory(),
         config);
 
     return validator;

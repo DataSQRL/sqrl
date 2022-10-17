@@ -1,0 +1,9 @@
+Orders.entries.total := SELECT quantity * unit_price - discount FROM _;
+
+
+LogicalProject(EXPR$0=[-(*($3, $4), $5)])
+  LogicalTableScan(table=[[entries$13]])
+
+
+SELECT "quantity" * "unit_price" - "discount"
+FROM "entries$13"

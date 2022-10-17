@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.sql.validate;
 
+import java.util.stream.IntStream;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.linq4j.function.Function2;
 import org.apache.calcite.linq4j.function.Functions;
@@ -66,6 +67,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqlOrderBy;
+import org.apache.calcite.sql.SqlPathIdentifier;
 import org.apache.calcite.sql.SqlPivot;
 import org.apache.calcite.sql.SqlSampleSpec;
 import org.apache.calcite.sql.SqlSelect;
@@ -2092,7 +2094,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    *                      scope
    * @return registered node, usually the same as {@code node}
    */
-  private SqlNode registerFrom(
+  public SqlNode registerFrom(
       SqlValidatorScope parentScope,
       SqlValidatorScope usingScope,
       boolean register,
@@ -5965,6 +5967,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         } else {
           final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
           field = nameMatcher.field(type, name);
+
+          //sqrl resolved
+          //name is not in rel type since we will reorient it later in a different scope
+
         }
         if (field == null) {
           throw newValidationError(id.getComponent(i),
@@ -6000,7 +6006,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * Converts an expression into canonical form by fully-qualifying any
    * identifiers.
    */
-  protected static class Expander extends SqlScopedShuttle {
+  public static class Expander extends SqlScopedShuttle {
     protected final SqlValidatorImpl validator;
 
     Expander(SqlValidatorImpl validator, SqlValidatorScope scope) {
@@ -6062,12 +6068,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * Shuttle which walks over an expression in the ORDER BY clause, replacing
    * usages of aliases with the underlying expression.
    */
-  class OrderExpressionExpander extends SqlScopedShuttle {
+  public class OrderExpressionExpander extends SqlScopedShuttle {
     private final List<String> aliasList;
     private final SqlSelect select;
     private final SqlNode root;
 
-    OrderExpressionExpander(SqlSelect select, SqlNode root) {
+    public OrderExpressionExpander(SqlSelect select, SqlNode root) {
       super(getOrderScope(select));
       this.select = select;
       this.root = root;
@@ -6187,12 +6193,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * Shuttle which walks over an expression in the GROUP BY/HAVING clause, replacing
    * usages of aliases or ordinals with the underlying expression.
    */
-  static class ExtendedExpander extends Expander {
+  public static class ExtendedExpander extends Expander {
     final SqlSelect select;
     final SqlNode root;
     final boolean havingExpr;
 
-    ExtendedExpander(SqlValidatorImpl validator, SqlValidatorScope scope,
+    public ExtendedExpander(SqlValidatorImpl validator, SqlValidatorScope scope,
         SqlSelect select, SqlNode root, boolean havingExpr) {
       super(validator, scope);
       this.select = select;

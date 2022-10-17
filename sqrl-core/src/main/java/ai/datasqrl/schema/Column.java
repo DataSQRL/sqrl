@@ -10,11 +10,13 @@ public class Column extends Field {
 
   final boolean isVisible;
   private final RelDataType type;
+  boolean nullable;
 
   Column(Name name, int version, boolean isVisible, RelDataType type) {
     super(name, version);
     this.isVisible = isVisible;
     this.type = type;
+    this.nullable = type.isNullable();
   }
 
   @Override
