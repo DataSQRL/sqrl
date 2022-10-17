@@ -15,12 +15,26 @@ import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.runtime.Geometries;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.ConversionUtil;
 
 public class SqrlTypeFactory extends JavaTypeFactoryImpl {
 
   public SqrlTypeFactory(RelDataTypeSystem typeSystem) {
     super(typeSystem);
+  }
+
+  public RelDataType createSqlType(SqlTypeName typeName) {
+    if (typeName.allowsPrec()) {
+      return this.createSqlType(typeName, this.typeSystem.getDefaultPrecision(typeName));
+    } else {
+      RelDataType newType = new BasicSqlType(this.typeSystem, typeName);
+
+      //TODO: Unknown why flink has issues with nullable functions
+      return this.createTypeWithNullability(newType, true);
+//      return this.canonize(newType)
+//          ;
+    }
   }
 
   @Override

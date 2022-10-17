@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled
 public class ResolveTest extends AbstractSQRLIT {
 
   ConfiguredSqrlParser parser;
@@ -278,7 +279,6 @@ public class ResolveTest extends AbstractSQRLIT {
    */
 
   @Test
-  @Disabled
   public void testUnion() {
     ScriptBuilder builder = imports();
     builder.add("CombinedStream := (SELECT o.customerid, o.\"time\" AS rowtime FROM Orders o)" +
@@ -400,7 +400,7 @@ public class ResolveTest extends AbstractSQRLIT {
   public static<T extends AbstractRelationalTable> Optional<T> getLatestTable(CalciteSchema relSchema, String tableName, Class<T> tableClass) {
     String normalizedName = Name.system(tableName).getCanonical();
     //Table names have an appended uuid - find the right tablename first. We assume tables are in the order in which they were created
-    return relSchema.getTableNames().stream().filter(s -> s.substring(0,s.indexOf(Name.NAME_DELIMITER)).equals(normalizedName))
+    return relSchema.getTableNames().stream().filter(s->s.indexOf(Name.NAME_DELIMITER) != -1).filter(s -> s.substring(0,s.indexOf(Name.NAME_DELIMITER)).equals(normalizedName))
             .filter(s -> tableClass.isInstance(relSchema.getTable(s,true).getTable()))
             //Get most recently added table
             .sorted((a,b) -> -Integer.compare(CalciteTableFactory.getTableOrdinal(a),CalciteTableFactory.getTableOrdinal(b)))

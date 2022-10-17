@@ -28,10 +28,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 @Slf4j
+@Disabled
 public class SchemaGeneratorTest extends AbstractSQRLIT {
 
   ConfiguredSqrlParser parser;
@@ -87,7 +89,7 @@ public class SchemaGeneratorTest extends AbstractSQRLIT {
   }
 
   @SneakyThrows
-  private void createOrValidateSnapshot(String className, String displayName, String content) {
+  public static void createOrValidateSnapshot(String className, String displayName, String content) {
     String snapLocation = String.format("src/test/resources/snapshots/%s/%s.txt",
         className.replace('.', '/'),
         displayName);

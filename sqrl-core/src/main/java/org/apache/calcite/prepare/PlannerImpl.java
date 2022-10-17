@@ -18,8 +18,9 @@ package org.apache.calcite.prepare;
 
 import static java.util.Objects.requireNonNull;
 
+import ai.datasqrl.SqrlCalciteCatalogReader;
+import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
 import java.io.Reader;
 import java.util.List;
 import lombok.Getter;
@@ -28,6 +29,7 @@ import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.config.CalciteSystemProperty;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.plan.Context;
 import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.plan.RelOptCluster;
@@ -130,7 +132,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     this.connectionConfig = connConfig(context, parserConfig);
     this.typeSystem = config.getTypeSystem();
     this.planner = new VolcanoPlanner(costFactory, context);
-    this.typeFactory = new SqrlTypeFactory(typeSystem);
+    this.typeFactory = PlannerFactory.getTypeFactory();
     final RexBuilder rexBuilder = createRexBuilder();
     cluster = RelOptCluster.create(
         requireNonNull(planner, "planner"),
@@ -272,7 +274,7 @@ public class PlannerImpl implements Planner, ViewExpander {
             createCatalogReader(), cluster, convertletTable, config);
     RelRoot root =
         sqlToRelConverter.convertQuery(validatedSqlNode, false, true);
-    root = root.withRel(sqlToRelConverter.flattenTypes(root.rel, true));
+//    root = root.withRel(sqlToRelConverter.flattenTypes(root.rel, true));
     final RelBuilder relBuilder =
         config.getRelBuilderFactory().create(cluster, null);
     root = root.withRel(
@@ -336,8 +338,8 @@ public class PlannerImpl implements Planner, ViewExpander {
     SchemaPlus defaultSchema = requireNonNull(this.defaultSchema, "defaultSchema");
     final SchemaPlus rootSchema = rootSchema(defaultSchema);
 
-    return new CalciteCatalogReader(
-        CalciteSchema.from(rootSchema),
+    return new SqrlCalciteCatalogReader(
+        defaultSchema.unwrap(SqrlCalciteSchema.class),
         CalciteSchema.from(defaultSchema).path(null),
         getTypeFactory(), connectionConfig);
   }

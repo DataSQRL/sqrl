@@ -5,7 +5,9 @@ import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
 import ai.datasqrl.plan.global.OptimizedDAG;
+import ai.datasqrl.util.db.JDBCTempDatabase;
 import graphql.com.google.common.base.Preconditions;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.flink.table.api.Schema;
@@ -25,6 +27,7 @@ public class FlinkPhysicalPlanner {
   private final StreamEngine streamEngine;
   private final ImportManager importManager;
   private final JDBCConnectionProvider jdbcConfiguration;
+  private final Optional<JDBCTempDatabase> jdbcTempDatabase;
 
   public FlinkStreamPhysicalPlan createStreamGraph(List<OptimizedDAG.MaterializeQuery> streamQueries) {
     final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder) streamEngine.createJob();
@@ -45,6 +48,7 @@ public class FlinkPhysicalPlanner {
       String dbSinkName = tblsink.getNameId() + "_sink";
       String subSinkName = tblsink.getNameId() + "_sub";
       if (List.of(tEnv.listTables()).contains(dbSinkName)) {
+        System.out.println();
         continue;
       }
       dataStreamRegisterer.register(query.getRelNode());
@@ -54,13 +58,25 @@ public class FlinkPhysicalPlanner {
       Table tbl = FlinkEnvProxy.relNodeQuery(relNode, tEnv);
 
       Schema tblSchema = FlinkPipelineUtils.addPrimaryKey(tbl.getSchema().toSchema(), tblsink);
-      TableDescriptor dbDescriptor = TableDescriptor.forConnector("jdbc")
-          .schema(tblSchema)
-          .option("url", jdbcConfiguration.getDbURL())
-          .option("table-name", tblsink.getNameId())
-          .option("username", jdbcConfiguration.getUser())
-          .option("password", jdbcConfiguration.getPassword())
-          .build();
+
+      TableDescriptor dbDescriptor;
+      if (jdbcTempDatabase.isPresent()) {
+        dbDescriptor = TableDescriptor.forConnector("jdbc")
+            .schema(tblSchema)
+            .option("url", jdbcTempDatabase.get().getPostgreSQLContainer().getJdbcUrl())
+            .option("table-name", tblsink.getNameId())
+            .option("username", jdbcTempDatabase.get().getPostgreSQLContainer().getUsername())
+            .option("password", jdbcTempDatabase.get().getPostgreSQLContainer().getPassword())
+            .build();
+      } else {
+        dbDescriptor = TableDescriptor.forConnector("jdbc")
+            .schema(tblSchema)
+            .option("url", jdbcConfiguration.getDbURL())
+            .option("table-name", tblsink.getNameId())
+            .option("username", jdbcConfiguration.getUser())
+            .option("password", jdbcConfiguration.getPassword())
+            .build();
+      }
       tEnv.createTemporaryTable(dbSinkName, dbDescriptor);
       stmtSet.addInsert(dbSinkName, tbl);
 

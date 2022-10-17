@@ -16,11 +16,14 @@
  */
 package org.apache.calcite.jdbc;
 
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SQRLTable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -32,12 +35,12 @@ public class SqrlCalciteSchema extends SimpleCalciteSchema {
   /**
    * Schema namespace for packages imported but not into the root namespace
    */
+
   @Getter
-  private final Schema namespace;
+  private Map<SQRLTable, VirtualRelationalTable> mapping = new HashMap<>();
 
   public SqrlCalciteSchema(Schema schema) {
-    super(CalciteSchema.createRootSchema(true), schema, "");
-    namespace = CalciteSchema.createRootSchema(false).schema;
+    super(null, schema, "");
   }
 
   public List<SQRLTable> getRootTables() {
@@ -49,10 +52,11 @@ public class SqrlCalciteSchema extends SimpleCalciteSchema {
   public List<SQRLTable> getAllTables() {
     Set<SQRLTable> tables = new HashSet<>(getRootTables());
     Stack<SQRLTable> iter = new Stack<>();
-    iter.addAll(getRootTables());
+    iter.addAll(tables);
 
     while (!iter.isEmpty()) {
       SQRLTable table = iter.pop();
+      if (table == null) continue;
       List<SQRLTable> relationships = table.getFields().getAccessibleFields().stream()
           .filter(f-> f instanceof Relationship)
           .map(f->((Relationship)f).getToTable())
@@ -66,6 +70,12 @@ public class SqrlCalciteSchema extends SimpleCalciteSchema {
       }
     }
 
-    return new ArrayList<>(tables);
+    return tables.stream()
+        .filter(f->f != null)
+        .collect(Collectors.toList());
+  }
+
+  public void addMapping(SQRLTable sqrlTable, VirtualRelationalTable virtualTable) {
+    mapping.put(sqrlTable, virtualTable);
   }
 }

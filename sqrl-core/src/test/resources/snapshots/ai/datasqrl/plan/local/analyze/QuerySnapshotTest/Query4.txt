@@ -1,0 +1,11 @@
+X := SELECT discount FROM Orders.entries;
+
+LogicalProject(discount=[$10])
+  LogicalJoin(condition=[=($0, $5)], joinType=[inner])
+    LogicalTableScan(table=[[orders$12]])
+    LogicalTableScan(table=[[entries$13]])
+
+
+SELECT "entries$13"."discount"
+FROM "orders$12"
+ INNER JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"

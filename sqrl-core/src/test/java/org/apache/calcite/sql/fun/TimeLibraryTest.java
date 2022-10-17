@@ -1,9 +1,9 @@
 package org.apache.calcite.sql.fun;
 
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
+import ai.datasqrl.plan.calcite.PlannerFactory;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.junit.jupiter.api.DynamicTest;
@@ -16,7 +16,7 @@ import static ai.datasqrl.plan.calcite.SqrlOperatorTable.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TimeLibraryTest {
-  static final SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
+  static final RelDataTypeFactory typeFactory = PlannerFactory.getTypeFactory();
 
   static final RelDataType TSNonNullable = typeFactory.createTypeWithNullability(
       typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3), false);

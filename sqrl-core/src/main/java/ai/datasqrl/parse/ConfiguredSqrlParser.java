@@ -4,6 +4,8 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.ParsingOptions.DecimalLiteralTreatment;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqrlStatement;
+import org.apache.calcite.sql.util.SqlShuttle;
+import org.apache.calcite.sql.validate.SqlScopedShuttle;
 
 /**
  * Parses SQRL scripts or statements using {@link SqrlParser} and holds the {@link ParsingOptions} configuration

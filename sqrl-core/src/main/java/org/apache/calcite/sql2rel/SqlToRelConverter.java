@@ -16,6 +16,12 @@
  */
 package org.apache.calcite.sql2rel;
 
+import ai.datasqrl.plan.calcite.util.RelToSql;
+import ai.datasqrl.schema.SQRLTable;
+import java.util.Optional;
+import java.util.stream.IntStream;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.calcite.avatica.util.Spaces;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.Convention;
@@ -107,6 +113,7 @@ import org.apache.calcite.sql.SqlExplainFormat;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlIdentifierWithPath;
 import org.apache.calcite.sql.SqlInsert;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlJoin;
@@ -120,6 +127,8 @@ import org.apache.calcite.sql.SqlNumericLiteral;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqlOrderBy;
+import org.apache.calcite.sql.SqlPathIdentifier;
+import org.apache.calcite.sql.SqlPathJoin;
 import org.apache.calcite.sql.SqlPivot;
 import org.apache.calcite.sql.SqlSampleSpec;
 import org.apache.calcite.sql.SqlSelect;
@@ -164,6 +173,8 @@ import org.apache.calcite.sql.validate.SqlValidatorNamespace;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqlValidatorTable;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
+import org.apache.calcite.sql.validate.SqrlEmptyScope.AbsoluteSQRLTable;
+import org.apache.calcite.sql.validate.SqrlEmptyScope.NestedSQRLTable;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
 import org.apache.calcite.util.ImmutableBeans;
@@ -222,7 +233,6 @@ import static org.apache.calcite.sql.SqlUtil.stripAs;
  * <p>The public entry points are: {@link #convertQuery},
  * {@link #convertExpression(SqlNode)}.
  */
-@SuppressWarnings("UnstableApiUsage")
 public class SqlToRelConverter {
   //~ Static fields/initializers ---------------------------------------------
 
@@ -584,6 +594,7 @@ public class SqlToRelConverter {
         collation = requiredCollation(result);
       }
     }
+    System.out.println(RelToSql.convertToSql(result));
     checkConvertedType(query, result);
 
     if (SQL2REL_LOGGER.isDebugEnabled()) {
@@ -1944,6 +1955,11 @@ public class SqlToRelConverter {
   protected RexNode convertExtendedExpression(
       SqlNode node,
       Blackboard bb) {
+    //If path,
+//    if (node instanceof SqlIdentifier) {
+//      SqlValidatorNamespace fromNamespace =
+//          validator.getNamespace((SqlIdentifier) node).resolve();
+//    }
     return null;
   }
 
@@ -2049,7 +2065,7 @@ public class SqlToRelConverter {
     }
   }
 
-  protected void convertFrom(
+  public void convertFrom(
       Blackboard bb,
       SqlNode from) {
     convertFrom(bb, from, Collections.emptyList());
@@ -2484,13 +2500,55 @@ public class SqlToRelConverter {
       SqlNodeList extendedColumns, SqlNodeList tableHints) {
     final SqlValidatorNamespace fromNamespace =
         validator.getNamespace(id).resolve();
+
+
+
+    final String datasetName =
+        datasetStack.isEmpty() ? null : datasetStack.peek();
+    final boolean[] usedDataset = {false};
+//
+//    if (id instanceof SqlPathIdentifier) {
+//      convertFrom(bb, ((SqlPathIdentifier) id).getSqlPathJoin());
+//      RelNode rel = bb.root;
+//      SqlPathIdentifier p = (SqlPathIdentifier) id;
+//
+//      RelDataType rightMost = validator.getNamespace(p.getSqlPathJoin().getRight()).resolve().getRowType();
+//      List<RexInputRef> refs = IntStream.range(rel.getRowType().getFieldCount() - rightMost.getFieldCount(),
+//              rel.getRowType().getFieldCount())
+//          .mapToObj(i->rexBuilder.makeInputRef(rel, i))
+//          .collect(Collectors.toList());
+//
+//      RelNode node = relBuilder.push(rel)
+//          .project(refs)
+//          .build();
+//      bb.setRoot(node, true);
+//      return;
+//    }
     if (fromNamespace.getNode() != null) {
       convertFrom(bb, fromNamespace.getNode());
       return;
     }
-    final String datasetName =
-        datasetStack.isEmpty() ? null : datasetStack.peek();
-    final boolean[] usedDataset = {false};
+    if (fromNamespace.getTable().unwrap(NestedSQRLTable.class) != null) {
+      NestedSQRLTable table = fromNamespace.getTable().unwrap(NestedSQRLTable.class);
+
+      RelNode tableRel = table.toRel(this, relBuilder, fromNamespace,
+          catalogReader, datasetName, usedDataset, bb);
+      bb.setPullup(true);
+      bb.setPullupAlias(table.getAlias());
+      bb.setPullupPkNames(table.getBaseTable().getVt().getPrimaryKeyNames());
+
+      bb.setRoot(tableRel, true);
+      return;
+    }
+    if (fromNamespace.getTable().unwrap(AbsoluteSQRLTable.class) != null) {
+      AbsoluteSQRLTable table = fromNamespace.getTable().unwrap(AbsoluteSQRLTable.class);
+
+      RelNode tableRel = table.toRel(this, relBuilder, fromNamespace,
+          catalogReader, datasetName, usedDataset, bb);
+
+      bb.setRoot(tableRel, true);
+      return;
+    }
     RelOptTable table =
         SqlValidatorUtil.getRelOptTable(fromNamespace, catalogReader,
             datasetName, usedDataset);
@@ -2856,6 +2914,23 @@ public class SqlToRelConverter {
     final Blackboard fromBlackboard = createBlackboard(scope, null, false);
     SqlNode left = join.getLeft();
     SqlNode right = join.getRight();
+//
+//    if (validator.getNamespace(left).resolve() instanceof JoinAliasTableNamespace) {
+//      JoinAliasTableNamespace ns = (JoinAliasTableNamespace)validator.getNamespace(left).resolve();
+//      //Tell the BB that there needs to be a join between this set of entries and the alias p
+//      final SqlValidatorScope rightScope =
+//          Util.first(validator.getJoinScope(right),
+//              ((DelegatingScope) bb.scope).getParent());
+//      final Blackboard rightBlackboard =
+//          createBlackboard(rightScope, null, false);
+//      convertFrom(rightBlackboard, right);
+//      final RelNode rightRel = rightBlackboard.root;
+//      bb.setRoot(rightRel, false);
+//      bb.setPullup(true);
+//      bb.setPullupAlias(ns.getAlias());
+//      return;
+//    }
+
     final SqlValidatorScope leftScope =
         Util.first(validator.getJoinScope(left),
             ((DelegatingScope) bb.scope).getParent());
@@ -2870,6 +2945,38 @@ public class SqlToRelConverter {
     final RelNode leftRel = leftBlackboard.root;
     convertFrom(rightBlackboard, right);
     final RelNode tempRightRel = rightBlackboard.root;
+    //Get pullup conditions here. we will need to get the indices for each alias
+    Optional<RexNode> pullup = Optional.empty();
+    if (rightBlackboard.isPullup()) {
+
+      bb.setRoot(ImmutableList.of(leftRel, tempRightRel));
+//      replaceSubQueries(bb, condition, RelOptUtil.Logic.UNKNOWN_AS_FALSE);
+      final RelNode newRightRel = bb.root == null || bb.registered.size() == 0
+          ? tempRightRel
+          : bb.reRegister(tempRightRel);
+      bb.setRoot(ImmutableList.of(leftRel, newRightRel));
+      String pullupAlias = rightBlackboard.getPullupAlias();
+
+      RexNode conditionExp = bb.convertExpression(new SqlIdentifier(List.of(pullupAlias,
+          rightBlackboard.getPullupPkNames().get(0)),
+          SqlParserPos.ZERO));
+
+      RexNode rightRex = null;
+      List<RelDataTypeField> fieldList = tempRightRel.getRowType().getFieldList();
+//      for (int i = 0; i < fieldList.size(); i++) {
+//        RelDataTypeField field = fieldList.get(i);
+//        if (field.getName().equalsIgnoreCase("_uuid")) {
+
+      //assume first is PK
+      int offset = leftRel.getRowType().getFieldCount();
+      rightRex = rexBuilder.makeInputRef(
+          tempRightRel.getRowType().getFieldList().get(0).getType(), offset);
+//        }
+//      }
+
+      conditionExp = rexBuilder.makeCall(SqlStdOperatorTable.EQUALS, conditionExp, rightRex);
+      pullup = Optional.of(conditionExp);
+    }
 
     final JoinConditionType conditionType = join.getConditionType();
     final RexNode condition;
@@ -2881,7 +2988,20 @@ public class SqlToRelConverter {
     } else {
       switch (conditionType) {
         case NONE:
-          condition = rexBuilder.makeLiteral(true);
+          //
+          if (join instanceof SqlPathJoin) {
+            //Get ego centric PK from left
+            //Right is always an identifier
+            //Create the condition (USING with offsets or something)
+            condition = convertImplicitUsing(
+                validator.getNamespace(left),
+                validator.getNamespace(right),
+                getPkNames(validator.getNamespace(left),
+                    validator.getNamespace(right).getTable().unwrap(SQRLTable.class)
+                    ), Optional.empty());
+          } else {
+            condition = rexBuilder.makeLiteral(true);
+          }
           rightRel = tempRightRel;
           break;
         case USING:
@@ -2902,13 +3022,38 @@ public class SqlToRelConverter {
           throw Util.unexpected(conditionType);
       }
     }
+
+    //Add pullup condition if it exists
+    RexNode newCondition = pullup.map(p->RexUtil.composeConjunction(rexBuilder, List.of(condition, p)))
+        .orElse(condition);
+
     final RelNode joinRel = createJoin(
         fromBlackboard,
         leftRel,
         rightRel,
-        condition,
+        newCondition,
         convertJoinType(join.getJoinType()));
     bb.setRoot(joinRel, false);
+  }
+
+  private List<String> getPkNames(SqlValidatorNamespace unwrap, SQRLTable unwrap1) {
+    //Common names for pks
+
+    SqlValidatorTable left;
+    if (unwrap.getNode() instanceof SqlPathJoin) {
+      SqlPathJoin pathJoin = (SqlPathJoin) unwrap.getNode();
+      left = validator.getNamespace(pathJoin.getRight())
+          .getTable();
+    } else {
+      left = unwrap.getTable();
+    }
+
+    List<String> result = left.unwrap(SQRLTable.class)
+        .getVt().getPrimaryKeyNames().stream()
+        .distinct()
+        .filter(v -> unwrap1.getVt().getPrimaryKeyNames().contains(v))
+        .collect(Collectors.toList());
+    return result;
   }
 
   private RexNode convertNaturalCondition(
@@ -2980,6 +3125,39 @@ public class SqlToRelConverter {
     return Pair.of(conditionExp, newRightRel);
   }
 
+
+  private @Nonnull RexNode convertImplicitUsing(SqlValidatorNamespace leftNamespace,
+      SqlValidatorNamespace rightNamespace,
+      List<String> nameList, Optional<RexNode> pullup) {
+    final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
+    final List<RexNode> list = new ArrayList<>();
+    for (String name : nameList) {
+      List<RexNode> operands = new ArrayList<>();
+      int offset = 0;
+      for (SqlValidatorNamespace n : ImmutableList.of(leftNamespace,
+          rightNamespace)) {
+        final RelDataType rowType = n.getRowType();
+        //get last field instead of first to support ego-centric pathing
+        RelDataTypeField field = null;
+        for (int i = rowType.getFieldCount() - 1; i >= 0; i--) {
+          if (nameMatcher.matches(rowType.getFieldList().get(i).getName(), name)) {
+            field = rowType.getFieldList().get(i);
+            break;
+          }
+        }
+
+        Preconditions.checkNotNull(field);
+
+        operands.add(
+            rexBuilder.makeInputRef(field.getType(),
+                offset + field.getIndex()));
+        offset += rowType.getFieldList().size();
+      }
+      list.add(rexBuilder.makeCall(SqlStdOperatorTable.EQUALS, operands));
+    }
+    pullup.ifPresent(list::add);
+    return RexUtil.composeConjunction(rexBuilder, list);
+  }
   /**
    * Returns an expression for matching columns of a USING clause or inferred
    * from NATURAL JOIN. "a JOIN b USING (x, y)" becomes "a.x = b.x AND a.y =
@@ -3018,6 +3196,7 @@ public class SqlToRelConverter {
       case COMMA:
       case INNER:
       case CROSS:
+      case IMPLICIT:
         return JoinRelType.INNER;
       case FULL:
         return JoinRelType.FULL;
@@ -4382,7 +4561,7 @@ public class SqlToRelConverter {
   /**
    * Workspace for translating an individual SELECT statement (or sub-SELECT).
    */
-  protected class Blackboard implements SqlRexContext, SqlVisitor<RexNode>,
+  public class Blackboard implements SqlRexContext, SqlVisitor<RexNode>,
       InitializerContext {
     /**
      * Collection of {@link RelNode} objects which correspond to a SELECT
@@ -4397,6 +4576,15 @@ public class SqlToRelConverter {
     private List<RegisterArgs> registered = new ArrayList<>();
 
     private boolean isPatternVarRef = false;
+    @Getter
+    @Setter
+    private boolean pullup = false;
+    @Getter
+    @Setter
+    private String pullupAlias = null;
+    @Getter
+    @Setter
+    private List<String> pullupPkNames = null;
 
     final List<RelNode> cursors = new ArrayList<>();
 
@@ -5115,6 +5303,35 @@ public class SqlToRelConverter {
     }
 
     public RexNode visit(SqlIdentifier id) {
+      if (id instanceof SqlIdentifierWithPath) {
+        System.out.println();
+        //do the join
+        Blackboard bb = createBlackboard(this.scope, null, false);
+        convertFrom(bb, ((SqlIdentifierWithPath) id).getTable());
+        System.out.println(bb.root);
+
+        this.root = relBuilder.push(root)
+            .push(bb.root)
+            //all types must be non-null for left joins.
+            .join(JoinRelType.INNER, rexBuilder.makeLiteral(true))
+            .build();
+
+//        root = relBuilder.push(root)
+//            .project()
+//            .build();
+        //create a new rex node
+        //find the literal looking from the left
+        for (int i = root.getRowType().getFieldCount() - 1; i >= 0; i--) {
+            final RelDataType rowType = root.getRowType();
+            final boolean matches = catalogReader.nameMatcher().matches(
+                rowType.getFieldList().get(i).getName(), id.names.get(id.names.size() - 1)
+            );
+            if (matches) {
+              return rexBuilder.makeInputRef(root, i);
+            }
+        }
+      }
+
       return convertIdentifier(this, id);
     }
 

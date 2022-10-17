@@ -4,6 +4,7 @@ import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.hints.TopNHint;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.local.HasToTable;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
@@ -125,13 +126,13 @@ public class JoinDeclarationFactory {
     return (SqlSelect) sqlNode;
   }
 
-  public VirtualRelationalTable getToTable(SqlValidator validator, SqlNode sqlNode) {
-    SqlBasicCall tRight = (SqlBasicCall) getRightDeepTable(sqlNode);
+  public SQRLTable getToTable(SqlValidator validator, SqlNode sqlNode) {
 
-    return validator.getNamespace(tRight).getTable()
-        .unwrap(VirtualRelationalTable.class);
+    SqlNode tRight = getRightDeepTable(sqlNode);
+    HasToTable table = validator.getNamespace(tRight).getTable()
+        .unwrap(HasToTable.class);
+    return table.getToTable();
   }
-
   public Multiplicity deriveMultiplicity(RelNode relNode) {
     Multiplicity multiplicity = relNode instanceof LogicalSort &&
         ((LogicalSort) relNode).fetch != null &&

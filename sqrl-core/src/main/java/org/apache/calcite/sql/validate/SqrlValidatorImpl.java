@@ -25,6 +25,7 @@ import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.StatementKind;
 import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
+import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.SQRLTable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -48,6 +49,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -61,6 +63,7 @@ import org.apache.calcite.prepare.Prepare;
 import org.apache.calcite.rel.type.DynamicRecordType;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.rel.type.RelRecordType;
@@ -101,6 +104,8 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqlOrderBy;
+import org.apache.calcite.sql.SqlPathIdentifier;
+import org.apache.calcite.sql.SqlPathJoin;
 import org.apache.calcite.sql.SqlPivot;
 import org.apache.calcite.sql.SqlSampleSpec;
 import org.apache.calcite.sql.SqlSelect;
@@ -138,6 +143,7 @@ import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Static;
 import org.apache.calcite.util.Util;
+import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 
 /**
  * Default implementation of {@link SqlValidator}.
@@ -148,13 +154,17 @@ import org.apache.calcite.util.Util;
  *
  * https://github.com/DataSQRL/sqml/compare/d4944237241bddaad41fee7f19a6cafcdb121a07...main
  */
-public class SqrlValidatorImpl extends SqlValidatorImpl {
+public class SqrlValidatorImpl extends FlinkCalciteSqlValidator {
 
+  public boolean resolveNestedColumns = true;
   SqlIdentifier self = new SqlIdentifier(ReservedName.SELF_IDENTIFIER.getDisplay(),
       SqlParserPos.ZERO);
 
   @Getter
   private Optional<SqlValidatorNamespace> contextTable;
+
+  @Getter
+  public List<String> assignmentPath = null;
   //~ Constructors -----------------------------------------------------------
 
   /**
@@ -308,6 +318,11 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
     // Expand the select item: fully-qualify columns, and convert
     // parentheses-free functions such as LOCALTIME into explicit function
     // calls.
+
+    //SQRL: We also want to see if this is a pathed expression so we can rewrite it
+    // to be on a different scoped table.
+
+
     SqlNode expanded = expandSelectExpr(selectItem, scope, select);
     final String alias =
         deriveAlias(
@@ -644,7 +659,10 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       top = addSelfTableToExpression(op.getQuery());
     } else if (op.getStatementKind() == StatementKind.JOIN) {
       top = performJoinRewrites(op.getQuery());
-      top = addSelfTableToQuery(op, top);
+      assignmentPath = op.getStatement().getNamePath().popLast().stream()
+          .map(e->e.getCanonical())
+          .collect(Collectors.toList());
+//      top = addSelfTableToQuery(op, top);
     } else if (op.getStatementKind() == StatementKind.QUERY ||
         op.getStatementKind() == StatementKind.DISTINCT_ON) {
       top = performQueryRewrites(op.getQuery());
@@ -672,7 +690,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
 
   private SqlNode addSelfTableToQuery(StatementOp op, SqlNode top) {
     Optional<SQRLTable> selfTable = resolveSelf(op).map(
-        ExpandableTableNamespace::getDestinationTable);
+        e->e.getTable().unwrap(SQRLTable.class));
     if (selfTable.isEmpty()) {
       return top;
     }
@@ -680,7 +698,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
     return rewriteSelfTableToQuery(top);
   }
 
-  private Optional<ExpandableTableNamespace> resolveSelf(StatementOp op) {
+  private Optional<SqlValidatorNamespace> resolveSelf(StatementOp op) {
     SqrlEmptyScope emptyScope = new SqrlEmptyScope(this);
     List<String> names = new ArrayList<>();
     for (int i = 0; i < op.getStatement().getNamePath().size() - 1; i++) {
@@ -696,8 +714,8 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
     emptyScope.resolveTable(names, nameMatcher, Path.EMPTY, resolved);
     if (resolved.count() == 1) {
       SqlValidatorNamespace ns = resolved.only().namespace;
-      ExpandableTableNamespace namespace = (ExpandableTableNamespace)ns;
-      return Optional.of(namespace);
+//      ExpandableTableNamespace namespace = (ExpandableTableNamespace)ns;
+      return Optional.of(ns);
     }
     return Optional.empty();
   }
@@ -1404,14 +1422,13 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
         // builtin function requiring special casing.  If it's
         // not, we'll handle it later during overload resolution.
 
-        //SQRL: Don't do this, we need to know the identifier resolution to pick the correct funciton
-//        final List<SqlOperator> overloads = new ArrayList<>();
-//        opTab.lookupOperatorOverloads(function.getNameAsId(),
-//            function.getFunctionType(), SqlSyntax.FUNCTION, overloads,
-//            catalogReader.nameMatcher());
-//        if (overloads.size() == 1) {
-//          ((SqlBasicCall) call).setOperator(overloads.get(0));
-//        }
+        final List<SqlOperator> overloads = new ArrayList<>();
+        opTab.lookupOperatorOverloads(function.getNameAsId(),
+            function.getFunctionType(), SqlSyntax.FUNCTION, overloads,
+            catalogReader.nameMatcher());
+        if (overloads.size() == 1) {
+          ((SqlBasicCall) call).setOperator(overloads.get(0));
+        }
       }
       if (config.callRewrite()) {
         node = call.getOperator().rewriteCall(this, call);
@@ -1846,7 +1863,26 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       // a known type with the unknown type
       return;
     }
-    nodeToTypeMap.put(node, type);
+    RelDataType type1 = removeRelationships(type);
+
+    nodeToTypeMap.put(node, type1);
+  }
+
+  private RelDataType removeRelationships(RelDataType type) {
+    if (type instanceof RelRecordType) {
+
+      FieldInfoBuilder b = new FieldInfoBuilder(typeFactory);
+      for (RelDataTypeField field : type.getFieldList()) {
+        if (!(field.getType() instanceof RelRecordType)) {
+          b.add(field);
+        }
+      }
+      return b.build();
+    }
+
+    return type;
+
+
   }
 
   public void removeValidatedNodeType(SqlNode node) {
@@ -1901,7 +1937,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
   RelDataType deriveTypeImpl(
       SqlValidatorScope scope,
       SqlNode operand) {
-    DeriveTypeVisitor v = new DeriveTypeVisitor(scope);
+    DeriveTypeVisitor2 v = new DeriveTypeVisitor2(this, typeFactory, catalogReader, scope);
     final RelDataType type = operand.accept(v);
     return Objects.requireNonNull(scope.nullifyType(operand, type));
   }
@@ -2241,7 +2277,8 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
    *                      scope
    * @return registered node, usually the same as {@code node}
    */
-  private SqlNode registerFrom(
+  AtomicInteger falseAlias = new AtomicInteger();
+  public SqlNode registerFrom(
       SqlValidatorScope parentScope,
       SqlValidatorScope usingScope,
       boolean register,
@@ -2379,6 +2416,62 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       return node;
 
     case JOIN:
+      if (node instanceof SqlPathJoin) {
+        SqlJoin join2 = ((SqlPathJoin) node);
+        final JoinScope joinScope2 =
+            new JoinScope(parentScope, usingScope, join2);
+        scopes.put(join2, joinScope2);
+        final SqlNode left2 = join2.getLeft();
+        final SqlNode right2 = join2.getRight();
+        boolean forceLeftNullable2 = forceNullable;
+        boolean forceRightNullable2 = forceNullable;
+        switch (join2.getJoinType()) {
+          case LEFT:
+            forceRightNullable2 = true;
+            break;
+          case RIGHT:
+            forceLeftNullable2 = true;
+            break;
+          case FULL:
+            forceLeftNullable2 = true;
+            forceRightNullable2 = true;
+            break;
+        }
+        final SqlNode newLeft2 =
+            registerFrom(
+                parentScope,
+                joinScope2,
+                false,
+                left2,
+                left2,
+                "__x_"+falseAlias.incrementAndGet(),
+                null,
+                forceLeftNullable2,
+                lateral);
+        if (newLeft2 != left2) {
+          join2.setLeft(newLeft2);
+        }
+        final SqlNode newRight2 =
+            registerFrom(
+                parentScope,
+                joinScope2,
+                false,
+                right2,
+                right2,
+                "__x_"+falseAlias.incrementAndGet(),
+                null,
+                forceRightNullable2,
+                lateral);
+        if (newRight2 != right2) {
+          join2.setRight(newRight2);
+        }
+        registerSubQueries(joinScope2, join2.getCondition());
+        final JoinNamespace joinNamespace2 = new JoinNamespace(this, join2);
+        registerNamespace(null, null, joinNamespace2, forceNullable);
+        return join2;
+      }
+
+
       final SqlJoin join = (SqlJoin) node;
       final JoinScope joinScope =
           new JoinScope(parentScope, usingScope, join);
@@ -2433,6 +2526,21 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       return join;
 
     case IDENTIFIER:
+      //Sqrl: Also add scope for join path
+      if (node instanceof SqlPathIdentifier) {
+//        SqlJoin join2 = ((SqlPathIdentifier) node).getSqlPathJoin();
+//        registerFrom(
+//            parentScope,
+//            usingScope,
+//            false,
+//            join2,
+//            enclosingNode,
+//            alias,
+//            extendList,
+//            forceNullable,
+//            lateral);
+      }
+
       final SqlIdentifier id = (SqlIdentifier) node;
       final IdentifierNamespace newNs =
           new IdentifierNamespace(
@@ -2742,17 +2850,18 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       //attempt to derive type to force functions to resolve
       //There may be consequences of deriving type too early. What are they?
       SqrlValidatorImpl that = this;
-      select.getSelectList().accept(new SqlBasicVisitor<>(){
-        @Override
-        public Object visit(SqlCall n) {
-          if (n instanceof SqlBasicCall) {
-            SqlBasicCall c = (SqlBasicCall)n;
-            SqlOperator op = c.getOperator();
-            op.deriveType(that, selectScope, c);
-          }
-          return super.visit(n);
-        }
-      });
+      //todo: should be 'expanded' select list
+//      select.getSelectList().accept(new SqlBasicVisitor<>(){
+//        @Override
+//        public Object visit(SqlCall n) {
+//          if (n instanceof SqlBasicCall) {
+//            SqlBasicCall c = (SqlBasicCall)n;
+//            SqlOperator op = c.getOperator();
+//            op.deriveType(that, selectScope, c);
+//          }
+//          return super.visit(n);
+//        }
+//      });
 
       if (isAggregate(select)) {
         aggScope =
@@ -3371,6 +3480,11 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       break;
     default:
       validateQuery(node, scope, targetRowType);
+      //sqrl: also register join path
+      if (node instanceof SqlPathIdentifier) {
+        SqlPathIdentifier p = (SqlPathIdentifier)node;
+        validateJoin(p.getSqlPathJoin(), scope);
+      }
       break;
     }
 
@@ -3506,6 +3620,10 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
 //      if ((condition == null) && !natural) {
 //        throw newValidationError(join, RESOURCE.joinRequiresCondition());
 //      }
+      break;
+    case IMPLICIT:
+
+
       break;
     case COMMA:
     case CROSS:
@@ -4253,7 +4371,9 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
           && ((SqlNodeList) groupItem).size() == 0) {
         continue;
       }
-      validateGroupItem(groupScope, aggregatingScope, groupItem);
+      Expander2 expander2 = new Expander2(this, groupScope);
+      SqlNode expanded = groupItem.accept(expander2);
+      validateGroupItem(groupScope, aggregatingScope, expanded);
     }
 
     SqlNode agg = aggFinder.findAgg(groupList);
@@ -5181,12 +5301,71 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
       if (scope.getValue() instanceof JoinScope) {
         for (ScopeChild child : ((JoinScope)scope.getValue()).children) {
           //we may override aliases with other namespaces if we can't find unique names
-          map.put(child.name, child.namespace);
+          if (child.namespace instanceof IdentifierNamespace && ((IdentifierNamespace) child.namespace).getStatus() != Status.IN_PROGRESS) {
+            map.put(child.name, child.namespace);
+          }
+        }
+      }
+    }
+
+    //Unknown why a single table isn't in the job scope
+    if (map.isEmpty()) {
+      for (Map.Entry<SqlNode, SqlValidatorScope> scope : scopes.entrySet()) {
+        if (scope.getKey() instanceof SqlSelect) {
+          for (ScopeChild child : ((ListScope)scope.getValue()).children) {
+            //we may override aliases with other namespaces if we can't find unique names
+            if (child.namespace instanceof IdentifierNamespace && ((IdentifierNamespace) child.namespace).getStatus() != Status.IN_PROGRESS) {
+              map.put(child.name, child.namespace);
+            }
+          }
         }
       }
     }
 
     return map;
+  }
+
+  public SqlValidatorScope getScopeForAlias(String name) {
+
+    for (Map.Entry<SqlNode, SqlValidatorScope> scope : scopes.entrySet()) {
+      if (scope.getValue() instanceof JoinScope) {
+        for (ScopeChild child : ((JoinScope)scope.getValue()).children) {
+          //we may override aliases with other namespaces if we can't find unique names
+          if (((IdentifierNamespace) child.namespace).getStatus() != Status.IN_PROGRESS) {
+            return scope.getValue();
+          }
+        }
+      }
+    }
+
+    //Unknown why a single table isn't in the job scope
+//    if (map.isEmpty()) {
+      for (Map.Entry<SqlNode, SqlValidatorScope> scope : scopes.entrySet()) {
+        if (scope.getKey() instanceof SqlSelect) {
+          for (ScopeChild child : ((ListScope)scope.getValue()).children) {
+            //we may override aliases with other namespaces if we can't find unique names
+            if (((IdentifierNamespace) child.namespace).getStatus() != Status.IN_PROGRESS) {
+              return scope.getValue();
+            }
+          }
+        }
+    }
+      return null;
+  }
+  public SqlValidatorScope getScopeForSelect() {
+    //Unknown why a single table isn't in the job scope
+//    if (map.isEmpty()) {
+      for (Map.Entry<SqlNode, SqlValidatorScope> scope : scopes.entrySet()) {
+        if (scope.getKey() instanceof SqlSelect) {
+          for (ScopeChild child : ((ListScope)scope.getValue()).children) {
+            //we may override aliases with other namespaces if we can't find unique names
+            if (((IdentifierNamespace) child.namespace).getStatus() != Status.IN_PROGRESS) {
+              return scope.getValue();
+            }
+          }
+        }
+    }
+      return null;
   }
 
   public String getContextAlias() {
@@ -5772,7 +5951,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
 
   public SqlNode expandSelectExpr(SqlNode expr,
       SelectScope scope, SqlSelect select) {
-    final Expander expander = new SelectExpander(this, scope, select);
+    final Expander2 expander = new SelectExpander2(this, scope, select);
     final SqlNode newExpr = expr.accept(expander);
     if (expr != newExpr) {
       setOriginal(newExpr, expr);
@@ -5781,7 +5960,7 @@ public class SqrlValidatorImpl extends SqlValidatorImpl {
   }
 
   public SqlNode expand(SqlNode expr, SqlValidatorScope scope) {
-    final Expander expander = new Expander(this, scope);
+    final Expander2 expander = new Expander2(this, scope);
     SqlNode newExpr = expr.accept(expander);
     if (expr != newExpr) {
       setOriginal(newExpr, expr);

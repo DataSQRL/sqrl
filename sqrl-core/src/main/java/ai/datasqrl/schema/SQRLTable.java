@@ -3,9 +3,11 @@ package ai.datasqrl.schema;
 import ai.datasqrl.config.util.StreamUtil;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.calcite.SqrlTypeFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
+import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.local.HasToTable;
 import ai.datasqrl.schema.Relationship.JoinType;
+import ai.datasqrl.schema.Relationship.Multiplicity;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.DataContext;
@@ -21,6 +23,7 @@ import org.apache.calcite.sql.SqlNode;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.calcite.util.Pair;
 
 /**
  * A {@link SQRLTable} represents a logical table in the SQRL script which contains fields that are
@@ -31,28 +34,31 @@ import java.util.stream.Stream;
  *
  */
 @Getter
-public class SQRLTable implements Table, org.apache.calcite.schema.Schema, ScannableTable {
+public class SQRLTable implements Table, org.apache.calcite.schema.Schema, ScannableTable
+    , CustomColumnResolvingTable, HasToTable
+{
 
   @NonNull
   NamePath path;
   @NonNull
   final FieldList fields = new FieldList();
 
-  private RelDataType dataType;
+  private RelDataType fullDataType;
   private Optional<SQRLTable> parent;
   private Optional<List<TableFunctionArgument>> tableArguments = Optional.empty();
+  private VirtualRelationalTable vt;
 
   public SQRLTable() {
 
   }
 
-  public SQRLTable(RelDataType dataType) {
-    this.dataType = dataType;
+  public SQRLTable(RelDataType fullDataType) {
+    this.fullDataType = fullDataType;
     this.parent = Optional.empty();
   }
 
-  public SQRLTable(RelDataType dataType, SQRLTable parent) {
-    this.dataType = dataType;
+  public SQRLTable(RelDataType fullDataType, SQRLTable parent) {
+    this.fullDataType = fullDataType;
     this.parent = Optional.of(parent);
   }
 
@@ -84,44 +90,48 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
     return col;
   }
 
-  public Relationship addRelationship(Name name, SQRLTable toTable, Relationship.JoinType joinType,
-                                      Relationship.Multiplicity multiplicity) {
-    Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity);
+  public Relationship addRelationship(Name name, SQRLTable toTable, JoinType joinType,
+                                      Multiplicity multiplicity, SqlNode node) {
+    Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity, node);
     fields.addField(rel);
     rebuildType();
     return rel;
   }
 
-  public void rebuildType() {
-    SqrlTypeFactory typeFactory = new SqrlTypeFactory(new SqrlTypeSystem());
-    FieldInfoBuilder b = new FieldInfoBuilder(typeFactory);
-    for (Column field : getColumns(true)) {
-      b.add(field.getName().getDisplay(), field.getType());
-    }
-
-    getAllRelationships().forEach(r->
-        //remap to PEEK_FIELDS_NO_EXPAND?
-        b.add(r.getName().getDisplay(), convertToStruct(r.getToTable().getFieldRowType(typeFactory))));
-
-    dataType = b.build();
+  public void setVT(VirtualRelationalTable vt) {
+    this.vt = vt;
+    rebuildType();
   }
 
-  private RelDataType getFieldRowType(SqrlTypeFactory typeFactory) {
+  public void rebuildType() {
+    RelDataTypeFactory typeFactory = PlannerFactory.getTypeFactory();
+    FieldInfoBuilder b = new FieldInfoBuilder(typeFactory);
+//    for (Column field : getColumns(true)) {
+//      b.add(field.getName().getDisplay(), field.getType())
+//          .nullable(field.isNullable());
+//    }
+
+    if (vt != null) {
+      b.addAll(vt.getRowType().getFieldList());
+    }
+    getAllRelationships().forEach(r->
+//        remap to PEEK_FIELDS_NO_EXPAND?
+        b.add(r.getName().getDisplay(), convertToStruct(r.getToTable().getFieldRowType(typeFactory))));
+
+    fullDataType = b.build();
+  }
+
+  private RelDataType getFieldRowType(RelDataTypeFactory typeFactory) {
     FieldInfoBuilder b = new FieldInfoBuilder(typeFactory);
     for (Column field : getColumns(true)) {
       b.add(field.getName().getDisplay(), field.getType());
     }
-
     return b.build();
   }
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory) {
-    if (dataType == null) {
-      rebuildType();
-    }
-
-   return dataType;
+    return vt.getRowType();
   }
 
   private RelDataType convertToStruct(RelDataType dataType) {
@@ -130,14 +140,33 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
       return null;
     }
     RelRecordType r = (RelRecordType)dataType;
-    SqrlTypeFactory t = new SqrlTypeFactory(new SqrlTypeSystem());
-    return t.createStructType(StructKind.PEEK_FIELDS_NO_EXPAND,
+    RelDataTypeFactory t = PlannerFactory.getTypeFactory();
+
+    return new RelTypeWithHidden(dataType,
         r.getFieldList().stream()
-            .map(e->e.getType())
-            .collect(Collectors.toList()),
-        r.getFieldNames());
+            .collect(Collectors.toList()));
   }
 
+  @Override
+  public SQRLTable getToTable() {
+    return this;
+  }
+
+  //used for type discovery
+  public static class RelTypeWithHidden extends RelRecordType {
+
+    private final RelDataType hidden;
+
+    public RelTypeWithHidden(RelDataType hidden, List<RelDataTypeField> fieldList) {
+      super(StructKind.PEEK_FIELDS_NO_EXPAND, fieldList);
+      this.hidden = hidden;
+    }
+
+    @Override
+    public RelDataTypeField getField(String fieldName, boolean caseSensitive, boolean elideRecord) {
+      return hidden.getField(fieldName, caseSensitive, elideRecord);
+    }
+  }
   @Override
   public Statistic getStatistic() {
     return Statistics.UNKNOWN;
@@ -301,5 +330,21 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
       }
     }
     return fields;
+  }
+
+  /**
+   * This can return an empty list if no results are found (eg when trying to resolve an alias)
+   */
+  @Override
+  public List<Pair<RelDataTypeField, List<String>>> resolveColumn(RelDataType relDataType,
+      RelDataTypeFactory relDataTypeFactory, List<String> list) {
+    RelDataTypeField field = fullDataType.getField(list.get(0), false, false);
+    if (field == null) {
+      return List.of();
+    }
+
+    return List.of(Pair.of(
+        field,
+        list.subList(1, list.size())));
   }
 }

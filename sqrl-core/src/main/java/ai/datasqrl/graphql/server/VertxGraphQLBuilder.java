@@ -165,7 +165,10 @@ public class VertxGraphQLBuilder implements
     pgQuery.getPreparedQuery().execute(Tuple.from(paramObj))
         .map(r -> resultMapper(r, isList))
         .onSuccess(context.fut::complete)
-        .onFailure(context.fut::fail);
+        .onFailure(f->{
+          f.printStackTrace();
+          context.fut.fail(f);
+        });
     return null;
   }
 

@@ -1,0 +1,9 @@
+Orders.entries.discount := SELECT coalesce(discount, 0.0) FROM _;
+
+
+LogicalProject(EXPR$0=[coalesce($5, 0E0:DOUBLE)])
+  LogicalTableScan(table=[[entries$13]])
+
+
+SELECT COALESCE("discount", 0)
+FROM "entries$13"
