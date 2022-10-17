@@ -16,12 +16,12 @@ public class TemporalJoinHint implements SqrlHint {
 
     final int streamTimestampIdx;
     final int stateTimestampIdx;
-    final int[] streamPrimaryKeys;
+    final int[] statePrimaryKeys;
 
     @Override
     public RelHint getHint() {
         return RelHint.builder(HINT_NAME).hintOptions(
-                IntStream.concat(IntStream.of(streamTimestampIdx, stateTimestampIdx), IntStream.of(streamPrimaryKeys))
+                IntStream.concat(IntStream.of(streamTimestampIdx, stateTimestampIdx), IntStream.of(statePrimaryKeys))
                         .mapToObj(String::valueOf).collect(Collectors.toList())
         ).build();
     }

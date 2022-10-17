@@ -89,7 +89,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   private Map<String,Integer> getImportRowCounts() {
-    Map<String,Integer> rowCounts = new HashMap<>(example.getTableCounts());
+    Map<String,Integer> rowCounts = new LinkedHashMap<>(example.getTableCounts());
     rowCounts.put("entries",7);
     return rowCounts;
   }
@@ -135,15 +135,24 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
 
   @Test
   public void joinTest() {
-    ScriptBuilder builder = example.getImports();
+    ScriptBuilder builder = new ScriptBuilder();
+    builder.add("IMPORT ecommerce-data.Customer TIMESTAMP (_ingest_time - INTERVAL 1 MONTH) as updateTime"); //we fake that customer updates happen before orders
+    builder.add("IMPORT ecommerce-data.Orders TIMESTAMP _ingest_time as rowtime");
     Map<String,Integer> rowCounts = getImportRowCounts();
+    rowCounts.remove("product");
 
+    //Normal join
     builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");
     rowCounts.put("ordercustomer",5); //One order joins twice because customer record isn't deduplicated yet
+    //Interval join
     builder.add("OrderCustomerInterval := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
-            "AND o.\"time\" <= c.\"_ingest_time\" AND o.\"time\" >= c.\"_ingest_time\" - INTERVAL 1 YEAR");
+            "AND o.rowtime >= c.updateTime AND o.rowtime <= c.updateTime + INTERVAL 1 YEAR");
     rowCounts.put("ordercustomerinterval",5);
-    //TODO: Add temporal join
+    //Temporal join
+    builder.add("CustomerDedup := DISTINCT Customer ON customerid ORDER BY updateTime DESC");
+    rowCounts.put("customerdedup",4);
+    builder.add("OrderCustomerDedup := SELECT o.id, c.name, o.customerid FROM Orders o JOIN CustomerDedup c on o.customerid = c.customerid");
+    rowCounts.put("ordercustomerdedup",4);
 
     Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
     validateRowCounts(rowCounts, results);
@@ -183,12 +192,13 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
 
   @SneakyThrows
   private void validateRowCounts(Map<String,Integer> rowCounts, Map<String,ResultSet> results) {
-    for (Map.Entry<String,ResultSet> res : results.entrySet()) {
-      Integer numExpectedRows = rowCounts.get(res.getKey());
+    for (Map.Entry<String,Integer> rowCount : rowCounts.entrySet()) {
+      int numExpectedRows = rowCount.getValue();
+      ResultSet result = results.get(rowCount.getKey());
       assertNotNull(numExpectedRows);
-      System.out.println("Results for table: " + res.getKey());
-      int numRows = ResultSetPrinter.print(res.getValue(), System.out);
-      assertEquals(numExpectedRows,numRows,res.getKey());
+      System.out.println("Results for table: " + rowCount.getKey());
+      int numRows = ResultSetPrinter.print(result, System.out);
+      assertEquals(numExpectedRows,numRows,rowCount.getKey());
     }
   }
 

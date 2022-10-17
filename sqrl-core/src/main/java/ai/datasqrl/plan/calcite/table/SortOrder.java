@@ -49,7 +49,8 @@ public class SortOrder implements PullupOperator {
 
     public static SortOrder of(List<Integer> partition, RelCollation collation) {
         List<RelFieldCollation> collationList = new ArrayList<>();
-        collationList.addAll(partition.stream().map(idx -> new RelFieldCollation(idx, RelFieldCollation.Direction.ASCENDING)).collect(Collectors.toList()));
+        collationList.addAll(partition.stream().map(idx -> new RelFieldCollation(idx, RelFieldCollation.Direction.ASCENDING,
+                RelFieldCollation.NullDirection.LAST)).collect(Collectors.toList()));
         collationList.addAll(collation.getFieldCollations());
         return new SortOrder(RelCollations.of(collationList));
     }

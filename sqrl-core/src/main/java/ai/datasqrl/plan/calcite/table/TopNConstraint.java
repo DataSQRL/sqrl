@@ -53,6 +53,7 @@ public class TopNConstraint implements PullupOperator {
     }
 
     public TopNConstraint remap(IndexMap map) {
+        if (isEmpty()) return this;
         RelCollation newCollation = SqrlRexUtil.mapCollation(collation,map);
         List<Integer> newPartition = partition.stream().map(i -> map.map(i)).collect(Collectors.toList());
         return new TopNConstraint(newPartition, distinct, newCollation, limit);
@@ -64,7 +65,7 @@ public class TopNConstraint implements PullupOperator {
     }
 
     public static TopNConstraint dedup(List<Integer> partitionByIndexes, int timestampIndex) {
-        RelCollation collation = RelCollations.of(new RelFieldCollation(timestampIndex, RelFieldCollation.Direction.DESCENDING));
+        RelCollation collation = RelCollations.of(new RelFieldCollation(timestampIndex, RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
         return new TopNConstraint(partitionByIndexes,false,collation,Optional.of(1));
     }
 

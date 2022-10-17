@@ -2,6 +2,7 @@ package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.plan.calcite.hints.*;
 import ai.datasqrl.plan.calcite.table.ImportedSourceTable;
+import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.calcite.util.TimePredicate;
 import ai.datasqrl.plan.calcite.util.TimeTumbleFunctionCall;
@@ -23,6 +24,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.util.Holder;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
@@ -32,9 +34,7 @@ import org.apache.flink.table.planner.delegation.StreamPlanner;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -95,17 +95,31 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   @Override
   public RelNode visit(LogicalJoin join) {
     FlinkRelBuilder relBuilder = getBuilder();
+    RelNode left = join.getLeft().accept(this), right = join.getRight().accept(this);
     Optional<TemporalJoinHint> temporalHintOpt = SqrlHint.fromRel(join,TemporalJoinHint.CONSTRUCTOR);
     if (temporalHintOpt.isPresent()) {
-
+      TemporalJoinHint temporalHint = temporalHintOpt.get();
+      FlinkRexBuilder rexBuilder = FlinkPhysicalPlanRewriter.getRexBuilder(relBuilder);
+      Holder<RexCorrelVariable> correlVar = Holder.of(null);
+      relBuilder.push(left).variable(correlVar);
+      relBuilder.push(right);
+      CalciteUtil.addIdentityProjection(relBuilder, relBuilder.peek().getRowType().getFieldCount());
+      relBuilder.snapshot(rexBuilder.makeFieldAccess(correlVar.get(),temporalHint.getStreamTimestampIdx()));
+      CorrelateRexRewriter correlRewriter = new CorrelateRexRewriter(rexBuilder,left.getRowType().getFieldList(),
+              correlVar, right.getRowType().getFieldList());
+      relBuilder.filter(correlRewriter.rewrite(join.getCondition()));
+      Set<Integer> usedLeftFieldIdx = correlRewriter.usedLeftFieldIdx;
+      usedLeftFieldIdx.add(temporalHint.getStreamTimestampIdx());
+      relBuilder.correlate(JoinRelType.INNER, correlVar.get().id, usedLeftFieldIdx.stream()
+              .map(idx -> rexBuilder.makeInputRef(left,idx)).collect(Collectors.toList()));
+      return relBuilder.build();
+    } else {
+      relBuilder.push(left);
+      relBuilder.push(right);
+      JoinRelType joinType = join.getJoinType();
+      relBuilder.join(joinType, rewrite(join.getCondition(), relBuilder, left, right));
+      return relBuilder.build();
     }
-    Preconditions.checkArgument(temporalHintOpt.isEmpty(),"Not yet implemented");
-    RelNode left = join.getLeft().accept(this), right = join.getRight().accept(this);
-    relBuilder.push(left);
-    relBuilder.push(right);
-    JoinRelType joinType = join.getJoinType();
-    relBuilder.join(joinType,rewrite(join.getCondition(), relBuilder, left, right));
-    return relBuilder.build();
   }
 
   @Override
@@ -307,8 +321,8 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   @AllArgsConstructor
   private static class RexRewriter extends RexShuttle {
 
-    private final List<RelDataTypeField> inputFields;
-    private final FlinkRexBuilder rexBuilder;
+    final List<RelDataTypeField> inputFields;
+    final FlinkRexBuilder rexBuilder;
 
     @Override
     public RexNode visitInputRef(RexInputRef ref) {
@@ -341,6 +355,41 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       }
       return literal;
     }
+  }
+
+  private static class CorrelateRexRewriter extends RexRewriter {
+
+    final List<RelDataTypeField> leftFields;
+    final Holder<RexCorrelVariable> leftCorrelVar;
+    final List<RelDataTypeField> rightFields;
+    final Set<Integer> usedLeftFieldIdx = new HashSet<>();
+
+    public CorrelateRexRewriter(FlinkRexBuilder rexBuilder,
+                                List<RelDataTypeField> leftFields, Holder<RexCorrelVariable> leftCorrelVar,
+                                List<RelDataTypeField> rightFields) {
+      super(List.of(), rexBuilder);
+      this.leftFields = leftFields;
+      this.leftCorrelVar = leftCorrelVar;
+      this.rightFields = rightFields;
+    }
+
+    @Override
+    public RexNode visitInputRef(RexInputRef ref) {
+      int idx = ref.getIndex();
+      if (idx<leftFields.size()) {
+        usedLeftFieldIdx.add(idx);
+        return rexBuilder.makeFieldAccess(leftCorrelVar.get(), idx);
+
+      } else {
+        idx = idx - leftFields.size();
+        return rexBuilder.makeInputRef(rightFields.get(idx).getType(),idx);
+      }
+    }
+
+    public RexNode rewrite(RexNode node) {
+      return node.accept(this);
+    }
+
   }
 
 }

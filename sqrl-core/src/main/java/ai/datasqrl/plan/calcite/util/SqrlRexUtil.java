@@ -226,7 +226,8 @@ public class SqrlRexUtil {
         Set<SqlKind> result = new HashSet<>();
         if (collation.direction.isDescending()) result.add(SqlKind.DESCENDING);
         if (collation.nullDirection== RelFieldCollation.NullDirection.FIRST) result.add(SqlKind.NULLS_FIRST);
-        if (collation.nullDirection== RelFieldCollation.NullDirection.LAST) result.add(SqlKind.NULLS_LAST);
+        else if (collation.nullDirection== RelFieldCollation.NullDirection.LAST) result.add(SqlKind.NULLS_LAST);
+        else result.add(SqlKind.NULLS_LAST);
         return result;
     }
 
@@ -236,7 +237,7 @@ public class SqrlRexUtil {
         RexNode row_function = rexBuilder.makeOver(intType, rowFunction,
                 List.of(), partition, ImmutableList.copyOf(fieldCollations),
                 RexWindowBounds.UNBOUNDED_PRECEDING,
-                RexWindowBounds.UNBOUNDED_FOLLOWING, true, true, false,
+                RexWindowBounds.CURRENT_ROW, true, true, false,
                 false, false);
         return row_function;
     }

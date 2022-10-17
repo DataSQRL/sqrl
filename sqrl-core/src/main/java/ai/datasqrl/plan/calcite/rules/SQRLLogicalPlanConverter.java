@@ -32,6 +32,7 @@ import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlAggFunction;
+import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -184,7 +185,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     List<Integer> remainingDistincts = new ArrayList<>(primaryKey.targetsAsList());
                     topN.getCollation().getFieldCollations().stream().map(RelFieldCollation::getFieldIndex).forEach(remainingDistincts::remove);
                     topN.getPartition().stream().forEach(remainingDistincts::remove);
-                    remainingDistincts.stream().map(idx -> new RexFieldCollation(RexInputRef.of(idx, inputType), Set.of()))
+                    remainingDistincts.stream().map(idx -> new RexFieldCollation(RexInputRef.of(idx, inputType), Set.of(SqlKind.NULLS_LAST)))
                             .forEach(fieldCollations::add);
                 }
 
@@ -211,8 +212,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     conditions.add(rexBuilder.makeCall(SqlStdOperatorTable.EQUALS, RexInputRef.of(rowNumberIdx, windowType),
                             RexInputRef.of(rankIdx, windowType)));
                     if (topN.hasLimit()) {
-                        conditions.add(rexBuilder.makeCall(SqlStdOperatorTable.LESS_THAN_OR_EQUAL, RexInputRef.of(denserankIdx, windowType),
-                                rexBuilder.makeExactLiteral(BigDecimal.valueOf(topN.getLimit()))));
+                        conditions.add(makeWindowLimitFilter(rexBuilder, topN.getLimit(), denserankIdx, windowType));
                     }
                 } else {
                     final int limit;
@@ -222,15 +222,15 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     } else {
                         limit = topN.getLimit();
                     }
-                    conditions.add(rexBuilder.makeCall(SqlStdOperatorTable.LESS_THAN_OR_EQUAL,RexInputRef.of(rowNumberIdx,windowType),
-                            rexBuilder.makeExactLiteral(BigDecimal.valueOf(limit))));
+                    conditions.add(makeWindowLimitFilter(rexBuilder, limit, rowNumberIdx, windowType));
                 }
 
 
                 relBuilder.filter(conditions);
                 if (topN.hasPartition() && (!topN.hasLimit() || topN.getLimit()>1)) {
                     //Add sort on top
-                    SortOrder sortByRowNum = SortOrder.of(topN.getPartition(),RelCollations.of(new RelFieldCollation(rowNumberIdx, RelFieldCollation.Direction.ASCENDING)));
+                    SortOrder sortByRowNum = SortOrder.of(topN.getPartition(),RelCollations.of(new RelFieldCollation(rowNumberIdx,
+                            RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST)));
                     newSort = newSort.ifEmpty(sortByRowNum);
                 }
                 ContinuousIndexMap newPk = primaryKey.remap(targetLength, IndexMap.IDENTITY);
@@ -238,6 +238,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 return RelMeta.build(relBuilder.build(),type,newPk,timestamp,newSelect,newMaterialize)
                         .sort(newSort).build();
             }
+        }
+
+        private static RexNode makeWindowLimitFilter(RexBuilder rexBuilder, int limit, int fieldIdx, RelDataType windowType) {
+            SqlBinaryOperator comparison = SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
+            if (limit == 1) comparison = SqlStdOperatorTable.EQUALS;
+            return rexBuilder.makeCall(comparison,RexInputRef.of(fieldIdx, windowType),
+                    rexBuilder.makeExactLiteral(BigDecimal.valueOf(limit)));
         }
 
         public RelMeta inlineNowFilter(RelBuilder relB) {
@@ -593,7 +600,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     if (partition.isEmpty()) {
                         //If there is no partition, we can ignore the sort order plus limit and sort by time instead
                         timestamp = timestamp.getBestCandidate().fixAsTimestamp();
-                        collation = RelCollations.of(new RelFieldCollation(timestamp.getTimestampCandidate().getIndex(), RelFieldCollation.Direction.DESCENDING));
+                        collation = RelCollations.of(new RelFieldCollation(timestamp.getTimestampCandidate().getIndex(),
+                                RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
                         limit = Optional.empty();
                     }
                 } else if (topNHint.getType() == TopNHint.Type.DISTINCT_ON) {
@@ -604,8 +612,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     pk = ContinuousIndexMap.builder(partition.size()).addAll(partition).build(targetLength);
                     select = ContinuousIndexMap.identity(targetLength,targetLength); //Select everything
                     //Extract timestamp from collation
-                    RelFieldCollation fieldCol = Iterables.getOnlyElement(collation.getFieldCollations());
-                    Preconditions.checkArgument(fieldCol.direction== RelFieldCollation.Direction.DESCENDING);
+                    RelFieldCollation fieldCol = Iterables.getOnlyElement(collation.getFieldCollations())
+                            .withNullDirection(RelFieldCollation.NullDirection.LAST); //overwrite null-direction
+                    Preconditions.checkArgument(fieldCol.direction == RelFieldCollation.Direction.DESCENDING &&
+                            fieldCol.nullDirection == RelFieldCollation.NullDirection.LAST);
+                    collation = RelCollations.of(fieldCol);
                     timestamp = timestamp.getCandidateByIndex(fieldCol.getFieldIndex()).fixAsTimestamp();
                     partition = Collections.EMPTY_LIST; //remove partition since we set primary key to partition
                     limit = Optional.empty(); //distinct does not need a limit
@@ -846,8 +857,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     ContinuousIndexMap pk = ContinuousIndexMap.builder(leftInput.primaryKey,0)
                             .build(joinedIndexMap.getTargetLength());
                     TemporalJoinHint hint = new TemporalJoinHint(joinTimestamp.getTimestampCandidate().getIndex(),
-                            rightInput.timestamp.getTimestampCandidate().getIndex()+newLeftSideMaxIdx,
-                            pk.targetsAsArray());
+                            rightInput.timestamp.getTimestampCandidate().getIndex(),
+                            rightInput.primaryKey.targetsAsArray());
                     relB.join(JoinRelType.INNER, condition);
                     hint.addTo(relB);
                     return setRelHolder(RelMeta.build(relB.build(), TableType.STREAM,
