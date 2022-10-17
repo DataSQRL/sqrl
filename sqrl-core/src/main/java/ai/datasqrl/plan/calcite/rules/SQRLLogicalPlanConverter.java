@@ -1191,7 +1191,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     projectNames.add(null);
                     partitionKeys.add(ref);
                 }
-                RexFieldCollation orderBy = new RexFieldCollation(timestampRef, Set.of(SqlKind.DESCENDING));
+                RexFieldCollation orderBy = new RexFieldCollation(timestampRef, Set.of());
 
                 //Add aggregate functions
                 for (int i = 0; i < aggregateCalls.size(); i++) {
