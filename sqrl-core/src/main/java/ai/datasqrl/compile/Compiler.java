@@ -53,27 +53,18 @@ import org.apache.calcite.sql.ScriptNode;
 
 public class Compiler {
 
-  //lets just start postgres here
+  public static void main(String[] args) {
+    Path build = Path.of(".").resolve("build");
 
-
-//  public static void main(String[] args) {
-//    //for testing
-//    Path build = Path.of(
-//        "/Users/henneberger/Projects/sqml-official/sqml-examples/retail-example-bundle/build/");
-//
-//    System.setProperty("user.dir",
-//        build.toAbsolutePath().toString());
-//
-//    Compiler compiler = new Compiler();
-//    compiler.run(build);
-//  }
+    Compiler compiler = new Compiler();
+    compiler.run(build);
+  }
 
   /**
    * Process: All the files are in the build directory
    */
   @SneakyThrows
   public void run(Path build) {
-    JDBCTempDatabase jdbcTempDatabase = new JDBCTempDatabase();
 
 
     ErrorCollector collector = ErrorCollector.root();
@@ -96,6 +87,8 @@ public class Compiler {
 
     //TODO: push compute to the api
     Root root = writeGraphql(env, build);
+
+    JDBCTempDatabase jdbcTempDatabase = new JDBCTempDatabase();
     PhysicalPlan plan = dryRunFlink(env, s, jdbcTempDatabase);
     exec(plan, jdbcTempDatabase);
     startGraphql(build, root, jdbcTempDatabase);
