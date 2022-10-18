@@ -65,8 +65,6 @@ public class Compiler {
    */
   @SneakyThrows
   public void run(Path build) {
-
-
     ErrorCollector collector = ErrorCollector.root();
     SqrlCalciteSchema schema = new SqrlCalciteSchema(
         CalciteSchema.createRootSchema(false, false).plus());
@@ -87,6 +85,7 @@ public class Compiler {
 
     //TODO: push compute to the api
     Root root = writeGraphql(env, build);
+    System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(root));
 
     JDBCTempDatabase jdbcTempDatabase = new JDBCTempDatabase();
     PhysicalPlan plan = dryRunFlink(env, s, jdbcTempDatabase);

@@ -1,6 +1,7 @@
 package ai.datasqrl.physical.stream.flink;
 
 import ai.datasqrl.physical.stream.StreamEngine;
+import ai.datasqrl.plan.calcite.PlannerFactory.EPOCH_TO_TIMESTAMPFunction;
 import lombok.NonNull;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -9,6 +10,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.flink.table.api.internal.FlinkEnvProxy;
+import org.apache.flink.table.catalog.FunctionCatalog;
 
 public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
 
@@ -24,6 +27,7 @@ public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
         ));
     //env.getConfig().disableGenericTypes(); TODO: use to ensure efficient serialization
     env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
+    //            .forEach(e->registerFunc(e, catalog));
 //        FlinkUtilities.enableCheckpointing(env);
     return new FlinkStreamBuilder(this, env);
   }

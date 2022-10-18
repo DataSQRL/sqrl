@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.prepare.CalciteCatalogReader;
@@ -68,6 +70,8 @@ public class SchemaInference {
 
     ObjectTypeDefinition objectTypeDefinition;
     Optional<SQRLTable> table;
+    VirtualRelationalTable parentVt;
+    RelNode parentRelNode;
   }
 
   private Root visit(Root.RootBuilder root, TypeDefinitionRegistry registry, Env env) {
@@ -78,7 +82,8 @@ public class SchemaInference {
     //1. Queue all Query fields
     ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) registry.getType("Query")
         .get();
-    horizon.add(new Entry(objectTypeDefinition, Optional.empty()));
+    horizon.add(new Entry(objectTypeDefinition, Optional.empty(),
+        null, null));
 
     List<ArgumentHandler> argumentHandlers = new ArrayList();
 
@@ -131,7 +136,7 @@ public class SchemaInference {
 
         for (RelAndArg arg : args) {
           RelNode parameters = addParameterizedRelNode(env, arg.relNode, rel);
-          List<PgParameterHandler> params = addContextToArg(arg, rel);
+          List<PgParameterHandler> params = addContextToArg(arg, rel, type,(VirtualRelationalTable) vt);
 
           coordsBuilder.match(ArgumentSet.builder()
                   .arguments(arg.getArgumentSet())
@@ -154,7 +159,7 @@ public class SchemaInference {
             !seenNodes.contains(def.getName())
         ) {
           ObjectTypeDefinition resultType = (ObjectTypeDefinition) def;
-          horizon.add(new Entry(resultType, Optional.of(table)));
+          horizon.add(new Entry(resultType, Optional.of(table), (VirtualRelationalTable) vt, relNode));
         }
       }
     }
@@ -177,12 +182,16 @@ public class SchemaInference {
         .build();
   }
 
-  private List<PgParameterHandler> addContextToArg(RelAndArg arg, Optional<Relationship> rel) {
+  private List<PgParameterHandler> addContextToArg(RelAndArg arg, Optional<Relationship> rel,
+      Entry type, VirtualRelationalTable vt) {
     if (rel.isPresent()) {
-      SourcePgParameter sourcePgParameter = new SourcePgParameter(
-          arg.relNode.getRowType().getFieldList().get(0).getName());
-
-      return List.of(sourcePgParameter);
+      int keys = Math.min(type.getParentVt().getPrimaryKeyNames().size(),
+          vt.getPrimaryKeyNames().size());
+      return IntStream.range(0, keys)
+          .mapToObj(i->type.parentRelNode.getRowType().getFieldList().get(i))
+          .map(f-> new SourcePgParameter(
+              f.getName()))
+          .collect(Collectors.toList());
     }
     return List.of();
   }

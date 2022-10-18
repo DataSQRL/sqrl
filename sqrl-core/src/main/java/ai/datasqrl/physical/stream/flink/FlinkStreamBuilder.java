@@ -17,6 +17,7 @@ import ai.datasqrl.physical.stream.flink.schema.FlinkRowConstructor;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
+import ai.datasqrl.plan.calcite.PlannerFactory.EPOCH_TO_TIMESTAMPFunction;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.InputTableSchema;
@@ -43,6 +44,9 @@ import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
+import org.apache.flink.table.api.internal.FlinkEnvProxy;
+import org.apache.flink.table.catalog.FunctionCatalog;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
@@ -78,6 +82,10 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
     this.engine = engine;
     this.environment = environment;
     this.tableEnvironment = StreamTableEnvironment.create(environment);
+    FunctionCatalog catalog = FlinkEnvProxy.getFunctionCatalog((StreamTableEnvironmentImpl) tableEnvironment);
+    catalog.registerTemporarySystemFunction("EPOCH_TO_TIMESTAMP",
+        new EPOCH_TO_TIMESTAMPFunction(), true);
+
     this.uuid = UUID.randomUUID();
   }
 

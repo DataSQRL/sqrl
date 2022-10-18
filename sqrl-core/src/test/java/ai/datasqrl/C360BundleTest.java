@@ -18,12 +18,13 @@ public class C360BundleTest {
       + "IMPORT ecommerce-data.Orders;"
       + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
       + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
-      + "Customer.orders := JOIN _ INNER JOIN Orders ON Orders.customerid = _.customerid;\n"
-      + "Orders.entries.product := JOIN _ INNER JOIN Product ON Product.productid = _.productid;\n"
-      + "Product.order_entries := JOIN _ INNER JOIN Orders.entries e ON e.productid = _.productid;\n"
+      + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
+      + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
+      + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
 
       //Error adding a nested column
 //      + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
+      + "Orders.x := EPOCH_TO_TIMESTAMP(100);"
       //State table error
       + "Orders.stats := SELECT _._uuid AS _uuid, "
       + "                        SUM(quantity * unit_price - discount) AS total, "

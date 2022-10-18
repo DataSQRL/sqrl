@@ -2,12 +2,14 @@ package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.physical.stream.flink.LocalFlinkStreamEngineImpl;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.util.SqlOperatorTables;
@@ -17,10 +19,17 @@ import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.calcite.tools.Frameworks;
 import org.apache.flink.table.api.internal.FlinkEnvProxy;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
+import org.apache.flink.table.catalog.CatalogFunction;
+import org.apache.flink.table.catalog.DataTypeFactory;
+import org.apache.flink.table.catalog.FunctionCatalog;
+import org.apache.flink.table.functions.FunctionKind;
+import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.catalog.FunctionCatalogOperatorTable;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
+import org.apache.flink.table.types.inference.TypeInference;
 
 @AllArgsConstructor
 public class PlannerFactory {
@@ -46,18 +55,59 @@ public class PlannerFactory {
   public static SqlOperatorTable getOperatorTable() {
     LocalFlinkStreamEngineImpl x = new LocalFlinkStreamEngineImpl();
     TableEnvironmentImpl t = (TableEnvironmentImpl)x.createJob().getTableEnvironment();
+    FunctionCatalog catalog = FlinkEnvProxy.getFunctionCatalog(t);
+//    SqrlOperatorTable.instance().getOperatorList().stream()
+//            .forEach(e->registerFunc(e, catalog));
+//    catalog.registerTemporarySystemFunction("EPOCH_TO_TIMESTAMP",
+//        new EPOCH_TO_TIMESTAMPFunction(), false);
 
     SqlOperatorTable operatorTable = SqlOperatorTables.chain(
         new FunctionCatalogOperatorTable(
-            FlinkEnvProxy.getFunctionCatalog(t),
+            catalog,
             t.getCatalogManager().getDataTypeFactory(),
             new FlinkTypeFactory(new FlinkTypeSystem())),
         FlinkSqlOperatorTable.instance()
-        ,SqrlOperatorTable.instance()
+//        ,SqrlOperatorTable.instance()
     );
     return operatorTable;
 
   }
+  public static class EPOCH_TO_TIMESTAMPFunction extends ScalarFunction {
+
+    public Instant eval(Double number) {
+      return Instant.ofEpochSecond(number.longValue());
+    }
+  }
+
+//  private static void registerFunc(SqlOperator e, FunctionCatalog catalog) {
+//    catalog.registerTemporarySystemFunction(e.getName(), createFuncDef(e), false);
+//
+//  }
+//
+//  private static CatalogFunction createFuncDef(SqlOperator e) {
+//
+//    return null;
+//  }
+//
+//  public static class WrappedFunction extends UserDefinedFunction {
+//
+//    private final SqlOperator op;
+//
+//    public WrappedFunction(SqlOperator op) {
+//      this.op = op;
+//    }
+//    @Override
+//    public FunctionKind getKind() {
+//      return FunctionKind.SCALAR;
+//    }
+//
+//    @Override
+//    public TypeInference getTypeInference(DataTypeFactory dataTypeFactory) {
+//      return TypeInference.newBuilder()
+//          .outputTypeStrategy()
+//          .build();
+//    }
+//  }
 
   public static RelDataTypeFactory getTypeFactory() {
     return new FlinkTypeFactory(getTypeSystem());
