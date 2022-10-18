@@ -17,7 +17,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 public class NowFunction extends SqrlScalarFunction {
 
   static final ScalarFunction fnc = ScalarFunctionImpl.create(Types.lookupMethod(
-      StdTimeLibraryImpl.class, "now"));
+      StdTimeLibraryImpl.NOW.class, "eval"));
 
   public NowFunction() {
     super(

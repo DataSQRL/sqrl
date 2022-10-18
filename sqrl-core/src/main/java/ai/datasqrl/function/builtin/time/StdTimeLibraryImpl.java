@@ -6,96 +6,196 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import java.util.List;
+import lombok.Value;
+import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 public class StdTimeLibraryImpl {
 
-  public int getSecond(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getSecond();
+  public static final List<FlinkFnc> fncs = List.of(
+      new FlinkFnc(NOW.class.getSimpleName(), new NOW()),
+      new FlinkFnc(EPOCH_TO_TIMESTAMP.class.getSimpleName(), new EPOCH_TO_TIMESTAMP()),
+      new FlinkFnc(TIMESTAMP_TO_EPOCH.class.getSimpleName(), new TIMESTAMP_TO_EPOCH()),
+      new FlinkFnc(STRING_TO_TIMESTAMP.class.getSimpleName(), new STRING_TO_TIMESTAMP()),
+      new FlinkFnc(TIMESTAMP_TO_STRING.class.getSimpleName(), new TIMESTAMP_TO_STRING()),
+      new FlinkFnc(TO_UTC.class.getSimpleName(), new TO_UTC()),
+      new FlinkFnc(AT_ZONE.class.getSimpleName(), new AT_ZONE()),
+      new FlinkFnc(ROUND_TO_SECOND.class.getSimpleName(), new ROUND_TO_SECOND()),
+      new FlinkFnc(ROUND_TO_MINUTE.class.getSimpleName(), new ROUND_TO_MINUTE()),
+      new FlinkFnc(ROUND_TO_HOUR.class.getSimpleName(), new ROUND_TO_HOUR()),
+      new FlinkFnc(ROUND_TO_DAY.class.getSimpleName(), new ROUND_TO_DAY()),
+      new FlinkFnc(ROUND_TO_MONTH.class.getSimpleName(), new ROUND_TO_MONTH()),
+      new FlinkFnc(ROUND_TO_YEAR.class.getSimpleName(), new ROUND_TO_YEAR()),
+      new FlinkFnc(GET_SECOND.class.getSimpleName(), new GET_SECOND()),
+      new FlinkFnc(GET_MINUTE.class.getSimpleName(), new GET_MINUTE()),
+      new FlinkFnc(GET_HOUR.class.getSimpleName(), new GET_HOUR()),
+      new FlinkFnc(GET_DAY_OF_WEEK.class.getSimpleName(), new GET_DAY_OF_WEEK()),
+      new FlinkFnc(GET_DAY_OF_MONTH.class.getSimpleName(), new GET_DAY_OF_MONTH()),
+      new FlinkFnc(GET_DAY_OF_YEAR.class.getSimpleName(), new GET_DAY_OF_YEAR()),
+      new FlinkFnc(GET_MONTH.class.getSimpleName(), new GET_DAY_OF_YEAR()),
+      new FlinkFnc(GET_YEAR.class.getSimpleName(), new GET_YEAR())
+  );
+
+  public static class GET_SECOND extends ScalarFunction {
+
+    public int eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getSecond();
+    }
   }
 
-  public int getMinute(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getMinute();
+  public static class GET_MINUTE extends ScalarFunction {
+
+    public int eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getMinute();
+    }
   }
 
-  public int getHour(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getHour();
+  public static class GET_HOUR extends ScalarFunction {
+
+    public int eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getHour();
+    }
+
   }
 
-  public int getDayOfWeek(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfWeek().getValue();
+  public static class GET_DAY_OF_WEEK extends ScalarFunction {
+
+    public int eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfWeek().getValue();
+    }
   }
 
-  public int getDayOfMonth(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfMonth();
+  public static class GET_DAY_OF_MONTH extends ScalarFunction {
+
+    public int eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfMonth();
+    }
   }
 
-  public int getDayOfYear(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfYear();
+  public static class GET_DAY_OF_YEAR extends ScalarFunction {
+
+    public int eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfYear();
+    }
+
   }
 
-  public int getMonth(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getMonthValue();
+  public static class GET_MONTH extends ScalarFunction {
+
+    public int eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getMonthValue();
+    }
   }
 
-  public int getYear(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getYear();
+  public static class GET_YEAR extends ScalarFunction {
+
+    public int eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getYear();
+    }
   }
 
-  public Instant roundToSecond(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS)
-        .toInstant();
+  public static class ROUND_TO_SECOND extends ScalarFunction {
+
+    public Instant eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS)
+          .toInstant();
+    }
   }
 
-  public Instant roundToMinute(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.MINUTES)
-        .toInstant();
+  public static class ROUND_TO_MINUTE extends ScalarFunction {
+
+    public Instant eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.MINUTES)
+          .toInstant();
+    }
   }
 
-  public Instant roundToHour(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.HOURS)
-        .toInstant();
+  public static class ROUND_TO_HOUR extends ScalarFunction {
+
+    public Instant eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.HOURS)
+          .toInstant();
+    }
   }
 
-  public Instant roundToDay(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS)
-        .toInstant();
+  public static class ROUND_TO_DAY extends ScalarFunction {
+
+    public Instant eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS)
+          .toInstant();
+    }
   }
 
-  public Instant roundToMonth(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
-        .with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant();
+  public static class ROUND_TO_MONTH extends ScalarFunction {
+
+    public Instant eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
+          .with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant();
+    }
   }
 
-  public Instant roundToYear(Instant instant) {
-    return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
-        .with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS).toInstant();
+  public static class ROUND_TO_YEAR extends ScalarFunction {
+
+    public Instant eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
+          .with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS).toInstant();
+    }
   }
 
-  public ZonedDateTime atZone(Instant instant, String zoneId) {
-    return instant.atZone(ZoneId.of(zoneId));
+  public static class AT_ZONE extends ScalarFunction {
+
+    public ZonedDateTime eval(Instant instant, String zoneId) {
+      return instant.atZone(ZoneId.of(zoneId));
+    }
   }
 
-  public Instant toUtc(ZonedDateTime zonedDateTime) {
-    return zonedDateTime.toInstant();
+  public static class TO_UTC extends ScalarFunction {
+
+    public Instant eval(ZonedDateTime zonedDateTime) {
+      return zonedDateTime.toInstant();
+    }
   }
 
-  public String timestampToString(Instant instant) {
-    return instant.toString();
+  public static class TIMESTAMP_TO_STRING extends ScalarFunction {
+
+    public String eval(Instant instant) {
+      return instant.toString();
+    }
   }
 
-  public Instant stringToTimestamp(String s) {
-    return Instant.parse(s);
+  public static class STRING_TO_TIMESTAMP extends ScalarFunction {
+
+    public Instant eval(String s) {
+      return Instant.parse(s);
+    }
   }
 
-  public long timestampToEpoch(Instant instant) {
-    return instant.toEpochMilli();
+  public static class TIMESTAMP_TO_EPOCH extends ScalarFunction {
+
+    public Long eval(Instant instant) {
+      return instant.toEpochMilli();
+    }
   }
 
-  public Instant epochToTimestamp(Long l) {
-    return Instant.ofEpochSecond(l);
+  public static class EPOCH_TO_TIMESTAMP extends ScalarFunction {
+    public Instant eval(Double l) {
+      return Instant.ofEpochSecond(l.longValue());
+    }
+
   }
 
-  public Instant now() {
-    return Instant.now();
+  public static class NOW extends ScalarFunction {
+
+    public Instant eval() {
+      return Instant.now();
+    }
+  }
+
+  @Value
+  public static class FlinkFnc {
+
+    String name;
+    UserDefinedFunction fnc;
   }
 }

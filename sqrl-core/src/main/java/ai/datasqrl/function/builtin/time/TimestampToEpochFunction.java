@@ -19,7 +19,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 public class TimestampToEpochFunction extends SqrlScalarFunction {
 
   static final ScalarFunction fnc = ScalarFunctionImpl.create(Types.lookupMethod(
-      StdTimeLibraryImpl.class, "timestampToEpoch", Instant.class));
+      StdTimeLibraryImpl.TIMESTAMP_TO_EPOCH.class, "eval", Instant.class));
 
   public TimestampToEpochFunction() {
     super(

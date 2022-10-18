@@ -19,7 +19,7 @@ import java.util.List;
 public class EpochToTimestampFunction extends SqrlScalarFunction {
 
   static final ScalarFunction fnc = ScalarFunctionImpl.create(Types.lookupMethod(
-      StdTimeLibraryImpl.class, "epochToTimestamp", Long.class));
+      StdTimeLibraryImpl.EPOCH_TO_TIMESTAMP.class, "eval", Double.class));
 
   public EpochToTimestampFunction() {
     super(

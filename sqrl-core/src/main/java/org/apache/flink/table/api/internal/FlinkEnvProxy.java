@@ -1,5 +1,6 @@
 package org.apache.flink.table.api.internal;
 
+import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import org.apache.calcite.rel.RelNode;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
@@ -18,9 +19,17 @@ public class FlinkEnvProxy {
   }
 
   public static FunctionCatalog getFunctionCatalog(TableEnvironmentImpl environment) {
+    StdTimeLibraryImpl.fncs.stream()
+        .forEach(fn ->
+            environment.functionCatalog.registerTemporarySystemFunction(fn.getName(),
+            fn.getFnc(), true));
     return environment.functionCatalog;
   }
   public static FunctionCatalog getFunctionCatalog(StreamTableEnvironmentImpl environment) {
+    StdTimeLibraryImpl.fncs.stream()
+        .forEach(fn ->
+            environment.functionCatalog.registerTemporarySystemFunction(fn.getName(),
+            fn.getFnc(), true));
     return environment.functionCatalog;
   }
 }

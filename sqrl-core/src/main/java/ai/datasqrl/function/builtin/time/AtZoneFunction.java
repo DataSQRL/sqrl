@@ -19,7 +19,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 public class AtZoneFunction extends SqrlScalarFunction {
 
   static final ScalarFunction fnc = ScalarFunctionImpl.create(Types.lookupMethod(
-      StdTimeLibraryImpl.class, "atZone", Instant.class, String.class));
+      StdTimeLibraryImpl.AT_ZONE.class, "eval", Instant.class, String.class));
 
   public AtZoneFunction() {
     super(

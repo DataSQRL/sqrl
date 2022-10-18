@@ -18,7 +18,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 public class StringToTimestampFunction extends SqrlScalarFunction {
 
   static final ScalarFunction fnc = ScalarFunctionImpl.create(Types.lookupMethod(
-      StdTimeLibraryImpl.class, "stringToTimestamp", String.class));
+      StdTimeLibraryImpl.STRING_TO_TIMESTAMP.class, "eval", String.class));
 
   public StringToTimestampFunction() {
     super(

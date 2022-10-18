@@ -1,6 +1,7 @@
 package ai.datasqrl.physical.stream.flink;
 
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
+import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import ai.datasqrl.io.formats.TextLineFormat;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.io.impl.file.FilePath;
@@ -17,7 +18,6 @@ import ai.datasqrl.physical.stream.flink.schema.FlinkRowConstructor;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
-import ai.datasqrl.plan.calcite.PlannerFactory.EPOCH_TO_TIMESTAMPFunction;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.InputTableSchema;
@@ -82,9 +82,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
     this.engine = engine;
     this.environment = environment;
     this.tableEnvironment = StreamTableEnvironment.create(environment);
-    FunctionCatalog catalog = FlinkEnvProxy.getFunctionCatalog((StreamTableEnvironmentImpl) tableEnvironment);
-    catalog.registerTemporarySystemFunction("EPOCH_TO_TIMESTAMP",
-        new EPOCH_TO_TIMESTAMPFunction(), true);
+//    FunctionCatalog catalog = FlinkEnvProxy.getFunctionCatalog((StreamTableEnvironmentImpl) tableEnvironment);
 
     this.uuid = UUID.randomUUID();
   }

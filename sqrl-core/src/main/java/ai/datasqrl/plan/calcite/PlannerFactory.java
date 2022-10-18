@@ -56,10 +56,6 @@ public class PlannerFactory {
     LocalFlinkStreamEngineImpl x = new LocalFlinkStreamEngineImpl();
     TableEnvironmentImpl t = (TableEnvironmentImpl)x.createJob().getTableEnvironment();
     FunctionCatalog catalog = FlinkEnvProxy.getFunctionCatalog(t);
-//    SqrlOperatorTable.instance().getOperatorList().stream()
-//            .forEach(e->registerFunc(e, catalog));
-//    catalog.registerTemporarySystemFunction("EPOCH_TO_TIMESTAMP",
-//        new EPOCH_TO_TIMESTAMPFunction(), false);
 
     SqlOperatorTable operatorTable = SqlOperatorTables.chain(
         new FunctionCatalogOperatorTable(
