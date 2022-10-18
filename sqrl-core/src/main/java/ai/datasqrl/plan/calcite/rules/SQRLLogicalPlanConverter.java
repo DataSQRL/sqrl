@@ -201,6 +201,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                         projects.add(rexUtil.createRowFunction(SqlStdOperatorTable.DENSE_RANK, partitionKeys, fieldCollations));
                         projectNames.add(null);
                     }
+                    newMaterialize = newMaterialize.update(MaterializationPreference.CANNOT, "partitioned distinct");
                 }
 
                 relBuilder.project(projects, projectNames);
