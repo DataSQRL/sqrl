@@ -3,7 +3,7 @@ O2 := SELECT * FROM Orders.entries e INNER JOIN e.parent;
 LogicalProject(id=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], id0=[$6], _uuid=[$7], _ingest_time=[$8], customerid=[$9], time=[$10])
   LogicalJoin(condition=[=($0, $6)], joinType=[inner])
     LogicalProject(id=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10])
-      LogicalJoin(condition=[=($0, $5)], joinType=[inner])
+      LogicalJoin(condition=[=($0, $5)], joinType=[default])
         LogicalTableScan(table=[[orders$12]])
         LogicalTableScan(table=[[entries$13]])
     LogicalTableScan(table=[[orders$12]])
@@ -12,5 +12,5 @@ LogicalProject(id=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4
 SELECT *
 FROM (SELECT "entries$13"."id", "entries$13"."_idx", "entries$13"."productid", "entries$13"."quantity", "entries$13"."unit_price", "entries$13"."discount"
   FROM "orders$12"
-   INNER JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id") AS "t"
+   DEFAULT JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id") AS "t"
  INNER JOIN "orders$12" AS "orders$120" ON "t"."id" = "orders$120"."id"

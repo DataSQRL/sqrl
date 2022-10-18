@@ -2,8 +2,8 @@ Orders.entries.product := JOIN Product ON Product.productid = _.productid;
 O2 := SELECT p.* FROM Orders.entries.product p;
 
 LogicalProject(_uuid=[$13], _ingest_time=[$14], productid=[$15], name=[$16], description=[$17], category=[$18])
-  LogicalJoin(condition=[=($5, $11)], joinType=[inner])
-    LogicalJoin(condition=[=($0, $5)], joinType=[inner])
+  LogicalJoin(condition=[=($5, $11)], joinType=[default])
+    LogicalJoin(condition=[=($0, $5)], joinType=[default])
       LogicalTableScan(table=[[orders$12]])
       LogicalTableScan(table=[[entries$13]])
     LogicalProject(_pk_id$0=[$0], _pk__idx$1=[$1], _uuid=[$6], _ingest_time=[$7], productid=[$8], name=[$9], description=[$10], category=[$11])
@@ -14,7 +14,7 @@ LogicalProject(_uuid=[$13], _ingest_time=[$14], productid=[$15], name=[$16], des
 
 SELECT "t"."_uuid", "t"."_ingest_time", "t"."productid", "t"."name", "t"."description", "t"."category"
 FROM "orders$12"
- INNER JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"
- INNER JOIN (SELECT "entries$130"."id" AS "_pk_id$0", "entries$130"."_idx" AS "_pk__idx$1", "product$10"."_uuid", "product$10"."_ingest_time", "product$10"."productid", "product$10"."name", "product$10"."description", "product$10"."category"
+ DEFAULT JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"
+ DEFAULT JOIN (SELECT "entries$130"."id" AS "_pk_id$0", "entries$130"."_idx" AS "_pk__idx$1", "product$10"."_uuid", "product$10"."_ingest_time", "product$10"."productid", "product$10"."name", "product$10"."description", "product$10"."category"
   FROM "entries$13" AS "entries$130"
    INNER JOIN "product$10" ON "entries$130"."productid" = "product$10"."productid") AS "t" ON "entries$13"."id" = "t"."_pk_id$0"

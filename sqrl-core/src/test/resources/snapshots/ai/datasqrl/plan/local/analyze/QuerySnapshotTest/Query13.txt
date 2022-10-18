@@ -1,25 +1,26 @@
 D := SELECT * FROM Orders.entries e INNER JOIN e.parent p WHERE e.parent.customerid = 0 AND p.customerid = 0;
 
 LogicalProject(id=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], id0=[$6], _uuid=[$7], _ingest_time=[$8], customerid=[$9], time=[$10])
-  LogicalJoin(condition=[=($0, $11)], joinType=[default])
-    LogicalJoin(condition=[=($0, $6)], joinType=[inner])
-      LogicalProject(id=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10])
-        LogicalJoin(condition=[=($0, $5)], joinType=[inner])
+  LogicalProject(id=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], id0=[$6], _uuid=[$7], _ingest_time=[$8], customerid=[$9], time=[$10], id1=[CAST($11):BIGINT], _uuid0=[CAST($12):CHAR(36) CHARACTER SET "UTF-16LE"], _ingest_time0=[CAST($13):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], customerid0=[$14], time0=[CAST($15):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)])
+    LogicalJoin(condition=[=($0, $11)], joinType=[inner])
+      LogicalJoin(condition=[=($0, $6)], joinType=[inner])
+        LogicalProject(id=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10])
+          LogicalJoin(condition=[=($0, $5)], joinType=[default])
+            LogicalTableScan(table=[[orders$12]])
+            LogicalTableScan(table=[[entries$13]])
+        LogicalFilter(condition=[=($3, 0)])
           LogicalTableScan(table=[[orders$12]])
-          LogicalTableScan(table=[[entries$13]])
       LogicalFilter(condition=[=($3, 0)])
         LogicalTableScan(table=[[orders$12]])
-    LogicalFilter(condition=[=($3, 0)])
-      LogicalTableScan(table=[[orders$12]])
 
 
 SELECT "t"."id", "t"."_idx", "t"."productid", "t"."quantity", "t"."unit_price", "t"."discount", "t0"."id" AS "id0", "t0"."_uuid", "t0"."_ingest_time", "t0"."customerid", "t0"."time"
 FROM (SELECT "entries$13"."id", "entries$13"."_idx", "entries$13"."productid", "entries$13"."quantity", "entries$13"."unit_price", "entries$13"."discount"
   FROM "orders$12"
-   INNER JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id") AS "t"
+   DEFAULT JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id") AS "t"
  INNER JOIN (SELECT *
   FROM "orders$12"
   WHERE "customerid" = 0) AS "t0" ON "t"."id" = "t0"."id"
- DEFAULT JOIN (SELECT *
+ INNER JOIN (SELECT *
   FROM "orders$12"
   WHERE "customerid" = 0) AS "t1" ON "t"."id" = "t1"."id"
