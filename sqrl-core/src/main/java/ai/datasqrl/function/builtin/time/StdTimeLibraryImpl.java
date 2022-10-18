@@ -1,5 +1,6 @@
 package ai.datasqrl.function.builtin.time;
 
+import java.math.BigInteger;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -179,7 +180,7 @@ public class StdTimeLibraryImpl {
   }
 
   public static class EPOCH_TO_TIMESTAMP extends ScalarFunction {
-    public Instant eval(Double l) {
+    public Instant eval(Long l) {
       return Instant.ofEpochSecond(l.longValue());
     }
 

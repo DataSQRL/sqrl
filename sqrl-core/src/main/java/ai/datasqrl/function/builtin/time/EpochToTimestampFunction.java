@@ -1,6 +1,7 @@
 package ai.datasqrl.function.builtin.time;
 
 import ai.datasqrl.function.calcite.FirstArgNullPreservingInference;
+import java.math.BigInteger;
 import org.apache.calcite.linq4j.tree.Types;
 import org.apache.calcite.rel.type.RelDataTypeImpl;
 import org.apache.calcite.schema.ScalarFunction;
@@ -19,7 +20,7 @@ import java.util.List;
 public class EpochToTimestampFunction extends SqrlScalarFunction {
 
   static final ScalarFunction fnc = ScalarFunctionImpl.create(Types.lookupMethod(
-      StdTimeLibraryImpl.EPOCH_TO_TIMESTAMP.class, "eval", Double.class));
+      StdTimeLibraryImpl.EPOCH_TO_TIMESTAMP.class, "eval", Long.class));
 
   public EpochToTimestampFunction() {
     super(
