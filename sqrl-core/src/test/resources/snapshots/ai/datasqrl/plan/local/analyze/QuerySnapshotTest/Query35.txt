@@ -1,0 +1,12 @@
+Orders.x := SELECT * FROM _ JOIN Product ON true;
+
+
+LogicalProject(_id$0=[$0], id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4], _uuid0=[$5], _ingest_time0=[$6], productid=[$7], name=[$8], description=[$9], category=[$10])
+  LogicalJoin(condition=[true], joinType=[default])
+    LogicalTableScan(table=[[orders$12]])
+    LogicalTableScan(table=[[product$10]])
+
+
+SELECT "orders$12"."id" AS "_id$0", "orders$12"."id", "orders$12"."_uuid", "orders$12"."_ingest_time", "orders$12"."customerid", "orders$12"."time", "product$10"."_uuid" AS "_uuid0", "product$10"."_ingest_time" AS "_ingest_time0", "product$10"."productid", "product$10"."name", "product$10"."description", "product$10"."category"
+FROM "orders$12"
+ DEFAULT JOIN "product$10" ON TRUE

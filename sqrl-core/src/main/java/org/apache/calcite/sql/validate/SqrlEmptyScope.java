@@ -505,7 +505,7 @@ public class SqrlEmptyScope implements SqlValidatorScope {
           relBuilder
               .push(toJoin)
               //TODO: CONVERT TO LEFT (fix nullability in rel data type)
-              .join(JoinRelType.INNER, pkEq);
+              .join(JoinRelType.DEFAULT, pkEq);
         } else {
           relBuilder.push(toJoin);
         }
@@ -624,7 +624,7 @@ public class SqrlEmptyScope implements SqlValidatorScope {
         relBuilder
             .push(toJoin)
             //TODO: CONVERT TO LEFT (fix nullability in rel data type)
-            .join(JoinRelType.INNER, pkEq);
+            .join(JoinRelType.DEFAULT, pkEq);
       }
 
       int keys = Math.min(baseTable.getVt().getPrimaryKeyNames().size(),

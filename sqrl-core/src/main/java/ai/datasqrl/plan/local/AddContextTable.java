@@ -37,6 +37,10 @@ public class AddContextTable extends SqlShuttle {
 
   @Override
   public SqlNode visit(SqlIdentifier id) {
+    //Already exists
+    if (id.names.size() == 1 && id.names.get(0).equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
+      return createConcreteSelfTable();
+    }
     return addSelfLeftDeep(id);
   }
 
@@ -65,15 +69,19 @@ public class AddContextTable extends SqlShuttle {
   private SqlNode addSelfLeftDeep(SqlNode node) {
     return new SqlJoin(
         SqlParserPos.ZERO,
-        SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-            new SqlIdentifier(selfVirtualTableName, SqlParserPos.ZERO),
-            new SqlIdentifier("_", SqlParserPos.ZERO)),
+        createConcreteSelfTable(),
         SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
         JoinType.INNER.symbol(SqlParserPos.ZERO),
         node,
         JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
         null
     );
+  }
+
+  private SqlNode createConcreteSelfTable() {
+    return SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+        new SqlIdentifier(selfVirtualTableName, SqlParserPos.ZERO),
+        new SqlIdentifier("_", SqlParserPos.ZERO));
   }
 
   class ValidateNoReservedAliases extends SqlBasicVisitor<SqlNode> {

@@ -5303,35 +5303,6 @@ public class SqlToRelConverter {
     }
 
     public RexNode visit(SqlIdentifier id) {
-      if (id instanceof SqlIdentifierWithPath) {
-        System.out.println();
-        //do the join
-        Blackboard bb = createBlackboard(this.scope, null, false);
-        convertFrom(bb, ((SqlIdentifierWithPath) id).getTable());
-        System.out.println(bb.root);
-
-        this.root = relBuilder.push(root)
-            .push(bb.root)
-            //all types must be non-null for left joins.
-            .join(JoinRelType.INNER, rexBuilder.makeLiteral(true))
-            .build();
-
-//        root = relBuilder.push(root)
-//            .project()
-//            .build();
-        //create a new rex node
-        //find the literal looking from the left
-        for (int i = root.getRowType().getFieldCount() - 1; i >= 0; i--) {
-            final RelDataType rowType = root.getRowType();
-            final boolean matches = catalogReader.nameMatcher().matches(
-                rowType.getFieldList().get(i).getName(), id.names.get(id.names.size() - 1)
-            );
-            if (matches) {
-              return rexBuilder.makeInputRef(root, i);
-            }
-        }
-      }
-
       return convertIdentifier(this, id);
     }
 
