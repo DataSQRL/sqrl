@@ -187,6 +187,7 @@ public class SqrlRexUtil {
 
     private boolean isTimestampPreservingFunction(RexCall call) {
         SqlOperator operator = call.getOperator();
+        if (operator == SqlStdOperatorTable.CAST) return true;
         if (!(operator instanceof SqrlAwareFunction)) return false; //TODO: generalize to allow other SQL functions
         if (((SqrlAwareFunction)operator).isTimestampPreserving()) {
             //Internal validation that this is a legit timestamp-preserving function
