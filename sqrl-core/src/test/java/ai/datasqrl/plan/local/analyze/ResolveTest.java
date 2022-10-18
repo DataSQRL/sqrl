@@ -70,7 +70,7 @@ public class ResolveTest extends AbstractSQRLIT {
 
   @AfterEach
   public void tearDown() {
-    if (snapshotExecution!=null) snapshotExecution.test();
+    //if (snapshotExecution!=null) snapshotExecution.test();
   }
 
   /*

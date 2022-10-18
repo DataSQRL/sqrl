@@ -114,7 +114,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       relBuilder.filter(correlRewriter.rewrite(join.getCondition()));
       Set<Integer> usedLeftFieldIdx = correlRewriter.usedLeftFieldIdx;
       usedLeftFieldIdx.add(temporalHint.getStreamTimestampIdx());
-      relBuilder.correlate(JoinRelType.INNER, correlVar.get().id, usedLeftFieldIdx.stream()
+      relBuilder.correlate(join.getJoinType(), correlVar.get().id, usedLeftFieldIdx.stream()
               .map(idx -> rexBuilder.makeInputRef(left,idx)).collect(Collectors.toList()));
       return relBuilder.build();
     } else {

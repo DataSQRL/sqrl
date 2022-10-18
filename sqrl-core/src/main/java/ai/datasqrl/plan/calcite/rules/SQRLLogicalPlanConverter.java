@@ -764,6 +764,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
         //Identify if this is an identical self-join for a nested tree
         boolean hasPullups = leftIn.hasPullups() || rightIn.hasPullups();
+        //TODO: support left-joins in unnesting
         if ((joinType==JoinRelType.DEFAULT || joinType==JoinRelType.INNER) && leftInput.joinTables!=null && rightInput.joinTables!=null
                 && !hasPullups && eqDecomp.getRemainingPredicates().isEmpty()) {
             //Determine if we can map the tables from both branches of the join onto each-other
@@ -821,9 +822,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         combinedMaterialize = analyzeRexNodesForMaterialize(combinedMaterialize,List.of(condition));
 
         //Detect temporal join
-        if (joinType==JoinRelType.DEFAULT || joinType==JoinRelType.TEMPORAL) {
+        if (joinType==JoinRelType.DEFAULT || joinType==JoinRelType.TEMPORAL || joinType==JoinRelType.LEFT) {
             if ((leftInput.type==TableType.STREAM && rightInput.type==TableType.TEMPORAL_STATE) ||
-                    (rightInput.type==TableType.STREAM && leftInput.type==TableType.TEMPORAL_STATE)) {
+                    (rightInput.type==TableType.STREAM && leftInput.type==TableType.TEMPORAL_STATE && joinType!=JoinRelType.LEFT)) {
                 //Make sure the stream is left and state is right
                 if (rightInput.type==TableType.STREAM) {
                     //Switch sides
@@ -842,7 +843,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 Set<Integer> pkIndexes = rightInput.primaryKey.getMapping().stream().map(p-> p.getTarget()+newLeftSideMaxIdx).collect(Collectors.toSet());
                 Set<Integer> pkEqualities = eqDecomp.getEqualities().stream().map(p -> p.target).collect(Collectors.toSet());
                 if (pkIndexes.equals(pkEqualities) && eqDecomp.getRemainingPredicates().isEmpty()) {
-                    joinType = JoinRelType.TEMPORAL;
                     RelBuilder relB = relBuilderFactory.get();
                     relB.push(leftInput.relNode); relB.push(rightInput.relNode);
                     Preconditions.checkArgument(rightInput.timestamp.hasFixedTimestamp());
@@ -853,7 +853,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     TemporalJoinHint hint = new TemporalJoinHint(joinTimestamp.getTimestampCandidate().getIndex(),
                             rightInput.timestamp.getTimestampCandidate().getIndex(),
                             rightInput.primaryKey.targetsAsArray());
-                    relB.join(JoinRelType.INNER, condition);
+                    relB.join(joinType==JoinRelType.LEFT?joinType:JoinRelType.INNER, condition);
                     hint.addTo(relB);
                     return setRelHolder(RelMeta.build(relB.build(), TableType.STREAM,
                             pk, joinTimestamp, joinedIndexMap,
@@ -877,15 +877,21 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             else return new RexInputRef(idx,rightInputF.relNode.getRowType().getFieldList().get(idx-leftSideMaxIdx).getType());
         };
 
-        ContinuousIndexMap.Builder concatPkBuilder = ContinuousIndexMap.builder(leftInputF.primaryKey,rightInputF.primaryKey.getSourceLength());
-        concatPkBuilder.addAll(rightInputF.primaryKey.remap(joinedIndexMap.getTargetLength(), idx -> idx + leftSideMaxIdx));
+
+        ContinuousIndexMap.Builder concatPkBuilder;
+        if (joinType==JoinRelType.LEFT) {
+            concatPkBuilder = ContinuousIndexMap.builder(leftInputF.primaryKey,0);
+        } else {
+            concatPkBuilder = ContinuousIndexMap.builder(leftInputF.primaryKey, rightInputF.primaryKey.getSourceLength());
+            concatPkBuilder.addAll(rightInputF.primaryKey.remap(joinedIndexMap.getTargetLength(), idx -> idx + leftSideMaxIdx));
+        }
         ContinuousIndexMap concatPk = concatPkBuilder.build(joinedIndexMap.getTargetLength());
 
         //combine sorts if present
         SortOrder joinedSort = leftInputF.sort.join(rightInputF.sort.remap(idx -> idx+leftSideMaxIdx));
 
         //Detect interval join
-        if (joinType==JoinRelType.DEFAULT || joinType ==JoinRelType.INNER || joinType==JoinRelType.INTERVAL) {
+        if (joinType==JoinRelType.DEFAULT || joinType ==JoinRelType.INNER || joinType==JoinRelType.INTERVAL || joinType == JoinRelType.LEFT) {
             if (leftInputF.type==TableType.STREAM && rightInputF.type==TableType.STREAM) {
                 //Validate that the join condition includes time bounds on both sides
                 List<RexNode> conjunctions = new ArrayList<>(rexUtil.getConjunctions(condition));
@@ -933,7 +939,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     for (int tidx : timestampIndexes) {
                         TimestampHolder.Derived newTimestamp = apply2JoinSide(tidx, leftSideMaxIdx, leftInputF, rightInputF,
                                 (prel, idx) -> prel.timestamp.getCandidateByIndex(idx).withIndex(tidx).fixAsTimestamp());
-                        if (tidx == upperBoundTimestampIndex) joinTimestamp = newTimestamp;
+                        if (joinType==JoinRelType.LEFT) {
+                            if (tidx < leftSideMaxIdx) joinTimestamp = newTimestamp;
+                        } else if (tidx == upperBoundTimestampIndex) joinTimestamp = newTimestamp;
                     }
                     assert joinTimestamp != null;
 
@@ -944,10 +952,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                                         idxResolver,false));
                     }
                     condition = RexUtil.composeConjunction(rexUtil.getBuilder(), conjunctions);
-                    joinType = JoinRelType.INTERVAL;
-                    relB.join(JoinRelType.INNER, condition); //Can treat as "standard" inner join since no modification is necessary in physical plan
+                    relB.join(joinType==JoinRelType.LEFT?joinType:JoinRelType.INNER, condition); //Can treat as "standard" inner join since no modification is necessary in physical plan
                     return setRelHolder(RelMeta.build(relB.build(), TableType.STREAM,
-                            concatPk, joinTimestamp, joinedIndexMap,combinedMaterialize).numRootPks(numRootPks).sort(joinedSort).build());
+                            concatPk, joinTimestamp, joinedIndexMap, combinedMaterialize).numRootPks(numRootPks).sort(joinedSort).build());
                 } else if (joinType==JoinRelType.INTERVAL) {
                     throw new IllegalArgumentException("Interval joins require time bounds in the join condition: " + logicalJoin);
                 }
@@ -966,10 +973,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             combinedMaterialize = combinedMaterialize.update(MaterializationPreference.SHOULD_NOT,"high cardinality join");
         }
 
-        Preconditions.checkArgument(joinType == JoinRelType.INNER, "Unsupported join type: %s", logicalJoin);
+        Preconditions.checkArgument(joinType == JoinRelType.INNER || joinType == JoinRelType.LEFT, "Unsupported join type: %s", logicalJoin);
         //Default inner join creates a state table
         RelNode newJoin = relB.push(leftInputF.relNode).push(rightInputF.relNode)
-                .join(JoinRelType.INNER, condition).build();
+                .join(joinType, condition).build();
         return setRelHolder(RelMeta.build(newJoin, TableType.STATE,
                 concatPk, TimestampHolder.Derived.NONE, joinedIndexMap,
                 combinedMaterialize).sort(joinedSort).build());
