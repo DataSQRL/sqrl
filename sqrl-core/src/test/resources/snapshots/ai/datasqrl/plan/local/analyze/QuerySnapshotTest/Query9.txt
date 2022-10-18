@@ -1,8 +1,11 @@
-Orders.o2 := SELECT * FROM _;
+Orders.o2 := SELECT x.* FROM _ AS x;
 
-LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4])
-  LogicalTableScan(table=[[orders$12]])
+LogicalProject(_id$0=[$0], id=[$5], _uuid=[$6], _ingest_time=[$7], customerid=[$8], time=[$9])
+  LogicalJoin(condition=[true], joinType=[inner])
+    LogicalTableScan(table=[[orders$12]])
+    LogicalTableScan(table=[[orders$12]])
 
 
-SELECT *
-FROM "orders$12"
+SELECT "orders$12"."id" AS "_id$0", "orders$120"."id", "orders$120"."_uuid", "orders$120"."_ingest_time", "orders$120"."customerid", "orders$120"."time"
+FROM "orders$12",
+ "orders$12" AS "orders$120"

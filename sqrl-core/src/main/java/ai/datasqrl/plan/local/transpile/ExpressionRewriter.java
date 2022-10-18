@@ -14,6 +14,7 @@ import com.google.common.base.Preconditions;
 import lombok.Getter;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.fun.ConvertableFunction;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.*;
 import org.apache.calcite.util.Util;
@@ -48,7 +49,7 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     }
 
     //Don't walk alias
-    if (call.getOperator() == SqrlOperatorTable.AS) {
+    if (call.getOperator() == SqlStdOperatorTable.AS) {
       return call.getOperandList().get(0).accept(this);
     }
 
@@ -159,12 +160,12 @@ public class ExpressionRewriter extends SqlScopedShuttle {
     //Add grouping conditions of pk
     //LEFT JOIN (SELECT sq FROM condition) x ON x.a = y.a;
     String fieldAlias = env.getAliasGenerator().generateFieldName();
-    SqlBasicCall asField = new SqlBasicCall(SqrlOperatorTable.AS,
+    SqlBasicCall asField = new SqlBasicCall(SqlStdOperatorTable.AS,
         new SqlNode[]{newCall, new SqlIdentifier(fieldAlias, SqlParserPos.ZERO)},
         SqlParserPos.ZERO);
     selectList.add(asField);
 
-    SqlBasicCall as = new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{
+    SqlBasicCall as = new SqlBasicCall(SqlStdOperatorTable.AS, new SqlNode[]{
         new SqlSelect(SqlParserPos.ZERO, SqlNodeList.EMPTY,
             new SqlNodeList(selectList, SqlParserPos.ZERO), declaration.getJoinTree(), null,
             new SqlNodeList(groups, SqlParserPos.ZERO), null, null, null, null, null,

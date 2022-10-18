@@ -16,6 +16,8 @@
  */
 package org.apache.calcite.sql.validate;
 
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
@@ -98,19 +100,19 @@ public abstract class ListScope extends DelegatingScope {
 
       // Look up the 2 tables independently, in case one is qualified with
       // catalog & schema and the other is not.
-      final SqlValidatorTable table = child.namespace.getTable();
-      if (table != null) {
-        final ResolvedImpl resolved = new ResolvedImpl();
-        resolveTable(names, nameMatcher, Path.EMPTY, resolved);
-        if (resolved.count() == 1
-            && resolved.only().remainingNames.isEmpty()
-            && resolved.only().namespace instanceof TableNamespace
-//            && resolved.only().namespace.getTable().getQualifiedName().equals(
-//                table.getQualifiedName())
-        ) {
-          return child;
-        }
-      }
+//      final SqlValidatorTable table = child.namespace.getTable();
+//      if (table != null) {
+//        final ResolvedImpl resolved = new ResolvedImpl();
+//        resolveTable(names, nameMatcher, Path.EMPTY, resolved);
+//        if (resolved.count() == 1
+//            && resolved.only().remainingNames.isEmpty()
+//            && resolved.only().namespace instanceof TableNamespace
+////            && resolved.only().namespace.getTable().getQualifiedName().equals(
+////                table.getQualifiedName())
+//        ) {
+//          return child;
+//        }
+//      }
     }
     return null;
   }
@@ -157,7 +159,12 @@ public abstract class ListScope extends DelegatingScope {
       final ResolvedImpl resolved = new ResolvedImpl();
       resolve(ImmutableList.of(child.name, columnName), nameMatcher, true,
           resolved);
-      if (resolved.count() > 0) {
+      //SQRL: Don't look deeply into table names. If it has a path of > 1 then we don't want it as resolvable
+      Optional<Resolve> resolveOptional = resolved.resolves.stream()
+          .filter(f->f.path.steps().size() == 1)
+          .findAny();
+
+      if (resolveOptional.isPresent()) {
         map.put(child.name, child);
       }
     }

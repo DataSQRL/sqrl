@@ -8,7 +8,6 @@ import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.prepare.CalciteCatalogReader;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
@@ -22,7 +21,8 @@ public class TranspilerFactory {
       .withTypeCoercionEnabled(false)
       .withLenientOperatorLookup(false);
 
-  public static SqrlValidatorImpl createSqrlValidator(SqrlCalciteSchema schema) {
+  public static SqrlValidatorImpl createSqrlValidator(SqrlCalciteSchema schema,
+      List<String> assignmentPath, boolean forcePathIdentifiers) {
     Properties p = new Properties();
     p.put(CalciteConnectionProperty.CASE_SENSITIVE.name(), false);
 
@@ -35,6 +35,8 @@ public class TranspilerFactory {
         PlannerFactory.getTypeFactory(),
         config
         );
+    validator.assignmentPath = assignmentPath;
+    validator.forcePathIdentifiers = forcePathIdentifiers;
     return validator;
   }
 

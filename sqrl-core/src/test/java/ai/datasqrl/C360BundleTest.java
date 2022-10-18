@@ -25,13 +25,13 @@ public class C360BundleTest {
       //Error adding a nested column
 //      + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
       //State table error
-//      + "Orders.stats := SELECT e._uuid AS _uuid, "
-//      + "                        SUM(quantity * unit_price - discount) AS total, "
-//      + "                        SUM(discount) AS total_savings, "
-//      + "                        COUNT(1) AS total_entries "
-//      + "                 FROM _ "
-//      + "                 INNER JOIN _.entries e"
-//      + "                 GROUP BY e._uuid;\n"
+      + "Orders.stats := SELECT _._uuid AS _uuid, "
+      + "                        SUM(quantity * unit_price - discount) AS total, "
+      + "                        SUM(discount) AS total_savings, "
+      + "                        COUNT(1) AS total_entries "
+      + "                 FROM _ "
+      + "                 INNER JOIN _.entries e"
+      + "                 GROUP BY _._uuid;\n"
       + "";
 
   @Test

@@ -13,19 +13,20 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlTableRef;
 import org.apache.calcite.sql.SqlUtil;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class SqlNodeBuilder {
 
   public static SqlNode createTableNode(TableWithPK tableWithPK, String alias) {
-    return new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
+    return new SqlBasicCall(SqlStdOperatorTable.AS, new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
         new SqlIdentifier(tableWithPK.getNameId(), SqlParserPos.ZERO), SqlNodeList.EMPTY),
         new SqlIdentifier(alias, SqlParserPos.ZERO)}, SqlParserPos.ZERO);
   }
 
   public static SqlNode createSelfEquality(TableWithPK table, String lhsAlias, String rhsAlias) {
     for (String name : table.getPrimaryKeyNames()) {
-      return new SqlBasicCall(SqrlOperatorTable.EQUALS,
+      return new SqlBasicCall(SqlStdOperatorTable.EQUALS,
           new SqlNode[]{new SqlIdentifier(List.of(lhsAlias, name), SqlParserPos.ZERO),
               new SqlIdentifier(List.of(rhsAlias, name), SqlParserPos.ZERO)}, SqlParserPos.ZERO);
     }
@@ -41,7 +42,7 @@ public class SqlNodeBuilder {
   }
 
   public static SqlNode as(SqlNode sqlNode, String alias) {
-    return new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{SqlUtil.stripAs(sqlNode),
+    return new SqlBasicCall(SqlStdOperatorTable.AS, new SqlNode[]{SqlUtil.stripAs(sqlNode),
         new SqlIdentifier(alias, sqlNode.getParserPosition())}, SqlParserPos.ZERO);
   }
 }

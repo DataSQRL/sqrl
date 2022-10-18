@@ -1,6 +1,5 @@
 package ai.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.parse.Check;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.hints.TopNHint;
 import ai.datasqrl.plan.calcite.table.TableWithPK;
@@ -12,6 +11,7 @@ import ai.datasqrl.schema.SQRLTable;
 import com.google.common.collect.ArrayListMultimap;
 import lombok.Value;
 import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.*;
 import org.apache.calcite.util.Util;
@@ -36,13 +36,15 @@ public class Transpile {
   private final Env env;
   private final StatementOp op;
   private final TranspileOptions options;
-  private final JoinBuilderFactory joinBuilderFactory;
+  Optional<SQRLTable> context;
+//  private final JoinBuilderFactory joinBuilderFactory;
 
-  public Transpile(Env env, StatementOp op, TranspileOptions options) {
+  public Transpile(Env env, StatementOp op, Optional<SQRLTable> context, TranspileOptions options) {
     this.env = env;
     this.op = op;
     this.options = options;
-    this.joinBuilderFactory = () -> new JoinBuilderImpl(env, op);
+    this.context = context;
+//    this.joinBuilderFactory = () -> new JoinBuilderImpl(env, op);
   }
 
   public void rewriteQuery(SqlSelect select, SqlValidatorScope scope) {
@@ -61,9 +63,9 @@ public class Transpile {
     rewriteSelectList(select, scope);
     rewriteWhere(select, scope);
 
-    SqlNode from = rewriteFrom(select.getFrom(), scope, Optional.empty());
-    from = extraFromItems(from, scope);
-    select.setFrom(from);
+//    SqlNode from = rewriteFrom(select.getFrom(), scope, Optional.empty());
+//    from = extraFromItems(from, scope);
+//    select.setFrom(from);
 
     if (select.isDistinct() && select.getGroup() != null) {
       throw new RuntimeException("SELECT DISTINCT with a GROUP not yet supported");
@@ -76,13 +78,13 @@ public class Transpile {
       rewriteDistinctingHint(select, scope, (ppkNode) ->
               TopNHint.createSqlHint(TopNHint.Type.TOP_N, ppkNode, SqlParserPos.ZERO));
     } else if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
-      rewriteDistinctOnHint(select, scope);
+      rewriteDistinctOnHint(select);
     }
     rewriteHints(select, scope);
   }
 
-  private void rewriteDistinctOnHint(SqlSelect select, SqlValidatorScope scope) {
-    CalciteUtil.wrapSelectInProject(select, scope);
+  private void rewriteDistinctOnHint(SqlSelect select) {
+    CalciteUtil.wrapSelectInProject(select);
     SqlSelect inner = (SqlSelect)select.getFrom();
     //pull up hints
     select.setHints(inner.getHints());
@@ -90,7 +92,7 @@ public class Transpile {
   }
 
   private boolean isNested(StatementOp op) {
-    return op.getSqrlValidator().getContextTable().isPresent();
+    return context.isPresent();
   }
 
   private void rewriteHints(SqlSelect select, SqlValidatorScope scope) {
@@ -129,7 +131,7 @@ public class Transpile {
   private void rewriteDistinctingHint(SqlSelect select, SqlValidatorScope scope, Function<SqlNodeList, SqlHint> createFnc) {
     CalciteUtil.removeKeywords(select);
     SqlNodeList innerSelectList = select.getSelectList();
-    CalciteUtil.wrapSelectInProject(select, scope);
+    CalciteUtil.wrapSelectInProject(select);
 
     List<SqlNode> innerPPKNodes = getPPKNodes(scope);
     List<SqlNode> ppkNodeIndex = mapIndexOfNodeList(innerSelectList, innerPPKNodes);
@@ -170,7 +172,7 @@ public class Transpile {
     for (int i = 0; i < options.size(); i++) {
       SqlNode option = options.get(i);
       if (!expressionInSelectList(select, option, scope)) {
-        SqlCall call = SqrlOperatorTable.AS.createCall(option.getParserPosition(),
+        SqlCall call = SqlStdOperatorTable.AS.createCall(option.getParserPosition(),
             List.of(
                 option,
                 new SqlIdentifier("_option_" + i, SqlParserPos.ZERO)));
@@ -189,8 +191,7 @@ public class Transpile {
   }
 
   private void createParentPrimaryKeys(SqlValidatorScope scope) {
-    Optional<SQRLTable> context = op.getSqrlValidator().getContextTable()
-        .map(e->((ExpandableTableNamespace)e).getDestinationTable());
+
     List<NamedKey> nodes = new ArrayList<>();
     if (context.isPresent()) {
       TableWithPK t = env.getTableMap().get(context.get());
@@ -234,13 +235,13 @@ public class Transpile {
   }
 
   private SqlNode convertExpression(SqlNode expr, SqlValidatorScope scope) {
-    ExpressionRewriter expressionRewriter = new ExpressionRewriter(scope, env, op);
-    SqlNode rewritten = expr.accept(expressionRewriter);
-
-    this.inlineAgg.putAll(scope, expressionRewriter.getInlineAggResults());
-    this.toOne.putAll(scope, expressionRewriter.getToOneResults());
-
-    return rewritten;
+//    ExpressionRewriter expressionRewriter = new ExpressionRewriter(scope, env, op);
+//    SqlNode rewritten = expr.accept(expressionRewriter);
+//
+//    this.inlineAgg.putAll(scope, expressionRewriter.getInlineAggResults());
+//    this.toOne.putAll(scope, expressionRewriter.getToOneResults());
+//
+    return expr;
   }
 
   private String deriveAlias(final SqlNode node, Collection<String> aliases, final int ordinal) {
@@ -395,31 +396,32 @@ public class Transpile {
   }
 
   private SqlNode convertTableName(SqlIdentifier id, String alias, SqlValidatorScope scope) {
-    final SqlValidatorNamespace fromNamespace = op.getSqrlValidator().getNamespace(id).resolve();
-
-    if (fromNamespace.getNode() != null) {
-      return rewriteFrom(fromNamespace.getNode(), scope, Optional.empty());
-    }
-
-    if (id.names.size() == 1 && id.names.get(0).equalsIgnoreCase("_")) {
-      return rewriteTable(id, scope);
-    }
-
-    if (fromNamespace instanceof ExpandableTableNamespace) {
-      ExpandableTableNamespace tn = (ExpandableTableNamespace) fromNamespace;
-
-      TablePath tablePath = tn.createTablePath(alias);
-
-      SqlJoinDeclaration declaration = JoinBuilderImpl.expandPath(tablePath, false,
-          joinBuilderFactory);
-      declaration.getPullupCondition().ifPresent(pullupConditions::push);
-      return declaration.getJoinTree();
-    } else {
-      //just do a simple mapping from table
-      SQRLTable baseTable = fromNamespace.getTable().unwrap(SQRLTable.class);
-      TableWithPK basePkTable = env.getTableMap().get(baseTable);
-      return SqlNodeBuilder.createTableNode(basePkTable, Util.last(id.names));
-    }
+//    final SqlValidatorNamespace fromNamespace = op.getSqrlValidator().getNamespace(id).resolve();
+//
+//    if (fromNamespace.getNode() != null) {
+//      return rewriteFrom(fromNamespace.getNode(), scope, Optional.empty());
+//    }
+//
+//    if (id.names.size() == 1 && id.names.get(0).equalsIgnoreCase("_")) {
+//      return rewriteTable(id, scope);
+//    }
+//
+//    if (fromNamespace instanceof ExpandableTableNamespace) {
+//      ExpandableTableNamespace tn = (ExpandableTableNamespace) fromNamespace;
+//
+//      TablePath tablePath = tn.createTablePath(alias);
+//
+//      SqlJoinDeclaration declaration = JoinBuilderImpl.expandPath(tablePath, false,
+//          joinBuilderFactory);
+//      declaration.getPullupCondition().ifPresent(pullupConditions::push);
+//      return declaration.getJoinTree();
+//    } else {
+//      //just do a simple mapping from table
+//      SQRLTable baseTable = fromNamespace.getTable().unwrap(SQRLTable.class);
+//      TableWithPK basePkTable = env.getTableMap().get(baseTable);
+//      return SqlNodeBuilder.createTableNode(basePkTable, Util.last(id.names));
+//    }
+    return null;
   }
 
   private SqlNode extraFromItems(SqlNode from, SqlValidatorScope scope) {

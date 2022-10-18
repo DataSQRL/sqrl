@@ -200,7 +200,8 @@ public class SchemaInference {
       return constructJoinDecScan(env, rel.get());
     }
 
-    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.getRelSchema());
+    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.getRelSchema(),
+        List.of(), true);
     RelBuilder relBuilder = PlannerFactory.sqlToRelConverterConfig.getRelBuilderFactory()
         .create(env.getSession().getPlanner().getCluster(),
             (CalciteCatalogReader) sqrlValidator.getCatalogReader()
@@ -211,7 +212,8 @@ public class SchemaInference {
   }
 
   private RelNode constructJoinDecScan(Env env, Relationship rel) {
-    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.getRelSchema());
+    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.getRelSchema(),
+        List.of(), true);
     SqlNode validated = sqrlValidator.validate(rel.getNode());
     env.getSession().getPlanner().setValidator(validated, sqrlValidator);
     RelNode relNode = env.getSession().getPlanner().rel(validated).rel;

@@ -34,7 +34,7 @@ public class JavaFunctionLoader implements Loader {
     Preconditions.checkState(alias.isEmpty(), "Alias for functions not yet supported");
     ServiceLoader<SqlFunction> serviceLoader = ServiceLoader.load(SqlFunction.class);
     for (SqlFunction function : serviceLoader) {
-      SqrlOperatorTable.getInstance().register(function);
+      SqrlOperatorTable.instance().register(function);
     }
     throw new RuntimeException("Functions not yet supported");
   }

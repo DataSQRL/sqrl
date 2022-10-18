@@ -165,6 +165,13 @@ public class SqrlValidatorImpl extends FlinkCalciteSqlValidator {
 
   @Getter
   public List<String> assignmentPath = null;
+
+  /**
+   * SQRL: This will add virtual columns so pathed identifiers will resolve naturally in calcite.
+   *  This has the consequence of creating invalid rel data types when converting to a relation.
+   *  After extracting relations, rerun the validator.
+   */
+  public boolean forcePathIdentifiers = false;
   //~ Constructors -----------------------------------------------------------
 
   /**
@@ -640,7 +647,7 @@ public class SqrlValidatorImpl extends FlinkCalciteSqlValidator {
     setContextTable(op);
     SqlValidatorScope scope = new SqrlEmptyScope(this);
     scope = new CatalogScope(scope, ImmutableList.of("CATALOG"));
-    SqlNode top = performSqrlRewrites(op);
+//    SqlNode top = performSqrlRewrites(op);
 
     final SqlNode topNode2 = validateScopedExpression(top, scope);
     final RelDataType type = getValidatedNodeType(topNode2);

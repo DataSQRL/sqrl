@@ -152,21 +152,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
     return this;
   }
 
-  //used for type discovery
-  public static class RelTypeWithHidden extends RelRecordType {
 
-    private final RelDataType hidden;
-
-    public RelTypeWithHidden(RelDataType hidden, List<RelDataTypeField> fieldList) {
-      super(StructKind.PEEK_FIELDS_NO_EXPAND, fieldList);
-      this.hidden = hidden;
-    }
-
-    @Override
-    public RelDataTypeField getField(String fieldName, boolean caseSensitive, boolean elideRecord) {
-      return hidden.getField(fieldName, caseSensitive, elideRecord);
-    }
-  }
   @Override
   public Statistic getStatistic() {
     return Statistics.UNKNOWN;

@@ -332,13 +332,16 @@ class AstBuilder
       return query;
     }
 
-    return new SqlOrderBy(
-        getLocation(context),
-        term,
-        orderBy,
-        null,
-        fetch
-    );
+    if (orderBy != null || fetch != null) {
+      return new SqlOrderBy(
+          getLocation(context),
+          term,
+          orderBy,
+          null,
+          fetch
+      );
+    }
+    return term;
   }
 
   @Override
@@ -802,6 +805,16 @@ class AstBuilder
     SqlIdentifier name = (SqlIdentifier) context.qualifiedName().accept(this);
     List<SqlNode> args = visit(context.expression(), SqlNode.class);
 
+    //special case: count(*)
+    if (context.ASTERISK() != null) {
+      args = List.of(SqlIdentifier.star(SqlParserPos.ZERO));
+    }
+    //special case: count()
+    if (name.names.size() == 1 && name.names.get(0).equalsIgnoreCase("count")
+      && args.isEmpty()) {
+      args = List.of(SqlIdentifier.star(SqlParserPos.ZERO));
+    }
+
     SqlUnresolvedFunction function = new SqlUnresolvedFunction(name,
         null, null, null, null,
         SqlFunctionCategory.USER_DEFINED_FUNCTION);
@@ -927,11 +940,13 @@ class AstBuilder
       case ISODOW:
       case DOY:
       case EPOCH:
-        BigDecimal newValue2 = expr.bigDecimalValue()
-            .multiply(timeUnit.multiplier)
-            .divide(BigDecimal.valueOf(1000));
-        expr = SqlLiteral.createExactNumeric(newValue2.toString(), expr.getParserPosition());
-        timeUnit = TimeUnit.SECOND;
+        //TODO: Normalize time for calcite so its less hard on the user
+        // e.g 120 SECONDS => 2 MINUTES
+//        BigDecimal newValue2 = expr.bigDecimalValue()
+//            .multiply(timeUnit.multiplier)
+//            .divide(BigDecimal.valueOf(1000));
+//        expr = SqlLiteral.createExactNumeric(newValue2.toString(), expr.getParserPosition());
+//        timeUnit = TimeUnit.SECOND;
       //normalized in sqltorel convert to seconds
     }
 
@@ -1118,26 +1133,40 @@ class AstBuilder
 
   @Override
   public SqlNode visitInlineJoin(InlineJoinContext ctx) {
-    return visit(ctx.relation());
-//
-//
-//    List<SqlNode> sort = visit(ctx.sortItem(), SqlNode.class);
-//
-//    SqlNode limit = ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? null :
-//        Optional.of(SqlLiteral.createExactNumeric(ctx.limit.getText(), getLocation(ctx.limit)))
-//            .orElse(null);
-//
-//    SqlNode from = visit(ctx.inlineJoinSpec());
-//
-//    if (sort != null && sort.size() > 0 || limit != null) {
-//      return new SqlOrderBy(getLocation(ctx), from,
-//          sort != null ? new SqlNodeList(sort, getLocation(ctx)) : null,
-//          null, limit);
-//    }
-//
-//    return from;
+
+    List<SqlNode> sort = visit(ctx.sortItem(), SqlNode.class);
+
+    SqlNode limit = ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? null :
+        Optional.of(SqlLiteral.createExactNumeric(ctx.limit.getText(), getLocation(ctx.limit)))
+            .orElse(null);
+
+    SqlNode from = visit(ctx.relation());
+    SqlNode criteria = null;
+    if (ctx.joinCriteria() != null) {
+      criteria = visit(ctx.joinCriteria().booleanExpression());
+    }
+
+    from = new SqlSelect(SqlParserPos.ZERO,
+        SqlNodeList.EMPTY,
+        new SqlNodeList(List.of(SqlLiteral.createExactNumeric("1", SqlParserPos.ZERO)),SqlParserPos.ZERO),
+        from,
+        criteria,
+        null,
+        null,
+        SqlNodeList.EMPTY,
+        sort != null ? new SqlNodeList(sort, getLocation(ctx)) : null,
+        null,
+        limit,
+        SqlNodeList.EMPTY
+    );
+
+    return from;
   }
 
+  @Override
+  public SqlNode visitJoinCriteria(JoinCriteriaContext ctx) {
+    throw new RuntimeException("Unwrap node in parent node");
+  }
 //
 //  @Override
 //  public SqlNode visitInlineQueryTermDefault(InlineQueryTermDefaultContext ctx) {

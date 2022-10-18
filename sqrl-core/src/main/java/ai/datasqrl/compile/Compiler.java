@@ -194,7 +194,6 @@ public class Compiler {
       //Write content to file
       Files.writeString(file.toPath().resolve("plan.json"),
           mapper.writeValueAsString(root), StandardOpenOption.CREATE);
-      System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(root));
       return root;
     } catch (Exception e) {
       e.printStackTrace();

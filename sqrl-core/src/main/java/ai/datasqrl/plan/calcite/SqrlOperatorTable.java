@@ -9,10 +9,10 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import org.apache.calcite.sql.util.ReflectiveSqlOperatorTable;
 
-public class SqrlOperatorTable extends SqlStdOperatorTable {
+public class SqrlOperatorTable extends ReflectiveSqlOperatorTable {
 
-  @Getter
   private static SqrlOperatorTable instance;
 
   //SQRL functions here:

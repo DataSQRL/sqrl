@@ -15,6 +15,7 @@ import org.apache.calcite.rel.logical.LogicalSort;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.util.Util;
@@ -69,7 +70,7 @@ public class JoinDeclarationFactory {
           new SqlIdentifier(List.of(lastAlias, ""), SqlParserPos.ZERO)),
           SqlParserPos.ZERO));
       String a = env.getAliasGenerator().generateFieldName();
-      SqlBasicCall alias = new SqlBasicCall(SqrlOperatorTable.AS,
+      SqlBasicCall alias = new SqlBasicCall(SqlStdOperatorTable.AS,
           new SqlNode[]{
               select,
               new SqlIdentifier(a, SqlParserPos.ZERO)
@@ -77,7 +78,7 @@ public class JoinDeclarationFactory {
       //change condition to be on pk
       List<SqlNode> pks = new ArrayList<>();
       for (String pk : pkTable.getPrimaryKeyNames()) {
-        pks.add(new SqlBasicCall(SqrlOperatorTable.EQUALS,
+        pks.add(new SqlBasicCall(SqlStdOperatorTable.EQUALS,
             new SqlNode[]{
                 new SqlIdentifier(List.of("_", pk), SqlParserPos.ZERO),
                 new SqlIdentifier(List.of(a,
@@ -155,7 +156,7 @@ public class JoinDeclarationFactory {
     for (int i = 0; i < parent.getPrimaryKeyNames().size(); i++) {
       String childPk = child.getPrimaryKeyNames().get(i);
       String parentPk = parent.getPrimaryKeyNames().get(i);
-      conditions.add(new SqlBasicCall(SqrlOperatorTable.EQUALS,
+      conditions.add(new SqlBasicCall(SqlStdOperatorTable.EQUALS,
           new SqlNode[]{new SqlIdentifier(List.of("_", childPk), SqlParserPos.ZERO),
               new SqlIdentifier(List.of(alias, parentPk), SqlParserPos.ZERO)}, SqlParserPos.ZERO));
     }
@@ -173,7 +174,7 @@ public class JoinDeclarationFactory {
 
 
   private SqlNode createTableRef(SQRLTable table, String alias, Env tableMapper) {
-    return new SqlBasicCall(SqrlOperatorTable.AS, new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
+    return new SqlBasicCall(SqlStdOperatorTable.AS, new SqlNode[]{new SqlTableRef(SqlParserPos.ZERO,
         new SqlIdentifier(env.getTableMap().get(table).getNameId(), SqlParserPos.ZERO),
         SqlNodeList.EMPTY), new SqlIdentifier(alias, SqlParserPos.ZERO)}, SqlParserPos.ZERO);
   }

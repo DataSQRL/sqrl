@@ -12,6 +12,7 @@ import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.codehaus.commons.nullanalysis.Nullable;
@@ -31,7 +32,7 @@ public class SqlNodeUtil {
     } else if (expressions.size() == 1) {
       return expressions.get(0);
     } else if (expressions.size() == 2) {
-      return new SqlBasicCall(SqrlOperatorTable.AND,
+      return new SqlBasicCall(SqlStdOperatorTable.AND,
           new SqlNode[]{
               expressions.get(0),
               expressions.get(1)
@@ -39,7 +40,7 @@ public class SqlNodeUtil {
           SqlParserPos.ZERO);
     }
 
-    return new SqlBasicCall(SqrlOperatorTable.AND,
+    return new SqlBasicCall(SqlStdOperatorTable.AND,
         new SqlNode[]{
             expressions.get(0),
             and(expressions.subList(1, expressions.size()))

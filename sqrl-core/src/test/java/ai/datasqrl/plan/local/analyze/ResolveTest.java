@@ -19,6 +19,7 @@ import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,6 @@ import java.util.stream.Collectors;
 import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.*;
 
-@Disabled
 public class ResolveTest extends AbstractSQRLIT {
 
   ConfiguredSqrlParser parser;
@@ -55,11 +55,11 @@ public class ResolveTest extends AbstractSQRLIT {
     assertTrue(
         importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
     Planner planner = new PlannerFactory(
-        CalciteSchema.createRootSchema(false, false).plus()).createPlanner();
+        new SqrlCalciteSchema(CalciteSchema.createRootSchema(false, false).plus()).plus()).createPlanner();
     Session session = new Session(error, importManager, planner);
     this.session = session;
     this.parser = new ConfiguredSqrlParser(error);
-    this.resolve = new Resolve(RETAIL_DIR_BASE);
+    this.resolve = new Resolve(RETAIL_DIR_BASE.resolve("build/"));
   }
 
   /*
@@ -107,11 +107,10 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled //todo: Fix
   public void tableDefinitionTest() {
     String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
           "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;",
-          "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM _ JOIN _.entries e");
+          "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM _.entries e");
     process(sqrl);
     validateQueryTable("entrycount", TableType.STREAM,5, 2, TimestampTest.candidates(3,4)); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
   }
@@ -166,11 +165,10 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void relationshipDeclarationTest() {
     ScriptBuilder builder = imports();
     builder.append("Product.p := JOIN Product p ORDER BY p.category LIMIT 1");
-    builder.append("Product.p2 := SELECT * FROM _ JOIN _.p");
+    builder.append("Product.p2 := SELECT * FROM _.p");
     process(builder.toString());
   }
 
@@ -232,9 +230,9 @@ public class ResolveTest extends AbstractSQRLIT {
   public void topNTest() {
     //TODO: add orderAgg test back in once this works in transpiler
     ScriptBuilder builder = imports();
-    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
-    builder.add("Customer.recentOrders := SELECT o.id, o.time FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
-//    builder.add("Customer.orderAgg := SELECT COUNT(d.id) FROM _ JOIN _.recentOrders d");
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC;");
+    builder.add("Customer.recentOrders := SELECT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
+//    builder.add("Customer.orderAgg := SELECT COUNT(d.id) FROM _.recentOrders d");
     process(builder.toString());
     validateQueryTable("recentOrders", TableType.TEMPORAL_STATE,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
 //    validateQueryTable("orderAgg", TableType.TEMPORAL_STATE,3, 2, TimestampTest.fixed(2));
@@ -254,10 +252,10 @@ public class ResolveTest extends AbstractSQRLIT {
   public void partitionSelectDistinctTest() {
     //TODO: add distinctAgg test back in once this works in transpiler
     ScriptBuilder builder = imports();
-    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
-    builder.add("Customer.distinctOrders := SELECT DISTINCT o.id FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
-    builder.add("Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.\"time\" FROM _ JOIN Orders o ON _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
-//    builder.add("Customer.distinctAgg := SELECT COUNT(d.id) FROM _ JOIN _.distinctOrders d");
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;");
+    builder.add("Customer.distinctOrders := SELECT DISTINCT o.id FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
+    builder.add("Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
+//    builder.add("Customer.distinctAgg := SELECT COUNT(d.id) FROM _.distinctOrders d");
     process(builder.toString());
     validateQueryTable("customer", TableType.TEMPORAL_STATE,6, 1, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
     validateQueryTable("orders", TableType.STREAM,6, 1, TimestampTest.fixed(4)); //temporal join fixes timestamp
@@ -286,73 +284,6 @@ public class ResolveTest extends AbstractSQRLIT {
             "(SELECT c.customerid, c.\"_ingest_time\" AS rowtime FROM Customer c);");
     process(builder.toString());
     validateQueryTable("combinedstream", TableType.STREAM,3, 1, TimestampTest.fixed(2));
-  }
-
-
-  @Test
-  @Disabled
-  public void fullTest() {
-    ScriptBuilder builder = imports();
-    builder.append("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n");
-    builder.append("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n");
-//    builder.append("Orders.entries.discount := coalesce(discount, 0.0);\n");
-    builder.append("Orders.entries.total := quantity * unit_price - discount;\n");
-    builder.append("Orders.total := sum(entries.unit_price); \n");
-    builder.append("Orders.total_savings := sum(entries.discount);\n");
-    builder.append("Orders.total_entries := count(entries);\n");
-    builder.append("Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n");
-    builder.append(
-        "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n");
-    builder.append(
-        "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n");
-    builder.append("Customer.recent_products := SELECT productid, e.product.category AS category,\n"
-        + "                                   sum(quantity) AS quantity, count(e._idx) AS num_orders\n"
-        + "                            FROM _ JOIN _.orders.entries e\n"
-        + "                            WHERE parent.time > now() - INTERVAL 2 YEAR\n"
-        + "                            GROUP BY productid, category ORDER BY num_orders DESC, "
-        + "quantity DESC;\n");
-
-    builder.append("Customer.recent_products_categories :="
-        + "                     SELECT category, count(e.productid) AS num_products"
-        + "                     FROM _ JOIN _.recent_products"
-        + "                     GROUP BY category ORDER BY num_products;\n");
-    builder.append(
-        "Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp"
-            + ".category=_.category;\n");
-    builder.append("Customer._spending_by_month_category :="
-        + "                     SELECT time.roundToMonth(e.parent.time) AS month,"
-        + "                            e.product.category AS category,"
-        + "                            sum(total) AS total,"
-        + "                            sum(discount) AS savings"
-        + "                     FROM _ JOIN _.orders.entries e"
-        + "                     GROUP BY month, category ORDER BY month DESC;\n");
-
-    builder.append("Customer.spending_by_month :="
-        + "                    SELECT month, sum(total) AS total, sum(savings) AS savings"
-        + "                    FROM _._spending_by_month_category"
-        + "                    GROUP BY month ORDER BY month DESC;\n");
-    builder.append("Customer.spending_by_month.categories :="
-        + "    JOIN _.parent._spending_by_month_category c ON c.month=_.month;\n");
-    builder.append("Product._sales_last_week := SELECT SUM(e.quantity)"
-        + "                          FROM _.order_entries e"
-        + "                          WHERE e.parent.time > now() - INTERVAL 7 DAY;\n");
-    builder.append("Product._sales_last_month := SELECT SUM(e.quantity)"
-        + "                          FROM _.order_entries e"
-        + "                          WHERE e.parent.time > now() - INTERVAL 1 MONTH;\n");
-    builder.append("Product._last_week_increase := _sales_last_week * 4 / _sales_last_month;\n");
-    builder.append("Category := SELECT DISTINCT category AS name FROM Product;\n");
-    builder.append("Category.products := JOIN Product ON _.name = Product.category;\n");
-    builder.append(
-        "Category.trending := JOIN Product p ON _.name = p.category AND p._last_week_increase >"
-            + " 0" + "                     ORDER BY p._last_week_increase DESC LIMIT 10;\n");
-    builder.append("Customer.favorite_categories := SELECT s.category as category_name,"
-        + "                                        sum(s.total) AS total"
-        + "                                FROM _._spending_by_month_category s"
-        + "                                WHERE s.month >= now() - INTERVAL 1 YEAR"
-        + "                                GROUP BY category_name ORDER BY total DESC LIMIT 5;\n");
-    builder.append(
-        "Customer.favorite_categories.category := JOIN Category ON _.category_name = Category.name;\n");
-    process(builder.toString());
   }
 
   private ScriptBuilder imports() {

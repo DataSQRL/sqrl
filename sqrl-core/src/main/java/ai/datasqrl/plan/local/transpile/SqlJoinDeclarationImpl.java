@@ -11,6 +11,7 @@ import lombok.Value;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 
 @Value
@@ -38,7 +39,7 @@ public class SqlJoinDeclarationImpl implements SqlJoinDeclaration {
     joinTree.accept(new SqlBasicVisitor<>() {
       @Override
       public Object visit(SqlCall call) {
-        if (call.getOperator() == SqrlOperatorTable.AS) {
+        if (call.getOperator() == SqlStdOperatorTable.AS) {
           SqlIdentifier identifier = (SqlIdentifier) call.getOperandList().get(1);
           aliases.add(identifier.names.get(0));
         }

@@ -1,0 +1,26 @@
+Orders3 := SELECT * FROM Orders.entries.parent.entries e WHERE e.parent.customerid = 100;
+
+
+LogicalProject(id=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5])
+  LogicalJoin(condition=[=($0, $6)], joinType=[default])
+    LogicalProject(id=[$16], _idx=[$17], productid=[$18], quantity=[$19], unit_price=[$20], discount=[$21])
+      LogicalJoin(condition=[=($11, $16)], joinType=[inner])
+        LogicalJoin(condition=[=($5, $11)], joinType=[inner])
+          LogicalJoin(condition=[=($0, $5)], joinType=[inner])
+            LogicalTableScan(table=[[orders$12]])
+            LogicalTableScan(table=[[entries$13]])
+          LogicalTableScan(table=[[orders$12]])
+        LogicalTableScan(table=[[entries$13]])
+    LogicalFilter(condition=[=($3, 100)])
+      LogicalTableScan(table=[[orders$12]])
+
+
+SELECT "t"."id", "t"."_idx", "t"."productid", "t"."quantity", "t"."unit_price", "t"."discount"
+FROM (SELECT "entries$130"."id", "entries$130"."_idx", "entries$130"."productid", "entries$130"."quantity", "entries$130"."unit_price", "entries$130"."discount"
+  FROM "orders$12"
+   INNER JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"
+   INNER JOIN "orders$12" AS "orders$120" ON "entries$13"."id" = "orders$120"."id"
+   INNER JOIN "entries$13" AS "entries$130" ON "orders$120"."id" = "entries$130"."id") AS "t"
+ DEFAULT JOIN (SELECT *
+  FROM "orders$12"
+  WHERE "customerid" = 100) AS "t0" ON "t"."id" = "t0"."id"

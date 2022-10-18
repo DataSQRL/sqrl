@@ -52,7 +52,9 @@ public class PlannerFactory {
             FlinkEnvProxy.getFunctionCatalog(t),
             t.getCatalogManager().getDataTypeFactory(),
             new FlinkTypeFactory(new FlinkTypeSystem())),
-        FlinkSqlOperatorTable.instance());
+        FlinkSqlOperatorTable.instance()
+        ,SqrlOperatorTable.instance()
+    );
     return operatorTable;
 
   }

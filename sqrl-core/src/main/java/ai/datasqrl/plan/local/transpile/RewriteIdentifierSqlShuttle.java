@@ -1,5 +1,7 @@
 package ai.datasqrl.plan.local.transpile;
 
+import static org.apache.calcite.sql.SqlKind.AS;
+
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 
@@ -39,7 +42,7 @@ public class RewriteIdentifierSqlShuttle extends SqlShuttle {
         return call;
       }
 
-      if (call.getOperator() == SqrlOperatorTable.AS) {
+      if (call.getKind() == AS) {
         String alias = ((SqlIdentifier)call.getOperandList().get(1)).getSimple();
         SqlNode[] operands = new SqlNode[] {
             call.getOperandList().get(0).accept(this),

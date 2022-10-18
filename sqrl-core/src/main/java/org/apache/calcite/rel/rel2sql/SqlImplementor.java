@@ -451,6 +451,8 @@ public abstract class SqlImplementor {
         return JoinType.DEFAULT;
       case INTERVAL:
         return JoinType.INTERVAL;
+      case TEMPORAL:
+        return JoinType.TEMPORAL;
       default:
         throw new AssertionError(joinType);
     }

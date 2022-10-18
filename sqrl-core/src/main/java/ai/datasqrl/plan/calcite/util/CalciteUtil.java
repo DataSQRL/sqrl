@@ -3,6 +3,7 @@ package ai.datasqrl.plan.calcite.util;
 import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
+import java.util.stream.IntStream;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -18,6 +19,7 @@ import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.AggregatingScope;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Litmus;
@@ -120,6 +122,10 @@ public class CalciteUtil {
     return false;
   }
 
+  public static void prependSelectListNodes(SqlSelect select, List<SqlNode> nodes) {
+    if (nodes.isEmpty()) return;
+    select.setSelectList(prependToList(select.getSelectList(), nodes));
+  }
   public static void prependGroupByNodes(SqlSelect select, List<SqlNode> nodes) {
     if (nodes.isEmpty()) return;
     select.setOperand(4, prependToList(select.getGroup(), nodes));
@@ -142,10 +148,11 @@ public class CalciteUtil {
     select.setOperand(0, SqlNodeList.EMPTY);
   }
 
-  public static List<SqlIdentifier> getColumnNames(SqlSelect select, SqlValidatorScope scope) {
+  public static List<SqlIdentifier> getColumnNames(SqlSelect select) {
     //Get names from select list directly
-    return select.getSelectList().getList().stream()
-        .map(i -> toIdentifierName(i))
+    return IntStream.range(0, select.getSelectList().size())
+        .mapToObj(i-> SqlValidatorUtil.getAlias(select.getSelectList().get(i), i))
+        .map(name -> new SqlIdentifier(name, SqlParserPos.ZERO))
         .collect(Collectors.toList());
   }
 
@@ -162,11 +169,11 @@ public class CalciteUtil {
     }
   }
 
-  public static void wrapSelectInProject(SqlSelect select, SqlValidatorScope scope) {
+  public static void wrapSelectInProject(SqlSelect select) {
     SqlSelect innerSelect = (SqlSelect)select.clone(select.getParserPosition());
 
-    List<SqlIdentifier> names = CalciteUtil.getColumnNames(select, scope);
-    SqlNodeList columnNames = new SqlNodeList(names, select.getSelectList().getParserPosition());
+//    List<SqlIdentifier> names = CalciteUtil.getColumnNames(select);
+    SqlNodeList columnNames = new SqlNodeList(List.of(SqlIdentifier.STAR), select.getSelectList().getParserPosition());
 
     select.setOperand(0, SqlNodeList.EMPTY);
     select.setOperand(1, columnNames);

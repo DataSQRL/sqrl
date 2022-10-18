@@ -38,7 +38,6 @@ import java.math.BigDecimal;
 import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.*;
 
-@Disabled
 class AnalyzerTest extends AbstractSQRLIT {
 
   ConfiguredSqrlParser parser;
@@ -68,7 +67,7 @@ class AnalyzerTest extends AbstractSQRLIT {
     Session session = new Session(error, importManager, planner);
     this.session = session;
     this.parser = new ConfiguredSqrlParser(error);
-    this.resolve = new Resolve(RETAIL_DIR_BASE);
+    this.resolve = new Resolve(RETAIL_DIR_BASE.resolve("build"));
   }
 
   private Env generate(ScriptNode node) {
@@ -154,7 +153,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   public void relativeTest1() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"
-        + "Orders.entries.d2 := SELECT discount FROM _;"));
+        + "Orders.entries.d2 := SELECT _.discount FROM _;"));
   }
 
   @Test
@@ -171,6 +170,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void assignmentHintTest() {
     Env env = generate(parser.parse("IMPORT ecommerce-data.Orders;"
         + "/*+ NOOP */ X := SELECT e.* FROM Orders.entries e;"));
@@ -193,6 +193,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void invalidFunctionDef() {
     generateInvalid(
         parser.parse("IMPORT ecommerce-data.Product;\n"
@@ -278,8 +279,8 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void invalidShadowRelationshipTest() {
     generateInvalid(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.productCopy := SELECT * FROM Product;"
-            + "Product.productCopy := SELECT * FROM Product;"));
+            + "Product.productCopy := JOIN Product;"
+            + "Product.productCopy := JOIN Product;"));
   }
 
   @Test
@@ -307,6 +308,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void joinDeclarationOnRootTet() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := JOIN Product;"));
@@ -353,9 +355,10 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   @Disabled
   public void parentTest() {
-    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
-        + "NewProduct := SELECT parent.productid FROM Product.joinDeclaration;"));
+    generate(parser.parse("IMPORT ecommerce-data.Orders; "
+        + "IMPORT ecommerce-data.Product; \n"
+        + "Product.orders_entries := JOIN Orders.entries e ON _.productid = e.productid;\n"
+        + "NewProduct := SELECT j.parent.customerid FROM Product.orders_entries j;"));
   }
 //
 //  @Test
@@ -455,7 +458,7 @@ class AnalyzerTest extends AbstractSQRLIT {
     assertTrue(rexLiteral.getValue() instanceof BigDecimal);
     assertEquals(BigDecimal.valueOf(7200000), rexLiteral.getValue());
     assertTrue(rexLiteral.getType() instanceof IntervalSqlType);
-    assertEquals(TimeUnit.SECOND,
+    assertEquals(TimeUnit.HOUR,
         rexLiteral.getType().getIntervalQualifier().getUnit());
   }
 
@@ -463,12 +466,12 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   public void intervalSecondTest2() {
     Env env = generate(parser.parse("IMPORT ecommerce-data.Product;\n"
-        + "Product2 := SELECT _ingest_time + INTERVAL 120 SECOND AS x FROM Product;"));
+        + "Product2 := SELECT _ingest_time + INTERVAL 60 SECOND AS x FROM Product;"));
     LogicalProject project = (LogicalProject)env.getOps().get(0).getRelNode();
     RexCall call = (RexCall)project.getNamedProjects().get(0).left;
     RexLiteral rexLiteral = (RexLiteral)call.getOperands().get(1);
     assertTrue(rexLiteral.getValue() instanceof BigDecimal);
-    assertEquals(BigDecimal.valueOf(120000), rexLiteral.getValue());
+    assertEquals(BigDecimal.valueOf(60000), rexLiteral.getValue());
     assertTrue(rexLiteral.getType() instanceof IntervalSqlType);
     assertEquals(TimeUnit.SECOND,
         rexLiteral.getType().getIntervalQualifier().getUnit());
@@ -522,6 +525,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void localAggregateRelativePathTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
@@ -538,7 +542,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void queryAsExpressionTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.total := SELECT SUM(productid) - 1 FROM _;"));
+            + "Product.total := SELECT SUM(x.productid) - 1 FROM _ AS x;"));
   }
 
   @Test
@@ -550,6 +554,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void localAggregateCountTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
@@ -564,13 +569,19 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void localAggregateCountStarTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.total := COUNT(*);"));
   }
 
   @Test
+  public void localAggregateCountStarTest2() {
+    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
+        + "Product.total := COUNT();"));
+  }
+
+  @Test
+  @Disabled
   public void localAggregateInAggregateTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
@@ -593,6 +604,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void invalidInlinePathMultiplicityTest() {
     generateInvalid(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -633,11 +645,10 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void distinctOnWithExpressionAliasTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product2 := DISTINCT Product ON Product.productid / 10;\n"));
+            + "Product2 := DISTINCT Product ON Product.productid / 10 ORDER BY _ingest_time DESC;\n"));
   }
 
   @Test
@@ -654,7 +665,7 @@ class AnalyzerTest extends AbstractSQRLIT {
     generate(parser.parse(
         "IMPORT ecommerce-data.Orders;\n"
             + "Orders.entries_2 := SELECT count(1) AS cnt "
-            + "                    FROM _ JOIN _.entries e"));
+            + "                    FROM _.entries e"));
   }
 
   @Test
@@ -662,15 +673,15 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void countFncTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Orders;\n"
-            + "Orders.entries_2 := SELECT discount, count() AS cnt "
-            + "                    FROM _ JOIN _.entries "
+            + "Orders.entries_2 := SELECT discount, count(*) AS cnt "
+            + "                    FROM _.entries "
             + "                    GROUP BY discount;\n"));
   }
 
   @Test
   @Disabled
   public void nestedLocalDistinctTest() {
-    generate(parser.parse(
+    generateInvalid(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
             + "Product.nested := SELECT p.productid FROM Product p;"
             + "Product.nested := DISTINCT _ ON _.productid;"));
@@ -702,6 +713,8 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
+  //TODO: disable paths in group
   public void invalidGroupTest() {
     generateInvalid(parser.parse("IMPORT ecommerce-data.Orders;"
         + "X := SELECT e.parent._uuid AS gp, min(e.unit_price) "
@@ -726,7 +739,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void queryAsExpressionTest2() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.example := SELECT productid FROM _;\n"));
+            + "Product.example := SELECT x.productid FROM _ AS x;\n"));
   }
 
   @Test
@@ -740,7 +753,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   public void queryAsExpressionSameNamedTest4() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.example := SELECT sum(productid) AS example FROM _ HAVING example > 10;\n"));
+            + "Product.example := SELECT sum(x.productid) AS example FROM _ AS x HAVING example > 10;\n"));
   }
 
   @Test
@@ -753,7 +766,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void joinTableFunctionTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -824,7 +837,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Disabled
   public void aggregateIsToOne2() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"
-        + "Orders.stats := SELECT COUNT(e.price) AS num, SUM(e.discount) AS total FROM _.entries e;\n"
+        + "Orders.stats := SELECT COUNT(e.unit_price) AS num, SUM(e.discount) AS total FROM _.entries e;\n"
         + "X := SELECT o.id, o.customerid, o.stats.num FROM Orders o;"));
   }
 

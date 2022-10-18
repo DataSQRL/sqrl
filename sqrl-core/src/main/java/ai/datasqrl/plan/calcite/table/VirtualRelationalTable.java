@@ -2,10 +2,12 @@ package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
+import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.builder.VirtualTable;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -43,6 +45,10 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
    */
   @NonNull
   protected RelDataType queryRowType;
+
+  @Getter
+  @Setter
+  private SQRLTable sqrlTable;
 
   protected VirtualRelationalTable(Name nameId, @NonNull RelDataType rowType,
                                    @NonNull RelDataType queryRowType, int numLocalPks) {

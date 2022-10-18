@@ -21,8 +21,10 @@ import static org.apache.calcite.util.Static.RESOURCE;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.local.HasToTable;
 import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.RelTypeWithHidden;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -166,12 +168,22 @@ public class SqrlEmptyScope implements SqlValidatorScope {
       resolved.found(createNs(base.get()), false, null, path, List.of());
       return true;
     } else {
+//      if (true) {
+//        return true;
+//      }
+
       Optional<SQRLTable> toTable = base.get()
           .walkTable(NamePath.of(names.subList(1, names.size()).toArray(new String[]{})));
       if (toTable.isEmpty()) {
         return false;
       }
       List<Field> fields = base.get().walkField(names.subList(1, names.size()));
+//      if (validator.forcePathIdentifiers && fields.size() > 0) {
+        //found but don't return
+//        resolved.found(createAbsoluteRel(base.get(), base.get(), List.of()), false, null, path,
+//            fields.stream().map(e->e.getName().getCanonical()).collect(Collectors.toList()));
+//        return true;
+//      }
 
       resolved.found(createAbsoluteRel(base.get(), toTable.get(), fields), false, null, path,
           List.of());
@@ -191,6 +203,9 @@ public class SqrlEmptyScope implements SqlValidatorScope {
     RelDataType rowType = validator.resolveNestedColumns ?
         toTable.getRowType(validator.typeFactory)
         : toTable.getVt().getRowType();
+
+    if (validator.forcePathIdentifiers)
+      rowType = new RelTypeWithHidden(toTable.getFullDataType(), toTable.getFullDataType().getFieldList());
 
     SqlValidatorTable relOptTable = RelOptTableImpl.create(relOptSchema, rowType,
         new AbsoluteSQRLTable(baseTable, toTable, fields.stream()
@@ -224,7 +239,9 @@ public class SqrlEmptyScope implements SqlValidatorScope {
     }
 
     List<Field> fields = baseTable.walkField(remainingNames);
-
+//    if (validator.forcePathIdentifiers && fields.size() > 0) {
+//      return false;
+//    }
     resolved.found(createNestedRel(names.get(0), baseTable, toTable.get(), fields), false, null,
         Path.EMPTY, List.of());
     return true;
@@ -233,6 +250,10 @@ public class SqrlEmptyScope implements SqlValidatorScope {
   private SQRLTable getBaseTable(SqlValidatorTable table) {
     if (table.unwrap(HasToTable.class) != null) {
       return table.unwrap(HasToTable.class).getToTable();
+    }
+    if (table.unwrap(VirtualRelationalTable.class) != null) {
+      VirtualRelationalTable vt = table.unwrap(VirtualRelationalTable.class);
+      return vt.getSqrlTable();
     }
     return null;
   }
@@ -247,6 +268,10 @@ public class SqrlEmptyScope implements SqlValidatorScope {
     if (fields.size() > 1) {
       rowType = addDummyPrimaryKeys(baseTable, rowType);
     }
+    if (validator.forcePathIdentifiers) {
+      rowType = toTable.getFullDataType();
+    }
+
 
     SqlValidatorTable relOptTable = RelOptTableImpl.create(relOptSchema, rowType,
         new NestedSQRLTable(alias, baseTable, toTable, fields.stream()
@@ -305,7 +330,10 @@ public class SqrlEmptyScope implements SqlValidatorScope {
     final RelOptSchema relOptSchema =
         validator.catalogReader.unwrap(RelOptSchema.class);
 
-    final RelDataType rowType = table.getRowType(validator.typeFactory);
+    RelDataType rowType = table.getRowType(validator.typeFactory);
+
+    if (validator.forcePathIdentifiers)
+      rowType = table.getFullDataType();
 
     SqlValidatorTable relOptTable = RelOptTableImpl.create(relOptSchema, rowType,
         table,
@@ -318,9 +346,9 @@ public class SqrlEmptyScope implements SqlValidatorScope {
   private SqlValidatorNamespace createVt(String name) {
     final RelOptSchema relOptSchema =
         validator.catalogReader.unwrap(RelOptSchema.class);
-    SqlValidatorTable relOptTable = (SqlValidatorTable) relOptSchema.getTableForMember(
-        List.of(name));
-    return new TableNamespace(validator, relOptTable);
+    VirtualRelationalTable virtualRelationalTable = relOptSchema.getTableForMember(
+        List.of(name)).unwrap(VirtualRelationalTable.class);
+    return createNs(virtualRelationalTable.getSqrlTable());
   }
 
   public RelDataType nullifyType(SqlNode node, RelDataType type) {

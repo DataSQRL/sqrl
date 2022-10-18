@@ -80,22 +80,11 @@ subscriptionType
     ;
 
 inlineJoin
-    : JOIN relation
-
-//    : inlineJoinSpec
-//      (ORDER BY sortItem (',' sortItem)*)?
-//      (LIMIT limit=INTEGER_VALUE)?
-//      (INVERSE inv=identifier)?
+    : JOIN relation (joinCriteria)?
+      (ORDER BY sortItem (',' sortItem)*)?
+      (LIMIT limit=INTEGER_VALUE)?
+      (INVERSE inv=identifier)?
     ;
-//
-//inlineJoinSpec
-//    : left=inlineJoinSpec operator=UNION setQuantifier right=inlineJoinSpec       #inlineSetOperation
-//    | (joinType JOIN inlineAliasedJoinRelation (joinCriteria)?)+                            #inlineQueryTermDefault
-//    ;
-//
-//inlineAliasedJoinRelation
-//    : qualifiedName hint? (AS? identifier)? #inlineTableName
-//    ;
 
 query
     : queryNoWith

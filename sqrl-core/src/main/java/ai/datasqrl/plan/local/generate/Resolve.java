@@ -17,6 +17,8 @@ import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Simple;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.RelToSql;
+import ai.datasqrl.plan.local.AddContextTable;
+import ai.datasqrl.plan.local.RenameSelfInTopQuery;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.generate.Resolve.RewriteIdentifierPathsToJoins.ToLeftJoin;
 import ai.datasqrl.plan.local.transpile.*;
@@ -27,7 +29,10 @@ import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
@@ -43,8 +48,10 @@ import org.apache.calcite.sql.validate.SqlQualified;
 import org.apache.calcite.sql.validate.SqlScopedShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.util.Litmus;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
@@ -69,9 +76,11 @@ public class Resolve {
 
   @Getter
   public class Env {
+
     CalciteTableFactory tableFactory = new CalciteTableFactory(PlannerFactory.getTypeFactory());
     SchemaAdjustmentSettings schemaAdjustmentSettings = SchemaAdjustmentSettings.DEFAULT;
-    List<Loader> loaders = List.of(new DataSourceLoader(), new JavaFunctionLoader(), new TypeLoader());
+    List<Loader> loaders = List.of(new DataSourceLoader(), new JavaFunctionLoader(),
+        new TypeLoader());
     VariableFactory variableFactory = new VariableFactory();
     List<StatementOp> ops = new ArrayList<>();
     Map<Relationship, SqlJoinDeclaration> resolvedJoinDeclarations = new HashMap<>();
@@ -231,12 +240,14 @@ public class Resolve {
     env.relSchema.add(tblDef.getBaseTable().getNameId(), tblDef.getBaseTable());
     if (tblDef.getBaseTable() instanceof ProxyImportRelationalTable) {
       ImportedSourceTable impTable = ((ProxyImportRelationalTable) tblDef.getBaseTable()).getSourceTable();
-      env.relSchema.add(impTable.getNameId(),impTable);
+      env.relSchema.add(impTable.getNameId(), impTable);
     }
     env.tableMap.putAll(tblDef.getShredTableMap());
-    for (Map.Entry<SQRLTable, VirtualRelationalTable> entry : tblDef.getShredTableMap().entrySet()){
+    for (Map.Entry<SQRLTable, VirtualRelationalTable> entry : tblDef.getShredTableMap()
+        .entrySet()) {
       env.relSchema.addMapping(entry.getKey(), entry.getValue());
       entry.getKey().setVT(entry.getValue());
+      entry.getValue().setSqrlTable(entry.getKey());
     }
 
     //and also map all fields
@@ -257,7 +268,6 @@ public class Resolve {
       env.relSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
           tblDef.getTable());
     } else {
-      System.out.println();
 
     }
   }
@@ -337,17 +347,18 @@ public class Resolve {
     StatementKind statementKind;
     if (statement instanceof ExpressionAssignment) {
       sqlNode = ((ExpressionAssignment) statement).getExpression();
+      sqlNode = transformExpressionToQuery(env, statement, sqlNode);
       statementKind = StatementKind.EXPR;
-    } else if  (statement instanceof QueryAssignment) {
+    } else if (statement instanceof QueryAssignment) {
       sqlNode = ((QueryAssignment) statement).getQuery();
       statementKind = StatementKind.QUERY;
-    } else if  (statement instanceof CreateSubscription) {
+    } else if (statement instanceof CreateSubscription) {
       sqlNode = ((CreateSubscription) statement).getQuery();
       statementKind = StatementKind.SUBSCRIPTION;
-    } else if  (statement instanceof DistinctAssignment) {
+    } else if (statement instanceof DistinctAssignment) {
       sqlNode = ((DistinctAssignment) statement).getQuery();
       statementKind = StatementKind.DISTINCT_ON;
-    } else if  (statement instanceof JoinAssignment) {
+    } else if (statement instanceof JoinAssignment) {
       sqlNode = ((JoinAssignment) statement).getQuery();
       statementKind = StatementKind.JOIN;
     } else if (statement instanceof ImportDefinition) {
@@ -356,10 +367,10 @@ public class Resolve {
         return Optional.empty();
       }
       sqlNode = importDef.getTimestamp().get();
+      sqlNode = transformExpressionToQuery(env, statement, sqlNode);
       statementKind = StatementKind.IMPORT;
 
-    }
-    else {
+    } else {
       throw new RuntimeException("Unrecognized assignment type");
     }
 
@@ -368,69 +379,114 @@ public class Resolve {
     return Optional.of(op);
   }
 
+  private SqlNode transformExpressionToQuery(Env env, SqrlStatement statement, SqlNode sqlNode) {
+    Preconditions.checkState(getContext(env, statement).isPresent());
+    return new SqlSelect(SqlParserPos.ZERO,
+        SqlNodeList.EMPTY,
+        new SqlNodeList(List.of(sqlNode), SqlParserPos.ZERO),
+        null,
+        null,
+        null,
+        null,
+        SqlNodeList.EMPTY,
+        null,
+        null,
+        null,
+        SqlNodeList.EMPTY
+    );
+  }
+
   public void validate(Env env, StatementOp op) {
     // Validator validator = createValidator(op);
     // validator.validate(env, op);
   }
 
   public void transpile(Env env, StatementOp op) {
-    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.relSchema);
-    sqrlValidator.assignmentPath = op.getStatement().getNamePath().popLast()
+    List<String> assignmentPath = op.getStatement().getNamePath().popLast()
         .stream()
-        .map(e->e.getCanonical())
+        .map(e -> e.getCanonical())
         .collect(Collectors.toList());
-    SqlNode newNode = sqrlValidator.validate(op);
 
-    op.setQuery(newNode);
+    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.relSchema,
+        assignmentPath, true);
+
+    Optional<SQRLTable> table = getContext(env, op.getStatement());
+    Optional<VirtualRelationalTable> context =
+        table.map(t -> t.getVt());
+
+    final SqlNode stage1 = context.map(
+            c -> new AddContextTable(c.getNameId()).accept(op.getQuery()))
+        .orElse(op.getQuery());
+    final SqlNode stage2 = context.map(c -> new RenameSelfInTopQuery(c.getNameId()).accept(stage1))
+        .orElse(stage1);
+
+    SqlNode finalStage = stage2;
+
+    finalStage = sqrlValidator.validate(finalStage);
+
+    op.setQuery(finalStage);
     op.setSqrlValidator(sqrlValidator);
 
-    System.out.println(newNode);
     if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
 
-      //TODO: need to process hint expression & do the proj wrapping
-      Transpile transpile = new Transpile(env, op, TranspileOptions.builder().build());
-      transpile.rewriteQuery((SqlSelect) newNode,
-          sqrlValidator.getSelectScope((SqlSelect)newNode)
-          );
-      System.out.println(newNode);
-      SqlNode newNode2 = sqrlValidator.validate(newNode);
-      System.out.println(newNode2);
-      op.setQuery(newNode);
-      op.setSqrlValidator(sqrlValidator);
-    } else {
-      SqlNode rewritten = rewrite(sqrlValidator, newNode);
+      new AddHints(sqrlValidator, context).accept(op, finalStage);
 
-      SqrlValidatorImpl validator = TranspilerFactory.createSqrlValidator(env.relSchema);
+      SqrlValidatorImpl validate2 = TranspilerFactory.createSqrlValidator(env.relSchema,
+          assignmentPath, false);
+      validate2.validate(finalStage);
+      op.setQuery(finalStage);
+      op.setSqrlValidator(validate2);
+    } else {
+      SqlNode rewritten = rewrite(env, op, sqrlValidator, finalStage);
+      rewritten = new AddContextQuery(sqrlValidator, context).accept(rewritten);
+
+      //Skip this for joins, we'll add the hints later when we reconstruct the node from the relnode
+      // Hints don't carry over when moving from rel -> sqlnode
+      if (op.getStatementKind() != StatementKind.JOIN) {
+        SqrlValidatorImpl prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
+            assignmentPath, false);
+        prevalidate.validate(rewritten);
+        new AddHints(prevalidate, context).accept(op, rewritten);
+      }
+
+      SqrlValidatorImpl validator = TranspilerFactory.createSqrlValidator(env.relSchema,
+          assignmentPath, false);
       validator.assignmentPath = sqrlValidator.assignmentPath;
       sqrlValidator.resolveNestedColumns = false;
       SqlNode newNode2 = validator.validate(rewritten);
-      System.out.println(newNode2);
       op.setQuery(newNode2);
       op.setSqrlValidator(validator);
-
     }
   }
 
-  private SqlNode rewrite(SqrlValidatorImpl sqrlValidator, SqlNode node) {
+  private SqlNode rewrite(Env env, StatementOp op, SqrlValidatorImpl sqrlValidator, SqlNode node) {
     switch (node.getKind()) {
       case JOIN:
         SqlJoin join = (SqlJoin) node;
-        join.setLeft(rewrite(sqrlValidator, join.getLeft()));
-        join.setRight(rewrite(sqrlValidator, join.getRight()));
+        join.setLeft(rewrite(env, op, sqrlValidator, join.getLeft()));
+        join.setRight(rewrite(env, op, sqrlValidator, join.getRight()));
         break;
       case SELECT:
         SqlSelect select = (SqlSelect) node;
 
-        RewriteIdentifierPathsToJoins j = new RewriteIdentifierPathsToJoins(
-            sqrlValidator.getSelectScope(select)
-        );
-        SqlNodeList sel = (SqlNodeList) select.getSelectList().accept(j);
+        SqlValidatorScope scope = sqrlValidator.getSelectScope(select);
+        RewriteIdentifierPathsToJoins j = new RewriteIdentifierPathsToJoins(scope);
+        List<SqlNode> expandedSelectList = scope.getValidator().getRawSelectScope(select)
+            .getExpandedSelectList();
+        SqlNodeList sel = (SqlNodeList) new SqlNodeList(expandedSelectList,
+            SqlParserPos.ZERO).accept(j);
         SqlNode where = select.getWhere() != null ? select.getWhere().accept(j) : null;
-        SqlNodeList ord = select.getOrderList() != null ? (SqlNodeList) select.getOrderList().accept(j) : null;
+        SqlNodeList ord =
+            select.getOrderList() != null ? (SqlNodeList) select.getOrderList().accept(j) : null;
 
         select.setSelectList(sel);
         select.setWhere(where);
         select.setOrderBy(ord);
+
+        ReplaceGroupIdentifiers rep = new ReplaceGroupIdentifiers(scope, j);
+        SqlNodeList group =
+            select.getGroup() != null ? (SqlNodeList) select.getGroup().accept(rep) : null;
+        select.setGroupBy(group);
 
         //TODO: check to see if we've modified any select items so we can update the group or order aliases
 
@@ -451,6 +507,9 @@ public class Resolve {
         }
         select.setFrom(from);
 
+//        Transpile transpile = new Transpile(env, op, TranspileOptions.builder().build());
+//        transpile.rewriteQuery(select, scope);
+
         return select;
     }
 
@@ -458,6 +517,7 @@ public class Resolve {
   }
 
   public class RewriteIdentifierPathsToJoins extends SqlScopedShuttle {
+
     protected RewriteIdentifierPathsToJoins(
         SqlValidatorScope initialScope) {
       super(initialScope);
@@ -477,33 +537,35 @@ public class Resolve {
     }
 
     AtomicInteger i = new AtomicInteger();
-    public String createLeftJoin(List<String> names) {
+
+    public String createLeftJoin(List<String> names, SqlQualified oldIdentifier) {
       String alias = "__a" + i.incrementAndGet();
-      this.left.add(new ToLeftJoin(names, alias));
+      this.left.add(new ToLeftJoin(names, alias, oldIdentifier));
       return alias;
     }
 
     List<ToLeftJoin> left = new ArrayList<>();
+
     @Value
     class ToLeftJoin {
+
       List<String> names;
       String alias;
+      SqlQualified oldIdentifier;
     }
 
     @Override
     public SqlNode visit(SqlIdentifier id) {
-//      SqlValidatorNamespace ns = getScope().fullyQualify(id).namespace;
-      System.out.println();
-
       try {
         SqlQualified qualified = getScope().fullyQualify(id);
-        if (getScope().fullyQualify(id).prefix().size() > 1) {
+        if (getScope().fullyQualify(id).suffix().size() > 1) {
           //add as left join, give it an alias
           //replace token with new one
 
           String alias = createLeftJoin(qualified.identifier
-              .names.subList(0, qualified.identifier.names.size()-1));
-          List<String> newName = List.of(alias, qualified.suffix().get(qualified.suffix().size()-1));
+              .names.subList(0, qualified.identifier.names.size() - 1), qualified);
+          List<String> newName = List.of(alias,
+              qualified.suffix().get(qualified.suffix().size() - 1));
           return new SqlIdentifier(newName, id.getParserPosition());
         }
 
@@ -540,15 +602,18 @@ public class Resolve {
     if (statement.getNamePath().size() <= 1) {
       return Optional.empty();
     }
-    SQRLTable table = (SQRLTable)
-        env.userSchema.getTable(statement.getNamePath().get(0).getDisplay(), false)
-            .getTable();
+    Optional<SQRLTable> table =
+        Optional.ofNullable(env.userSchema.getTable(statement.getNamePath().get(0).getDisplay(), false))
+            .map(t->(SQRLTable)t.getTable());
 
     if (statement.getNamePath().popFirst().size() == 1) {
-      return Optional.of(table);
+      return table;
     }
-
-    return table.walkTable(statement.getNamePath().popFirst().popLast());
+    if (table.isEmpty()) {
+      //No table in namespace
+      throw new RuntimeException("No table in namespace: " + statement.getNamePath().popLast());
+    }
+    return table.get().walkTable(statement.getNamePath().popFirst().popLast());
   }
 
   public void validateSql(Env env, StatementOp op) {
@@ -565,8 +630,11 @@ public class Resolve {
 
     RelNode relNode = env.session.planner.rel(op.getQuery()).rel;
 
+    //Optimization prepass
+    relNode = env.session.planner.transform(OptimizationStage.PUSH_FILTER_INTO_JOIN,
+        relNode);
+
     op.setRelNode(relNode);
-    System.out.println(relNode.explain());
   }
 
   public SQRLLogicalPlanConverter.RelMeta optimize(Env env, StatementOp op) {
@@ -583,16 +651,17 @@ public class Resolve {
     //table types, and timestamps in the process
 
     //TODO: extract materialization preference from hints if present
-    SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(getRelBuilderFactory(env), Optional.empty());
+    SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(getRelBuilderFactory(env),
+        Optional.empty());
     relNode = relNode.accept(sqrl2sql);
 //    System.out.println("LP$2: \n" + relNode.explain());
-    if (op.statementKind==StatementKind.DISTINCT_ON) {
+    if (op.statementKind == StatementKind.DISTINCT_ON) {
       //Get all field names from relnode
       fieldNames = relNode.getRowType().getFieldNames();
     }
-    SQRLLogicalPlanConverter.RelMeta prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode), fieldNames);
+    SQRLLogicalPlanConverter.RelMeta prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode),
+        fieldNames);
 //    System.out.println("LP$3: \n" + prel.getRelNode().explain());
-    System.out.println(prel.getRelNode().explain());
 
     return prel;
   }
@@ -607,7 +676,7 @@ public class Resolve {
       case EXPR_QUERY:
       case IMPORT_TIMESTAMP:
         AddedColumn c = createColumnAddOp(env, op);
-        addColumn(env, op, c, op.kind==IMPORT_TIMESTAMP);
+        addColumn(env, op, c, op.kind == IMPORT_TIMESTAMP);
         break;
       case ROOT_QUERY:
         createTable(env, op, Optional.empty());
@@ -615,7 +684,7 @@ public class Resolve {
 //        updateTableMapping(env, op, q);
         break;
       case QUERY:
-        Optional<SQRLTable> parentTable = getContext(env,op.getStatement());
+        Optional<SQRLTable> parentTable = getContext(env, op.getStatement());
         assert parentTable.isPresent();
         createTable(env, op, parentTable);
 
@@ -633,7 +702,7 @@ public class Resolve {
     Optional<VirtualRelationalTable> optTable = getTargetRelTable(env, op);
 //    Check.state(optTable.isPresent(), null, null);
     SQRLTable table = getContext(env, op.statement)
-        .orElseThrow(()->new RuntimeException("Cannot resolve table"));
+        .orElseThrow(() -> new RuntimeException("Cannot resolve table"));
     Name name = op.getStatement().getNamePath().getLast();
     if (table.getField(name).isPresent()) {
       name = Name.system(op.getStatement().getNamePath().getLast().getCanonical() + "_");
@@ -641,14 +710,17 @@ public class Resolve {
     c.setNameId(name.getCanonical());
 
     VirtualRelationalTable vtable = optTable.get();
-    Optional<Integer> timestampScore = env.tableFactory.getTimestampScore(op.statement.getNamePath().getLast(),c.getDataType());
-    vtable.addColumn(c, env.tableFactory.getTypeFactory(), getRelBuilderFactory(env), timestampScore);
+    Optional<Integer> timestampScore = env.tableFactory.getTimestampScore(
+        op.statement.getNamePath().getLast(), c.getDataType());
+    vtable.addColumn(c, env.tableFactory.getTypeFactory(), getRelBuilderFactory(env),
+        timestampScore);
     if (fixTimestamp) {
 //      Check.state(timestampScore.isPresent(), null, null);
 //      Check.state(vtable.isRoot() && vtable.getAddedColumns().isEmpty(), null, null);
-      QueryRelationalTable baseTbl = ((VirtualRelationalTable.Root)vtable).getBase();
-      baseTbl.getTimestamp().getCandidateByIndex(baseTbl.getNumColumns()-1) //Timestamp must be last column
-              .fixAsTimestamp();
+      QueryRelationalTable baseTbl = ((VirtualRelationalTable.Root) vtable).getBase();
+      baseTbl.getTimestamp()
+          .getCandidateByIndex(baseTbl.getNumColumns() - 1) //Timestamp must be last column
+          .fixAsTimestamp();
     }
 
     Column column = env.variableFactory.addColumn(name,
@@ -676,36 +748,53 @@ public class Resolve {
         joinDeclarationFactory.deriveMultiplicity(op.relNode);
 
     SqlNode node = RelToSql.convertToSqlNode(op.relNode);
-    convertToSelectStar(node, null, table.get());
+    convertToSelectStar(env, op, op.getStatement().getNamePath().popLast()
+            .stream().map(e -> e.getCanonical()).collect(Collectors.toList()),
+        node, table.get());
 
     env.variableFactory.addJoinDeclaration(op.statement.getNamePath(), table.get(),
-            toTable, multiplicity, node);
+        toTable, multiplicity, node);
 
 //    env.fieldMap.put(relationship, relationship.getName().getCanonical());
 //    env.resolvedJoinDeclarations.put(relationship, joinDeclaration);
   }
 
-  private void convertToSelectStar(SqlNode node, String alias, SQRLTable fromTable) {
+  private void convertToSelectStar(Env env, StatementOp op, List<String> assignmentPath,
+      SqlNode node, SQRLTable sqrlTable) {
     SqlSelect select = (SqlSelect) node;
-    SqlNode n = ((SqlJoin)select.getFrom()).getRight();
+    SqlNode n = ((SqlJoin) select.getFrom()).getRight();
 
     String rightName = getNameFromTableNode(n);
     SqlNode leftNode = getLeftDeepTableNode(select.getFrom());
     String leftName = getNameFromTableNode(leftNode);
 
+    List<SqlNode> keys = IntStream.range(0, sqrlTable.getVt().getPrimaryKeyNames().size())
+        .mapToObj(i ->
+            SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+                new SqlIdentifier(
+                    List.of(leftName, sqrlTable.getVt().getPrimaryKeyNames().get(i)),
+                    SqlParserPos.ZERO),
+                new SqlIdentifier(
+                    List.of("_pk_" + sqrlTable.getVt().getPrimaryKeyNames().get(i)+"$"+i),
+                    SqlParserPos.ZERO)
+            ))
+        .collect(Collectors.toList());
+    List<SqlNode> list = new ArrayList<>(keys);
+    list.add(new SqlIdentifier(List.of(
+        rightName, ""), SqlParserPos.ZERO));
 
-    SqlIdentifier pk = new SqlIdentifier(List.of(leftName, fromTable.getVt().getPrimaryKeyNames().get(0)), SqlParserPos.ZERO);
+    select.setSelectList(new SqlNodeList(list, SqlParserPos.ZERO));
 
-    select.setSelectList(new SqlNodeList(
-        List.of(pk, new SqlIdentifier(List.of(
-            rightName, ""), SqlParserPos.ZERO)), SqlParserPos.ZERO
-    ));
+    SqrlValidatorImpl prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
+        assignmentPath, false);
+    prevalidate.validate(select);
+    new AddHints(prevalidate, getContext(env, op.getStatement()).map(e -> e.getVt()))
+        .accept(op, select);
 
-    System.out.println(select);
   }
 
   private SqlNode getLeftDeepTableNode(SqlNode node) {
-    switch (node.getKind()){
+    switch (node.getKind()) {
       case AS:
       case IDENTIFIER:
         return node;
@@ -718,10 +807,10 @@ public class Resolve {
   }
 
   private String getNameFromTableNode(SqlNode n) {
-    switch (n.getKind()){
+    switch (n.getKind()) {
       case AS:
-        SqlCall call = (SqlCall)n;
-        SqlIdentifier id = (SqlIdentifier)call.getOperandList().get(1);
+        SqlCall call = (SqlCall) n;
+        SqlIdentifier id = (SqlIdentifier) call.getOperandList().get(1);
         return id.names.get(0);
       case IDENTIFIER:
         return ((SqlIdentifier) n).names.get(0);
@@ -742,17 +831,18 @@ public class Resolve {
 
   private void createTable(Env env, StatementOp op, Optional<SQRLTable> parentTable) {
 
-    System.out.println(RelToSql.convertToSql(op.relNode));
     final SQRLLogicalPlanConverter.RelMeta processedRel = optimize(env, op);
 
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
-    List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream().map(idx -> relFieldNames.get(idx))
-            .map(n -> Name.system(n)).collect(Collectors.toList());
+    List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()
+        .map(idx -> relFieldNames.get(idx))
+        .map(n -> Name.system(n)).collect(Collectors.toList());
 
-    Optional<Pair<SQRLTable,VirtualRelationalTable>> parentPair = parentTable.map(tbl ->
-            Pair.of(tbl,env.tableMap.get(tbl)));
-    ScriptTableDefinition queryTable = env.tableFactory.defineTable(op.statement.getNamePath(), processedRel,
-            fieldNames, parentPair);
+    Optional<Pair<SQRLTable, VirtualRelationalTable>> parentPair = parentTable.map(tbl ->
+        Pair.of(tbl, env.tableMap.get(tbl)));
+    ScriptTableDefinition queryTable = env.tableFactory.defineTable(op.statement.getNamePath(),
+        processedRel,
+        fieldNames, parentPair);
     registerScriptTable(env, queryTable);
   }
 
@@ -810,5 +900,65 @@ public class Resolve {
       this.query = query;
       this.statementKind = statementKind;
     }
+  }
+
+  private class ReplaceGroupIdentifiers extends SqlScopedShuttle {
+
+    private final RewriteIdentifierPathsToJoins j;
+    private final ImmutableMap<SqlQualified,
+        RewriteIdentifierPathsToJoins.ToLeftJoin> map;
+
+    public ReplaceGroupIdentifiers(SqlValidatorScope scope, RewriteIdentifierPathsToJoins j) {
+      super(scope);
+      this.j = j;
+      this.map = Maps.uniqueIndex(j.left, i -> i.getOldIdentifier());
+    }
+
+
+    @Override
+    protected SqlNode visitScoped(SqlCall call) {
+      switch (call.getKind()) {
+        case AS:
+          return SqlStdOperatorTable.AS.createCall(call.getParserPosition(),
+              call.getOperandList().get(0).accept(this),
+              call.getOperandList().get(1)
+          );
+      }
+
+      return super.visitScoped(call);
+    }
+
+    List<RewriteIdentifierPathsToJoins.ToLeftJoin> left = new ArrayList<>();
+
+    @Value
+    class ToLeftJoin {
+
+      List<String> names;
+      String alias;
+      SqlQualified oldIdentifier;
+    }
+
+    @Override
+    public SqlNode visit(SqlIdentifier id) {
+//      SqlValidatorNamespace ns = getScope().fullyQualify(id).namespace;
+      try {
+        SqlQualified qualified = getScope().fullyQualify(id);
+        for (RewriteIdentifierPathsToJoins.ToLeftJoin j : this.j.left) {
+          if (j.getOldIdentifier().identifier
+              .equalsDeep(qualified.identifier, Litmus.IGNORE)) {
+            List<String> newName = List.of(j.alias,
+                qualified.suffix().get(qualified.suffix().size() - 1));
+            return new SqlIdentifier(newName, id.getParserPosition());
+          }
+        }
+
+
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+
+      return super.visit(id);
+    }
+
   }
 }

@@ -22,8 +22,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqlExplainFormat;
+import org.apache.calcite.sql.SqlExplainLevel;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
@@ -129,39 +132,47 @@ class QuerySnapshotTest extends AbstractSQRLIT {
           + "FROM Orders.entries AS e "
           + "INNER JOIN Orders.entries AS f ON true "
           + "INNER JOIN Orders.entries AS g ON true;",
-      "Orders.o2 := SELECT * FROM _;",
+      "Orders.o2 := SELECT x.* FROM _ AS x;",
       "X := SELECT e.* FROM Orders.entries e ORDER BY e.discount DESC;",
-      "Orders.o2 := SELECT _.* FROM _ INNER JOIN Orders;",
+      "Orders.o2 := SELECT _.* FROM Orders;",
       "D := SELECT e.parent.id FROM Orders.entries AS e;",
-      "D := SELECT * FROM Orders.entries e WHERE e.parent.id = 0;",
+      "D := SELECT * FROM Orders.entries e INNER JOIN e.parent p WHERE e.parent.customerid = 0 AND p.customerid = 0;",
       "Product2 := SELECT _ingest_time + INTERVAL 2 YEAR AS x FROM Product;",
-      ""
-          + "Orders.entries.product := JOIN _ INNER JOIN Product ON Product.productid = _.productid;\n"
+      "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
           + "O2 := SELECT p.* FROM Orders.entries.product p;",
       "O2 := SELECT * FROM Orders.entries e INNER JOIN e.parent;",
       "X := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;",
-      "Orders.products := SELECT p.* FROM _ INNER JOIN _.entries e INNER JOIN Product AS p ON e.productid = p.productid;",
-      "Orders.entries.x := SELECT _.parent.id, _.discount FROM _;",
-      "Orders.entries.x := SELECT _.parent.id, _.discount FROM _ WHERE _.parent.id = 1;",
+      "Orders.products := SELECT p.* FROM _.entries e INNER JOIN Product AS p ON e.productid = p.productid;",
+      "Orders.entries.x := SELECT _.parent.id, _.discount FROM _ AS x;",
+      "Orders.entries.x := SELECT _.parent.id, _.discount FROM _ AS x WHERE _.parent.id = 1;",
       "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n",
-      "Orders.entries.discount := SELECT coalesce(discount, 0.0) FROM _;\n",
-      "Orders.entries.total := SELECT quantity * unit_price - discount FROM _;\n",
-      "Orders._stats := SELECT e.id, SUM(quantity * unit_price - discount) AS total, sum(discount) AS total_savings, "
+      "Orders.entries.discount := SELECT coalesce(x.discount, 0.0) FROM _ AS x;\n",
+      "Orders.entries.total := SELECT x.quantity * x.unit_price - x.discount FROM _ AS x;\n",
+      "Orders._stats := SELECT SUM(quantity * unit_price - discount) AS total, sum(discount) AS total_savings, "
           + "                 COUNT(1) AS total_entries "
-          + "                 FROM _ INNER JOIN _.entries e"
-          + "              GROUP BY e.id;\n",
-   "Orders._stats := SELECT e.id, SUM(quantity * unit_price - discount) AS total, sum(discount) AS total_savings, \n"
+          + "                 FROM _.entries e\n",
+      "Orders._stats := SELECT SUM(quantity * unit_price - discount) AS total, sum(discount) AS total_savings, \n"
           + "                 COUNT(1) AS total_entries \n"
-          + "                 FROM _ INNER JOIN _.entries e\n"
-          + "                 GROUP BY e.id;\n",
-      "Orders3 := SELECT * FROM Orders.entries.parent.entries;\n"
-//      "Customer.orders := JOIN _ INNER JOIN Orders ON Orders.customerid = _.customerid;\n"
-//          + "Orders.entries.product := JOIN _ INNER JOIN Product ON Product.productid = _.productid;\n"
-//          + "Customer.recent_products := SELECT e.productid, e.product.category AS category,\n"
-//          + "                                   sum(e.quantity) AS quantity, count(*) AS num_orders\n"
-//          + "                            FROM _ INNER JOIN _.orders.entries AS e\n"
-//          + "                            WHERE e.parent.time > now() - INTERVAL 2 YEAR\n"
-//          + "                            GROUP BY productid, category ORDER BY num_orders DESC, quantity DESC;\n",
+          + "                 FROM _.entries e;\n",
+      "Orders3 := SELECT * FROM Orders.entries.parent.entries;\n",
+      "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
+          + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
+          + "Customer.recent_products := SELECT e.productid, e.product.category AS category,\n"
+          + "                                   sum(e.quantity) AS quantity, count(1) AS num_orders\n"
+          + "                            FROM _.orders.entries AS e\n"
+          + "                            WHERE e.parent.time > now() - INTERVAL 2 YEAR\n"
+          + "                            GROUP BY productid, category ORDER BY count(1) DESC, quantity DESC;\n",
+      "Orders3 := SELECT * FROM Orders.entries.parent.entries e WHERE e.parent.customerid = 100;\n",
+      "Orders.biggestDiscount := JOIN _.entries e ORDER BY e.discount DESC LIMIT 1;\n"
+          + "Orders2 := SELECT * FROM Orders.biggestDiscount.parent e;\n",
+      "Orders.entries2 := SELECT _.id, _.time FROM _.entries;\n",
+      //Assure that added parent primary keys do not override the explicit aliases
+      "Orders.entries2 := SELECT e.discount AS id FROM _.entries e GROUP BY e.discount;\n",
+      "Orders.newid := COALESCE(customerid, id);\n",
+      "Category := SELECT DISTINCT category AS name FROM Product;\n",
+      "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
+       + "Orders.entries.dProduct := SELECT DISTINCT category AS name FROM _.product LIMIT 1;\n"
+
 
 //      "Orders3 := SELECT __a1.id\n"
 //          + "FROM Orders.entries AS e\n"
@@ -173,7 +184,7 @@ class QuerySnapshotTest extends AbstractSQRLIT {
 //      "Orders.o2 := SELECT count(entries) FROM Orders;",
 //      "Orders.entries.x := SELECT _.parent.id AS x, sum(_.discount) FROM _ GROUP BY x"
 
-      );
+  );
 
   AtomicInteger cnt = new AtomicInteger();
 
@@ -190,6 +201,8 @@ class QuerySnapshotTest extends AbstractSQRLIT {
             RelNode relNode = generate(IMPORTS, sql, false);
             System.out.println(RelToSql.convertToSql(relNode));
 
+//            String plan = RelOptUtil.dumpPlan("", relNode, SqlExplainFormat.TEXT,
+//                SqlExplainLevel.ALL_ATTRIBUTES);
             createOrValidateSnapshot(getClass().getName(), "Query" + testNo,
                 sql + "\n\n" + relNode.explain() +
                     "\n\n" + RelToSql.convertToSql(relNode)
