@@ -14,7 +14,9 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.inference.CallContext;
 import org.apache.flink.table.types.inference.TypeInference;
+import org.apache.flink.table.types.inference.utils.AdaptedCallContext;
 
 public class StdTimeLibraryImpl {
 
@@ -216,7 +218,7 @@ public class StdTimeLibraryImpl {
       return TypeInference.newBuilder()
           .typedArguments(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(), DataTypes.STRING())
           .outputTypeStrategy(callContext -> {
-            DataType type = callContext.getArgumentDataTypes().get(0);
+            DataType type = getFirstArgumentType(callContext);
             if (type.getLogicalType().isNullable()) {
               return Optional.of(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE());
             }
@@ -225,7 +227,6 @@ public class StdTimeLibraryImpl {
           })
           .build();
     }
-    //todo
   }
 
   public static class TO_UTC extends ScalarFunction {
@@ -308,7 +309,8 @@ public class StdTimeLibraryImpl {
     return TypeInference.newBuilder()
         .typedArguments(inputType)
         .outputTypeStrategy(callContext -> {
-          DataType type = callContext.getArgumentDataTypes().get(0);
+          DataType type = getFirstArgumentType(callContext);
+
           if (type.getLogicalType().isNullable()) {
             return Optional.of(outputType.nullable());
           }
@@ -317,7 +319,16 @@ public class StdTimeLibraryImpl {
         })
         .build();
   }
-  
+
+  public static DataType getFirstArgumentType(CallContext callContext) {
+    if (callContext instanceof AdaptedCallContext) {
+      return ((AdaptedCallContext) callContext).getOriginalContext().getArgumentDataTypes()
+          .get(0);
+    } else {
+      return callContext.getArgumentDataTypes().get(0);
+    }
+  }
+
   @Value
   public static class FlinkFnc {
 
