@@ -298,11 +298,6 @@ public class StdTimeLibraryImpl {
       return TypeInference.newBuilder()
           .typedArguments()
           .outputTypeStrategy(callContext -> {
-            DataType type = callContext.getArgumentDataTypes().get(0);
-            if (type.getLogicalType().isNullable()) {
-              return Optional.of(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE().nullable());
-            }
-
             return Optional.of(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE().notNull());
           })
           .build();
