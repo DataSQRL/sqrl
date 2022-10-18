@@ -1,45 +1,43 @@
-IMPORT ecommerce-data.Customer;
+IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) AS updateTime;
 IMPORT ecommerce-data.Product;
 IMPORT ecommerce-data.Orders;
 
-Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;
+Customer := DISTINCT Customer ON customerid ORDER BY updateTime DESC;
+Category := SELECT DISTINCT category AS name FROM Product;
 Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;
 
 -- Compute useful statistics on orders
 Orders.entries.discount := coalesce(discount, 0.0);
 Orders.entries.total := quantity * unit_price - discount;
-Orders.total := sum(entries.total);
-Orders.total_savings := sum(entries.discount);
-Orders.total_entries := count(entries);
-
+Orders.total := SELECT sum(e.total) AS price, sum(e.discount) AS discount, count(1) AS num FROM _.entries e;
 
 -- Relate Customer to Orders and compute a customer's total order spent
 Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;
 Customer.total_orders := sum(orders.total);
 
 -- Aggregate all products the customer has ordered for the 'order again' feature
-Orders.entries.product := JOIN Product ON Product.productid = _.productid INVERSE order_entries;
+Orders.entries.product := JOIN Product ON Product.productid = _.productid;
 
-Customer.recent_products := SELECT productid, product.category AS category,
-                                   sum(quantity) AS quantity, count(*) AS num_orders
-                            FROM _.orders.entries
-                            WHERE parent.time > now() - INTERVAL 2 YEAR
+Customer.recent_products := SELECT e.productid, e.product.category AS category,
+                                   sum(e.quantity) AS quantity, count(1) AS num_orders
+                            FROM _.orders o JOIN o.entries e
+                            WHERE o.time > now() - INTERVAL 2 YEAR
                             GROUP BY productid, category ORDER BY num_orders DESC, quantity DESC;
 
 Customer.recent_products_categories :=
-                     SELECT category, count(*) AS num_products
+                     SELECT category, sum(num_orders) AS total_orders
                      FROM _.recent_products
-                     GROUP BY category ORDER BY num_products;
+                     GROUP BY category ORDER BY total_orders DESC;
 
 Customer.recent_products_categories.products := JOIN _.parent.recent_products rp ON rp.category=_.category;
 
 -- Aggregate customer spending by month and product category for the 'spending history' feature
 Customer._spending_by_month_category :=
-                     SELECT time.roundToMonth(parent.time) AS month,
-                            product.category AS category,
-                            sum(total) AS total,
-                            sum(discount) AS savings
-                     FROM _.orders.entries
+                     SELECT round_to_month(o.time) AS month,
+                            e.product.category AS category,
+                            sum(e.total) AS total,
+                            sum(e.discount) AS savings
+                     FROM _.orders o JOIN o.entries e
                      GROUP BY month, category ORDER BY month DESC;
 
 Customer.spending_by_month :=
@@ -51,23 +49,21 @@ Customer.spending_by_month.categories :=
 
 /* Compute w/w product sales volume increase average over a month
    These numbers are internal to determine trending products */
-Product._sales_last_week := SELECT SUM(e.quantity)
-                          FROM _.order_entries e
-                          --WHERE e.parent.time > now() - INTERVAL 1 WEEK;
-                          WHERE e.parent.time > now() - INTERVAL 7 DAY;
 
-Product._sales_last_month := SELECT SUM(e.quantity)
-                          FROM _.order_entries e
-                          --WHERE e.parent.time > now() - INTERVAL 4 WEEK;
-                          WHERE e.parent.time > now() - INTERVAL 1 MONTH;
+Product._sales_by_hour := SELECT round_to_hour(o.time) as hour, sum(e.quantity) as quantity,
+                                count(1) as num_orders
+                          FROM _ JOIN (Orders o JOIN o.entries e) ON e.productid = _.productid ORDER BY hour DESC;
 
-Product._last_week_increase := _sales_last_week * 4 / _sales_last_month;
+Product._sales_24h := SELECT sum(quantity) as total, sum(num_orders) as num FROM _._sales_by_hour LIMIT 24;
+Product._sales_72h := SELECT sum(quantity) as total, sum(num_orders) as num FROM _._sales_by_hour LIMIT 72;
+
+Product._sales_trend := SELECT a.total*1.5 / greatest(b.total, 500) + a.num*1.5 / greatest(b.num, 100) as increase
+                        FROM _.sales_24h a JOIN _.sales_72h b
 
 -- Determine trending products for each category
-Category := SELECT DISTINCT category AS name FROM Product;
 Category.products := JOIN Product ON _.name = Product.category;
-Category.trending := JOIN Product p ON _.name = p.category AND p._last_week_increase > 0
-                     ORDER BY p._last_week_increase DESC LIMIT 10;
+Category.trending := JOIN Product p ON _.name = p.category
+                     ORDER BY p._sales_trend.increase DESC;
 
 /* Determine customers favorite categories by total spent
    In combination with trending products this is used for the product recommendation feature */
@@ -81,5 +77,9 @@ Customer.favorite_categories.category := JOIN Category ON _.category_name = Cate
 
 -- Create subscription for customer spending more than $100 so we can send them a coupon --
 
+Customer.order_stats := SELECT sum(o.total.price) as total_spend, count(1) as num_orders
+                        FROM _.orders o;
+
 CREATE SUBSCRIPTION NewCustomerPromotion ON ADD AS
-SELECT customerid, email, name, total_orders FROM Customer WHERE total_orders >= 100;
+SELECT customerid, email, name, total_orders FROM Customer c JOIN c.order_stats o
+WHERE o.total_spend >= 100 OR o.num_orders >=3;
