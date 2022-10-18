@@ -85,9 +85,9 @@ public class C360BundleTest {
     System.out.println(s.statusCode());
 
 // Uncomment to test graphql
-    while(true) {
-      Thread.sleep(10);
-    }
+//    while(true) {
+//      Thread.sleep(10);
+//    }
   }
 
   @SneakyThrows
