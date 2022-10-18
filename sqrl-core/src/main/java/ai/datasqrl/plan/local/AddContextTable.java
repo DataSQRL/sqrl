@@ -71,7 +71,7 @@ public class AddContextTable extends SqlShuttle {
         SqlParserPos.ZERO,
         createConcreteSelfTable(),
         SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-        JoinType.INNER.symbol(SqlParserPos.ZERO),
+        JoinType.DEFAULT.symbol(SqlParserPos.ZERO),
         node,
         JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
         null
