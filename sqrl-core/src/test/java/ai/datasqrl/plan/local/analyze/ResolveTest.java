@@ -12,8 +12,9 @@ import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
-import ai.datasqrl.util.data.C360;
 import ai.datasqrl.util.ScriptBuilder;
+import ai.datasqrl.util.SnapshotTest;
+import ai.datasqrl.util.data.C360;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
@@ -22,9 +23,10 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.compress.utils.Sets;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -42,8 +44,11 @@ public class ResolveTest extends AbstractSQRLIT {
 
   private Resolve.Env resolvedDag = null;
 
+  private SnapshotTest.SnapshotRun snapshotRun;
+  private SnapshotTest.Execution snapshotExecution;
+
   @BeforeEach
-  public void setup() throws IOException {
+  public void setup(TestInfo testInfo) throws IOException {
     error = ErrorCollector.root();
     initialize(IntegrationTestSettings.getInMemory(false));
     C360 example = C360.BASIC;
@@ -60,6 +65,12 @@ public class ResolveTest extends AbstractSQRLIT {
     this.session = session;
     this.parser = new ConfiguredSqrlParser(error);
     this.resolve = new Resolve(RETAIL_DIR_BASE.resolve("build/"));
+    this.snapshotRun = SnapshotTest.SnapshotRun.of(getClass(),testInfo).with(false);
+  }
+
+  @AfterEach
+  public void tearDown() {
+    if (snapshotExecution!=null) snapshotExecution.test();
   }
 
   /*
@@ -69,9 +80,9 @@ public class ResolveTest extends AbstractSQRLIT {
   @Test
   public void tableImportTest() {
     process(imports().toString());
-    validateQueryTable("customer", TableType.STREAM, 6, 1, TimestampTest.best(1));
-    validateQueryTable("product", TableType.STREAM,6, 1, TimestampTest.best(1));
-    validateQueryTable("orders", TableType.STREAM,6, 1, TimestampTest.best(4));
+    validateQueryTable("customer", TableType.STREAM, 6, 1, TimestampTest.candidates(1));
+    validateQueryTable("product", TableType.STREAM,6, 1, TimestampTest.candidates(1));
+    validateQueryTable("orders", TableType.STREAM,6, 1, TimestampTest.candidates(1,4));
   }
 
   /*
@@ -109,8 +120,7 @@ public class ResolveTest extends AbstractSQRLIT {
   @Test
   public void tableDefinitionTest() {
     String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
-          "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;",
-          "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM _.entries e");
+          "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;");
     process(sqrl);
     validateQueryTable("entrycount", TableType.STREAM,5, 2, TimestampTest.candidates(3,4)); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
   }
@@ -120,14 +130,19 @@ public class ResolveTest extends AbstractSQRLIT {
    */
 
   @Test
-  public void intervalJoinAgggregateTest() {
+  public void nestedAggregationAndSelfJoinTest() {
     String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
-            "OrdersTotal := SELECT o._uuid, SUM(o.id) as total FROM Orders o GROUP BY o._uuid;",
-            "OrderAgg := SELECT o.customerid, o.\"time\", o.id, t.total FROM Orders o JOIN OrdersTotal t ON o._uuid = t._uuid");
+            "IMPORT ecommerce-data.Customer",
+            "Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC",
+            "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM _.entries e",
+            "OrdersInline := SELECT o.id, o.customerid, o.\"time\", t.price, t.num FROM Orders o JOIN o.total t",
+            "Customer.orders_by_day := SELECT round_to_day(o.\"time\") as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM OrdersInline o WHERE o.customerid = _.customerid GROUP BY day");
     process(sqrl);
-    validateQueryTable("orderstotal", TableType.STREAM,3, 1, TimestampTest.fixed(2));
-    validateQueryTable("orderagg", TableType.STREAM,5, 1, TimestampTest.fixed(2));
+    validateQueryTable("total", TableType.STREAM, 5, 1, TimestampTest.fixed(4));
+    validateQueryTable("ordersinline", TableType.STREAM, 6, 1, TimestampTest.fixed(3));
+    validateQueryTable("orders_by_day", TableType.STREAM, 4, 2, TimestampTest.fixed(1));
   }
+
 
   /*
   ===== JOINS ======
@@ -321,6 +336,7 @@ public class ResolveTest extends AbstractSQRLIT {
                                   PullupTest pullupTest) {
     CalciteSchema relSchema = resolvedDag.getRelSchema();
     QueryRelationalTable table = getLatestTable(relSchema,tableName,QueryRelationalTable.class).get();
+    snapshotExecution = SnapshotTest.createOrValidateSnapshot(snapshotRun.with(tableName,"lp"), table.getRelNode().explain());
     assertEquals(tableType, table.getType(), "table type");
     assertEquals(numPrimaryKeys, table.getNumPrimaryKeys(), "primary key size");
     assertEquals(numCols, table.getRowType().getFieldCount(), "field count");

@@ -113,17 +113,6 @@ public class SqrlRexUtil {
         };
     }
 
-    public static RexFinder<RexInputRef> findRexInputRefByIndex(final int index) {
-        return new RexFinder<RexInputRef>() {
-            @Override public Void visitInputRef(RexInputRef ref) {
-                if (ref.getIndex()==index) {
-                    throw new Util.FoundOne(ref);
-                }
-                return super.visitInputRef(ref);
-            }
-        };
-    }
-
     public static RexNode mapIndexes(@NonNull RexNode node, IndexMap map) {
         if (map == null) {
             return node;

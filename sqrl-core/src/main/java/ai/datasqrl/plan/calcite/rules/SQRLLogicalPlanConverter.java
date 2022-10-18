@@ -45,6 +45,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -660,7 +661,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     }
                 }
             }
-            if (originalIndex>0) {
+            if (originalIndex>=0) {
                 if (mappedProjects.putIfAbsent(originalIndex,exp.i)!=null) {
                     //We are ignoring this mapping because the prior one takes precedence, let's see if we should warn the user
                     if (input.primaryKey.containsTarget(originalIndex) || input.timestamp.isCandidate(originalIndex)) {
@@ -871,6 +872,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         final RelMeta rightInputF = rightInput;
         RelBuilder relB = relBuilderFactory.get();
         relB.push(leftInputF.relNode); relB.push(rightInputF.relNode);
+        Function<Integer,RexInputRef> idxResolver = idx -> {
+            if (idx<leftSideMaxIdx) return RexInputRef.of(idx,leftInputF.relNode.getRowType());
+            else return new RexInputRef(idx,rightInputF.relNode.getRowType().getFieldList().get(idx-leftSideMaxIdx).getType());
+        };
 
         ContinuousIndexMap.Builder concatPkBuilder = ContinuousIndexMap.builder(leftInputF.primaryKey,rightInputF.primaryKey.getSourceLength());
         concatPkBuilder.addAll(rightInputF.primaryKey.remap(joinedIndexMap.getTargetLength(), idx -> idx + leftSideMaxIdx));
@@ -883,7 +888,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         if (joinType==JoinRelType.DEFAULT || joinType ==JoinRelType.INNER || joinType==JoinRelType.INTERVAL) {
             if (leftInputF.type==TableType.STREAM && rightInputF.type==TableType.STREAM) {
                 //Validate that the join condition includes time bounds on both sides
-                List<RexNode> conjunctions = rexUtil.getConjunctions(condition);
+                List<RexNode> conjunctions = new ArrayList<>(rexUtil.getConjunctions(condition));
                 Predicate<Integer> isTimestampColumn = idx -> idx<leftSideMaxIdx?leftInputF.timestamp.isCandidate(idx):
                                                                                 rightInputF.timestamp.isCandidate(idx-leftSideMaxIdx);
                 List<TimePredicate> timePredicates = conjunctions.stream().map(rex ->
@@ -895,21 +900,25 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 Optional<Integer> numRootPks = Optional.empty();
                 if (timePredicates.isEmpty() && leftInputF.numRootPks.flatMap(npk ->
                         rightInputF.numRootPks.filter(npk2 -> npk2.equals(npk))).isPresent()) {
-                    //If both streams have same number of root primary keys, check if those are part of equality conditiosn
+                    //If both streams have same number of root primary keys, check if those are part of equality conditions
                     List<IntPair> rootPkPairs = new ArrayList<>();
                     for (int i = 0; i < leftInputF.numRootPks.get(); i++) {
                         rootPkPairs.add(new IntPair(leftInputF.primaryKey.map(i), rightInputF.primaryKey.map(i)+leftSideMaxIdx));
                     }
                     if (eqDecomp.getEqualities().containsAll(rootPkPairs)) {
                         //Change primary key to only include root pk once and equality time condition because timestamps must be equal
-                        timePredicates.add(new TimePredicate(rightInputF.timestamp.getBestCandidate().getIndex()+leftSideMaxIdx,
-                                leftInputF.timestamp.getBestCandidate().getIndex(), false, 0));
+                        TimePredicate eqCondition = new TimePredicate(rightInputF.timestamp.getBestCandidate().getIndex()+leftSideMaxIdx,
+                                leftInputF.timestamp.getBestCandidate().getIndex(), false, 0);
+                        timePredicates.add(eqCondition);
+                        conjunctions.add(eqCondition.createRexNode(rexUtil.getBuilder(), idxResolver,false));
+
                         numRootPks = leftInputF.numRootPks;
                         //remove root pk columns from right side when combining primary keys
                         concatPkBuilder = ContinuousIndexMap.builder(leftInputF.primaryKey,rightInputF.primaryKey.getSourceLength()-numRootPks.get());
                         List<Integer> rightPks = rightInputF.primaryKey.targetsAsList();
                         concatPkBuilder.addAll(rightPks.subList(numRootPks.get(),rightPks.size()).stream().map(idx -> idx + leftSideMaxIdx).collect(Collectors.toList()));
                         concatPk = concatPkBuilder.build(joinedIndexMap.getTargetLength());
+
                     }
                 }
                 if (!timePredicates.isEmpty()) {
@@ -930,13 +939,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
                     if (timePredicates.size() == 1 && !timePredicates.get(0).isEquality()) {
                         //We only have an upper bound, add (very loose) bound in other direction - Flink requires this
-                        conjunctions = new ArrayList<>(conjunctions);
-                        final RexNode findInCondition = condition;
                         conjunctions.add(Iterables.getOnlyElement(timePredicates)
                                 .inverseWithInterval(UPPER_BOUND_INTERVAL_MS).createRexNode(rexUtil.getBuilder(),
-                                        idx -> SqrlRexUtil.findRexInputRefByIndex(idx).find(findInCondition).get(),false));
-                        condition = RexUtil.composeConjunction(rexUtil.getBuilder(), conjunctions);
+                                        idxResolver,false));
                     }
+                    condition = RexUtil.composeConjunction(rexUtil.getBuilder(), conjunctions);
                     joinType = JoinRelType.INTERVAL;
                     relB.join(JoinRelType.INNER, condition); //Can treat as "standard" inner join since no modification is necessary in physical plan
                     return setRelHolder(RelMeta.build(relB.build(), TableType.STREAM,
