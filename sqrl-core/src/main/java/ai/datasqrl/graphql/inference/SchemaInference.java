@@ -187,10 +187,11 @@ public class SchemaInference {
     if (rel.isPresent()) {
       int keys = Math.min(type.getParentVt().getPrimaryKeyNames().size(),
           vt.getPrimaryKeyNames().size());
+
       return IntStream.range(0, keys)
-          .mapToObj(i->type.parentRelNode.getRowType().getFieldList().get(i))
+          .mapToObj(i->type.getParentVt().getPrimaryKeyNames().get(i))
           .map(f-> new SourcePgParameter(
-              f.getName()))
+              f))
           .collect(Collectors.toList());
     }
     return List.of();

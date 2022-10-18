@@ -88,6 +88,7 @@ public class Compiler {
     System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(root));
 
     JDBCTempDatabase jdbcTempDatabase = new JDBCTempDatabase();
+    System.out.println("PORT: " + jdbcTempDatabase.getPostgreSQLContainer().getMappedPort(5432));
     PhysicalPlan plan = dryRunFlink(env, s, jdbcTempDatabase);
     exec(plan, jdbcTempDatabase);
     startGraphql(build, root, jdbcTempDatabase);
