@@ -497,7 +497,7 @@ public class Resolve {
               SqlParserPos.ZERO,
               from,
               SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-              JoinType.DEFAULT.symbol(SqlParserPos.ZERO),
+              JoinType.LEFT.symbol(SqlParserPos.ZERO),
               SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
                   new SqlIdentifier(toJoin.names, SqlParserPos.ZERO),
                   new SqlIdentifier(toJoin.alias, SqlParserPos.ZERO)),
