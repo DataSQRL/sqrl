@@ -1,11 +1,9 @@
 Category := SELECT DISTINCT category AS name FROM Product;
 
 
-LogicalAggregate(group=[{0}])
-  LogicalProject(name=[$5])
-    LogicalTableScan(table=[[product$10]])
+LogicalProject(name=[$5])
+  LogicalTableScan(table=[[product$10]])
 
 
 SELECT "category" AS "name"
 FROM "product$10"
-GROUP BY "category"

@@ -2,11 +2,11 @@ Orders.entries2 := SELECT _.id, _.time FROM _.entries;
 
 
 LogicalProject(_id$0=[$0], id=[$0], time=[$4])
-  LogicalJoin(condition=[=($0, $5)], joinType=[inner])
+  LogicalJoin(condition=[=($0, $5)], joinType=[default])
     LogicalTableScan(table=[[orders$12]])
     LogicalTableScan(table=[[entries$13]])
 
 
 SELECT "orders$12"."id" AS "_id$0", "orders$12"."id", "orders$12"."time"
 FROM "orders$12"
- INNER JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"
+ DEFAULT JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"

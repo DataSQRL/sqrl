@@ -172,7 +172,9 @@ class QuerySnapshotTest extends AbstractSQRLIT {
       "Category := SELECT DISTINCT category AS name FROM Product;\n",
       "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
        + "Orders.entries.dProduct := SELECT DISTINCT category AS name FROM _.product LIMIT 1;\n",
-      "Orders.x := SELECT * FROM _ JOIN Product ON true;\n"
+      "Orders.x := SELECT * FROM _ JOIN Product ON true;\n",
+      "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
+          + "Orders.entries.dProduct := SELECT unit_price, product.category, product.name FROM _;\n"
 
 
 //      "Orders3 := SELECT __a1.id\n"

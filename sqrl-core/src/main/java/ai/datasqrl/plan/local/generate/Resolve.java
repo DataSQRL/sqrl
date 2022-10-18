@@ -507,9 +507,6 @@ public class Resolve {
         }
         select.setFrom(from);
 
-//        Transpile transpile = new Transpile(env, op, TranspileOptions.builder().build());
-//        transpile.rewriteQuery(select, scope);
-
         return select;
     }
 
@@ -539,6 +536,13 @@ public class Resolve {
     AtomicInteger i = new AtomicInteger();
 
     public String createLeftJoin(List<String> names, SqlQualified oldIdentifier) {
+      //Dedupe joins
+      for (ToLeftJoin j : this.left) {
+        if (j.names.equals(names)) {
+          return j.alias;
+        }
+      }
+
       String alias = "__a" + i.incrementAndGet();
       this.left.add(new ToLeftJoin(names, alias, oldIdentifier));
       return alias;

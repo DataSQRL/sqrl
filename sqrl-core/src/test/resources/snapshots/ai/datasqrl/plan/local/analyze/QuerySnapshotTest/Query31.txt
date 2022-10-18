@@ -3,12 +3,12 @@ Orders.entries2 := SELECT e.discount AS id FROM _.entries e GROUP BY e.discount;
 
 LogicalAggregate(group=[{0, 1}])
   LogicalProject(_id$0=[$0], id=[$10])
-    LogicalJoin(condition=[=($0, $5)], joinType=[inner])
+    LogicalJoin(condition=[=($0, $5)], joinType=[default])
       LogicalTableScan(table=[[orders$12]])
       LogicalTableScan(table=[[entries$13]])
 
 
 SELECT "orders$12"."id" AS "_id$0", "entries$13"."discount" AS "id"
 FROM "orders$12"
- INNER JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"
+ DEFAULT JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"
 GROUP BY "orders$12"."id", "entries$13"."discount"
