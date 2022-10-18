@@ -26,13 +26,11 @@ public class C360BundleTest {
 //      + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
       + "Orders.x := EPOCH_TO_TIMESTAMP(100);"
       //State table error
-      + "Orders.stats := SELECT _._uuid AS _uuid, "
+      + "Orders.stats := SELECT "
       + "                        SUM(quantity * unit_price - discount) AS total, "
-      + "                        SUM(discount) AS total_savings, "
+      + "                        SUM(quantity * discount) AS total_savings, "
       + "                        COUNT(1) AS total_entries "
-      + "                 FROM _ "
-      + "                 INNER JOIN _.entries e"
-      + "                 GROUP BY _._uuid;\n"
+      + "                 FROM _.entries e;\n"
       + "";
 
   @Test
@@ -87,9 +85,9 @@ public class C360BundleTest {
     System.out.println(s.statusCode());
 
 // Uncomment to test graphql
-//    while(true) {
-//      Thread.sleep(10);
-//    }
+    while(true) {
+      Thread.sleep(10);
+    }
   }
 
   @SneakyThrows
