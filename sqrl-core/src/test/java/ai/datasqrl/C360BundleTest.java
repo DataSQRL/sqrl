@@ -16,21 +16,21 @@ public class C360BundleTest {
   String c360Script = "IMPORT ecommerce-data.Customer;\n"
       + "IMPORT ecommerce-data.Product;\n"
       + "IMPORT ecommerce-data.Orders;"
-      + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
-      + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
+      + "Customer := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n"
+//      + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
       + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
-      + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
-      + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
-
-      //Error adding a nested column
-//      + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
-      + "Orders.x := EPOCH_TO_TIMESTAMP(100);"
-      //State table error
-      + "Orders.stats := SELECT "
-      + "                        SUM(quantity * unit_price - discount) AS total, "
-      + "                        SUM(quantity * discount) AS total_savings, "
-      + "                        COUNT(1) AS total_entries "
-      + "                 FROM _.entries e;\n"
+//      + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
+//      + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
+//
+//      //Error adding a nested column
+////      + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
+//      + "Orders.x := EPOCH_TO_TIMESTAMP(100);"
+//      //State table error
+//      + "Orders.stats := SELECT "
+//      + "                        SUM(quantity * unit_price - discount) AS total, "
+//      + "                        SUM(quantity * discount) AS total_savings, "
+//      + "                        COUNT(1) AS total_entries "
+//      + "                 FROM _.entries e;\n"
       + "";
 
   @Test
