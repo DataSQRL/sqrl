@@ -175,7 +175,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             List<RexNode> projects = rexUtil.getIdentityProject(builder.peek());
             RexNode added;
             if (column instanceof AddedColumn.Simple) {
-                added = ((AddedColumn.Simple) column).getExpression(path);
+                added = ((AddedColumn.Simple) column).getExpression(path.mapLeafTable());
             } else {
                 AddedColumn.Complex cc = (AddedColumn.Complex) column;
                 //TODO: Need to join and project out everything but the last column

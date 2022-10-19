@@ -131,7 +131,7 @@ public class JoinTable implements Comparable<JoinTable> {
     }
 
 
-    public static class Path extends AbstractPath<JoinTable, Path> implements IndexMap {
+    public static class Path extends AbstractPath<JoinTable, Path> /*implements IndexMap*/ {
 
         public static final Path ROOT = new Path();
         private static final Constructor CONSTRUCTOR = new Constructor();
@@ -152,20 +152,42 @@ public class JoinTable implements Comparable<JoinTable> {
             return Path.CONSTRUCTOR.of(ancestors);
         }
 
-        @Override
-        public int map(int index) {
-            Preconditions.checkArgument(index>=0);
-            int delta = index;
-            for (int i = 0; i < size(); i++) {
-                JoinTable t = get(i);
-                if (delta < t.numColumns()) {
-                    return t.offset + delta;
-                } else {
-                    delta -= t.numColumns();
+        public IndexMap mapLeafTable() {
+            return index -> {
+                Preconditions.checkArgument(index>=0);
+                int delta = index;
+                for (int i = 0; i < size(); i++) {
+                    JoinTable t = get(i);
+                    int localColLength;
+                    if (i < size()-1) { //It's a parent table, only account for local primary keys
+                        localColLength = t.getNumLocalPk();
+                    } else {
+                        localColLength = t.numColumns();
+                    }
+                    if (delta < localColLength) {
+                        return t.offset + delta;
+                    } else {
+                        delta -= localColLength;
+                    }
                 }
-            }
-            throw new IllegalArgumentException(String.format("Index %d out of range of child path",index));
+                throw new IllegalArgumentException(String.format("Index %d out of range of child path",index));
+            };
         }
+
+//        public int map(int index) {
+//            Preconditions.checkArgument(index>=0);
+//            int delta = index;
+//            for (int i = 0; i < size(); i++) {
+//                JoinTable t = get(i);
+//                if ()
+//                if (delta < t.numColumns()) {
+//                    return t.offset + delta;
+//                } else {
+//                    delta -= t.numColumns();
+//                }
+//            }
+//            throw new IllegalArgumentException(String.format("Index %d out of range of child path",index));
+//        }
 
         @Override
         protected Constructor constructor() {

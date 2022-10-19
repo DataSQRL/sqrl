@@ -1,0 +1,2 @@
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[/(+($2, $3), 2)])
+  LogicalValues(tuples=[[]])
