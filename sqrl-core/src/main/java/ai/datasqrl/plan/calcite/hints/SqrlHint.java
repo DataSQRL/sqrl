@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.calcite.hints;
 
+import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.hint.RelHint;
@@ -32,6 +33,19 @@ public interface SqrlHint {
         return Optional.empty();
     }
 
+    static SqrlHint of(@NonNull final String name) {
+        return new SqrlHint() {
+            @Override
+            public RelHint getHint() {
+                return RelHint.builder(name).build();
+            }
+
+            @Override
+            public String getHintName() {
+                return name;
+            }
+        };
+    }
 
     public interface Constructor<H extends SqrlHint> {
 

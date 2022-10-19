@@ -391,6 +391,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     //We are ignoring this mapping because the prior one takes precedence, let's see if we should warn the user
                     if (input.primaryKey.containsTarget(originalIndex)) {
                         //TODO: issue a warning to alert the user that this mapping is not considered part of primary key
+                        System.out.println("WARNING: mapping primary key multiple times");
                     }
                 }
             }
@@ -677,6 +678,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     }
                     condition = RexUtil.composeConjunction(rexUtil.getBuilder(), conjunctions);
                     relB.join(joinType==JoinRelType.LEFT?joinType:JoinRelType.INNER, condition); //Can treat as "standard" inner join since no modification is necessary in physical plan
+                    SqrlHintStrategyTable.INTERVAL_JOIN.addTo(relB);
                     return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM,
                             concatPk, joinTimestamp, joinedIndexMap, combinedMaterialize).numRootPks(numRootPks).sort(joinedSort).build());
                 } else if (joinType==JoinRelType.INTERVAL) {

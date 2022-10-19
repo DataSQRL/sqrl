@@ -1,5 +1,5 @@
 LogicalProject(__uuid$0=[$0], price=[$2], num=[$3], discount=[$4], time=[$1])
-  LogicalAggregate(group=[{0, 3}], price=[SUM($1)], num=[COUNT()], discount=[SUM($2)])
+  LogicalAggregate(group=[{0, 3}], price=[SUM($1)], num=[COUNT()], discount=[SUM($2)]) hints[TumbleAggregationHint options:[5, INSTANT]]
     LogicalProject(__uuid$0=[$0], $f1=[-(*($8, $9), $10)], discount=[$10], time=[$4])
       LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
         LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])

@@ -8,6 +8,8 @@ public class SqrlHintStrategyTable {
 
   public static final String NOOP = "NOOP";
 
+  public static final SqrlHint INTERVAL_JOIN = SqrlHint.of("IntervalJoin");
+
   @Getter
   static HintStrategyTable hintStrategyTable = HintStrategyTable.builder()
       .hintStrategy(TopNHint.Type.DISTINCT_ON.name(), HintPredicates.PROJECT)

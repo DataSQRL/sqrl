@@ -1,5 +1,5 @@
 LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], time=[$4], price=[$7], num=[$8])
-  LogicalJoin(condition=[AND(=($0, $6), =($10, $4))], joinType=[inner])
+  LogicalJoin(condition=[AND(=($0, $6), =($10, $4))], joinType=[inner]) hints[IntervalJoin]
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
       LogicalTableScan(table=[[orders$q$2]])
     LogicalProject(__uuid$0=[$0], price=[$1], num=[$2], discount=[$3], time=[$4])

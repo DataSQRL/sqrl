@@ -14,6 +14,7 @@ import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.SnapshotTest;
+import ai.datasqrl.util.TestRelWriter;
 import ai.datasqrl.util.data.C360;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -181,14 +182,6 @@ public class ResolveTest extends AbstractSQRLIT {
     validateQueryTable("orderwithcount2", TableType.STREAM,5, 1, TimestampTest.fixed(4)); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
   }
 
-  @Test
-  public void relationshipDeclarationTest() {
-    ScriptBuilder builder = imports();
-    builder.append("Product.p := JOIN Product p ORDER BY p.category LIMIT 1");
-    builder.append("Product.p2 := SELECT * FROM _.p");
-    process(builder.toString());
-  }
-
 
   /*
   ===== AGGREGATE ======
@@ -347,7 +340,7 @@ public class ResolveTest extends AbstractSQRLIT {
                                   PullupTest pullupTest) {
     CalciteSchema relSchema = resolvedDag.getRelSchema();
     QueryRelationalTable table = getLatestTable(relSchema,tableName,QueryRelationalTable.class).get();
-    snapshotExecution = SnapshotTest.createOrValidateSnapshot(snapshotRun.with(tableName,"lp"), table.getRelNode().explain());
+    snapshotExecution = SnapshotTest.createOrValidateSnapshot(snapshotRun.with(tableName,"lp"), TestRelWriter.explain(table.getRelNode()));
     assertEquals(tableType, table.getType(), "table type");
     assertEquals(numPrimaryKeys, table.getNumPrimaryKeys(), "primary key size");
     assertEquals(numCols, table.getRowType().getFieldCount(), "field count");

@@ -1,5 +1,5 @@
 LogicalProject(_customerid$0=[$6], id=[$2], time=[$4])
-  LogicalJoin(condition=[=($6, $2)], joinType=[inner])
+  LogicalJoin(condition=[=($6, $2)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
       LogicalTableScan(table=[[orders$q$5]])
     LogicalFilter(condition=[=($6, 1)])
