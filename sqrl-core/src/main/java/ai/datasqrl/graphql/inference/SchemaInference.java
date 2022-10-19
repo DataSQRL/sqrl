@@ -1,21 +1,12 @@
 package ai.datasqrl.graphql.inference;
 
-import ai.datasqrl.graphql.server.Model.Argument;
-import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
-import ai.datasqrl.graphql.server.Model.ArgumentSet;
-import ai.datasqrl.graphql.server.Model.PgParameterHandler;
-import ai.datasqrl.graphql.server.Model.PgQuery;
-import ai.datasqrl.graphql.server.Model.Root;
-import ai.datasqrl.graphql.server.Model.SourcePgParameter;
-import ai.datasqrl.graphql.server.Model.StringSchema;
-import ai.datasqrl.graphql.server.Model.TypeDefinitionSchema;
-import ai.datasqrl.graphql.server.Model.VariableArgument;
+import ai.datasqrl.graphql.server.Model.*;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
+import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.RelToSql;
@@ -24,26 +15,12 @@ import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.builder.VirtualTable;
-import com.ibm.icu.impl.Pair;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.TypeDefinition;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.Set;
-import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
@@ -61,6 +38,11 @@ import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.tools.RelBuilder;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 public class SchemaInference {
@@ -203,8 +185,8 @@ public class SchemaInference {
         () -> env.getSession().getPlanner().getRelBuilder(), Optional.empty());
     relNode = relNode.accept(sqrl2sql);
 //    System.out.println("LP$2: \n" + relNode.explain());
-    SQRLLogicalPlanConverter.RelMeta prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode),
-        fieldNames);
+    AnnotatedLP prel = sqrl2sql.getRelHolder(relNode);
+    prel = prel.postProcess(sqrl2sql.makeRelBuilder(), fieldNames);
 
     return prel.getRelNode();
   }
