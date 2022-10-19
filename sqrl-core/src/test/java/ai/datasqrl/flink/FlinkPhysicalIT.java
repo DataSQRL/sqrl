@@ -18,6 +18,7 @@ import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.global.DAGPlanner;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.local.analyze.ResolveTest;
@@ -227,9 +228,9 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     System.out.println("Started Flink Job: " + job.getExecutionId());
     Map<String,ResultSet> results = new HashMap<>();
     for (Map.Entry<APIQuery,QueryTemplate> query : physicalPlan.getDatabaseQueries().entrySet()) {
-      System.out.println("Executing query: " + query.getValue().getSql());
+      System.out.println("Executing query: " + RelToSql.convertToSql(query.getValue().getRelNode()));
       ResultSet resultSet = jdbc.getConnection().createStatement()
-              .executeQuery(query.getValue().getSql());
+              .executeQuery(RelToSql.convertToSql(query.getValue().getRelNode()));
       results.put(query.getKey().getNameId(),resultSet);
     }
     return results;

@@ -3,18 +3,45 @@ package ai.datasqrl.compile;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.graphql.GraphQLServer;
+import ai.datasqrl.graphql.inference.SchemaInference.ApiQueryBase;
+import ai.datasqrl.graphql.inference.SchemaInference.ApiQueryVisitor;
+import ai.datasqrl.graphql.inference.SchemaInference.RelAndArg;
+import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
+import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
+import ai.datasqrl.graphql.server.Model.CoordVisitor;
+import ai.datasqrl.graphql.server.Model.FixedArgument;
+import ai.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
+import ai.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
+import ai.datasqrl.graphql.server.Model.ParameterHandlerVisitor;
+import ai.datasqrl.graphql.server.Model.PgQuery;
+import ai.datasqrl.graphql.server.Model.QueryBaseVisitor;
+import ai.datasqrl.graphql.server.Model.ResolvedPgQuery;
+import ai.datasqrl.graphql.server.Model.ResolvedQuery;
+import ai.datasqrl.graphql.server.Model.ResolvedQueryVisitor;
+import ai.datasqrl.graphql.server.Model.RootVisitor;
+import ai.datasqrl.graphql.server.Model.SchemaVisitor;
+import ai.datasqrl.graphql.server.Model.SourcePgParameter;
+import ai.datasqrl.graphql.server.Model.StringSchema;
+import ai.datasqrl.graphql.server.Model.TypeDefinitionSchema;
+import ai.datasqrl.graphql.server.VertxGraphQLBuilder.QueryExecutionContext;
+import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.physical.database.QueryTemplate;
 import ai.datasqrl.physical.stream.Job;
 import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
 import ai.datasqrl.physical.stream.flink.LocalFlinkStreamEngineImpl;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
+import ai.datasqrl.schema.builder.VirtualTable;
 import ai.datasqrl.util.db.JDBCTempDatabase;
+import graphql.GraphQL;
+import graphql.schema.idl.TypeDefinitionRegistry;
 import io.vertx.core.Vertx;
+import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -22,9 +49,13 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.UnaryOperator;
+import lombok.Getter;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import ai.datasqrl.graphql.generate.SchemaGenerator;
@@ -32,7 +63,6 @@ import ai.datasqrl.graphql.inference.SchemaInference;
 import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
-import ai.datasqrl.physical.stream.flink.plan.FlinkStreamPhysicalPlan;
 import ai.datasqrl.plan.global.DAGPlanner;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
@@ -45,11 +75,15 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlWriterConfig;
+import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
+import org.apache.calcite.sql.pretty.SqlPrettyWriter;
+import org.jetbrains.annotations.NotNull;
 
 public class Compiler {
 
@@ -84,14 +118,56 @@ public class Compiler {
     Env env = resolve.planDag(s, ast);
 
     //TODO: push compute to the api
-    Root root = writeGraphql(env, build);
-    System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(root));
+    String gqlSchema = inferSchema(env, build);
 
+    SchemaInference inference = new SchemaInference(env.getSession().getPlanner());
+    Root root = inference.visitSchema(gqlSchema, env);
+
+    OptimizedDAG dag = optimizeDag(inference.getApiQueries(), env);
     JDBCTempDatabase jdbcTempDatabase = new JDBCTempDatabase();
+
+    PhysicalPlan plan = createPhysicalPlan(dag, env, s, jdbcTempDatabase);
+    root = updateGraphqlPlan(root, plan.getDatabaseQueries());
+
     System.out.println("PORT: " + jdbcTempDatabase.getPostgreSQLContainer().getMappedPort(5432));
-    PhysicalPlan plan = dryRunFlink(env, s, jdbcTempDatabase);
+    writeGraphql(env, build, root);
     exec(plan, jdbcTempDatabase);
+
     startGraphql(build, root, jdbcTempDatabase);
+  }
+
+  private OptimizedDAG optimizeDag(List<APIQuery> queries, Env env) {
+    DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner());
+    //We add a scan query for every query table
+    CalciteSchema relSchema = env.getRelSchema();
+    //todo comment out
+//    addAllQueryTables(env.getSession().getPlanner(), relSchema, queries);
+    OptimizedDAG dag = dagPlanner.plan(relSchema,queries);
+
+    return dag;
+  }
+
+  private List<APIQuery> buildApiQueries(Root root) {
+
+
+    return null;
+  }
+
+  private Root updateGraphqlPlan(Root root, Map<APIQuery, QueryTemplate> queries) {
+    ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(queries);
+    root.accept(replaceGraphqlQueries, null);
+    return root;
+  }
+
+  private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, Env env, Session s, JDBCTempDatabase jdbcTempDatabase) {
+
+    PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.getImportManager(),
+        jdbcTempDatabase.getJdbcConfiguration().getDatabase("test"),
+        new LocalFlinkStreamEngineImpl(), s.getPlanner()
+    );
+    PhysicalPlan physicalPlan = physicalPlanner.plan(dag, Optional.of(jdbcTempDatabase));
+    return physicalPlan;
+
   }
 
   @SneakyThrows
@@ -138,31 +214,10 @@ public class Compiler {
     System.out.println("Started Flink Job: " + job.getExecutionId());
   }
 
-  private PhysicalPlan dryRunFlink(Env env, Session s, JDBCTempDatabase jdbcTempDatabase) {
-    DAGPlanner dagPlanner = new DAGPlanner(s.getPlanner());
-    //We add a scan query for every query table
-    List<APIQuery> queries = new ArrayList<APIQuery>();
-    CalciteSchema relSchema = env.getRelSchema();
-    addAllQueryTables(env.getSession().getPlanner(), relSchema, queries);
-    OptimizedDAG dag = dagPlanner.plan(relSchema,queries);
-    PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.getImportManager(),
-        jdbcTempDatabase.getJdbcConfiguration().getDatabase("test"),
-        new LocalFlinkStreamEngineImpl(), s.getPlanner()
-        );
-    PhysicalPlan physicalPlan = physicalPlanner.plan(dag, Optional.of(jdbcTempDatabase));
-    FlinkStreamPhysicalPlan ph = (FlinkStreamPhysicalPlan)physicalPlan.getStreamQueries();
-    //write
-
-    return physicalPlan;
-    //just execute for now
-
-
-  }
-
   private void addAllQueryTables(Planner planner, CalciteSchema relSchema, List<APIQuery> queries) {
     relSchema.getTableNames().stream()
         .map(t->relSchema.getTable(t, false))
-        .filter(t->t.getTable() instanceof VirtualRelationalTable)
+        .filter(t->t.getTable() instanceof VirtualTable)
         .forEach(vt->{
           RelNode rel = planner.getRelBuilder().scan(vt.name).build();
 
@@ -171,8 +226,7 @@ public class Compiler {
 
   }
 
-  @SneakyThrows
-  private Root writeGraphql(Env env, Path build) {
+  public String inferSchema(Env env, Path build) {
     GraphQLSchema schema = SchemaGenerator.generate(env);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
@@ -180,24 +234,149 @@ public class Compiler {
         .includeDirectives(false);
     String schemaStr = new SchemaPrinter(opts).print(schema);
 
-    SchemaInference inference = new SchemaInference(env.getSession().getPlanner());
-    Root root = inference.visitSchema(schemaStr, env);
+    return schemaStr;
+  }
+  @SneakyThrows
+  private void writeGraphql(Env env, Path build, Root root) {
 
     ObjectMapper mapper = new ObjectMapper();
 
     Path filePath = build.resolve("api");
     File file = filePath.toFile();
     file.mkdirs();
+    System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(root));
 
     try {
       file.toPath().resolve("plan.json").toFile().delete();
       //Write content to file
       Files.writeString(file.toPath().resolve("plan.json"),
           mapper.writeValueAsString(root), StandardOpenOption.CREATE);
-      return root;
     } catch (Exception e) {
       e.printStackTrace();
     }
-    return root;
+  }
+
+  public class ReplaceGraphqlQueries implements
+      RootVisitor<Object, Object>,
+      CoordVisitor<Object, Object>,
+      SchemaVisitor<Object, Object>,
+      GraphQLArgumentWrapperVisitor<Object, Object>,
+      QueryBaseVisitor<PgQuery, Object>,
+      ApiQueryVisitor<PgQuery, Object>,
+      ResolvedQueryVisitor<Object, Object>,
+      ParameterHandlerVisitor<Object, Object>
+  {
+
+    private final Map<APIQuery, QueryTemplate> queries;
+
+    public ReplaceGraphqlQueries(Map<APIQuery, QueryTemplate> queries) {
+
+      this.queries = queries;
+    }
+
+    @Override
+    public PgQuery visitApiQuery(ApiQueryBase apiQueryBase, Object context) {
+      QueryTemplate template = queries.get(apiQueryBase.getQuery());
+
+      return PgQuery.builder()
+          .parameters(apiQueryBase.getParameters())
+          .sql(convertDynamicParams(template.getRelNode(), apiQueryBase.getRelAndArg())
+              //todo: remove hacks
+              .replace("DEFAULT", "LEFT"))
+          .build();
+    }
+
+
+    private String convertDynamicParams(RelNode relNode, RelAndArg arg) {
+      SqlNode node = RelToSql.convertToSqlNode(relNode);
+
+      UnaryOperator<SqlWriterConfig> transform = c -> c.withAlwaysUseParentheses(false)
+          .withSelectListItemsOnSeparateLines(false).withUpdateSetListNewline(false)
+          .withIndentation(1).withDialect(PostgresqlSqlDialect.DEFAULT).withSelectFolding(null);
+
+      SqlWriterConfig config = transform.apply(SqlPrettyWriter.config());
+      DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config, arg);
+      node.unparse(writer, 0, 0);
+
+      return writer.toSqlString().getSql();
+    }
+
+    /**
+     * Writes postgres style dynamic params `$1` instead of `?`. Assumes the index field is the index
+     * of the parameter.
+     */
+    public class DynamicParamSqlPrettyWriter extends SqlPrettyWriter {
+
+      @Getter
+      private List<Integer> dynamicParameters = new ArrayList<>();
+
+      public DynamicParamSqlPrettyWriter(@NotNull SqlWriterConfig config, RelAndArg arg) {
+        super(config);
+      }
+
+      //Write the current index but emit the arg index that it maps to
+      int i = 0;
+
+      @Override
+      public void dynamicParam(int index) {
+        if (dynamicParameters == null) {
+          dynamicParameters = new ArrayList<>();
+        }
+        dynamicParameters.add(index);
+        print("$" + (index + 1));
+        setNeedWhitespace(true);
+      }
+    }
+
+    @Override
+    public Object visitRoot(Root root, Object context) {
+      root.getCoords().forEach(c->c.accept(this, context));
+      return null;
+    }
+
+    @Override
+    public Object visitTypeDefinition(TypeDefinitionSchema typeDefinitionSchema, Object context) {
+      return null;
+    }
+
+    @Override
+    public Object visitStringDefinition(StringSchema stringSchema, Object context) {
+      return null;
+    }
+
+    @Override
+    public Object visitArgumentLookup(ArgumentLookupCoords coords, Object context) {
+      coords.getMatchs().forEach(c->{
+        PgQuery query = c.getQuery().accept(this, context);
+        c.setQuery(query);
+      });
+      return null;
+    }
+
+    @Override
+    public PgQuery visitPgQuery(PgQuery pgQuery, Object context) {
+      return null;
+    }
+
+    @Override
+    public Object visitSourcePgParameter(SourcePgParameter sourceParameter, Object context) {
+      return null;
+    }
+
+    @Override
+    public Object visitArgumentPgParameter(ArgumentPgParameter argumentParameter, Object context) {
+      return null;
+    }
+
+    @Override
+    public Object visitResolvedPgQuery(ResolvedPgQuery query, Object context) {
+      return null;
+    }
+
+    @Override
+    public Object visitArgumentWrapper(GraphQLArgumentWrapper graphQLArgumentWrapper,
+        Object context) {
+      return null;
+    }
   }
 }

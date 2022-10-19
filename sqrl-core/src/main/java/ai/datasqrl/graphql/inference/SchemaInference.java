@@ -11,6 +11,7 @@ import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
+import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.SQRLTable;
@@ -21,8 +22,12 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.language.TypeDefinition;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.Singular;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.prepare.CalciteCatalogReader;
@@ -37,6 +42,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.tools.RelBuilder;
+import org.apiguardian.api.API;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -48,6 +54,8 @@ import java.util.stream.IntStream;
 public class SchemaInference {
 
   private final Planner planner;
+  @Getter
+  List<APIQuery> apiQueries = new ArrayList<>();
 
   public SchemaInference(Planner planner) {
 
@@ -104,7 +112,7 @@ public class SchemaInference {
         SQRLTable table = rel.map(Relationship::getToTable).orElseGet(
             () -> (SQRLTable) env.getUserSchema().getTable(field.getName(), false).getTable());
         //todo check if we've already registered the type
-        VirtualTable vt = env.getTableMap().get(table);
+        VirtualRelationalTable vt = table.getVt();
 
         RelNode relNode = constructRel(table, (VirtualRelationalTable) vt, rel, env);
         Set<RelAndArg> args = new HashSet<>();
@@ -150,8 +158,11 @@ public class SchemaInference {
               (VirtualRelationalTable) vt);
           argHandler.addAll(params);
 
+//          relNode = optimize2(env, relNode);
+          APIQuery query = new APIQuery(UUID.randomUUID().toString(), relNode);
+          apiQueries.add(query);
           coordsBuilder.match(ArgumentSet.builder().arguments(arg.getArgumentSet()).query(
-              PgQuery.builder().sql(convertDynamicParams(relNode, arg)).parameters(argHandler)
+              ApiQueryBase.builder().query(query).relNode(relNode).relAndArg(arg).parameters(argHandler)
                   .build()).build()).build();
         }
 
@@ -191,47 +202,6 @@ public class SchemaInference {
     return prel.getRelNode();
   }
 
-  private String convertDynamicParams(RelNode relNode, RelAndArg arg) {
-    SqlNode node = RelToSql.convertToSqlNode(relNode);
-
-    UnaryOperator<SqlWriterConfig> transform = c -> c.withAlwaysUseParentheses(false)
-        .withSelectListItemsOnSeparateLines(false).withUpdateSetListNewline(false)
-        .withIndentation(1).withDialect(PostgresqlSqlDialect.DEFAULT).withSelectFolding(null);
-
-    SqlWriterConfig config = transform.apply(SqlPrettyWriter.config());
-    DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config, arg);
-    node.unparse(writer, 0, 0);
-
-    return writer.toSqlString().getSql();
-  }
-
-  /**
-   * Writes postgres style dynamic params `$1` instead of `?`. Assumes the index field is the index
-   * of the parameter.
-   */
-  public class DynamicParamSqlPrettyWriter extends SqlPrettyWriter {
-
-    @Getter
-    private List<Integer> dynamicParameters = new ArrayList<>();
-
-    public DynamicParamSqlPrettyWriter(@NotNull SqlWriterConfig config, RelAndArg arg) {
-      super(config);
-    }
-
-    //Write the current index but emit the arg index that it maps to
-    int i = 0;
-
-    @Override
-    public void dynamicParam(int index) {
-      if (dynamicParameters == null) {
-        dynamicParameters = new ArrayList<>();
-      }
-      dynamicParameters.add(index);
-      print("$" + (index + 1));
-      setNeedWhitespace(true);
-    }
-  }
-
   private RelNode addPkNode(Env env, int index,
       int i, RelNode relNode, Optional<Relationship> rel) {
     if (rel.isEmpty()) {
@@ -260,7 +230,7 @@ public class SchemaInference {
   }
 
   @Value
-  static class RelAndArg {
+  public static class RelAndArg {
 
     RelNode relNode;
     Set<Argument> argumentSet;
@@ -344,5 +314,27 @@ public class SchemaInference {
     public boolean canHandle(ArgumentHandlerContextV1 contextV1) {
       return true;
     }
+  }
+
+  @Builder
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class ApiQueryBase implements QueryBase {
+    final String type = "pgQuery";
+    APIQuery query;
+    RelNode relNode;
+    RelAndArg relAndArg;
+    @Singular
+    List<PgParameterHandler> parameters;
+
+    @Override
+    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
+      ApiQueryVisitor<R, C> visitor1 = (ApiQueryVisitor<R, C>) visitor;
+      return visitor1.visitApiQuery(this, context);
+    }
+  }
+  public interface ApiQueryVisitor<R,C> extends QueryBaseVisitor<R, C> {
+    R visitApiQuery(ApiQueryBase apiQueryBase, C context);
   }
 }

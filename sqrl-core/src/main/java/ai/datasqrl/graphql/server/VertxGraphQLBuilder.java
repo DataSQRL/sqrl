@@ -204,7 +204,7 @@ public class VertxGraphQLBuilder implements
 
   @AllArgsConstructor
   @Getter
-  static class QueryExecutionContext {
+  public static class QueryExecutionContext {
     VertxContext vertxContext;
     DataFetchingEnvironment environment;
     Set<FixedArgument> arguments;

@@ -40,7 +40,7 @@ public class QueryBuilder {
   private QueryTemplate planQuery(OptimizedDAG.ReadQuery query) {
     RelNode relNode = query.getRelNode();
     relNode = relNode.accept(new FunctionNameRewriter());
-    return new QueryTemplate(RelToSql.convertToSql(relNode));
+    return new QueryTemplate(relNode);
   }
 
   private SqlDialect getCalciteDialect() {

@@ -17,10 +17,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.Singular;
 
 public class Model {
-  interface RootVisitor<R, C> {
+  public interface RootVisitor<R, C> {
     R visitRoot(Root root, C context);
   }
 
@@ -56,7 +57,7 @@ public class Model {
     <R, C> R accept(SchemaVisitor<R, C> visitor, C context);
   }
 
-  interface SchemaVisitor<R, C> {
+  public interface SchemaVisitor<R, C> {
     R visitTypeDefinition(TypeDefinitionSchema typeDefinitionSchema, C context);
     R visitStringDefinition(StringSchema stringSchema, C context);
   }
@@ -82,7 +83,7 @@ public class Model {
     }
   }
 
-  interface CoordVisitor<R, C> {
+  public interface CoordVisitor<R, C> {
     R visitArgumentLookup(ArgumentLookupCoords coords, C context);
   }
 
@@ -123,6 +124,7 @@ public class Model {
 
   @Builder
   @Getter
+  @Setter
   @AllArgsConstructor
   @NoArgsConstructor
   public static class ArgumentSet {
