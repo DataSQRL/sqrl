@@ -245,7 +245,6 @@ public class ResolveTest extends AbstractSQRLIT {
 
   @Test
   public void topNTest() {
-    //TODO: add orderAgg test back in once this works in transpiler
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC;");
     builder.add("Customer.recentOrders := SELECT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
@@ -294,11 +293,21 @@ public class ResolveTest extends AbstractSQRLIT {
    */
 
   @Test
-  public void testUnion() {
+  public void testUnionWithTimestamp() {
     ScriptBuilder builder = imports();
     builder.add("CombinedStream := (SELECT o.customerid, o.\"time\" AS rowtime FROM Orders o)" +
             " UNION ALL " +
             "(SELECT c.customerid, c.\"_ingest_time\" AS rowtime FROM Customer c);");
+    process(builder.toString());
+    validateQueryTable("combinedstream", TableType.STREAM,3, 1, TimestampTest.fixed(2));
+  }
+
+  @Test
+  public void testUnionWithoutTimestamp() {
+    ScriptBuilder builder = imports();
+    builder.add("CombinedStream := (SELECT o.customerid FROM Orders o)" +
+            " UNION ALL " +
+            "(SELECT c.customerid FROM Customer c);");
     process(builder.toString());
     validateQueryTable("combinedstream", TableType.STREAM,3, 1, TimestampTest.fixed(2));
   }

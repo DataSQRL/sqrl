@@ -1008,7 +1008,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         ContinuousIndexMap pk = inputs.get(0).primaryKey;
         ContinuousIndexMap select = inputs.get(0).select;
         Optional<Integer> numRootPks = inputs.get(0).numRootPks;
-        int maxSelectIdx = Collections.max(select.targetsAsList());
+        int maxSelectIdx = Collections.max(select.targetsAsList())+1;
         List<Integer> selectIndexes = SqrlRexUtil.combineIndexes(pk.targetsAsList(),select.targetsAsList());
         List<String> selectNames = Collections.nCopies(maxSelectIdx,null);
         assert maxSelectIdx == selectIndexes.size() && ContiguousSet.closedOpen(0,maxSelectIdx).asList().equals(selectIndexes) : maxSelectIdx + " vs " + selectIndexes;
@@ -1045,7 +1045,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
             relBuilder.push(input.relNode);
             CalciteUtil.addProjection(relBuilder, selectIndexes, selectNames);
-            unionTimestamp.union(localTimestamp);
+            unionTimestamp = unionTimestamp.union(localTimestamp);
+            materialize = materialize==null?input.materialize:materialize.combine(input.materialize);
         }
         relBuilder.union(true,inputs.size());
         return setRelHolder(RelMeta.build(relBuilder.build(),TableType.STREAM,pk,unionTimestamp,select,materialize)
