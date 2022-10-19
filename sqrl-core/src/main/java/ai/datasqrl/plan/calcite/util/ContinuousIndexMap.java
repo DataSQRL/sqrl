@@ -26,7 +26,6 @@ import java.util.stream.IntStream;
 public class ContinuousIndexMap implements IndexMap {
 
     final int[] targets;
-    final int targetLength;
 
     @Override
     public int map(int index) {
@@ -61,34 +60,30 @@ public class ContinuousIndexMap implements IndexMap {
         return ArrayUtils.contains(targets,targetIndex);
     }
 
-    public ContinuousIndexMap join(ContinuousIndexMap right) {
+    public ContinuousIndexMap join(ContinuousIndexMap right, int leftSideWidth) {
         int[] combined = new int[targets.length + right.targets.length];
         //Left map doesn't change
         System.arraycopy(targets, 0, combined, 0, targets.length);
         int offset = targets.length;
         for (int i = 0; i < right.targets.length; i++) {
-            combined[offset + i] = targetLength + right.targets[i];
+            combined[offset + i] = leftSideWidth + right.targets[i];
         }
-        return new ContinuousIndexMap(combined, targetLength + right.targetLength);
+        return new ContinuousIndexMap(combined);
     }
 
     public ContinuousIndexMap append(ContinuousIndexMap add) {
         int[] combined = new int[targets.length + add.targets.length];
         System.arraycopy(targets, 0, combined, 0, targets.length);
         System.arraycopy(add.targets, 0, combined, targets.length, add.targets.length);
-        return new ContinuousIndexMap(combined, Math.max(targetLength, add.targetLength));
+        return new ContinuousIndexMap(combined);
     }
 
-    public ContinuousIndexMap remap(int newTargetLength, IndexMap remap) {
+    public ContinuousIndexMap remap(IndexMap remap) {
         Builder b = new Builder(targets.length);
         for (int i = 0; i < targets.length; i++) {
             b.add(remap.map(map(i)));
         }
-        return b.build(newTargetLength);
-    }
-
-    public ContinuousIndexMap remap(IndexMap remap) {
-        return remap(targetLength, remap);
+        return b.build();
     }
 
     public Optional<ContinuousIndexMap> project(LogicalProject project) {
@@ -100,7 +95,7 @@ public class ContinuousIndexMap implements IndexMap {
                 newMap[i] = map(((RexInputRef) exp).getIndex());
             } else return Optional.empty(); //This is not a re-mapping projection, hence abort
         }
-        return Optional.of(new ContinuousIndexMap(newMap, targetLength));
+        return Optional.of(new ContinuousIndexMap(newMap));
     }
 
     public static Builder builder(int length) {
@@ -160,9 +155,13 @@ public class ContinuousIndexMap implements IndexMap {
         }
 
         public ContinuousIndexMap build(int targetLength) {
-            Preconditions.checkArgument(offset == map.length);
             Preconditions.checkArgument(!Arrays.stream(map).anyMatch(i -> i >= targetLength));
-            return new ContinuousIndexMap(map, targetLength);
+            return build();
+        }
+
+        public ContinuousIndexMap build() {
+            Preconditions.checkArgument(offset == map.length);
+            return new ContinuousIndexMap(map);
         }
 
 

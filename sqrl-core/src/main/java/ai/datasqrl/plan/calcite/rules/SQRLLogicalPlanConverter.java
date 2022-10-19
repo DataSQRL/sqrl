@@ -124,6 +124,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             return builder;
         }
 
+        public int getFieldLength() {
+            return relNode.getRowType().getFieldCount();
+        }
+
         /**
          * Called to inline the TopNConstraint on top of the input relation.
          * This will inline a nowFilter if present
@@ -165,11 +169,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 if (topN.isDistinct() && topN.hasPartition()) {
                     rowFunctionColumns += topN.hasLimit()?2:1;
                 }
-                int targetLength = projectIdx.size()+rowFunctionColumns;
+                int projectLength = projectIdx.size()+rowFunctionColumns;
 
                 List<RexNode> partitionKeys = new ArrayList<>(partitionIdx.size());
-                List<RexNode> projects = new ArrayList<>(targetLength);
-                List<String> projectNames = new ArrayList<>(targetLength);
+                List<RexNode> projects = new ArrayList<>(projectLength);
+                List<String> projectNames = new ArrayList<>(projectLength);
                 for (Integer idx : projectIdx) {
                     RexInputRef ref = RexInputRef.of(idx, inputType);
                     projects.add(ref);
@@ -234,8 +238,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                             RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST)));
                     newSort = newSort.ifEmpty(sortByRowNum);
                 }
-                ContinuousIndexMap newPk = primaryKey.remap(targetLength, IndexMap.IDENTITY);
-                ContinuousIndexMap newSelect = select.remap(targetLength, IndexMap.IDENTITY);
+                ContinuousIndexMap newPk = primaryKey.remap(IndexMap.IDENTITY);
+                ContinuousIndexMap newSelect = select.remap(IndexMap.IDENTITY);
                 return RelMeta.build(relBuilder.build(),type,newPk,timestamp,newSelect,newMaterialize)
                         .sort(newSort).build();
             }
@@ -288,7 +292,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 input.select.targetsAsList().stream().map(fields::get).map(RelDataTypeField::getType).anyMatch(CalciteUtil::isNestedTable)) {
             input = input.inlineTopN(makeRelBuilder());
         }
-        ContinuousIndexMap indexMap = input.select;
+        ContinuousIndexMap select = input.select;
         HashMap<Integer,Integer> remapping = new HashMap<>();
         int index = 0;
         for (int i = 0; i < input.primaryKey.getSourceLength(); i++) {
@@ -311,10 +315,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             }
         }
 
-        Preconditions.checkArgument(index<=indexMap.getTargetLength() && remapping.size() == index);
+        Preconditions.checkArgument(index<=input.getFieldLength() && remapping.size() == index);
         IndexMap remap = IndexMap.of(remapping);
         ContinuousIndexMap updatedIndexMap = input.select.remap(remap);
-        List<RexNode> projects = new ArrayList<>(indexMap.getTargetLength());
+        List<RexNode> projects = new ArrayList<>(input.getFieldLength());
         RelDataType rowType = input.relNode.getRowType();
         remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(),e.getValue()))
                 .sorted((a, b)-> Integer.compare(a.getTarget(),b.getTarget()))
@@ -579,7 +583,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
 
                 RelMeta baseInput = getRelHolder(base.accept(this));
                 baseInput = baseInput.inlineNowFilter(makeRelBuilder()).inlineTopN(makeRelBuilder());
-                int targetLength = baseInput.select.getTargetLength();
+                int targetLength = baseInput.getFieldLength();
 
                 collation = SqrlRexUtil.mapCollation(collation, baseInput.select);
                 if (collation.getFieldCollations().isEmpty()) collation = baseInput.sort.getCollation();
@@ -744,7 +748,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             if (!(rex instanceof RexInputRef)) return null;
             b.add(baseMap.map((((RexInputRef) rex)).getIndex()));
         }
-        return b.build(baseMap.getTargetLength());
+        return b.build();
     }
 
     @Override
@@ -757,13 +761,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         RelMeta rightInput = rightIn.inlineNowFilter(makeRelBuilder()).inlineTopN(makeRelBuilder());
         JoinRelType joinType = logicalJoin.getJoinType();
 
-        ContinuousIndexMap joinedIndexMap = leftInput.select.join(rightInput.select);
+        final int leftSideMaxIdx = leftInput.getFieldLength();
+        ContinuousIndexMap joinedIndexMap = leftInput.select.join(rightInput.select, leftSideMaxIdx);
         RexNode condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(),joinedIndexMap);
         //TODO: pull now() conditions up as a nowFilter and move nested now filters through
         Preconditions.checkArgument(!FIND_NOW.foundIn(condition),"now() is not allowed in join conditions");
         SqrlRexUtil.EqualityComparisonDecomposition eqDecomp = rexUtil.decomposeEqualityComparison(condition);
 
-        final int leftSideMaxIdx = leftInput.select.getTargetLength();
 
         //Identify if this is an identical self-join for a nested tree
         boolean hasPullups = leftIn.hasPullups() || rightIn.hasPullups();
@@ -771,9 +775,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         if ((joinType==JoinRelType.DEFAULT || joinType==JoinRelType.INNER) && leftInput.joinTables!=null && rightInput.joinTables!=null
                 && !hasPullups && eqDecomp.getRemainingPredicates().isEmpty()) {
             //Determine if we can map the tables from both branches of the join onto each-other
-            int leftTargetLength = leftInput.select.getTargetLength();
             Map<JoinTable, JoinTable> right2left = JoinTable.joinTreeMap(leftInput.joinTables,
-                    leftTargetLength , rightInput.joinTables, eqDecomp.getEqualities());
+                    leftSideMaxIdx , rightInput.joinTables, eqDecomp.getEqualities());
             if (!right2left.isEmpty()) {
                 //We currently expect a single path from leaf to right as a self-join
                 Preconditions.checkArgument(JoinTable.getRoots(rightInput.joinTables).size() == 1, "Current simplifying assumption");
@@ -809,7 +812,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 RelNode relNode = relBuilder.build();
                 //Update indexMap based on the mapping of join tables
                 final RelMeta rightInputfinal = rightInput;
-                ContinuousIndexMap remapedRight = rightInput.select.remap(relNode.getRowType().getFieldCount(),
+                ContinuousIndexMap remapedRight = rightInput.select.remap(
                         index -> {
                             JoinTable jt = JoinTable.find(rightInputfinal.joinTables,index).get();
                             return right2left.get(jt).getGlobalIndex(jt.getLocalIndex(index));
@@ -835,13 +838,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     rightInput = leftInput;
                     leftInput = tmp;
 
-                    int tmpLeftSideMaxIdx = leftInput.select.getTargetLength();
+                    int tmpLeftSideMaxIdx = leftInput.getFieldLength();
                     IndexMap leftRightFlip = idx -> idx<leftSideMaxIdx?tmpLeftSideMaxIdx+idx:idx-leftSideMaxIdx;
                     condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(), leftRightFlip);
                     joinedIndexMap = joinedIndexMap.remap(leftRightFlip);
                     eqDecomp = rexUtil.decomposeEqualityComparison(condition);
                 }
-                int newLeftSideMaxIdx = leftInput.select.getTargetLength();
+                int newLeftSideMaxIdx = leftInput.getFieldLength();
                 //Check for primary keys equalities on the state-side of the join
                 Set<Integer> pkIndexes = rightInput.primaryKey.getMapping().stream().map(p-> p.getTarget()+newLeftSideMaxIdx).collect(Collectors.toSet());
                 Set<Integer> pkEqualities = eqDecomp.getEqualities().stream().map(p -> p.target).collect(Collectors.toSet());
@@ -852,7 +855,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                     TimestampHolder.Derived joinTimestamp = leftInput.timestamp.getBestCandidate().fixAsTimestamp();
 
                     ContinuousIndexMap pk = ContinuousIndexMap.builder(leftInput.primaryKey,0)
-                            .build(joinedIndexMap.getTargetLength());
+                            .build();
                     TemporalJoinHint hint = new TemporalJoinHint(joinTimestamp.getTimestampCandidate().getIndex(),
                             rightInput.timestamp.getTimestampCandidate().getIndex(),
                             rightInput.primaryKey.targetsAsArray());
@@ -886,9 +889,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             concatPkBuilder = ContinuousIndexMap.builder(leftInputF.primaryKey,0);
         } else {
             concatPkBuilder = ContinuousIndexMap.builder(leftInputF.primaryKey, rightInputF.primaryKey.getSourceLength());
-            concatPkBuilder.addAll(rightInputF.primaryKey.remap(joinedIndexMap.getTargetLength(), idx -> idx + leftSideMaxIdx));
+            concatPkBuilder.addAll(rightInputF.primaryKey.remap(idx -> idx + leftSideMaxIdx));
         }
-        ContinuousIndexMap concatPk = concatPkBuilder.build(joinedIndexMap.getTargetLength());
+        ContinuousIndexMap concatPk = concatPkBuilder.build();
 
         //combine sorts if present
         SortOrder joinedSort = leftInputF.sort.join(rightInputF.sort.remap(idx -> idx+leftSideMaxIdx));
@@ -926,7 +929,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                         concatPkBuilder = ContinuousIndexMap.builder(leftInputF.primaryKey,rightInputF.primaryKey.getSourceLength()-numRootPks.get());
                         List<Integer> rightPks = rightInputF.primaryKey.targetsAsList();
                         concatPkBuilder.addAll(rightPks.subList(numRootPks.get(),rightPks.size()).stream().map(idx -> idx + leftSideMaxIdx).collect(Collectors.toList()));
-                        concatPk = concatPkBuilder.build(joinedIndexMap.getTargetLength());
+                        concatPk = concatPkBuilder.build();
 
                     }
                 }
