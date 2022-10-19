@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 import static ai.datasqrl.errors.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
 import static ai.datasqrl.errors.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
 import static ai.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
+import static org.apache.calcite.sql.SqlKind.AS;
 
 @Getter
 public class Resolve {
@@ -731,6 +732,16 @@ public class Resolve {
         table, c.getDataType());
     //todo shadowing
     env.fieldMap.put(column, name.getCanonical());
+
+    rebuildAllTypes(env.getRelSchema());
+  }
+
+  private void rebuildAllTypes(SqrlCalciteSchema relSchema) {
+    relSchema.getTableNames().stream()
+        .map(name -> relSchema.getTable(name, false).getTable())
+        .filter(t->t instanceof SQRLTable)
+        .forEach(t->((SQRLTable) t).rebuildType());
+
   }
 
   private void updateJoinMapping(Env env, StatementOp op) {
@@ -765,8 +776,13 @@ public class Resolve {
 
   private void convertToSelectStar(Env env, StatementOp op, List<String> assignmentPath,
       SqlNode node, SQRLTable sqrlTable) {
+    //todo: this needs to be recursive: the target table could be wrapped in a join which also needs
+    // decomposition. All fields should be strictly greater so no index remapping needs to happen
+    // (as long as that assumption doesn't change)
     SqlSelect select = (SqlSelect) node;
     SqlNode n = ((SqlJoin) select.getFrom()).getRight();
+    recursiveSelectStar(n);
+
 
     String rightName = getNameFromTableNode(n);
     SqlNode leftNode = getLeftDeepTableNode(select.getFrom());
@@ -795,6 +811,30 @@ public class Resolve {
     new AddHints(prevalidate, getContext(env, op.getStatement()).map(e -> e.getVt()))
         .accept(op, select);
 
+  }
+
+  private void recursiveSelectStar(SqlNode n) {
+    if (n.getKind() == AS && ((SqlCall) n).getOperandList().get(0) instanceof SqlSelect) {
+      SqlSelect select = (SqlSelect)((SqlCall) n).getOperandList().get(0);
+      //assume right nested queries are joined tables.
+      SqlJoin join = (SqlJoin) select.getFrom();
+      String rightName = getNameFromTableNode(join.getRight());
+
+      List<SqlNode> list = new ArrayList<>();
+      for (SqlNode node : select.getSelectList()) {
+        if (node instanceof SqlIdentifier && ((SqlIdentifier) node).names.get(0).equalsIgnoreCase(rightName)) {
+          break;
+        }
+        list.add(node);
+      }
+
+      list.add(new SqlIdentifier(List.of(
+          rightName, ""), SqlParserPos.ZERO));
+
+      select.setSelectList(new SqlNodeList(list, SqlParserPos.ZERO));
+
+      recursiveSelectStar(join.getRight());
+    }
   }
 
   private SqlNode getLeftDeepTableNode(SqlNode node) {
