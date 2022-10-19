@@ -21,8 +21,10 @@ import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.Hintable;
+import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.tools.RelBuilder;
 
@@ -134,7 +136,7 @@ public class DAGPlanner {
         //6. Produce an LP-tree for each query with all tables inlined and push down filters to determine indexes
         List<OptimizedDAG.ReadQuery> readDAG = new ArrayList<>();
         for (QueryNode qNode : Iterables.filter(dag, QueryNode.class)) {
-            RelNode expanded = VirtualTableQueryRewriter.updateScan(planner.getRelBuilder(),qNode.query.getRelNode());
+            RelNode expanded = APIQueryRewriter.rewrite(planner.getRelBuilder(),qNode.query.getRelNode());
             //Inline pullups on
             expanded = planner.transform(READ_DAG_OPTIMIZATION,expanded);
 
@@ -308,13 +310,21 @@ public class DAGPlanner {
      * Inlines pullups from the base table and removes timestamp columns on nested tables
      */
     @AllArgsConstructor
-    private static class VirtualTableQueryRewriter extends RelShuttleImpl {
+    private static class APIQueryRewriter extends RelShuttleImpl {
 
         final RelBuilder relBuilder;
 
-        public static RelNode updateScan(RelBuilder relBuilder, RelNode query) {
-            VirtualTableQueryRewriter rewriter = new VirtualTableQueryRewriter(relBuilder);
+        public static RelNode rewrite(RelBuilder relBuilder, RelNode query) {
+            APIQueryRewriter rewriter = new APIQueryRewriter(relBuilder);
             return query.accept(rewriter);
+        }
+
+        @Override
+        public RelNode visit(LogicalJoin join) {
+            if (join.getJoinType()== JoinRelType.DEFAULT) { //replace DEFAULT joins with INNER
+                join = join.copy(join.getTraitSet(),join.getCondition(),join.getLeft(),join.getRight(),JoinRelType.INNER,join.isSemiJoinDone());
+            }
+            return super.visit(join);
         }
 
         @Override
@@ -323,7 +333,7 @@ public class DAGPlanner {
             QueryRelationalTable baseTable = vtable.getRoot().getBase();
             MaterializationStrategy strategy = baseTable.getMaterialization();
             if (strategy.isMaterialize()) {
-                relBuilder.push(scan);
+                relBuilder.scan(vtable.getNameId()); //Update scan since we changed tables in DAG planner to add columns
             } else {
                 Preconditions.checkArgument(vtable.isRoot() && !CalciteUtil.isNestedTable(baseTable.getRowType()));
                 relBuilder.push(baseTable.getRelNode());
@@ -363,7 +373,9 @@ public class DAGPlanner {
                     CalciteUtil.addIdentityProjection(relBuilder,relBuilder.peek().getRowType().getFieldCount()-1);
                 }
             }
-            return relBuilder.build();
+            RelNode result = relBuilder.build();
+            assert result.getRowType().equals(scan.getRowType()) : "Invalid conversion:" + result.getRowType() + " vs " + scan.getRowType();
+            return result;
         }
     }
 
