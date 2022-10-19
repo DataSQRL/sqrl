@@ -11,6 +11,7 @@ import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
+import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
@@ -48,7 +49,6 @@ import org.apache.calcite.sql.validate.SqlQualified;
 import org.apache.calcite.sql.validate.SqlScopedShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
-import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Litmus;
@@ -641,7 +641,7 @@ public class Resolve {
     op.setRelNode(relNode);
   }
 
-  public SQRLLogicalPlanConverter.RelMeta optimize(Env env, StatementOp op) {
+  public AnnotatedLP optimize(Env env, StatementOp op) {
     List<String> fieldNames = op.relNode.getRowType().getFieldNames();
 //    System.out.println("LP$0: \n" + op.relNode.explain());
 
@@ -663,8 +663,8 @@ public class Resolve {
       //Get all field names from relnode
       fieldNames = relNode.getRowType().getFieldNames();
     }
-    SQRLLogicalPlanConverter.RelMeta prel = sqrl2sql.postProcess(sqrl2sql.getRelHolder(relNode),
-        fieldNames);
+    AnnotatedLP prel = sqrl2sql.getRelHolder(relNode);
+    prel = prel.postProcess(sqrl2sql.makeRelBuilder(),fieldNames);
 //    System.out.println("LP$3: \n" + prel.getRelNode().explain());
 
     return prel;
@@ -835,7 +835,7 @@ public class Resolve {
 
   private void createTable(Env env, StatementOp op, Optional<SQRLTable> parentTable) {
 
-    final SQRLLogicalPlanConverter.RelMeta processedRel = optimize(env, op);
+    final AnnotatedLP processedRel = optimize(env, op);
 
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()

@@ -4,6 +4,7 @@ import ai.datasqrl.config.AbstractDAG;
 import ai.datasqrl.config.util.StreamUtil;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.hints.WatermarkHint;
+import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.MaterializationInference;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.*;
@@ -107,8 +108,8 @@ public class DAGPlanner {
                 RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
                 //Shred the table if necessary before materialization
                 RelNode expandedScan = scanTable.accept(sqrl2sql);
-                SQRLLogicalPlanConverter.RelMeta processedRel = sqrl2sql.getRelHolder(expandedScan);
-                processedRel = sqrl2sql.postProcess(processedRel, dbTable.getRowType().getFieldNames());
+                AnnotatedLP processedRel = sqrl2sql.getRelHolder(expandedScan);
+                processedRel = processedRel.postProcess(sqrl2sql.makeRelBuilder(), dbTable.getRowType().getFieldNames());
                 expandedScan = processedRel.getRelNode();
                 //Expand to full tree
                 expandedScan = planner.transform(WRITE_DAG_OPTIMIZATION,expandedScan);
@@ -339,7 +340,7 @@ public class DAGPlanner {
                 if (!pullup.getTopN().isEmpty()) {
                     RelNode relnode = relBuilder.build();
                     int targetLength = relnode.getRowType().getFieldCount();
-                    SQRLLogicalPlanConverter.RelMeta meta = SQRLLogicalPlanConverter.RelMeta.build(
+                    AnnotatedLP meta = AnnotatedLP.build(
                             relnode,null, ContinuousIndexMap.identity(0,targetLength),TimestampHolder.Derived.NONE,
                             ContinuousIndexMap.identity(targetLength,targetLength),new MaterializationInference(MaterializationPreference.MUST))
                             .topN(pullup.getTopN()).build();
