@@ -4,12 +4,15 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import graphql.Scalars;
+import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 
 public class SchemaBuilder {
   private final Map<SQRLTable, String> seenSqrlTables = new HashMap<>();
@@ -52,7 +56,15 @@ public class SchemaBuilder {
     return name;
   }
 
+  private GraphQLInputType getInputType(RelDataType type) {
+    return (GraphQLInputType) getInOutType(type);
+  }
+
   private GraphQLOutputType getOutputType(RelDataType type) {
+    return (GraphQLOutputType) getInOutType(type);
+  }
+
+  private GraphQLType getInOutType(RelDataType type) {
     switch (type.getSqlTypeName()) {
       case BOOLEAN:
         return Scalars.GraphQLBoolean;
@@ -154,9 +166,23 @@ public class SchemaBuilder {
       GraphQLFieldDefinition def = GraphQLFieldDefinition.newFieldDefinition()
           .name(name.getDisplay())
           .type(getRelationshipType(toTable, multiplicity))
+          .argument(buildArgs(toTable))
           .build();
 
       fields.put(name.getDisplay(), def);
+    }
+
+    private List<GraphQLArgument> buildArgs(SQRLTable toTable) {
+      List<GraphQLArgument> args = new ArrayList<>();
+      for (RelDataTypeField field : toTable.getVt().getRowType().getFieldList()) {
+        if (!field.getName().startsWith("_")) {
+          args.add(GraphQLArgument.newArgument()
+              .name(field.getName())
+              .type(getInputType(field.getType()))
+              .build());
+        }
+      }
+      return args;
     }
 
     private GraphQLOutputType getRelationshipType(SQRLTable toTable, Multiplicity multiplicity) {

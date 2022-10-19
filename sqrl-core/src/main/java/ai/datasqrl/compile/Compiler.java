@@ -180,7 +180,7 @@ public class Compiler {
         .includeDirectives(false);
     String schemaStr = new SchemaPrinter(opts).print(schema);
 
-    SchemaInference inference = new SchemaInference();
+    SchemaInference inference = new SchemaInference(env.getSession().getPlanner());
     Root root = inference.visitSchema(schemaStr, env);
 
     ObjectMapper mapper = new ObjectMapper();
