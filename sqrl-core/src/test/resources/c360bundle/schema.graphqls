@@ -1,0 +1,36 @@
+type Customer {
+    customerid: Int
+    email: String
+    name: String
+    lastupdated: Int
+    orders(id: Int, customerid: Int, time: String): [Orders]
+}
+
+type Orders {
+    id: Int
+    customerid: Int
+    time: String
+    entries(id: Int, productid: Int, quantity: Int, unit_price: Float, discount: Float): [entries]
+}
+
+type Product {
+    productid: Int
+    name: String
+    description: String
+    category: String
+    order_entries(id: Int, productid: Int, quantity: Int, unit_price: Float, discount: Float): [entries]
+}
+
+type Query {
+    Customer(customerid: Int, email: String, name: String, lastupdated: Int): [Customer]
+    Orders(id: Int, customerid: Int, time: String): [Orders]
+    Product(productid: Int, name: String, description: String, category: String): [Product]
+}
+
+type entries {
+    productid: Int
+    quantity: Int
+    unit_price: Float
+    discount: Float
+    product(productid: Int): [Product]
+}
