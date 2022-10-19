@@ -16,11 +16,12 @@ public class C360BundleTest {
   String c360Script = "IMPORT ecommerce-data.Customer;\n"
       + "IMPORT ecommerce-data.Product;\n"
       + "IMPORT ecommerce-data.Orders;"
-      + "Customer := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n"
-//      + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
+      + "Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n"
+      + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
+      + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
       + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
-//      + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
-//      + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
+      + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
+      + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
 //
 //      //Error adding a nested column
 ////      + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
