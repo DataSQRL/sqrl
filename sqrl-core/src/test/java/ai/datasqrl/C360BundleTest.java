@@ -8,6 +8,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Optional;
+import javax.swing.text.html.Option;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
@@ -33,20 +35,25 @@ public class C360BundleTest {
 //      + "                        COUNT(1) AS total_entries "
 //      + "                 FROM _.entries e;\n"
       + "";
+  @Test
+  @SneakyThrows
+  public void testByoSchema() {
+    Path dest = copyBundle(c360Script);
+    Compiler compiler = new Compiler();
+    compiler.run(dest.resolve("build/"), Optional.of(dest.resolve("schema.graphqls")));
+
+// Uncomment to test graphql
+//    while(true) {
+//      Thread.sleep(10);
+//    }
+  }
 
   @Test
   @SneakyThrows
   public void test() {
-    Path dest = Files.createTempDirectory("c360bundle");
-    dest.toFile().deleteOnExit();
-    Path src = Path.of("src/test/resources/c360bundle/");
-
-    copyDirectory(src, dest);
-
-    Files.write(dest.resolve("build/").resolve("main.sqrl"), c360Script.getBytes(StandardCharsets.UTF_8));
-    dest.resolve("build/").resolve("main.sqrl").toFile().deleteOnExit();
+    Path dest = copyBundle(c360Script);
     Compiler compiler = new Compiler();
-    compiler.run(dest.resolve("build/"));
+    compiler.run(dest.resolve("build/"), Optional.empty());
 
     HttpResponse<String> s = compiler.testQuery("{\n"
         + "  Orders {\n"
@@ -75,6 +82,19 @@ public class C360BundleTest {
 //    while(true) {
 //      Thread.sleep(10);
 //    }
+  }
+
+  @SneakyThrows
+  private Path copyBundle(String c360Script) {
+    Path dest = Files.createTempDirectory("c360bundle");
+    dest.toFile().deleteOnExit();
+    Path src = Path.of("src/test/resources/c360bundle/");
+
+    copyDirectory(src, dest);
+
+    Files.write(dest.resolve("build/").resolve("main.sqrl"), c360Script.getBytes(StandardCharsets.UTF_8));
+    dest.resolve("build/").resolve("main.sqrl").toFile().deleteOnExit();
+    return dest;
   }
 
   @SneakyThrows

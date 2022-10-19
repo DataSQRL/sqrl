@@ -9,22 +9,18 @@ import ai.datasqrl.graphql.inference.SchemaInference.RelAndArg;
 import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
 import ai.datasqrl.graphql.server.Model.CoordVisitor;
-import ai.datasqrl.graphql.server.Model.FixedArgument;
 import ai.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import ai.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
 import ai.datasqrl.graphql.server.Model.ParameterHandlerVisitor;
 import ai.datasqrl.graphql.server.Model.PgQuery;
 import ai.datasqrl.graphql.server.Model.QueryBaseVisitor;
 import ai.datasqrl.graphql.server.Model.ResolvedPgQuery;
-import ai.datasqrl.graphql.server.Model.ResolvedQuery;
 import ai.datasqrl.graphql.server.Model.ResolvedQueryVisitor;
 import ai.datasqrl.graphql.server.Model.RootVisitor;
 import ai.datasqrl.graphql.server.Model.SchemaVisitor;
 import ai.datasqrl.graphql.server.Model.SourcePgParameter;
 import ai.datasqrl.graphql.server.Model.StringSchema;
 import ai.datasqrl.graphql.server.Model.TypeDefinitionSchema;
-import ai.datasqrl.graphql.server.VertxGraphQLBuilder.QueryExecutionContext;
-import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.database.QueryTemplate;
@@ -38,10 +34,7 @@ import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.schema.builder.VirtualTable;
 import ai.datasqrl.util.db.JDBCTempDatabase;
-import graphql.GraphQL;
-import graphql.schema.idl.TypeDefinitionRegistry;
 import io.vertx.core.Vertx;
-import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -52,7 +45,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.UnaryOperator;
 import lombok.Getter;
@@ -91,14 +83,14 @@ public class Compiler {
     Path build = Path.of(".").resolve("build");
 
     Compiler compiler = new Compiler();
-    compiler.run(build);
+    compiler.run(build, Optional.of(build.resolve("schema.graphqls")));
   }
 
   /**
    * Process: All the files are in the build directory
    */
   @SneakyThrows
-  public void run(Path build) {
+  public void run(Path build, Optional<Path> graphqlSchema) {
     ErrorCollector collector = ErrorCollector.root();
     SqrlCalciteSchema schema = new SqrlCalciteSchema(
         CalciteSchema.createRootSchema(false, false).plus());
@@ -118,7 +110,7 @@ public class Compiler {
     Env env = resolve.planDag(s, ast);
 
     //TODO: push compute to the api
-    String gqlSchema = inferSchema(env, build);
+    String gqlSchema = inferOrGetSchema(env, build, graphqlSchema);
 
     SchemaInference inference = new SchemaInference(env.getSession().getPlanner());
     Root root = inference.visitSchema(gqlSchema, env);
@@ -130,7 +122,8 @@ public class Compiler {
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
 
     System.out.println("PORT: " + jdbcTempDatabase.getPostgreSQLContainer().getMappedPort(5432));
-    writeGraphql(env, build, root);
+    System.out.println("build dir: " + build.toAbsolutePath().toString());
+    writeGraphql(env, build, root, gqlSchema);
     exec(plan, jdbcTempDatabase);
 
     startGraphql(build, root, jdbcTempDatabase);
@@ -226,7 +219,11 @@ public class Compiler {
 
   }
 
-  public String inferSchema(Env env, Path build) {
+  @SneakyThrows
+  public String inferOrGetSchema(Env env, Path build, Optional<Path> graphqlSchema) {
+    if (graphqlSchema.map(s->s.toFile().exists()).orElse(false)) {
+      return Files.readString(graphqlSchema.get());
+    }
     GraphQLSchema schema = SchemaGenerator.generate(env);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
@@ -237,7 +234,7 @@ public class Compiler {
     return schemaStr;
   }
   @SneakyThrows
-  private void writeGraphql(Env env, Path build, Root root) {
+  private void writeGraphql(Env env, Path build, Root root, String gqlSchema) {
 
     ObjectMapper mapper = new ObjectMapper();
 
@@ -248,9 +245,14 @@ public class Compiler {
 
     try {
       file.toPath().resolve("plan.json").toFile().delete();
+      file.toPath().resolve("schema.graphqls").toFile().delete();
+
+
       //Write content to file
       Files.writeString(file.toPath().resolve("plan.json"),
           mapper.writeValueAsString(root), StandardOpenOption.CREATE);
+      Files.writeString(file.toPath().resolve("schema.graphqls"),
+          gqlSchema, StandardOpenOption.CREATE);
     } catch (Exception e) {
       e.printStackTrace();
     }
