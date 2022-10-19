@@ -9,7 +9,6 @@ import ai.datasqrl.plan.calcite.TranspilerFactory;
 import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.schema.Relationship;
@@ -36,17 +35,11 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlWriterConfig;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.tools.RelBuilder;
-import org.apiguardian.api.API;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -143,11 +136,11 @@ public class SchemaInference {
 
         for (RelAndArg arg : args) {
           int keysize =
-              rel.isPresent() ? Math.min(rel.get().getFromTable().getVt().getNumPrimaryKeys(),
-                  rel.get().getToTable().getVt().getNumPrimaryKeys())
+              rel.isPresent() ? rel.get().getFromTable().getVt().getNumPrimaryKeys()
                   : table.getVt().getNumPrimaryKeys();
+          relNode = arg.relNode;
           for (int i = 0; i < keysize; i++) { //todo align with the argument building
-            relNode = addPkNode(env, arg.getArgumentSet().size() + i, i, arg.relNode, rel);
+            relNode = addPkNode(env, arg.getArgumentSet().size() + i, i, relNode, rel);
           }
 
           List<PgParameterHandler> argHandler = arg.getArgumentSet().stream()
@@ -155,7 +148,7 @@ public class SchemaInference {
               .collect(Collectors.toList());
 
           List<SourcePgParameter> params = addContextToArg(arg, rel, type,
-              (VirtualRelationalTable) vt);
+              (VirtualRelationalTable) vt, keysize);
           argHandler.addAll(params);
 
 //          relNode = optimize2(env, relNode);
@@ -212,18 +205,16 @@ public class SchemaInference {
 
     RexDynamicParam param = builder.getRexBuilder().makeDynamicParam(relNode.getRowType(), index);
     RelNode newRelNode = builder.push(relNode)
-        .filter(rex.makeCall(SqlStdOperatorTable.EQUALS, rex.makeInputRef(relNode, 0), param))
+        .filter(rex.makeCall(SqlStdOperatorTable.EQUALS, rex.makeInputRef(relNode, i), param))
         .build();
     return newRelNode;
   }
 
   private List<SourcePgParameter> addContextToArg(RelAndArg arg, Optional<Relationship> rel,
-      Entry type, VirtualRelationalTable vt) {
+      Entry type, VirtualRelationalTable vt, int keys) {
     if (rel.isPresent()) {
-      int keys = Math.min(type.getParentVt().getPrimaryKeyNames().size(),
-          vt.getPrimaryKeyNames().size());
 
-      return IntStream.range(0, keys).mapToObj(i -> type.getParentVt().getPrimaryKeyNames().get(i))
+      return IntStream.range(0, keys).mapToObj(i -> rel.get().getFromTable().getVt().getPrimaryKeyNames().get(i))
           .map(f -> new SourcePgParameter(f)).collect(Collectors.toList());
     }
     return List.of();
