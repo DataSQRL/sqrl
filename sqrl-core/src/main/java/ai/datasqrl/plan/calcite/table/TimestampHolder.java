@@ -217,7 +217,6 @@ public abstract class TimestampHolder<C extends TimestampHolder.Candidate> {
             }
 
             //Derived candidates are equal iff their dependents are
-
             @Override
             public boolean equals(Object o) {
                 if (this == o) return true;

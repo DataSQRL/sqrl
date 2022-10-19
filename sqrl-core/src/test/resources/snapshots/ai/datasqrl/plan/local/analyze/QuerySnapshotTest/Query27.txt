@@ -1,0 +1,47 @@
+Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;
+Orders.entries.product := JOIN Product ON Product.productid = _.productid;
+Customer.recent_products := SELECT e.productid, e.product.category AS category,
+                                   sum(e.quantity) AS quantity, count(1) AS num_orders
+                            FROM _.orders.entries AS e
+                            WHERE e.parent.time > now() - INTERVAL 2 YEAR
+                            GROUP BY productid, category ORDER BY count(1) DESC, quantity DESC;
+
+
+LogicalSort(sort0=[$0], sort1=[$4], sort2=[$3], dir0=[ASC], dir1=[DESC], dir2=[DESC])
+  LogicalAggregate(group=[{0, 1, 2}], quantity=[SUM($3)], num_orders=[COUNT()])
+    LogicalProject(__uuid$0=[$0], productid=[$9], category=[$18], quantity=[$10])
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], _pk__uuid$0=[$6], id=[$7], _idx=[$8], productid=[$9], quantity=[$10], unit_price=[$11], discount=[$12], _uuid0=[$13], _ingest_time0=[$14], productid0=[$15], name0=[$16], description=[$17], category=[$18], id0=[CAST($19):BIGINT], _uuid1=[CAST($20):CHAR(36) CHARACTER SET "UTF-16LE"], _ingest_time1=[CAST($21):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], customerid0=[$22], time=[CAST($23):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)])
+        LogicalJoin(condition=[=($7, $19)], joinType=[inner])
+          LogicalJoin(condition=[=($7, $13)], joinType=[left])
+            LogicalJoin(condition=[=($0, $6)], joinType=[default])
+              LogicalTableScan(table=[[customer$3]])
+              LogicalProject(_pk__uuid$0=[$0], id=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11])
+                LogicalJoin(condition=[=($1, $6)], joinType=[default])
+                  LogicalProject(_pk__uuid$0=[$0], id=[$6], _uuid=[$7], _ingest_time=[$8], customerid=[$9], time=[$10])
+                    LogicalJoin(condition=[=($2, $9)], joinType=[default])
+                      LogicalTableScan(table=[[customer$3]])
+                      LogicalTableScan(table=[[orders$12]])
+                  LogicalTableScan(table=[[entries$13]])
+            LogicalProject(_uuid=[$6], _ingest_time=[$7], productid=[$8], name=[$9], description=[$10], category=[$11])
+              LogicalJoin(condition=[=($2, $8)], joinType=[default])
+                LogicalTableScan(table=[[entries$13]])
+                LogicalTableScan(table=[[product$10]])
+          LogicalFilter(condition=[>($4, -(now(), 24:INTERVAL MONTH))])
+            LogicalTableScan(table=[[orders$12]])
+
+
+SELECT "customer$3"."_uuid" AS "__uuid$0", "t0"."productid", "t1"."category", SUM("t0"."quantity") AS "quantity", COUNT(*) AS "num_orders"
+FROM "customer$3"
+ DEFAULT JOIN (SELECT "t"."_pk__uuid$0", "entries$13"."id", "entries$13"."_idx", "entries$13"."productid", "entries$13"."quantity", "entries$13"."unit_price", "entries$13"."discount"
+  FROM (SELECT "customer$30"."_uuid" AS "_pk__uuid$0", "orders$12"."id", "orders$12"."_uuid", "orders$12"."_ingest_time", "orders$12"."customerid", "orders$12"."time"
+    FROM "customer$3" AS "customer$30"
+     DEFAULT JOIN "orders$12" ON "customer$30"."customerid" = "orders$12"."customerid") AS "t"
+   DEFAULT JOIN "entries$13" ON "t"."id" = "entries$13"."id") AS "t0" ON "customer$3"."_uuid" = "t0"."_pk__uuid$0"
+ LEFT JOIN (SELECT "product$10"."_uuid", "product$10"."_ingest_time", "product$10"."productid", "product$10"."name", "product$10"."description", "product$10"."category"
+  FROM "entries$13" AS "entries$130"
+   DEFAULT JOIN "product$10" ON "entries$130"."productid" = "product$10"."productid") AS "t1" ON "t0"."id" = "t1"."_uuid"
+ INNER JOIN (SELECT *
+  FROM "orders$12"
+  WHERE "time" > "now"() - INTERVAL '24' MONTH) AS "t2" ON "t0"."id" = "t2"."id"
+GROUP BY "customer$3"."_uuid", "t0"."productid", "t1"."category"
+ORDER BY "customer$3"."_uuid", COUNT(*) DESC, SUM("t0"."quantity") DESC

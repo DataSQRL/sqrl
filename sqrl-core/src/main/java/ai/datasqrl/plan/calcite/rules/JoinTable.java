@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
+import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.util.mapping.IntPair;
 
 import java.util.*;
@@ -18,10 +19,11 @@ public class JoinTable implements Comparable<JoinTable> {
 
     final VirtualRelationalTable table;
     final JoinTable parent;
+    final JoinRelType joinType;
     final int offset;
 
     public static JoinTable ofRoot(VirtualRelationalTable.Root root) {
-        return new JoinTable(root, null, 0);
+        return new JoinTable(root, null, JoinRelType.INNER,0);
     }
 
     public int numColumns() {
@@ -34,6 +36,11 @@ public class JoinTable implements Comparable<JoinTable> {
 
     public boolean containsIndex(int globalIndex) {
         return getLocalIndex(globalIndex)>=0;
+    }
+
+    public boolean isJoinCompatible(JoinTable right) {
+        //join type can only be inner or left
+        return joinType==JoinRelType.INNER || right.joinType==JoinRelType.LEFT;
     }
 
     public int getLocalIndex(int globalIndex) {
@@ -92,7 +99,9 @@ public class JoinTable implements Comparable<JoinTable> {
             JoinTable lt = find(left,current.source).get();
             if (rt.table.equals(lt.table) //Make sure tables map onto the same underlying table...
                     && rt.getLocalIndex(current.target - rightOffset) == 0 // and index is first local primary key column
-                    && (rt.parent == null || right2Left.containsKey(rt.parent))) { //and parent was mapped
+                    && (rt.parent == null || right2Left.containsKey(rt.parent)) //and parent was mapped
+                    && lt.isJoinCompatible(rt) //and the join types are compatible
+                ) {
                 //See if all the primary keys match
                 for (int i = 0; i < rt.getNumLocalPk(); i++) {
                     if (current == null) {

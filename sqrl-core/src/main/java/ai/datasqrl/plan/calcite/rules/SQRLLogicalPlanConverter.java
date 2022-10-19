@@ -104,20 +104,21 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                                   AtomicReference<MaterializationInference> materialize,
                                   boolean isLeaf) {
         Preconditions.checkArgument(joinTables.isEmpty());
-        return shredTable(vtable, primaryKey, indexMap, joinTables, materialize,null, isLeaf);
+        return shredTable(vtable, primaryKey, indexMap, joinTables, materialize,null, JoinRelType.INNER, isLeaf);
     }
 
     private RelBuilder shredTable(VirtualRelationalTable vtable, ContinuousIndexMap.Builder primaryKey,
                                   List<JoinTable> joinTables, Pair<JoinTable,RelBuilder> startingBase,
-                                  AtomicReference<MaterializationInference> materialize) {
+                                  JoinRelType joinType, AtomicReference<MaterializationInference> materialize) {
         Preconditions.checkArgument(joinTables.isEmpty());
-        return shredTable(vtable, primaryKey, null, joinTables, materialize, startingBase, false);
+        return shredTable(vtable, primaryKey, null, joinTables, materialize, startingBase, joinType, false);
     }
 
     private RelBuilder shredTable(VirtualRelationalTable vtable, ContinuousIndexMap.Builder primaryKey,
                                   ContinuousIndexMap.Builder indexMap, List<JoinTable> joinTables,
                                   AtomicReference<MaterializationInference> materialize,
-                                  Pair<JoinTable,RelBuilder> startingBase, boolean isLeaf) {
+                                  Pair<JoinTable,RelBuilder> startingBase, JoinRelType joinType, boolean isLeaf) {
+        Preconditions.checkArgument(joinType==JoinRelType.INNER || joinType == JoinRelType.LEFT);
         RelBuilder builder;
         List<AddedColumn> columns2Add;
         int offset;
@@ -140,7 +141,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             }
         } else {
             VirtualRelationalTable.Child child = (VirtualRelationalTable.Child) vtable;
-            builder = shredTable(child.getParent(), primaryKey, indexMap, joinTables, materialize, startingBase,false);
+            builder = shredTable(child.getParent(), primaryKey, indexMap, joinTables, materialize, startingBase, joinType, false);
             JoinTable parentJoinTable = Iterables.getLast(joinTables);
             int indexOfShredField = parentJoinTable.getOffset() + child.getShredIndex();
             CorrelationId id = new CorrelationId(0);
@@ -159,8 +160,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                                             rexUtil.getBuilder().makeCorrel(base, id),
                                             indexOfShredField)))
                     .uncollect(List.of(), false)
-                    .correlate(JoinRelType.INNER, id, RexInputRef.of(indexOfShredField,  base));
-            joinTable = new JoinTable(vtable, parentJoinTable, offset);
+                    .correlate(joinType, id, RexInputRef.of(indexOfShredField,  base));
+            joinTable = new JoinTable(vtable, parentJoinTable, joinType, offset);
             materialize.getAndUpdate(m -> m.update(MaterializationPreference.MUST,"unnesting"));
         }
         for (int i = 0; i < vtable.getNumLocalPks(); i++) {
@@ -385,10 +386,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             }
             if (originalIndex>=0) {
                 if (mappedProjects.putIfAbsent(originalIndex,exp.i)!=null) {
+                    Optional<TimestampHolder.Derived.Candidate> originalCand = input.timestamp.getOptCandidateByIndex(originalIndex);
+                    originalCand.map(c -> timeCandidates.add(c.withIndex(exp.i)));
                     //We are ignoring this mapping because the prior one takes precedence, let's see if we should warn the user
-                    if (input.primaryKey.containsTarget(originalIndex) || input.timestamp.isCandidate(originalIndex)) {
-                        //TODO: convert to warning and ignore
-                        throw new IllegalArgumentException("Cannot project primary key or timestamp columns multiple times");
+                    if (input.primaryKey.containsTarget(originalIndex)) {
+                        //TODO: issue a warning to alert the user that this mapping is not considered part of primary key
                     }
                 }
             }
@@ -487,14 +489,15 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         //Identify if this is an identical self-join for a nested tree
         boolean hasPullups = leftIn.hasPullups() || rightIn.hasPullups();
         //TODO: support left-joins in unnesting
-        if ((joinType==JoinRelType.DEFAULT || joinType==JoinRelType.INNER) && leftInput.joinTables!=null && rightInput.joinTables!=null
+        if ((joinType==JoinRelType.DEFAULT || joinType==JoinRelType.INNER || joinType==JoinRelType.LEFT) && leftInput.joinTables!=null && rightInput.joinTables!=null
                 && !hasPullups && eqDecomp.getRemainingPredicates().isEmpty()) {
             //Determine if we can map the tables from both branches of the join onto each-other
+            if (joinType==JoinRelType.DEFAULT) joinType=JoinRelType.INNER;
             Map<JoinTable, JoinTable> right2left = JoinTable.joinTreeMap(leftInput.joinTables,
                     leftSideMaxIdx , rightInput.joinTables, eqDecomp.getEqualities());
             if (!right2left.isEmpty()) {
                 //We currently expect a single path from leaf to right as a self-join
-                Preconditions.checkArgument(JoinTable.getRoots(rightInput.joinTables).size() == 1, "Current simplifying assumption");
+                Preconditions.checkArgument(JoinTable.getRoots(rightInput.joinTables).size() == 1, "Current assuming a single root table on the right");
                 JoinTable rightLeaf = Iterables.getOnlyElement(JoinTable.getLeafs(rightInput.joinTables));
                 RelBuilder relBuilder = relBuilderFactory.get().push(leftInput.getRelNode());
                 ContinuousIndexMap newPk = leftInput.primaryKey;
@@ -516,7 +519,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     ContinuousIndexMap.Builder addedPk = ContinuousIndexMap.builder(newPk, numAddedPks);
                     List<JoinTable> addedTables = new ArrayList<>();
                     relBuilder = shredTable(rightLeaf.table, addedPk, addedTables,
-                            Pair.of(right2left.get(ancestor),relBuilder),materialize);
+                            Pair.of(right2left.get(ancestor),relBuilder),joinType, materialize);
                     newPk = addedPk.build(relBuilder.peek().getRowType().getFieldCount());
                     Preconditions.checkArgument(ancestorPath.size() == addedTables.size());
                     for (int i = 1; i < addedTables.size(); i++) { //First table is the already mapped root ancestor
