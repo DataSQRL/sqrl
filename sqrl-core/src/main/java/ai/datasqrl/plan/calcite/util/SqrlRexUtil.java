@@ -1,7 +1,9 @@
 package ai.datasqrl.plan.calcite.util;
 
-import ai.datasqrl.function.SqrlAwareFunction;
+import ai.datasqrl.function.SqrlFunction;
+import ai.datasqrl.function.TimestampPreservingFunction;
 import ai.datasqrl.function.SqrlTimeTumbleFunction;
+import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.table.TimestampHolder;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
@@ -18,14 +20,21 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlBinaryOperator;
+import org.apache.calcite.sql.SqlFunctionCategory;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
+import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
 import java.math.BigDecimal;
@@ -40,6 +49,27 @@ public class SqrlRexUtil {
 
     public SqrlRexUtil(RelDataTypeFactory typeFactory) {
         rexBuilder = new FlinkRexBuilder(typeFactory);
+    }
+
+    public static SqlOperator getSqrlOperator(String name) {
+        List<SqlOperator> ops = new ArrayList<>();
+        SqlOperatorTable opTable = PlannerFactory.getOperatorTable();
+        opTable.lookupOperatorOverloads(
+            new SqlIdentifier(name, SqlParserPos.ZERO),
+            SqlFunctionCategory.USER_DEFINED_FUNCTION,
+            SqlSyntax.FUNCTION,
+            ops,
+            SqlNameMatchers.withCaseSensitive(false)
+        );
+
+        for (SqlOperator op : ops) {
+            if (op instanceof BridgingSqlFunction && ((BridgingSqlFunction) op).getDefinition()
+                instanceof SqrlFunction) {
+                return op;
+            }
+        }
+
+        return null;
     }
 
     public RexBuilder getBuilder() {
@@ -98,14 +128,14 @@ public class SqrlRexUtil {
 
     }
 
-    public static RexFinder findFunction(SqlOperator operator) {
+    public static RexFinder findFunction(SqrlFunction operator) {
         return findFunction(o -> o.equals(operator));
     }
 
-    public static RexFinder findFunction(Predicate<SqlOperator> operatorMatch) {
+    public static RexFinder findFunction(Predicate<SqrlFunction> operatorMatch) {
         return new RexFinder<Void>() {
             @Override public Void visitCall(RexCall call) {
-                if (operatorMatch.test(call.getOperator())) {
+                if (unwrapSqrlFunction(call.getOperator()).filter(operatorMatch).isPresent()) {
                     throw Util.FoundOne.NULL;
                 }
                 return super.visitCall(call);
@@ -198,8 +228,11 @@ public class SqrlRexUtil {
 
     private boolean isTimestampPreservingFunction(RexCall call) {
         SqlOperator operator = call.getOperator();
-        if (!(operator instanceof SqrlAwareFunction)) return false; //TODO: generalize to allow other SQL functions
-        if (((SqrlAwareFunction)operator).isTimestampPreserving()) {
+        Optional<TimestampPreservingFunction> fnc = unwrapSqrlFunction(operator)
+            .filter(op -> op instanceof TimestampPreservingFunction)
+            .map(op -> (TimestampPreservingFunction)op)
+            .filter(TimestampPreservingFunction::isTimestampPreserving);
+        if (fnc.isPresent()) {
             //Internal validation that this is a legit timestamp-preserving function
             long numTimeParams = call.getOperands().stream().map(param -> param.getType()).filter(CalciteUtil::isTimestamp).count();
             Preconditions.checkArgument(numTimeParams==1,
@@ -208,13 +241,22 @@ public class SqrlRexUtil {
         } else return false;
     }
 
+    public static Optional<SqrlFunction> unwrapSqrlFunction(SqlOperator operator) {
+        if (operator instanceof BridgingSqlFunction) {
+            BridgingSqlFunction flinkFnc = (BridgingSqlFunction)operator;
+            if (flinkFnc.getDefinition() instanceof SqrlFunction) {
+                return Optional.of((SqrlFunction) flinkFnc.getDefinition());
+            }
+        }
+        return Optional.empty();
+    }
+
     public Optional<TimeTumbleFunctionCall> getTimeBucketingFunction(RexNode rexNode) {
         if (!(rexNode instanceof RexCall)) return Optional.empty();
         RexCall call = (RexCall)rexNode;
-        if (!(call.getOperator() instanceof SqrlAwareFunction)) return Optional.empty();
-        SqrlAwareFunction bucketFct = (SqrlAwareFunction) call.getOperator();
-        if (!(bucketFct instanceof SqrlTimeTumbleFunction)) return Optional.empty();
-        return Optional.of(TimeTumbleFunctionCall.from(call,getBuilder()));
+        return unwrapSqrlFunction(call.getOperator())
+            .filter(o-> o instanceof SqrlTimeTumbleFunction)
+            .map(o->TimeTumbleFunctionCall.from(call,getBuilder()));
     }
 
     public static RelCollation mapCollation(RelCollation collation, IndexMap map) {

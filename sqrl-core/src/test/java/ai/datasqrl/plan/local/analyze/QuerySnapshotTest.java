@@ -174,7 +174,9 @@ class QuerySnapshotTest extends AbstractSQRLIT {
        + "Orders.entries.dProduct := SELECT DISTINCT category AS name FROM _.product LIMIT 1;\n",
       "Orders.x := SELECT * FROM _ JOIN Product ON true;\n",
       "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
-          + "Orders.entries.dProduct := SELECT unit_price, product.category, product.name FROM _;\n"
+          + "Orders.entries.dProduct := SELECT unit_price, product.category, product.name FROM _;\n",
+      "Orders.newid := SELECT NOW(), STRING_TO_TIMESTAMP(TIMESTAMP_TO_STRING(EPOCH_TO_TIMESTAMP(100))) FROM Orders;"
+
 
 
 //      "Orders3 := SELECT __a1.id\n"
@@ -202,6 +204,7 @@ class QuerySnapshotTest extends AbstractSQRLIT {
           () -> {
             System.out.println(sql);
             RelNode relNode = generate(IMPORTS, sql, false);
+            System.out.println(relNode.explain());
             System.out.println(RelToSql.convertToSql(relNode));
 
 //            String plan = RelOptUtil.dumpPlan("", relNode, SqlExplainFormat.TEXT,

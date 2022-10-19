@@ -1,7 +1,7 @@
 package ai.datasqrl.physical.database;
 
 import ai.datasqrl.config.engines.JDBCConfiguration;
-import ai.datasqrl.function.SqrlAwareFunction;
+import ai.datasqrl.function.TimestampPreservingFunction;
 import ai.datasqrl.function.builtin.time.NowFunction;
 import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.global.OptimizedDAG;
@@ -59,7 +59,7 @@ public class QueryBuilder {
       List<RexNode> clonedOperands = this.visitList(call.operands, update);
       SqlOperator operator = call.getOperator();
       RelDataType datatype = call.getType();
-      if (operator instanceof SqrlAwareFunction) {
+      if (operator instanceof TimestampPreservingFunction) {
         update[0] = true;
         if (operator instanceof NowFunction) {
           Preconditions.checkArgument(clonedOperands.isEmpty());

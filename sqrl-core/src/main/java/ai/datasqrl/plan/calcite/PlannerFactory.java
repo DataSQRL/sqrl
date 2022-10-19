@@ -68,42 +68,6 @@ public class PlannerFactory {
     return operatorTable;
 
   }
-  public static class EPOCH_TO_TIMESTAMPFunction extends ScalarFunction {
-
-    public Instant eval(Double number) {
-      return Instant.ofEpochSecond(number.longValue());
-    }
-  }
-
-//  private static void registerFunc(SqlOperator e, FunctionCatalog catalog) {
-//    catalog.registerTemporarySystemFunction(e.getName(), createFuncDef(e), false);
-//
-//  }
-//
-//  private static CatalogFunction createFuncDef(SqlOperator e) {
-//
-//    return null;
-//  }
-//
-//  public static class WrappedFunction extends UserDefinedFunction {
-//
-//    private final SqlOperator op;
-//
-//    public WrappedFunction(SqlOperator op) {
-//      this.op = op;
-//    }
-//    @Override
-//    public FunctionKind getKind() {
-//      return FunctionKind.SCALAR;
-//    }
-//
-//    @Override
-//    public TypeInference getTypeInference(DataTypeFactory dataTypeFactory) {
-//      return TypeInference.newBuilder()
-//          .outputTypeStrategy()
-//          .build();
-//    }
-//  }
 
   public static RelDataTypeFactory getTypeFactory() {
     return new FlinkTypeFactory(getTypeSystem());

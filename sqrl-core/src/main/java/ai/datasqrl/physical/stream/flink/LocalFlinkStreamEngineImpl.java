@@ -1,7 +1,6 @@
 package ai.datasqrl.physical.stream.flink;
 
 import ai.datasqrl.physical.stream.StreamEngine;
-import ai.datasqrl.plan.calcite.PlannerFactory.EPOCH_TO_TIMESTAMPFunction;
 import lombok.NonNull;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;

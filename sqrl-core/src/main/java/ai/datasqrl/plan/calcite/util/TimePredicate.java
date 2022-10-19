@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.calcite.util;
 
-import ai.datasqrl.plan.calcite.SqrlOperatorTable;
+import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.google.common.collect.Iterables;
 import graphql.com.google.common.base.Preconditions;
 import lombok.Value;
@@ -114,7 +114,7 @@ public class TimePredicate {
             if (useCurrentTime) {
                 return rexBuilder.makeCall(SqlStdOperatorTable.CURRENT_TIMESTAMP);
             } else {
-                return rexBuilder.makeCall(SqrlOperatorTable.NOW);
+                return rexBuilder.makeCall(SqrlRexUtil.getSqrlOperator("NOW"));
             }
         }
         throw new UnsupportedOperationException("Invalid index: " + index);
@@ -180,7 +180,7 @@ public class TimePredicate {
             }
             if (rexNode instanceof RexCall) {
                 RexCall call = (RexCall)rexNode;
-                if (call.getOperator().equals(SqrlOperatorTable.NOW)) {
+                if (SqrlRexUtil.unwrapSqrlFunction(call.getOperator()).filter(op->op instanceof StdTimeLibraryImpl.NOW).isPresent()) {
                     return Pair.of(Set.of(NOW_INDEX),rexBuilder.makeZeroLiteral(rexNode.getType()));
                 } else {
                     //Map recursively
