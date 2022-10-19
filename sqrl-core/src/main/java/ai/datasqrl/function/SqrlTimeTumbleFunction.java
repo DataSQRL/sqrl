@@ -1,6 +1,6 @@
 package ai.datasqrl.function;
 
-public interface SqrlTimeTumbleFunction extends SqrlAwareFunction {
+public interface SqrlTimeTumbleFunction extends TimestampPreservingFunction {
 
     public Specification getSpecification(long[] arguments);
 

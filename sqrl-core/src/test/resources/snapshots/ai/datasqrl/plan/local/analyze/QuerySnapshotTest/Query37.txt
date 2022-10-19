@@ -1,0 +1,11 @@
+Orders.newid := SELECT NOW(), STRING_TO_TIMESTAMP(TIMESTAMP_TO_STRING(EPOCH_TO_TIMESTAMP(100))) FROM Orders;
+
+LogicalProject(_id$0=[$0], EXPR$1=[NOW()], EXPR$2=[STRING_TO_TIMESTAMP(TIMESTAMP_TO_STRING(EPOCH_TO_TIMESTAMP(100:BIGINT)))])
+  LogicalJoin(condition=[true], joinType=[default])
+    LogicalTableScan(table=[[orders$12]])
+    LogicalTableScan(table=[[orders$12]])
+
+
+SELECT "orders$12"."id" AS "_id$0", "NOW"(), "STRING_TO_TIMESTAMP"("TIMESTAMP_TO_STRING"("EPOCH_TO_TIMESTAMP"(100)))
+FROM "orders$12"
+ DEFAULT JOIN "orders$12" AS "orders$120" ON TRUE

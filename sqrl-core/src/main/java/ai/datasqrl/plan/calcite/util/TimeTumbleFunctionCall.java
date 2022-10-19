@@ -2,6 +2,7 @@ package ai.datasqrl.plan.calcite.util;
 
 import ai.datasqrl.function.SqrlTimeTumbleFunction;
 import com.google.common.base.Preconditions;
+import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.rex.*;
 
@@ -20,8 +21,11 @@ public class TimeTumbleFunctionCall {
     }
 
     public static TimeTumbleFunctionCall from(RexCall call, RexBuilder rexBuilder) {
-        Preconditions.checkArgument(call.getOperator() instanceof SqrlTimeTumbleFunction);
-        SqrlTimeTumbleFunction bucketFct = (SqrlTimeTumbleFunction) call.getOperator();
+        Optional<SqrlTimeTumbleFunction> fnc = SqrlRexUtil.unwrapSqrlFunction(call.getOperator())
+            .filter(o->o instanceof SqrlTimeTumbleFunction)
+            .map(o->(SqrlTimeTumbleFunction)o);
+        Preconditions.checkState(fnc.isPresent());
+        SqrlTimeTumbleFunction bucketFct = fnc.get();
         //Validate time bucketing function: First argument is timestamp, all others must be constants
         Preconditions.checkArgument(call.getOperands().size()>0,"Time-bucketing function must have at least one argument");
         RexNode timestamp = call.getOperands().get(0);

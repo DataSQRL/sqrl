@@ -1,7 +1,5 @@
 package ai.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.function.SqrlAwareFunction;
-import lombok.Getter;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.fun.ConvertableFunction;
 import org.apache.calcite.sql.validate.*;

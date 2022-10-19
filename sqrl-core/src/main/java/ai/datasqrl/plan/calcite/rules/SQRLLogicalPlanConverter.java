@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.function.SqrlAwareFunction;
+import ai.datasqrl.function.TimestampPreservingFunction;
+import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.hints.*;
 import ai.datasqrl.plan.calcite.table.*;
@@ -479,12 +480,15 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
         return builder;
     }
 
-    private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(SqrlOperatorTable.NOW);
+    private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(StdTimeLibraryImpl.NOW);
     //Functions that can only be executed in the database
-    private static final SqrlRexUtil.RexFinder FIND_DB_ONLY = SqrlRexUtil.findFunction(SqrlOperatorTable.NOW);
+    private static final SqrlRexUtil.RexFinder FIND_DB_ONLY = SqrlRexUtil.findFunction(StdTimeLibraryImpl.NOW);
     //Functions that can only be executed in the stream
     private static final SqrlRexUtil.RexFinder FIND_STREAM_ONLY = SqrlRexUtil.findFunction(o -> {
-        return (o instanceof SqrlAwareFunction) && !o.equals(SqrlOperatorTable.NOW);
+        return Optional.ofNullable(o)
+            .filter(op -> op instanceof TimestampPreservingFunction)
+            .filter(op -> op instanceof StdTimeLibraryImpl.NOW)
+            .isPresent();
     });
     private static final Predicate<SqlAggFunction> STREAM_ONLY_AGG = Predicates.alwaysFalse();
 
