@@ -228,6 +228,7 @@ public class SqrlRexUtil {
 
     private boolean isTimestampPreservingFunction(RexCall call) {
         SqlOperator operator = call.getOperator();
+        if (operator.getKind().equals(SqlKind.CAST)) return true;
         Optional<TimestampPreservingFunction> fnc = unwrapSqrlFunction(operator)
             .filter(op -> op instanceof TimestampPreservingFunction)
             .map(op -> (TimestampPreservingFunction)op)

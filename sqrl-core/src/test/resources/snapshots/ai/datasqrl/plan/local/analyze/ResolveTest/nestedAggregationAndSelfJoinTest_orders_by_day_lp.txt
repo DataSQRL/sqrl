@@ -1,0 +1,8 @@
+LogicalAggregate(group=[{0, 1}], total_price=[SUM($2)], total_num=[SUM($3)])
+  LogicalProject(_customerid$0=[$6], day=[round_to_day($3)], price=[$4], num=[$5])
+    LogicalJoin(condition=[=($1, $6)], joinType=[inner])
+      LogicalProject(_uuid=[$0], id=[$1], customerid=[$2], time=[$3], price=[$4], num=[$5])
+        LogicalTableScan(table=[[ordersinline$q$12]])
+      LogicalFilter(condition=[=($6, 1)])
+        LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+          LogicalTableScan(table=[[customer$q$8]])

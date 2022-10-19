@@ -2,7 +2,6 @@ package ai.datasqrl.plan.calcite.rules;
 
 import ai.datasqrl.function.TimestampPreservingFunction;
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
-import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.hints.*;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.*;
@@ -1007,6 +1006,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
                 .collect(Collectors.toList());
         Preconditions.checkArgument(inputs.size()>0);
 
+        //In the following, we can assume that the input relations are aligned because we post-processed them
         RelBuilder relBuilder = makeRelBuilder();
         MaterializationInference materialize = null;
         ContinuousIndexMap pk = inputs.get(0).primaryKey;
@@ -1048,7 +1048,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<SQRLLogical
             }
 
             relBuilder.push(input.relNode);
-            CalciteUtil.addProjection(relBuilder, selectIndexes, selectNames);
+            CalciteUtil.addProjection(relBuilder, localSelectIndexes, localSelectNames);
             unionTimestamp = unionTimestamp.union(localTimestamp);
             materialize = materialize==null?input.materialize:materialize.combine(input.materialize);
         }

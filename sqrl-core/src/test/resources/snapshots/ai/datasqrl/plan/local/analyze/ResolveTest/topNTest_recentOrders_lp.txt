@@ -1,0 +1,7 @@
+LogicalProject(_customerid$0=[$6], _uuid=[$0], id=[$2], time=[$4])
+  LogicalJoin(condition=[=($6, $2)], joinType=[inner])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+      LogicalTableScan(table=[[orders$q$5]])
+    LogicalFilter(condition=[=($6, 1)])
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$q$11]])

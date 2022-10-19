@@ -1,0 +1,6 @@
+LogicalProject(_uuid=[$0], id=[$2], order_count=[$7], customerid=[$3], time=[$4])
+  LogicalJoin(condition=[=($3, $6)], joinType=[inner])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+      LogicalTableScan(table=[[orders$q$5]])
+    LogicalProject(customer=[$0], order_count=[$1], time=[$2])
+      LogicalTableScan(table=[[customercount$q$11]])
