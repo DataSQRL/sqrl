@@ -72,11 +72,10 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
       addedColumns.add(column);
     }
     //Update the row types
-    RelDataType colType = column.getDataType();
-    if (!CalciteUtil.isNestedTable(colType)) {
-      rowType = CalciteUtil.appendField(rowType, column.getNameId(), colType, typeFactory);
+    if (!CalciteUtil.isNestedTable(column.getDataType())) {
+      rowType = column.appendTo(rowType, typeFactory);
     }
-    queryRowType = CalciteUtil.appendField(queryRowType, column.getNameId(), colType, typeFactory);
+    queryRowType = column.appendTo(queryRowType, typeFactory);
   }
 
   public abstract int getNumParentPks();

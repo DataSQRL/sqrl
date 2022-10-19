@@ -14,7 +14,6 @@ import ai.datasqrl.plan.calcite.TranspilerFactory;
 import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.*;
-import ai.datasqrl.plan.calcite.table.AddedColumn.Complex;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Simple;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.RelToSql;
@@ -22,7 +21,10 @@ import ai.datasqrl.plan.local.AddContextTable;
 import ai.datasqrl.plan.local.RenameSelfInTopQuery;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.generate.Resolve.RewriteIdentifierPathsToJoins.ToLeftJoin;
-import ai.datasqrl.plan.local.transpile.*;
+import ai.datasqrl.plan.local.transpile.JoinDeclarationFactory;
+import ai.datasqrl.plan.local.transpile.SqlJoinDeclaration;
+import ai.datasqrl.plan.local.transpile.UniqueAliasGenerator;
+import ai.datasqrl.plan.local.transpile.UniqueAliasGeneratorImpl;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
@@ -32,8 +34,6 @@ import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
@@ -45,11 +45,7 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.SqlQualified;
-import org.apache.calcite.sql.validate.SqlScopedShuttle;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorScope;
-import org.apache.calcite.sql.validate.SqrlValidatorImpl;
+import org.apache.calcite.sql.validate.*;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Litmus;
 import org.apache.commons.lang3.tuple.Pair;
@@ -58,8 +54,10 @@ import java.io.File;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static ai.datasqrl.errors.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
 import static ai.datasqrl.errors.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
@@ -858,9 +856,12 @@ public class Resolve {
     if (isSimple(op)) {
       Project project = (Project) op.getRelNode();
       return new Simple(columnName, project.getProjects().get(project.getProjects().size() - 1));
+    } else {
+      //return new Complex(columnName, op.relNode);
+      throw new UnsupportedOperationException("Complex column not yet supported");
     }
 
-    return new Complex(columnName, op.relNode);
+
   }
 
   private boolean isSimple(StatementOp op) {

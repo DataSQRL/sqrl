@@ -7,10 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.tools.RelBuilder;
@@ -66,26 +64,26 @@ public abstract class AddedColumn {
     }
 
 
-    public static class Complex extends AddedColumn {
-
-        //Logical plan that produces the added column value in the last field. All previous fields
-        //are primary key columns of the table (in the same order as for the table) to which this column is added.
-        final RelNode rightJoin;
-
-        public Complex(@NonNull String nameId, @NonNull RelNode rightJoin) {
-            super(nameId); //For now, we never inline complex columns
-            this.rightJoin = rightJoin;
-        }
-
-        RelDataTypeField getAddedColumnField() {
-            List<RelDataTypeField> fields = rightJoin.getRowType().getFieldList();
-            return fields.get(fields.size()-1);
-        }
-
-        @Override
-        public RelDataType getDataType() {
-            return getAddedColumnField().getType();
-        }
-    }
+//    public static class Complex extends AddedColumn {
+//
+//        //Logical plan that produces the added column value in the last field. All previous fields
+//        //are primary key columns of the table (in the same order as for the table) to which this column is added.
+//        final RelNode rightJoin;
+//
+//        public Complex(@NonNull String nameId, @NonNull RelNode rightJoin) {
+//            super(nameId); //For now, we never inline complex columns
+//            this.rightJoin = rightJoin;
+//        }
+//
+//        RelDataTypeField getAddedColumnField() {
+//            List<RelDataTypeField> fields = rightJoin.getRowType().getFieldList();
+//            return fields.get(fields.size()-1);
+//        }
+//
+//        @Override
+//        public RelDataType getDataType() {
+//            return getAddedColumnField().getType();
+//        }
+//    }
 
 }

@@ -100,11 +100,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     }
 
     private RelBuilder shredTable(VirtualRelationalTable vtable, ContinuousIndexMap.Builder primaryKey,
-                                  ContinuousIndexMap.Builder indexMap, List<JoinTable> joinTables,
+                                  ContinuousIndexMap.Builder select, List<JoinTable> joinTables,
                                   AtomicReference<MaterializationInference> materialize,
                                   boolean isLeaf) {
         Preconditions.checkArgument(joinTables.isEmpty());
-        return shredTable(vtable, primaryKey, indexMap, joinTables, materialize,null, JoinRelType.INNER, isLeaf);
+        return shredTable(vtable, primaryKey, select, joinTables, materialize,null, JoinRelType.INNER, isLeaf);
     }
 
     private RelBuilder shredTable(VirtualRelationalTable vtable, ContinuousIndexMap.Builder primaryKey,
@@ -115,7 +115,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     }
 
     private RelBuilder shredTable(VirtualRelationalTable vtable, ContinuousIndexMap.Builder primaryKey,
-                                  ContinuousIndexMap.Builder indexMap, List<JoinTable> joinTables,
+                                  ContinuousIndexMap.Builder select, List<JoinTable> joinTables,
                                   AtomicReference<MaterializationInference> materialize,
                                   Pair<JoinTable,RelBuilder> startingBase, JoinRelType joinType, boolean isLeaf) {
         Preconditions.checkArgument(joinType==JoinRelType.INNER || joinType == JoinRelType.LEFT);
@@ -141,7 +141,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             }
         } else {
             VirtualRelationalTable.Child child = (VirtualRelationalTable.Child) vtable;
-            builder = shredTable(child.getParent(), primaryKey, indexMap, joinTables, materialize, startingBase, joinType, false);
+            builder = shredTable(child.getParent(), primaryKey, select, joinTables, materialize, startingBase, joinType, false);
             JoinTable parentJoinTable = Iterables.getLast(joinTables);
             int indexOfShredField = parentJoinTable.getOffset() + child.getShredIndex();
             CorrelationId id = new CorrelationId(0);
@@ -166,7 +166,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         }
         for (int i = 0; i < vtable.getNumLocalPks(); i++) {
             primaryKey.add(offset+i);
-            if (!isLeaf && startingBase==null) indexMap.add(offset+i);
+            if (!isLeaf && startingBase==null) select.add(offset+i);
         }
         //Add additional columns
         JoinTable.Path path = JoinTable.Path.of(joinTable);
@@ -174,13 +174,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             //How do columns impact materialization preference (e.g. contain function that cannot be computed in DB) if they might get projected out again
             List<RexNode> projects = rexUtil.getIdentityProject(builder.peek());
             RexNode added;
-            if (column instanceof AddedColumn.Simple) {
-                added = ((AddedColumn.Simple) column).getExpression(path.mapLeafTable());
-            } else {
-                AddedColumn.Complex cc = (AddedColumn.Complex) column;
-                //TODO: Need to join and project out everything but the last column
-                throw new UnsupportedOperationException("Not yet implemented");
-            }
+            AddedColumn.Simple simpleCol = (AddedColumn.Simple) column;
+            added = simpleCol.getExpression(path.mapLeafTable());
             projects.add(added);
             builder.project(projects);
         }
@@ -192,7 +187,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             for (int i = 0; i < queryRowType.size(); i++) {
                 RelDataTypeField field = queryRowType.get(i);
                 if (!CalciteUtil.isNestedTable(field.getType())) {
-                    indexMap.add(offset+i);
+                    select.add(offset+i);
                 }
             }
         }
