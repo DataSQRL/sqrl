@@ -1,0 +1,16 @@
+>>>ordercustomer-lp
+LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], time=[$4])
+  LogicalJoin(condition=[AND(=($3, $8), >($4, $7), <=($4, +($7, 2:INTERVAL MONTH)))], joinType=[inner]) hints[IntervalJoin]
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+      LogicalTableScan(table=[[orders$q$5]])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5])
+      LogicalTableScan(table=[[customer$q$2]])
+
+>>>ordercustomer2-lp
+LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], time=[$4])
+  LogicalJoin(condition=[AND(=($3, $8), >($4, $7), <=($4, +($7, 2:INTERVAL MONTH)))], joinType=[inner]) hints[IntervalJoin]
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+      LogicalTableScan(table=[[orders$q$5]])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5])
+      LogicalTableScan(table=[[customer$q$2]])
+

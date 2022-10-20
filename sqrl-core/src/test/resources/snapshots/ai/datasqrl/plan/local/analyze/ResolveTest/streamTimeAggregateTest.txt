@@ -1,3 +1,5 @@
+>>>orderagg1-lp
 LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION]]
   LogicalProject(customer=[$3], bucket=[round_to_second($4)])
-    LogicalTableScan(table=[[orderfilter$q$11]])
+    LogicalTableScan(table=[[orders$q$5]])
+

@@ -45,8 +45,7 @@ public class ResolveTest extends AbstractSQRLIT {
 
   private Resolve.Env resolvedDag = null;
 
-  private SnapshotTest.SnapshotRun snapshotRun;
-  private SnapshotTest.Execution snapshotExecution;
+  private SnapshotTest.Snapshot snapshot;
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
@@ -66,13 +65,13 @@ public class ResolveTest extends AbstractSQRLIT {
     this.session = session;
     this.parser = new ConfiguredSqrlParser(error);
     this.resolve = new Resolve(RETAIL_DIR_BASE.resolve("build/"));
-    this.snapshotRun = SnapshotTest.SnapshotRun.of(getClass(),testInfo).with(false);
+    this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
   }
 
   @AfterEach
   public void tearDown() {
     super.tearDown();
-    if (snapshotExecution!=null) snapshotExecution.test();
+    snapshot.createOrValidate();
   }
 
   /*
@@ -350,7 +349,7 @@ public class ResolveTest extends AbstractSQRLIT {
                                   PullupTest pullupTest) {
     CalciteSchema relSchema = resolvedDag.getRelSchema();
     QueryRelationalTable table = getLatestTable(relSchema,tableName,QueryRelationalTable.class).get();
-    snapshotExecution = SnapshotTest.createOrValidateSnapshot(snapshotRun.with(tableName,"lp"), TestRelWriter.explain(table.getRelNode()));
+    snapshot.addContent(TestRelWriter.explain(table.getRelNode()),tableName,"lp");
     assertEquals(tableType, table.getType(), "table type");
     assertEquals(numPrimaryKeys, table.getNumPrimaryKeys(), "primary key size");
     assertEquals(numCols, table.getRowType().getFieldCount(), "field count");

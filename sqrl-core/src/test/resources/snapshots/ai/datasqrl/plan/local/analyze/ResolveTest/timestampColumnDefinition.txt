@@ -1,2 +1,8 @@
+>>>customer-lp
 LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[EPOCH_TO_TIMESTAMP($5)], month=[ROUND_TO_MONTH(ROUND_TO_MONTH(CAST(EPOCH_TO_TIMESTAMP($5)):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))])
   LogicalValues(tuples=[[]])
+
+>>>customercopy-lp
+LogicalProject(_uuid=[$0], timestamp=[$6], month=[$7], _ingest_time=[$1])
+  LogicalTableScan(table=[[customer$q$2]])
+

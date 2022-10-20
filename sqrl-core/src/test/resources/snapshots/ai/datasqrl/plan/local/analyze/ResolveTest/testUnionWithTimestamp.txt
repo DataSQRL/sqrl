@@ -1,5 +1,7 @@
+>>>combinedstream-lp
 LogicalUnion(all=[true])
   LogicalProject(_uuid=[$0], customerid=[$3], time=[$4])
     LogicalTableScan(table=[[orders$q$5]])
   LogicalProject(_uuid=[$0], customerid=[$2], _ingest_time=[$1])
     LogicalTableScan(table=[[customer$q$2]])
+

@@ -1,2 +1,0 @@
-LogicalProject(order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
-  LogicalTableScan(table=[[orders$q$5]])

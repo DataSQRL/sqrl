@@ -99,7 +99,6 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled //todo enable after relationship fix
   public void tableColumnDefinitionTest() {
     ScriptBuilder builder = example.getImports();
     Map<String,Integer> rowCounts = getImportRowCounts();
@@ -107,10 +106,14 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     builder.add("EntryPrice := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e"); //This is line 4 in the script
     rowCounts.put("entryprice",rowCounts.get("entries"));
 
-//    builder.add("Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)");
-//    builder.add("Customer.month := ROUND_TO_MONTH(ROUND_TO_MONTH(timestamp))");
-//    builder.add("CustomerCopy := SELECT timestamp, month FROM Customer");
-//    rowCounts.put("customercopy",rowCounts.get("customer"));
+    builder.add("Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)");
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC");
+    rowCounts.put("customer",4); //Dedups
+
+    builder.add("Orders.col1 := (id + customerid)/2");
+    builder.add("Orders.entries.discount2 := COALESCE(discount,0.0)");
+
+
 
 
 //    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");

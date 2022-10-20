@@ -1,0 +1,9 @@
+>>>customer-lp
+LogicalValues(tuples=[[]])
+
+>>>product-lp
+LogicalValues(tuples=[[]])
+
+>>>orders-lp
+LogicalValues(tuples=[[]])
+
