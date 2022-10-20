@@ -26,12 +26,12 @@ public class C360BundleTest {
       + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
 //
 //      //Error adding a nested column
-////      + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
+      + "Orders.entries.discount2 := COALESCE(discount, 0.0)\n;"
 //      + "Orders.x := EPOCH_TO_TIMESTAMP(100);"
 //      //State table error
 //      + "Orders.stats := SELECT "
-//      + "                        SUM(quantity * unit_price - discount) AS total, "
-//      + "                        SUM(quantity * discount) AS total_savings, "
+//      + "                        SUM(quantity * unit_price - discount2) AS total, "
+//      + "                        SUM(quantity * discount2) AS total_savings, "
 //      + "                        COUNT(1) AS total_entries "
 //      + "                 FROM _.entries e;\n"
       + "";

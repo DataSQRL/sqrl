@@ -21,79 +21,92 @@ public class Expander2 extends SqlScopedShuttle {
     this.validator = validator;
   }
 
-  @Override
-  public SqlNode visit(SqlIdentifier id) {
+  @Override public SqlNode visit(SqlIdentifier id) {
     // First check for builtin functions which don't have
     // parentheses, like "LOCALTIME".
     final SqlCall call = validator.makeNullaryCall(id);
     if (call != null) {
       return call.accept(this);
     }
-
-    final SqlIdentifier fqId = get(id);
-//
-//
-//    //check to see if we're inside a path so we can reorient it to a different  scope
-//    if (fqId.names.size() > 2) {
-//      SqlPathIdentifier table = new SqlPathIdentifier(
-//          fqId.names.subList(0, fqId.names.size() - 1),
-//          null,
-//          fqId.getParserPosition(),
-//          IntStream.range(0, fqId.names.size() - 1)
-//              .mapToObj(i -> fqId.getComponentParserPosition(i))
-//              .collect(Collectors.toList()));
-//      System.out.println(table);
-//
-////      SqlValidatorScope scope = ((SqrlValidatorImpl)validator).getScopeForAlias(fqId.names.get(0));
-//      SqlPathJoin j = new SqlPathJoin(fqId.names.subList(0, fqId.names.size() - 1),
-//         SqlParserPos.ZERO, IntStream.range(0, fqId.names.size() - 1)
-//          .mapToObj(i -> fqId.getComponentParserPosition(i))
-//          .collect(Collectors.toList()));
-//
-//      SqlValidatorNamespace ns= ((SqrlValidatorImpl)validator).getJoinScopes().get(fqId.names.get(0));
-//
-//      SqlIdentifier sqlIdentifier = new SqlIdentifierWithPath(table,
-//          List.of(
-//              fqId.names.subList(0, fqId.names.size() - 1).stream()
-//                      .collect(Collectors.joining(".")),
-//              fqId.names.get(fqId.names.size()-1)
-//          ), null,
-//          SqlParserPos.ZERO,
-//          IntStream.range(0, fqId.names.size() - 1)
-//              .mapToObj(i -> fqId.getComponentParserPosition(i))
-//              .collect(Collectors.toList())
-//      );
-//      validator.registerFrom(
-//          getScope(),
-//          null,
-//          false,
-//          j,
-//          null,
-//          null,
-//          null,
-//          false,
-//          false);
-//      validator.namespaces.put(table, ns);
-//      table.setSqlPathJoin(j);
-//      final JoinScope joinScope =
-//          new JoinScope(getScope(), null, j);
-//      validator.scopes.put(j, joinScope);
-//      validator.validateJoin(table.getSqlPathJoin(), getScope());
-//      validator.getNamespace(table.getSqlPathJoin().getLeft()).validate(
-//          ((SqrlValidatorImpl) validator).unknownType);
-//      validator.getNamespace(table.getSqlPathJoin().getRight()).validate(
-//          ((SqrlValidatorImpl) validator).unknownType);
-//      return sqlIdentifier;
-//
-////      validator.validateFrom(table, validator.unknownType, getScope());
-//
-////      validateFrom()
-//    }
-
+    final SqlIdentifier fqId = getScope().fullyQualify(id).identifier;
     SqlNode expandedExpr = expandDynamicStar(id, fqId);
     validator.setOriginal(expandedExpr, id);
     return expandedExpr;
   }
+//
+//  @Override
+//  public SqlNode visit(SqlIdentifier id) {
+//    // First check for builtin functions which don't have
+//    // parentheses, like "LOCALTIME".
+//    final SqlCall call = validator.makeNullaryCall(id);
+//    if (call != null) {
+//      return call.accept(this);
+//    }
+//
+//    final SqlIdentifier fqId = get(id);
+////
+////
+////    //check to see if we're inside a path so we can reorient it to a different  scope
+////    if (fqId.names.size() > 2) {
+////      SqlPathIdentifier table = new SqlPathIdentifier(
+////          fqId.names.subList(0, fqId.names.size() - 1),
+////          null,
+////          fqId.getParserPosition(),
+////          IntStream.range(0, fqId.names.size() - 1)
+////              .mapToObj(i -> fqId.getComponentParserPosition(i))
+////              .collect(Collectors.toList()));
+////      System.out.println(table);
+////
+//////      SqlValidatorScope scope = ((SqrlValidatorImpl)validator).getScopeForAlias(fqId.names.get(0));
+////      SqlPathJoin j = new SqlPathJoin(fqId.names.subList(0, fqId.names.size() - 1),
+////         SqlParserPos.ZERO, IntStream.range(0, fqId.names.size() - 1)
+////          .mapToObj(i -> fqId.getComponentParserPosition(i))
+////          .collect(Collectors.toList()));
+////
+////      SqlValidatorNamespace ns= ((SqrlValidatorImpl)validator).getJoinScopes().get(fqId.names.get(0));
+////
+////      SqlIdentifier sqlIdentifier = new SqlIdentifierWithPath(table,
+////          List.of(
+////              fqId.names.subList(0, fqId.names.size() - 1).stream()
+////                      .collect(Collectors.joining(".")),
+////              fqId.names.get(fqId.names.size()-1)
+////          ), null,
+////          SqlParserPos.ZERO,
+////          IntStream.range(0, fqId.names.size() - 1)
+////              .mapToObj(i -> fqId.getComponentParserPosition(i))
+////              .collect(Collectors.toList())
+////      );
+////      validator.registerFrom(
+////          getScope(),
+////          null,
+////          false,
+////          j,
+////          null,
+////          null,
+////          null,
+////          false,
+////          false);
+////      validator.namespaces.put(table, ns);
+////      table.setSqlPathJoin(j);
+////      final JoinScope joinScope =
+////          new JoinScope(getScope(), null, j);
+////      validator.scopes.put(j, joinScope);
+////      validator.validateJoin(table.getSqlPathJoin(), getScope());
+////      validator.getNamespace(table.getSqlPathJoin().getLeft()).validate(
+////          ((SqrlValidatorImpl) validator).unknownType);
+////      validator.getNamespace(table.getSqlPathJoin().getRight()).validate(
+////          ((SqrlValidatorImpl) validator).unknownType);
+////      return sqlIdentifier;
+////
+//////      validator.validateFrom(table, validator.unknownType, getScope());
+////
+//////      validateFrom()
+////    }
+//
+//    SqlNode expandedExpr = expandDynamicStar(id, fqId);
+//    validator.setOriginal(expandedExpr, id);
+//    return expandedExpr;
+//  }
 
   private SqlIdentifier get(SqlIdentifier id) {
     return getScope().fullyQualify(id).identifier;

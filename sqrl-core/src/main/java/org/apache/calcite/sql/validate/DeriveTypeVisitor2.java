@@ -5,7 +5,10 @@ import static org.apache.calcite.util.Static.RESOURCE;
 import ai.datasqrl.SqrlCalciteCatalogReader;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.HasToTable;
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.SQRLTable;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.prepare.Prepare.CatalogReader;
 import org.apache.calcite.rel.type.RelDataType;
@@ -18,6 +21,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.util.SqlVisitor;
+import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Util;
 
 /**
@@ -64,6 +68,21 @@ public class DeriveTypeVisitor2 implements SqlVisitor<RelDataType> {
     RelDataType type = null;
     if (!(scope instanceof EmptyScope)) {
       id = scope.fullyQualify(id).identifier;
+      //SQRL: Don't do usual checking, just grab it from the qualified anmespace
+      if (id.names.size() > 2) {
+
+        HasToTable table = scope.fullyQualify(id).namespace.getTable().unwrap(HasToTable.class);
+
+        List<Field> fields = table.getToTable()
+            .walkField(scope.fullyQualify(id).suffix());
+        Column column = (Column) fields.get(fields.size()-1);
+        type = column.getType();
+        type =
+            SqlTypeUtil.addCharsetAndCollation(
+                type,
+                typeFactory);
+        return type;
+      }
     }
 
     // Resolve the longest prefix of id that we can
@@ -110,30 +129,39 @@ public class DeriveTypeVisitor2 implements SqlVisitor<RelDataType> {
           RESOURCE.unknownIdentifier(last.toString()));
     }
 
-    if (!(scope instanceof EmptyScope) && scope.fullyQualify(id).identifier.names.size() > 2) {
-//      this.scope.fullyQualify(id).namespace.getTable()
-      SqlQualified q = scope.fullyQualify(id);
-      SqlValidatorNamespace ns = q.namespace;
-      SQRLTable table = q.namespace.getTable()
-          .unwrap(HasToTable.class).getToTable();
-      SQRLTable target = table.walkTable(NamePath.of(q.identifier.names.subList(1, q.identifier.names.size() - 1)
-          .toArray(new String[]{}))).get();
-      RelDataTypeField f = target.getVt().getRowType().getField(q.identifier.names.get(q.identifier.names.size() - 1), false, false);
-//      this.scope.fullyQualify(id).namespace.getTable()
-//              .unwrap(HasToTable.class)
-//              .getToTable().getVt().getRowType()
-//              .getField(id.names.get(id.names.size() - 1), false, false);
-      if (f != null) {
-        type = f.getType();
-        type =
-            SqlTypeUtil.addCharsetAndCollation(
-                type,
-                typeFactory);
-        return type;
-      } else {
-        throw new RuntimeException("Could not find field");
-      }
+
+    RelDataType colType = scope.resolveColumn(id.names.get(0), id);
+    if (colType != null) {
+      type =
+          SqlTypeUtil.addCharsetAndCollation(
+              type,
+              typeFactory);
+      return type;
     }
+//    if (!(scope instanceof EmptyScope) && scope.fullyQualify(id).identifier.names.size() > 2) {
+////      this.scope.fullyQualify(id).namespace.getTable()
+//      SqlQualified q = scope.fullyQualify(id);
+//      SqlValidatorNamespace ns = q.namespace;
+//      SQRLTable table = q.namespace.getTable()
+//          .unwrap(HasToTable.class).getToTable();
+//      SQRLTable target = table.walkTable(NamePath.of(q.identifier.names.subList(1, q.identifier.names.size() - 1)
+//          .toArray(new String[]{}))).get();
+//      RelDataTypeField f = target.getVt().getRowType().getField(q.identifier.names.get(q.identifier.names.size() - 1), false, false);
+////      this.scope.fullyQualify(id).namespace.getTable()
+////              .unwrap(HasToTable.class)
+////              .getToTable().getVt().getRowType()
+////              .getField(id.names.get(id.names.size() - 1), false, false);
+//      if (f != null) {
+//        type = f.getType();
+//        type =
+//            SqlTypeUtil.addCharsetAndCollation(
+//                type,
+//                typeFactory);
+//        return type;
+//      } else {
+//        throw new RuntimeException("Could not find field");
+//      }
+//    }
 
     // Resolve rest of identifier
     for (; i < id.names.size(); i++) {
@@ -153,28 +181,6 @@ public class DeriveTypeVisitor2 implements SqlVisitor<RelDataType> {
             RESOURCE.unknownField(name));
       }
       type = field.getType();
-    }
-//    if (type == null) {
-//      try {
-//        if (this.scope.fullyQualify(id).namespace.getTable().unwrap(HasToTable.class) != null) {
-//          RelDataTypeField f = this.scope.fullyQualify(id).namespace.getTable()
-//              .unwrap(HasToTable.class)
-//              .getToTable().getVt().getRowType()
-//              .getField(id.names.get(id.names.size() - 1), false, false);
-//          type = f.getType();
-//          type =
-//              SqlTypeUtil.addCharsetAndCollation(
-//                  type,
-//                  typeFactory);
-//          return type;
-//        }
-//      } catch (Exception e) {
-//        //todo hacks
-//      }
-//    }
-    if (type == null) {
-      throw validator.newValidationError(id.getComponent(i),
-          RESOURCE.unknownField(id.names.get(i)));
     }
     type =
         SqlTypeUtil.addCharsetAndCollation(
