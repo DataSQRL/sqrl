@@ -439,13 +439,20 @@ public class Resolve {
       op.setSqrlValidator(validate2);
     } else {
       SqlNode rewritten = rewrite(env, op, sqrlValidator, finalStage);
-      rewritten = new AddContextQuery(sqrlValidator, context).accept(rewritten);
+      //revalidate then deconstruct joins
+      SqrlValidatorImpl revalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
+          assignmentPath, true);
+      revalidate.validate(rewritten);
+      rewritten = new DeconstructPathsToSimpleJoins(revalidate).accept(rewritten);
+
+      rewritten = new AddContextQuery(revalidate, context).accept(rewritten);
 
       //Skip this for joins, we'll add the hints later when we reconstruct the node from the relnode
       // Hints don't carry over when moving from rel -> sqlnode
       if (op.getStatementKind() != StatementKind.JOIN) {
+        System.out.println(rewritten);
         SqrlValidatorImpl prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
-            assignmentPath, false);
+            assignmentPath, true);
         prevalidate.validate(rewritten);
         new AddHints(prevalidate, context).accept(op, rewritten);
       }

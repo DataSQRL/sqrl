@@ -2,11 +2,11 @@ Orders.biggestDiscount := JOIN _.entries e ORDER BY e.discount DESC LIMIT 1;
 Orders2 := SELECT * FROM Orders.biggestDiscount.parent e;
 
 
-LogicalProject(id=[$12], _uuid=[$13], _ingest_time=[$14], customerid=[$15], time=[$16])
-  LogicalJoin(condition=[=($6, $12)], joinType=[default])
+LogicalProject(id=[$11], _uuid=[$12], _ingest_time=[$13], customerid=[$14], time=[$15])
+  LogicalJoin(condition=[=($5, $11)], joinType=[default])
     LogicalJoin(condition=[=($0, $5)], joinType=[default])
       LogicalTableScan(table=[[orders$12]])
-      LogicalProject(_pk_id$0=[$0], id=[$1], _idx=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6])
+      LogicalProject(id=[$1], _idx=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6])
         LogicalSort(sort0=[$6], dir0=[DESC], fetch=[1])
           LogicalProject(_pk_id$0=[$0], id=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10])
             LogicalJoin(condition=[=($0, $5)], joinType=[default])
@@ -17,10 +17,10 @@ LogicalProject(id=[$12], _uuid=[$13], _ingest_time=[$14], customerid=[$15], time
 
 SELECT "orders$121"."id", "orders$121"."_uuid", "orders$121"."_ingest_time", "orders$121"."customerid", "orders$121"."time"
 FROM "orders$12"
- DEFAULT JOIN (SELECT *
+ DEFAULT JOIN (SELECT "t0"."id", "t0"."_idx", "t0"."productid", "t0"."quantity", "t0"."unit_price", "t0"."discount"
   FROM (SELECT "orders$120"."id" AS "_pk_id$0", "entries$13"."id", "entries$13"."_idx", "entries$13"."productid", "entries$13"."quantity", "entries$13"."unit_price", "entries$13"."discount"
     FROM "orders$12" AS "orders$120"
      DEFAULT JOIN "entries$13" ON "orders$120"."id" = "entries$13"."id"
     ORDER BY "entries$13"."discount" DESC
-    FETCH NEXT 1 ROWS ONLY) AS "t0") AS "t1" ON "orders$12"."id" = "t1"."_pk_id$0"
+    FETCH NEXT 1 ROWS ONLY) AS "t0") AS "t1" ON "orders$12"."id" = "t1"."id"
  DEFAULT JOIN "orders$12" AS "orders$121" ON "t1"."id" = "orders$121"."id"
