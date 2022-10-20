@@ -865,6 +865,9 @@ public class Resolve {
         return id.names.get(0);
       case IDENTIFIER:
         return ((SqlIdentifier) n).names.get(0);
+      case JOIN:
+        SqlJoin join = (SqlJoin) n;
+        return getNameFromTableNode(join.getRight());
       default:
         throw new RuntimeException("unknown node type: " + n);
     }
