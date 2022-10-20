@@ -116,15 +116,25 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
     }
     getAllRelationships().forEach(r->
 //        remap to PEEK_FIELDS_NO_EXPAND?
-        b.add(r.getName().getDisplay(), convertToStruct(r.getToTable().getFieldRowType(typeFactory))));
+    {
+      b.add(new RelPlus(r.getName().getDisplay(), b.getFieldCount(),
+          convertToStruct(r.getToTable().getFieldRowType(typeFactory))));
+    });
 
     fullDataType = b.build();
+  }
+
+  public class RelPlus extends RelDataTypeFieldImpl {
+
+    public RelPlus(String name, int index, RelDataType type) {
+      super(name, index, type);
+    }
   }
 
   private RelDataType getFieldRowType(RelDataTypeFactory typeFactory) {
     FieldInfoBuilder b = new FieldInfoBuilder(typeFactory);
     for (Column field : getColumns(true)) {
-      b.add(field.getName().getDisplay(), field.getType());
+      b.add(new RelPlus(field.getName().getDisplay(), b.getFieldCount(), field.getType()));
     }
     return b.build();
   }
@@ -324,13 +334,52 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   @Override
   public List<Pair<RelDataTypeField, List<String>>> resolveColumn(RelDataType relDataType,
       RelDataTypeFactory relDataTypeFactory, List<String> list) {
+
     RelDataTypeField field = fullDataType.getField(list.get(0), false, false);
     if (field == null) {
       return List.of();
+    }
+    if (list.size() > 2) {
+      RelDataType fieldType = buildDeepType(list);
+      if (fieldType == null) {
+        return List.of();
+      }
+
+      return List.of(Pair.of(
+          fieldType.getField(list.get(0), false, false),
+          list.subList(1, list.size())));
     }
 
     return List.of(Pair.of(
         field,
         list.subList(1, list.size())));
+  }
+
+  private RelDataType buildDeepType(List<String> columns) {
+    RelDataTypeFactory typeFactory = PlannerFactory.getTypeFactory();
+    FieldInfoBuilder b = new FieldInfoBuilder(typeFactory);
+    if (vt != null) {
+      b.addAll(vt.getRowType().getFieldList());
+    }
+
+    Optional<Field> field = this.getField(Name.system(columns.get(0)));
+    if (field.isEmpty()) {
+      return null;
+    }
+    else if (field.get() instanceof Relationship) {
+      Relationship r = (Relationship)field.get();
+      if (columns.isEmpty()) {
+        return null;
+      }
+      RelDataType newField = r.getToTable().buildDeepType(columns.subList(1, columns.size()));
+
+      b.add(r.getName().getDisplay(), newField);
+    } else if (field.get() instanceof Column) {
+      if (columns.size() > 1) {
+        return null;
+      }
+      b.add(this.getVt().getRowType().getField(columns.get(0), false, false));
+    }
+    return b.build();
   }
 }

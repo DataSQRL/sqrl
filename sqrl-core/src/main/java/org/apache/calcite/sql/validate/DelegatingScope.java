@@ -100,26 +100,27 @@ public abstract class DelegatingScope implements SqlValidatorScope {
     }
     final RelDataType rowType = ns.getRowType();
     if (rowType.isStruct()) {
-//      SqlValidatorTable validatorTable = ns.getTable();
-//      if (validatorTable instanceof Prepare.PreparingTable) {
-//        Table t = ((Prepare.PreparingTable) validatorTable).unwrap(Table.class);
-//        if (t instanceof CustomColumnResolvingTable) {
-//          final List<Pair<RelDataTypeField, List<String>>> entries =
-//              ((CustomColumnResolvingTable) t).resolveColumn(
-//                  rowType, validator.getTypeFactory(), names);
-//          for (Pair<RelDataTypeField, List<String>> entry : entries) {
-//            final RelDataTypeField field = entry.getKey();
-//            final List<String> remainder = entry.getValue();
-//            final SqlValidatorNamespace ns2 =
-//                new FieldNamespace(validator, field.getType());
-//            final Step path2 = path.plus(rowType, field.getIndex(),
-//                field.getName(), StructKind.FULLY_QUALIFIED);
-//            resolveInNamespace(ns2, nullable, remainder, nameMatcher, path2,
-//                resolved);
-//          }
-//          return;
-//        }
-//      }
+      SqlValidatorTable validatorTable = ns.getTable();
+      if (validatorTable instanceof Prepare.PreparingTable) {
+        Table t = ((Prepare.PreparingTable) validatorTable).unwrap(Table.class);
+        if (t instanceof CustomColumnResolvingTable
+            && names.size() > 2) { //SQRL : We only premake the reldatatype only to a certain size
+          final List<Pair<RelDataTypeField, List<String>>> entries =
+              ((CustomColumnResolvingTable) t).resolveColumn(
+                  rowType, validator.getTypeFactory(), names);
+          for (Pair<RelDataTypeField, List<String>> entry : entries) {
+            final RelDataTypeField field = entry.getKey();
+            final List<String> remainder = entry.getValue();
+            final SqlValidatorNamespace ns2 =
+                new FieldNamespace(validator, field.getType());
+            final Step path2 = path.plus(rowType, field.getIndex(),
+                field.getName(), StructKind.PEEK_FIELDS_NO_EXPAND);
+            resolveInNamespace(ns2, nullable, remainder, nameMatcher, path2,
+                resolved);
+          }
+          return;
+        }
+      }
 
       final String name = names.get(0);
       final RelDataTypeField field0 = nameMatcher.field(rowType, name);
@@ -130,18 +131,18 @@ public abstract class DelegatingScope implements SqlValidatorScope {
         resolveInNamespace(ns2, nullable, names.subList(1, names.size()),
             nameMatcher, path2, resolved);
       } else {
-        for (RelDataTypeField field : rowType.getFieldList()) {
-          switch (field.getType().getStructKind()) {
-            case PEEK_FIELDS:
-            case PEEK_FIELDS_DEFAULT:
-            case PEEK_FIELDS_NO_EXPAND:
-              final Step path2 = path.plus(rowType, field.getIndex(),
-                  field.getName(), field.getType().getStructKind());
-              final SqlValidatorNamespace ns2 = ns.lookupChild(field.getName());
-              resolveInNamespace(ns2, nullable, names, nameMatcher, path2,
-                  resolved);
-          }
-        }
+//        for (RelDataTypeField field : rowType.getFieldList()) {
+//          switch (field.getType().getStructKind()) {
+//            case PEEK_FIELDS:
+//            case PEEK_FIELDS_DEFAULT:
+//            case PEEK_FIELDS_NO_EXPAND:
+//              final Step path2 = path.plus(rowType, field.getIndex(),
+//                  field.getName(), field.getType().getStructKind());
+//              final SqlValidatorNamespace ns2 = ns.lookupChild(field.getName());
+//              resolveInNamespace(ns2, nullable, names, nameMatcher, path2,
+//                  resolved);
+//          }
+//        }
       }
     }
   }
