@@ -50,12 +50,16 @@ public class OptimizationStage {
                     ), false, DefaultRelMetadataProvider.INSTANCE),
             Optional.empty());
 
-    public static final OptimizationStage READ_DAG_OPTIMIZATION = new OptimizationStage("ReadDAGExpansion",
-            Programs.hep(List.of(new DAGExpansionRule.Read()),
+    public static final OptimizationStage READ_DAG_STITCHING = new OptimizationStage("ReadDAGExpansion",
+            Programs.hep(List.of(new DAGExpansionRule.ReadOnly()),
                     false, DefaultRelMetadataProvider.INSTANCE), Optional.empty());
 
-    public static final OptimizationStage WRITE_DAG_OPTIMIZATION = new OptimizationStage("WriteDAGExpansion",
-            Programs.hep(List.of(new DAGExpansionRule.Write()), false, DefaultRelMetadataProvider.INSTANCE),
+    public static final OptimizationStage WRITE_DAG_STITCHING = new OptimizationStage("WriteDAGExpansion",
+            Programs.hep(List.of(new DAGExpansionRule.WriteOnly()), false, DefaultRelMetadataProvider.INSTANCE),
+            Optional.empty());
+
+    public static final OptimizationStage READ2WRITE_STITCHING = new OptimizationStage("Read2WriteAdjustment",
+            Programs.hep(List.of(new DAGExpansionRule.Read2Write()), false, DefaultRelMetadataProvider.INSTANCE),
             Optional.empty());
 
 

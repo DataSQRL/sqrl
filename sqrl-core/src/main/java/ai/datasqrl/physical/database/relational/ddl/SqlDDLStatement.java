@@ -1,4 +1,4 @@
-package ai.datasqrl.physical.database.ddl;
+package ai.datasqrl.physical.database.relational.ddl;
 
 public interface SqlDDLStatement {
 

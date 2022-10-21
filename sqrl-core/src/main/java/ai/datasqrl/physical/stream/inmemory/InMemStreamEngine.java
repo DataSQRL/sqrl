@@ -5,29 +5,30 @@ import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.io.formats.TextLineFormat;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.io.impl.file.FilePath;
-import ai.datasqrl.io.sources.*;
+import ai.datasqrl.io.sources.DataSource;
+import ai.datasqrl.io.sources.DataSourceImplementation;
+import ai.datasqrl.io.sources.SourceRecord;
+import ai.datasqrl.io.sources.SourceTableConfiguration;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.dataset.TableStatisticsStore;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.physical.EngineCapability;
+import ai.datasqrl.physical.ExecutionEngine;
 import ai.datasqrl.physical.stream.FunctionWithError;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -35,12 +36,19 @@ import java.util.stream.Stream;
 
 public class InMemStreamEngine implements StreamEngine {
 
+    private final ExecutionEngine ENGINE_DESCRIPTION = new ExecutionEngine.Impl(ExecutionEngine.Type.STREAM, EnumSet.noneOf(EngineCapability.class)) {};
+
     private final AtomicInteger jobIdCounter = new AtomicInteger(0);
     private final ConcurrentHashMap<String, Job> jobs = new ConcurrentHashMap<>();
 
     @Override
     public JobBuilder createJob() {
         return new JobBuilder();
+    }
+
+    @Override
+    public ExecutionEngine getEngineDescription() {
+        return ENGINE_DESCRIPTION;
     }
 
     @Override

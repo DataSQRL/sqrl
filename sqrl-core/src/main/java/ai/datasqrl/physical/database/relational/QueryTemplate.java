@@ -1,4 +1,4 @@
-package ai.datasqrl.physical.database;
+package ai.datasqrl.physical.database.relational;
 
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;

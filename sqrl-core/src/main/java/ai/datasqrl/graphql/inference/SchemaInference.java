@@ -2,12 +2,9 @@ package ai.datasqrl.graphql.inference;
 
 import ai.datasqrl.graphql.server.Model.*;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
-import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
-import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.queries.APIQuery;
@@ -21,13 +18,7 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.language.TypeDefinition;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Singular;
-import lombok.Value;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
@@ -171,28 +162,6 @@ public class SchemaInference {
     }
 
     return root.build();
-  }
-
-  private @NonNull RelNode optimize(Env env, RelNode relNode) {
-    List<String> fieldNames = relNode.getRowType().getFieldNames();
-
-    relNode = env.getSession().getPlanner()
-        .transform(OptimizationStage.PUSH_FILTER_INTO_JOIN, relNode);
-//    System.out.println("LP$1: \n" + relNode.explain());
-
-    //Step 2: Convert all special SQRL conventions into vanilla SQL and remove
-    //self-joins (including nested self-joins) as well as infer primary keys,
-    //table types, and timestamps in the process
-
-    //TODO: extract materialization preference from hints if present
-    SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(
-        () -> env.getSession().getPlanner().getRelBuilder(), Optional.empty());
-    relNode = relNode.accept(sqrl2sql);
-//    System.out.println("LP$2: \n" + relNode.explain());
-    AnnotatedLP prel = sqrl2sql.getRelHolder(relNode);
-    prel = prel.postProcess(sqrl2sql.makeRelBuilder(), fieldNames);
-
-    return prel.getRelNode();
   }
 
   private RelNode addPkNode(Env env, int index,

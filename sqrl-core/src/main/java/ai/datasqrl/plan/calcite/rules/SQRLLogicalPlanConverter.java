@@ -1,13 +1,13 @@
 package ai.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.function.TimestampPreservingFunction;
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
+import ai.datasqrl.physical.EngineCapability;
+import ai.datasqrl.physical.pipeline.ExecutionPipeline;
+import ai.datasqrl.physical.pipeline.ExecutionStage;
 import ai.datasqrl.plan.calcite.hints.*;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.*;
-import ai.datasqrl.plan.global.MaterializationPreference;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
@@ -27,7 +27,6 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.*;
-import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.mapping.IntPair;
@@ -37,7 +36,6 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -54,18 +52,57 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
     Supplier<RelBuilder> relBuilderFactory;
     SqrlRexUtil rexUtil;
-    MaterializationPreference materializationPreference;
+    ExecutionStage startStage;
+    boolean allowStageChange = false;
     double cardinalityJoinThreshold = HIGH_CARDINALITY_JOIN_THRESHOLD;
     double defaultSlidePercentage = DEFAULT_SLIDING_WIDTH_PERCENTAGE;
 
-    public SQRLLogicalPlanConverter(Supplier<RelBuilder> relBuilderFactory, Optional<MaterializationPreference> materializationPreference) {
+    public SQRLLogicalPlanConverter(Supplier<RelBuilder> relBuilderFactory, ExecutionStage stage) {
         this.relBuilderFactory = relBuilderFactory;
         this.rexUtil = new SqrlRexUtil(relBuilderFactory.get().getTypeFactory());
-        this.materializationPreference = materializationPreference.orElse(MaterializationPreference.SHOULD);
+        this.startStage = stage;
+    }
+
+    public static AnnotatedLP findCheapest(RelNode relNode, ExecutionPipeline pipeline, Supplier<RelBuilder> relBuilderFactory) {
+        AnnotatedLP cheapest = null;
+        ComputeCost cheapestCost = null;
+        for (ExecutionStage stage : pipeline.getStages()) {
+            try {
+                AnnotatedLP alp = convert(relNode, stage, relBuilderFactory);
+                ComputeCost cost = ComputeCost.Simple.of(stage.getEngine().getType(),false); //TODO: analyze relNode to determine expensive
+                if (cheapestCost==null || cost.compareTo(cheapestCost)<0) {
+                    cheapest = alp;
+                    cheapestCost = cost;
+                }
+            } catch (Exception e) {}
+        }
+        if (cheapest==null) throw new IllegalArgumentException("Could not find stage that can process relation");
+        return cheapest;
+    }
+
+    public static AnnotatedLP convert(RelNode relNode, ExecutionStage stage, Supplier<RelBuilder> relBuilderFactory) {
+        SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(relBuilderFactory, stage);
+        relNode = relNode.accept(sqrl2sql);
+        return sqrl2sql.getRelHolder(relNode);
     }
 
     public RelBuilder makeRelBuilder() {
         return relBuilderFactory.get();
+    }
+
+    @Override
+    protected RelNode setRelHolder(AnnotatedLP relHolder) {
+        if (relHolder.exec.getStage().isRead()) {
+            //Inline all pullups
+            relHolder = relHolder.inlineAllPullups(makeRelBuilder());
+        }
+        if (!allowStageChange && !relHolder.exec.getStage().equals(startStage)) {
+            throw new IllegalStateException("Change execution stage");
+        }
+
+        super.setRelHolder(relHolder);
+        this.relHolder = relHolder;
+        return relHolder.getRelNode();
     }
 
     @Override
@@ -74,53 +111,68 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         VirtualRelationalTable vtable = tableScan.getTable().unwrap(VirtualRelationalTable.class);
         Preconditions.checkArgument(vtable != null);
 
-        //Shred the virtual table all the way to root:
-        //First, we prepare all the data structures
-        ContinuousIndexMap.Builder indexMap = ContinuousIndexMap.builder(vtable.getNumColumns());
-        List<JoinTable> joinTables = new ArrayList<>();
-        ContinuousIndexMap.Builder primaryKey = ContinuousIndexMap.builder(vtable.getNumPrimaryKeys());
         VirtualRelationalTable.Root root = vtable.getRoot();
         QueryRelationalTable queryTable = root.getBase();
-        AtomicReference<MaterializationInference> materialize = new AtomicReference<>(new MaterializationInference(
-                queryTable.getMaterialization().getPreference()==MaterializationPreference.CANNOT?
-                MaterializationPreference.CANNOT:materializationPreference));
-        //Now, we shred
-        RelNode relNode = shredTable(vtable, primaryKey, indexMap, joinTables, materialize, true).build();
-        //Finally, we assemble the result
+        ExecutionAnalysis scanExec = ExecutionAnalysis.ofScan(queryTable.getExecution());
+        ExecutionAnalysis exec = scanExec.combine(ExecutionAnalysis.start(startStage));
 
-        int mapToLength = relNode.getRowType().getFieldCount();
-        Optional<Integer> numRootPks = Optional.of(vtable.getRoot().getNumPrimaryKeys());
-        AnnotatedLP result = new AnnotatedLP(relNode, queryTable.getType(),
-                primaryKey.build(mapToLength),
-                queryTable.getTimestamp().getDerived(),
-                indexMap.build(mapToLength), materialize.get(), joinTables, numRootPks,
-                queryTable.getPullups().getNowFilter(), queryTable.getPullups().getTopN(),
-                queryTable.getPullups().getSort(), null);
-        return setRelHolder(result);
+        Optional<Integer> numRootPks = Optional.of(root.getNumPrimaryKeys());
+        if (exec.getStage().supports(EngineCapability.DENORMALIZE)) {
+            //Shred the virtual table all the way to root:
+            //First, we prepare all the data structures
+            ContinuousIndexMap.Builder indexMap = ContinuousIndexMap.builder(vtable.getNumColumns());
+            ContinuousIndexMap.Builder primaryKey = ContinuousIndexMap.builder(vtable.getNumPrimaryKeys());
+            List<JoinTable> joinTables = new ArrayList<>();
+
+            //Now, we shred
+            RelNode relNode = shredTable(vtable, primaryKey, indexMap, joinTables, true).build();
+            //Finally, we assemble the result
+
+            int targetLength = relNode.getRowType().getFieldCount();
+            AnnotatedLP result = new AnnotatedLP(relNode, queryTable.getType(),
+                    primaryKey.build(targetLength),
+                    queryTable.getTimestamp().getDerived(),
+                    indexMap.build(targetLength), exec, joinTables, numRootPks,
+                    queryTable.getPullups().getNowFilter(), queryTable.getPullups().getTopN(),
+                    queryTable.getPullups().getSort());
+            return setRelHolder(result);
+        } else {
+            int targetLength = vtable.getNumColumns();
+            TopNConstraint topN = queryTable.getPullups().getTopN();
+            if (exec.isMaterialize(scanExec) && topN.isPrimaryKeyDedup()) {
+                //We can drop topN since that gets enforced by writing to DB with primary key
+                topN = TopNConstraint.EMPTY;
+            }
+            AnnotatedLP result = new AnnotatedLP(tableScan, queryTable.getType(),
+                    ContinuousIndexMap.identity(vtable.getNumPrimaryKeys(),targetLength),
+                    queryTable.getTimestamp().getDerived(),
+                    ContinuousIndexMap.identity(targetLength,targetLength),
+                    exec, null, numRootPks,
+                    queryTable.getPullups().getNowFilter(), topN,
+                    queryTable.getPullups().getSort());
+            return setRelHolder(result);
+        }
     }
 
     private RelBuilder shredTable(VirtualRelationalTable vtable, ContinuousIndexMap.Builder primaryKey,
                                   ContinuousIndexMap.Builder select, List<JoinTable> joinTables,
-                                  AtomicReference<MaterializationInference> materialize,
                                   boolean isLeaf) {
         Preconditions.checkArgument(joinTables.isEmpty());
-        return shredTable(vtable, primaryKey, select, joinTables, materialize,null, JoinRelType.INNER, isLeaf);
+        return shredTable(vtable, primaryKey, select, joinTables, null, JoinRelType.INNER, isLeaf);
     }
 
     private RelBuilder shredTable(VirtualRelationalTable vtable, ContinuousIndexMap.Builder primaryKey,
                                   List<JoinTable> joinTables, Pair<JoinTable,RelBuilder> startingBase,
-                                  JoinRelType joinType, AtomicReference<MaterializationInference> materialize) {
+                                  JoinRelType joinType) {
         Preconditions.checkArgument(joinTables.isEmpty());
-        return shredTable(vtable, primaryKey, null, joinTables, materialize, startingBase, joinType, false);
+        return shredTable(vtable, primaryKey, null, joinTables, startingBase, joinType, false);
     }
 
     private RelBuilder shredTable(VirtualRelationalTable vtable, ContinuousIndexMap.Builder primaryKey,
                                   ContinuousIndexMap.Builder select, List<JoinTable> joinTables,
-                                  AtomicReference<MaterializationInference> materialize,
                                   Pair<JoinTable,RelBuilder> startingBase, JoinRelType joinType, boolean isLeaf) {
         Preconditions.checkArgument(joinType==JoinRelType.INNER || joinType == JoinRelType.LEFT);
         RelBuilder builder;
-        List<AddedColumn> columns2Add;
         int offset;
         JoinTable joinTable;
         if (startingBase!=null && startingBase.getKey().getTable().equals(vtable)) {
@@ -132,16 +184,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             VirtualRelationalTable.Root root = (VirtualRelationalTable.Root) vtable;
             offset = 0;
             builder = relBuilderFactory.get();
-            QueryRelationalTable qTable = root.getBase();
             builder.scan(root.getBase().getNameId());
-            CalciteUtil.addIdentityProjection(builder,root.getNumQueryColumns());
             joinTable = JoinTable.ofRoot(root);
-            if (qTable.getMaterialization().getPreference()==MaterializationPreference.CANNOT) {
-                materialize.getAndUpdate(m -> m.update(MaterializationPreference.CANNOT,"input table"));
-            }
         } else {
             VirtualRelationalTable.Child child = (VirtualRelationalTable.Child) vtable;
-            builder = shredTable(child.getParent(), primaryKey, select, joinTables, materialize, startingBase, joinType, false);
+            builder = shredTable(child.getParent(), primaryKey, select, joinTables, startingBase, joinType, false);
             JoinTable parentJoinTable = Iterables.getLast(joinTables);
             int indexOfShredField = parentJoinTable.getOffset() + child.getShredIndex();
             CorrelationId id = new CorrelationId(0);
@@ -162,7 +209,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     .uncollect(List.of(), false)
                     .correlate(joinType, id, RexInputRef.of(indexOfShredField,  base));
             joinTable = new JoinTable(vtable, parentJoinTable, joinType, offset);
-            materialize.getAndUpdate(m -> m.update(MaterializationPreference.MUST,"unnesting"));
         }
         for (int i = 0; i < vtable.getNumLocalPks(); i++) {
             primaryKey.add(offset+i);
@@ -195,16 +241,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     }
 
     private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(StdTimeLibraryImpl.NOW);
-    //Functions that can only be executed in the database
-    private static final SqrlRexUtil.RexFinder FIND_DB_ONLY = SqrlRexUtil.findFunction(StdTimeLibraryImpl.NOW);
-    //Functions that can only be executed in the stream
-    private static final SqrlRexUtil.RexFinder FIND_STREAM_ONLY = SqrlRexUtil.findFunction(o -> {
-        return Optional.ofNullable(o)
-            .filter(op -> op instanceof TimestampPreservingFunction)
-            .filter(op -> op instanceof StdTimeLibraryImpl.NOW)
-            .isPresent();
-    });
-    private static final Predicate<SqlAggFunction> STREAM_ONLY_AGG = Predicates.alwaysFalse();
 
     @Override
     public RelNode visit(LogicalFilter logicalFilter) {
@@ -259,16 +295,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         }
         relBuilder.filter(conjunctions);
         return setRelHolder(input.copy().relNode(relBuilder.build()).timestamp(timestamp)
-                .materialize(analyzeRexNodesForMaterialize(input.materialize, conjunctions))
-                .nowFilter(nowFilter).build());
-    }
-
-    private MaterializationInference analyzeRexNodesForMaterialize(MaterializationInference base, Iterable<RexNode> nodes) {
-        //Update materialization preference based on function calls in RexNodes
-        MaterializationInference result = base;
-        if (FIND_DB_ONLY.foundIn(nodes)) result = result.update(MaterializationPreference.CANNOT,"DB-only function call");
-        if (FIND_STREAM_ONLY.foundIn(nodes)) result = result.update(MaterializationPreference.MUST,"stream-only function call");
-        return result;
+                .exec(input.exec.requireRex(conjunctions)).nowFilter(nowFilter).build());
     }
 
     @Override
@@ -451,8 +478,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         int fieldCount = updatedProjects.size();
         return setRelHolder(AnnotatedLP.build(newProject,input.type,primaryKey.build(fieldCount),
                 timestamp, ContinuousIndexMap.identity(logicalProject.getProjects().size(),fieldCount),
-                analyzeRexNodesForMaterialize(input.materialize,updatedProjects)).numRootPks(input.numRootPks)
-                .nowFilter(nowFilter).sort(sort).build());
+                input.exec.requireRex(updatedProjects))
+                .numRootPks(input.numRootPks).nowFilter(nowFilter).sort(sort).build());
     }
 
     private ContinuousIndexMap getTrivialMapping(LogicalProject project, ContinuousIndexMap baseMap) {
@@ -498,48 +525,46 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 RelBuilder relBuilder = relBuilderFactory.get().push(leftInput.getRelNode());
                 ContinuousIndexMap newPk = leftInput.primaryKey;
                 List<JoinTable> joinTables = new ArrayList<>(leftInput.joinTables);
-                AtomicReference<MaterializationInference> materialize = new AtomicReference<>(
-                        leftInput.materialize.combine(rightInput.materialize));
-                if (!right2left.containsKey(rightLeaf)) {
-                    //Find closest ancestor that was mapped and shred from there
-                    List<JoinTable> ancestorPath = new ArrayList<>();
-                    int numAddedPks = 0;
-                    ancestorPath.add(rightLeaf);
-                    JoinTable ancestor = rightLeaf;
-                    while (!right2left.containsKey(ancestor)) {
-                        numAddedPks += ancestor.getNumLocalPk();
-                        ancestor = ancestor.parent;
-                        ancestorPath.add(ancestor);
+                if (right2left.containsKey(rightLeaf) || leftInput.exec.getStage().supports(EngineCapability.DENORMALIZE)) {
+                    if (!right2left.containsKey(rightLeaf)) {
+                        //Find closest ancestor that was mapped and shred from there
+                        List<JoinTable> ancestorPath = new ArrayList<>();
+                        int numAddedPks = 0;
+                        ancestorPath.add(rightLeaf);
+                        JoinTable ancestor = rightLeaf;
+                        while (!right2left.containsKey(ancestor)) {
+                            numAddedPks += ancestor.getNumLocalPk();
+                            ancestor = ancestor.parent;
+                            ancestorPath.add(ancestor);
+                        }
+                        Collections.reverse(ancestorPath); //To match the order of addedTables when shredding (i.e. from root to leaf)
+                        ContinuousIndexMap.Builder addedPk = ContinuousIndexMap.builder(newPk, numAddedPks);
+                        List<JoinTable> addedTables = new ArrayList<>();
+                        relBuilder = shredTable(rightLeaf.table, addedPk, addedTables,
+                                Pair.of(right2left.get(ancestor), relBuilder), joinType);
+                        newPk = addedPk.build(relBuilder.peek().getRowType().getFieldCount());
+                        Preconditions.checkArgument(ancestorPath.size() == addedTables.size());
+                        for (int i = 1; i < addedTables.size(); i++) { //First table is the already mapped root ancestor
+                            joinTables.add(addedTables.get(i));
+                            right2left.put(ancestorPath.get(i), addedTables.get(i));
+                        }
                     }
-                    Collections.reverse(ancestorPath); //To match the order of addedTables when shredding (i.e. from root to leaf)
-                    ContinuousIndexMap.Builder addedPk = ContinuousIndexMap.builder(newPk, numAddedPks);
-                    List<JoinTable> addedTables = new ArrayList<>();
-                    relBuilder = shredTable(rightLeaf.table, addedPk, addedTables,
-                            Pair.of(right2left.get(ancestor),relBuilder),joinType, materialize);
-                    newPk = addedPk.build(relBuilder.peek().getRowType().getFieldCount());
-                    Preconditions.checkArgument(ancestorPath.size() == addedTables.size());
-                    for (int i = 1; i < addedTables.size(); i++) { //First table is the already mapped root ancestor
-                        joinTables.add(addedTables.get(i));
-                        right2left.put(ancestorPath.get(i), addedTables.get(i));
-                    }
+                    RelNode relNode = relBuilder.build();
+                    //Update indexMap based on the mapping of join tables
+                    final AnnotatedLP rightInputfinal = rightInput;
+                    ContinuousIndexMap remapedRight = rightInput.select.remap(
+                            index -> {
+                                JoinTable jt = JoinTable.find(rightInputfinal.joinTables, index).get();
+                                return right2left.get(jt).getGlobalIndex(jt.getLocalIndex(index));
+                            });
+                    ContinuousIndexMap indexMap = leftInput.select.append(remapedRight);
+                    return setRelHolder(AnnotatedLP.build(relNode, leftInput.type, newPk, leftInput.timestamp,
+                            indexMap, leftInput.exec).numRootPks(leftInput.numRootPks).joinTables(joinTables).build());
                 }
-                RelNode relNode = relBuilder.build();
-                //Update indexMap based on the mapping of join tables
-                final AnnotatedLP rightInputfinal = rightInput;
-                ContinuousIndexMap remapedRight = rightInput.select.remap(
-                        index -> {
-                            JoinTable jt = JoinTable.find(rightInputfinal.joinTables,index).get();
-                            return right2left.get(jt).getGlobalIndex(jt.getLocalIndex(index));
-                        });
-                ContinuousIndexMap indexMap = leftInput.select.append(remapedRight);
-                return setRelHolder(AnnotatedLP.build(relNode, leftInput.type, newPk, leftInput.timestamp,
-                        indexMap, materialize.get()).numRootPks(leftInput.numRootPks).joinTables(joinTables).build());
-
             }
         }
 
-        MaterializationInference combinedMaterialize = leftInput.materialize.combine(rightInput.materialize);
-        combinedMaterialize = analyzeRexNodesForMaterialize(combinedMaterialize,List.of(condition));
+        ExecutionAnalysis combinedExec = leftInput.exec.combine(rightInput.exec).requireRex(List.of(condition));
 
         //Detect temporal join
         if (joinType==JoinRelType.DEFAULT || joinType==JoinRelType.TEMPORAL || joinType==JoinRelType.LEFT) {
@@ -577,7 +602,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     hint.addTo(relB);
                     return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM,
                             pk, joinTimestamp, joinedIndexMap,
-                            combinedMaterialize.update(MaterializationPreference.MUST,"temporal join"))
+                            combinedExec.require(EngineCapability.TEMPORAL_JOIN))
                             .numRootPks(leftInput.numRootPks).sort(leftInput.sort).build());
                 } else if (joinType==JoinRelType.TEMPORAL) {
                     throw new IllegalArgumentException("Expected join condition to be equality condition on state's primary key: " + logicalJoin);
@@ -612,7 +637,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         //Detect interval join
         if (joinType==JoinRelType.DEFAULT || joinType ==JoinRelType.INNER || joinType==JoinRelType.INTERVAL || joinType == JoinRelType.LEFT) {
-            if (leftInputF.type==TableType.STREAM && rightInputF.type==TableType.STREAM) {
+            if (leftInputF.type==TableType.STREAM && rightInputF.type==TableType.STREAM && combinedExec.getStage().isWrite()) {
                 //Validate that the join condition includes time bounds on both sides
                 List<RexNode> conjunctions = new ArrayList<>(rexUtil.getConjunctions(condition));
                 Predicate<Integer> isTimestampColumn = idx -> idx<leftSideMaxIdx?leftInputF.timestamp.isCandidate(idx):
@@ -675,7 +700,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     relB.join(joinType==JoinRelType.LEFT?joinType:JoinRelType.INNER, condition); //Can treat as "standard" inner join since no modification is necessary in physical plan
                     SqrlHintStrategyTable.INTERVAL_JOIN.addTo(relB);
                     return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM,
-                            concatPk, joinTimestamp, joinedIndexMap, combinedMaterialize).numRootPks(numRootPks).sort(joinedSort).build());
+                            concatPk, joinTimestamp, joinedIndexMap, combinedExec).numRootPks(numRootPks).sort(joinedSort).build());
                 } else if (joinType==JoinRelType.INTERVAL) {
                     throw new IllegalArgumentException("Interval joins require time bounds in the join condition: " + logicalJoin);
                 }
@@ -689,19 +714,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             joinType = JoinRelType.INNER;
         }
 
-        combinedMaterialize = combinedMaterialize.update(MaterializationPreference.SHOULD_NOT,"high cardinality join");
-        if (leftInputF.estimateRowCount()>cardinalityJoinThreshold ||
-            rightInputF.estimateRowCount()>cardinalityJoinThreshold) {
-
-        }
-
         Preconditions.checkArgument(joinType == JoinRelType.INNER || joinType == JoinRelType.LEFT, "Unsupported join type: %s", logicalJoin);
         //Default inner join creates a state table
         RelNode newJoin = relB.push(leftInputF.relNode).push(rightInputF.relNode)
                 .join(joinType, condition).build();
         return setRelHolder(AnnotatedLP.build(newJoin, TableType.STATE,
                 concatPk, TimestampHolder.Derived.NONE, joinedIndexMap,
-                combinedMaterialize).sort(joinedSort).build());
+                combinedExec).sort(joinedSort).build());
     }
 
     private static<T,R> R apply2JoinSide(int joinIndex, int leftSideMaxIdx, T left, T right, BiFunction<T,Integer,R> function) {
@@ -727,7 +746,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         //In the following, we can assume that the input relations are aligned because we post-processed them
         RelBuilder relBuilder = makeRelBuilder();
-        MaterializationInference materialize = null;
+        ExecutionAnalysis exec = null;
         ContinuousIndexMap pk = inputs.get(0).primaryKey;
         ContinuousIndexMap select = inputs.get(0).select;
         Optional<Integer> numRootPks = inputs.get(0).numRootPks;
@@ -769,10 +788,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             relBuilder.push(input.relNode);
             CalciteUtil.addProjection(relBuilder, localSelectIndexes, localSelectNames);
             unionTimestamp = unionTimestamp.union(localTimestamp);
-            materialize = materialize==null?input.materialize:materialize.combine(input.materialize);
+            exec = exec==null?input.exec:exec.combine(input.exec);
         }
         relBuilder.union(true,inputs.size());
-        return setRelHolder(AnnotatedLP.build(relBuilder.build(),TableType.STREAM,pk,unionTimestamp,select,materialize)
+        return setRelHolder(AnnotatedLP.build(relBuilder.build(),TableType.STREAM,pk,unionTimestamp,select,exec)
                 .numRootPks(numRootPks).build());
     }
 
@@ -793,13 +812,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         }).collect(Collectors.toList());
         int targetLength = groupByIdx.size() + aggregateCalls.size();
 
-        MaterializationInference materialize = input.materialize;
-        if (aggregateCalls.stream().anyMatch(agg -> STREAM_ONLY_AGG.test(agg.getAggregation()))) {
-            materialize.update(MaterializationPreference.MUST,"stream-only aggregation function");
-        }
+        ExecutionAnalysis exec = input.exec.requireAggregates(aggregateCalls);
 
         //Check if this an aggregation of a stream on root primary key
-        if (input.type == TableType.STREAM && input.numRootPks.isPresent() && materialize.getPreference().canMaterialize()
+        if (input.type == TableType.STREAM && input.numRootPks.isPresent() && exec.getStage().isWrite()
                 && input.numRootPks.get() <= groupByIdx.size() && groupByIdx.subList(0,input.numRootPks.get())
                 .equals(input.primaryKey.targetsAsList().subList(0,input.numRootPks.get()))) {
             TimestampHolder.Derived.Candidate candidate = input.timestamp.getCandidates().stream()
@@ -815,11 +831,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
             new TumbleAggregationHint(candidate.getIndex(), TumbleAggregationHint.Type.INSTANT).addTo(relB);
 
-            materialize = materialize.update(MaterializationPreference.MUST,"time-window aggregation");
             NowFilter nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(),
                      timestamp.getTimestampCandidate().getIndex()));
 
-            return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM, pk, timestamp, select, materialize)
+            return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM, pk, timestamp, select, exec)
                     .numRootPks(Optional.of(pk.getSourceLength()))
                     .nowFilter(nowFilter).build());
         }
@@ -857,13 +872,12 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
                 ContinuousIndexMap select = ContinuousIndexMap.identity(targetLength, targetLength);
 
-                materialize = materialize.update(MaterializationPreference.MUST,"time-window aggregation");
                 /* TODO: this type of streaming aggregation requires a post-filter in the database (in physical model) to filter out "open" time buckets,
                 i.e. time_bucket_col < time_bucket_function(now()) [if now() lands in a time bucket, that bucket is still open and shouldn't be shown]
                   set to "SHOULD" once this is supported
                  */
 
-                return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM, pk, newTimestamp, select, materialize)
+                return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM, pk, newTimestamp, select, exec)
                         .numRootPks(Optional.of(pk.getSourceLength()))
                         .nowFilter(nowFilter).build());
 
@@ -878,7 +892,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             TimestampHolder.Derived.Candidate candidate = inputTimestamp.getBestCandidate();
             targetLength += 1; //Adding timestamp column to output relation
 
-            if (!input.nowFilter.isEmpty() && input.materialize.getPreference().isMaterialize()) {
+            if (!input.nowFilter.isEmpty() && exec.getStage().isWrite()) {
                 NowFilter nowFilter = input.nowFilter;
                 //Determine timestamp, add to group-By and
                 Preconditions.checkArgument(nowFilter.getTimestampIndex()==candidate.getIndex(),"Timestamp indexes don't match");
@@ -900,7 +914,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
                 TopNConstraint dedup = TopNConstraint.dedup(pk.targetsAsList(),timestamp.getTimestampCandidate().getIndex());
                 return setRelHolder(AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pk,
-                        timestamp, select, input.materialize.update(MaterializationPreference.MUST,"Sliding window"))
+                        timestamp, select, exec)
                         .topN(dedup).build());
             } else {
                 //Convert aggregation to window-based aggregation in a project so we can preserve timestamp
@@ -950,7 +964,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
                 ContinuousIndexMap select = ContinuousIndexMap.identity(targetLength - 1, targetLength);
                 return setRelHolder(AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pk,
-                        outputTimestamp, select, nowInput.materialize).build());
+                        outputTimestamp, select, nowInput.exec.requireAggregates(aggregateCalls)).build());
             }
         } else {
             //Standard aggregation produces a state table
@@ -963,7 +977,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
             ContinuousIndexMap select = ContinuousIndexMap.identity(targetLength, targetLength);
             return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STATE, pk,
-                    TimestampHolder.Derived.NONE, select, input.materialize).build());
+                    TimestampHolder.Derived.NONE, select, exec).build());
         }
     }
 

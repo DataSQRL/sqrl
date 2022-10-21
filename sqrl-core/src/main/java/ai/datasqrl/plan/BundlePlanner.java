@@ -1,10 +1,7 @@
 package ai.datasqrl.plan;
 
 import ai.datasqrl.config.BundleOptions;
-import ai.datasqrl.config.EnvironmentConfiguration;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
@@ -22,14 +19,14 @@ import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.plan.queries.APIQuery;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.sql.ScriptNode;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.prepare.PlannerImpl;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.ScriptNode;
 
 /**
  * Creates a logical and physical plan for a SQRL {@link ScriptBundle} submitted to the DataSQRL server for
@@ -67,7 +64,7 @@ public class BundlePlanner {
           queries.add(new APIQuery(tblName.substring(0,tblName.indexOf(Name.NAME_DELIMITER)), rel));
         });
 
-    OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries);
+    OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries, env.getSession().getPipeline());
 
     return physicalPlanner.plan(dag);
   }

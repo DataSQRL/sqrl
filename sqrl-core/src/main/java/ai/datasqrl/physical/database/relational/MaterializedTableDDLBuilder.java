@@ -1,8 +1,8 @@
-package ai.datasqrl.physical.database;
+package ai.datasqrl.physical.database.relational;
 
-import ai.datasqrl.physical.database.ddl.CreateTableDDL;
-import ai.datasqrl.physical.database.ddl.DropTableDDL;
-import ai.datasqrl.physical.database.ddl.SqlDDLStatement;
+import ai.datasqrl.physical.database.relational.ddl.CreateTableDDL;
+import ai.datasqrl.physical.database.relational.ddl.DropTableDDL;
+import ai.datasqrl.physical.database.relational.ddl.SqlDDLStatement;
 import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import org.apache.calcite.rel.type.RelDataTypeField;

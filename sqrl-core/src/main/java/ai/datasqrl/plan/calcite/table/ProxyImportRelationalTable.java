@@ -2,8 +2,7 @@ package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.plan.global.MaterializationPreference;
-import ai.datasqrl.plan.global.MaterializationStrategy;
+import ai.datasqrl.physical.pipeline.ExecutionStage;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;
@@ -20,11 +19,11 @@ public class ProxyImportRelationalTable extends QueryRelationalTable {
   private final ImportedSourceTable sourceTable;
 
   public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull TimestampHolder.Base timestamp,
-                                    RelNode relNode, ImportedSourceTable sourceTable) {
+                                    RelNode relNode, ImportedSourceTable sourceTable, ExecutionStage execution) {
     super(rootTableId, TableType.STREAM, relNode, PullupOperator.Container.EMPTY, timestamp,
             1,
             TableStatistic.from(sourceTable.getSourceTableImport().getTable().getStatistics()),
-            new MaterializationStrategy(MaterializationPreference.MUST));
+            execution);
     this.sourceTable = sourceTable;
   }
 

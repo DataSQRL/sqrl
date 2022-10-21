@@ -1,0 +1,93 @@
+>>>orders$6-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], col1=[$6])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[/(+($2, $3), 2)]) hints[WatermarkHint options:[4]]
+    LogicalTableScan(table=[[orders$i$4]])
+
+>>>entryprice$12-lp-stream
+LogicalProject(_uuid=[$0], _idx=[$6], price=[-(*($8, $9), $10)], _ingest_time=[$1], time=[$4])
+  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5]) hints[WatermarkHint options:[4]]
+      LogicalTableScan(table=[[orders$i$4]])
+    Uncollect
+      LogicalProject($f0=[$cor0.entries])
+        LogicalValues(tuples=[[{ 0 }]])
+
+>>>customer$14-lp-stream
+LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[EPOCH_TO_TIMESTAMP($5)]) hints[WatermarkHint options:[6]]
+    LogicalTableScan(table=[[customer$i$1]])
+
+>>>ordercustomer$16-lp-stream
+LogicalProject(_uuid=[$0], _idx=[$7], id=[$2], name=[$17], customerid=[$3], col1=[$6], discount2=[$12], time=[$4])
+  LogicalJoin(condition=[=($3, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], $f12=[COALESCE($11, 0E0:DOUBLE)])
+      LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[/(+($2, $3), 2)]) hints[WatermarkHint options:[4]]
+          LogicalTableScan(table=[[orders$i$4]])
+        Uncollect
+          LogicalProject($f0=[$cor0.entries])
+            LogicalValues(tuples=[[{ 0 }]])
+    LogicalFilter(condition=[=($7, 1)])
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+        LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6])
+          LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[EPOCH_TO_TIMESTAMP($5)]) hints[WatermarkHint options:[6]]
+            LogicalTableScan(table=[[customer$i$1]])
+
+>>>entries$7-lp-stream
+LogicalProject(_uuid=[$0], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], discount2=[COALESCE($11, 0E0:DOUBLE)], time=[$4])
+  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[/(+($2, $3), 2)]) hints[WatermarkHint options:[4]]
+      LogicalTableScan(table=[[orders$i$4]])
+    Uncollect
+      LogicalProject($f0=[$cor0.entries])
+        LogicalValues(tuples=[[{ 0 }]])
+
+>>>entryprice-lp-database
+LogicalTableScan(table=[[entryprice$12]])
+
+>>>customer-lp-database
+LogicalTableScan(table=[[customer$14]])
+
+>>>orders-lp-database
+LogicalTableScan(table=[[orders$6]])
+
+>>>entries-lp-database
+LogicalTableScan(table=[[entries$7]])
+
+>>>ordercustomer-lp-database
+LogicalTableScan(table=[[ordercustomer$16]])
+
+>>>entryprice-data
+0, 17.35, 2022-05-19 01:29:39.553244
+0, 41.95, 2022-05-19 01:45:39.553244
+0, 61.5, 2022-05-19 02:16:39.553244
+0, null, 2022-05-19 02:28:39.553244
+1, 103.5, 2022-05-19 01:29:39.553244
+1, 105.0, 2022-05-19 02:16:39.553244
+1, 36.95, 2022-05-19 02:28:39.553244
+>>>customer-data
+1000101, john.mekker@gmail.com, John B. Mekker, 1650498257, 2022-04-20 23:44:17.0
+1000107, emily.ludies@hotmail.com, Emily F. Ludies, 1650493189, 2022-04-20 22:19:49.0
+1000121, lalelu@hottunes.org, Michelle Dagnes, 1650493449, 2022-04-20 22:24:09.0
+1000131, hotbear753@yahoo.com, Mark Spielman, 1650494449, 2022-04-20 22:40:49.0
+>>>orders-data
+10007140, 1000107, 2022-05-19 02:28:39.553244, 5503623
+10007543, 1000101, 2022-05-19 01:29:39.553244, 5503822
+10008231, 1000121, 2022-05-19 02:16:39.553244, 5504176
+10008434, 1000107, 2022-05-19 01:45:39.553244, 5504270
+>>>entries-data
+0, 1332, 8, 8.49, null, 0.0, 2022-05-19 02:28:39.553244
+0, 3571, 1, 41.95, 0.0, 0.0, 2022-05-19 01:45:39.553244
+0, 7235, 1, 17.35, 0.0, 0.0, 2022-05-19 01:29:39.553244
+0, 7552, 3, 25.5, 15.0, 15.0, 2022-05-19 02:16:39.553244
+1, 3225, 1, 105.0, 0.0, 0.0, 2022-05-19 02:16:39.553244
+1, 3571, 1, 41.95, 5.0, 5.0, 2022-05-19 02:28:39.553244
+1, 8757, 2, 57.5, 11.5, 11.5, 2022-05-19 01:29:39.553244
+>>>ordercustomer-data
+0, 10007140, Emily F. Ludies, 1000107, 5503623, 0.0, 2022-05-19 02:28:39.553
+0, 10007543, John B. Mekker, 1000101, 5503822, 0.0, 2022-05-19 01:29:39.553
+0, 10008231, Michelle Dagnes, 1000121, 5504176, 15.0, 2022-05-19 02:16:39.553
+0, 10008434, Emily F. Ludies, 1000107, 5504270, 0.0, 2022-05-19 01:45:39.553
+1, 10007140, Emily F. Ludies, 1000107, 5503623, 5.0, 2022-05-19 02:28:39.553
+1, 10007543, John B. Mekker, 1000101, 5503822, 11.5, 2022-05-19 01:29:39.553
+1, 10008231, Michelle Dagnes, 1000121, 5504176, 0.0, 2022-05-19 02:16:39.553

@@ -1,9 +1,9 @@
-package ai.datasqrl.physical.database;
+package ai.datasqrl.physical.database.relational;
 
 import ai.datasqrl.config.engines.JDBCConfiguration;
-import ai.datasqrl.function.TimestampPreservingFunction;
-import ai.datasqrl.function.builtin.time.NowFunction;
-import ai.datasqrl.plan.calcite.util.RelToSql;
+import ai.datasqrl.function.SqrlFunction;
+import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
+import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
@@ -22,6 +22,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @AllArgsConstructor
 public class QueryBuilder {
@@ -59,9 +60,10 @@ public class QueryBuilder {
       List<RexNode> clonedOperands = this.visitList(call.operands, update);
       SqlOperator operator = call.getOperator();
       RelDataType datatype = call.getType();
-      if (operator instanceof TimestampPreservingFunction) {
+      Optional<SqrlFunction> sqrlFunction = SqrlRexUtil.unwrapSqrlFunction(operator);
+      if (sqrlFunction.isPresent()) {
         update[0] = true;
-        if (operator instanceof NowFunction) {
+        if (sqrlFunction.get().equals(StdTimeLibraryImpl.NOW)) {
           Preconditions.checkArgument(clonedOperands.isEmpty());
           int precision = datatype.getPrecision();
           operator = SqlStdOperatorTable.CURRENT_TIMESTAMP;

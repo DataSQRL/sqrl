@@ -1,8 +1,8 @@
 package ai.datasqrl.physical;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.physical.database.QueryTemplate;
-import ai.datasqrl.physical.database.ddl.SqlDDLStatement;
+import ai.datasqrl.physical.database.relational.QueryTemplate;
+import ai.datasqrl.physical.database.relational.ddl.SqlDDLStatement;
 import ai.datasqrl.physical.stream.StreamPhysicalPlan;
 import ai.datasqrl.plan.queries.APIQuery;
 import lombok.Value;

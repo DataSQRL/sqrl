@@ -2,7 +2,7 @@ package ai.datasqrl.physical.stream;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.physical.PhysicalPlan;
-import ai.datasqrl.physical.database.ddl.SqlDDLStatement;
+import ai.datasqrl.physical.database.relational.ddl.SqlDDLStatement;
 import ai.datasqrl.physical.stream.flink.plan.FlinkStreamPhysicalPlan;
 import ai.datasqrl.util.db.JDBCTempDatabase;
 import java.util.Optional;

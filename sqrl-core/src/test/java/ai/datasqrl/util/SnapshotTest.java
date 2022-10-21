@@ -1,10 +1,12 @@
 package ai.datasqrl.util;
 
+import ai.datasqrl.plan.global.OptimizedDAG;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.rel.RelNode;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.junit.jupiter.api.TestInfo;
@@ -77,6 +79,19 @@ public class SnapshotTest {
                 content.append(HEADER_SUFFIX);
             }
             content.append(addedContent).append(CONTENT_DELIMITER);
+            return this;
+        }
+
+        //Convenience methods
+        public Snapshot addContent(@NonNull RelNode relnode, String... caseNames) {
+            return addContent(TestRelWriter.explain(relnode),caseNames);
+        }
+
+        public Snapshot addContent(@NonNull OptimizedDAG dag, String... caseNames) {
+            dag.getStreamQueries().forEach(mq -> addContent(mq.getRelNode(),
+                    ArrayUtils.addAll(caseNames,mq.getSink().getName(),"lp-stream")));
+            dag.getDatabaseQueries().forEach(dq -> addContent(dq.getRelNode(),
+                    ArrayUtils.addAll(caseNames,dq.getQuery().getNameId(),"lp-database")));
             return this;
         }
 
