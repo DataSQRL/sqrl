@@ -339,7 +339,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
     if (field == null) {
       return List.of();
     }
-    if (list.size() > 2) {
+    if (list.size() > 1) {
       RelDataType fieldType = buildDeepType(list);
       if (fieldType == null) {
         return List.of();
@@ -371,9 +371,23 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
       if (columns.isEmpty()) {
         return null;
       }
+      if (columns.size() == 1) {
+        FieldInfoBuilder b2 = new FieldInfoBuilder(typeFactory);
+        b2.addAll(r.getToTable().getVt().getRowType().getFieldList());
+
+        b2.add(r.getName().getDisplay(), b2.build());
+
+        return b2.build();
+      }
+
       RelDataType newField = r.getToTable().buildDeepType(columns.subList(1, columns.size()));
 
+      if (newField == null) {
+        return null;
+      }
       b.add(r.getName().getDisplay(), newField);
+
+
     } else if (field.get() instanceof Column) {
       if (columns.size() > 1) {
         return null;

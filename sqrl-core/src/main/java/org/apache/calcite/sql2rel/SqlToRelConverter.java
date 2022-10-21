@@ -2914,22 +2914,6 @@ public class SqlToRelConverter {
     final Blackboard fromBlackboard = createBlackboard(scope, null, false);
     SqlNode left = join.getLeft();
     SqlNode right = join.getRight();
-//
-//    if (validator.getNamespace(left).resolve() instanceof JoinAliasTableNamespace) {
-//      JoinAliasTableNamespace ns = (JoinAliasTableNamespace)validator.getNamespace(left).resolve();
-//      //Tell the BB that there needs to be a join between this set of entries and the alias p
-//      final SqlValidatorScope rightScope =
-//          Util.first(validator.getJoinScope(right),
-//              ((DelegatingScope) bb.scope).getParent());
-//      final Blackboard rightBlackboard =
-//          createBlackboard(rightScope, null, false);
-//      convertFrom(rightBlackboard, right);
-//      final RelNode rightRel = rightBlackboard.root;
-//      bb.setRoot(rightRel, false);
-//      bb.setPullup(true);
-//      bb.setPullupAlias(ns.getAlias());
-//      return;
-//    }
 
     final SqlValidatorScope leftScope =
         Util.first(validator.getJoinScope(left),

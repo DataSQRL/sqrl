@@ -1,0 +1,33 @@
+{
+  "dataset": {
+    "source": {
+      "name": "ecommerce-data",
+      "implementation": {
+        "sourceType": "dir",
+        "uri": "ecommerce-data/",
+        "discoverFiles": true
+      },
+      "config": {
+        "canonicalizer": "system",
+        "charset": "UTF-8",
+        "format": null
+      }
+    }
+  },
+  "name": "customer",
+  "configuration": {
+    "name": "customer",
+    "identifier": "customer",
+    "format": {
+      "formatType": "csv",
+      "delimiter": ",",
+      "commentPrefix": null,
+      "header": [
+        "customerid",
+        "email",
+        "name",
+        "lastUpdated"
+      ]
+    }
+  }
+}

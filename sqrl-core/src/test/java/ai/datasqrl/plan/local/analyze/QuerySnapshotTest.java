@@ -175,7 +175,10 @@ class QuerySnapshotTest extends AbstractSQRLIT {
       "Orders.x := SELECT * FROM _ JOIN Product ON true;\n",
       "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
           + "Orders.entries.dProduct := SELECT unit_price, product.category, product.name FROM _;\n",
-      "Orders.newid := SELECT NOW(), STRING_TO_TIMESTAMP(TIMESTAMP_TO_STRING(EPOCH_TO_TIMESTAMP(100))) FROM Orders;"
+      "Orders.newid := SELECT NOW(), STRING_TO_TIMESTAMP(TIMESTAMP_TO_STRING(EPOCH_TO_TIMESTAMP(100))) FROM Orders;",
+"Orders.entries.x := SELECT e.parent.entries.parent.id, f.parent.entries.parent.customerid "
+    + "FROM _.parent.entries e JOIN e.parent.entries.parent.entries f "
+    + "WHERE f.parent.entries.parent.id = 2;"
 
 
 

@@ -1,0 +1,815 @@
+{
+  "flinkVersion" : "1.15",
+  "nodes" : [ {
+    "id" : 40,
+    "type" : "stream-exec-table-source-scan_1",
+    "scanTableSource" : {
+      "table" : {
+        "identifier" : "`default_catalog`.`default_database`.`orders$i$4`"
+      }
+    },
+    "outputType" : "ROW<`_uuid` CHAR(36) NOT NULL, `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL, `id` BIGINT NOT NULL, `customerid` BIGINT, `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL, `entries` ARRAY<ROW<`_idx` BIGINT NOT NULL, `productid` BIGINT, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL>",
+    "description" : "TableSourceScan(table=[[default_catalog, default_database, orders$i$4]], fields=[_uuid, _ingest_time, id, customerid, time, entries])",
+    "inputProperties" : [ ]
+  }, {
+    "id" : 41,
+    "type" : "stream-exec-watermark-assigner_1",
+    "watermarkExpr" : {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 4,
+      "type" : "TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL"
+    },
+    "rowtimeFieldIndex" : 4,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "_uuid",
+        "fieldType" : "CHAR(36) NOT NULL"
+      }, {
+        "name" : "_ingest_time",
+        "fieldType" : "TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL"
+      }, {
+        "name" : "id",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "customerid",
+        "fieldType" : "BIGINT"
+      }, {
+        "name" : "time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "nullable" : false,
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      }, {
+        "name" : "entries",
+        "fieldType" : "ARRAY<ROW<`_idx` BIGINT NOT NULL, `productid` BIGINT, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL"
+      } ]
+    },
+    "description" : "WatermarkAssigner(rowtime=[time], watermark=[time])"
+  }, {
+    "id" : 42,
+    "type" : "stream-exec-correlate_1",
+    "joinType" : "INNER",
+    "functionCall" : {
+      "kind" : "CALL",
+      "internalName" : "$UNNEST_ROWS$1",
+      "operands" : [ {
+        "kind" : "FIELD_ACCESS",
+        "name" : "entries",
+        "expr" : {
+          "kind" : "CORREL_VARIABLE",
+          "correl" : "$cor0",
+          "type" : "ROW<`_uuid` CHAR(36) NOT NULL, `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL, `id` BIGINT NOT NULL, `customerid` BIGINT, `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL, `entries` ARRAY<ROW<`_idx` BIGINT NOT NULL, `productid` BIGINT, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL> NOT NULL"
+        }
+      } ],
+      "type" : "ROW<`_idx` BIGINT NOT NULL, `productid` BIGINT, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL"
+    },
+    "condition" : null,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "_uuid",
+        "fieldType" : "CHAR(36) NOT NULL"
+      }, {
+        "name" : "_ingest_time",
+        "fieldType" : "TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL"
+      }, {
+        "name" : "id",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "customerid",
+        "fieldType" : "BIGINT"
+      }, {
+        "name" : "time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "nullable" : false,
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      }, {
+        "name" : "entries",
+        "fieldType" : "ARRAY<ROW<`_idx` BIGINT NOT NULL, `productid` BIGINT, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL"
+      }, {
+        "name" : "_idx",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "productid",
+        "fieldType" : "BIGINT"
+      }, {
+        "name" : "quantity",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "unit_price",
+        "fieldType" : "DOUBLE NOT NULL"
+      }, {
+        "name" : "discount",
+        "fieldType" : "DOUBLE"
+      } ]
+    },
+    "description" : "Correlate(invocation=[$UNNEST_ROWS$1($cor0.entries)], correlate=[table($UNNEST_ROWS$1($cor0.entries))], select=[_uuid,_ingest_time,id,customerid,time,entries,_idx,productid,quantity,unit_price,discount], rowType=[RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, BIGINT id, BIGINT customerid, TIMESTAMP_LTZ(3) *ROWTIME* time, RecordType:peek_no_expand(BIGINT _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount) ARRAY entries, BIGINT _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], joinType=[INNER])"
+  }, {
+    "id" : 43,
+    "type" : "stream-exec-calc_1",
+    "projection" : [ {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 0,
+      "type" : "CHAR(36) NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 6,
+      "type" : "BIGINT NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 7,
+      "type" : "BIGINT"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 8,
+      "type" : "BIGINT NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 9,
+      "type" : "DOUBLE NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 10,
+      "type" : "DOUBLE"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 4,
+      "type" : {
+        "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+        "nullable" : false,
+        "precision" : 3,
+        "kind" : "ROWTIME"
+      }
+    } ],
+    "condition" : null,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "_uuid",
+        "fieldType" : "CHAR(36) NOT NULL"
+      }, {
+        "name" : "_idx",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "productid",
+        "fieldType" : "BIGINT"
+      }, {
+        "name" : "quantity",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "unit_price",
+        "fieldType" : "DOUBLE NOT NULL"
+      }, {
+        "name" : "discount",
+        "fieldType" : "DOUBLE"
+      }, {
+        "name" : "time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "nullable" : false,
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      } ]
+    },
+    "description" : "Calc(select=[_uuid, _idx, productid, quantity, unit_price, discount, time])"
+  }, {
+    "id" : 44,
+    "type" : "stream-exec-sink_1",
+    "configuration" : {
+      "table.exec.sink.keyed-shuffle" : "AUTO",
+      "table.exec.sink.not-null-enforcer" : "ERROR",
+      "table.exec.sink.type-length-enforcer" : "IGNORE",
+      "table.exec.sink.upsert-materialize" : "AUTO"
+    },
+    "dynamicTableSink" : {
+      "table" : {
+        "identifier" : "`default_catalog`.`default_database`.`entries$7_sink`",
+        "resolvedTable" : {
+          "schema" : {
+            "columns" : [ {
+              "name" : "_uuid",
+              "dataType" : "CHAR(36) NOT NULL"
+            }, {
+              "name" : "_idx",
+              "dataType" : "BIGINT NOT NULL"
+            }, {
+              "name" : "productid",
+              "dataType" : "BIGINT"
+            }, {
+              "name" : "quantity",
+              "dataType" : "BIGINT NOT NULL"
+            }, {
+              "name" : "unit_price",
+              "dataType" : "DOUBLE NOT NULL"
+            }, {
+              "name" : "discount",
+              "dataType" : "DOUBLE"
+            }, {
+              "name" : "time",
+              "dataType" : {
+                "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+                "nullable" : false,
+                "precision" : 3,
+                "kind" : "ROWTIME"
+              }
+            } ],
+            "watermarkSpecs" : [ ],
+            "primaryKey" : {
+              "name" : "PK__uuid__idx",
+              "type" : "PRIMARY_KEY",
+              "columns" : [ "_uuid", "_idx" ]
+            }
+          },
+          "partitionKeys" : [ ],
+          "options" : {
+            "password" : "test",
+            "connector" : "jdbc",
+            "table-name" : "entries$7",
+            "url" : "jdbc:postgresql://localhost:59154/datasqrl",
+            "username" : "test"
+          }
+        }
+      }
+    },
+    "inputChangelogMode" : [ "INSERT" ],
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "_uuid",
+        "fieldType" : "CHAR(36) NOT NULL"
+      }, {
+        "name" : "_idx",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "productid",
+        "fieldType" : "BIGINT"
+      }, {
+        "name" : "quantity",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "unit_price",
+        "fieldType" : "DOUBLE NOT NULL"
+      }, {
+        "name" : "discount",
+        "fieldType" : "DOUBLE"
+      }, {
+        "name" : "time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "nullable" : false,
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      } ]
+    },
+    "description" : "Sink(table=[default_catalog.default_database.entries$7_sink], fields=[_uuid, _idx, productid, quantity, unit_price, discount, time])"
+  }, {
+    "id" : 45,
+    "type" : "stream-exec-calc_1",
+    "projection" : [ {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 0,
+      "type" : "CHAR(36) NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 1,
+      "type" : "TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 2,
+      "type" : "BIGINT NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 3,
+      "type" : "BIGINT"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 4,
+      "type" : {
+        "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+        "nullable" : false,
+        "precision" : 3,
+        "kind" : "ROWTIME"
+      }
+    } ],
+    "condition" : null,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "_uuid",
+        "fieldType" : "CHAR(36) NOT NULL"
+      }, {
+        "name" : "_ingest_time",
+        "fieldType" : "TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL"
+      }, {
+        "name" : "id",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "customerid",
+        "fieldType" : "BIGINT"
+      }, {
+        "name" : "time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "nullable" : false,
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      } ]
+    },
+    "description" : "Calc(select=[_uuid, _ingest_time, id, customerid, time])"
+  }, {
+    "id" : 46,
+    "type" : "stream-exec-sink_1",
+    "configuration" : {
+      "table.exec.sink.keyed-shuffle" : "AUTO",
+      "table.exec.sink.not-null-enforcer" : "ERROR",
+      "table.exec.sink.type-length-enforcer" : "IGNORE",
+      "table.exec.sink.upsert-materialize" : "AUTO"
+    },
+    "dynamicTableSink" : {
+      "table" : {
+        "identifier" : "`default_catalog`.`default_database`.`orders$6_sink`",
+        "resolvedTable" : {
+          "schema" : {
+            "columns" : [ {
+              "name" : "_uuid",
+              "dataType" : "CHAR(36) NOT NULL"
+            }, {
+              "name" : "_ingest_time",
+              "dataType" : "TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL"
+            }, {
+              "name" : "id",
+              "dataType" : "BIGINT NOT NULL"
+            }, {
+              "name" : "customerid",
+              "dataType" : "BIGINT"
+            }, {
+              "name" : "time",
+              "dataType" : {
+                "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+                "nullable" : false,
+                "precision" : 3,
+                "kind" : "ROWTIME"
+              }
+            } ],
+            "watermarkSpecs" : [ ],
+            "primaryKey" : {
+              "name" : "PK__uuid",
+              "type" : "PRIMARY_KEY",
+              "columns" : [ "_uuid" ]
+            }
+          },
+          "partitionKeys" : [ ],
+          "options" : {
+            "password" : "test",
+            "connector" : "jdbc",
+            "table-name" : "orders$6",
+            "url" : "jdbc:postgresql://localhost:59154/datasqrl",
+            "username" : "test"
+          }
+        }
+      }
+    },
+    "inputChangelogMode" : [ "INSERT" ],
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "_uuid",
+        "fieldType" : "CHAR(36) NOT NULL"
+      }, {
+        "name" : "_ingest_time",
+        "fieldType" : "TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL"
+      }, {
+        "name" : "id",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "customerid",
+        "fieldType" : "BIGINT"
+      }, {
+        "name" : "time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "nullable" : false,
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      } ]
+    },
+    "description" : "Sink(table=[default_catalog.default_database.orders$6_sink], fields=[_uuid, _ingest_time, id, customerid, time])"
+  }, {
+    "id" : 47,
+    "type" : "stream-exec-table-source-scan_1",
+    "scanTableSource" : {
+      "table" : {
+        "identifier" : "`default_catalog`.`default_database`.`product$i$8`"
+      }
+    },
+    "outputType" : "ROW<`_uuid` CHAR(36) NOT NULL, `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL, `productid` BIGINT NOT NULL, `name` VARCHAR(2147483647) NOT NULL, `description` VARCHAR(2147483647), `category` VARCHAR(2147483647) NOT NULL>",
+    "description" : "TableSourceScan(table=[[default_catalog, default_database, product$i$8]], fields=[_uuid, _ingest_time, productid, name, description, category])",
+    "inputProperties" : [ ]
+  }, {
+    "id" : 48,
+    "type" : "stream-exec-watermark-assigner_1",
+    "watermarkExpr" : {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 1,
+      "type" : "TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL"
+    },
+    "rowtimeFieldIndex" : 1,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "_uuid",
+        "fieldType" : "CHAR(36) NOT NULL"
+      }, {
+        "name" : "_ingest_time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "nullable" : false,
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      }, {
+        "name" : "productid",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "name",
+        "fieldType" : "VARCHAR(2147483647) NOT NULL"
+      }, {
+        "name" : "description",
+        "fieldType" : "VARCHAR(2147483647)"
+      }, {
+        "name" : "category",
+        "fieldType" : "VARCHAR(2147483647) NOT NULL"
+      } ]
+    },
+    "description" : "WatermarkAssigner(rowtime=[_ingest_time], watermark=[_ingest_time])"
+  }, {
+    "id" : 49,
+    "type" : "stream-exec-sink_1",
+    "configuration" : {
+      "table.exec.sink.keyed-shuffle" : "AUTO",
+      "table.exec.sink.not-null-enforcer" : "ERROR",
+      "table.exec.sink.type-length-enforcer" : "IGNORE",
+      "table.exec.sink.upsert-materialize" : "AUTO"
+    },
+    "dynamicTableSink" : {
+      "table" : {
+        "identifier" : "`default_catalog`.`default_database`.`product$10_sink`",
+        "resolvedTable" : {
+          "schema" : {
+            "columns" : [ {
+              "name" : "_uuid",
+              "dataType" : "CHAR(36) NOT NULL"
+            }, {
+              "name" : "_ingest_time",
+              "dataType" : {
+                "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+                "nullable" : false,
+                "precision" : 3,
+                "kind" : "ROWTIME"
+              }
+            }, {
+              "name" : "productid",
+              "dataType" : "BIGINT NOT NULL"
+            }, {
+              "name" : "name",
+              "dataType" : "VARCHAR(2147483647) NOT NULL"
+            }, {
+              "name" : "description",
+              "dataType" : "VARCHAR(2147483647)"
+            }, {
+              "name" : "category",
+              "dataType" : "VARCHAR(2147483647) NOT NULL"
+            } ],
+            "watermarkSpecs" : [ ],
+            "primaryKey" : {
+              "name" : "PK__uuid",
+              "type" : "PRIMARY_KEY",
+              "columns" : [ "_uuid" ]
+            }
+          },
+          "partitionKeys" : [ ],
+          "options" : {
+            "password" : "test",
+            "connector" : "jdbc",
+            "table-name" : "product$10",
+            "url" : "jdbc:postgresql://localhost:59154/datasqrl",
+            "username" : "test"
+          }
+        }
+      }
+    },
+    "inputChangelogMode" : [ "INSERT" ],
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "_uuid",
+        "fieldType" : "CHAR(36) NOT NULL"
+      }, {
+        "name" : "_ingest_time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "nullable" : false,
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      }, {
+        "name" : "productid",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "name",
+        "fieldType" : "VARCHAR(2147483647) NOT NULL"
+      }, {
+        "name" : "description",
+        "fieldType" : "VARCHAR(2147483647)"
+      }, {
+        "name" : "category",
+        "fieldType" : "VARCHAR(2147483647) NOT NULL"
+      } ]
+    },
+    "description" : "Sink(table=[default_catalog.default_database.product$10_sink], fields=[_uuid, _ingest_time, productid, name, description, category])"
+  }, {
+    "id" : 50,
+    "type" : "stream-exec-table-source-scan_1",
+    "scanTableSource" : {
+      "table" : {
+        "identifier" : "`default_catalog`.`default_database`.`customer$i$1`"
+      }
+    },
+    "outputType" : "ROW<`_uuid` CHAR(36) NOT NULL, `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL, `customerid` BIGINT NOT NULL, `email` VARCHAR(2147483647) NOT NULL, `name` VARCHAR(2147483647), `lastupdated` BIGINT NOT NULL>",
+    "description" : "TableSourceScan(table=[[default_catalog, default_database, customer$i$1]], fields=[_uuid, _ingest_time, customerid, email, name, lastupdated])",
+    "inputProperties" : [ ]
+  }, {
+    "id" : 51,
+    "type" : "stream-exec-watermark-assigner_1",
+    "watermarkExpr" : {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 1,
+      "type" : "TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL"
+    },
+    "rowtimeFieldIndex" : 1,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "_uuid",
+        "fieldType" : "CHAR(36) NOT NULL"
+      }, {
+        "name" : "_ingest_time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "nullable" : false,
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      }, {
+        "name" : "customerid",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "email",
+        "fieldType" : "VARCHAR(2147483647) NOT NULL"
+      }, {
+        "name" : "name",
+        "fieldType" : "VARCHAR(2147483647)"
+      }, {
+        "name" : "lastupdated",
+        "fieldType" : "BIGINT NOT NULL"
+      } ]
+    },
+    "description" : "WatermarkAssigner(rowtime=[_ingest_time], watermark=[_ingest_time])"
+  }, {
+    "id" : 52,
+    "type" : "stream-exec-sink_1",
+    "configuration" : {
+      "table.exec.sink.keyed-shuffle" : "AUTO",
+      "table.exec.sink.not-null-enforcer" : "ERROR",
+      "table.exec.sink.type-length-enforcer" : "IGNORE",
+      "table.exec.sink.upsert-materialize" : "AUTO"
+    },
+    "dynamicTableSink" : {
+      "table" : {
+        "identifier" : "`default_catalog`.`default_database`.`customer$3_sink`",
+        "resolvedTable" : {
+          "schema" : {
+            "columns" : [ {
+              "name" : "_uuid",
+              "dataType" : "CHAR(36) NOT NULL"
+            }, {
+              "name" : "_ingest_time",
+              "dataType" : {
+                "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+                "nullable" : false,
+                "precision" : 3,
+                "kind" : "ROWTIME"
+              }
+            }, {
+              "name" : "customerid",
+              "dataType" : "BIGINT NOT NULL"
+            }, {
+              "name" : "email",
+              "dataType" : "VARCHAR(2147483647) NOT NULL"
+            }, {
+              "name" : "name",
+              "dataType" : "VARCHAR(2147483647)"
+            }, {
+              "name" : "lastupdated",
+              "dataType" : "BIGINT NOT NULL"
+            } ],
+            "watermarkSpecs" : [ ],
+            "primaryKey" : {
+              "name" : "PK__uuid",
+              "type" : "PRIMARY_KEY",
+              "columns" : [ "_uuid" ]
+            }
+          },
+          "partitionKeys" : [ ],
+          "options" : {
+            "password" : "test",
+            "connector" : "jdbc",
+            "table-name" : "customer$3",
+            "url" : "jdbc:postgresql://localhost:59154/datasqrl",
+            "username" : "test"
+          }
+        }
+      }
+    },
+    "inputChangelogMode" : [ "INSERT" ],
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "_uuid",
+        "fieldType" : "CHAR(36) NOT NULL"
+      }, {
+        "name" : "_ingest_time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "nullable" : false,
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      }, {
+        "name" : "customerid",
+        "fieldType" : "BIGINT NOT NULL"
+      }, {
+        "name" : "email",
+        "fieldType" : "VARCHAR(2147483647) NOT NULL"
+      }, {
+        "name" : "name",
+        "fieldType" : "VARCHAR(2147483647)"
+      }, {
+        "name" : "lastupdated",
+        "fieldType" : "BIGINT NOT NULL"
+      } ]
+    },
+    "description" : "Sink(table=[default_catalog.default_database.customer$3_sink], fields=[_uuid, _ingest_time, customerid, email, name, lastupdated])"
+  } ],
+  "edges" : [ {
+    "source" : 40,
+    "target" : 41,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 41,
+    "target" : 42,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 42,
+    "target" : 43,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 43,
+    "target" : 44,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 41,
+    "target" : 45,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 45,
+    "target" : 46,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 47,
+    "target" : 48,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 48,
+    "target" : 49,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 50,
+    "target" : 51,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 51,
+    "target" : 52,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  } ]
+}
