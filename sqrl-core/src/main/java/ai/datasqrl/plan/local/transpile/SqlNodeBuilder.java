@@ -43,6 +43,6 @@ public class SqlNodeBuilder {
 
   public static SqlNode as(SqlNode sqlNode, String alias) {
     return new SqlBasicCall(SqlStdOperatorTable.AS, new SqlNode[]{SqlUtil.stripAs(sqlNode),
-        new SqlIdentifier(alias, sqlNode.getParserPosition())}, SqlParserPos.ZERO);
+        new SqlIdentifier(alias, sqlNode.getParserPosition())}, sqlNode.getParserPosition());
   }
 }

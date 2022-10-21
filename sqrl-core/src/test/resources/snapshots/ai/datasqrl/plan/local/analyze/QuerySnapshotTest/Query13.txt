@@ -1,6 +1,6 @@
 D := SELECT * FROM Orders.entries e INNER JOIN e.parent p WHERE e.parent.customerid = 0 AND p.customerid = 0;
 
-LogicalProject(id=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], id0=[$11], _uuid=[$12], _ingest_time=[$13], customerid=[$14], time=[$15])
+LogicalProject(_idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], id=[$11], _uuid=[$12], _ingest_time=[$13], customerid=[$14], time=[$15])
   LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4], id0=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], id1=[$11], _uuid0=[$12], _ingest_time0=[$13], customerid0=[$14], time0=[$15], id2=[CAST($16):BIGINT], _uuid1=[CAST($17):CHAR(36) CHARACTER SET "UTF-16LE"], _ingest_time1=[CAST($18):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], customerid1=[$19], time1=[CAST($20):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)])
     LogicalJoin(condition=[=($5, $16)], joinType=[inner])
       LogicalJoin(condition=[=($5, $11)], joinType=[inner])
@@ -13,7 +13,7 @@ LogicalProject(id=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9
         LogicalTableScan(table=[[orders$12]])
 
 
-SELECT "entries$13"."id", "entries$13"."_idx", "entries$13"."productid", "entries$13"."quantity", "entries$13"."unit_price", "entries$13"."discount", "t"."id" AS "id0", "t"."_uuid", "t"."_ingest_time", "t"."customerid", "t"."time"
+SELECT "entries$13"."_idx", "entries$13"."productid", "entries$13"."quantity", "entries$13"."unit_price", "entries$13"."discount", "t"."id", "t"."_uuid", "t"."_ingest_time", "t"."customerid", "t"."time"
 FROM "orders$12"
  DEFAULT JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"
  INNER JOIN (SELECT *

@@ -21,6 +21,8 @@ type Product {
 
 type Query {
   Customer(customerid: Int, email: String, name: String, lastupdated: Int): [Customer]
+  Orders(id: Int, customerid: Int, time: String): [Orders]
+  Product(productid: Int, name: String, description: String, category: String): [Product]
 }
 
 type entries {

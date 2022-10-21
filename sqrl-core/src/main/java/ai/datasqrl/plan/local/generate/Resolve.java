@@ -413,10 +413,46 @@ public class Resolve {
     Optional<VirtualRelationalTable> context =
         table.map(t -> t.getVt());
 
+
     final SqlNode stage1 = context.map(
             c -> new AddContextTable(c.getNameId()).accept(op.getQuery()))
         .orElse(op.getQuery());
-    final SqlNode stage2 = context.map(c -> new RenameSelfInTopQuery(c.getNameId()).accept(stage1))
+
+    AnalyzeStatement analyzeStatement = new AnalyzeStatement(env.relSchema, assignmentPath);
+    analyzeStatement.accept(stage1);
+
+    QualifyIdentifiers qualifyIdentifiers = new QualifyIdentifiers(analyzeStatement);
+    SqlNode node = stage1.accept(qualifyIdentifiers);
+    System.out.println("Qualify \n" +node + "\n");
+
+    //many nodes have changed, reanalyze
+    analyzeStatement = new AnalyzeStatement(env.relSchema, assignmentPath);
+    analyzeStatement.accept(node);
+
+    FlattenFieldPaths flattenFieldPaths = new FlattenFieldPaths(analyzeStatement);
+    node = flattenFieldPaths.accept(node);
+    System.out.println("Flatten Fields \n" +node + "\n");
+
+    analyzeStatement = new AnalyzeStatement(env.relSchema, assignmentPath);
+    analyzeStatement.accept(node);
+
+
+    FlattenTablePaths flattenTablePaths = new FlattenTablePaths(analyzeStatement);
+    node = flattenTablePaths.accept(node);
+    System.out.println("Flatten Tables \n" +node + "\n");
+
+
+//    analyzeStatement = new AnalyzeStatement(env.relSchema, assignmentPath);
+//    analyzeStatement.accept(node);
+
+    //
+//    AddConditionsToImplicitJoins addConditions = new AddConditionsToImplicitJoins(analyzeStatement);
+//    node = addConditions.accept(node);
+
+//    System.out.println("Add conditions \n" +node + "\n");
+    final SqlNode stage1b = node;
+
+    final SqlNode stage2 = context.map(c -> new RenameSelfInTopQuery(c.getNameId()).accept(stage1b))
         .orElse(stage1);
 
     SqlNode finalStage = stage2;
@@ -436,19 +472,20 @@ public class Resolve {
       op.setQuery(finalStage);
       op.setSqrlValidator(validate2);
     } else {
-      SqlNode rewritten = rewrite(env, op, sqrlValidator, finalStage);
-      //revalidate then deconstruct joins
+      SqlNode rewritten = finalStage;
+//      SqlNode rewritten = rewrite(env, op, sqrlValidator, finalStage);
+//      //revalidate then deconstruct joins
       SqrlValidatorImpl revalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
           assignmentPath, true);
       revalidate.validate(rewritten);
-      rewritten = new DeconstructPathsToSimpleJoins(revalidate).accept(rewritten);
-
+//      rewritten = new DeconstructPathsToSimpleJoins(revalidate).accept(rewritten);
+//
       rewritten = new AddContextQuery(revalidate, context).accept(rewritten);
 
       //Skip this for joins, we'll add the hints later when we reconstruct the node from the relnode
       // Hints don't carry over when moving from rel -> sqlnode
       if (op.getStatementKind() != StatementKind.JOIN) {
-        System.out.println(rewritten);
+//        System.out.println(rewritten);
         SqrlValidatorImpl prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
             assignmentPath, true);
         prevalidate.validate(rewritten);

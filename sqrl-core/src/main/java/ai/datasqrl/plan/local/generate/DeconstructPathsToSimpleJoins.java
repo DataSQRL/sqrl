@@ -54,6 +54,8 @@ public class DeconstructPathsToSimpleJoins {
           //walk only from
           select.setFrom(select.getFrom().accept(this));
           return select;
+
+          //TODO case JOIN: ??
         case AS:
           //is a table, do the expansion
 

@@ -12,7 +12,7 @@ public class Column extends Field {
   private final RelDataType type;
   boolean nullable;
 
-  Column(Name name, int version, boolean isVisible, RelDataType type) {
+  public Column(Name name, int version, boolean isVisible, RelDataType type) {
     super(name, version);
     this.isVisible = isVisible;
     this.type = type;

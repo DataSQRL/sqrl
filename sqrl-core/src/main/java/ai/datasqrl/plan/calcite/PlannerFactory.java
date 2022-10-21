@@ -73,7 +73,7 @@ public class PlannerFactory {
     return new FlinkTypeFactory(getTypeSystem());
   }
 
-  private static RelDataTypeSystem getTypeSystem() {
+  public static RelDataTypeSystem getTypeSystem() {
     return new FlinkTypeSystem();
   }
 

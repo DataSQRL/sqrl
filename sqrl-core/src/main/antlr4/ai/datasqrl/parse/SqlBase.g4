@@ -187,9 +187,7 @@ predicate[ParserRuleContext value]
     | NOT? IN qualifiedName                                               #inRelation
     | NOT? IN '(' expression (',' expression)* ')'                        #inList
     | NOT? IN '(' query ')'                                               #inSubquery
-   // | NOT? LIKE pattern=valueExpression                                   #like
     | IS NOT? NULL                                                        #nullPredicate
-//    | IS NOT? DISTINCT FROM right=valueExpression                         #distinctFrom
     ;
 
 valueExpression
@@ -221,7 +219,7 @@ string
     ;
 
 comparisonOperator
-    : EQ | NEQ | LT | LTE | GT | GTE | IS
+    : EQ | NEQ | LT | LTE | GT | GTE
     ;
 
 booleanValue

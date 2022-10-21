@@ -1,7 +1,7 @@
 Orders3 := SELECT * FROM Orders.entries.parent.entries e WHERE e.parent.customerid = 100;
 
 
-LogicalProject(id=[$16], _idx=[$17], productid=[$18], quantity=[$19], unit_price=[$20], discount=[$21])
+LogicalProject(_idx=[$17], productid=[$18], quantity=[$19], unit_price=[$20], discount=[$21])
   LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4], id0=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], id1=[$11], _uuid0=[$12], _ingest_time0=[$13], customerid0=[$14], time0=[$15], id2=[$16], _idx0=[$17], productid0=[$18], quantity0=[$19], unit_price0=[$20], discount0=[$21], id3=[CAST($22):BIGINT], _uuid1=[CAST($23):CHAR(36) CHARACTER SET "UTF-16LE"], _ingest_time1=[CAST($24):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], customerid1=[$25], time1=[CAST($26):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)])
     LogicalJoin(condition=[=($16, $22)], joinType=[inner])
       LogicalJoin(condition=[=($11, $16)], joinType=[default])
@@ -15,7 +15,7 @@ LogicalProject(id=[$16], _idx=[$17], productid=[$18], quantity=[$19], unit_price
         LogicalTableScan(table=[[orders$12]])
 
 
-SELECT "entries$130"."id", "entries$130"."_idx", "entries$130"."productid", "entries$130"."quantity", "entries$130"."unit_price", "entries$130"."discount"
+SELECT "entries$130"."_idx", "entries$130"."productid", "entries$130"."quantity", "entries$130"."unit_price", "entries$130"."discount"
 FROM "orders$12"
  DEFAULT JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"
  DEFAULT JOIN "orders$12" AS "orders$120" ON "entries$13"."id" = "orders$120"."id"
