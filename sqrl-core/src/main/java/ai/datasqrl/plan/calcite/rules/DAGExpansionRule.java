@@ -4,13 +4,11 @@ import ai.datasqrl.plan.calcite.table.ImportedSourceTable;
 import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.global.MaterializationStrategy;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.tools.RelBuilder;
-import org.h2.util.StringUtils;
 
 /**
  *
@@ -27,35 +25,46 @@ public abstract class DAGExpansionRule extends RelOptRule {
   }
 
 
-  public static class Read extends DAGExpansionRule {
+  public static class ReadOnly extends DAGExpansionRule {
 
     @Override
     public void onMatch(RelOptRuleCall call) {
       LogicalTableScan scan = call.rel(0);
-      VirtualRelationalTable dbTable = scan.getTable()
+      VirtualRelationalTable vTable = scan.getTable()
               .unwrap(VirtualRelationalTable.class);
-      QueryRelationalTable queryTable = scan.getTable().unwrap(QueryRelationalTable.class);
-      Preconditions.checkArgument(dbTable!=null ^ queryTable!=null);
-      if (dbTable!=null) {
-        //Do nothing
-      }
-      if (queryTable!=null) {
+      Preconditions.checkArgument(vTable!=null);
+      QueryRelationalTable queryTable = vTable.getRoot().getBase();
+      if (queryTable.getExecution().isRead()) {
         Preconditions.checkArgument(!CalciteUtil.isNestedTable(queryTable.getRowType()));
-        MaterializationStrategy strategy = queryTable.getMaterialization();
-        if (strategy.isMaterialize()) {
-          Preconditions.checkArgument(!StringUtils.isNullOrEmpty(strategy.getPersistedAs()));
-          RelBuilder builder = getBuilder(scan);
-          call.transformTo(builder.scan(strategy.getPersistedAs()).build());
-        } else {
-          call.transformTo(queryTable.getRelNode());
-        }
+        call.transformTo(queryTable.getRelNode());
       }
     }
 
   }
 
+  public static class Read2Write extends DAGExpansionRule {
 
-  public static class Write extends DAGExpansionRule {
+    @Override
+    public void onMatch(RelOptRuleCall call) {
+      LogicalTableScan scan = call.rel(0);
+      VirtualRelationalTable vTable = scan.getTable()
+              .unwrap(VirtualRelationalTable.class);
+      Preconditions.checkArgument(vTable!=null);
+      QueryRelationalTable queryTable = vTable.getRoot().getBase();
+      Preconditions.checkArgument(queryTable.getExecution().isWrite());
+      if (!vTable.isRoot() && vTable.getRoot().getBase().getTimestamp().hasFixedTimestamp()) {
+        RelBuilder relBuilder = getBuilder(scan);
+        relBuilder.scan(vTable.getNameId()); //Update scan since we changed tables in DAG planner to add columns
+        CalciteUtil.addIdentityProjection(relBuilder, relBuilder.peek().getRowType().getFieldCount() - 1);
+        call.transformTo(relBuilder.build());
+      } //else do nothing; the table is materialized and can be consumed without adjustment
+
+    }
+
+  }
+
+
+  public static class WriteOnly extends DAGExpansionRule {
 
     @Override
     public void onMatch(RelOptRuleCall call) {
@@ -64,7 +73,11 @@ public abstract class DAGExpansionRule extends RelOptRule {
       ImportedSourceTable sourceTable = table.getTable().unwrap(ImportedSourceTable.class);
       Preconditions.checkArgument(queryTable!=null ^ sourceTable!=null);
       if (queryTable!=null) {
-        call.transformTo(queryTable.getRelNode());
+        RelBuilder relBuilder = getBuilder(table);
+        relBuilder.push(queryTable.getRelNode());
+        //We might have added additional columns to table so restrict to length of original rowtype
+        CalciteUtil.addIdentityProjection(relBuilder,table.getRowType().getFieldCount());
+        call.transformTo(relBuilder.build());
       }
       if (sourceTable != null) {
         //Leave as is

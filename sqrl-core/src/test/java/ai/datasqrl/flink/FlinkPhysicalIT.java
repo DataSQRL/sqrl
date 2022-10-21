@@ -12,7 +12,7 @@ import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
-import ai.datasqrl.physical.database.QueryTemplate;
+import ai.datasqrl.physical.database.relational.QueryTemplate;
 import ai.datasqrl.physical.stream.Job;
 import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
 import ai.datasqrl.plan.calcite.Planner;
@@ -27,6 +27,7 @@ import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.ResultSetPrinter;
 import ai.datasqrl.util.ScriptBuilder;
+import ai.datasqrl.util.SnapshotTest;
 import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.C360;
 import lombok.SneakyThrows;
@@ -37,10 +38,12 @@ import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -56,9 +59,10 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   private PhysicalPlanner physicalPlanner;
   private TestDataset example;
 
+  private SnapshotTest.Snapshot snapshot;
 
   @BeforeEach
-  public void setup() throws IOException {
+  public void setup(TestInfo testInfo) throws IOException {
     error = ErrorCollector.root();
     initialize(IntegrationTestSettings.getFlinkWithDB(false));
     example = C360.BASIC;
@@ -82,62 +86,41 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
 
     physicalPlanner = new PhysicalPlanner(importManager, jdbc,
             sqrlSettings.getStreamEngineProvider().create(), planner);
+    this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
   }
 
   @Test
   public void tableImportTest() {
     String script = example.getImports().toString();
-    Map<String,Integer> rowCounts = getImportRowCounts();
-    Map<String,ResultSet> results = process(script,rowCounts.keySet());
-    validateRowCounts(rowCounts, results);
+    validate(script, "customer","product","orders","entries");
   }
 
-  private Map<String,Integer> getImportRowCounts() {
-    Map<String,Integer> rowCounts = new LinkedHashMap<>(example.getTableCounts());
-    rowCounts.put("entries",7);
-    return rowCounts;
-  }
 
   @Test
   public void tableColumnDefinitionTest() {
     ScriptBuilder builder = example.getImports();
-    Map<String,Integer> rowCounts = getImportRowCounts();
 
     builder.add("EntryPrice := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e"); //This is line 4 in the script
-    rowCounts.put("entryprice",rowCounts.get("entries"));
 
     builder.add("Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)");
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC");
-    rowCounts.put("customer",4); //Dedups
 
     builder.add("Orders.col1 := (id + customerid)/2");
     builder.add("Orders.entries.discount2 := COALESCE(discount,0.0)");
 
+    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid, o.col1, e.discount2 FROM Orders o JOIN o.entries e JOIN Customer c on o.customerid = c.customerid");
 
-
-
-//    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");
-//    rowCounts.put("ordercustomer",5); //One order joins twice because customer record isn't deduplicated yet
-//    builder.add("OrderCustomerInterval := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
-//            "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH");
-//    rowCounts.put("ordercustomerinterval",4);
-
-
-    Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
-
-    validateRowCounts(rowCounts, results);
+    validate(builder.getScript(),"entryprice","customer","orders","entries","ordercustomer");
   }
 
   @Test
   @Disabled
   public void topNTest() {
     ScriptBuilder builder = example.getImports();
-    Map<String,Integer> rowCounts = getImportRowCounts();
 
 
 
-    Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
-    validateRowCounts(rowCounts, results);
+    validate(builder.getScript(),"");
   }
 
   @Test
@@ -145,73 +128,49 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     ScriptBuilder builder = new ScriptBuilder();
     builder.add("IMPORT ecommerce-data.Customer TIMESTAMP (_ingest_time - INTERVAL 1 MONTH) as updateTime"); //we fake that customer updates happen before orders
     builder.add("IMPORT ecommerce-data.Orders TIMESTAMP _ingest_time as rowtime");
-    Map<String,Integer> rowCounts = getImportRowCounts();
-    rowCounts.remove("product");
 
     //Normal join
     builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");
-    rowCounts.put("ordercustomer",5); //One order joins twice because customer record isn't deduplicated yet
     //Interval join
     builder.add("OrderCustomerInterval := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
             "AND o.rowtime >= c.updateTime AND o.rowtime <= c.updateTime + INTERVAL 1 YEAR");
-    rowCounts.put("ordercustomerinterval",5);
     //Temporal join
     builder.add("CustomerDedup := DISTINCT Customer ON customerid ORDER BY updateTime DESC");
-    rowCounts.put("customerdedup",4);
     builder.add("OrderCustomerDedup := SELECT o.id, c.name, o.customerid FROM Orders o JOIN CustomerDedup c on o.customerid = c.customerid");
-    rowCounts.put("ordercustomerdedup",4);
 
-    Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
-    validateRowCounts(rowCounts, results);
+    validate(builder.getScript(),"ordercustomer","ordercustomerinterval","customerdedup","ordercustomerdedup");
   }
 
   @Test
   @Disabled
   public void aggregateTest() {
     ScriptBuilder builder = example.getImports();
-    Map<String,Integer> rowCounts = getImportRowCounts();
-
     builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_hour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;\n");
-    rowCounts.put("orderagg1",rowCounts.get("orders"));
 
     builder.append("OrderAgg2 := SELECT round_to_hour(o.\"time\") as bucket, o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY bucket, customer;\n");
-    rowCounts.put("orderagg2",rowCounts.get("orders"));
 
-    Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
-    validateRowCounts(rowCounts, results);
+    validate(builder.getScript(),"orderagg1", "orderagg2");
   }
 
   @Test
   @Disabled
   public void filterTest() {
     ScriptBuilder builder = example.getImports();
-    Map<String,Integer> rowCounts = getImportRowCounts();
 
     builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 5 YEAR");
-    rowCounts.put("historicorders",rowCounts.get("orders"));
     builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 1 MONTH");
-    rowCounts.put("recentorders",0);
 //    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 SECOND");
 //    rowCounts.put("recentorders",0);
 
-    Map<String,ResultSet> results = process(builder.getScript(),rowCounts.keySet());
-    validateRowCounts(rowCounts, results);
+    validate(builder.getScript(), "historicorders", "recentorders");
+  }
+
+  private void validate(String script, String... queryTables) {
+    validate(script,Arrays.asList(queryTables));
   }
 
   @SneakyThrows
-  private void validateRowCounts(Map<String,Integer> rowCounts, Map<String,ResultSet> results) {
-    for (Map.Entry<String,Integer> rowCount : rowCounts.entrySet()) {
-      int numExpectedRows = rowCount.getValue();
-      ResultSet result = results.get(rowCount.getKey());
-      assertNotNull(numExpectedRows);
-      System.out.println("Results for table: " + rowCount.getKey());
-      int numRows = ResultSetPrinter.print(result, System.out);
-      assertEquals(numExpectedRows,numRows,rowCount.getKey());
-    }
-  }
-
-  @SneakyThrows
-  private Map<String,ResultSet> process(String script, Collection<String> queryTables) {
+  private void validate(String script, Collection<String> queryTables) {
     ScriptNode node = parse(script);
     Resolve.Env resolvedDag = resolve.planDag(session, node);
     DAGPlanner dagPlanner = new DAGPlanner(planner);
@@ -224,19 +183,24 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
       RelNode rel = planner.getRelBuilder().scan(tblName).build();
       queries.add(new APIQuery(tblName.substring(0,tblName.indexOf(Name.NAME_DELIMITER)), rel));
     });
-    OptimizedDAG dag = dagPlanner.plan(relSchema,queries);
+    OptimizedDAG dag = dagPlanner.plan(relSchema,queries, session.getPipeline());
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     Job job = executor.execute(physicalPlan);
     System.out.println("Started Flink Job: " + job.getExecutionId());
     Map<String,ResultSet> results = new HashMap<>();
-    for (Map.Entry<APIQuery,QueryTemplate> query : physicalPlan.getDatabaseQueries().entrySet()) {
-      System.out.println("Executing query: " + RelToSql.convertToSql(query.getValue().getRelNode()));
+    for (APIQuery query : queries) {
+      QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
+      String sqlQuery = RelToSql.convertToSql(template.getRelNode());
+      System.out.println("Executing query: " + sqlQuery);
       ResultSet resultSet = jdbc.getConnection().createStatement()
-              .executeQuery(RelToSql.convertToSql(query.getValue().getRelNode()));
-      results.put(query.getKey().getNameId(),resultSet);
+              .executeQuery(sqlQuery);
+      results.put(query.getNameId(),resultSet);
+      //Since Flink execution order is non-deterministic we need to sort results
+      String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,Set.of("_uuid","_ingest_time"))).sorted().collect(Collectors.joining(System.lineSeparator()));
+      snapshot.addContent(content,query.getNameId());
     }
-    return results;
+    snapshot.createOrValidate();
   }
 
   private ScriptNode parse(String query) {

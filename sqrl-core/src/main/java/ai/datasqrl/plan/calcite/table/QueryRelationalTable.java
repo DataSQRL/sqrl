@@ -1,13 +1,12 @@
 package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.physical.pipeline.ExecutionStage;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.global.MaterializationStrategy;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -47,8 +46,7 @@ public class QueryRelationalTable extends AbstractRelationalTable {
    The materialization strategy for this table as determined by the optimizer. This is used when cutting
    the DAG and expanding the RelNodes.
    */
-  @Setter
-  private MaterializationStrategy materialization;
+  private final ExecutionStage execution;
 
 
   public QueryRelationalTable(@NonNull Name rootTableId, @NonNull TableType type,
@@ -56,7 +54,7 @@ public class QueryRelationalTable extends AbstractRelationalTable {
                               @NonNull TimestampHolder.Base timestamp,
                               @NonNull int numPrimaryKeys,
                               @NonNull TableStatistic stats,
-                              @NonNull MaterializationStrategy materialization) {
+                              @NonNull ExecutionStage execution) {
     super(rootTableId);
     this.type = type;
     this.timestamp = timestamp;
@@ -64,7 +62,7 @@ public class QueryRelationalTable extends AbstractRelationalTable {
     this.pullups = pullups;
     this.numPrimaryKeys = numPrimaryKeys;
     this.statistic = stats;
-    this.materialization = materialization;
+    this.execution = execution;
   }
 
   public RelNode getRelNode() {

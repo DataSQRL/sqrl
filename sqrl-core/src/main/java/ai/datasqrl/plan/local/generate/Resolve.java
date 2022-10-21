@@ -8,6 +8,7 @@ import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
+import ai.datasqrl.physical.pipeline.ExecutionPipeline;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
@@ -95,6 +96,7 @@ public class Resolve {
     Session session;
     ScriptNode scriptNode;
     URI packageUri;
+    ExecutionPipeline pipeline;
 
     //Updated while processing each node
     SqlNode currentNode = null;
@@ -660,17 +662,14 @@ public class Resolve {
     //self-joins (including nested self-joins) as well as infer primary keys,
     //table types, and timestamps in the process
 
-    //TODO: extract materialization preference from hints if present
-    SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(getRelBuilderFactory(env),
-        Optional.empty());
-    relNode = relNode.accept(sqrl2sql);
-//    System.out.println("LP$2: \n" + relNode.explain());
     if (op.statementKind == StatementKind.DISTINCT_ON) {
       //Get all field names from relnode
       fieldNames = relNode.getRowType().getFieldNames();
     }
-    AnnotatedLP prel = sqrl2sql.getRelHolder(relNode);
-    prel = prel.postProcess(sqrl2sql.makeRelBuilder(),fieldNames);
+    //TODO: extract execution stage preference from hints if present
+    Supplier<RelBuilder> relBuilderFactory = getRelBuilderFactory(env);
+    AnnotatedLP prel = SQRLLogicalPlanConverter.findCheapest(relNode, env.session.pipeline, relBuilderFactory);
+    prel = prel.postProcess(relBuilderFactory.get(),fieldNames);
 //    System.out.println("LP$3: \n" + prel.getRelNode().explain());
 
     return prel;

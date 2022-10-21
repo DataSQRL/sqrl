@@ -1,11 +1,11 @@
 package ai.datasqrl.plan.calcite.rules;
 
+import ai.datasqrl.physical.EngineCapability;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import ai.datasqrl.plan.calcite.util.IndexMap;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
-import ai.datasqrl.plan.global.MaterializationPreference;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import lombok.AllArgsConstructor;
@@ -44,7 +44,7 @@ public class AnnotatedLP implements RelHolder {
     @NonNull
     public ContinuousIndexMap select;
     @NonNull
-    public MaterializationInference materialize;
+    public ExecutionAnalysis exec;
 
     @Builder.Default
     public List<JoinTable> joinTables = null;
@@ -61,13 +61,11 @@ public class AnnotatedLP implements RelHolder {
     @NonNull
     public SortOrder sort = SortOrder.EMPTY;
 
-    @Builder.Default
-    public TableStatistic statistic = null;
-
     public static AnnotatedLPBuilder build(RelNode relNode, TableType type, ContinuousIndexMap primaryKey,
-                                       TimestampHolder.Derived timestamp, ContinuousIndexMap select, MaterializationInference materialize) {
+                                       TimestampHolder.Derived timestamp, ContinuousIndexMap select,
+                                           ExecutionAnalysis exec) {
         return AnnotatedLP.builder().relNode(relNode).type(type).primaryKey(primaryKey).timestamp(timestamp)
-                .select(select).materialize(materialize);
+                .select(select).exec(exec);
     }
 
     public AnnotatedLPBuilder copy() {
@@ -79,11 +77,10 @@ public class AnnotatedLP implements RelHolder {
         builder.select(select);
         builder.joinTables(joinTables);
         builder.numRootPks(numRootPks);
-        builder.materialize(materialize);
+        builder.exec(exec);
         builder.nowFilter(nowFilter);
         builder.topN(topN);
         builder.sort(sort);
-        builder.statistic(statistic);
         return builder;
     }
 
@@ -105,7 +102,7 @@ public class AnnotatedLP implements RelHolder {
 
         relBuilder.push(relNode);
 
-        MaterializationInference newMaterialize = materialize;
+        ExecutionAnalysis newExec = exec;
         SortOrder newSort = sort;
         if (!topN.isDistinct() && (!topN.hasPartition() || !topN.hasLimit())) {
             assert topN.hasCollation();
@@ -113,11 +110,11 @@ public class AnnotatedLP implements RelHolder {
             if (topN.hasLimit()) { //It's not partitioned, so straight forward order and limit
                 relBuilder.sort(collation);
                 relBuilder.limit(0, topN.getLimit());
-                newMaterialize = materialize.update(MaterializationPreference.SHOULD_NOT, "sort");
+                newExec = exec.require(EngineCapability.GLOBAL_SORT);
             } else { //Lift up sort and prepend partition (if any)
                 newSort = newSort.ifEmpty(SortOrder.of(topN.getPartition(), collation));
             }
-            return AnnotatedLP.build(relBuilder.build(), type, primaryKey, timestamp, select, newMaterialize)
+            return AnnotatedLP.build(relBuilder.build(), type, primaryKey, timestamp, select, newExec)
                     .sort(newSort).build();
         } else { //distinct or (hasPartition and hasLimit)
             final RelDataType inputType = relBuilder.peek().getRowType();
@@ -170,7 +167,7 @@ public class AnnotatedLP implements RelHolder {
                     projects.add(rexUtil.createRowFunction(SqlStdOperatorTable.DENSE_RANK, partitionKeys, fieldCollations));
                     projectNames.add(null);
                 }
-                newMaterialize = newMaterialize.update(MaterializationPreference.CANNOT, "partitioned distinct");
+                newExec = newExec.require(EngineCapability.MULTI_RANK);
             }
 
             relBuilder.project(projects, projectNames);
@@ -204,7 +201,7 @@ public class AnnotatedLP implements RelHolder {
             }
             ContinuousIndexMap newPk = primaryKey.remap(IndexMap.IDENTITY);
             ContinuousIndexMap newSelect = select.remap(IndexMap.IDENTITY);
-            return AnnotatedLP.build(relBuilder.build(), type, newPk, timestamp, newSelect, newMaterialize)
+            return AnnotatedLP.build(relBuilder.build(), type, newPk, timestamp, newSelect, newExec)
                     .sort(newSort).build();
         }
     }
@@ -213,7 +210,7 @@ public class AnnotatedLP implements RelHolder {
         if (nowFilter.isEmpty()) return this;
         nowFilter.addFilterTo(relB.push(relNode));
         return copy().relNode(relB.build())
-                .materialize(materialize.update(MaterializationPreference.CANNOT, "now-filter"))
+                .exec(exec.require(EngineCapability.NOW))
                 .nowFilter(NowFilter.EMPTY).build();
 
     }
@@ -225,8 +222,12 @@ public class AnnotatedLP implements RelHolder {
         if (!topN.isEmpty()) return inlineTopN(relB).inlineSort(relB);
         sort.addTo(relB.push(relNode));
         return copy().relNode(relB.build())
-                .materialize(materialize.update(MaterializationPreference.SHOULD_NOT, "sort"))
+                .exec(exec.require(EngineCapability.GLOBAL_SORT))
                 .sort(SortOrder.EMPTY).build();
+    }
+
+    public AnnotatedLP inlineAllPullups(RelBuilder relB) {
+        return inlineNowFilter(relB).inlineTopN(relB).inlineSort(relB);
     }
 
     public boolean hasPullups() {
@@ -293,11 +294,10 @@ public class AnnotatedLP implements RelHolder {
         relBuilder.push(input.relNode);
         relBuilder.project(projects, updatedFieldNames);
         RelNode relNode = relBuilder.build();
-        TableStatistic statistic = TableStatistic.of(estimateRowCount());
 
         return new AnnotatedLP(relNode,input.type,input.primaryKey.remap(remap),
-                input.timestamp.remapIndexes(remap), updatedIndexMap, input.materialize, null, input.numRootPks,
-                input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap), statistic);
+                input.timestamp.remapIndexes(remap), updatedIndexMap, input.exec, null, input.numRootPks,
+                input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap));
     }
 
     public AnnotatedLP postProcess(RelBuilder relBuilder) {

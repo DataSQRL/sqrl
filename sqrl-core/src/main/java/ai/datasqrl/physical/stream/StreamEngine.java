@@ -4,8 +4,7 @@ import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema;
+import ai.datasqrl.physical.ExecutionEngine;
 import ai.datasqrl.schema.input.InputTableSchema;
 
 import java.io.Closeable;
@@ -14,6 +13,8 @@ import java.util.Optional;
 public interface StreamEngine extends Closeable {
 
   Builder createJob();
+
+  ExecutionEngine getEngineDescription();
 
   interface Builder {
 

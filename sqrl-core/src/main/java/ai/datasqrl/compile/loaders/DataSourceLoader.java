@@ -98,6 +98,6 @@ public class DataSourceLoader implements Loader {
   private ScriptTableDefinition createScriptTableDefinition(Env env, SourceTableImport tblImport,
       Optional<Name> alias) {
     return env.getTableFactory().importTable(tblImport, alias,
-        env.getSession().getPlanner().getRelBuilder());
+        env.getSession().getPlanner().getRelBuilder(), env.getSession().getPipeline());
   }
 }

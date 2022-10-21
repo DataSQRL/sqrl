@@ -4,12 +4,13 @@ import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.physical.ExecutionEngine;
+import ai.datasqrl.physical.pipeline.ExecutionPipeline;
 import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.SqrlType2Calcite;
 import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
-import ai.datasqrl.plan.global.MaterializationStrategy;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SQRLTable;
@@ -60,14 +61,15 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         return Integer.parseInt(tableId.substring(idx+1,tableId.length()));
     }
 
-    public ScriptTableDefinition importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias, RelBuilder relBuilder) {
+    public ScriptTableDefinition importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias, RelBuilder relBuilder,
+                                             ExecutionPipeline pipeline) {
         CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(this);
         RelDataType rootType = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
                 schemaGen).get();
         AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
         ImportedSourceTable source = new ImportedSourceTable(getTableId(rootTable.getName(),"i"),rootType,sourceTable);
         ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(getTableId(rootTable.getName(),"q"), getTimestampHolder(rootTable),
-                relBuilder.values(rootType).build(), source);
+                relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get());
 
         Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable, Optional.empty());
         return new ScriptTableDefinition(impTable, tables);
@@ -80,10 +82,11 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
 
         Name tableid = getTableId(tablePath.getLast(),"q");
         TimestampHolder.Base timestamp = TimestampHolder.Base.ofDerived(rel.getTimestamp());
+        TableStatistic statistic = TableStatistic.of(rel.estimateRowCount());
         QueryRelationalTable baseTable = new QueryRelationalTable(tableid, rel.getType(),
                 rel.getRelNode(), rel.getPullups(), timestamp,
-                rel.getPrimaryKey().getSourceLength(), rel.getStatistic(),
-                new MaterializationStrategy(rel.getMaterialize().getPreference()));
+                rel.getPrimaryKey().getSourceLength(), statistic,
+                rel.getExec().getStage());
 
         LinkedHashMap<Integer,Name> index2Name = new LinkedHashMap<>();
         for (int i = 0; i < fieldNames.size(); i++) {

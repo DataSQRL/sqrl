@@ -1,9 +1,8 @@
-package ai.datasqrl.physical.database;
+package ai.datasqrl.physical.database.relational;
 
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.function.TimestampPreservingFunction;
 import ai.datasqrl.function.builtin.time.NowFunction;
-import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;

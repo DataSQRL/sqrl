@@ -69,4 +69,9 @@ public class TopNConstraint implements PullupOperator {
         return new TopNConstraint(partitionByIndexes,false,collation,Optional.of(1));
     }
 
+    public boolean isPrimaryKeyDedup() {
+        return (!distinct && hasLimit() && getLimit()==1) ||
+                (distinct && !hasPartition() && !hasLimit());
+    }
+
 }
