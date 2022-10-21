@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.local.generate;
 
 import ai.datasqrl.plan.local.generate.AnalyzeStatement.ResolvedTableField;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import java.util.ArrayList;
@@ -86,6 +87,12 @@ public class FlattenFieldPaths extends SqlShuttle {
   @Override
   public SqlNode visit(SqlCall call) {
     switch (call.getKind()) {
+      case SELECT:
+      case UNION:
+      case INTERSECT:
+      case EXCEPT:
+        FlattenFieldPaths flattenFieldPaths = new FlattenFieldPaths(this.analyzeStatement);
+        return flattenFieldPaths.accept(call);
       case AS:
         return SqlStdOperatorTable.AS.createCall(call.getParserPosition(),
             call.getOperandList().get(0).accept(this),
@@ -125,6 +132,7 @@ public class FlattenFieldPaths extends SqlShuttle {
     //all identifiers are fully qualified
     ResolvedTableField tableField = analyzeStatement.getExpressions().get(id);
 
+    Preconditions.checkNotNull(tableField, id);
     if (tableField == null) {
       System.out.println();
     }

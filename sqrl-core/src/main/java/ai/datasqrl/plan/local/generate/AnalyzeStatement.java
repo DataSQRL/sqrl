@@ -4,7 +4,6 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
@@ -21,7 +20,6 @@ import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -39,12 +37,12 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.util.Litmus;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
+@Getter
 public class AnalyzeStatement {
 
   private final SqrlCalciteSchema schema;
   private final List<String> assignmentPath;
   private final Optional<SqlIdentifier> selfIdentifier;
-  @Getter
   private final Map<SqlIdentifier, ResolvedTableField> expressions = new HashMap<>();
 
   public Map<SqlIdentifier, Resolved> tableIdentifiers = new HashMap<>();
@@ -239,7 +237,7 @@ public class AnalyzeStatement {
   }
 
   @Value
-  class RelativeResolvedTable extends Resolved {
+  public static class RelativeResolvedTable extends Resolved {
     String alias;
     List<Relationship> fields;
 
@@ -274,7 +272,7 @@ public class AnalyzeStatement {
     }
   }
 
-  abstract class Resolved {
+  public static abstract class Resolved {
 
     abstract SQRLTable getToTable();
 
@@ -501,9 +499,9 @@ public class AnalyzeStatement {
 
   public void visitExpr(SqlNode expr, Context context, boolean allowPaths) {
 
-    QualifyExpression qualifyExpression = new QualifyExpression(allowPaths, context, allowSystemFields);
-    expr.accept(qualifyExpression);
-    expressions.putAll(qualifyExpression.getResolvedFields());
+    AnalyzeExpression analyzeExpression = new AnalyzeExpression(allowPaths, context, allowSystemFields, this);
+    expr.accept(analyzeExpression);
+    expressions.putAll(analyzeExpression.getResolvedFields());
   }
 
   //Walk query and qualify all identifiers
@@ -514,7 +512,7 @@ public class AnalyzeStatement {
 
   //check idents in select, where having order
 
-  class Context {
+  public static class Context {
 
     public Context() {
     }

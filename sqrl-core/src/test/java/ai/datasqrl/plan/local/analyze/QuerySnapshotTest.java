@@ -178,7 +178,10 @@ class QuerySnapshotTest extends AbstractSQRLIT {
       "Orders.newid := SELECT NOW(), STRING_TO_TIMESTAMP(TIMESTAMP_TO_STRING(EPOCH_TO_TIMESTAMP(100))) FROM Orders;",
 "Orders.entries.x := SELECT e.parent.entries.parent.id, f.parent.entries.parent.customerid "
     + "FROM _.parent.entries e JOIN e.parent.entries.parent.entries f "
-    + "WHERE f.parent.entries.parent.id = 2;"
+    + "WHERE f.parent.entries.parent.id = 2;",
+    "CustomerWithPurchase := SELECT * FROM Customer\n"
+        + "WHERE customerid IN (SELECT customerid FROM Orders.entries.parent)\n"
+        + "ORDER BY name;"
 
 
 

@@ -96,6 +96,22 @@ public class QualifyIdentifiers extends SqlShuttle {
   public class QualifyExpression extends SqlShuttle {
 
     @Override
+    public SqlNode visit(SqlCall call) {
+      switch (call.getKind()) {
+
+        case SELECT:
+        case UNION:
+        case INTERSECT:
+        case EXCEPT:
+          QualifyIdentifiers qualifyIdentifiers = new QualifyIdentifiers(analysis);
+
+          return call.accept(qualifyIdentifiers);
+
+      }
+      return super.visit(call);
+    }
+
+    @Override
     public SqlNode visit(SqlIdentifier id) {
       if (analysis.getExpressions().containsKey(id)) {
         return analysis.getExpressions().get(id).getAliasedIdentifier(id);
