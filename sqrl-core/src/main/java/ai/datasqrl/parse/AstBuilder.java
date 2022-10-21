@@ -206,8 +206,6 @@ class AstBuilder
         return SqlStdOperatorTable.GREATER_THAN;
       case SqlBaseLexer.GTE:
         return SqlStdOperatorTable.GREATER_THAN_OR_EQUAL;
-      case SqlBaseLexer.IS:
-        return SqlStdOperatorTable.IS_NOT_NULL;
     }
 
     throw new IllegalArgumentException("Unsupported operator: " + symbol.getText());

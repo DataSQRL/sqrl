@@ -181,7 +181,13 @@ class QuerySnapshotTest extends AbstractSQRLIT {
     + "WHERE f.parent.entries.parent.id = 2;",
     "CustomerWithPurchase := SELECT * FROM Customer\n"
         + "WHERE customerid IN (SELECT customerid FROM Orders.entries.parent)\n"
-        + "ORDER BY name;"
+        + "ORDER BY name;",
+    "CustomerNames := SELECT *\n"
+        + "FROM Customer\n"
+        + "ORDER BY (CASE\n"
+        + "    WHEN name IS NULL THEN email\n"
+        + "    ELSE name\n"
+        + "END);"
 
 
 
