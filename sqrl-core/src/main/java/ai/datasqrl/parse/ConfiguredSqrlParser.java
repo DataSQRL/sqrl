@@ -26,6 +26,7 @@ public class ConfiguredSqrlParser {
   }
 
   public ScriptNode parse(String script) {
+    System.out.println(script);
     return parser.createScript(script, parsingOptions);
   }
 
