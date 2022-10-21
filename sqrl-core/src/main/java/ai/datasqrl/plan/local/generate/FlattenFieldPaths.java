@@ -129,29 +129,21 @@ public class FlattenFieldPaths extends SqlShuttle {
 
   @Override
   public SqlNode visit(SqlIdentifier id) {
-    //all identifiers are fully qualified
     ResolvedTableField tableField = analyzeStatement.getExpressions().get(id);
-
-    Preconditions.checkNotNull(tableField, id);
+    //not all fields are qualified, such as COUNT(*)
     if (tableField == null) {
-      System.out.println();
+      return id;
     }
-    try {
-      if (tableField.getPath().size() > 1) {
+    if (tableField.getPath().size() > 1) {
+      //add as left join, give it an alias
+      //replace token with new one
+      SqlIdentifier identifier = tableField.getAliasedIdentifier(id);
 
-        //add as left join, give it an alias
-        //replace token with new one
-        SqlIdentifier identifier = tableField.getAliasedIdentifier(id);
-
-        String alias = createLeftJoin(identifier
-            .names.subList(0, identifier.names.size() - 1), identifier);
-        List<String> newName = List.of(alias,
-            identifier.names.get(identifier.names.size() - 1));
-        return new SqlIdentifier(newName, id.getParserPosition());
-      }
-
-    } catch (Exception e) {
-      e.printStackTrace();
+      String alias = createLeftJoin(identifier
+          .names.subList(0, identifier.names.size() - 1), identifier);
+      List<String> newName = List.of(alias,
+          identifier.names.get(identifier.names.size() - 1));
+      return new SqlIdentifier(newName, id.getParserPosition());
     }
 
     return super.visit(id);
