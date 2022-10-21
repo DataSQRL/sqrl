@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -124,10 +125,11 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled //TODO: need to fix function in Flink
   public void joinTest() {
     ScriptBuilder builder = new ScriptBuilder();
-    builder.add("IMPORT ecommerce-data.Customer TIMESTAMP (_ingest_time - INTERVAL 1 MONTH) as updateTime"); //we fake that customer updates happen before orders
-    builder.add("IMPORT ecommerce-data.Orders TIMESTAMP _ingest_time as rowtime");
+    builder.add("IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
+    builder.add("IMPORT ecommerce-data.Orders TIMESTAMP \"time\" AS rowtime");
 
     //Normal join
     builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");
@@ -142,7 +144,6 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void aggregateTest() {
     ScriptBuilder builder = example.getImports();
     builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_hour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;\n");
@@ -153,7 +154,6 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void filterTest() {
     ScriptBuilder builder = example.getImports();
 
@@ -184,6 +184,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
       queries.add(new APIQuery(tblName.substring(0,tblName.indexOf(Name.NAME_DELIMITER)), rel));
     });
     OptimizedDAG dag = dagPlanner.plan(relSchema,queries, session.getPipeline());
+    snapshot.addContent(dag);
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     Job job = executor.execute(physicalPlan);
@@ -196,9 +197,10 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
       ResultSet resultSet = jdbc.getConnection().createStatement()
               .executeQuery(sqlQuery);
       results.put(query.getNameId(),resultSet);
-      //Since Flink execution order is non-deterministic we need to sort results
-      String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,Set.of("_uuid","_ingest_time"))).sorted().collect(Collectors.joining(System.lineSeparator()));
-      snapshot.addContent(content,query.getNameId());
+      //Since Flink execution order is non-deterministic we need to sort results and remove uuid and ingest_time which change with every invocation
+      String content = Arrays.stream(ResultSetPrinter.toLines(resultSet, s -> Stream.of("_uuid", "_ingest_time").noneMatch(p -> s.startsWith(p))))
+              .sorted().collect(Collectors.joining(System.lineSeparator()));
+      snapshot.addContent(content,query.getNameId(),"data");
     }
     snapshot.createOrValidate();
   }

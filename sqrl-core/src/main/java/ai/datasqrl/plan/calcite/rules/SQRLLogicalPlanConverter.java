@@ -173,7 +173,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                                   Pair<JoinTable,RelBuilder> startingBase, JoinRelType joinType, boolean isLeaf) {
         Preconditions.checkArgument(joinType==JoinRelType.INNER || joinType == JoinRelType.LEFT);
         RelBuilder builder;
-        List<AddedColumn> columns2Add;
         int offset;
         JoinTable joinTable;
         if (startingBase!=null && startingBase.getKey().getTable().equals(vtable)) {

@@ -1,5 +1,6 @@
 package ai.datasqrl.util;
 
+import com.google.common.base.Predicates;
 import lombok.SneakyThrows;
 
 import java.io.ByteArrayOutputStream;
@@ -7,17 +8,16 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.util.Collections;
-import java.util.Set;
+import java.util.function.Predicate;
 
 public class ResultSetPrinter {
 
   public static int print(ResultSet resultSet, PrintStream out) {
-    return print(resultSet, out, Collections.EMPTY_SET);
+    return print(resultSet, out, Predicates.alwaysTrue());
   }
 
   @SneakyThrows
-  public static int print(ResultSet resultSet, PrintStream out, Set<String> filterColumns) {
+  public static int print(ResultSet resultSet, PrintStream out, Predicate<String> filterColumns) {
     final ResultSetMetaData metaData = resultSet.getMetaData();
     final int columnCount = metaData.getColumnCount();
     int size = 0;
@@ -26,7 +26,7 @@ public class ResultSetPrinter {
       size++;
       int cols = 0;
       for (int i = 1; i <= columnCount; i++) {
-        if (filterColumns.contains(metaData.getColumnName(i))) continue;
+        if (!filterColumns.test(metaData.getColumnName(i))) continue;
         if (cols++ > 0) out.print(", ");
         out.print(resultSet.getObject(i));
       }
@@ -34,14 +34,14 @@ public class ResultSetPrinter {
     return size;
   }
 
-  public static String toString(ResultSet resultSet, Set<String> filterColumns) {
+  public static String toString(ResultSet resultSet, Predicate<String> filterColumns) {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     PrintStream ps = new PrintStream(os);
     print(resultSet,ps,filterColumns);
     return os.toString(StandardCharsets.UTF_8);
   }
 
-  public static String[] toLines(ResultSet resultSet, Set<String> filterColumns) {
+  public static String[] toLines(ResultSet resultSet, Predicate<String> filterColumns) {
     return toString(resultSet,filterColumns).split("\\R");
   }
 }

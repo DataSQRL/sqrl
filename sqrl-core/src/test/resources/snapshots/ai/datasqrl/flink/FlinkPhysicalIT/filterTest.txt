@@ -1,0 +1,25 @@
+>>>historicorders$12-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+    LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+>>>recentorders$14-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+    LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+>>>historicorders-lp-database
+LogicalFilter(condition=[<=(NOW(), +($4, 157766400000:INTERVAL SECOND))])
+  LogicalTableScan(table=[[historicorders$12]])
+
+>>>recentorders-lp-database
+LogicalFilter(condition=[<=(NOW(), +($4, 2678400000:INTERVAL SECOND))])
+  LogicalTableScan(table=[[recentorders$14]])
+
+>>>historicorders-data
+10007140, 1000107, 2022-05-19 02:28:39.553244
+10007543, 1000101, 2022-05-19 01:29:39.553244
+10008231, 1000121, 2022-05-19 02:16:39.553244
+10008434, 1000107, 2022-05-19 01:45:39.553244
+>>>recentorders-data
+

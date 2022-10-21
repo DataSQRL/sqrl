@@ -662,13 +662,14 @@ public class Resolve {
     //self-joins (including nested self-joins) as well as infer primary keys,
     //table types, and timestamps in the process
 
-    if (op.statementKind == StatementKind.DISTINCT_ON) {
-      //Get all field names from relnode
-      fieldNames = relNode.getRowType().getFieldNames();
-    }
+
     //TODO: extract execution stage preference from hints if present
     Supplier<RelBuilder> relBuilderFactory = getRelBuilderFactory(env);
     AnnotatedLP prel = SQRLLogicalPlanConverter.findCheapest(relNode, env.session.pipeline, relBuilderFactory);
+    if (op.statementKind == StatementKind.DISTINCT_ON) {
+      //Get all field names from relnode
+      fieldNames = prel.relNode.getRowType().getFieldNames();
+    }
     prel = prel.postProcess(relBuilderFactory.get(),fieldNames);
 //    System.out.println("LP$3: \n" + prel.getRelNode().explain());
 

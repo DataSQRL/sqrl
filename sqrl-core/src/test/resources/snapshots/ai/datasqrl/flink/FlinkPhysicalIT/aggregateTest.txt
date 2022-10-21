@@ -1,0 +1,30 @@
+>>>orderagg1$12-lp-stream
+LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
+  LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION]]
+    LogicalProject(customer=[$3], bucket=[round_to_hour($4)])
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+        LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+>>>orderagg2$14-lp-stream
+LogicalProject(bucket=[$0], customer=[$1], order_count=[$2])
+  LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION]]
+    LogicalProject(bucket=[round_to_hour($4)], customer=[$3])
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+        LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+>>>orderagg1-lp-database
+LogicalTableScan(table=[[orderagg1$12]])
+
+>>>orderagg2-lp-database
+LogicalTableScan(table=[[orderagg2$14]])
+
+>>>orderagg1-data
+1000101, 2022-05-19 01:59:59.999, 1
+1000107, 2022-05-19 01:59:59.999, 1
+1000107, 2022-05-19 02:59:59.999, 1
+1000121, 2022-05-19 02:59:59.999, 1
+>>>orderagg2-data
+2022-05-19 01:59:59.999, 1000101, 1
+2022-05-19 01:59:59.999, 1000107, 1
+2022-05-19 02:59:59.999, 1000107, 1
+2022-05-19 02:59:59.999, 1000121, 1

@@ -26,6 +26,8 @@ public class OptimizedDAG {
 
   public interface MaterializeSink {
 
+    public String getName();
+
   }
 
   @Value
@@ -41,12 +43,16 @@ public class OptimizedDAG {
       this(table.getNameId(),table.getNumPrimaryKeys(),table.getRowType(),timestampIdx);
     }
 
+    @Override
+    public String getName() {
+      return getNameId();
+    }
   }
 
   @Value
-  public static class StreamSink implements MaterializeSink {
+  public static class ExternalSink implements MaterializeSink {
 
-
+    String name;
 
   }
 

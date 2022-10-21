@@ -14,7 +14,6 @@ import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.TestRelWriter;
 import ai.datasqrl.util.data.C360;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -252,6 +251,7 @@ public class ResolveTest extends AbstractSQRLIT {
     builder.add("Customer.recentOrders := SELECT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
 //    builder.add("Customer.orderAgg := SELECT COUNT(d.id) FROM _.recentOrders d");
     process(builder.toString());
+    validateQueryTable("customer", TableType.TEMPORAL_STATE,6, 1, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
     validateQueryTable("recentOrders", TableType.TEMPORAL_STATE,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
 //    validateQueryTable("orderAgg", TableType.TEMPORAL_STATE,3, 2, TimestampTest.fixed(2));
   }
@@ -349,7 +349,7 @@ public class ResolveTest extends AbstractSQRLIT {
                                   PullupTest pullupTest) {
     CalciteSchema relSchema = resolvedDag.getRelSchema();
     QueryRelationalTable table = getLatestTable(relSchema,tableName,QueryRelationalTable.class).get();
-    snapshot.addContent(TestRelWriter.explain(table.getRelNode()),tableName,"lp");
+    snapshot.addContent(table.getRelNode(),tableName,"lp");
     assertEquals(tableType, table.getType(), "table type");
     assertEquals(numPrimaryKeys, table.getNumPrimaryKeys(), "primary key size");
     assertEquals(numCols, table.getRowType().getFieldCount(), "field count");

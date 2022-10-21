@@ -1,8 +1,7 @@
 >>>entrycount-lp
 LogicalProject(_uuid=[$0], _idx=[$6], price=[-(*($8, $9), $10)], _ingest_time=[$1], time=[$4])
   LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
-    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
-      LogicalTableScan(table=[[orders$q$2]])
+    LogicalTableScan(table=[[orders$q$2]])
     Uncollect
       LogicalProject($f0=[$cor0.entries])
         LogicalValues(tuples=[[{ 0 }]])

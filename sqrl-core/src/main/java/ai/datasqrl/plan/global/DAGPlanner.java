@@ -26,9 +26,11 @@ import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.tools.RelBuilder;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static ai.datasqrl.plan.calcite.OptimizationStage.*;
+import static ai.datasqrl.plan.calcite.OptimizationStage.READ_DAG_STITCHING;
+import static ai.datasqrl.plan.calcite.OptimizationStage.WRITE_DAG_STITCHING;
 
 @AllArgsConstructor
 public class DAGPlanner {
@@ -40,10 +42,10 @@ public class DAGPlanner {
         List<QueryRelationalTable> queryTables = CalciteUtil.getTables(relSchema, QueryRelationalTable.class);
 
         //Assign timestamps to imports which should propagate and set all remaining timestamps
-        StreamUtil.filterByClass(queryTables, ProxyImportRelationalTable.class).forEach(this::fixTimestamp);
+        StreamUtil.filterByClass(queryTables, ProxyImportRelationalTable.class).forEach(this::finalizeImportTable);
         Preconditions.checkArgument(queryTables.stream().allMatch(table -> !table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp()));
 
-        //Plan API queries
+        //Plan API queries and find all tables that need to be materialized
         List<OptimizedDAG.ReadQuery> readDAG = new ArrayList<>();
         VisitTableScans tableScanVisitor = new VisitTableScans();
         for (APIQuery query : queries) {
@@ -51,7 +53,7 @@ public class DAGPlanner {
             RelNode relNode = APIQueryRewriter.rewrite(planner.getRelBuilder(),query.getRelNode());
             //Rewrite query
             AnnotatedLP rewritten = SQRLLogicalPlanConverter.convert(relNode, pipeline.getStage(ExecutionEngine.Type.DATABASE).get(),
-                    () -> planner.getRelBuilder());
+                    getRelBuilderFactory());
             relNode = rewritten.getRelNode();
             relNode = planner.transform(READ_DAG_STITCHING,relNode);
             relNode.accept(tableScanVisitor);
@@ -61,12 +63,13 @@ public class DAGPlanner {
         Preconditions.checkArgument(tableScanVisitor.scanTables.stream().allMatch(t -> t instanceof VirtualRelationalTable));
         Set<VirtualRelationalTable> tableSinks = StreamUtil.filterByClass(tableScanVisitor.scanTables,VirtualRelationalTable.class).collect(Collectors.toSet());
 
+
         List<OptimizedDAG.MaterializeQuery> writeDAG = new ArrayList<>();
         for (VirtualRelationalTable dbTable : tableSinks) {
             RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
             //Shred the table if necessary before materialization
             AnnotatedLP processedRel = SQRLLogicalPlanConverter.convert(scanTable,pipeline.getStage(ExecutionEngine.Type.STREAM).get(),
-                    () -> planner.getRelBuilder());
+                    getRelBuilderFactory());
             processedRel = processedRel.postProcess(planner.getRelBuilder(), dbTable.getRowType().getFieldNames());
             RelNode expandedScan = processedRel.getRelNode();
             //Expand to full tree
@@ -86,15 +89,19 @@ public class DAGPlanner {
                     expandedScan));
         }
 
-        readDAG = readDAG.stream().map( q -> {
-            RelNode newStitch = planner.transform(READ2WRITE_STITCHING, q.getRelNode());
-            return new OptimizedDAG.ReadQuery(q.getQuery(), newStitch);
-        }).collect(Collectors.toList());
+//        readDAG = readDAG.stream().map( q -> {
+//            RelNode newStitch = planner.transform(READ2WRITE_STITCHING, q.getRelNode());
+//            return new OptimizedDAG.ReadQuery(q.getQuery(), newStitch);
+//        }).collect(Collectors.toList());
 
         return new OptimizedDAG(writeDAG,readDAG);
     }
 
-    private void fixTimestamp(ProxyImportRelationalTable table) {
+    private Supplier<RelBuilder> getRelBuilderFactory() {
+        return () -> planner.getRelBuilder();
+    }
+
+    private void finalizeImportTable(ProxyImportRelationalTable table) {
         // Determine timestamp
         if (!table.getTimestamp().hasFixedTimestamp()) {
             table.getTimestamp().getBestCandidate().fixAsTimestamp();

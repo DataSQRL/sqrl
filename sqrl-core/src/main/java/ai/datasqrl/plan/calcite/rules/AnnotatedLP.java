@@ -279,7 +279,7 @@ public class AnnotatedLP implements RelHolder {
 
         Preconditions.checkArgument(index<=input.getFieldLength() && remapping.size() == index);
         IndexMap remap = IndexMap.of(remapping);
-        ContinuousIndexMap updatedIndexMap = input.select.remap(remap);
+        ContinuousIndexMap updatedSelect = input.select.remap(remap);
         List<RexNode> projects = new ArrayList<>(input.getFieldLength());
         RelDataType rowType = input.relNode.getRowType();
         remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(),e.getValue()))
@@ -289,14 +289,14 @@ public class AnnotatedLP implements RelHolder {
                 });
         List<String> updatedFieldNames = Arrays.asList(new String[projects.size()]);
         for (int i = 0; i < fieldNames.size(); i++) {
-            updatedFieldNames.set(updatedIndexMap.map(i),fieldNames.get(i));
+            updatedFieldNames.set(updatedSelect.map(i),fieldNames.get(i));
         }
         relBuilder.push(input.relNode);
         relBuilder.project(projects, updatedFieldNames);
         RelNode relNode = relBuilder.build();
 
         return new AnnotatedLP(relNode,input.type,input.primaryKey.remap(remap),
-                input.timestamp.remapIndexes(remap), updatedIndexMap, input.exec, null, input.numRootPks,
+                input.timestamp.remapIndexes(remap), updatedSelect, input.exec, null, input.numRootPks,
                 input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap));
     }
 
