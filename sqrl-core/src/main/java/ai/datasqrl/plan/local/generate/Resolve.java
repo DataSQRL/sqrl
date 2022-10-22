@@ -813,16 +813,29 @@ public class Resolve {
     Multiplicity multiplicity =
         joinDeclarationFactory.deriveMultiplicity(op.relNode);
 
-    SqlNode node = RelToSql.convertToSqlNode(op.relNode);
-    convertToSelectStar(env, op, op.getStatement().getNamePath().popLast()
-            .stream().map(e -> e.getCanonical()).collect(Collectors.toList()),
-        node, table.get());
+//    SqlNode node = RelToSql.convertToSqlNode(op.relNode);
+//    convertToSelectStar(env, op, op.getStatement().getNamePath().popLast()
+//            .stream().map(e -> e.getCanonical()).collect(Collectors.toList()),
+//        node, table.get());
+    SqlNode node = pullWhereIntoJoin(op.getQuery());
 
     env.variableFactory.addJoinDeclaration(op.statement.getNamePath(), table.get(),
         toTable, multiplicity, node);
 
 //    env.fieldMap.put(relationship, relationship.getName().getCanonical());
 //    env.resolvedJoinDeclarations.put(relationship, joinDeclaration);
+  }
+
+  private SqlNode pullWhereIntoJoin(SqlNode query) {
+    if (query instanceof SqlSelect) {
+      SqlSelect select = (SqlSelect) query;
+      if (select.getWhere() != null) {
+        SqlJoin join = (SqlJoin) select.getFrom();
+        FlattenTablePaths.addJoinCondition(join, select.getWhere());
+      }
+      return select.getFrom();
+    }
+    return query;
   }
 
   private void convertToSelectStar(Env env, StatementOp op, List<String> assignmentPath,

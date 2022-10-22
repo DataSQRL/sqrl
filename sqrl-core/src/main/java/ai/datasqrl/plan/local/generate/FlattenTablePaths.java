@@ -151,7 +151,7 @@ public class FlattenTablePaths extends SqlShuttle {
 
         SqlNode condition = createCondition(firstAlias, t.getAlias(), from, to);
 
-        pullupStack.push(condition);
+//        pullupStack.push(condition);
       }
     }
 
