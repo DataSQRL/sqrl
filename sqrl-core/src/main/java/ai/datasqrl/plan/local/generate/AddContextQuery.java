@@ -57,7 +57,7 @@ public class AddContextQuery {
           SqlStdOperatorTable.AS.createCall(
               SqlParserPos.ZERO,
               ppk,
-              new SqlIdentifier(List.of("_" + alias + "$" + i), SqlParserPos.ZERO)
+              new SqlIdentifier(List.of(alias), SqlParserPos.ZERO)
           ));
     }
 

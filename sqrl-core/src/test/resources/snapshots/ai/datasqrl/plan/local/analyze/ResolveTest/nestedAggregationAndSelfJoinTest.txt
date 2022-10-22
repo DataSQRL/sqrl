@@ -1,7 +1,7 @@
 >>>total-lp
-LogicalProject(__uuid$0=[$0], price=[$2], num=[$3], discount=[$4], time=[$1])
+LogicalProject(_uuid=[$0], price=[$2], num=[$3], discount=[$4], time=[$1])
   LogicalAggregate(group=[{0, 3}], price=[SUM($1)], num=[COUNT()], discount=[SUM($2)]) hints[TumbleAggregationHint options:[5, INSTANT]]
-    LogicalProject(__uuid$0=[$0], $f1=[-(*($8, $9), $10)], discount=[$10], time=[$4])
+    LogicalProject(_uuid=[$0], $f1=[-(*($8, $9), $10)], discount=[$10], time=[$4])
       LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
         LogicalTableScan(table=[[orders$q$2]])
         Uncollect
@@ -16,7 +16,7 @@ LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], time=[$4], price=[$7], num=
 
 >>>orders_by_day-lp
 LogicalAggregate(group=[{0, 1}], total_price=[SUM($2)], total_num=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION]]
-  LogicalProject(_customerid$0=[$6], day=[round_to_day($3)], price=[$4], num=[$5])
+  LogicalProject(customerid=[$6], day=[round_to_day($3)], price=[$4], num=[$5])
     LogicalJoin(condition=[=($1, $6)], joinType=[inner]) hints[TemporalJoinHint options:[3, 2, 0]]
       LogicalTableScan(table=[[ordersinline$q$12]])
       LogicalFilter(condition=[=($6, 1)])

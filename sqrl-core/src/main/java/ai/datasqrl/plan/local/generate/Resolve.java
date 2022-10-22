@@ -443,6 +443,14 @@ public class Resolve {
     node = flattenTablePaths.accept(node);
     System.out.println("Flatten Tables \n" +node + "\n");
 
+    analyzeStatement = new AnalyzeStatement(env.relSchema, assignmentPath);
+    analyzeStatement.accept(node);
+
+    ReplaceWithVirtualTable toVirtualTable = new ReplaceWithVirtualTable(analyzeStatement);
+    node = toVirtualTable.accept(node);
+
+    System.out.println("To vt Tables \n" +node + "\n");
+
 
 //    analyzeStatement = new AnalyzeStatement(env.relSchema, assignmentPath);
 //    analyzeStatement.accept(node);
@@ -455,7 +463,7 @@ public class Resolve {
     final SqlNode stage1b = node;
 
     final SqlNode stage2 = context.map(c -> new RenameSelfInTopQuery(c.getNameId()).accept(stage1b))
-        .orElse(stage1);
+        .orElse(node);
 
     SqlNode finalStage = stage2;
 
@@ -484,6 +492,7 @@ public class Resolve {
 //
       rewritten = new AddContextQuery(revalidate, context).accept(rewritten);
 
+      System.out.println(rewritten);
       //Skip this for joins, we'll add the hints later when we reconstruct the node from the relnode
       // Hints don't carry over when moving from rel -> sqlnode
       if (op.getStatementKind() != StatementKind.JOIN) {

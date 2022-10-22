@@ -349,7 +349,7 @@ public class StdTimeLibraryImpl {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(), DataTypes.BIGINT());
+      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.BIGINT());
     }
   }
 

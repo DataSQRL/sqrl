@@ -1,6 +1,6 @@
 Orders.entries.x := SELECT _.parent.id, _.discount FROM _ AS x;
 
-LogicalProject(_id$0=[$0], __idx$1=[$1], id=[$12], discount=[$5])
+LogicalProject(id=[$0], _idx=[$1], id0=[$12], discount=[$5])
   LogicalJoin(condition=[=($0, $12)], joinType=[left])
     LogicalJoin(condition=[true], joinType=[default])
       LogicalTableScan(table=[[entries$13]])
@@ -8,7 +8,7 @@ LogicalProject(_id$0=[$0], __idx$1=[$1], id=[$12], discount=[$5])
     LogicalTableScan(table=[[orders$12]])
 
 
-SELECT "entries$13"."id" AS "_id$0", "entries$13"."_idx" AS "__idx$1", "orders$12"."id", "entries$13"."discount"
+SELECT "entries$13"."id", "entries$13"."_idx", "orders$12"."id" AS "id0", "entries$13"."discount"
 FROM "entries$13"
  DEFAULT JOIN "entries$13" AS "entries$130" ON TRUE
  LEFT JOIN "orders$12" ON "entries$13"."id" = "orders$12"."id"
