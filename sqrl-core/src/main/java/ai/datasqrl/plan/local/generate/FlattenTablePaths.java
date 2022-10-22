@@ -142,8 +142,6 @@ public class FlattenTablePaths extends SqlShuttle {
         );
         currentAlias = nextAlias;
       }
-      System.out.println();
-
       //Create condition. It will be:
       // first alias's pk = first expanded table pk
       if (resolve instanceof RelativeResolvedTable) {
@@ -154,12 +152,9 @@ public class FlattenTablePaths extends SqlShuttle {
         SqlNode condition = createCondition(firstAlias, t.getAlias(), from, to);
 
         pullupStack.push(condition);
-        return n;
       }
-
-
-      return n;
     }
+
 
     return n;
   }

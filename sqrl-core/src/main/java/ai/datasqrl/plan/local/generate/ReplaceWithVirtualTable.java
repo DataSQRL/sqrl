@@ -7,15 +7,18 @@ import ai.datasqrl.plan.local.generate.AnalyzeStatement.Resolved;
 import ai.datasqrl.plan.local.generate.AnalyzeStatement.SingleTable;
 import ai.datasqrl.schema.Relationship;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
-import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 
 public class ReplaceWithVirtualTable extends SqlShuttle {
 
@@ -31,7 +34,6 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
   public SqlNode accept(SqlNode node) {
 
     SqlNode result = node.accept(this);
-
     Preconditions.checkState(pullup.isEmpty());
     return result;
   }
@@ -40,7 +42,7 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
   public SqlNode visit(SqlCall call) {
     switch (call.getKind()) {
       case SELECT:
-        SqlSelect select = (SqlSelect) call;
+        SqlSelect select = (SqlSelect) super.visit(call);
         while (!pullup.isEmpty()) {
           SqlNode condition = pullup.pop();
 
@@ -48,13 +50,21 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
         }
         return select;
       case JOIN:
-        SqlJoin join = (SqlJoin) call;
-        while (!pullup.isEmpty()) {
+        //Any right joins that are bushy don't need to pull up identifiers.
+
+        SqlJoin join = (SqlJoin) super.visit(call);
+        //if right is a bushy tree, we don't need to add the conditions (done in flattentablepaths)
+//        if (join.getRight() instanceof SqlJoin) {
+//          pullup.clear();
+//        }
+
+//        while (!pullup.isEmpty()) {
+        if (!pullup.isEmpty()) {
           SqlNode condition = pullup.pop();
           FlattenTablePaths.addJoinCondition(join, condition);
         }
 
-        return super.visit(call);
+        return join;
     }
 
     return super.visit(call);
@@ -88,8 +98,9 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
       Preconditions.checkState(resolveRel.getFields().size() == 1);
       Relationship relationship = resolveRel.getFields().get(0);
       if (relationship.getNode() != null) {
-        //todo: join expansion
+
         return super.visit(id);
+//        return expandJoinDeclaration(resolveRel, id, relationship, relationship.getNode());
       }
       //create join condition to pull up
 //      FlattenTablePaths.createCondition()
@@ -105,6 +116,86 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
     }
 
     return super.visit(id);
+  }
+
+  private SqlNode expandJoinDeclaration(RelativeResolvedTable resolveRel, SqlIdentifier id,
+      Relationship relationship, SqlNode node) {
+    //this could be made cleaner
+    String alias = this.analysis.getTableAlias().get(id);
+    if (node instanceof SqlSelect) {
+      SqlSelect select = (SqlSelect) node;
+
+      //simple, return from condition
+      if (select.getFetch() == null && (select.getHints() ==null||select.getHints().getList().isEmpty())) {
+        //append condition
+        SqlJoin join = (SqlJoin) select.getFrom();
+        SqlIdentifier identifier = (SqlIdentifier) join.getRight();
+
+        join.setRight(SqlStdOperatorTable.AS.createCall(
+            SqlParserPos.ZERO,
+            join.getRight(),
+            new SqlIdentifier(alias, SqlParserPos.ZERO)
+        ));
+
+        String toReplace = identifier.names.get(0);
+        join = (SqlJoin) join.accept(new SqlShuttle() {
+          @Override
+          public SqlNode visit(SqlIdentifier id) {
+            if (id.names.size() == 2) {
+              //todo: actually walk tree instead of just guessing
+              if (id.names.get(0).equalsIgnoreCase(toReplace)) {
+                List<String> names = new ArrayList<>(id.names);
+                names.set(0, alias);
+                return new SqlIdentifier(names, id.getParserPosition());
+              }
+            }
+            return super.visit(id);
+          }
+        });
+
+
+//        SqlCall call = SqlStdOperatorTable.EQUALS.createCall(SqlParserPos.ZERO,
+//            new SqlIdentifier(List.of(alias,
+//                SqlValidatorUtil.getAlias(select.getSelectList().get(i), i)
+//            ), SqlParserPos.ZERO),
+//            new SqlIdentifier(List.of(resolveRel.getAlias(), pkName), SqlParserPos.ZERO)
+//        );
+//        pullup.push(call);
+
+        //also add a join
+
+        return join;
+      } else {
+        return super.visit(id);
+      }
+//
+//      //Is not simple
+//      if (select.getFetch() != null) {
+//        //todo: get name from first
+//        List<SqlNode> conditions = new ArrayList<>();
+//
+//        for (int i = 0; i < relationship.getFromTable().getVt().getPrimaryKeyNames().size()
+//            && i < relationship.getToTable().getVt().getPrimaryKeyNames().size(); i++) {
+//
+//          String pkName = relationship.getFromTable().getVt().getPrimaryKeyNames().get(i);
+//
+//          SqlCall call = SqlStdOperatorTable.EQUALS.createCall(SqlParserPos.ZERO,
+//              new SqlIdentifier(List.of(alias,
+//                  SqlValidatorUtil.getAlias(select.getSelectList().get(i), i)
+//                  ), SqlParserPos.ZERO),
+//              new SqlIdentifier(List.of(resolveRel.getAlias(), pkName), SqlParserPos.ZERO)
+//          );
+//          conditions.add(call);
+//        }
+//        SqlNode condition = SqlNodeUtil.and(conditions);
+//
+//        this.pullup.push(condition);
+//        return node;
+//      }
+
+    }
+
+    return node;
   }
 
 }
