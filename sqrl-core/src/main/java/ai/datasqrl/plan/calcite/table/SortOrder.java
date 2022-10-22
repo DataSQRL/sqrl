@@ -33,7 +33,7 @@ public class SortOrder implements PullupOperator {
     }
 
     public RelBuilder addTo(RelBuilder relBuilder) {
-        relBuilder.sort(collation);
+        if (!isEmpty()) relBuilder.sort(collation);
         return relBuilder;
     }
 

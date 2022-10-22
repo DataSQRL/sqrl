@@ -105,10 +105,9 @@ public class AnnotatedLP implements RelHolder {
         ExecutionAnalysis newExec = exec;
         SortOrder newSort = sort;
         if (!topN.isDistinct() && (!topN.hasPartition() || !topN.hasLimit())) {
-            assert topN.hasCollation();
             RelCollation collation = topN.getCollation();
             if (topN.hasLimit()) { //It's not partitioned, so straight forward order and limit
-                relBuilder.sort(collation);
+                if (topN.hasCollation()) relBuilder.sort(collation);
                 relBuilder.limit(0, topN.getLimit());
                 newExec = exec.require(EngineCapability.GLOBAL_SORT);
             } else { //Lift up sort and prepend partition (if any)
