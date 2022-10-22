@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.local.generate;
+package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;

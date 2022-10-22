@@ -1,10 +1,11 @@
-package ai.datasqrl.plan.local.generate;
+package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
-import ai.datasqrl.plan.local.generate.AnalyzeStatement.AbsoluteResolvedTable;
-import ai.datasqrl.plan.local.generate.AnalyzeStatement.RelativeResolvedTable;
-import ai.datasqrl.plan.local.generate.AnalyzeStatement.Resolved;
-import ai.datasqrl.plan.local.generate.AnalyzeStatement.SingleTable;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Resolved;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.SingleTable;
 import ai.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -19,15 +20,16 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 
 public class FlattenTablePaths extends SqlShuttle {
-  private final AnalyzeStatement analysis;
+  private final Analysis analysis;
 
-  public FlattenTablePaths(AnalyzeStatement analysis) {
+  Stack<SqlNode> pullupStack = new Stack<>();
+
+  public FlattenTablePaths(Analysis analysis) {
     this.analysis = analysis;
   }
 
@@ -79,7 +81,6 @@ public class FlattenTablePaths extends SqlShuttle {
     return super.visit(id);
   }
 
-  Stack<SqlNode> pullupStack = new Stack<>();
   @Value
   class ExpandedTable {
     SqlNode table;

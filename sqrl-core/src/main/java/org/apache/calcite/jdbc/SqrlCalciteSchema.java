@@ -16,29 +16,16 @@
  */
 package org.apache.calcite.jdbc;
 
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SQRLTable;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
-import lombok.Getter;
 import org.apache.calcite.schema.Schema;
 
 public class SqrlCalciteSchema extends SimpleCalciteSchema {
-
-  /**
-   * Schema namespace for packages imported but not into the root namespace
-   */
-
-  @Getter
-  private Map<SQRLTable, VirtualRelationalTable> mapping = new HashMap<>();
-
   public SqrlCalciteSchema(Schema schema) {
     super(null, schema, "");
   }
@@ -73,9 +60,5 @@ public class SqrlCalciteSchema extends SimpleCalciteSchema {
     return tables.stream()
         .filter(f->f != null)
         .collect(Collectors.toList());
-  }
-
-  public void addMapping(SQRLTable sqrlTable, VirtualRelationalTable virtualTable) {
-    mapping.put(sqrlTable, virtualTable);
   }
 }

@@ -5,7 +5,6 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.local.HasToTable;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import lombok.Getter;
@@ -34,9 +33,7 @@ import org.apache.calcite.util.Pair;
  *
  */
 @Getter
-public class SQRLTable implements Table, org.apache.calcite.schema.Schema, ScannableTable
-    , CustomColumnResolvingTable, HasToTable
-{
+public class SQRLTable implements Table, org.apache.calcite.schema.Schema, ScannableTable {
 
   @NonNull
   NamePath path;
@@ -156,12 +153,6 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
         r.getFieldList().stream()
             .collect(Collectors.toList()));
   }
-
-  @Override
-  public SQRLTable getToTable() {
-    return this;
-  }
-
 
   @Override
   public Statistic getStatistic() {
@@ -326,74 +317,5 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
       }
     }
     return fields;
-  }
-
-  /**
-   * This can return an empty list if no results are found (eg when trying to resolve an alias)
-   */
-  @Override
-  public List<Pair<RelDataTypeField, List<String>>> resolveColumn(RelDataType relDataType,
-      RelDataTypeFactory relDataTypeFactory, List<String> list) {
-
-    RelDataTypeField field = fullDataType.getField(list.get(0), false, false);
-    if (field == null) {
-      return List.of();
-    }
-    if (list.size() > 1) {
-      RelDataType fieldType = buildDeepType(list);
-      if (fieldType == null) {
-        return List.of();
-      }
-
-      return List.of(Pair.of(
-          fieldType.getField(list.get(0), false, false),
-          list.subList(1, list.size())));
-    }
-
-    return List.of(Pair.of(
-        field,
-        list.subList(1, list.size())));
-  }
-
-  private RelDataType buildDeepType(List<String> columns) {
-    RelDataTypeFactory typeFactory = PlannerFactory.getTypeFactory();
-    FieldInfoBuilder b = new FieldInfoBuilder(typeFactory);
-    if (vt != null) {
-      b.addAll(vt.getRowType().getFieldList());
-    }
-
-    Optional<Field> field = this.getField(Name.system(columns.get(0)));
-    if (field.isEmpty()) {
-      return null;
-    }
-    else if (field.get() instanceof Relationship) {
-      Relationship r = (Relationship)field.get();
-      if (columns.isEmpty()) {
-        return null;
-      }
-      if (columns.size() == 1) {
-        FieldInfoBuilder b2 = new FieldInfoBuilder(typeFactory);
-        b2.addAll(r.getToTable().getVt().getRowType().getFieldList());
-
-        b2.add(r.getName().getDisplay(), b2.build());
-
-        return b2.build();
-      }
-
-      RelDataType newField = r.getToTable().buildDeepType(columns.subList(1, columns.size()));
-
-      if (newField == null) {
-        return null;
-      }
-      b.add(r.getName().getDisplay(), newField);
-
-
-    } else if (field.get() instanceof Column) {
-      if (columns.size() > 1) {
-        return null;
-      }
-      b.add(this.getVt().getRowType().getField(columns.get(0), false, false));
-    }
-    return b.build();
   }
 }

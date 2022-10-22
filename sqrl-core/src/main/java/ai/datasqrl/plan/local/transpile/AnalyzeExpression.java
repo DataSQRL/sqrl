@@ -1,15 +1,14 @@
-package ai.datasqrl.plan.local.generate;
+package ai.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.local.generate.AnalyzeStatement.Context;
-import ai.datasqrl.plan.local.generate.AnalyzeStatement.ResolvedTableField;
-import ai.datasqrl.plan.local.generate.AnalyzeExpression.ExpressionContext;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Context;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTableField;
+import ai.datasqrl.plan.local.transpile.AnalyzeExpression.ExpressionContext;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 
 public class AnalyzeExpression extends SqlBasicVisitor<ExpressionContext> {

@@ -1,10 +1,10 @@
-package ai.datasqrl.plan.local.generate;
+package ai.datasqrl.plan.local.transpile;
 
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import java.util.List;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
@@ -17,9 +17,10 @@ import org.apache.calcite.sql.util.SqlShuttle;
  */
 public class QualifyIdentifiers extends SqlShuttle {
 
-  private final AnalyzeStatement analysis;
 
-  public QualifyIdentifiers(AnalyzeStatement analysis) {
+  private final Analysis analysis;
+
+  public QualifyIdentifiers(Analysis analysis) {
     this.analysis = analysis;
   }
 

@@ -6,7 +6,7 @@ import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.local.generate.ReplaceWithVirtualTable.ExtractRightDeepAlias;
+import ai.datasqrl.plan.local.transpile.ReplaceWithVirtualTable.ExtractRightDeepAlias;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.schema.Relationship;

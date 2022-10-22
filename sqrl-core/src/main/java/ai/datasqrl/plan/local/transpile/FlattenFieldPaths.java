@@ -1,7 +1,7 @@
-package ai.datasqrl.plan.local.generate;
+package ai.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.local.generate.AnalyzeStatement.ResolvedTableField;
-import com.google.common.base.Preconditions;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTableField;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import java.util.ArrayList;
@@ -28,12 +28,11 @@ import org.apache.calcite.util.Litmus;
  */
 public class FlattenFieldPaths extends SqlShuttle {
 
-  private final AnalyzeStatement analyzeStatement;
+  private final Analysis analysis;
   List<ToLeftJoin> left = new ArrayList<>();
 
-  public FlattenFieldPaths(AnalyzeStatement analyzeStatement) {
-
-    this.analyzeStatement = analyzeStatement;
+  public FlattenFieldPaths(Analysis analysis) {
+    this.analysis = analysis;
   }
 
   public SqlNode accept(SqlNode node) {
@@ -46,7 +45,7 @@ public class FlattenFieldPaths extends SqlShuttle {
       case SELECT:
         SqlSelect select = (SqlSelect) node;
 
-        List<SqlNode> expandedSelect = analyzeStatement.expandedSelect.get(select);
+        List<SqlNode> expandedSelect = analysis.expandedSelect.get(select);
         SqlNodeList sel = (SqlNodeList) new SqlNodeList(expandedSelect,
             SqlParserPos.ZERO).accept(this);
         SqlNode where = select.getWhere() != null ? select.getWhere().accept(this) : null;
@@ -94,7 +93,7 @@ public class FlattenFieldPaths extends SqlShuttle {
       case UNION:
       case INTERSECT:
       case EXCEPT:
-        FlattenFieldPaths flattenFieldPaths = new FlattenFieldPaths(this.analyzeStatement);
+        FlattenFieldPaths flattenFieldPaths = new FlattenFieldPaths(this.analysis);
         return flattenFieldPaths.accept(call);
       case AS:
         return SqlStdOperatorTable.AS.createCall(call.getParserPosition(),
@@ -132,7 +131,7 @@ public class FlattenFieldPaths extends SqlShuttle {
 
   @Override
   public SqlNode visit(SqlIdentifier id) {
-    ResolvedTableField tableField = analyzeStatement.getExpressions().get(id);
+    ResolvedTableField tableField = analysis.getExpressions().get(id);
     //not all fields are qualified, such as COUNT(*)
     if (tableField == null) {
       return id;
@@ -188,9 +187,6 @@ public class FlattenFieldPaths extends SqlShuttle {
 
     @Override
     public SqlNode visit(SqlIdentifier id) {
-//      SqlValidatorNamespace ns = getScope().fullyQualify(id).namespace;
-//      ResolvedTableField tableField = analyzeStatement.getExpressions().get(id);
-//      Preconditions.checkNotNull(tableField);
       for (FlattenFieldPaths.ToLeftJoin j : left) {
         if (j.getOldIdentifier()
             .equalsDeep(id, Litmus.IGNORE)) {

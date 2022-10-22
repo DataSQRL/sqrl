@@ -1,11 +1,9 @@
-package ai.datasqrl.plan.local;
+package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.local.AddContextTable.ValidateNoReservedAliases;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;

@@ -1,6 +1,5 @@
-package ai.datasqrl.plan.local.generate;
+package ai.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.config.AbstractPath;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
@@ -56,6 +55,21 @@ public class AnalyzeStatement {
   private Map<SqlNode, SqlNode> aliasedOrder = new HashMap<>();
   private boolean allowSystemFields;
 
+  @Value
+  public static class Analysis {
+    private final SqrlCalciteSchema schema;
+    private final List<String> assignmentPath;
+    private final Optional<SqlIdentifier> selfIdentifier;
+    private final Map<SqlIdentifier, ResolvedTableField> expressions;
+    public Map<SqlIdentifier, Resolved> tableIdentifiers;
+    public Map<SqlNode, String> mayNeedAlias;
+    public Map<SqlSelect, List<SqlNode>> expandedSelect;
+    public Map<SqlNodeList, List<SqlNode>> groupByExpressions;
+    public Map<SqlNode, String> tableAlias;
+    private Map<SqlNode, SqlNode> aliasedOrder;
+    private boolean allowSystemFields;
+  }
+
   public AnalyzeStatement(SqrlCalciteSchema schema, List<String> assignmentPath) {
     this(schema, assignmentPath, false);
   }
@@ -71,9 +85,20 @@ public class AnalyzeStatement {
     }
   }
 
-  public void accept(SqlNode node) {
+  public Analysis accept(SqlNode node) {
     Context context = new Context();
     visit(node, context);
+    return new Analysis(schema,
+        assignmentPath,
+        selfIdentifier,
+        expressions,
+        tableIdentifiers,
+        mayNeedAlias,
+        expandedSelect,
+        groupByExpressions,
+        tableAlias,
+        aliasedOrder,
+        allowSystemFields);
   }
 
   //No contextful single dispatch in SqlNode so we do it manually
