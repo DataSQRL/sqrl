@@ -40,7 +40,7 @@ public class ExecutionAnalysis {
         if (otherNext.isPresent() && next.isPresent() && next.get().equals(otherNext.get())) {
             return new ExecutionAnalysis(next.get());
         }
-        throw new IllegalStateException("Could not combine stages: " + stage + " vs " + other.stage);
+        throw new ExecutionStageException.StageFinding();
     }
 
     public ExecutionAnalysis require(EngineCapability... requiredCapabilities) {
@@ -55,7 +55,7 @@ public class ExecutionAnalysis {
             if (nextStage.get().supportsAll(requiredCapabilities)) return new ExecutionAnalysis(nextStage.get());
             else nextStage = nextStage.get().nextStage();
         }
-        throw new IllegalStateException("Could not find stage that supports capabilities: " + requiredCapabilities);
+        throw new ExecutionStageException.StageFinding();
     }
 
     public ExecutionAnalysis requireRex(Iterable<RexNode> nodes) {

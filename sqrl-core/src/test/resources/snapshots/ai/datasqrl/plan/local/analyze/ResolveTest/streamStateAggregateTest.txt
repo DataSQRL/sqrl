@@ -1,4 +1,4 @@
 >>>agg1-lp
 LogicalAggregate(group=[{4}], order_count=[COUNT()])
-  LogicalTableScan(table=[[ordercustomer$q$11]])
+  LogicalTableScan(table=[[ordercustomer$12]])
 

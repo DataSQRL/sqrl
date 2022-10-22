@@ -35,7 +35,7 @@ public abstract class DAGExpansionRule extends RelOptRule {
       Preconditions.checkArgument(vTable!=null);
       QueryRelationalTable queryTable = vTable.getRoot().getBase();
       if (queryTable.getExecution().isRead()) {
-        Preconditions.checkArgument(!CalciteUtil.isNestedTable(queryTable.getRowType()));
+        Preconditions.checkArgument(!CalciteUtil.hasNesting(queryTable.getRowType()));
         call.transformTo(queryTable.getRelNode());
       }
     }

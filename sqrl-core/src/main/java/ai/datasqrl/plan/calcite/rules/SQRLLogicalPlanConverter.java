@@ -69,12 +69,12 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         for (ExecutionStage stage : pipeline.getStages()) {
             try {
                 AnnotatedLP alp = convert(relNode, stage, relBuilderFactory);
-                ComputeCost cost = ComputeCost.Simple.of(stage.getEngine().getType(),false); //TODO: analyze relNode to determine expensive
+                ComputeCost cost = SimpleCostModel.of(stage.getEngine().getType(),alp);
                 if (cheapestCost==null || cost.compareTo(cheapestCost)<0) {
                     cheapest = alp;
                     cheapestCost = cost;
                 }
-            } catch (Exception e) {}
+            } catch (ExecutionStageException e) {}
         }
         if (cheapest==null) throw new IllegalArgumentException("Could not find stage that can process relation");
         return cheapest;
@@ -97,7 +97,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             relHolder = relHolder.inlineAllPullups(makeRelBuilder());
         }
         if (!allowStageChange && !relHolder.exec.getStage().equals(startStage)) {
-            throw new IllegalStateException("Change execution stage");
+            throw new ExecutionStageException.StageChange();
         }
 
         super.setRelHolder(relHolder);
@@ -608,7 +608,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     throw new IllegalArgumentException("Expected join condition to be equality condition on state's primary key: " + logicalJoin);
                 }
             } else if (joinType==JoinRelType.TEMPORAL) {
-                throw new IllegalArgumentException("Expect one side of the join to be stream and the other temporal state: " + logicalJoin);
+                throw new ExecutionStageException.StageIncompatibility("Expect one side of the join to be stream and the other temporal state: " + logicalJoin);
             }
 
         }
@@ -705,7 +705,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     throw new IllegalArgumentException("Interval joins require time bounds in the join condition: " + logicalJoin);
                 }
             } else if (joinType==JoinRelType.INTERVAL) {
-                throw new IllegalArgumentException("Interval joins are only supported between two streams: " + logicalJoin);
+                throw new ExecutionStageException.StageIncompatibility("Interval joins are only supported between two streams: " + logicalJoin);
             }
         }
 
@@ -716,9 +716,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         Preconditions.checkArgument(joinType == JoinRelType.INNER || joinType == JoinRelType.LEFT, "Unsupported join type: %s", logicalJoin);
         //Default inner join creates a state table
-        RelNode newJoin = relB.push(leftInputF.relNode).push(rightInputF.relNode)
-                .join(joinType, condition).build();
-        return setRelHolder(AnnotatedLP.build(newJoin, TableType.STATE,
+        relB.push(leftInputF.relNode).push(rightInputF.relNode);
+        relB.join(joinType, condition);
+        new JoinCostHint(leftInputF.type,rightInputF.type,eqDecomp.getEqualities().size()).addTo(relB);
+
+        return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STATE,
                 concatPk, TimestampHolder.Derived.NONE, joinedIndexMap,
                 combinedExec).sort(joinedSort).build());
     }
@@ -1035,8 +1037,5 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         Preconditions.checkArgument(limit instanceof RexLiteral);
         return Optional.of(((RexLiteral)limit).getValueAs(Integer.class));
     }
-
-
-
 
 }

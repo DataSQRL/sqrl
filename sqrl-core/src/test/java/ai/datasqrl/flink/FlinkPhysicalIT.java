@@ -125,11 +125,14 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled //TODO: need to fix function in Flink
+  @Disabled //TODO: need to fix function in Flink to make this test deterministic
   public void joinTest() {
     ScriptBuilder builder = new ScriptBuilder();
-    builder.add("IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
-    builder.add("IMPORT ecommerce-data.Orders TIMESTAMP \"time\" AS rowtime");
+    builder.add("IMPORT ecommerce-data.Customer TIMESTAMP (_ingest_time - INTERVAL 1 MONTH) as updateTime"); //we fake that customer updates happen before orders
+    builder.add("IMPORT ecommerce-data.Orders TIMESTAMP _ingest_time AS rowtime");
+
+//    builder.add("IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
+//    builder.add("IMPORT ecommerce-data.Orders TIMESTAMP \"time\" AS rowtime");
 
     //Normal join
     builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid");

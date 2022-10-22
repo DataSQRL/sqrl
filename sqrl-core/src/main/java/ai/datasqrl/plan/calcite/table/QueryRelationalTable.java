@@ -2,7 +2,6 @@ package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.pipeline.ExecutionStage;
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import lombok.Getter;
@@ -107,19 +106,6 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   @Override
   public RelDataType getRowType() {
     return relNode.getRowType();
-  }
-
-  public boolean isPrimaryKey(FieldIndexPath path) {
-    Preconditions.checkArgument(path.size() > 0);
-    if (path.size() == 1) {
-      return path.get(0) < numPrimaryKeys;
-    } else {
-      if (path.getLast() != 0) {
-        return false;
-      }
-      RelDataType type = getField(path.popLast()).getType();
-      return CalciteUtil.isNestedTable(type) && CalciteUtil.isArray(type);
-    }
   }
 
   public RelDataTypeField getField(FieldIndexPath path) {
