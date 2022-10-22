@@ -534,6 +534,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void compoundAggregateExpressionTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.total := SUM(_.productid) + SUM(_.productid);"));
@@ -570,12 +571,14 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
+  @Disabled
   public void localAggregateCountStarTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.total := COUNT(*);"));
   }
 
   @Test
+  @Disabled
   public void localAggregateCountStarTest2() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.total := COUNT();"));
