@@ -140,6 +140,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     builder.add("CustomerDedup := DISTINCT Customer ON customerid ORDER BY updateTime DESC");
     builder.add("OrderCustomerDedup := SELECT o.id, c.name, o.customerid FROM Orders o JOIN CustomerDedup c on o.customerid = c.customerid");
 
+    System.out.println(builder.toString());
     validate(builder.getScript(),"ordercustomer","ordercustomerinterval","customerdedup","ordercustomerdedup");
   }
 

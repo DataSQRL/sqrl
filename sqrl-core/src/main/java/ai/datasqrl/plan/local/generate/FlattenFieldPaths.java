@@ -23,6 +23,9 @@ import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlQualified;
 import org.apache.calcite.util.Litmus;
 
+/**
+ * Adds left joins for field paths
+ */
 public class FlattenFieldPaths extends SqlShuttle {
 
   private final AnalyzeStatement analyzeStatement;

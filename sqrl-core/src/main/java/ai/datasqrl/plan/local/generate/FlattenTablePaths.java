@@ -4,6 +4,7 @@ import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
 import ai.datasqrl.plan.local.generate.AnalyzeStatement.AbsoluteResolvedTable;
 import ai.datasqrl.plan.local.generate.AnalyzeStatement.RelativeResolvedTable;
 import ai.datasqrl.plan.local.generate.AnalyzeStatement.Resolved;
+import ai.datasqrl.plan.local.generate.AnalyzeStatement.SingleTable;
 import ai.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -31,35 +32,12 @@ public class FlattenTablePaths extends SqlShuttle {
   }
 
   public SqlNode accept(SqlNode node) {
-    if (node instanceof SqlSelect) {
-      SqlSelect select = (SqlSelect) node;
-      SqlNode from = select.getFrom().accept(this);
-      while (!pullupStack.isEmpty()) {
-        SqlNode condition = pullupStack.pop();
-        if (from instanceof SqlJoin) {
-          SqlJoin join = (SqlJoin) from;
-          addJoinCondition(join, condition);
-
-        } else {
-          if (select.getWhere() ==null) {
-            select.setWhere(condition);
-          } else {
-            select.setWhere(SqlNodeUtil.and(condition));
-          }
-        }
-      }
-
-      select.setFrom(from);
-      Preconditions.checkState(pullupStack.isEmpty());
-      return node;
-    }
-    //todo UNION
-
-//    throw new RuntimeException("Union, etc, todo");
-    return node;
+    SqlNode result = node.accept(this);;
+    Preconditions.checkState(pullupStack.isEmpty());
+    return result;
   }
 
-  private void addJoinCondition(SqlJoin join, SqlNode condition) {
+  public static void addJoinCondition(SqlJoin join, SqlNode condition) {
     if (join.getCondition() == null) {
       join.setOperand(5, condition);
     } else {
@@ -71,31 +49,34 @@ public class FlattenTablePaths extends SqlShuttle {
   @Override
   public SqlNode visit(SqlCall call) {
     switch (call.getKind()) {
-      case SELECT:
-        SqlSelect select = (SqlSelect) call;
-        //walk only from
-        select.setFrom(select.getFrom().accept(this));
-        return select;
       case JOIN:
-        SqlJoin join = (SqlJoin) super.visit(call);
+        SqlJoin join = (SqlJoin)super.visit(call);
         if (!pullupStack.isEmpty()) {
           SqlNode toAppend = pullupStack.pop();
           addJoinCondition(join, toAppend);
         }
         return join;
       case AS:
-
-        if (call.getOperandList().get(0) instanceof SqlIdentifier &&
-            ((SqlIdentifier) call.getOperandList().get(0)).names.size() > 1
-        ) {
-          ExpandedTable table = expandTable((SqlIdentifier) call.getOperandList().get(0),
-              ((SqlIdentifier) call.getOperandList().get(1)).names.get(0));
-          table.pullupCondition.map(c->pullupStack.push(c));
-          return table.table;
+        //When we rewrite paths, we turn a left tree into a bushy tree and we'll need to add the
+        // alias to the last table. So If we do that, we need to remove this alias or calcite
+        // will end up wrapping it in a subquery. This is for aesthetics so remove it if it causes
+        // problems.
+        if (analysis.getTableIdentifiers().get(call.getOperandList().get(0)) != null) {
+          return call.getOperandList().get(0).accept(this);
         }
+
+
     }
 
     return super.visit(call);
+  }
+
+  @Override
+  public SqlNode visit(SqlIdentifier id) {
+    if (analysis.getTableIdentifiers().get(id) != null) {
+      return expandTable(id);
+    }
+    return super.visit(id);
   }
 
   Stack<SqlNode> pullupStack = new Stack<>();
@@ -107,12 +88,18 @@ public class FlattenTablePaths extends SqlShuttle {
 
   int idx = 0;
 
-  private ExpandedTable expandTable(SqlIdentifier id, String finalAlias) {
+  private SqlNode expandTable(SqlIdentifier id) {
+    String finalAlias = analysis.tableAlias.get(id);
     List<String> suffix;
 
     SqlIdentifier first;
     Resolved resolve = analysis.tableIdentifiers.get(id);
-    if (resolve instanceof AbsoluteResolvedTable) {
+    if (resolve instanceof SingleTable) {
+      suffix = List.of();
+      first = new SqlIdentifier(List.of(
+          id.names.get(0)
+      ), SqlParserPos.ZERO);
+    } else if (resolve instanceof AbsoluteResolvedTable) {
       suffix = id.names.subList(1, id.names.size());
       first = new SqlIdentifier(List.of(
           id.names.get(0)
@@ -164,24 +151,31 @@ public class FlattenTablePaths extends SqlShuttle {
         SQRLTable from = t.getFields().get(0).getFromTable();
         SQRLTable to = t.getFields().get(0).getToTable();
 
-        List<SqlNode> conditions = new ArrayList<>();
-        for (int i = 0; i < from.getVt().getPrimaryKeyNames().size()
-            && i < to.getVt().getPrimaryKeyNames().size(); i++) {
-          String pkName = from.getVt().getPrimaryKeyNames().get(i);
-          SqlCall call = SqlStdOperatorTable.EQUALS.createCall(SqlParserPos.ZERO,
-              new SqlIdentifier(List.of(t.getAlias(), pkName), SqlParserPos.ZERO),
-              new SqlIdentifier(List.of(firstAlias, pkName), SqlParserPos.ZERO)
-              );
-          conditions.add(call);
-        }
-        SqlNode condition = SqlNodeUtil.and(conditions);
-        return new ExpandedTable(n, Optional.of(condition));
+        SqlNode condition = createCondition(firstAlias, t.getAlias(), from, to);
+
+        pullupStack.push(condition);
+        return n;
       }
 
 
-      return new ExpandedTable(n, Optional.empty());
+      return n;
     }
 
-    return new ExpandedTable(n, Optional.empty());
+    return n;
+  }
+
+  public static SqlNode createCondition(String firstAlias, String alias, SQRLTable from, SQRLTable to) {
+    List<SqlNode> conditions = new ArrayList<>();
+    for (int i = 0; i < from.getVt().getPrimaryKeyNames().size()
+        && i < to.getVt().getPrimaryKeyNames().size(); i++) {
+      String pkName = from.getVt().getPrimaryKeyNames().get(i);
+      SqlCall call = SqlStdOperatorTable.EQUALS.createCall(SqlParserPos.ZERO,
+          new SqlIdentifier(List.of(alias, pkName), SqlParserPos.ZERO),
+          new SqlIdentifier(List.of(firstAlias, pkName), SqlParserPos.ZERO)
+      );
+      conditions.add(call);
+    }
+    SqlNode condition = SqlNodeUtil.and(conditions);
+    return condition;
   }
 }

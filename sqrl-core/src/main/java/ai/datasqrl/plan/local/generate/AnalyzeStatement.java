@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.local.generate;
 
+import ai.datasqrl.config.AbstractPath;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
@@ -49,7 +50,8 @@ public class AnalyzeStatement {
   public Map<SqlNode, String> mayNeedAlias = new HashMap<>();
   public Map<SqlSelect, List<SqlNode>> expandedSelect = new HashMap<>();
   public Map<SqlNodeList, List<SqlNode>> groupByExpressions = new HashMap<>();
-//  public Map<SqlNodeList, List<SqlNode>> orderByExpressions = new HashMap<>();
+  public Map<SqlNode, String> tableAlias = new HashMap<>();
+  //  public Map<SqlNodeList, List<SqlNode>> orderByExpressions = new HashMap<>();
 //  public List<SqlNode> uniqueOrderItems = new ArrayList<>();
   private Map<SqlNode, SqlNode> aliasedOrder = new HashMap<>();
   private boolean allowSystemFields;
@@ -113,6 +115,7 @@ public class AnalyzeStatement {
       mayNeedAlias.remove(id);
     }
 
+    tableAlias.put(id, alias);
     return newContext(context, toFields(resolved.getAccessibleFields(), alias)
     );
   }
@@ -330,6 +333,8 @@ public class AnalyzeStatement {
     Context rel = visit(node.getOperandList().get(0), context);
     mayNeedAlias.remove(node.getOperandList().get(0));
 
+
+    tableAlias.put(node.getOperandList().get(0), alias);
     return rel.aliasIdentifiers(alias);
   }
 

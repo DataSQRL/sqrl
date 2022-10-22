@@ -9,7 +9,7 @@ Customer.recent_products := SELECT e.productid, e.product.category AS category,
 
 LogicalSort(sort0=[$0], sort1=[$4], sort2=[$3], dir0=[ASC], dir1=[DESC], dir2=[DESC])
   LogicalAggregate(group=[{0, 1, 2}], quantity=[SUM($3)], num_orders=[COUNT()])
-    LogicalProject(__uuid$0=[$0], productid=[$13], category=[$22], quantity=[$14])
+    LogicalProject(_uuid=[$0], productid=[$13], category=[$22], quantity=[$14])
       LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], id=[$6], _uuid0=[$7], _ingest_time0=[$8], customerid0=[$9], time=[$10], id0=[$11], _idx=[$12], productid=[$13], quantity=[$14], unit_price=[$15], discount=[$16], _uuid1=[$17], _ingest_time1=[$18], productid0=[$19], name0=[$20], description=[$21], category=[$22], id1=[CAST($23):BIGINT], _uuid2=[CAST($24):CHAR(36) CHARACTER SET "UTF-16LE"], _ingest_time2=[CAST($25):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], customerid1=[$26], time0=[CAST($27):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)])
         LogicalJoin(condition=[=($11, $23)], joinType=[inner])
           LogicalJoin(condition=[=($11, $17)], joinType=[left])
@@ -29,7 +29,7 @@ LogicalSort(sort0=[$0], sort1=[$4], sort2=[$3], dir0=[ASC], dir1=[DESC], dir2=[D
             LogicalTableScan(table=[[orders$12]])
 
 
-SELECT "customer$3"."_uuid" AS "__uuid$0", "entries$13"."productid", "t0"."category", SUM("entries$13"."quantity") AS "quantity", COUNT(*) AS "num_orders"
+SELECT "customer$3"."_uuid", "entries$13"."productid", "t0"."category", SUM("entries$13"."quantity") AS "quantity", COUNT(*) AS "num_orders"
 FROM "customer$3"
  DEFAULT JOIN ((SELECT "orders$12"."id", "orders$12"."_uuid", "orders$12"."_ingest_time", "orders$12"."customerid", "orders$12"."time"
    FROM "customer$3" AS "customer$30"
