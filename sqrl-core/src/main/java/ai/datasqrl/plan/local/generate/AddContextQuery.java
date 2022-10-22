@@ -10,17 +10,16 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.SqlValidatorScope;
+import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
-import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.flink.util.Preconditions;
 
 public class AddContextQuery {
 
-  private final SqrlValidatorImpl sqrlValidator;
+  private final SqlValidator sqrlValidator;
   private final Optional<VirtualRelationalTable> context;
 
-  public AddContextQuery(SqrlValidatorImpl sqrlValidator,
+  public AddContextQuery(SqlValidator sqrlValidator,
       Optional<VirtualRelationalTable> context) {
     this.sqrlValidator = sqrlValidator;
     this.context = context;

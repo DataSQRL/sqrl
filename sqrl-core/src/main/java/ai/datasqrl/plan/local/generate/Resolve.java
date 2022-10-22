@@ -408,7 +408,7 @@ public class Resolve {
         .map(e -> e.getCanonical())
         .collect(Collectors.toList());
 
-    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.relSchema,
+    SqlValidator sqrlValidator = TranspilerFactory.createSqrlValidator(env.relSchema,
         assignmentPath, true);
 
     Optional<SQRLTable> table = getContext(env, op.getStatement());
@@ -451,6 +451,9 @@ public class Resolve {
 
     System.out.println("To vt Tables \n" +node + "\n");
 
+    analyzeStatement = new AnalyzeStatement(env.relSchema, assignmentPath);
+    analyzeStatement.accept(node);
+
 
 //    analyzeStatement = new AnalyzeStatement(env.relSchema, assignmentPath);
 //    analyzeStatement.accept(node);
@@ -476,7 +479,7 @@ public class Resolve {
 
       new AddHints(sqrlValidator, context).accept(op, finalStage);
 
-      SqrlValidatorImpl validate2 = TranspilerFactory.createSqrlValidator(env.relSchema,
+      SqlValidator validate2 = TranspilerFactory.createSqrlValidator(env.relSchema,
           assignmentPath, false);
       validate2.validate(finalStage);
       op.setQuery(finalStage);
@@ -485,7 +488,7 @@ public class Resolve {
       SqlNode rewritten = finalStage;
 //      SqlNode rewritten = rewrite(env, op, sqrlValidator, finalStage);
 //      //revalidate then deconstruct joins
-      SqrlValidatorImpl revalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
+      SqlValidator revalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
           assignmentPath, true);
       revalidate.validate(rewritten);
 //      rewritten = new DeconstructPathsToSimpleJoins(revalidate).accept(rewritten);
@@ -497,23 +500,23 @@ public class Resolve {
       // Hints don't carry over when moving from rel -> sqlnode
       if (op.getStatementKind() != StatementKind.JOIN) {
 //        System.out.println(rewritten);
-        SqrlValidatorImpl prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
+        SqlValidator prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
             assignmentPath, true);
         prevalidate.validate(rewritten);
         new AddHints(prevalidate, context).accept(op, rewritten);
       }
 
-      SqrlValidatorImpl validator = TranspilerFactory.createSqrlValidator(env.relSchema,
+      SqlValidator validator = TranspilerFactory.createSqrlValidator(env.relSchema,
           assignmentPath, false);
-      validator.assignmentPath = sqrlValidator.assignmentPath;
-      sqrlValidator.resolveNestedColumns = false;
+//      validator.assignmentPath = sqrlValidator.assignmentPath;
+//      sqrlValidator.resolveNestedColumns = false;
       SqlNode newNode2 = validator.validate(rewritten);
       op.setQuery(newNode2);
       op.setSqrlValidator(validator);
     }
   }
 
-  private SqlNode rewrite(Env env, StatementOp op, SqrlValidatorImpl sqrlValidator, SqlNode node) {
+  private SqlNode rewrite(Env env, StatementOp op, SqlValidator sqrlValidator, SqlNode node) {
     switch (node.getKind()) {
       case JOIN:
         SqlJoin join = (SqlJoin) node;
@@ -869,7 +872,7 @@ public class Resolve {
 
     select.setSelectList(new SqlNodeList(list, SqlParserPos.ZERO));
 
-    SqrlValidatorImpl prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
+    SqlValidator prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
         assignmentPath, false);
     prevalidate.validate(select);
     new AddHints(prevalidate, getContext(env, op.getStatement()).map(e -> e.getVt()))
@@ -1003,7 +1006,7 @@ public class Resolve {
     boolean expression;
     Map fieldMapping;
 
-    SqrlValidatorImpl sqrlValidator;
+    SqlValidator sqrlValidator;
     SqlValidator sqlValidator;
 
     SqlNode query;

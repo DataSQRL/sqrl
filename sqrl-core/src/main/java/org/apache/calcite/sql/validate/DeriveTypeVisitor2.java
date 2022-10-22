@@ -32,7 +32,7 @@ import org.apache.calcite.util.Util;
  */
 @AllArgsConstructor
 public class DeriveTypeVisitor2 implements SqlVisitor<RelDataType> {
-  private final SqrlValidatorImpl validator;
+  private final SqlValidatorImpl validator;
   private final RelDataTypeFactory typeFactory;
   private final SqlValidatorCatalogReader catalogReader;
   private final SqlValidatorScope scope;

@@ -6,6 +6,7 @@ import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.local.generate.ReplaceWithVirtualTable.ExtractRightDeepAlias;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.schema.Relationship;
@@ -25,9 +26,13 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexDynamicParam;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.validate.SqrlValidatorImpl;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
 
 import java.util.*;
@@ -204,7 +209,7 @@ public class SchemaInference {
       return constructJoinDecScan(env, rel.get());
     }
 
-    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.getRelSchema(),
+    SqlValidator sqrlValidator = TranspilerFactory.createSqrlValidator(env.getRelSchema(),
         List.of(), true);
     RelBuilder relBuilder = PlannerFactory.sqlToRelConverterConfig.getRelBuilderFactory()
         .create(env.getSession().getPlanner().getCluster(),
@@ -213,9 +218,27 @@ public class SchemaInference {
   }
 
   private RelNode constructJoinDecScan(Env env, Relationship rel) {
-    SqrlValidatorImpl sqrlValidator = TranspilerFactory.createSqrlValidator(env.getRelSchema(),
+    SqlValidator sqrlValidator = TranspilerFactory.createSqrlValidator(env.getRelSchema(),
         List.of(), true);
-    SqlNode validated = sqrlValidator.validate(rel.getNode());
+
+    //todo: fix for TOP N
+    ExtractRightDeepAlias rightDeepAlias = new ExtractRightDeepAlias();
+    String alias = rel.getNode().accept(rightDeepAlias);
+
+    SqlSelect select = new SqlSelect(
+        SqlParserPos.ZERO,
+        null,
+        new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO),
+        rel.getNode(),
+        null,
+        null,
+        null
+        ,
+        SqlNodeList.EMPTY,
+        null,null,null, SqlNodeList.EMPTY
+    );
+
+    SqlNode validated = sqrlValidator.validate(select);
     env.getSession().getPlanner().setValidator(validated, sqrlValidator);
     RelNode relNode = env.getSession().getPlanner().rel(validated).rel;
 

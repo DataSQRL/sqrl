@@ -32,7 +32,7 @@ public class AbsoluteTableNamespace extends TableNamespace implements Expandable
   private final SQRLTable baseTable;
   private final List<Relationship> relationships;
 
-  AbsoluteTableNamespace(SqrlValidatorImpl validator, SqlValidatorTable table, SQRLTable baseTable,
+  AbsoluteTableNamespace(SqlValidatorImpl validator, SqlValidatorTable table, SQRLTable baseTable,
       List<Relationship> relationships) {
     super(validator, table);
     this.baseTable = baseTable;

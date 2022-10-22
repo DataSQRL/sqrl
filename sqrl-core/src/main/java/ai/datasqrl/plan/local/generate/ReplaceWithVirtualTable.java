@@ -196,7 +196,7 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
     return Pair.of(node, SqlNodeUtil.and(newConditions));
   }
 
-  public class ExtractRightDeepAlias extends SqlBasicVisitor<String> {
+  public static class ExtractRightDeepAlias extends SqlBasicVisitor<String> {
 
     @Override
     public String visit(SqlCall call) {

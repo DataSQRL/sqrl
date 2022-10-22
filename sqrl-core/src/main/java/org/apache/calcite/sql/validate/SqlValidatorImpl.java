@@ -269,7 +269,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
    * @param typeFactory   Type factory
    * @param config        Config
    */
-  protected SqlValidatorImpl(
+  public SqlValidatorImpl(
       SqlOperatorTable opTab,
       SqlValidatorCatalogReader catalogReader,
       RelDataTypeFactory typeFactory,
@@ -3331,12 +3331,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case LEFT:
     case RIGHT:
     case FULL:
-    case DEFAULT:
-    case TEMPORAL:
-    case INTERVAL:
       if ((condition == null) && !natural) {
         throw newValidationError(join, RESOURCE.joinRequiresCondition());
       }
+      break;
+    case DEFAULT:
+    case TEMPORAL:
+    case INTERVAL:
       break;
     case COMMA:
     case CROSS:

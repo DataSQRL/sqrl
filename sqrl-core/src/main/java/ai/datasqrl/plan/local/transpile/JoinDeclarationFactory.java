@@ -127,13 +127,19 @@ public class JoinDeclarationFactory {
     return (SqlSelect) sqlNode;
   }
 
+  //TOdo remove baked in assumptions
   public SQRLTable getToTable(SqlValidator validator, SqlNode sqlNode) {
 
     SqlNode tRight = getRightDeepTable(sqlNode);
-    HasToTable table = validator.getNamespace(tRight).getTable()
-        .unwrap(HasToTable.class);
-    return table.getToTable();
+    if (tRight.getKind() == SqlKind.AS) {
+      tRight = ((SqlCall)tRight).getOperandList().get(0);
+    }
+    SqlIdentifier identifier = (SqlIdentifier)tRight;
+    return validator.getCatalogReader().getTable(identifier.names)
+        .unwrap(VirtualRelationalTable.class)
+        .getSqrlTable();
   }
+
   public Multiplicity deriveMultiplicity(RelNode relNode) {
     Multiplicity multiplicity = relNode instanceof LogicalSort &&
         ((LogicalSort) relNode).fetch != null &&

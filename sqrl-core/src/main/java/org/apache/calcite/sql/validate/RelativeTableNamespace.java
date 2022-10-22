@@ -32,7 +32,7 @@ public class RelativeTableNamespace extends TableNamespace implements Expandable
   private final String baseAlias;
   private final List<Relationship> relationships;
 
-  RelativeTableNamespace(SqrlValidatorImpl validator, SqlValidatorTable table, SQRLTable baseTable,
+  RelativeTableNamespace(SqlValidatorImpl validator, SqlValidatorTable table, SQRLTable baseTable,
       String baseAlias, List<Relationship> relationships) {
     super(validator, table);
     this.baseTable = baseTable;

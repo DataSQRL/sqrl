@@ -9,8 +9,10 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
-import org.apache.calcite.sql.validate.SqrlValidatorImpl;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 
 public class TranspilerFactory {
   static final SqlValidator.Config config = SqlValidator.Config.DEFAULT
@@ -21,13 +23,13 @@ public class TranspilerFactory {
       .withTypeCoercionEnabled(false)
       .withLenientOperatorLookup(false);
 
-  public static SqrlValidatorImpl createSqrlValidator(SqrlCalciteSchema schema,
+  public static SqlValidator createSqrlValidator(SqrlCalciteSchema schema,
       List<String> assignmentPath, boolean forcePathIdentifiers) {
     Properties p = new Properties();
     p.put(CalciteConnectionProperty.CASE_SENSITIVE.name(), false);
 
 
-    SqrlValidatorImpl validator = new SqrlValidatorImpl(
+    SqlValidator validator = new FlinkCalciteSqlValidator(
         PlannerFactory.getOperatorTable(),
         new SqrlCalciteCatalogReader(schema, List.of(), PlannerFactory.getTypeFactory(),
             new CalciteConnectionConfigImpl(p).set(CalciteConnectionProperty.CASE_SENSITIVE,
@@ -35,8 +37,8 @@ public class TranspilerFactory {
         PlannerFactory.getTypeFactory(),
         config
         );
-    validator.assignmentPath = assignmentPath;
-    validator.forcePathIdentifiers = forcePathIdentifiers;
+//    validator.assignmentPath = assignmentPath;
+//    validator.forcePathIdentifiers = forcePathIdentifiers;
     return validator;
   }
 

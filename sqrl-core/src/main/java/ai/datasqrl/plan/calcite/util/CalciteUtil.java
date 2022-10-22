@@ -18,9 +18,9 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.AggregatingScope;
+import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
-import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
@@ -82,7 +82,7 @@ public class CalciteUtil {
     return null;
   }
 
-  public static boolean isAggregating(SqlNode query, SqrlValidatorImpl sqrlValidator) {
+  public static boolean isAggregating(SqlNode query, SqlValidator sqrlValidator) {
     SqlValidatorScope scope = sqrlValidator.getSelectScope(stripOrderBy(query));
 
     return scope instanceof AggregatingScope;

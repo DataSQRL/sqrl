@@ -1,6 +1,5 @@
 package ai.datasqrl.plan.local.generate;
 
-import ai.datasqrl.plan.calcite.SqrlOperatorTable;
 import ai.datasqrl.plan.calcite.hints.TopNHint;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
@@ -23,16 +22,16 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SelectScope;
+import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
-import org.apache.calcite.sql.validate.SqrlValidatorImpl;
 import org.apache.calcite.util.Litmus;
 
 public class AddHints {
 
-  private final SqrlValidatorImpl validator;
+  private final SqlValidator validator;
   private final Optional<VirtualRelationalTable> context;
 
-  public AddHints(SqrlValidatorImpl validator, Optional<VirtualRelationalTable> context) {
+  public AddHints(SqlValidator validator, Optional<VirtualRelationalTable> context) {
     this.validator = validator;
     this.context = context;
   }
