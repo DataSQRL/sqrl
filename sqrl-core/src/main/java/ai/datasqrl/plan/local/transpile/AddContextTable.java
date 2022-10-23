@@ -16,6 +16,14 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
 
+/**
+ * Orders.x := SELECT * FROM Product;
+ * ->
+ * Orders.x := SELECT * FROM orders$1 AS _ JOIN Product;
+ *
+ * Does not add self table if one is already present and is properly aliased.
+ * Also adds self to expressions.
+ */
 @AllArgsConstructor
 public class AddContextTable extends SqlShuttle {
   String selfVirtualTableName;
@@ -26,7 +34,7 @@ public class AddContextTable extends SqlShuttle {
       if (select.getFrom() == null) {
         select.setFrom(SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
             new SqlIdentifier(selfVirtualTableName, SqlParserPos.ZERO),
-            new SqlIdentifier("_", SqlParserPos.ZERO)));
+            new SqlIdentifier(ReservedName.SELF_IDENTIFIER.getCanonical(), SqlParserPos.ZERO)));
       } else {
         select.setFrom(select.getFrom().accept(this));
       }
@@ -80,7 +88,7 @@ public class AddContextTable extends SqlShuttle {
   private SqlNode createConcreteSelfTable() {
     return SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
         new SqlIdentifier(selfVirtualTableName, SqlParserPos.ZERO),
-        new SqlIdentifier("_", SqlParserPos.ZERO));
+        new SqlIdentifier(ReservedName.SELF_IDENTIFIER.getCanonical(), SqlParserPos.ZERO));
   }
 
   class ValidateNoReservedAliases extends SqlBasicVisitor<SqlNode> {

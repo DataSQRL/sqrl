@@ -24,10 +24,17 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 
+/**
+ * Orders.entries.customer = SELECT __a1.customerid
+ *                           FROM _.entries.parent p
+ *                           LEFT JOIN e.parent AS __a1;
+ * ->
+ * Orders.entries.customer = SELECT __a1.customerid
+ *                           FROM (_.entries AS g1 JOIN g1.parent AS p)
+ *                           LEFT JOIN e.parent AS __a1;
+ */
 public class FlattenTablePaths extends SqlShuttle {
   private final Analysis analysis;
-
-  Stack<SqlNode> pullupStack = new Stack<>();
 
   public FlattenTablePaths(Analysis analysis) {
     this.analysis = analysis;
@@ -35,7 +42,6 @@ public class FlattenTablePaths extends SqlShuttle {
 
   public SqlNode accept(SqlNode node) {
     SqlNode result = node.accept(this);;
-    Preconditions.checkState(pullupStack.isEmpty());
     return result;
   }
 
@@ -52,12 +58,7 @@ public class FlattenTablePaths extends SqlShuttle {
   public SqlNode visit(SqlCall call) {
     switch (call.getKind()) {
       case JOIN:
-        SqlJoin join = (SqlJoin)super.visit(call);
-        if (!pullupStack.isEmpty()) {
-          SqlNode toAppend = pullupStack.pop();
-          addJoinCondition(join, toAppend);
-        }
-        return join;
+        return super.visit(call);
       case AS:
         //When we rewrite paths, we turn a left tree into a bushy tree and we'll need to add the
         // alias to the last table. So If we do that, we need to remove this alias or calcite
@@ -143,35 +144,8 @@ public class FlattenTablePaths extends SqlShuttle {
         );
         currentAlias = nextAlias;
       }
-      //Create condition. It will be:
-      // first alias's pk = first expanded table pk
-      if (resolve instanceof RelativeResolvedTable) {
-        RelativeResolvedTable t = (RelativeResolvedTable)resolve;
-        SQRLTable from = t.getFields().get(0).getFromTable();
-        SQRLTable to = t.getFields().get(0).getToTable();
-
-        SqlNode condition = createCondition(firstAlias, t.getAlias(), from, to);
-
-//        pullupStack.push(condition);
-      }
     }
-
 
     return n;
-  }
-
-  public static SqlNode createCondition(String firstAlias, String alias, SQRLTable from, SQRLTable to) {
-    List<SqlNode> conditions = new ArrayList<>();
-    for (int i = 0; i < from.getVt().getPrimaryKeyNames().size()
-        && i < to.getVt().getPrimaryKeyNames().size(); i++) {
-      String pkName = from.getVt().getPrimaryKeyNames().get(i);
-      SqlCall call = SqlStdOperatorTable.EQUALS.createCall(SqlParserPos.ZERO,
-          new SqlIdentifier(List.of(alias, pkName), SqlParserPos.ZERO),
-          new SqlIdentifier(List.of(firstAlias, pkName), SqlParserPos.ZERO)
-      );
-      conditions.add(call);
-    }
-    SqlNode condition = SqlNodeUtil.and(conditions);
-    return condition;
   }
 }

@@ -14,12 +14,22 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.flink.util.Preconditions;
 
-public class AddContextQuery {
+/**
+ *
+ * Orders.entries.x := SELECT max(discount) AS bestDiscount
+ *                     FROM _;
+ * ->
+ * Orders.entries.x := SELECT pk, max(discount) AS bestDiscount
+ *                     FROM _
+ *                     GROUP BY pk;
+ *
+ */
+public class AddContextFields {
 
   private final SqlValidator sqrlValidator;
   private final Optional<VirtualRelationalTable> context;
 
-  public AddContextQuery(SqlValidator sqrlValidator,
+  public AddContextFields(SqlValidator sqrlValidator,
       Optional<VirtualRelationalTable> context) {
     this.sqrlValidator = sqrlValidator;
     this.context = context;

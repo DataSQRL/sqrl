@@ -222,7 +222,7 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   public void importWithTimestamp() {
     Env env1 = generate(parser.parse("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time AS c_ts;"));
-    SQRLTable sqrlTable = (SQRLTable) env1.getUserSchema().getTable("Customer", false).getTable();
+    SQRLTable sqrlTable = (SQRLTable) env1.getRelSchema().getTable("Customer", false).getTable();
     assertTrue(sqrlTable.getField(Name.system("c_ts")).isPresent(), "Timestamp column missing");
   }
 

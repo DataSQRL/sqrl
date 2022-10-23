@@ -99,7 +99,7 @@ public class SchemaInference {
             .map(t -> ((Relationship) t.getField(Name.system(field.getName())).get()));
 
         SQRLTable table = rel.map(Relationship::getToTable).orElseGet(
-            () -> (SQRLTable) env.getUserSchema().getTable(field.getName(), false).getTable());
+            () -> (SQRLTable) env.getRelSchema().getTable(field.getName(), false).getTable());
         //todo check if we've already registered the type
         VirtualRelationalTable vt = table.getVt();
 

@@ -38,6 +38,9 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.util.Litmus;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
+/**
+ * Walks a query and collects information that is needed for transpilaton
+ */
 @Getter
 public class AnalyzeStatement {
 
@@ -51,8 +54,6 @@ public class AnalyzeStatement {
   public Map<SqlSelect, List<SqlNode>> expandedSelect = new HashMap<>();
   public Map<SqlNodeList, List<SqlNode>> groupByExpressions = new HashMap<>();
   public Map<SqlNode, String> tableAlias = new HashMap<>();
-  //  public Map<SqlNodeList, List<SqlNode>> orderByExpressions = new HashMap<>();
-//  public List<SqlNode> uniqueOrderItems = new ArrayList<>();
   private Map<SqlNode, SqlNode> aliasedOrder = new HashMap<>();
   private boolean allowSystemFields;
 
@@ -118,8 +119,6 @@ public class AnalyzeStatement {
       default:
         throw new RuntimeException("unknown ast node");
     }
-
-//    return null;
   }
 
   public Context visitFrom(SqlIdentifier id, Context context) {

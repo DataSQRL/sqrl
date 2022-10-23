@@ -7,6 +7,7 @@ import ai.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.SingleTable;
 import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import com.ibm.icu.impl.Pair;
 import java.util.ArrayList;
@@ -74,13 +75,22 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
         SqlJoin join = (SqlJoin) super.visit(call);
         if (!pullup.isEmpty()) {
           SqlNode condition = pullup.pop();
-          FlattenTablePaths.addJoinCondition(join, condition);
+          addJoinCondition(join, condition);
         }
 
         return join;
     }
 
     return super.visit(call);
+  }
+
+  public static void addJoinCondition(SqlJoin join, SqlNode condition) {
+    if (join.getCondition() == null) {
+      join.setOperand(5, condition);
+    } else {
+      join.setOperand(5, SqlNodeUtil.and(join.getCondition(), condition));
+    }
+    join.setOperand(4, JoinConditionType.ON.symbol(SqlParserPos.ZERO));
   }
 
   private void appendToSelect(SqlSelect select, SqlNode condition) {
@@ -121,7 +131,7 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
       }
 
       String alias = analysis.tableAlias.get(id);
-      SqlNode condition = FlattenTablePaths.createCondition(alias, resolveRel.getAlias(),
+      SqlNode condition = createCondition(alias, resolveRel.getAlias(),
           relationship.getFromTable(),
           relationship.getToTable()
       );
@@ -132,6 +142,21 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
     }
 
     return super.visit(id);
+  }
+
+  public static SqlNode createCondition(String firstAlias, String alias, SQRLTable from, SQRLTable to) {
+    List<SqlNode> conditions = new ArrayList<>();
+    for (int i = 0; i < from.getVt().getPrimaryKeyNames().size()
+        && i < to.getVt().getPrimaryKeyNames().size(); i++) {
+      String pkName = from.getVt().getPrimaryKeyNames().get(i);
+      SqlCall call = SqlStdOperatorTable.EQUALS.createCall(SqlParserPos.ZERO,
+          new SqlIdentifier(List.of(alias, pkName), SqlParserPos.ZERO),
+          new SqlIdentifier(List.of(firstAlias, pkName), SqlParserPos.ZERO)
+      );
+      conditions.add(call);
+    }
+    SqlNode condition = SqlNodeUtil.and(conditions);
+    return condition;
   }
 
   int a = 0;

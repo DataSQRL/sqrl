@@ -24,7 +24,13 @@ import org.apache.calcite.sql.validate.SqlQualified;
 import org.apache.calcite.util.Litmus;
 
 /**
- * Adds left joins for field paths
+ * Orders.entries.customer = SELECT e.parent.customerid
+ *                           FROM _;
+ * ->
+ * Orders.entries.customer = SELECT __a1.customerid
+ *                           FROM _
+ *                           LEFT JOIN e.parent AS __a1;
+ *
  */
 public class FlattenFieldPaths extends SqlShuttle {
 

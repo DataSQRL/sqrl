@@ -34,17 +34,12 @@ import org.junit.jupiter.api.TestFactory;
 
 class QuerySnapshotTest extends AbstractSQRLIT {
 
-  ConfiguredSqrlParser parser;
-
   ErrorCollector error;
-
-  private Session session;
-  private Resolve resolve;
-  SqrlCalciteSchema schema;
 
   public static final String IMPORTS = C360.BASIC.getImports().getScript() + "\n"
       + "Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n"
       ;
+  private ImportManager importManager;
 
   @BeforeEach
   public void setup() throws IOException {
@@ -58,22 +53,24 @@ class QuerySnapshotTest extends AbstractSQRLIT {
     ScriptBundle bundle = example.buildBundle().getBundle();
     Assertions.assertTrue(
         importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
-    schema = new SqrlCalciteSchema(
-        CalciteSchema.createRootSchema(false, false).plus());
-    Planner planner = new PlannerFactory(schema.plus()).createPlanner();
-
-    Session session = new Session(error, importManager, planner);
-    this.session = session;
-    this.parser = new ConfiguredSqrlParser(error);
-    this.resolve = new Resolve(RETAIL_DIR_BASE.resolve("build/"));
+    this.importManager = importManager;
   }
 
   private Env generate(ScriptNode node) {
+    SqrlCalciteSchema schema = new SqrlCalciteSchema(
+        CalciteSchema.createRootSchema(false, false).plus());
+    Planner planner = new PlannerFactory(schema.plus()).createPlanner();
+
+    Session session = new Session(error, this.importManager, planner);
+    Resolve resolve = new Resolve(RETAIL_DIR_BASE.resolve("build/"));
+
     return resolve.planDag(session, node);
   }
 
   public RelNode generate(String init, String sql, boolean nested) {
-    Env env = generate(ConfiguredSqrlParser.newParser(ErrorCollector.root()).parse(init + sql));
+    ConfiguredSqrlParser parser = new ConfiguredSqrlParser(error);
+
+    Env env = generate(parser.parse(init + sql));
 
     return env.getOps().get(env.getOps().size() - 1).getRelNode();
   }
@@ -155,7 +152,8 @@ class QuerySnapshotTest extends AbstractSQRLIT {
           + "ORDER BY (CASE\n"
           + "    WHEN name IS NULL THEN email\n"
           + "    ELSE name\n"
-          + "END);"
+          + "END);",
+      "Orders.x := SELECT x.* FROM _ JOIN _ AS x"
   );
 
   List<Integer> disabledTests = List.of(37, 38);

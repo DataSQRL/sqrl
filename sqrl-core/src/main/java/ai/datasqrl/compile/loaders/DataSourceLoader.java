@@ -73,7 +73,7 @@ public class DataSourceLoader implements Loader {
 
     ScriptTableDefinition def = createScriptTableDefinition(env, sourceTableImport, alias);
 
-    if (env.getUserSchema()
+    if (env.getRelSchema()
         .getTable(def.getTable().getName().getCanonical(), false) != null) {
       throw Check.newException(ErrorCode.IMPORT_NAMESPACE_CONFLICT,
           env.getCurrentNode(),

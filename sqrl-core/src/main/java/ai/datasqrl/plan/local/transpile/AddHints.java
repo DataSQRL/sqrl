@@ -26,6 +26,9 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.util.Litmus;
 
+/**
+ * Adds hints for nested limits, distinct on, or select distinct
+ */
 public class AddHints {
 
   private final SqlValidator validator;
@@ -55,9 +58,7 @@ public class AddHints {
     } else if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
       rewriteDistinctOnHint(select);
     }
-//    rewriteHints(select, scope);
   }
-
 
   private void rewriteDistinctOnHint(SqlSelect select) {
     SqlValidatorScope scope = validator.getSelectScope(select);

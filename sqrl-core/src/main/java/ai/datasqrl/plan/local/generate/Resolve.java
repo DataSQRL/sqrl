@@ -26,14 +26,13 @@ import ai.datasqrl.plan.calcite.table.ProxyImportRelationalTable;
 import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.local.transpile.AddContextQuery;
+import ai.datasqrl.plan.local.transpile.AddContextFields;
 import ai.datasqrl.plan.local.transpile.AddContextTable;
 import ai.datasqrl.plan.local.transpile.AddHints;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement;
 import ai.datasqrl.plan.local.transpile.FlattenFieldPaths;
 import ai.datasqrl.plan.local.transpile.FlattenTablePaths;
 import ai.datasqrl.plan.local.transpile.QualifyIdentifiers;
-import ai.datasqrl.plan.local.transpile.RenameSelfInTopQuery;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import ai.datasqrl.plan.local.transpile.JoinDeclarationUtil;
@@ -115,9 +114,8 @@ public class Resolve {
     //Updated while processing each node
     SqlNode currentNode = null;
 
-    public Env(SqrlCalciteSchema userSchema, SqrlCalciteSchema relSchema, Session session,
+    public Env(SqrlCalciteSchema relSchema, Session session,
         ScriptNode scriptNode, URI packageUri) {
-      this.userSchema = userSchema;
       this.relSchema = relSchema;
       this.session = session;
       this.scriptNode = scriptNode;
@@ -136,16 +134,11 @@ public class Resolve {
   public Env createEnv(Session session, ScriptNode script) {
     // All operations are applied to this env
     return new Env(
-        createUserSchema(),
         session.planner.getDefaultSchema().unwrap(SqrlCalciteSchema.class),
         session,
         script,
         basePath.toUri()
     );
-  }
-
-  private SqrlCalciteSchema createUserSchema() {
-    return new SqrlCalciteSchema(CalciteSchema.createRootSchema(true).schema);
   }
 
   private void validateImportInHeader(Env env) {
@@ -268,8 +261,8 @@ public class Resolve {
     env.fieldMap.putAll(tblDef.getFieldNameMap());
 
     if (tblDef.getTable().getPath().size() == 1) {
-      env.userSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
-          tblDef.getTable());
+//      env.userSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
+//          tblDef.getTable());
       env.relSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
           tblDef.getTable());
     } else {
@@ -425,10 +418,10 @@ public class Resolve {
     Analysis currentAnalysis = analyzer.apply(node);
 
     List<Function<Analysis, SqlShuttle>> transforms = List.of(
-        (analysis)->new QualifyIdentifiers(analysis),
-        (analysis)->new FlattenFieldPaths(analysis),
-        (analysis)->new FlattenTablePaths(analysis),
-        (analysis)->new ReplaceWithVirtualTable(analysis)
+        QualifyIdentifiers::new,
+        FlattenFieldPaths::new,
+        FlattenTablePaths::new,
+        ReplaceWithVirtualTable::new
     );
 
     for (Function<Analysis, SqlShuttle> transform : transforms) {
@@ -436,10 +429,7 @@ public class Resolve {
       currentAnalysis = analyzer.apply(node);
     }
 
-
-    final SqlNode node2 = node;
-    final SqlNode finalStage = context.map(c -> new RenameSelfInTopQuery(c.getNameId()).accept(node2))
-        .orElse(node);
+    final SqlNode finalStage = node;
 
     SqlValidator sqrlValidator = TranspilerFactory.createSqrlValidator(env.relSchema,
         assignmentPath, true);
@@ -455,7 +445,7 @@ public class Resolve {
       op.setQuery(finalStage);
       op.setSqrlValidator(validate2);
     } else {
-      SqlNode rewritten = new AddContextQuery(sqrlValidator, context).accept(finalStage);
+      SqlNode rewritten = new AddContextFields(sqrlValidator, context).accept(finalStage);
 
       //Skip this for joins, we'll add the hints later when we reconstruct the node from the relnode
       // Hints don't carry over when moving from rel -> sqlnode
@@ -479,7 +469,7 @@ public class Resolve {
       return Optional.empty();
     }
     Optional<SQRLTable> table =
-        Optional.ofNullable(env.userSchema.getTable(statement.getNamePath().get(0).getDisplay(), false))
+        Optional.ofNullable(env.relSchema.getTable(statement.getNamePath().get(0).getDisplay(), false))
             .map(t->(SQRLTable)t.getTable());
 
     if (statement.getNamePath().popFirst().size() == 1) {

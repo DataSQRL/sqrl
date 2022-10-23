@@ -4,7 +4,6 @@ import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import java.util.List;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
@@ -13,7 +12,13 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 
 /**
- * Expands select *, also needs to add an alias to tables that need one
+ * Qualifies all identifiers that could be potentially ambiguous during transpilation
+ *
+ * Orders.entries2 := SELECT *
+ *                    FROM _.parent.entries;
+ * ->
+ * Orders.entries2 := SELECT x1.discount, x1.unit_price, ...
+ *                    FROM _.parent.entries AS x1;
  */
 public class QualifyIdentifiers extends SqlShuttle {
 
@@ -43,17 +48,6 @@ public class QualifyIdentifiers extends SqlShuttle {
     switch (call.getKind()) {
       case SELECT:
         return rewriteSelect((SqlSelect) call);
-      case JOIN:
-        SqlJoin join = (SqlJoin) call;
-        join.setRight(join.getRight().accept(this));
-        join.setLeft(join.getLeft().accept(this));
-        return join;
-      case AS:
-        //only walk table
-        SqlNode aliased = call.getOperandList().get(0)
-            .accept(this);
-        call.setOperand(0, aliased);
-        return call;
     }
 
     return super.visit(call);

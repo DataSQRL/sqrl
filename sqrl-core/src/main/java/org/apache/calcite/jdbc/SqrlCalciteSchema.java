@@ -32,7 +32,9 @@ public class SqrlCalciteSchema extends SimpleCalciteSchema {
 
   public List<SQRLTable> getRootTables() {
     return getTableNames().stream()
-        .map(name -> (SQRLTable) getTable(name, false).getTable())
+        .map(name -> getTable(name, false).getTable())
+        .filter(t->t instanceof SQRLTable)
+        .map(t->(SQRLTable) t)
         .collect(Collectors.toList());
   }
 
