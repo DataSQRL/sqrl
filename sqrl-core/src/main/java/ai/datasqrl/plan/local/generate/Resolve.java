@@ -267,16 +267,7 @@ public class Resolve {
     //and also map all fields
     env.fieldMap.putAll(tblDef.getFieldNameMap());
 
-    JoinDeclarationUtil joinDeclarationUtil = new JoinDeclarationUtil(env);
-    //Add all join declarations
-    tblDef.getShredTableMap().keySet().stream().flatMap(t ->
-        t.getAllRelationships()).forEach(r -> {
-//      SqlJoinDeclaration dec =
-//          joinDeclarationFactory.createParentChildJoinDeclaration(r);
-//      env.resolvedJoinDeclarations.put(r, dec);
-    });
     if (tblDef.getTable().getPath().size() == 1) {
-
       env.userSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
           tblDef.getTable());
       env.relSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
@@ -596,16 +587,6 @@ public class Resolve {
         table, c.getDataType());
     //todo shadowing
     env.fieldMap.put(column, name.getCanonical());
-
-    rebuildAllTypes(env.getRelSchema());
-  }
-
-  private void rebuildAllTypes(SqrlCalciteSchema relSchema) {
-    relSchema.getTableNames().stream()
-        .map(name -> relSchema.getTable(name, false).getTable())
-        .filter(t->t instanceof SQRLTable)
-        .forEach(t->((SQRLTable) t).rebuildType());
-
   }
 
   private void updateJoinMapping(Env env, StatementOp op) {

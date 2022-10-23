@@ -54,10 +54,13 @@ public class AnalyzeExpression extends SqlBasicVisitor<ExpressionContext> {
 
   @Override
   public ExpressionContext visit(SqlIdentifier id) {
+    if (id.isStar()) { //skip any count(*)'s
+      return super.visit(id);
+    }
+
     Optional<ResolvedTableField> field = context.resolveField(id.names, allowSystemFields);
     if (field.isEmpty()) {
-      //it may not be a field, skip it
-      return super.visit(id);
+      throw new RuntimeException("Could not find field: " + id);
     }
     this.resolvedFields.put(id, field.get());
 

@@ -673,7 +673,6 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void countFncTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Orders;\n"

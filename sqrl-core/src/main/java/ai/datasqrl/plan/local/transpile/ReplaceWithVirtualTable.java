@@ -4,7 +4,7 @@ import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Resolved;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.SingleTable;
 import ai.datasqrl.schema.Relationship;
 import com.google.common.base.Preconditions;
@@ -53,7 +53,7 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
         SqlNode tbl = call.getOperandList().get(0);
         //aliased in inlined
         if (tbl instanceof SqlIdentifier) {
-          Resolved resolved = analysis.getTableIdentifiers().get(tbl);
+          ResolvedTable resolved = analysis.getTableIdentifiers().get(tbl);
           if (resolved instanceof RelativeResolvedTable &&
               ((RelativeResolvedTable)resolved).getFields().get(0).getNode() != null){
             return tbl.accept(this);
@@ -99,7 +99,7 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
       return super.visit(id);
     }
 
-    Resolved resolved = analysis.getTableIdentifiers().get(id);
+    ResolvedTable resolved = analysis.getTableIdentifiers().get(id);
     if (resolved instanceof SingleTable) {
       SingleTable singleTable = (SingleTable) resolved;
       return new SqlIdentifier(singleTable.getToTable().getVt().getNameId(),

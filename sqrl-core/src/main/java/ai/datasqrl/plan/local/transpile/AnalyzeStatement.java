@@ -20,6 +20,7 @@ import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -45,7 +46,7 @@ public class AnalyzeStatement {
   private final Optional<SqlIdentifier> selfIdentifier;
   private final Map<SqlIdentifier, ResolvedTableField> expressions = new HashMap<>();
 
-  public Map<SqlIdentifier, Resolved> tableIdentifiers = new HashMap<>();
+  public Map<SqlIdentifier, ResolvedTable> tableIdentifiers = new HashMap<>();
   public Map<SqlNode, String> mayNeedAlias = new HashMap<>();
   public Map<SqlSelect, List<SqlNode>> expandedSelect = new HashMap<>();
   public Map<SqlNodeList, List<SqlNode>> groupByExpressions = new HashMap<>();
@@ -61,7 +62,7 @@ public class AnalyzeStatement {
     private final List<String> assignmentPath;
     private final Optional<SqlIdentifier> selfIdentifier;
     private final Map<SqlIdentifier, ResolvedTableField> expressions;
-    public Map<SqlIdentifier, Resolved> tableIdentifiers;
+    public Map<SqlIdentifier, ResolvedTable> tableIdentifiers;
     public Map<SqlNode, String> mayNeedAlias;
     public Map<SqlSelect, List<SqlNode>> expandedSelect;
     public Map<SqlNodeList, List<SqlNode>> groupByExpressions;
@@ -122,12 +123,12 @@ public class AnalyzeStatement {
   }
 
   public Context visitFrom(SqlIdentifier id, Context context) {
-    Optional<Resolved> resolve = resolve(id, context);
+    Optional<ResolvedTable> resolve = resolve(id, context);
     if (resolve.isEmpty()) {
       throw new RuntimeException("Could not find table: " + id.names);
     }
 
-    Resolved resolved = resolve.get();
+    ResolvedTable resolved = resolve.get();
 
     String alias = resolved.getTableName()
         .orElseGet(this::generateInaccessibleAlias);
@@ -172,24 +173,24 @@ public class AnalyzeStatement {
     return new Context(parent, fields);
   }
 
-  private Optional<Resolved> resolve(SqlIdentifier id, Context context) {
+  private Optional<ResolvedTable> resolve(SqlIdentifier id, Context context) {
 
     //o.entries
-    Optional<Resolved> relativeTable = resolveRelativeTable(id, context);
+    Optional<ResolvedTable> relativeTable = resolveRelativeTable(id, context);
     if (relativeTable.isPresent()) {
       return relativeTable;
     }
 
 
     //FROM Orders.entries
-    Optional<Resolved> table = resolveSchema(id);
+    Optional<ResolvedTable> table = resolveSchema(id);
     if (table.isPresent()) {
       return table;
     }
     return Optional.empty();
   }
 
-  private Optional<Resolved> resolveRelativeTable(SqlIdentifier id, Context context) {
+  private Optional<ResolvedTable> resolveRelativeTable(SqlIdentifier id, Context context) {
     if (id.names.size() == 1 || context.fields == null) {
       return Optional.empty();
     }
@@ -198,7 +199,7 @@ public class AnalyzeStatement {
     return path.map(p->p);
   }
 
-  private Optional<Resolved> resolveSchema(SqlIdentifier id) {
+  private Optional<ResolvedTable> resolveSchema(SqlIdentifier id) {
     //look for relschema
     Optional<Table> baseTable = Optional.ofNullable(
             schema.getTable(id.names.get(0), false))
@@ -213,6 +214,10 @@ public class AnalyzeStatement {
         base = Optional.of((SQRLTable)baseTable.get());
       } else if (baseTable.get() instanceof VirtualRelationalTable) {
         base = Optional.of(((VirtualRelationalTable)baseTable.get()).getSqrlTable());
+        Preconditions.checkState(id.names.size() == 1);
+        //Virtual tables exposes all fields to the analyzer
+        return Optional.of(new SingleTable(id.names.get(0), base.get(),
+            toVtFields((VirtualRelationalTable)baseTable.get())));
       }
     }
 
@@ -225,9 +230,9 @@ public class AnalyzeStatement {
     if (base.isEmpty()) {
       return Optional.empty();
     } else if (id.names.size() == 1) {
-      return Optional.of(new SingleTable(id.names.get(0), base.get()));
+      return Optional.of(new SingleTable(id.names.get(0), base.get(),
+          base.get().getFields().getAccessibleFields()));
     } else {
-
       Optional<SQRLTable> toTable = base.get()
           .walkTable(NamePath.of(id.names.subList(1, id.names.size()).toArray(new String[]{})));
       if (toTable.isEmpty()) {
@@ -243,12 +248,27 @@ public class AnalyzeStatement {
     }
 
 
-    return null;
+    return Optional.empty();
   }
+
+  private List<Field> toVtFields(VirtualRelationalTable vt) {
+    List<Field> fields = new ArrayList<>();
+    for (RelDataTypeField f : vt.getRowType().getFieldList()) {
+      if (vt.getSqrlTable().getField(Name.system(f.getName())).isEmpty()) {
+        fields.add(new Column(Name.system(f.getName()), 0, false, f.getType()));
+      }
+    }
+
+    fields.addAll(vt.getSqrlTable().getFields().getAccessibleFields());
+    return fields;
+  }
+
+
   @Value
-  class SingleTable extends Resolved {
+  class SingleTable extends ResolvedTable {
     String name;
     SQRLTable table;
+    List<Field> fields;
 
     public Optional<String> getTableName() {
       return Optional.of(name);
@@ -260,12 +280,12 @@ public class AnalyzeStatement {
     }
 
     public List<Field> getAccessibleFields() {
-      return table.getFields().getAccessibleFields();
+      return fields;
     }
   }
 
   @Value
-  public static class RelativeResolvedTable extends Resolved {
+  public static class RelativeResolvedTable extends ResolvedTable {
     String alias;
     List<Relationship> fields;
 
@@ -282,7 +302,7 @@ public class AnalyzeStatement {
 
 
   @Value
-  class AbsoluteResolvedTable extends Resolved {
+  class AbsoluteResolvedTable extends ResolvedTable {
     List<Relationship> fields;
 
     @Override
@@ -300,7 +320,7 @@ public class AnalyzeStatement {
     }
   }
 
-  public static abstract class Resolved {
+  public static abstract class ResolvedTable {
 
     abstract SQRLTable getToTable();
 
@@ -534,14 +554,6 @@ public class AnalyzeStatement {
     expressions.putAll(analyzeExpression.getResolvedFields());
   }
 
-  //Walk query and qualify all identifiers
-
-  //Walk From, pull up fields with original table identifier (for aliasing)
-
-  //Replace group by with select items (or by alias)
-
-  //check idents in select, where having order
-
   public static class Context {
 
     public Context() {
@@ -568,6 +580,7 @@ public class AnalyzeStatement {
       return fields.stream()
           .filter(f->f.alias.equalsIgnoreCase(prefix))
           .filter(f->f.field instanceof Column)
+          .filter(f->f.field.isVisible())
           .map(f-> f.toIdentifier())
           .collect(Collectors.toList());
     }
@@ -575,6 +588,7 @@ public class AnalyzeStatement {
     public List<SqlIdentifier> resolveAllScalars() {
       return fields.stream()
           .filter(f->f.field instanceof Column)
+          .filter(f->f.field.isVisible())
           .map(f-> f.toIdentifier())
           .collect(Collectors.toList());
     }

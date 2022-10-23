@@ -4,7 +4,7 @@ import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Resolved;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.SingleTable;
 import ai.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
@@ -94,7 +94,7 @@ public class FlattenTablePaths extends SqlShuttle {
     List<String> suffix;
 
     SqlIdentifier first;
-    Resolved resolve = analysis.tableIdentifiers.get(id);
+    ResolvedTable resolve = analysis.tableIdentifiers.get(id);
     if (resolve instanceof SingleTable) {
       suffix = List.of();
       first = new SqlIdentifier(List.of(

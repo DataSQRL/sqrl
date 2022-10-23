@@ -21,7 +21,6 @@ public class VariableFactory {
       SqlNode query) {
     Relationship relationship = parentTable.addRelationship(namePath.getLast(), target,
         JoinType.JOIN, multiplicity, query);
-    parentTable.rebuildType();
     return relationship;
   }
 

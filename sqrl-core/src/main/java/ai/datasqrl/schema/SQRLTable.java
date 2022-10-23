@@ -83,7 +83,6 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   public Column addColumn(Name name, boolean visible, RelDataType type) {
     Column col = new Column(name, getNextFieldVersion(name), visible, type);
     fields.addField(col);
-    rebuildType();
     return col;
   }
 
@@ -91,67 +90,16 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
                                       Multiplicity multiplicity, SqlNode node) {
     Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity, node);
     fields.addField(rel);
-    rebuildType();
     return rel;
   }
 
   public void setVT(VirtualRelationalTable vt) {
     this.vt = vt;
-    rebuildType();
-  }
-
-  public void rebuildType() {
-    RelDataTypeFactory typeFactory = PlannerFactory.getTypeFactory();
-    FieldInfoBuilder b = new FieldInfoBuilder(typeFactory);
-//    for (Column field : getColumns(true)) {
-//      b.add(field.getName().getDisplay(), field.getType())
-//          .nullable(field.isNullable());
-//    }
-
-    if (vt != null) {
-      b.addAll(vt.getRowType().getFieldList());
-    }
-    getAllRelationships().forEach(r->
-//        remap to PEEK_FIELDS_NO_EXPAND?
-    {
-      b.add(new RelPlus(r.getName().getDisplay(), b.getFieldCount(),
-          convertToStruct(r.getToTable().getFieldRowType(typeFactory))));
-    });
-
-    fullDataType = b.build();
-  }
-
-  public class RelPlus extends RelDataTypeFieldImpl {
-
-    public RelPlus(String name, int index, RelDataType type) {
-      super(name, index, type);
-    }
-  }
-
-  private RelDataType getFieldRowType(RelDataTypeFactory typeFactory) {
-    FieldInfoBuilder b = new FieldInfoBuilder(typeFactory);
-    for (Column field : getColumns(true)) {
-      b.add(new RelPlus(field.getName().getDisplay(), b.getFieldCount(), field.getType()));
-    }
-    return b.build();
   }
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory) {
     return vt.getRowType();
-  }
-
-  private RelDataType convertToStruct(RelDataType dataType) {
-    //parent may refer to root but is actually workable
-    if (dataType == null) {
-      return null;
-    }
-    RelRecordType r = (RelRecordType)dataType;
-    RelDataTypeFactory t = PlannerFactory.getTypeFactory();
-
-    return new RelTypeWithHidden(dataType,
-        r.getFieldList().stream()
-            .collect(Collectors.toList()));
   }
 
   @Override
@@ -177,24 +125,11 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
 
   @Override
   public Table getTable(String s) {
-//    if (s.equalsIgnoreCase(ReservedName.PARENT.getCanonical()) && parent.isPresent()) {
-//      return parent.get();
-//    }
     Optional<SQRLTable> rel = this.getAllRelationships().filter(e->e.getName().getCanonical().equalsIgnoreCase(s))
         .map(r->r.getToTable())
         .findAny();
 
     return rel.orElse(null);
-//
-//    Optional<RelDataType> field = Optional.ofNullable(dataType.getField(s, false, false))
-//        .filter(f->
-//            f.getType() instanceof ArraySqlType || f.getType() instanceof RelRecordType)
-//        .map(f->f.getType() instanceof ArraySqlType ? f.getType().getComponentType() : f.getType())
-//        ;
-//    if (field.isPresent()) {
-//      return new SQRLTable(field.get(), this);
-//    }
-//    return null;
   }
 
   @Override
