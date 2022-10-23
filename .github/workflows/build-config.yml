@@ -1,4 +1,4 @@
-name: Buld and test SQRL with Maven
+name: Build and test SQRL with Maven
 
 on:
   push:
