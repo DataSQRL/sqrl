@@ -919,11 +919,11 @@ class AstBuilder
       case MILLENNIUM:
       case YEAR:
       case MONTH:
-        BigDecimal newValue = expr.bigDecimalValue()
-            .multiply(timeUnit.multiplier);
-        expr = SqlLiteral.createExactNumeric(newValue.toString(), expr.getParserPosition());
-        timeUnit = TimeUnit.MONTH;
-        break;
+//        BigDecimal newValue = expr.bigDecimalValue()
+//            .multiply(timeUnit.multiplier);
+//        expr = SqlLiteral.createExactNumeric(newValue.toString(), expr.getParserPosition());
+//        timeUnit = TimeUnit.MONTH;
+//        break;
       case DAY:
       case HOUR:
       case MINUTE:

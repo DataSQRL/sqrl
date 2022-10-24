@@ -445,7 +445,7 @@ class AnalyzerTest extends AbstractSQRLIT {
     assertEquals(BigDecimal.valueOf(24), rexLiteral.getValue());
     assertTrue(rexLiteral.getType() instanceof IntervalSqlType);
     assertEquals(
-        TimeUnit.MONTH,
+        TimeUnit.YEAR,
         rexLiteral.getType().getIntervalQualifier().getUnit());
   }
 
