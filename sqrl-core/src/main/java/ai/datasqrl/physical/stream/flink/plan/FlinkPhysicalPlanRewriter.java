@@ -47,11 +47,19 @@ import java.util.stream.Collectors;
  *  - Expanding temporal joins
  *  - Expanding time-based aggregations into Flink window aggregations
  *  - Handling interval joins
+ *
+ *  This class is not thread safe. You should construct a new instance for each rewriting or
+ *  simply use {@link #rewrite(StreamTableEnvironmentImpl, RelNode)}.
  */
-@AllArgsConstructor
 public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   StreamTableEnvironmentImpl tEnv;
   Supplier<FlinkRelBuilder> relBuilderFactory;
+  private boolean isTop = true;
+
+  public FlinkPhysicalPlanRewriter(StreamTableEnvironmentImpl tEnv, Supplier<FlinkRelBuilder> relBuilderFactory) {
+    this.tEnv = tEnv;
+    this.relBuilderFactory = relBuilderFactory;
+  }
 
   public static RelNode rewrite(StreamTableEnvironmentImpl tEnv, RelNode input) {
     return input.accept(new FlinkPhysicalPlanRewriter(tEnv, () -> ((StreamPlanner) tEnv.getPlanner()).getRelBuilder()));
@@ -71,12 +79,20 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     return relBuilder.build();
   }
 
+  private boolean isTop() {
+    boolean isTopTmp = isTop;
+    isTop = false;
+    return isTopTmp;
+  }
+
   @Override
   public RelNode visit(LogicalProject project) {
+    boolean forceProject = isTop(); //We want to make sure we preserve the projection at the top so the names line up
     FlinkRelBuilder relBuilder = getBuilder();
     relBuilder.push(project.getInput().accept(this));
-    relBuilder.project(project.getProjects().stream().map(rex -> rewrite(rex,relBuilder)).collect(Collectors.toList()),
-            project.getRowType().getFieldList().stream().map(f -> f.getName()).collect(Collectors.toList()),true);
+    List<String> projectNames = project.getRowType().getFieldNames();
+    relBuilder.project(project.getProjects().stream().map(rex -> rewrite(rex, relBuilder)).collect(Collectors.toList()),
+              projectNames, forceProject);
     SqrlHint.fromRel(project, WatermarkHint.CONSTRUCTOR).ifPresent(watermark -> addWatermark(relBuilder,watermark.getTimestampIdx()));
     return relBuilder.build();
   }
