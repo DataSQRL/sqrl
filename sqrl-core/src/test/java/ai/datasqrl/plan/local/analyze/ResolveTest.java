@@ -147,7 +147,6 @@ public class ResolveTest extends AbstractSQRLIT {
             "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM _.entries e",
             "OrdersInline := SELECT o.id, o.customerid, o.\"time\", t.price, t.num FROM Orders o JOIN o.total t",
             "Customer.orders_by_day := SELECT round_to_day(o.\"time\") as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM _ JOIN OrdersInline o ON o.customerid = _.customerid GROUP BY day");
-//    "Customer.orders_by_day := SELECT round_to_day(o.\"time\") as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM OrdersInline o WHERE o.customerid = _.customerid GROUP BY day");
     process(sqrl);
     validateQueryTable("total", TableType.STREAM, 5, 1, TimestampTest.fixed(4));
     validateQueryTable("ordersinline", TableType.STREAM, 6, 1, TimestampTest.fixed(3));

@@ -36,6 +36,7 @@ public class AnnotatedLP implements RelHolder {
 
     @NonNull
     public RelNode relNode;
+    @NonNull
     public TableType type;
     @NonNull
     public ContinuousIndexMap primaryKey;
@@ -48,7 +49,7 @@ public class AnnotatedLP implements RelHolder {
 
     @Builder.Default
     public List<JoinTable> joinTables = null;
-    @Builder.Default
+    @Builder.Default @NonNull
     public Optional<Integer> numRootPks = Optional.empty();
 
     @Builder.Default

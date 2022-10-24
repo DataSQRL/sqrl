@@ -157,7 +157,6 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       FlinkRexBuilder rexBuilder = getRexBuilder(relBuilder);
       int inputFieldCount = input.getRowType().getFieldCount();
       RelDataType inputType = input.getRowType();
-      relBuilder.push(input.getInput(0));
 
       final int timestampIdx;
       final long[] intervalsMs;
@@ -170,6 +169,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
         if (tumbleHint.getType()== TumbleAggregationHint.Type.FUNCTION) {
           //Extract bucketing function from project
           Preconditions.checkArgument(input instanceof LogicalProject, "Expected projection as input");
+          relBuilder.push(input.getInput(0));
           List<RexNode> projects = new ArrayList<>(((LogicalProject) input).getProjects());
           SqrlRexUtil rexUtil = new SqrlRexUtil(relBuilder.getTypeFactory());
           TimeTumbleFunctionCall bucketFct = rexUtil.getTimeBucketingFunction(projects.get(timestampIdx)).get();
@@ -179,11 +179,13 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
           relBuilder.project(projects, inputType.getFieldNames());
         } else if (tumbleHint.getType()== TumbleAggregationHint.Type.INSTANT) {
+          relBuilder.push(input);
           intervalsMs = new long[]{1};
         } else {
           throw new UnsupportedOperationException("Invalid tumble window type: " + tumbleHint.getType());
         }
       } else {
+        relBuilder.push(input);
         SlidingAggregationHint slideHint = slideHintOpt.get();
         timestampIdx = slideHint.getTimestampIdx();
         intervalsMs = new long[]{slideHint.getSlideWidthMs(), slideHint.getIntervalWidthMs()};

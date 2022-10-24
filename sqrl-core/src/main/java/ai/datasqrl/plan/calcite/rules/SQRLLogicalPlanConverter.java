@@ -87,7 +87,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     }
 
     public RelBuilder makeRelBuilder() {
-        return relBuilderFactory.get();
+        return relBuilderFactory.get().transform(config -> config.withPruneInputOfAggregate(false));
     }
 
     @Override
@@ -183,7 +183,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         if (vtable.isRoot()) {
             VirtualRelationalTable.Root root = (VirtualRelationalTable.Root) vtable;
             offset = 0;
-            builder = relBuilderFactory.get();
+            builder = makeRelBuilder();
             builder.scan(root.getBase().getNameId());
             joinTable = JoinTable.ofRoot(root);
         } else {
@@ -252,7 +252,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         NowFilter nowFilter = input.nowFilter;
 
         //Check if it has a now() predicate and pull out or throw an exception if malformed
-        RelBuilder relBuilder = relBuilderFactory.get();
+        RelBuilder relBuilder = makeRelBuilder();
         relBuilder.push(input.relNode);
         List<TimePredicate> timeFunctions = new ArrayList<>();
         List<RexNode> conjunctions = null;
@@ -471,7 +471,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         SortOrder sort = new SortOrder(RelCollations.of(collations));
 
         //Build new project
-        RelBuilder relB = relBuilderFactory.get();
+        RelBuilder relB = makeRelBuilder();
         relB.push(input.relNode);
         relB.project(updatedProjects,updatedNames);
         RelNode newProject = relB.build();
@@ -522,7 +522,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 //We currently expect a single path from leaf to right as a self-join
                 Preconditions.checkArgument(JoinTable.getRoots(rightInput.joinTables).size() == 1, "Current assuming a single root table on the right");
                 JoinTable rightLeaf = Iterables.getOnlyElement(JoinTable.getLeafs(rightInput.joinTables));
-                RelBuilder relBuilder = relBuilderFactory.get().push(leftInput.getRelNode());
+                RelBuilder relBuilder = makeRelBuilder().push(leftInput.getRelNode());
                 ContinuousIndexMap newPk = leftInput.primaryKey;
                 List<JoinTable> joinTables = new ArrayList<>(leftInput.joinTables);
                 if (right2left.containsKey(rightLeaf) || leftInput.exec.getStage().supports(EngineCapability.DENORMALIZE)) {
@@ -579,8 +579,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
                     int tmpLeftSideMaxIdx = leftInput.getFieldLength();
                     IndexMap leftRightFlip = idx -> idx<leftSideMaxIdx?tmpLeftSideMaxIdx+idx:idx-leftSideMaxIdx;
-                    condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(), leftRightFlip);
                     joinedIndexMap = joinedIndexMap.remap(leftRightFlip);
+                    condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(), joinedIndexMap);
                     eqDecomp = rexUtil.decomposeEqualityComparison(condition);
                 }
                 int newLeftSideMaxIdx = leftInput.getFieldLength();
@@ -588,7 +588,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 Set<Integer> pkIndexes = rightInput.primaryKey.getMapping().stream().map(p-> p.getTarget()+newLeftSideMaxIdx).collect(Collectors.toSet());
                 Set<Integer> pkEqualities = eqDecomp.getEqualities().stream().map(p -> p.target).collect(Collectors.toSet());
                 if (pkIndexes.equals(pkEqualities) && eqDecomp.getRemainingPredicates().isEmpty()) {
-                    RelBuilder relB = relBuilderFactory.get();
+                    RelBuilder relB = makeRelBuilder();
                     relB.push(leftInput.relNode); relB.push(rightInput.relNode);
                     Preconditions.checkArgument(rightInput.timestamp.hasFixedTimestamp());
                     TimestampHolder.Derived joinTimestamp = leftInput.timestamp.getBestCandidate().fixAsTimestamp();
@@ -615,7 +615,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         final AnnotatedLP leftInputF = leftInput;
         final AnnotatedLP rightInputF = rightInput;
-        RelBuilder relB = relBuilderFactory.get();
+        RelBuilder relB = makeRelBuilder();
         relB.push(leftInputF.relNode); relB.push(rightInputF.relNode);
         Function<Integer,RexInputRef> idxResolver = idx -> {
             if (idx<leftSideMaxIdx) return RexInputRef.of(idx,leftInputF.relNode.getRowType());
@@ -824,7 +824,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     .filter(cand -> groupByIdx.contains(cand.getIndex())).findAny().orElse(input.timestamp.getBestCandidate());
 
 
-            RelBuilder relB = relBuilderFactory.get();
+            RelBuilder relB = makeRelBuilder();
             relB.push(input.relNode);
             Triple<ContinuousIndexMap, ContinuousIndexMap, TimestampHolder.Derived> addedTimestamp =
                     addTimestampAggregate(relB,groupByIdx,candidate,aggregateCalls);
@@ -867,7 +867,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 Preconditions.checkArgument(input.nowFilter.isEmpty() || input.nowFilter.getTimestampIndex()==keyCandidate.getIndex());
                 NowFilter nowFilter = input.nowFilter.remap(IndexMap.singleton(keyCandidate.getIndex(),keyIdx));
 
-                RelBuilder relB = relBuilderFactory.get();
+                RelBuilder relB = makeRelBuilder();
                 relB.push(input.relNode);
                 relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)),aggregateCalls);
                 new TumbleAggregationHint(keyCandidate.getIndex(), TumbleAggregationHint.Type.FUNCTION).addTo(relB);
@@ -900,7 +900,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 Preconditions.checkArgument(nowFilter.getTimestampIndex()==candidate.getIndex(),"Timestamp indexes don't match");
                 Preconditions.checkArgument(!groupByIdx.contains(candidate.getIndex()),"Cannot group on timestamp");
 
-                RelBuilder relB = relBuilderFactory.get();
+                RelBuilder relB = makeRelBuilder();
                 relB.push(input.relNode);
                 Triple<ContinuousIndexMap, ContinuousIndexMap, TimestampHolder.Derived> addedTimestamp =
                         addTimestampAggregate(relB,groupByIdx,candidate,aggregateCalls);
@@ -923,7 +923,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 AnnotatedLP nowInput = input.inlineNowFilter(makeRelBuilder());
 
                 RelNode inputRel = nowInput.relNode;
-                RelBuilder relB = relBuilderFactory.get();
+                RelBuilder relB = makeRelBuilder();
                 relB.push(inputRel);
 
                 RexInputRef timestampRef = RexInputRef.of(candidate.getIndex(), inputRel.getRowType());
@@ -971,7 +971,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         } else {
             //Standard aggregation produces a state table
             Preconditions.checkArgument(input.nowFilter.isEmpty(),"State table cannot have now-filter since there is no timestamp");
-            RelBuilder relB = relBuilderFactory.get();
+            RelBuilder relB = makeRelBuilder();
             relB.push(input.relNode);
             relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)), aggregateCalls);
             //since there is no timestamp, we cannot propagate a sliding window

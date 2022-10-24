@@ -115,13 +115,16 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
-  public void topNTest() {
-    ScriptBuilder builder = example.getImports();
-
-
-
-    validate(builder.getScript(),"");
+  public void nestedAggregationandSelfJoinTest() {
+    ScriptBuilder builder = new ScriptBuilder();
+    builder.add("IMPORT ecommerce-data.Orders");
+    builder.add("IMPORT ecommerce-data.Customer TIMESTAMP EPOCH_TO_TIMESTAMP(lastUpdated) AS updateTime");
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY updateTime DESC");
+    builder.add("Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM _.entries e");
+    builder.add("OrdersInline := SELECT o.id, o.customerid, o.\"time\", t.price, t.num FROM Orders o JOIN o.total t");
+//    builder.add("Customer.orders_by_day := SELECT o.\"time\", o.price, o.num FROM _ JOIN OrdersInline o ON o.customerid = _.customerid");
+    builder.add("Customer.orders_by_day := SELECT round_to_day(o.\"time\") as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM _ JOIN OrdersInline o ON o.customerid = _.customerid GROUP BY day");
+    validate(builder.getScript(),"customer","orders","ordersinline","orders_by_day");
   }
 
   @Test
@@ -139,7 +142,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     builder.add("CustomerDedup := DISTINCT Customer ON customerid ORDER BY updateTime DESC");
     builder.add("OrderCustomerDedup := SELECT o.id, c.name, o.customerid FROM Orders o JOIN CustomerDedup c on o.customerid = c.customerid");
 
-    System.out.println(builder.toString());
+    System.out.println(builder);
     validate(builder.getScript(),"ordercustomer","ordercustomerinterval","customerdedup","ordercustomerdedup");
   }
 
@@ -164,6 +167,17 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
 
     validate(builder.getScript(), "historicorders", "recentorders");
   }
+
+  @Test
+  @Disabled
+  public void topNTest() {
+    ScriptBuilder builder = example.getImports();
+
+
+
+    validate(builder.getScript(),"");
+  }
+
 
   private void validate(String script, String... queryTables) {
     validate(script,Arrays.asList(queryTables));
