@@ -76,7 +76,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     FlinkRelBuilder relBuilder = getBuilder();
     relBuilder.push(project.getInput().accept(this));
     relBuilder.project(project.getProjects().stream().map(rex -> rewrite(rex,relBuilder)).collect(Collectors.toList()),
-            project.getRowType().getFieldList().stream().map(f -> f.getName()).collect(Collectors.toList()));
+            project.getRowType().getFieldList().stream().map(f -> f.getName()).collect(Collectors.toList()),true);
     SqrlHint.fromRel(project, WatermarkHint.CONSTRUCTOR).ifPresent(watermark -> addWatermark(relBuilder,watermark.getTimestampIdx()));
     return relBuilder.build();
   }
@@ -262,8 +262,15 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   @Override
   public RelNode visit(LogicalUnion union) {
-    throw new UnsupportedOperationException("Not yet implemented");
-    //return super.visit(union);
+    Preconditions.checkArgument(union.all);
+    FlinkRelBuilder relBuilder = getBuilder();
+    int numInputs = 0;
+    for (RelNode input : union.getInputs()) {
+      relBuilder.push(input.accept(this));
+      numInputs++;
+    }
+    relBuilder.union(union.all, numInputs);
+    return relBuilder.build();
   }
 
   @Override

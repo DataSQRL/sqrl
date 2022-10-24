@@ -292,7 +292,7 @@ public class AnnotatedLP implements RelHolder {
             updatedFieldNames.set(updatedSelect.map(i),fieldNames.get(i));
         }
         relBuilder.push(input.relNode);
-        relBuilder.project(projects, updatedFieldNames);
+        relBuilder.project(projects, updatedFieldNames, true); //Force to make sure fields are renamed
         RelNode relNode = relBuilder.build();
 
         return new AnnotatedLP(relNode,input.type,input.primaryKey.remap(remap),

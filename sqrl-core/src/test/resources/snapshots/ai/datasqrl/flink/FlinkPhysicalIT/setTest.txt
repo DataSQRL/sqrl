@@ -1,0 +1,24 @@
+>>>combinedstream$9-lp-stream
+LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
+  LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
+    LogicalUnion(all=[true])
+      LogicalProject(_uuid=[$0], customerid=[$3], time=[$4])
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+          LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+      LogicalProject(_uuid=[$0], customerid=[$2], updatetime=[$6])
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+          LogicalTableScan(table=[[customer$i$1]])
+
+>>>combinedstream-lp-database
+LogicalTableScan(table=[[combinedstream$9]])
+
+>>>combinedstream-data
+1000101, 2022-02-20 22:40:49.0
+1000101, 2022-04-20 23:44:17.0
+1000101, 2022-05-19 01:29:39.553
+1000107, 2022-04-20 22:19:49.0
+1000107, 2022-05-19 01:45:39.553
+1000107, 2022-05-19 02:28:39.553
+1000121, 2022-04-20 22:24:09.0
+1000121, 2022-05-19 02:16:39.553
+1000131, 2022-04-20 22:40:49.0

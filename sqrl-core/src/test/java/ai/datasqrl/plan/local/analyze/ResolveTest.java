@@ -299,6 +299,8 @@ public class ResolveTest extends AbstractSQRLIT {
     builder.add("CombinedStream := (SELECT o.customerid, o.\"time\" AS rowtime FROM Orders o)" +
             " UNION ALL " +
             "(SELECT c.customerid, c.\"_ingest_time\" AS rowtime FROM Customer c);");
+    //TODO: fix
+//    builder.add("StreamCount := SELECT round_to_day(rowtime) as day, COUNT(1) as num FROM CombinedStream GROUP BY day");
     process(builder.toString());
     validateQueryTable("combinedstream", TableType.STREAM,3, 1, TimestampTest.fixed(2));
   }

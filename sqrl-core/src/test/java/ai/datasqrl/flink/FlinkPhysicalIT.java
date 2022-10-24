@@ -153,6 +153,8 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
 
     builder.append("OrderAgg2 := SELECT round_to_hour(o.\"time\") as bucket, o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY bucket, customer;\n");
 
+    //Sliding time window test
+
     validate(builder.getScript(),"orderagg1", "orderagg2");
   }
 
@@ -176,6 +178,19 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
 
 
     validate(builder.getScript(),"");
+  }
+
+  @Test
+  public void setTest() {
+    ScriptBuilder builder = new ScriptBuilder();
+    builder.add("IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
+    builder.add("IMPORT ecommerce-data.Orders");
+
+    builder.add("CombinedStream := (SELECT o.customerid, o.\"time\" AS rowtime FROM Orders o)" +
+            " UNION ALL " +
+            "(SELECT c.customerid, c.updateTime AS rowtime FROM Customer c);");
+//    builder.add("StreamCount := SELECT round_to_day(rowtime) as day, COUNT(1) as num FROM CombinedStream GROUP BY day");
+    validate(builder.getScript(), "combinedstream");//,"streamcount");
   }
 
 
