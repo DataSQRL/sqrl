@@ -158,6 +158,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     RelDataType windowType = relBuilder.peek().getRowType();
     relBuilder.filter(SqrlRexUtil.makeWindowLimitFilter(getRexBuilder(relBuilder), 1, rowNumberIdx, windowType));
     CalciteUtil.addIdentityProjection(relBuilder,rowNumberIdx); //project row_number back out
+    throw new UnsupportedOperationException("Not yet implemented, see issue#67");
   }
 
   @Override

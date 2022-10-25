@@ -269,7 +269,7 @@ public class ResolveTest extends AbstractSQRLIT {
     builder.add("Customer.recentOrders := SELECT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
     process(builder.toString());
     validateQueryTable("customer", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,6, 1, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
-    validateQueryTable("recentOrders", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("recentOrders", TableType.STATE, ExecutionEngine.Type.STREAM,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
   }
 
   @Test
@@ -293,8 +293,8 @@ public class ResolveTest extends AbstractSQRLIT {
     process(builder.toString());
     validateQueryTable("customer", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,6, 1, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM,6, 1, TimestampTest.fixed(4)); //temporal join fixes timestamp
-    validateQueryTable("distinctorders", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,3, 2, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
-    validateQueryTable("distinctorderstime", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,3, 3, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("distinctorders", TableType.STATE, ExecutionEngine.Type.STREAM,3, 2, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("distinctorderstime", TableType.STATE, ExecutionEngine.Type.STREAM,3, 3, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
 //    validateQueryTable("distinctAgg", TableType.TEMPORAL_STATE,3, 2, TimestampTest.fixed(2));
   }
 

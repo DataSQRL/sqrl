@@ -376,8 +376,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     pk = ContinuousIndexMap.builder(pkIdx.size()).addAll(pkIdx).build(targetLength);
                 }
 
-                TopNConstraint topN = new TopNConstraint(partition,isDistinct,collation,limit);
-                return setRelHolder(baseInput.copy().type(type).primaryKey(pk).select(select).timestamp(timestamp)
+                TopNConstraint topN = new TopNConstraint(partition,isDistinct,collation,limit, baseInput.type);
+                return setRelHolder(baseInput.copy().type(topN.getTableType())
+                        .primaryKey(pk).select(select).timestamp(timestamp)
                         .joinTables(null).topN(topN).sort(SortOrder.EMPTY).build());
             } else {
                 //If it's a trivial project, we remove it and only update the indexMap. This is needed to eliminate self-joins
@@ -925,7 +926,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 Preconditions.checkArgument(slideWidthMs>0 && slideWidthMs<intervalWidthMs,"Invalid window widths: %s - %s",intervalWidthMs,slideWidthMs);
                 new SlidingAggregationHint(candidate.getIndex(),intervalWidthMs, slideWidthMs).addTo(relB);
 
-                TopNConstraint dedup = TopNConstraint.dedup(pk.targetsAsList(),timestamp.getTimestampCandidate().getIndex());
+                TopNConstraint dedup = TopNConstraint.dedup(pk.targetsAsList(),timestamp.getTimestampCandidate().getIndex(), TableType.STREAM);
                 return setRelHolder(AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pk,
                         timestamp, select, exec)
                         .topN(dedup).build());
@@ -1033,7 +1034,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         AnnotatedLP result;
         if (limit.isPresent()) {
-            result = input.copy().topN(new TopNConstraint(List.of(),false,newCollation,limit)).build();
+            result = input.copy().topN(new TopNConstraint(List.of(),false,newCollation,limit, input.type)).build();
         } else {
             //We can just replace any old order that might be present
             result = input.copy().sort(new SortOrder(newCollation)).build();
