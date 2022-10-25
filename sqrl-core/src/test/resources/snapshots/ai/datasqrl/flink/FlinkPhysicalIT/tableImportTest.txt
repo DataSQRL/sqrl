@@ -23,16 +23,20 @@ LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=
         LogicalValues(tuples=[[{ 0 }]])
 
 >>>customer-lp-database
-LogicalTableScan(table=[[customer$3]])
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5])
+  LogicalTableScan(table=[[customer$3]])
 
 >>>product-lp-database
-LogicalTableScan(table=[[product$10]])
+LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5])
+  LogicalTableScan(table=[[product$10]])
 
 >>>orders-lp-database
-LogicalTableScan(table=[[orders$6]])
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
+  LogicalTableScan(table=[[orders$6]])
 
 >>>entries-lp-database
-LogicalTableScan(table=[[entries$7]])
+LogicalProject(_uuid=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5])
+  LogicalTableScan(table=[[entries$7]])
 
 >>>customer-data
 1000101, john.mekker@gmail.com, John B. Mekker, 1650498257

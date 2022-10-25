@@ -3,16 +3,18 @@ package ai.datasqrl.plan.calcite.util;
 import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
-import java.util.stream.IntStream;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
@@ -25,8 +27,12 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class CalciteUtil {
 
@@ -314,4 +320,20 @@ public class CalciteUtil {
       return fieldBuilder.build();
     }
   }
+
+  public static RelNode applyRexShuttleRecursively(@NonNull RelNode node, @NonNull final RexShuttle rexShuttle) {
+    return node.accept(new RexShuttleApplier(rexShuttle));
+  }
+
+  @Value
+  private static class RexShuttleApplier extends RelShuttleImpl {
+
+    RexShuttle rexShuttle;
+
+    @Override
+    protected RelNode visitChild(RelNode parent, int i, RelNode child) {
+      return super.visitChild(parent.accept(rexShuttle),i,child);
+    }
+  }
+
 }

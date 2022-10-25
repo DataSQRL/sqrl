@@ -10,7 +10,8 @@ LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
           LogicalTableScan(table=[[customer$i$1]])
 
 >>>combinedstream-lp-database
-LogicalTableScan(table=[[combinedstream$9]])
+LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
+  LogicalTableScan(table=[[combinedstream$9]])
 
 >>>combinedstream-data
 1000101, 2022-02-20 22:40:49.0

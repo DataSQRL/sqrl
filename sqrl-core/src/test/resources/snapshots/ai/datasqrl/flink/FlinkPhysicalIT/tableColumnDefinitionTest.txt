@@ -46,19 +46,24 @@ LogicalProject(_uuid=[$0], _idx=[$7], productid=[$8], quantity=[$9], unit_price=
         LogicalValues(tuples=[[{ 0 }]])
 
 >>>entryprice-lp-database
-LogicalTableScan(table=[[entryprice$12]])
+LogicalProject(_uuid=[$0], _idx=[$1], price=[$2], _ingest_time=[$3], time=[$4])
+  LogicalTableScan(table=[[entryprice$12]])
 
 >>>customer-lp-database
-LogicalTableScan(table=[[customer$14]])
+LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6])
+  LogicalTableScan(table=[[customer$14]])
 
 >>>orders-lp-database
-LogicalTableScan(table=[[orders$6]])
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], col1=[$5])
+  LogicalTableScan(table=[[orders$6]])
 
 >>>entries-lp-database
-LogicalTableScan(table=[[entries$7]])
+LogicalProject(_uuid=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], discount2=[$6])
+  LogicalTableScan(table=[[entries$7]])
 
 >>>ordercustomer-lp-database
-LogicalTableScan(table=[[ordercustomer$16]])
+LogicalProject(_uuid=[$0], _idx=[$1], id=[$2], name=[$3], customerid=[$4], col1=[$5], discount2=[$6], time=[$7])
+  LogicalTableScan(table=[[ordercustomer$16]])
 
 >>>entryprice-data
 0, 17.35, 2022-05-19 01:29:39.553244

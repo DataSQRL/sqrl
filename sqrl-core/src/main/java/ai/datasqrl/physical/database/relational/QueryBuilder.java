@@ -3,6 +3,7 @@ package ai.datasqrl.physical.database.relational;
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.function.SqrlFunction;
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
+import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.queries.APIQuery;
@@ -40,7 +41,7 @@ public class QueryBuilder {
 
   private QueryTemplate planQuery(OptimizedDAG.ReadQuery query) {
     RelNode relNode = query.getRelNode();
-    relNode = relNode.accept(new FunctionNameRewriter());
+    relNode = CalciteUtil.applyRexShuttleRecursively(relNode,new FunctionNameRewriter());
     return new QueryTemplate(relNode);
   }
 
@@ -50,6 +51,8 @@ public class QueryBuilder {
       default: throw new UnsupportedOperationException("Not a supported dialect: " + dbDialect);
     }
   }
+
+
 
 
   private class FunctionNameRewriter extends RexShuttle {

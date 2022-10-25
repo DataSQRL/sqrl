@@ -54,6 +54,7 @@ public class DAGPlanner {
             //Rewrite query
             AnnotatedLP rewritten = SQRLLogicalPlanConverter.convert(relNode, pipeline.getStage(ExecutionEngine.Type.DATABASE).get(),
                     getRelBuilderFactory());
+            rewritten = rewritten.postProcess(getRelBuilderFactory().get());
             relNode = rewritten.getRelNode();
             relNode = planner.transform(READ_DAG_STITCHING,relNode);
             relNode.accept(tableScanVisitor);

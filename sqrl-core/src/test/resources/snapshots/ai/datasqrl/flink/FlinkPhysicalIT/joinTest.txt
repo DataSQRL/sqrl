@@ -36,19 +36,23 @@ LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=
       LogicalTableScan(table=[[customer$i$1]])
 
 >>>ordercustomer-lp-database
-LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3])
-  LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1]]
-    LogicalTableScan(table=[[orders$6]])
-    LogicalTableScan(table=[[customer$3]])
+LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4])
+  LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3])
+    LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1]]
+      LogicalTableScan(table=[[orders$6]])
+      LogicalTableScan(table=[[customer$3]])
 
 >>>ordercustomerinterval-lp-database
-LogicalTableScan(table=[[ordercustomerinterval$11]])
+LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4], rowtime=[$5])
+  LogicalTableScan(table=[[ordercustomerinterval$11]])
 
 >>>customerdedup-lp-database
-LogicalTableScan(table=[[customerdedup$13]])
+LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+  LogicalTableScan(table=[[customerdedup$13]])
 
 >>>ordercustomerdedup-lp-database
-LogicalTableScan(table=[[ordercustomerdedup$15]])
+LogicalProject(_uuid=[$0], id=[$1], name=[$2], customerid=[$3], rowtime=[$4])
+  LogicalTableScan(table=[[ordercustomerdedup$15]])
 
 >>>ordercustomer-data
 10007140, Emily F. Ludies, 1000107

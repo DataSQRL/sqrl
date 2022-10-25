@@ -36,7 +36,6 @@ import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -47,7 +46,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FlinkPhysicalIT extends AbstractSQRLIT {
 
@@ -174,18 +173,26 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 5 YEAR");
     builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 1 SECOND");
 
-
     validate(builder.getScript(), "historicorders", "recentorders");
   }
 
   @Test
-  @Disabled
   public void topNTest() {
     ScriptBuilder builder = example.getImports();
 
+    builder.add("Customer.updateTime := epoch_to_timestamp(lastUpdated)");
+    builder.add("CustomerDistinct := DISTINCT Customer ON customerid ORDER BY updateTime DESC;");
+    builder.add("CustomerDistinct.recentOrders := SELECT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
 
+    builder.add("CustomerId := SELECT DISTINCT customerid FROM Customer;");
+    builder.add("CustomerOrders := SELECT o.id, c.customerid FROM CustomerId c JOIN Orders o ON o.customerid = c.customerid");
 
-    validate(builder.getScript(),"");
+    builder.add("CustomerDistinct.distinctOrders := SELECT DISTINCT o.id FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
+    builder.add("CustomerDistinct.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
+
+    builder.add("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC");
+
+    validate(builder.getScript(),"customerdistinct","customerid","customerorders","distinctorders","distinctorderstime","orders","entries");
   }
 
   @Test
@@ -214,8 +221,9 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     //We add a scan query for every query table
     List<APIQuery> queries = new ArrayList<APIQuery>();
     CalciteSchema relSchema = resolvedDag.getRelSchema();
-    queryTables.stream().map(t -> ResolveTest.getLatestTable(relSchema,t,VirtualRelationalTable.class))
-            .map(t -> t.get()).forEach(vt -> {
+    queryTables.stream().map(t -> ResolveTest.getLatestTable(relSchema,t,VirtualRelationalTable.class)
+                    .orElseThrow(() -> new IllegalArgumentException("No such table: " + t)))
+            .forEach(vt -> {
       String tblName =  vt.getNameId();
       RelNode rel = planner.getRelBuilder().scan(tblName).build();
       queries.add(new APIQuery(tblName.substring(0,tblName.indexOf(Name.NAME_DELIMITER)), rel));

@@ -262,11 +262,9 @@ public class ResolveTest extends AbstractSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC;");
     builder.add("Customer.recentOrders := SELECT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
-//    builder.add("Customer.orderAgg := SELECT COUNT(d.id) FROM _.recentOrders d");
     process(builder.toString());
     validateQueryTable("customer", TableType.TEMPORAL_STATE,6, 1, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
     validateQueryTable("recentOrders", TableType.TEMPORAL_STATE,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
-//    validateQueryTable("orderAgg", TableType.TEMPORAL_STATE,3, 2, TimestampTest.fixed(2));
   }
 
   @Test
@@ -281,7 +279,7 @@ public class ResolveTest extends AbstractSQRLIT {
 
   @Test
   public void partitionSelectDistinctTest() {
-    //TODO: add distinctAgg test back in once this works in transpiler
+    //TODO: add distinctAgg test back in once we keep parent state
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;");
     builder.add("Customer.distinctOrders := SELECT DISTINCT o.id FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
