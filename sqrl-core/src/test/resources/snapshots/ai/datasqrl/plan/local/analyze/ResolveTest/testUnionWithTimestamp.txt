@@ -6,3 +6,9 @@ LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
     LogicalProject(_uuid=[$0], customerid=[$2], _ingest_time=[$1])
       LogicalTableScan(table=[[customer$q$2]])
 
+>>>streamcount-lp
+LogicalProject(day=[$0], num=[$1])
+  LogicalAggregate(group=[{0}], num=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION]]
+    LogicalProject(day=[round_to_day($2)], _uuid=[$0])
+      LogicalTableScan(table=[[combinedstream$q$11]])
+

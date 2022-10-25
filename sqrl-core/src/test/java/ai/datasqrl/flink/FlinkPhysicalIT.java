@@ -207,8 +207,8 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     builder.add("CombinedStream := (SELECT o.customerid, o.\"time\" AS rowtime FROM Orders o)" +
             " UNION ALL " +
             "(SELECT c.customerid, c.updateTime AS rowtime FROM Customer c);");
-//    builder.add("StreamCount := SELECT round_to_day(rowtime) as day, COUNT(1) as num FROM CombinedStream GROUP BY day");
-    validate(builder.getScript(), "combinedstream");//,"streamcount");
+    builder.add("StreamCount := SELECT round_to_hour(rowtime) as hour, COUNT(1) as num FROM CombinedStream GROUP BY hour");
+    validate(builder.getScript(), "combinedstream","streamcount");
   }
 
   private void validate(String script, String... queryTables) {
