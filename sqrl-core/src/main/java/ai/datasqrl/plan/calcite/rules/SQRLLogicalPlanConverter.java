@@ -11,6 +11,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
+import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.rel.RelCollation;
@@ -46,23 +48,30 @@ import java.util.stream.Collectors;
 @Value
 public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP> {
 
-    private static final long UPPER_BOUND_INTERVAL_MS = 999L*365L*24L*3600L; //999 years
-    public static final double HIGH_CARDINALITY_JOIN_THRESHOLD = 10000;
+    @Value
+    @Builder
+    public static class Config {
+        @NonNull
+        ExecutionStage startStage;
+        @Builder.Default
+        boolean allowStageChange = false;
+        @Builder.Default
+        int defaultSlideWindowPanes = DEFAULT_SLIDING_WINDOW_PANES;
+    }
+
+    public static final long UPPER_BOUND_INTERVAL_MS = 999L*365L*24L*3600L; //999 years
     public static final int DEFAULT_SLIDING_WINDOW_PANES = 50;
     public static final String UNION_TIMESTAMP_COLUMN_NAME = "_timestamp";
     public static final String DEFAULT_PRIMARY_KEY_COLUMN_NAME = "_pk";
 
     Supplier<RelBuilder> relBuilderFactory;
     SqrlRexUtil rexUtil;
-    ExecutionStage startStage;
-    boolean allowStageChange = false;
-    double cardinalityJoinThreshold = HIGH_CARDINALITY_JOIN_THRESHOLD;
-    int defaultSlideWindowPanes = DEFAULT_SLIDING_WINDOW_PANES;
+    Config config;
 
-    public SQRLLogicalPlanConverter(Supplier<RelBuilder> relBuilderFactory, ExecutionStage stage) {
+    public SQRLLogicalPlanConverter(@NonNull Supplier<RelBuilder> relBuilderFactory, @NonNull Config config) {
         this.relBuilderFactory = relBuilderFactory;
         this.rexUtil = new SqrlRexUtil(relBuilderFactory.get().getTypeFactory());
-        this.startStage = stage;
+        this.config = config;
     }
 
     public static AnnotatedLP findCheapest(RelNode relNode, ExecutionPipeline pipeline, Supplier<RelBuilder> relBuilderFactory) {
@@ -70,7 +79,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         ComputeCost cheapestCost = null;
         for (ExecutionStage stage : pipeline.getStages()) {
             try {
-                AnnotatedLP alp = convert(relNode, stage, relBuilderFactory);
+                AnnotatedLP alp = convert(relNode, relBuilderFactory, Config.builder().startStage(stage).build());
                 ComputeCost cost = SimpleCostModel.of(stage.getEngine().getType(),alp);
                 if (cheapestCost==null || cost.compareTo(cheapestCost)<0) {
                     cheapest = alp;
@@ -82,8 +91,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         return cheapest;
     }
 
-    public static AnnotatedLP convert(RelNode relNode, ExecutionStage stage, Supplier<RelBuilder> relBuilderFactory) {
-        SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(relBuilderFactory, stage);
+    public static AnnotatedLP convert(RelNode relNode, Supplier<RelBuilder> relBuilderFactory, Config config) {
+        SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(relBuilderFactory, config);
         relNode = relNode.accept(sqrl2sql);
         return sqrl2sql.getRelHolder(relNode);
     }
@@ -98,7 +107,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             //Inline all pullups
             relHolder = relHolder.inlineAllPullups(makeRelBuilder());
         }
-        if (!allowStageChange && !relHolder.exec.getStage().equals(startStage)) {
+        if (!config.allowStageChange && !relHolder.exec.getStage().equals(config.startStage)) {
             throw new ExecutionStageException.StageChange();
         }
 
@@ -116,7 +125,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         VirtualRelationalTable.Root root = vtable.getRoot();
         QueryRelationalTable queryTable = root.getBase();
         ExecutionAnalysis scanExec = ExecutionAnalysis.ofScan(queryTable.getExecution());
-        ExecutionAnalysis exec = scanExec.combine(ExecutionAnalysis.start(startStage));
+        ExecutionAnalysis exec = scanExec.combine(ExecutionAnalysis.start(config.startStage));
 
         Optional<Integer> numRootPks = Optional.of(root.getNumPrimaryKeys());
         if (exec.getStage().supports(EngineCapability.DENORMALIZE)) {
@@ -912,7 +921,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 //Convert now-filter to sliding window and add as hint
                 long intervalWidthMs = nowFilter.getPredicate().getIntervalLength();
                 // TODO: extract slide-width from hint
-                long slideWidthMs = intervalWidthMs/defaultSlideWindowPanes;
+                long slideWidthMs = intervalWidthMs/config.defaultSlideWindowPanes;
                 Preconditions.checkArgument(slideWidthMs>0 && slideWidthMs<intervalWidthMs,"Invalid window widths: %s - %s",intervalWidthMs,slideWidthMs);
                 new SlidingAggregationHint(candidate.getIndex(),intervalWidthMs, slideWidthMs).addTo(relB);
 

@@ -1,9 +1,5 @@
 package ai.datasqrl.plan.local.generate;
 
-import static ai.datasqrl.errors.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
-import static ai.datasqrl.errors.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
-import static ai.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
-
 import ai.datasqrl.compile.loaders.DataSourceLoader;
 import ai.datasqrl.compile.loaders.JavaFunctionLoader;
 import ai.datasqrl.compile.loaders.Loader;
@@ -16,70 +12,45 @@ import ai.datasqrl.physical.pipeline.ExecutionPipeline;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
+import ai.datasqrl.plan.calcite.hints.ExecutionHint;
 import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.table.AddedColumn;
+import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Simple;
-import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
-import ai.datasqrl.plan.calcite.table.ImportedSourceTable;
-import ai.datasqrl.plan.calcite.table.ProxyImportRelationalTable;
-import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.local.transpile.AddContextFields;
-import ai.datasqrl.plan.local.transpile.AddContextTable;
-import ai.datasqrl.plan.local.transpile.AddHints;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement;
-import ai.datasqrl.plan.local.transpile.FlattenFieldPaths;
-import ai.datasqrl.plan.local.transpile.FlattenTablePaths;
-import ai.datasqrl.plan.local.transpile.QualifyIdentifiers;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
+import ai.datasqrl.plan.local.transpile.*;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
-import ai.datasqrl.plan.local.transpile.JoinDeclarationUtil;
-import ai.datasqrl.plan.local.transpile.ReplaceWithVirtualTable;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
-import java.io.File;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.sql.Assignment;
-import org.apache.calcite.sql.CreateSubscription;
-import org.apache.calcite.sql.DistinctAssignment;
-import org.apache.calcite.sql.ExpressionAssignment;
-import org.apache.calcite.sql.ImportDefinition;
-import org.apache.calcite.sql.JoinAssignment;
-import org.apache.calcite.sql.QueryAssignment;
-import org.apache.calcite.sql.ScriptNode;
-import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqrlStatement;
-import org.apache.calcite.sql.StreamAssignment;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
+
+import java.io.File;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static ai.datasqrl.errors.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
+import static ai.datasqrl.errors.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
+import static ai.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
 
 @Getter
 public class Resolve {
@@ -513,9 +484,16 @@ public class Resolve {
     //table types, and timestamps in the process
 
 
-    //TODO: extract execution stage preference from hints if present
     Supplier<RelBuilder> relBuilderFactory = getRelBuilderFactory(env);
-    AnnotatedLP prel = SQRLLogicalPlanConverter.findCheapest(relNode, env.session.pipeline, relBuilderFactory);
+    AnnotatedLP prel;
+    SQRLLogicalPlanConverter.Config.ConfigBuilder converterConfig = SQRLLogicalPlanConverter.Config.builder();
+    Optional<ExecutionHint> execHint = ExecutionHint.fromSqlHint(op.getStatement().getHints());
+    if (execHint.isPresent()) {
+      converterConfig = execHint.get().getConfig(env.session.getPipeline(), converterConfig);
+      prel = SQRLLogicalPlanConverter.convert(relNode, relBuilderFactory, converterConfig.build());
+    } else {
+      prel = SQRLLogicalPlanConverter.findCheapest(relNode, env.session.pipeline, relBuilderFactory);
+    }
     if (op.statementKind == StatementKind.DISTINCT_ON) {
       //Get all field names from relnode
       fieldNames = prel.relNode.getRowType().getFieldNames();

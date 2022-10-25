@@ -52,8 +52,11 @@ public class DAGPlanner {
             //Replace DEFAULT joins
             RelNode relNode = APIQueryRewriter.rewrite(planner.getRelBuilder(),query.getRelNode());
             //Rewrite query
-            AnnotatedLP rewritten = SQRLLogicalPlanConverter.convert(relNode, pipeline.getStage(ExecutionEngine.Type.DATABASE).get(),
-                    getRelBuilderFactory());
+            AnnotatedLP rewritten = SQRLLogicalPlanConverter.convert(relNode, getRelBuilderFactory(),
+                    SQRLLogicalPlanConverter.Config.builder()
+                            .startStage(pipeline.getStage(ExecutionEngine.Type.DATABASE).get())
+                            .allowStageChange(false) //set to true once we can execute relnodes in the server
+                            .build());
             rewritten = rewritten.postProcess(getRelBuilderFactory().get());
             relNode = rewritten.getRelNode();
             relNode = planner.transform(READ_DAG_STITCHING,relNode);
@@ -69,8 +72,11 @@ public class DAGPlanner {
         for (VirtualRelationalTable dbTable : tableSinks) {
             RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
             //Shred the table if necessary before materialization
-            AnnotatedLP processedRel = SQRLLogicalPlanConverter.convert(scanTable,pipeline.getStage(ExecutionEngine.Type.STREAM).get(),
-                    getRelBuilderFactory());
+            AnnotatedLP processedRel = SQRLLogicalPlanConverter.convert(scanTable, getRelBuilderFactory(),
+                    SQRLLogicalPlanConverter.Config.builder()
+                            .startStage(pipeline.getStage(ExecutionEngine.Type.STREAM).get())
+                            .allowStageChange(false)
+                            .build());
             processedRel = processedRel.postProcess(planner.getRelBuilder(), dbTable.getRowType().getFieldNames());
             RelNode expandedScan = processedRel.getRelNode();
             //Expand to full tree
