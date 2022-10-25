@@ -74,6 +74,7 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlStatement;
+import org.apache.calcite.sql.StreamAssignment;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -347,6 +348,9 @@ public class Resolve {
       sqlNode = ((ExpressionAssignment) statement).getExpression();
       sqlNode = transformExpressionToQuery(env, statement, sqlNode);
       statementKind = StatementKind.EXPR;
+    } else if (statement instanceof StreamAssignment) {
+      sqlNode = ((StreamAssignment) statement).getQuery();
+      statementKind = StatementKind.STREAM;
     } else if (statement instanceof QueryAssignment) {
       sqlNode = ((QueryAssignment) statement).getQuery();
       statementKind = StatementKind.QUERY;
@@ -651,7 +655,7 @@ public class Resolve {
   }
 
   public enum StatementKind {
-    EXPR, QUERY, JOIN, SUBSCRIPTION, IMPORT, EXPORT, DISTINCT_ON
+    EXPR, QUERY, JOIN, SUBSCRIPTION, IMPORT, EXPORT, DISTINCT_ON, STREAM
   }
 
   enum OpKind {

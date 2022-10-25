@@ -171,12 +171,11 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void assignmentHintTest() {
     Env env = generate(parser.parse("IMPORT ecommerce-data.Orders;"
         + "/*+ NOOP */ X := SELECT e.* FROM Orders.entries e;"));
 
-    assertFalse(((LogicalProject) env.getOps().get(0).getRelNode()).getHints().isEmpty());
+    assertFalse(env.getOps().get(0).getStatement().getHints().isEmpty());
   }
 
   @Test
@@ -445,7 +444,7 @@ class AnalyzerTest extends AbstractSQRLIT {
     assertEquals(BigDecimal.valueOf(24), rexLiteral.getValue());
     assertTrue(rexLiteral.getType() instanceof IntervalSqlType);
     assertEquals(
-        TimeUnit.MONTH,
+        TimeUnit.YEAR,
         rexLiteral.getType().getIntervalQualifier().getUnit());
   }
 
@@ -979,4 +978,13 @@ class AnalyzerTest extends AbstractSQRLIT {
 //    node = gen("Orders.warn := SELECT * FROM _ CROSS JOIN _.entries;");
 //    System.out.println(node);
 //  }
+
+  @Test
+  public void streamTest() {
+    Env env1 = generate(parser.parse("IMPORT ecommerce-data.Customer;"
+        + "X := STREAM ON ADD AS SELECT * From Customer;"));
+
+    assertNotNull(
+        env1.getRelSchema().getTable("X", false));
+  }
 }

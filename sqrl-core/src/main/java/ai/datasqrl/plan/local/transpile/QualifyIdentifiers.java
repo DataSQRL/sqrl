@@ -2,6 +2,7 @@ package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -79,7 +80,10 @@ public class QualifyIdentifiers extends SqlShuttle {
   }
 
   private SqlNodeList replaceGroupBy(SqlNodeList group) {
-    List<SqlNode> full = analysis.groupByExpressions.get(group);
+    List<SqlNode> full = analysis.groupByExpressions.get(group)
+        .stream()
+        .map(this::expr)
+        .collect(Collectors.toList());
 
     return new SqlNodeList(full, group.getParserPosition());
   }

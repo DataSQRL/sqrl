@@ -1,8 +1,8 @@
 Product2 := SELECT _ingest_time + INTERVAL 2 YEAR AS x FROM Product;
 
-LogicalProject(x=[+($1, 24:INTERVAL MONTH)])
+LogicalProject(x=[+($1, 24:INTERVAL YEAR)])
   LogicalTableScan(table=[[product$10]])
 
 
-SELECT "_ingest_time" + INTERVAL '24' MONTH AS "x"
+SELECT "_ingest_time" + INTERVAL '2' YEAR AS "x"
 FROM "product$10"

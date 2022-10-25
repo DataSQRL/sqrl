@@ -19,7 +19,7 @@ LogicalSort(sort0=[$0], sort1=[$4], sort2=[$3], dir0=[ASC], dir1=[DESC], dir2=[D
                 LogicalTableScan(table=[[orders$12]])
                 LogicalTableScan(table=[[entries$13]])
             LogicalTableScan(table=[[product$10]])
-          LogicalFilter(condition=[>($4, -(now(), 24:INTERVAL MONTH))])
+          LogicalFilter(condition=[>($4, -(now(), 24:INTERVAL YEAR))])
             LogicalTableScan(table=[[orders$12]])
 
 
@@ -29,6 +29,6 @@ FROM "customer$3"
  LEFT JOIN "product$10" ON "entries$13"."productid" = "product$10"."productid"
  INNER JOIN (SELECT *
   FROM "orders$12"
-  WHERE "time" > "now"() - INTERVAL '24' MONTH) AS "t" ON "entries$13"."id" = "t"."id"
+  WHERE "time" > "now"() - INTERVAL '2' YEAR) AS "t" ON "entries$13"."id" = "t"."id"
 GROUP BY "customer$3"."_uuid", "entries$13"."productid", "product$10"."category"
 ORDER BY "customer$3"."_uuid", COUNT(*) DESC, SUM("entries$13"."quantity") DESC
