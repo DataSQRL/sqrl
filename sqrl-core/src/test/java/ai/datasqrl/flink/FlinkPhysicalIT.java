@@ -9,7 +9,6 @@ import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.physical.database.relational.QueryTemplate;
@@ -30,6 +29,8 @@ import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.SnapshotTest;
 import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.C360;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
@@ -41,7 +42,9 @@ import org.junit.jupiter.api.TestInfo;
 
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.Types;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -162,7 +165,7 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
     builder.append("agg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM OrderCustomer o GROUP BY customer;\n");
 
-    validate(builder.getScript(),"orderagg1", "orderagg2","ordertime1","ordernow1",
+    validate(builder.getScript(),Set.of("ordernow3"),"orderagg1", "orderagg2","ordertime1","ordernow1",
             "ordernow2","ordernow3","orderaugment","ordercustomer","agg1");
   }
 
@@ -208,26 +211,29 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     validate(builder.getScript(), "combinedstream");//,"streamcount");
   }
 
-
   private void validate(String script, String... queryTables) {
-    validate(script,Arrays.asList(queryTables));
+    validate(script,Collections.EMPTY_SET,queryTables);
+  }
+
+  private void validate(String script, Set<String> tableWithoutTimestamp, String... queryTables) {
+    validate(script,tableWithoutTimestamp, Arrays.asList(queryTables));
   }
 
   @SneakyThrows
-  private void validate(String script, Collection<String> queryTables) {
+  private void validate(String script, Set<String> tableWithoutTimestamp, Collection<String> queryTables) {
     ScriptNode node = parse(script);
     Resolve.Env resolvedDag = resolve.planDag(session, node);
     DAGPlanner dagPlanner = new DAGPlanner(planner);
     //We add a scan query for every query table
     List<APIQuery> queries = new ArrayList<APIQuery>();
     CalciteSchema relSchema = resolvedDag.getRelSchema();
-    queryTables.stream().map(t -> ResolveTest.getLatestTable(relSchema,t,VirtualRelationalTable.class)
-                    .orElseThrow(() -> new IllegalArgumentException("No such table: " + t)))
-            .forEach(vt -> {
-      String tblName =  vt.getNameId();
-      RelNode rel = planner.getRelBuilder().scan(tblName).build();
-      queries.add(new APIQuery(tblName.substring(0,tblName.indexOf(Name.NAME_DELIMITER)), rel));
-    });
+    for (String tableName : queryTables) {
+      Optional<VirtualRelationalTable> vtOpt = ResolveTest.getLatestTable(relSchema,tableName,VirtualRelationalTable.class);
+      Preconditions.checkArgument(vtOpt.isPresent(),"No such table: %s",tableName);
+      VirtualRelationalTable vt = vtOpt.get();
+      RelNode rel = planner.getRelBuilder().scan(vt.getNameId()).build();
+      queries.add(new APIQuery(tableName, rel));
+    }
     OptimizedDAG dag = dagPlanner.plan(relSchema,queries, session.getPipeline());
     snapshot.addContent(dag);
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
@@ -243,12 +249,18 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
               .executeQuery(sqlQuery);
       results.put(query.getNameId(),resultSet);
       //Since Flink execution order is non-deterministic we need to sort results and remove uuid and ingest_time which change with every invocation
-      String content = Arrays.stream(ResultSetPrinter.toLines(resultSet, s -> Stream.of("_uuid", "_ingest_time").noneMatch(p -> s.startsWith(p))))
+      Predicate<Integer> typeFilter = Predicates.alwaysTrue();
+      if (tableWithoutTimestamp.contains(query.getNameId())) typeFilter = filterOutTimestampColumn;
+      String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,
+                      s -> Stream.of("_uuid", "_ingest_time").noneMatch(p -> s.startsWith(p)), typeFilter))
               .sorted().collect(Collectors.joining(System.lineSeparator()));
       snapshot.addContent(content,query.getNameId(),"data");
     }
     snapshot.createOrValidate();
   }
+
+  private static final Predicate<Integer> filterOutTimestampColumn =
+          type -> type!= Types.TIMESTAMP_WITH_TIMEZONE && type!=Types.TIMESTAMP;
 
   private ScriptNode parse(String query) {
     return parser.parse(query);

@@ -13,11 +13,12 @@ import java.util.function.Predicate;
 public class ResultSetPrinter {
 
   public static int print(ResultSet resultSet, PrintStream out) {
-    return print(resultSet, out, Predicates.alwaysTrue());
+    return print(resultSet, out, Predicates.alwaysTrue(), Predicates.alwaysTrue());
   }
 
   @SneakyThrows
-  public static int print(ResultSet resultSet, PrintStream out, Predicate<String> filterColumns) {
+  public static int print(ResultSet resultSet, PrintStream out, Predicate<String> filterColumnsByName,
+                          Predicate<Integer> filterColumnsByType) {
     final ResultSetMetaData metaData = resultSet.getMetaData();
     final int columnCount = metaData.getColumnCount();
     int size = 0;
@@ -26,7 +27,8 @@ public class ResultSetPrinter {
       size++;
       int cols = 0;
       for (int i = 1; i <= columnCount; i++) {
-        if (!filterColumns.test(metaData.getColumnName(i))) continue;
+        if (!filterColumnsByName.test(metaData.getColumnName(i))) continue;
+        if (!filterColumnsByType.test(metaData.getColumnType(i))) continue;
         if (cols++ > 0) out.print(", ");
         out.print(resultSet.getObject(i));
       }
@@ -34,14 +36,17 @@ public class ResultSetPrinter {
     return size;
   }
 
-  public static String toString(ResultSet resultSet, Predicate<String> filterColumns) {
+  public static String toString(ResultSet resultSet, Predicate<String> filterColumnsByName,
+                                Predicate<Integer> filterColumnsByType) {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     PrintStream ps = new PrintStream(os);
-    print(resultSet,ps,filterColumns);
+    print(resultSet,ps,filterColumnsByName,filterColumnsByType);
     return os.toString(StandardCharsets.UTF_8);
   }
 
-  public static String[] toLines(ResultSet resultSet, Predicate<String> filterColumns) {
-    return toString(resultSet,filterColumns).split("\\R");
+  public static String[] toLines(ResultSet resultSet, Predicate<String> filterColumnsByName,
+                                 Predicate<Integer> filterColumnsByType) {
+    return toString(resultSet,filterColumnsByName,filterColumnsByType)
+            .split("\\R");
   }
 }
