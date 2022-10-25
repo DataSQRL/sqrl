@@ -978,4 +978,13 @@ class AnalyzerTest extends AbstractSQRLIT {
 //    node = gen("Orders.warn := SELECT * FROM _ CROSS JOIN _.entries;");
 //    System.out.println(node);
 //  }
+
+  @Test
+  public void streamTest() {
+    Env env1 = generate(parser.parse("IMPORT ecommerce-data.Customer;"
+        + "X := STREAM ON ADD AS SELECT * From Customer;"));
+
+    assertNotNull(
+        env1.getRelSchema().getTable("X", false));
+  }
 }

@@ -28,7 +28,6 @@ singleStatement
 
 statement
     : assignment                                                       #assign
-    | CREATE SUBSCRIPTION qualifiedName ON subscriptionType AS query   #createSubscription
     | IMPORT importDefinition                                          #importStatement
     | EXPORT exportDefinition                                          #exportStatement
     ;
@@ -45,6 +44,7 @@ assignment
     : hint? qualifiedName tableFunction? ':=' inlineJoin                          # joinAssignment
     | hint? qualifiedName tableFunction? ':=' expression                          # expressionAssign
     | hint? qualifiedName tableFunction? ':=' query                               # queryAssign
+    | hint? qualifiedName tableFunction? ':=' streamQuery                               # streamAssign
     | hint? qualifiedName ':=' DISTINCT table=identifier (AS? distinctAlias=identifier)?
                                ON onList
                                (ORDER BY orderExpr=expression ordering=DESC?)?              # distinctAssignment
@@ -85,6 +85,9 @@ inlineJoin
       (LIMIT limit=INTEGER_VALUE)?
       (INVERSE inv=identifier)?
     ;
+
+streamQuery
+    : STREAM ON subscriptionType AS query;
 
 query
     : queryNoWith
@@ -460,6 +463,7 @@ SET: 'SET';
 SETS: 'SETS';
 SHOW: 'SHOW';
 SOME: 'SOME';
+STREAM: 'STREAM';
 SQL: 'SQL';
 STATE: 'STATE';
 SUBSCRIPTION: 'SUBSCRIPTION';

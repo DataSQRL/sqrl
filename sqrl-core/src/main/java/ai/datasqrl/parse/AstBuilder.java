@@ -1253,6 +1253,18 @@ class AstBuilder
         emptyListToEmptyOptional(getHints(ctx.hint())));
   }
 
+  @Override
+  public SqlNode visitStreamAssign(StreamAssignContext ctx) {
+
+    SqlNode query = visit(ctx.streamQuery().query());
+    SubscriptionType type = SubscriptionType.valueOf(ctx.streamQuery().subscriptionType().getText());
+    return new StreamAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
+        getTableArgs(ctx.tableFunction()),
+        query,
+        type,
+        emptyListToEmptyOptional(getHints(ctx.hint())));
+  }
+
   private Optional<SqlNodeList> emptyListToEmptyOptional(SqlNodeList list) {
     if (list.getList().isEmpty()) {
       return Optional.empty();
@@ -1268,17 +1280,6 @@ class AstBuilder
         getTableArgs(ctx.tableFunction()),
         expr,
         emptyListToEmptyOptional(getHints(ctx.hint())));
-  }
-
-  @Override
-  public SqlNode visitCreateSubscription(CreateSubscriptionContext ctx) {
-
-    return new CreateSubscription(
-        getLocation(ctx),
-        SubscriptionType.valueOf(ctx.subscriptionType().getText()),
-        getNamePath(ctx.qualifiedName()),
-        visit(ctx.query())
-    );
   }
 
   @Override
