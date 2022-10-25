@@ -23,10 +23,7 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.compress.utils.Sets;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.*;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -101,10 +98,18 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   @Test
-  public void timestampTest() {
+  public void timestampExpressionTest() {
     process("IMPORT ecommerce-data.Customer TIMESTAMP EPOCH_TO_TIMESTAMP(lastUpdated) AS timestamp;\n");
     validateQueryTable("customer", TableType.STREAM, 7, 1, TimestampTest.fixed(6));
   }
+
+  @Test
+  @Disabled
+  public void timestampDefinitionTest() {
+    process("IMPORT ecommerce-data.Orders TIMESTAMP \"time\";\n");
+    validateQueryTable("orders", TableType.STREAM,6, 1, TimestampTest.fixed(4));
+  }
+
 
   @Test
   public void addingSimpleColumns() {
