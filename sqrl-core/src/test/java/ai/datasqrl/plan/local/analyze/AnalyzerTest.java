@@ -6,7 +6,6 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.errors.ErrorCode;
-import ai.datasqrl.errors.SqrlException;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.ParsingException;
 import ai.datasqrl.parse.tree.name.Name;
@@ -24,6 +23,7 @@ import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.type.IntervalSqlType;
 import org.junit.Ignore;
@@ -173,9 +173,11 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   public void assignmentHintTest() {
     Env env = generate(parser.parse("IMPORT ecommerce-data.Orders;"
-        + "/*+ NOOP */ X := SELECT e.* FROM Orders.entries e;"));
+        + "/*+ EXEC(database) */ X := SELECT e.* FROM Orders.entries e;"));
 
     assertFalse(env.getOps().get(0).getStatement().getHints().isEmpty());
+    SqlHint hint = (SqlHint)env.getOps().get(0).getStatement().getHints().get().get(0);
+    assertFalse(hint.getOperandList().isEmpty());
   }
 
   @Test

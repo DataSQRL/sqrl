@@ -66,13 +66,13 @@ hint
    : '/*+' hintItem (',' hintItem)* '*/'
    ;
 
-// NO_HASH_JOIN, RESOURCE(mem='128mb', parallelism='24')
+// NO_HASH_JOIN, RESOURCE(mem, parallelism)
 hintItem
    : identifier ('(' keyValue (',' keyValue)* ')')?
    ;
 
 keyValue
-   : identifier ('=' string)?
+   : identifier
    ;
 
 subscriptionType

@@ -31,7 +31,6 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -52,16 +51,6 @@ class AstBuilder
 
   AstBuilder(ParsingOptions parsingOptions) {
   }
-//
-//  @SneakyThrows
-//  private SqlNode parseSql(String sql) {
-//    SqlNode node = SqlParser.create(sql,
-//        SqlParser.config().withCaseSensitive(false)
-//            .withConformance(SqrlConformance.INSTANCE)
-//            .withUnquotedCasing(Casing.UNCHANGED)
-//        ).parseQuery();
-//    return node;
-//  }
 
   private static void check(boolean condition, String message, ParserRuleContext context) {
     if (!condition) {
@@ -631,9 +620,14 @@ class AstBuilder
   public SqlNode visitHintItem(HintItemContext ctx) {
     return new SqlHint(getLocation(ctx),
         (SqlIdentifier) ctx.identifier().accept(this),
-        SqlNodeList.EMPTY,
-        HintOptionFormat.EMPTY
+        new SqlNodeList(visit(ctx.keyValue(), SqlNode.class), getLocation(ctx)),
+        HintOptionFormat.ID_LIST
     );
+  }
+
+  @Override
+  public SqlNode visitKeyValue(KeyValueContext ctx) {
+    return visit(ctx.identifier());
   }
 
   @Override
