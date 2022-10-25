@@ -171,12 +171,11 @@ class AnalyzerTest extends AbstractSQRLIT {
   }
 
   @Test
-  @Disabled
   public void assignmentHintTest() {
     Env env = generate(parser.parse("IMPORT ecommerce-data.Orders;"
         + "/*+ NOOP */ X := SELECT e.* FROM Orders.entries e;"));
 
-    assertFalse(((LogicalProject) env.getOps().get(0).getRelNode()).getHints().isEmpty());
+    assertFalse(env.getOps().get(0).getStatement().getHints().isEmpty());
   }
 
   @Test
