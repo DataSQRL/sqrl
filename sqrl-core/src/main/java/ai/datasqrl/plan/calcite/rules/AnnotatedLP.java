@@ -19,10 +19,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexFieldCollation;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.tools.RelBuilder;
@@ -257,8 +254,14 @@ public class AnnotatedLP implements RelHolder {
         }
         HashMap<Integer,Integer> remapping = new HashMap<>();
         int index = 0;
+        boolean addedPk = false;
         for (int i = 0; i < input.primaryKey.getSourceLength(); i++) {
             remapping.put(input.primaryKey.map(i),index++);
+        }
+        if (input.primaryKey.getSourceLength()==0) {
+            //If we don't have a primary key, we add a static one to resolve uniqueness in the database
+            addedPk = true;
+            index++;
         }
         for (int i = 0; i < input.select.getSourceLength(); i++) {
             int target = input.select.map(i);
@@ -277,17 +280,26 @@ public class AnnotatedLP implements RelHolder {
             }
         }
 
-        Preconditions.checkArgument(index<=input.getFieldLength() && remapping.size() == index);
+        int projectLength = index;
+        int inputLength = input.getFieldLength();
+        Preconditions.checkArgument(remapping.keySet().stream().allMatch(idx -> idx < inputLength)
+                && remapping.size()+(addedPk?1:0) == index && projectLength<=inputLength+(addedPk?1:0));
         IndexMap remap = IndexMap.of(remapping);
         ContinuousIndexMap updatedSelect = input.select.remap(remap);
-        List<RexNode> projects = new ArrayList<>(input.getFieldLength());
+        List<RexNode> projects = new ArrayList<>(projectLength);
+        List<String> updatedFieldNames = Arrays.asList(new String[projectLength]);
+        ContinuousIndexMap primaryKey = input.primaryKey.remap(remap);
+        if (addedPk) {
+            primaryKey = ContinuousIndexMap.identity(1,projectLength);
+            projects.add(0, relBuilder.literal(1));
+            updatedFieldNames.set(0,SQRLLogicalPlanConverter.DEFAULT_PRIMARY_KEY_COLUMN_NAME);
+        }
         RelDataType rowType = input.relNode.getRowType();
         remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(),e.getValue()))
                 .sorted((a, b)-> Integer.compare(a.getTarget(),b.getTarget()))
                 .forEach(p -> {
                     projects.add(p.getTarget(),RexInputRef.of(p.getSource(), rowType));
                 });
-        List<String> updatedFieldNames = Arrays.asList(new String[projects.size()]);
         for (int i = 0; i < fieldNames.size(); i++) {
             updatedFieldNames.set(updatedSelect.map(i),fieldNames.get(i));
         }
@@ -295,7 +307,7 @@ public class AnnotatedLP implements RelHolder {
         relBuilder.project(projects, updatedFieldNames, true); //Force to make sure fields are renamed
         RelNode relNode = relBuilder.build();
 
-        return new AnnotatedLP(relNode,input.type,input.primaryKey.remap(remap),
+        return new AnnotatedLP(relNode,input.type, primaryKey,
                 input.timestamp.remapIndexes(remap), updatedSelect, input.exec, null, input.numRootPks,
                 input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap));
     }

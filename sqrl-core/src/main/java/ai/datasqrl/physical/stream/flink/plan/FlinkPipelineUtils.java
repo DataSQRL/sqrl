@@ -24,10 +24,7 @@ public class FlinkPipelineUtils {
       }
       builder.column(column.getName(), dataType);
     }
-
-    return builder
-//        .watermark(toSchema.getWatermarkSpecs().get(0).getColumnName(), toSchema.getWatermarkSpecs().get(0).getWatermarkExpression())
-        .primaryKey(pks)
-        .build();
+    if (!pks.isEmpty()) builder.primaryKey(pks);
+    return builder.build();
   }
 }

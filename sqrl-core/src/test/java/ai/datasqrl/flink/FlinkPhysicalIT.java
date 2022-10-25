@@ -123,8 +123,8 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     builder.add("Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM _.entries e");
     builder.add("OrdersInline := SELECT o.id, o.customerid, o.\"time\", t.price, t.num FROM Orders o JOIN o.total t");
 //    builder.add("Customer.orders_by_day := SELECT o.\"time\", o.price, o.num FROM _ JOIN OrdersInline o ON o.customerid = _.customerid");
-    builder.add("Customer.orders_by_day := SELECT round_to_day(o.\"time\") as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM _ JOIN OrdersInline o ON o.customerid = _.customerid GROUP BY day");
-    validate(builder.getScript(),"customer","orders","ordersinline","orders_by_day");
+    builder.add("Customer.orders_by_hour := SELECT round_to_hour(o.\"time\") as hour, SUM(o.price) as total_price, SUM(o.num) as total_num FROM _ JOIN OrdersInline o ON o.customerid = _.customerid GROUP BY hour");
+    validate(builder.getScript(),"customer","orders","ordersinline","orders_by_hour");
   }
 
   @Test
@@ -149,13 +149,22 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
   @Test
   public void aggregateTest() {
     ScriptBuilder builder = example.getImports();
-    builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_hour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket;\n");
+    //temporal state
+    builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_hour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+    builder.append("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o");
+    //time window
+    builder.append("Ordertime1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+    //now() and sliding window
+    builder.append("OrderNow1 := SELECT o.customerid as customer, round_to_hour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer, bucket");
+    builder.append("OrderNow2 := SELECT round_to_hour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY bucket");
+    builder.append("OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer");
+    builder.append("OrderAugment := SELECT o.id, o.\"time\", c.order_count FROM Orders o JOIN OrderNow3 c ON o.customerid = c.customer"); //will be empty because OrderNow3 has a timestamp greater than Order
+    //state
+    builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
+    builder.append("agg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM OrderCustomer o GROUP BY customer;\n");
 
-    builder.append("OrderAgg2 := SELECT round_to_hour(o.\"time\") as bucket, o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY bucket, customer;\n");
-
-    //Sliding time window test
-
-    validate(builder.getScript(),"orderagg1", "orderagg2");
+    validate(builder.getScript(),"orderagg1", "orderagg2","ordertime1","ordernow1",
+            "ordernow2","ordernow3","orderaugment","ordercustomer","agg1");
   }
 
   @Test
@@ -163,9 +172,8 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     ScriptBuilder builder = example.getImports();
 
     builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 5 YEAR");
-    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 1 MONTH");
-//    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 SECOND");
-//    rowCounts.put("recentorders",0);
+    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 1 SECOND");
+
 
     validate(builder.getScript(), "historicorders", "recentorders");
   }

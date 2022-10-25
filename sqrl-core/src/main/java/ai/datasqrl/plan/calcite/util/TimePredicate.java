@@ -37,8 +37,8 @@ public class TimePredicate {
 
     final int smallerIndex;
     final int largerIndex;
-    final boolean smaller;
-    final long interval_ms;
+    final SqlKind comparison; //equals, less_than, or less_than_equals
+    final long intervalLength; //in milliseconds
 
     public List<Integer> getIndexes() {
         return List.of(smallerIndex,largerIndex);
@@ -49,54 +49,80 @@ public class TimePredicate {
     }
 
     public boolean isNowPredicate() {
-        return smallerIndex == NOW_INDEX && interval_ms > 0;
+        return smallerIndex == NOW_INDEX && intervalLength > 0;
     }
 
     public boolean isUpperBound() {
-        return interval_ms<=0;
+        return intervalLength <=0;
     }
 
     public boolean isEquality() {
-        return smaller==false;
+        return comparison==SqlKind.EQUALS;
+    }
+
+    public long normalizedIntervalLength() {
+        if (comparison == SqlKind.LESS_THAN) return intervalLength-1;
+        else return intervalLength;
     }
 
     public Optional<TimePredicate> and(TimePredicate other) {
         Preconditions.checkArgument(smallerIndex==other.smallerIndex && largerIndex == other.largerIndex,
                 "Incompatible indexes: [%s] vs [%s]",this,other);
-        if (!smaller && !other.smaller) {
-            if (interval_ms == other.interval_ms) return Optional.of(this);
+        if (isEquality() && other.isEquality()) {
+            if (intervalLength == other.intervalLength) return Optional.of(this);
             else return Optional.empty();
-        } else if (!smaller) {
-            if (interval_ms <= other.interval_ms) return Optional.of(this);
+        } else if (isEquality()) {
+            if (intervalLength <= other.normalizedIntervalLength()) return Optional.of(this);
             else return Optional.empty();
-        } else if (!other.smaller) {
-            if (other.interval_ms <= interval_ms) return Optional.of(other);
+        } else if (other.isEquality()) {
+            if (other.intervalLength <= normalizedIntervalLength()) return Optional.of(other);
             else return Optional.empty();
         } else { //both are inequalities
-            return Optional.of(new TimePredicate(smallerIndex,largerIndex,true,Long.min(interval_ms,other.interval_ms)));
+            SqlKind comp;
+            long intLength;
+            if (comparison == other.comparison) {
+                comp = comparison;
+                intLength= Long.min(intervalLength, other.intervalLength);
+            } else {
+                comp = SqlKind.LESS_THAN_OR_EQUAL;
+                intLength= Long.min(normalizedIntervalLength(), other.normalizedIntervalLength());
+            }
+            return Optional.of(new TimePredicate(smallerIndex, largerIndex, comp, intLength));
         }
     }
 
     public TimePredicate inverseWithInterval(long interval_ms) {
-        return new TimePredicate(largerIndex,smallerIndex,smaller,interval_ms);
+        return new TimePredicate(largerIndex,smallerIndex,comparison,interval_ms);
     }
 
     public TimePredicate remap(IndexMap map) {
         return new TimePredicate(smallerIndex<0?smallerIndex:map.map(smallerIndex),
-                largerIndex<0?largerIndex:map.map(largerIndex), smaller, interval_ms);
+                largerIndex<0?largerIndex:map.map(largerIndex), comparison, intervalLength);
     }
 
     public RexNode createRexNode(RexBuilder rexBuilder, Function<Integer,RexInputRef> createInputRef, boolean useCurrentTime) {
         RexNode smallerRef = createRef(smallerIndex, rexBuilder, createInputRef, useCurrentTime);
         RexNode largerRef = createRef(largerIndex, rexBuilder, createInputRef, useCurrentTime);
-        SqlOperator op = smaller?SqlStdOperatorTable.LESS_THAN_OR_EQUAL:SqlStdOperatorTable.EQUALS;
+        SqlOperator op;
+        switch (comparison) {
+            case EQUALS:
+                op = SqlStdOperatorTable.EQUALS;
+                break;
+            case LESS_THAN:
+                op = SqlStdOperatorTable.LESS_THAN;
+                break;
+            case LESS_THAN_OR_EQUAL:
+                op = SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
+                break;
+            default: throw new UnsupportedOperationException(comparison.name());
+        }
 
-        if (interval_ms<0) {
+        if (intervalLength <0) {
             smallerRef = rexBuilder.makeCall(SqlStdOperatorTable.DATETIME_PLUS, smallerRef,
-                    makeInterval(interval_ms, rexBuilder));
-        } else if (interval_ms > 0) {
+                    makeInterval(intervalLength, rexBuilder));
+        } else if (intervalLength > 0) {
             largerRef = rexBuilder.makeCall(SqlStdOperatorTable.DATETIME_PLUS, largerRef,
-                    makeInterval(interval_ms, rexBuilder));
+                    makeInterval(intervalLength, rexBuilder));
         }
         return rexBuilder.makeCall(op,smallerRef,largerRef);
     }
@@ -109,7 +135,7 @@ public class TimePredicate {
 
     private static RexNode createRef(int index, RexBuilder rexBuilder,
                                      Function<Integer,RexInputRef> createInputRef, boolean useCurrentTime) {
-        if (index>0) return createInputRef.apply(index);
+        if (index>=0) return createInputRef.apply(index);
         else if (index==NOW_INDEX) {
             if (useCurrentTime) {
                 return rexBuilder.makeCall(SqlStdOperatorTable.CURRENT_TIMESTAMP);
@@ -140,7 +166,7 @@ public class TimePredicate {
                     break;
                 default: return Optional.empty();
             }
-            boolean makeEqual = opKind == SqlKind.LESS_THAN || opKind == SqlKind.GREATER_THAN;
+            boolean strictlySmaller = opKind == SqlKind.LESS_THAN || opKind == SqlKind.GREATER_THAN;
             boolean flip = opKind == SqlKind.GREATER_THAN || opKind == SqlKind.GREATER_THAN_OR_EQUAL;
             boolean smaller = opKind != SqlKind.EQUALS;
 
@@ -168,9 +194,10 @@ public class TimePredicate {
             int smallerIndex = flip?rightRef:leftRef;
             int largerIndex = flip?leftRef:rightRef;
             if (flip) interval_ms *= -1;
-            if (makeEqual) interval_ms -=1;
 
-            TimePredicate tp = new TimePredicate(smallerIndex,largerIndex,smaller,interval_ms);
+            TimePredicate tp = new TimePredicate(smallerIndex,largerIndex,
+                    smaller?(strictlySmaller?SqlKind.LESS_THAN:SqlKind.LESS_THAN_OR_EQUAL):SqlKind.EQUALS,
+                    interval_ms);
             return Optional.of(tp);
         }
 

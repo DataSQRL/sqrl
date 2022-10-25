@@ -3,6 +3,6 @@ LogicalProject(customer=[$3], order_count=[COUNT() IGNORE NULLS OVER (PARTITION 
   LogicalTableScan(table=[[orders$q$5]])
 
 >>>orderagg2-lp
-LogicalProject(order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+LogicalProject(_pk=[1], order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
   LogicalTableScan(table=[[orders$q$5]])
 

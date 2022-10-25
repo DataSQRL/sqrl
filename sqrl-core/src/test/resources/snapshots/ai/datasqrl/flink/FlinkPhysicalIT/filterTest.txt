@@ -15,7 +15,7 @@ LogicalFilter(condition=[<=(NOW(), +($4, 157766400000:INTERVAL SECOND))])
   LogicalTableScan(table=[[historicorders$12]])
 
 >>>recentorders-lp-database
-LogicalFilter(condition=[<=(NOW(), +($4, 2678400000:INTERVAL SECOND))])
+LogicalFilter(condition=[<=(NOW(), +($4, 1000:INTERVAL SECOND))])
   LogicalTableScan(table=[[recentorders$14]])
 
 >>>historicorders-data

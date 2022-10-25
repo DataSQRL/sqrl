@@ -1,7 +1,8 @@
 package ai.datasqrl.physical.database.relational.ddl;
 
-import java.util.List;
 import lombok.Value;
+
+import java.util.List;
 
 @Value
 public class CreateTableDDL implements SqlDDLStatement {
@@ -12,10 +13,13 @@ public class CreateTableDDL implements SqlDDLStatement {
 
   @Override
   public String toSql() {
-    String createTable = "CREATE TABLE IF NOT EXISTS %s (%s, PRIMARY KEY (%s));";
+    String primaryKeyStr = "";
+    if (!primaryKeys.isEmpty()) {
+      primaryKeyStr = String.format(", PRIMARY KEY (%s)", String.join(",", primaryKeys));
+    }
+    String createTable = "CREATE TABLE IF NOT EXISTS %s (%s %s);";
     String sql = String.format(createTable, name,
-        String.join(",", columns),
-        String.join(",", primaryKeys));
+        String.join(",", columns), primaryKeyStr);
 
     return sql;
   }

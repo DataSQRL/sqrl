@@ -27,6 +27,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.*;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.mapping.IntPair;
@@ -47,15 +48,16 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
     private static final long UPPER_BOUND_INTERVAL_MS = 999L*365L*24L*3600L; //999 years
     public static final double HIGH_CARDINALITY_JOIN_THRESHOLD = 10000;
-    public static final double DEFAULT_SLIDING_WIDTH_PERCENTAGE = 0.02;
+    public static final int DEFAULT_SLIDING_WINDOW_PANES = 50;
     public static final String UNION_TIMESTAMP_COLUMN_NAME = "_timestamp";
+    public static final String DEFAULT_PRIMARY_KEY_COLUMN_NAME = "_pk";
 
     Supplier<RelBuilder> relBuilderFactory;
     SqrlRexUtil rexUtil;
     ExecutionStage startStage;
     boolean allowStageChange = false;
     double cardinalityJoinThreshold = HIGH_CARDINALITY_JOIN_THRESHOLD;
-    double defaultSlidePercentage = DEFAULT_SLIDING_WIDTH_PERCENTAGE;
+    int defaultSlideWindowPanes = DEFAULT_SLIDING_WINDOW_PANES;
 
     public SQRLLogicalPlanConverter(Supplier<RelBuilder> relBuilderFactory, ExecutionStage stage) {
         this.relBuilderFactory = relBuilderFactory;
@@ -399,7 +401,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                         if (bucketFct.isPresent()) {
                             long intervalExpansion = bucketFct.get().getSpecification().getBucketWidthMillis();
                             nowFilter = input.nowFilter.map(tp -> new TimePredicate(tp.getSmallerIndex(),
-                                    exp.i,tp.isSmaller(),tp.getInterval_ms()+intervalExpansion));
+                                    exp.i,tp.getComparison(),tp.getIntervalLength()+intervalExpansion));
                         } else {
                             input = input.inlineNowFilter(makeRelBuilder());
                         }
@@ -659,7 +661,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     if (eqDecomp.getEqualities().containsAll(rootPkPairs)) {
                         //Change primary key to only include root pk once and equality time condition because timestamps must be equal
                         TimePredicate eqCondition = new TimePredicate(rightInputF.timestamp.getBestCandidate().getIndex()+leftSideMaxIdx,
-                                leftInputF.timestamp.getBestCandidate().getIndex(), false, 0);
+                                leftInputF.timestamp.getBestCandidate().getIndex(), SqlKind.EQUALS, 0);
                         timePredicates.add(eqCondition);
                         conjunctions.add(eqCondition.createRexNode(rexUtil.getBuilder(), idxResolver,false));
 
@@ -908,9 +910,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 TimestampHolder.Derived timestamp = addedTimestamp.getRight();
 
                 //Convert now-filter to sliding window and add as hint
-                long intervalWidthMs = nowFilter.getPredicate().getInterval_ms();
+                long intervalWidthMs = nowFilter.getPredicate().getIntervalLength();
                 // TODO: extract slide-width from hint
-                long slideWidthMs = Math.round(Math.ceil(intervalWidthMs*defaultSlidePercentage));
+                long slideWidthMs = intervalWidthMs/defaultSlideWindowPanes;
                 Preconditions.checkArgument(slideWidthMs>0 && slideWidthMs<intervalWidthMs,"Invalid window widths: %s - %s",intervalWidthMs,slideWidthMs);
                 new SlidingAggregationHint(candidate.getIndex(),intervalWidthMs, slideWidthMs).addTo(relB);
 
@@ -974,8 +976,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             RelBuilder relB = makeRelBuilder();
             relB.push(input.relNode);
             relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)), aggregateCalls);
-            //since there is no timestamp, we cannot propagate a sliding window
-            //if (isSlidingAggregate) new TumbleAggregationHint(TumbleAggregationHint.Type.SLIDING).addTo(relB);
             ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
             ContinuousIndexMap select = ContinuousIndexMap.identity(targetLength, targetLength);
             return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STATE, pk,
