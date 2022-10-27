@@ -984,7 +984,8 @@ class AnalyzerTest extends AbstractSQRLIT {
   @Test
   public void streamTest() {
     Env env1 = generate(parser.parse("IMPORT ecommerce-data.Customer;"
-        + "X := STREAM ON ADD AS SELECT * From Customer;"));
+            + "Y := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;"
+        + "X := STREAM ON ADD AS SELECT * From Y;"));
 
     assertNotNull(
         env1.getRelSchema().getTable("X", false));
