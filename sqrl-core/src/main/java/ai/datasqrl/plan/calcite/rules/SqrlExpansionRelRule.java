@@ -56,7 +56,7 @@ public class SqrlExpansionRelRule extends RelOptRule {
      */
     if (baseTable != null) { //A logical table that may need shredding, such as Products$1
       RelOptTable baseDatasetRelOptTable = table.getTable().getRelOptSchema()
-          .getTableForMember(List.of(baseTable.getSourceTable().getNameId()));
+          .getTableForMember(List.of(baseTable.getBaseTable().getNameId()));
 
       RelNode relNode = null; /*shred(baseTable.getNamePath(), baseTable.getSourceTableImport(),
           baseDatasetRelOptTable, table); */

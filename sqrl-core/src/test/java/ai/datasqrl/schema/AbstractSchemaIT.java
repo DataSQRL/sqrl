@@ -12,7 +12,6 @@ import ai.datasqrl.util.TestDataset;
 import lombok.SneakyThrows;
 
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,17 +24,17 @@ public class AbstractSchemaIT extends AbstractSQRLIT {
     }
 
     public FlexibleDatasetSchema getPreSchema(TestDataset example) {
-        return getSchema(example.getName(),example.getInputSchema());
+        return getSchema(example.getName(),example.getInputSchema().get());
     }
 
     public FlexibleDatasetSchema getDiscoveredSchema(TestDataset example) {
-        return getSchema(example.getName(),example.getDiscoveredSchema());
+        return getSchema(example.getName(),example.getDiscoveredSchema().get());
     }
 
     @SneakyThrows
-    public FlexibleDatasetSchema getSchema(String datasetName, Optional<String> schemaString) {
-        assertTrue(schemaString.isPresent());
-        SchemaDefinition schemaDef = SqrlScript.Config.parseSchema(schemaString.get());
+    public FlexibleDatasetSchema getSchema(String datasetName, String schemaString) {
+        SchemaDefinition schemaDef = SqrlScript.Config.parseSchema(schemaString);
+
         SchemaImport importer = new SchemaImport(sourceRegistry, Constraint.FACTORY_LOOKUP);
         ErrorCollector errors = ErrorCollector.root();
         Map<Name, FlexibleDatasetSchema> schema = importer.convertImportSchema(schemaDef, errors);

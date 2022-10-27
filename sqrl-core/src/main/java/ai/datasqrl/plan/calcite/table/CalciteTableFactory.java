@@ -4,47 +4,45 @@ import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.physical.ExecutionEngine;
 import ai.datasqrl.physical.pipeline.ExecutionPipeline;
-import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
-import ai.datasqrl.plan.calcite.SqrlType2Calcite;
+import ai.datasqrl.plan.calcite.SqrlTypeRelDataTypeConverter;
 import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
+import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SQRLTable;
-import ai.datasqrl.schema.builder.AbstractTableFactory;
-import ai.datasqrl.schema.builder.NestedTableBuilder;
-import ai.datasqrl.schema.builder.VirtualTableFactory;
+import ai.datasqrl.schema.builder.UniversalTableBuilder;
+import ai.datasqrl.schema.input.FlexibleTable2UTBConverter;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
-import ai.datasqrl.schema.input.SqrlTypeConverter;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.h2.util.StringUtils;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CalciteTableFactory extends VirtualTableFactory<RelDataType, VirtualRelationalTable> {
+public class CalciteTableFactory {
 
     private final AtomicInteger tableIdCounter = new AtomicInteger(0);
     private final NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM; //TODO: make constructor argument and configure correctly
     @Getter
     private final RelDataTypeFactory typeFactory;
+    private final SqrlTypeRelDataTypeConverter typeConverter;
 
     public CalciteTableFactory(RelDataTypeFactory typeFactory) {
         this.typeFactory = typeFactory;
+        this.typeConverter = new SqrlTypeRelDataTypeConverter(typeFactory);
     }
 
     private Name getTableId(@NonNull Name name) {
@@ -58,17 +56,33 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
 
     public static int getTableOrdinal(String tableId) {
         int idx = tableId.lastIndexOf(Name.NAME_DELIMITER);
-        return Integer.parseInt(tableId.substring(idx+1,tableId.length()));
+        return Integer.parseInt(tableId.substring(idx+1));
     }
 
     public ScriptTableDefinition importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias, RelBuilder relBuilder,
                                              ExecutionPipeline pipeline) {
-        CalciteSchemaGenerator schemaGen = new CalciteSchemaGenerator(this);
-        RelDataType rootType = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
-                schemaGen).get();
-        AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = schemaGen.getRootTable();
+        FlexibleTable2UTBConverter converter = new FlexibleTable2UTBConverter(typeFactory);
+        UniversalTableBuilder rootTable = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
+                converter);
+        RelDataType rootType = convertTable(rootTable, true, true);
         ImportedSourceTable source = new ImportedSourceTable(getTableId(rootTable.getName(),"i"),rootType,sourceTable);
         ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(getTableId(rootTable.getName(),"q"), getTimestampHolder(rootTable),
+                relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get());
+
+        Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable, Optional.empty());
+        return new ScriptTableDefinition(impTable, tables);
+    }
+
+    public ScriptTableDefinition defineStreamTable(NamePath tablePath, AnnotatedLP baseRel, List<Name> fieldNames,
+                                                   RelBuilder relBuilder, ExecutionPipeline pipeline) {
+        Preconditions.checkArgument(baseRel.type!=TableType.STREAM,"Underlying table is already a stream");
+        Name tableName = tablePath.getLast();
+
+        UniversalTableBuilder rootTable = convertStream2TableBuilder(tablePath,
+                baseRel.getRelNode().getRowType());
+        RelDataType rootType = convertTable(rootTable, true, true);
+        StreamSourceTable source = new StreamSourceTable(getTableId(tableName,"s"), baseRel.getRelNode(), rootType, rootTable, StateChangeType.ADD);
+        ProxyStreamRelationalTable impTable = new ProxyStreamRelationalTable(getTableId(tableName,"q"), getTimestampHolder(rootTable),
                 relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get());
 
         Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable, Optional.empty());
@@ -92,7 +106,7 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         for (int i = 0; i < fieldNames.size(); i++) {
             index2Name.put(selectMap.map(i), fieldNames.get(i));
         }
-        AbstractTableFactory.UniversalTableBuilder<RelDataType> rootTable = convert2TableBuilder(tablePath, baseTable.getRowType(),
+        UniversalTableBuilder rootTable = convert2TableBuilder(tablePath, baseTable.getRowType(),
                 baseTable.getNumPrimaryKeys(), index2Name);
         Optional<Pair<SQRLTable, Relationship.Multiplicity>> parent = parentPair.map(pp ->
             Pair.of(pp.getLeft(), pp.getRight().getNumPrimaryKeys()==baseTable.getNumPrimaryKeys()?
@@ -106,95 +120,169 @@ public class CalciteTableFactory extends VirtualTableFactory<RelDataType, Virtua
         return tblDef;
     }
 
-    public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTableBuilder<RelDataType> rootTable,
+    private final Map<Name,Integer> defaultTimestampPreference = ImmutableMap.of(
+            ReservedName.SOURCE_TIME, 6,
+            ReservedName.INGEST_TIME, 3,
+            Name.system("timestamp"), 20,
+            Name.system("time"), 8);
+
+    protected int getTimestampScore(Name columnName) {
+        return Optional.ofNullable(defaultTimestampPreference.get(columnName)).orElse(1);
+    }
+
+    public Optional<Integer> getTimestampScore(Name columnName, RelDataType datatype) {
+        if (!CalciteUtil.isTimestamp(datatype)) return Optional.empty();
+        return Optional.of(getTimestampScore(columnName));
+    }
+
+    public TimestampHolder.Base getTimestampHolder(UniversalTableBuilder tblBuilder) {
+        Preconditions.checkArgument(tblBuilder.getParent()==null,"Can only be invoked on root table");
+        TimestampHolder.Base tsh = new TimestampHolder.Base();
+        tblBuilder.getAllIndexedFields().forEach(indexField -> {
+            if (indexField.getField() instanceof UniversalTableBuilder.Column) {
+                UniversalTableBuilder.Column column = (UniversalTableBuilder.Column) indexField.getField();
+                Optional<Integer> score = getTimestampScore(column.getName(),column.getType());
+                score.ifPresent(s -> tsh.addCandidate(indexField.getIndex(), s));
+            }
+        });
+        return tsh;
+    }
+
+    public UniversalTableBuilder convert2TableBuilder(@NonNull NamePath path,
+                                                                   RelDataType type, int numPrimaryKeys,
+                                                                   LinkedHashMap<Integer,Name> index2Name) {
+        RelDataType2UTBConverter converter = new RelDataType2UTBConverter(typeFactory,numPrimaryKeys,canonicalizer);
+        return converter.convert(path,type,index2Name);
+    }
+
+    public UniversalTableBuilder convertStream2TableBuilder(@NonNull NamePath path, RelDataType type) {
+        RelDataType2UTBConverter converter = new RelDataType2UTBConverter(
+                new UniversalTableBuilder.ImportFactory(typeFactory,false),canonicalizer);
+        return converter.convert(path,type,null);
+    }
+
+    public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTableBuilder rootTable,
                                                                       QueryRelationalTable baseTable,
                                                                       Optional<Pair<SQRLTable, Relationship.Multiplicity>> parent) {
         return build(rootTable, new VirtualTableConstructor(baseTable),parent);
     }
 
-    public RelDataType convertTable(AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder, boolean forNested) {
-        CalciteUtil.RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
-        List<NestedTableBuilder.Column<RelDataType>> columns = tblBuilder.getColumns(forNested,forNested);
-        for (NestedTableBuilder.Column<RelDataType> column : columns) {
-            typeBuilder.add(column.getId(), column.getType(), column.isNullable());
-        };
-        return typeBuilder.build();
+    public RelDataType convertTable(UniversalTableBuilder tblBuilder, boolean includeNested, boolean onlyVisible) {
+        return new UTB2RelDataTypeConverter().convertSchema(tblBuilder, includeNested, onlyVisible);
     }
 
-    @Override
-    protected boolean isTimestamp(RelDataType datatype) {
-        return CalciteUtil.isTimestamp(datatype);
-    }
-
-    @Value
-    private final class VirtualTableConstructor implements VirtualTableBuilder<RelDataType, VirtualRelationalTable> {
-
-        QueryRelationalTable baseTable;
+    public class UTB2RelDataTypeConverter implements UniversalTableBuilder.TypeConverter<RelDataType>, UniversalTableBuilder.SchemaConverter<RelDataType> {
 
         @Override
-        public VirtualRelationalTable make(@NonNull AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder) {
-            RelDataType rowType = convertTable(tblBuilder,false);
-            return new VirtualRelationalTable.Root(getTableId(tblBuilder.getName()), rowType, baseTable);
+        public RelDataType convertBasic(RelDataType type) {
+            return type;
         }
 
         @Override
-        public VirtualRelationalTable make(@NonNull AbstractTableFactory.UniversalTableBuilder<RelDataType> tblBuilder, VirtualRelationalTable parent, Name shredFieldName) {
-            RelDataType rowType = convertTable(tblBuilder,false);
+        public RelDataType nullable(RelDataType type, boolean nullable) {
+            return typeFactory.createTypeWithNullability(type, nullable);
+        }
+
+        @Override
+        public RelDataType wrapArray(RelDataType type) {
+            return typeFactory.createArrayType(type,-1L);
+        }
+
+        @Override
+        public RelDataType nestedTable(List<Pair<String, RelDataType>> fields) {
+            CalciteUtil.RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
+            for (Pair<String, RelDataType> column : fields) {
+                typeBuilder.add(column.getKey(), column.getRight());
+            };
+            return typeBuilder.build();
+        }
+
+        @Override
+        public RelDataType convertSchema(UniversalTableBuilder tblBuilder) {
+            return convertSchema(tblBuilder, true, true);
+        }
+
+        public RelDataType convertSchema(UniversalTableBuilder tblBuilder, boolean includeNested, boolean onlyVisible) {
+            return nestedTable(tblBuilder.convert(this,includeNested, onlyVisible));
+        }
+    }
+
+    @Value
+    private final class VirtualTableConstructor {
+
+        QueryRelationalTable baseTable;
+
+        public VirtualRelationalTable make(@NonNull UniversalTableBuilder tblBuilder) {
+            RelDataType rowType = convertTable(tblBuilder,false, false);
+            return new VirtualRelationalTable.Root(getTableId(tblBuilder.getName()), rowType, baseTable);
+        }
+
+        public VirtualRelationalTable make(@NonNull UniversalTableBuilder tblBuilder, VirtualRelationalTable parent, Name shredFieldName) {
+            RelDataType rowType = convertTable(tblBuilder,false, false);
             return VirtualRelationalTable.Child.of(getTableId(tblBuilder.getName()),rowType,parent,shredFieldName.getCanonical());
         }
     }
 
-    public UniversalTableBuilder<RelDataType> convert2TableBuilder(@NonNull NamePath path,
-                                                                   RelDataType type, int numPrimaryKeys,
-                                                                   LinkedHashMap<Integer,Name> index2Name) {
-        return createBuilder(path, null, type, numPrimaryKeys, index2Name,
-                new CalciteTypeIntrospector());
+    public Map<SQRLTable, VirtualRelationalTable> build(UniversalTableBuilder builder, VirtualTableConstructor vtableBuilder,
+                                                        Optional<Pair<SQRLTable, Relationship.Multiplicity>> parent) {
+        Map<SQRLTable,VirtualRelationalTable> createdTables = new HashMap<>();
+        build(builder,null,null,null,vtableBuilder,createdTables);
+        if (parent.isPresent()) {
+            SQRLTable root = createdTables.keySet().stream().filter(t -> t.getParent().isEmpty()).findFirst().get();
+            SQRLTable parentTbl = parent.get().getKey();
+//            createChildRelationship(root.getName(), root, parentTbl, parent.get().getValue());
+            createChildRelationship(root.getName(), root, parentTbl, Relationship.Multiplicity.MANY);
+            createParentRelationship(root, parentTbl);
+        }
+        return createdTables;
     }
 
-    public class CalciteTypeIntrospector implements TypeIntrospector<RelDataType,RelDataTypeField> {
-
-        @Override
-        public Iterable<RelDataTypeField> getFields(RelDataType relDataType) {
-            Preconditions.checkArgument(relDataType.isStruct(),"Not a table: %s",relDataType);
-            return relDataType.getFieldList();
+    private void build(UniversalTableBuilder builder, SQRLTable parent, VirtualRelationalTable vParent,
+                       UniversalTableBuilder.ChildRelationship childRel,
+                       VirtualTableConstructor vtableBuilder,
+                       Map<SQRLTable,VirtualRelationalTable> createdTables) {
+        VirtualRelationalTable vTable;
+        if (parent==null) vTable = vtableBuilder.make(builder);
+        else vTable = vtableBuilder.make(builder,vParent,childRel.getId());
+        SQRLTable tbl = new SQRLTable(builder.getPath());
+        createdTables.put(tbl,vTable);
+        if (parent!=null) {
+            //Add child relationship
+            createChildRelationship(childRel.getName(), tbl, parent, childRel.getMultiplicity());
         }
-
-        @Override
-        public Name getName(RelDataTypeField field) {
-            return Name.of(field.getName(),canonicalizer);
-        }
-
-        @Override
-        public RelDataType getType(RelDataTypeField field) {
-            return field.getType();
-        }
-
-        @Override
-        public boolean isNullable(RelDataTypeField field) {
-            return field.getType().isNullable();
-        }
-
-        @Override
-        public Optional<Pair<RelDataType, Relationship.Multiplicity>> getNested(RelDataTypeField field) {
-            if (CalciteUtil.isNestedTable(field.getType())) {
-                Optional<RelDataType> componentType = CalciteUtil.getArrayElementType(field.getType());
-                RelDataType nestedType = componentType.orElse(field.getType());
-                Relationship.Multiplicity multi = Relationship.Multiplicity.ZERO_ONE;
-                if (componentType.isPresent()) multi = Relationship.Multiplicity.MANY;
-                else if (!nestedType.isNullable()) multi = Relationship.Multiplicity.ONE;
-                return Optional.of(Pair.of(nestedType,multi));
+        //Add all fields to proxy
+        for (Field field : builder.getAllFields()) {
+            if (field instanceof UniversalTableBuilder.Column) {
+                UniversalTableBuilder.Column c = (UniversalTableBuilder.Column)field;
+                tbl.addColumn(c.getName(),c.isVisible(), c.getType());
             } else {
-                return Optional.empty();
+                UniversalTableBuilder.ChildRelationship child = (UniversalTableBuilder.ChildRelationship)field;
+                build(child.getChildTable(),tbl,vTable,child,vtableBuilder,createdTables);
             }
-
         }
-
-        @Override
-        public SqrlTypeConverter<RelDataType> getTypeConverter() {
-            return new SqrlType2Calcite(typeFactory);
+        //Add parent relationship if not overwriting column
+        if (parent!=null) {
+            createParentRelationship(tbl, parent);
         }
     }
 
+    public static final Name parentRelationshipName = ReservedName.PARENT;
+
+    public static Optional<Relationship> createParentRelationship(SQRLTable childTable, SQRLTable parentTable) {
+        //Avoid overwriting an existing "parent" column on the child
+        if (childTable.getField(parentRelationshipName).isEmpty()) {
+            return Optional.of(childTable.addRelationship(parentRelationshipName, parentTable, Relationship.JoinType.PARENT,
+                    Relationship.Multiplicity.ONE, null));
+        }
+        return Optional.empty();
+    }
+
+
+    public static Relationship createChildRelationship(Name childName, SQRLTable childTable, SQRLTable parentTable,
+                                                       Relationship.Multiplicity multiplicity) {
+        return parentTable.addRelationship(childName, childTable,
+                Relationship.JoinType.CHILD, multiplicity, null);
+    }
 
 
 }

@@ -42,6 +42,7 @@ public class SnapshotTest {
         public static final String HEADER_PREFIX = ">>>";
         public static final String HEADER_DELIMITER = "-";
         public static final String HEADER_SUFFIX = "\n";
+        public static final String FILE_DELIMITER = "_";
 
         String className;
         String fileName;
@@ -53,6 +54,12 @@ public class SnapshotTest {
             StringBuilder c = new StringBuilder();
             if (Strings.isNotEmpty(content)) c.append(content);
             return new Snapshot(testClass.getName(), fileName, c);
+        }
+
+        public static Snapshot of(@NonNull Class testClass, @NonNull String... testParameters) {
+            Preconditions.checkArgument(testParameters.length>0);
+            String fileName = String.join(FILE_DELIMITER,testParameters);
+            return new Snapshot(testClass.getName(),fileName, new StringBuilder());
         }
 
         public static Snapshot of(@NonNull Class testClass, @NonNull TestInfo testInfo) {
@@ -98,7 +105,7 @@ public class SnapshotTest {
         @SneakyThrows
         public void createOrValidate() {
             String content = getContent();
-            Preconditions.checkArgument(fileName.matches("^\\w+$"), "Invalid display name: %s", fileName);
+            Preconditions.checkArgument(fileName.matches("^[a-zA-Z0-9_-]+$"), "Invalid display name: %s", fileName);
             Preconditions.checkArgument(Strings.isNotEmpty(className), "No snapshot class name");
             Preconditions.checkArgument(Strings.isNotEmpty(content), "No snapshot content");
 

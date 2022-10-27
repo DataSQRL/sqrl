@@ -3,6 +3,7 @@ package ai.datasqrl.plan.calcite.table;
 import ai.datasqrl.plan.calcite.util.IndexMap;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
+import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
@@ -16,13 +17,13 @@ import java.util.stream.Stream;
 @Value
 public class TopNConstraint implements PullupOperator {
 
-    public static TopNConstraint EMPTY = new TopNConstraint(List.of(),false,RelCollations.EMPTY,Optional.empty(), TableType.STREAM);
+    public static TopNConstraint EMPTY = new TopNConstraint(List.of(),false,RelCollations.EMPTY,Optional.empty(), null);
 
-    List<Integer> partition; //First, we partition in the input relation
+    @NonNull List<Integer> partition; //First, we partition in the input relation
     boolean distinct; //second, we select distinct rows if true [All columns not in the partition indexes are SELECT DISTINCT columns]
-    RelCollation collation; //third, we sort it
-    Optional<Integer> limit; //fourth, we limit the result
-    TableType inputTableType; //table type of the input relation so we can add a hint in case we are stacking temporal state
+    @NonNull RelCollation collation; //third, we sort it
+    @NonNull Optional<Integer> limit; //fourth, we limit the result
+    TableType inputTableType; //optional table type of the input relation so we can add a hint in case we are stacking temporal state
 
     public TopNConstraint(List<Integer> partition, boolean distinct, RelCollation collation, Optional<Integer> limit, TableType inputTableType) {
         this.partition = partition;
@@ -66,9 +67,9 @@ public class TopNConstraint implements PullupOperator {
                 partition.stream()).collect(Collectors.toList());
     }
 
-    public static TopNConstraint dedup(List<Integer> partitionByIndexes, int timestampIndex, TableType inputTableType) {
+    public static TopNConstraint dedupWindowAggregation(List<Integer> partitionByIndexes, int timestampIndex) {
         RelCollation collation = RelCollations.of(new RelFieldCollation(timestampIndex, RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
-        return new TopNConstraint(partitionByIndexes,false,collation,Optional.of(1), inputTableType);
+        return new TopNConstraint(partitionByIndexes,false,collation,Optional.of(1), TableType.STREAM);
     }
 
     public boolean isPrimaryKeyDedup() {
@@ -77,6 +78,7 @@ public class TopNConstraint implements PullupOperator {
     }
 
     public TableType getTableType() {
+        Preconditions.checkState(inputTableType!=null);
         if (inputTableType==TableType.STATE) return inputTableType;
         if (!hasLimit() || (hasPartition() && getLimit()==1)) {
             return TableType.TEMPORAL_STATE;

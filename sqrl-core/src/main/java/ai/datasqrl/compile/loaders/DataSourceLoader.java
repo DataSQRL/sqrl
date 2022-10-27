@@ -59,9 +59,8 @@ public class DataSourceLoader implements Loader {
 
     DatasetDefinition definition = schemaDef.datasets.get(0);
 
-    SchemaImport importer = new SchemaImport(null, Constraint.FACTORY_LOOKUP);
-    FlexibleDatasetSchema userDSSchema = importer.convert(definition, table.getDataset(),
-        env.getSession().getErrors());
+    SchemaImport.DatasetConverter importer = new SchemaImport.DatasetConverter(table.getDataset().getCanonicalizer(), Constraint.FACTORY_LOOKUP);
+    FlexibleDatasetSchema userDSSchema = importer.convert(definition, env.getSession().getErrors());
 
     FlexibleDatasetSchema.TableField tbField = ImportManager.createTable(table,
         userDSSchema.getFieldByName(table.getName()), env.getSchemaAdjustmentSettings(),

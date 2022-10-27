@@ -2,18 +2,18 @@ package ai.datasqrl.plan.local.generate;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
-import ai.datasqrl.schema.builder.AbstractTableFactory;
 import lombok.AllArgsConstructor;
-
-import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.Optional;
 
 @AllArgsConstructor
 public class VariableFactory {
@@ -36,9 +36,9 @@ public class VariableFactory {
 //          multiplicity = Multiplicity.ONE;
 //        }
 
-      Optional<Relationship> parent = AbstractTableFactory.createParentRelationship(child, parentTable.get());
+      Optional<Relationship> parent = CalciteTableFactory.createParentRelationship(child, parentTable.get());
 
-      Relationship childRel = AbstractTableFactory
+      Relationship childRel = CalciteTableFactory
               .createChildRelationship(relationshipName, child, parentTable.get(), multiplicity);
       return Optional.of(Pair.of(parent.get(), childRel));
     } else return Optional.empty();

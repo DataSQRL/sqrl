@@ -58,7 +58,7 @@ public class SourceRecord2RowMapper<R> implements Function<SourceRecord.Named, R
                                 Object[] cols = constructRows(item, subType);
                                 //Add index
                                 cols = extendCols(cols,1);
-                                cols[0] = Long.valueOf(idx);
+                                cols[0] = Integer.valueOf(idx);
                                 rows[idx] = rowConstructor.createNestedRow(cols);
                                 idx++;
                             }

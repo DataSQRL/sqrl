@@ -34,7 +34,11 @@ public class SourceRecord<K> implements Serializable {
   }
 
   public SourceRecord(Map<K, Object> data, Instant sourceTime) {
-    this(data, sourceTime, Instant.now(), UUID.randomUUID());
+    this(data, sourceTime, Instant.now(), makeUUID());
+  }
+
+  public static UUID makeUUID() {
+    return UUID.randomUUID();
   }
 
   public boolean hasUUID() {

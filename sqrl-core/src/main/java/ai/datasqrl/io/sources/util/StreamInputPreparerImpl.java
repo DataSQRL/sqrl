@@ -1,16 +1,14 @@
 package ai.datasqrl.io.sources.util;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.physical.stream.StreamEngine;
-import ai.datasqrl.physical.stream.FunctionWithError;
-import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.io.formats.Format;
 import ai.datasqrl.io.formats.TextLineFormat;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.physical.stream.FunctionWithError;
+import ai.datasqrl.physical.stream.StreamEngine;
+import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
-import ai.datasqrl.schema.input.SchemaValidator;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 
@@ -63,14 +61,14 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
         }
     }
 
-    @Override
-    public void importTable(ImportManager.SourceTableImport tableImport, StreamEngine.Builder builder) {
-        StreamHolder<SourceRecord.Raw> stream = getRawInput(tableImport.getTable(), builder);
-        SchemaValidator schemaValidator = new SchemaValidator(tableImport.getSchema(),
-                schemaAdjustmentSettings, tableImport.getTable().getDataset().getDigest());
-        StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),
-                "schema", SourceRecord.Named.class);
-        builder.addAsTable(validate, tableImport.getSchema(), tableImport.getTable().qualifiedName());
-    }
+//    @Override
+//    public void importTable(ImportManager.SourceTableImport tableImport, StreamEngine.Builder builder) {
+//        StreamHolder<SourceRecord.Raw> stream = getRawInput(tableImport.getTable(), builder);
+//        SchemaValidator schemaValidator = new SchemaValidator(tableImport.getSchema(),
+//                schemaAdjustmentSettings, tableImport.getTable().getDataset().getDigest());
+//        StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),
+//                "schema", SourceRecord.Named.class);
+//        builder.addAsTable(validate, tableImport.getSchema(), tableImport.getTable().qualifiedName());
+//    }
 
 }

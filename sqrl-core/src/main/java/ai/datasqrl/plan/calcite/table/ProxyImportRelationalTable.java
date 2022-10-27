@@ -13,18 +13,18 @@ import org.apache.calcite.rel.RelNode;
  *
  * This is a phyiscal relation with a schema that captures the input data.
  */
-public class ProxyImportRelationalTable extends QueryRelationalTable {
+public class ProxyImportRelationalTable extends SourceRelationalTable {
 
   @Getter
-  private final ImportedSourceTable sourceTable;
+  private final ImportedSourceTable baseTable;
 
   public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull TimestampHolder.Base timestamp,
-                                    RelNode relNode, ImportedSourceTable sourceTable, ExecutionStage execution) {
+                                    RelNode relNode, ImportedSourceTable baseTable, ExecutionStage execution) {
     super(rootTableId, TableType.STREAM, relNode, PullupOperator.Container.EMPTY, timestamp,
             1,
-            TableStatistic.from(sourceTable.getSourceTableImport().getTable().getStatistics()),
+            TableStatistic.from(baseTable.getSourceTableImport().getTable().getStatistics()),
             execution);
-    this.sourceTable = sourceTable;
+    this.baseTable = baseTable;
   }
 
 }

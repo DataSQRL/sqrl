@@ -1,0 +1,12 @@
+>>>Customer-hasTimestamp
+Row(_uuid: String, _ingest_time: Instant, _source_time: Instant, customerid: Long, email: String, name: String, lastupdated: Long)
+>>>Customer
+Row(_uuid: String, _ingest_time: Instant, customerid: Long, email: String, name: String, lastupdated: Long)
+>>>Product-hasTimestamp
+Row(_uuid: String, _ingest_time: Instant, _source_time: Instant, productid: Long, name: String, description: String, category: String)
+>>>Product
+Row(_uuid: String, _ingest_time: Instant, productid: Long, name: String, description: String, category: String)
+>>>Orders-hasTimestamp
+Row(_uuid: String, _ingest_time: Instant, _source_time: Instant, id: Long, customerid: Long, time: Instant, entries: ObjectArrayTypeInfo<Row(_idx: Integer, productid: Long, quantity: Long, unit_price: Double, discount: Double)>)
+>>>Orders
+Row(_uuid: String, _ingest_time: Instant, id: Long, customerid: Long, time: Instant, entries: ObjectArrayTypeInfo<Row(_idx: Integer, productid: Long, quantity: Long, unit_price: Double, discount: Double)>)

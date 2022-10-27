@@ -333,6 +333,25 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   /*
+  ===== STREAM TESTS ======
+   */
+
+  @Test
+  public void convert2StreamTest() {
+    ScriptBuilder builder = imports();
+    builder.append("Product.updateTime := _ingest_time - INTERVAL 1 YEAR");
+    builder.append("Product := DISTINCT Product ON productid ORDER BY updateTime DESC");
+    builder.append("ProductCount := SELECT p.productid, p.name, SUM(e.quantity) as quantity FROM Orders.entries e JOIN Product p on e.productid = p.productid GROUP BY p.productid, p.name");
+    builder.append("CountStream := STREAM ON ADD AS SELECT productid, name, quantity FROM ProductCount WHERE quantity > 1");
+    builder.append("ProductCount2 := DISTINCT CountStream ON productid ORDER BY _ingest_time DESC");
+    process(builder.toString());
+    validateQueryTable("productcount", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,4, 2, TimestampTest.fixed(3));
+    validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM,6, 1, TimestampTest.fixed(2));
+    validateQueryTable("productcount2", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,6, 1, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
+  }
+
+
+  /*
   ===== HINT TESTS ======
    */
 

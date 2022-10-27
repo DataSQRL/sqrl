@@ -1,7 +1,6 @@
 package ai.datasqrl.physical.stream.flink;
 
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
-import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import ai.datasqrl.io.formats.TextLineFormat;
 import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.io.impl.file.FilePath;
@@ -18,8 +17,8 @@ import ai.datasqrl.physical.stream.flink.schema.FlinkRowConstructor;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
+import ai.datasqrl.schema.builder.UniversalTableBuilder;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
-import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
@@ -44,9 +43,6 @@ import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
-import org.apache.flink.table.api.internal.FlinkEnvProxy;
-import org.apache.flink.table.catalog.FunctionCatalog;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
@@ -152,14 +148,14 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, String qualifiedTableName) {
     Preconditions.checkArgument(stream instanceof FlinkStreamHolder && ((FlinkStreamHolder)stream).getBuilder().equals(this));
     FlinkStreamHolder<SourceRecord.Named> flinkStream = (FlinkStreamHolder)stream;
-    FlexibleTableConverter converter = new FlexibleTableConverter(schema);
+    UniversalTableBuilder tblBuilder = schema.getUniversalTableBuilder();
 
-    TypeInformation typeInformation = FlinkTypeInfoSchemaGenerator.convert(converter);
+    TypeInformation typeInformation = FlinkTypeInfoSchemaGenerator.INSTANCE.convertSchema(tblBuilder);
     SourceRecord2RowMapper<Row> mapper = new SourceRecord2RowMapper(schema, FlinkRowConstructor.INSTANCE);
 
     //TODO: error handling when mapping doesn't work?
     SingleOutputStreamOperator<Row> rows = flinkStream.getStream().map(r -> mapper.apply(r),typeInformation);
-    Schema tableSchema = FlinkTableSchemaGenerator.convert(converter);
+    Schema tableSchema = FlinkTableSchemaGenerator.INSTANCE.convertSchema(tblBuilder);
     tableEnvironment.createTemporaryView(qualifiedTableName, rows, tableSchema);
   }
 

@@ -1,56 +1,98 @@
 package ai.datasqrl.physical.stream.flink.schema;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.input.SimpleFlexibleTableConverterVisitor;
-import ai.datasqrl.schema.input.FlexibleTableConverter;
-import ai.datasqrl.schema.builder.NestedTableBuilder;
-import ai.datasqrl.schema.builder.SimpleTableBuilder;
+import ai.datasqrl.schema.builder.UniversalTableBuilder;
 import ai.datasqrl.schema.input.SqrlTypeConverter;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.*;
-import com.google.common.base.Preconditions;
 import lombok.Value;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.type.BasicSqlType;
+import org.apache.calcite.sql.type.IntervalSqlType;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.types.DataType;
 
 import java.util.List;
-import java.util.Optional;
 
-/*
-TODO: Need to add watermark based on inferred or defined timestamp
-schemaBuilder.columnByExpression("__rowtime", "CAST(_ingest_time AS TIMESTAMP_LTZ(3))");
-schemaBuilder.watermark(ReservedName.INGEST_TIME.getCanonical(),
-ReservedName.INGEST_TIME.getCanonical() + " - INTERVAL '10' SECOND");
- */
+
 @Value
-public class FlinkTableSchemaGenerator extends SimpleFlexibleTableConverterVisitor<DataType> {
+public class FlinkTableSchemaGenerator implements UniversalTableBuilder.TypeConverter<DataType>, UniversalTableBuilder.SchemaConverter<Schema> {
 
-    private final Schema.Builder schemaBuilder = Schema.newBuilder();
-
-    @Override
-    public Optional<DataType> endTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton) {
-        SimpleTableBuilder<DataType> tblBuilder = stack.removeFirst();
-        if (isNested) {
-            return createTable(tblBuilder);
-        } else {
-            for (SimpleTableBuilder.Column<DataType> column : tblBuilder.getColumns(true,true)) {
-                schemaBuilder.column(column.getId().getCanonical(),column.getType());
-            };
-            return Optional.empty();
-        }
-    }
+    public static final FlinkTableSchemaGenerator INSTANCE = new FlinkTableSchemaGenerator();
 
     @Override
-    protected Optional<DataType> createTable(SimpleTableBuilder<DataType> tblBuilder) {
-        List<NestedTableBuilder.Column<DataType>> columns = tblBuilder.getColumns(true,true);
-        DataTypes.Field[] fields = new DataTypes.Field[columns.size()];
-        for (int i = 0; i < fields.length; i++) {
-            NestedTableBuilder.Column<DataType> column = columns.get(i);
-            fields[i] = DataTypes.FIELD(column.getId().getCanonical(),column.getType());
+    public DataType convertBasic(RelDataType datatype) {
+        if (datatype instanceof BasicSqlType || datatype instanceof IntervalSqlType) {
+            switch (datatype.getSqlTypeName()) {
+                case VARCHAR:
+                    return DataTypes.STRING();
+                case CHAR:
+                    return DataTypes.CHAR(datatype.getPrecision());
+                case TIMESTAMP:
+                    return DataTypes.TIMESTAMP(datatype.getPrecision());
+                case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+                    return DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(datatype.getPrecision());
+                case BIGINT:
+                    return DataTypes.BIGINT();
+                case INTEGER:
+                    return DataTypes.INT();
+                case SMALLINT:
+                    return DataTypes.SMALLINT();
+                case TINYINT:
+                    return DataTypes.TINYINT();
+                case BOOLEAN:
+                    return DataTypes.BOOLEAN();
+                case DOUBLE:
+                    return DataTypes.DOUBLE();
+                case DECIMAL:
+                    return DataTypes.DECIMAL(datatype.getPrecision(),datatype.getScale());
+                case FLOAT:
+                    return DataTypes.FLOAT();
+                case REAL:
+                    return DataTypes.DOUBLE();
+                case DATE:
+                    return DataTypes.DATE();
+                case TIME:
+                    return DataTypes.TIME(datatype.getPrecision());
+
+                case TIME_WITH_LOCAL_TIME_ZONE:
+                case BINARY:
+                case VARBINARY:
+                case GEOMETRY:
+                case SYMBOL:
+                case ANY:
+                case NULL:
+                default:
+            }
+        } else if (datatype instanceof IntervalSqlType) {
+            IntervalSqlType interval = (IntervalSqlType) datatype;
+            switch(interval.getSqlTypeName()) {
+                case INTERVAL_DAY_HOUR:
+                case INTERVAL_DAY_MINUTE:
+                case INTERVAL_DAY_SECOND:
+                case INTERVAL_HOUR_MINUTE:
+                case INTERVAL_HOUR_SECOND:
+                case INTERVAL_MINUTE_SECOND:
+                case INTERVAL_YEAR_MONTH:
+                    throw new NotImplementedException();
+                case INTERVAL_SECOND:
+                    return DataTypes.INTERVAL(DataTypes.SECOND(datatype.getPrecision()));
+                case INTERVAL_YEAR:
+                    return DataTypes.INTERVAL(DataTypes.YEAR(datatype.getPrecision()));
+                case INTERVAL_MINUTE:
+                    return DataTypes.INTERVAL(DataTypes.MINUTE());
+                case INTERVAL_HOUR:
+                    return DataTypes.INTERVAL(DataTypes.HOUR());
+                case INTERVAL_DAY:
+                    return DataTypes.INTERVAL(DataTypes.SECOND(datatype.getPrecision()));
+                case INTERVAL_MONTH:
+                    return DataTypes.INTERVAL(DataTypes.MONTH());
+
+            }
         }
-        return Optional.of(DataTypes.ROW(fields));
+        throw new UnsupportedOperationException("Unsupported type: " + datatype);
     }
 
     @Override
@@ -60,25 +102,27 @@ public class FlinkTableSchemaGenerator extends SimpleFlexibleTableConverterVisit
     }
 
     @Override
-    protected SqrlTypeConverter<DataType> getTypeConverter() {
-        return SqrlType2TableConverter.INSTANCE;
-    }
-
-    @Override
     public DataType wrapArray(DataType type) {
         return DataTypes.ARRAY(type);
     }
 
-    public Schema getSchema() {
-        Preconditions.checkState(stack.isEmpty());
-        //TODO: add watermark
-        return schemaBuilder.build();
+    @Override
+    public DataType nestedTable(List<Pair<String, DataType>> columns) {
+        DataTypes.Field[] fields = new DataTypes.Field[columns.size()];
+        int i=0;
+        for (Pair<String, DataType> column : columns) {
+            fields[i++] = DataTypes.FIELD(column.getKey(),column.getValue());
+        }
+        return DataTypes.ROW(fields);
     }
 
-    public static Schema convert(FlexibleTableConverter converter) {
-        FlinkTableSchemaGenerator tblGen = new FlinkTableSchemaGenerator();
-        converter.apply(tblGen);
-        return tblGen.getSchema();
+    @Override
+    public Schema convertSchema(UniversalTableBuilder tblBuilder) {
+        Schema.Builder schemaBuilder = Schema.newBuilder();
+        for (Pair<String, DataType> column : tblBuilder.convert(this)) {
+            schemaBuilder.column(column.getKey(),column.getValue());
+        }
+        return schemaBuilder.build();
     }
 
     public static class SqrlType2TableConverter implements SqrlTypeConverter<DataType> {

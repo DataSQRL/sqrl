@@ -1,68 +1,96 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.IntegrationTestSettings;
+import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
-import ai.datasqrl.plan.calcite.CalciteSchemaGenerator;
 import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
-import ai.datasqrl.schema.builder.AbstractTableFactory;
+import ai.datasqrl.schema.builder.UniversalTableBuilder;
+import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
+import ai.datasqrl.schema.input.FlexibleTable2UTBConverter;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.InputTableSchema;
+import ai.datasqrl.schema.input.external.DatasetDefinition;
+import ai.datasqrl.schema.input.external.SchemaDefinition;
+import ai.datasqrl.schema.input.external.SchemaImport;
+import ai.datasqrl.util.SnapshotTest;
 import ai.datasqrl.util.TestDataset;
+import ai.datasqrl.util.junit.ArgumentProvider;
+import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests the generation of schemas for various consumers based on the central {@link FlexibleDatasetSchema}
- * using the {@link FlexibleTableConverter}.
+ * by way of the {@link UniversalTableBuilder}.
  */
-@Disabled
-public class FlexibleSchemaHandlingTest extends AbstractSchemaIT {
-
-    @BeforeEach
-    public void setup() {
-        initialize(IntegrationTestSettings.getInMemory(false));
-    }
+public class FlexibleSchemaHandlingTest {
 
     @ParameterizedTest
     @ArgumentsSource(SchemaConverterProvider.class)
-    public<T, V extends FlexibleTableConverter.Visitor<T>> void conversionTest(TestDataset example, SchemaConverter<T,V> visitorTest) {
+    public<S> void conversionTest(InputSchema inputSchema, SchemaConverterTestCase<S> visitorTest) {
+        SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), inputSchema.getName(), visitorTest.schemaConverter.getClass().getSimpleName());
         Name tableAlias = Name.system("TestTable");
-        registerDataset(example);
-        FlexibleDatasetSchema schema = getPreSchema(example);
+        FlexibleDatasetSchema schema = getSchema(inputSchema);
         for (FlexibleDatasetSchema.TableField table : schema.getFields()) {
             for (boolean hasSourceTimestamp : new boolean[]{true, false}) {
                 for (Optional<Name> alias : new Optional[]{Optional.empty(), Optional.of(tableAlias)}) {
                     FlexibleTableConverter converter = new FlexibleTableConverter(new InputTableSchema(table, hasSourceTimestamp), alias);
-                    V visitor = visitorTest.visitorSupplier.get();
-                    Optional<T> result = converter.apply(visitor);
-                    visitorTest.validator.validate(result,alias.orElse(table.getName()),visitor);
+                    FlexibleTable2UTBConverter utbConverter = new FlexibleTable2UTBConverter();
+                    UniversalTableBuilder tblBuilder = converter.apply(utbConverter);
+                    if (alias.isPresent()) {
+                        assertEquals(tblBuilder.getName(),alias.get());
+                        continue;
+                    }
+                    S resultSchema = visitorTest.schemaConverter.convertSchema(tblBuilder);
+                    assertNotNull(resultSchema);
+                    String[] caseName = getCaseName(table.getName().getDisplay(), hasSourceTimestamp);
+                    snapshot.addContent(resultSchema.toString(), caseName);
                 }
             }
         }
-
+        snapshot.createOrValidate();
     }
 
+    public static String[] getCaseName(String tableName, boolean hasTimestamp) {
+        List<String> caseName = new ArrayList<>();
+        caseName.add(tableName);
+        if (hasTimestamp) caseName.add("hasTimestamp");
+        return caseName.toArray(new String[caseName.size()]);
+    }
+
+    @SneakyThrows
+    public FlexibleDatasetSchema getSchema(InputSchema inputSchema) {
+        String schemaString = Files.readString(inputSchema.file);
+        SchemaDefinition schemaDef = SqrlScript.Config.parseSchema(schemaString);
+        DatasetDefinition datasetDefinition = schemaDef.datasets.stream().filter(dd -> dd.name.equalsIgnoreCase(inputSchema.name)).findFirst().get();
+        SchemaImport.DatasetConverter importer = new SchemaImport.DatasetConverter(NameCanonicalizer.SYSTEM, Constraint.FACTORY_LOOKUP);
+        ErrorCollector errors = ErrorCollector.root();
+        FlexibleDatasetSchema schema = importer.convert(datasetDefinition,errors);
+
+        assertFalse(errors.isFatal(), errors.toString());
+        assertFalse(schema.getFields().isEmpty());
+        return schema;
+    }
 
 
     static class WithSchemaProvider implements ArgumentsProvider {
@@ -73,58 +101,48 @@ public class FlexibleSchemaHandlingTest extends AbstractSchemaIT {
         }
     }
 
+    @Value
+    public static class InputSchema {
+        Path file;
+        String name;
+    }
+
+    public static final List<InputSchema> preSchemas = List.of(new InputSchema(Paths.get("..","sqml-examples","retail","c360","pre-schema.yml"),"ecommerce-data"));
+
     static class SchemaConverterProvider implements ArgumentsProvider {
 
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {
-            List<SchemaConverter> converters = new ArrayList<>();
+            List<SchemaConverterTestCase> converters = new ArrayList<>();
 
             //Calcite
-            converters.add(SchemaConverter.of(() -> new CalciteSchemaGenerator(new CalciteTableFactory(new JavaTypeFactoryImpl())),
-                    (result, name, calciteVisitor)-> {
-                        assertTrue(result.isPresent());
-                        RelDataType table = result.get();
-                        assertTrue(table.getFieldCount()>0);
-                        AbstractTableFactory.UniversalTableBuilder tbl = calciteVisitor.getRootTable();
-                        assertTrue(tbl.getAllFields().size()>0);
-                        System.out.println(table);
-                    }));
+            CalciteTableFactory calciteTableFactory = new CalciteTableFactory(new JavaTypeFactoryImpl());
+            CalciteTableFactory.UTB2RelDataTypeConverter converter = calciteTableFactory.new UTB2RelDataTypeConverter();
+            converters.add(new SchemaConverterTestCase(converter));
             //Flink
-            converters.add(SchemaConverter.of(() -> new FlinkTypeInfoSchemaGenerator(),
-                    (result, name, visitor)-> {
-                        assertTrue(result.isPresent());
-                        TypeInformation table = result.get();
-                        assertTrue(table.isTupleType());
-                        System.out.println(table);
-                    }));
-            converters.add(SchemaConverter.of(() -> new FlinkTableSchemaGenerator(),
-                    (result, name, flinkTable)-> {
-                        assertFalse(result.isPresent());
-                        org.apache.flink.table.api.Schema schema = flinkTable.getSchema();
-                        assertTrue(schema.getColumns().size()>0);
-                        System.out.println(schema);
-                    }));
+            converters.add(new SchemaConverterTestCase(FlinkTypeInfoSchemaGenerator.INSTANCE));
+            converters.add(new SchemaConverterTestCase(FlinkTableSchemaGenerator.INSTANCE));
 
-            return TestDataset.generateAsArguments(td -> td.getInputSchema().isPresent(), converters);
+            return ArgumentProvider.crossProduct(preSchemas, converters);
         }
     }
 
     @Value
-    static class SchemaConverter<T, V extends FlexibleTableConverter.Visitor<T>> {
-        Supplier<V> visitorSupplier;
-        SchemaConverterValidator<T,V> validator;
+    @AllArgsConstructor
+    static class SchemaConverterTestCase<S> {
+        UniversalTableBuilder.SchemaConverter<S> schemaConverter;
+        SchemaConverterValidator<S> validator;
 
-        static <T, V extends FlexibleTableConverter.Visitor<T>> SchemaConverter<T,V> of(
-                                    Supplier<V> visitorSupplier,
-                                    SchemaConverterValidator<T,V> validator) {
-            return new SchemaConverter<>(visitorSupplier,validator);
+        public SchemaConverterTestCase(UniversalTableBuilder.SchemaConverter<S> schemaConverter) {
+            this(schemaConverter,null);
         }
+
     }
 
     @FunctionalInterface
-    static interface SchemaConverterValidator<T, V extends FlexibleTableConverter.Visitor<T>> {
+    static interface SchemaConverterValidator<S> {
 
-        void validate(Optional<T> result, Name tableName, V visitor);
+        void validate(S result, Name tableName);
 
     }
 

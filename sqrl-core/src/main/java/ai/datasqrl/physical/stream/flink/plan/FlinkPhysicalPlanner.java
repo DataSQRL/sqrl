@@ -7,9 +7,8 @@ import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.util.db.JDBCTempDatabase;
 import graphql.com.google.common.base.Preconditions;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.rel.RelNode;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableDescriptor;
@@ -17,9 +16,9 @@ import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.api.config.ExecutionConfigOptions.NotNullEnforcer;
-import org.apache.flink.table.api.internal.FlinkEnvProxy;
 
 import java.util.List;
+import java.util.Optional;
 
 @AllArgsConstructor
 public class FlinkPhysicalPlanner {
@@ -32,7 +31,7 @@ public class FlinkPhysicalPlanner {
   public FlinkStreamPhysicalPlan createStreamGraph(List<OptimizedDAG.MaterializeQuery> streamQueries) {
     final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder) streamEngine.createJob();
     final StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)streamBuilder.getTableEnvironment();
-    final DataStreamRegisterer dataStreamRegisterer = new DataStreamRegisterer(tEnv,
+    final TableRegisterer tableRegisterer = new TableRegisterer(tEnv,
         this.importManager, streamBuilder);
 
     tEnv.getConfig()
@@ -42,20 +41,11 @@ public class FlinkPhysicalPlanner {
     StreamStatementSet stmtSet = tEnv.createStatementSet();
     //TODO: push down filters across queries to determine if we can constraint sources by time for efficiency (i.e. only load the subset of the stream that is required)
     for (OptimizedDAG.MaterializeQuery query : streamQueries) {
-      Preconditions.checkArgument(query.getSink() instanceof OptimizedDAG.TableSink, "Subscriptions not yet implemented");
+      Preconditions.checkArgument(query.getSink() instanceof OptimizedDAG.TableSink, "Export not yet implemented");
       OptimizedDAG.TableSink tblsink = ((OptimizedDAG.TableSink) query.getSink());
-
       String dbSinkName = tblsink.getNameId() + "_sink";
-      String subSinkName = tblsink.getNameId() + "_sub";
-      if (List.of(tEnv.listTables()).contains(dbSinkName)) {
-        System.out.println();
-        continue;
-      }
-      dataStreamRegisterer.register(query.getRelNode());
-
-      RelNode relNode = FlinkPhysicalPlanRewriter.rewrite(tEnv, query.getRelNode());
-
-      Table tbl = FlinkEnvProxy.relNodeQuery(relNode, tEnv);
+      Preconditions.checkArgument(!ArrayUtils.contains(tEnv.listTables(),dbSinkName),"Table already defined: %s",dbSinkName);
+      Table tbl = tableRegisterer.makeTable(query.getRelNode());
 
       Schema tblSchema = FlinkPipelineUtils.addPrimaryKey(tbl.getSchema().toSchema(), tblsink);
 

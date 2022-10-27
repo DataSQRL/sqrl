@@ -25,6 +25,8 @@ import java.util.stream.IntStream;
 @ToString
 public class ContinuousIndexMap implements IndexMap {
 
+    public static final ContinuousIndexMap EMPTY = new ContinuousIndexMap(new int[0]);
+
     final int[] targets;
 
     @Override

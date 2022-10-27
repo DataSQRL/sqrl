@@ -7,10 +7,7 @@ import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.hints.WatermarkHint;
 import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.table.AbstractRelationalTable;
-import ai.datasqrl.plan.calcite.table.ProxyImportRelationalTable;
-import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
@@ -42,7 +39,7 @@ public class DAGPlanner {
         List<QueryRelationalTable> queryTables = CalciteUtil.getTables(relSchema, QueryRelationalTable.class);
 
         //Assign timestamps to imports which should propagate and set all remaining timestamps
-        StreamUtil.filterByClass(queryTables, ProxyImportRelationalTable.class).forEach(this::finalizeImportTable);
+        StreamUtil.filterByClass(queryTables, SourceRelationalTable.class).forEach(this::finalizeSourceTable);
         Preconditions.checkArgument(queryTables.stream().allMatch(table -> !table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp()));
 
         //Plan API queries and find all tables that need to be materialized
@@ -67,7 +64,7 @@ public class DAGPlanner {
         Preconditions.checkArgument(tableScanVisitor.scanTables.stream().allMatch(t -> t instanceof VirtualRelationalTable));
         Set<VirtualRelationalTable> tableSinks = StreamUtil.filterByClass(tableScanVisitor.scanTables,VirtualRelationalTable.class).collect(Collectors.toSet());
 
-
+        //Fill all table sinks
         List<OptimizedDAG.MaterializeQuery> writeDAG = new ArrayList<>();
         for (VirtualRelationalTable dbTable : tableSinks) {
             RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
@@ -81,6 +78,7 @@ public class DAGPlanner {
             RelNode expandedScan = processedRel.getRelNode();
             //Expand to full tree
             expandedScan = planner.transform(WRITE_DAG_STITCHING,expandedScan);
+            //Determine if we need to append a timestamp for nested tables
             Optional<Integer> timestampIdx = processedRel.getType().hasTimestamp()?
                     Optional.of(processedRel.getTimestamp().getTimestampCandidate().getIndex()):Optional.empty();
             if (!dbTable.isRoot() && timestampIdx.isPresent()) {
@@ -96,6 +94,13 @@ public class DAGPlanner {
                     expandedScan));
         }
 
+        //Stitch together all StreamSourceTable
+        for (StreamSourceTable sst : CalciteUtil.getTables(relSchema, StreamSourceTable.class)) {
+            RelNode stitchedNode = planner.transform(WRITE_DAG_STITCHING, sst.getBaseRelation());
+            sst.setBaseRelation(stitchedNode);
+        }
+
+
 //        readDAG = readDAG.stream().map( q -> {
 //            RelNode newStitch = planner.transform(READ2WRITE_STITCHING, q.getRelNode());
 //            return new OptimizedDAG.ReadQuery(q.getQuery(), newStitch);
@@ -108,13 +113,13 @@ public class DAGPlanner {
         return () -> planner.getRelBuilder();
     }
 
-    private void finalizeImportTable(ProxyImportRelationalTable table) {
+    private void finalizeSourceTable(SourceRelationalTable table) {
         // Determine timestamp
         if (!table.getTimestamp().hasFixedTimestamp()) {
             table.getTimestamp().getBestCandidate().fixAsTimestamp();
         }
         // Rewrite LogicalValues to TableScan and add watermark hint
-        new ImportTableRewriter(table,planner.getRelBuilder()).replaceImport();
+        new SourceTableRewriter(table,planner.getRelBuilder()).replaceImport();
     }
 
     private static class VisitTableScans extends RelShuttleImpl {
@@ -137,9 +142,9 @@ public class DAGPlanner {
      * Replaces LogicalValues with the TableScan for the actual import table
      */
     @AllArgsConstructor
-    private static class ImportTableRewriter extends RelShuttleImpl {
+    private static class SourceTableRewriter extends RelShuttleImpl {
 
-        final ProxyImportRelationalTable table;
+        final SourceRelationalTable table;
         final RelBuilder relBuilder;
 
         public void replaceImport() {
@@ -154,7 +159,7 @@ public class DAGPlanner {
         @Override
         public RelNode visit(LogicalValues values) {
             //The Values are a place-holder for the tablescan, replace with actual table now
-            return relBuilder.scan(table.getSourceTable().getNameId()).build();
+            return relBuilder.scan(table.getBaseTable().getNameId()).build();
         }
     }
 

@@ -1,7 +1,7 @@
 package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.plan.calcite.hints.*;
-import ai.datasqrl.plan.calcite.table.ImportedSourceTable;
+import ai.datasqrl.plan.calcite.table.SourceTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.calcite.util.TimePredicate;
@@ -36,7 +36,6 @@ import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -53,25 +52,23 @@ import java.util.stream.Collectors;
  */
 public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   StreamTableEnvironmentImpl tEnv;
-  Supplier<FlinkRelBuilder> relBuilderFactory;
   private boolean isTop = true;
 
-  public FlinkPhysicalPlanRewriter(StreamTableEnvironmentImpl tEnv, Supplier<FlinkRelBuilder> relBuilderFactory) {
+  public FlinkPhysicalPlanRewriter(StreamTableEnvironmentImpl tEnv) {
     this.tEnv = tEnv;
-    this.relBuilderFactory = relBuilderFactory;
   }
 
   public static RelNode rewrite(StreamTableEnvironmentImpl tEnv, RelNode input) {
-    return input.accept(new FlinkPhysicalPlanRewriter(tEnv, () -> ((StreamPlanner) tEnv.getPlanner()).getRelBuilder()));
+    return input.accept(new FlinkPhysicalPlanRewriter(tEnv));
   }
 
   private FlinkRelBuilder getBuilder() {
-    return relBuilderFactory.get();
+    return ((StreamPlanner) tEnv.getPlanner()).getRelBuilder();
   }
 
   @Override
   public RelNode visit(TableScan scan) {
-    ImportedSourceTable t = scan.getTable().unwrap(ImportedSourceTable.class);
+    SourceTable t = scan.getTable().unwrap(SourceTable.class);
     String tableName = t.getNameId();
     FlinkRelBuilder relBuilder = getBuilder();
     relBuilder.scan(tableName);

@@ -8,6 +8,7 @@ import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
+import ai.datasqrl.physical.ExecutionEngine;
 import ai.datasqrl.physical.pipeline.ExecutionPipeline;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.PlannerFactory;
@@ -218,8 +219,8 @@ public class Resolve {
     tblDef.getShredTableMap().values().stream().forEach(vt ->
         env.relSchema.add(vt.getNameId(), vt));
     env.relSchema.add(tblDef.getBaseTable().getNameId(), tblDef.getBaseTable());
-    if (tblDef.getBaseTable() instanceof ProxyImportRelationalTable) {
-      ImportedSourceTable impTable = ((ProxyImportRelationalTable) tblDef.getBaseTable()).getSourceTable();
+    if (tblDef.getBaseTable() instanceof SourceRelationalTable) {
+      AbstractRelationalTable impTable = ((SourceRelationalTable) tblDef.getBaseTable()).getBaseTable();
       env.relSchema.add(impTable.getNameId(), impTable);
     }
     env.tableMap.putAll(tblDef.getShredTableMap());
@@ -470,36 +471,41 @@ public class Resolve {
     op.setRelNode(relNode);
   }
 
-  public AnnotatedLP optimize(Env env, StatementOp op) {
+  public AnnotatedLP convert(Env env, StatementOp op) {
     List<String> fieldNames = op.relNode.getRowType().getFieldNames();
-//    System.out.println("LP$0: \n" + op.relNode.explain());
 
     //Step 1: Push filters into joins so we can correctly identify self-joins
     RelNode relNode = env.session.planner.transform(OptimizationStage.PUSH_FILTER_INTO_JOIN,
         op.relNode);
-//    System.out.println("LP$1: \n" + relNode.explain());
 
     //Step 2: Convert all special SQRL conventions into vanilla SQL and remove
     //self-joins (including nested self-joins) as well as infer primary keys,
     //table types, and timestamps in the process
-
-
     Supplier<RelBuilder> relBuilderFactory = getRelBuilderFactory(env);
+    final SQRLLogicalPlanConverter.Config.ConfigBuilder configBuilder = SQRLLogicalPlanConverter.Config.builder();
     AnnotatedLP prel;
-    SQRLLogicalPlanConverter.Config.ConfigBuilder converterConfig = SQRLLogicalPlanConverter.Config.builder();
     Optional<ExecutionHint> execHint = ExecutionHint.fromSqlHint(op.getStatement().getHints());
-    if (execHint.isPresent()) {
-      converterConfig = execHint.get().getConfig(env.session.getPipeline(), converterConfig);
-      prel = SQRLLogicalPlanConverter.convert(relNode, relBuilderFactory, converterConfig.build());
+    if (op.statementKind==StatementKind.STREAM) {
+      Preconditions.checkArgument(!execHint.filter(h -> h.getExecType() != ExecutionEngine.Type.STREAM).isPresent(),
+              "Invalid execution hint: %s",execHint);
+      if (execHint.isEmpty()) execHint = Optional.of(new ExecutionHint(ExecutionEngine.Type.STREAM));
+    }
+    execHint.map(h -> h.getConfig(env.session.getPipeline(), configBuilder));
+    SQRLLogicalPlanConverter.Config config = configBuilder.build();
+    if (config.getStartStage()!=null) {
+      prel = SQRLLogicalPlanConverter.convert(relNode, relBuilderFactory, config);
     } else {
-      prel = SQRLLogicalPlanConverter.findCheapest(relNode, env.session.pipeline, relBuilderFactory);
+      prel = SQRLLogicalPlanConverter.findCheapest(relNode, relBuilderFactory, env.session.pipeline, config);
     }
     if (op.statementKind == StatementKind.DISTINCT_ON) {
-      //Get all field names from relnode
+      //Get all field names from resulting relnode instead of the op
       fieldNames = prel.relNode.getRowType().getFieldNames();
     }
-    prel = prel.postProcess(relBuilderFactory.get(),fieldNames);
-//    System.out.println("LP$3: \n" + prel.getRelNode().explain());
+    if (op.statementKind==StatementKind.STREAM) {
+      prel = prel.postProcessStream(relBuilderFactory.get(), fieldNames);
+    } else {
+      prel = prel.postProcess(relBuilderFactory.get(), fieldNames);
+    }
 
     return prel;
   }
@@ -523,10 +529,10 @@ public class Resolve {
         Optional<SQRLTable> parentTable = getContext(env, op.getStatement());
         assert parentTable.isPresent();
         createTable(env, op, parentTable);
-
         break;
       case JOIN:
         updateJoinMapping(env, op);
+        break;
     }
   }
 
@@ -591,18 +597,23 @@ public class Resolve {
 
   private void createTable(Env env, StatementOp op, Optional<SQRLTable> parentTable) {
 
-    final AnnotatedLP processedRel = optimize(env, op);
+    final AnnotatedLP processedRel = convert(env, op);
 
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()
         .map(idx -> relFieldNames.get(idx))
         .map(n -> Name.system(n)).collect(Collectors.toList());
-
     Optional<Pair<SQRLTable, VirtualRelationalTable>> parentPair = parentTable.map(tbl ->
         Pair.of(tbl, env.tableMap.get(tbl)));
-    ScriptTableDefinition queryTable = env.tableFactory.defineTable(op.statement.getNamePath(),
-        processedRel,
-        fieldNames, parentPair);
+
+    ScriptTableDefinition queryTable;
+    if (op.statementKind==StatementKind.STREAM) {
+      queryTable=env.tableFactory.defineStreamTable(op.statement.getNamePath(), processedRel, fieldNames,
+              env.getSession().getPlanner().getRelBuilder(), env.getSession().getPipeline());
+    } else {
+      queryTable=env.tableFactory.defineTable(op.statement.getNamePath(), processedRel, fieldNames, parentPair);
+    }
+
     registerScriptTable(env, queryTable);
   }
 

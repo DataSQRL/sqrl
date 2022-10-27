@@ -1,32 +1,83 @@
 package ai.datasqrl.physical.stream.flink.schema;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.input.SimpleFlexibleTableConverterVisitor;
-import ai.datasqrl.schema.input.FlexibleTableConverter;
-import ai.datasqrl.schema.builder.SimpleTableBuilder;
+import ai.datasqrl.schema.builder.UniversalTableBuilder;
 import ai.datasqrl.schema.input.SqrlTypeConverter;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.*;
 import lombok.Value;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.type.BasicSqlType;
+import org.apache.calcite.sql.type.IntervalSqlType;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 
 import java.util.List;
-import java.util.Optional;
 
 @Value
-public class FlinkTypeInfoSchemaGenerator extends SimpleFlexibleTableConverterVisitor<TypeInformation> {
+public class FlinkTypeInfoSchemaGenerator implements UniversalTableBuilder.TypeConverter<TypeInformation>, UniversalTableBuilder.SchemaConverter<TypeInformation> {
 
     public static final FlinkTypeInfoSchemaGenerator INSTANCE = new FlinkTypeInfoSchemaGenerator();
 
-
     @Override
-    protected Optional<TypeInformation> createTable(SimpleTableBuilder<TypeInformation> tblBuilder) {
-        List<SimpleTableBuilder.Column<TypeInformation>> columns = tblBuilder.getColumns(true,true);
-        return Optional.of(Types.ROW_NAMED(
-                columns.stream().map(SimpleTableBuilder.Column::getId).map(Name::getCanonical).toArray(i -> new String[i]),
-                columns.stream().map(SimpleTableBuilder.Column::getType).toArray(i -> new TypeInformation[i])));
+    public TypeInformation convertBasic(RelDataType datatype) {
+        if (datatype instanceof BasicSqlType || datatype instanceof IntervalSqlType) {
+            switch (datatype.getSqlTypeName()) {
+                case CHAR:
+                case VARCHAR:
+                    return BasicTypeInfo.STRING_TYPE_INFO;
+                case TIMESTAMP:
+                case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+                    return BasicTypeInfo.INSTANT_TYPE_INFO;
+                case BIGINT:
+                    return BasicTypeInfo.LONG_TYPE_INFO;
+                case SMALLINT:
+                case TINYINT:
+                case INTEGER:
+                    return BasicTypeInfo.INT_TYPE_INFO;
+                case BOOLEAN:
+                    return BasicTypeInfo.BOOLEAN_TYPE_INFO;
+                case DECIMAL:
+                case REAL:
+                case DOUBLE:
+                    return BasicTypeInfo.DOUBLE_TYPE_INFO;
+                case FLOAT:
+                    return BasicTypeInfo.FLOAT_TYPE_INFO;
+                case DATE:
+                case TIME:
+                    return BasicTypeInfo.DATE_TYPE_INFO;
+
+                case TIME_WITH_LOCAL_TIME_ZONE:
+                case BINARY:
+                case VARBINARY:
+                case GEOMETRY:
+                case SYMBOL:
+                case ANY:
+                case NULL:
+                default:
+            }
+        } else if (datatype instanceof IntervalSqlType) {
+            IntervalSqlType interval = (IntervalSqlType) datatype;
+            switch(interval.getSqlTypeName()) {
+                case INTERVAL_DAY_HOUR:
+                case INTERVAL_DAY_MINUTE:
+                case INTERVAL_DAY_SECOND:
+                case INTERVAL_HOUR_MINUTE:
+                case INTERVAL_HOUR_SECOND:
+                case INTERVAL_MINUTE_SECOND:
+                case INTERVAL_YEAR_MONTH:
+                case INTERVAL_SECOND:
+                case INTERVAL_YEAR:
+                case INTERVAL_MINUTE:
+                case INTERVAL_HOUR:
+                case INTERVAL_DAY:
+                case INTERVAL_MONTH:
+                    throw new NotImplementedException();
+            }
+        }
+        throw new UnsupportedOperationException("Unsupported type: " + datatype);
     }
 
     @Override
@@ -35,17 +86,20 @@ public class FlinkTypeInfoSchemaGenerator extends SimpleFlexibleTableConverterVi
     }
 
     @Override
-    protected SqrlTypeConverter<TypeInformation> getTypeConverter() {
-        return SqrlType2TypeInfoConverter.INSTANCE;
-    }
-
-    @Override
     public TypeInformation wrapArray(TypeInformation type) {
         return Types.OBJECT_ARRAY(type);
     }
 
-    public static TypeInformation convert(FlexibleTableConverter converter) {
-        return converter.apply(INSTANCE).get();
+    @Override
+    public TypeInformation nestedTable(List<Pair<String, TypeInformation>> columns) {
+        return Types.ROW_NAMED(
+                columns.stream().map(Pair::getKey).toArray(i -> new String[i]),
+                columns.stream().map(Pair::getValue).toArray(i -> new TypeInformation[i]));
+    }
+
+    @Override
+    public TypeInformation convertSchema(UniversalTableBuilder tblBuilder) {
+        return nestedTable(tblBuilder.convert(this));
     }
 
     public static class SqrlType2TypeInfoConverter implements SqrlTypeConverter<TypeInformation> {

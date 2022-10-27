@@ -1,6 +1,5 @@
 package ai.datasqrl.plan.calcite;
 
-import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.prepare.PlannerImpl;
 import org.apache.calcite.rel.RelNode;
@@ -41,8 +40,8 @@ public class Planner extends PlannerImpl {
     return sqlToRelConverterConfig.getRelBuilderFactory().create(this.getCluster(), createCatalogReader());
   }
 
-  public SqrlType2Calcite getTypeConverter() {
-    return new SqrlType2Calcite(typeFactory);
+  public SqrlTypeRelDataTypeConverter getTypeConverter() {
+    return new SqrlTypeRelDataTypeConverter(typeFactory);
   }
 
   public RelNode transform(OptimizationStage stage, RelNode node) {

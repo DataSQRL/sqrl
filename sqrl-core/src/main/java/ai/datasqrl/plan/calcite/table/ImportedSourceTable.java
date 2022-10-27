@@ -3,17 +3,17 @@ package ai.datasqrl.plan.calcite.table;
 import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import lombok.Getter;
 import lombok.NonNull;
+import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 
 import java.util.List;
 
-@Getter
-public class ImportedSourceTable extends AbstractRelationalTable {
+@Value
+public class ImportedSourceTable extends SourceTable {
 
-    private final SourceTableImport sourceTableImport;
-    private RelDataType baseRowType;
+    SourceTableImport sourceTableImport;
+    RelDataType baseRowType;
 
     public ImportedSourceTable(@NonNull Name nameId, RelDataType baseRowType, SourceTableImport sourceTableImport) {
         super(nameId);

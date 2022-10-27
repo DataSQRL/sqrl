@@ -51,12 +51,18 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     @Value
     @Builder
     public static class Config {
-        @NonNull
         ExecutionStage startStage;
         @Builder.Default
         boolean allowStageChange = false;
         @Builder.Default
         int defaultSlideWindowPanes = DEFAULT_SLIDING_WINDOW_PANES;
+
+        public ConfigBuilder copy() {
+            return builder()
+                    .startStage(startStage)
+                    .allowStageChange(allowStageChange)
+                    .defaultSlideWindowPanes(defaultSlideWindowPanes);
+        }
     }
 
     public static final long UPPER_BOUND_INTERVAL_MS = 999L*365L*24L*3600L; //999 years
@@ -74,20 +80,25 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         this.config = config;
     }
 
-    public static AnnotatedLP findCheapest(RelNode relNode, ExecutionPipeline pipeline, Supplier<RelBuilder> relBuilderFactory) {
+    public static AnnotatedLP findCheapest(RelNode relNode, Supplier<RelBuilder> relBuilderFactory,
+                                            ExecutionPipeline pipeline, Config config) {
         AnnotatedLP cheapest = null;
         ComputeCost cheapestCost = null;
+        List<ExecutionStageException> stageExceptions = new ArrayList<>();
         for (ExecutionStage stage : pipeline.getStages()) {
             try {
-                AnnotatedLP alp = convert(relNode, relBuilderFactory, Config.builder().startStage(stage).build());
+                Config.ConfigBuilder configBuilder = config.copy();
+                AnnotatedLP alp = convert(relNode, relBuilderFactory, configBuilder.startStage(stage).build());
                 ComputeCost cost = SimpleCostModel.of(stage.getEngine().getType(),alp);
                 if (cheapestCost==null || cost.compareTo(cheapestCost)<0) {
                     cheapest = alp;
                     cheapestCost = cost;
                 }
-            } catch (ExecutionStageException e) {}
+            } catch (ExecutionStageException e) {
+                stageExceptions.add(e);
+            }
         }
-        if (cheapest==null) throw new IllegalArgumentException("Could not find stage that can process relation");
+        if (cheapest==null) throw new IllegalArgumentException("Could not find stage that can process relation: " + stageExceptions);
         return cheapest;
     }
 
@@ -926,7 +937,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 Preconditions.checkArgument(slideWidthMs>0 && slideWidthMs<intervalWidthMs,"Invalid window widths: %s - %s",intervalWidthMs,slideWidthMs);
                 new SlidingAggregationHint(candidate.getIndex(),intervalWidthMs, slideWidthMs).addTo(relB);
 
-                TopNConstraint dedup = TopNConstraint.dedup(pk.targetsAsList(),timestamp.getTimestampCandidate().getIndex(), TableType.STREAM);
+                TopNConstraint dedup = TopNConstraint.dedupWindowAggregation(pk.targetsAsList(),timestamp.getTimestampCandidate().getIndex());
                 return setRelHolder(AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pk,
                         timestamp, select, exec)
                         .topN(dedup).build());

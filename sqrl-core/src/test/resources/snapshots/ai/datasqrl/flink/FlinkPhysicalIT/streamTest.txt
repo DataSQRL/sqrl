@@ -1,0 +1,53 @@
+>>>countstream$17-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+    LogicalTableScan(table=[[countstream$s$15]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
+>>>customercount2$19-lp-stream
+LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], quantity=[$4])
+  LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], quantity=[$4])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+      LogicalTableScan(table=[[countstream$s$15]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
+>>>customercount$14-lp-stream
+LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3])
+  LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+    LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+      LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+          LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+        Uncollect
+          LogicalProject($f0=[$cor0.entries])
+            LogicalValues(tuples=[[{ 0 }]])
+      LogicalFilter(condition=[=($7, 1)])
+        LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+          LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+            LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+              LogicalTableScan(table=[[customer$i$1]])
+
+>>>customercount-lp-database
+LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3])
+  LogicalTableScan(table=[[customercount$14]])
+
+>>>countstream-lp-database
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+  LogicalTableScan(table=[[countstream$17]])
+
+>>>customercount2-lp-database
+LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], quantity=[$4])
+  LogicalTableScan(table=[[customercount2$19]])
+
+>>>customercount-data
+1000101, John B. Mekker, 3, 2022-05-19 01:29:39.553
+1000107, Emily F. Ludies, 10, 2022-05-19 02:28:39.553
+1000121, Michelle Dagnes, 4, 2022-05-19 02:16:39.553
+>>>countstream-data
+1000101, John B. Mekker, 3
+1000107, Emily F. Ludies, 10
+1000107, Emily F. Ludies, 9
+1000121, Michelle Dagnes, 3
+1000121, Michelle Dagnes, 4
+>>>customercount2-data
+1000101, John B. Mekker, 3
+1000107, Emily F. Ludies, 10
+1000121, Michelle Dagnes, 4

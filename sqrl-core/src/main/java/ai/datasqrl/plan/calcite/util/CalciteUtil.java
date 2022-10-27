@@ -18,6 +18,8 @@ import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
+import org.apache.calcite.sql.type.BasicSqlType;
+import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.AggregatingScope;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -49,6 +51,10 @@ public class CalciteUtil {
     } else {
       return Optional.empty();
     }
+  }
+
+  public static boolean isBasicOrArrayType(RelDataType type) {
+    return type instanceof BasicSqlType || type instanceof IntervalSqlType || type instanceof ArraySqlType;
   }
 
   public static boolean hasNesting(RelDataType type) {
@@ -302,7 +308,6 @@ public class CalciteUtil {
       builder.addAll(relation.getFieldList());
       builder.add(fieldId, fieldType);
       return builder.build();
-
     }
 
     public RelDataTypeBuilder add(String name, RelDataType type, boolean nullable) {

@@ -316,6 +316,24 @@ public class AnnotatedLP implements RelHolder {
         return postProcess(relBuilder,Collections.nCopies(select.getSourceLength(),null));
     }
 
+    public AnnotatedLP postProcessStream(RelBuilder relBuilder, List<String> fieldNames) {
+        AnnotatedLP input = this;
+        input = input.inlineAllPullups(relBuilder);
+
+        List<RexNode> projects = new ArrayList<>(input.select.getSourceLength());
+        Preconditions.checkArgument(fieldNames.size()==input.select.getSourceLength());
+        RelDataType rowType = input.relNode.getRowType();
+        for (int targetIdx : input.select.targetsAsList()) {
+            projects.add(RexInputRef.of(targetIdx, rowType));
+        }
+        relBuilder.push(input.relNode);
+        relBuilder.project(projects, fieldNames, true); //Force to make sure fields are renamed
+        RelNode relNode = relBuilder.build();
+        return new AnnotatedLP(relNode, input.type, ContinuousIndexMap.EMPTY, TimestampHolder.Derived.NONE,
+                ContinuousIndexMap.identity(projects.size(), projects.size()), input.exec, null, Optional.empty(),
+                NowFilter.EMPTY, TopNConstraint.EMPTY, SortOrder.EMPTY);
+    }
+
     public double estimateRowCount() {
         final RelMetadataQuery mq = relNode.getCluster().getMetadataQuery();
         return mq.getRowCount(relNode);

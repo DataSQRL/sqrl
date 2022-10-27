@@ -2,16 +2,13 @@ package ai.datasqrl.schema.input;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.type.ArrayType;
-import ai.datasqrl.schema.type.Type;
-import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.constraint.Cardinality;
 import ai.datasqrl.schema.constraint.ConstraintHelper;
-import com.google.common.base.Preconditions;
+import ai.datasqrl.schema.type.Type;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
-import java.util.*;
+import java.util.Optional;
 
 @Value
 @AllArgsConstructor
@@ -24,12 +21,12 @@ public class FlexibleTableConverter {
         this(tableSchema, Optional.empty());
     }
 
-    public<T> Optional<T> apply(Visitor<T> visitor) {
+    public<T> T apply(Visitor<T> visitor) {
         return visitRelation(NamePath.ROOT, tableAlias.orElse(tableSchema.getSchema().getName()), tableSchema.getSchema().getFields(),
                 false, false, tableSchema.isHasSourceTimestamp(), visitor);
     }
 
-    private<T> Optional<T> visitRelation(NamePath path, Name name, RelationType<FlexibleDatasetSchema.FlexibleField> relation,
+    private<T> T visitRelation(NamePath path, Name name, RelationType<FlexibleDatasetSchema.FlexibleField> relation,
                                          boolean isNested, boolean isSingleton, boolean hasSourceTime, Visitor<T> visitor) {
         visitor.beginTable(name, path, isNested, isSingleton, hasSourceTime);
         path = path.concat(name);
@@ -47,41 +44,16 @@ public class FlexibleTableConverter {
     private<T> void visitFieldType(NamePath path, Name fieldName, FlexibleDatasetSchema.FieldType ftype,
                                 boolean isMixedType, Visitor<T> visitor) {
         boolean nullable = isMixedType || !ConstraintHelper.isNonNull(ftype.getConstraints());
-
-        boolean isNested = false;
         boolean isSingleton = false;
-        T resultType;
         if (ftype.getType() instanceof RelationType) {
-            isNested = true;
             isSingleton = isSingleton(ftype);
-            Optional<T> relType = visitRelation(path, fieldName, (RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType(), true,
+            T nestedTable = visitRelation(path, fieldName, (RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType(), true,
                     isSingleton, false, visitor);
-            Preconditions.checkArgument(relType.isPresent());
-            resultType = relType.get();
-            if (!isSingleton(ftype)) {
-                resultType = visitor.wrapArray(visitor.nullable(resultType,false));
-            }
             nullable = isMixedType || hasZeroOneMultiplicity(ftype);
-        } else if (ftype.getType() instanceof ArrayType) {
-            resultType = wrapArrayType(path.concat(fieldName), (ArrayType) ftype.getType(), visitor);
+            visitor.addField(fieldName, nestedTable, nullable, isSingleton);
         } else {
-            assert ftype.getType() instanceof BasicType;
-            resultType = visitor.convertBasicType((BasicType) ftype.getType());
+            visitor.addField(fieldName, ftype.getType(), nullable);
         }
-        resultType = visitor.nullable(resultType,nullable);
-        visitor.addField(fieldName, resultType, nullable, isNested, isSingleton);
-    }
-
-    private static<T> T wrapArrayType(NamePath path, ArrayType arrType, Visitor<T> visitor) {
-        Type subType = arrType.getSubType();
-        T result;
-        if (subType instanceof ArrayType) {
-            result = wrapArrayType(path, (ArrayType) subType, visitor);
-        } else {
-            assert subType instanceof BasicType;
-            result = visitor.convertBasicType((BasicType) subType);
-        }
-        return visitor.wrapArray(result);
     }
 
     private static boolean isSingleton(FlexibleDatasetSchema.FieldType ftype) {
@@ -95,24 +67,24 @@ public class FlexibleTableConverter {
 
     public interface Visitor<T> {
 
-        default void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton,
-                                boolean hasSourceTimestamp) {
+        void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton,
+                                boolean hasSourceTimestamp);
 
-        }
+        T endTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton);
 
-        Optional<T> endTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton);
+        void addField(Name name, Type type, boolean nullable);
 
-        void addField(Name name, T type, boolean nullable, boolean isNested, boolean isSingleTon);
+        void addField(Name name, T nestedTable, boolean nullable, boolean isSingleTon);
 
-        default void addField(Name name, BasicType type, boolean nullable) {
-            addField(name,convertBasicType(type),nullable,false, false);
-        }
+//        default void addField(Name name, BasicType type, boolean nullable) {
+//            addField(name,convertBasicType(type),nullable,false, false);
+//        }
 
-        T nullable(T type, boolean nullable);
-
-        T convertBasicType(BasicType type);
-
-        T wrapArray(T type);
+//        T nullable(T type, boolean nullable);
+//
+//        T convertBasicType(BasicType type);
+//
+//        T wrapArray(T type);
     }
 
 }

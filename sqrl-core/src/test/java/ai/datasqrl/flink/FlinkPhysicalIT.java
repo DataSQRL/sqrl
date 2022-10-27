@@ -211,6 +211,17 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     validate(builder.getScript(), "combinedstream","streamcount");
   }
 
+  @Test
+  public void streamTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("Customer.updateTime := epoch_to_timestamp(lastUpdated)");
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY updateTime DESC");
+    builder.add("CustomerCount := SELECT c.customerid, c.name, SUM(e.quantity) as quantity FROM Orders o JOIN o.entries e JOIN Customer c on o.customerid = c.customerid GROUP BY c.customerid, c.name");
+    builder.add("CountStream := STREAM ON ADD AS SELECT customerid, name, quantity FROM CustomerCount WHERE quantity > 1");
+    builder.add("CustomerCount2 := DISTINCT CountStream ON customerid ORDER BY _ingest_time DESC");
+    validate(builder.getScript(), "customercount","countstream","customercount2");
+  }
+
   private void validate(String script, String... queryTables) {
     validate(script,Collections.EMPTY_SET,queryTables);
   }
