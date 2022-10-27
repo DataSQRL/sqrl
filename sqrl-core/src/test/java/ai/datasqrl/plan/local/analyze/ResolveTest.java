@@ -346,8 +346,8 @@ public class ResolveTest extends AbstractSQRLIT {
     builder.append("ProductCount2 := DISTINCT CountStream ON productid ORDER BY _ingest_time DESC");
     process(builder.toString());
     validateQueryTable("productcount", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,4, 2, TimestampTest.fixed(3));
-    validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM,6, 1, TimestampTest.fixed(2));
-    validateQueryTable("productcount2", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,6, 1, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM,5, 1, TimestampTest.fixed(1));
+    validateQueryTable("productcount2", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,5, 1, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
   }
 
 

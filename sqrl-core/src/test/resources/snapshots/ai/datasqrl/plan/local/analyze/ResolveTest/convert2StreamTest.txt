@@ -14,6 +14,6 @@ LogicalProject(productid=[$11], name=[$14], quantity=[SUM($8) IGNORE NULLS OVER 
 LogicalValues(tuples=[[]])
 
 >>>productcount2-lp
-LogicalProject(productid=[$3], _uuid=[$0], _ingest_time=[$1], _source_time=[$2], name=[$4], quantity=[$5])
+LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], quantity=[$4])
   LogicalTableScan(table=[[countstream$q$16]])
 
