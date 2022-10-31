@@ -9,6 +9,3 @@ The current SQRL committers are:
 |--------------------|------------------
 | Matthias Broecheler | mbroecheler |
 | Daniel Henneberger | henneberger      |
-| Brad Bailey| bradjbailey      |
-
-To understand how to become a SQRL contributor see the [SQRL Contributing Guide](CONTRIBUTING.md).
