@@ -7,5 +7,8 @@ The current SQRL committers are:
 
 | Name               | Email or GitHub Id |
 |--------------------|------------------
+| Matthias Broecheler | mbroecheler |
+| Daniel Henneberger | henneberger      |
+| Brad Bailey| bradjbailey      |
 
 To understand how to become a SQRL contributor see the [SQRL Contributing Guide](CONTRIBUTING.md).

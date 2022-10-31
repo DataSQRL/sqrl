@@ -7,6 +7,5 @@ This file recognizes the people who have make an important contribution to SQRL.
 |--------------------|------------------
 | Matthias Broecheler | mbroecheler |
 | Daniel Henneberger | henneberger      |
-| Brad Bailey| bradjbailey      |
 
 To understand how to become a SQRL contributor see the [SQRL Contributing Guide](CONTRIBUTING.md).
