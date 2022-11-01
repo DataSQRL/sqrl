@@ -1,6 +1,9 @@
 package ai.datasqrl.graphql.generate;
 
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import graphql.Scalars;
@@ -174,11 +177,12 @@ public class SchemaBuilder {
 
     private List<GraphQLArgument> buildArgs(SQRLTable toTable) {
       List<GraphQLArgument> args = new ArrayList<>();
-      for (RelDataTypeField field : toTable.getVt().getRowType().getFieldList()) {
-        if (!field.getName().startsWith("_")) {
+      for (Field field : toTable.getFields().getAccessibleFields()) {
+        if (field instanceof Relationship) continue;
+        if (!field.getName().getCanonical().startsWith("_")) {
           args.add(GraphQLArgument.newArgument()
-              .name(field.getName())
-              .type(getInputType(field.getType()))
+              .name(field.getName().getDisplay())
+              .type(getInputType(((Column)field).getType()))
               .build());
         }
       }

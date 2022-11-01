@@ -9,6 +9,8 @@ import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.local.transpile.ReplaceWithVirtualTable.ExtractRightDeepAlias;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.queries.APIQuery;
+import ai.datasqrl.schema.Column;
+import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.SQRLTable;
@@ -100,6 +102,17 @@ public class SchemaInference {
 
         SQRLTable table = rel.map(Relationship::getToTable).orElseGet(
             () -> (SQRLTable) env.getRelSchema().getTable(field.getName(), false).getTable());
+
+        for (Field scalars : table.getFields().getAccessibleFields()) {
+          if (scalars instanceof Relationship) continue;
+          FieldLookupCoords scalarCoord = FieldLookupCoords.builder()
+              .parentType(field.getName())
+              .fieldName(scalars.getName().getCanonical())
+              .columnName(((Column)scalars).getShadowedName().getCanonical())
+              .build();
+          root.coord(scalarCoord);
+        }
+
         //todo check if we've already registered the type
         VirtualRelationalTable vt = table.getVt();
 
@@ -276,8 +289,10 @@ public class SchemaInference {
         RelBuilder relBuilder = context.getRelBuilder();
         relBuilder.push(args.relNode);
 
+        Column shadowedField = (Column)context.table.getField(Name.system(context.arg.getName()))
+            .orElseThrow(()->new RuntimeException("Could not find field: " + context.arg.getName()));
         RelDataTypeField field = relBuilder.peek().getRowType()
-            .getField(context.arg.getName(), false, false);
+            .getField(shadowedField.getShadowedName().getCanonical(), false, false);
         RexDynamicParam dynamicParam = rexBuilder.makeDynamicParam(field.getType(),
             args.argumentSet.size());
         RelNode rel = relBuilder.filter(rexBuilder.makeCall(SqlStdOperatorTable.EQUALS,

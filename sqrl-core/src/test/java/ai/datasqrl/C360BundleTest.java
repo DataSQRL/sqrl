@@ -24,16 +24,7 @@ public class C360BundleTest {
       + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
       + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
       + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
-//
-//      //Error adding a nested column
-      + "Orders.entries.discount2 := COALESCE(discount, 0.0)\n;"
-//      + "Orders.x := EPOCH_TO_TIMESTAMP(100);"
-//      //State table error
-//      + "Orders.stats := SELECT "
-//      + "                        SUM(quantity * unit_price - discount2) AS total, "
-//      + "                        SUM(quantity * discount2) AS total_savings, "
-//      + "                        COUNT(1) AS total_entries "
-//      + "                 FROM _.entries e;\n"
+      + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
       + "";
   @Test
   @SneakyThrows
@@ -58,7 +49,7 @@ public class C360BundleTest {
     HttpResponse<String> s = compiler.testQuery("{\n"
         + "  Orders {\n"
         + "    id\n"
-        + "    entries(productid: 1332) {\n"
+        + "    entries {\n"
         + "      productid\n"
         + "      discount\n"
         + "    }\n"

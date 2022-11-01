@@ -153,7 +153,9 @@ class QuerySnapshotTest extends AbstractSQRLIT {
           + "    WHEN name IS NULL THEN email\n"
           + "    ELSE name\n"
           + "END);",
-      "Orders.x := SELECT x.* FROM _ JOIN _ AS x"
+      "Orders.x := SELECT x.* FROM _ JOIN _ AS x",
+      "Orders.entries.discount := COALESCE(discount, 0.0);\n"
+          + "Orders.entries.total := quantity * unit_price - discount;"
   );
 
   List<Integer> disabledTests = List.of(37, 38);

@@ -5,6 +5,7 @@ import ai.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTable;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTableField;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.SingleTable;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SQRLTable;
@@ -38,13 +39,6 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
   public ReplaceWithVirtualTable(Analysis analysis) {
 
     this.analysis = analysis;
-  }
-
-  public SqlNode accept(SqlNode node) {
-
-    SqlNode result = node.accept(this);
-    Preconditions.checkState(pullup.isEmpty());
-    return result;
   }
 
   @Override
@@ -105,7 +99,10 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
 
   @Override
   public SqlNode visit(SqlIdentifier id) {
-    if (analysis.getTableIdentifiers().get(id) == null) {
+    //identifier
+    if (analysis.getExpressions().get(id) != null) {
+      return id.accept(new ShadowColumns());
+    } else if (analysis.getTableIdentifiers().get(id) == null) {
       return super.visit(id);
     }
 
@@ -351,6 +348,18 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
             newAliasMap.get(id.names.get(0)), id.names.get(1)
         ), id.getParserPosition());
 
+      }
+      return super.visit(id);
+    }
+  }
+
+  private class ShadowColumns extends SqlShuttle {
+
+    @Override
+    public SqlNode visit(SqlIdentifier id) {
+      ResolvedTableField field = analysis.getExpressions().get(id);
+      if (field != null) {
+        return field.getShadowedIdentifier(id);
       }
       return super.visit(id);
     }

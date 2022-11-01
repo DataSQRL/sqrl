@@ -342,6 +342,11 @@ public class Compiler {
     }
 
     @Override
+    public Object visitFieldLookup(FieldLookupCoords coords, Object context) {
+      return null;
+    }
+
+    @Override
     public PgQuery visitPgQuery(PgQuery pgQuery, Object context) {
       return null;
     }

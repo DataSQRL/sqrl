@@ -22,8 +22,7 @@ import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.transpile.*;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
-import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
@@ -38,6 +37,7 @@ import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -69,13 +69,11 @@ public class Resolve {
     SchemaAdjustmentSettings schemaAdjustmentSettings = SchemaAdjustmentSettings.DEFAULT;
     List<Loader> loaders = List.of(new DataSourceLoader(), new JavaFunctionLoader(),
         new TypeLoader());
-    VariableFactory variableFactory = new VariableFactory();
     List<StatementOp> ops = new ArrayList<>();
     List<SqrlStatement> queryOperations = new ArrayList<>();
 
     // Mappings
     Map<SQRLTable, VirtualRelationalTable> tableMap = new HashMap<>();
-    Map<Field, String> fieldMap = new HashMap<>();
     SqrlCalciteSchema userSchema;
     SqrlCalciteSchema relSchema;
 
@@ -230,9 +228,6 @@ public class Resolve {
       entry.getValue().setSqrlTable(entry.getKey());
     }
 
-    //and also map all fields
-    env.fieldMap.putAll(tblDef.getFieldNameMap());
-
     if (tblDef.getTable().getPath().size() == 1) {
 //      env.userSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
 //          tblDef.getTable());
@@ -385,13 +380,15 @@ public class Resolve {
     Optional<VirtualRelationalTable> context =
         table.map(t -> t.getVt());
 
-    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(env.relSchema, assignmentPath)
+    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(env.relSchema, assignmentPath, table)
         .accept(node);
 
+    //This must come later
     SqlNode node = context.map(
-        c -> new AddContextTable(c.getNameId()).accept(op.getQuery())).orElse(op.getQuery());
+        c -> new AddContextTable(ReservedName.SELF_IDENTIFIER.getCanonical())
+            .accept(op.getQuery())).orElse(op.getQuery());
 
-    Analysis currentAnalysis = analyzer.apply(node);
+    Analysis currentAnalysis = analyzer.apply(op.getQuery());
 
     List<Function<Analysis, SqlShuttle>> transforms = List.of(
         QualifyIdentifiers::new,
@@ -538,18 +535,17 @@ public class Resolve {
 
   private void addColumn(Env env, StatementOp op, AddedColumn c, boolean fixTimestamp) {
     Optional<VirtualRelationalTable> optTable = getTargetRelTable(env, op);
-//    Check.state(optTable.isPresent(), null, null);
     SQRLTable table = getContext(env, op.statement)
         .orElseThrow(() -> new RuntimeException("Cannot resolve table"));
     Name name = op.getStatement().getNamePath().getLast();
-    if (table.getField(name).isPresent()) {
-      name = Name.system(op.getStatement().getNamePath().getLast().getCanonical() + "_");
-    }
-    c.setNameId(name.getCanonical());
+    Name vtName = uniquifyColumnName(name, table);
+
+    c.setNameId(vtName.getCanonical());
 
     VirtualRelationalTable vtable = optTable.get();
     Optional<Integer> timestampScore = env.tableFactory.getTimestampScore(
         op.statement.getNamePath().getLast(), c.getDataType());
+    Preconditions.checkState(vtable.getField(vtName) == null);
     vtable.addColumn(c, env.tableFactory.getTypeFactory(), getRelBuilderFactory(env),
         timestampScore);
     if (fixTimestamp) {
@@ -561,10 +557,20 @@ public class Resolve {
           .fixAsTimestamp();
     }
 
-    Column column = env.variableFactory.addColumn(name,
-        table, c.getDataType());
-    //todo shadowing
-    env.fieldMap.put(column, name.getCanonical());
+    table.addColumn(name, vtName, true, c.getDataType());
+  }
+
+  private Name uniquifyColumnName(Name name, SQRLTable table) {
+    if (table.getField(name).isPresent()) {
+      String newName = SqlValidatorUtil.uniquify(
+          name.getCanonical(),
+          new HashSet<>(table.getVt().getRowType().getFieldNames()),
+          //Renamed columns to names the user cannot address to prevent collisions
+          (original, attempt, size)-> original + "$" + attempt);
+      return Name.system(newName);
+    }
+
+    return name;
   }
 
   private void updateJoinMapping(Env env, StatementOp op) {
@@ -579,8 +585,8 @@ public class Resolve {
 
     SqlNode node = pullWhereIntoJoin(op.getQuery());
 
-    env.variableFactory.addJoinDeclaration(op.statement.getNamePath(), table.get(),
-        toTable, multiplicity, node);
+    table.get().addRelationship(op.statement.getNamePath().getLast(), toTable,
+        Relationship.JoinType.JOIN, multiplicity, node);
   }
 
   private SqlNode pullWhereIntoJoin(SqlNode query) {
