@@ -990,4 +990,9 @@ class AnalyzerTest extends AbstractSQRLIT {
     assertNotNull(
         env1.getRelSchema().getTable("X", false));
   }
+
+  @Test
+  public void timestampTest() {
+    Env env1 = generate(parser.parse("IMPORT ecommerce-data.Orders TIMESTAMP time;"));
+  }
 }

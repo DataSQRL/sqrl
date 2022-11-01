@@ -15,6 +15,7 @@ package org.apache.calcite.sql;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
+import com.google.common.base.Preconditions;
 import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -29,25 +30,34 @@ public class ImportDefinition extends SqrlStatement {
   private final Optional<Name> alias;
   private final Optional<SqlNode> timestamp;
   private final NamePath importPath;
+  private final Optional<SqlIdentifier> timestampAlias;
 
   public ImportDefinition(SqlParserPos location,
-      NamePath importPath, Optional<Name> alias, Optional<SqlNode> timestamp) {
-    super(location, createNamePath(importPath, alias, timestamp), Optional.empty());
+      NamePath importPath, Optional<Name> alias, Optional<SqlNode> timestamp,
+      Optional<SqlIdentifier> timestampAlias) {
+    super(location, createNamePath(importPath, alias, timestamp, timestampAlias), Optional.empty());
     this.alias = alias;
     this.timestamp = timestamp;
     this.importPath = importPath;
+    this.timestampAlias = timestampAlias;
+    if (timestampAlias.isPresent()) {
+      Preconditions.checkState(timestamp.isPresent());
+    }
   }
 
   private static NamePath createNamePath(NamePath importPath, Optional<Name> alias,
-      Optional<SqlNode> timestamp) {
-    NamePath first = alias.map(a->a.toNamePath()).orElse(importPath.popFirst());
-    return timestamp.map(ts -> first.concat(getTimestampColumnName(ts))).orElse(first);
-  }
+      Optional<SqlNode> timestamp, Optional<SqlIdentifier> timestampAlias) {
+    if (timestamp.isPresent() && timestampAlias.isEmpty()) {
+      Preconditions.checkState(timestamp.get() instanceof SqlIdentifier,
+          "Timestamp must be an identifier or use the AS keyword to define a new column");
+      SqlIdentifier identifier = (SqlIdentifier)timestamp.get();
+      Preconditions.checkState(identifier.names.size() == 1, "Identifier should not be nested or contain a path");
+      return importPath.popFirst().concat(Name.system(identifier.names.get(0)));
+    }
 
-  private static Name getTimestampColumnName(SqlNode timestamp) {
-    SqlCall call = (SqlCall) timestamp;
-    SqlIdentifier columnName = (SqlIdentifier) call.getOperandList().get(1);
-    return Name.system(columnName.names.get(0));
+    NamePath first = alias.map(a->a.toNamePath()).orElse(importPath.popFirst());
+    return timestampAlias
+        .map(ts -> first.concat(Name.system(ts.names.get(0)))).orElse(first);
   }
 
   @Override
