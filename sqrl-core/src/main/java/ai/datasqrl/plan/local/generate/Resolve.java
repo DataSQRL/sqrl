@@ -33,7 +33,9 @@ import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -263,12 +265,7 @@ public class Resolve {
   }
 
   private void computeOpKind(Env env, StatementOp op) {
-
     op.setKind(getKind(env, op));
-    /**
-     * if op is join:
-     *  if context ->
-     */
   }
 
   private OpKind getKind(Env env, StatementOp op) {
@@ -335,7 +332,13 @@ public class Resolve {
       if (importDef.getTimestamp().isEmpty()) {
         return Optional.empty();
       }
-      sqlNode = importDef.getTimestamp().get();
+
+      if (importDef.getTimestampAlias().isPresent()) {
+        sqlNode = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+            importDef.getTimestamp().get(), importDef.getTimestampAlias().get());
+      } else {
+        sqlNode = importDef.getTimestamp().get();
+      }
       sqlNode = transformExpressionToQuery(env, statement, sqlNode);
       statementKind = StatementKind.IMPORT;
 
@@ -516,8 +519,13 @@ public class Resolve {
       case EXPR:
       case EXPR_QUERY:
       case IMPORT_TIMESTAMP:
-        AddedColumn c = createColumnAddOp(env, op);
-        addColumn(env, op, c, op.kind == IMPORT_TIMESTAMP);
+        Optional<AddedColumn> columnAdd = createColumnAddOp(env, op);
+        columnAdd.ifPresent(c->addColumn(env, op, c, op.kind == IMPORT_TIMESTAMP));
+
+        if (columnAdd.isEmpty() && op.statementKind == StatementKind.IMPORT) {
+          setTimestampColumn(env, op);
+        }
+
         break;
       case ROOT_QUERY:
         createTable(env, op, Optional.empty());
@@ -531,6 +539,25 @@ public class Resolve {
         updateJoinMapping(env, op);
         break;
     }
+  }
+
+  private void setTimestampColumn(Env env, StatementOp op) {
+    //get table from env
+    ImportDefinition importDefinition = (ImportDefinition) op.getStatement();
+    SQRLTable table = (SQRLTable) env.getRelSchema().getTable(importDefinition.getAlias().orElse(importDefinition.getImportPath().getLast())
+            .getCanonical(),
+        false)
+        .getTable();
+
+    QueryRelationalTable baseTbl = ((VirtualRelationalTable.Root) table.getVt()).getBase();
+    Preconditions.checkState(importDefinition.getTimestamp().get() instanceof SqlIdentifier,
+        "Aliased timestamps must use the AS keyword to set a new column");
+    SqlIdentifier identifier = (SqlIdentifier)importDefinition.getTimestamp().get();
+    RelDataTypeField field = baseTbl.getRowType().getField(identifier.names.get(0), false, false);
+
+    baseTbl.getTimestamp()
+        .getCandidateByIndex(field.getIndex())
+        .fixAsTimestamp();
   }
 
   private void addColumn(Env env, StatementOp op, AddedColumn c, boolean fixTimestamp) {
@@ -624,13 +651,20 @@ public class Resolve {
   }
 
 
-  private AddedColumn createColumnAddOp(Env env, StatementOp op) {
+  private Optional<AddedColumn> createColumnAddOp(Env env, StatementOp op) {
     String columnName = op.statement.getNamePath().getLast().getCanonical();
+
+    if (op.getStatementKind() == StatementKind.IMPORT) {
+      ImportDefinition importDefinition = (ImportDefinition)op.getStatement();
+      if (importDefinition.getTimestampAlias().isEmpty()) {
+        return Optional.empty();
+      }
+    }
 
     //TODO: check for sub-queries
     if (isSimple(op)) {
       Project project = (Project) op.getRelNode();
-      return new Simple(columnName, project.getProjects().get(project.getProjects().size() - 1));
+      return Optional.of(new Simple(columnName, project.getProjects().get(project.getProjects().size() - 1)));
     } else {
       //return new Complex(columnName, op.relNode);
       throw new UnsupportedOperationException("Complex column not yet supported");

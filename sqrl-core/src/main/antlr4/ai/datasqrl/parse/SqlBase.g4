@@ -37,7 +37,7 @@ exportDefinition
     ;
 
 importDefinition
-    : qualifiedName (AS? alias=identifier)? (TIMESTAMP expression AS? timestampAlias=identifier?)?
+    : qualifiedName (AS? alias=identifier)? (TIMESTAMP expression (AS timestampAlias=identifier)?)?
     ;
 
 assignment

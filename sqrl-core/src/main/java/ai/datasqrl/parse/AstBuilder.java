@@ -977,25 +977,22 @@ class AstBuilder
         ctx.alias == null ? null : (SqlIdentifier) visit(ctx.alias));
 
     Optional<SqlNode> timestamp;
+    Optional<SqlIdentifier> timestampAlias = Optional.empty();
     if (ctx.TIMESTAMP() != null) {
-
-//      Interval tableI = new Interval(
-//          ctx.expression().start.getStartIndex(),
-//          ctx.expression().stop.getStopIndex());
-//      String expr = ctx.expression().start.getInputStream().getText(tableI);
-
       SqlNode expr = visit(ctx.expression());
-      SqlIdentifier timestampAlias = ((SqlIdentifier) visit(ctx.timestampAlias));
-      SqlCall call = SqlStdOperatorTable.AS.createCall(getLocation(ctx), expr, timestampAlias);
-      timestamp = Optional.of(call);
+
+      if (ctx.timestampAlias != null) {
+        SqlIdentifier tsAlias = ((SqlIdentifier) visit(ctx.timestampAlias));;
+        timestampAlias = Optional.of(tsAlias);
+      }
+      timestamp = Optional.of(expr);
     } else {
       timestamp = Optional.empty();
     }
 
     return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), alias.map(
         a -> Name.system(String.join(".", a.names))
-    ),
-        timestamp);
+    ), timestamp, timestampAlias);
   }
 
   @Override
