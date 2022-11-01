@@ -10,7 +10,7 @@ type Orders {
     id: Int
     customerid: Int
     time: String
-    entries(id: Int, productid: Int, quantity: Int, unit_price: Float, discount: Float): [entries]
+    entries(productid: Int, quantity: Int, unit_price: Float, discount: Float): [entries]
 }
 
 type Product {
@@ -18,7 +18,7 @@ type Product {
     name: String
     description: String
     category: String
-    order_entries(id: Int, productid: Int, quantity: Int, unit_price: Float, discount: Float): [entries]
+    order_entries(productid: Int, quantity: Int, unit_price: Float, discount: Float): [entries]
 }
 
 type Query {

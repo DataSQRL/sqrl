@@ -5,6 +5,7 @@ import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
 import ai.datasqrl.graphql.server.Model.CoordVisitor;
 import ai.datasqrl.graphql.server.Model.Coords;
+import ai.datasqrl.graphql.server.Model.FieldLookupCoords;
 import ai.datasqrl.graphql.server.Model.FixedArgument;
 import ai.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import ai.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
@@ -25,6 +26,7 @@ import ai.datasqrl.graphql.server.VertxGraphQLBuilder.QueryExecutionContext;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
 import com.google.common.base.Preconditions;
 import graphql.GraphQL;
+import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLCodeRegistry;
@@ -43,6 +45,7 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +59,7 @@ import lombok.Value;
 
 public class VertxGraphQLBuilder implements
     RootVisitor<GraphQL, VertxContext>,
-    CoordVisitor<VertxDataFetcher<?>, VertxContext>,
+    CoordVisitor<DataFetcher<?>, VertxContext>,
     SchemaVisitor<TypeDefinitionRegistry, Object>,
     GraphQLArgumentWrapperVisitor<Set<FixedArgument>, Object>,
     QueryBaseVisitor<ResolvedQuery, VertxContext>,
@@ -103,7 +106,7 @@ public class VertxGraphQLBuilder implements
   }
 
   @Override
-  public VertxDataFetcher<?> visitArgumentLookup(ArgumentLookupCoords coords, VertxContext ctx) {
+  public DataFetcher<?> visitArgumentLookup(ArgumentLookupCoords coords, VertxContext ctx) {
     //Map ResolvedQuery to precompute as much as possible
     Map<Set<Argument>, ResolvedQuery> lookupMap = coords.getMatchs().stream()
         .collect(Collectors.toMap(c->c.arguments, c->c.query.accept(this, ctx)));
@@ -123,6 +126,11 @@ public class VertxGraphQLBuilder implements
           env, argumentSet, fut);
       resolvedQuery.accept(this, context);
     });
+  }
+
+  @Override
+  public DataFetcher<?> visitFieldLookup(FieldLookupCoords coords, VertxContext context) {
+    return VertxPropertyDataFetcher.create(coords.getColumnName());
   }
 
   @Override

@@ -1,9 +1,9 @@
 package ai.datasqrl.schema;
 
+import ai.datasqrl.config.metadata.FileMetadataStore;
 import ai.datasqrl.config.util.StreamUtil;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
@@ -14,7 +14,6 @@ import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.rel.type.*;
-import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.schema.*;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
@@ -22,7 +21,6 @@ import org.apache.calcite.sql.SqlNode;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.calcite.util.Pair;
 
 /**
  * A {@link SQRLTable} represents a logical table in the SQRL script which contains fields that are
@@ -80,8 +78,8 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
     return fields.nextVersion(name);
   }
 
-  public Column addColumn(Name name, boolean visible, RelDataType type) {
-    Column col = new Column(name, getNextFieldVersion(name), visible, type);
+  public Column addColumn(Name name, Name vtName, boolean visible, RelDataType type) {
+    Column col = new Column(name, vtName, getNextFieldVersion(name), visible, type);
     fields.addField(col);
     return col;
   }

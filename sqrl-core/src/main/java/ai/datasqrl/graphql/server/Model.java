@@ -85,6 +85,7 @@ public class Model {
 
   public interface CoordVisitor<R, C> {
     R visitArgumentLookup(ArgumentLookupCoords coords, C context);
+    R visitFieldLookup(FieldLookupCoords coords, C context);
   }
 
   @Getter
@@ -105,6 +106,22 @@ public class Model {
     }
   }
 
+  @Getter
+  @NoArgsConstructor
+  public static class FieldLookupCoords extends Coords {
+    final String type = "field";
+    String columnName;
+
+    @Builder
+    public FieldLookupCoords(String parentType, String fieldName,
+        String columnName) {
+      super(parentType, fieldName);
+      this.columnName = columnName;
+    }
+    public <R, C> R accept(CoordVisitor<R, C> visitor, C context) {
+      return visitor.visitFieldLookup(this, context);
+    }
+  }
   @Getter
   @NoArgsConstructor
   public static class ArgumentLookupCoords extends Coords {

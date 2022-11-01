@@ -56,6 +56,7 @@ public class AnalyzeStatement {
   public Map<SqlNode, String> tableAlias = new HashMap<>();
   private Map<SqlNode, SqlNode> aliasedOrder = new HashMap<>();
   private boolean allowSystemFields;
+  private Optional<SQRLTable> context;
 
   @Value
   public static class Analysis {
@@ -72,14 +73,17 @@ public class AnalyzeStatement {
     private boolean allowSystemFields;
   }
 
-  public AnalyzeStatement(SqrlCalciteSchema schema, List<String> assignmentPath) {
-    this(schema, assignmentPath, false);
+  public AnalyzeStatement(SqrlCalciteSchema schema, List<String> assignmentPath,
+      Optional<SQRLTable> context) {
+    this(schema, assignmentPath, false, context);
   }
 
-  public AnalyzeStatement(SqrlCalciteSchema schema, List<String> assignmentPath, boolean allowSystemFields) {
+  public AnalyzeStatement(SqrlCalciteSchema schema, List<String> assignmentPath, boolean allowSystemFields,
+      Optional<SQRLTable> context) {
     this.schema = schema;
     this.assignmentPath = assignmentPath;
     this.allowSystemFields = allowSystemFields;
+    this.context = context;
     if (!this.assignmentPath.isEmpty()) {
       this.selfIdentifier = Optional.of(new SqlIdentifier(assignmentPath, SqlParserPos.ZERO));
     } else {
@@ -141,8 +145,7 @@ public class AnalyzeStatement {
     }
 
     tableAlias.put(id, alias);
-    return newContext(context, toFields(resolved.getAccessibleFields(), alias)
-    );
+    return newContext(context, aliasFields(resolved.getAccessibleFields(), alias));
   }
 
 
@@ -150,15 +153,15 @@ public class AnalyzeStatement {
   private List<RelationField> toFields(List<String> names) {
     return names.stream()
         //create anonymous column
-        .map(f->new RelationField(new Column(Name.system(f), 0, true,
+        .map(f->new RelationField(new Column(Name.system(f), Name.system(f), 0, true,
             new BasicSqlType(PlannerFactory.getTypeSystem(), SqlTypeName.ANY)), null))
         .collect(Collectors.toList());
   }
 
 
-  private List<RelationField> toFields(List<Field> accessibleFields, String alias) {
+  private List<RelationField> aliasFields(List<RelationField> accessibleFields, String alias) {
     return accessibleFields.stream()
-        .map(f->new RelationField(f, alias))
+        .map(f->new RelationField(f.getField(), alias))
         .collect(Collectors.toList());
   }
 
@@ -174,6 +177,12 @@ public class AnalyzeStatement {
 
   private Optional<ResolvedTable> resolve(SqlIdentifier id, Context context) {
 
+    //_
+    Optional<ResolvedTable> selfTable = resolveSelfTable(id, context);
+    if (selfTable.isPresent()) {
+      return selfTable;
+    }
+
     //o.entries
     Optional<ResolvedTable> relativeTable = resolveRelativeTable(id, context);
     if (relativeTable.isPresent()) {
@@ -186,6 +195,15 @@ public class AnalyzeStatement {
     if (table.isPresent()) {
       return table;
     }
+    return Optional.empty();
+  }
+
+  private Optional<ResolvedTable> resolveSelfTable(SqlIdentifier id, Context context) {
+    if (id.names.size() == 1 && id.names.get(0).equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
+      return Optional.of(new SingleTable(ReservedName.SELF_IDENTIFIER.getCanonical(), this.context.get(),
+          this.context.get().getFields().getAccessibleFields()));
+    }
+
     return Optional.empty();
   }
 
@@ -215,8 +233,7 @@ public class AnalyzeStatement {
         base = Optional.of(((VirtualRelationalTable)baseTable.get()).getSqrlTable());
         Preconditions.checkState(id.names.size() == 1);
         //Virtual tables exposes all fields to the analyzer
-        return Optional.of(new SingleTable(id.names.get(0), base.get(),
-            toVtFields((VirtualRelationalTable)baseTable.get())));
+        return Optional.of(new VirtualResolvedTable(id.names.get(0), (VirtualRelationalTable)baseTable.get()));
       }
     }
 
@@ -254,7 +271,7 @@ public class AnalyzeStatement {
     List<Field> fields = new ArrayList<>();
     for (RelDataTypeField f : vt.getRowType().getFieldList()) {
       if (vt.getSqrlTable().getField(Name.system(f.getName())).isEmpty()) {
-        fields.add(new Column(Name.system(f.getName()), 0, false, f.getType()));
+        fields.add(new Column(Name.system(f.getName()), Name.system(f.getName()), 0, false, f.getType()));
       }
     }
 
@@ -262,7 +279,28 @@ public class AnalyzeStatement {
     return fields;
   }
 
+  @Value
+  class VirtualResolvedTable extends ResolvedTable {
+    String name;
+    VirtualRelationalTable vt;
 
+    public Optional<String> getTableName() {
+      return Optional.of(name);
+    }
+
+    @Override
+    SQRLTable getToTable() {
+      return vt.getSqrlTable();
+    }
+
+    public List<RelationField> getAccessibleFields() {
+      return vt.getRowType().getFieldList().stream()
+          .map(f->new RelationField(
+              new Column(Name.system(f.getName()), Name.system(f.getName()), 0, false, f.getType()),
+              null))
+          .collect(Collectors.toList());
+    }
+  }
   @Value
   class SingleTable extends ResolvedTable {
     String name;
@@ -278,8 +316,10 @@ public class AnalyzeStatement {
       return table;
     }
 
-    public List<Field> getAccessibleFields() {
-      return fields;
+    public List<RelationField> getAccessibleFields() {
+      return fields.stream()
+          .map(f->new RelationField(f, null))
+          .collect(Collectors.toList());
     }
   }
 
@@ -293,9 +333,10 @@ public class AnalyzeStatement {
       return fields.get(fields.size() - 1).getToTable();
     }
 
-    public List<Field> getAccessibleFields() {
-      return getToTable().getFields()
-          .getAccessibleFields();
+    public List<RelationField> getAccessibleFields() {
+      return getToTable().getFields().getAccessibleFields().stream()
+          .map(f->new RelationField(f, null))
+          .collect(Collectors.toList());
     }
   }
 
@@ -313,9 +354,10 @@ public class AnalyzeStatement {
       return true;
     }
 
-    public List<Field> getAccessibleFields() {
-      return getToTable().getFields()
-          .getAccessibleFields();
+    public List<RelationField> getAccessibleFields() {
+      return getToTable().getFields().getAccessibleFields().stream()
+          .map(f->new RelationField(f, null))
+          .collect(Collectors.toList());
     }
   }
 
@@ -327,7 +369,7 @@ public class AnalyzeStatement {
       return true;
     }
 
-    public List<Field> getAccessibleFields() {
+    public List<RelationField> getAccessibleFields() {
       return List.of();
     }
 
@@ -528,7 +570,7 @@ public class AnalyzeStatement {
   }
 
   @Value
-  public class RelationField {
+  public static class RelationField {
     //todo parser position
     Field field;
     String alias;
@@ -706,6 +748,16 @@ public class AnalyzeStatement {
         this.identifier = createAliasedIdentifier(original);
       }
      return identifier;
+    }
+
+    public SqlNode getShadowedIdentifier(SqlIdentifier original) {
+      List<String> names = new ArrayList<>();
+      names.add(alias);
+      Preconditions.checkState(path.size() == 1);
+      Preconditions.checkState(path.get(0) instanceof Column);
+      names.add(((Column)path.get(0)).getShadowedName().getDisplay());
+
+      return new SqlIdentifier(names, original.getParserPosition());
     }
   }
 }

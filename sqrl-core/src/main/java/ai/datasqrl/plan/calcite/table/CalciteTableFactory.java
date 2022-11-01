@@ -254,7 +254,7 @@ public class CalciteTableFactory {
         for (Field field : builder.getAllFields()) {
             if (field instanceof UniversalTableBuilder.Column) {
                 UniversalTableBuilder.Column c = (UniversalTableBuilder.Column)field;
-                tbl.addColumn(c.getName(),c.isVisible(), c.getType());
+                tbl.addColumn(c.getName(), c.getName(), c.isVisible(), c.getType());
             } else {
                 UniversalTableBuilder.ChildRelationship child = (UniversalTableBuilder.ChildRelationship)field;
                 build(child.getChildTable(),tbl,vTable,child,vtableBuilder,createdTables);
