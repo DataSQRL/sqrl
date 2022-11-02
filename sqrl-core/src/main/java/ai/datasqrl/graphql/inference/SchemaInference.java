@@ -374,7 +374,7 @@ public class SchemaInference {
         //No-op rel node, query must be constructed at query time
         Set<Argument> newArgs = new LinkedHashSet<>(args.argumentSet);
         newArgs.add(VariableArgument.builder().path(context.arg.getName()).build());
-        RelAndArg relAndArg = new RelAndArg(args.relNode, newArgs, "limit", null, true);
+        RelAndArg relAndArg = new RelAndArg(args.relNode, newArgs, context.arg.getName(), null, true);
 
         set.add(relAndArg);
       }
