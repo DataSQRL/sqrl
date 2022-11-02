@@ -4,8 +4,9 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Optional;
-import java.util.Set;
 
 public interface Loader {
 
@@ -15,7 +16,10 @@ public interface Loader {
 //  void load(Env env, URI uri, String name, Optional<Name> alias);
 //  void loadFile(Env env, URI uri, String name);
 
+  Optional<String> handles(Path file);
+
   boolean load(Env env, NamePath fullPath, Optional<Name> alias);
-  Set<Name> loadAll(Env env, NamePath basePath);
+
+  Collection<Name> loadAll(Env env, NamePath basePath);
 
 }

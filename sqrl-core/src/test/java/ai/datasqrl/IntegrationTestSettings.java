@@ -28,8 +28,6 @@ public class IntegrationTestSettings {
     final StreamEngine stream = StreamEngine.INMEMORY;
     @Builder.Default
     final DatabaseEngine database = DatabaseEngine.INMEMORY;
-    @Builder.Default
-    final boolean monitorSources = true;
 
     Pair<DatabaseHandle, SqrlSettings> getSqrlSettings() {
 
@@ -62,7 +60,6 @@ public class IntegrationTestSettings {
         GlobalConfiguration config = GlobalConfiguration.builder()
                 .engines(enginesBuilder.build())
                 .discovery(DiscoveryConfiguration.builder()
-                        .monitorSources(isMonitorSources())
                         .metastore(DiscoveryConfiguration.MetaData.builder()
                                 .databaseName(DiscoveryConfiguration.MetaData.DEFAULT_DATABASE)
                                 .build())
@@ -82,25 +79,12 @@ public class IntegrationTestSettings {
         return IntegrationTestSettings.builder().build();
     }
 
-    public static IntegrationTestSettings getInMemory(boolean monitorSources) {
-        return IntegrationTestSettings.builder().monitorSources(monitorSources).build();
-    }
-
     public static IntegrationTestSettings getFlinkWithDB() {
-        return getFlinkWithDB(false);
-    }
-
-    public static IntegrationTestSettings getFlinkWithDB(boolean monitorSources) {
-        return getEngines(StreamEngine.FLINK,DatabaseEngine.POSTGRES,monitorSources);
+        return getEngines(StreamEngine.FLINK,DatabaseEngine.POSTGRES);
     }
 
     public static IntegrationTestSettings getEngines(StreamEngine stream, DatabaseEngine database) {
-        return getEngines(stream,database,false);
-    }
-
-    public static IntegrationTestSettings getEngines(StreamEngine stream, DatabaseEngine database, boolean monitorSources) {
-        return IntegrationTestSettings.builder().stream(stream).database(database)
-            .monitorSources(monitorSources).build();
+        return IntegrationTestSettings.builder().stream(stream).database(database).build();
     }
 
     @Value
@@ -108,6 +92,10 @@ public class IntegrationTestSettings {
 
         DatabaseEngine database;
         StreamEngine stream;
+
+        public String getName() {
+            return database.name() + "_" + stream.name();
+        }
 
     }
 

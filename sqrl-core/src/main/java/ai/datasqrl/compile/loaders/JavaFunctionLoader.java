@@ -4,9 +4,11 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -15,7 +17,16 @@ import java.util.regex.Pattern;
  */
 public class JavaFunctionLoader implements Loader {
 
-  private static final Pattern PATTERN = Pattern.compile(".*\\.jar$");
+  private static final Pattern CONFIG_FILE_PATTERN = Pattern.compile("(.*)\\.jar$");
+
+  @Override
+  public Optional<String> handles(Path file) {
+    Matcher matcher = CONFIG_FILE_PATTERN.matcher(file.getFileName().toString());
+    if (matcher.find()) {
+      return Optional.of(matcher.group(1));
+    }
+    return Optional.empty();
+  }
 
   @Override
   public boolean load(Env env, NamePath fullPath, Optional<Name> alias) {
@@ -29,8 +40,8 @@ public class JavaFunctionLoader implements Loader {
   }
 
   @Override
-  public Set<Name> loadAll(Env env, NamePath basePath) {
+  public Collection<Name> loadAll(Env env, NamePath basePath) {
     //"Function loading from entire jar tbd"
-    return Collections.EMPTY_SET;
+    return Collections.EMPTY_LIST;
   }
 }

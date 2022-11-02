@@ -1,15 +1,11 @@
-package ai.datasqrl.api;
+package ai.datasqrl.compiler;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractEngineIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.metadata.MetadataStore;
 import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.serializer.KryoProvider;
 import com.google.common.collect.ImmutableSet;
-import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -22,7 +18,12 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-public class MetadataStoreTestIT extends AbstractSQRLIT {
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class MetadataStoreTestIT extends AbstractEngineIT {
 
     MetadataStore meta = null;
 

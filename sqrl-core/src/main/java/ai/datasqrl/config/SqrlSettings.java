@@ -3,11 +3,9 @@ package ai.datasqrl.config;
 import ai.datasqrl.config.metadata.FileMetadataStore;
 import ai.datasqrl.config.metadata.InMemoryMetadataStore;
 import ai.datasqrl.config.metadata.JDBCMetadataStore;
+import ai.datasqrl.config.metadata.MetadataNamedPersistence;
 import ai.datasqrl.config.provider.*;
 import ai.datasqrl.config.serializer.KryoProvider;
-import ai.datasqrl.config.metadata.MetadataNamedPersistence;
-import ai.datasqrl.compile.SourceTableMonitorImpl;
-import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -23,7 +21,6 @@ public class SqrlSettings {
   DiscoveryConfiguration discoveryConfiguration;
   MetadataStoreProvider metadataStoreProvider;
   SerializerProvider serializerProvider;
-  SourceTableMonitorProvider sourceTableMonitorProvider;
   TableStatisticsStoreProvider tableStatisticsStoreProvider;
 
   public static SqrlSettings fromConfiguration(GlobalConfiguration config) {
@@ -54,13 +51,8 @@ public class SqrlSettings {
       builder.metadataStoreProvider(new FileMetadataStore.Provider());
     }else throw new IllegalArgumentException("Must configure a database engine");
 
-    if (!config.getDiscovery().isMonitorSources()) {
-      builder.sourceTableMonitorProvider(SourceTableMonitorProvider.NO_MONITORING);
-    } else {
-      builder.sourceTableMonitorProvider(
-          (engine, statsStore) -> new SourceTableMonitorImpl(engine, statsStore, new StreamInputPreparerImpl()));
-    }
 
     return builder;
   }
+
 }

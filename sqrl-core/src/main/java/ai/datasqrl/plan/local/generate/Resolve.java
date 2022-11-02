@@ -159,7 +159,7 @@ public class Resolve {
           () -> node.getTimestamp().get().getParserPosition(),
           () -> "Cannot use timestamp with import star");
 
-      Set<Name> loaded = env.getLoader().loadAll(env, basePath);
+      Collection<Name> loaded = env.getLoader().loadAll(env, basePath);
       Preconditions.checkState(!loaded.isEmpty(), "Import [%s] is not a package or package is empty",basePath);
     } else {
       boolean loaded = env.getLoader().load(env,fullPath, node.getAlias());

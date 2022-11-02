@@ -1,7 +1,5 @@
 package ai.datasqrl.io.sources.dataset;
 
-import ai.datasqrl.io.formats.Format;
-import ai.datasqrl.io.formats.FormatConfiguration;
 import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -14,7 +12,7 @@ import lombok.NonNull;
  * TableSource} is comprised of records and is the smallest unit of data that one can refer to
  * within an SQML script.
  */
-public class TableSource extends AbstractExternalTable {
+public class TableSource extends TableInput {
 
   @NonNull
   private final FlexibleDatasetSchema.TableField schema;
@@ -25,17 +23,7 @@ public class TableSource extends AbstractExternalTable {
     this.schema = schema;
   }
 
-  public boolean hasSourceTimestamp() {
-    return dataset.hasSourceTimestamp();
-  }
-
   public InputTableSchema getSchema() {
     return new InputTableSchema(schema, dataset.hasSourceTimestamp());
   }
-
-  public Format.Parser getParser() {
-    FormatConfiguration format = configuration.getFormat();
-    return format.getImplementation().getParser(format);
-  }
-
 }

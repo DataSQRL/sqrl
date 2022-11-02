@@ -1,4 +1,4 @@
-package ai.datasqrl.api;
+package ai.datasqrl.compiler;
 
 import ai.datasqrl.io.sources.DataSystemConnectorConfig;
 import lombok.Value;

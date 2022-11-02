@@ -7,9 +7,10 @@ import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.io.impl.file.FilePath;
 import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.io.sources.SourceRecord;
+import ai.datasqrl.io.sources.dataset.TableInput;
 import ai.datasqrl.io.sources.dataset.TableSource;
-import ai.datasqrl.io.sources.stats.TableStatisticsStore;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
+import ai.datasqrl.io.sources.stats.TableStatisticsStore;
 import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
 import ai.datasqrl.physical.EngineCapability;
 import ai.datasqrl.physical.ExecutionEngine;
@@ -65,7 +66,7 @@ public class InMemStreamEngine implements StreamEngine {
         private final RecordHolder recordHolder = new RecordHolder();
 
         @Override
-        public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableSource table) {
+        public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table) {
             Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser, "This method only supports text sources");
             DataSystemConnector source = table.getDataset();
 
@@ -82,7 +83,7 @@ public class InMemStreamEngine implements StreamEngine {
         }
 
         @Override
-        public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream, TableSource tableSource, TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
+        public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream, TableInput tableSource, TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
             final SourceTableStatistics statistics = new SourceTableStatistics();
             final TableSource.Digest tableDigest = tableSource.getDigest();
             StreamHolder<SourceRecord.Raw> result = stream.mapWithError((r, c) -> {

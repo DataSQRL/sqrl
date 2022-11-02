@@ -4,7 +4,7 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.formats.Format;
 import ai.datasqrl.io.formats.TextLineFormat;
 import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.TableSource;
+import ai.datasqrl.io.sources.dataset.TableInput;
 import ai.datasqrl.physical.stream.FunctionWithError;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.StreamHolder;
@@ -22,12 +22,12 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
 
     private final SchemaAdjustmentSettings schemaAdjustmentSettings = SchemaAdjustmentSettings.DEFAULT;
 
-    public boolean isRawInput(TableSource table) {
+    public boolean isRawInput(TableInput table) {
         //TODO: support other flexible formats
         return table.getParser() instanceof TextLineFormat.Parser;
     }
 
-    public StreamHolder<SourceRecord.Raw> getRawInput(TableSource table, StreamEngine.Builder builder) {
+    public StreamHolder<SourceRecord.Raw> getRawInput(TableInput table, StreamEngine.Builder builder) {
         Preconditions.checkArgument(isRawInput(table), "Not a valid raw input table: " + table);
         Format.Parser parser = table.getParser();
         if (parser instanceof TextLineFormat.Parser) {

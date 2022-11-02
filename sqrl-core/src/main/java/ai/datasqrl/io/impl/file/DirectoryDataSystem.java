@@ -45,7 +45,7 @@ public abstract class DirectoryDataSystem implements DataSystemConnector, Serial
         return false;
       }
       //If file has a format, it needs to match
-      if (Strings.isNullOrEmpty(components.getFormat())) {
+      if (Strings.isNullOrEmpty(components.getFormat()) || tableConfig.getFormat()==null) {
         return true;
       } else {
         return tableConfig.getFormat().getFileFormat().matches(components.getFormat());

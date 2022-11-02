@@ -7,8 +7,8 @@ import ai.datasqrl.io.impl.file.FilePath;
 import ai.datasqrl.io.impl.kafka.KafkaDataSystem;
 import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.dataset.TableConfig;
+import ai.datasqrl.io.sources.dataset.TableInput;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
 import ai.datasqrl.physical.stream.StreamHolder;
@@ -107,7 +107,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
 
   @Override
   public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream,
-                                                TableSource tableSource,
+                                                TableInput tableSource,
                                                 TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
     Preconditions.checkArgument(stream instanceof FlinkStreamHolder && ((FlinkStreamHolder)stream).getBuilder().equals(this));
     setJobType(FlinkStreamEngine.JobType.MONITOR);
@@ -158,7 +158,8 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
     tableEnvironment.createTemporaryView(qualifiedTableName, rows, tableSchema);
   }
 
-  public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableSource table) {
+  @Override
+  public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table) {
     Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser, "This method only supports text sources");
     DataSystemConnector sourceConnector = table.getDataset();
     String flinkSourceName = table.getDigest().toString('-',"input");

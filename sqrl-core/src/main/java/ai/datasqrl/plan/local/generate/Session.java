@@ -10,6 +10,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class Session {
+
   ErrorCollector errors;
   Planner planner;
   ExecutionPipeline pipeline;

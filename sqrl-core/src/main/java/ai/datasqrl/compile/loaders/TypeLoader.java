@@ -4,11 +4,17 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
 public class TypeLoader implements Loader {
+
+  @Override
+  public Optional<String> handles(Path file) {
+    return Optional.empty();
+  }
 
   @Override
   public boolean load(Env env, NamePath fullPath, Optional<Name> alias) {
@@ -16,7 +22,7 @@ public class TypeLoader implements Loader {
   }
 
   @Override
-  public Set<Name> loadAll(Env env, NamePath basePath) {
-    return Collections.EMPTY_SET;
+  public Collection<Name> loadAll(Env env, NamePath basePath) {
+    return Collections.EMPTY_LIST;
   }
 }

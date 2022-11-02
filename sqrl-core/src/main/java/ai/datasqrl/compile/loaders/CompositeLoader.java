@@ -6,19 +6,26 @@ import ai.datasqrl.plan.local.generate.Resolve;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.nio.file.Path;
+import java.util.*;
 
 @Value
 @AllArgsConstructor
-public class CompositeLoader implements Loader {
+public class CompositeLoader extends AbstractLoader implements Loader {
 
     List<Loader> loaders;
 
     public CompositeLoader(Loader... loaders) {
         this(List.of(loaders));
+    }
+
+    @Override
+    public Optional<String> handles(Path file) {
+        for (Loader loader : loaders) {
+            Optional<String> result = loader.handles(file);
+            if (result.isPresent()) return result;
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -29,12 +36,4 @@ public class CompositeLoader implements Loader {
         return false;
     }
 
-    @Override
-    public Set<Name> loadAll(Resolve.Env env, NamePath basePath) {
-        Set<Name> allLoaded = new HashSet<>();
-        for (Loader loader : loaders) {
-            allLoaded.addAll(loader.loadAll(env,basePath));
-        }
-        return allLoaded;
-    }
 }

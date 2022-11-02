@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 @SuperBuilder
@@ -88,6 +89,12 @@ public abstract class DirectoryDataSystemConfig {
                 return new DirectoryDataSystem.Discovery(getPath(), getPattern(), new Connector(this));
             } else return null;
         }
+
     }
+
+    public static DataSystemDiscoveryConfig of(Path path) {
+        return Discovery.builder().uri(path.toUri().getPath()).build();
+    }
+
 
 }

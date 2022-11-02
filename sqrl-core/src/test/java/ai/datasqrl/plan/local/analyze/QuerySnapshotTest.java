@@ -1,69 +1,42 @@
 package ai.datasqrl.plan.local.analyze;
 
-import static ai.datasqrl.graphql.SchemaGeneratorTest.createOrValidateSnapshot;
-import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
-
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.scripts.ScriptBundle;
-import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.util.RelToSql;
-import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
-import ai.datasqrl.plan.local.generate.Session;
+import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.C360;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
-import org.apache.calcite.plan.RelOptUtil;
+import ai.datasqrl.util.data.Retail;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
-import org.apache.calcite.sql.SqlExplainFormat;
-import org.apache.calcite.sql.SqlExplainLevel;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
-class QuerySnapshotTest extends AbstractSQRLIT {
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-  ErrorCollector error;
+import static ai.datasqrl.graphql.SchemaGeneratorTest.createOrValidateSnapshot;
+
+class QuerySnapshotTest extends AbstractSQRLIT {
 
   public static final String IMPORTS = C360.BASIC.getImports().getScript() + "\n"
       + "Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n"
       ;
-  private ImportManager importManager;
+
+  private TestDataset example = Retail.INSTANCE;
 
   @BeforeEach
   public void setup() throws IOException {
     error = ErrorCollector.root();
-    initialize(IntegrationTestSettings.getInMemory(false));
-    C360 example = C360.BASIC;
-    example.registerSource(env);
-
-    ImportManager importManager = sqrlSettings.getImportManagerProvider()
-        .createImportManager(env.getDatasetRegistry());
-    ScriptBundle bundle = example.buildBundle().getBundle();
-    Assertions.assertTrue(
-        importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
-    this.importManager = importManager;
+    initialize(IntegrationTestSettings.getInMemory(),example.getRootPackageDirectory());
   }
 
   private Env generate(ScriptNode node) {
-    SqrlCalciteSchema schema = new SqrlCalciteSchema(
-        CalciteSchema.createRootSchema(false, false).plus());
-    Planner planner = new PlannerFactory(schema.plus()).createPlanner();
-
-    Session session = new Session(error, this.importManager, planner);
-    Resolve resolve = new Resolve(RETAIL_DIR_BASE.resolve("build/"));
-
     return resolve.planDag(session, node);
   }
 

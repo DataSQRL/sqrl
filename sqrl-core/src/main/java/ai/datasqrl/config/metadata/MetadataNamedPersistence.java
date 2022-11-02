@@ -12,6 +12,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class MetadataNamedPersistence implements TableStatisticsStore {
@@ -35,7 +37,12 @@ public class MetadataNamedPersistence implements TableStatisticsStore {
     return store.remove(key.getKey(),key.getValue());
   }
 
-  private Pair<String,String[]> getKey(@NonNull NamePath path, String... suffix) {
+  private List<NamePath> getSubPaths(@NonNull NamePath path) {
+    return store.getSubKeys(getKey(path)).stream()
+            .map(s -> path.concat(Name.system(s))).collect(Collectors.toList());
+  }
+
+  private List<String> getKeyInternal(@NonNull NamePath path, String... suffix) {
     List<String> components = new ArrayList<>();
     path.stream().map(Name::getCanonical).forEach(components::add);
     if (suffix!=null && suffix.length>0) {
@@ -44,7 +51,17 @@ public class MetadataNamedPersistence implements TableStatisticsStore {
       }
     }
     assert components.size()>=1;
+    return components;
+  }
+
+  private Pair<String,String[]> getKey(@NonNull NamePath path, String... suffix) {
+    List<String> components = getKeyInternal(path,suffix);
     return Pair.of(components.get(0),components.subList(1,components.size()).toArray(new String[components.size()-1]));
+  }
+
+  private String[] getKey(@NonNull NamePath path) {
+    List<String> components = getKeyInternal(path);
+    return components.toArray(new String[components.size()]);
   }
 
 
@@ -61,6 +78,12 @@ public class MetadataNamedPersistence implements TableStatisticsStore {
   @Override
   public SourceTableStatistics getTableStatistics(NamePath path) {
     return get(SourceTableStatistics.class,path,STORE_TABLE_STATS_KEY);
+  }
+
+  @Override
+  public Map<Name,SourceTableStatistics> getTablesStatistics(NamePath basePath) {
+    return getSubPaths(basePath).stream().map(path -> Pair.of(path.getLast(),getTableStatistics(path))).
+            filter(pair -> pair.getValue()!=null).collect(Collectors.toMap(Pair::getKey,Pair::getValue));
   }
 
 

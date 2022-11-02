@@ -1,15 +1,17 @@
 package ai.datasqrl.util;
 
-import ai.datasqrl.io.impl.file.DirectoryDataSystem;
-import ai.datasqrl.util.data.BookClub;
-import ai.datasqrl.util.data.C360;
+import ai.datasqrl.util.data.Retail;
 import ai.datasqrl.util.junit.ArgumentProvider;
 import com.google.common.base.Predicates;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 
-import java.util.*;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,28 +20,24 @@ public interface TestDataset {
 
     String getName();
 
-    DirectoryDataSystem getSource();
+    Path getDataDirectory();
 
-    Map<String, Integer> getTableCounts();
-
-    String getScriptContent(ScriptComplexity complexity);
+    default Path getRootPackageDirectory() {
+        return getDataDirectory();
+    }
 
     ScriptBuilder getImports();
 
-    default Optional<String> getInputSchema() {
-        return Optional.empty();
+    default List<Path> getScripts() {
+        return Collections.EMPTY_LIST;
     }
 
-    default Optional<String> getDiscoveredSchema() {
-        return Optional.empty();
-    }
-
-    default TestScriptBundleBuilder buildBundle() {
-        return new TestScriptBundleBuilder(this);
-    }
+    /*
+    === STATIC METHODS ===
+     */
 
     static List<TestDataset> getAll() {
-        return List.of(BookClub.INSTANCE, C360.BASIC, C360.NESTED_CATEGORIES);
+        return List.of(Retail.INSTANCE);
     }
 
     static Stream<? extends Arguments> generateAsArguments(List<? extends Object>... otherArgs) {
