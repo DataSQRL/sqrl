@@ -3,9 +3,9 @@ package ai.datasqrl.io.impl.file;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.formats.FileFormat;
 import ai.datasqrl.io.formats.FormatConfiguration;
-import ai.datasqrl.io.sources.DataSourceConfig;
-import ai.datasqrl.io.sources.DataSourceConnector;
-import ai.datasqrl.io.sources.DataSourceDiscovery;
+import ai.datasqrl.io.sources.DataSystemConfig;
+import ai.datasqrl.io.sources.DataSystemConnector;
+import ai.datasqrl.io.sources.DataSystemDiscovery;
 import ai.datasqrl.io.sources.dataset.TableConfig;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
@@ -24,11 +24,11 @@ import java.util.stream.Stream;
 /**
  */
 @Slf4j
-public abstract class DirectorySource implements DataSourceConnector, Serializable {
+public abstract class DirectoryDataSystem implements DataSystemConnector, Serializable {
 
   @AllArgsConstructor
   @Getter
-  public static class Connector implements DataSourceConnector, Serializable {
+  public static class Connector implements DataSystemConnector, Serializable {
 
     final FilePath path;
     final Pattern partPattern;
@@ -54,11 +54,11 @@ public abstract class DirectorySource implements DataSourceConnector, Serializab
 
   }
 
-  public static class Discovery extends DirectorySource.Connector implements DataSourceDiscovery {
+  public static class Discovery extends DirectoryDataSystem.Connector implements DataSystemDiscovery {
 
-    final DirectorySourceConfig.Connector connectorConfig;
+    final DirectoryDataSystemConfig.Connector connectorConfig;
 
-    public Discovery(FilePath path, Pattern partPattern, DirectorySourceConfig.Connector connectorConfig) {
+    public Discovery(FilePath path, Pattern partPattern, DirectoryDataSystemConfig.Connector connectorConfig) {
       super(path, partPattern);
       this.connectorConfig = connectorConfig;
     }
@@ -74,14 +74,14 @@ public abstract class DirectorySource implements DataSourceConnector, Serializab
     }
 
     @Override
-    public Collection<TableConfig> discoverTables(DataSourceConfig config, ErrorCollector errors) {
+    public Collection<TableConfig> discoverTables(DataSystemConfig config, ErrorCollector errors) {
       Map<Name, TableConfig> tablesByName = new HashMap<>();
       gatherTables(path, tablesByName, config, errors);
       return tablesByName.values();
     }
 
     private void gatherTables(FilePath directory, Map<Name, TableConfig> tablesByName,
-                              DataSourceConfig config, ErrorCollector errors) {
+                              DataSystemConfig config, ErrorCollector errors) {
       try {
         for (FilePath.Status fps : directory.listFiles()) {
           FilePath p = fps.getPath();

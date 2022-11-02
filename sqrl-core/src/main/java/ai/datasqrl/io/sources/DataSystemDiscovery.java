@@ -7,7 +7,7 @@ import lombok.NonNull;
 import java.util.Collection;
 import java.util.Optional;
 
-public interface DataSourceDiscovery {
+public interface DataSystemDiscovery {
 
     /**
      * The name of the dataset produced by this data source if discoverable from the configuration
@@ -18,7 +18,7 @@ public interface DataSourceDiscovery {
 
     boolean requiresFormat();
 
-    Collection<TableConfig> discoverTables(@NonNull DataSourceConfig config,
+    Collection<TableConfig> discoverTables(@NonNull DataSystemConfig config,
                                            @NonNull ErrorCollector errors);
 
 }

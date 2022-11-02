@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.calcite.table;
 
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.pipeline.ExecutionStage;
 import lombok.Getter;
@@ -8,7 +9,7 @@ import org.apache.calcite.rel.RelNode;
 
 /**
  * A relational table that is defined by the imported data from a
- * {@link ai.datasqrl.io.sources.dataset.SourceTable}.
+ * {@link TableSource}.
  *
  * This is a phyiscal relation with a schema that captures the input data.
  */

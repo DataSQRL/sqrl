@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -59,13 +59,13 @@ public class CalciteTableFactory {
         return Integer.parseInt(tableId.substring(idx+1));
     }
 
-    public ScriptTableDefinition importTable(SourceTable sourceTable, Optional<Name> tblAlias, RelBuilder relBuilder,
+    public ScriptTableDefinition importTable(TableSource tableSource, Optional<Name> tblAlias, RelBuilder relBuilder,
                                              ExecutionPipeline pipeline) {
         FlexibleTable2UTBConverter converter = new FlexibleTable2UTBConverter(typeFactory);
-        UniversalTableBuilder rootTable = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
+        UniversalTableBuilder rootTable = new FlexibleTableConverter(tableSource.getSchema(),tblAlias).apply(
                 converter);
         RelDataType rootType = convertTable(rootTable, true, true);
-        ImportedRelationalTable source = new ImportedRelationalTable(getTableId(rootTable.getName(),"i"),rootType,sourceTable);
+        ImportedRelationalTable source = new ImportedRelationalTable(getTableId(rootTable.getName(),"i"),rootType, tableSource);
         ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(getTableId(rootTable.getName(),"q"), getTimestampHolder(rootTable),
                 relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get());
 

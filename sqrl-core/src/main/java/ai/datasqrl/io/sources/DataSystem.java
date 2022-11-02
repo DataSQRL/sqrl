@@ -12,7 +12,7 @@ import java.util.Collection;
 
 @AllArgsConstructor
 @Getter
-public class DataSource implements Serializable {
+public class DataSystem implements Serializable {
 
   public enum Type {
     SOURCE, SINK, SOURCE_AND_SINK;
@@ -27,8 +27,8 @@ public class DataSource implements Serializable {
   }
 
   Name name;
-  DataSourceDiscovery datasource;
-  DataSourceConfig config;
+  DataSystemDiscovery datasource;
+  DataSystemConfig config;
 
   public NameCanonicalizer getCanonicalizer() {
     return config.getNameCanonicalizer();

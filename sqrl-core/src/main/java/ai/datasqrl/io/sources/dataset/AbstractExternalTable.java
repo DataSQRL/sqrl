@@ -1,6 +1,6 @@
 package ai.datasqrl.io.sources.dataset;
 
-import ai.datasqrl.io.sources.DataSourceConnector;
+import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -18,7 +18,7 @@ import java.util.List;
 public class AbstractExternalTable {
 
     @NonNull
-    protected final DataSourceConnector dataset;
+    protected final DataSystemConnector dataset;
     @NonNull
     protected final TableConfig configuration;
     @EqualsAndHashCode.Include

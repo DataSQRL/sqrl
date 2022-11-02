@@ -1,10 +1,10 @@
 package ai.datasqrl.io.impl.kafka;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.sources.DataSourceConnector;
-import ai.datasqrl.io.sources.DataSourceConnectorConfig;
-import ai.datasqrl.io.sources.DataSourceDiscovery;
-import ai.datasqrl.io.sources.DataSourceDiscoveryConfig;
+import ai.datasqrl.io.sources.DataSystemConnector;
+import ai.datasqrl.io.sources.DataSystemConnectorConfig;
+import ai.datasqrl.io.sources.DataSystemDiscovery;
+import ai.datasqrl.io.sources.DataSystemDiscoveryConfig;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -20,7 +20,7 @@ import java.util.Properties;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class KafkaSourceConfig {
+public abstract class KafkaDataSystemConfig {
 
     public static final String SOURCE_TYPE = "kafka";
 
@@ -68,27 +68,27 @@ public abstract class KafkaSourceConfig {
 
     @SuperBuilder
     @NoArgsConstructor
-    public static class Connector extends KafkaSourceConfig implements DataSourceConnectorConfig {
+    public static class Connector extends KafkaDataSystemConfig implements DataSystemConnectorConfig {
 
         private Connector(Discovery discovery) {
             super(discovery.servers,discovery.topicPrefix);
         }
 
         @Override
-        public DataSourceConnector initialize(@NonNull ErrorCollector errors) {
+        public DataSystemConnector initialize(@NonNull ErrorCollector errors) {
             if (rootInitialize(errors)) {
-                return new KafkaSource.Connector(getProperties(), topicPrefix);
+                return new KafkaDataSystem.Connector(getProperties(), topicPrefix);
             } else return null;
         }
 
     }
 
-    public static class Discovery extends KafkaSourceConfig implements DataSourceDiscoveryConfig {
+    public static class Discovery extends KafkaDataSystemConfig implements DataSystemDiscoveryConfig {
 
         @Override
-        public DataSourceDiscovery initialize(@NonNull ErrorCollector errors) {
+        public DataSystemDiscovery initialize(@NonNull ErrorCollector errors) {
             if (rootInitialize(errors)) {
-                return new KafkaSource.Discovery(getProperties(), topicPrefix, new Connector(this));
+                return new KafkaDataSystem.Discovery(getProperties(), topicPrefix, new Connector(this));
             } else return null;
         }
     }

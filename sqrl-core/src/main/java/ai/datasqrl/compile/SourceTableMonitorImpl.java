@@ -1,7 +1,7 @@
 package ai.datasqrl.compile;
 
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.io.sources.SourceRecord;
@@ -19,7 +19,7 @@ public class SourceTableMonitorImpl implements SourceTableMonitor {
   private final StreamInputPreparer streamPreparer;
 
   @Override
-  public void startTableMonitoring(SourceTable table) {
+  public void startTableMonitoring(TableSource table) {
     //TODO: check if this table is already being monitored
     //Only monitor tables with flexible schemas (i.e. schemas that aren't defined ahead of time)
     if (streamPreparer.isRawInput(table)) {
@@ -33,7 +33,7 @@ public class SourceTableMonitorImpl implements SourceTableMonitor {
   }
 
   @Override
-  public void stopTableMonitoring(SourceTable table) {
+  public void stopTableMonitoring(TableSource table) {
     //TODO: Look up job by qualified table name and stop if it exists
     throw new UnsupportedOperationException("not yet implemented");
 //        Optional<? extends StreamEngine.Job> job = stream.getJob(id);

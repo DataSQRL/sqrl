@@ -2,7 +2,7 @@ package ai.datasqrl.schema.input;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.FieldStats;
 import ai.datasqrl.io.sources.stats.SchemaGenerator;
 import ai.datasqrl.io.sources.stats.TypeSignature.Simple;
@@ -35,7 +35,7 @@ public class SchemaValidator implements Serializable {
 
   public SchemaValidator(@NonNull InputTableSchema tableSchema,
       @NonNull SchemaAdjustmentSettings settings,
-      @NonNull SourceTable.Digest tableDigest) {
+      @NonNull TableSource.Digest tableDigest) {
     Preconditions.checkArgument(!tableSchema.getSchema().isPartialSchema());
     this.settings = settings;
     this.tableSchema = tableSchema;

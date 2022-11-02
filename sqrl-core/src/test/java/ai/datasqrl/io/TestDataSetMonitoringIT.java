@@ -4,7 +4,7 @@ import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.util.TestDataset;
 import org.junit.jupiter.api.Disabled;
@@ -36,7 +36,7 @@ public class TestDataSetMonitoringIT extends AbstractSQRLIT {
         Map<String,Integer> tblCounts = example.getTableCounts();
         assertEquals(tblCounts.size(),ds.getTables().size());
         for (Map.Entry<String,Integer> tbl : tblCounts.entrySet()) {
-            SourceTable table = ds.getTable(tbl.getKey());
+            TableSource table = ds.getTable(tbl.getKey());
             SourceTableStatistics stats = table.getStatistics();
             assertNotNull(stats);
             assertEquals(tbl.getValue().longValue(),stats.getCount());

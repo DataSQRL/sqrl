@@ -1,6 +1,6 @@
 package ai.datasqrl.util;
 
-import ai.datasqrl.io.impl.file.DirectorySource;
+import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.util.data.BookClub;
 import ai.datasqrl.util.data.C360;
 import ai.datasqrl.util.junit.ArgumentProvider;
@@ -18,7 +18,7 @@ public interface TestDataset {
 
     String getName();
 
-    DirectorySource getSource();
+    DirectoryDataSystem getSource();
 
     Map<String, Integer> getTableCounts();
 

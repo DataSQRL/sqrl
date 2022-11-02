@@ -2,7 +2,7 @@ package ai.datasqrl.io.sources.stats;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import com.google.common.base.Preconditions;
@@ -10,7 +10,7 @@ import lombok.ToString;
 
 @ToString
 public class SourceTableStatistics implements
-    Accumulator<SourceRecord<String>, SourceTableStatistics, SourceTable.Digest> {
+    Accumulator<SourceRecord<String>, SourceTableStatistics, TableSource.Digest> {
 
   final RelationStats relation;
 
@@ -18,14 +18,14 @@ public class SourceTableStatistics implements
     this.relation = new RelationStats();
   }
 
-  public ErrorCollector validate(SourceRecord<String> sourceRecord, SourceTable.Digest dataset) {
+  public ErrorCollector validate(SourceRecord<String> sourceRecord, TableSource.Digest dataset) {
     ErrorCollector errors = ErrorCollector.root();
     RelationStats.validate(sourceRecord.getData(), errors, dataset.getCanonicalizer());
     return errors;
   }
 
   @Override
-  public void add(SourceRecord<String> sourceRecord, SourceTable.Digest dataset) {
+  public void add(SourceRecord<String> sourceRecord, TableSource.Digest dataset) {
     //TODO: Analyze timestamps on record
     relation.add(sourceRecord.getData(), dataset.getCanonicalizer());
   }

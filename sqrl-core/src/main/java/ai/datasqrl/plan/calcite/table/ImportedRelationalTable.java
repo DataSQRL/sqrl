@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import lombok.NonNull;
@@ -12,13 +12,13 @@ import java.util.List;
 @Value
 public class ImportedRelationalTable extends SourceRelationalTable {
 
-    SourceTable sourceTable;
+    TableSource tableSource;
     RelDataType baseRowType;
 
-    public ImportedRelationalTable(@NonNull Name nameId, RelDataType baseRowType, SourceTable sourceTable) {
+    public ImportedRelationalTable(@NonNull Name nameId, RelDataType baseRowType, TableSource tableSource) {
         super(nameId);
         this.baseRowType = baseRowType;
-        this.sourceTable = sourceTable;
+        this.tableSource = tableSource;
     }
 
     @Override

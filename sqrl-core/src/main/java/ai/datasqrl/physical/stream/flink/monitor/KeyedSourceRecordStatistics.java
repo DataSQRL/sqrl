@@ -2,7 +2,7 @@ package ai.datasqrl.physical.stream.flink.monitor;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
 import org.apache.flink.api.common.state.ValueState;
@@ -24,13 +24,13 @@ public class KeyedSourceRecordStatistics extends
   private final int maxRecords = 100000;
   private final int maxTimeInMin = 5;
   private final OutputTag<SourceTableStatistics> statsOutput;
-  private final SourceTable.Digest tableDigest;
+  private final TableSource.Digest tableDigest;
 
   private transient ValueState<SourceTableStatistics> stats;
   private transient ValueState<Long> nextTimer;
 
   public KeyedSourceRecordStatistics(OutputTag<SourceTableStatistics> tag,
-      SourceTable.Digest tableDigest) {
+      TableSource.Digest tableDigest) {
     this.statsOutput = tag;
     this.tableDigest = tableDigest;
   }

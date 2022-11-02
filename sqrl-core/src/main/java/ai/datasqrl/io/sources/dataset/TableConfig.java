@@ -4,8 +4,8 @@ import ai.datasqrl.config.constraints.OptionalMinString;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.util.ConfigurationUtil;
 import ai.datasqrl.io.SharedConfiguration;
-import ai.datasqrl.io.sources.DataSourceConnector;
-import ai.datasqrl.io.sources.DataSourceConnectorConfig;
+import ai.datasqrl.io.sources.DataSystemConnector;
+import ai.datasqrl.io.sources.DataSystemConnectorConfig;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
@@ -33,7 +33,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
     @OptionalMinString
     String identifier;
     @Valid @NonNull @NotNull
-    DataSourceConnectorConfig datasource;
+    DataSystemConnectorConfig datasource;
 
     /**
      * TODO: make this configurable
@@ -44,7 +44,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
         return SchemaAdjustmentSettings.DEFAULT;
     }
 
-    private DataSourceConnector baseInitialize(ErrorCollector errors, NamePath basePath) {
+    private DataSystemConnector baseInitialize(ErrorCollector errors, NamePath basePath) {
         if (!Name.validName(name)) {
             errors.fatal("Table needs to have valid name: %s", name);
             return null;
@@ -66,16 +66,16 @@ public class TableConfig extends SharedConfiguration implements Serializable {
 
     }
 
-    public SourceTable initializeSource(ErrorCollector errors, NamePath basePath,
+    public TableSource initializeSource(ErrorCollector errors, NamePath basePath,
                                         FlexibleDatasetSchema.TableField schema) {
-        DataSourceConnector connector = baseInitialize(errors,basePath);
+        DataSystemConnector connector = baseInitialize(errors,basePath);
         if (connector==null) return null;
         Name tableName = getName();
-        return new SourceTable(connector,this,basePath.concat(tableName), tableName, schema);
+        return new TableSource(connector,this,basePath.concat(tableName), tableName, schema);
     }
 
     public TableSink initializeSink(ErrorCollector errors, NamePath basePath) {
-        DataSourceConnector connector = baseInitialize(errors,basePath);
+        DataSystemConnector connector = baseInitialize(errors,basePath);
         if (connector==null) return null;
         Name tableName = getName();
         return new TableSink(connector, this, basePath.concat(tableName), tableName);

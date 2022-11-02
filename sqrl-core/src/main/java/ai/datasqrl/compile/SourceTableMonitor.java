@@ -1,6 +1,6 @@
 package ai.datasqrl.compile;
 
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 
 
 public interface SourceTableMonitor {
@@ -10,11 +10,11 @@ public interface SourceTableMonitor {
    *
    * @param table the table to monitor
    */
-  void startTableMonitoring(SourceTable table);
+  void startTableMonitoring(TableSource table);
 
   /**
    * @param table the table to stop monitoring
    */
-  void stopTableMonitoring(SourceTable table);
+  void stopTableMonitoring(TableSource table);
 
 }

@@ -1,6 +1,6 @@
 package ai.datasqrl.io.sources;
 
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.tree.name.Name;
 import lombok.*;
 
@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Raw records of a {@link SourceTable} are represented as {@link SourceRecord}
+ * Raw records of a {@link TableSource} are represented as {@link SourceRecord}
  * <p>
  * The generic parameter K is one of {@link java.lang.String} or {@link Name}.
  */

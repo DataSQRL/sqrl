@@ -1,6 +1,6 @@
 package ai.datasqrl.util.data;
 
-import ai.datasqrl.io.impl.file.DirectorySource;
+import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.ScriptComplexity;
 import ai.datasqrl.util.TestDataset;
@@ -23,8 +23,8 @@ public class BookClub implements TestDataset {
     }
 
     @Override
-    public DirectorySource getSource() {
-        return DirectorySource.builder()
+    public DirectoryDataSystem getSource() {
+        return DirectoryDataSystem.builder()
                 .uri(BookClub.DATA_DIR.toAbsolutePath().toString())
                 .build();
     }

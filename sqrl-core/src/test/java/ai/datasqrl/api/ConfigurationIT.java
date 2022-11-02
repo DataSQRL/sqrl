@@ -8,17 +8,17 @@ import ai.datasqrl.io.formats.FileFormat;
 import ai.datasqrl.io.formats.FormatConfiguration;
 import ai.datasqrl.io.formats.JsonLineFormat;
 import ai.datasqrl.io.impl.file.DirectorySinkImplementation;
-import ai.datasqrl.io.impl.file.DirectorySource;
+import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.io.sinks.DataSink;
 import ai.datasqrl.io.sinks.DataSinkConfiguration;
 import ai.datasqrl.io.sinks.DataSinkRegistration;
 import ai.datasqrl.io.sinks.registry.DataSinkRegistry;
-import ai.datasqrl.io.sources.DataSourceConfig;
+import ai.datasqrl.io.sources.DataSystemConfig;
 import ai.datasqrl.io.sources.DataSourceUpdate;
 import ai.datasqrl.io.sources.SourceTableConfiguration;
 import ai.datasqrl.io.sources.dataset.DatasetRegistry;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.util.TestDataset;
@@ -46,7 +46,7 @@ public class ConfigurationIT extends AbstractSQRLIT {
         assertNotNull(config.getEngines().getFlink());
         assertEquals(config.getDiscovery().getMetastore().getDatabaseName(),"system");
         assertEquals(1, config.getSources().size());
-        assertTrue(config.getSources().get(0).getSource() instanceof DirectorySource);
+        assertTrue(config.getSources().get(0).getSource() instanceof DirectoryDataSystem);
         assertEquals(1, config.getSinks().size());
         assertTrue(config.getSinks().get(0).getSink() instanceof DirectorySinkImplementation);
         assertTrue(config.getSinks().get(0).getConfig().getFormat() instanceof JsonLineFormat.Configuration);
@@ -78,18 +78,18 @@ public class ConfigurationIT extends AbstractSQRLIT {
         example.registerSource(env);
         SourceDataset ds = registry.getDataset(example.getName());
         assertNotNull(ds);
-        Set<String> tablenames = ds.getTables().stream().map(SourceTable::getName)
+        Set<String> tablenames = ds.getTables().stream().map(TableSource::getName)
                 .map(Name::getCanonical).collect(Collectors.toSet());
         Map<String,Integer> tblCounts = example.getTableCounts();
         assertEquals(tblCounts.keySet(), tablenames);
         assertNotNull(ds.getDigest().getCanonicalizer());
         Assertions.assertEquals(example.getName(),ds.getDigest().getName().getCanonical());
-        assertTrue(ds.getSource().getImplementation() instanceof DirectorySource);
+        assertTrue(ds.getSource().getImplementation() instanceof DirectoryDataSystem);
         assertNull(ds.getSource().getConfig().getFormat());
 
         for (String tblname : tblCounts.keySet()) {
             assertTrue(ds.containsTable(tblname));
-            SourceTable table = ds.getTable(tblname);
+            TableSource table = ds.getTable(tblname);
             assertNotNull(table);
             Assertions.assertEquals(tblname,table.getName().getCanonical());
             assertEquals(ds,table.getDataset());
@@ -107,7 +107,7 @@ public class ConfigurationIT extends AbstractSQRLIT {
 
         ds = registry.getDataset(example.getName());
         assertNotNull(ds);
-        tablenames = ds.getTables().stream().map(SourceTable::getName)
+        tablenames = ds.getTables().stream().map(TableSource::getName)
                 .map(Name::getCanonical).collect(Collectors.toSet());
         assertEquals(tblCounts.keySet(), tablenames);
 
@@ -136,7 +136,7 @@ public class ConfigurationIT extends AbstractSQRLIT {
         //Without table discovery
         String ds2Name = "explicitDS";
         DataSourceUpdate update = DataSourceUpdate.builder().name(ds2Name).source(example.getSource())
-                .config(DataSourceConfig.builder().format(new JsonLineFormat.Configuration()).build())
+                .config(DataSystemConfig.builder().format(new JsonLineFormat.Configuration()).build())
                 .tables(ImmutableList.of(SourceTableConfiguration.builder().name("test").identifier("book").build()))
                 .discoverTables(false)
                 .build();

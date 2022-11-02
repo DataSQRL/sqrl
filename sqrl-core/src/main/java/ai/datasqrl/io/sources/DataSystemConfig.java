@@ -18,15 +18,15 @@ import java.util.Optional;
 @SuperBuilder
 @NoArgsConstructor
 @Getter
-public class DataSourceConfig extends SharedConfiguration implements Serializable {
+public class DataSystemConfig extends SharedConfiguration implements Serializable {
 
   @OptionalMinString
   String name;
   @Valid @NonNull @NotNull
-  DataSourceDiscoveryConfig datasource;
+  DataSystemDiscoveryConfig datasource;
 
-  public DataSource initialize(ErrorCollector errors) {
-    DataSourceDiscovery source = datasource.initialize(errors);
+  public DataSystem initialize(ErrorCollector errors) {
+    DataSystemDiscovery source = datasource.initialize(errors);
     if (!rootInitialize(errors,source.requiresFormat())) return null;
 
     if (Strings.isNullOrEmpty(name)) {
@@ -38,7 +38,7 @@ public class DataSourceConfig extends SharedConfiguration implements Serializabl
         return null;
       }
     }
-    return new DataSource(Name.system(name),source,this);
+    return new DataSystem(Name.system(name),source,this);
   }
 
 }

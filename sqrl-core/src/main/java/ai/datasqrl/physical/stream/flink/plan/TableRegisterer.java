@@ -3,7 +3,7 @@ package ai.datasqrl.physical.stream.flink.plan;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.SourceRecord.Raw;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.util.StreamInputPreparer;
 import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
 import ai.datasqrl.physical.stream.StreamHolder;
@@ -83,14 +83,14 @@ public class TableRegisterer extends RelShuttleImpl {
   private void registerImportSource(ImportedRelationalTable table) {
     if (!addSource(table)) return;
     //TODO: if we are reading data in strict mode, we can use table API connectors directly which can be more efficient
-    SourceTable sourceTable = table.getSourceTable();
+    TableSource tableSource = table.getTableSource();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
     //TODO: push down startup timestamp if determined in FlinkPhysicalPlanner
-    StreamHolder<Raw> stream = streamPreparer.getRawInput(sourceTable,streamBuilder);
-    SchemaValidator schemaValidator = new SchemaValidator(sourceTable.getSchema(), sourceTable.getConfiguration().getSchemaAdjustmentSettings(),
-            sourceTable.getDigest());
+    StreamHolder<Raw> stream = streamPreparer.getRawInput(tableSource,streamBuilder);
+    SchemaValidator schemaValidator = new SchemaValidator(tableSource.getSchema(), tableSource.getConfiguration().getSchemaAdjustmentSettings(),
+            tableSource.getDigest());
     StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),"schema", SourceRecord.Named.class);
-    streamBuilder.addAsTable(validate, sourceTable.getSchema(), table.getNameId());
+    streamBuilder.addAsTable(validate, tableSource.getSchema(), table.getNameId());
 
   }
 

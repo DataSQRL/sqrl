@@ -2,7 +2,7 @@ package ai.datasqrl.compile.loaders;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.error.ErrorCode;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.dataset.TableConfig;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
@@ -63,9 +63,9 @@ public class DataSourceLoader extends AbstractLoader implements Loader {
     FlexibleDatasetSchema.TableField tbField = dsSchema.getFieldByName(tableConfig.getName());
 
 
-    SourceTable sourceTable = tableConfig.initializeSource(errors,basePath,tbField);
+    TableSource tableSource = tableConfig.initializeSource(errors,basePath,tbField);
 
-    ScriptTableDefinition def = createScriptTableDefinition(env, sourceTable, alias);
+    ScriptTableDefinition def = createScriptTableDefinition(env, tableSource, alias);
 
     if (env.getRelSchema()
         .getTable(def.getTable().getName().getCanonical(), false) != null) {
@@ -77,14 +77,14 @@ public class DataSourceLoader extends AbstractLoader implements Loader {
     }
 
     Resolve.registerScriptTable(env, def);
-    return sourceTable.getName();
+    return tableSource.getName();
   }
 
 
 
-  private ScriptTableDefinition createScriptTableDefinition(Env env, SourceTable sourceTable,
+  private ScriptTableDefinition createScriptTableDefinition(Env env, TableSource tableSource,
       Optional<Name> alias) {
-    return env.getTableFactory().importTable(sourceTable, alias,
+    return env.getTableFactory().importTable(tableSource, alias,
         env.getSession().getPlanner().getRelBuilder(), env.getSession().getPipeline());
   }
 

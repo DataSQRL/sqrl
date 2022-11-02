@@ -5,11 +5,11 @@ import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.formats.JsonLineFormat;
-import ai.datasqrl.io.impl.kafka.KafkaSource;
-import ai.datasqrl.io.sources.DataSourceConfig;
+import ai.datasqrl.io.impl.kafka.KafkaDataSystem;
+import ai.datasqrl.io.sources.DataSystemConfig;
 import ai.datasqrl.io.sources.DataSourceUpdate;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
 import ai.datasqrl.util.data.BookClub;
@@ -157,9 +157,9 @@ public class KafkaSourceIT extends AbstractSQRLIT {
         DataSourceUpdate dsUpdate = DataSourceUpdate.builder()
                 .name(dsName).discoverTables(true)
                 .config(
-                    DataSourceConfig.builder().format(new JsonLineFormat.Configuration()).build())
+                    DataSystemConfig.builder().format(new JsonLineFormat.Configuration()).build())
                 .source(
-                    KafkaSource.builder().servers(Arrays.asList(bootstrapServers)).topicPrefix(dsName+".").build())
+                    KafkaDataSystem.builder().servers(Arrays.asList(bootstrapServers)).topicPrefix(dsName+".").build())
                 .build();
 
         testBookSourceTable(dsName,dsUpdate);
@@ -174,7 +174,7 @@ public class KafkaSourceIT extends AbstractSQRLIT {
         String dsName = "test";
         DataSourceUpdate dsUpdate = DataSourceUpdate.builder()
                 .name(dsName).discoverTables(true)
-                .source(KafkaSource.builder().servers(Arrays.asList(bootstrapServers)).build())
+                .source(KafkaDataSystem.builder().servers(Arrays.asList(bootstrapServers)).build())
                 .build();
 
         testBookSourceTable(dsName,dsUpdate);
@@ -191,7 +191,7 @@ public class KafkaSourceIT extends AbstractSQRLIT {
 
         SourceDataset ds = sourceRegistry.getDataset(dsName);
         assertEquals(1, ds.getTables().size());
-        SourceTable book = ds.getTable("book");
+        TableSource book = ds.getTable("book");
         assertNotNull(book);
         SourceTableStatistics stats = book.getStatistics();
         assertNotNull(stats);

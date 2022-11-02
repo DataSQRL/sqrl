@@ -3,11 +3,11 @@ package ai.datasqrl.physical.stream.inmemory;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.io.formats.TextLineFormat;
-import ai.datasqrl.io.impl.file.DirectorySource;
+import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.io.impl.file.FilePath;
-import ai.datasqrl.io.sources.DataSourceConnector;
+import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.TableStatisticsStore;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
@@ -65,12 +65,12 @@ public class InMemStreamEngine implements StreamEngine {
         private final RecordHolder recordHolder = new RecordHolder();
 
         @Override
-        public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(SourceTable table) {
+        public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableSource table) {
             Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser, "This method only supports text sources");
-            DataSourceConnector source = table.getDataset();
+            DataSystemConnector source = table.getDataset();
 
-            if (source instanceof DirectorySource.Connector) {
-                DirectorySource.Connector filesource = (DirectorySource.Connector)source;
+            if (source instanceof DirectoryDataSystem.Connector) {
+                DirectoryDataSystem.Connector filesource = (DirectoryDataSystem.Connector)source;
                 try {
                     Stream<Path> paths = FileStreamUtil.matchingFiles(FilePath.toJavaPath(filesource.getPath()),
                             filesource, table.getConfiguration());
@@ -82,9 +82,9 @@ public class InMemStreamEngine implements StreamEngine {
         }
 
         @Override
-        public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream, SourceTable sourceTable, TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
+        public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream, TableSource tableSource, TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
             final SourceTableStatistics statistics = new SourceTableStatistics();
-            final SourceTable.Digest tableDigest = sourceTable.getDigest();
+            final TableSource.Digest tableDigest = tableSource.getDigest();
             StreamHolder<SourceRecord.Raw> result = stream.mapWithError((r, c) -> {
                 ai.datasqrl.config.error.ErrorCollector errors = statistics.validate(r, tableDigest);
                 if (errors.hasErrors()) c.accept(errors);

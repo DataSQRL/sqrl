@@ -2,7 +2,7 @@ package ai.datasqrl.io.sources.dataset;
 
 import ai.datasqrl.io.formats.Format;
 import ai.datasqrl.io.formats.FormatConfiguration;
-import ai.datasqrl.io.sources.DataSourceConnector;
+import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import lombok.NonNull;
@@ -10,7 +10,7 @@ import lombok.NonNull;
 
 public class TableSink extends AbstractExternalTable {
 
-  public TableSink(@NonNull DataSourceConnector dataset, @NonNull TableConfig configuration, @NonNull NamePath path, @NonNull Name name) {
+  public TableSink(@NonNull DataSystemConnector dataset, @NonNull TableConfig configuration, @NonNull NamePath path, @NonNull Name name) {
     super(dataset, configuration, path, name);
   }
 

@@ -1,6 +1,6 @@
 package ai.datasqrl.io.sources;
 
-public interface DataSourceConnector {
+public interface DataSystemConnector {
 
     boolean hasSourceTimestamp();
 

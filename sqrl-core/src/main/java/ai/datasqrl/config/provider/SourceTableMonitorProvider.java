@@ -1,7 +1,7 @@
 package ai.datasqrl.config.provider;
 
 import ai.datasqrl.physical.stream.StreamEngine;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.compile.SourceTableMonitor;
 
 public interface SourceTableMonitorProvider {
@@ -12,12 +12,12 @@ public interface SourceTableMonitorProvider {
 
     return new SourceTableMonitor() {
       @Override
-      public void startTableMonitoring(SourceTable table) {
+      public void startTableMonitoring(TableSource table) {
         //Do nothing
       }
 
       @Override
-      public void stopTableMonitoring(SourceTable table) {
+      public void stopTableMonitoring(TableSource table) {
         //Do nothing;
       }
     };

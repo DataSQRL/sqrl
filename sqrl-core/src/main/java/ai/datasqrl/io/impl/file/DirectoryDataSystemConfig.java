@@ -1,10 +1,10 @@
 package ai.datasqrl.io.impl.file;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.sources.DataSourceConnector;
-import ai.datasqrl.io.sources.DataSourceConnectorConfig;
-import ai.datasqrl.io.sources.DataSourceDiscovery;
-import ai.datasqrl.io.sources.DataSourceDiscoveryConfig;
+import ai.datasqrl.io.sources.DataSystemConnector;
+import ai.datasqrl.io.sources.DataSystemConnectorConfig;
+import ai.datasqrl.io.sources.DataSystemDiscovery;
+import ai.datasqrl.io.sources.DataSystemDiscoveryConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class DirectorySourceConfig {
+public abstract class DirectoryDataSystemConfig {
 
     public static final String SOURCE_TYPE = "dir";
     public static final String DEFAULT_PATTERN = "_(\\d+)";
@@ -64,28 +64,28 @@ public abstract class DirectorySourceConfig {
 
     @SuperBuilder
     @NoArgsConstructor
-    public static class Connector extends DirectorySourceConfig implements DataSourceConnectorConfig {
+    public static class Connector extends DirectoryDataSystemConfig implements DataSystemConnectorConfig {
 
         private Connector(Discovery discovery) {
             super(discovery.uri, discovery.partPattern);
         }
 
         @Override
-        public DataSourceConnector initialize(@NonNull ErrorCollector errors) {
+        public DataSystemConnector initialize(@NonNull ErrorCollector errors) {
             if (rootInitialize(errors)) {
-                return new DirectorySource.Connector(getPath(), getPattern());
+                return new DirectoryDataSystem.Connector(getPath(), getPattern());
             } else return null;
         }
     }
 
     @SuperBuilder
     @NoArgsConstructor
-    public static class Discovery extends DirectorySourceConfig implements DataSourceDiscoveryConfig {
+    public static class Discovery extends DirectoryDataSystemConfig implements DataSystemDiscoveryConfig {
 
         @Override
-        public DataSourceDiscovery initialize(@NonNull ErrorCollector errors) {
+        public DataSystemDiscovery initialize(@NonNull ErrorCollector errors) {
             if (rootInitialize(errors)) {
-                return new DirectorySource.Discovery(getPath(), getPattern(), new Connector(this));
+                return new DirectoryDataSystem.Discovery(getPath(), getPattern(), new Connector(this));
             } else return null;
         }
     }

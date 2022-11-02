@@ -4,10 +4,10 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.formats.FileFormat;
 import ai.datasqrl.io.formats.FormatConfiguration;
 import ai.datasqrl.io.impl.file.FilePath;
-import ai.datasqrl.io.sources.DataSourceConfig;
-import ai.datasqrl.io.sources.DataSourceConnector;
-import ai.datasqrl.io.sources.DataSourceConnectorConfig;
-import ai.datasqrl.io.sources.DataSourceDiscovery;
+import ai.datasqrl.io.sources.DataSystemConfig;
+import ai.datasqrl.io.sources.DataSystemConnector;
+import ai.datasqrl.io.sources.DataSystemConnectorConfig;
+import ai.datasqrl.io.sources.DataSystemDiscovery;
 import ai.datasqrl.io.sources.dataset.TableConfig;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
@@ -23,11 +23,11 @@ import java.util.*;
 import java.util.function.Predicate;
 
 
-public abstract class KafkaSource implements DataSourceConnectorConfig, Serializable {
+public abstract class KafkaDataSystem implements DataSystemConnectorConfig, Serializable {
 
   @AllArgsConstructor
   @Getter
-  public static class Connector implements DataSourceConnector, Serializable {
+  public static class Connector implements DataSystemConnector, Serializable {
 
     final Properties properties;
     final String topicPrefix;
@@ -51,13 +51,13 @@ public abstract class KafkaSource implements DataSourceConnectorConfig, Serializ
 
   }
 
-  public static class Discovery extends Connector implements DataSourceDiscovery, Serializable {
+  public static class Discovery extends Connector implements DataSystemDiscovery, Serializable {
 
     public static String[] TOPIC_SUFFIX = {".", "/", "_"};
 
-    final KafkaSourceConfig.Connector connectorConfig;
+    final KafkaDataSystemConfig.Connector connectorConfig;
 
-    public Discovery(Properties properties, String topicPrefix, KafkaSourceConfig.Connector connectorConfig) {
+    public Discovery(Properties properties, String topicPrefix, KafkaDataSystemConfig.Connector connectorConfig) {
       super(properties, topicPrefix);
       this.connectorConfig = connectorConfig;
     }
@@ -89,7 +89,7 @@ public abstract class KafkaSource implements DataSourceConnectorConfig, Serializ
 
     @Override
     public Collection<TableConfig> discoverTables(
-            @NonNull DataSourceConfig config, @NonNull ErrorCollector errors) {
+            @NonNull DataSystemConfig config, @NonNull ErrorCollector errors) {
       List<TableConfig> tables = new ArrayList<>();
       Set<String> topicNames = Collections.EMPTY_SET;
       try (Admin admin = Admin.create(getProperties(null))) {

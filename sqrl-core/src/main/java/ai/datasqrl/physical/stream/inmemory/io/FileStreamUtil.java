@@ -1,6 +1,6 @@
 package ai.datasqrl.physical.stream.inmemory.io;
 
-import ai.datasqrl.io.impl.file.DirectorySource;
+import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.io.impl.file.FilePath;
 import ai.datasqrl.io.sources.dataset.TableConfig;
 import com.google.common.base.Preconditions;
@@ -28,7 +28,7 @@ public class FileStreamUtil {
         });
     }
 
-    public static Stream<Path> matchingFiles(Path start, DirectorySource.Connector directorySource,
+    public static Stream<Path> matchingFiles(Path start, DirectoryDataSystem.Connector directorySource,
             TableConfig table) throws IOException {
         return Files.find(start,100,
                 (filePath, fileAttr) -> {
