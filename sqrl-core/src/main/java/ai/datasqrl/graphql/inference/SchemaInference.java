@@ -168,8 +168,6 @@ public class SchemaInference {
             coordsBuilder.match(ArgumentSet.builder().arguments(arg.getArgumentSet()).query(
                 PagedApiQueryBase.builder().query(query).relNode(relNode).relAndArg(arg)
                     .parameters(argHandler)
-                    .limit(Optional.of(1))
-                    .offset(Optional.of(1))
                     .build()).build()).build();
           } else {
             coordsBuilder.match(ArgumentSet.builder().arguments(arg.getArgumentSet()).query(
@@ -337,8 +335,6 @@ public class SchemaInference {
     RelAndArg relAndArg;
     @Singular
     List<PgParameterHandler> parameters;
-    Optional<Integer> limit;
-    Optional<Integer> offset;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {

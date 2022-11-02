@@ -192,8 +192,6 @@ public class Model {
     String sql;
     @Singular
     List<PgParameterHandler> parameters;
-    Optional<Integer> limit;
-    Optional<Integer> offset;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
@@ -352,7 +350,9 @@ public class Model {
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
       return visitor.visitResolvedPgQuery(this, context);
     }
-  }@AllArgsConstructor
+  }
+
+  @AllArgsConstructor
   @Getter
   @NoArgsConstructor
   public static class ResolvedPagedPgQuery implements ResolvedQuery {

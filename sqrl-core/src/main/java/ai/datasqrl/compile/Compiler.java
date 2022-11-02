@@ -280,9 +280,7 @@ public class Compiler {
       //todo builder
       return new PagedPgQuery(
           convertDynamicParams(template.getRelNode(), apiQueryBase.getRelAndArg()),
-          apiQueryBase.getParameters(),
-          apiQueryBase.getLimit(),
-          apiQueryBase.getOffset());
+          apiQueryBase.getParameters());
     }
 
     private String convertDynamicParams(RelNode relNode, RelAndArg arg) {
