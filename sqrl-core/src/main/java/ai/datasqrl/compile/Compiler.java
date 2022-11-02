@@ -7,6 +7,7 @@ import ai.datasqrl.graphql.generate.SchemaGenerator;
 import ai.datasqrl.graphql.inference.SchemaInference;
 import ai.datasqrl.graphql.inference.SchemaInference.ApiQueryBase;
 import ai.datasqrl.graphql.inference.SchemaInference.ApiQueryVisitor;
+import ai.datasqrl.graphql.inference.SchemaInference.PagedApiQueryBase;
 import ai.datasqrl.graphql.inference.SchemaInference.RelAndArg;
 import ai.datasqrl.graphql.server.Model.*;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
@@ -98,7 +99,7 @@ public class Compiler {
     //TODO: push compute to the api
     String gqlSchema = inferOrGetSchema(env, build, graphqlSchema);
 
-    SchemaInference inference = new SchemaInference(env.getSession().getPlanner());
+    SchemaInference inference = new SchemaInference();
     Root root = inference.visitSchema(gqlSchema, env);
 
     OptimizedDAG dag = optimizeDag(inference.getApiQueries(), env);
@@ -268,12 +269,21 @@ public class Compiler {
 
       return PgQuery.builder()
           .parameters(apiQueryBase.getParameters())
-          .sql(convertDynamicParams(template.getRelNode(), apiQueryBase.getRelAndArg())
-              //todo: remove hacks
-              .replace("DEFAULT", "LEFT"))
+          .sql(convertDynamicParams(template.getRelNode(), apiQueryBase.getRelAndArg()))
           .build();
     }
 
+    @Override
+    public PgQuery visitPagedApiQuery(PagedApiQueryBase apiQueryBase, Object context) {
+      QueryTemplate template = queries.get(apiQueryBase.getQuery());
+
+      //todo builder
+      return new PagedPgQuery(
+          convertDynamicParams(template.getRelNode(), apiQueryBase.getRelAndArg()),
+          apiQueryBase.getParameters(),
+          apiQueryBase.getLimit(),
+          apiQueryBase.getOffset());
+    }
 
     private String convertDynamicParams(RelNode relNode, RelAndArg arg) {
       SqlNode node = RelToSql.convertToSqlNode(relNode);
@@ -352,6 +362,11 @@ public class Compiler {
     }
 
     @Override
+    public PgQuery visitPagedPgQuery(PagedPgQuery pgQuery, Object context) {
+      return null;
+    }
+
+    @Override
     public Object visitSourcePgParameter(SourcePgParameter sourceParameter, Object context) {
       return null;
     }
@@ -363,6 +378,11 @@ public class Compiler {
 
     @Override
     public Object visitResolvedPgQuery(ResolvedPgQuery query, Object context) {
+      return null;
+    }
+
+    @Override
+    public Object visitResolvedPagedPgQuery(ResolvedPagedPgQuery query, Object context) {
       return null;
     }
 

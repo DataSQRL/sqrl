@@ -1,6 +1,5 @@
 package ai.datasqrl.graphql;
 
-import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -80,7 +79,7 @@ class SchemaAnalyzerTest extends AbstractSQRLIT {
     TypeDefinitionRegistry typeDefinitionRegistry =
         (new SchemaParser()).parse(gql);
 
-    SchemaInference inference = new SchemaInference(env2.getSession().getPlanner());
+    SchemaInference inference = new SchemaInference();
     Root root = inference.visitTypeDefinitionRegistry(typeDefinitionRegistry, env2);
     assertNotNull(root);
   }

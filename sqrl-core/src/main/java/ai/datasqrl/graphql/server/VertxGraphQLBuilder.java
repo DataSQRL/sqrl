@@ -9,10 +9,12 @@ import ai.datasqrl.graphql.server.Model.FieldLookupCoords;
 import ai.datasqrl.graphql.server.Model.FixedArgument;
 import ai.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import ai.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
+import ai.datasqrl.graphql.server.Model.PagedPgQuery;
 import ai.datasqrl.graphql.server.Model.ParameterHandlerVisitor;
 import ai.datasqrl.graphql.server.Model.PgParameterHandler;
 import ai.datasqrl.graphql.server.Model.PgQuery;
 import ai.datasqrl.graphql.server.Model.QueryBaseVisitor;
+import ai.datasqrl.graphql.server.Model.ResolvedPagedPgQuery;
 import ai.datasqrl.graphql.server.Model.ResolvedPgQuery;
 import ai.datasqrl.graphql.server.Model.ResolvedQuery;
 import ai.datasqrl.graphql.server.Model.ResolvedQueryVisitor;
@@ -49,6 +51,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -103,6 +106,11 @@ public class VertxGraphQLBuilder implements
     PreparedQuery<RowSet<Row>> preparedQuery = context.getClient()
         .preparedQuery(pgQuery.getSql());
     return new ResolvedPgQuery(pgQuery, preparedQuery);
+  }
+
+  @Override
+  public ResolvedQuery visitPagedPgQuery(PagedPgQuery pgQuery, VertxContext context) {
+    return new ResolvedPagedPgQuery(pgQuery);
   }
 
   @Override
@@ -171,6 +179,48 @@ public class VertxGraphQLBuilder implements
     boolean isList = context.environment.getFieldType().getClass().equals(GraphQLList.class);
 
     pgQuery.getPreparedQuery().execute(Tuple.from(paramObj))
+        .map(r -> resultMapper(r, isList))
+        .onSuccess(context.fut::complete)
+        .onFailure(f->{
+          f.printStackTrace();
+          context.fut.fail(f);
+        });
+    return null;
+  }
+
+  @Override
+  public Void visitResolvedPagedPgQuery(ResolvedPagedPgQuery pgQuery, QueryExecutionContext context) {
+    Optional<Integer> limit = Optional.empty();
+    Optional<Integer> offset = Optional.empty();
+    Object[] paramObj = new Object[pgQuery.query.parameters.size()];
+    for (int i = 0; i < pgQuery.query.getParameters().size(); i++) {
+      PgParameterHandler param = pgQuery.query.getParameters().get(i);
+      if (param instanceof ArgumentPgParameter &&
+          ((ArgumentPgParameter)param).path.equalsIgnoreCase("limit")) {
+        Integer o = (Integer)param.accept(this, context);
+        limit = Optional.ofNullable(o);
+      } else if (param instanceof ArgumentPgParameter &&
+          ((ArgumentPgParameter)param).path.equalsIgnoreCase("offset"))  {
+        Integer o = (Integer)param.accept(this, context);
+        offset = Optional.ofNullable(o);
+      }
+      Object o = param.accept(this, context);
+      paramObj[i] = o;
+    }
+
+    //Look at graphql response for list type here
+    boolean isList = context.environment.getFieldType().getClass().equals(GraphQLList.class);
+
+    //Add limit + offset
+    final String query = String.format("SELECT * FROM (%s) x LIMIT %s OFFSET %s",
+        pgQuery.getQuery().sql,
+        limit.map(Object::toString).orElse("ALL"),
+        offset.orElse(0)
+    );
+
+    context.getVertxContext().getClient()
+        .preparedQuery(query)
+        .execute(Tuple.from(paramObj))
         .map(r -> resultMapper(r, isList))
         .onSuccess(context.fut::complete)
         .onFailure(f->{

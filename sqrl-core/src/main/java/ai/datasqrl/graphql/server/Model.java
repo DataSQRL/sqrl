@@ -12,6 +12,7 @@ import io.vertx.sqlclient.RowSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -153,6 +154,7 @@ public class Model {
 
   public interface QueryBaseVisitor<R,C> {
     R visitPgQuery(PgQuery pgQuery, C context);
+    R visitPagedPgQuery(PagedPgQuery pgQuery, C context);
   }
 
   @JsonTypeInfo(
@@ -179,6 +181,23 @@ public class Model {
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
       return visitor.visitPgQuery(this, context);
+    }
+  }
+
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class PagedPgQuery extends PgQuery {
+    final String type = "PagedPgQuery";
+    String sql;
+    @Singular
+    List<PgParameterHandler> parameters;
+    Optional<Integer> limit;
+    Optional<Integer> offset;
+
+    @Override
+    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
+      return visitor.visitPagedPgQuery(this, context);
     }
   }
 
@@ -315,6 +334,7 @@ public class Model {
 
   public interface ResolvedQueryVisitor<R, C> {
     public R visitResolvedPgQuery(ResolvedPgQuery query, C context);
+    public R visitResolvedPagedPgQuery(ResolvedPagedPgQuery query, C context);
   }
 
   public interface ResolvedQuery {
@@ -331,6 +351,15 @@ public class Model {
     @Override
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
       return visitor.visitResolvedPgQuery(this, context);
+    }
+  }@AllArgsConstructor
+  @Getter
+  @NoArgsConstructor
+  public static class ResolvedPagedPgQuery implements ResolvedQuery {
+    PagedPgQuery query;
+    @Override
+    public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
+      return visitor.visitResolvedPagedPgQuery(this, context);
     }
   }
 

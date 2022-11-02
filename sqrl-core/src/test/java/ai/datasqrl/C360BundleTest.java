@@ -9,8 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
-import javax.swing.text.html.Option;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class C360BundleTest {
@@ -26,13 +26,27 @@ public class C360BundleTest {
       + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
       + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
       + "";
+
   @Test
   @SneakyThrows
-  public void testByoSchema() {
+  public void testByoPagedSchema() {
     Path dest = copyBundle(c360Script);
     Compiler compiler = new Compiler();
     compiler.run(dest.resolve("build/"), Optional.of(dest.resolve("schema.graphqls")));
 
+    HttpResponse<String> s = compiler.testQuery("{\n"
+        + "  Orders {\n"
+        + "    id\n"
+        + "    entries(limit:1, offset: 1) {\n"
+        + "      productid\n"
+        + "      discount\n"
+        + "    }\n"
+        + "  }\n"
+        + "}");
+
+    System.out.println(s.body());
+    System.out.println(s.headers());
+    System.out.println(s.statusCode());
 // Uncomment to test graphql
 //    while(true) {
 //      Thread.sleep(10);

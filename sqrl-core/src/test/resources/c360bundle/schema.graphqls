@@ -10,7 +10,7 @@ type Orders {
     id: Int
     customerid: Int
     time: String
-    entries(productid: Int, quantity: Int, unit_price: Float, discount: Float): [entries]
+    entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, limit: Int!, offset: Int!): [entries]
 }
 
 type Product {
