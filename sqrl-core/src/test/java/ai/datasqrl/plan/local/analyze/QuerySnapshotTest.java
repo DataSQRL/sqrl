@@ -33,7 +33,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @BeforeEach
   public void setup() throws IOException {
     error = ErrorCollector.root();
-    initialize(IntegrationTestSettings.getInMemory(),example.getRootPackageDirectory());
   }
 
   private Env generate(ScriptNode node) {
@@ -41,7 +40,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   public RelNode generate(String init, String sql, boolean nested) {
-    ConfiguredSqrlParser parser = new ConfiguredSqrlParser(error);
+      initialize(IntegrationTestSettings.getInMemory(),example.getRootPackageDirectory());
+      ConfiguredSqrlParser parser = new ConfiguredSqrlParser(error);
 
     Env env = generate(parser.parse(init + sql));
 
