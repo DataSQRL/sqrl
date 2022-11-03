@@ -6,6 +6,7 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
+import ai.datasqrl.util.SnapshotTest;
 import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.C360;
 import ai.datasqrl.util.data.Retail;
@@ -19,8 +20,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static ai.datasqrl.graphql.SchemaGeneratorTest.createOrValidateSnapshot;
 
 class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
@@ -153,7 +152,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
             System.out.println(relNode.explain());
             System.out.println(RelToSql.convertToSql(relNode));
 
-            createOrValidateSnapshot(getClass().getName(), "Query" + testNo,
+            SnapshotTest.createOrValidateSnapshot(getClass().getName(), "Query" + testNo,
                 sql + "\n\n" + relNode.explain() +
                     "\n\n" + RelToSql.convertToSql(relNode)
             );
