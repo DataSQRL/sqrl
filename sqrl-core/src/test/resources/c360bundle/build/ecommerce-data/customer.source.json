@@ -1,0 +1,17 @@
+{
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "csv",
+    "delimiter" : ",",
+    "commentPrefix" : null,
+    "header" : [ "customerid", "email", "name", "lastUpdated" ]
+  },
+  "name" : "customer",
+  "identifier" : "customer",
+  "datasource" : {
+    "uri" : "../sqml-examples/retail/data/",
+    "partPattern" : "_(\\d+)",
+    "sourceType" : "dir"
+  }
+}
