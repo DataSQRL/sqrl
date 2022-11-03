@@ -1,9 +1,6 @@
 package ai.datasqrl.plan.local.generate;
 
-import ai.datasqrl.compile.loaders.DataSourceLoader;
-import ai.datasqrl.compile.loaders.JavaFunctionLoader;
-import ai.datasqrl.compile.loaders.Loader;
-import ai.datasqrl.compile.loaders.TypeLoader;
+import ai.datasqrl.compile.loaders.*;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -43,16 +40,14 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.io.File;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static ai.datasqrl.errors.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
-import static ai.datasqrl.errors.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
+import static ai.datasqrl.config.error.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
+import static ai.datasqrl.config.error.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
 import static ai.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
 
 @Getter
@@ -69,8 +64,7 @@ public class Resolve {
 
     CalciteTableFactory tableFactory = new CalciteTableFactory(PlannerFactory.getTypeFactory());
     SchemaAdjustmentSettings schemaAdjustmentSettings = SchemaAdjustmentSettings.DEFAULT;
-    List<Loader> loaders = List.of(new DataSourceLoader(), new JavaFunctionLoader(),
-        new TypeLoader());
+    Loader loader = new CompositeLoader(new DataSourceLoader(), new JavaFunctionLoader(), new TypeLoader());
     List<StatementOp> ops = new ArrayList<>();
     List<SqrlStatement> queryOperations = new ArrayList<>();
 
@@ -81,18 +75,18 @@ public class Resolve {
 
     Session session;
     ScriptNode scriptNode;
-    URI packageUri;
+    Path packagePath;
     ExecutionPipeline pipeline;
 
     //Updated while processing each node
     SqlNode currentNode = null;
 
     public Env(SqrlCalciteSchema relSchema, Session session,
-        ScriptNode scriptNode, URI packageUri) {
+        ScriptNode scriptNode, Path packagePath) {
       this.relSchema = relSchema;
       this.session = session;
       this.scriptNode = scriptNode;
-      this.packageUri = packageUri;
+      this.packagePath = packagePath;
     }
   }
 
@@ -110,7 +104,7 @@ public class Resolve {
         session.planner.getDefaultSchema().unwrap(SqrlCalciteSchema.class),
         session,
         script,
-        basePath.toUri()
+        basePath
     );
   }
 
@@ -148,16 +142,9 @@ public class Resolve {
   //TODO: Allow modules to resolve other modules, for example a library package
   private void resolveImportDefinition(Env env, ImportDefinition node) {
     setCurrentNode(env, node);
-    NamePath path = node.getImportPath();
-
-    //Walk path, check if last item is ALL.
-    URI uri = env.getPackageUri();
-    for (int i = 0; i < path.getNames().length - 1; i++) {
-      Name name = path.getNames()[i];
-      uri = uri.resolve(name.getCanonical() + "/");
-    }
-
-    Name last = path.getNames()[path.getNames().length - 1];
+    NamePath fullPath = node.getImportPath();
+    Name last = fullPath.getLast();
+    NamePath basePath = fullPath.subList(0, fullPath.size()-1);
     /*
      * Add all files to namespace
      */
@@ -172,21 +159,11 @@ public class Resolve {
           () -> node.getTimestamp().get().getParserPosition(),
           () -> "Cannot use timestamp with import star");
 
-      File file = new File(uri);
-      Preconditions.checkState(file.isDirectory(), "Import * is not a directory");
-
-      for (String f : file.list()) {
-        loadModuleFile(env, uri, f);
-      }
+      Set<Name> loaded = env.getLoader().loadAll(env, basePath);
+      Preconditions.checkState(!loaded.isEmpty(), "Import [%s] is not a package or package is empty",basePath);
     } else {
-      uri = uri.resolve(last.getCanonical());
-      File file = new File(uri);
-      Preconditions.checkState(!file.isDirectory());
-      //load a Named module
-      loadSingleModule(env,
-          uri,
-          path.getLast().getCanonical(),
-          node.getAlias());
+      boolean loaded = env.getLoader().load(env,fullPath, node.getAlias());
+      Preconditions.checkState(loaded, "Could not import: %s", fullPath);
     }
   }
 
@@ -194,24 +171,6 @@ public class Resolve {
     env.currentNode = node;
   }
 
-  private void loadModuleFile(Env env, URI uri, String name) {
-    for (Loader loader : env.getLoaders()) {
-      if (loader.handlesFile(uri, name)) {
-        loader.loadFile(env, uri, name);
-        return;
-      }
-    }
-  }
-
-  private void loadSingleModule(Env env, URI uri, String name, Optional<Name> alias) {
-    for (Loader loader : env.getLoaders()) {
-      if (loader.handles(uri, name)) {
-        loader.load(env, uri, name, alias);
-        return;
-      }
-    }
-    throw new RuntimeException("Cannot find loader for module: " + uri + "." + name);
-  }
 
   public static void registerScriptTable(Env env, ScriptTableDefinition tblDef) {
     //Update table mapping from SQRL table to Calcite table...
@@ -219,8 +178,8 @@ public class Resolve {
     tblDef.getShredTableMap().values().stream().forEach(vt ->
         env.relSchema.add(vt.getNameId(), vt));
     env.relSchema.add(tblDef.getBaseTable().getNameId(), tblDef.getBaseTable());
-    if (tblDef.getBaseTable() instanceof SourceRelationalTable) {
-      AbstractRelationalTable impTable = ((SourceRelationalTable) tblDef.getBaseTable()).getBaseTable();
+    if (tblDef.getBaseTable() instanceof ProxySourceRelationalTable) {
+      AbstractRelationalTable impTable = ((ProxySourceRelationalTable) tblDef.getBaseTable()).getBaseTable();
       env.relSchema.add(impTable.getNameId(), impTable);
     }
     env.tableMap.putAll(tblDef.getShredTableMap());

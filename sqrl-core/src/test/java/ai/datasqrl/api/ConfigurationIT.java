@@ -8,12 +8,12 @@ import ai.datasqrl.io.formats.FileFormat;
 import ai.datasqrl.io.formats.FormatConfiguration;
 import ai.datasqrl.io.formats.JsonLineFormat;
 import ai.datasqrl.io.impl.file.DirectorySinkImplementation;
-import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
+import ai.datasqrl.io.impl.file.DirectorySource;
 import ai.datasqrl.io.sinks.DataSink;
 import ai.datasqrl.io.sinks.DataSinkConfiguration;
 import ai.datasqrl.io.sinks.DataSinkRegistration;
 import ai.datasqrl.io.sinks.registry.DataSinkRegistry;
-import ai.datasqrl.io.sources.DataSourceConfiguration;
+import ai.datasqrl.io.sources.DataSourceConfig;
 import ai.datasqrl.io.sources.DataSourceUpdate;
 import ai.datasqrl.io.sources.SourceTableConfiguration;
 import ai.datasqrl.io.sources.dataset.DatasetRegistry;
@@ -44,9 +44,9 @@ public class ConfigurationIT extends AbstractSQRLIT {
         IntegrationTestSettings.validateConfig(config);
         assertEquals(config.getEngines().getJdbc().getDbURL(),"jdbc:h2:tmp/output");
         assertNotNull(config.getEngines().getFlink());
-        assertEquals(config.getEnvironment().getMetastore().getDatabaseName(),"system");
+        assertEquals(config.getDiscovery().getMetastore().getDatabaseName(),"system");
         assertEquals(1, config.getSources().size());
-        assertTrue(config.getSources().get(0).getSource() instanceof DirectorySourceImplementation);
+        assertTrue(config.getSources().get(0).getSource() instanceof DirectorySource);
         assertEquals(1, config.getSinks().size());
         assertTrue(config.getSinks().get(0).getSink() instanceof DirectorySinkImplementation);
         assertTrue(config.getSinks().get(0).getConfig().getFormat() instanceof JsonLineFormat.Configuration);
@@ -84,7 +84,7 @@ public class ConfigurationIT extends AbstractSQRLIT {
         assertEquals(tblCounts.keySet(), tablenames);
         assertNotNull(ds.getDigest().getCanonicalizer());
         Assertions.assertEquals(example.getName(),ds.getDigest().getName().getCanonical());
-        assertTrue(ds.getSource().getImplementation() instanceof DirectorySourceImplementation);
+        assertTrue(ds.getSource().getImplementation() instanceof DirectorySource);
         assertNull(ds.getSource().getConfig().getFormat());
 
         for (String tblname : tblCounts.keySet()) {
@@ -136,7 +136,7 @@ public class ConfigurationIT extends AbstractSQRLIT {
         //Without table discovery
         String ds2Name = "explicitDS";
         DataSourceUpdate update = DataSourceUpdate.builder().name(ds2Name).source(example.getSource())
-                .config(DataSourceConfiguration.builder().format(new JsonLineFormat.Configuration()).build())
+                .config(DataSourceConfig.builder().format(new JsonLineFormat.Configuration()).build())
                 .tables(ImmutableList.of(SourceTableConfiguration.builder().name("test").identifier("book").build()))
                 .discoverTables(false)
                 .build();

@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.environment.ImportManager;
+import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -59,13 +59,13 @@ public class CalciteTableFactory {
         return Integer.parseInt(tableId.substring(idx+1));
     }
 
-    public ScriptTableDefinition importTable(ImportManager.SourceTableImport sourceTable, Optional<Name> tblAlias, RelBuilder relBuilder,
+    public ScriptTableDefinition importTable(SourceTable sourceTable, Optional<Name> tblAlias, RelBuilder relBuilder,
                                              ExecutionPipeline pipeline) {
         FlexibleTable2UTBConverter converter = new FlexibleTable2UTBConverter(typeFactory);
         UniversalTableBuilder rootTable = new FlexibleTableConverter(sourceTable.getSchema(),tblAlias).apply(
                 converter);
         RelDataType rootType = convertTable(rootTable, true, true);
-        ImportedSourceTable source = new ImportedSourceTable(getTableId(rootTable.getName(),"i"),rootType,sourceTable);
+        ImportedRelationalTable source = new ImportedRelationalTable(getTableId(rootTable.getName(),"i"),rootType,sourceTable);
         ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(getTableId(rootTable.getName(),"q"), getTimestampHolder(rootTable),
                 relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get());
 
@@ -81,7 +81,7 @@ public class CalciteTableFactory {
         UniversalTableBuilder rootTable = convertStream2TableBuilder(tablePath,
                 baseRel.getRelNode().getRowType());
         RelDataType rootType = convertTable(rootTable, true, true);
-        StreamSourceTable source = new StreamSourceTable(getTableId(tableName,"s"), baseRel.getRelNode(), rootType, rootTable, StateChangeType.ADD);
+        StreamRelationalTable source = new StreamRelationalTable(getTableId(tableName,"s"), baseRel.getRelNode(), rootType, rootTable, StateChangeType.ADD);
         ProxyStreamRelationalTable impTable = new ProxyStreamRelationalTable(getTableId(tableName,"q"), getTimestampHolder(rootTable),
                 relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get());
 

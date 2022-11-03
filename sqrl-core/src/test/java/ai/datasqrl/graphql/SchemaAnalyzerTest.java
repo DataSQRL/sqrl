@@ -12,7 +12,7 @@ import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.graphql.inference.SchemaInference;
 import ai.datasqrl.graphql.server.Model.Root;
-import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
+import ai.datasqrl.io.impl.file.DirectorySource;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
@@ -47,7 +47,7 @@ class SchemaAnalyzerTest extends AbstractSQRLIT {
     ImportManager importManager = sqrlSettings.getImportManagerProvider()
         .createImportManager(env.getDatasetRegistry());
 
-    DirectorySourceImplementation i = DirectorySourceImplementation.builder()
+    DirectorySource i = DirectorySource.builder()
         .uri(DIR_BASE.toUri().toString())
         .build();
 

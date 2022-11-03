@@ -1,22 +1,20 @@
 package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.environment.ImportManager.SourceTableImport;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.SourceRecord.Raw;
+import ai.datasqrl.io.sources.dataset.SourceTable;
 import ai.datasqrl.io.sources.util.StreamInputPreparer;
 import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
 import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.physical.stream.flink.FlinkStreamEngine.Builder;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
-import ai.datasqrl.plan.calcite.table.ImportedSourceTable;
-import ai.datasqrl.plan.calcite.table.SourceTable;
+import ai.datasqrl.plan.calcite.table.ImportedRelationalTable;
+import ai.datasqrl.plan.calcite.table.SourceRelationalTable;
 import ai.datasqrl.plan.calcite.table.StateChangeType;
-import ai.datasqrl.plan.calcite.table.StreamSourceTable;
+import ai.datasqrl.plan.calcite.table.StreamRelationalTable;
 import ai.datasqrl.schema.builder.UniversalTableBuilder;
-import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import ai.datasqrl.schema.input.SchemaValidator;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
@@ -42,16 +40,14 @@ import java.util.Set;
 public class TableRegisterer extends RelShuttleImpl {
 
   StreamTableEnvironmentImpl tEnv;
-  ImportManager importManager;
   Builder streamBuilder;
 
   final Set<String> registeredTables = new HashSet<>();
   final ErrorCollector errors = ErrorCollector.root();
   final FlinkPhysicalPlanRewriter rewriter;
 
-  public TableRegisterer(StreamTableEnvironmentImpl tEnv, ImportManager importManager, Builder streamBuilder) {
+  public TableRegisterer(StreamTableEnvironmentImpl tEnv, Builder streamBuilder) {
     this.tEnv = tEnv;
-    this.importManager = importManager;
     this.streamBuilder = streamBuilder;
     this.rewriter = new FlinkPhysicalPlanRewriter(tEnv);
   }
@@ -62,13 +58,13 @@ public class TableRegisterer extends RelShuttleImpl {
     return FlinkEnvProxy.relNodeQuery(rewritten, tEnv);
   }
 
-  private boolean addSource(SourceTable table) {
+  private boolean addSource(SourceRelationalTable table) {
     if (registeredTables.contains(table.getNameId())) return false;
     registeredTables.add(table.getNameId());
     return true;
   }
 
-  private void registerStreamSource(StreamSourceTable table) {
+  private void registerStreamSource(StreamRelationalTable table) {
     if (!addSource(table)) return;
 
     UniversalTableBuilder tblBuilder = table.getStreamSchema();
@@ -84,16 +80,17 @@ public class TableRegisterer extends RelShuttleImpl {
     tEnv.createTemporaryView(table.getNameId(), changeStream, tableSchema);
   }
 
-  private void registerImportSource(ImportedSourceTable table) {
+  private void registerImportSource(ImportedRelationalTable table) {
     if (!addSource(table)) return;
     //TODO: if we are reading data in strict mode, we can use table API connectors directly which can be more efficient
-    SourceTableImport imp = table.getSourceTableImport();
+    SourceTable sourceTable = table.getSourceTable();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
     //TODO: push down startup timestamp if determined in FlinkPhysicalPlanner
-    StreamHolder<Raw> stream = streamPreparer.getRawInput(imp.getTable(),streamBuilder);
-    SchemaValidator schemaValidator = new SchemaValidator(imp.getSchema(), SchemaAdjustmentSettings.DEFAULT, imp.getTable().getDataset().getDigest());
+    StreamHolder<Raw> stream = streamPreparer.getRawInput(sourceTable,streamBuilder);
+    SchemaValidator schemaValidator = new SchemaValidator(sourceTable.getSchema(), sourceTable.getConfiguration().getSchemaAdjustmentSettings(),
+            sourceTable.getDigest());
     StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),"schema", SourceRecord.Named.class);
-    streamBuilder.addAsTable(validate, imp.getSchema(), table.getNameId());
+    streamBuilder.addAsTable(validate, sourceTable.getSchema(), table.getNameId());
 
   }
 
@@ -103,11 +100,11 @@ public class TableRegisterer extends RelShuttleImpl {
 
   @Override
   public RelNode visit(TableScan scan) {
-    SourceTable table = scan.getTable().unwrap(SourceTable.class);
-    if (table instanceof ImportedSourceTable) {
-      registerImportSource((ImportedSourceTable) table);
+    SourceRelationalTable table = scan.getTable().unwrap(SourceRelationalTable.class);
+    if (table instanceof ImportedRelationalTable) {
+      registerImportSource((ImportedRelationalTable) table);
     } else {
-      registerStreamSource((StreamSourceTable) table);
+      registerStreamSource((StreamRelationalTable) table);
     }
     return super.visit(scan);
   }

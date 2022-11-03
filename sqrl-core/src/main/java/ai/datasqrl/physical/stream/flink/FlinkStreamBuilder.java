@@ -2,14 +2,15 @@ package ai.datasqrl.physical.stream.flink;
 
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.io.formats.TextLineFormat;
-import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
+import ai.datasqrl.io.impl.file.DirectorySource;
 import ai.datasqrl.io.impl.file.FilePath;
-import ai.datasqrl.io.impl.kafka.KafkaSourceImplementation;
-import ai.datasqrl.io.sources.*;
+import ai.datasqrl.io.impl.kafka.KafkaSource;
+import ai.datasqrl.io.sources.DataSourceConnector;
+import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableConfig;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
-import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.physical.stream.flink.monitor.KeyedSourceRecordStatistics;
 import ai.datasqrl.physical.stream.flink.monitor.SaveTableStatistics;
@@ -32,7 +33,6 @@ import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.file.src.enumerate.NonSplittingRecursiveEnumerator;
-import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.KafkaSourceBuilder;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
@@ -120,7 +120,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
     SingleOutputStreamOperator<SourceRecord.Raw> process = data.keyBy(
                     FlinkUtilities.getHashPartitioner(defaultParallelism))
             .process(
-                    new KeyedSourceRecordStatistics(statsOutput, sourceTable.getDataset().getDigest()), TypeInformation.of(SourceRecord.Raw.class));
+                    new KeyedSourceRecordStatistics(statsOutput, sourceTable.getDigest()), TypeInformation.of(SourceRecord.Raw.class));
 //    process.addSink(new PrintSinkFunction<>()); //TODO: persist last 100 for querying
 
     //Process the gathered statistics in the side output
@@ -139,8 +139,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
             .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
 //                .process(new BufferedLatestSelector(getFlinkName(STATS_NAME_PREFIX, sourceTable),
 //                        500, SourceTableStatistics.Accumulator.class), TypeInformation.of(SourceTableStatistics.Accumulator.class))
-            .addSink(new SaveTableStatistics(statisticsStoreProvider,
-                    sourceTable.getDataset().getName(), sourceTable.getName()));
+            .addSink(new SaveTableStatistics(statisticsStoreProvider, sourceTable.getDigest()));
     return new FlinkStreamHolder<>(this,process);
   }
 
@@ -160,28 +159,23 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   }
 
   public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(SourceTable table) {
-    SourceTableConfiguration tblConfig = table.getConfiguration();
-    Preconditions.checkArgument(tblConfig.getFormatParser() instanceof TextLineFormat.Parser, "This method only supports text sources");
-    DataSource source = table.getDataset().getSource();
-    DataSourceImplementation sourceImpl = source.getImplementation();
-    DataSourceConfiguration sourceConfig = source.getConfig();
-    String flinkSourceName = String.join("-", table.getDataset().getName().getDisplay(),
-            tblConfig.getIdentifier(), "input");
+    Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser, "This method only supports text sources");
+    DataSourceConnector sourceConnector = table.getDataset();
+    String flinkSourceName = table.getDigest().toString('-',"input");
 
     StreamExecutionEnvironment env = getEnvironment();
     DataStream<TimeAnnotatedRecord<String>> timedSource;
-    if (sourceImpl instanceof DirectorySourceImplementation) {
-      DirectorySourceImplementation filesource = (DirectorySourceImplementation) sourceImpl;
+    if (sourceConnector instanceof DirectorySource.Connector) {
+      DirectorySource.Connector filesource = (DirectorySource.Connector) sourceConnector;
 
       Duration monitorDuration = null;
 //            if (filesource.getConfiguration().isDiscoverFiles()) monitorDuration = Duration.ofSeconds(10);
-      FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(filesource,
-              source.getCanonicalizer(), tblConfig);
+      FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(filesource, table.getConfiguration());
 
       org.apache.flink.connector.file.src.FileSource.FileSourceBuilder<String> builder =
               org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
                       new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
-                              sourceConfig.getCharset()), FilePath.toFlinkPath(filesource.getPath()));
+                              table.getConfiguration().getCharset()), FilePath.toFlinkPath(filesource.getPath()));
 
       builder.setFileEnumerator(fileEnumerator);
       if (monitorDuration != null) {
@@ -195,12 +189,12 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
               WatermarkStrategy.noWatermarks(), flinkSourceName);
       timedSource = textSource.map(new ToTimedRecord());
 
-    } else if (sourceImpl instanceof KafkaSourceImplementation) {
-      KafkaSourceImplementation kafkaSource = (KafkaSourceImplementation) sourceImpl;
-      String topic = kafkaSource.getTopicPrefix() + tblConfig.getIdentifier();
+    } else if (sourceConnector instanceof KafkaSource.Connector) {
+      KafkaSource.Connector kafkaSource = (KafkaSource.Connector) sourceConnector;
+      String topic = kafkaSource.getTopicPrefix() + table.getConfiguration().getIdentifier();
       String groupId = flinkSourceName + "-" + getUuid();
 
-      KafkaSourceBuilder<TimeAnnotatedRecord<String>> builder = KafkaSource.<TimeAnnotatedRecord<String>>builder()
+      KafkaSourceBuilder<TimeAnnotatedRecord<String>> builder = org.apache.flink.connector.kafka.source.KafkaSource.<TimeAnnotatedRecord<String>>builder()
               .setBootstrapServers(kafkaSource.getServersAsString())
               .setTopics(topic)
               .setStartingOffsets(OffsetsInitializer.earliest()) //TODO: work with commits
@@ -231,9 +225,8 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   private static class FileEnumeratorProvider implements
           org.apache.flink.connector.file.src.enumerate.FileEnumerator.Provider {
 
-    DirectorySourceImplementation directorySource;
-    NameCanonicalizer canonicalizer;
-    SourceTableConfiguration table;
+    DirectorySource.Connector directorySource;
+    TableConfig table;
 
     @Override
     public org.apache.flink.connector.file.src.enumerate.FileEnumerator create() {
@@ -251,7 +244,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
         } catch (IOException e) {
           return false;
         }
-        return directorySource.isTableFile(FilePath.fromFlinkPath(path), table, canonicalizer);
+        return directorySource.isTableFile(FilePath.fromFlinkPath(path), table);
       }
     }
   }

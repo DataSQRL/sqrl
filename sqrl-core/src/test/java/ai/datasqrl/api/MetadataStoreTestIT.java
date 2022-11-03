@@ -29,7 +29,7 @@ public class MetadataStoreTestIT extends AbstractSQRLIT {
     public void setup(IntegrationTestSettings.DatabaseEngine database) {
         initialize(IntegrationTestSettings.getEngines(IntegrationTestSettings.StreamEngine.INMEMORY, database));
         DatabaseConnectionProvider dbConn = sqrlSettings.getDatabaseEngineProvider().getDatabase(
-                sqrlSettings.getEnvironmentConfiguration().getMetastore().getDatabaseName());
+                sqrlSettings.getDiscoveryConfiguration().getMetastore().getDatabaseName());
         meta = sqrlSettings.getMetadataStoreProvider().openStore(dbConn, new KryoProvider());
     }
 

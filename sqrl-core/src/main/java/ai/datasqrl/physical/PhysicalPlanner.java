@@ -2,7 +2,6 @@ package ai.datasqrl.physical;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.util.StreamUtil;
-import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.physical.database.relational.MaterializedTableDDLBuilder;
 import ai.datasqrl.physical.database.relational.QueryBuilder;
 import ai.datasqrl.physical.database.relational.QueryTemplate;
@@ -14,17 +13,16 @@ import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.db.JDBCTempDatabase;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class PhysicalPlanner {
 
-  ImportManager importManager;
   JDBCConnectionProvider dbConnection;
   StreamEngine streamEngine;
   Planner planner;
@@ -42,8 +40,7 @@ public class PhysicalPlanner {
             .createTables(materializedTables, true);
 
     // 2. Plan Physical Stream Graph
-    FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(streamEngine, importManager,
-            dbConnection, jdbcTempDatabase)
+    FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(streamEngine, dbConnection, jdbcTempDatabase)
         .createStreamGraph(plan.getStreamQueries());
 
     // 3. Create SQL queries

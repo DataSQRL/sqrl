@@ -24,15 +24,15 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
 
     public boolean isRawInput(SourceTable table) {
         //TODO: support other flexible formats
-        return table.getConfiguration().getFormatParser() instanceof TextLineFormat.Parser;
+        return table.getParser() instanceof TextLineFormat.Parser;
     }
 
     public StreamHolder<SourceRecord.Raw> getRawInput(SourceTable table, StreamEngine.Builder builder) {
         Preconditions.checkArgument(isRawInput(table), "Not a valid raw input table: " + table);
-        Format.Parser parser = table.getConfiguration().getFormatParser();
+        Format.Parser parser = table.getParser();
         if (parser instanceof TextLineFormat.Parser) {
             return text2Record(builder.fromTextSource(table),
-                    (TextLineFormat.Parser)table.getConfiguration().getFormatParser());
+                    (TextLineFormat.Parser)parser);
         } else {
             throw new UnsupportedOperationException("Should never happen");
         }

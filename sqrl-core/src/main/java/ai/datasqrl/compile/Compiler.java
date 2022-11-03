@@ -1,7 +1,6 @@
 package ai.datasqrl.compile;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.graphql.GraphQLServer;
 import ai.datasqrl.graphql.generate.SchemaGenerator;
 import ai.datasqrl.graphql.inference.SchemaInference;
@@ -83,7 +82,7 @@ public class Compiler {
         CalciteSchema.createRootSchema(false, false).plus());
     Planner planner = new PlannerFactory(schema.plus()).createPlanner();
 
-    Session s = new Session(collector, new ImportManager(null), planner);
+    Session s = new Session(collector, planner);
 
     Resolve resolve = new Resolve(build);
 
@@ -140,8 +139,7 @@ public class Compiler {
   }
 
   private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, Env env, Session s, JDBCTempDatabase jdbcTempDatabase) {
-
-    PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.getImportManager(),
+    PhysicalPlanner physicalPlanner = new PhysicalPlanner(
         jdbcTempDatabase.getJdbcConfiguration().getDatabase("test"),
         new LocalFlinkStreamEngineImpl(), s.getPlanner()
     );

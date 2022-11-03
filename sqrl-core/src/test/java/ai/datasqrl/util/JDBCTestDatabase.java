@@ -1,7 +1,7 @@
 package ai.datasqrl.util;
 
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
+import ai.datasqrl.config.DiscoveryConfiguration.MetaData;
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.config.engines.JDBCConfiguration.Dialect;
 import com.google.common.base.Preconditions;

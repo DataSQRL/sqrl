@@ -1,7 +1,7 @@
 package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.plan.calcite.hints.*;
-import ai.datasqrl.plan.calcite.table.SourceTable;
+import ai.datasqrl.plan.calcite.table.SourceRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import ai.datasqrl.plan.calcite.util.TimePredicate;
@@ -68,7 +68,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   @Override
   public RelNode visit(TableScan scan) {
-    SourceTable t = scan.getTable().unwrap(SourceTable.class);
+    SourceRelationalTable t = scan.getTable().unwrap(SourceRelationalTable.class);
     String tableName = t.getNameId();
     FlinkRelBuilder relBuilder = getBuilder();
     relBuilder.scan(tableName);

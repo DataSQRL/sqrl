@@ -1,17 +1,11 @@
 package ai.datasqrl.parse.tree.name;
 
-import ai.datasqrl.config.AbstractPath;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterators;
-import java.io.Serializable;
+import ai.datasqrl.config.util.AbstractPath;
+
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.NonNull;
-import lombok.Value;
-import org.apache.commons.lang3.StringUtils;
 
 public final class NamePath extends AbstractPath<Name,NamePath> {
 

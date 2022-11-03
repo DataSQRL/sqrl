@@ -2,7 +2,7 @@ package ai.datasqrl.config.provider;
 
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.io.sources.dataset.SourceTable;
-import ai.datasqrl.io.sources.dataset.SourceTableMonitor;
+import ai.datasqrl.compile.SourceTableMonitor;
 
 public interface SourceTableMonitorProvider {
 

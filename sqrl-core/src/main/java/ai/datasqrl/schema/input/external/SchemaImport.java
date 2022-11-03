@@ -3,8 +3,6 @@ package ai.datasqrl.schema.input.external;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.util.NamedIdentifier;
 import ai.datasqrl.config.util.StringNamedId;
-import ai.datasqrl.io.sources.dataset.DatasetRegistry;
-import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.SpecialName;
@@ -36,12 +34,12 @@ public class SchemaImport {
 
   public static final NamedIdentifier VERSION = StringNamedId.of("1");
 
-  private final DatasetRegistry datasetLookup;
   private final Lookup constraintLookup;
+  private final NameCanonicalizer defaultCanonicalizer;
 
-  public SchemaImport(DatasetRegistry datasetLookup, Lookup constraintLookup) {
-    this.datasetLookup = datasetLookup;
+  public SchemaImport(Lookup constraintLookup, NameCanonicalizer defaultCanonicalizer) {
     this.constraintLookup = constraintLookup;
+    this.defaultCanonicalizer = defaultCanonicalizer;
   }
 
   public Map<Name, FlexibleDatasetSchema> convertImportSchema(SchemaDefinition schema,
@@ -62,21 +60,16 @@ public class SchemaImport {
         errors.fatal("Missing or invalid dataset name: %s", dataset.name);
         continue;
       }
-      SourceDataset sd = datasetLookup.getDataset(Name.system(dataset.name));
-      if (sd == null) {
-        errors.fatal("Source dataset is unknown and has not been registered with system: %s",
-            dataset.name);
-        continue;
-      }
-      if (result.containsKey(sd.getName())) {
+      Name datasetName = Name.system(dataset.name);
+      if (result.containsKey(datasetName)) {
         errors.warn(
             "Dataset [%s] is defined multiple times in schema and later definitions are ignored",
             dataset.name);
         continue;
       }
-      errors = errors.resolve(sd.getName());
-      FlexibleDatasetSchema ddschema = new DatasetConverter(sd.getCanonicalizer(), constraintLookup).convert(dataset, errors);
-      result.put(sd.getName(), ddschema);
+      errors = errors.resolve(datasetName);
+      FlexibleDatasetSchema ddschema = new DatasetConverter(defaultCanonicalizer, constraintLookup).convert(dataset, errors);
+      result.put(datasetName, ddschema);
     }
     return result;
   }

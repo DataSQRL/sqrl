@@ -4,13 +4,10 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.impl.InputPreview;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.*;
+
 import java.io.IOException;
 import java.util.Map;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.ToString;
 
 public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configuration> {
 

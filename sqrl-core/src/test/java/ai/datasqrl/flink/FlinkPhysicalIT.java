@@ -2,7 +2,7 @@ package ai.datasqrl.flink;
 
 import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.EnvironmentConfiguration;
+import ai.datasqrl.config.DiscoveryConfiguration;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
@@ -84,10 +84,10 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     this.session = session;
     this.parser = new ConfiguredSqrlParser(error);
     this.resolve = new Resolve(RETAIL_DIR_BASE.resolve("build/"));
-    DatabaseConnectionProvider db = sqrlSettings.getDatabaseEngineProvider().getDatabase(EnvironmentConfiguration.MetaData.DEFAULT_DATABASE);
+    DatabaseConnectionProvider db = sqrlSettings.getDatabaseEngineProvider().getDatabase(DiscoveryConfiguration.MetaData.DEFAULT_DATABASE);
     jdbc = (JDBCConnectionProvider) db;
 
-    physicalPlanner = new PhysicalPlanner(importManager, jdbc,
+    physicalPlanner = new PhysicalPlanner(jdbc,
             sqrlSettings.getStreamEngineProvider().create(), planner);
     this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
   }

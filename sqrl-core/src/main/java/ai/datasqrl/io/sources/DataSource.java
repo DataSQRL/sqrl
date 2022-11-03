@@ -1,48 +1,41 @@
 package ai.datasqrl.io.sources;
 
+import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.io.sources.dataset.TableConfig;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.io.Serializable;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.Getter;
 
-@NoArgsConstructor
-@ToString
+import java.io.Serializable;
+import java.util.Collection;
+
+@AllArgsConstructor
+@Getter
 public class DataSource implements Serializable {
 
-  String name;
-  DataSourceImplementation implementation;
-  DataSourceConfiguration config;
+  public enum Type {
+    SOURCE, SINK, SOURCE_AND_SINK;
 
-  @JsonCreator
-  public DataSource(@JsonProperty("name") String name,
-      @JsonProperty("implementation") DataSourceImplementation implementation,
-      @JsonProperty("config") DataSourceConfiguration config) {
-    this.name = name;
-    this.implementation = implementation;
-    this.config = config;
+    public boolean isSource() {
+      return this==SOURCE || this==SOURCE_AND_SINK;
+    }
+
+    public boolean isSink() {
+      return this==SOURCE || this==SOURCE_AND_SINK;
+    }
   }
 
-  public DataSource(DataSourceUpdate update) {
-    this(update.getName(), update.getSource(), update.getConfig());
-  }
+  Name name;
+  DataSourceDiscovery datasource;
+  DataSourceConfig config;
 
   public NameCanonicalizer getCanonicalizer() {
     return config.getNameCanonicalizer();
   }
 
-  public Name getName() {
-    return Name.system(name);
+  public Collection<TableConfig> discoverTables(ErrorCollector errors) {
+    return datasource.discoverTables(config,errors);
   }
 
-  public DataSourceImplementation getImplementation() {
-    return implementation;
-  }
-
-  public DataSourceConfiguration getConfig() {
-    return config;
-  }
 }

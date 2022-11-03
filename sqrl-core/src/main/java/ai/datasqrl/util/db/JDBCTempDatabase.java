@@ -1,6 +1,6 @@
 package ai.datasqrl.util.db;
 
-import ai.datasqrl.config.EnvironmentConfiguration.MetaData;
+import ai.datasqrl.config.DiscoveryConfiguration.MetaData;
 import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.config.engines.JDBCConfiguration.Dialect;
 import java.util.Properties;

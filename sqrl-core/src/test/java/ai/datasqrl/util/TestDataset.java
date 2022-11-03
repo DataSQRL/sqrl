@@ -1,8 +1,6 @@
 package ai.datasqrl.util;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.environment.Environment;
-import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
+import ai.datasqrl.io.impl.file.DirectorySource;
 import ai.datasqrl.util.data.BookClub;
 import ai.datasqrl.util.data.C360;
 import ai.datasqrl.util.junit.ArgumentProvider;
@@ -16,19 +14,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-
 public interface TestDataset {
 
     String getName();
 
-    DirectorySourceImplementation getSource();
-
-    default void registerSource(Environment env) {
-        ErrorCollector errors = ErrorCollector.root();
-        env.getDatasetRegistry().addOrUpdateSource(getName(), getSource(), errors);
-        assertFalse(errors.isFatal(),errors.toString());
-    }
+    DirectorySource getSource();
 
     Map<String, Integer> getTableCounts();
 

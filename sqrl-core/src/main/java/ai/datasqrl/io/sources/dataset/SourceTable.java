@@ -1,10 +1,12 @@
 package ai.datasqrl.io.sources.dataset;
 
-import ai.datasqrl.io.sources.SourceTableConfiguration;
-import ai.datasqrl.io.sources.stats.SourceTableStatistics;
+import ai.datasqrl.io.formats.Format;
+import ai.datasqrl.io.formats.FormatConfiguration;
+import ai.datasqrl.io.sources.DataSourceConnector;
 import ai.datasqrl.parse.tree.name.Name;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.schema.input.FlexibleDatasetSchema;
+import ai.datasqrl.schema.input.InputTableSchema;
 import lombok.NonNull;
 
 /**
@@ -12,70 +14,28 @@ import lombok.NonNull;
  * SourceTable} is comprised of records and is the smallest unit of data that one can refer to
  * within an SQML script.
  */
-public class SourceTable {
+public class SourceTable extends AbstractExternalTable {
 
-  final SourceDataset dataset;
-  private final SourceTableConfiguration config;
-  private final Name name;
+  @NonNull
+  private final FlexibleDatasetSchema.TableField schema;
 
-  public SourceTable(SourceDataset dataset,
-      Name tableName,
-      SourceTableConfiguration config) {
-    this.dataset = dataset;
-    this.config = config;
-    this.name = tableName;
-  }
-
-  @JsonCreator
-  public SourceTable(@JsonProperty("dataset") SourceDataset dataset,
-      @JsonProperty("name") String tableName,
-      @JsonProperty("configuration") SourceTableConfiguration config) {
-    this.dataset = dataset;
-    this.config = config;
-    this.name = Name.system(tableName); //todo fix by injecting NameCanonicalizer
-  }
-
-  public @NonNull SourceTableConfiguration getConfiguration() {
-    return config;
-  }
-
-
-  /**
-   * @return {@link SourceDataset} that this table is part of
-   */
-  public SourceDataset getDataset() {
-    return dataset;
+  public SourceTable(DataSourceConnector dataset, TableConfig configuration, NamePath path, Name name,
+                     FlexibleDatasetSchema.TableField schema) {
+    super(dataset, configuration, path, name);
+    this.schema = schema;
   }
 
   public boolean hasSourceTimestamp() {
-    return dataset.getSource().getImplementation().hasSourceTimestamp();
+    return dataset.hasSourceTimestamp();
   }
 
-  /**
-   * Returns the name of this table. It must be unique within its {@link SourceDataset}
-   *
-   * @return
-   */
-  public Name getName() {
-    return name;
+  public InputTableSchema getSchema() {
+    return new InputTableSchema(schema, dataset.hasSourceTimestamp());
   }
 
-  public String qualifiedName() {
-    return getDataset().getName().getCanonical() + "." + getName().getCanonical();
-  }
-
-  public boolean hasSchema() {
-    return false;
-  }
-
-  public SourceTableStatistics getStatistics() {
-//    SourceTableStatistics stats = dataset.registry.persistence.getTableStatistics(dataset.getName(),
-//        getName());
-//    if (stats == null) {
-//      stats = new SourceTableStatistics();
-//    }
-//    return stats;
-    return new SourceTableStatistics();
+  public Format.Parser getParser() {
+    FormatConfiguration format = configuration.getFormat();
+    return format.getImplementation().getParser(format);
   }
 
 }

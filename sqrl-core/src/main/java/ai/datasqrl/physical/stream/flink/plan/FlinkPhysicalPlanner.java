@@ -1,7 +1,6 @@
 package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.environment.ImportManager;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
 import ai.datasqrl.plan.global.OptimizedDAG;
@@ -24,15 +23,13 @@ import java.util.Optional;
 public class FlinkPhysicalPlanner {
 
   private final StreamEngine streamEngine;
-  private final ImportManager importManager;
   private final JDBCConnectionProvider jdbcConfiguration;
   private final Optional<JDBCTempDatabase> jdbcTempDatabase;
 
   public FlinkStreamPhysicalPlan createStreamGraph(List<OptimizedDAG.MaterializeQuery> streamQueries) {
     final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder) streamEngine.createJob();
     final StreamTableEnvironmentImpl tEnv = (StreamTableEnvironmentImpl)streamBuilder.getTableEnvironment();
-    final TableRegisterer tableRegisterer = new TableRegisterer(tEnv,
-        this.importManager, streamBuilder);
+    final TableRegisterer tableRegisterer = new TableRegisterer(tEnv, streamBuilder);
 
     tEnv.getConfig()
         .getConfiguration()

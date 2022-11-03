@@ -5,7 +5,7 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.scripts.ScriptBundle;
 import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.errors.ErrorCode;
+import ai.datasqrl.config.error.ErrorCode;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.ParsingException;
 import ai.datasqrl.parse.tree.name.Name;

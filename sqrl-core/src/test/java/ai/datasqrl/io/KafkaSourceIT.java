@@ -5,8 +5,8 @@ import ai.datasqrl.AbstractSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.formats.JsonLineFormat;
-import ai.datasqrl.io.impl.kafka.KafkaSourceImplementation;
-import ai.datasqrl.io.sources.DataSourceConfiguration;
+import ai.datasqrl.io.impl.kafka.KafkaSource;
+import ai.datasqrl.io.sources.DataSourceConfig;
 import ai.datasqrl.io.sources.DataSourceUpdate;
 import ai.datasqrl.io.sources.dataset.SourceDataset;
 import ai.datasqrl.io.sources.dataset.SourceTable;
@@ -157,9 +157,9 @@ public class KafkaSourceIT extends AbstractSQRLIT {
         DataSourceUpdate dsUpdate = DataSourceUpdate.builder()
                 .name(dsName).discoverTables(true)
                 .config(
-                    DataSourceConfiguration.builder().format(new JsonLineFormat.Configuration()).build())
+                    DataSourceConfig.builder().format(new JsonLineFormat.Configuration()).build())
                 .source(
-                    KafkaSourceImplementation.builder().servers(Arrays.asList(bootstrapServers)).topicPrefix(dsName+".").build())
+                    KafkaSource.builder().servers(Arrays.asList(bootstrapServers)).topicPrefix(dsName+".").build())
                 .build();
 
         testBookSourceTable(dsName,dsUpdate);
@@ -174,7 +174,7 @@ public class KafkaSourceIT extends AbstractSQRLIT {
         String dsName = "test";
         DataSourceUpdate dsUpdate = DataSourceUpdate.builder()
                 .name(dsName).discoverTables(true)
-                .source(KafkaSourceImplementation.builder().servers(Arrays.asList(bootstrapServers)).build())
+                .source(KafkaSource.builder().servers(Arrays.asList(bootstrapServers)).build())
                 .build();
 
         testBookSourceTable(dsName,dsUpdate);

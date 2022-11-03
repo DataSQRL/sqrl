@@ -1,6 +1,6 @@
 package ai.datasqrl;
 
-import ai.datasqrl.config.EnvironmentConfiguration;
+import ai.datasqrl.config.DiscoveryConfiguration;
 import ai.datasqrl.config.GlobalConfiguration;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.engines.FlinkConfiguration;
@@ -61,10 +61,10 @@ public class IntegrationTestSettings {
 
         GlobalConfiguration config = GlobalConfiguration.builder()
                 .engines(enginesBuilder.build())
-                .environment(EnvironmentConfiguration.builder()
+                .discovery(DiscoveryConfiguration.builder()
                         .monitorSources(isMonitorSources())
-                        .metastore(EnvironmentConfiguration.MetaData.builder()
-                                .databaseName(EnvironmentConfiguration.MetaData.DEFAULT_DATABASE)
+                        .metastore(DiscoveryConfiguration.MetaData.builder()
+                                .databaseName(DiscoveryConfiguration.MetaData.DEFAULT_DATABASE)
                                 .build())
                         .build())
                 .build();
