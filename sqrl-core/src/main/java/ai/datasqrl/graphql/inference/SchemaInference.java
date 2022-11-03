@@ -15,10 +15,14 @@ import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.builder.VirtualTable;
+import graphql.Scalars;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
+import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.Type;
 import graphql.language.TypeDefinition;
+import graphql.language.TypeName;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import lombok.*;
@@ -44,13 +48,10 @@ import java.util.stream.IntStream;
 @Slf4j
 public class SchemaInference {
 
-  private final Planner planner;
   @Getter
   List<APIQuery> apiQueries = new ArrayList<>();
 
-  public SchemaInference(Planner planner) {
-
-    this.planner = planner;
+  public SchemaInference() {
   }
 
   public Root visitSchema(String schemaStr, Env env) {
@@ -86,7 +87,7 @@ public class SchemaInference {
         .get();
     horizon.add(new Entry(objectTypeDefinition, Optional.empty(), null, null));
 
-    List<ArgumentHandler> argumentHandlers = List.of(new EqHandler());
+    List<ArgumentHandler> argumentHandlers = List.of(new EqHandler(), new LimitOffsetHandler());
 
     while (!horizon.isEmpty()) {
       Entry type = horizon.poll();
@@ -120,7 +121,7 @@ public class SchemaInference {
         Set<RelAndArg> args = new HashSet<>();
 
         //Todo: if all args are optional (just assume there is a no-arg for now)
-        args.add(new RelAndArg(relNode, new LinkedHashSet<>(), null, null));
+        args.add(new RelAndArg(relNode, new LinkedHashSet<>(), null, null, false));
 
         //todo: don't use arg index size, some args are fixed
         for (InputValueDefinition arg : field.getInputValueDefinitions()) {
@@ -136,7 +137,7 @@ public class SchemaInference {
             }
           }
           if (!handled) {
-            log.error("Unhandled Arg : {}", arg);
+            throw new RuntimeException(String.format("Unhandled Arg : %s", arg));
           }
         }
 
@@ -163,9 +164,17 @@ public class SchemaInference {
 //          relNode = optimize2(env, relNode);
           APIQuery query = new APIQuery(UUID.randomUUID().toString(), relNode);
           apiQueries.add(query);
-          coordsBuilder.match(ArgumentSet.builder().arguments(arg.getArgumentSet()).query(
-              ApiQueryBase.builder().query(query).relNode(relNode).relAndArg(arg).parameters(argHandler)
-                  .build()).build()).build();
+          if (arg.limitOffsetFlag) {
+            coordsBuilder.match(ArgumentSet.builder().arguments(arg.getArgumentSet()).query(
+                PagedApiQueryBase.builder().query(query).relNode(relNode).relAndArg(arg)
+                    .parameters(argHandler)
+                    .build()).build()).build();
+          } else {
+            coordsBuilder.match(ArgumentSet.builder().arguments(arg.getArgumentSet()).query(
+                ApiQueryBase.builder().query(query).relNode(relNode).relAndArg(arg)
+                    .parameters(argHandler)
+                    .build()).build()).build();
+          }
         }
 
         root.coord(coordsBuilder.build());
@@ -214,6 +223,7 @@ public class SchemaInference {
     Set<Argument> argumentSet;
     String name;
     RexDynamicParam dynamicParam;
+    boolean limitOffsetFlag;
   }
 
   private RelNode constructRel(SQRLTable table, VirtualRelationalTable vt,
@@ -301,7 +311,7 @@ public class SchemaInference {
         Set<Argument> newArgs = new LinkedHashSet<>(args.argumentSet);
         newArgs.add(VariableArgument.builder().path(context.arg.getName()).build());
 
-        set.add(new RelAndArg(rel, newArgs, field.getName(), dynamicParam));
+        set.add(new RelAndArg(rel, newArgs, field.getName(), dynamicParam, args.limitOffsetFlag));
       }
 
       //if optional: add an option to the arg permutation list
@@ -309,11 +319,29 @@ public class SchemaInference {
     }
 
     @Override
-    public boolean canHandle(ArgumentHandlerContextV1 contextV1) {
-      return true;
+    public boolean canHandle(ArgumentHandlerContextV1 context) {
+      return context.table.getField(Name.system(context.arg.getName())).isPresent();
     }
   }
 
+  @Builder
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class PagedApiQueryBase implements QueryBase {
+    final String type = "pagedPgQuery";
+    APIQuery query;
+    RelNode relNode;
+    RelAndArg relAndArg;
+    @Singular
+    List<PgParameterHandler> parameters;
+
+    @Override
+    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
+      ApiQueryVisitor<R, C> visitor1 = (ApiQueryVisitor<R, C>) visitor;
+      return visitor1.visitPagedApiQuery(this, context);
+    }
+  }
   @Builder
   @Getter
   @AllArgsConstructor
@@ -334,5 +362,43 @@ public class SchemaInference {
   }
   public interface ApiQueryVisitor<R,C> extends QueryBaseVisitor<R, C> {
     R visitApiQuery(ApiQueryBase apiQueryBase, C context);
+    R visitPagedApiQuery(PagedApiQueryBase apiQueryBase, C context);
+  }
+
+  private class LimitOffsetHandler implements ArgumentHandler {
+
+    @Override
+    public Set<RelAndArg> accept(ArgumentHandlerContextV1 context) {
+      Set<RelAndArg> set = new HashSet<>(context.getRelAndArgs());
+      for (RelAndArg args : context.getRelAndArgs()) {
+        //No-op rel node, query must be constructed at query time
+        Set<Argument> newArgs = new LinkedHashSet<>(args.argumentSet);
+        newArgs.add(VariableArgument.builder().path(context.arg.getName()).build());
+        RelAndArg relAndArg = new RelAndArg(args.relNode, newArgs, context.arg.getName(), null, true);
+
+        set.add(relAndArg);
+      }
+
+      return set;
+    }
+
+    @Override
+    public boolean canHandle(ArgumentHandlerContextV1 context) {
+      //must be int or not null int
+      Type<?> type = context.getArg().getType();
+      if (type instanceof NonNullType) {
+        NonNullType nonNull = (NonNullType) type;
+        type = nonNull.getType();
+      }
+
+      if (!(type instanceof TypeName) ||
+          !((TypeName)type).getName().equalsIgnoreCase(Scalars.GraphQLInt.getName())){
+        return false;
+      }
+
+
+      return (context.arg.getName().equalsIgnoreCase("limit") ||
+          context.arg.getName().equalsIgnoreCase("offset"));
+    }
   }
 }
