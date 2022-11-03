@@ -6,7 +6,6 @@ import ai.datasqrl.io.formats.FormatConfiguration;
 import ai.datasqrl.io.impl.file.FilePath;
 import ai.datasqrl.io.sources.DataSystemConfig;
 import ai.datasqrl.io.sources.DataSystemConnector;
-import ai.datasqrl.io.sources.DataSystemConnectorConfig;
 import ai.datasqrl.io.sources.DataSystemDiscovery;
 import ai.datasqrl.io.sources.dataset.TableConfig;
 import ai.datasqrl.parse.tree.name.Name;
@@ -23,7 +22,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 
-public abstract class KafkaDataSystem implements DataSystemConnectorConfig, Serializable {
+public abstract class KafkaDataSystem {
 
   @AllArgsConstructor
   @Getter

@@ -68,7 +68,7 @@ public class DataSourceLoader extends AbstractLoader implements Loader {
     Map<Name,FlexibleDatasetSchema> schemas = importer.convertImportSchema(schemaDef, errors);
     Preconditions.checkArgument(schemaDef.datasets.size()==1);
     FlexibleDatasetSchema dsSchema = Iterables.getOnlyElement(schemas.values());
-    FlexibleDatasetSchema.TableField tbField = dsSchema.getFieldByName(tableConfig.getName());
+    FlexibleDatasetSchema.TableField tbField = dsSchema.getFieldByName(tableConfig.getResolvedName());
 
 
     TableSource tableSource = tableConfig.initializeSource(errors,basePath,tbField);

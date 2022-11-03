@@ -6,14 +6,17 @@ import ai.datasqrl.compile.DataDiscovery;
 import ai.datasqrl.compile.loaders.DataSourceLoader;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.DataSystemConfig;
-import ai.datasqrl.parse.tree.name.NamePath;
+import ai.datasqrl.io.sources.dataset.TableInput;
+import ai.datasqrl.io.sources.dataset.TableSource;
+import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaExport;
 import ai.datasqrl.util.SnapshotTest;
 import ai.datasqrl.util.TestDataset;
-import ai.datasqrl.util.data.Retail;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
@@ -27,11 +30,9 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Disabled
 public class TestDataSetMonitoringIT extends AbstractEngineIT {
@@ -43,26 +44,40 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         initialize(IntegrationTestSettings.builder().stream(engine.getStream()).database(engine.getDatabase()).build());
         SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), example.getName(), engine.getName());
 
-        SchemaDefinition outputSchema = discoverSchema(example);
+        List<TableSource> tables = discoverSchema(example);
+
+        //Write out table configurations
+        ObjectMapper jsonMapper = new ObjectMapper();
+        jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        for (TableSource table : tables) {
+            snapshot.addContent(jsonMapper.writeValueAsString(table.getConfiguration()),table.getName().getCanonical());
+        }
+
+        Name datasetName = tables.get(0).getPath().parent().getLast();
+        FlexibleDatasetSchema combinedSchema = DataDiscovery.combineSchema(tables);
+
+        //Write out combined schema file
+        SchemaExport export = new SchemaExport();
+        SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
         YAMLMapper mapper = new YAMLMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        snapshot.addContent(mapper.writeValueAsString(outputSchema));
+        snapshot.addContent(mapper.writeValueAsString(outputSchema),"combined schema");
         snapshot.createOrValidate();
     }
 
-    private SchemaDefinition discoverSchema(TestDataset example) {
+    private List<TableSource> discoverSchema(TestDataset example) {
         DataDiscovery discovery = new DataDiscovery(sqrlSettings);
         ErrorCollector errors = ErrorCollector.root();
         DataSystemConfig systemConfig = getSystemConfigBuilder(example).build();
-        Optional<NamePath> path = discovery.monitorTables(systemConfig,errors);
-        assertTrue(path.isPresent());
+        List<TableInput> inputTables = discovery.discoverTables(systemConfig, errors);
         assertFalse(errors.isFatal(), errors.toString());
-        FlexibleDatasetSchema schema = discovery.discoverSchema(path.get(),errors);
+        assertEquals(example.getNumTables(), inputTables.size());
+        discovery.monitorTables(inputTables, errors);
         assertFalse(errors.isFatal(), errors.toString());
-
-        SchemaExport export = new SchemaExport();
-        SchemaDefinition outputSchema = export.export(Map.of(path.get().getLast(), schema));
-        return outputSchema;
+        List<TableSource> sourceTables = discovery.discoverSchema(inputTables, errors);
+        assertFalse(errors.isFatal(), errors.toString());
+        assertEquals(example.getNumTables(), sourceTables.size());
+        return sourceTables;
     }
 
     static class TestDatasetPlusStreamEngine implements ArgumentsProvider {
@@ -81,17 +96,34 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
      */
     @Test
     public void generateSchema() {
-        TestDataset example = Retail.INSTANCE;
-        generateSchema(example,example.getDataDirectory().resolve(DataSourceLoader.PACKAGE_SCHEMA_FILE));
+//        generateTableConfigAndSchemaInDataDir(Retail.INSTANCE);
     }
 
     @SneakyThrows
-    public void generateSchema(TestDataset example, Path schemaFile) {
+    public void generateTableConfigAndSchemaInDataDir(TestDataset example) {
+        assertTrue(example.getNumTables()>0);
         initialize(IntegrationTestSettings.getInMemory());
-        SchemaDefinition outputSchema = discoverSchema(example);
-        YAMLMapper mapper = new YAMLMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        mapper.writeValue(schemaFile.toFile(),outputSchema);
+        List<TableSource> tables = discoverSchema(example);
+
+        Path destinationDir = example.getRootPackageDirectory().resolve(example.getName());
+        //Write out table configurations
+        ObjectMapper jsonMapper = new ObjectMapper();
+        jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        for (TableSource table : tables) {
+            Path tableConfigFile = destinationDir.resolve(table.getName().getCanonical()+DataSourceLoader.CONFIG_FILE_SUFFIX);
+            jsonMapper.writeValue(tableConfigFile.toFile(),table.getConfiguration());
+        }
+
+        Name datasetName = tables.get(0).getPath().parent().getLast();
+        FlexibleDatasetSchema combinedSchema = DataDiscovery.combineSchema(tables);
+
+        //Write out combined schema file
+        SchemaExport export = new SchemaExport();
+        SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
+        Path schemaFile = destinationDir.resolve(DataSourceLoader.PACKAGE_SCHEMA_FILE);
+        YAMLMapper yamlMapper = new YAMLMapper();
+        yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        yamlMapper.writeValue(schemaFile.toFile(),outputSchema);
     }
 
 }

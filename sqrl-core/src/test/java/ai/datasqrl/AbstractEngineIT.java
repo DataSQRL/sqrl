@@ -33,6 +33,7 @@ public abstract class AbstractEngineIT {
     DataSystemDiscoveryConfig datasource = DirectoryDataSystemConfig.of(testDataset.getDataDirectory());
     DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
     builder.datasource(datasource);
+    builder.name(testDataset.getName());
     return builder;
   }
 

@@ -43,7 +43,6 @@ public abstract class AbstractPath<E extends Comparable,P extends AbstractPath<E
     return constructor().create(newelements);
   }
 
-
   public int size() {
     return elements.length;
   }
@@ -126,6 +125,10 @@ public abstract class AbstractPath<E extends Comparable,P extends AbstractPath<E
     Preconditions.checkArgument(size()>0);
     E[] newNames = Arrays.copyOfRange(elements, 0, elements.length - 1);
     return constructor().create(newNames);
+  }
+
+  public P parent() {
+    return popLast();
   }
 
   public E getFirst() {

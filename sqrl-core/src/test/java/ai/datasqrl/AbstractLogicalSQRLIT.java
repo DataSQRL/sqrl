@@ -1,14 +1,10 @@
 package ai.datasqrl;
 
 import ai.datasqrl.compile.loaders.DataSourceLoader;
-import ai.datasqrl.config.DiscoveryConfiguration;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.local.generate.Resolve;
@@ -21,7 +17,7 @@ import org.junit.jupiter.api.AfterEach;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class AbstractSQRLIT extends AbstractEngineIT {
+public class AbstractLogicalSQRLIT extends AbstractEngineIT {
 
     @AfterEach
     public void tearDown() {
@@ -36,8 +32,6 @@ public class AbstractSQRLIT extends AbstractEngineIT {
     public Resolve resolve;
     public Session session;
     public Path rootDir;
-    public JDBCConnectionProvider jdbc;
-    public PhysicalPlanner physicalPlanner;
 
 
     protected void initialize(IntegrationTestSettings settings, Path rootDir) {
@@ -51,12 +45,6 @@ public class AbstractSQRLIT extends AbstractEngineIT {
         this.parser = new ConfiguredSqrlParser(error);
         this.resolve = new Resolve(rootDir);
         this.rootDir = rootDir;
-
-        DatabaseConnectionProvider db = sqrlSettings.getDatabaseEngineProvider().getDatabase(DiscoveryConfiguration.MetaData.DEFAULT_DATABASE);
-        jdbc = (JDBCConnectionProvider) db;
-
-        physicalPlanner = new PhysicalPlanner(jdbc,
-                sqrlSettings.getStreamEngineProvider().create(), planner);
     }
 
     protected TableSource loadTable(NamePath path) {

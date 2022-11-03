@@ -1,6 +1,6 @@
 package ai.datasqrl.graphql;
 
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.graphql.inference.SchemaInference;
 import ai.datasqrl.graphql.server.Model.Root;
@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Disabled
-class SchemaAnalyzerTest extends AbstractSQRLIT {
+class SchemaAnalyzerTest extends AbstractLogicalSQRLIT {
 
   Path DIR_BASE = Path.of("../sqml-examples/starwars/starwars");
 

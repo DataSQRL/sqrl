@@ -1,6 +1,6 @@
 package ai.datasqrl.graphql;
 
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.graphql.generate.SchemaGenerator;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
 @Disabled
-public class SchemaGeneratorTest extends AbstractSQRLIT {
+public class SchemaGeneratorTest extends AbstractLogicalSQRLIT {
 
   private TestInfo testInfo;
   private TestDataset example = Retail.INSTANCE;

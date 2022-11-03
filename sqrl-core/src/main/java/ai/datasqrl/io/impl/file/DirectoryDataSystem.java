@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 /**
  */
 @Slf4j
-public abstract class DirectoryDataSystem implements DataSystemConnector, Serializable {
+public abstract class DirectoryDataSystem {
 
   @AllArgsConstructor
   @Getter

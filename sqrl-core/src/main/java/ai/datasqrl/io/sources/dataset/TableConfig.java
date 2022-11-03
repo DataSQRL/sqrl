@@ -70,26 +70,26 @@ public class TableConfig extends SharedConfiguration implements Serializable {
                                         FlexibleDatasetSchema.TableField schema) {
         DataSystemConnector connector = baseInitialize(errors,basePath);
         if (connector==null) return null;
-        Name tableName = getName();
+        Name tableName = getResolvedName();
         return new TableSource(connector,this,basePath.concat(tableName), tableName, schema);
     }
 
     public TableInput initializeInput(ErrorCollector errors, NamePath basePath) {
         DataSystemConnector connector = baseInitialize(errors,basePath);
         if (connector==null) return null;
-        Name tableName = getName();
+        Name tableName = getResolvedName();
         return new TableInput(connector,this,basePath.concat(tableName), tableName);
     }
 
     public TableSink initializeSink(ErrorCollector errors, NamePath basePath) {
         DataSystemConnector connector = baseInitialize(errors,basePath);
         if (connector==null) return null;
-        Name tableName = getName();
+        Name tableName = getResolvedName();
         return new TableSink(connector, this, basePath.concat(tableName), tableName);
     }
 
     @JsonIgnore
-    public Name getName() {
+    public Name getResolvedName() {
         return Name.of(name,getCanonicalizer().getCanonicalizer());
     }
 

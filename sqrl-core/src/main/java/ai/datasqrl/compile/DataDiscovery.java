@@ -8,12 +8,12 @@ import ai.datasqrl.io.sources.DataSystem;
 import ai.datasqrl.io.sources.DataSystemConfig;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.TableInput;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.SchemaGenerator;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.io.sources.stats.TableStatisticsStore;
 import ai.datasqrl.io.sources.util.StreamInputPreparer;
 import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.StreamHolder;
@@ -21,9 +21,8 @@ import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class DataDiscovery {
@@ -44,17 +43,24 @@ public class DataDiscovery {
         streamPreparer = new StreamInputPreparerImpl();
     }
 
-    public Optional<NamePath> monitorTables(DataSystemConfig discoveryConfig, ErrorCollector errors) {
+    public List<TableInput> discoverTables(DataSystemConfig discoveryConfig, ErrorCollector errors) {
         DataSystem dataSystem = discoveryConfig.initialize(errors);
-        if (dataSystem==null) return Optional.empty();
+        if (dataSystem==null) return List.of();
 
         NamePath path = NamePath.of(dataSystem.getName());
         List<TableInput> tables = dataSystem.getDatasource().discoverTables(dataSystem.getConfig(),errors)
                 .stream().map(tblConfig -> tblConfig.initializeInput(errors,path))
                 .filter(tbl -> tbl!=null && streamPreparer.isRawInput(tbl))
                 .collect(Collectors.toList());
-        if (tables.isEmpty()) return Optional.empty();
+        return tables;
+    }
 
+    public void monitorTables(List<TableInput> tables, ErrorCollector errors) {
+        try (TableStatisticsStore store = statsStore.openStore()) {
+        } catch (IOException e) {
+            errors.fatal("Could not open statistics store");
+
+        }
         StreamEngine.Builder streamBuilder = streamEngine.createJob();
         for (TableInput table : tables) {
             StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(table,streamBuilder);
@@ -62,36 +68,47 @@ public class DataDiscovery {
             stream.printSink();
         }
         StreamEngine.Job job = streamBuilder.build();
-        job.execute(path.getDisplay()+"-monitor");
-        return Optional.of(path);
+        job.execute("monitoring["+tables.size()+"]"+tables.hashCode());
     }
 
-    public FlexibleDatasetSchema discoverSchema(NamePath datasetPath, ErrorCollector errors) {
-        return discoverSchema(datasetPath, FlexibleDatasetSchema.EMPTY, errors);
+
+    public List<TableSource> discoverSchema(List<TableInput> tables, ErrorCollector errors) {
+        return discoverSchema(tables, FlexibleDatasetSchema.EMPTY, errors);
     }
 
-    public FlexibleDatasetSchema discoverSchema(NamePath datasetPath, FlexibleDatasetSchema baseSchema, ErrorCollector errors) {
-        Map<Name,SourceTableStatistics> tableStats;
+    public List<TableSource> discoverSchema(List<TableInput> tables, FlexibleDatasetSchema baseSchema, ErrorCollector errors) {
+        List<TableSource> resultTables = new ArrayList<>();
         try (TableStatisticsStore store = statsStore.openStore()) {
-            tableStats = store.getTablesStatistics(datasetPath);
+            for (TableInput table : tables) {
+                SourceTableStatistics stats = store.getTableStatistics(table.getPath());
+                SchemaGenerator generator = new SchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
+                FlexibleDatasetSchema.TableField tableField = baseSchema.getFieldByName(table.getName());
+                FlexibleDatasetSchema.TableField schema;
+                ErrorCollector subErrors = errors.resolve(table.getName());
+                if (tableField==null) {
+                    schema = generator.mergeSchema(stats, table.getName(), subErrors);
+                } else {
+                    schema = generator.mergeSchema(stats, tableField, subErrors);
+                }
+                TableSource tblSource = table.getConfiguration().initializeSource(errors,table.getPath().parent(),schema);
+                resultTables.add(tblSource);
+            }
         } catch (IOException e) {
             errors.fatal("Could not read statistics from store");
-            return null;
-        }
 
+        }
+        return resultTables;
+    }
+
+    public static FlexibleDatasetSchema combineSchema(List<TableSource> tables) {
+        return combineSchema(tables,FlexibleDatasetSchema.EMPTY);
+    }
+
+    public static FlexibleDatasetSchema combineSchema(List<TableSource> tables, FlexibleDatasetSchema baseSchema) {
         FlexibleDatasetSchema.Builder builder = new FlexibleDatasetSchema.Builder();
         builder.setDescription(baseSchema.getDescription());
-        for (Map.Entry<Name, SourceTableStatistics> entry : tableStats.entrySet()) {
-            SchemaGenerator generator = new SchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
-            FlexibleDatasetSchema.TableField tableField = baseSchema.getFieldByName(entry.getKey());
-            FlexibleDatasetSchema.TableField result;
-            ErrorCollector subErrors = errors.resolve(entry.getKey());
-            if (tableField==null) {
-                result = generator.mergeSchema(entry.getValue(),entry.getKey(),subErrors);
-            } else {
-                result = generator.mergeSchema(entry.getValue(),tableField, subErrors);
-            }
-            builder.add(result);
+        for (TableSource table : tables) {
+            builder.add(table.getSchema().getSchema());
         }
         return builder.build();
     }

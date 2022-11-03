@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.local.analyze;
 
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.ExecutionEngine;
@@ -8,7 +8,6 @@ import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.Retail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,9 +24,9 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ResolveTest extends AbstractSQRLIT {
+public class ResolveTest extends AbstractLogicalSQRLIT {
 
-  private final TestDataset example = Retail.INSTANCE;
+  private final Retail example = Retail.INSTANCE;
 
   private Resolve.Env resolvedDag = null;
   private SnapshotTest.Snapshot snapshot;

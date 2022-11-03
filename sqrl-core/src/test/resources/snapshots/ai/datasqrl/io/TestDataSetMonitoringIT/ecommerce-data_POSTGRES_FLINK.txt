@@ -1,0 +1,129 @@
+>>>product
+{
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "csv",
+    "delimiter" : ",",
+    "commentPrefix" : null,
+    "header" : [ "productid", "name", "description", "category" ]
+  },
+  "name" : "product",
+  "identifier" : "product",
+  "datasource" : {
+    "uri" : "/Users/matthias/git/sqml/sqrl-core/../sqml-examples/retail/data/",
+    "partPattern" : "_(\\d+)",
+    "sourceType" : "dir"
+  }
+}
+>>>orders
+{
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "json"
+  },
+  "name" : "orders",
+  "identifier" : "orders",
+  "datasource" : {
+    "uri" : "/Users/matthias/git/sqml/sqrl-core/../sqml-examples/retail/data/",
+    "partPattern" : "_(\\d+)",
+    "sourceType" : "dir"
+  }
+}
+>>>customer
+{
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "csv",
+    "delimiter" : ",",
+    "commentPrefix" : null,
+    "header" : [ "customerid", "email", "name", "lastUpdated" ]
+  },
+  "name" : "customer",
+  "identifier" : "customer",
+  "datasource" : {
+    "uri" : "/Users/matthias/git/sqml/sqrl-core/../sqml-examples/retail/data/",
+    "partPattern" : "_(\\d+)",
+    "sourceType" : "dir"
+  }
+}
+>>>combined schema
+---
+version: "1"
+datasets:
+- name: "ecommerce-data"
+  tables:
+  - name: "product"
+    partial_schema: false
+    columns:
+    - name: "productid"
+      type: "INTEGER"
+      tests:
+      - "not_null"
+    - name: "name"
+      type: "STRING"
+      tests:
+      - "not_null"
+    - name: "description"
+      type: "STRING"
+      tests:
+      - "not_null"
+    - name: "category"
+      type: "STRING"
+      tests:
+      - "not_null"
+  - name: "orders"
+    partial_schema: false
+    columns:
+    - name: "id"
+      type: "INTEGER"
+      tests:
+      - "not_null"
+    - name: "customerid"
+      type: "INTEGER"
+      tests:
+      - "not_null"
+    - name: "time"
+      type: "DATETIME"
+      tests:
+      - "not_null"
+    - name: "entries"
+      columns:
+      - name: "productid"
+        type: "INTEGER"
+        tests:
+        - "not_null"
+      - name: "quantity"
+        type: "INTEGER"
+        tests:
+        - "not_null"
+      - name: "unit_price"
+        type: "FLOAT"
+        tests:
+        - "not_null"
+      - name: "discount"
+        type: "FLOAT"
+      tests:
+      - "not_null"
+  - name: "customer"
+    partial_schema: false
+    columns:
+    - name: "customerid"
+      type: "INTEGER"
+      tests:
+      - "not_null"
+    - name: "email"
+      type: "STRING"
+      tests:
+      - "not_null"
+    - name: "name"
+      type: "STRING"
+      tests:
+      - "not_null"
+    - name: "lastUpdated"
+      type: "INTEGER"
+      tests:
+      - "not_null"
+

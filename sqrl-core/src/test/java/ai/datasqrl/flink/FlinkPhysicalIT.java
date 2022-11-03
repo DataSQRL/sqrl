@@ -1,6 +1,6 @@
 package ai.datasqrl.flink;
 
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractPhysicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.database.relational.QueryTemplate;
@@ -16,7 +16,6 @@ import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.ResultSetPrinter;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.Retail;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
@@ -36,9 +35,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class FlinkPhysicalIT extends AbstractSQRLIT {
+class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
-  private TestDataset example = Retail.INSTANCE;
+  private Retail example = Retail.INSTANCE;
   private SnapshotTest.Snapshot snapshot;
 
   @BeforeEach

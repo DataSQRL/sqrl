@@ -6,10 +6,7 @@ import ai.datasqrl.io.sources.DataSystemConnectorConfig;
 import ai.datasqrl.io.sources.DataSystemDiscovery;
 import ai.datasqrl.io.sources.DataSystemDiscoveryConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;
@@ -21,6 +18,7 @@ import java.util.regex.Pattern;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
 public abstract class DirectoryDataSystemConfig {
 
     public static final String SOURCE_TYPE = "dir";

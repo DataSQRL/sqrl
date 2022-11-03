@@ -1,6 +1,6 @@
 package ai.datasqrl.flink;
 
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractPhysicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.TableSource;
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @Disabled
-public class FlinkTableAPIIT extends AbstractSQRLIT {
+public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
 
   private final TestDataset example = Retail.INSTANCE;
 

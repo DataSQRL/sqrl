@@ -5,8 +5,10 @@ import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.io.sources.DataSystemConnectorConfig;
 import ai.datasqrl.io.sources.DataSystemDiscovery;
 import ai.datasqrl.io.sources.DataSystemDiscoveryConfig;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
@@ -20,6 +22,7 @@ import java.util.Properties;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
 public abstract class KafkaDataSystemConfig {
 
     public static final String SOURCE_TYPE = "kafka";
@@ -56,10 +59,12 @@ public abstract class KafkaDataSystemConfig {
         return SOURCE_TYPE;
     }
 
+    @JsonIgnore
     protected String getServersAsString() {
         return String.join(", ", servers);
     }
 
+    @JsonIgnore
     protected Properties getProperties() {
         Properties properties = new Properties();
         properties.put("bootstrap.servers", getServersAsString());

@@ -28,7 +28,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -79,7 +78,6 @@ public class FlexibleSchemaHandlingTest {
 
     @SneakyThrows
     public FlexibleDatasetSchema getSchema(InputSchema inputSchema) {
-        String schemaString = Files.readString(inputSchema.packageDir);
         SchemaDefinition schemaDef = new DataSourceLoader().loadPackageSchema(inputSchema.packageDir);
         DatasetDefinition datasetDefinition = schemaDef.datasets.stream().filter(dd -> dd.name.equalsIgnoreCase(inputSchema.name)).findFirst().get();
         SchemaImport.DatasetConverter importer = new SchemaImport.DatasetConverter(NameCanonicalizer.SYSTEM, Constraint.FACTORY_LOOKUP);

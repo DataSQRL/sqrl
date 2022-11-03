@@ -10,7 +10,6 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -22,14 +21,10 @@ public interface TestDataset {
 
     Path getDataDirectory();
 
+    int getNumTables();
+
     default Path getRootPackageDirectory() {
         return getDataDirectory();
-    }
-
-    ScriptBuilder getImports();
-
-    default List<Path> getScripts() {
-        return Collections.EMPTY_LIST;
     }
 
     /*

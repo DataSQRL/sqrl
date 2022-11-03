@@ -2,11 +2,11 @@ package ai.datasqrl.util.data;
 
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.TestDataset;
+import ai.datasqrl.util.TestScript;
 
 import java.nio.file.Path;
-import java.util.List;
 
-public class Retail implements TestDataset {
+public class Retail implements TestDataset, TestScript {
 
     public static final Path BASE_PATH = Path.of("..","sqml-examples","retail");
 
@@ -14,12 +14,17 @@ public class Retail implements TestDataset {
 
     @Override
     public String getName() {
-        return "retail";
+        return "ecommerce-data";
     }
 
     @Override
     public Path getDataDirectory() {
-        return BASE_PATH.resolve("ecommerce-data");
+        return BASE_PATH.resolve("data");
+    }
+
+    @Override
+    public int getNumTables() {
+        return 3;
     }
 
     @Override
@@ -28,16 +33,15 @@ public class Retail implements TestDataset {
     }
 
     @Override
+    public Path getScript() {
+        return BASE_PATH.resolve(Path.of("c360","c360.sqrl"));
+    }
+
     public ScriptBuilder getImports() {
         ScriptBuilder builder = new ScriptBuilder();
         builder.append("IMPORT ecommerce-data.Customer");
         builder.append("IMPORT ecommerce-data.Orders");
         builder.append("IMPORT ecommerce-data.Product");
         return builder;
-    }
-
-    @Override
-    public List<Path> getScripts() {
-        return List.of(BASE_PATH.resolve(Path.of("c360","c360.sqrl")));
     }
 }

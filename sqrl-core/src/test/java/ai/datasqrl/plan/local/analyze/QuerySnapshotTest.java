@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.local.analyze;
 
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static ai.datasqrl.graphql.SchemaGeneratorTest.createOrValidateSnapshot;
 
-class QuerySnapshotTest extends AbstractSQRLIT {
+class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   public static final String IMPORTS = C360.BASIC.getImports().getScript() + "\n"
       + "Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n"

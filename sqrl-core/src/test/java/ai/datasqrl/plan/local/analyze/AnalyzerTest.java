@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.local.analyze;
 
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCode;
 import ai.datasqrl.parse.ParsingException;
@@ -27,7 +27,7 @@ import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class AnalyzerTest extends AbstractSQRLIT {
+class AnalyzerTest extends AbstractLogicalSQRLIT {
 
   private TestDataset example = Retail.INSTANCE;
 

@@ -5,11 +5,8 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
 
 public class RelationStats implements
     Accumulator<Map<String, Object>, RelationStats, NameCanonicalizer> {
@@ -21,7 +18,7 @@ public class RelationStats implements
   Map<Name, FieldStats> fieldStats;
 
   public RelationStats() {
-    this.fieldStats = new HashMap<>(INITIAL_CAPACITY);
+    this.fieldStats = new LinkedHashMap<>(INITIAL_CAPACITY);
     this.count = 0;
   }
 

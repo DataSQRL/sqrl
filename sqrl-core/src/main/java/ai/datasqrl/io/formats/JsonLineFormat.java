@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.*;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configuration> {
@@ -40,7 +41,7 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
         mapper = new ObjectMapper();
       }
       try {
-        Map<String, Object> record = mapper.readValue(line, Map.class);
+        Map<String, Object> record = mapper.readValue(line, LinkedHashMap.class);
         return Result.success(record);
       } catch (IOException e) {
         return Result.error(e.getMessage());

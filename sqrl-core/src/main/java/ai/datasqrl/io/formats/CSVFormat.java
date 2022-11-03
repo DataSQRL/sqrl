@@ -5,16 +5,12 @@ import ai.datasqrl.io.impl.InputPreview;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import lombok.*;
+
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.ToString;
 
 public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
 
@@ -73,7 +69,7 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
       if (isHeader) {
         return Result.skip();
       }
-      HashMap<String, Object> map = new HashMap<>(parts.size());
+      LinkedHashMap<String, Object> map = new LinkedHashMap<>(parts.size());
       for (int i = 0; i < parts.size(); i++) {
         map.put(header[i], parts.get(i));
       }
