@@ -50,7 +50,8 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         ObjectMapper jsonMapper = new ObjectMapper();
         jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
         for (TableSource table : tables) {
-            snapshot.addContent(jsonMapper.writeValueAsString(table.getConfiguration()),table.getName().getCanonical());
+            String json = jsonMapper.writeValueAsString(table.getConfiguration());
+            assertTrue(json.length()>0);
         }
 
         Name datasetName = tables.get(0).getPath().parent().getLast();
