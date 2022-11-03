@@ -1,27 +1,19 @@
 package ai.datasqrl.plan.local.analyze;
 
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.scripts.ScriptBundle;
-import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.local.generate.Resolve;
-import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.data.C360;
+import ai.datasqrl.util.data.Retail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.*;
@@ -30,38 +22,18 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ResolveTest extends AbstractSQRLIT {
+public class ResolveTest extends AbstractLogicalSQRLIT {
 
-  ConfiguredSqrlParser parser;
-  ErrorCollector error;
-  private Resolve resolve;
-  private Session session;
+  private final Retail example = Retail.INSTANCE;
 
   private Resolve.Env resolvedDag = null;
-
   private SnapshotTest.Snapshot snapshot;
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
-    error = ErrorCollector.root();
-    initialize(IntegrationTestSettings.getInMemory(false));
-    C360 example = C360.BASIC;
-    example.registerSource(env);
-
-    ImportManager importManager = sqrlSettings.getImportManagerProvider()
-        .createImportManager(env.getDatasetRegistry());
-    ScriptBundle bundle = example.buildBundle().getBundle();
-    assertTrue(
-        importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
-    Planner planner = new PlannerFactory(
-        new SqrlCalciteSchema(CalciteSchema.createRootSchema(false, false).plus()).plus()).createPlanner();
-    Session session = new Session(error, importManager, planner);
-    this.session = session;
-    this.parser = new ConfiguredSqrlParser(error);
-    this.resolve = new Resolve(RETAIL_DIR_BASE.resolve("build/"));
+    initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
     this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
   }
 
@@ -370,7 +342,7 @@ public class ResolveTest extends AbstractSQRLIT {
   }
 
   private ScriptBuilder imports() {
-    return C360.BASIC.getImports();
+    return example.getImports();
   }
 
   @SneakyThrows

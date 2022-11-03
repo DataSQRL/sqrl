@@ -1,39 +1,26 @@
 package ai.datasqrl.flink;
 
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractPhysicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.EnvironmentConfiguration;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.config.scripts.ScriptBundle;
-import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.physical.PhysicalPlan;
-import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.physical.database.relational.QueryTemplate;
 import ai.datasqrl.physical.stream.Job;
 import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.global.DAGPlanner;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.local.analyze.ResolveTest;
 import ai.datasqrl.plan.local.generate.Resolve;
-import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.ResultSetPrinter;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.TestDataset;
-import ai.datasqrl.util.data.C360;
+import ai.datasqrl.util.data.Retail;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,47 +35,14 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
-class FlinkPhysicalIT extends AbstractSQRLIT {
-
-  ConfiguredSqrlParser parser;
-  ErrorCollector error;
-  private Resolve resolve;
-  private Session session;
-  private Planner planner;
-  private JDBCConnectionProvider jdbc;
-  private PhysicalPlanner physicalPlanner;
-  private TestDataset example;
-
+  private Retail example = Retail.INSTANCE;
   private SnapshotTest.Snapshot snapshot;
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
-    error = ErrorCollector.root();
-    initialize(IntegrationTestSettings.getFlinkWithDB(false));
-    example = C360.BASIC;
-    example.registerSource(env);
-
-    ImportManager importManager = sqrlSettings.getImportManagerProvider()
-        .createImportManager(env.getDatasetRegistry());
-    ScriptBundle bundle = example.buildBundle().getBundle();
-    assertTrue(
-            importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
-
-    SqrlCalciteSchema schema = new SqrlCalciteSchema(
-        CalciteSchema.createRootSchema(false, false).plus());
-    planner = new PlannerFactory(schema.plus()).createPlanner();
-    Session session = new Session(error, importManager, planner);
-    this.session = session;
-    this.parser = new ConfiguredSqrlParser(error);
-    this.resolve = new Resolve(RETAIL_DIR_BASE.resolve("build/"));
-    DatabaseConnectionProvider db = sqrlSettings.getDatabaseEngineProvider().getDatabase(EnvironmentConfiguration.MetaData.DEFAULT_DATABASE);
-    jdbc = (JDBCConnectionProvider) db;
-
-    physicalPlanner = new PhysicalPlanner(importManager, jdbc,
-            sqrlSettings.getStreamEngineProvider().create(), planner);
+    initialize(IntegrationTestSettings.getFlinkWithDB(), example.getRootPackageDirectory());
     this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
   }
 
@@ -97,7 +51,6 @@ class FlinkPhysicalIT extends AbstractSQRLIT {
     String script = example.getImports().toString();
     validate(script, "customer","product","orders","entries");
   }
-
 
   @Test
   public void tableColumnDefinitionTest() {

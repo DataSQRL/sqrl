@@ -1,55 +1,38 @@
 package ai.datasqrl.util;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.environment.Environment;
-import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
-import ai.datasqrl.util.data.BookClub;
-import ai.datasqrl.util.data.C360;
+import ai.datasqrl.util.data.Retail;
 import ai.datasqrl.util.junit.ArgumentProvider;
 import com.google.common.base.Predicates;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 
-import java.util.*;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public interface TestDataset {
 
     String getName();
 
-    DirectorySourceImplementation getSource();
+    Path getDataDirectory();
 
-    default void registerSource(Environment env) {
-        ErrorCollector errors = ErrorCollector.root();
-        env.getDatasetRegistry().addOrUpdateSource(getName(), getSource(), errors);
-        assertFalse(errors.isFatal(),errors.toString());
+    int getNumTables();
+
+    default Path getRootPackageDirectory() {
+        return getDataDirectory();
     }
 
-    Map<String, Integer> getTableCounts();
-
-    String getScriptContent(ScriptComplexity complexity);
-
-    ScriptBuilder getImports();
-
-    default Optional<String> getInputSchema() {
-        return Optional.empty();
-    }
-
-    default Optional<String> getDiscoveredSchema() {
-        return Optional.empty();
-    }
-
-    default TestScriptBundleBuilder buildBundle() {
-        return new TestScriptBundleBuilder(this);
-    }
+    /*
+    === STATIC METHODS ===
+     */
 
     static List<TestDataset> getAll() {
-        return List.of(BookClub.INSTANCE, C360.BASIC, C360.NESTED_CATEGORIES);
+        return List.of(Retail.INSTANCE);
     }
 
     static Stream<? extends Arguments> generateAsArguments(List<? extends Object>... otherArgs) {

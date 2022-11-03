@@ -1,9 +1,10 @@
 package ai.datasqrl.config.metadata;
 
 import ai.datasqrl.parse.tree.name.Name;
+import lombok.NonNull;
+
 import java.io.Closeable;
 import java.util.Set;
-import lombok.NonNull;
 
 public interface MetadataStore extends Closeable {
 

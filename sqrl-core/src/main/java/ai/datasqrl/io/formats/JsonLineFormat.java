@@ -4,13 +4,11 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.impl.InputPreview;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.*;
+
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.ToString;
 
 public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configuration> {
 
@@ -43,7 +41,7 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
         mapper = new ObjectMapper();
       }
       try {
-        Map<String, Object> record = mapper.readValue(line, Map.class);
+        Map<String, Object> record = mapper.readValue(line, LinkedHashMap.class);
         return Result.success(record);
       } catch (IOException e) {
         return Result.error(e.getMessage());

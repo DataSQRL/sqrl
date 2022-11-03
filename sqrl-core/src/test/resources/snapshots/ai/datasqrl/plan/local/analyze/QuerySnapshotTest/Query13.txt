@@ -1,7 +1,7 @@
 D := SELECT * FROM Orders.entries e INNER JOIN e.parent p WHERE e.parent.customerid = 0 AND p.customerid = 0;
 
 LogicalProject(_idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], id=[$11], _uuid=[$12], _ingest_time=[$13], customerid=[$14], time=[$15])
-  LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4], id0=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], id1=[$11], _uuid0=[$12], _ingest_time0=[$13], customerid0=[$14], time0=[$15], id2=[CAST($16):BIGINT], _uuid1=[CAST($17):CHAR(36) CHARACTER SET "UTF-16LE"], _ingest_time1=[CAST($18):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], customerid1=[$19], time1=[CAST($20):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)])
+  LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4], id0=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], id1=[$11], _uuid0=[$12], _ingest_time0=[$13], customerid0=[$14], time0=[$15], id2=[CAST($16):BIGINT], _uuid1=[CAST($17):CHAR(36) CHARACTER SET "UTF-16LE"], _ingest_time1=[CAST($18):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], customerid1=[CAST($19):BIGINT], time1=[CAST($20):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)])
     LogicalJoin(condition=[=($5, $16)], joinType=[inner])
       LogicalJoin(condition=[=($5, $11)], joinType=[inner])
         LogicalJoin(condition=[=($0, $5)], joinType=[default])

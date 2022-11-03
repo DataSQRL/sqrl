@@ -1,25 +1,14 @@
 {
-  "dataset": {
-    "source": {
-      "name": "ecommerce-data",
-      "implementation": {
-        "sourceType": "dir",
-        "uri": "../sqml-examples/retail-example-bundle/ecommerce-data/",
-        "discoverFiles": true
-      },
-      "config": {
-        "canonicalizer": "system",
-        "charset": "UTF-8",
-        "format": null
-      }
-    }
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "json"
   },
-  "name": "orders",
-  "configuration": {
-    "name": "orders",
-    "identifier": "orders",
-    "format": {
-      "formatType": "json"
-    }
+  "name" : "orders",
+  "identifier" : "orders",
+  "datasource" : {
+    "uri" : "../sqml-examples/retail/data/",
+    "partPattern" : "_(\\d+)",
+    "sourceType" : "dir"
   }
 }

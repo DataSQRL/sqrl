@@ -1,16 +1,7 @@
 package ai.datasqrl.io;
 
 
-import ai.datasqrl.AbstractSQRLIT;
-import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.formats.JsonLineFormat;
-import ai.datasqrl.io.impl.kafka.KafkaSourceImplementation;
-import ai.datasqrl.io.sources.DataSourceConfiguration;
-import ai.datasqrl.io.sources.DataSourceUpdate;
-import ai.datasqrl.io.sources.dataset.SourceDataset;
-import ai.datasqrl.io.sources.dataset.SourceTable;
-import ai.datasqrl.io.sources.stats.SourceTableStatistics;
+import ai.datasqrl.AbstractEngineIT;
 import ai.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
 import ai.datasqrl.util.data.BookClub;
 import com.google.common.collect.ImmutableList;
@@ -18,7 +9,10 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.clients.admin.Admin;
-import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -30,18 +24,17 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
 //TODO: flink integration currently hangs on monitoring
-public class KafkaSourceIT extends AbstractSQRLIT {
+public class KafkaSourceIT extends AbstractEngineIT {
 
     public static final int NUM_BROKERS = 1;
 
@@ -147,56 +140,56 @@ public class KafkaSourceIT extends AbstractSQRLIT {
         assertEquals(4,numRecords);
     }
 
-    @Disabled("fix after Flink monitoring idling is solved")
-    @Test
-    @SneakyThrows
-    public void testDatasetMonitoringWithPrefix() {
-        writeTextFilesToTopic(topics[0], "key", BookClub.BOOK_FILES);
-
-        String dsName = "bookclub";
-        DataSourceUpdate dsUpdate = DataSourceUpdate.builder()
-                .name(dsName).discoverTables(true)
-                .config(
-                    DataSourceConfiguration.builder().format(new JsonLineFormat.Configuration()).build())
-                .source(
-                    KafkaSourceImplementation.builder().servers(Arrays.asList(bootstrapServers)).topicPrefix(dsName+".").build())
-                .build();
-
-        testBookSourceTable(dsName,dsUpdate);
-    }
-
-    @Disabled("fix after Flink monitoring idling is solved")
-    @Test
-    @SneakyThrows
-    public void testDatasetMonitoringWithExtension() {
-        writeTextFilesToTopic(topics[1], "key", BookClub.BOOK_FILES);
-
-        String dsName = "test";
-        DataSourceUpdate dsUpdate = DataSourceUpdate.builder()
-                .name(dsName).discoverTables(true)
-                .source(KafkaSourceImplementation.builder().servers(Arrays.asList(bootstrapServers)).build())
-                .build();
-
-        testBookSourceTable(dsName,dsUpdate);
-    }
-
-    public void testBookSourceTable(String dsName, DataSourceUpdate dsUpdate) {
-        initialize(IntegrationTestSettings.getFlinkWithDB());
-
-        ErrorCollector errors = ErrorCollector.root();
-        sourceRegistry.addOrUpdateSource(dsUpdate, errors);
-        assertFalse(errors.isFatal(), errors.toString());
-
-        //Needs some time to wait for the flink pipeline to compile data
-
-        SourceDataset ds = sourceRegistry.getDataset(dsName);
-        assertEquals(1, ds.getTables().size());
-        SourceTable book = ds.getTable("book");
-        assertNotNull(book);
-        SourceTableStatistics stats = book.getStatistics();
-        assertNotNull(stats);
-        assertEquals(4,stats.getCount());
-    }
+//    @Disabled("fix after Flink monitoring idling is solved")
+//    @Test
+//    @SneakyThrows
+//    public void testDatasetMonitoringWithPrefix() {
+//        writeTextFilesToTopic(topics[0], "key", BookClub.BOOK_FILES);
+//
+//        String dsName = "bookclub";
+//        DataSourceUpdate dsUpdate = DataSourceUpdate.builder()
+//                .name(dsName).discoverTables(true)
+//                .config(
+//                    DataSystemConfig.builder().format(new JsonLineFormat.Configuration()).build())
+//                .source(
+//                    KafkaDataSystem.builder().servers(Arrays.asList(bootstrapServers)).topicPrefix(dsName+".").build())
+//                .build();
+//
+//        testBookSourceTable(dsName,dsUpdate);
+//    }
+//
+//    @Disabled("fix after Flink monitoring idling is solved")
+//    @Test
+//    @SneakyThrows
+//    public void testDatasetMonitoringWithExtension() {
+//        writeTextFilesToTopic(topics[1], "key", BookClub.BOOK_FILES);
+//
+//        String dsName = "test";
+//        DataSourceUpdate dsUpdate = DataSourceUpdate.builder()
+//                .name(dsName).discoverTables(true)
+//                .source(KafkaDataSystem.builder().servers(Arrays.asList(bootstrapServers)).build())
+//                .build();
+//
+//        testBookSourceTable(dsName,dsUpdate);
+//    }
+//
+//    public void testBookSourceTable(String dsName, DataSourceUpdate dsUpdate) {
+//        initialize(IntegrationTestSettings.getFlinkWithDB());
+//
+//        ErrorCollector errors = ErrorCollector.root();
+//        sourceRegistry.addOrUpdateSource(dsUpdate, errors);
+//        assertFalse(errors.isFatal(), errors.toString());
+//
+//        //Needs some time to wait for the flink pipeline to compile data
+//
+//        SourceDataset ds = sourceRegistry.getDataset(dsName);
+//        assertEquals(1, ds.getTables().size());
+//        TableSource book = ds.getTable("book");
+//        assertNotNull(book);
+//        SourceTableStatistics stats = book.getStatistics();
+//        assertNotNull(stats);
+//        assertEquals(4,stats.getCount());
+//    }
 
 
 }

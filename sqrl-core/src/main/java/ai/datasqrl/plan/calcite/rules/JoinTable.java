@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.config.AbstractPath;
+import ai.datasqrl.config.util.AbstractPath;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.IndexMap;
 import com.google.common.base.Preconditions;

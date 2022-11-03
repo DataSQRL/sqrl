@@ -2,7 +2,7 @@ package ai.datasqrl.physical.stream;
 
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.io.sources.dataset.TableInput;
 import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
 import ai.datasqrl.physical.ExecutionEngine;
 import ai.datasqrl.schema.input.InputTableSchema;
@@ -18,10 +18,10 @@ public interface StreamEngine extends Closeable {
 
   interface Builder {
 
-    StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(SourceTable table);
+    StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table);
 
     StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream,
-                                           SourceTable sourceTable,
+                                           TableInput tableSource,
                                            TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider);
 
     void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, String qualifiedTableName);

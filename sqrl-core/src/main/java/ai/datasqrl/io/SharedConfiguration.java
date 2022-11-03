@@ -1,23 +1,19 @@
 package ai.datasqrl.io;
 
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.config.util.ConfigurationUtil;
 import ai.datasqrl.io.formats.FormatConfiguration;
 import ai.datasqrl.io.impl.CanonicalizerConfiguration;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.io.Serializable;
-import java.nio.charset.Charset;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-@AllArgsConstructor
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.io.Serializable;
+import java.nio.charset.Charset;
+
 @NoArgsConstructor
 @Getter
 @SuperBuilder
@@ -45,15 +41,15 @@ public abstract class SharedConfiguration implements Serializable {
   }
 
   @JsonIgnore
-  protected abstract boolean formatRequired();
-
-  @JsonIgnore
   public Charset getCharsetObject() {
     return Charset.forName(charset);
   }
 
 
-  public boolean initialize(ErrorCollector errors) {
+  public boolean rootInitialize(ErrorCollector errors, boolean formatRequired) {
+    if (!ConfigurationUtil.javaxValidate(this, errors)) {
+      return false;
+    }
     try {
       Charset cs = Charset.forName(charset);
     } catch (Exception e) {
@@ -61,7 +57,7 @@ public abstract class SharedConfiguration implements Serializable {
       return false;
     }
     if (format == null) {
-      if (formatRequired()) {
+      if (formatRequired) {
         errors.fatal("Need to configure a format");
         return false;
       }

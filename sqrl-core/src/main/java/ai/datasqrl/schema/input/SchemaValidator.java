@@ -1,36 +1,27 @@
 package ai.datasqrl.schema.input;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.physical.stream.FunctionWithError;
 import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.SourceDataset;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.FieldStats;
 import ai.datasqrl.io.sources.stats.SchemaGenerator;
 import ai.datasqrl.io.sources.stats.TypeSignature.Simple;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
+import ai.datasqrl.physical.stream.FunctionWithError;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.BasicType;
 import ai.datasqrl.schema.type.basic.StringType;
 import com.google.common.base.Preconditions;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiPredicate;
-import java.util.function.Consumer;
-
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+
+import java.io.Serializable;
+import java.util.*;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 
 /**
  * Follows {@link SchemaGenerator} in structure and semantics.
@@ -44,11 +35,11 @@ public class SchemaValidator implements Serializable {
 
   public SchemaValidator(@NonNull InputTableSchema tableSchema,
       @NonNull SchemaAdjustmentSettings settings,
-      @NonNull SourceDataset.Digest dataset) {
+      @NonNull TableSource.Digest tableDigest) {
     Preconditions.checkArgument(!tableSchema.getSchema().isPartialSchema());
     this.settings = settings;
     this.tableSchema = tableSchema;
-    this.canonicalizer = dataset.getCanonicalizer();
+    this.canonicalizer = tableDigest.getCanonicalizer();
     this.schemaGenerator = new SchemaGenerator(settings);
   }
 

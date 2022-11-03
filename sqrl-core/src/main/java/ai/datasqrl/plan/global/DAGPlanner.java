@@ -39,7 +39,7 @@ public class DAGPlanner {
         List<QueryRelationalTable> queryTables = CalciteUtil.getTables(relSchema, QueryRelationalTable.class);
 
         //Assign timestamps to imports which should propagate and set all remaining timestamps
-        StreamUtil.filterByClass(queryTables, SourceRelationalTable.class).forEach(this::finalizeSourceTable);
+        StreamUtil.filterByClass(queryTables, ProxySourceRelationalTable.class).forEach(this::finalizeSourceTable);
         Preconditions.checkArgument(queryTables.stream().allMatch(table -> !table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp()));
 
         //Plan API queries and find all tables that need to be materialized
@@ -95,7 +95,7 @@ public class DAGPlanner {
         }
 
         //Stitch together all StreamSourceTable
-        for (StreamSourceTable sst : CalciteUtil.getTables(relSchema, StreamSourceTable.class)) {
+        for (StreamRelationalTable sst : CalciteUtil.getTables(relSchema, StreamRelationalTable.class)) {
             RelNode stitchedNode = planner.transform(WRITE_DAG_STITCHING, sst.getBaseRelation());
             sst.setBaseRelation(stitchedNode);
         }
@@ -113,7 +113,7 @@ public class DAGPlanner {
         return () -> planner.getRelBuilder();
     }
 
-    private void finalizeSourceTable(SourceRelationalTable table) {
+    private void finalizeSourceTable(ProxySourceRelationalTable table) {
         // Determine timestamp
         if (!table.getTimestamp().hasFixedTimestamp()) {
             table.getTimestamp().getBestCandidate().fixAsTimestamp();
@@ -144,7 +144,7 @@ public class DAGPlanner {
     @AllArgsConstructor
     private static class SourceTableRewriter extends RelShuttleImpl {
 
-        final SourceRelationalTable table;
+        final ProxySourceRelationalTable table;
         final RelBuilder relBuilder;
 
         public void replaceImport() {

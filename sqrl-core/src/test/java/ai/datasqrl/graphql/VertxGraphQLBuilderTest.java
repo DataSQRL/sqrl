@@ -1,20 +1,9 @@
 package ai.datasqrl.graphql;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractEngineIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.IntegrationTestSettings.DatabaseEngine;
-import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
-import ai.datasqrl.graphql.server.Model.ArgumentSet;
-import ai.datasqrl.graphql.server.Model.FixedArgument;
-import ai.datasqrl.graphql.server.Model.PgQuery;
-import ai.datasqrl.graphql.server.Model.Root;
-import ai.datasqrl.graphql.server.Model.SourcePgParameter;
-import ai.datasqrl.graphql.server.Model.StringSchema;
-import ai.datasqrl.graphql.server.Model.VariableArgument;
+import ai.datasqrl.graphql.server.Model.*;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
 import ai.datasqrl.util.JDBCTestDatabase;
@@ -29,8 +18,6 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgConnection;
 import io.vertx.sqlclient.impl.SqlClientInternal;
-import java.sql.Connection;
-import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,8 +25,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.sql.Connection;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 @ExtendWith(VertxExtension.class)
-class VertxGraphQLBuilderTest extends AbstractSQRLIT {
+class VertxGraphQLBuilderTest extends AbstractEngineIT {
   static Root root = Root.builder()
       .schema(StringSchema.builder().schema(""
           + "type Query { "

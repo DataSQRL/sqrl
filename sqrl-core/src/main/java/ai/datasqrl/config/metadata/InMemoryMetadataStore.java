@@ -1,16 +1,17 @@
 package ai.datasqrl.config.metadata;
 
-import ai.datasqrl.config.engines.FileDatabaseConfiguration;
 import ai.datasqrl.config.engines.InMemoryDatabaseConfiguration;
 import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.provider.MetadataStoreProvider;
 import ai.datasqrl.config.provider.SerializerProvider;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class InMemoryMetadataStore implements MetadataStore {
@@ -18,7 +19,8 @@ public class InMemoryMetadataStore implements MetadataStore {
     private static ThreadLocal<Map<Key,Object>> STORE = new ThreadLocal<>();
 
     public static void clearLocal() {
-        STORE.get().clear();
+        Map<Key,Object> store = STORE.get();
+        if (store!=null) store.clear();
     }
 
     @Override

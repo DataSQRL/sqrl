@@ -1,102 +1,105 @@
 package ai.datasqrl.compile.loaders;
 
-import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.environment.ImportManager.SourceTableImport;
-import ai.datasqrl.errors.ErrorCode;
-import ai.datasqrl.io.sources.dataset.SourceTable;
+import ai.datasqrl.config.error.ErrorCode;
+import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.io.sources.dataset.TableConfig;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
-import ai.datasqrl.schema.input.external.DatasetDefinition;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaImport;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
-import java.net.URI;
-import java.net.URL;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DataSourceLoader implements Loader {
+public class DataSourceLoader extends AbstractLoader implements Loader {
 
-  SchemaLoader discoveredSchemaLoader = new DiscoveredSchemaLoader();
-  private static final Pattern PATTERN = Pattern.compile(".*\\.source\\.json");
+  public static final String CONFIG_FILE_SUFFIX = ".source.json";
+  public static final String SCHEMA_FILE_SUFFIX = ".schema.yml";
+  public static final String PACKAGE_SCHEMA_FILE = "schema.yml";
+  private static final Pattern CONFIG_FILE_PATTERN = Pattern.compile("(.*)\\.source\\.json$");
 
   @Override
-  public boolean handles(URI uri, String name) {
-    URI file = uri.resolve(name + ".source.json");
-    File f = (new File(file));
-    return f.exists();
+  public Optional<String> handles(Path file) {
+    Matcher matcher = CONFIG_FILE_PATTERN.matcher(file.getFileName().toString());
+    if (matcher.find()) {
+      return Optional.of(matcher.group(1));
+    }
+    return Optional.empty();
   }
 
   @Override
-  public boolean handlesFile(URI uri, String name) {
-    URI file = uri.resolve(name);
-    File f = (new File(file));
-    return f.exists() && PATTERN.matcher(name).find();
+  public boolean load(Env env, NamePath fullPath, Optional<Name> alias) {
+    return readTable(env.getPackagePath(), fullPath, env.getSession().getErrors()).map(tbl -> registerTable(env,tbl,alias))
+            .map(name -> name!=null).orElse(false);
   }
 
-  @Override
-  public void load(Env env, URI uri, String name, Optional<Name> alias) {
-    loadModule(env, uri, name + ".source.json", alias);
-  }
 
-  @Override
-  public void loadFile(Env env, URI uri, String name) {
-    loadModule(env, uri, name, Optional.empty());
-  }
+  public Optional<TableSource> readTable(Path rootDir, NamePath fullPath, ErrorCollector errors) {
+    NamePath basePath = fullPath.subList(0,fullPath.size()-1);
+    String tableFileName = fullPath.getLast().getCanonical();
+    Path baseDir = namepath2Path(rootDir, basePath);
+    Path tableConfigPath = baseDir.resolve(tableFileName + CONFIG_FILE_SUFFIX);
+    //First, look for table specific schema file. If not present, look for package global schema file
+    Path tableSchemaPath = baseDir.resolve(tableFileName + SCHEMA_FILE_SUFFIX);
+    if (!Files.isRegularFile(tableSchemaPath)) {
+      tableSchemaPath = baseDir.resolve(PACKAGE_SCHEMA_FILE);
+    }
+    if (!Files.isRegularFile(tableConfigPath) || !Files.isRegularFile(tableSchemaPath)) return Optional.empty();
 
-  public void loadModule(Env env, URI uri, String fileName, Optional<Name> alias) {
     //todo: namespace monoid to handle aliasing and exposing to global namespace
-    ObjectMapper mapper = new ObjectMapper();
-    SourceTable table = resolveUri(uri, fileName, mapper, SourceTable.class);
+    TableConfig tableConfig = mapJsonFile(tableConfigPath, TableConfig.class);
 
-    SchemaDefinition schemaDef = discoveredSchemaLoader.resolve(uri, fileName.split("\\.")[0]);
+    //Get table schema
+    SchemaDefinition schemaDef = mapYAMLFile(tableSchemaPath, SchemaDefinition.class);
+    SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, tableConfig.getNameCanonicalizer());
+    Map<Name,FlexibleDatasetSchema> schemas = importer.convertImportSchema(schemaDef, errors);
+    Preconditions.checkArgument(schemaDef.datasets.size()==1);
+    FlexibleDatasetSchema dsSchema = Iterables.getOnlyElement(schemas.values());
+    FlexibleDatasetSchema.TableField tbField = dsSchema.getFieldByName(tableConfig.getResolvedName());
 
-    DatasetDefinition definition = schemaDef.datasets.get(0);
 
-    SchemaImport.DatasetConverter importer = new SchemaImport.DatasetConverter(table.getDataset().getCanonicalizer(), Constraint.FACTORY_LOOKUP);
-    FlexibleDatasetSchema userDSSchema = importer.convert(definition, env.getSession().getErrors());
+    TableSource tableSource = tableConfig.initializeSource(errors,basePath,tbField);
+    return Optional.of(tableSource);
+  }
 
-    FlexibleDatasetSchema.TableField tbField = ImportManager.createTable(table,
-        userDSSchema.getFieldByName(table.getName()), env.getSchemaAdjustmentSettings(),
-        env.getSession()
-            .getErrors().resolve(table.getDataset().getName()));
+  public SchemaDefinition loadPackageSchema(Path baseDir) {
+    Path tableSchemaPath = baseDir.resolve(PACKAGE_SCHEMA_FILE);
+    return mapYAMLFile(tableSchemaPath, SchemaDefinition.class);
+  }
 
-    SourceTableImport sourceTableImport = new SourceTableImport(table, tbField,
-        env.getSchemaAdjustmentSettings());
-
-    ScriptTableDefinition def = createScriptTableDefinition(env, sourceTableImport, alias);
+  private Name registerTable(Env env, TableSource tableSource, Optional<Name> alias) {
+    ScriptTableDefinition def = createScriptTableDefinition(env, tableSource, alias);
 
     if (env.getRelSchema()
-        .getTable(def.getTable().getName().getCanonical(), false) != null) {
+            .getTable(def.getTable().getName().getCanonical(), false) != null) {
       throw Check.newException(ErrorCode.IMPORT_NAMESPACE_CONFLICT,
-          env.getCurrentNode(),
-          env.getCurrentNode().getParserPosition(),
-          String.format("An item named `%s` is already in scope",
-              def.getTable().getName().getDisplay()));
+              env.getCurrentNode(),
+              env.getCurrentNode().getParserPosition(),
+              String.format("An item named `%s` is already in scope",
+                      def.getTable().getName().getDisplay()));
     }
 
     Resolve.registerScriptTable(env, def);
+    return tableSource.getName();
   }
 
-  public static <T> T resolveUri(URI uri, String name, ObjectMapper mapper,
-      Class<T> clazz) {
-    try {
-      URL tableURL = uri.resolve(name).toURL();
-      return mapper.readValue(tableURL, clazz);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private ScriptTableDefinition createScriptTableDefinition(Env env, SourceTableImport tblImport,
+  private ScriptTableDefinition createScriptTableDefinition(Env env, TableSource tableSource,
       Optional<Name> alias) {
-    return env.getTableFactory().importTable(tblImport, alias,
+    return env.getTableFactory().importTable(tableSource, alias,
         env.getSession().getPlanner().getRelBuilder(), env.getSession().getPipeline());
   }
+
 }

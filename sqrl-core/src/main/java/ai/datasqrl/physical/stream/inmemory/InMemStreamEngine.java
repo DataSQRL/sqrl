@@ -3,18 +3,15 @@ package ai.datasqrl.physical.stream.inmemory;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.io.formats.TextLineFormat;
-import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
+import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.io.impl.file.FilePath;
-import ai.datasqrl.io.sources.DataSource;
-import ai.datasqrl.io.sources.DataSourceImplementation;
+import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.SourceTableConfiguration;
-import ai.datasqrl.io.sources.dataset.SourceDataset;
-import ai.datasqrl.io.sources.dataset.SourceTable;
-import ai.datasqrl.io.sources.dataset.TableStatisticsStore;
+import ai.datasqrl.io.sources.dataset.TableInput;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
+import ai.datasqrl.io.sources.stats.TableStatisticsStore;
 import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
-import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.EngineCapability;
 import ai.datasqrl.physical.ExecutionEngine;
 import ai.datasqrl.physical.stream.FunctionWithError;
@@ -69,17 +66,15 @@ public class InMemStreamEngine implements StreamEngine {
         private final RecordHolder recordHolder = new RecordHolder();
 
         @Override
-        public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(SourceTable table) {
-            SourceTableConfiguration tblConfig = table.getConfiguration();
-            Preconditions.checkArgument(tblConfig.getFormatParser() instanceof TextLineFormat.Parser, "This method only supports text sources");
-            DataSource source = table.getDataset().getSource();
-            DataSourceImplementation sourceImpl = source.getImplementation();
+        public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table) {
+            Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser, "This method only supports text sources");
+            DataSystemConnector source = table.getDataset();
 
-            if (sourceImpl instanceof DirectorySourceImplementation) {
-                DirectorySourceImplementation filesource = (DirectorySourceImplementation)sourceImpl;
+            if (source instanceof DirectoryDataSystem.Connector) {
+                DirectoryDataSystem.Connector filesource = (DirectoryDataSystem.Connector)source;
                 try {
                     Stream<Path> paths = FileStreamUtil.matchingFiles(FilePath.toJavaPath(filesource.getPath()),
-                            filesource, source.getCanonicalizer(), tblConfig);
+                            filesource, table.getConfiguration());
                     return new Holder<>(FileStreamUtil.filesByline(paths).map(s -> new TimeAnnotatedRecord<>(s)));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -88,16 +83,14 @@ public class InMemStreamEngine implements StreamEngine {
         }
 
         @Override
-        public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream, SourceTable sourceTable, TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
+        public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream, TableInput tableSource, TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
             final SourceTableStatistics statistics = new SourceTableStatistics();
-            final Name dataset = sourceTable.getDataset().getName();
-            final Name tableName = sourceTable.getName();
-            final SourceDataset.Digest datasetReg = sourceTable.getDataset().getDigest();
+            final TableSource.Digest tableDigest = tableSource.getDigest();
             StreamHolder<SourceRecord.Raw> result = stream.mapWithError((r, c) -> {
-                ai.datasqrl.config.error.ErrorCollector errors = statistics.validate(r, datasetReg);
+                ai.datasqrl.config.error.ErrorCollector errors = statistics.validate(r, tableDigest);
                 if (errors.hasErrors()) c.accept(errors);
                 if (!errors.isFatal()) {
-                    statistics.add(r, datasetReg);
+                    statistics.add(r, tableDigest);
                     return Optional.of(r);
                 } else {
                     return Optional.empty();
@@ -105,7 +98,7 @@ public class InMemStreamEngine implements StreamEngine {
             },"stats",SourceRecord.Raw.class);
             sideStreams.add(Stream.of(statistics).map(s -> {
                 try (TableStatisticsStore store = statisticsStoreProvider.openStore()) {
-                    store.putTableStatistics(dataset,tableName,s);
+                    store.putTableStatistics(tableDigest.getPath(),s);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

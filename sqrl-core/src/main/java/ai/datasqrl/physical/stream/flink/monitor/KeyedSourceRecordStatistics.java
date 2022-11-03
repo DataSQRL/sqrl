@@ -1,11 +1,10 @@
 package ai.datasqrl.physical.stream.flink.monitor;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
 import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.SourceDataset;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
-import java.util.concurrent.TimeUnit;
+import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
@@ -15,6 +14,8 @@ import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
+import java.util.concurrent.TimeUnit;
+
 public class KeyedSourceRecordStatistics extends
     KeyedProcessFunction<Integer, SourceRecord.Raw, SourceRecord.Raw> {
 
@@ -23,15 +24,15 @@ public class KeyedSourceRecordStatistics extends
   private final int maxRecords = 100000;
   private final int maxTimeInMin = 5;
   private final OutputTag<SourceTableStatistics> statsOutput;
-  private final SourceDataset.Digest datasetReg;
+  private final TableSource.Digest tableDigest;
 
   private transient ValueState<SourceTableStatistics> stats;
   private transient ValueState<Long> nextTimer;
 
   public KeyedSourceRecordStatistics(OutputTag<SourceTableStatistics> tag,
-      SourceDataset.Digest datasetReg) {
+      TableSource.Digest tableDigest) {
     this.statsOutput = tag;
-    this.datasetReg = datasetReg;
+    this.tableDigest = tableDigest;
   }
 
   @Override
@@ -47,12 +48,12 @@ public class KeyedSourceRecordStatistics extends
       //Register an event timer into the far future to trigger when the stream ends
       context.timerService().registerEventTimeTimer(Long.MAX_VALUE);
     }
-    ErrorCollector errors = acc.validate(sourceRecord, datasetReg);
+    ErrorCollector errors = acc.validate(sourceRecord, tableDigest);
     if (errors.isFatal()) {
       //TODO: Record is flawed, put it in sideoutput and issue warning; reuse MapWithErrorProcess
       System.out.println("Stats Validation Error: " + errors);
     } else {
-      acc.add(sourceRecord, datasetReg);
+      acc.add(sourceRecord, tableDigest);
       stats.update(acc);
       if (acc.getCount() >= maxRecords) {
         context.timerService().deleteProcessingTimeTimer(nextTimer.value());

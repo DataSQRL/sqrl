@@ -1,4 +1,4 @@
-environment:
+discovery:
   monitorSources: true
   metastore:
     databaseName: "system"
@@ -9,16 +9,3 @@ engines:
       dbURL: "jdbc:h2:tmp/output"
       driverName: "org.h2.Driver"
       dialect: H2
-sources:
-  - name: "ecommerce-data"
-    source:
-      sourceType: "dir"
-      uri: "../sqml-examples/retail/ecommerce-data"
-sinks:
-  - name: "local"
-    sink:
-      sinkType: "dir"
-      uri: "../sqml-examples/retail/ecommerce-output"
-    config:
-      format:
-        formatType: "json"

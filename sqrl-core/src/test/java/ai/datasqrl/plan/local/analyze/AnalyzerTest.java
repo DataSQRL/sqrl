@@ -1,24 +1,15 @@
 package ai.datasqrl.plan.local.analyze;
 
-import ai.datasqrl.AbstractSQRLIT;
+import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.scripts.ScriptBundle;
-import ai.datasqrl.environment.ImportManager;
-import ai.datasqrl.errors.ErrorCode;
-import ai.datasqrl.parse.ConfiguredSqrlParser;
+import ai.datasqrl.config.error.ErrorCode;
 import ai.datasqrl.parse.ParsingException;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
-import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.schema.SQRLTable;
-import ai.datasqrl.util.data.C360;
+import ai.datasqrl.util.TestDataset;
+import ai.datasqrl.util.data.Retail;
 import org.apache.calcite.avatica.util.TimeUnit;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexLiteral;
@@ -27,7 +18,6 @@ import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.type.IntervalSqlType;
 import org.junit.Ignore;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -35,39 +25,16 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.math.BigDecimal;
 
-import static ai.datasqrl.util.data.C360.RETAIL_DIR_BASE;
 import static org.junit.jupiter.api.Assertions.*;
 
-class AnalyzerTest extends AbstractSQRLIT {
+class AnalyzerTest extends AbstractLogicalSQRLIT {
 
-  ConfiguredSqrlParser parser;
+  private TestDataset example = Retail.INSTANCE;
 
-  ErrorCollector error;
-
-  private Session session;
-  private Resolve resolve;
 
   @BeforeEach
   public void setup() throws IOException {
-    error = ErrorCollector.root();
-    initialize(IntegrationTestSettings.getInMemory(false));
-    C360 example = C360.BASIC;
-    example.registerSource(env);
-
-    ImportManager importManager = sqrlSettings.getImportManagerProvider()
-        .createImportManager(env.getDatasetRegistry());
-    ScriptBundle bundle = example.buildBundle().getBundle();
-    Assertions.assertTrue(
-        importManager.registerUserSchema(bundle.getMainScript().getSchema(), error));
-    SqrlCalciteSchema schema = new SqrlCalciteSchema(
-        CalciteSchema.createRootSchema(false, false).plus());
-
-    Planner planner = new PlannerFactory(
-        schema.plus()).createPlanner();
-    Session session = new Session(error, importManager, planner);
-    this.session = session;
-    this.parser = new ConfiguredSqrlParser(error);
-    this.resolve = new Resolve(RETAIL_DIR_BASE.resolve("build"));
+    initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
   }
 
   private Env generate(ScriptNode node) {

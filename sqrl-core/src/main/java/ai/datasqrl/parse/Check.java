@@ -1,9 +1,9 @@
 package ai.datasqrl.parse;
 
-import static ai.datasqrl.errors.ErrorCode.GENERIC_ERROR;
+import static ai.datasqrl.config.error.ErrorCode.GENERIC_ERROR;
 
-import ai.datasqrl.errors.ErrorCode;
-import ai.datasqrl.errors.SqrlException;
+import ai.datasqrl.config.error.ErrorCode;
+import ai.datasqrl.config.error.SqrlException;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.apache.calcite.runtime.CalciteContextException;

@@ -1,18 +1,10 @@
 package ai.datasqrl.util.data;
 
-import ai.datasqrl.io.impl.file.DirectorySourceImplementation;
 import ai.datasqrl.util.ScriptBuilder;
-import ai.datasqrl.util.ScriptComplexity;
-import ai.datasqrl.util.TestDataset;
-import com.google.common.collect.ImmutableMap;
-import lombok.SneakyThrows;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Optional;
 
-public class C360 implements TestDataset {
+public class C360 {
 
     public static final Path RETAIL_DIR_BASE = Path.of("../sqml-examples/retail-example-bundle/");
 
@@ -39,29 +31,11 @@ public class C360 implements TestDataset {
         return scriptName;
     }
 
-    @Override
     public String getName() {
         return datasetName;
     }
 
-    @Override
-    public DirectorySourceImplementation getSource() {
-        return DirectorySourceImplementation.builder()
-                .uri(dataDir.toAbsolutePath().toString())
-                .build();
-    }
 
-    @Override
-    public Map<String, Integer> getTableCounts() {
-        return ImmutableMap.of("orders",4, "customer",5, "product",6);
-    }
-
-    @Override
-    public String getScriptContent(ScriptComplexity complexity) {
-        return "IMPORT "+datasetName+".Orders;";
-    }
-
-    @Override
     public ScriptBuilder getImports() {
         ScriptBuilder builder = new ScriptBuilder();
         builder.append("IMPORT ecommerce-data.Customer");
@@ -70,17 +44,6 @@ public class C360 implements TestDataset {
         return builder;
     }
 
-    @Override
-    @SneakyThrows
-    public Optional<String> getInputSchema() {
-        return Optional.empty();
-    }
-
-    @Override
-    @SneakyThrows
-    public Optional<String> getDiscoveredSchema() {
-        return Optional.of(Files.readString(discoveredSchema));
-    }
 
     public static final C360 BASIC = new C360("");
     /* Multiple categories per product as nested entity */

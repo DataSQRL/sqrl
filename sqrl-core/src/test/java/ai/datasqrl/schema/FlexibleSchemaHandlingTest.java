@@ -1,7 +1,7 @@
 package ai.datasqrl.schema;
 
+import ai.datasqrl.compile.loaders.DataSourceLoader;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.scripts.SqrlScript;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
@@ -17,7 +17,6 @@ import ai.datasqrl.schema.input.external.DatasetDefinition;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaImport;
 import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.junit.ArgumentProvider;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -29,7 +28,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -80,8 +78,7 @@ public class FlexibleSchemaHandlingTest {
 
     @SneakyThrows
     public FlexibleDatasetSchema getSchema(InputSchema inputSchema) {
-        String schemaString = Files.readString(inputSchema.file);
-        SchemaDefinition schemaDef = SqrlScript.Config.parseSchema(schemaString);
+        SchemaDefinition schemaDef = new DataSourceLoader().loadPackageSchema(inputSchema.packageDir);
         DatasetDefinition datasetDefinition = schemaDef.datasets.stream().filter(dd -> dd.name.equalsIgnoreCase(inputSchema.name)).findFirst().get();
         SchemaImport.DatasetConverter importer = new SchemaImport.DatasetConverter(NameCanonicalizer.SYSTEM, Constraint.FACTORY_LOOKUP);
         ErrorCollector errors = ErrorCollector.root();
@@ -92,22 +89,13 @@ public class FlexibleSchemaHandlingTest {
         return schema;
     }
 
-
-    static class WithSchemaProvider implements ArgumentsProvider {
-
-        @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {
-            return TestDataset.generateAsArguments(td -> td.getInputSchema().isPresent());
-        }
-    }
-
     @Value
     public static class InputSchema {
-        Path file;
+        Path packageDir;
         String name;
     }
 
-    public static final List<InputSchema> preSchemas = List.of(new InputSchema(Paths.get("..","sqml-examples","retail","c360","pre-schema.yml"),"ecommerce-data"));
+    public static final List<InputSchema> preSchemas = List.of(new InputSchema(Paths.get("..","sqml-examples","retail","ecommerce-data"),"ecommerce-data"));
 
     static class SchemaConverterProvider implements ArgumentsProvider {
 
