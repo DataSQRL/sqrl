@@ -16,6 +16,7 @@ import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.ResultSetPrinter;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.SnapshotTest;
+import ai.datasqrl.util.TestScript;
 import ai.datasqrl.util.data.Retail;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
@@ -24,10 +25,14 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.*;
@@ -173,6 +178,19 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("CountStream := STREAM ON ADD AS SELECT customerid, name, quantity FROM CustomerCount WHERE quantity > 1");
     builder.add("CustomerCount2 := DISTINCT CountStream ON customerid ORDER BY _ingest_time DESC");
     validate(builder.getScript(), "customercount","countstream","customercount2");
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(TestScript.AllProvider.class)
+  @SneakyThrows
+  public void fullScriptTest(TestScript script) {
+    validate(Files.readString(script.getScript()), Collections.EMPTY_SET, script.getResultTables());
+  }
+
+  @Disabled
+  @Test
+  public void failingScriptTest() {
+    fullScriptTest(Retail.INSTANCE.getScripts().get(1));
   }
 
   private void validate(String script, String... queryTables) {

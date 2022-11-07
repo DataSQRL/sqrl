@@ -6,8 +6,8 @@ import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.util.TestDataset;
-import ai.datasqrl.util.data.Retail;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.Optional;
 
@@ -15,15 +15,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class LoaderTest {
 
-    @Test
-    public void testLoadingSources() {
-        TestDataset example = Retail.INSTANCE;
+    @ParameterizedTest
+    @ArgumentsSource(TestDataset.AllProvider.class)
+    public void testLoadingSources(TestDataset example) {
         ErrorCollector errors = ErrorCollector.root();
         DataSourceLoader loader = new DataSourceLoader();
-        Optional<TableSource> table = loader.readTable(example.getRootPackageDirectory(), NamePath.of("ecommerce-data","orders"), errors);
-        assertFalse(errors.isFatal(), errors.toString());
-        assertTrue(table.isPresent());
-        assertEquals(table.get().getName(),Name.system("orders"));
+        for (String tblName : example.getTables()) {
+            Optional<TableSource> table = loader.readTable(example.getRootPackageDirectory(), NamePath.of(example.getName(),tblName), errors);
+            assertFalse(errors.isFatal(), errors.toString());
+            assertTrue(table.isPresent());
+            assertEquals(table.get().getName(),Name.system(tblName));
+
+        }
     }
 
 }

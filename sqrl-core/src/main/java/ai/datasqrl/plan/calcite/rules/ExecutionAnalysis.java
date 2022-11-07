@@ -11,6 +11,7 @@ import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexVisitorImpl;
+import org.apache.commons.collections.ListUtils;
 
 import java.util.*;
 
@@ -18,13 +19,18 @@ import java.util.*;
 public class ExecutionAnalysis {
 
     ExecutionStage stage;
+    List<AnnotatedLP> inputs;
 
-    public static ExecutionAnalysis ofScan(ExecutionStage scan) {
-        return new ExecutionAnalysis(scan);
+    public static ExecutionAnalysis of(AnnotatedLP alp) {
+        return new ExecutionAnalysis(alp.getStage(), List.of(alp));
     }
 
     public static ExecutionAnalysis start(ExecutionStage start) {
-        return new ExecutionAnalysis(start);
+        return new ExecutionAnalysis(start, List.of());
+    }
+
+    public ExecutionStage getStage() {
+        return stage;
     }
 
     public boolean isMaterialize(ExecutionAnalysis from) {
@@ -32,15 +38,24 @@ public class ExecutionAnalysis {
     }
 
     public ExecutionAnalysis combine(ExecutionAnalysis other) {
-        if (stage.equals(other.stage)) return this;
-        Optional<ExecutionStage> next = stage.nextStage();
-        if (next.filter(s -> s.equals(other.stage)).isPresent()) return other;
-        Optional<ExecutionStage> otherNext = other.stage.nextStage();
-        if (otherNext.filter(s -> s.equals(stage)).isPresent()) return this;
-        if (otherNext.isPresent() && next.isPresent() && next.get().equals(otherNext.get())) {
-            return new ExecutionAnalysis(next.get());
+        List<AnnotatedLP> inputs = ListUtils.union(this.inputs,other.inputs);
+        ExecutionStage resultStage;
+        if (stage.equals(other.stage)) {
+            resultStage = stage;
+        } else {
+            Optional<ExecutionStage> next = stage.nextStage();
+            Optional<ExecutionStage> otherNext = other.stage.nextStage();
+            if (next.filter(s -> s.equals(other.stage)).isPresent()) {
+                resultStage = other.stage;
+            } else if (otherNext.filter(s -> s.equals(stage)).isPresent()) {
+                resultStage = stage;
+            } else if (otherNext.isPresent() && next.isPresent() && next.get().equals(otherNext.get())) {
+                resultStage = next.get();
+            } else {
+                throw ExecutionStageException.StageFinding.of(stage,other.stage).injectInputs(inputs);
+            }
         }
-        throw new ExecutionStageException.StageFinding();
+        return new ExecutionAnalysis(resultStage, inputs);
     }
 
     public ExecutionAnalysis require(EngineCapability... requiredCapabilities) {
@@ -52,10 +67,10 @@ public class ExecutionAnalysis {
 
         Optional<ExecutionStage> nextStage = stage.nextStage();
         while (nextStage.isPresent()) {
-            if (nextStage.get().supportsAll(requiredCapabilities)) return new ExecutionAnalysis(nextStage.get());
+            if (nextStage.get().supportsAll(requiredCapabilities)) return new ExecutionAnalysis(nextStage.get(), inputs);
             else nextStage = nextStage.get().nextStage();
         }
-        throw new ExecutionStageException.StageFinding();
+        throw ExecutionStageException.StageFinding.of(stage,requiredCapabilities).injectInputs(inputs);
     }
 
     public ExecutionAnalysis requireRex(Iterable<RexNode> nodes) {

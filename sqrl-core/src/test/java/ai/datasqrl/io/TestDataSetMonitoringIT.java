@@ -14,6 +14,7 @@ import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaExport;
 import ai.datasqrl.util.SnapshotTest;
 import ai.datasqrl.util.TestDataset;
+import ai.datasqrl.util.junit.ArgumentProvider;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -29,6 +30,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,6 +45,8 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), example.getName(), engine.getName());
 
         List<TableSource> tables = discoverSchema(example);
+        assertEquals(example.getNumTables(),tables.size());
+        assertEquals(example.getTables(),tables.stream().map(TableSource::getName).map(Name::getCanonical).collect(Collectors.toSet()));
 
         //Write out table configurations
         ObjectMapper jsonMapper = new ObjectMapper();
@@ -83,10 +87,11 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
 
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {
-            return TestDataset.generateAsArguments(List.of(
+            List<IntegrationTestSettings.EnginePair> engines = List.of(
                     new IntegrationTestSettings.EnginePair(IntegrationTestSettings.DatabaseEngine.INMEMORY, IntegrationTestSettings.StreamEngine.INMEMORY)
                     ,new IntegrationTestSettings.EnginePair(IntegrationTestSettings.DatabaseEngine.POSTGRES, IntegrationTestSettings.StreamEngine.FLINK)
-            ));
+            );
+            return ArgumentProvider.crossProduct(TestDataset.getAll(), engines);
         }
     }
 

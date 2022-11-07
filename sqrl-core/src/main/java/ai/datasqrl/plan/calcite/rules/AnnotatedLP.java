@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite.rules;
 
 import ai.datasqrl.physical.EngineCapability;
+import ai.datasqrl.physical.pipeline.ExecutionStage;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
@@ -8,18 +9,19 @@ import ai.datasqrl.plan.calcite.util.IndexMap;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
+import lombok.*;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rex.*;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexFieldCollation;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.tools.RelBuilder;
@@ -29,6 +31,7 @@ import java.util.*;
 @Value
 @AllArgsConstructor
 @Builder
+@ToString
 public class AnnotatedLP implements RelHolder {
 
     @NonNull
@@ -42,7 +45,7 @@ public class AnnotatedLP implements RelHolder {
     @NonNull
     public ContinuousIndexMap select;
     @NonNull
-    public ExecutionAnalysis exec;
+    public ExecutionStage stage;
 
     @Builder.Default
     public List<JoinTable> joinTables = null;
@@ -59,11 +62,21 @@ public class AnnotatedLP implements RelHolder {
     @NonNull
     public SortOrder sort = SortOrder.EMPTY;
 
+    @Builder.Default
+    @NonNull
+    public List<AnnotatedLP> inputs = List.of();
+
+    public static AnnotatedLPBuilder build(RelNode relNode, TableType type, ContinuousIndexMap primaryKey,
+                                           TimestampHolder.Derived timestamp, ContinuousIndexMap select,
+                                           ExecutionAnalysis exec, AnnotatedLP input) {
+        return build(relNode, type, primaryKey, timestamp, select, exec, List.of(input));
+    }
+
     public static AnnotatedLPBuilder build(RelNode relNode, TableType type, ContinuousIndexMap primaryKey,
                                        TimestampHolder.Derived timestamp, ContinuousIndexMap select,
-                                           ExecutionAnalysis exec) {
+                                           ExecutionAnalysis exec, List<AnnotatedLP> inputs) {
         return AnnotatedLP.builder().relNode(relNode).type(type).primaryKey(primaryKey).timestamp(timestamp)
-                .select(select).exec(exec);
+                .select(select).stage(exec.getStage()).inputs(inputs);
     }
 
     public AnnotatedLPBuilder copy() {
@@ -75,15 +88,29 @@ public class AnnotatedLP implements RelHolder {
         builder.select(select);
         builder.joinTables(joinTables);
         builder.numRootPks(numRootPks);
-        builder.exec(exec);
+        builder.stage(stage);
         builder.nowFilter(nowFilter);
         builder.topN(topN);
         builder.sort(sort);
+        builder.inputs(List.of(this));
         return builder;
+    }
+
+    public static AnnotatedLP ofScan(QueryRelationalTable table, TableScan scan) {
+        int numCols = table.getNumColumns();
+        return AnnotatedLP.builder().relNode(scan).type(table.getType())
+                .primaryKey(ContinuousIndexMap.identity(table.getNumPrimaryKeys(),numCols))
+                .timestamp(table.getTimestamp().getDerived())
+                .select(ContinuousIndexMap.identity(numCols,numCols))
+                .stage(table.getExecution()).build();
     }
 
     public int getFieldLength() {
         return relNode.getRowType().getFieldCount();
+    }
+
+    public ExecutionAnalysis getExec() {
+        return ExecutionAnalysis.of(this);
     }
 
     /**
@@ -100,18 +127,18 @@ public class AnnotatedLP implements RelHolder {
 
         relBuilder.push(relNode);
 
-        ExecutionAnalysis newExec = exec;
+        ExecutionAnalysis newExec = getExec();
         SortOrder newSort = sort;
         if (!topN.isDistinct() && (!topN.hasPartition() || !topN.hasLimit())) {
             RelCollation collation = topN.getCollation();
             if (topN.hasLimit()) { //It's not partitioned, so straight forward order and limit
                 if (topN.hasCollation()) relBuilder.sort(collation);
                 relBuilder.limit(0, topN.getLimit());
-                newExec = exec.require(EngineCapability.GLOBAL_SORT);
+                newExec = newExec.require(EngineCapability.GLOBAL_SORT);
             } else { //Lift up sort and prepend partition (if any)
                 newSort = newSort.ifEmpty(SortOrder.of(topN.getPartition(), collation));
             }
-            return AnnotatedLP.build(relBuilder.build(), type, primaryKey, timestamp, select, newExec)
+            return AnnotatedLP.build(relBuilder.build(), type, primaryKey, timestamp, select, newExec, this)
                     .sort(newSort).build();
         } else { //distinct or (hasPartition and hasLimit)
             final RelDataType inputType = relBuilder.peek().getRowType();
@@ -198,7 +225,7 @@ public class AnnotatedLP implements RelHolder {
             }
             ContinuousIndexMap newPk = primaryKey.remap(IndexMap.IDENTITY);
             ContinuousIndexMap newSelect = select.remap(IndexMap.IDENTITY);
-            return AnnotatedLP.build(relBuilder.build(), type, newPk, timestamp, newSelect, newExec)
+            return AnnotatedLP.build(relBuilder.build(), type, newPk, timestamp, newSelect, newExec, this)
                     .sort(newSort).build();
         }
     }
@@ -207,7 +234,7 @@ public class AnnotatedLP implements RelHolder {
         if (nowFilter.isEmpty()) return this;
         nowFilter.addFilterTo(relB.push(relNode));
         return copy().relNode(relB.build())
-                .exec(exec.require(EngineCapability.NOW))
+                .stage(getExec().require(EngineCapability.NOW).getStage())
                 .nowFilter(NowFilter.EMPTY).build();
 
     }
@@ -219,7 +246,7 @@ public class AnnotatedLP implements RelHolder {
         if (!topN.isEmpty()) return inlineTopN(relB).inlineSort(relB);
         sort.addTo(relB.push(relNode));
         return copy().relNode(relB.build())
-                .exec(exec.require(EngineCapability.GLOBAL_SORT))
+                .stage(getExec().require(EngineCapability.GLOBAL_SORT).getStage())
                 .sort(SortOrder.EMPTY).build();
     }
 
@@ -308,8 +335,8 @@ public class AnnotatedLP implements RelHolder {
         RelNode relNode = relBuilder.build();
 
         return new AnnotatedLP(relNode,input.type, primaryKey,
-                input.timestamp.remapIndexes(remap), updatedSelect, input.exec, null, input.numRootPks,
-                input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap));
+                input.timestamp.remapIndexes(remap), updatedSelect, input.getStage(), null, input.numRootPks,
+                input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap), List.of(this));
     }
 
     public AnnotatedLP postProcess(RelBuilder relBuilder) {
@@ -318,7 +345,7 @@ public class AnnotatedLP implements RelHolder {
 
     public AnnotatedLP postProcessStream(RelBuilder relBuilder, List<String> fieldNames) {
         AnnotatedLP input = this;
-        input = input.inlineAllPullups(relBuilder);
+        input = input.inlineNowFilter(relBuilder).inlineTopN(relBuilder); //for streams, we ignore sorts
 
         List<RexNode> projects = new ArrayList<>(input.select.getSourceLength());
         Preconditions.checkArgument(fieldNames.size()==input.select.getSourceLength());
@@ -330,8 +357,8 @@ public class AnnotatedLP implements RelHolder {
         relBuilder.project(projects, fieldNames, true); //Force to make sure fields are renamed
         RelNode relNode = relBuilder.build();
         return new AnnotatedLP(relNode, input.type, ContinuousIndexMap.EMPTY, TimestampHolder.Derived.NONE,
-                ContinuousIndexMap.identity(projects.size(), projects.size()), input.exec, null, Optional.empty(),
-                NowFilter.EMPTY, TopNConstraint.EMPTY, SortOrder.EMPTY);
+                ContinuousIndexMap.identity(projects.size(), projects.size()), input.stage, null, Optional.empty(),
+                NowFilter.EMPTY, TopNConstraint.EMPTY, SortOrder.EMPTY, List.of(this));
     }
 
     public double estimateRowCount() {

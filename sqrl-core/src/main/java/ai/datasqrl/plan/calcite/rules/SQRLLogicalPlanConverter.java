@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite.rules;
 
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
+import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.physical.EngineCapability;
 import ai.datasqrl.physical.pipeline.ExecutionPipeline;
 import ai.datasqrl.physical.pipeline.ExecutionStage;
@@ -34,7 +35,6 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.mapping.IntPair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 import java.math.BigDecimal;
@@ -80,11 +80,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         this.config = config;
     }
 
-    public static AnnotatedLP findCheapest(RelNode relNode, Supplier<RelBuilder> relBuilderFactory,
-                                            ExecutionPipeline pipeline, Config config) {
+    public static AnnotatedLP findCheapest(NamePath name, RelNode relNode, Supplier<RelBuilder> relBuilderFactory,
+                                           ExecutionPipeline pipeline, Config config) {
         AnnotatedLP cheapest = null;
         ComputeCost cheapestCost = null;
-        List<ExecutionStageException> stageExceptions = new ArrayList<>();
+        Map<ExecutionStage, ExecutionStageException> stageExceptions = new HashMap<>();
         for (ExecutionStage stage : pipeline.getStages()) {
             try {
                 Config.ConfigBuilder configBuilder = config.copy();
@@ -95,10 +95,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     cheapestCost = cost;
                 }
             } catch (ExecutionStageException e) {
-                stageExceptions.add(e);
+                stageExceptions.put(stage, e);
             }
         }
-        if (cheapest==null) throw new IllegalArgumentException("Could not find stage that can process relation: " + stageExceptions);
+        if (cheapest==null) throw new ExecutionStageException.NoStage(name, stageExceptions);
         return cheapest;
     }
 
@@ -114,12 +114,12 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
     @Override
     protected RelNode setRelHolder(AnnotatedLP relHolder) {
-        if (relHolder.exec.getStage().isRead()) {
+        if (relHolder.getStage().isRead()) {
             //Inline all pullups
             relHolder = relHolder.inlineAllPullups(makeRelBuilder());
         }
-        if (!config.allowStageChange && !relHolder.exec.getStage().equals(config.startStage)) {
-            throw new ExecutionStageException.StageChange();
+        if (!config.allowStageChange && !relHolder.getStage().equals(config.startStage)) {
+            throw ExecutionStageException.StageChange.of(config.startStage, relHolder.getStage()).injectInput(relHolder);
         }
 
         super.setRelHolder(relHolder);
@@ -135,7 +135,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         VirtualRelationalTable.Root root = vtable.getRoot();
         QueryRelationalTable queryTable = root.getBase();
-        ExecutionAnalysis scanExec = ExecutionAnalysis.ofScan(queryTable.getExecution());
+        ExecutionAnalysis scanExec = ExecutionAnalysis.of(AnnotatedLP.ofScan(queryTable, tableScan));
         ExecutionAnalysis exec = scanExec.combine(ExecutionAnalysis.start(config.startStage));
 
         Optional<Integer> numRootPks = Optional.of(root.getNumPrimaryKeys());
@@ -154,9 +154,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             AnnotatedLP result = new AnnotatedLP(relNode, queryTable.getType(),
                     primaryKey.build(targetLength),
                     queryTable.getTimestamp().getDerived(),
-                    indexMap.build(targetLength), exec, joinTables, numRootPks,
+                    indexMap.build(targetLength), exec.getStage(), joinTables, numRootPks,
                     queryTable.getPullups().getNowFilter(), queryTable.getPullups().getTopN(),
-                    queryTable.getPullups().getSort());
+                    queryTable.getPullups().getSort(), List.of());
             return setRelHolder(result);
         } else {
             int targetLength = vtable.getNumColumns();
@@ -169,9 +169,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     ContinuousIndexMap.identity(vtable.getNumPrimaryKeys(),targetLength),
                     queryTable.getTimestamp().getDerived(),
                     ContinuousIndexMap.identity(targetLength,targetLength),
-                    exec, null, numRootPks,
+                    exec.getStage(), null, numRootPks,
                     queryTable.getPullups().getNowFilter(), topN,
-                    queryTable.getPullups().getSort());
+                    queryTable.getPullups().getSort(), List.of());
             return setRelHolder(result);
         }
     }
@@ -317,7 +317,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         }
         relBuilder.filter(conjunctions);
         return setRelHolder(input.copy().relNode(relBuilder.build()).timestamp(timestamp)
-                .exec(input.exec.requireRex(conjunctions)).nowFilter(nowFilter).build());
+                .stage(input.getExec().requireRex(conjunctions).getStage()).nowFilter(nowFilter).build());
     }
 
     @Override
@@ -501,7 +501,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         int fieldCount = updatedProjects.size();
         return setRelHolder(AnnotatedLP.build(newProject,input.type,primaryKey.build(fieldCount),
                 timestamp, ContinuousIndexMap.identity(logicalProject.getProjects().size(),fieldCount),
-                input.exec.requireRex(updatedProjects))
+                input.getExec().requireRex(updatedProjects), input)
                 .numRootPks(input.numRootPks).nowFilter(nowFilter).sort(sort).build());
     }
 
@@ -548,7 +548,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 RelBuilder relBuilder = makeRelBuilder().push(leftInput.getRelNode());
                 ContinuousIndexMap newPk = leftInput.primaryKey;
                 List<JoinTable> joinTables = new ArrayList<>(leftInput.joinTables);
-                if (right2left.containsKey(rightLeaf) || leftInput.exec.getStage().supports(EngineCapability.DENORMALIZE)) {
+                if (right2left.containsKey(rightLeaf) || leftInput.getStage().supports(EngineCapability.DENORMALIZE)) {
                     if (!right2left.containsKey(rightLeaf)) {
                         //Find closest ancestor that was mapped and shred from there
                         List<JoinTable> ancestorPath = new ArrayList<>();
@@ -582,12 +582,12 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                             });
                     ContinuousIndexMap indexMap = leftInput.select.append(remapedRight);
                     return setRelHolder(AnnotatedLP.build(relNode, leftInput.type, newPk, leftInput.timestamp,
-                            indexMap, leftInput.exec).numRootPks(leftInput.numRootPks).joinTables(joinTables).build());
+                            indexMap, leftInput.getExec(), leftInput).numRootPks(leftInput.numRootPks).joinTables(joinTables).build());
                 }
             }
         }
 
-        ExecutionAnalysis combinedExec = leftInput.exec.combine(rightInput.exec).requireRex(List.of(condition));
+        ExecutionAnalysis combinedExec = leftInput.getExec().combine(rightInput.getExec()).requireRex(List.of(condition));
 
         //Detect temporal join
         if (joinType==JoinRelType.DEFAULT || joinType==JoinRelType.TEMPORAL || joinType==JoinRelType.LEFT) {
@@ -625,7 +625,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     hint.addTo(relB);
                     return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM,
                             pk, joinTimestamp, joinedIndexMap,
-                            combinedExec.require(EngineCapability.TEMPORAL_JOIN))
+                            combinedExec.require(EngineCapability.TEMPORAL_JOIN), List.of(leftInput, rightInput))
                             .numRootPks(leftInput.numRootPks).sort(leftInput.sort).build());
                 } else if (joinType==JoinRelType.TEMPORAL) {
                     throw new IllegalArgumentException("Expected join condition to be equality condition on state's primary key: " + logicalJoin);
@@ -723,7 +723,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     relB.join(joinType==JoinRelType.LEFT?joinType:JoinRelType.INNER, condition); //Can treat as "standard" inner join since no modification is necessary in physical plan
                     SqrlHintStrategyTable.INTERVAL_JOIN.addTo(relB);
                     return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM,
-                            concatPk, joinTimestamp, joinedIndexMap, combinedExec).numRootPks(numRootPks).sort(joinedSort).build());
+                            concatPk, joinTimestamp, joinedIndexMap, combinedExec, List.of(leftInputF, rightInputF)).numRootPks(numRootPks).sort(joinedSort).build());
                 } else if (joinType==JoinRelType.INTERVAL) {
                     throw new IllegalArgumentException("Interval joins require time bounds in the join condition: " + logicalJoin);
                 }
@@ -745,7 +745,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STATE,
                 concatPk, TimestampHolder.Derived.NONE, joinedIndexMap,
-                combinedExec).sort(joinedSort).build());
+                combinedExec, List.of(leftInputF, rightInputF)).sort(joinedSort).build());
     }
 
     private static<T,R> R apply2JoinSide(int joinIndex, int leftSideMaxIdx, T left, T right, BiFunction<T,Integer,R> function) {
@@ -813,10 +813,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             relBuilder.push(input.relNode);
             CalciteUtil.addProjection(relBuilder, localSelectIndexes, localSelectNames);
             unionTimestamp = unionTimestamp.union(localTimestamp);
-            exec = exec==null?input.exec:exec.combine(input.exec);
+            exec = exec==null?input.getExec():exec.combine(input.getExec());
         }
         relBuilder.union(true,inputs.size());
-        return setRelHolder(AnnotatedLP.build(relBuilder.build(),TableType.STREAM,pk,unionTimestamp,select,exec)
+        return setRelHolder(AnnotatedLP.build(relBuilder.build(),TableType.STREAM,pk,unionTimestamp,select,exec, inputs)
                 .numRootPks(numRootPks).build());
     }
 
@@ -828,8 +828,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         final List<Integer> groupByIdx = aggregate.getGroupSet().asList().stream()
                 .map(idx -> input.select.map(idx))
                 .collect(Collectors.toList());
-        //We are making the assumption that remapping preserves sort order since group-by indexes must be sorted (they are converted to bitsets)
-        Preconditions.checkArgument(groupByIdx.equals(groupByIdx.stream().sorted().collect(Collectors.toList())));
         List<AggregateCall> aggregateCalls = aggregate.getAggCallList().stream().map(agg -> {
             Preconditions.checkArgument(agg.getCollation().getFieldCollations().isEmpty(), "Unexpected aggregate call: %s", agg);
             Preconditions.checkArgument(agg.filterArg<0,"Unexpected aggregate call: %s", agg);
@@ -837,7 +835,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         }).collect(Collectors.toList());
         int targetLength = groupByIdx.size() + aggregateCalls.size();
 
-        ExecutionAnalysis exec = input.exec.requireAggregates(aggregateCalls);
+        ExecutionAnalysis exec = input.getExec().requireAggregates(aggregateCalls);
 
         //Check if this an aggregation of a stream on root primary key
         if (input.type == TableType.STREAM && input.numRootPks.isPresent() && exec.getStage().isWrite()
@@ -849,18 +847,18 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
             RelBuilder relB = makeRelBuilder();
             relB.push(input.relNode);
-            Triple<ContinuousIndexMap, ContinuousIndexMap, TimestampHolder.Derived> addedTimestamp =
+            Pair<PkAndSelect, TimestampHolder.Derived> addedTimestamp =
                     addTimestampAggregate(relB,groupByIdx,candidate,aggregateCalls);
-            ContinuousIndexMap pk = addedTimestamp.getLeft(), select = addedTimestamp.getMiddle();
-            TimestampHolder.Derived timestamp = addedTimestamp.getRight();
+            PkAndSelect pkSelect = addedTimestamp.getKey();
+            TimestampHolder.Derived timestamp = addedTimestamp.getValue();
 
             new TumbleAggregationHint(candidate.getIndex(), TumbleAggregationHint.Type.INSTANT).addTo(relB);
 
             NowFilter nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(),
                      timestamp.getTimestampCandidate().getIndex()));
 
-            return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM, pk, timestamp, select, exec)
-                    .numRootPks(Optional.of(pk.getSourceLength()))
+            return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM, pkSelect.pk, timestamp, pkSelect.select, exec, input)
+                    .numRootPks(Optional.of(pkSelect.pk.getSourceLength()))
                     .nowFilter(nowFilter).build());
         }
 
@@ -894,16 +892,15 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 relB.push(input.relNode);
                 relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)),aggregateCalls);
                 new TumbleAggregationHint(keyCandidate.getIndex(), TumbleAggregationHint.Type.FUNCTION).addTo(relB);
-                ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
-                ContinuousIndexMap select = ContinuousIndexMap.identity(targetLength, targetLength);
+                PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength);
 
                 /* TODO: this type of streaming aggregation requires a post-filter in the database (in physical model) to filter out "open" time buckets,
                 i.e. time_bucket_col < time_bucket_function(now()) [if now() lands in a time bucket, that bucket is still open and shouldn't be shown]
                   set to "SHOULD" once this is supported
                  */
 
-                return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM, pk, newTimestamp, select, exec)
-                        .numRootPks(Optional.of(pk.getSourceLength()))
+                return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM, pkSelect.pk, newTimestamp, pkSelect.select, exec, input)
+                        .numRootPks(Optional.of(pkSelect.pk.getSourceLength()))
                         .nowFilter(nowFilter).build());
 
             }
@@ -925,10 +922,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
                 RelBuilder relB = makeRelBuilder();
                 relB.push(input.relNode);
-                Triple<ContinuousIndexMap, ContinuousIndexMap, TimestampHolder.Derived> addedTimestamp =
+                Pair<PkAndSelect, TimestampHolder.Derived> addedTimestamp =
                         addTimestampAggregate(relB,groupByIdx,candidate,aggregateCalls);
-                ContinuousIndexMap pk = addedTimestamp.getLeft(), select = addedTimestamp.getMiddle();
-                TimestampHolder.Derived timestamp = addedTimestamp.getRight();
+                PkAndSelect pkAndSelect = addedTimestamp.getKey();
+                TimestampHolder.Derived timestamp = addedTimestamp.getValue();
 
                 //Convert now-filter to sliding window and add as hint
                 long intervalWidthMs = nowFilter.getPredicate().getIntervalLength();
@@ -937,9 +934,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 Preconditions.checkArgument(slideWidthMs>0 && slideWidthMs<intervalWidthMs,"Invalid window widths: %s - %s",intervalWidthMs,slideWidthMs);
                 new SlidingAggregationHint(candidate.getIndex(),intervalWidthMs, slideWidthMs).addTo(relB);
 
-                TopNConstraint dedup = TopNConstraint.dedupWindowAggregation(pk.targetsAsList(),timestamp.getTimestampCandidate().getIndex());
-                return setRelHolder(AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pk,
-                        timestamp, select, exec)
+                TopNConstraint dedup = TopNConstraint.dedupWindowAggregation(pkAndSelect.pk.targetsAsList(),timestamp.getTimestampCandidate().getIndex());
+                return setRelHolder(AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pkAndSelect.pk,
+                        timestamp, pkAndSelect.select, exec, input)
                         .topN(dedup).build());
             } else {
                 //Convert aggregation to window-based aggregation in a project so we can preserve timestamp
@@ -986,10 +983,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 projectNames.add(null);
 
                 relB.project(projects, projectNames);
-                ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
-                ContinuousIndexMap select = ContinuousIndexMap.identity(targetLength - 1, targetLength);
-                return setRelHolder(AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pk,
-                        outputTimestamp, select, nowInput.exec.requireAggregates(aggregateCalls)).build());
+                PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength-1);
+                return setRelHolder(AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pkSelect.pk,
+                        outputTimestamp, pkSelect.select, nowInput.getExec().requireAggregates(aggregateCalls), input).build());
             }
         } else {
             //Standard aggregation produces a state table
@@ -997,14 +993,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             RelBuilder relB = makeRelBuilder();
             relB.push(input.relNode);
             relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)), aggregateCalls);
-            ContinuousIndexMap pk = ContinuousIndexMap.identity(groupByIdx.size(), targetLength);
-            ContinuousIndexMap select = ContinuousIndexMap.identity(targetLength, targetLength);
-            return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STATE, pk,
-                    TimestampHolder.Derived.NONE, select, exec).build());
+            PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength);
+            return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STATE, pkSelect.pk,
+                    TimestampHolder.Derived.NONE, pkSelect.select, exec, input).build());
         }
     }
 
-    private Triple<ContinuousIndexMap, ContinuousIndexMap, TimestampHolder.Derived> addTimestampAggregate(
+    private Pair<PkAndSelect, TimestampHolder.Derived> addTimestampAggregate(
             RelBuilder relBuilder, List<Integer> groupByIdx, TimestampHolder.Derived.Candidate candidate,
             List<AggregateCall> aggregateCalls) {
         int targetLength = groupByIdx.size() + aggregateCalls.size();
@@ -1019,12 +1014,48 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         TimestampHolder.Derived timestamp = candidate.withIndex(newTimestampIdx).fixAsTimestamp();
 
         relBuilder.aggregate(relBuilder.groupKey(Ints.toArray(groupByIdxTimestamp)),aggregateCalls);
-        List<Integer> pkIndexes = new ArrayList<>(ContiguousSet.closedOpen(0,groupByIdxTimestamp.size()).asList());
-        if (addedTimestamp) pkIndexes.remove(newTimestampIdx);
-        ContinuousIndexMap pk = ContinuousIndexMap.of(pkIndexes,targetLength);
-        ContinuousIndexMap select = ContinuousIndexMap.of(SqrlRexUtil.combineIndexes(pkIndexes,
-                ContiguousSet.closedOpen(groupByIdxTimestamp.size(),targetLength)),targetLength);
-        return Triple.of(pk,select,timestamp);
+        //Restore original order of groupByIdx in primary key and select
+        PkAndSelect pkAndSelect =
+                aggregatePkAndSelect(groupByIdx, groupByIdxTimestamp, targetLength);
+        return Pair.of(pkAndSelect, timestamp);
+    }
+
+    public PkAndSelect aggregatePkAndSelect(List<Integer> originalGroupByIdx,
+                                                                            int targetLength) {
+        return aggregatePkAndSelect(originalGroupByIdx,
+                originalGroupByIdx.stream().sorted().collect(Collectors.toList()),
+                targetLength);
+    }
+
+    /**
+     * Produces the pk and select mappings by taking into consideration that the group-by indexes of an aggregation
+     * are implicitly sorted because they get converted to a bitset in the RelBuilder.
+     *
+     * @param originalGroupByIdx The original list of selected group by indexes (may not be sorted)
+     * @param finalGroupByIdx The list of selected group by indexes to be used in the aggregate (must be sorted)
+     * @param targetLength The number of columns of the aggregate operator
+     * @return
+     */
+    public PkAndSelect aggregatePkAndSelect(List<Integer> originalGroupByIdx,
+                                                                   List<Integer> finalGroupByIdx, int targetLength) {
+        Preconditions.checkArgument(finalGroupByIdx.equals(finalGroupByIdx.stream().sorted().collect(Collectors.toList())),
+                "Expected final groupByIdx to be sorted");
+        ContinuousIndexMap.Builder pkBuilder = ContinuousIndexMap.builder(originalGroupByIdx.size());
+        for (int idx : originalGroupByIdx) {
+            int mappedToIdx = finalGroupByIdx.indexOf(idx);
+            Preconditions.checkArgument(mappedToIdx>=0, "Invalid groupByIdx [%s] to [%s]",originalGroupByIdx,finalGroupByIdx);
+            pkBuilder.add(mappedToIdx);
+        }
+        ContinuousIndexMap pk = pkBuilder.build(targetLength);
+        ContinuousIndexMap select = pk.append(ContinuousIndexMap.of(
+                ContiguousSet.closedOpen(finalGroupByIdx.size(),targetLength)));
+        return new PkAndSelect(pk,select);
+    }
+
+    @Value
+    private static class PkAndSelect {
+        ContinuousIndexMap pk;
+        ContinuousIndexMap select;
     }
 
     @Override

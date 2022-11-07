@@ -117,8 +117,8 @@ public class ContinuousIndexMap implements IndexMap {
         return b.build(targetLength);
     }
 
-    public static ContinuousIndexMap of(Collection<Integer> indexes, int targetLength) {
-        return builder(indexes.size()).addAll(indexes).build(targetLength);
+    public static ContinuousIndexMap of(Collection<Integer> indexes) {
+        return builder(indexes.size()).addAll(indexes).build();
     }
 
     public static final class Builder {

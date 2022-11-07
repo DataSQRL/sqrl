@@ -17,6 +17,7 @@ import ai.datasqrl.schema.input.external.DatasetDefinition;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaImport;
 import ai.datasqrl.util.SnapshotTest;
+import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.junit.ArgumentProvider;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -29,10 +30,10 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -95,8 +96,6 @@ public class FlexibleSchemaHandlingTest {
         String name;
     }
 
-    public static final List<InputSchema> preSchemas = List.of(new InputSchema(Paths.get("..","sqml-examples","retail","ecommerce-data"),"ecommerce-data"));
-
     static class SchemaConverterProvider implements ArgumentsProvider {
 
         @Override
@@ -111,7 +110,11 @@ public class FlexibleSchemaHandlingTest {
             converters.add(new SchemaConverterTestCase(FlinkTypeInfoSchemaGenerator.INSTANCE));
             converters.add(new SchemaConverterTestCase(FlinkTableSchemaGenerator.INSTANCE));
 
-            return ArgumentProvider.crossProduct(preSchemas, converters);
+            List<InputSchema> schemas = TestDataset.getAll().stream()
+                    .map(td -> new InputSchema(td.getRootPackageDirectory().resolve(td.getName()),td.getName()))
+                    .collect(Collectors.toList());
+
+            return ArgumentProvider.crossProduct(schemas, converters);
         }
     }
 

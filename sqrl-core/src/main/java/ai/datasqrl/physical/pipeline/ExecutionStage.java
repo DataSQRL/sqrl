@@ -8,6 +8,10 @@ import java.util.Optional;
 
 public interface ExecutionStage {
 
+    default String getName() {
+        return getEngine().getName();
+    }
+
     default boolean supportsAll(Collection<EngineCapability> capabilities) {
         return capabilities.stream().allMatch(this::supports);
     }

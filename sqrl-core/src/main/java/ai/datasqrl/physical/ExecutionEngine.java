@@ -26,6 +26,8 @@ public interface ExecutionEngine {
 
     Type getType();
 
+    String getName();
+
     @AllArgsConstructor
     @Getter
     public static abstract class Impl implements ExecutionEngine {
@@ -36,6 +38,11 @@ public interface ExecutionEngine {
         @Override
         public boolean supports(EngineCapability capability) {
             return capabilities.contains(capability);
+        }
+
+        @Override
+        public String getName() {
+            return type.name();
         }
 
     }

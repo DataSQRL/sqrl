@@ -28,4 +28,8 @@ public class ArgumentProvider {
         return base;
     }
 
+    public static Stream<? extends Arguments> of(List<? extends Object> arguments) {
+        return arguments.stream().map(Arguments::of);
+    }
+
 }

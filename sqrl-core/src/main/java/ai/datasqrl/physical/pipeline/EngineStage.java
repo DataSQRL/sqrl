@@ -18,6 +18,11 @@ public class EngineStage implements ExecutionStage {
     Optional<ExecutionStage> next;
 
     @Override
+    public String getName() {
+        return engine.getName();
+    }
+
+    @Override
     public boolean supports(EngineCapability capability) {
         return engine.supports(capability);
     }

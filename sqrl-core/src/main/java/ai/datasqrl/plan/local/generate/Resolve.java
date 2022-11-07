@@ -454,7 +454,7 @@ public class Resolve {
     if (config.getStartStage()!=null) {
       prel = SQRLLogicalPlanConverter.convert(relNode, relBuilderFactory, config);
     } else {
-      prel = SQRLLogicalPlanConverter.findCheapest(relNode, relBuilderFactory, env.session.pipeline, config);
+      prel = SQRLLogicalPlanConverter.findCheapest(op.statement.getNamePath(), relNode, relBuilderFactory, env.session.pipeline, config);
     }
     if (op.statementKind == StatementKind.DISTINCT_ON) {
       //Get all field names from resulting relnode instead of the op

@@ -15,6 +15,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -44,12 +46,16 @@ public class SnapshotTest {
         public static final String HEADER_SUFFIX = "\n";
         public static final String FILE_DELIMITER = "_";
 
+        private static final Pattern PARAMETRIZED_TEST = Pattern.compile("^\\[\\d+\\] (.+)$");
+
         String className;
         String fileName;
         StringBuilder content;
 
         public static Snapshot of(@NonNull Class testClass, @NonNull TestInfo testInfo, String content) {
             String fileName = testInfo.getDisplayName();
+            Matcher matcher = PARAMETRIZED_TEST.matcher(fileName);
+            if (matcher.find()) fileName = matcher.group(1);
             if (fileName.endsWith("()")) fileName = fileName.substring(0,fileName.length()-2);
             StringBuilder c = new StringBuilder();
             if (Strings.isNotEmpty(content)) c.append(content);

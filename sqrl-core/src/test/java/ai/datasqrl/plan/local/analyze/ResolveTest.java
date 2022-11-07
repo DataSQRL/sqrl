@@ -77,7 +77,6 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void timestampDefinitionTest() {
     process("IMPORT ecommerce-data.Orders TIMESTAMP \"time\";\n");
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1, TimestampTest.fixed(4));
@@ -164,6 +163,19 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     process(builder.toString());
     validateQueryTable("orderwithcount", TableType.STREAM, ExecutionEngine.Type.STREAM,5, 1, TimestampTest.fixed(4)); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
     validateQueryTable("orderwithcount2", TableType.STREAM, ExecutionEngine.Type.STREAM,5, 1, TimestampTest.fixed(4)); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
+  }
+
+  @Test
+  @Disabled
+  public void tableTemporalJoinWithTimeFilterTest() {
+    ScriptBuilder builder = imports();
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
+    builder.add("Customer.orders := JOIN Orders ON Orders.customerid = _.customerid");
+    builder.add("Orders.entries.product := JOIN Product ON Product.productid = _.productid");
+    builder.append("Customer.totals := SELECT p.category as category, sum(e.quantity) as num " +
+            "FROM _.orders o JOIN o.entries e JOIN e.product p WHERE o.\"time\" >= now() - INTERVAL 1 YEAR GROUP BY category");
+    process(builder.toString());
+    validateQueryTable("totals", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,4, 2, TimestampTest.fixed(3));
   }
 
 
