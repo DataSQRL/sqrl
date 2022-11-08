@@ -35,12 +35,16 @@ public class Retail implements TestDataset {
     }
 
     public List<TestScript> getScripts() {
-        return List.of(TestScript.of(this,BASE_PATH.resolve("c360-orderstats.sqrl"),
+        return List.of(
+                TestScript.of(this,BASE_PATH.resolve("c360-orderstats.sqrl"),
                 "orders", "entries", "totals", "customerorderstats"),
                 TestScript.of(this,BASE_PATH.resolve("c360-full.sqrl"),
                         "orders", "entries", "customer", "category", "product", "total", "order_again",
                         "_spending_by_month_category", "favorite_categories",
-                        "order_stats", "newcustomerpromotion"));
+                        "order_stats", "newcustomerpromotion"),
+                TestScript.of(this,BASE_PATH.resolve("c360-recommend.sqrl"),
+                        "orders", "entries", "customer", "category", "product", "total",
+                        "_sales_by_hour","_sales_24h", "_sales_72h", "_sales_trend"));
     }
 
     public ScriptBuilder getImports() {

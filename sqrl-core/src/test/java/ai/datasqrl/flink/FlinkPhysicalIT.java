@@ -191,7 +191,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   @Disabled
   @Test
   public void failingScriptTest() {
-    fullScriptTest(Retail.INSTANCE.getScripts().get(1));
+    fullScriptTest(Retail.INSTANCE.getScripts().get(2));
   }
 
   private void validate(String script, String... queryTables) {
