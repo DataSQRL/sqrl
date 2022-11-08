@@ -24,7 +24,7 @@ Orders.entries.product := JOIN Product ON Product.productid = _.productid;
 
 Product._sales_by_hour := SELECT round_to_hour(o.time) as hour, sum(e.quantity) as quantity,
                                 count(1) as num_orders
-                          FROM _ JOIN Orders o JOIN o.entries e ON e.productid = _.productid
+                          FROM _ JOIN Orders.entries e ON e.productid = _.productid JOIN e.parent o
                           GROUP BY hour
                           ORDER BY hour DESC;
 
