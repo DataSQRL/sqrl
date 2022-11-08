@@ -1,0 +1,36 @@
+IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) AS updateTime;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time - INTERVAL 1 YEAR AS updateTime;
+IMPORT ecommerce-data.Orders;
+
+Customer := DISTINCT Customer ON customerid ORDER BY updateTime DESC;
+Category := SELECT DISTINCT category AS name FROM Product;
+Product := DISTINCT Product ON productid ORDER BY updateTime DESC;
+
+-- Compute useful statistics on orders
+Orders.entries.discount := coalesce(discount, 0.0);
+Orders.entries.total := quantity * unit_price - discount;
+Orders.total := SELECT sum(e.total) AS price, sum(e.discount) AS discount, count(1) AS num FROM _.entries e;
+
+-- Relate Customer to Orders and categories to products
+Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;
+Category.products := JOIN Product ON _.name = Product.category;
+
+-- Aggregate all products the customer has ordered for the 'order again' feature
+Orders.entries.product := JOIN Product ON Product.productid = _.productid;
+
+
+/* Compute w/w product sales volume increase average over a month
+   These numbers are internal to determine trending products */
+
+Product._sales_by_hour := SELECT round_to_hour(o.time) as hour, sum(e.quantity) as quantity,
+                                count(1) as num_orders
+                          FROM _ JOIN (Orders o JOIN o.entries e) ON e.productid = _.productid ORDER BY hour DESC;
+
+Product._sales_24h := SELECT sum(quantity) as total, sum(num_orders) as num FROM _._sales_by_hour LIMIT 24;
+Product._sales_72h := SELECT sum(quantity) as total, sum(num_orders) as num FROM _._sales_by_hour LIMIT 72;
+
+Product._sales_trend := SELECT a.total*1.5 / greatest(b.total, 500) + a.num*1.5 / greatest(b.num, 100) as increase
+                        FROM _.sales_24h a JOIN _.sales_72h b
+
+Category.trending := JOIN Product p ON _.name = p.category
+                     ORDER BY p._sales_trend.increase DESC;
