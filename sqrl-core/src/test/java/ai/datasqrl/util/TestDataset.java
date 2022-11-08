@@ -1,5 +1,6 @@
 package ai.datasqrl.util;
 
+import ai.datasqrl.util.data.Nutshop;
 import ai.datasqrl.util.data.Retail;
 import ai.datasqrl.util.junit.ArgumentProvider;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -32,7 +33,7 @@ public interface TestDataset {
      */
 
     static List<TestDataset> getAll() {
-        return List.of(Retail.INSTANCE);
+        return List.of(Retail.INSTANCE, Nutshop.INSTANCE);
     }
 
     class AllProvider implements ArgumentsProvider {

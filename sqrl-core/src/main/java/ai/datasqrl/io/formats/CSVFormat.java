@@ -6,9 +6,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import lombok.*;
+import org.apache.commons.lang3.tuple.Pair;
+import org.codehaus.plexus.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -78,6 +81,7 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
   }
 
   private static Splitter getSplitter(String delimiter) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(delimiter));
     return Splitter.on(delimiter).trimResults();
   }
 
@@ -97,11 +101,15 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
 
   public static class Inferer implements TextLineFormat.ConfigurationInference<Configuration> {
 
-    private final Splitter splitter;
+    public static final String[] DELIMITER_CANDIDATES = new String[]{",",";"};
+
     private String[] header;
+    private String delimiter;
+
+    private transient Splitter splitter;
 
     public Inferer(String delimiter) {
-      this.splitter = getSplitter(delimiter);
+      this.delimiter = delimiter;
     }
 
     @Override
@@ -118,8 +126,23 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
       if (header != null) {
         return; //We already verified there is no header
       }
-
       String line = textInput.readLine();
+      if (Strings.isNullOrEmpty(delimiter)) {
+        //try to infer delimiter
+        Pair<String,Integer> topScoringDelimiter = Arrays.stream(DELIMITER_CANDIDATES)
+                .map(del -> Pair.of(del,StringUtils.countMatches(line,del)))
+                .sorted((p1, p2) -> -Integer.compare(p1.getValue(),p2.getValue())).findFirst().get();
+        if (topScoringDelimiter.getValue()>0) {
+          delimiter = topScoringDelimiter.getKey();
+        } else {
+          delimiter = DEFAULT_DELIMITER;
+        }
+      }
+
+      if (splitter == null) {
+        splitter = getSplitter(delimiter);
+      }
+
       List<String> h = splitter.splitToList(line);
       if (!h.isEmpty()) {
         //verify all header elements are proper strings
@@ -148,8 +171,7 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
   @Getter
   public static class Configuration implements FormatConfiguration {
 
-    @Builder.Default
-    private String delimiter = DEFAULT_DELIMITER;
+    private String delimiter;
     private String commentPrefix;
     private String[] header;
 
@@ -159,11 +181,7 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
 
     @Override
     public boolean initialize(InputPreview preview, @NonNull ErrorCollector errors) {
-      if (Strings.isNullOrEmpty(delimiter)) {
-        errors.fatal("Need to specify valid delimiter, given: %s", delimiter);
-        return false;
-      }
-      if (header == null || header.length == 0) {
+      if (header == null || header.length == 0 || Strings.isNullOrEmpty(delimiter)) {
         if (preview != null) {
           //Try to infer
           FormatConfigInferer fci = new FormatConfigInferer();
@@ -171,8 +189,12 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
           fci.inferConfig(preview, inferer);
           if (inferer.foundHeader()) {
             header = inferer.header;
+            delimiter = inferer.delimiter;
           }
         }
+      }
+      if (Strings.isNullOrEmpty(delimiter)) {
+        delimiter = DEFAULT_DELIMITER;
       }
       if (header == null || header.length == 0) {
         errors.fatal("Need to specify a header (could not be inferred)");

@@ -2,6 +2,7 @@ package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
+import ai.datasqrl.plan.calcite.util.IndexMap;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.builder.VirtualTable;
 import com.google.common.base.Preconditions;
@@ -13,9 +14,7 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.tools.RelBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -111,6 +110,20 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     protected Root(Name nameId, @NonNull RelDataType rowType, @NonNull QueryRelationalTable base) {
       super(nameId, rowType, base.getRowType(), base.getNumPrimaryKeys());
       this.base = base;
+    }
+
+
+    public IndexMap mapQueryTable() {
+      Map<Integer,Integer> mapping = new HashMap<>();
+      int vTablePos = 0;
+      for (int i = 0; i < queryRowType.getFieldCount(); i++) {
+        RelDataTypeField field = queryRowType.getFieldList().get(i);
+        if (!CalciteUtil.isNestedTable(field.getType())) {
+          mapping.put(i,vTablePos++);
+        }
+      }
+      assert vTablePos==getNumColumns();
+      return IndexMap.of(mapping);
     }
 
     @Override

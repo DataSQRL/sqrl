@@ -1,5 +1,6 @@
 package ai.datasqrl.util;
 
+import ai.datasqrl.util.data.Nutshop;
 import ai.datasqrl.util.data.Retail;
 import ai.datasqrl.util.junit.ArgumentProvider;
 import lombok.Value;
@@ -55,6 +56,7 @@ public interface TestScript {
     static List<TestScript> getAll() {
         ImmutableList.Builder b = new ImmutableList.Builder();
         b.addAll(Retail.INSTANCE.getScripts());
+        b.addAll(Nutshop.INSTANCE.getScripts().subList(0,2));
         return b.build();
     }
 

@@ -160,19 +160,32 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             return setRelHolder(result);
         } else {
             int targetLength = vtable.getNumColumns();
-            TopNConstraint topN = queryTable.getPullups().getTopN();
-            if (exec.isMaterialize(scanExec) && topN.isPrimaryKeyDedup()) {
-                //We can drop topN since that gets enforced by writing to DB with primary key
-                topN = TopNConstraint.EMPTY;
+            PullupOperator.Container pullups = queryTable.getPullups();
+            if (vtable.isRoot()) {
+                TopNConstraint topN = pullups.getTopN();
+                if (exec.isMaterialize(scanExec) && topN.isPrimaryKeyDedup()) {
+                    //We can drop topN since that gets enforced by writing to DB with primary key
+                    topN = TopNConstraint.EMPTY;
+                }
+                IndexMap query2virtualTable = ((VirtualRelationalTable.Root)vtable).mapQueryTable();
+                return setRelHolder(new AnnotatedLP(tableScan, queryTable.getType(),
+                        ContinuousIndexMap.identity(vtable.getNumPrimaryKeys(), targetLength),
+                        queryTable.getTimestamp().getDerived().remapIndexes(query2virtualTable),
+                        ContinuousIndexMap.identity(targetLength, targetLength),
+                        exec.getStage(), null, numRootPks,
+                        pullups.getNowFilter().remap(query2virtualTable), topN,
+                        pullups.getSort().remap(query2virtualTable), List.of()));
+            } else {
+                //We ignore sort order for child tables
+                Preconditions.checkArgument(pullups.getTopN().isEmpty() && pullups.getNowFilter().isEmpty());
+                return setRelHolder(new AnnotatedLP(tableScan, queryTable.getType(),
+                        ContinuousIndexMap.identity(vtable.getNumPrimaryKeys(), targetLength),
+                        TimestampHolder.Derived.NONE,
+                        ContinuousIndexMap.identity(targetLength, targetLength),
+                        exec.getStage(), null, numRootPks,
+                        NowFilter.EMPTY, TopNConstraint.EMPTY,
+                        SortOrder.EMPTY, List.of()));
             }
-            AnnotatedLP result = new AnnotatedLP(tableScan, queryTable.getType(),
-                    ContinuousIndexMap.identity(vtable.getNumPrimaryKeys(),targetLength),
-                    queryTable.getTimestamp().getDerived(),
-                    ContinuousIndexMap.identity(targetLength,targetLength),
-                    exec.getStage(), null, numRootPks,
-                    queryTable.getPullups().getNowFilter(), topN,
-                    queryTable.getPullups().getSort(), List.of());
-            return setRelHolder(result);
         }
     }
 
@@ -539,7 +552,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         if ((joinType==JoinRelType.DEFAULT || joinType==JoinRelType.INNER || joinType==JoinRelType.LEFT) && leftInput.joinTables!=null && rightInput.joinTables!=null
                 && !hasPullups && eqDecomp.getRemainingPredicates().isEmpty()) {
             //Determine if we can map the tables from both branches of the join onto each-other
-            if (joinType==JoinRelType.DEFAULT) joinType=JoinRelType.INNER;
             Map<JoinTable, JoinTable> right2left = JoinTable.joinTreeMap(leftInput.joinTables,
                     leftSideMaxIdx , rightInput.joinTables, eqDecomp.getEqualities());
             if (!right2left.isEmpty()) {
@@ -550,6 +562,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 ContinuousIndexMap newPk = leftInput.primaryKey;
                 List<JoinTable> joinTables = new ArrayList<>(leftInput.joinTables);
                 if (right2left.containsKey(rightLeaf) || leftInput.getStage().supports(EngineCapability.DENORMALIZE)) {
+                    if (joinType==JoinRelType.DEFAULT) joinType=JoinRelType.INNER;
                     if (!right2left.containsKey(rightLeaf)) {
                         //Find closest ancestor that was mapped and shred from there
                         List<JoinTable> ancestorPath = new ArrayList<>();

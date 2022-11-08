@@ -2,13 +2,14 @@ import java.io.*;
 import java.util.regex.*;
 import java.util.*;
 import java.util.stream.*;
+import java.time.Instant;
 
 /**
  * Utility class used to generate the nut products from the USDA listing of nuts (in the file nuts_usda.json in
- * the data directory).
+ * the data directory) as well as a random list of orders.
  *
  * In the sibling data directory, run the following command:
- * java ../util/ExtractNuts.java nuts_usda.json > nut_products.csv
+ * java ../util/GenerateNutData.java ../nutshop-data/nuts_usda.json [num_customers] [num_days] [orders_per_day]
  *
  * Note, that this generator is randomized and will produce a different listing of products with each run. It will
  * contain all of the same nuts but with different sizes.
@@ -24,7 +25,7 @@ public class GenerateNutData {
 
     static final Random rand = new Random();
 
-    static final String[] product_header = {"id","name","sizing","weight_in_gram","type","category","usda_id"};
+    static final String[] product_header = {"id","name","sizing","weight_in_gram","type","category","usda_id","updated"};
 
     static final Size defaultSize = new Size("1 lbs", 454, 1.0);
     static final Size[] other_sizes = new Size[]{
@@ -42,7 +43,7 @@ public class GenerateNutData {
     static final int ordersPerFile =  1000000;
     static final double ordersStdDevPercentage = 0.4;
     static final double numEntriesStdDev = 0.8;
-    static final double quantityStdDev = 0.2;
+    static final double quantityStdDev = 1;
     static final double discountLikelihood = 0.4;
     static final double maxDiscountPercentage = 0.5;
     static final double minDiscountPercentage = 0.05;
@@ -65,6 +66,10 @@ public class GenerateNutData {
             throw new IllegalArgumentException("Numbers must be positive integers");
         }
 
+        final long timeNow = System.currentTimeMillis();
+        final int millisPerDay = (24*3600*1000);
+        final long productUpdateTime = timeNow - (numDays+1)*millisPerDay;
+
         //First, generate products from list of USDA nuts
         List<Product> products = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(nutFile))) {
@@ -83,7 +88,8 @@ public class GenerateNutData {
                     String[] desc_comps = matches[0].split(", ");
                     String name = String.join(", ",Arrays.copyOfRange(desc_comps,1,desc_comps.length));
                     double price = rand.nextDouble()*8.0 + 5.0;
-                    Product product = new Product(name, desc_comps[0], desc_comps[1], price, defaultSize, matches[1]);
+                    Product product = new Product(name, desc_comps[0], desc_comps[1], price,
+                            defaultSize, matches[1], Instant.ofEpochMilli(productUpdateTime));
                     products.add(product);
 
                     int variants = 0;
@@ -102,8 +108,6 @@ public class GenerateNutData {
         int daysPerFile = Math.max(1,ordersPerFile/ordersPerDay);
         int numFiles = 0;
         List<Order> orders = new ArrayList<>();
-        final long timeNow = System.currentTimeMillis();
-        final int millisPerDay = (24*3600*1000);
         final double stdDevMulti = ordersPerDay * ordersStdDevPercentage;
         for (int days = 0; days < numDays ; days++) {
             if ((days+1)%daysPerFile==0) {
@@ -160,7 +164,8 @@ public class GenerateNutData {
     public static void writeOrdersToFile(List<Order> orders, int fileNo) {
         String ordersFilename = ordersFilenamePrefix + fileNo + ordersFilenameSuffix;
         orders.sort((Order o1, Order o2) -> Long.compare(o1.timestamp,o2.timestamp));
-        writeToFile(orders,ordersFilename,"[","]");
+//        writeToFile(orders,ordersFilename,"[","]");
+        writeToFile(orders,ordersFilename,null,null);
     }
 
     public static void writeToFile(List<? extends Object> objs, String filename, String header, String footer) {
@@ -207,7 +212,7 @@ public class GenerateNutData {
         }
 
         public String toString() {
-            return String.format("{\"id\": %d, \"customerid\": %d, \"time\": %d, \"entries\": [%s] },", id, customerid, timestamp,
+            return String.format("{\"id\": %d, \"customerid\": %d, \"time\": %d, \"items\": [%s] }", id, customerid, timestamp,
                     String.join(",", entries.stream().map(e -> e.toString()).collect(Collectors.toList())));
         }
 
@@ -226,10 +231,10 @@ public class GenerateNutData {
             }
 
             public String toString() {
-                String result = String.format("{\"productid\": %d,\"quantity\": %d,\"unit_price\": %5.2f, ",
+                String result = String.format("{\"productid\": %d,\"quantity\": %d,\"unit_price\": %5.2f ",
                         productid, quantity, unitPrice);
                 if (discount>0) {
-                    result += String.format("\"discount\": %5.2f ", discount);
+                    result += String.format(",\"discount\": %5.2f ", discount);
                 }
                 result += "}";
                 return result;
@@ -250,8 +255,9 @@ public class GenerateNutData {
         public final double price;
         public final Size size;
         public final String usdaId;
+        public final Instant updated;
 
-        public Product(String name, String type, String category, double price, Size size, String usdaId) {
+        public Product(String name, String type, String category, double price, Size size, String usdaId, Instant updated) {
             this.id = ++counter;
             this.name = name;
             this.type = type;
@@ -259,16 +265,18 @@ public class GenerateNutData {
             this.price = price;
             this.size = size;
             this.usdaId = usdaId;
+            this.updated = updated;
         }
 
         public Product changeSize(Size size) {
-            return new Product(this.name, this.type, this.category, this.price* size.price_multi, size, this.usdaId);
+            return new Product(this.name, this.type, this.category, this.price* size.price_multi,
+                    size, this.usdaId, this.updated);
         }
 
         public String toString() {
             return String.join(csv_delimiter,
                     new String[]{String.valueOf(id),name, size.name, String.valueOf(size.grams),
-                                 type, category, usdaId});
+                                 type, category, usdaId, String.valueOf(updated)});
         }
 
         public boolean equals(Object object) {

@@ -30,7 +30,11 @@ public class ResultSetPrinter {
         if (!filterColumnsByName.test(metaData.getColumnName(i))) continue;
         if (!filterColumnsByType.test(metaData.getColumnType(i))) continue;
         if (cols++ > 0) out.print(", ");
-        out.print(resultSet.getObject(i));
+        Object o = resultSet.getObject(i);
+        if (o instanceof Float || o instanceof Double) {
+          o = String.format("%.3f",o);
+        }
+        out.print(o);
       }
     }
     return size;

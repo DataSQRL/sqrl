@@ -25,7 +25,6 @@ public class LoaderTest {
             assertFalse(errors.isFatal(), errors.toString());
             assertTrue(table.isPresent());
             assertEquals(table.get().getName(),Name.system(tblName));
-
         }
     }
 

@@ -2,49 +2,19 @@ package ai.datasqrl.flink;
 
 import ai.datasqrl.AbstractPhysicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.physical.PhysicalPlan;
-import ai.datasqrl.physical.database.relational.QueryTemplate;
-import ai.datasqrl.physical.stream.Job;
-import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.calcite.util.RelToSql;
-import ai.datasqrl.plan.global.DAGPlanner;
-import ai.datasqrl.plan.global.OptimizedDAG;
-import ai.datasqrl.plan.local.analyze.ResolveTest;
-import ai.datasqrl.plan.local.generate.Resolve;
-import ai.datasqrl.plan.queries.APIQuery;
-import ai.datasqrl.util.ResultSetPrinter;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.TestScript;
 import ai.datasqrl.util.data.Retail;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableSet;
-import lombok.SneakyThrows;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.sql.ResultSet;
-import java.sql.Types;
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Set;
 
 class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
   private Retail example = Retail.INSTANCE;
-  private SnapshotTest.Snapshot snapshot;
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
@@ -179,73 +149,5 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("CountStream := STREAM ON ADD AS SELECT customerid, name, quantity FROM CustomerCount WHERE quantity > 1");
     builder.add("CustomerCount2 := DISTINCT CountStream ON customerid ORDER BY _ingest_time DESC");
     validate(builder.getScript(), "customercount","countstream","customercount2");
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(TestScript.AllProvider.class)
-  @SneakyThrows
-  public void fullScriptTest(TestScript script) {
-    validate(Files.readString(script.getScript()), ImmutableSet.copyOf(script.getResultTables()), script.getResultTables());
-  }
-
-  @Test
-  @Disabled
-  public void singledOutFailingTest() {
-    fullScriptTest(Retail.INSTANCE.getScripts().get(2));
-  }
-
-  private void validate(String script, String... queryTables) {
-    validate(script,Collections.EMPTY_SET,queryTables);
-  }
-
-  private void validate(String script, Set<String> tableWithoutTimestamp, String... queryTables) {
-    validate(script,tableWithoutTimestamp, Arrays.asList(queryTables));
-  }
-
-  @SneakyThrows
-  private void validate(String script, Set<String> tableWithoutTimestamp, Collection<String> queryTables) {
-    ScriptNode node = parse(script);
-    Resolve.Env resolvedDag = resolve.planDag(session, node);
-    DAGPlanner dagPlanner = new DAGPlanner(planner);
-    //We add a scan query for every query table
-    List<APIQuery> queries = new ArrayList<APIQuery>();
-    CalciteSchema relSchema = resolvedDag.getRelSchema();
-    for (String tableName : queryTables) {
-      Optional<VirtualRelationalTable> vtOpt = ResolveTest.getLatestTable(relSchema,tableName,VirtualRelationalTable.class);
-      Preconditions.checkArgument(vtOpt.isPresent(),"No such table: %s",tableName);
-      VirtualRelationalTable vt = vtOpt.get();
-      RelNode rel = planner.getRelBuilder().scan(vt.getNameId()).build();
-      queries.add(new APIQuery(tableName, rel));
-    }
-    OptimizedDAG dag = dagPlanner.plan(relSchema,queries, session.getPipeline());
-    snapshot.addContent(dag);
-    PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
-    PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-    Job job = executor.execute(physicalPlan);
-    System.out.println("Started Flink Job: " + job.getExecutionId());
-    Map<String,ResultSet> results = new HashMap<>();
-    for (APIQuery query : queries) {
-      QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
-      String sqlQuery = RelToSql.convertToSql(template.getRelNode());
-      System.out.println("Executing query: " + sqlQuery);
-      ResultSet resultSet = jdbc.getConnection().createStatement()
-              .executeQuery(sqlQuery);
-      results.put(query.getNameId(),resultSet);
-      //Since Flink execution order is non-deterministic we need to sort results and remove uuid and ingest_time which change with every invocation
-      Predicate<Integer> typeFilter = Predicates.alwaysTrue();
-      if (tableWithoutTimestamp.contains(query.getNameId())) typeFilter = filterOutTimestampColumn;
-      String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,
-                      s -> Stream.of("_uuid", "_ingest_time").noneMatch(p -> s.startsWith(p)), typeFilter))
-              .sorted().collect(Collectors.joining(System.lineSeparator()));
-      snapshot.addContent(content,query.getNameId(),"data");
-    }
-    snapshot.createOrValidate();
-  }
-
-  private static final Predicate<Integer> filterOutTimestampColumn =
-          type -> type!= Types.TIMESTAMP_WITH_TIMEZONE && type!=Types.TIMESTAMP;
-
-  private ScriptNode parse(String query) {
-    return parser.parse(query);
   }
 }

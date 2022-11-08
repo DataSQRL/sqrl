@@ -1,0 +1,610 @@
+>>>orders$6-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], timestamp=[$6])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epoch_to_timestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
+    LogicalTableScan(table=[[orders$i$4]])
+
+>>>customers$9-lp-stream
+LogicalProject(id=[$0], timestamp=[$1])
+  LogicalProject(id=[$3], timestamp=[$6])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epoch_to_timestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
+      LogicalTableScan(table=[[orders$i$4]])
+
+>>>totals$13-lp-stream
+LogicalProject(_uuid=[$0], price=[$1], savings=[$2], timestamp=[$3])
+  LogicalProject(_uuid=[$0], price=[$2], savings=[$3], timestamp=[$1])
+    LogicalAggregate(group=[{0, 6}], price=[SUM($13)], savings=[SUM($12)]) hints[TumbleAggregationHint options:[6, INSTANT]]
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], $f12=[coalesce($11, 0E0:DOUBLE)], $f13=[-(*($9, $10), coalesce($11, 0E0:DOUBLE))])
+        LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+          LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epoch_to_timestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
+            LogicalTableScan(table=[[orders$i$4]])
+          Uncollect
+            LogicalProject($f0=[$cor0.items])
+              LogicalValues(tuples=[[{ 0 }]])
+
+>>>spending_by_month$15-lp-stream
+LogicalProject(id=[$0], month=[$1], total_spend=[$2], total_savings=[$3])
+  LogicalProject(id=[$0], month=[$1], total_spend=[$2], total_savings=[$3])
+    LogicalAggregate(group=[{0, 1}], total_spend=[SUM($2)], total_savings=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION]]
+      LogicalProject(id=[$7], month=[round_to_month($6)], price=[$11], savings=[$12], _uuid=[$0])
+        LogicalJoin(condition=[AND(=($0, $10), =($13, $6))], joinType=[inner]) hints[IntervalJoin]
+          LogicalJoin(condition=[=($3, $7)], joinType=[inner]) hints[TemporalJoinHint options:[6, 1, 0]]
+            LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epoch_to_timestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
+              LogicalTableScan(table=[[orders$i$4]])
+            LogicalFilter(condition=[=($2, 1)])
+              LogicalProject(id=[$0], timestamp=[$1], $f2=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+                LogicalProject(id=[$3], timestamp=[$6])
+                  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epoch_to_timestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
+                    LogicalTableScan(table=[[orders$i$4]])
+          LogicalProject(_uuid=[$0], price=[$2], savings=[$3], timestamp=[$1])
+            LogicalAggregate(group=[{0, 6}], price=[SUM($13)], savings=[SUM($12)]) hints[TumbleAggregationHint options:[6, INSTANT]]
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], $f12=[coalesce($11, 0E0:DOUBLE)], $f13=[-(*($9, $10), coalesce($11, 0E0:DOUBLE))])
+                LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+                  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epoch_to_timestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
+                    LogicalTableScan(table=[[orders$i$4]])
+                  Uncollect
+                    LogicalProject($f0=[$cor0.items])
+                      LogicalValues(tuples=[[{ 0 }]])
+
+>>>items$7-lp-stream
+LogicalProject(_uuid=[$0], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], discount$0=[coalesce($11, 0E0:DOUBLE)], total=[-(*($9, $10), coalesce($11, 0E0:DOUBLE))], timestamp=[$6])
+  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epoch_to_timestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
+      LogicalTableScan(table=[[orders$i$4]])
+    Uncollect
+      LogicalProject($f0=[$cor0.items])
+        LogicalValues(tuples=[[{ 0 }]])
+
+>>>products$11-lp-stream
+LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], sizing=[$4], weight_in_gram=[$5], type=[$6], category=[$7], usda_id=[$8], updated=[$9])
+  LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], sizing=[$4], weight_in_gram=[$5], type=[$6], category=[$7], usda_id=[$8], updated=[$9])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], name=[$3], sizing=[$4], weight_in_gram=[$5], type=[$6], category=[$7], usda_id=[$8], updated=[$9])
+      LogicalTableScan(table=[[products$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[9]]]]) hints[WatermarkHint options:[9]]
+
+>>>orders-lp-database
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], timestamp=[$5])
+  LogicalTableScan(table=[[orders$6]])
+
+>>>items-lp-database
+LogicalProject(_uuid=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], discount$0=[$6], total=[$7])
+  LogicalTableScan(table=[[items$7]])
+
+>>>totals-lp-database
+LogicalProject(_uuid=[$0], price=[$1], savings=[$2], timestamp=[$3])
+  LogicalTableScan(table=[[totals$13]])
+
+>>>customers-lp-database
+LogicalProject(id=[$0], timestamp=[$1])
+  LogicalTableScan(table=[[customers$9]])
+
+>>>products-lp-database
+LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], sizing=[$4], weight_in_gram=[$5], type=[$6], category=[$7], usda_id=[$8], updated=[$9])
+  LogicalTableScan(table=[[products$11]])
+
+>>>spending_by_month-lp-database
+LogicalProject(id=[$0], month=[$1], total_spend=[$2], total_savings=[$3])
+  LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[DESC])
+    LogicalTableScan(table=[[spending_by_month$15]])
+
+>>>orders-data
+150000001, 5, 1667159841271
+150000002, 9, 1667090517646
+150000003, 9, 1667104297142
+150000004, 4, 1667084934092
+150000005, 9, 1667162896684
+150000006, 4, 1667147311096
+150000007, 1, 1667180653210
+150000008, 1, 1667226030618
+150000009, 5, 1667169177674
+150000010, 2, 1667228827288
+150000011, 1, 1667246379090
+150000012, 10, 1667242650777
+150000013, 1, 1667224451876
+150000014, 3, 1667246892454
+150000015, 2, 1667208484907
+150000016, 10, 1667169659585
+150000017, 2, 1667175283827
+150000018, 9, 1667218557527
+150000019, 7, 1667230473301
+150000020, 5, 1667218438046
+150000021, 2, 1667234251455
+150000022, 8, 1667179464707
+150000023, 3, 1667278396466
+150000024, 8, 1667293541781
+150000025, 4, 1667281693074
+150000026, 2, 1667315238712
+150000027, 4, 1667298534292
+150000028, 2, 1667280533109
+150000029, 10, 1667275029469
+150000030, 3, 1667257838336
+150000031, 6, 1667259323118
+150000032, 4, 1667270024405
+150000033, 6, 1667369914950
+150000034, 3, 1667355311531
+150000035, 8, 1667414962886
+150000036, 3, 1667422677949
+150000037, 6, 1667355608600
+150000038, 9, 1667367957883
+150000039, 8, 1667368357650
+150000040, 10, 1667358302299
+150000041, 2, 1667369671540
+150000042, 9, 1667342288524
+150000043, 5, 1667343934015
+150000044, 2, 1667485910291
+150000045, 4, 1667489658320
+150000046, 6, 1667429257652
+150000047, 5, 1667463132286
+150000048, 6, 1667470731774
+150000049, 6, 1667480721311
+150000050, 7, 1667450025266
+150000051, 7, 1667438352817
+150000052, 4, 1667425994708
+150000053, 5, 1667458181415
+150000054, 7, 1667428408222
+150000055, 7, 1667459681323
+150000056, 6, 1667510893540
+150000057, 10, 1667593198009
+150000058, 4, 1667594909893
+150000059, 2, 1667548864165
+150000060, 5, 1667545329298
+150000061, 9, 1667517492673
+150000062, 1, 1667534008146
+150000063, 8, 1667562771397
+150000064, 1, 1667556494961
+150000065, 2, 1667746739181
+150000066, 1, 1667738461894
+150000067, 2, 1667743760820
+150000068, 8, 1667699917139
+150000069, 1, 1667778920862
+150000070, 6, 1667784795956
+150000071, 10, 1667808594720
+150000072, 2, 1667803370884
+150000073, 8, 1667784014859
+150000074, 8, 1667847404906
+150000075, 2, 1667835163765
+150000076, 3, 1667777045727
+150000077, 2, 1667791086259
+150000078, 2, 1667773264910
+150000079, 1, 1667818971732
+150000080, 9, 1667912020542
+150000081, 4, 1667897778842
+150000082, 4, 1667941703862
+150000083, 9, 1667899285283
+150000084, 10, 1667892447293
+150000085, 10, 1667879588301
+150000086, 8, 1667909079007
+150000087, 7, 1667863932626
+>>>items-data
+0, 104, 1, 6.380, null, 0.000, 6.380
+0, 107, 3, 19.500, null, 0.000, 58.500
+0, 108, 1, 12.140, 5.160, 5.160, 6.980
+0, 111, 1, 6.130, null, 0.000, 6.130
+0, 120, 1, 11.700, null, 0.000, 11.700
+0, 125, 3, 37.100, 51.650, 51.650, 59.650
+0, 127, 1, 12.010, 1.600, 1.600, 10.410
+0, 13, 1, 71.520, null, 0.000, 71.520
+0, 139, 1, 53.250, 22.510, 22.510, 30.740
+0, 139, 1, 53.250, null, 0.000, 53.250
+0, 140, 1, 5.060, 1.470, 1.470, 3.590
+0, 141, 2, 8.600, 4.260, 4.260, 12.940
+0, 142, 1, 9.510, 1.240, 1.240, 8.270
+0, 142, 2, 9.510, null, 0.000, 19.020
+0, 143, 2, 6.670, null, 0.000, 13.340
+0, 144, 1, 10.350, null, 0.000, 10.350
+0, 144, 1, 10.350, null, 0.000, 10.350
+0, 145, 1, 17.600, 2.770, 2.770, 14.830
+0, 146, 1, 8.130, 3.070, 3.070, 5.060
+0, 146, 1, 8.130, null, 0.000, 8.130
+0, 147, 1, 13.830, null, 0.000, 13.830
+0, 156, 1, 8.530, null, 0.000, 8.530
+0, 162, 3, 7.630, null, 0.000, 22.890
+0, 163, 2, 12.870, null, 0.000, 25.740
+0, 165, 2, 9.520, 8.300, 8.300, 10.740
+0, 165, 2, 9.520, null, 0.000, 19.040
+0, 169, 1, 10.590, 2.870, 2.870, 7.720
+0, 170, 1, 7.650, 0.790, 0.790, 6.860
+0, 171, 3, 10.570, null, 0.000, 31.710
+0, 174, 1, 12.710, null, 0.000, 12.710
+0, 18, 1, 11.120, null, 0.000, 11.120
+0, 182, 1, 10.490, null, 0.000, 10.490
+0, 182, 2, 10.490, null, 0.000, 20.980
+0, 184, 1, 39.870, null, 0.000, 39.870
+0, 188, 1, 41.780, 11.070, 11.070, 30.710
+0, 192, 2, 12.460, 12.300, 12.300, 12.620
+0, 192, 2, 12.460, 7.760, 7.760, 17.160
+0, 193, 1, 27.860, 2.810, 2.810, 25.050
+0, 195, 1, 8.580, null, 0.000, 8.580
+0, 196, 2, 11.040, null, 0.000, 22.080
+0, 197, 1, 18.770, null, 0.000, 18.770
+0, 2, 2, 12.400, null, 0.000, 24.800
+0, 22, 1, 12.450, null, 0.000, 12.450
+0, 23, 1, 12.870, 1.420, 1.420, 11.450
+0, 24, 1, 21.870, 5.140, 5.140, 16.730
+0, 24, 2, 21.870, null, 0.000, 43.740
+0, 30, 1, 6.960, 3.040, 3.040, 3.920
+0, 31, 1, 8.740, 1.740, 1.740, 7.000
+0, 32, 1, 5.790, null, 0.000, 5.790
+0, 36, 1, 10.900, 3.980, 3.980, 6.920
+0, 36, 1, 10.900, null, 0.000, 10.900
+0, 38, 1, 41.410, 16.870, 16.870, 24.540
+0, 4, 2, 11.430, 5.270, 5.270, 17.590
+0, 43, 1, 44.760, 14.730, 14.730, 30.030
+0, 5, 2, 7.350, 0.890, 0.890, 13.810
+0, 53, 1, 49.270, 2.660, 2.660, 46.610
+0, 54, 1, 10.820, 3.640, 3.640, 7.180
+0, 54, 1, 10.820, null, 0.000, 10.820
+0, 55, 2, 5.560, null, 0.000, 11.120
+0, 56, 1, 9.460, null, 0.000, 9.460
+0, 57, 1, 8.070, null, 0.000, 8.070
+0, 61, 1, 8.640, null, 0.000, 8.640
+0, 61, 2, 8.640, null, 0.000, 17.280
+0, 62, 1, 12.410, 4.430, 4.430, 7.980
+0, 62, 2, 12.410, 3.170, 3.170, 21.650
+0, 63, 1, 8.170, null, 0.000, 8.170
+0, 63, 2, 8.170, 5.000, 5.000, 11.340
+0, 66, 1, 10.940, null, 0.000, 10.940
+0, 72, 1, 7.340, null, 0.000, 7.340
+0, 72, 3, 7.340, null, 0.000, 22.020
+0, 79, 1, 5.030, null, 0.000, 5.030
+0, 79, 2, 5.030, null, 0.000, 10.060
+0, 81, 1, 10.640, 5.280, 5.280, 5.360
+0, 82, 1, 7.600, 1.210, 1.210, 6.390
+0, 82, 1, 7.600, null, 0.000, 7.600
+0, 83, 1, 12.920, null, 0.000, 12.920
+0, 83, 1, 12.920, null, 0.000, 12.920
+0, 85, 1, 7.280, null, 0.000, 7.280
+0, 86, 1, 8.880, 0.900, 0.900, 7.980
+0, 88, 1, 12.040, null, 0.000, 12.040
+0, 89, 1, 9.500, null, 0.000, 9.500
+0, 91, 1, 36.110, null, 0.000, 36.110
+0, 92, 2, 70.320, null, 0.000, 140.640
+0, 94, 2, 8.170, 4.240, 4.240, 12.100
+0, 95, 2, 11.260, null, 0.000, 22.520
+0, 96, 1, 5.500, null, 0.000, 5.500
+0, 98, 1, 12.790, null, 0.000, 12.790
+1, 112, 1, 9.470, null, 0.000, 9.470
+1, 121, 2, 26.160, 22.870, 22.870, 29.450
+1, 126, 1, 12.890, 5.090, 5.090, 7.800
+1, 126, 1, 12.890, null, 0.000, 12.890
+1, 127, 1, 12.010, null, 0.000, 12.010
+1, 128, 1, 20.420, null, 0.000, 20.420
+1, 142, 2, 9.510, null, 0.000, 19.020
+1, 143, 1, 6.670, null, 0.000, 6.670
+1, 145, 1, 17.600, 2.100, 2.100, 15.500
+1, 147, 1, 13.830, null, 0.000, 13.830
+1, 157, 1, 7.320, null, 0.000, 7.320
+1, 163, 1, 12.870, null, 0.000, 12.870
+1, 180, 3, 46.210, 34.680, 34.680, 103.950
+1, 188, 1, 41.780, null, 0.000, 41.780
+1, 189, 1, 6.460, null, 0.000, 6.460
+1, 22, 1, 12.450, null, 0.000, 12.450
+1, 3, 2, 5.160, null, 0.000, 10.320
+1, 53, 1, 49.270, null, 0.000, 49.270
+1, 64, 1, 13.880, 5.990, 5.990, 7.890
+1, 64, 1, 13.880, null, 0.000, 13.880
+1, 64, 2, 13.880, null, 0.000, 27.760
+1, 70, 2, 12.970, 7.740, 7.740, 18.200
+1, 75, 1, 8.590, null, 0.000, 8.590
+1, 78, 1, 63.560, null, 0.000, 63.560
+1, 83, 2, 12.920, null, 0.000, 25.840
+1, 84, 1, 12.950, null, 0.000, 12.950
+2, 193, 1, 27.860, 6.730, 6.730, 21.130
+2, 82, 1, 7.600, null, 0.000, 7.600
+>>>totals-data
+10.350, 0.000
+10.350, 0.000
+10.900, 0.000
+11.120, 0.000
+11.120, 0.000
+11.340, 5.000
+11.450, 1.420
+11.730, 3.070
+118.780, 37.450
+12.620, 12.300
+12.710, 0.000
+12.920, 0.000
+12.940, 4.260
+13.340, 0.000
+140.640, 0.000
+15.900, 0.000
+16.730, 5.140
+17.160, 7.760
+17.280, 0.000
+17.590, 5.270
+18.500, 0.000
+18.650, 0.000
+19.040, 0.000
+20.980, 0.000
+21.920, 0.000
+22.020, 0.000
+22.080, 0.000
+22.890, 0.000
+23.190, 8.300
+23.830, 0.000
+24.240, 1.600
+24.800, 0.000
+25.660, 0.000
+25.740, 0.000
+25.980, 4.240
+26.320, 2.100
+26.780, 0.000
+29.900, 7.740
+3.590, 1.470
+3.920, 3.040
+30.030, 14.730
+30.710, 11.070
+30.740, 22.510
+36.110, 0.000
+36.550, 16.870
+37.790, 0.000
+39.510, 5.090
+39.870, 0.000
+40.540, 8.800
+41.570, 0.890
+42.940, 0.000
+43.740, 0.000
+44.370, 6.730
+44.860, 0.000
+46.610, 2.660
+5.030, 0.000
+5.360, 5.280
+5.500, 0.000
+5.790, 0.000
+51.100, 26.040
+52.270, 0.000
+53.250, 0.000
+57.250, 4.430
+58.500, 0.000
+59.650, 51.650
+6.130, 0.000
+6.380, 0.000
+6.390, 1.210
+6.860, 0.790
+6.920, 3.980
+6.980, 5.160
+7.180, 3.640
+7.280, 0.000
+7.340, 0.000
+7.600, 0.000
+7.720, 2.870
+7.980, 0.900
+70.560, 1.740
+71.520, 0.000
+8.070, 0.000
+8.130, 0.000
+8.170, 0.000
+8.270, 1.240
+8.530, 0.000
+8.640, 0.000
+9.460, 0.000
+9.500, 0.000
+>>>customers-data
+1
+10
+2
+3
+4
+5
+6
+7
+8
+9
+>>>products-data
+1, coconut meat, dried (desiccated), creamed, 1 lbs, 454, Nuts, coconut meat, 168585
+10, sunflower seed kernels, toasted, with salt added, 1 lbs, 454, Seeds, sunflower seed kernels, 168594
+100, chestnuts, european, dried, peeled, 2 lbs, 907, Nuts, chestnuts, 170167
+101, chestnuts, european, boiled and steamed, 1 lbs, 454, Nuts, chestnuts, 170168
+102, chestnuts, european, boiled and steamed, 2 lbs, 907, Nuts, chestnuts, 170168
+103, chestnuts, european, boiled and steamed, 5 lbs, 2268, Nuts, chestnuts, 170168
+104, coconut meat, raw, 1 lbs, 454, Nuts, coconut meat, 170169
+105, coconut meat, dried (desiccated), not sweetened, 1 lbs, 454, Nuts, coconut meat, 170170
+106, coconut cream, canned, sweetened, 1 lbs, 454, Nuts, coconut cream, 170171
+107, coconut cream, canned, sweetened, 2 lbs, 907, Nuts, coconut cream, 170171
+108, ginkgo nuts, dried, 1 lbs, 454, Nuts, ginkgo nuts, 170175
+109, ginkgo nuts, dried, 2 lbs, 907, Nuts, ginkgo nuts, 170175
+11, sunflower seed kernels, toasted, with salt added, 2 lbs, 907, Seeds, sunflower seed kernels, 168594
+110, ginkgo nuts, dried, 5 lbs, 2268, Nuts, ginkgo nuts, 170175
+111, ginkgo nuts, canned, 1 lbs, 454, Nuts, ginkgo nuts, 170176
+112, hickorynuts, dried, 1 lbs, 454, Nuts, hickorynuts, 170177
+113, macadamia nuts, raw, 1 lbs, 454, Nuts, macadamia nuts, 170178
+114, macadamia nuts, dry roasted, without salt added, 1 lbs, 454, Nuts, macadamia nuts, 170179
+115, mixed nuts, dry roasted, with peanuts, salt added, CHOSEN ROASTER, 1 lbs, 454, Nuts, mixed nuts, 170181
+116, pecans, 1 lbs, 454, Nuts, pecans, 170182
+117, pecans, 2 lbs, 907, Nuts, pecans, 170182
+118, pecans, 5 lbs, 2268, Nuts, pecans, 170182
+119, pecans, dry roasted, without salt added, 1 lbs, 454, Nuts, pecans, 170183
+12, sunflower seed kernels, toasted, with salt added, 5 lbs, 2268, Seeds, sunflower seed kernels, 168594
+120, pecans, dry roasted, without salt added, 2 lbs, 907, Nuts, pecans, 170183
+121, pecans, dry roasted, without salt added, 5 lbs, 2268, Nuts, pecans, 170183
+122, pistachio nuts, raw, 1 lbs, 454, Nuts, pistachio nuts, 170184
+123, pistachio nuts, dry roasted, without salt added, 1 lbs, 454, Nuts, pistachio nuts, 170185
+124, pistachio nuts, dry roasted, without salt added, 2 lbs, 907, Nuts, pistachio nuts, 170185
+125, pistachio nuts, dry roasted, without salt added, 5 lbs, 2268, Nuts, pistachio nuts, 170185
+126, walnuts, black, dried, 1 lbs, 454, Nuts, walnuts, 170186
+127, walnuts, english, 1 lbs, 454, Nuts, walnuts, 170187
+128, walnuts, english, 2 lbs, 907, Nuts, walnuts, 170187
+129, pumpkin and squash seeds, whole, roasted, without salt, 1 lbs, 454, Seeds, pumpkin and squash seeds, 170188
+13, sunflower seed kernels, toasted, with salt added, 10 lbs, 4536, Seeds, sunflower seed kernels, 168594
+130, sesame butter, tahini, from roasted and toasted kernels (most common type), 1 lbs, 454, Seeds, sesame butter, 170189
+131, chestnuts, european, roasted, 1 lbs, 454, Nuts, chestnuts, 170190
+132, chestnuts, european, roasted, 2 lbs, 907, Nuts, chestnuts, 170190
+133, chestnuts, european, roasted, 5 lbs, 2268, Nuts, chestnuts, 170190
+134, chestnuts, european, roasted, 10 lbs, 4536, Nuts, chestnuts, 170190
+135, sesame butter, paste, 1 lbs, 454, Seeds, sesame butter, 170191
+136, breadnut tree seeds, raw, 1 lbs, 454, Seeds, breadnut tree seeds, 170552
+137, breadnut tree seeds, raw, 2 lbs, 907, Seeds, breadnut tree seeds, 170552
+138, breadnut tree seeds, raw, 5 lbs, 2268, Seeds, breadnut tree seeds, 170552
+139, breadnut tree seeds, raw, 10 lbs, 4536, Seeds, breadnut tree seeds, 170552
+14, sunflower seed butter, with salt added (Includes foods for USDA's Food Distribution Program), 1 lbs, 454, Seeds, sunflower seed butter, 168595
+140, breadnut tree seeds, dried, 1 lbs, 454, Seeds, breadnut tree seeds, 170553
+141, breadnut tree seeds, dried, 2 lbs, 907, Seeds, breadnut tree seeds, 170553
+142, chia seeds, dried, 1 lbs, 454, Seeds, chia seeds, 170554
+143, pumpkin and squash seed kernels, dried, 1 lbs, 454, Seeds, pumpkin and squash seed kernels, 170556
+144, pumpkin and squash seed kernels, roasted, without salt, 1 lbs, 454, Seeds, pumpkin and squash seed kernels, 170557
+145, pumpkin and squash seed kernels, roasted, without salt, 2 lbs, 907, Seeds, pumpkin and squash seed kernels, 170557
+146, safflower seed kernels, dried, 1 lbs, 454, Seeds, safflower seed kernels, 170558
+147, safflower seed kernels, dried, 2 lbs, 907, Seeds, safflower seed kernels, 170558
+148, safflower seed kernels, dried, 5 lbs, 2268, Seeds, safflower seed kernels, 170558
+149, sunflower seed kernels, dried, 1 lbs, 454, Seeds, sunflower seed kernels, 170562
+15, almonds, dry roasted, with salt added, 1 lbs, 454, Nuts, almonds, 168596
+150, sunflower seed kernels, dried, 2 lbs, 907, Seeds, sunflower seed kernels, 170562
+151, sunflower seed kernels, dried, 5 lbs, 2268, Seeds, sunflower seed kernels, 170562
+152, sunflower seed kernels, dried, 10 lbs, 4536, Seeds, sunflower seed kernels, 170562
+153, sunflower seed kernels, dry roasted, without salt, 1 lbs, 454, Seeds, sunflower seed kernels, 170563
+154, sunflower seed kernels, oil roasted, without salt, 1 lbs, 454, Seeds, sunflower seed kernels, 170564
+155, acorns, dried, 1 lbs, 454, Nuts, acorns, 170565
+156, almonds, 1 lbs, 454, Nuts, almonds, 170567
+157, almonds, blanched, 1 lbs, 454, Nuts, almonds, 170568
+158, almonds, blanched, 2 lbs, 907, Nuts, almonds, 170568
+159, almonds, blanched, 5 lbs, 2268, Nuts, almonds, 170568
+16, almonds, dry roasted, with salt added, 2 lbs, 907, Nuts, almonds, 168596
+160, brazilnuts, dried, unblanched, 1 lbs, 454, Nuts, brazilnuts, 170569
+161, butternuts, dried, 1 lbs, 454, Nuts, butternuts, 170570
+162, cashew nuts, dry roasted, without salt added, 1 lbs, 454, Nuts, cashew nuts, 170571
+163, cashew nuts, oil roasted, without salt added, 1 lbs, 454, Nuts, cashew nuts, 170572
+164, chestnuts, chinese, roasted, 1 lbs, 454, Nuts, chestnuts, 170573
+165, chestnuts, european, raw, unpeeled, 1 lbs, 454, Nuts, chestnuts, 170574
+166, chestnuts, european, raw, unpeeled, 2 lbs, 907, Nuts, chestnuts, 170574
+167, chestnuts, european, raw, unpeeled, 5 lbs, 2268, Nuts, chestnuts, 170574
+168, chestnuts, european, raw, unpeeled, 10 lbs, 4536, Nuts, chestnuts, 170574
+169, chestnuts, european, raw, peeled, 1 lbs, 454, Nuts, chestnuts, 170575
+17, almonds, dry roasted, with salt added, 5 lbs, 2268, Nuts, almonds, 168596
+170, chestnuts, european, dried, unpeeled, 1 lbs, 454, Nuts, chestnuts, 170576
+171, coconut meat, dried (desiccated), sweetened, flaked, packaged, 1 lbs, 454, Nuts, coconut meat, 170577
+172, coconut meat, dried (desiccated), sweetened, flaked, canned, 1 lbs, 454, Nuts, coconut meat, 170578
+173, coconut meat, dried (desiccated), sweetened, flaked, canned, 2 lbs, 907, Nuts, coconut meat, 170578
+174, coconut meat, dried (desiccated), toasted, 1 lbs, 454, Nuts, coconut meat, 170579
+175, hazelnuts or filberts, 1 lbs, 454, Nuts, hazelnuts or filberts, 170581
+176, hazelnuts or filberts, blanched, 1 lbs, 454, Nuts, hazelnuts or filberts, 170582
+177, hazelnuts or filberts, dry roasted, without salt added, 1 lbs, 454, Nuts, hazelnuts or filberts, 170583
+178, ginkgo nuts, raw, 1 lbs, 454, Nuts, ginkgo nuts, 170584
+179, ginkgo nuts, raw, 2 lbs, 907, Nuts, ginkgo nuts, 170584
+18, cashew butter, plain, with salt added, 1 lbs, 454, Nuts, cashew butter, 168597
+180, ginkgo nuts, raw, 5 lbs, 2268, Nuts, ginkgo nuts, 170584
+181, mixed nuts, dry roasted, with peanuts, without salt added, 1 lbs, 454, Nuts, mixed nuts, 170585
+182, mixed nuts, oil roasted, with peanuts, without salt added, 1 lbs, 454, Nuts, mixed nuts, 170587
+183, mixed nuts, oil roasted, with peanuts, without salt added, 2 lbs, 907, Nuts, mixed nuts, 170587
+184, mixed nuts, oil roasted, with peanuts, without salt added, 5 lbs, 2268, Nuts, mixed nuts, 170587
+185, mixed nuts, oil roasted, without peanuts, without salt added, 1 lbs, 454, Nuts, mixed nuts, 170588
+186, pecans, oil roasted, without salt added, 1 lbs, 454, Nuts, pecans, 170589
+187, pecans, oil roasted, without salt added, 2 lbs, 907, Nuts, pecans, 170589
+188, pecans, oil roasted, without salt added, 5 lbs, 2268, Nuts, pecans, 170589
+189, pilinuts, dried, 1 lbs, 454, Nuts, pilinuts, 170590
+19, macadamia nuts, dry roasted, with salt added, 1 lbs, 454, Nuts, macadamia nuts, 168598
+190, pine nuts, dried, 1 lbs, 454, Nuts, pine nuts, 170591
+191, pine nuts, pinyon, dried, 1 lbs, 454, Nuts, pine nuts, 170592
+192, pine nuts, pinyon, dried, 2 lbs, 907, Nuts, pine nuts, 170592
+193, pine nuts, pinyon, dried, 5 lbs, 2268, Nuts, pine nuts, 170592
+194, walnuts, glazed, 1 lbs, 454, Nuts, walnuts, 170593
+195, walnuts, dry roasted, with salt added, 1 lbs, 454, Nuts, walnuts, 170594
+196, breadfruit seeds, roasted, 1 lbs, 454, Seeds, breadfruit seeds, 170595
+197, breadfruit seeds, roasted, 2 lbs, 907, Seeds, breadfruit seeds, 170595
+198, cottonseed kernels, roasted (glandless), 1 lbs, 454, Seeds, cottonseed kernels, 170596
+2, coconut meat, dried (desiccated), sweetened, shredded, 1 lbs, 454, Nuts, coconut meat, 168586
+20, macadamia nuts, dry roasted, with salt added, 2 lbs, 907, Nuts, macadamia nuts, 168598
+21, mixed nuts, dry roasted, with peanuts, with salt added, 1 lbs, 454, Nuts, mixed nuts, 168599
+22, mixed nuts, oil roasted, with peanuts, with salt added, 1 lbs, 454, Nuts, mixed nuts, 168600
+23, pumpkin and squash seeds, whole, roasted, with salt added, 1 lbs, 454, Seeds, pumpkin and squash seeds, 168601
+24, pumpkin and squash seeds, whole, roasted, with salt added, 2 lbs, 907, Seeds, pumpkin and squash seeds, 168601
+25, almonds, oil roasted, lightly salted, 1 lbs, 454, Nuts, almonds, 168602
+26, almonds, oil roasted, lightly salted, 2 lbs, 907, Nuts, almonds, 168602
+27, almonds, oil roasted, lightly salted, 5 lbs, 2268, Nuts, almonds, 168602
+28, almond butter, plain, with salt added, 1 lbs, 454, Nuts, almond butter, 168603
+29, sesame butter, tahini, type of kernels unspecified, 1 lbs, 454, Seeds, sesame butter, 168604
+3, sisymbrium sp. seeds, whole, dried, 1 lbs, 454, Seeds, sisymbrium sp. seeds, 168587
+30, sesame butter, tahini, from unroasted kernels (non-chemically removed seed coat), 1 lbs, 454, Seeds, sesame butter, 169406
+31, watermelon seed kernels, dried, 1 lbs, 454, Seeds, watermelon seed kernels, 169407
+32, chestnuts, japanese, dried, 1 lbs, 454, Nuts, chestnuts, 169408
+33, sesame butter, tahini, from raw and stone ground kernels, 1 lbs, 454, Seeds, sesame butter, 169410
+34, sesame butter, tahini, from raw and stone ground kernels, 2 lbs, 907, Seeds, sesame butter, 169410
+35, sesame seed kernels, dried (decorticated), 1 lbs, 454, Seeds, sesame seed kernels, 169412
+36, chestnuts, japanese, raw, 1 lbs, 454, Nuts, chestnuts, 169413
+37, chestnuts, japanese, raw, 2 lbs, 907, Nuts, chestnuts, 169413
+38, chestnuts, japanese, raw, 5 lbs, 2268, Nuts, chestnuts, 169413
+39, flaxseed, 1 lbs, 454, Seeds, flaxseed, 169414
+4, almond butter, plain, without salt added, 1 lbs, 454, Nuts, almond butter, 168588
+40, flaxseed, 2 lbs, 907, Seeds, flaxseed, 169414
+41, pumpkin and squash seed kernels, roasted, with salt added, 1 lbs, 454, Seeds, pumpkin and squash seed kernels, 169415
+42, pumpkin and squash seed kernels, roasted, with salt added, 2 lbs, 907, Seeds, pumpkin and squash seed kernels, 169415
+43, pumpkin and squash seed kernels, roasted, with salt added, 5 lbs, 2268, Seeds, pumpkin and squash seed kernels, 169415
+44, sesame seed kernels, toasted, with salt added (decorticated), 1 lbs, 454, Seeds, sesame seed kernels, 169416
+45, sesame seed kernels, toasted, with salt added (decorticated), 2 lbs, 907, Seeds, sesame seed kernels, 169416
+46, sesame seed kernels, toasted, with salt added (decorticated), 5 lbs, 2268, Seeds, sesame seed kernels, 169416
+47, sesame seed kernels, toasted, with salt added (decorticated), 10 lbs, 4536, Seeds, sesame seed kernels, 169416
+48, sunflower seed kernels, from shell, dry roasted, with salt added, 1 lbs, 454, Seeds, sunflower seed kernels, 169417
+49, sunflower seed kernels, from shell, dry roasted, with salt added, 2 lbs, 907, Seeds, sunflower seed kernels, 169417
+5, chestnuts, japanese, boiled and steamed, 1 lbs, 454, Nuts, chestnuts, 168589
+50, sunflower seed kernels, from shell, dry roasted, with salt added, 5 lbs, 2268, Seeds, sunflower seed kernels, 169417
+51, sunflower seed kernels, dry roasted, with salt added, 1 lbs, 454, Seeds, sunflower seed kernels, 169418
+52, sunflower seed kernels, dry roasted, with salt added, 2 lbs, 907, Seeds, sunflower seed kernels, 169418
+53, sunflower seed kernels, dry roasted, with salt added, 5 lbs, 2268, Seeds, sunflower seed kernels, 169418
+54, almonds, oil roasted, with salt added, 1 lbs, 454, Nuts, almonds, 169419
+55, almonds, oil roasted, with salt added, smoke flavor, 1 lbs, 454, Nuts, almonds, 169420
+56, almonds, oil roasted, with salt added, smoke flavor, 2 lbs, 907, Nuts, almonds, 169420
+57, cashew nuts, dry roasted, with salt added, 1 lbs, 454, Nuts, cashew nuts, 169421
+58, cashew nuts, oil roasted, with salt added, 1 lbs, 454, Nuts, cashew nuts, 169422
+59, mixed nuts, oil roasted, without peanuts, with salt added, 1 lbs, 454, Nuts, mixed nuts, 169423
+6, chestnuts, japanese, roasted, 1 lbs, 454, Nuts, chestnuts, 168590
+60, pecans, dry roasted, with salt added, 1 lbs, 454, Nuts, pecans, 169424
+61, pecans, dry roasted, with salt added, 2 lbs, 907, Nuts, pecans, 169424
+62, pecans, oil roasted, with salt added, 1 lbs, 454, Nuts, pecans, 169425
+63, pistachio nuts, dry roasted, with salt added, 1 lbs, 454, Nuts, pistachio nuts, 169426
+64, pistachio nuts, dry roasted, with salt added, 2 lbs, 907, Nuts, pistachio nuts, 169426
+65, mixed nuts, oil roasted, with peanuts, lightly salted, 1 lbs, 454, Nuts, mixed nuts, 169427
+66, mixed nuts, oil roasted, with peanuts, lightly salted, 2 lbs, 907, Nuts, mixed nuts, 169427
+67, mixed nuts, oil roasted, with peanuts, lightly salted, 5 lbs, 2268, Nuts, mixed nuts, 169427
+68, mixed nuts, oil roasted, with peanuts, lightly salted, 10 lbs, 4536, Nuts, mixed nuts, 169427
+69, mixed nuts, oil roasted, without peanuts, lightly salted, 1 lbs, 454, Nuts, mixed nuts, 169428
+7, lotus seeds, raw, 1 lbs, 454, Seeds, lotus seeds, 168591
+70, breadfruit seeds, raw, 1 lbs, 454, Seeds, breadfruit seeds, 170144
+71, breadfruit seeds, boiled, 1 lbs, 454, Seeds, breadfruit seeds, 170145
+72, hemp seed, hulled, 1 lbs, 454, Seeds, hemp seed, 170148
+73, hemp seed, hulled, 2 lbs, 907, Seeds, hemp seed, 170148
+74, hemp seed, hulled, 5 lbs, 2268, Seeds, hemp seed, 170148
+75, lotus seeds, dried, 1 lbs, 454, Seeds, lotus seeds, 170149
+76, lotus seeds, dried, 2 lbs, 907, Seeds, lotus seeds, 170149
+77, lotus seeds, dried, 5 lbs, 2268, Seeds, lotus seeds, 170149
+78, lotus seeds, dried, 10 lbs, 4536, Seeds, lotus seeds, 170149
+79, sesame seeds, whole, dried, 1 lbs, 454, Seeds, sesame seeds, 170150
+8, almonds, honey roasted, unblanched, 1 lbs, 454, Nuts, almonds, 168592
+80, sesame seeds, whole, roasted and toasted, 1 lbs, 454, Seeds, sesame seeds, 170151
+81, sesame seed kernels, toasted, without salt added (decorticated), 1 lbs, 454, Seeds, sesame seed kernels, 170152
+82, sunflower seed kernels, toasted, without salt, 1 lbs, 454, Seeds, sunflower seed kernels, 170154
+83, sunflower seed kernels, toasted, without salt, 2 lbs, 907, Seeds, sunflower seed kernels, 170154
+84, sunflower seed butter, without salt, 1 lbs, 454, Seeds, sunflower seed butter, 170155
+85, acorns, raw, 1 lbs, 454, Nuts, acorns, 170157
+86, almonds, dry roasted, without salt added, 1 lbs, 454, Nuts, almonds, 170158
+87, almonds, oil roasted, without salt added, 1 lbs, 454, Nuts, almonds, 170159
+88, almond paste, 1 lbs, 454, Nuts, almond paste, 170160
+89, beechnuts, dried, 1 lbs, 454, Nuts, beechnuts, 170161
+9, sunflower seed kernels, oil roasted, with salt added, 1 lbs, 454, Seeds, sunflower seed kernels, 168593
+90, beechnuts, dried, 2 lbs, 907, Nuts, beechnuts, 170161
+91, beechnuts, dried, 5 lbs, 2268, Nuts, beechnuts, 170161
+92, beechnuts, dried, 10 lbs, 4536, Nuts, beechnuts, 170161
+93, cashew nuts, raw, 1 lbs, 454, Nuts, cashew nuts, 170162
+94, cashew butter, plain, without salt added, 1 lbs, 454, Nuts, cashew butter, 170163
+95, chestnuts, chinese, raw, 1 lbs, 454, Nuts, chestnuts, 170164
+96, chestnuts, chinese, dried, 1 lbs, 454, Nuts, chestnuts, 170165
+97, chestnuts, chinese, boiled and steamed, 1 lbs, 454, Nuts, chestnuts, 170166
+98, chestnuts, chinese, boiled and steamed, 2 lbs, 907, Nuts, chestnuts, 170166
+99, chestnuts, european, dried, peeled, 1 lbs, 454, Nuts, chestnuts, 170167
+>>>spending_by_month-data
+1, 225.770, 14.730
+1, 95.530, 1.240
+10, 104.330, 35.410
+10, 84.180, 4.240
+2, 139.860, 29.080
+2, 336.640, 50.490
+3, 20.640, 0.000
+3, 53.940, 0.000
+4, 118.500, 18.280
+4, 98.750, 7.000
+5, 105.550, 65.730
+5, 149.080, 4.430
+6, 172.840, 12.640
+6, 36.550, 16.870
+7, 23.830, 0.000
+7, 86.940, 7.940
+8, 118.540, 7.260
+8, 17.590, 5.270
+9, 78.830, 5.950
+9, 94.360, 21.880

@@ -311,7 +311,7 @@ public class Resolve {
   }
 
   private SqlNode transformExpressionToQuery(Env env, SqrlStatement statement, SqlNode sqlNode) {
-    Preconditions.checkState(getContext(env, statement).isPresent());
+    Preconditions.checkState(getContext(env, statement).isPresent(),"Could not find parent table: %s",statement.getNamePath());
     return new SqlSelect(SqlParserPos.ZERO,
         SqlNodeList.EMPTY,
         new SqlNodeList(List.of(sqlNode), SqlParserPos.ZERO),

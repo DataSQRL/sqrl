@@ -100,7 +100,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
      */
     @Test
     public void generateSchema() {
-//        generateTableConfigAndSchemaInDataDir(Retail.INSTANCE);
+//        generateTableConfigAndSchemaInDataDir(Nutshop.INSTANCE);
     }
 
     @SneakyThrows

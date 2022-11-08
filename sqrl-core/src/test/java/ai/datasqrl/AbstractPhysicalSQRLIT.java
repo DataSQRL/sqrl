@@ -3,14 +3,41 @@ package ai.datasqrl;
 import ai.datasqrl.config.DiscoveryConfiguration;
 import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
+import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
+import ai.datasqrl.physical.database.relational.QueryTemplate;
+import ai.datasqrl.physical.stream.Job;
+import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.calcite.util.RelToSql;
+import ai.datasqrl.plan.global.DAGPlanner;
+import ai.datasqrl.plan.global.OptimizedDAG;
+import ai.datasqrl.plan.local.analyze.ResolveTest;
+import ai.datasqrl.plan.local.generate.Resolve;
+import ai.datasqrl.plan.queries.APIQuery;
+import ai.datasqrl.util.ResultSetPrinter;
+import ai.datasqrl.util.SnapshotTest;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
+import lombok.SneakyThrows;
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.sql.ScriptNode;
 
 import java.nio.file.Path;
+import java.sql.ResultSet;
+import java.sql.Types;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
     public JDBCConnectionProvider jdbc;
     public PhysicalPlanner physicalPlanner;
+
+    protected SnapshotTest.Snapshot snapshot;
 
     protected void initialize(IntegrationTestSettings settings, Path rootDir) {
         super.initialize(settings, rootDir);
@@ -22,5 +49,60 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
                 sqrlSettings.getStreamEngineProvider().create(), planner);
     }
 
+
+    protected void validate(String script, String... queryTables) {
+        validate(script,Collections.EMPTY_SET,queryTables);
+    }
+
+    protected void validate(String script, Set<String> tableWithoutTimestamp, String... queryTables) {
+        validate(script,tableWithoutTimestamp, Arrays.asList(queryTables));
+    }
+
+    @SneakyThrows
+    protected void validate(String script, Set<String> tableWithoutTimestamp, Collection<String> queryTables) {
+        ScriptNode node = parse(script);
+        Resolve.Env resolvedDag = resolve.planDag(session, node);
+        DAGPlanner dagPlanner = new DAGPlanner(planner);
+        //We add a scan query for every query table
+        List<APIQuery> queries = new ArrayList<APIQuery>();
+        CalciteSchema relSchema = resolvedDag.getRelSchema();
+        for (String tableName : queryTables) {
+            Optional<VirtualRelationalTable> vtOpt = ResolveTest.getLatestTable(relSchema,tableName,VirtualRelationalTable.class);
+            Preconditions.checkArgument(vtOpt.isPresent(),"No such table: %s",tableName);
+            VirtualRelationalTable vt = vtOpt.get();
+            RelNode rel = planner.getRelBuilder().scan(vt.getNameId()).build();
+            queries.add(new APIQuery(tableName, rel));
+        }
+        OptimizedDAG dag = dagPlanner.plan(relSchema,queries, session.getPipeline());
+        snapshot.addContent(dag);
+        PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
+        PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
+        Job job = executor.execute(physicalPlan);
+        System.out.println("Started Flink Job: " + job.getExecutionId());
+        Map<String, ResultSet> results = new HashMap<>();
+        for (APIQuery query : queries) {
+            QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
+            String sqlQuery = RelToSql.convertToSql(template.getRelNode());
+            System.out.println("Executing query: " + sqlQuery);
+            ResultSet resultSet = jdbc.getConnection().createStatement()
+                    .executeQuery(sqlQuery);
+            results.put(query.getNameId(),resultSet);
+            //Since Flink execution order is non-deterministic we need to sort results and remove uuid and ingest_time which change with every invocation
+            Predicate<Integer> typeFilter = Predicates.alwaysTrue();
+            if (tableWithoutTimestamp.contains(query.getNameId())) typeFilter = filterOutTimestampColumn;
+            String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,
+                            s -> Stream.of("_uuid", "_ingest_time").noneMatch(p -> s.startsWith(p)), typeFilter))
+                    .sorted().collect(Collectors.joining(System.lineSeparator()));
+            snapshot.addContent(content,query.getNameId(),"data");
+        }
+        snapshot.createOrValidate();
+    }
+
+    private static final Predicate<Integer> filterOutTimestampColumn =
+            type -> type!= Types.TIMESTAMP_WITH_TIMEZONE && type!=Types.TIMESTAMP;
+
+    private ScriptNode parse(String query) {
+        return parser.parse(query);
+    }
 
 }
