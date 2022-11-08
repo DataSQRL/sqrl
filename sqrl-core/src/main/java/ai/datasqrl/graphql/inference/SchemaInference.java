@@ -228,7 +228,7 @@ public class SchemaInference {
 
   private RelNode constructRel(SQRLTable table, VirtualRelationalTable vt,
       Optional<Relationship> rel, Env env) {
-    if (rel.isPresent() && rel.get().getJoinType() == JoinType.JOIN) {
+    if (rel.isPresent() && rel.get().getJoin().isPresent()) {
       return constructJoinDecScan(env, rel.get());
     }
 
@@ -246,13 +246,13 @@ public class SchemaInference {
 
     //todo: fix for TOP N
     ExtractRightDeepAlias rightDeepAlias = new ExtractRightDeepAlias();
-    String alias = rel.getNode().accept(rightDeepAlias);
+    String alias = rel.getJoin().get().getQuery().accept(rightDeepAlias);
 
     SqlSelect select = new SqlSelect(
         SqlParserPos.ZERO,
         null,
         new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO),
-        rel.getNode(),
+        rel.getJoin().get().getQuery(),
         null,
         null,
         null

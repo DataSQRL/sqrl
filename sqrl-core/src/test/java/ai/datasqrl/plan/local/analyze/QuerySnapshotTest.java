@@ -100,17 +100,17 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
           + "                            WHERE e.parent.time > now() - INTERVAL 2 YEAR\n"
           + "                            GROUP BY productid, category ORDER BY count(1) DESC, quantity DESC;\n",
       "Orders3 := SELECT * FROM Orders.entries.parent.entries e WHERE e.parent.customerid = 100;\n",
-      "Orders.biggestDiscount := JOIN _.entries e ORDER BY e.discount DESC LIMIT 1;\n"
+      "Orders.biggestDiscount := JOIN _.entries e ORDER BY e.discount DESC;\n"
           + "Orders2 := SELECT * FROM Orders.biggestDiscount.parent e;\n",
       "Orders.entries2 := SELECT _.id, _.time FROM _.entries;\n",
       //Assure that added parent primary keys do not override the explicit aliases
       "Orders.entries2 := SELECT e.discount AS id FROM _.entries e GROUP BY e.discount;\n",
       "Orders.newid := COALESCE(customerid, id);\n",
       "Category := SELECT DISTINCT category AS name FROM Product;\n",
-      "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
-          + "Orders.entries.dProduct := SELECT DISTINCT category AS name FROM _.product LIMIT 1;\n",
+      "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
+          + "Orders.entries.dProduct := SELECT DISTINCT category AS name FROM _.product;\n",
       "Orders.x := SELECT * FROM _ JOIN Product ON true;\n",
-      "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
+      "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
           + "Orders.entries.dProduct := SELECT unit_price, product.category, product.name FROM _;\n",
       "Orders.newid := SELECT NOW(), STRING_TO_TIMESTAMP(TIMESTAMP_TO_STRING(EPOCH_TO_TIMESTAMP(100))) FROM Orders;",
       "Orders.entries.x := SELECT e.parent.entries.parent.id, f.parent.entries.parent.customerid "

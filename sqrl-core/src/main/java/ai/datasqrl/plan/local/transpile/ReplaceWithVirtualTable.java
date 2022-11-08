@@ -50,7 +50,7 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
         if (tbl instanceof SqlIdentifier) {
           ResolvedTable resolved = analysis.getTableIdentifiers().get(tbl);
           if (resolved instanceof RelativeResolvedTable &&
-              ((RelativeResolvedTable)resolved).getFields().get(0).getNode() != null){
+              ((RelativeResolvedTable)resolved).getFields().get(0).getJoin().isPresent()){
             return tbl.accept(this);
           }
         }
@@ -118,9 +118,9 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
       Preconditions.checkState(resolveRel.getFields().size() == 1);
       Relationship relationship = resolveRel.getFields().get(0);
       //Is a join declaration
-      if (relationship.getNode() != null) {
+      if (relationship.getJoin().isPresent()) {
         String alias = analysis.tableAlias.get(id);
-        Pair<SqlNode, SqlNode> pair = expand(relationship.getNode(),
+        Pair<SqlNode, SqlNode> pair = expand(relationship.getJoin().get().getQuery(),
             resolveRel.getAlias(), alias
         );
         pullup.push(pair.second);

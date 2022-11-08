@@ -23,6 +23,9 @@ import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
+import ai.datasqrl.schema.join.InlineJoinDeclaration;
+import ai.datasqrl.schema.join.JoinDeclaration;
+import ai.datasqrl.schema.join.TopNJoinDeclaration;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.Setter;
@@ -574,13 +577,45 @@ public class Resolve {
     SQRLTable toTable =
         joinDeclarationUtil.getToTable(op.sqrlValidator,
             op.query);
-    Multiplicity multiplicity =
-        joinDeclarationUtil.deriveMultiplicity(op.relNode);
+    Multiplicity multiplicity = getMultiplicity(env, op);
 
-    SqlNode node = pullWhereIntoJoin(op.getQuery());
+    JoinDeclaration join;
+    if (!hasBoundedLimit(env, op)) {
+      SqlNode node = pullWhereIntoJoin(op.getQuery());
+      join = new InlineJoinDeclaration(node);
+    } else {
+      join = new TopNJoinDeclaration(op.query);
+    }
 
     table.get().addRelationship(op.statement.getNamePath().getLast(), toTable,
-        Relationship.JoinType.JOIN, multiplicity, node);
+        Relationship.JoinType.JOIN, multiplicity, Optional.of(join));
+  }
+
+  private boolean hasBoundedLimit(Env env, StatementOp op) {
+    //todo: check if we can eliminate a LIMIT 1 for PK joins
+    Optional<SqlNode> fetch = getFetch(op);
+    return fetch.isPresent();
+  }
+
+  private Multiplicity getMultiplicity(Env env, StatementOp op) {
+    Optional<SqlNode> fetch = getFetch(op);
+
+    return fetch
+        .filter(f -> ((SqlNumericLiteral) f).intValue(true) == 1)
+        .map(f -> Multiplicity.ONE)
+        .orElse(Multiplicity.MANY);
+  }
+
+  private Optional<SqlNode> getFetch(StatementOp op) {
+    if (op.query instanceof SqlSelect) {
+      SqlSelect select = (SqlSelect) op.query;
+      return Optional.ofNullable(select.getFetch());
+    } else if (op.query instanceof SqlOrderBy) {
+      SqlOrderBy order = (SqlOrderBy) op.query;
+      return Optional.ofNullable(order.fetch);
+    } else {
+      throw new RuntimeException("Unknown node type");
+    }
   }
 
   private SqlNode pullWhereIntoJoin(SqlNode query) {

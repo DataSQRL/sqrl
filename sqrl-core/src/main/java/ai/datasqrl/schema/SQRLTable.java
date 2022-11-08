@@ -7,6 +7,7 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
+import ai.datasqrl.schema.join.JoinDeclaration;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.DataContext;
@@ -85,8 +86,9 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   }
 
   public Relationship addRelationship(Name name, SQRLTable toTable, JoinType joinType,
-                                      Multiplicity multiplicity, SqlNode node) {
-    Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity, node);
+                                      Multiplicity multiplicity, Optional<JoinDeclaration> join) {
+    Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity,
+        join);
     fields.addField(rel);
     return rel;
   }

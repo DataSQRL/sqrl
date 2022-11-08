@@ -272,7 +272,7 @@ public class CalciteTableFactory {
         //Avoid overwriting an existing "parent" column on the child
         if (childTable.getField(parentRelationshipName).isEmpty()) {
             return Optional.of(childTable.addRelationship(parentRelationshipName, parentTable, Relationship.JoinType.PARENT,
-                    Relationship.Multiplicity.ONE, null));
+                    Relationship.Multiplicity.ONE, Optional.empty()));
         }
         return Optional.empty();
     }
@@ -281,7 +281,7 @@ public class CalciteTableFactory {
     public static Relationship createChildRelationship(Name childName, SQRLTable childTable, SQRLTable parentTable,
                                                        Relationship.Multiplicity multiplicity) {
         return parentTable.addRelationship(childName, childTable,
-                Relationship.JoinType.CHILD, multiplicity, null);
+                Relationship.JoinType.CHILD, multiplicity, Optional.empty());
     }
 
 
