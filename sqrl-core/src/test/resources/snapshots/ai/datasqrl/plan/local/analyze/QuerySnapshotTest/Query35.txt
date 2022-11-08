@@ -8,5 +8,5 @@ LogicalProject(id=[$0], id0=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3]
 
 
 SELECT "orders$12"."id", "orders$12"."id" AS "id0", "orders$12"."_uuid", "orders$12"."_ingest_time", "orders$12"."customerid", "orders$12"."time", "product$10"."_uuid" AS "_uuid0", "product$10"."_ingest_time" AS "_ingest_time0", "product$10"."productid", "product$10"."name", "product$10"."description", "product$10"."category"
-FROM "orders$12"
- DEFAULT JOIN "product$10" ON TRUE
+FROM orders$12
+ DEFAULT JOIN product$10 ON TRUE

@@ -8,5 +8,5 @@ LogicalProject(id=[$0], _idx=[$1], EXPR$2=[coalesce($11, 0E0:DOUBLE)])
 
 
 SELECT "entries$13"."id", "entries$13"."_idx", COALESCE("entries$130"."discount", 0)
-FROM "entries$13"
- DEFAULT JOIN "entries$13" AS "entries$130" ON TRUE
+FROM entries$13
+ DEFAULT JOIN entries$13 AS "entries$130" ON TRUE

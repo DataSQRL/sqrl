@@ -9,5 +9,5 @@ LogicalProject(id=[$0], _idx=[$1], unit_price=[$4], category=[$11], name=[$9])
 
 
 SELECT "entries$13"."id", "entries$13"."_idx", "entries$13"."unit_price", "product$10"."category", "product$10"."name"
-FROM "entries$13"
- LEFT JOIN "product$10" ON "entries$13"."productid" = "product$10"."productid"
+FROM entries$13
+ LEFT JOIN product$10 ON "entries$13"."productid" = "product$10"."productid"

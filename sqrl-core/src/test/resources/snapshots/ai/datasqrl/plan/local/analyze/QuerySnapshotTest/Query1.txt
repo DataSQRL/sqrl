@@ -5,4 +5,4 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], descrip
 
 
 SELECT *
-FROM "product$10"
+FROM product$10

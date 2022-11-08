@@ -5,4 +5,4 @@ LogicalProject(x=[+($1, 24:INTERVAL YEAR)])
 
 
 SELECT "_ingest_time" + INTERVAL '2' YEAR AS "x"
-FROM "product$10"
+FROM product$10

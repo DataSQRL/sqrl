@@ -11,7 +11,7 @@ LogicalProject(time=[$4], time0=[$9], time1=[$14])
 
 
 SELECT "orders$12"."time", "orders$120"."time" AS "time0", "orders$121"."time" AS "time1"
-FROM "orders$12"
- INNER JOIN "orders$12" AS "orders$120" ON "orders$12"."_uuid" = "orders$120"."_uuid"
- INNER JOIN "orders$12" AS "orders$121" ON "orders$120"."_uuid" = "orders$121"."_uuid"
- INNER JOIN "orders$12" AS "orders$122" ON "orders$121"."_uuid" = "orders$122"."_uuid"
+FROM orders$12
+ INNER JOIN orders$12 AS "orders$120" ON "orders$12"."_uuid" = "orders$120"."_uuid"
+ INNER JOIN orders$12 AS "orders$121" ON "orders$120"."_uuid" = "orders$121"."_uuid"
+ INNER JOIN orders$12 AS "orders$122" ON "orders$121"."_uuid" = "orders$122"."_uuid"

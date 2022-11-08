@@ -188,9 +188,8 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     validate(Files.readString(script.getScript()), ImmutableSet.copyOf(script.getResultTables()), script.getResultTables());
   }
 
-  @Disabled
   @Test
-  public void failingScriptTest() {
+  public void testFull() {
     fullScriptTest(Retail.INSTANCE.getScripts().get(2));
   }
 

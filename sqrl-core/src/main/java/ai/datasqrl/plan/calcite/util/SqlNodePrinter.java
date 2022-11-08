@@ -15,11 +15,7 @@ public class SqlNodePrinter {
   }
 
   public static String toString(SqlNode node) {
-    SqlWriterConfig config = SqlPrettyWriter.config().withAlwaysUseParentheses(false)
-        .withIndentation(2)
-        .withSubQueryStyle(SubQueryStyle.HYDE)
-        .withSelectListItemsOnSeparateLines(true)
-        ;
+    SqlWriterConfig config = RelToSql.transform.apply(SqlPrettyWriter.config());
     SqlPrettyWriter writer = new SqlPrettyWriter(config);
 
     node.unparse(writer, 0, 0);

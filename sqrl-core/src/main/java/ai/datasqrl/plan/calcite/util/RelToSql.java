@@ -12,7 +12,14 @@ import java.util.function.UnaryOperator;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
 public class RelToSql {
-
+  public static final UnaryOperator<SqlWriterConfig> transform = c ->
+      c.withAlwaysUseParentheses(false)
+          .withSelectListItemsOnSeparateLines(false)
+          .withUpdateSetListNewline(false)
+          .withIndentation(1)
+          .withQuoteAllIdentifiers(false)
+          .withDialect(PostgresqlSqlDialect.DEFAULT)
+          .withSelectFolding(null);
   public static SqlNode convertToSqlNode(RelNode optimizedNode) {
     RelToSqlConverter converter = new RelToSqlConverter(PostgresqlSqlDialect.DEFAULT);
     final SqlNode sqlNode = converter.visitRoot(optimizedNode).asStatement();
@@ -20,13 +27,6 @@ public class RelToSql {
   }
 
   public static String convertToSql(RelNode optimizedNode) {
-    UnaryOperator<SqlWriterConfig> transform = c ->
-        c.withAlwaysUseParentheses(false)
-            .withSelectListItemsOnSeparateLines(false)
-            .withUpdateSetListNewline(false)
-            .withIndentation(1)
-            .withDialect(PostgresqlSqlDialect.DEFAULT)
-            .withSelectFolding(null);
 
     String sql = convertToSqlNode(optimizedNode).toSqlString(
             c -> transform.apply(c.withDialect(PostgresqlSqlDialect.DEFAULT)))

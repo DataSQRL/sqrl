@@ -8,5 +8,5 @@ LogicalProject(id=[$0], _idx=[$1], EXPR$2=[-(*($9, $10), $11)])
 
 
 SELECT "entries$13"."id", "entries$13"."_idx", "entries$130"."quantity" * "entries$130"."unit_price" - "entries$130"."discount"
-FROM "entries$13"
- DEFAULT JOIN "entries$13" AS "entries$130" ON TRUE
+FROM entries$13
+ DEFAULT JOIN entries$13 AS "entries$130" ON TRUE

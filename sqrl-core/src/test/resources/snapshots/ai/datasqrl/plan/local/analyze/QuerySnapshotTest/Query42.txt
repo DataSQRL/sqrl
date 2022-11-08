@@ -6,4 +6,4 @@ LogicalProject(id=[$0], _idx=[$1], EXPR$2=[-(*($3, $4), $6)])
 
 
 SELECT "id", "_idx", "quantity" * "unit_price" - "discount$0"
-FROM "entries$13"
+FROM entries$13

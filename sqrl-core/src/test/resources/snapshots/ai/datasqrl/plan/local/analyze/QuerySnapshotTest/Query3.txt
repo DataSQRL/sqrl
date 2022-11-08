@@ -5,4 +5,4 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=
 
 
 SELECT "_uuid", "_ingest_time", "customerid", "email", "name", "lastupdated" AS "lastUpdated"
-FROM "customer$3"
+FROM customer$3

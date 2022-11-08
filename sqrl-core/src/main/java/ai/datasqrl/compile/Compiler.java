@@ -284,11 +284,7 @@ public class Compiler {
     private String convertDynamicParams(RelNode relNode, RelAndArg arg) {
       SqlNode node = RelToSql.convertToSqlNode(relNode);
 
-      UnaryOperator<SqlWriterConfig> transform = c -> c.withAlwaysUseParentheses(false)
-          .withSelectListItemsOnSeparateLines(false).withUpdateSetListNewline(false)
-          .withIndentation(1).withDialect(PostgresqlSqlDialect.DEFAULT).withSelectFolding(null);
-
-      SqlWriterConfig config = transform.apply(SqlPrettyWriter.config());
+      SqlWriterConfig config = RelToSql.transform.apply(SqlPrettyWriter.config());
       DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config, arg);
       node.unparse(writer, 0, 0);
 

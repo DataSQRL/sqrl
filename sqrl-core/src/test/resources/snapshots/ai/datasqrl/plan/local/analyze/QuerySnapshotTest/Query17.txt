@@ -7,5 +7,5 @@ LogicalProject(price=[-(*($8, $9), $10)])
 
 
 SELECT "entries$13"."quantity" * "entries$13"."unit_price" - "entries$13"."discount" AS "price"
-FROM "orders$12"
- DEFAULT JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"
+FROM orders$12
+ DEFAULT JOIN entries$13 ON "orders$12"."id" = "entries$13"."id"

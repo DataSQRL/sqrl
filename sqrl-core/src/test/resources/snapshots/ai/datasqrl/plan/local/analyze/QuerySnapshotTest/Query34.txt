@@ -12,6 +12,6 @@ LogicalProject(id=[$0], _idx=[$1], name=[$2])
 
 SELECT *
 FROM (SELECT "entries$13"."id", "entries$13"."_idx", "product$10"."category" AS "name"
-  FROM "entries$13"
-   DEFAULT JOIN "product$10" ON "entries$13"."productid" = "product$10"."productid"
+  FROM entries$13
+   DEFAULT JOIN product$10 ON "entries$13"."productid" = "product$10"."productid"
   FETCH NEXT 1 ROWS ONLY) AS "t0"

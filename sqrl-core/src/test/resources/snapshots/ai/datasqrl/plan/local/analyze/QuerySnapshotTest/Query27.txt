@@ -24,11 +24,11 @@ LogicalSort(sort0=[$0], sort1=[$4], sort2=[$3], dir0=[ASC], dir1=[DESC], dir2=[D
 
 
 SELECT "customer$3"."_uuid", "entries$13"."productid", "product$10"."category", SUM("entries$13"."quantity") AS "quantity", COUNT(*) AS "num_orders"
-FROM "customer$3"
- DEFAULT JOIN ("orders$12" DEFAULT JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id") ON "customer$3"."customerid" = "orders$12"."customerid"
- LEFT JOIN "product$10" ON "entries$13"."productid" = "product$10"."productid"
+FROM customer$3
+ DEFAULT JOIN (orders$12 DEFAULT JOIN entries$13 ON "orders$12"."id" = "entries$13"."id") ON "customer$3"."customerid" = "orders$12"."customerid"
+ LEFT JOIN product$10 ON "entries$13"."productid" = "product$10"."productid"
  INNER JOIN (SELECT *
-  FROM "orders$12"
-  WHERE "time" > "now"() - INTERVAL '2' YEAR) AS "t" ON "entries$13"."id" = "t"."id"
+  FROM orders$12
+  WHERE "time" > now() - INTERVAL '2' YEAR) AS "t" ON "entries$13"."id" = "t"."id"
 GROUP BY "customer$3"."_uuid", "entries$13"."productid", "product$10"."category"
 ORDER BY "customer$3"."_uuid", COUNT(*) DESC, SUM("entries$13"."quantity") DESC

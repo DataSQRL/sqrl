@@ -5,4 +5,4 @@ LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4
 
 
 SELECT *
-FROM "orders$12"
+FROM orders$12

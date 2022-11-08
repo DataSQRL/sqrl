@@ -11,8 +11,8 @@ LogicalProject(id=[$0], _idx=[$1], id0=[$12], discount=[$5])
 
 
 SELECT "entries$13"."id", "entries$13"."_idx", CAST("t"."id" AS BIGINT) AS "id0", "entries$13"."discount"
-FROM "entries$13"
- DEFAULT JOIN "entries$13" AS "entries$130" ON TRUE
+FROM entries$13
+ DEFAULT JOIN entries$13 AS "entries$130" ON TRUE
  INNER JOIN (SELECT *
-  FROM "orders$12"
+  FROM orders$12
   WHERE "id" = 1) AS "t" ON "entries$13"."id" = "t"."id"
