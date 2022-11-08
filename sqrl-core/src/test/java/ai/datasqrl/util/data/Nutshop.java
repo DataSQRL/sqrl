@@ -42,10 +42,10 @@ public class Nutshop implements TestDataset {
     public List<TestScript> getScripts() {
         return List.of(
                 TestScript.of(this,BASE_PATH.resolve("customer360").resolve("nutshopv1-"+size+".sqrl"),
-                "orders", "items", "totals", "customers", "products", "spending_by_month"),
+                "orders", "items", "totals", "customers", "products", "spending_by_month").noDataSnapshot(),
                 TestScript.of(this,BASE_PATH.resolve("customer360").resolve("nutshopv2-"+size+".sqrl"),
                         "orders", "items", "totals", "customers", "products", "spending_by_month",
-                        "past_purchases", "volume_by_day"));
+                        "past_purchases", "volume_by_day").noDataSnapshot());
     }
 
     @Override

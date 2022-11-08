@@ -26,23 +26,23 @@ public class FlinkPhysicalUseCaseTest extends AbstractPhysicalSQRLIT {
     }
 
     @SneakyThrows
-    private void scriptTest(TestScript script, boolean removeTimestamps) {
+    private void scriptTest(TestScript script, boolean removeTimestamps, boolean snapshotData) {
         initialize(IntegrationTestSettings.getFlinkWithDB(), script.getRootPackageDirectory());
-        validate(Files.readString(script.getScript()),
+        validate(Files.readString(script.getScript()), script.getResultTables(),
                 removeTimestamps?ImmutableSet.copyOf(script.getResultTables()): Set.of(),
-                script.getResultTables());
+                snapshotData?Set.of():ImmutableSet.copyOf(script.getResultTables()));
     }
 
     @ParameterizedTest
     @ArgumentsSource(TestScript.AllProvider.class)
     public void fullScriptTest(TestScript script) {
-        scriptTest(script,true);
+        scriptTest(script,true, script.dataSnapshot());
     }
 
     @Test
     @Disabled
     public void forDebuggingIndividualUseCases() {
-        scriptTest(Nutshop.INSTANCE.getScripts().get(1), false);
+        scriptTest(Nutshop.INSTANCE.getScripts().get(1), false, true);
     }
 
 }

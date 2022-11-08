@@ -55,11 +55,11 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     }
 
     protected void validate(String script, Set<String> tableWithoutTimestamp, String... queryTables) {
-        validate(script,tableWithoutTimestamp, Arrays.asList(queryTables));
+        validate(script,Arrays.asList(queryTables), tableWithoutTimestamp, Set.of());
     }
 
     @SneakyThrows
-    protected void validate(String script, Set<String> tableWithoutTimestamp, Collection<String> queryTables) {
+    protected void validate(String script, Collection<String> queryTables, Set<String> tableWithoutTimestamp, Set<String> tableNoDataSnapshot) {
         ScriptNode node = parse(script);
         Resolve.Env resolvedDag = resolve.planDag(session, node);
         DAGPlanner dagPlanner = new DAGPlanner(planner);
@@ -79,14 +79,13 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
         PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
         Job job = executor.execute(physicalPlan);
         System.out.println("Started Flink Job: " + job.getExecutionId());
-        Map<String, ResultSet> results = new HashMap<>();
         for (APIQuery query : queries) {
             QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
             String sqlQuery = RelToSql.convertToSql(template.getRelNode());
             System.out.println("Executing query: " + sqlQuery);
             ResultSet resultSet = jdbc.getConnection().createStatement()
                     .executeQuery(sqlQuery);
-            results.put(query.getNameId(),resultSet);
+            if (tableNoDataSnapshot.contains(query.getNameId())) continue;
             //Since Flink execution order is non-deterministic we need to sort results and remove uuid and ingest_time which change with every invocation
             Predicate<Integer> typeFilter = Predicates.alwaysTrue();
             if (tableWithoutTimestamp.contains(query.getNameId())) typeFilter = filterOutTimestampColumn;

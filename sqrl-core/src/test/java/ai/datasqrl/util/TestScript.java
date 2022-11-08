@@ -24,6 +24,10 @@ public interface TestScript {
 
     List<String> getResultTables();
 
+    default boolean dataSnapshot() {
+        return true;
+    }
+
     @Value
     static class Impl implements TestScript {
 
@@ -31,22 +35,32 @@ public interface TestScript {
         final Path rootPackageDirectory;
         final Path script;
         final List<String> resultTables;
+        final boolean dataSnapshot;
 
         @Override
         public String toString() {
             return name;
         }
 
+        @Override
+        public boolean dataSnapshot() {
+            return dataSnapshot;
+        }
+
+        public Impl noDataSnapshot() {
+            return new Impl(name,rootPackageDirectory,script,resultTables,false);
+        }
+
     }
 
-    static TestScript of(TestDataset dataset, Path script, String... resultTables) {
+    static TestScript.Impl of(TestDataset dataset, Path script, String... resultTables) {
         return of(dataset.getRootPackageDirectory(),script, resultTables);
     }
 
-    static TestScript of(Path rootPackage, Path script, String... resultTables) {
+    static TestScript.Impl of(Path rootPackage, Path script, String... resultTables) {
         String name = script.getFileName().toString();
         if (name.endsWith(".sqrl")) name = name.substring(0,name.length()-5);
-        return new Impl(name, rootPackage, script, Arrays.asList(resultTables));
+        return new Impl(name, rootPackage, script, Arrays.asList(resultTables), true);
     }
 
         /*
