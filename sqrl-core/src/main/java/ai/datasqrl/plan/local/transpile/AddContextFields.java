@@ -28,11 +28,13 @@ public class AddContextFields {
 
   private final SqlValidator sqrlValidator;
   private final Optional<VirtualRelationalTable> context;
+  private final boolean aggregate;
 
   public AddContextFields(SqlValidator sqrlValidator,
-      Optional<VirtualRelationalTable> context) {
+      Optional<VirtualRelationalTable> context, boolean aggregate) {
     this.sqrlValidator = sqrlValidator;
     this.context = context;
+    this.aggregate = aggregate;
   }
 
   public SqlNode accept(SqlNode node) {
@@ -44,10 +46,11 @@ public class AddContextFields {
       SqlSelect select = (SqlSelect) node;
       if (!select.isDistinct() &&
           !(context.isPresent()
-              && select.getFetch() != null)) { //we add this to the hint instead of these keywords
+              && select.getFetch() != null) || aggregate) { //we add this to the hint instead of these keywords
         rewriteGroup(select);
         rewriteOrder(select);
       }
+
       rewriteSelect(select);
     }
 

@@ -380,7 +380,8 @@ public class Resolve {
       op.setQuery(finalStage);
       op.setSqrlValidator(validate2);
     } else {
-      SqlNode rewritten = new AddContextFields(sqrlValidator, context).accept(finalStage);
+      SqlNode rewritten = new AddContextFields(sqrlValidator, context,
+          isAggregate(sqrlValidator, finalStage)).accept(finalStage);
 
       //Skip this for joins, we'll add the hints later when we reconstruct the node from the relnode
       // Hints don't carry over when moving from rel -> sqlnode
@@ -397,6 +398,13 @@ public class Resolve {
       op.setQuery(newNode2);
       op.setSqrlValidator(validator);
     }
+  }
+
+  private boolean isAggregate(SqlValidator sqrlValidator, SqlNode node) {
+    if (node instanceof SqlSelect) {
+      return sqrlValidator.isAggregate((SqlSelect) node);
+    }
+    return sqrlValidator.isAggregate(node);
   }
 
   private Optional<SQRLTable> getContext(Env env, SqrlStatement statement) {

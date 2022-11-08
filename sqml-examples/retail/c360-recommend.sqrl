@@ -24,13 +24,15 @@ Orders.entries.product := JOIN Product ON Product.productid = _.productid;
 
 Product._sales_by_hour := SELECT round_to_hour(o.time) as hour, sum(e.quantity) as quantity,
                                 count(1) as num_orders
-                          FROM _ JOIN (Orders o JOIN o.entries e) ON e.productid = _.productid ORDER BY hour DESC;
+                          FROM _ JOIN Orders o JOIN o.entries e ON e.productid = _.productid
+                          GROUP BY hour
+                          ORDER BY hour DESC;
 
 Product._sales_24h := SELECT sum(quantity) as total, sum(num_orders) as num FROM _._sales_by_hour LIMIT 24;
 Product._sales_72h := SELECT sum(quantity) as total, sum(num_orders) as num FROM _._sales_by_hour LIMIT 72;
 
 Product._sales_trend := SELECT a.total*1.5 / greatest(b.total, 500) + a.num*1.5 / greatest(b.num, 100) as increase
-                        FROM _.sales_24h a JOIN _.sales_72h b
+                        FROM _._sales_24h a JOIN _._sales_72h b
 
 Category.trending := JOIN Product p ON _.name = p.category
                      ORDER BY p._sales_trend.increase DESC;
