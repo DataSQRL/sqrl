@@ -378,7 +378,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     Preconditions.checkArgument(fieldCol.direction == RelFieldCollation.Direction.DESCENDING &&
                             fieldCol.nullDirection == RelFieldCollation.NullDirection.LAST);
                     collation = RelCollations.of(fieldCol);
-                    timestamp = timestamp.getCandidateByIndex(fieldCol.getFieldIndex()).fixAsTimestamp();
+                    Optional<TimestampHolder.Derived.Candidate> candidateOpt = timestamp.getOptCandidateByIndex(fieldCol.getFieldIndex());
+                    Preconditions.checkArgument(candidateOpt.isPresent(),"Not a valid timestamp column");
+                    timestamp = candidateOpt.get().fixAsTimestamp();
                     partition = Collections.EMPTY_LIST; //remove partition since we set primary key to partition
                     limit = Optional.empty(); //distinct does not need a limit
                 } else if (topNHint.getType() == TopNHint.Type.TOP_N) {
@@ -519,9 +521,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         AnnotatedLP leftIn = getRelHolder(logicalJoin.getLeft().accept(this));
         AnnotatedLP rightIn = getRelHolder(logicalJoin.getRight().accept(this));
 
-        //TODO: pull now-filters through if possible
-        AnnotatedLP leftInput = leftIn.inlineNowFilter(makeRelBuilder()).inlineTopN(makeRelBuilder());
-        AnnotatedLP rightInput = rightIn.inlineNowFilter(makeRelBuilder()).inlineTopN(makeRelBuilder());
+        AnnotatedLP leftInput = leftIn.inlineTopN(makeRelBuilder());
+        AnnotatedLP rightInput = rightIn.inlineTopN(makeRelBuilder());
         JoinRelType joinType = logicalJoin.getJoinType();
 
         final int leftSideMaxIdx = leftInput.getFieldLength();
@@ -533,7 +534,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
 
         //Identify if this is an identical self-join for a nested tree
-        boolean hasPullups = leftIn.hasPullups() || rightIn.hasPullups();
+        boolean hasPullups = !leftIn.topN.isEmpty() || rightIn.hasPullups();
         //TODO: support left-joins in unnesting
         if ((joinType==JoinRelType.DEFAULT || joinType==JoinRelType.INNER || joinType==JoinRelType.LEFT) && leftInput.joinTables!=null && rightInput.joinTables!=null
                 && !hasPullups && eqDecomp.getRemainingPredicates().isEmpty()) {
@@ -582,7 +583,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                             });
                     ContinuousIndexMap indexMap = leftInput.select.append(remapedRight);
                     return setRelHolder(AnnotatedLP.build(relNode, leftInput.type, newPk, leftInput.timestamp,
-                            indexMap, leftInput.getExec(), leftInput).numRootPks(leftInput.numRootPks).joinTables(joinTables).build());
+                            indexMap, leftInput.getExec(), leftInput)
+                            .numRootPks(leftInput.numRootPks).nowFilter(leftInput.nowFilter).joinTables(joinTables).build());
                 }
             }
         }
@@ -610,7 +612,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 //Check for primary keys equalities on the state-side of the join
                 Set<Integer> pkIndexes = rightInput.primaryKey.getMapping().stream().map(p-> p.getTarget()+newLeftSideMaxIdx).collect(Collectors.toSet());
                 Set<Integer> pkEqualities = eqDecomp.getEqualities().stream().map(p -> p.target).collect(Collectors.toSet());
-                if (pkIndexes.equals(pkEqualities) && eqDecomp.getRemainingPredicates().isEmpty()) {
+                if (pkIndexes.equals(pkEqualities) && eqDecomp.getRemainingPredicates().isEmpty() &&
+                    rightInput.nowFilter.isEmpty()) {
                     RelBuilder relB = makeRelBuilder();
                     relB.push(leftInput.relNode); relB.push(rightInput.relNode);
                     Preconditions.checkArgument(rightInput.timestamp.hasFixedTimestamp());
@@ -626,7 +629,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM,
                             pk, joinTimestamp, joinedIndexMap,
                             combinedExec.require(EngineCapability.TEMPORAL_JOIN), List.of(leftInput, rightInput))
-                            .numRootPks(leftInput.numRootPks).sort(leftInput.sort).build());
+                            .joinTables(leftInput.joinTables)
+                            .numRootPks(leftInput.numRootPks).nowFilter(leftInput.nowFilter).sort(leftInput.sort).build());
                 } else if (joinType==JoinRelType.TEMPORAL) {
                     throw new IllegalArgumentException("Expected join condition to be equality condition on state's primary key: " + logicalJoin);
                 }
@@ -636,8 +640,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         }
 
-        final AnnotatedLP leftInputF = leftInput;
-        final AnnotatedLP rightInputF = rightInput;
+        //TODO: pull now-filters through interval join where possible
+        final AnnotatedLP leftInputF = leftInput.inlineNowFilter(makeRelBuilder());
+        final AnnotatedLP rightInputF = rightInput.inlineNowFilter(makeRelBuilder());
+        combinedExec = leftInputF.getExec().combine(rightInputF.getExec()).requireRex(List.of(condition));
+
         RelBuilder relB = makeRelBuilder();
         relB.push(leftInputF.relNode); relB.push(rightInputF.relNode);
         Function<Integer,RexInputRef> idxResolver = idx -> {

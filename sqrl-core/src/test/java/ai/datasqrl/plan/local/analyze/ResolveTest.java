@@ -170,12 +170,13 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void tableTemporalJoinWithTimeFilterTest() {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
+    builder.add("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC");
     builder.add("Customer.orders := JOIN Orders ON Orders.customerid = _.customerid");
     builder.add("Orders.entries.product := JOIN Product ON Product.productid = _.productid");
     builder.append("Customer.totals := SELECT p.category as category, sum(e.quantity) as num " +
             "FROM _.orders o JOIN o.entries e JOIN e.product p WHERE o.\"time\" >= now() - INTERVAL 1 YEAR GROUP BY category");
     process(builder.toString());
-    validateQueryTable("totals", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,4, 2, TimestampTest.fixed(3));
+    validateQueryTable("totals", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
   }
 
 

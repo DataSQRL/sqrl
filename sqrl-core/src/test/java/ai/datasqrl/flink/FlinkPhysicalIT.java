@@ -20,6 +20,7 @@ import ai.datasqrl.util.TestScript;
 import ai.datasqrl.util.data.Retail;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableSet;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
@@ -184,7 +185,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   @ArgumentsSource(TestScript.AllProvider.class)
   @SneakyThrows
   public void fullScriptTest(TestScript script) {
-    validate(Files.readString(script.getScript()), Collections.EMPTY_SET, script.getResultTables());
+    validate(Files.readString(script.getScript()), ImmutableSet.copyOf(script.getResultTables()), script.getResultTables());
   }
 
   @Disabled

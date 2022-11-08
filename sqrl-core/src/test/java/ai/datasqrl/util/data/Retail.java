@@ -38,8 +38,8 @@ public class Retail implements TestDataset {
         return List.of(TestScript.of(this,BASE_PATH.resolve("c360-orderstats.sqrl"),
                 "orders", "entries", "totals", "customerorderstats"),
                 TestScript.of(this,BASE_PATH.resolve("c360-full.sqrl"),
-                        "orders", "entries", "customer", "category", "product", "total", "recent_products",
-                        "recent_products_categories", "_spending_by_month_category", "spending_by_month", "favorite_categories",
+                        "orders", "entries", "customer", "category", "product", "total", "order_again",
+                        "_spending_by_month_category", "favorite_categories",
                         "order_stats", "newcustomerpromotion"));
     }
 

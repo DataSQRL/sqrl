@@ -54,7 +54,7 @@ public interface TestScript {
 
     static List<TestScript> getAll() {
         ImmutableList.Builder b = new ImmutableList.Builder();
-        b.addAll(Retail.INSTANCE.getScripts().subList(0,1));
+        b.addAll(Retail.INSTANCE.getScripts().subList(0,2));
         return b.build();
     }
 
