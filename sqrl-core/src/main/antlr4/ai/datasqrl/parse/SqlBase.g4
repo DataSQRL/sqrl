@@ -41,7 +41,7 @@ importDefinition
     ;
 
 assignment
-    : hint? qualifiedName tableFunction? ':=' inlineJoin                          # joinAssignment
+    : hint? qualifiedName tableFunction? ':=' joinSpecification                          # joinAssignment
     | hint? qualifiedName tableFunction? ':=' expression                          # expressionAssign
     | hint? qualifiedName tableFunction? ':=' query                               # queryAssign
     | hint? qualifiedName tableFunction? ':=' streamQuery                               # streamAssign
@@ -79,11 +79,16 @@ subscriptionType
     : ADD //todo: add other types
     ;
 
-inlineJoin
-    : JOIN relation (joinCriteria)?
+joinSpecification
+    : joinTerm
       (ORDER BY sortItem (',' sortItem)*)?
       (LIMIT limit=INTEGER_VALUE)?
       (INVERSE inv=identifier)?
+    ;
+
+joinTerm
+    : (JOIN aliasedRelation (joinCondition)?)+                                          #joinPath
+    | left=joinTerm operator=(UNION | INTERSECT | EXCEPT) setQuantifier right=joinTerm  #joinSetOperation
     ;
 
 streamQuery
@@ -147,7 +152,7 @@ selectItem
 relation
     : left=relation
       ( CROSS JOIN right=relationPrimary
-      | joinType JOIN rightRelation=aliasedRelation (joinCriteria)?
+      | joinType JOIN rightRelation=aliasedRelation (joinCondition)?
       )                                           #joinRelation
     | aliasedRelation                             #relationDefault
     ;
@@ -158,7 +163,7 @@ joinType
     | INTERVAL?
     ;
 
-joinCriteria
+joinCondition
     : ON booleanExpression
     ;
 
@@ -169,7 +174,6 @@ aliasedRelation
 relationPrimary
     : qualifiedName  #tableName
     | '(' query ')'   #subqueryRelation
-    | '(' relation ')'                                                #parenthesizedRelation
     ;
 
 expression

@@ -23,9 +23,6 @@ import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
-import ai.datasqrl.schema.join.InlineJoinDeclaration;
-import ai.datasqrl.schema.join.JoinDeclaration;
-import ai.datasqrl.schema.join.TopNJoinDeclaration;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.Setter;
@@ -348,14 +345,11 @@ public class Resolve {
     Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(env.relSchema, assignmentPath, table)
         .accept(node);
 
-    //This must come later
-    SqlNode node = context.map(
-        c -> new AddContextTable(ReservedName.SELF_IDENTIFIER.getCanonical())
-            .accept(op.getQuery())).orElse(op.getQuery());
-
-    Analysis currentAnalysis = analyzer.apply(op.getQuery());
+    SqlNode node = op.getQuery();
+    Analysis currentAnalysis = null;
 
     List<Function<Analysis, SqlShuttle>> transforms = List.of(
+        (analysis) -> new AddContextTable(table.isPresent()),
         QualifyIdentifiers::new,
         FlattenFieldPaths::new,
         FlattenTablePaths::new,
@@ -367,11 +361,12 @@ public class Resolve {
       currentAnalysis = analyzer.apply(node);
     }
 
-    final SqlNode finalStage = node;
+    final SqlNode finalStage = node.accept(new ConvertJoinDeclaration(currentAnalysis));
 
     SqlValidator sqrlValidator = TranspilerFactory.createSqrlValidator(env.relSchema,
         assignmentPath, true);
-    sqrlValidator.validate(node);
+
+    sqrlValidator.validate(finalStage);
 
     if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
 
@@ -579,16 +574,8 @@ public class Resolve {
             op.query);
     Multiplicity multiplicity = getMultiplicity(env, op);
 
-    JoinDeclaration join;
-    if (!hasBoundedLimit(env, op)) {
-      SqlNode node = pullWhereIntoJoin(op.getQuery());
-      join = new InlineJoinDeclaration(node);
-    } else {
-      join = new TopNJoinDeclaration(op.query);
-    }
-
     table.get().addRelationship(op.statement.getNamePath().getLast(), toTable,
-        Relationship.JoinType.JOIN, multiplicity, Optional.of(join));
+        Relationship.JoinType.JOIN, multiplicity, Optional.of(op.query));
   }
 
   private boolean hasBoundedLimit(Env env, StatementOp op) {
@@ -616,18 +603,6 @@ public class Resolve {
     } else {
       throw new RuntimeException("Unknown node type");
     }
-  }
-
-  private SqlNode pullWhereIntoJoin(SqlNode query) {
-    if (query instanceof SqlSelect) {
-      SqlSelect select = (SqlSelect) query;
-      if (select.getWhere() != null) {
-        SqlJoin join = (SqlJoin) select.getFrom();
-        FlattenTablePaths.addJoinCondition(join, select.getWhere());
-      }
-      return select.getFrom();
-    }
-    return query;
   }
 
   private void createTable(Env env, StatementOp op, Optional<SQRLTable> parentTable) {

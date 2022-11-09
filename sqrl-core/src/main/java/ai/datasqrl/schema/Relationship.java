@@ -1,7 +1,6 @@
 package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.join.JoinDeclaration;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import lombok.Getter;
@@ -14,10 +13,10 @@ public class Relationship extends Field {
   private final SQRLTable toTable;
   private final JoinType joinType;
   private final Multiplicity multiplicity;
-  private final Optional<JoinDeclaration> join;
+  private final Optional<SqlNode> join;
 
   public Relationship(Name name, int version, SQRLTable fromTable, SQRLTable toTable, JoinType joinType,
-                      Multiplicity multiplicity, Optional<JoinDeclaration> join) {
+                      Multiplicity multiplicity, Optional<SqlNode> join) {
     super(name, version);
     this.fromTable = fromTable;
     this.toTable = toTable;

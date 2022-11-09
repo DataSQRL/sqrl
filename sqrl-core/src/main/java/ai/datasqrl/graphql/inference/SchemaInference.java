@@ -6,8 +6,8 @@ import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.local.transpile.ReplaceWithVirtualTable.ExtractRightDeepAlias;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
+import ai.datasqrl.plan.local.transpile.ExpandJoinDeclaration.ExtractRightDeepAlias;
 import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
@@ -246,13 +246,13 @@ public class SchemaInference {
 
     //todo: fix for TOP N
     ExtractRightDeepAlias rightDeepAlias = new ExtractRightDeepAlias();
-    String alias = rel.getJoin().get().getQuery().accept(rightDeepAlias);
+    String alias = rel.getJoin().get().accept(rightDeepAlias);
 
     SqlSelect select = new SqlSelect(
         SqlParserPos.ZERO,
         null,
         new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO),
-        rel.getJoin().get().getQuery(),
+        rel.getJoin().get(),
         null,
         null,
         null
