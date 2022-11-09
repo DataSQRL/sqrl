@@ -36,23 +36,27 @@ LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=
       LogicalTableScan(table=[[customer$i$1]])
 
 >>>ordercustomer-lp-database
-LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4])
-  LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3])
-    LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1]]
-      LogicalTableScan(table=[[orders$6]])
-      LogicalTableScan(table=[[customer$3]])
+LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4])
+    LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3])
+      LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1]]
+        LogicalTableScan(table=[[orders$6]])
+        LogicalTableScan(table=[[customer$3]])
 
 >>>ordercustomerinterval-lp-database
-LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4], rowtime=[$5])
-  LogicalTableScan(table=[[ordercustomerinterval$11]])
+LogicalSort(sort0=[$5], sort1=[$0], sort2=[$1], dir0=[DESC-nulls-last], dir1=[ASC], dir2=[ASC])
+  LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4], rowtime=[$5])
+    LogicalTableScan(table=[[ordercustomerinterval$11]])
 
 >>>customerdedup-lp-database
-LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-  LogicalTableScan(table=[[customerdedup$13]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+    LogicalTableScan(table=[[customerdedup$13]])
 
 >>>ordercustomerdedup-lp-database
-LogicalProject(_uuid=[$0], id=[$1], name=[$2], customerid=[$3], rowtime=[$4])
-  LogicalTableScan(table=[[ordercustomerdedup$15]])
+LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], id=[$1], name=[$2], customerid=[$3], rowtime=[$4])
+    LogicalTableScan(table=[[ordercustomerdedup$15]])
 
 >>>ordercustomer-data
 10007140, Emily F. Ludies, 1000107

@@ -144,51 +144,59 @@ LogicalProject(customerid=[$0], productid=[$1], quantity=[$2], num_orders=[$3], 
           LogicalValues(tuples=[[{ 0 }]])
 
 >>>orders-lp-database
-LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
-  LogicalTableScan(table=[[orders$9]])
+LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
+    LogicalTableScan(table=[[orders$9]])
 
 >>>entries-lp-database
-LogicalProject(_uuid=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], discount$0=[$6], total=[$7])
-  LogicalTableScan(table=[[entries$10]])
+LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], discount$0=[$6], total=[$7])
+    LogicalTableScan(table=[[entries$10]])
 
 >>>customer-lp-database
-LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-  LogicalTableScan(table=[[customer$12]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+    LogicalTableScan(table=[[customer$12]])
 
 >>>category-lp-database
-LogicalProject(name=[$0], updatetime=[$1])
-  LogicalTableScan(table=[[category$14]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(name=[$0], updatetime=[$1])
+    LogicalTableScan(table=[[category$14]])
 
 >>>product-lp-database
-LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6])
-  LogicalTableScan(table=[[product$16]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6])
+    LogicalTableScan(table=[[product$16]])
 
 >>>total-lp-database
-LogicalProject(_uuid=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
-  LogicalTableScan(table=[[total$18]])
+LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
+    LogicalTableScan(table=[[total$18]])
 
 >>>order_again-lp-database
-LogicalProject(customerid=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4], time=[$5])
-  LogicalSort(sort0=[$0], sort1=[$4], sort2=[$2], dir0=[ASC], dir1=[DESC], dir2=[DESC])
+LogicalSort(sort0=[$0], sort1=[$4], sort2=[$2], sort3=[$1], dir0=[ASC], dir1=[DESC], dir2=[DESC], dir3=[ASC])
+  LogicalProject(customerid=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4], time=[$5])
     LogicalTableScan(table=[[order_again$20]])
 
 >>>_spending_by_month_category-lp-database
-LogicalProject(customerid=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
-  LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[DESC])
+LogicalSort(sort0=[$0], sort1=[$1], sort2=[$2], dir0=[ASC], dir1=[DESC], dir2=[ASC])
+  LogicalProject(customerid=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
     LogicalTableScan(table=[[_spending_by_month_category$22]])
 
 >>>favorite_categories-lp-database
-LogicalProject(customerid=[$0], category_name=[$1], total=[$2], month=[$3])
-  LogicalSort(sort0=[$0], sort1=[$2], dir0=[ASC], dir1=[ASC])
+LogicalSort(sort0=[$0], sort1=[$2], sort2=[$1], dir0=[ASC], dir1=[ASC], dir2=[ASC])
+  LogicalProject(customerid=[$0], category_name=[$1], total=[$2], month=[$3])
     LogicalTableScan(table=[[favorite_categories$24]])
 
 >>>order_stats-lp-database
-LogicalProject(customerid=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
-  LogicalTableScan(table=[[order_stats$26]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(customerid=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
+    LogicalTableScan(table=[[order_stats$26]])
 
 >>>newcustomerpromotion-lp-database
-LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
-  LogicalTableScan(table=[[newcustomerpromotion$29]])
+LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
+    LogicalTableScan(table=[[newcustomerpromotion$29]])
 
 >>>orders-data
 10007140, 1000107

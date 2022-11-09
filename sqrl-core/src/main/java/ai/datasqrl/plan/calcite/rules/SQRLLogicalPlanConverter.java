@@ -116,7 +116,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     protected RelNode setRelHolder(AnnotatedLP relHolder) {
         if (relHolder.getStage().isRead()) {
             //Inline all pullups
-            relHolder = relHolder.inlineAllPullups(makeRelBuilder());
+            relHolder = relHolder.inlineNowFilter(makeRelBuilder()).inlineTopN(makeRelBuilder());
         }
         if (!config.allowStageChange && !relHolder.getStage().equals(config.startStage)) {
             throw ExecutionStageException.StageChange.of(config.startStage, relHolder.getStage()).injectInput(relHolder);
@@ -547,10 +547,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
 
         //Identify if this is an identical self-join for a nested tree
-        boolean hasPullups = !leftIn.topN.isEmpty() || rightIn.hasPullups();
-        //TODO: support left-joins in unnesting
+        boolean hasTransformativePullups = !leftIn.topN.isEmpty() || !rightIn.topN.isEmpty() || !rightIn.nowFilter.isEmpty();
         if ((joinType==JoinRelType.DEFAULT || joinType==JoinRelType.INNER || joinType==JoinRelType.LEFT) && leftInput.joinTables!=null && rightInput.joinTables!=null
-                && !hasPullups && eqDecomp.getRemainingPredicates().isEmpty()) {
+                && !hasTransformativePullups && eqDecomp.getRemainingPredicates().isEmpty()) {
             //Determine if we can map the tables from both branches of the join onto each-other
             Map<JoinTable, JoinTable> right2left = JoinTable.joinTreeMap(leftInput.joinTables,
                     leftSideMaxIdx , rightInput.joinTables, eqDecomp.getEqualities());

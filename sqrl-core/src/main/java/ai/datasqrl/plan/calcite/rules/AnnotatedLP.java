@@ -250,16 +250,19 @@ public class AnnotatedLP implements RelHolder {
                 .sort(SortOrder.EMPTY).build();
     }
 
-    public AnnotatedLP inlineAllPullups(RelBuilder relB) {
-        return inlineNowFilter(relB).inlineTopN(relB).inlineSort(relB);
-    }
-
-    public boolean hasPullups() {
-        return !topN.isEmpty() || !nowFilter.isEmpty() || !sort.isEmpty();
-    }
-
     public PullupOperator.Container getPullups() {
         return new PullupOperator.Container(nowFilter, topN, sort);
+    }
+
+    public AnnotatedLP withDefaultSort() {
+        SortOrder newSort;
+        if (sort.isEmpty()) {
+            newSort = SortOrder.getDefaultOrder(this);
+        } else {
+            newSort = sort.ensurePrimaryKeyPresent(primaryKey);
+            if (newSort.equals(sort)) return this;
+        }
+        return copy().sort(newSort).build();
     }
 
     /**

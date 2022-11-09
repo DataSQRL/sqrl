@@ -1,5 +1,7 @@
 package ai.datasqrl.plan.calcite.table;
 
+import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
+import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import ai.datasqrl.plan.calcite.util.IndexMap;
 import lombok.Value;
 import org.apache.calcite.rel.RelCollation;
@@ -47,6 +49,18 @@ public class SortOrder implements PullupOperator {
         return new SortOrder(RelCollations.of(ListUtils.union(collation.getFieldCollations(),right.collation.getFieldCollations())));
     }
 
+    public SortOrder ensurePrimaryKeyPresent(ContinuousIndexMap pk) {
+        List<Integer> pkIdx = new ArrayList<>(pk.targetsAsList());
+        collation.getFieldCollations().stream().map(fc -> fc.getFieldIndex()).forEach(pkIdx::remove);
+        if (pkIdx.isEmpty()) return this;
+        //Append remaining pk columns to end of collation
+        List<RelFieldCollation> collations = new ArrayList<>(collation.getFieldCollations());
+        for (Integer idx : pkIdx) {
+            collations.add(new RelFieldCollation(idx));
+        }
+        return new SortOrder(RelCollations.of(collations));
+    }
+
     public static SortOrder of(List<Integer> partition, RelCollation collation) {
         List<RelFieldCollation> collationList = new ArrayList<>();
         collationList.addAll(partition.stream().map(idx -> new RelFieldCollation(idx, RelFieldCollation.Direction.ASCENDING,
@@ -54,5 +68,17 @@ public class SortOrder implements PullupOperator {
         collationList.addAll(collation.getFieldCollations());
         return new SortOrder(RelCollations.of(collationList));
     }
+
+    public static SortOrder getDefaultOrder(AnnotatedLP alp) {
+        //If stream, timestamp first then pk, otherwise just pk
+        List<RelFieldCollation> collations = new ArrayList<>();
+        if (alp.getType()==TableType.STREAM && alp.getTimestamp().hasFixedTimestamp()) {
+            collations.add(new RelFieldCollation(alp.getTimestamp().getTimestampCandidate().getIndex(),
+                    RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
+        }
+        return new SortOrder(RelCollations.of(collations)).ensurePrimaryKeyPresent(alp.primaryKey);
+    }
+
+
 
 }

@@ -24,12 +24,14 @@ LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
           LogicalTableScan(table=[[customer$i$1]])
 
 >>>combinedstream-lp-database
-LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
-  LogicalTableScan(table=[[combinedstream$9]])
+LogicalSort(sort0=[$2], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
+    LogicalTableScan(table=[[combinedstream$9]])
 
 >>>streamcount-lp-database
-LogicalProject(hour=[$0], num=[$1])
-  LogicalTableScan(table=[[streamcount$11]])
+LogicalSort(sort0=[$0], dir0=[DESC-nulls-last])
+  LogicalProject(hour=[$0], num=[$1])
+    LogicalTableScan(table=[[streamcount$11]])
 
 >>>combinedstream-data
 1000101, 2022-02-20 22:40:49.0

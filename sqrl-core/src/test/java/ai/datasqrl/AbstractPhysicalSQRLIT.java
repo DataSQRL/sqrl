@@ -88,7 +88,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
             if (tableNoDataSnapshot.contains(query.getNameId())) {
                 resultSet.last();
                 int numResults = resultSet.getRow();
-                snapshot.addContent(String.valueOf(numResults), query.getNameId(), "count");
+                System.out.println("Number of rows returned: " + numResults);
             } else {
                 //Since Flink execution order is non-deterministic we need to sort results and remove uuid and ingest_time which change with every invocation
                 Predicate<Integer> typeFilter = Predicates.alwaysTrue();

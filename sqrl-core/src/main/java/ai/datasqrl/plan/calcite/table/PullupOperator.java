@@ -18,6 +18,10 @@ public interface PullupOperator {
         final TopNConstraint topN;
         final SortOrder sort;
 
+        public boolean isEmpty() {
+            return nowFilter.isEmpty() && topN.isEmpty() && sort.isEmpty();
+        }
+
     }
 
 

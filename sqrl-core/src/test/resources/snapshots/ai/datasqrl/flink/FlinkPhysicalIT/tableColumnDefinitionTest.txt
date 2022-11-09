@@ -46,24 +46,29 @@ LogicalProject(_uuid=[$0], _idx=[$7], productid=[$8], quantity=[$9], unit_price=
         LogicalValues(tuples=[[{ 0 }]])
 
 >>>entryprice-lp-database
-LogicalProject(_uuid=[$0], _idx=[$1], price=[$2], _ingest_time=[$3], time=[$4])
-  LogicalTableScan(table=[[entryprice$12]])
+LogicalSort(sort0=[$4], sort1=[$0], sort2=[$1], dir0=[DESC-nulls-last], dir1=[ASC], dir2=[ASC])
+  LogicalProject(_uuid=[$0], _idx=[$1], price=[$2], _ingest_time=[$3], time=[$4])
+    LogicalTableScan(table=[[entryprice$12]])
 
 >>>customer-lp-database
-LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6])
-  LogicalTableScan(table=[[customer$14]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6])
+    LogicalTableScan(table=[[customer$14]])
 
 >>>orders-lp-database
-LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], col1=[$5])
-  LogicalTableScan(table=[[orders$6]])
+LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], col1=[$5])
+    LogicalTableScan(table=[[orders$6]])
 
 >>>entries-lp-database
-LogicalProject(_uuid=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], discount2=[$6])
-  LogicalTableScan(table=[[entries$7]])
+LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], discount2=[$6])
+    LogicalTableScan(table=[[entries$7]])
 
 >>>ordercustomer-lp-database
-LogicalProject(_uuid=[$0], _idx=[$1], id=[$2], name=[$3], customerid=[$4], col1=[$5], discount2=[$6], time=[$7])
-  LogicalTableScan(table=[[ordercustomer$16]])
+LogicalSort(sort0=[$7], sort1=[$0], sort2=[$1], dir0=[DESC-nulls-last], dir1=[ASC], dir2=[ASC])
+  LogicalProject(_uuid=[$0], _idx=[$1], id=[$2], name=[$3], customerid=[$4], col1=[$5], discount2=[$6], time=[$7])
+    LogicalTableScan(table=[[ordercustomer$16]])
 
 >>>entryprice-data
 0, 17.350, 2022-05-19 01:29:39.553244

@@ -51,20 +51,24 @@ LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=
       LogicalTableScan(table=[[customer$i$5]])
 
 >>>customer-lp-database
-LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-  LogicalTableScan(table=[[customer$9]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+    LogicalTableScan(table=[[customer$9]])
 
 >>>orders-lp-database
-LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
-  LogicalTableScan(table=[[orders$3]])
+LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
+    LogicalTableScan(table=[[orders$3]])
 
 >>>ordersinline-lp-database
-LogicalProject(_uuid=[$0], id=[$1], customerid=[$2], time=[$3], price=[$4], num=[$5])
-  LogicalTableScan(table=[[ordersinline$13]])
+LogicalSort(sort0=[$3], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], id=[$1], customerid=[$2], time=[$3], price=[$4], num=[$5])
+    LogicalTableScan(table=[[ordersinline$13]])
 
 >>>orders_by_hour-lp-database
-LogicalProject(customerid=[$0], hour=[$1], total_price=[$2], total_num=[$3])
-  LogicalTableScan(table=[[orders_by_hour$15]])
+LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(customerid=[$0], hour=[$1], total_price=[$2], total_num=[$3])
+    LogicalTableScan(table=[[orders_by_hour$15]])
 
 >>>customer-data
 1000101, john.mekker@gmail.com, John B. Mekker, 1650498257, 2022-04-20 23:44:17.0
