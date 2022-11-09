@@ -73,7 +73,7 @@ public class CalciteTableFactory {
         return new ScriptTableDefinition(impTable, tables);
     }
 
-    public ScriptTableDefinition defineStreamTable(NamePath tablePath, AnnotatedLP baseRel, List<Name> fieldNames,
+    public ScriptTableDefinition defineStreamTable(NamePath tablePath, AnnotatedLP baseRel, StateChangeType changeType,
                                                    RelBuilder relBuilder, ExecutionPipeline pipeline) {
         Preconditions.checkArgument(baseRel.type!=TableType.STREAM,"Underlying table is already a stream");
         Name tableName = tablePath.getLast();
@@ -81,7 +81,7 @@ public class CalciteTableFactory {
         UniversalTableBuilder rootTable = convertStream2TableBuilder(tablePath,
                 baseRel.getRelNode().getRowType());
         RelDataType rootType = convertTable(rootTable, true, true);
-        StreamRelationalTable source = new StreamRelationalTable(getTableId(tableName,"s"), baseRel.getRelNode(), rootType, rootTable, StateChangeType.ADD);
+        StreamRelationalTable source = new StreamRelationalTable(getTableId(tableName,"s"), baseRel.getRelNode(), rootType, rootTable, changeType);
         ProxyStreamRelationalTable impTable = new ProxyStreamRelationalTable(getTableId(tableName,"q"), getTimestampHolder(rootTable),
                 relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get());
 
