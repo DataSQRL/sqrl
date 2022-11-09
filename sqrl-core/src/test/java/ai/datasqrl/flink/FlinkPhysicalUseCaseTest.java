@@ -42,7 +42,7 @@ public class FlinkPhysicalUseCaseTest extends AbstractPhysicalSQRLIT {
     @Test
     @Disabled
     public void forDebuggingIndividualUseCases() {
-        scriptTest(Nutshop.INSTANCE.getScripts().get(1), false, true);
+        scriptTest(Nutshop.MEDIUM.getScripts().get(1), false, false);
     }
 
 }
