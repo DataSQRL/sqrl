@@ -131,3 +131,19 @@ LogicalProject(id=[$0], day=[$1], quantity=[$2], total=[$3], total_weight=[$4])
   LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[DESC])
     LogicalTableScan(table=[[volume_by_day$19]])
 
+>>>orders-count
+87
+>>>items-count
+115
+>>>totals-count
+87
+>>>customers-count
+10
+>>>products-count
+198
+>>>spending_by_month-count
+20
+>>>past_purchases-count
+112
+>>>volume_by_day-count
+109

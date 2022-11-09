@@ -83,16 +83,21 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
             QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
             String sqlQuery = RelToSql.convertToSql(template.getRelNode());
             System.out.println("Executing query: " + sqlQuery);
-            ResultSet resultSet = jdbc.getConnection().createStatement()
+            ResultSet resultSet = jdbc.getConnection().createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
                     .executeQuery(sqlQuery);
-            if (tableNoDataSnapshot.contains(query.getNameId())) continue;
-            //Since Flink execution order is non-deterministic we need to sort results and remove uuid and ingest_time which change with every invocation
-            Predicate<Integer> typeFilter = Predicates.alwaysTrue();
-            if (tableWithoutTimestamp.contains(query.getNameId())) typeFilter = filterOutTimestampColumn;
-            String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,
-                            s -> Stream.of("_uuid", "_ingest_time").noneMatch(p -> s.startsWith(p)), typeFilter))
-                    .sorted().collect(Collectors.joining(System.lineSeparator()));
-            snapshot.addContent(content,query.getNameId(),"data");
+            if (tableNoDataSnapshot.contains(query.getNameId())) {
+                resultSet.last();
+                int numResults = resultSet.getRow();
+                snapshot.addContent(String.valueOf(numResults), query.getNameId(), "count");
+            } else {
+                //Since Flink execution order is non-deterministic we need to sort results and remove uuid and ingest_time which change with every invocation
+                Predicate<Integer> typeFilter = Predicates.alwaysTrue();
+                if (tableWithoutTimestamp.contains(query.getNameId())) typeFilter = filterOutTimestampColumn;
+                String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,
+                                s -> Stream.of("_uuid", "_ingest_time").noneMatch(p -> s.startsWith(p)), typeFilter))
+                        .sorted().collect(Collectors.joining(System.lineSeparator()));
+                snapshot.addContent(content, query.getNameId(), "data");
+            }
         }
         snapshot.createOrValidate();
     }
