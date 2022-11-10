@@ -3,12 +3,30 @@ package ai.datasqrl.compile;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.graphql.GraphQLServer;
 import ai.datasqrl.graphql.generate.SchemaGenerator;
+import ai.datasqrl.graphql.inference.ArgumentSet;
 import ai.datasqrl.graphql.inference.SchemaInference;
-import ai.datasqrl.graphql.inference.SchemaInference.ApiQueryBase;
-import ai.datasqrl.graphql.inference.SchemaInference.ApiQueryVisitor;
-import ai.datasqrl.graphql.inference.SchemaInference.PagedApiQueryBase;
-import ai.datasqrl.graphql.inference.SchemaInference.RelAndArg;
-import ai.datasqrl.graphql.server.Model.*;
+import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
+import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
+import ai.datasqrl.graphql.server.Model.CoordVisitor;
+import ai.datasqrl.graphql.server.Model.FieldLookupCoords;
+import ai.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
+import ai.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
+import ai.datasqrl.graphql.server.Model.PagedPgQuery;
+import ai.datasqrl.graphql.server.Model.ParameterHandlerVisitor;
+import ai.datasqrl.graphql.server.Model.PgQuery;
+import ai.datasqrl.graphql.server.Model.QueryBaseVisitor;
+import ai.datasqrl.graphql.server.Model.ResolvedPagedPgQuery;
+import ai.datasqrl.graphql.server.Model.ResolvedPgQuery;
+import ai.datasqrl.graphql.server.Model.ResolvedQueryVisitor;
+import ai.datasqrl.graphql.server.Model.Root;
+import ai.datasqrl.graphql.server.Model.RootVisitor;
+import ai.datasqrl.graphql.server.Model.SchemaVisitor;
+import ai.datasqrl.graphql.server.Model.SourcePgParameter;
+import ai.datasqrl.graphql.server.Model.StringSchema;
+import ai.datasqrl.graphql.server.Model.TypeDefinitionSchema;
+import ai.datasqrl.graphql.util.ApiQueryBase;
+import ai.datasqrl.graphql.util.ApiQueryVisitor;
+import ai.datasqrl.graphql.util.PagedApiQueryBase;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.PhysicalPlan;
@@ -33,18 +51,6 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
 import io.vertx.core.Vertx;
-import lombok.Getter;
-import lombok.SneakyThrows;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.ScriptNode;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlWriterConfig;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
-import org.apache.calcite.sql.pretty.SqlPrettyWriter;
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -61,7 +67,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.UnaryOperator;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlWriterConfig;
+import org.apache.calcite.sql.pretty.SqlPrettyWriter;
+import org.jetbrains.annotations.NotNull;
 
 public class Compiler {
 
@@ -97,11 +112,16 @@ public class Compiler {
 
     //TODO: push compute to the api
     String gqlSchema = inferOrGetSchema(env, build, graphqlSchema);
+    SchemaInference inference2 = new SchemaInference(gqlSchema,
+        env.getRelSchema(), env.getSession().getPlanner().getRelBuilder(),
+        env.getSession().getPlanner());
+    inference2.accept();
 
-    SchemaInference inference = new SchemaInference();
-    Root root = inference.visitSchema(gqlSchema, env);
+//    SchemaInference inference = new SchemaInference();
+//    Root root = inference.visitSchema(gqlSchema, env);
+    Root root = inference2.getRoot().build();
 
-    OptimizedDAG dag = optimizeDag(inference.getApiQueries(), env);
+    OptimizedDAG dag = optimizeDag(inference2.getApiQueries(), env);
     JDBCTempDatabase jdbcTempDatabase = new JDBCTempDatabase();
 
     PhysicalPlan plan = createPhysicalPlan(dag, env, s, jdbcTempDatabase);
@@ -281,7 +301,7 @@ public class Compiler {
           apiQueryBase.getParameters());
     }
 
-    private String convertDynamicParams(RelNode relNode, RelAndArg arg) {
+    private String convertDynamicParams(RelNode relNode, ArgumentSet arg) {
       SqlNode node = RelToSql.convertToSqlNode(relNode);
 
       SqlWriterConfig config = RelToSql.transform.apply(SqlPrettyWriter.config());
@@ -300,7 +320,7 @@ public class Compiler {
       @Getter
       private List<Integer> dynamicParameters = new ArrayList<>();
 
-      public DynamicParamSqlPrettyWriter(@NotNull SqlWriterConfig config, RelAndArg arg) {
+      public DynamicParamSqlPrettyWriter(@NotNull SqlWriterConfig config, ArgumentSet arg) {
         super(config);
       }
 

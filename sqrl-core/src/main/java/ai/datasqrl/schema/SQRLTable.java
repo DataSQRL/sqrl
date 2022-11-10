@@ -31,6 +31,7 @@ import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 
 /**
  * A {@link SQRLTable} represents a logical table in the SQRL script which contains fields that are
@@ -95,7 +96,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   }
 
   public Relationship addRelationship(Name name, SQRLTable toTable, JoinType joinType,
-                                      Multiplicity multiplicity, Optional<SqlNode> join) {
+                                      Multiplicity multiplicity, Optional<SqrlJoinDeclarationSpec> join) {
     Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity,
         join);
     fields.addField(rel);

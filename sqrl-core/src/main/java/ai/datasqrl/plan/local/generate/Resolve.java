@@ -342,7 +342,8 @@ public class Resolve {
     Optional<VirtualRelationalTable> context =
         table.map(t -> t.getVt());
 
-    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(env.relSchema, assignmentPath, table)
+    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(env.relSchema,
+        assignmentPath, table)
         .accept(node);
 
     SqlNode node = op.getQuery();
@@ -361,34 +362,32 @@ public class Resolve {
       currentAnalysis = analyzer.apply(node);
     }
 
-    final SqlNode finalStage = node.accept(new ConvertJoinDeclaration(currentAnalysis));
-
+    final SqlNode sql = node.accept(new ConvertJoinDeclaration(context));
     SqlValidator sqrlValidator = TranspilerFactory.createSqrlValidator(env.relSchema,
         assignmentPath, true);
-
-    sqrlValidator.validate(finalStage);
+    sqrlValidator.validate(sql);
 
     if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
 
-      new AddHints(sqrlValidator, context).accept(op, finalStage);
+      new AddHints(sqrlValidator, context).accept(op, sql);
 
       SqlValidator validate2 = TranspilerFactory.createSqrlValidator(env.relSchema,
           assignmentPath, false);
-      validate2.validate(finalStage);
-      op.setQuery(finalStage);
+      validate2.validate(sql);
+      op.setQuery(sql);
       op.setSqrlValidator(validate2);
-    } else {
+    } else if (op.getStatementKind() == StatementKind.JOIN) {
+      op.setQuery(sql);
+      op.setJoinDeclaration((SqrlJoinDeclarationSpec) node);
+      op.setSqrlValidator(sqrlValidator);
+     } else {
       SqlNode rewritten = new AddContextFields(sqrlValidator, context,
-          isAggregate(sqrlValidator, finalStage)).accept(finalStage);
+          isAggregate(sqrlValidator, sql)).accept(sql);
 
-      //Skip this for joins, we'll add the hints later when we reconstruct the node from the relnode
-      // Hints don't carry over when moving from rel -> sqlnode
-      if (op.getStatementKind() != StatementKind.JOIN) {
-        SqlValidator prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
-            assignmentPath, true);
-        prevalidate.validate(rewritten);
-        new AddHints(prevalidate, context).accept(op, rewritten);
-      }
+      SqlValidator prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
+          assignmentPath, true);
+      prevalidate.validate(rewritten);
+      new AddHints(prevalidate, context).accept(op, rewritten);
 
       SqlValidator validator = TranspilerFactory.createSqrlValidator(env.relSchema,
           assignmentPath, false);
@@ -575,13 +574,7 @@ public class Resolve {
     Multiplicity multiplicity = getMultiplicity(env, op);
 
     table.get().addRelationship(op.statement.getNamePath().getLast(), toTable,
-        Relationship.JoinType.JOIN, multiplicity, Optional.of(op.query));
-  }
-
-  private boolean hasBoundedLimit(Env env, StatementOp op) {
-    //todo: check if we can eliminate a LIMIT 1 for PK joins
-    Optional<SqlNode> fetch = getFetch(op);
-    return fetch.isPresent();
+        Relationship.JoinType.JOIN, multiplicity, Optional.of(op.joinDeclaration));
   }
 
   private Multiplicity getMultiplicity(Env env, StatementOp op) {
@@ -687,6 +680,7 @@ public class Resolve {
     SqlNode query;
     SqlNode validatedSql;
 
+    SqrlJoinDeclarationSpec joinDeclaration;
     StatementOp(SqrlStatement statement, SqlNode query, StatementKind statementKind) {
       this.statement = statement;
       this.query = query;

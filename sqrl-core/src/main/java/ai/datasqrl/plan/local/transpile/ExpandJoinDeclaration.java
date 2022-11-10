@@ -1,5 +1,8 @@
 package ai.datasqrl.plan.local.transpile;
 
+import static ai.datasqrl.plan.local.transpile.ConvertJoinDeclaration.convertToBushyTree;
+
+import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +18,9 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
+import org.apache.calcite.sql.SqrlJoinPath;
+import org.apache.calcite.sql.UnboundJoin;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
@@ -29,7 +35,14 @@ public class ExpandJoinDeclaration {
   String lastAlias;
   AtomicInteger aliasCnt;
 
-  public Pair<SqlNode, SqlNode> expand(SqlNode node, String firstAlias, String lastAlias) {
+  public UnboundJoin expand(SqrlJoinDeclarationSpec node) {
+    SqrlJoinPath from = (SqrlJoinPath)node.getRelation();
+    Preconditions.checkState(node.fetch.isEmpty(), "Limit on join declaration tbd");
+
+    return expand(convertToBushyTree(from.getRelations(), from.getConditions()));
+  }
+
+  public UnboundJoin expand(SqlNode node) {
     //1. Extraction conditions Since we don't know where exactly on the node
     //tree it will belong and we don't want to do decomposition at this time
     ExtractConditions extractConditions = new ExtractConditions();
@@ -49,11 +62,11 @@ public class ExpandJoinDeclaration {
 
     ExtractRightDeepAlias rightDeepAlias = new ExtractRightDeepAlias();
     String rightAlias = node.accept(rightDeepAlias);
-    //4. Realias the who
+    //4. Realias
     Map<String, String> newAliasMap = new HashMap<>();
     for (Map.Entry<String, SqlNode> aliases : aliasMapInverse.entrySet()) {
-      if (aliases.getKey().equalsIgnoreCase("_")) {
-        newAliasMap.put("_", firstAlias);
+      if (aliases.getKey().equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
+        newAliasMap.put(ReservedName.SELF_IDENTIFIER.getCanonical(), firstAlias);
         aliasMap.put(aliases.getValue(), firstAlias);
       } else if (aliases.getKey().equalsIgnoreCase(rightAlias)) {
         newAliasMap.put(aliases.getKey(), lastAlias);
@@ -61,7 +74,8 @@ public class ExpandJoinDeclaration {
       } else {
         SqlNode existingRight = aliasMapInverse.get(rightAlias);
         //todo assure unique
-        String newAlias = "_" + aliases.getKey() + "_" + (aliasCnt.incrementAndGet());
+        String newAlias = ReservedName.SELF_IDENTIFIER.getCanonical()
+            + aliases.getKey() + ReservedName.SELF_IDENTIFIER.getCanonical() + (aliasCnt.incrementAndGet());
         aliasMap.put(existingRight, newAlias);
         newAliasMap.put(aliases.getKey(), newAlias);
       }
@@ -76,8 +90,9 @@ public class ExpandJoinDeclaration {
         .map(c -> c.accept(replaceIdentifierAliases))
         .collect(Collectors.toList());
 
-    return Pair.of(node, SqlNodeUtil.and(newConditions));
+    return new UnboundJoin(SqlParserPos.ZERO, node, Optional.ofNullable(SqlNodeUtil.and(newConditions)));
   }
+
 
   public static class ExtractRightDeepAlias extends SqlBasicVisitor<String> {
 

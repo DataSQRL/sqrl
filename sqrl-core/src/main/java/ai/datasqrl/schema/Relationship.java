@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 
 @Getter
 public class Relationship extends Field {
@@ -13,10 +14,10 @@ public class Relationship extends Field {
   private final SQRLTable toTable;
   private final JoinType joinType;
   private final Multiplicity multiplicity;
-  private final Optional<SqlNode> join;
+  private final Optional<SqrlJoinDeclarationSpec> join;
 
   public Relationship(Name name, int version, SQRLTable fromTable, SQRLTable toTable, JoinType joinType,
-                      Multiplicity multiplicity, Optional<SqlNode> join) {
+                      Multiplicity multiplicity, Optional<SqrlJoinDeclarationSpec> join) {
     super(name, version);
     this.fromTable = fromTable;
     this.toTable = toTable;

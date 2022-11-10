@@ -146,10 +146,9 @@ public class ReplaceWithVirtualTable extends SqlShuttle
         String alias = analysis.tableAlias.get(id);
 
         ExpandJoinDeclaration expander = new ExpandJoinDeclaration(resolveRel.getAlias(), alias, aliasCnt);
-        Pair<SqlNode, SqlNode> pair = expander.expand(pullWhereIntoJoin(relationship.getJoin().get()),
-            resolveRel.getAlias(), alias);
-        pullup.push(pair.getRight());
-        return pair.getLeft();
+        UnboundJoin pair = expander.expand(relationship.getJoin().get());
+        pullup.push(pair.getCondition().get());
+        return pair.getRelation();
       }
 
       String alias = analysis.tableAlias.get(id);

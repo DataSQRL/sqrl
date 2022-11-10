@@ -1,12 +1,15 @@
 package ai.datasqrl.plan.local.transpile;
 
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
+import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
@@ -17,6 +20,7 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.SqrlJoinPath;
 import org.apache.calcite.sql.UnboundJoin;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.util.Util;
@@ -24,9 +28,13 @@ import org.apache.calcite.util.Util;
 /**
  * Convert the join declaration to a normal select
  */
-@Value
 public class ConvertJoinDeclaration extends SqlShuttle {
-  Analysis analysis;
+
+  private final Optional<VirtualRelationalTable> context;
+
+  public ConvertJoinDeclaration(Optional<VirtualRelationalTable> context) {
+    this.context = context;
+  }
 
   @Override
   public SqlNode visit(SqlCall call) {
@@ -57,12 +65,24 @@ public class ConvertJoinDeclaration extends SqlShuttle {
 
     from = addLeftJoins(from, node.getLeftJoins());
 
+    List<SqlNode> projects = new ArrayList<>();
+    //add ppk
+    if (context.isPresent()) {
+      int cnt = 0;
+      for (String pkName : context.get().getPrimaryKeyNames()) {
+        SqlIdentifier i = new SqlIdentifier(List.of("_", pkName), SqlParserPos.ZERO);
+        SqlIdentifier name = new SqlIdentifier(List.of("_ppk_" + Integer.toString(++cnt)), SqlParserPos.ZERO);
+        SqlCall alias = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, i, name);
+        projects.add(alias);
+      }
+    }
+
+    SqlNode star = SqlIdentifier.star(List.of(getAliasName(path.relations.get(path.relations.size() - 1)), "*"),
+        SqlParserPos.ZERO, List.of(SqlParserPos.ZERO, SqlParserPos.ZERO));
+    projects.add(star);
     SqlSelect select = new SqlSelect(SqlParserPos.ZERO,
         new SqlNodeList(SqlParserPos.ZERO),
-        new SqlNodeList(List.of(
-            SqlIdentifier.star(List.of(getAliasName(path.relations.get(path.relations.size() - 1)), "*"),
-                SqlParserPos.ZERO, List.of(SqlParserPos.ZERO, SqlParserPos.ZERO))
-        ), SqlParserPos.ZERO),
+        new SqlNodeList(projects, SqlParserPos.ZERO),
         from,
         where,
         null,
@@ -76,7 +96,7 @@ public class ConvertJoinDeclaration extends SqlShuttle {
     return select;
   }
 
-  private String getAliasName(SqlNode sqlNode) {
+  public static String getAliasName(SqlNode sqlNode) {
     switch (sqlNode.getKind()) {
       case AS:
         SqlCall call = (SqlCall) sqlNode;
@@ -108,7 +128,7 @@ public class ConvertJoinDeclaration extends SqlShuttle {
     return from;
   }
 
-  private SqlNode convertToBushyTree(List<SqlNode> relations, List<SqlNode> conditions) {
+  public static SqlNode convertToBushyTree(List<SqlNode> relations, List<SqlNode> conditions) {
     Preconditions.checkState(conditions.get(0) == null);
     SqlJoin join = new SqlJoin(relations.get(0).getParserPosition(),
         relations.get(0),
