@@ -6,6 +6,7 @@ import ai.datasqrl.graphql.inference.argument.EqHandler;
 import ai.datasqrl.graphql.inference.argument.LimitOffsetHandler;
 import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
+import ai.datasqrl.graphql.server.Model.FieldLookupCoords;
 import ai.datasqrl.graphql.server.Model.PgParameterHandler;
 import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.graphql.server.Model.Root.RootBuilder;
@@ -19,6 +20,7 @@ import ai.datasqrl.plan.calcite.TranspilerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
 import ai.datasqrl.plan.queries.APIQuery;
+import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.JoinType;
@@ -225,8 +227,19 @@ public class SchemaInference {
       Optional<Field> sqrlField = sqrlTable.getField(Name.system(definition.getName()));
       if (sqrlField.isPresent() && sqrlField.get() instanceof Relationship) {
         resovleQueryFromRel(definition, objectType, (Relationship)sqrlField.get());
+      } else if (sqrlField.isPresent() && sqrlField.get() instanceof Column) {
+        resolveField(definition, sqrlField.get());
       }
     }
+  }
+
+  private void resolveField(FieldDefinition definition, Field field) {
+    FieldLookupCoords scalarCoord = FieldLookupCoords.builder()
+        .parentType(definition.getName())
+        .fieldName(field.getName().getCanonical())
+        .columnName(((Column)field).getShadowedName().getCanonical())
+        .build();
+    root.coord(scalarCoord);
   }
 
   private RelPair createNestedRelNode(Relationship r) {
