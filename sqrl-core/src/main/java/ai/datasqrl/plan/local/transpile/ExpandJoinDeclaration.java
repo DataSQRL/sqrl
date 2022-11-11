@@ -133,6 +133,8 @@ public class ExpandJoinDeclaration {
               join.getRight(),
               JoinConditionType.NONE.symbol(join.getParserPosition()),
               null);
+        case SELECT:
+          return call;
       }
 
       return super.visit(call);
