@@ -223,6 +223,13 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void coalesceTest() {
+    generate(
+        parser.parse("IMPORT ecommerce-data.Orders;\n"
+            + "Orders.entries.discount2 := discount ? 0.0;"));
+  }
+
+  @Test
   public void nestedCrossJoinQueryTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"

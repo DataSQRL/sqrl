@@ -664,6 +664,12 @@ class AstBuilder
 
   @Override
   public SqlNode visitValueExpressionDefault(ValueExpressionDefaultContext ctx) {
+    if (ctx.primaryExpression().size() > 1) {
+      return SqlStdOperatorTable.COALESCE.createCall(
+          getLocation(ctx),
+          visit(ctx.primaryExpression().get(0)),
+          visit(ctx.primaryExpression().get(1)));
+    }
     return visit(ctx.primaryExpression().get(0));
   }
 
