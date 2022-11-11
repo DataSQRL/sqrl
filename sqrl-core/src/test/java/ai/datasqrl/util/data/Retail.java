@@ -3,12 +3,11 @@ package ai.datasqrl.util.data;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.TestScript;
+import lombok.Getter;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.Getter;
 
 public class Retail implements TestDataset {
 
