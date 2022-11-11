@@ -66,6 +66,7 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.ValidationException;
 import org.apache.calcite.util.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -346,7 +347,7 @@ public class PlannerImpl implements Planner, ViewExpander {
 
   protected SqlValidator createSqlValidator(CalciteCatalogReader catalogReader) {
     return SqlValidatorUtil.newValidator(
-        SqrlOperatorTable.instance(),
+        PlannerFactory.getOperatorTable(),
         catalogReader,
         getTypeFactory(),
         sqlValidatorConfig

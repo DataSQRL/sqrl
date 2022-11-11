@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 public class C360BundleTest {
 
   String c360Script = "IMPORT ecommerce-data.Customer;\n"
+      + "IMPORT ecommerce-data.MyFunction;\n"
       + "IMPORT ecommerce-data.Product;\n"
       + "IMPORT ecommerce-data.Orders;"
       + "Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n"
@@ -26,7 +27,7 @@ public class C360BundleTest {
       + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid"
       + "  ORDER BY e.discount DESC;\n"
       + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
-      + "";
+      + "Orders.entries.test := MyFunction(quantity)\n;";
 
   @Test
   @SneakyThrows
@@ -67,6 +68,7 @@ public class C360BundleTest {
         + "    entries {\n"
         + "      productid\n"
         + "      discount\n"
+        + "      test\n"
         + "    }\n"
         + "  }\n"
         + "  Customer {\n"

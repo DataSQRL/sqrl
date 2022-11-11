@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.local.generate;
 
 import ai.datasqrl.compile.loaders.*;
+import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -80,6 +81,8 @@ public class Resolve {
 
     //Updated while processing each node
     SqlNode currentNode = null;
+
+    List<FlinkFnc> resolvedFunctions = new ArrayList<>();
 
     public Env(SqrlCalciteSchema relSchema, Session session,
         ScriptNode scriptNode, Path packagePath) {
@@ -190,8 +193,6 @@ public class Resolve {
     }
 
     if (tblDef.getTable().getPath().size() == 1) {
-//      env.userSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
-//          tblDef.getTable());
       env.relSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
           tblDef.getTable());
     } else {
@@ -364,17 +365,17 @@ public class Resolve {
     }
 
     final SqlNode sql = node.accept(new ConvertJoinDeclaration(context));
-    SqlValidator sqrlValidator = TranspilerFactory.createSqlValidator(env.relSchema
+    SqlValidator sqrlValidator = TranspilerFactory.createSqlValidator(env.relSchema, env.getResolvedFunctions()
     );
-    System.out.println(sql);
+
     sqrlValidator.validate(sql);
 
     if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
 
       new AddHints(sqrlValidator, context).accept(op, sql);
 
-      SqlValidator validate2 = TranspilerFactory.createSqlValidator(env.relSchema
-      );
+      SqlValidator validate2 = TranspilerFactory.createSqlValidator(env.relSchema,
+          env.getResolvedFunctions());
       validate2.validate(sql);
       op.setQuery(sql);
       op.setSqrlValidator(validate2);
@@ -386,13 +387,13 @@ public class Resolve {
       SqlNode rewritten = new AddContextFields(sqrlValidator, context,
           isAggregate(sqrlValidator, sql)).accept(sql);
 
-      SqlValidator prevalidate = TranspilerFactory.createSqlValidator(env.relSchema
-      );
+      SqlValidator prevalidate = TranspilerFactory.createSqlValidator(env.relSchema,
+          env.getResolvedFunctions());
       prevalidate.validate(rewritten);
       new AddHints(prevalidate, context).accept(op, rewritten);
 
-      SqlValidator validator = TranspilerFactory.createSqlValidator(env.relSchema
-      );
+      SqlValidator validator = TranspilerFactory.createSqlValidator(env.relSchema,
+          env.getResolvedFunctions());
       SqlNode newNode2 = validator.validate(rewritten);
       op.setQuery(newNode2);
       op.setSqrlValidator(validator);
