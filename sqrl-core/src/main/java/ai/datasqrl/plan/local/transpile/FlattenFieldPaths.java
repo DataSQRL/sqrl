@@ -115,10 +115,9 @@ public class FlattenFieldPaths extends SqlShuttle {
   @Override
   public SqlNode visit(SqlCall call) {
     switch (call.getKind()) {
-      case SELECT:
       case UNION:
-      case INTERSECT:
-      case EXCEPT:
+        return super.visit(call);
+      case SELECT:
       case JOIN_DECLARATION:
         FlattenFieldPaths flattenFieldPaths = new FlattenFieldPaths(this.analysis);
         return flattenFieldPaths.accept(call);

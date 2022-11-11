@@ -40,6 +40,14 @@ public class AddHints {
   }
 
   public void accept(StatementOp op, SqlNode node) {
+    switch (node.getKind()) {
+      case UNION:
+        SqlCall call = (SqlCall) node;
+        call.getOperandList()
+            .forEach(o->accept(op, o));
+        return;
+    }
+
     if (!(node instanceof SqlSelect)) {
       return ;
     }

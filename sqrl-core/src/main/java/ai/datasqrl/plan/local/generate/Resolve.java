@@ -243,7 +243,7 @@ public class Resolve {
         return OpKind.ROOT_QUERY;
       }
 
-      return isExpressionQuery(op) ? OpKind.EXPR_QUERY : OpKind.QUERY;
+      return OpKind.QUERY;
     } else if (op.statement instanceof ImportDefinition) {
       return IMPORT_TIMESTAMP;
     }
@@ -411,13 +411,12 @@ public class Resolve {
     Optional<SQRLTable> table =
         Optional.ofNullable(env.relSchema.getTable(statement.getNamePath().get(0).getDisplay(), false))
             .map(t->(SQRLTable)t.getTable());
-
-    if (statement.getNamePath().popFirst().size() == 1) {
-      return table;
-    }
     if (table.isEmpty()) {
       //No table in namespace
       throw new RuntimeException("No table in namespace: " + statement.getNamePath().popLast());
+    }
+    if (statement.getNamePath().popFirst().size() == 1) {
+      return table;
     }
     return table.get().walkTable(statement.getNamePath().popFirst().popLast());
   }

@@ -84,8 +84,6 @@ public class FlattenTablePaths extends SqlShuttle
         if (analysis.getTableIdentifiers().get(call.getOperandList().get(0)) != null) {
           return call.getOperandList().get(0).accept(this);
         }
-
-
     }
 
     return super.visit(call);

@@ -396,14 +396,20 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
+  public void nestedUnionTest() {
+    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
+        + "Product.p2 := SELECT * FROM _\n"
+        + "              UNION DISTINCT\n"
+        + "              SELECT * FROM _;"));
+  }
+
+  @Test
   public void unionTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT * FROM Product UNION DISTINCT SELECT * FROM Product;"));
   }
 
   @Test
-  @Disabled
   public void unionAllTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT * FROM Product UNION ALL SELECT * FROM Product;"));

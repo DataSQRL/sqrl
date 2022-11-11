@@ -5,6 +5,7 @@ import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
@@ -41,6 +42,14 @@ public class AddContextFields {
     if (context.isEmpty()) {
       return node;
     }
+    switch (node.getKind()) {
+      case UNION:
+        SqlCall call = (SqlCall) node;
+        call.getOperandList()
+            .forEach(this::accept);
+        return call;
+    }
+
 
     if (node instanceof SqlSelect) {
       SqlSelect select = (SqlSelect) node;

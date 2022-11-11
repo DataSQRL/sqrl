@@ -139,7 +139,6 @@ public class AddContextTable
           select.setFrom(select.getFrom().accept(this));
         }
         return select;
-
     }
     return super.visit(node);
   }

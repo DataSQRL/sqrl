@@ -436,16 +436,9 @@ public class AnalyzeStatement implements
   }
 
   public Context visitSetOperation(SqlCall node, Context context) {
-
     for (SqlNode arm : node.getOperandList()) {
       visit(arm, context);
     }
-
-    System.out.println();
-    //Walk each side
-    
-    //Match columns by name, add nulls where needed
-    
     return context;
   }
 

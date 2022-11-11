@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -53,15 +54,15 @@ public class QualifyIdentifiers extends SqlShuttle
   }
 
   @Override
-  public SqlNode visit(SqlCall call) {
-    switch (call.getKind()) {
+  public SqlNode visit(SqlCall node) {
+    switch (node.getKind()) {
       case SELECT:
-        return rewriteSelect((SqlSelect) call);
+        return rewriteSelect((SqlSelect) node);
       case JOIN_DECLARATION:
-        return rewriteJoinDeclaration((SqrlJoinDeclarationSpec) call);
+        return rewriteJoinDeclaration((SqrlJoinDeclarationSpec) node);
     }
 
-    return super.visit(call);
+    return super.visit(node);
   }
 
   private SqlNode rewriteJoinDeclaration(SqrlJoinDeclarationSpec node) {
