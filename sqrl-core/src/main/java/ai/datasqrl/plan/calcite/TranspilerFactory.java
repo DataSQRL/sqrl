@@ -1,30 +1,19 @@
 package ai.datasqrl.plan.calcite;
 
+import static ai.datasqrl.plan.calcite.PlannerFactory.sqlValidatorConfig;
+
 import ai.datasqrl.SqrlCalciteCatalogReader;
 import java.util.List;
 import java.util.Properties;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.config.CalciteConnectionProperty;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
-import org.apache.calcite.prepare.CalciteCatalogReader;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorImpl;
-import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 
 public class TranspilerFactory {
-  static final SqlValidator.Config config = SqlValidator.Config.DEFAULT
-      .withSqlConformance(SqrlConformance.INSTANCE)
-      .withCallRewrite(true)
-      .withIdentifierExpansion(false)
-      .withColumnReferenceExpansion(false)
-      .withTypeCoercionEnabled(false)
-      .withLenientOperatorLookup(false);
 
-  public static SqlValidator createSqrlValidator(SqrlCalciteSchema schema,
-      List<String> assignmentPath, boolean forcePathIdentifiers) {
+  public static SqlValidator createSqlValidator(SqrlCalciteSchema schema) {
     Properties p = new Properties();
     p.put(CalciteConnectionProperty.CASE_SENSITIVE.name(), false);
 
@@ -35,22 +24,8 @@ public class TranspilerFactory {
             new CalciteConnectionConfigImpl(p).set(CalciteConnectionProperty.CASE_SENSITIVE,
                 "false")),
         PlannerFactory.getTypeFactory(),
-        config
+        sqlValidatorConfig
         );
-//    validator.assignmentPath = assignmentPath;
-//    validator.forcePathIdentifiers = forcePathIdentifiers;
-    return validator;
-  }
-
-  public static SqlValidator createSqlValidator(CalciteSchema schema) {
-    SqlValidator validator = SqlValidatorUtil.newValidator(
-        SqrlOperatorTable.instance(),
-        new CalciteCatalogReader(schema, List.of(), PlannerFactory.getTypeFactory(),
-            new CalciteConnectionConfigImpl(new Properties()).set(CalciteConnectionProperty.CASE_SENSITIVE,
-                "false")),
-        PlannerFactory.getTypeFactory(),
-        config);
-
     return validator;
   }
 }

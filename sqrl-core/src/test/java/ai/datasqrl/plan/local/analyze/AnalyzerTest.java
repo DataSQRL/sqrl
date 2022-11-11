@@ -410,6 +410,14 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void unionMixedTest() {
+    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
+        + "Product2 := SELECT productid, name, category FROM Product\n"
+        + "            UNION DISTINCT\n"
+        + "            SELECT description, productid FROM Product;"));
+  }
+
+  @Test
   public void unionAllTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT * FROM Product UNION ALL SELECT * FROM Product;"));

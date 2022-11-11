@@ -354,7 +354,8 @@ public class Resolve {
         QualifyIdentifiers::new,
         FlattenFieldPaths::new,
         FlattenTablePaths::new,
-        ReplaceWithVirtualTable::new
+        ReplaceWithVirtualTable::new,
+        AllowMixedFieldUnions::new
     );
 
     for (Function<Analysis, SqlShuttle> transform : transforms) {
@@ -363,16 +364,17 @@ public class Resolve {
     }
 
     final SqlNode sql = node.accept(new ConvertJoinDeclaration(context));
-    SqlValidator sqrlValidator = TranspilerFactory.createSqrlValidator(env.relSchema,
-        assignmentPath, true);
+    SqlValidator sqrlValidator = TranspilerFactory.createSqlValidator(env.relSchema
+    );
+    System.out.println(sql);
     sqrlValidator.validate(sql);
 
     if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
 
       new AddHints(sqrlValidator, context).accept(op, sql);
 
-      SqlValidator validate2 = TranspilerFactory.createSqrlValidator(env.relSchema,
-          assignmentPath, false);
+      SqlValidator validate2 = TranspilerFactory.createSqlValidator(env.relSchema
+      );
       validate2.validate(sql);
       op.setQuery(sql);
       op.setSqrlValidator(validate2);
@@ -384,13 +386,13 @@ public class Resolve {
       SqlNode rewritten = new AddContextFields(sqrlValidator, context,
           isAggregate(sqrlValidator, sql)).accept(sql);
 
-      SqlValidator prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
-          assignmentPath, true);
+      SqlValidator prevalidate = TranspilerFactory.createSqlValidator(env.relSchema
+      );
       prevalidate.validate(rewritten);
       new AddHints(prevalidate, context).accept(op, rewritten);
 
-      SqlValidator validator = TranspilerFactory.createSqrlValidator(env.relSchema,
-          assignmentPath, false);
+      SqlValidator validator = TranspilerFactory.createSqlValidator(env.relSchema
+      );
       SqlNode newNode2 = validator.validate(rewritten);
       op.setQuery(newNode2);
       op.setSqrlValidator(validator);

@@ -18,7 +18,6 @@ import ai.datasqrl.graphql.inference.argument.ArgumentHandlerContextV1;
 import ai.datasqrl.graphql.inference.argument.EqHandler;
 import ai.datasqrl.graphql.inference.argument.LimitOffsetHandler;
 import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
 import ai.datasqrl.graphql.server.Model.Coords;
 import ai.datasqrl.graphql.server.Model.FieldLookupCoords;
 import ai.datasqrl.graphql.server.Model.PgParameterHandler;
@@ -307,8 +306,8 @@ public class PgBuilder implements
   }
 
   private RelNode plan(SqlNode node) {
-    SqlValidator sqrlValidator = TranspilerFactory.createSqrlValidator(schema,
-        List.of(), true);
+    SqlValidator sqrlValidator = TranspilerFactory.createSqlValidator(schema
+    );
     System.out.println(node);
     SqlNode validated = sqrlValidator.validate(node);
 

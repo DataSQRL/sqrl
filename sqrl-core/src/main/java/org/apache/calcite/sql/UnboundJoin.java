@@ -1,8 +1,10 @@
 package org.apache.calcite.sql;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
+import org.apache.calcite.sql.SqlJoin.SqlJoinOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,12 +33,13 @@ public class UnboundJoin extends SqlCall {
   @NotNull
   @Override
   public SqlOperator getOperator() {
-    return null;
+    //this isn't the true operator and will fail if you try to rewrite child items in the shuttle
+    return SqrlJoinDeclarationSpec.OPERATOR;
   }
 
   @NotNull
   @Override
   public List<SqlNode> getOperandList() {
-    return null;
+    return List.of();
   }
 }

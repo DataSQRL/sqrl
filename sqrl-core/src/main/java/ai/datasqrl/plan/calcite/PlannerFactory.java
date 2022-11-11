@@ -39,7 +39,7 @@ public class PlannerFactory {
       .withCallRewrite(true)
       .withIdentifierExpansion(true)
       .withColumnReferenceExpansion(true)
-      .withTypeCoercionEnabled(false)
+      .withTypeCoercionEnabled(true) //must be true to allow null literals
       .withLenientOperatorLookup(true)
       .withSqlConformance(SqrlConformance.INSTANCE)
       ;
