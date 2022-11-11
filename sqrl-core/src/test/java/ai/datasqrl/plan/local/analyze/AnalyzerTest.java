@@ -5,6 +5,7 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCode;
 import ai.datasqrl.parse.ParsingException;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.util.TestDataset;
@@ -373,7 +374,6 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void crossJoinTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
