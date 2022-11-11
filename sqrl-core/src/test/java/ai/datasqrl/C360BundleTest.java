@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 public class C360BundleTest {
 
   String c360Script = "IMPORT ecommerce-data.Customer;\n"
+      + "IMPORT ecommerce-data.MyFunction;\n"
       + "IMPORT ecommerce-data.Product;\n"
       + "IMPORT ecommerce-data.Orders;"
       + "Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n"
@@ -23,9 +24,10 @@ public class C360BundleTest {
       + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
       + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
       + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
-      + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
+      + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid"
+      + "  ORDER BY e.discount DESC;\n"
       + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
-      + "";
+      + "Orders.entries.test := MyFunction(quantity)\n;";
 
   @Test
   @SneakyThrows
@@ -66,6 +68,7 @@ public class C360BundleTest {
         + "    entries {\n"
         + "      productid\n"
         + "      discount\n"
+        + "      test\n"
         + "    }\n"
         + "  }\n"
         + "  Customer {\n"
@@ -74,9 +77,13 @@ public class C360BundleTest {
         + "      customerid\n"
         + "    }\n"
         + "  }\n"
-        + "  Product(productid: 1332) {\n"
+        + "  Product {\n"
         + "    \n"
         + "    description\n"
+        + "    order_entries {\n"
+        + "       discount\n"
+        + "    }\n"
+        + "   \n"
         + "  }\n"
         + "}");
     System.out.println(s.body());

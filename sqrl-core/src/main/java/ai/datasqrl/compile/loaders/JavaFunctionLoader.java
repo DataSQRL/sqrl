@@ -1,23 +1,25 @@
 package ai.datasqrl.compile.loaders;
 
+import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
-
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.validation.constraints.NotNull;
+import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 /**
  * All jars are loaded on the class path and resolved with java's ServiceLoader.
  *
  */
-public class JavaFunctionLoader implements Loader {
-
-  private static final Pattern CONFIG_FILE_PATTERN = Pattern.compile("(.*)\\.jar$");
+public class JavaFunctionLoader extends AbstractLoader {
+  public static final String FILE_SUFFIX = ".function.json";
+  private static final Pattern CONFIG_FILE_PATTERN = Pattern.compile("(.*)\\.function\\.json$");
 
   @Override
   public Optional<String> handles(Path file) {
@@ -30,18 +32,31 @@ public class JavaFunctionLoader implements Loader {
 
   @Override
   public boolean load(Env env, NamePath fullPath, Optional<Name> alias) {
-    return false;
-//    Preconditions.checkState(alias.isEmpty(), "Alias for functions not yet supported");
-//    ServiceLoader<SqlFunction> serviceLoader = ServiceLoader.load(SqlFunction.class);
-//    for (SqlFunction function : serviceLoader) {
-//      SqrlOperatorTable.instance().register(function);
-//    }
-//    throw new RuntimeException("Functions not yet supported");
+    NamePath basePath = fullPath.subList(0,fullPath.size()-1);
+
+    Path baseDir = namepath2Path(env.getPackagePath(), basePath);
+
+    Path path = baseDir.resolve(fullPath.getLast() + FILE_SUFFIX);
+    Preconditions.checkState(path.toFile().isFile(), "Could not find function %s %s", fullPath,
+        path);
+
+    FunctionJson fnc = mapJsonFile(path, FunctionJson.class);
+    try {
+      Class<?> clazz = Class.forName(fnc.classPath);
+      env.getResolvedFunctions().add(
+          new FlinkFnc(alias.map(Name::getCanonical).orElse(clazz.getSimpleName()),
+              (UserDefinedFunction) clazz.getDeclaredConstructor().newInstance()
+          ));
+    } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException |
+             IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(String.format("Could not find or load class name: %s", fnc.classPath), e);
+    }
+
+    return true;
   }
 
-  @Override
-  public Collection<Name> loadAll(Env env, NamePath basePath) {
-    //"Function loading from entire jar tbd"
-    return Collections.EMPTY_LIST;
+  public static class FunctionJson {
+    @NotNull
+    public String classPath;
   }
 }

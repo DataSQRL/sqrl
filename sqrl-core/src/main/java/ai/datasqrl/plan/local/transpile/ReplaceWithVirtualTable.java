@@ -10,31 +10,37 @@ import ai.datasqrl.plan.local.transpile.AnalyzeStatement.SingleTable;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
-import com.ibm.icu.impl.Pair;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Stack;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
+import org.apache.calcite.sql.SqrlJoinPath;
+import org.apache.calcite.sql.SqrlJoinSetOperation;
+import org.apache.calcite.sql.SqrlJoinTerm;
+import org.apache.calcite.sql.SqrlJoinTerm.SqrlJoinTermVisitor;
+import org.apache.calcite.sql.UnboundJoin;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
+import org.apache.commons.lang3.tuple.Pair;
 
-public class ReplaceWithVirtualTable extends SqlShuttle {
+public class ReplaceWithVirtualTable extends SqlShuttle
+    implements SqrlJoinTermVisitor<SqrlJoinTerm, Object> {
 
   private final Analysis analysis;
 
   Stack<SqlNode> pullup = new Stack<>();
+
+  AtomicInteger aliasCnt = new AtomicInteger(0);
 
   public ReplaceWithVirtualTable(Analysis analysis) {
 
@@ -44,13 +50,31 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
   @Override
   public SqlNode visit(SqlCall call) {
     switch (call.getKind()) {
+      case UNBOUND_JOIN:
+        UnboundJoin u = (UnboundJoin)call;
+        return new UnboundJoin(u.getParserPosition(),
+            u.getRelation().accept(this),
+            u.getCondition()
+        );
+      case JOIN_DECLARATION:
+        SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) call;
+        SqrlJoinTerm relation = spec.getRelation().accept(this, null);
+        Optional<SqlNodeList> orderList = spec.getOrderList().map(o->(SqlNodeList)o.accept(this));
+        Optional<SqlNodeList> leftJoin = spec.getLeftJoins().map(l->(SqlNodeList) l.accept(this));
+
+        return new SqrlJoinDeclarationSpec(spec.getParserPosition(),
+            relation,
+            orderList,
+            spec.getFetch(),
+            spec.getInverse(),
+            leftJoin);
       case AS:
         SqlNode tbl = call.getOperandList().get(0);
         //aliased in inlined
         if (tbl instanceof SqlIdentifier) {
           ResolvedTable resolved = analysis.getTableIdentifiers().get(tbl);
           if (resolved instanceof RelativeResolvedTable &&
-              ((RelativeResolvedTable)resolved).getFields().get(0).getNode() != null){
+              ((RelativeResolvedTable)resolved).getFields().get(0).getJoin().isPresent()){
             return tbl.accept(this);
           }
         }
@@ -118,13 +142,13 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
       Preconditions.checkState(resolveRel.getFields().size() == 1);
       Relationship relationship = resolveRel.getFields().get(0);
       //Is a join declaration
-      if (relationship.getNode() != null) {
+      if (relationship.getJoin().isPresent()) {
         String alias = analysis.tableAlias.get(id);
-        Pair<SqlNode, SqlNode> pair = expand(relationship.getNode(),
-            resolveRel.getAlias(), alias
-        );
-        pullup.push(pair.second);
-        return pair.first;
+
+        ExpandJoinDeclaration expander = new ExpandJoinDeclaration(resolveRel.getAlias(), alias, aliasCnt);
+        UnboundJoin pair = expander.expand(relationship.getJoin().get());
+        pair.getCondition().map(c->pullup.push(c));
+        return pair.getRelation();
       }
 
       String alias = analysis.tableAlias.get(id);
@@ -141,6 +165,20 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
     return super.visit(id);
   }
 
+  private SqlNode pullWhereIntoJoin(SqlNode query) {
+    //
+    if (query instanceof SqlSelect) {
+      SqlSelect select = (SqlSelect) query;
+      if (select.getWhere() != null) {
+        SqlJoin join = (SqlJoin) select.getFrom();
+        FlattenTablePaths.addJoinCondition(join, select.getWhere());
+      }
+      return select.getFrom();
+    }
+    return query;
+  }
+
+
   public static SqlNode createCondition(String firstAlias, String alias, SQRLTable from, SQRLTable to) {
     List<SqlNode> conditions = new ArrayList<>();
     for (int i = 0; i < from.getVt().getPrimaryKeyNames().size()
@@ -156,201 +194,32 @@ public class ReplaceWithVirtualTable extends SqlShuttle {
     return condition;
   }
 
-  int a = 0;
-
-  private Pair<SqlNode, SqlNode> expand(SqlNode node, String firstAlias, String lastAlias) {
-    //1. Extraction conditions Since we don't know where exactly on the node
-    //tree it will belong and we don't want to do decomposition at this time
-    ExtractConditions extractConditions = new ExtractConditions();
-    node = node.accept(extractConditions);
-
-    List<SqlNode> conditions = extractConditions.conditions;
-
-    //2. Extract table alises
-    ExtractTableAlias tableAlias = new ExtractTableAlias();
-    node.accept(tableAlias);
-    Map<SqlNode, String> aliasMap = tableAlias.tableAliasMap;
-    Map<String, SqlNode> aliasMapInverse = tableAlias.inverse;
-
-    //3. Remove left deep table so we can inline it
-    RemoveLeftDeep removeLeftDeep = new RemoveLeftDeep();
-    node = node.accept(removeLeftDeep);
-
-    ExtractRightDeepAlias rightDeepAlias = new ExtractRightDeepAlias();
-    String rightAlias = node.accept(rightDeepAlias);
-    //4. Realias the who
-    Map<String, String> newAliasMap = new HashMap<>();
-    for (Map.Entry<String, SqlNode> aliases : aliasMapInverse.entrySet()) {
-      if (aliases.getKey().equalsIgnoreCase("_")) {
-        newAliasMap.put("_", firstAlias);
-        aliasMap.put(aliases.getValue(), firstAlias);
-      } else if (aliases.getKey().equalsIgnoreCase(rightAlias)) {
-        newAliasMap.put(aliases.getKey(), lastAlias);
-        aliasMap.put(aliases.getValue(), lastAlias);
-      } else {
-        SqlNode existingRight = aliasMapInverse.get(rightAlias);
-        //todo assure unique
-        String newAlias = "_" + aliases.getKey() + "_" + (++a);
-        aliasMap.put(existingRight, newAlias);
-        newAliasMap.put(aliases.getKey(), newAlias);
-      }
-    }
-
-    //Replace all aliases
-    ReplaceTableAlias replaceTableAlias = new ReplaceTableAlias(aliasMap);
-    node = node.accept(replaceTableAlias);
-
-    ReplaceIdentifierAliases replaceIdentifierAliases = new ReplaceIdentifierAliases(newAliasMap);
-    List<SqlNode> newConditions = conditions.stream()
-        .map(c->c.accept(replaceIdentifierAliases))
-        .collect(Collectors.toList());
-
-
-    return Pair.of(node, SqlNodeUtil.and(newConditions));
-  }
-
-  public static class ExtractRightDeepAlias extends SqlBasicVisitor<String> {
-
-    @Override
-    public String visit(SqlCall call) {
-      switch (call.getKind()) {
-        case AS:
-          return call.getOperandList().get(1).accept(this);
-        case JOIN:
-          SqlJoin join = (SqlJoin) call;
-          return join.getRight().accept(this);
-
-      }
-      return super.visit(call);
-    }
-
-    @Override
-    public String visit(SqlIdentifier id) {
-      return id.names.get(0);
-    }
-  }
-
-
-  public class ExtractConditions extends SqlShuttle {
-
+  @Override
+  public SqrlJoinTerm visitJoinPath(SqrlJoinPath node, Object context) {
+    List<SqlNode> relations = new ArrayList<>();
     List<SqlNode> conditions = new ArrayList<>();
-
-    @Override
-    public SqlNode visit(SqlCall call) {
-      switch (call.getKind()) {
-        case JOIN:
-          SqlJoin join = (SqlJoin) call;
-          this.conditions.add(join.getCondition());
-          return new SqlJoin(join.getParserPosition(),
-              join.getLeft(),
-              join.isNaturalNode(),
-              join.getJoinTypeNode(),
-              join.getRight(),
-              JoinConditionType.NONE.symbol(join.getParserPosition()),
-              null);
+    for (int i = 0; i < node.getRelations().size(); i++) {
+      relations.add(node.getRelations().get(i).accept(this));
+      if (node.getConditions().get(i) != null) {
+        conditions.add(node.getConditions().get(i).accept(this));
+      } else {
+        conditions.add(null);
       }
-
-      return super.visit(call);
+      if (!pullup.isEmpty()) {
+        SqlNode condition = pullup.pop();
+        conditions.set(i, SqlNodeUtil.and(conditions.get(i), condition));
+      }
     }
+
+    return new SqrlJoinPath(node.getParserPosition(),
+        relations,
+        conditions);
   }
 
-  private class ExtractTableAlias extends SqlBasicVisitor {
-
-    Map<SqlNode, String> tableAliasMap = new HashMap<>();
-    Map<String, SqlNode> inverse = new HashMap<>();
-
-    @Override
-    public Object visit(SqlCall call) {
-      if (call.getKind() == SqlKind.AS) {
-        tableAliasMap.put(call.getOperandList().get(0),
-            ((SqlIdentifier) call.getOperandList().get(1)).names.get(0)
-        );
-        inverse.put(((SqlIdentifier) call.getOperandList().get(1)).names.get(0),
-            call.getOperandList().get(0)
-        );
-      }
-
-      return super.visit(call);
-    }
-  }
-
-  private class RemoveLeftDeep extends SqlShuttle {
-
-    @Override
-    public SqlNode visit(SqlCall call) {
-      switch (call.getKind()) {
-        case JOIN:
-          SqlJoin join = (SqlJoin) call;
-          Optional<SqlNode> left = removeLeftDeep(join.getLeft());
-          if (left.isEmpty()) {
-            return join.getRight();
-          }
-
-          return new SqlJoin(join.getParserPosition(),
-              left.get(),
-              join.isNaturalNode(),
-              join.getJoinTypeNode(),
-              join.getRight(),
-              join.getConditionTypeNode(),
-              join.getCondition());
-      }
-
-      return super.visit(call);
-    }
-
-    private Optional<SqlNode> removeLeftDeep(SqlNode node) {
-      if (node instanceof SqlIdentifier ||
-          (node instanceof SqlCall && ((SqlCall)node).getOperandList().get(0) instanceof SqlIdentifier )) {
-        return Optional.empty();
-      }
-
-      return Optional.of(node.accept(this));
-    }
-  }
-
-  private class ReplaceTableAlias extends SqlShuttle {
-
-    private final Map<SqlNode, String> aliasMap;
-
-    public ReplaceTableAlias(Map<SqlNode, String> aliasMap) {
-      this.aliasMap = aliasMap;
-    }
-
-    @Override
-    public SqlNode visit(SqlCall call) {
-      switch (call.getKind()) {
-        case AS:
-          Preconditions.checkNotNull(aliasMap.get(call.getOperandList().get(0)));
-          return SqlStdOperatorTable.AS
-              .createCall(SqlParserPos.ZERO,
-                  call.getOperandList().get(0),
-                  new SqlIdentifier(aliasMap.get(call.getOperandList().get(0)), SqlParserPos.ZERO)
-              );
-
-      }
-      return super.visit(call);
-    }
-  }
-
-  private class ReplaceIdentifierAliases extends SqlShuttle{
-
-    private final Map<String, String> newAliasMap;
-
-    public ReplaceIdentifierAliases(Map<String, String> newAliasMap) {
-      this.newAliasMap = newAliasMap;
-    }
-
-    @Override
-    public SqlNode visit(SqlIdentifier id) {
-      if (id.names.size() > 1) {
-        Preconditions.checkState(newAliasMap.containsKey(id.names.get(0)));
-        return new SqlIdentifier(List.of(
-            newAliasMap.get(id.names.get(0)), id.names.get(1)
-        ), id.getParserPosition());
-
-      }
-      return super.visit(id);
-    }
+  @Override
+  public SqrlJoinTerm visitJoinSetOperation(SqrlJoinSetOperation sqrlJoinSetOperation,
+      Object context) {
+    return null;
   }
 
   private class ShadowColumns extends SqlShuttle {

@@ -4,6 +4,7 @@ import ai.datasqrl.compile.loaders.*;
 import ai.datasqrl.config.error.ErrorCode;
 import ai.datasqrl.io.sources.dataset.TableSink;
 import ai.datasqrl.io.sources.dataset.TableSource;
+import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -87,6 +88,8 @@ public class Resolve {
 
     //Updated while processing each node
     SqlNode currentNode = null;
+
+    List<FlinkFnc> resolvedFunctions = new ArrayList<>();
 
     public Env(SqrlCalciteSchema relSchema, Session session,
         ScriptNode scriptNode, Path packagePath) {
@@ -219,8 +222,6 @@ public class Resolve {
     }
 
     if (tblDef.getTable().getPath().size() == 1) {
-//      env.userSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
-//          tblDef.getTable());
       env.relSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
           tblDef.getTable());
     } else {
@@ -272,7 +273,7 @@ public class Resolve {
         return OpKind.ROOT_QUERY;
       }
 
-      return isExpressionQuery(op) ? OpKind.EXPR_QUERY : OpKind.QUERY;
+      return OpKind.QUERY;
     } else if (op.statement instanceof ImportDefinition) {
       return IMPORT_TIMESTAMP;
     }
@@ -390,21 +391,20 @@ public class Resolve {
     Optional<VirtualRelationalTable> context =
         table.map(t -> t.getVt());
 
-    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(env.relSchema, assignmentPath, table)
+    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(env.relSchema,
+        assignmentPath, table)
         .accept(node);
 
-    //This must come later
-    SqlNode node = context.map(
-        c -> new AddContextTable(ReservedName.SELF_IDENTIFIER.getCanonical())
-            .accept(op.getQuery())).orElse(op.getQuery());
-
-    Analysis currentAnalysis = analyzer.apply(op.getQuery());
+    SqlNode node = op.getQuery();
+    Analysis currentAnalysis = null;
 
     List<Function<Analysis, SqlShuttle>> transforms = List.of(
+        (analysis) -> new AddContextTable(table.isPresent()),
         QualifyIdentifiers::new,
         FlattenFieldPaths::new,
         FlattenTablePaths::new,
-        ReplaceWithVirtualTable::new
+        ReplaceWithVirtualTable::new,
+        AllowMixedFieldUnions::new
     );
 
     for (Function<Analysis, SqlShuttle> transform : transforms) {
@@ -412,36 +412,36 @@ public class Resolve {
       currentAnalysis = analyzer.apply(node);
     }
 
-    final SqlNode finalStage = node;
+    final SqlNode sql = node.accept(new ConvertJoinDeclaration(context));
+    SqlValidator sqrlValidator = TranspilerFactory.createSqlValidator(env.relSchema, env.getResolvedFunctions()
+    );
 
-    SqlValidator sqrlValidator = TranspilerFactory.createSqrlValidator(env.relSchema,
-        assignmentPath, true);
-    sqrlValidator.validate(node);
+    sqrlValidator.validate(sql);
 
     if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
 
-      new AddHints(sqrlValidator, context).accept(op, finalStage);
+      new AddHints(sqrlValidator, context).accept(op, sql);
 
-      SqlValidator validate2 = TranspilerFactory.createSqrlValidator(env.relSchema,
-          assignmentPath, false);
-      validate2.validate(finalStage);
-      op.setQuery(finalStage);
+      SqlValidator validate2 = TranspilerFactory.createSqlValidator(env.relSchema,
+          env.getResolvedFunctions());
+      validate2.validate(sql);
+      op.setQuery(sql);
       op.setSqrlValidator(validate2);
-    } else {
+    } else if (op.getStatementKind() == StatementKind.JOIN) {
+      op.setQuery(sql);
+      op.setJoinDeclaration((SqrlJoinDeclarationSpec) node);
+      op.setSqrlValidator(sqrlValidator);
+     } else {
       SqlNode rewritten = new AddContextFields(sqrlValidator, context,
-          isAggregate(sqrlValidator, finalStage)).accept(finalStage);
+          isAggregate(sqrlValidator, sql)).accept(sql);
 
-      //Skip this for joins, we'll add the hints later when we reconstruct the node from the relnode
-      // Hints don't carry over when moving from rel -> sqlnode
-      if (op.getStatementKind() != StatementKind.JOIN) {
-        SqlValidator prevalidate = TranspilerFactory.createSqrlValidator(env.relSchema,
-            assignmentPath, true);
-        prevalidate.validate(rewritten);
-        new AddHints(prevalidate, context).accept(op, rewritten);
-      }
+      SqlValidator prevalidate = TranspilerFactory.createSqlValidator(env.relSchema,
+          env.getResolvedFunctions());
+      prevalidate.validate(rewritten);
+      new AddHints(prevalidate, context).accept(op, rewritten);
 
-      SqlValidator validator = TranspilerFactory.createSqrlValidator(env.relSchema,
-          assignmentPath, false);
+      SqlValidator validator = TranspilerFactory.createSqlValidator(env.relSchema,
+          env.getResolvedFunctions());
       SqlNode newNode2 = validator.validate(rewritten);
       op.setQuery(newNode2);
       op.setSqrlValidator(validator);
@@ -622,25 +622,31 @@ public class Resolve {
     SQRLTable toTable =
         joinDeclarationUtil.getToTable(op.sqrlValidator,
             op.query);
-    Multiplicity multiplicity =
-        joinDeclarationUtil.deriveMultiplicity(op.relNode);
-
-    SqlNode node = pullWhereIntoJoin(op.getQuery());
+    Multiplicity multiplicity = getMultiplicity(env, op);
 
     table.get().addRelationship(op.statement.getNamePath().getLast(), toTable,
-        Relationship.JoinType.JOIN, multiplicity, node);
+        Relationship.JoinType.JOIN, multiplicity, Optional.of(op.joinDeclaration));
   }
 
-  private SqlNode pullWhereIntoJoin(SqlNode query) {
-    if (query instanceof SqlSelect) {
-      SqlSelect select = (SqlSelect) query;
-      if (select.getWhere() != null) {
-        SqlJoin join = (SqlJoin) select.getFrom();
-        FlattenTablePaths.addJoinCondition(join, select.getWhere());
-      }
-      return select.getFrom();
+  private Multiplicity getMultiplicity(Env env, StatementOp op) {
+    Optional<SqlNode> fetch = getFetch(op);
+
+    return fetch
+        .filter(f -> ((SqlNumericLiteral) f).intValue(true) == 1)
+        .map(f -> Multiplicity.ONE)
+        .orElse(Multiplicity.MANY);
+  }
+
+  private Optional<SqlNode> getFetch(StatementOp op) {
+    if (op.query instanceof SqlSelect) {
+      SqlSelect select = (SqlSelect) op.query;
+      return Optional.ofNullable(select.getFetch());
+    } else if (op.query instanceof SqlOrderBy) {
+      SqlOrderBy order = (SqlOrderBy) op.query;
+      return Optional.ofNullable(order.fetch);
+    } else {
+      throw new RuntimeException("Unknown node type");
     }
-    return query;
   }
 
   private void createTable(Env env, StatementOp op, Optional<SQRLTable> parentTable) {
@@ -656,8 +662,9 @@ public class Resolve {
 
     ScriptTableDefinition queryTable;
     if (op.statementKind==StatementKind.STREAM) {
-      //TODO: Determine change type and add
-      queryTable=env.tableFactory.defineStreamTable(op.statement.getNamePath(), processedRel, StateChangeType.ADD,
+      StreamAssignment streamAssignment = (StreamAssignment) op.statement;
+      queryTable=env.tableFactory.defineStreamTable(op.statement.getNamePath(), processedRel,
+          StateChangeType.valueOf(streamAssignment.getType().name()),
               env.getSession().getPlanner().getRelBuilder(), env.getSession().getPipeline());
     } else {
       queryTable=env.tableFactory.defineTable(op.statement.getNamePath(), processedRel, fieldNames, parentPair);
@@ -725,6 +732,7 @@ public class Resolve {
     SqlNode query;
     SqlNode validatedSql;
 
+    SqrlJoinDeclarationSpec joinDeclaration;
     StatementOp(SqrlStatement statement, SqlNode query, StatementKind statementKind) {
       this.statement = statement;
       this.query = query;

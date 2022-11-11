@@ -1,0 +1,3 @@
+LogicalProject(x=[+($1, 24:INTERVAL YEAR)])
+  LogicalTableScan(table=[[product$3]])
+

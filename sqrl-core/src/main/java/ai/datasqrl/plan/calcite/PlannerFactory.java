@@ -1,8 +1,10 @@
 package ai.datasqrl.plan.calcite;
 
+import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
 import ai.datasqrl.physical.stream.flink.LocalFlinkStreamEngineImpl;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import java.time.Instant;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.rel.RelCollationTraitDef;
@@ -37,10 +39,10 @@ public class PlannerFactory {
 
   public static SqlValidator.Config sqlValidatorConfig = SqlValidator.Config.DEFAULT
       .withCallRewrite(true)
-      .withIdentifierExpansion(true)
+      .withIdentifierExpansion(false)
       .withColumnReferenceExpansion(true)
-      .withTypeCoercionEnabled(false)
-      .withLenientOperatorLookup(true)
+      .withTypeCoercionEnabled(true) //must be true to allow null literals
+      .withLenientOperatorLookup(false)
       .withSqlConformance(SqrlConformance.INSTANCE)
       ;
 
@@ -53,9 +55,15 @@ public class PlannerFactory {
 
 
   public static SqlOperatorTable getOperatorTable() {
+    return getOperatorTable(List.of());
+  }
+  public static SqlOperatorTable getOperatorTable(List<FlinkFnc> envFunctions) {
     LocalFlinkStreamEngineImpl x = new LocalFlinkStreamEngineImpl();
     TableEnvironmentImpl t = (TableEnvironmentImpl)x.createJob().getTableEnvironment();
     FunctionCatalog catalog = FlinkEnvProxy.getFunctionCatalog(t);
+
+    envFunctions.forEach(fn -> catalog.registerTemporarySystemFunction(fn.getName(),
+        fn.getFnc(), true));
 
     SqlOperatorTable operatorTable = SqlOperatorTables.chain(
         new FunctionCatalogOperatorTable(

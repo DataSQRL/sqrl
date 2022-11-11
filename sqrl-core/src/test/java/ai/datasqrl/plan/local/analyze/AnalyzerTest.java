@@ -5,8 +5,13 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCode;
 import ai.datasqrl.parse.ParsingException;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.plan.calcite.util.RelToSql;
+import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
+import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
 import ai.datasqrl.schema.SQRLTable;
+import ai.datasqrl.util.SnapshotTest;
+import ai.datasqrl.util.SnapshotTest.Snapshot;
 import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.Retail;
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -24,21 +29,37 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import org.junit.jupiter.api.TestInfo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class AnalyzerTest extends AbstractLogicalSQRLIT {
 
   private TestDataset example = Retail.INSTANCE;
+  private Snapshot snapshot;
 
 
   @BeforeEach
-  public void setup() throws IOException {
+  public void setup(TestInfo testInfo) throws IOException {
     initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
+    this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
   }
 
   private Env generate(ScriptNode node) {
-    return resolve.planDag(session, node);
+    Env env = resolve.planDag(session, node);
+    snapshotEnv(env);
+    return env;
+  }
+
+  private void snapshotEnv(Env env) {
+    if (env.getOps().size() == 0) {
+      return;
+    }
+      for (StatementOp op : env.getOps()) {
+      snapshot.addContent(String.format("%s", op.getRelNode().explain()));
+    }
+
+    snapshot.createOrValidate();
   }
 
   private void generateInvalid(ScriptNode node) {
@@ -223,6 +244,13 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void coalesceTest() {
+    generate(
+        parser.parse("IMPORT ecommerce-data.Orders;\n"
+            + "Orders.entries.discount2 := discount ? 0.0;"));
+  }
+
+  @Test
   public void nestedCrossJoinQueryTest() {
     generate(parser.parse(
         "IMPORT ecommerce-data.Product;\n"
@@ -366,7 +394,6 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void crossJoinTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;\n"
@@ -389,14 +416,28 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
+  public void nestedUnionTest() {
+    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
+        + "Product.p2 := SELECT * FROM _\n"
+        + "              UNION DISTINCT\n"
+        + "              SELECT * FROM _;"));
+  }
+
+  @Test
   public void unionTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT * FROM Product UNION DISTINCT SELECT * FROM Product;"));
   }
 
   @Test
-  @Disabled
+  public void unionMixedTest() {
+    generate(parser.parse("IMPORT ecommerce-data.Product;\n"
+        + "Product2 := SELECT productid, name, category FROM Product\n"
+        + "            UNION DISTINCT\n"
+        + "            SELECT description, productid FROM Product;"));
+  }
+
+  @Test
   public void unionAllTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT * FROM Product UNION ALL SELECT * FROM Product;"));
@@ -782,14 +823,17 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void castTest() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"
-        + "X := SELECT CAST(1 AS String) From Orders;"));
+        + "X := SELECT CAST(1 AS String) From Orders;"
+        + "X := SELECT CAST(1 AS Boolean) From Orders;"
+        + "X := SELECT CAST(1 AS Float) From Orders;"
+        + "X := SELECT CAST(1 AS Integer) From Orders;"
+        + "X := SELECT CAST(1 AS DateTime) From Orders;"
+    ));
   }
 
   @Test
-  @Disabled
   public void castExpression() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"
         + "Orders.x := CAST(1 AS String);"));

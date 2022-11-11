@@ -190,20 +190,11 @@ public class VertxGraphQLBuilder implements
 
   @Override
   public Void visitResolvedPagedPgQuery(ResolvedPagedPgQuery pgQuery, QueryExecutionContext context) {
-    Optional<Integer> limit = Optional.empty();
-    Optional<Integer> offset = Optional.empty();
+    Optional<Integer> limit = Optional.ofNullable(context.getEnvironment().getArgument("limit"));
+    Optional<Integer> offset = Optional.ofNullable(context.getEnvironment().getArgument("offset"));
     Object[] paramObj = new Object[pgQuery.query.parameters.size()];
     for (int i = 0; i < pgQuery.query.getParameters().size(); i++) {
       PgParameterHandler param = pgQuery.query.getParameters().get(i);
-      if (param instanceof ArgumentPgParameter &&
-          ((ArgumentPgParameter)param).path.equalsIgnoreCase("limit")) {
-        Integer o = (Integer)param.accept(this, context);
-        limit = Optional.ofNullable(o);
-      } else if (param instanceof ArgumentPgParameter &&
-          ((ArgumentPgParameter)param).path.equalsIgnoreCase("offset"))  {
-        Integer o = (Integer)param.accept(this, context);
-        offset = Optional.ofNullable(o);
-      }
       Object o = param.accept(this, context);
       paramObj[i] = o;
     }

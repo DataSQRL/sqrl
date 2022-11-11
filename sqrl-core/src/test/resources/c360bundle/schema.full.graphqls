@@ -1,0 +1,100 @@
+
+type Category {
+    name: String
+    products(category: String, description: String, name: String, productid: Int, updatetime: String): [Product]
+}
+
+type Customer {
+    _spending_by_month_category(category: String, customerid: Int, month: String, savings: Float, total: Float): [_spending_by_month_category]
+    customerid: Int
+    email: String
+    favorite_categories(category_name: String, customerid: Int, total: Float): [favorite_categories]
+    lastupdated: Int
+    name: String
+    order_again(customerid: Int, most_recent: String, num_orders: Int, productid: Int, quantity: Int): [order_again]
+    order_stats(customerid: Int, num_orders: Int, total_spend: Float): [order_stats]
+    orders(customerid: Int, id: Int, time: String): [Orders]
+    updatetime: String
+}
+
+type NewCustomerPromotion {
+    customerid: Int
+    email: String
+    name: String
+    num_orders: Int
+    total_spend: Float
+}
+
+type Product {
+    category: String
+    description: String
+    name: String
+    productid: Int
+    updatetime: String
+}
+
+type Query {
+    category(name: String): [Category]
+    customer(customerid: Int, email: String, lastupdated: Int, name: String, updatetime: String): [Customer]
+    newCustomerPromotion(customerid: Int, email: String, name: String, num_orders: Int, total_spend: Float): [NewCustomerPromotion]
+    product(category: String, description: String, name: String, productid: Int, updatetime: String): [Product]
+    orders(customerid: Int, id: Int, time: String): [Orders]
+}
+
+type _spending_by_month_category {
+    category: String
+    customerid: Int
+    month: String
+    parent(customerid: Int, email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    savings: Float
+    total: Float
+}
+
+type entries {
+    discount: Float
+    parent(customerid: Int, id: Int, time: String): Orders!
+    product(category: String, description: String, name: String, productid: Int, updatetime: String): [Product]
+    productid: Int
+    quantity: Int
+    total: Float
+    unit_price: Float
+}
+
+type favorite_categories {
+    category(name: String): [Category]
+    category_name: String
+    customerid: Int
+    parent(customerid: Int, email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    total: Float
+}
+
+type order_again {
+    customerid: Int
+    most_recent: String
+    num_orders: Int
+    parent(customerid: Int, email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    productid: Int
+    quantity: Int
+}
+
+type order_stats {
+    customerid: Int
+    num_orders: Int
+    parent(customerid: Int, email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    total_spend: Float
+}
+
+type Orders {
+    customerid: Int
+    entries(discount: Float, productid: Int, quantity: Int, total: Float, unit_price: Float): [entries]
+    id: Int
+    time: String
+    total(discount: Float, num: Int, price: Float): [Total]
+}
+
+type Total {
+    discount: Float
+    num: Int
+    parent(customerid: Int, id: Int, time: String): Orders!
+    price: Float
+}

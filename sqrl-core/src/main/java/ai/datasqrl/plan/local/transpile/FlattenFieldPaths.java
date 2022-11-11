@@ -6,7 +6,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.Value;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
@@ -17,6 +19,9 @@ import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
+import org.apache.calcite.sql.SqrlJoinPath;
+import org.apache.calcite.sql.UnboundJoin;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
@@ -43,6 +48,21 @@ public class FlattenFieldPaths extends SqlShuttle {
 
   public SqlNode accept(SqlNode node) {
     switch (node.getKind()) {
+      case JOIN_DECLARATION:
+        SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) node;
+        Optional<SqlNodeList> orders = spec.getOrderList().map(o->(SqlNodeList) o.accept(this));
+        List<UnboundJoin> leftJoins = this.left.stream()
+            .map(l->  SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+                new SqlIdentifier(l.names, SqlParserPos.ZERO),
+                new SqlIdentifier(l.alias, SqlParserPos.ZERO)))
+            .map(l->new UnboundJoin(SqlParserPos.ZERO, l, Optional.empty()))
+            .collect(Collectors.toList());
+        return new SqrlJoinDeclarationSpec(spec.getParserPosition(),
+            spec.relation,
+            orders,
+            spec.getFetch(),
+            spec.getInverse(),
+            Optional.of(new SqlNodeList(leftJoins, SqlParserPos.ZERO)));
       case JOIN:
         SqlJoin join = (SqlJoin) node;
         join.setLeft(join.getLeft().accept(this));
@@ -95,10 +115,10 @@ public class FlattenFieldPaths extends SqlShuttle {
   @Override
   public SqlNode visit(SqlCall call) {
     switch (call.getKind()) {
-      case SELECT:
       case UNION:
-      case INTERSECT:
-      case EXCEPT:
+        return super.visit(call);
+      case SELECT:
+      case JOIN_DECLARATION:
         FlattenFieldPaths flattenFieldPaths = new FlattenFieldPaths(this.analysis);
         return flattenFieldPaths.accept(call);
       case AS:

@@ -1,4 +1,4 @@
-Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;
+Orders.entries.product := JOIN Product ON Product.productid = _.productid;
 Orders.entries.dProduct := SELECT unit_price, product.category, product.name FROM _;
 
 

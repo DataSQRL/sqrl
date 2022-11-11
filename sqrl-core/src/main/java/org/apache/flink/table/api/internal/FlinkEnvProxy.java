@@ -25,11 +25,4 @@ public class FlinkEnvProxy {
             fn.getFnc(), true));
     return environment.functionCatalog;
   }
-  public static FunctionCatalog getFunctionCatalog(StreamTableEnvironmentImpl environment) {
-    StdTimeLibraryImpl.fncs.stream()
-        .forEach(fn ->
-            environment.functionCatalog.registerTemporarySystemFunction(fn.getName(),
-            fn.getFnc(), true));
-    return environment.functionCatalog;
-  }
 }

@@ -65,7 +65,7 @@ public class StdTimeLibraryImpl {
       new FlinkFnc(GET_DAY_OF_WEEK.class.getSimpleName(), GET_DAY_OF_WEEK),
       new FlinkFnc(GET_DAY_OF_MONTH.class.getSimpleName(), GET_DAY_OF_MONTH),
       new FlinkFnc(GET_DAY_OF_YEAR.class.getSimpleName(), GET_DAY_OF_YEAR),
-      new FlinkFnc(GET_MONTH.class.getSimpleName(), GET_DAY_OF_YEAR),
+      new FlinkFnc(GET_MONTH.class.getSimpleName(), GET_MONTH),
       new FlinkFnc(GET_YEAR.class.getSimpleName(), GET_YEAR)
   );
 

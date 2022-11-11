@@ -69,7 +69,7 @@ public interface TestScript {
 
     static List<TestScript> getAll() {
         ImmutableList.Builder b = new ImmutableList.Builder();
-        b.addAll(Retail.INSTANCE.getScripts());
+        b.addAll(Retail.INSTANCE.getTestScripts().values());
         b.addAll(Nutshop.INSTANCE.getScripts().subList(0,2));
         return b.build();
     }
