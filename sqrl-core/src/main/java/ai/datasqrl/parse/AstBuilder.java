@@ -19,6 +19,7 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.hints.TopNHint;
 import ai.datasqrl.schema.TableFunctionArgument;
+import java.util.Locale;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -31,6 +32,7 @@ import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.util.Util;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -1274,11 +1276,35 @@ class AstBuilder
     //todo: Collections, params, dates, etc
     SqlIdentifier id = (SqlIdentifier) visit(baseType.identifier());
 
-    SqlBasicTypeNameSpec sqlBasicTypeNameSpec = new SqlBasicTypeNameSpec(
-        SqlTypeName.valueOf(id.names.get(0)),
+    String name = Util.last(id.names);
+    SqlTypeName typeName;
+    switch (name.toLowerCase(Locale.ROOT)) {
+      case "boolean":
+        typeName = SqlTypeName.BOOLEAN;
+        break;
+      case "datetime":
+        return new SqlBasicTypeNameSpec(
+            SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE,
+            3,
+            getLocation(baseType)
+        );
+      case "float":
+        typeName = SqlTypeName.FLOAT;
+        break;
+      case "integer":
+        typeName = SqlTypeName.INTEGER;
+        break;
+      case "string":
+        typeName = SqlTypeName.VARCHAR;
+        break;
+      default:
+        throw new RuntimeException(String.format("Unknown data type %s", name));
+    }
+
+    return new SqlBasicTypeNameSpec(
+        typeName,
         getLocation(baseType)
     );
-    return sqlBasicTypeNameSpec;
   }
 
   @Override

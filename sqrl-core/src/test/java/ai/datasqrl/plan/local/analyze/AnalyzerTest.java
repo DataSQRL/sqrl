@@ -803,14 +803,17 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void castTest() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"
-        + "X := SELECT CAST(1 AS String) From Orders;"));
+        + "X := SELECT CAST(1 AS String) From Orders;"
+        + "X := SELECT CAST(1 AS Boolean) From Orders;"
+        + "X := SELECT CAST(1 AS Float) From Orders;"
+        + "X := SELECT CAST(1 AS Integer) From Orders;"
+        + "X := SELECT CAST(1 AS DateTime) From Orders;"
+    ));
   }
 
   @Test
-  @Disabled
   public void castExpression() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"
         + "Orders.x := CAST(1 AS String);"));
