@@ -1,0 +1,5 @@
+LogicalProject(_uuid=[$0], EXPR$1=[+($2, 1)])
+  LogicalJoin(condition=[true], joinType=[inner])
+    LogicalTableScan(table=[[product$3]])
+    LogicalTableScan(table=[[product$3]])
+

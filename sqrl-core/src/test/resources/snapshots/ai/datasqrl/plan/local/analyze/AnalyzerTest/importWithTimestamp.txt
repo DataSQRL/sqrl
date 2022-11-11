@@ -1,0 +1,3 @@
+LogicalProject(_uuid=[$0], c_ts=[$1])
+  LogicalTableScan(table=[[customer$3]])
+

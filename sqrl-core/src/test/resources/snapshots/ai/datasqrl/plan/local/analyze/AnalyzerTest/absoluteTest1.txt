@@ -1,0 +1,3 @@
+LogicalProject(productid=[$2])
+  LogicalTableScan(table=[[product$3]])
+

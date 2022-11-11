@@ -6,8 +6,12 @@ import ai.datasqrl.config.error.ErrorCode;
 import ai.datasqrl.parse.ParsingException;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.RelToSql;
+import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
+import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
 import ai.datasqrl.schema.SQRLTable;
+import ai.datasqrl.util.SnapshotTest;
+import ai.datasqrl.util.SnapshotTest.Snapshot;
 import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.Retail;
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -25,21 +29,37 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import org.junit.jupiter.api.TestInfo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class AnalyzerTest extends AbstractLogicalSQRLIT {
 
   private TestDataset example = Retail.INSTANCE;
+  private Snapshot snapshot;
 
 
   @BeforeEach
-  public void setup() throws IOException {
+  public void setup(TestInfo testInfo) throws IOException {
     initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
+    this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
   }
 
   private Env generate(ScriptNode node) {
-    return resolve.planDag(session, node);
+    Env env = resolve.planDag(session, node);
+    snapshotEnv(env);
+    return env;
+  }
+
+  private void snapshotEnv(Env env) {
+    if (env.getOps().size() == 0) {
+      return;
+    }
+      for (StatementOp op : env.getOps()) {
+      snapshot.addContent(String.format("%s", op.getRelNode().explain()));
+    }
+
+    snapshot.createOrValidate();
   }
 
   private void generateInvalid(ScriptNode node) {

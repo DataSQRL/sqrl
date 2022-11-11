@@ -1,0 +1,10 @@
+LogicalProject(_ppk_1=[$0], _uuid=[$6], _ingest_time=[$7], productid=[$8], name=[$9], description=[$10], category=[$11])
+  LogicalJoin(condition=[=($2, $8)], joinType=[default])
+    LogicalTableScan(table=[[product$3]])
+    LogicalTableScan(table=[[product$3]])
+
+LogicalProject(_ppk_1=[$0], _uuid=[$6], _ingest_time=[$7], productid=[$8], name=[$9], description=[$10], category=[$11])
+  LogicalJoin(condition=[=($2, $8)], joinType=[default])
+    LogicalTableScan(table=[[product$3]])
+    LogicalTableScan(table=[[product$3]])
+

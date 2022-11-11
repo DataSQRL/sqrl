@@ -1,0 +1,3 @@
+LogicalProject(x=[+($1, 7200000:INTERVAL HOUR)])
+  LogicalTableScan(table=[[product$3]])
+
