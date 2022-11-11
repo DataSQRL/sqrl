@@ -4,14 +4,15 @@ import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
+import org.apache.flink.table.functions.UserDefinedFunction;
+
+import javax.validation.constraints.NotNull;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.validation.constraints.NotNull;
-import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 /**
  * All jars are loaded on the class path and resolved with java's ServiceLoader.
@@ -37,8 +38,7 @@ public class JavaFunctionLoader extends AbstractLoader {
     Path baseDir = namepath2Path(env.getPackagePath(), basePath);
 
     Path path = baseDir.resolve(fullPath.getLast() + FILE_SUFFIX);
-    Preconditions.checkState(path.toFile().isFile(), "Could not find function %s %s", fullPath,
-        path);
+    if (!Files.isRegularFile(path)) return false;
 
     FunctionJson fnc = mapJsonFile(path, FunctionJson.class);
     try {

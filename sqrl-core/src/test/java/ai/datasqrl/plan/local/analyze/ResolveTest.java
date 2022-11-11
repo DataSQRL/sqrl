@@ -16,9 +16,15 @@ import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.compress.utils.Sets;
-import org.junit.jupiter.api.*;
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -27,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ResolveTest extends AbstractLogicalSQRLIT {
 
   private final Retail example = Retail.INSTANCE;
+  private Path exportPath = example.getRootPackageDirectory().resolve("export-data");
 
   private Resolve.Env resolvedDag = null;
   private SnapshotTest.Snapshot snapshot;
@@ -35,12 +42,16 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void setup(TestInfo testInfo) throws IOException {
     initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
     this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
+    if (!Files.isDirectory(exportPath)) Files.createDirectory(exportPath);
+
   }
 
   @AfterEach
+  @SneakyThrows
   public void tearDown() {
     super.tearDown();
     snapshot.createOrValidate();
+    if (Files.isDirectory(exportPath)) FileUtils.deleteDirectory(exportPath.toFile());
   }
 
   /*
