@@ -1,13 +1,20 @@
 package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
+import org.apache.calcite.sql.SqrlJoinPath;
+import org.apache.calcite.sql.SqrlJoinSetOperation;
+import org.apache.calcite.sql.SqrlJoinTerm;
+import org.apache.calcite.sql.SqrlJoinTerm.SqrlJoinTermVisitor;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
@@ -21,7 +28,8 @@ import org.apache.calcite.sql.util.SqlShuttle;
  * Orders.entries2 := SELECT x1.discount, x1.unit_price, ...
  *                    FROM _.parent.entries AS x1;
  */
-public class QualifyIdentifiers extends SqlShuttle {
+public class QualifyIdentifiers extends SqlShuttle
+  implements SqrlJoinTermVisitor<SqrlJoinTerm, Object> {
 
 
   private final Analysis analysis;
@@ -49,9 +57,48 @@ public class QualifyIdentifiers extends SqlShuttle {
     switch (call.getKind()) {
       case SELECT:
         return rewriteSelect((SqlSelect) call);
+      case JOIN_DECLARATION:
+        return rewriteJoinDeclaration((SqrlJoinDeclarationSpec) call);
     }
 
     return super.visit(call);
+  }
+
+  private SqlNode rewriteJoinDeclaration(SqrlJoinDeclarationSpec node) {
+    SqrlJoinTerm relation = node.getRelation().accept(this, null);
+    Optional<SqlNodeList> orders = node.getOrderList().map(o->(SqlNodeList)expr(o));
+
+    return new SqrlJoinDeclarationSpec(
+        node.getParserPosition(),
+        relation,
+        orders,
+        node.fetch,
+        node.inverse,
+        node.leftJoins
+    );
+  }
+
+  @Override
+  public SqrlJoinTerm visitJoinPath(SqrlJoinPath sqrlJoinPath, Object context) {
+    List<SqlNode> relations = new ArrayList<>();
+    List<SqlNode> conditions = new ArrayList<>();
+    for (int i = 0; i < sqrlJoinPath.relations.size(); i++) {
+      relations.add(sqrlJoinPath.relations.get(i).accept(this));
+      if (sqrlJoinPath.getConditions().get(i) != null) {
+        conditions.add(expr(sqrlJoinPath.getConditions().get(i)));
+      } else {
+        conditions.add(null);
+      }
+    }
+    return new SqrlJoinPath(sqrlJoinPath.getParserPosition(),
+        relations,
+        conditions);
+  }
+
+  @Override
+  public SqrlJoinTerm visitJoinSetOperation(SqrlJoinSetOperation sqrlJoinSetOperation,
+      Object context) {
+    return null;
   }
 
   private SqlNode rewriteSelect(SqlSelect select) {

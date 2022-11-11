@@ -246,6 +246,13 @@ public class Model {
     public int hashCode() {
       return Objects.hash(path);
     }
+
+    @Override
+    public String toString() {
+      return "VariableArgument{" +
+          "path='" + path + '\'' +
+          '}';
+    }
   }
 
   public interface FixedArgumentVisitor<R, C> {

@@ -27,6 +27,8 @@ import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParseException;
+import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.commons.lang3.tuple.Pair;
@@ -510,6 +512,31 @@ class AstBuilder
   }
 
   @Override
+  public SqlNode visitJoinSetOperation(JoinSetOperationContext ctx) {
+    //todo
+    return new SqrlJoinSetOperation(getLocation(ctx));
+  }
+
+  @Override
+  public SqlNode visitJoinPath(JoinPathContext ctx) {
+    List<SqlNode> relations = ctx.aliasedRelation().stream()
+        .map(this::visit)
+        .collect(toList());
+    List<SqlNode> conditions = new ArrayList<>();
+    for (int i = 0; i < ctx.aliasedRelation().size(); i++) {
+      if (i <= ctx.joinCondition().size() && ctx.joinCondition(i) != null) {
+        conditions.add(ctx.joinCondition(i).booleanExpression().accept(this));
+      } else {
+        conditions.add(null);
+      }
+    }
+
+    return new SqrlJoinPath(getLocation(ctx),
+        relations,
+        conditions);
+  }
+
+  @Override
   public SqlNode visitJoinRelation(JoinRelationContext context) {
     SqlNode left = visit(context.left);
     SqlNode right;
@@ -527,11 +554,11 @@ class AstBuilder
     }
 
     SqlLiteral type = JoinConditionType.NONE.symbol(SqlParserPos.ZERO);
-    SqlNode criteria = null;
+    SqlNode condition = null;
     right = visit(context.rightRelation);
-    if (context.joinCriteria() != null && context.joinCriteria().ON() != null) {
-      type = JoinConditionType.ON.symbol(getLocation(context.joinCriteria().ON()));
-      criteria = visit(context.joinCriteria().booleanExpression());
+    if (context.joinCondition() != null && context.joinCondition().ON() != null) {
+      type = JoinConditionType.ON.symbol(getLocation(context.joinCondition().ON()));
+      condition = visit(context.joinCondition().booleanExpression());
     }
 
     return new SqlJoin(getLocation(context),
@@ -540,7 +567,7 @@ class AstBuilder
         toJoinType(context.joinType()).symbol(getLocation(context.joinType())),
         right,
         type,
-        criteria);
+        condition);
   }
 
   public JoinType toJoinType(JoinTypeContext joinTypeContext) {
@@ -1094,7 +1121,7 @@ class AstBuilder
   public SqlNode visitJoinAssignment(JoinAssignmentContext ctx) {
     NamePath name = getNamePath(ctx.qualifiedName());
 
-    SqlNode join = visit(ctx.inlineJoin());
+    SqlNode join = visit(ctx.joinSpecification());
 
     return new JoinAssignment(getLocation(ctx), name,
         getTableArgs(ctx.tableFunction()),
@@ -1121,119 +1148,26 @@ class AstBuilder
   }
 
   @Override
-  public SqlNode visitInlineJoin(InlineJoinContext ctx) {
-
+  public SqlNode visitJoinSpecification(JoinSpecificationContext ctx) {
     List<SqlNode> sort = visit(ctx.sortItem(), SqlNode.class);
+    Optional<SqlNodeList> sortList = emptyListToEmptyOptional(sort);
 
-    SqlNode limit = ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL") ? null :
-        Optional.of(SqlLiteral.createExactNumeric(ctx.limit.getText(), getLocation(ctx.limit)))
-            .orElse(null);
+    Optional<SqlNumericLiteral> limit = ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL")
+        ? Optional.empty()
+        : Optional.of(SqlLiteral.createExactNumeric(ctx.limit.getText(), getLocation(ctx.limit)));
+    SqrlJoinTerm relation = (SqrlJoinTerm) visit(ctx.joinTerm());
 
-    SqlNode from = visit(ctx.relation());
-    SqlNode criteria = null;
-    if (ctx.joinCriteria() != null) {
-      criteria = visit(ctx.joinCriteria().booleanExpression());
-    }
-
-    from = new SqlSelect(SqlParserPos.ZERO,
-        SqlNodeList.EMPTY,
-        new SqlNodeList(List.of(SqlLiteral.createExactNumeric("1", SqlParserPos.ZERO)),SqlParserPos.ZERO),
-        from,
-        criteria,
-        null,
-        null,
-        SqlNodeList.EMPTY,
-        sort != null ? new SqlNodeList(sort, getLocation(ctx)) : null,
-        null,
+    Optional<SqlIdentifier> inverse = Optional.ofNullable(ctx.inv)
+        .map(i->(SqlIdentifier) visit(i));
+    return new SqrlJoinDeclarationSpec(
+        getLocation(ctx),
+        relation,
+        sortList,
         limit,
-        SqlNodeList.EMPTY
+        inverse,
+        Optional.empty()
     );
-
-    return from;
   }
-
-  @Override
-  public SqlNode visitJoinCriteria(JoinCriteriaContext ctx) {
-    throw new RuntimeException("Unwrap node in parent node");
-  }
-//
-//  @Override
-//  public SqlNode visitInlineQueryTermDefault(InlineQueryTermDefaultContext ctx) {
-//    List<SqlNode> relations = visit(ctx.inlineAliasedJoinRelation(), SqlNode.class);
-//    if (relations.size() == 1) {
-//      SqlNode criteria = null;
-//      if (ctx.joinCriteria(0) != null && ctx.joinCriteria(0).ON() != null) {
-//        criteria = visit(ctx.joinCriteria(0).booleanExpression());
-//      }
-//
-//      return new SqlSelect(getLocation(ctx),
-//          null,
-//          new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO),
-//          relations.get(0), criteria,
-//          null, null,
-//          null, null, null,
-//          null,null);
-//    }
-//
-//
-//    SqlNode left = relations.get(0);
-//    for (int i = 1; i < relations.size(); i++) {
-//      JoinType joinType = toJoinType(ctx.joinType(i));
-//
-//      SqlLiteral type = JoinConditionType.NONE.symbol(getLocation(ctx));
-//      SqlNode criteria = null;
-//      if (ctx.joinCriteria(i - 1) != null && ctx.joinCriteria(i - 1).ON() != null) {
-//        type = JoinConditionType.ON.symbol(getLocation(ctx.joinCriteria(i - 1).ON()));
-//        criteria = visit(ctx.joinCriteria(i - 1).booleanExpression());
-//      }
-//      left = new SqlJoin(getLocation(ctx),
-//          left,
-//          SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-//          SqlLiteral.createSymbol(joinType, SqlParserPos.ZERO),
-//          relations.get(i),
-//          type,
-//          criteria);
-//    }
-//
-//    return left;
-//  }
-//
-//  @Override
-//  public SqlNode visitInlineSetOperation(InlineSetOperationContext context) {
-//    SqlNode left = visit(context.left);
-//    SqlNode right = visit(context.right);
-//
-//    Optional<Boolean> distinct = Optional.empty();
-//    if (context.setQuantifier() != null) {
-//      if (context.setQuantifier().DISTINCT() != null) {
-//        distinct = Optional.of(true);
-//      } else if (context.setQuantifier().ALL() != null) {
-//        distinct = Optional.of(false);
-//      }
-//    }
-//
-//    switch (context.operator.getType()) {
-//      case SqlBaseLexer.UNION:
-//        SqlSetOperator op = distinct.map(d -> SqlStdOperatorTable.UNION_ALL)
-//            .orElse(SqlStdOperatorTable.UNION);
-//        return op.createCall(getLocation(context.UNION()), List.of(left, right));
-//    }
-//
-//    throw new RuntimeException("unknown set operation");
-//  }
-//
-//  @Override
-//  public SqlNode visitInlineTableName(InlineTableNameContext ctx) {
-//    SqlIdentifier identifier = (SqlIdentifier) visit(ctx.qualifiedName());
-//    SqlNodeList hints = getHints(ctx.hint());
-//    SqlNode from = new SqlTableRef(getLocation(ctx), identifier, hints);
-//    if (ctx.identifier() != null) {
-//      SqlIdentifier alias = (SqlIdentifier) visit(ctx.identifier());
-//      return SqlStdOperatorTable.AS.createCall(getLocation(ctx), from, alias);
-//    }
-//
-//    return from;
-//  }
 
   @Override
   public SqlNode visitQueryAssign(QueryAssignContext ctx) {
@@ -1254,6 +1188,13 @@ class AstBuilder
         query,
         type,
         emptyListToEmptyOptional(getHints(ctx.hint())));
+  }
+
+  private Optional<SqlNodeList> emptyListToEmptyOptional(List<SqlNode> list) {
+    if (list == null || list.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(new SqlNodeList(list, SqlParserPos.ZERO));
   }
 
   private Optional<SqlNodeList> emptyListToEmptyOptional(SqlNodeList list) {

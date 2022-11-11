@@ -1,404 +1,195 @@
 package ai.datasqrl.graphql.inference;
 
-import ai.datasqrl.graphql.server.Model.*;
+import ai.datasqrl.graphql.inference.SchemaInferenceModel.*;
+import ai.datasqrl.graphql.inference.argument.ArgumentHandler;
+import ai.datasqrl.graphql.inference.argument.EqHandler;
+import ai.datasqrl.graphql.inference.argument.LimitOffsetHandler;
+import ai.datasqrl.graphql.server.Model.Root;
+import ai.datasqrl.graphql.server.Model.Root.RootBuilder;
+import ai.datasqrl.graphql.server.Model.StringSchema;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.calcite.TranspilerFactory;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.local.transpile.ReplaceWithVirtualTable.ExtractRightDeepAlias;
-import ai.datasqrl.plan.local.generate.Resolve.Env;
-import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.SQRLTable;
-import ai.datasqrl.schema.builder.VirtualTable;
-import graphql.Scalars;
 import graphql.language.FieldDefinition;
-import graphql.language.InputValueDefinition;
+import graphql.language.ListType;
 import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
-import graphql.language.TypeName;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import lombok.*;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.prepare.CalciteCatalogReader;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexDynamicParam;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.tools.RelBuilder;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import lombok.Getter;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
 
-@Slf4j
+@Getter
 public class SchemaInference {
 
-  @Getter
-  List<APIQuery> apiQueries = new ArrayList<>();
+  private final TypeDefinitionRegistry registry;
+  private final SqrlCalciteSchema schema;
+  private final Planner planner;
+  private final RootBuilder root;
+  List<ArgumentHandler> argumentHandlers = List.of(new EqHandler(), new LimitOffsetHandler());
+  RelBuilder relBuilder;
+  private Set<FieldDefinition> visited = new HashSet<>();
+  private Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
-  public SchemaInference() {
+  public SchemaInference(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder,
+      Planner planner) {
+    this.registry = (new SchemaParser()).parse(gqlSchema);
+    this.schema = schema;
+    this.planner = planner;
+    RootBuilder root = Root.builder().schema(StringSchema.builder().schema(gqlSchema).build());
+    this.root = root;
+    this.relBuilder = relBuilder;
+  }
+  //Handles walking the schema completely
+
+  public InferredSchema accept() {
+
+    //resolve additional types
+    resolveTypes();
+
+    InferredQuery query = registry.getType("Query")
+        .map(q -> resolveQueries((ObjectTypeDefinition) q))
+        .orElseThrow(()->new RuntimeException("Must have a query type"));
+
+    Optional<InferredRootObject> mutation = registry.getType("Mutation")
+        .map(m -> resolveMutations((ObjectTypeDefinition) m));
+
+    Optional<InferredRootObject> subscription = registry.getType("subscription")
+        .map(s -> resolveSubscriptions((ObjectTypeDefinition) s));
+
+    InferredSchema inferredSchema = new InferredSchema(query, mutation, subscription);
+    return inferredSchema;
   }
 
-  public Root visitSchema(String schemaStr, Env env) {
-    Root.RootBuilder root = Root.builder().schema(StringSchema.builder().schema(schemaStr).build());
-
-    TypeDefinitionRegistry typeDefinitionRegistry = (new SchemaParser()).parse(schemaStr);
-
-    return visit(root, typeDefinitionRegistry, env);
+  private void resolveTypes() {
+    //todo custom types: walk all defined types and import them
   }
 
-  public Root visitTypeDefinitionRegistry(TypeDefinitionRegistry registry, Env env) {
-    Root.RootBuilder root = Root.builder()
-        .schema(TypeDefinitionSchema.builder().typeDefinitionRegistry(registry).build());
-    return visit(root, registry, env);
-  }
-
-  @Value
-  class Entry {
-
-    ObjectTypeDefinition objectTypeDefinition;
-    Optional<SQRLTable> table;
-    VirtualRelationalTable parentVt;
-    RelNode parentRelNode;
-  }
-
-  private Root visit(Root.RootBuilder root, TypeDefinitionRegistry registry, Env env) {
-    Set<String> seenNodes = new HashSet<>();
-    Queue<Entry> horizon = new ArrayDeque<>();
-    Map<ObjectTypeDefinition, SQRLTable> associatedTypes = new HashMap<>();
-
-    //1. Queue all Query fields
-    ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) registry.getType("Query")
-        .get();
-    horizon.add(new Entry(objectTypeDefinition, Optional.empty(), null, null));
-
-    List<ArgumentHandler> argumentHandlers = List.of(new EqHandler(), new LimitOffsetHandler());
-
-    while (!horizon.isEmpty()) {
-      Entry type = horizon.poll();
-      seenNodes.add(type.getObjectTypeDefinition().getName());
-
-      for (FieldDefinition field : type.getObjectTypeDefinition().getFieldDefinitions()) {
-        if (!(registry.getType(field.getType()).get() instanceof ObjectTypeDefinition)) {
-          //scalar?
-          continue;
-        }
-        Optional<Relationship> rel = type.getTable()
-            .map(t -> ((Relationship) t.getField(Name.system(field.getName())).get()));
-
-        SQRLTable table = rel.map(Relationship::getToTable).orElseGet(
-            () -> (SQRLTable) env.getRelSchema().getTable(field.getName(), false).getTable());
-
-        for (Field scalars : table.getFields().getAccessibleFields()) {
-          if (scalars instanceof Relationship) continue;
-          FieldLookupCoords scalarCoord = FieldLookupCoords.builder()
-              .parentType(field.getName())
-              .fieldName(scalars.getName().getCanonical())
-              .columnName(((Column)scalars).getShadowedName().getCanonical())
-              .build();
-          root.coord(scalarCoord);
-        }
-
-        //todo check if we've already registered the type
-        VirtualRelationalTable vt = table.getVt();
-
-        RelNode relNode = constructRel(table, (VirtualRelationalTable) vt, rel, env);
-        Set<RelAndArg> args = new HashSet<>();
-
-        //Todo: if all args are optional (just assume there is a no-arg for now)
-        args.add(new RelAndArg(relNode, new LinkedHashSet<>(), null, null, false));
-
-        //todo: don't use arg index size, some args are fixed
-        for (InputValueDefinition arg : field.getInputValueDefinitions()) {
-          boolean handled = false;
-          for (ArgumentHandler handler : argumentHandlers) {
-            ArgumentHandlerContextV1 contextV1 = new ArgumentHandlerContextV1(arg, args,
-                type.getObjectTypeDefinition(), field, table, vt,
-                env.getSession().getPlanner().getRelBuilder());
-            if (handler.canHandle(contextV1)) {
-              args = handler.accept(contextV1);
-              handled = true;
-              break;
-            }
-          }
-          if (!handled) {
-            throw new RuntimeException(String.format("Unhandled Arg : %s", arg));
-          }
-        }
-
-        ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
-            .parentType(type.getObjectTypeDefinition().getName()).fieldName(field.getName());
-
-        for (RelAndArg arg : args) {
-          int keysize =
-              rel.isPresent() ? rel.get().getFromTable().getVt().getNumPrimaryKeys()
-                  : table.getVt().getNumPrimaryKeys();
-          relNode = arg.relNode;
-          for (int i = 0; i < keysize; i++) { //todo align with the argument building
-            relNode = addPkNode(env, arg.getArgumentSet().size() + i, i, relNode, rel);
-          }
-
-          List<PgParameterHandler> argHandler = arg.getArgumentSet().stream()
-              .map(a -> ArgumentPgParameter.builder().path(a.getPath()).build())
-              .collect(Collectors.toList());
-
-          List<SourcePgParameter> params = addContextToArg(arg, rel, type,
-              (VirtualRelationalTable) vt, keysize);
-          argHandler.addAll(params);
-
-//          relNode = optimize2(env, relNode);
-          APIQuery query = new APIQuery(UUID.randomUUID().toString(), relNode);
-          apiQueries.add(query);
-          if (arg.limitOffsetFlag) {
-            coordsBuilder.match(ArgumentSet.builder().arguments(arg.getArgumentSet()).query(
-                PagedApiQueryBase.builder().query(query).relNode(relNode).relAndArg(arg)
-                    .parameters(argHandler)
-                    .build()).build()).build();
-          } else {
-            coordsBuilder.match(ArgumentSet.builder().arguments(arg.getArgumentSet()).query(
-                ApiQueryBase.builder().query(query).relNode(relNode).relAndArg(arg)
-                    .parameters(argHandler)
-                    .build()).build()).build();
-          }
-        }
-
-        root.coord(coordsBuilder.build());
-
-        TypeDefinition def = registry.getType(field.getType()).get();
-        if (def instanceof ObjectTypeDefinition && !seenNodes.contains(def.getName())) {
-          ObjectTypeDefinition resultType = (ObjectTypeDefinition) def;
-          horizon.add(
-              new Entry(resultType, Optional.of(table), (VirtualRelationalTable) vt, relNode));
-        }
-      }
+  private InferredQuery resolveQueries(ObjectTypeDefinition query) {
+    List<InferredField> fields = new ArrayList<>();
+    for (FieldDefinition fieldDefinition : query.getFieldDefinitions()) {
+      visited.add(fieldDefinition);
+      fields.add(resolveQueryFromSchema(fieldDefinition, fields, query));
     }
 
-    return root.build();
+    return new InferredQuery(query, fields);
   }
 
-  private RelNode addPkNode(Env env, int index,
-      int i, RelNode relNode, Optional<Relationship> rel) {
-    if (rel.isEmpty()) {
-      return relNode;
-    }
-    RelBuilder builder = env.getSession().getPlanner().getRelBuilder();
-    RexBuilder rex = builder.getRexBuilder();
+  private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
+      List<InferredField> fields, ObjectTypeDefinition parent) {
+    Optional<SQRLTable> sqrlTable = Optional.ofNullable(
+            schema.getTable(fieldDefinition.getName(), false))
+        .filter(t -> t.getTable() instanceof SQRLTable).map(t -> (SQRLTable) t.getTable());
+    Preconditions.checkState(sqrlTable.isPresent(),
+        "Could not find associated SQRL type for field {}", fieldDefinition.getName());
+    SQRLTable table = sqrlTable.get();
 
-    RexDynamicParam param = builder.getRexBuilder().makeDynamicParam(relNode.getRowType(), index);
-    RelNode newRelNode = builder.push(relNode)
-        .filter(rex.makeCall(SqlStdOperatorTable.EQUALS, rex.makeInputRef(relNode, i), param))
-        .build();
-    return newRelNode;
+    return inferObjectField(fieldDefinition, table, fields, parent);
   }
 
-  private List<SourcePgParameter> addContextToArg(RelAndArg arg, Optional<Relationship> rel,
-      Entry type, VirtualRelationalTable vt, int keys) {
-    if (rel.isPresent()) {
+  private InferredField inferObjectField(FieldDefinition fieldDefinition, SQRLTable table,
+      List<InferredField> fields, ObjectTypeDefinition parent) {
+    TypeDefinition typeDef = unwrapObjectType(fieldDefinition.getType());
 
-      return IntStream.range(0, keys).mapToObj(i -> rel.get().getFromTable().getVt().getPrimaryKeyNames().get(i))
-          .map(f -> new SourcePgParameter(f)).collect(Collectors.toList());
-    }
-    return List.of();
-  }
-
-  @Value
-  public static class RelAndArg {
-
-    RelNode relNode;
-    Set<Argument> argumentSet;
-    String name;
-    RexDynamicParam dynamicParam;
-    boolean limitOffsetFlag;
-  }
-
-  private RelNode constructRel(SQRLTable table, VirtualRelationalTable vt,
-      Optional<Relationship> rel, Env env) {
-    if (rel.isPresent() && rel.get().getJoinType() == JoinType.JOIN) {
-      return constructJoinDecScan(env, rel.get());
-    }
-
-    SqlValidator sqrlValidator = TranspilerFactory.createSqrlValidator(env.getRelSchema(),
-        List.of(), true);
-    RelBuilder relBuilder = PlannerFactory.sqlToRelConverterConfig.getRelBuilderFactory()
-        .create(env.getSession().getPlanner().getCluster(),
-            (CalciteCatalogReader) sqrlValidator.getCatalogReader());
-    return relBuilder.scan(vt.getNameId()).build();
-  }
-
-  private RelNode constructJoinDecScan(Env env, Relationship rel) {
-    SqlValidator sqrlValidator = TranspilerFactory.createSqrlValidator(env.getRelSchema(),
-        List.of(), true);
-
-    //todo: fix for TOP N
-    ExtractRightDeepAlias rightDeepAlias = new ExtractRightDeepAlias();
-    String alias = rel.getNode().accept(rightDeepAlias);
-
-    SqlSelect select = new SqlSelect(
-        SqlParserPos.ZERO,
-        null,
-        new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO),
-        rel.getNode(),
-        null,
-        null,
-        null
-        ,
-        SqlNodeList.EMPTY,
-        null,null,null, SqlNodeList.EMPTY
-    );
-
-    SqlNode validated = sqrlValidator.validate(select);
-    env.getSession().getPlanner().setValidator(validated, sqrlValidator);
-    RelNode relNode = env.getSession().getPlanner().rel(validated).rel;
-
-    return relNode;
-  }
-
-  interface ArgumentHandler {
-
-    //Eventually public api
-    public Set<RelAndArg> accept(ArgumentHandlerContextV1 context);
-
-    boolean canHandle(ArgumentHandlerContextV1 contextV1);
-  }
-
-  @Value
-  class ArgumentHandlerContextV1 {
-
-    InputValueDefinition arg;
-    Set<RelAndArg> relAndArgs;
-    ObjectTypeDefinition type;
-    FieldDefinition field;
-    SQRLTable table;
-    VirtualTable virtualTable;
-    RelBuilder relBuilder;
-  }
-
-  public static class EqHandler implements ArgumentHandler {
-
-    @Override
-    public Set<RelAndArg> accept(ArgumentHandlerContextV1 context) {
-      //if optional, assure we re-emit all args
-      Set<RelAndArg> set = new HashSet<>(context.getRelAndArgs());
-      RexBuilder rexBuilder = context.getRelBuilder().getRexBuilder();
-      for (RelAndArg args : context.getRelAndArgs()) {
-        RelBuilder relBuilder = context.getRelBuilder();
-        relBuilder.push(args.relNode);
-
-        Column shadowedField = (Column)context.table.getField(Name.system(context.arg.getName()))
-            .orElseThrow(()->new RuntimeException("Could not find field: " + context.arg.getName()));
-        RelDataTypeField field = relBuilder.peek().getRowType()
-            .getField(shadowedField.getShadowedName().getCanonical(), false, false);
-        RexDynamicParam dynamicParam = rexBuilder.makeDynamicParam(field.getType(),
-            args.argumentSet.size());
-        RelNode rel = relBuilder.filter(rexBuilder.makeCall(SqlStdOperatorTable.EQUALS,
-            rexBuilder.makeInputRef(relBuilder.peek(), field.getIndex()), dynamicParam)).build();
-
-        Set<Argument> newArgs = new LinkedHashSet<>(args.argumentSet);
-        newArgs.add(VariableArgument.builder().path(context.arg.getName()).build());
-
-        set.add(new RelAndArg(rel, newArgs, field.getName(), dynamicParam, args.limitOffsetFlag));
-      }
-
-      //if optional: add an option to the arg permutation list
-      return set;
-    }
-
-    @Override
-    public boolean canHandle(ArgumentHandlerContextV1 context) {
-      return context.table.getField(Name.system(context.arg.getName())).isPresent();
+    if (typeDef instanceof ObjectTypeDefinition) {
+      ObjectTypeDefinition obj = (ObjectTypeDefinition)typeDef;
+      Preconditions.checkState(visitedObj.get(obj) == null || visitedObj.get(obj) == table,
+          "Cannot redefine a type to point to a different SQRL table. Use an interface instead.");
+      visitedObj.put(obj, table);
+      InferredObjectField inferredObjectField = new InferredObjectField(parent, fieldDefinition,
+          (ObjectTypeDefinition) typeDef, table);
+      fields.addAll(walkChildren((ObjectTypeDefinition) typeDef, table, fields));
+      return inferredObjectField;
+    } else {
+      throw new RuntimeException("Tbd");
     }
   }
 
-  @Builder
-  @Getter
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class PagedApiQueryBase implements QueryBase {
-    final String type = "pagedPgQuery";
-    APIQuery query;
-    RelNode relNode;
-    RelAndArg relAndArg;
-    @Singular
-    List<PgParameterHandler> parameters;
+  private List<InferredField> walkChildren(ObjectTypeDefinition typeDef, SQRLTable table,
+      List<InferredField> fields) {
+    Preconditions.checkState(!checkType(typeDef, table), "Field not allowed");
 
-    @Override
-    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
-      ApiQueryVisitor<R, C> visitor1 = (ApiQueryVisitor<R, C>) visitor;
-      return visitor1.visitPagedApiQuery(this, context);
-    }
-  }
-  @Builder
-  @Getter
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class ApiQueryBase implements QueryBase {
-    final String type = "pgQuery";
-    APIQuery query;
-    RelNode relNode;
-    RelAndArg relAndArg;
-    @Singular
-    List<PgParameterHandler> parameters;
-
-    @Override
-    public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
-      ApiQueryVisitor<R, C> visitor1 = (ApiQueryVisitor<R, C>) visitor;
-      return visitor1.visitApiQuery(this, context);
-    }
-  }
-  public interface ApiQueryVisitor<R,C> extends QueryBaseVisitor<R, C> {
-    R visitApiQuery(ApiQueryBase apiQueryBase, C context);
-    R visitPagedApiQuery(PagedApiQueryBase apiQueryBase, C context);
+    return typeDef.getFieldDefinitions().stream()
+        .filter(f->!visited.contains(f))
+        .map(f->walk(f, table.getField(Name.system(f.getName())).get(), fields, typeDef))
+        .collect(Collectors.toList());
   }
 
-  private class LimitOffsetHandler implements ArgumentHandler {
-
-    @Override
-    public Set<RelAndArg> accept(ArgumentHandlerContextV1 context) {
-      Set<RelAndArg> set = new HashSet<>(context.getRelAndArgs());
-      for (RelAndArg args : context.getRelAndArgs()) {
-        //No-op rel node, query must be constructed at query time
-        Set<Argument> newArgs = new LinkedHashSet<>(args.argumentSet);
-        newArgs.add(VariableArgument.builder().path(context.arg.getName()).build());
-        RelAndArg relAndArg = new RelAndArg(args.relNode, newArgs, context.arg.getName(), null, true);
-
-        set.add(relAndArg);
-      }
-
-      return set;
+  private InferredField walk(FieldDefinition fieldDefinition, Field field,
+      List<InferredField> fields, ObjectTypeDefinition parent) {
+    visited.add(fieldDefinition);
+    if (field instanceof Relationship) {
+      return walkRel(fieldDefinition, (Relationship)field, fields, parent);
+    } else {
+      return walkScalar(fieldDefinition, (Column) field);
     }
+  }
 
-    @Override
-    public boolean canHandle(ArgumentHandlerContextV1 context) {
-      //must be int or not null int
-      Type<?> type = context.getArg().getType();
-      if (type instanceof NonNullType) {
-        NonNullType nonNull = (NonNullType) type;
-        type = nonNull.getType();
-      }
+  private InferredField walkRel(FieldDefinition fieldDefinition, Relationship relationship,
+      List<InferredField> fields, ObjectTypeDefinition parent) {
+    return new NestedField(relationship, inferObjectField(fieldDefinition, relationship.getToTable(),
+        fields, parent));
+  }
 
-      if (!(type instanceof TypeName) ||
-          !((TypeName)type).getName().equalsIgnoreCase(Scalars.GraphQLInt.getName())){
-        return false;
-      }
+  private InferredField walkScalar(FieldDefinition fieldDefinition, Column column) {
+    /*
+     * Check to see what types are compatible
+     */
+    return new InferredScalarField(fieldDefinition, column);
+  }
 
+  private boolean checkType(ObjectTypeDefinition typeDef, SQRLTable table) {
+    return typeDef.getFieldDefinitions().stream()
+        .anyMatch(f->table.getField(Name.system(f.getName())).isEmpty());
+  }
 
-      return (context.arg.getName().equalsIgnoreCase("limit") ||
-          context.arg.getName().equalsIgnoreCase("offset"));
+  private TypeDefinition unwrapObjectType(Type type) {
+    //type can be in a single array with any non-nulls, e.g. [customer!]!
+    type = unboxNonNull(type);
+    if (type instanceof ListType) {
+      type = ((ListType) type).getType();
     }
+    type = unboxNonNull(type);
+
+    Optional<TypeDefinition> typeDef = this.registry.getType(type);
+
+    Preconditions.checkState(typeDef.isPresent(), "Could not find Object type");
+
+    return typeDef.get();
+  }
+
+  private boolean isListType(Type type) {
+    return unboxNonNull(type) instanceof ListType;
+  }
+
+  private Type unboxNonNull(Type type) {
+    if (type instanceof NonNullType) {
+      return unboxNonNull(((NonNullType) type).getType());
+    }
+    return type;
+  }
+
+  private InferredRootObject resolveMutations(ObjectTypeDefinition m) {
+    return null;
+  }
+
+  private InferredRootObject resolveSubscriptions(ObjectTypeDefinition s) {
+
+    return null;
   }
 }

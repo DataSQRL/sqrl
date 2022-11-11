@@ -1,26 +1,37 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.config.metadata.FileMetadataStore;
 import ai.datasqrl.config.util.StreamUtil;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.Relationship.Multiplicity;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.DataContext;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.tree.Expression;
-import org.apache.calcite.rel.type.*;
-import org.apache.calcite.schema.*;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelProtoDataType;
+import org.apache.calcite.schema.Function;
+import org.apache.calcite.schema.ScannableTable;
+import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.schema.SchemaVersion;
+import org.apache.calcite.schema.Statistic;
+import org.apache.calcite.schema.Statistics;
+import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 
 /**
  * A {@link SQRLTable} represents a logical table in the SQRL script which contains fields that are
@@ -85,8 +96,9 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   }
 
   public Relationship addRelationship(Name name, SQRLTable toTable, JoinType joinType,
-                                      Multiplicity multiplicity, SqlNode node) {
-    Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity, node);
+                                      Multiplicity multiplicity, Optional<SqrlJoinDeclarationSpec> join) {
+    Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity,
+        join);
     fields.addField(rel);
     return rel;
   }

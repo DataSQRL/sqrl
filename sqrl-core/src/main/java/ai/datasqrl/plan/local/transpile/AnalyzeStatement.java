@@ -5,6 +5,7 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Context;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
@@ -31,6 +32,12 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlUtil;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec.SqrlJoinDeclarationVisitor;
+import org.apache.calcite.sql.SqrlJoinPath;
+import org.apache.calcite.sql.SqrlJoinSetOperation;
+import org.apache.calcite.sql.SqrlJoinTerm.SqrlJoinTermVisitor;
+import org.apache.calcite.sql.UnboundJoin;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -42,7 +49,10 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
  * Walks a query and collects information that is needed for transpilaton
  */
 @Getter
-public class AnalyzeStatement {
+public class AnalyzeStatement implements
+    SqrlJoinDeclarationVisitor<Context, Context>,
+    SqrlJoinTermVisitor<Context, Context>
+{
 
   private final SqrlCalciteSchema schema;
   private final List<String> assignmentPath;
@@ -60,10 +70,10 @@ public class AnalyzeStatement {
 
   @Value
   public static class Analysis {
-    private final SqrlCalciteSchema schema;
-    private final List<String> assignmentPath;
-    private final Optional<SqlIdentifier> selfIdentifier;
-    private final Map<SqlIdentifier, ResolvedTableField> expressions;
+    private SqrlCalciteSchema schema;
+    private List<String> assignmentPath;
+    private Optional<SqlIdentifier> selfIdentifier;
+    private Map<SqlIdentifier, ResolvedTableField> expressions;
     public Map<SqlIdentifier, ResolvedTable> tableIdentifiers;
     public Map<SqlNode, String> mayNeedAlias;
     public Map<SqlSelect, List<SqlNode>> expandedSelect;
@@ -120,9 +130,56 @@ public class AnalyzeStatement {
         return visitSetOperation((SqlCall) node, context);
       case JOIN:
         return visitJoin((SqlJoin)node, context);
+      case JOIN_DECLARATION:
+        SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) node;
+        return spec.accept(this, context);
       default:
         throw new RuntimeException("unknown ast node");
     }
+  }
+
+  @Override
+  public Context visitJoinDeclaration(SqrlJoinDeclarationSpec node, Context context) {
+    Context relContext = node.getRelation().accept(this, context);
+
+    //Also get expanded left joins
+    if (node.getLeftJoins().isPresent()) {
+      for (SqlNode sqlNode : node.getLeftJoins().get().getList()) {
+        UnboundJoin join = (UnboundJoin) sqlNode;
+        relContext = combine(relContext, visit(join.getRelation(), relContext));
+
+        //Walk condition
+        if (join.getCondition().isPresent()) {
+          visitExpr(join.getCondition().get(), relContext, false);
+        }
+      }
+    }
+
+    final Context finalContext = relContext;
+
+    node.getOrderList().ifPresent(order-> order.getList()
+        .forEach(o->visitExpr(o, finalContext, true)));
+
+    return relContext;
+  }
+
+  @Override
+  public Context visitJoinPath(SqrlJoinPath node, Context context) {
+    Context ctx = context;
+    for (int i = 0; i < node.relations.size(); i++) {
+      SqlNode rel = node.getRelations().get(i);
+      final Context relContext = combine(visit(rel, ctx), ctx);
+      ctx = relContext;
+      Optional<SqlNode> condition = Optional.ofNullable(node.getConditions().get(i));
+      condition.ifPresent(c->visitExpr(c, relContext, false));
+    }
+
+    return ctx;
+  }
+
+  @Override
+  public Context visitJoinSetOperation(SqrlJoinSetOperation node, Context context) {
+    throw new RuntimeException("TBD");
   }
 
   public Context visitFrom(SqlIdentifier id, Context context) {
@@ -408,7 +465,9 @@ public class AnalyzeStatement {
 
   private Context combine(Context left, Context right) {
     List<RelationField> fields = new ArrayList<>(left.fields);
-    fields.addAll(right.fields);
+    if (right.fields != null) {
+      fields.addAll(right.fields);
+    }
 
     return new Context(null, fields);
   }

@@ -43,8 +43,9 @@ class SchemaAnalyzerTest extends AbstractLogicalSQRLIT {
     TypeDefinitionRegistry typeDefinitionRegistry =
         (new SchemaParser()).parse(gql);
 
-    SchemaInference inference = new SchemaInference();
-    Root root = inference.visitTypeDefinitionRegistry(typeDefinitionRegistry, env2);
-    assertNotNull(root);
+    SchemaInference inference = new SchemaInference(gql, env2.getRelSchema(),
+        env2.getSession().getPlanner().getRelBuilder(),
+        env2.getSession().getPlanner());
+    inference.accept();
   }
 }

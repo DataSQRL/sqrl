@@ -7,12 +7,10 @@ import ai.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.SingleTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.VirtualResolvedTable;
-import ai.datasqrl.schema.SQRLTable;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Stack;
+import java.util.stream.Collectors;
 import lombok.Value;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
@@ -21,20 +19,25 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
+import org.apache.calcite.sql.SqrlJoinPath;
+import org.apache.calcite.sql.SqrlJoinSetOperation;
+import org.apache.calcite.sql.SqrlJoinTerm;
+import org.apache.calcite.sql.SqrlJoinTerm.SqrlJoinTermVisitor;
+import org.apache.calcite.sql.UnboundJoin;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 
 /**
- * Orders.entries.customer = SELECT __a1.customerid
- *                           FROM _.entries.parent p
- *                           LEFT JOIN e.parent AS __a1;
- * ->
- * Orders.entries.customer = SELECT __a1.customerid
- *                           FROM (_.entries AS g1 JOIN g1.parent AS p)
- *                           LEFT JOIN e.parent AS __a1;
+ * Orders.entries.customer = SELECT __a1.customerid FROM _.entries.parent p LEFT JOIN e.parent AS
+ * __a1; -> Orders.entries.customer = SELECT __a1.customerid FROM (_.entries AS g1 JOIN g1.parent AS
+ * p) LEFT JOIN e.parent AS __a1;
  */
-public class FlattenTablePaths extends SqlShuttle {
+public class FlattenTablePaths extends SqlShuttle
+    implements SqrlJoinTermVisitor<SqrlJoinTerm, Object> {
+
   private final Analysis analysis;
 
   public FlattenTablePaths(Analysis analysis) {
@@ -42,7 +45,8 @@ public class FlattenTablePaths extends SqlShuttle {
   }
 
   public SqlNode accept(SqlNode node) {
-    SqlNode result = node.accept(this);;
+    SqlNode result = node.accept(this);
+    ;
     return result;
   }
 
@@ -58,6 +62,18 @@ public class FlattenTablePaths extends SqlShuttle {
   @Override
   public SqlNode visit(SqlCall call) {
     switch (call.getKind()) {
+      case JOIN_DECLARATION:
+        SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) call;
+        SqrlJoinTerm relation = spec.getRelation().accept(this, null);
+        Optional<SqlNodeList> leftJoins = spec.getLeftJoins()
+            .map(this::convertUnboundJoins);
+
+        return new SqrlJoinDeclarationSpec(spec.getParserPosition(),
+            relation,
+            spec.getOrderList(),
+            spec.getFetch(),
+            spec.getInverse(),
+            leftJoins);
       case JOIN:
         return super.visit(call);
       case AS:
@@ -75,6 +91,16 @@ public class FlattenTablePaths extends SqlShuttle {
     return super.visit(call);
   }
 
+  private SqlNodeList convertUnboundJoins(SqlNodeList l) {
+    return new SqlNodeList(l.getList().stream()
+        .map(i -> {
+          UnboundJoin j = (UnboundJoin) i;
+          return new UnboundJoin(i.getParserPosition(), j.getRelation().accept(this),
+              j.getCondition());
+        })
+        .collect(Collectors.toList()), SqlParserPos.ZERO);
+  }
+
   @Override
   public SqlNode visit(SqlIdentifier id) {
     if (analysis.getTableIdentifiers().get(id) != null) {
@@ -83,8 +109,27 @@ public class FlattenTablePaths extends SqlShuttle {
     return super.visit(id);
   }
 
+  @Override
+  public SqrlJoinTerm visitJoinPath(SqrlJoinPath sqrlJoinPath, Object context) {
+    List<SqlNode> relation = new ArrayList<>();
+    for (SqlNode rel : sqrlJoinPath.getRelations()) {
+      relation.add(rel.accept(this));
+    }
+
+    return new SqrlJoinPath(sqrlJoinPath.getParserPosition(),
+        relation,
+        sqrlJoinPath.getConditions());
+  }
+
+  @Override
+  public SqrlJoinTerm visitJoinSetOperation(SqrlJoinSetOperation sqrlJoinSetOperation,
+      Object context) {
+    return null;
+  }
+
   @Value
   class ExpandedTable {
+
     SqlNode table;
     Optional<SqlNode> pullupCondition;
   }
@@ -107,12 +152,12 @@ public class FlattenTablePaths extends SqlShuttle {
       first = new SqlIdentifier(List.of(
           id.names.get(0)
       ), SqlParserPos.ZERO);
-    } else if (resolve instanceof RelativeResolvedTable){
-      first = new SqlIdentifier(List.of( id.names.get(0),
+    } else if (resolve instanceof RelativeResolvedTable) {
+      first = new SqlIdentifier(List.of(id.names.get(0),
           id.names.get(1)
       ), SqlParserPos.ZERO);
-      if ( id.names.size() > 2) {
-        suffix =  id.names.subList(2, id.names.size());
+      if (id.names.size() > 2) {
+        suffix = id.names.subList(2, id.names.size());
       } else {
         suffix = List.of();
       }
@@ -125,7 +170,7 @@ public class FlattenTablePaths extends SqlShuttle {
     SqlNode n =
         SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
             first,
-            new SqlIdentifier(suffix.size() > 0 ? firstAlias: finalAlias,
+            new SqlIdentifier(suffix.size() > 0 ? firstAlias : finalAlias,
                 SqlParserPos.ZERO));
     if (suffix.size() >= 1) {
       String currentAlias = "_g" + (idx);

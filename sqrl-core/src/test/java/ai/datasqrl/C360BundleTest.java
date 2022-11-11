@@ -23,7 +23,8 @@ public class C360BundleTest {
       + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
       + "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
       + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
-      + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid;\n"
+      + "Product.order_entries := JOIN Orders.entries e ON e.productid = _.productid"
+      + "  ORDER BY e.discount DESC;\n"
       + "Orders.entries.discount := COALESCE(discount, 0.0)\n;"
       + "";
 
@@ -74,9 +75,13 @@ public class C360BundleTest {
         + "      customerid\n"
         + "    }\n"
         + "  }\n"
-        + "  Product(productid: 1332) {\n"
+        + "  Product {\n"
         + "    \n"
         + "    description\n"
+        + "    order_entries {\n"
+        + "       discount\n"
+        + "    }\n"
+        + "   \n"
         + "  }\n"
         + "}");
     System.out.println(s.body());
