@@ -13,7 +13,7 @@ import org.apache.calcite.tools.RelBuilder;
 public class ArgumentHandlerContextV1 {
 
   InputValueDefinition arg;
-  Set<ArgumentSet> relAndArgs;
+  Set<ArgumentSet> argumentSet;
   SQRLTable table;
   RelBuilder relBuilder;
   List<PgParameterHandler> sourceHandlers;

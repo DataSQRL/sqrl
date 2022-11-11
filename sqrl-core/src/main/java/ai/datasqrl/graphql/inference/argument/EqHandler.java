@@ -2,11 +2,14 @@ package ai.datasqrl.graphql.inference.argument;
 
 import ai.datasqrl.graphql.inference.ArgumentSet;
 import ai.datasqrl.graphql.server.Model.Argument;
+import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
 import ai.datasqrl.graphql.server.Model.VariableArgument;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Column;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -20,9 +23,9 @@ public class EqHandler implements ArgumentHandler {
     @Override
     public Set<ArgumentSet> accept(ArgumentHandlerContextV1 context) {
       //if optional, assure we re-emit all args
-      Set<ArgumentSet> set = new HashSet<>(context.getRelAndArgs());
+      Set<ArgumentSet> set = new HashSet<>(context.getArgumentSet());
       RexBuilder rexBuilder = context.getRelBuilder().getRexBuilder();
-      for (ArgumentSet args : context.getRelAndArgs()) {
+      for (ArgumentSet args : context.getArgumentSet()) {
         RelBuilder relBuilder = context.getRelBuilder();
         relBuilder.push(args.getRelNode());
 
@@ -38,7 +41,10 @@ public class EqHandler implements ArgumentHandler {
         Set<Argument> newHandlers = new LinkedHashSet<>(args.getArgumentHandlers());
         newHandlers.add(VariableArgument.builder().path(context.getArg().getName()).build());
 
-        set.add(new ArgumentSet(rel, newHandlers, args.isLimitOffsetFlag()));
+        List<ArgumentPgParameter> parameters = new ArrayList<>(args.getArgumentParameters());
+        parameters.add(ArgumentPgParameter.builder().path(context.getArg().getName()).build());
+
+        set.add(new ArgumentSet(rel, newHandlers, parameters, args.isLimitOffsetFlag()));
       }
 
       //if optional: add an option to the arg permutation list

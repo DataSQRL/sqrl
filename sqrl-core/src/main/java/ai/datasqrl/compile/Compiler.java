@@ -4,7 +4,7 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.graphql.GraphQLServer;
 import ai.datasqrl.graphql.generate.SchemaGenerator;
 import ai.datasqrl.graphql.inference.ArgumentSet;
-import ai.datasqrl.graphql.inference.InferredPgBuilder;
+import ai.datasqrl.graphql.inference.PgBuilder;
 import ai.datasqrl.graphql.inference.SchemaInference;
 import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
@@ -121,7 +121,7 @@ public class Compiler {
         env.getRelSchema(), env.getSession().getPlanner().getRelBuilder(),
         env.getSession().getPlanner());
     InferredSchema inferredSchema = inference2.accept();
-    InferredPgBuilder pgBuilder = new InferredPgBuilder(gqlSchema,
+    PgBuilder pgBuilder = new PgBuilder(gqlSchema,
         env.getRelSchema(),
         env.getSession().getPlanner().getRelBuilder(),
         env.getSession().getPlanner() );
@@ -295,9 +295,6 @@ public class Compiler {
       SqlWriterConfig config = RelToSql.transform.apply(SqlPrettyWriter.config());
       DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
       String query = convertDynamicParams(writer, template.getRelNode(), apiQueryBase.getRelAndArg());
-      Preconditions.checkState(apiQueryBase.getParameters().size() == 0 ||
-              Collections.max(writer.dynamicParameters) < apiQueryBase.getParameters().size(),
-          "Parameters do not match");
       return PgQuery.builder()
           .parameters(apiQueryBase.getParameters())
           .sql(query)

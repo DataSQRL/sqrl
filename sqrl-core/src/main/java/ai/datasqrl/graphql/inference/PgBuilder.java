@@ -32,7 +32,6 @@ import ai.datasqrl.plan.calcite.TranspilerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
 import ai.datasqrl.plan.queries.APIQuery;
-import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.JoinType;
 import ai.datasqrl.schema.SQRLTable;
@@ -62,7 +61,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
 
-public class InferredPgBuilder implements
+public class PgBuilder implements
     InferredSchemaVisitor<Root, Object>,
     InferredRootObjectVisitor<List<Coords>, Object>,
     InferredFieldVisitor<Coords, Object> {
@@ -79,7 +78,7 @@ public class InferredPgBuilder implements
   @Getter
   private List<APIQuery> apiQueries = new ArrayList<>();
 
-  public InferredPgBuilder(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder,
+  public PgBuilder(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder,
       Planner planner) {
     this.stringSchema = gqlSchema;
     this.registry = (new SchemaParser()).parse(gqlSchema);
@@ -142,9 +141,8 @@ public class InferredPgBuilder implements
     //todo: table functions
 
     Set<ArgumentSet> args = new HashSet<>();
-    if (!hasAnyRequiredArgs(inputArgs)) {
-      args.add(new ArgumentSet(relNode, new LinkedHashSet<>(), false));
-    }
+    //TODO: remove if not used by final query set (has required params)
+    args.add(new ArgumentSet(relNode, new LinkedHashSet<>(), new ArrayList<>(), false));
 
     for (InputValueDefinition arg : inputArgs) {
       boolean handled = false;
@@ -187,9 +185,7 @@ public class InferredPgBuilder implements
 
       List<PgParameterHandler> argHandler = new ArrayList<>();
       argHandler.addAll(existingHandlers);
-      argHandler.addAll(argumentSet.getArgumentHandlers().stream()
-          .map(a -> ArgumentPgParameter.builder().path(a.getPath()).build())
-          .collect(Collectors.toList()));
+      argHandler.addAll(argumentSet.getArgumentParameters());
 
       if (argumentSet.isLimitOffsetFlag()) {
         coordsBuilder.match(ai.datasqrl.graphql.server.Model.ArgumentSet.builder()

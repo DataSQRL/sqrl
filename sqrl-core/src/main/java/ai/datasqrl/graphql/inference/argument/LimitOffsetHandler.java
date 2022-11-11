@@ -15,12 +15,12 @@ public class LimitOffsetHandler implements ArgumentHandler {
 
   @Override
   public Set<ArgumentSet> accept(ArgumentHandlerContextV1 context) {
-    Set<ArgumentSet> set = new HashSet<>(context.getRelAndArgs());
-    for (ArgumentSet args : context.getRelAndArgs()) {
+    Set<ArgumentSet> set = new HashSet<>(context.getArgumentSet());
+    for (ArgumentSet args : context.getArgumentSet()) {
       //No-op rel node, query must be constructed at query time
       Set<Argument> newArgs = new LinkedHashSet<>(args.getArgumentHandlers());
       newArgs.add(VariableArgument.builder().path(context.getArg().getName()).build());
-      ArgumentSet relAndArg = new ArgumentSet(args.getRelNode(), newArgs, true);
+      ArgumentSet relAndArg = new ArgumentSet(args.getRelNode(), newArgs, args.getArgumentParameters(), true);
 
       set.add(relAndArg);
     }
