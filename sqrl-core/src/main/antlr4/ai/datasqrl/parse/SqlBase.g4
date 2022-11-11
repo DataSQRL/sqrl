@@ -76,7 +76,9 @@ keyValue
    ;
 
 subscriptionType
-    : ADD //todo: add other types
+    : ADD
+    | DELETE
+    | UPDATE
     ;
 
 joinSpecification
@@ -489,6 +491,7 @@ UESCAPE: 'UESCAPE';
 UNBOUNDED: 'UNBOUNDED';
 UNCOMMITTED: 'UNCOMMITTED';
 UNION: 'UNION';
+UPDATE: 'UPDATE';
 USE: 'USE';
 USING: 'USING';
 VALIDATE: 'VALIDATE';

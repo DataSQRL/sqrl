@@ -611,8 +611,9 @@ public class Resolve {
 
     ScriptTableDefinition queryTable;
     if (op.statementKind==StatementKind.STREAM) {
-      //TODO: Determine change type and add
-      queryTable=env.tableFactory.defineStreamTable(op.statement.getNamePath(), processedRel, StateChangeType.ADD,
+      StreamAssignment streamAssignment = (StreamAssignment) op.statement;
+      queryTable=env.tableFactory.defineStreamTable(op.statement.getNamePath(), processedRel,
+          StateChangeType.valueOf(streamAssignment.getType().name()),
               env.getSession().getPlanner().getRelBuilder(), env.getSession().getPipeline());
     } else {
       queryTable=env.tableFactory.defineTable(op.statement.getNamePath(), processedRel, fieldNames, parentPair);
