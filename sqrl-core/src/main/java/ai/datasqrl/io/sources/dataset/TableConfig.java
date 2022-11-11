@@ -11,6 +11,7 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.Optional;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -33,7 +35,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
     @OptionalMinString
     String identifier;
     @Valid @NonNull @NotNull
-    DataSystemConnectorConfig datasource;
+    DataSystemConnectorConfig connector;
 
     /**
      * TODO: make this configurable
@@ -50,7 +52,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
             return null;
         }
         errors = errors.resolve(name);
-        if (!rootInitialize(errors,true)) return null;
+        if (!rootInitialize(errors)) return null;
         if (!ConfigurationUtil.javaxValidate(this, errors)) {
             return null;
         }
@@ -62,14 +64,20 @@ public class TableConfig extends SharedConfiguration implements Serializable {
 
         if (!format.initialize(errors.resolve("format"))) return null;
 
-        return datasource.initialize(errors.resolve(name).resolve("datasource"));
-
+        DataSystemConnector connector = this.connector.initialize(errors.resolve(name).resolve("datasource"));
+        if (connector == null) return null;
+        if (connector.requiresFormat(getType()) && getFormat()==null) {
+            errors.fatal("Need to configure a format");
+            return null;
+        }
+        return connector;
     }
 
     public TableSource initializeSource(ErrorCollector errors, NamePath basePath,
                                         FlexibleDatasetSchema.TableField schema) {
         DataSystemConnector connector = baseInitialize(errors,basePath);
         if (connector==null) return null;
+        Preconditions.checkArgument(getType().isSource());
         Name tableName = getResolvedName();
         return new TableSource(connector,this,basePath.concat(tableName), tableName, schema);
     }
@@ -77,15 +85,18 @@ public class TableConfig extends SharedConfiguration implements Serializable {
     public TableInput initializeInput(ErrorCollector errors, NamePath basePath) {
         DataSystemConnector connector = baseInitialize(errors,basePath);
         if (connector==null) return null;
+        Preconditions.checkArgument(getType().isSource());
         Name tableName = getResolvedName();
         return new TableInput(connector,this,basePath.concat(tableName), tableName);
     }
 
-    public TableSink initializeSink(ErrorCollector errors, NamePath basePath) {
+    public TableSink initializeSink(ErrorCollector errors, NamePath basePath,
+                                    Optional<FlexibleDatasetSchema.TableField> schema) {
         DataSystemConnector connector = baseInitialize(errors,basePath);
         if (connector==null) return null;
+        Preconditions.checkArgument(getType().isSink());
         Name tableName = getResolvedName();
-        return new TableSink(connector, this, basePath.concat(tableName), tableName);
+        return new TableSink(connector, this, basePath.concat(tableName), tableName, schema);
     }
 
     @JsonIgnore
@@ -95,6 +106,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
 
     public static TableConfigBuilder copy(SharedConfiguration config) {
         return TableConfig.builder()
+                .type(config.getType())
                 .canonicalizer(config.getCanonicalizer())
                 .charset(config.getCharset())
                 .format(config.getFormat());

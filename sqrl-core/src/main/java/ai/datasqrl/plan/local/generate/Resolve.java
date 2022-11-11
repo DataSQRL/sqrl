@@ -1,6 +1,9 @@
 package ai.datasqrl.plan.local.generate;
 
 import ai.datasqrl.compile.loaders.*;
+import ai.datasqrl.config.error.ErrorCode;
+import ai.datasqrl.io.sources.dataset.TableSink;
+import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -26,11 +29,13 @@ import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.Value;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -65,6 +70,7 @@ public class Resolve {
     CalciteTableFactory tableFactory = new CalciteTableFactory(PlannerFactory.getTypeFactory());
     SchemaAdjustmentSettings schemaAdjustmentSettings = SchemaAdjustmentSettings.DEFAULT;
     Loader loader = new CompositeLoader(new DataSourceLoader(), new JavaFunctionLoader(), new TypeLoader());
+    Exporter exporter = new DataSourceLoader();
     List<StatementOp> ops = new ArrayList<>();
     List<SqrlStatement> queryOperations = new ArrayList<>();
 
@@ -72,6 +78,7 @@ public class Resolve {
     Map<SQRLTable, VirtualRelationalTable> tableMap = new HashMap<>();
     SqrlCalciteSchema userSchema;
     SqrlCalciteSchema relSchema;
+    List<ResolvedExport> exports = new ArrayList<>();
 
     Session session;
     ScriptNode scriptNode;
@@ -87,6 +94,28 @@ public class Resolve {
       this.session = session;
       this.scriptNode = scriptNode;
       this.packagePath = packagePath;
+    }
+
+
+    public Name registerTable(TableSource tableSource, Optional<Name> alias) {
+      ScriptTableDefinition def = getTableFactory().importTable(tableSource, alias,
+              getSession().getPlanner().getRelBuilder(), getSession().getPipeline());
+
+      if (getRelSchema()
+              .getTable(def.getTable().getName().getCanonical(), false) != null) {
+        throw Check.newException(ErrorCode.IMPORT_NAMESPACE_CONFLICT,
+                getCurrentNode(),
+                getCurrentNode().getParserPosition(),
+                String.format("An item named `%s` is already in scope",
+                        def.getTable().getName().getDisplay()));
+      }
+
+      registerScriptTable(this, def);
+      return tableSource.getName();
+    }
+
+    public Resolve getResolve() {
+      return Resolve.this;
     }
   }
 
@@ -172,7 +201,7 @@ public class Resolve {
   }
 
 
-  public static void registerScriptTable(Env env, ScriptTableDefinition tblDef) {
+  public void registerScriptTable(Env env, ScriptTableDefinition tblDef) {
     //Update table mapping from SQRL table to Calcite table...
 
     tblDef.getShredTableMap().values().stream().forEach(vt ->
@@ -301,8 +330,27 @@ public class Resolve {
       sqlNode = transformExpressionToQuery(env, statement, sqlNode);
       statementKind = StatementKind.IMPORT;
 
+    } else if (statement instanceof ExportDefinition) {
+      //We handle exports out-of-band and just resolve them.
+      ExportDefinition export = (ExportDefinition) statement;
+      Optional<SQRLTable> tableOpt = resolveTable(env, export.getTablePath(), false);
+      Optional<TableSink> sink = env.getExporter().export(env,export.getSinkPath());
+      Preconditions.checkArgument(tableOpt.isPresent());
+      Preconditions.checkArgument(sink.isPresent());
+      SQRLTable table = tableOpt.get();
+      Preconditions.checkArgument(table.getVt().getRoot().getBase().getExecution().isWrite());
+      RelBuilder relBuilder  = env.getSession().getPlanner().getRelBuilder().scan(table.getVt().getNameId());
+      List<RexNode> selects = new ArrayList<>();
+      List<String> fieldNames = new ArrayList<>();
+      table.getVisibleColumns().stream().forEach( c -> {
+        selects.add(relBuilder.field(c.getShadowedName().getCanonical()));
+        fieldNames.add(c.getName().getDisplay());
+      });
+      relBuilder.project(selects,fieldNames);
+      env.exports.add(new ResolvedExport(table.getVt(),relBuilder.build(),sink.get()));
+      return Optional.empty();
     } else {
-      throw new RuntimeException("Unrecognized assignment type");
+      throw new RuntimeException("Unrecognized assignment type: " + statement.getClass());
     }
 
     StatementOp op = new StatementOp(statement, sqlNode, statementKind);
@@ -408,21 +456,21 @@ public class Resolve {
   }
 
   private Optional<SQRLTable> getContext(Env env, SqrlStatement statement) {
-    if (statement.getNamePath().size() <= 1) {
+    return resolveTable(env,statement.getNamePath(),true);
+  }
+
+  private Optional<SQRLTable> resolveTable(Env env, NamePath namePath, boolean getParent) {
+    if (getParent && !namePath.isEmpty()) {
+      namePath = namePath.popLast();
+    }
+    if (namePath.isEmpty()) {
       return Optional.empty();
     }
     Optional<SQRLTable> table =
-        Optional.ofNullable(env.relSchema.getTable(statement.getNamePath().get(0).getDisplay(), false))
-            .map(t->(SQRLTable)t.getTable());
-
-    if (statement.getNamePath().popFirst().size() == 1) {
-      return table;
-    }
-    if (table.isEmpty()) {
-      //No table in namespace
-      throw new RuntimeException("No table in namespace: " + statement.getNamePath().popLast());
-    }
-    return table.get().walkTable(statement.getNamePath().popFirst().popLast());
+            Optional.ofNullable(env.relSchema.getTable(namePath.get(0).getDisplay(), false))
+                    .map(t->(SQRLTable)t.getTable());
+    NamePath childPath = namePath.popFirst();
+    return table.flatMap(t -> t.walkTable(childPath));
   }
 
   public void plan(Env env, StatementOp op) {
@@ -683,4 +731,14 @@ public class Resolve {
       this.statementKind = statementKind;
     }
   }
+
+  @Value
+  public static class ResolvedExport {
+
+    VirtualRelationalTable table;
+    RelNode relNode;
+    TableSink sink;
+
+  }
+
 }

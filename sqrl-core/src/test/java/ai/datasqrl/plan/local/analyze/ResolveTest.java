@@ -96,8 +96,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void selfJoinSubqueryTest() {
     ScriptBuilder builder = imports();
-//    builder.append("IMPORT ecommerce-data.Orders;\n");
-    builder.append("Orders2 := SELECT o2._uuid FROM Orders o2 "
+//    builder.add("IMPORT ecommerce-data.Orders;\n");
+    builder.add("Orders2 := SELECT o2._uuid FROM Orders o2 "
             + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid;\n");
     process(builder.toString());
     validateQueryTable("orders2", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 1, TimestampTest.candidates(1,2));
@@ -147,7 +147,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o INTERVAL JOIN Customer c on o.customerid = c.customerid "+
             "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH;");
-    builder.append("OrderCustomer2 := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
+    builder.add("OrderCustomer2 := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "+
             "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH;");
     process(builder.toString());
     validateQueryTable("ordercustomer", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 2, TimestampTest.fixed(5)); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
@@ -157,23 +157,22 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void tableTemporalJoinTest() {
     ScriptBuilder builder = imports();
-    builder.append("CustomerCount := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer");
-    builder.append("OrderWithCount := SELECT o.id, c.order_count, o.customerid FROM Orders o TEMPORAL JOIN CustomerCount c on o.customerid = c.customer");
-    builder.append("OrderWithCount2 := SELECT o.id, c.order_count, o.customerid FROM CustomerCount c TEMPORAL JOIN Orders o on o.customerid = c.customer");
+    builder.add("CustomerCount := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer");
+    builder.add("OrderWithCount := SELECT o.id, c.order_count, o.customerid FROM Orders o TEMPORAL JOIN CustomerCount c on o.customerid = c.customer");
+    builder.add("OrderWithCount2 := SELECT o.id, c.order_count, o.customerid FROM CustomerCount c TEMPORAL JOIN Orders o on o.customerid = c.customer");
     process(builder.toString());
     validateQueryTable("orderwithcount", TableType.STREAM, ExecutionEngine.Type.STREAM,5, 1, TimestampTest.fixed(4)); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
     validateQueryTable("orderwithcount2", TableType.STREAM, ExecutionEngine.Type.STREAM,5, 1, TimestampTest.fixed(4)); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
   }
 
   @Test
-  @Disabled
   public void tableTemporalJoinWithTimeFilterTest() {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
     builder.add("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC");
     builder.add("Customer.orders := JOIN Orders ON Orders.customerid = _.customerid");
     builder.add("Orders.entries.product := JOIN Product ON Product.productid = _.productid");
-    builder.append("Customer.totals := SELECT p.category as category, sum(e.quantity) as num " +
+    builder.add("Customer.totals := SELECT p.category as category, sum(e.quantity) as num " +
             "FROM _.orders o JOIN o.entries e JOIN e.product p WHERE o.\"time\" >= now() - INTERVAL 1 YEAR GROUP BY category");
     process(builder.toString());
     validateQueryTable("totals", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
@@ -187,8 +186,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void streamAggregateTest() {
     ScriptBuilder builder = imports();
-    builder.append("OrderAgg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer");
-    builder.append("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o;");
+    builder.add("OrderAgg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer");
+    builder.add("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o;");
     process(builder.toString());
     validateQueryTable("orderagg1", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,3, 1, TimestampTest.fixed(2)); //timestamp column is added
     validateQueryTable("orderagg2", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,3, 1, TimestampTest.fixed(2));
@@ -197,7 +196,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void streamTimeAggregateTest() {
     ScriptBuilder builder = imports();
-    builder.append("Ordertime1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+    builder.add("Ordertime1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     process(builder.toString());
     validateQueryTable("ordertime1", TableType.STREAM, ExecutionEngine.Type.STREAM,3, 2, TimestampTest.fixed(1));
   }
@@ -205,10 +204,10 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void nowAggregateTest() {
     ScriptBuilder builder = imports();
-    builder.append("OrderNow1 := SELECT o.customerid as customer, round_to_day(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer, bucket");
-    builder.append("OrderNow2 := SELECT round_to_day(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY bucket");
-    builder.append("OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer");
-    builder.append("OrderAugment := SELECT o.id, o.\"time\", c.order_count FROM Orders o JOIN OrderNow3 c ON o.customerid = c.customer");
+    builder.add("OrderNow1 := SELECT o.customerid as customer, round_to_day(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer, bucket");
+    builder.add("OrderNow2 := SELECT round_to_day(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY bucket");
+    builder.add("OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer");
+    builder.add("OrderAugment := SELECT o.id, o.\"time\", c.order_count FROM Orders o JOIN OrderNow3 c ON o.customerid = c.customer");
     process(builder.toString());
     validateQueryTable("ordernow1", TableType.STREAM, ExecutionEngine.Type.STREAM,3, 2, TimestampTest.fixed(1), PullupTest.builder().hasNowFilter(true).build());
     validateQueryTable("ordernow2", TableType.STREAM, ExecutionEngine.Type.STREAM,2, 1, TimestampTest.fixed(0), PullupTest.builder().hasNowFilter(true).build());
@@ -219,8 +218,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void streamStateAggregateTest() {
     ScriptBuilder builder = imports();
-    builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
-    builder.append("agg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM OrderCustomer o GROUP BY customer;\n");
+    builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
+    builder.add("agg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM OrderCustomer o GROUP BY customer;\n");
     process(builder.toString());
     validateQueryTable("agg1", TableType.STATE, ExecutionEngine.Type.DATABASE,2, 1, TimestampTest.NONE);
   }
@@ -232,11 +231,11 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void nowFilterTest() {
     ScriptBuilder builder = imports();
-    builder.append("OrderFilter := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 YEAR;\n");
+    builder.add("OrderFilter := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 YEAR;\n");
 
-    builder.append("OrderAgg1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM OrderFilter o GROUP BY customer, bucket;\n");
+    builder.add("OrderAgg1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM OrderFilter o GROUP BY customer, bucket;\n");
 //    //The following should be equivalent
-    builder.append("OrderAgg2 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 YEAR GROUP BY customer, bucket;\n");
+    builder.add("OrderAgg2 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 YEAR GROUP BY customer, bucket;\n");
     process(builder.toString());
     validateQueryTable("orderfilter", TableType.STREAM, ExecutionEngine.Type.STREAM,5, 1, TimestampTest.fixed(4), new PullupTest(true,false));
     validateQueryTable("orderagg1", TableType.STREAM, ExecutionEngine.Type.STREAM,3, 2, TimestampTest.fixed(1), new PullupTest(true,false));
@@ -324,15 +323,25 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void convert2StreamTest() {
     ScriptBuilder builder = imports();
-    builder.append("Product.updateTime := _ingest_time - INTERVAL 1 YEAR");
-    builder.append("Product := DISTINCT Product ON productid ORDER BY updateTime DESC");
-    builder.append("ProductCount := SELECT p.productid, p.name, SUM(e.quantity) as quantity FROM Orders.entries e JOIN Product p on e.productid = p.productid GROUP BY p.productid, p.name");
-    builder.append("CountStream := STREAM ON ADD AS SELECT productid, name, quantity FROM ProductCount WHERE quantity > 1");
-    builder.append("ProductCount2 := DISTINCT CountStream ON productid ORDER BY _ingest_time DESC");
+    builder.add("Product.updateTime := _ingest_time - INTERVAL 1 YEAR");
+    builder.add("Product := DISTINCT Product ON productid ORDER BY updateTime DESC");
+    builder.add("ProductCount := SELECT p.productid, p.name, SUM(e.quantity) as quantity FROM Orders.entries e JOIN Product p on e.productid = p.productid GROUP BY p.productid, p.name");
+    builder.add("CountStream := STREAM ON ADD AS SELECT productid, name, quantity FROM ProductCount WHERE quantity > 1");
+    builder.add("ProductCount2 := DISTINCT CountStream ON productid ORDER BY _ingest_time DESC");
     process(builder.toString());
     validateQueryTable("productcount", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,4, 2, TimestampTest.fixed(3));
     validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM,5, 1, TimestampTest.fixed(1));
     validateQueryTable("productcount2", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,5, 1, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
+  }
+
+  @Test
+  public void exportStreamTest() {
+    ScriptBuilder builder = imports();
+    builder.add("CountStream := STREAM ON ADD AS SELECT customerid, COUNT(1) as num_orders FROM Orders GROUP BY customerid"); //TODO: change to update
+    builder.add("EXPORT CountStream TO print.CountStream");
+    builder.add("EXPORT CountStream TO output.CountStream");
+    process(builder.toString());
+    validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM,4, 1, TimestampTest.candidates(1));
   }
 
 
@@ -361,11 +370,6 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @SneakyThrows
   private Resolve.Env process(String query) {
     ScriptNode node = parse(query);
-//    SqlNode parsed = SqlParser.create("SELECT o2._uuid FROM Orders o2 \n"
-//        + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid\n")
-//        .parseQuery();
-//    System.out.println(((QueryAssignment) node.getStatements().get(4)).getQuery());
-//    System.out.println(parsed);
     resolvedDag = resolve.planDag(session, node);
     return resolvedDag;
   }

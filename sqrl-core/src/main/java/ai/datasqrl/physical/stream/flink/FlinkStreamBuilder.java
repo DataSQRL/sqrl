@@ -161,7 +161,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   @Override
   public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table) {
     Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser, "This method only supports text sources");
-    DataSystemConnector sourceConnector = table.getDataset();
+    DataSystemConnector sourceConnector = table.getConnector();
     String flinkSourceName = table.getDigest().toString('-',"input");
 
     StreamExecutionEnvironment env = getEnvironment();

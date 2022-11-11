@@ -18,7 +18,7 @@ import java.util.List;
 public class AbstractExternalTable {
 
     @NonNull
-    protected final DataSystemConnector dataset;
+    protected final DataSystemConnector connector;
     @NonNull
     protected final TableConfig configuration;
     @EqualsAndHashCode.Include

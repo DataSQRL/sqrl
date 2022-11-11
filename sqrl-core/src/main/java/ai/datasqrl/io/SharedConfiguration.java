@@ -4,6 +4,7 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.util.ConfigurationUtil;
 import ai.datasqrl.io.formats.FormatConfiguration;
 import ai.datasqrl.io.impl.CanonicalizerConfiguration;
+import ai.datasqrl.io.sources.ExternalDataType;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
@@ -22,6 +23,8 @@ public abstract class SharedConfiguration implements Serializable {
 
   public static final String DEFAULT_CHARSET = "UTF-8";
 
+  @NonNull @NotNull
+  ExternalDataType type;
   @Builder.Default
   @NonNull
   @NotNull
@@ -46,7 +49,7 @@ public abstract class SharedConfiguration implements Serializable {
   }
 
 
-  public boolean rootInitialize(ErrorCollector errors, boolean formatRequired) {
+  public boolean rootInitialize(ErrorCollector errors) {
     if (!ConfigurationUtil.javaxValidate(this, errors)) {
       return false;
     }
@@ -57,10 +60,6 @@ public abstract class SharedConfiguration implements Serializable {
       return false;
     }
     if (format == null) {
-      if (formatRequired) {
-        errors.fatal("Need to configure a format");
-        return false;
-      }
       return true;
     } else {
       return format.initialize(null, errors.resolve("format"));

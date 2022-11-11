@@ -25,6 +25,16 @@ LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3])
             LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
               LogicalTableScan(table=[[customer$i$1]])
 
+>>>countstream$17$1-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+    LogicalTableScan(table=[[countstream$s$15]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
+>>>countstream$17$2-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+    LogicalTableScan(table=[[countstream$s$15]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
 >>>customercount-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
   LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3])
@@ -54,3 +64,5 @@ LogicalSort(sort0=[$0], dir0=[ASC])
 1000101, John B. Mekker, 3
 1000107, Emily F. Ludies, 10
 1000121, Michelle Dagnes, 4
+>>>export-countstream
+5

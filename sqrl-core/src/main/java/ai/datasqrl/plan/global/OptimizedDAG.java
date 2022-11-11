@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.global;
 
+import ai.datasqrl.io.sources.dataset.TableSink;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.queries.APIQuery;
 import lombok.AllArgsConstructor;
@@ -32,14 +33,14 @@ public class OptimizedDAG {
 
   @Value
   @AllArgsConstructor
-  public static class TableSink implements MaterializeSink {
+  public static class DatabaseSink implements MaterializeSink {
 
     final String nameId;
     final int numPrimaryKeys;
     final RelDataType rowType;
     final Optional<Integer> timestampIdx;
 
-    public TableSink(VirtualRelationalTable table, Optional<Integer> timestampIdx) {
+    public DatabaseSink(VirtualRelationalTable table, Optional<Integer> timestampIdx) {
       this(table.getNameId(),table.getNumPrimaryKeys(),table.getRowType(),timestampIdx);
     }
 
@@ -53,6 +54,7 @@ public class OptimizedDAG {
   public static class ExternalSink implements MaterializeSink {
 
     String name;
+    TableSink sink;
 
   }
 

@@ -1,19 +1,6 @@
 package ai.datasqrl.io.impl.file;
 
 import com.google.common.base.Strings;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.nio.file.Paths;
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -22,6 +9,19 @@ import org.apache.flink.connector.file.src.compression.StandardDeCompressors;
 import org.apache.flink.core.fs.FileStatus;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Represents a file that is identified by a URI.
@@ -73,6 +73,10 @@ public class FilePath implements Serializable {
 
   public String getFileName() {
     return flinkPath.getName();
+  }
+
+  public FilePath resolve(String sub) {
+    return new FilePath(new Path(this.flinkPath,sub));
   }
 
   public NameComponents getComponents(Pattern partPattern) {

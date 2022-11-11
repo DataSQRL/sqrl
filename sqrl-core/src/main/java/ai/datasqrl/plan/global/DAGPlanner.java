@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.global;
 
 import ai.datasqrl.config.util.StreamUtil;
+import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.ExecutionEngine;
 import ai.datasqrl.physical.pipeline.ExecutionPipeline;
 import ai.datasqrl.plan.calcite.Planner;
@@ -9,6 +10,7 @@ import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
+import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
@@ -21,6 +23,7 @@ import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -34,7 +37,8 @@ public class DAGPlanner {
 
     private final Planner planner;
 
-    public OptimizedDAG plan(CalciteSchema relSchema, Collection<APIQuery> queries, ExecutionPipeline pipeline) {
+    public OptimizedDAG plan(CalciteSchema relSchema, Collection<APIQuery> queries,
+                             Collection<Resolve.ResolvedExport> exports, ExecutionPipeline pipeline) {
 
         List<QueryRelationalTable> queryTables = CalciteUtil.getTables(relSchema, QueryRelationalTable.class);
 
@@ -68,32 +72,42 @@ public class DAGPlanner {
 
         //Fill all table sinks
         List<OptimizedDAG.MaterializeQuery> writeDAG = new ArrayList<>();
+        //First, all the tables that need to be written to the database
         for (VirtualRelationalTable dbTable : tableSinks) {
             RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
-            //Shred the table if necessary before materialization
-            AnnotatedLP processedRel = SQRLLogicalPlanConverter.convert(scanTable, getRelBuilderFactory(),
-                    SQRLLogicalPlanConverter.Config.builder()
-                            .startStage(pipeline.getStage(ExecutionEngine.Type.STREAM).get())
-                            .allowStageChange(false)
-                            .build());
-            processedRel = processedRel.postProcess(planner.getRelBuilder(), dbTable.getRowType().getFieldNames());
-            RelNode expandedScan = processedRel.getRelNode();
-            //Expand to full tree
-            expandedScan = planner.transform(WRITE_DAG_STITCHING,expandedScan);
-            //Determine if we need to append a timestamp for nested tables
-            Optional<Integer> timestampIdx = processedRel.getType().hasTimestamp()?
-                    Optional.of(processedRel.getTimestamp().getTimestampCandidate().getIndex()):Optional.empty();
-            if (!dbTable.isRoot() && timestampIdx.isPresent()) {
-                //Append timestamp to the end of table columns
+            Pair<RelNode, Optional<Integer>> processed = processWriteVTable(scanTable, pipeline);
+            RelNode processedRelnode = processed.getKey();
+            Optional<Integer> timestampIdx = processed.getValue();
+            //Check if we need to add timestamp column for nested child-tables
+            if (!dbTable.isRoot() && timestampIdx.isPresent() &&
+                    dbTable.getRowType().getFieldCount()<processedRelnode.getRowType().getFieldCount()) {
+                //Append timestamp to the end of table
                 assert dbTable.getRowType().getFieldCount()==timestampIdx.get();
-                ((VirtualRelationalTable.Child)dbTable).appendTimestampColumn(expandedScan.getRowType().getFieldList().get(timestampIdx.get()),
+                ((VirtualRelationalTable.Child)dbTable).appendTimestampColumn(processedRelnode.getRowType().getFieldList().get(timestampIdx.get()),
                         planner.getRelBuilder().getTypeFactory());
             }
-            assert dbTable.getRowType().equals(expandedScan.getRowType()) :
-                    "Rowtypes do not match: " + dbTable.getRowType() + " vs " + expandedScan.getRowType();
+            assert dbTable.getRowType().equals(processedRelnode.getRowType()) :
+                    "Rowtypes do not match: " + dbTable.getRowType() + " vs " + processedRelnode.getRowType();
             writeDAG.add(new OptimizedDAG.MaterializeQuery(
-                    new OptimizedDAG.TableSink(dbTable, timestampIdx),
-                    expandedScan));
+                    new OptimizedDAG.DatabaseSink(dbTable, processed.getValue()),
+                    processed.getKey()));
+        }
+        //Second, all the tables that are exported
+        int numExports = 1;
+        for (Resolve.ResolvedExport export : exports) {
+            RelNode relnode = export.getRelNode();
+            Pair<RelNode, Optional<Integer>> processed = processWriteVTable(relnode, pipeline);
+            RelNode processedRelnode = processed.getKey();
+            //Pick only the selected keys
+            RelBuilder relBuilder = planner.getRelBuilder().push(processedRelnode);
+            relBuilder.project(relnode.getRowType().getFieldNames().stream()
+                    .map(n -> relBuilder.field(n)).collect(Collectors.toList()));
+            processedRelnode = relBuilder.build();
+            //TODO: check that the rowtype matches the schema of the tablesink (if present)
+            String name = Name.addSuffix(export.getTable().getNameId(),String.valueOf(numExports++));
+            writeDAG.add(new OptimizedDAG.MaterializeQuery(
+                    new OptimizedDAG.ExternalSink(name, export.getSink()),
+                    processedRelnode));
         }
 
         //Stitch together all StreamSourceTable
@@ -109,6 +123,23 @@ public class DAGPlanner {
 //        }).collect(Collectors.toList());
 
         return new OptimizedDAG(writeDAG,readDAG);
+    }
+
+    private Pair<RelNode, Optional<Integer>> processWriteVTable(RelNode scanTable, ExecutionPipeline pipeline) {
+        //Shred the table if necessary before materialization
+        AnnotatedLP processedRel = SQRLLogicalPlanConverter.convert(scanTable, getRelBuilderFactory(),
+                SQRLLogicalPlanConverter.Config.builder()
+                        .startStage(pipeline.getStage(ExecutionEngine.Type.STREAM).get())
+                        .allowStageChange(false)
+                        .build());
+        processedRel = processedRel.postProcess(planner.getRelBuilder(), scanTable.getRowType().getFieldNames());
+        RelNode expandedScan = processedRel.getRelNode();
+        //Expand to full tree
+        expandedScan = planner.transform(WRITE_DAG_STITCHING,expandedScan);
+        //Determine if we need to append a timestamp for nested tables
+        Optional<Integer> timestampIdx = processedRel.getType().hasTimestamp()?
+                Optional.of(processedRel.getTimestamp().getTimestampCandidate().getIndex()):Optional.empty();
+        return Pair.of(expandedScan, timestampIdx);
     }
 
     private Supplier<RelBuilder> getRelBuilderFactory() {

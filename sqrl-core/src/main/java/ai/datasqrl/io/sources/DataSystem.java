@@ -6,25 +6,15 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NonNull;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Optional;
 
 @AllArgsConstructor
 @Getter
 public class DataSystem implements Serializable {
-
-  public enum Type {
-    SOURCE, SINK, SOURCE_AND_SINK;
-
-    public boolean isSource() {
-      return this==SOURCE || this==SOURCE_AND_SINK;
-    }
-
-    public boolean isSink() {
-      return this==SOURCE || this==SOURCE_AND_SINK;
-    }
-  }
 
   Name name;
   DataSystemDiscovery datasource;
@@ -35,7 +25,11 @@ public class DataSystem implements Serializable {
   }
 
   public Collection<TableConfig> discoverTables(ErrorCollector errors) {
-    return datasource.discoverTables(config,errors);
+    return datasource.discoverSources(config,errors);
+  }
+
+  public Optional<TableConfig> discoverSink(@NonNull Name sinkName, @NonNull ErrorCollector errors) {
+    return datasource.discoverSink(sinkName, config, errors);
   }
 
 }

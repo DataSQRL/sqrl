@@ -11,7 +11,7 @@ import java.util.List;
 
 public class FlinkPipelineUtils {
 
-  public static Schema addPrimaryKey(Schema toSchema, OptimizedDAG.TableSink persistTable) {
+  public static Schema addPrimaryKey(Schema toSchema, OptimizedDAG.DatabaseSink persistTable) {
     Schema.Builder builder = Schema.newBuilder();
     List<String> pks = new ArrayList<>();
     List<UnresolvedColumn> columns = toSchema.getColumns();

@@ -7,6 +7,7 @@ import ai.datasqrl.io.impl.file.FilePath;
 import ai.datasqrl.io.sources.DataSystemConfig;
 import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.io.sources.DataSystemDiscovery;
+import ai.datasqrl.io.sources.ExternalDataType;
 import ai.datasqrl.io.sources.dataset.TableConfig;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
@@ -81,13 +82,14 @@ public abstract class KafkaDataSystem {
     }
 
     @Override
-    public boolean requiresFormat() {
-      return false;
+    public boolean requiresFormat(ExternalDataType type) {
+      if (type.isSource()) return false;
+      else return true;
     }
 
 
     @Override
-    public Collection<TableConfig> discoverTables(
+    public Collection<TableConfig> discoverSources(
             @NonNull DataSystemConfig config, @NonNull ErrorCollector errors) {
       List<TableConfig> tables = new ArrayList<>();
       Set<String> topicNames = Collections.EMPTY_SET;
@@ -103,7 +105,7 @@ public abstract class KafkaDataSystem {
               .filter(Predicate.not(Strings::isNullOrEmpty))
               .forEach(name -> {
                 TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
-                tblBuilder.datasource(connectorConfig);
+                tblBuilder.connector(connectorConfig);
 
                 if (format != null) {
                   if (Name.validName(name)) {

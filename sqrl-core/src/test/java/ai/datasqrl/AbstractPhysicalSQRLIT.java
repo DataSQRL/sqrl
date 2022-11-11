@@ -3,6 +3,9 @@ package ai.datasqrl;
 import ai.datasqrl.config.DiscoveryConfiguration;
 import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
+import ai.datasqrl.io.impl.file.DirectoryDataSystem;
+import ai.datasqrl.io.impl.file.FilePath;
+import ai.datasqrl.io.sources.dataset.TableSink;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.physical.database.relational.QueryTemplate;
@@ -15,6 +18,7 @@ import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.local.analyze.ResolveTest;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.queries.APIQuery;
+import ai.datasqrl.util.FileTestUtil;
 import ai.datasqrl.util.ResultSetPrinter;
 import ai.datasqrl.util.SnapshotTest;
 import com.google.common.base.Preconditions;
@@ -25,6 +29,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.*;
@@ -73,7 +78,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
             RelNode rel = planner.getRelBuilder().scan(vt.getNameId()).build();
             queries.add(new APIQuery(tableName, rel));
         }
-        OptimizedDAG dag = dagPlanner.plan(relSchema,queries, session.getPipeline());
+        OptimizedDAG dag = dagPlanner.plan(relSchema,queries, resolvedDag.getExports(), session.getPipeline());
         snapshot.addContent(dag);
         PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
         PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
@@ -97,6 +102,16 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
                                 s -> Stream.of("_uuid", "_ingest_time").noneMatch(p -> s.startsWith(p)), typeFilter))
                         .sorted().collect(Collectors.joining(System.lineSeparator()));
                 snapshot.addContent(content, query.getNameId(), "data");
+            }
+        }
+        for (Resolve.ResolvedExport export : resolvedDag.getExports()) {
+            TableSink sink = export.getSink();
+            if (sink.getConnector() instanceof DirectoryDataSystem.Connector) {
+                DirectoryDataSystem.Connector connector = (DirectoryDataSystem.Connector)sink.getConnector();
+                FilePath path = connector.getPath().resolve(sink.getConfiguration().getIdentifier());
+                Path filePath = Paths.get(path.toString());
+                snapshot.addContent(String.valueOf(FileTestUtil.countLinesInAllFiles(filePath)),
+                        "export",sink.getConfiguration().getIdentifier());
             }
         }
         snapshot.createOrValidate();

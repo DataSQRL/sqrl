@@ -14,6 +14,7 @@ import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaExport;
 import ai.datasqrl.util.SnapshotTest;
 import ai.datasqrl.util.TestDataset;
+import ai.datasqrl.util.data.Retail;
 import ai.datasqrl.util.junit.ArgumentProvider;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -100,7 +101,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
      */
     @Test
     public void generateSchema() {
-//        generateTableConfigAndSchemaInDataDir(Nutshop.INSTANCE);
+        generateTableConfigAndSchemaInDataDir(Retail.INSTANCE);
     }
 
     @SneakyThrows
@@ -114,7 +115,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         ObjectMapper jsonMapper = new ObjectMapper();
         jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
         for (TableSource table : tables) {
-            Path tableConfigFile = destinationDir.resolve(table.getName().getCanonical()+DataSourceLoader.CONFIG_FILE_SUFFIX);
+            Path tableConfigFile = destinationDir.resolve(table.getName().getCanonical()+DataSourceLoader.TABLE_FILE_SUFFIX);
             jsonMapper.writeValue(tableConfigFile.toFile(),table.getConfiguration());
         }
 

@@ -1,0 +1,31 @@
+IMPORT nutshop-medium.Products;
+IMPORT nutshop-medium.Orders TIMESTAMP epoch_to_timestamp(time/1000) AS timestamp;
+
+Orders.items.discount := coalesce(discount, 0.0);
+Orders.items.total := quantity * unit_price - discount;
+Orders.totals := SELECT sum(total) as price, sum(discount) as savings FROM _.items;
+
+Products := DISTINCT Products ON id ORDER BY updated DESC;
+Orders.items.product := JOIN Products ON Products.id = _.productid;
+
+Customers := SELECT DISTINCT o.customerid AS id FROM Orders o;
+Customers.purchases := JOIN Orders ON Orders.customerid = _.id ORDER BY Orders.time DESC;
+
+Customers.spending_by_month :=
+         SELECT round_to_month(p.timestamp) AS month,
+                sum(t.price) AS total_spend,
+                sum(t.savings) AS total_savings
+         FROM _.purchases p JOIN p.totals t
+         GROUP BY month ORDER BY month DESC;
+
+Customers.past_purchases :=
+         SELECT i.productid, count(1) as num_orders, sum(i.quantity) as total_quantity
+         FROM _.purchases.items i
+         GROUP BY i.productid
+         ORDER BY num_orders DESC, total_quantity DESC;
+
+Products.volume_by_day := SELECT round_to_day(o.timestamp) as day, sum(i.quantity) as quantity,
+                                 sum(i.total) as total,
+                                 sum(i.quantity * _.weight_in_gram) as total_weight
+                          FROM _ JOIN Orders.items i ON i.productid = _.id JOIN i.parent o
+                          GROUP BY day ORDER BY day DESC;

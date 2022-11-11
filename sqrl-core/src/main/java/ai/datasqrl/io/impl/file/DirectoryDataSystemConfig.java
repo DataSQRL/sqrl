@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 @Getter
 public abstract class DirectoryDataSystemConfig {
 
-    public static final String SOURCE_TYPE = "dir";
+    public static final String SYSTEM_TYPE = "dir";
     public static final String DEFAULT_PATTERN = "_(\\d+)";
 
     @NonNull @NotNull
@@ -47,8 +47,8 @@ public abstract class DirectoryDataSystemConfig {
         return true;
     }
 
-    public String getSourceType() {
-        return SOURCE_TYPE;
+    public String getSystemType() {
+        return SYSTEM_TYPE;
     }
 
     @JsonIgnore

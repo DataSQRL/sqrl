@@ -13,7 +13,7 @@ public class TableInput extends AbstractExternalTable {
     }
 
     public boolean hasSourceTimestamp() {
-        return dataset.hasSourceTimestamp();
+        return connector.hasSourceTimestamp();
     }
 
     public Format.Parser getParser() {

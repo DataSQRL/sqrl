@@ -12,9 +12,9 @@ import java.util.List;
 
 public class MaterializedTableDDLBuilder {
 
-  public List<SqlDDLStatement> createTables(List<OptimizedDAG.TableSink> createdTables, boolean drop) {
+  public List<SqlDDLStatement> createTables(List<OptimizedDAG.DatabaseSink> createdTables, boolean drop) {
     List<SqlDDLStatement> statements = new ArrayList<>();
-    for (OptimizedDAG.TableSink table : createdTables) {
+    for (OptimizedDAG.DatabaseSink table : createdTables) {
       if (drop) {
         DropTableDDL dropTableDDL = new DropTableDDL(table.getNameId());
         statements.add(dropTableDDL);
@@ -26,7 +26,7 @@ public class MaterializedTableDDLBuilder {
     return statements;
   }
 
-  private CreateTableDDL create(OptimizedDAG.TableSink table) {
+  private CreateTableDDL create(OptimizedDAG.DatabaseSink table) {
     List<String> pk = new ArrayList<>();
     List<String> columns = new ArrayList<>();
 

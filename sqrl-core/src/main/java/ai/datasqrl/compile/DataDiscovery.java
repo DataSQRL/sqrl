@@ -48,7 +48,7 @@ public class DataDiscovery {
         if (dataSystem==null) return List.of();
 
         NamePath path = NamePath.of(dataSystem.getName());
-        List<TableInput> tables = dataSystem.getDatasource().discoverTables(dataSystem.getConfig(),errors)
+        List<TableInput> tables = dataSystem.getDatasource().discoverSources(dataSystem.getConfig(),errors)
                 .stream().map(tblConfig -> tblConfig.initializeInput(errors,path))
                 .filter(tbl -> tbl!=null && streamPreparer.isRawInput(tbl))
                 .collect(Collectors.toList());

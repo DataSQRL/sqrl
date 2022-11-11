@@ -2,10 +2,11 @@ package ai.datasqrl.parse.tree.name;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.io.Serializable;
-import java.util.function.Function;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+
+import java.io.Serializable;
+import java.util.function.Function;
 
 /**
  * Represents the name of a field in the ingested data
@@ -52,6 +53,10 @@ public interface Name extends Serializable, Comparable<Name> {
 
   default Name suffix(String suffix) {
     return append(system(NAME_DELIMITER + suffix));
+  }
+
+  public static String addSuffix(String str, String suffix) {
+    return str + NAME_DELIMITER + suffix;
   }
 
 //    /**

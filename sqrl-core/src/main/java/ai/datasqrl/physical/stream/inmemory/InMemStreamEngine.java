@@ -68,7 +68,7 @@ public class InMemStreamEngine implements StreamEngine {
         @Override
         public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table) {
             Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser, "This method only supports text sources");
-            DataSystemConnector source = table.getDataset();
+            DataSystemConnector source = table.getConnector();
 
             if (source instanceof DirectoryDataSystem.Connector) {
                 DirectoryDataSystem.Connector filesource = (DirectoryDataSystem.Connector)source;

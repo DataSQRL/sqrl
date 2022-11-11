@@ -5,21 +5,34 @@ import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.SnapshotTest;
 import ai.datasqrl.util.data.Retail;
+import lombok.SneakyThrows;
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 
 class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
   private Retail example = Retail.INSTANCE;
+  private Path exportPath = example.getRootPackageDirectory().resolve("export-data");
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
     initialize(IntegrationTestSettings.getFlinkWithDB(), example.getRootPackageDirectory());
     this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
+    if (!Files.isDirectory(exportPath)) Files.createDirectory(exportPath);
+  }
+
+  @AfterEach
+  @SneakyThrows
+  public void cleanupDirectory() {
+    if (Files.isDirectory(exportPath)) FileUtils.deleteDirectory(exportPath.toFile());
   }
 
   @Test
@@ -148,6 +161,8 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("CustomerCount := SELECT c.customerid, c.name, SUM(e.quantity) as quantity FROM Orders o JOIN o.entries e JOIN Customer c on o.customerid = c.customerid GROUP BY c.customerid, c.name");
     builder.add("CountStream := STREAM ON ADD AS SELECT customerid, name, quantity FROM CustomerCount WHERE quantity > 1");
     builder.add("CustomerCount2 := DISTINCT CountStream ON customerid ORDER BY _ingest_time DESC");
+    builder.add("EXPORT CountStream TO print.CountStream");
+    builder.add("EXPORT CountStream TO output.CountStream");
     validate(builder.getScript(), "customercount","countstream","customercount2");
   }
 }

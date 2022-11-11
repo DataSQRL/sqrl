@@ -33,8 +33,8 @@ public class PhysicalPlanner {
 
   public PhysicalPlan plan(OptimizedDAG plan, Optional<JDBCTempDatabase> jdbcTempDatabase) {
     // 1. Create DDL for materialized tables
-    List<OptimizedDAG.TableSink> materializedTables = StreamUtil.filterByClass(
-            plan.getStreamQueries().stream().map(q -> q.getSink()), OptimizedDAG.TableSink.class)
+    List<OptimizedDAG.DatabaseSink> materializedTables = StreamUtil.filterByClass(
+            plan.getStreamQueries().stream().map(q -> q.getSink()), OptimizedDAG.DatabaseSink.class)
             .collect(Collectors.toList());
     List<SqlDDLStatement> statements = new MaterializedTableDDLBuilder()
             .createTables(materializedTables, true);

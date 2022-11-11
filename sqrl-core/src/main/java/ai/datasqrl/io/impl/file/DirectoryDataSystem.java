@@ -6,6 +6,7 @@ import ai.datasqrl.io.formats.FormatConfiguration;
 import ai.datasqrl.io.sources.DataSystemConfig;
 import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.io.sources.DataSystemDiscovery;
+import ai.datasqrl.io.sources.ExternalDataType;
 import ai.datasqrl.io.sources.dataset.TableConfig;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
@@ -69,12 +70,13 @@ public abstract class DirectoryDataSystem {
     }
 
     @Override
-    public boolean requiresFormat() {
-      return false;
+    public boolean requiresFormat(ExternalDataType type) {
+      if (type.isSource()) return false;
+      else return true;
     }
 
     @Override
-    public Collection<TableConfig> discoverTables(DataSystemConfig config, ErrorCollector errors) {
+    public Collection<TableConfig> discoverSources(DataSystemConfig config, ErrorCollector errors) {
       Map<Name, TableConfig> tablesByName = new HashMap<>();
       gatherTables(path, tablesByName, config, errors);
       return tablesByName.values();
@@ -105,7 +107,7 @@ public abstract class DirectoryDataSystem {
               TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
               tblBuilder.identifier(components.getName());
               tblBuilder.name(components.getName());
-              tblBuilder.datasource(connectorConfig);
+              tblBuilder.connector(connectorConfig);
               //infer format if not completely specified
               format.initialize(new InputPreview(tblBuilder.build()), errors.resolve("format"));
               tblBuilder.format(format);
@@ -145,6 +147,16 @@ public abstract class DirectoryDataSystem {
           files.add(p);
         }
       }
+    }
+
+    @Override
+    public Optional<TableConfig> discoverSink(@NonNull Name sinkName, @NonNull DataSystemConfig config, @NonNull ErrorCollector errors) {
+      TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
+      tblBuilder.type(ExternalDataType.SINK);
+      tblBuilder.identifier(sinkName.getCanonical());
+      tblBuilder.name(sinkName.getDisplay());
+      tblBuilder.connector(connectorConfig);
+      return Optional.of(tblBuilder.build());
     }
 
     @Value

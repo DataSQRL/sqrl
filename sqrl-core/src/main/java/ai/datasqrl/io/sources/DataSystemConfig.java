@@ -23,11 +23,16 @@ public class DataSystemConfig extends SharedConfiguration implements Serializabl
   @OptionalMinString
   String name;
   @Valid @NonNull @NotNull
-  DataSystemDiscoveryConfig datasource;
+  DataSystemDiscoveryConfig datadiscovery;
 
   public DataSystem initialize(ErrorCollector errors) {
-    DataSystemDiscovery source = datasource.initialize(errors);
-    if (!rootInitialize(errors,source.requiresFormat())) return null;
+    if (!rootInitialize(errors)) return null;
+    DataSystemDiscovery source = datadiscovery.initialize(errors);
+    if (source == null) return null;
+    if (source.requiresFormat(getType()) && getFormat()==null) {
+      errors.fatal("Need to configure a format");
+      return null;
+    }
 
     if (Strings.isNullOrEmpty(name)) {
       Optional<String> discoveredName = source.getDefaultName();

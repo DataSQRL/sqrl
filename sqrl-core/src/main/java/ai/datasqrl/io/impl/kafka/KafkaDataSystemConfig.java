@@ -25,7 +25,7 @@ import java.util.Properties;
 @Getter
 public abstract class KafkaDataSystemConfig {
 
-    public static final String SOURCE_TYPE = "kafka";
+    public static final String SYSTEM_TYPE = "kafka";
 
     @NonNull @NotNull @NotEmpty
     List<String> servers;
@@ -55,8 +55,8 @@ public abstract class KafkaDataSystemConfig {
         }
     }
 
-    public String getSourceType() {
-        return SOURCE_TYPE;
+    public String getSystemType() {
+        return SYSTEM_TYPE;
     }
 
     @JsonIgnore

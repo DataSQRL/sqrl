@@ -2,9 +2,11 @@ package ai.datasqrl.io.sources;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.dataset.TableConfig;
+import ai.datasqrl.parse.tree.name.Name;
 import lombok.NonNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 public interface DataSystemDiscovery {
@@ -16,9 +18,16 @@ public interface DataSystemDiscovery {
      */
     @NonNull Optional<String> getDefaultName();
 
-    boolean requiresFormat();
+    boolean requiresFormat(ExternalDataType type);
 
-    Collection<TableConfig> discoverTables(@NonNull DataSystemConfig config,
-                                           @NonNull ErrorCollector errors);
+    default Collection<TableConfig> discoverSources(@NonNull DataSystemConfig config,
+                                            @NonNull ErrorCollector errors) {
+        return Collections.EMPTY_LIST;
+    }
+
+    default Optional<TableConfig> discoverSink(@NonNull Name sinkName, @NonNull DataSystemConfig config,
+                                               @NonNull ErrorCollector errors) {
+        return Optional.empty();
+    }
 
 }

@@ -41,7 +41,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriterConfig;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +60,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.UnaryOperator;
 
 public class Compiler {
 
@@ -121,7 +119,7 @@ public class Compiler {
     CalciteSchema relSchema = env.getRelSchema();
     //todo comment out
 //    addAllQueryTables(env.getSession().getPlanner(), relSchema, queries);
-    OptimizedDAG dag = dagPlanner.plan(relSchema,queries, env.getSession().getPipeline());
+    OptimizedDAG dag = dagPlanner.plan(relSchema,queries, env.getExports(), env.getSession().getPipeline());
 
     return dag;
   }

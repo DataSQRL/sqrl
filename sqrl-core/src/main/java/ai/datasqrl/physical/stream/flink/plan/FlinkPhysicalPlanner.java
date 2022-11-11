@@ -1,10 +1,15 @@
 package ai.datasqrl.physical.stream.flink.plan;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
+import ai.datasqrl.io.formats.FormatConfiguration;
+import ai.datasqrl.io.impl.file.DirectoryDataSystem;
+import ai.datasqrl.io.impl.print.PrintDataSystem;
+import ai.datasqrl.io.sources.dataset.TableSink;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.util.db.JDBCTempDatabase;
+import com.google.common.base.Strings;
 import graphql.com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.ArrayUtils;
@@ -38,45 +43,73 @@ public class FlinkPhysicalPlanner {
     StreamStatementSet stmtSet = tEnv.createStatementSet();
     //TODO: push down filters across queries to determine if we can constraint sources by time for efficiency (i.e. only load the subset of the stream that is required)
     for (OptimizedDAG.MaterializeQuery query : streamQueries) {
-      Preconditions.checkArgument(query.getSink() instanceof OptimizedDAG.TableSink, "Export not yet implemented");
-      OptimizedDAG.TableSink tblsink = ((OptimizedDAG.TableSink) query.getSink());
-      String dbSinkName = tblsink.getNameId() + "_sink";
-      Preconditions.checkArgument(!ArrayUtils.contains(tEnv.listTables(),dbSinkName),"Table already defined: %s",dbSinkName);
+      String flinkSinkName = query.getSink().getName() + "_sink";
+      Preconditions.checkArgument(!ArrayUtils.contains(tEnv.listTables(),flinkSinkName),"Table already defined: %s",flinkSinkName);
       Table tbl = tableRegisterer.makeTable(query.getRelNode());
 
-      Schema tblSchema = FlinkPipelineUtils.addPrimaryKey(tbl.getSchema().toSchema(), tblsink);
+      Schema tblSchema = tbl.getSchema().toSchema();
 
-      TableDescriptor dbDescriptor;
-      if (jdbcTempDatabase.isPresent()) {
-        dbDescriptor = TableDescriptor.forConnector("jdbc")
-            .schema(tblSchema)
-            .option("url", jdbcTempDatabase.get().getPostgreSQLContainer().getJdbcUrl())
-            .option("table-name", tblsink.getNameId())
-            .option("username", jdbcTempDatabase.get().getPostgreSQLContainer().getUsername())
-            .option("password", jdbcTempDatabase.get().getPostgreSQLContainer().getPassword())
-            .build();
+      TableDescriptor sinkDescriptor;
+      if (query.getSink() instanceof  OptimizedDAG.DatabaseSink) {
+        OptimizedDAG.DatabaseSink dbSink = ((OptimizedDAG.DatabaseSink) query.getSink());
+        tblSchema = FlinkPipelineUtils.addPrimaryKey(tblSchema, dbSink);
+        if (jdbcTempDatabase.isPresent()) {
+          sinkDescriptor = TableDescriptor.forConnector("jdbc")
+                  .schema(tblSchema)
+                  .option("url", jdbcTempDatabase.get().getPostgreSQLContainer().getJdbcUrl())
+                  .option("table-name", dbSink.getName())
+                  .option("username", jdbcTempDatabase.get().getPostgreSQLContainer().getUsername())
+                  .option("password", jdbcTempDatabase.get().getPostgreSQLContainer().getPassword())
+                  .build();
+        } else {
+          sinkDescriptor = TableDescriptor.forConnector("jdbc")
+                  .schema(tblSchema)
+                  .option("url", jdbcConfiguration.getDbURL())
+                  .option("table-name", dbSink.getName())
+                  .option("username", jdbcConfiguration.getUser())
+                  .option("password", jdbcConfiguration.getPassword())
+                  .build();
+        }
       } else {
-        dbDescriptor = TableDescriptor.forConnector("jdbc")
-            .schema(tblSchema)
-            .option("url", jdbcConfiguration.getDbURL())
-            .option("table-name", tblsink.getNameId())
-            .option("username", jdbcConfiguration.getUser())
-            .option("password", jdbcConfiguration.getPassword())
-            .build();
+        OptimizedDAG.ExternalSink extSink = (OptimizedDAG.ExternalSink) query.getSink();
+        TableSink tableSink = extSink.getSink();
+        if (tableSink.getConnector() instanceof PrintDataSystem.Connector) {
+          PrintDataSystem.Connector connector = (PrintDataSystem.Connector) tableSink.getConnector();
+          String name = tableSink.getName().getDisplay();
+          if (!Strings.isNullOrEmpty(connector.getPrefix())) name = connector.getPrefix() + "_" + name;
+          sinkDescriptor = TableDescriptor.forConnector("print")
+                  .schema(tblSchema)
+                  .option("print-identifier", name)
+                  .build();
+        } else if (tableSink.getConnector() instanceof DirectoryDataSystem.Connector) {
+          DirectoryDataSystem.Connector connector = (DirectoryDataSystem.Connector) tableSink.getConnector();
+          TableDescriptor.Builder tblBuilder = TableDescriptor.forConnector("filesystem")
+                  .schema(tblSchema)
+                  .option("path", connector.getPath().resolve(tableSink.getConfiguration().getIdentifier()).toString());
+          addFormat(tblBuilder, tableSink.getConfiguration().getFormat());
+          sinkDescriptor = tblBuilder.build();
+        } else {
+          throw new UnsupportedOperationException("Not yet implemented: " + tableSink.getConnector().getClass());
+        }
       }
-      tEnv.createTemporaryTable(dbSinkName, dbDescriptor);
-      stmtSet.addInsert(dbSinkName, tbl);
-
-//      DataStream<Row> changeStream = tEnv.toChangelogStream(tbl);
-//      Table subTbl = tEnv.fromChangelogStream(changeStream,tblSchema, ChangelogMode.insertOnly());
-//
-//      TableDescriptor subDescriptor = TableDescriptor.forConnector("print")
-//              .option("print-identifier",subSinkName)
-//              .schema(tblSchema).build();
-//      tEnv.createTemporaryTable(subSinkName, subDescriptor);
-//      stmtSet.addInsert(subSinkName, subTbl);
+      tEnv.createTemporaryTable(flinkSinkName, sinkDescriptor);
+      stmtSet.addInsert(flinkSinkName, tbl);
     }
 
     return new FlinkStreamPhysicalPlan(stmtSet);
   }
+
+  private void addFormat(TableDescriptor.Builder tblBuilder, FormatConfiguration formatConfig) {
+    switch (formatConfig.getFileFormat()) {
+      case CSV:
+        tblBuilder.format("csv");
+        break;
+      case JSON:
+        tblBuilder.format("json");
+        break;
+      default: throw new UnsupportedOperationException("Unsupported format: " + formatConfig.getFileFormat());
+    }
+  }
+
+
 }

@@ -24,6 +24,6 @@ public class TableSource extends TableInput {
   }
 
   public InputTableSchema getSchema() {
-    return new InputTableSchema(schema, dataset.hasSourceTimestamp());
+    return new InputTableSchema(schema, connector.hasSourceTimestamp());
   }
 }
