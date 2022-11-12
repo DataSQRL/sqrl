@@ -2,6 +2,7 @@ package ai.datasqrl.plan.global;
 
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ContiguousSet;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -32,6 +33,15 @@ public class IndexSelection {
     public IndexSelection prune() {
         if (remainingIndexColumns.size()<2) return this;
         return new IndexSelection(table,equalityIndexColumns,List.of(remainingIndexColumns.get(0)));
+    }
+
+    public boolean coveredByPrimaryKey(boolean isBtree) {
+        if (remainingIndexColumns.size()>(isBtree?1:0)) return false;
+        //The indexed columns must be part of the primary key columns and must be in order starting from first
+        List<IndexColumn> columns = getColumns();
+        if (columns.size()>table.getNumPrimaryKeys()) return false;
+        return columns.stream().map(IndexColumn::getColumnIndex).collect(Collectors.toList())
+                .equals(ContiguousSet.closedOpen(0,columns.size()).asList());
     }
 
     public List<IndexColumn> getColumns() {

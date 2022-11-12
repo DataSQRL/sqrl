@@ -25,7 +25,9 @@ public class IndexSelector {
 
     public Collection<IndexSelection> optimizeIndexes(Collection<IndexSelection> indexes) {
         //Prune down to database indexes and remove duplicates
-        return indexes.stream().map(IndexSelection::prune).collect(Collectors.toSet());
+        return indexes.stream().map(IndexSelection::prune)
+                .filter(index -> !index.coveredByPrimaryKey(true))
+                .collect(Collectors.toSet());
     }
 
 }
