@@ -4,9 +4,7 @@ import ai.datasqrl.plan.calcite.rules.DAGExpansionRule;
 import ai.datasqrl.plan.calcite.rules.SQRLPrograms;
 import lombok.Value;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
-import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelTrait;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.metadata.DefaultRelMetadataProvider;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.tools.Program;
@@ -73,8 +71,6 @@ public class OptimizationStage {
     public static final OptimizationStage READ_QUERY_OPTIMIZATION = new OptimizationStage("Volcano",
             SQRLPrograms.ENUMERABLE_VOLCANO, Optional.of(EnumerableConvention.INSTANCE)
     );
-
-
 
     //Enumerable
 //    public static final OptimizationStage SQRL_ENUMERABLE_HEP = new OptimizationStage("SQRL2Enumerable",
