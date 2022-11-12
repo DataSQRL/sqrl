@@ -63,7 +63,6 @@ public class OptimizedDAG {
 
     APIQuery query;
     RelNode relNode;
-    List<IndexSelection> indexes;
 
   }
 

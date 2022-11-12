@@ -46,7 +46,6 @@ public class DAGPlanner {
         StreamUtil.filterByClass(queryTables, ProxySourceRelationalTable.class).forEach(this::finalizeSourceTable);
         Preconditions.checkArgument(queryTables.stream().allMatch(table -> !table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp()));
 
-        IndexSelector queryPlanner = new IndexSelector(planner);
         //Plan API queries and find all tables that need to be materialized
         List<OptimizedDAG.ReadQuery> readDAG = new ArrayList<>();
         VisitTableScans tableScanVisitor = new VisitTableScans();
@@ -65,9 +64,7 @@ public class DAGPlanner {
             relNode = rewritten.getRelNode();
             relNode = planner.transform(READ_DAG_STITCHING,relNode);
             relNode.accept(tableScanVisitor);
-            List<IndexSelection> selectedIndexes = queryPlanner.getIndexSelection(relNode);
-            //TODO: Push down filters into queries to determine indexes needed on tables
-            readDAG.add(new OptimizedDAG.ReadQuery(query,relNode, selectedIndexes));
+            readDAG.add(new OptimizedDAG.ReadQuery(query,relNode));
         }
         Preconditions.checkArgument(tableScanVisitor.scanTables.stream().allMatch(t -> t instanceof VirtualRelationalTable));
         Set<VirtualRelationalTable> tableSinks = StreamUtil.filterByClass(tableScanVisitor.scanTables,VirtualRelationalTable.class).collect(Collectors.toSet());

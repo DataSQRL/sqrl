@@ -109,7 +109,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     }
 
     public RelBuilder makeRelBuilder() {
-        return relBuilderFactory.get().transform(config -> config.withPruneInputOfAggregate(false));
+        RelBuilder rel = relBuilderFactory.get().transform(config -> config.withPruneInputOfAggregate(false));
+        return rel;
     }
 
     @Override

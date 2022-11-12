@@ -10,14 +10,14 @@ import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.flink.plan.FlinkPhysicalPlanner;
 import ai.datasqrl.physical.stream.flink.plan.FlinkStreamPhysicalPlan;
 import ai.datasqrl.plan.calcite.Planner;
+import ai.datasqrl.plan.global.IndexSelection;
+import ai.datasqrl.plan.global.IndexSelector;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.db.JDBCTempDatabase;
 import lombok.AllArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -33,12 +33,17 @@ public class PhysicalPlanner {
 
   public PhysicalPlan plan(OptimizedDAG plan, Optional<JDBCTempDatabase> jdbcTempDatabase) {
     // 1. Create DDL for materialized tables
+    List<SqlDDLStatement> ddlStatements = new ArrayList<>();
+    MaterializedTableDDLBuilder dbBuilder = new MaterializedTableDDLBuilder();
     List<OptimizedDAG.DatabaseSink> materializedTables = StreamUtil.filterByClass(
             plan.getStreamQueries().stream().map(q -> q.getSink()), OptimizedDAG.DatabaseSink.class)
             .collect(Collectors.toList());
-    List<SqlDDLStatement> statements = new MaterializedTableDDLBuilder()
-            .createTables(materializedTables, true);
-    //TODO: add indexes to statements
+    IndexSelector indexSelector = new IndexSelector(planner);
+    ddlStatements.addAll(dbBuilder.createTables(materializedTables,true));
+    Collection<IndexSelection> indexSelection = plan.getDatabaseQueries().stream().map(indexSelector::getIndexSelection)
+            .flatMap(List::stream).collect(Collectors.toList());
+    indexSelection = indexSelector.optimizeIndexes(indexSelection);
+    ddlStatements.addAll(dbBuilder.createIndexes(indexSelection, true));
 
     // 2. Plan Physical Stream Graph
     FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(streamEngine, dbConnection, jdbcTempDatabase)
@@ -48,6 +53,6 @@ public class PhysicalPlanner {
     QueryBuilder queryBuilder = new QueryBuilder(dbConnection.getDialect(),planner.getRelBuilder().getRexBuilder());
     Map<APIQuery, QueryTemplate> databaseQueries = queryBuilder.planQueries(plan.getDatabaseQueries());
 
-    return new PhysicalPlan(dbConnection, statements, streamPlan, databaseQueries);
+    return new PhysicalPlan(dbConnection, ddlStatements, streamPlan, databaseQueries);
   }
 }
