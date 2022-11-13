@@ -4,7 +4,9 @@ import ai.datasqrl.plan.calcite.rules.DAGExpansionRule;
 import ai.datasqrl.plan.calcite.rules.SQRLPrograms;
 import lombok.Value;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
+import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelTrait;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.metadata.DefaultRelMetadataProvider;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.tools.Program;
@@ -46,7 +48,7 @@ public class OptimizationStage {
     ====== DEFINITION OF ACTUAL STAGES
      */
 
-    public static final OptimizationStage PUSH_FILTER_INTO_JOIN = new OptimizationStage("PushDownProjections",
+    public static final OptimizationStage PUSH_FILTER_INTO_JOIN = new OptimizationStage("PushFilterIntoJoin",
             Programs.hep(List.of(
                     CoreRules.FILTER_INTO_JOIN
                     ), false, DefaultRelMetadataProvider.INSTANCE),
@@ -63,9 +65,16 @@ public class OptimizationStage {
     public static final OptimizationStage READ2WRITE_STITCHING = new OptimizationStage("Read2WriteAdjustment",
             Programs.hep(List.of(new DAGExpansionRule.Read2Write()), false, DefaultRelMetadataProvider.INSTANCE),
             Optional.empty());
+
     public static final OptimizationStage VOLCANO = new OptimizationStage("Volcano",
         SQRLPrograms.ENUMERABLE_VOLCANO, Optional.of(EnumerableConvention.INSTANCE)
         );
+
+    public static final OptimizationStage READ_QUERY_OPTIMIZATION = new OptimizationStage("Volcano",
+            SQRLPrograms.ENUMERABLE_VOLCANO, Optional.of(EnumerableConvention.INSTANCE)
+    );
+
+
 
     //Enumerable
 //    public static final OptimizationStage SQRL_ENUMERABLE_HEP = new OptimizationStage("SQRL2Enumerable",

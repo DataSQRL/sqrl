@@ -38,6 +38,7 @@ public class PhysicalPlanner {
             .collect(Collectors.toList());
     List<SqlDDLStatement> statements = new MaterializedTableDDLBuilder()
             .createTables(materializedTables, true);
+    //TODO: add indexes to statements
 
     // 2. Plan Physical Stream Graph
     FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(streamEngine, dbConnection, jdbcTempDatabase)

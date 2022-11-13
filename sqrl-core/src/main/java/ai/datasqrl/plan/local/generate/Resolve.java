@@ -479,7 +479,7 @@ public class Resolve {
 
     RelNode relNode = env.session.planner.rel(op.getQuery()).rel;
 
-    //Optimization prepass
+    //Optimization prepass: TODO: why are we doing this here?
     relNode = env.session.planner.transform(OptimizationStage.PUSH_FILTER_INTO_JOIN,
         relNode);
 
