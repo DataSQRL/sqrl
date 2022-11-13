@@ -11,8 +11,10 @@ import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.physical.PhysicalPlan;
+import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.global.DAGPlanner;
 import ai.datasqrl.plan.global.OptimizedDAG;
+import ai.datasqrl.plan.global.OptimizedDAG.ReadQuery;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.data.Retail;
@@ -26,6 +28,7 @@ import java.nio.file.Path;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.rel.RelNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +72,15 @@ class SchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     /// plan dag
     DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner());
     OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries, env.getExports(), env.getSession().getPipeline());
+
+    for (ReadQuery query : dag.getDatabaseQueries()) {
+      RelNode relNode = env.getSession().getPlanner()
+          .transform(
+              OptimizationStage.VOLCANO,
+              query.getRelNode()
+          );
+      System.out.println(relNode);
+    }
 
   }
 }

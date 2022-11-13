@@ -2,7 +2,10 @@ package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.plan.calcite.rules.DAGExpansionRule;
 import lombok.Value;
+import org.apache.calcite.adapter.enumerable.EnumerableConvention;
+import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.plan.RelTrait;
+import org.apache.calcite.plan.volcano.SQRLPrograms;
 import org.apache.calcite.rel.metadata.DefaultRelMetadataProvider;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.tools.Program;
@@ -61,7 +64,9 @@ public class OptimizationStage {
     public static final OptimizationStage READ2WRITE_STITCHING = new OptimizationStage("Read2WriteAdjustment",
             Programs.hep(List.of(new DAGExpansionRule.Read2Write()), false, DefaultRelMetadataProvider.INSTANCE),
             Optional.empty());
-
+    public static final OptimizationStage VOLCANO = new OptimizationStage("Volcano",
+        SQRLPrograms.ENUMERABLE_VOLCANO, Optional.of(EnumerableConvention.INSTANCE)
+        );
 
     //Enumerable
 //    public static final OptimizationStage SQRL_ENUMERABLE_HEP = new OptimizationStage("SQRL2Enumerable",

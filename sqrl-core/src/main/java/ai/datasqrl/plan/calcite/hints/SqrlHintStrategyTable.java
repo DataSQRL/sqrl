@@ -17,6 +17,7 @@ public class SqrlHintStrategyTable {
       .hintStrategy(TopNHint.Type.TOP_N.name(), HintPredicates.PROJECT)
       .hintStrategy(NOOP, HintPredicates.PROJECT)
       .hintStrategy(WatermarkHint.HINT_NAME, HintPredicates.or(HintPredicates.PROJECT,HintPredicates.TABLE_SCAN))
+      .hintStrategy(JoinCostHint.HINT_NAME, HintPredicates.JOIN)
       .build();
 
 }

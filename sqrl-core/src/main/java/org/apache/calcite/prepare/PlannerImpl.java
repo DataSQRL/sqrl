@@ -133,6 +133,9 @@ public class PlannerImpl implements Planner, ViewExpander {
     this.connectionConfig = connConfig(context, parserConfig);
     this.typeSystem = config.getTypeSystem();
     this.planner = new VolcanoPlanner(costFactory, context);
+    //add default traits
+    traitDefs.forEach(planner::addRelTraitDef);
+
     this.typeFactory = PlannerFactory.getTypeFactory();
     final RexBuilder rexBuilder = createRexBuilder();
     cluster = RelOptCluster.create(
