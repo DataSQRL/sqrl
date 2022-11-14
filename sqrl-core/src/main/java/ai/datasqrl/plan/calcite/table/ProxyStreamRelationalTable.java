@@ -17,10 +17,11 @@ public class ProxyStreamRelationalTable extends ProxySourceRelationalTable {
   private final StreamRelationalTable baseTable;
 
   public ProxyStreamRelationalTable(@NonNull Name rootTableId, @NonNull TimestampHolder.Base timestamp,
-                                    RelNode relNode, StreamRelationalTable baseTable, ExecutionStage execution) {
+                                    RelNode relNode, StreamRelationalTable baseTable, ExecutionStage execution,
+                                    TableStatistic tableStatistic) {
     super(rootTableId, TableType.STREAM, relNode, PullupOperator.Container.EMPTY, timestamp,
             1,
-            TableStatistic.UNKNOWN,
+            tableStatistic,
             execution);
     this.baseTable = baseTable;
   }

@@ -6,15 +6,15 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.physical.PhysicalPlan;
-import ai.datasqrl.plan.calcite.OptimizationStage;
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.global.DAGPlanner;
 import ai.datasqrl.plan.global.IndexSelection;
 import ai.datasqrl.plan.global.IndexSelector;
 import ai.datasqrl.plan.global.OptimizedDAG;
-import ai.datasqrl.plan.global.OptimizedDAG.ReadQuery;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.queries.APIQuery;
+import ai.datasqrl.util.CalciteWriter;
 import ai.datasqrl.util.data.Retail;
 import ai.datasqrl.util.data.Retail.RetailScriptNames;
 import lombok.SneakyThrows;
@@ -25,11 +25,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import lombok.SneakyThrows;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.rel.RelNode;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -73,6 +68,11 @@ class SchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     /// plan dag
     DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner());
     OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries, env.getExports(), env.getSession().getPipeline());
+
+    CalciteUtil.getTables(env.getRelSchema(), VirtualRelationalTable.class)
+            .stream().forEach(vt -> {
+              System.out.println(vt.getNameId() + ": " + CalciteWriter.toString(vt.getStatistic()));
+            });
 
     IndexSelector indexSelector = new IndexSelector(env.getSession().getPlanner());
     for (OptimizedDAG.ReadQuery query : dag.getDatabaseQueries()) {

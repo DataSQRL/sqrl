@@ -6,13 +6,17 @@ import ai.datasqrl.plan.calcite.util.IndexMap;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.builder.VirtualTable;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ContiguousSet;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.schema.Statistic;
+import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.util.ImmutableBitSet;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -100,6 +104,46 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     return queryRowType.getFieldCount();
   }
 
+  private transient Statistic statistic = null;
+
+  @Override
+  public Statistic getStatistic() {
+    if (statistic == null) {
+      TableStatistic tblStats = getTableStatistic();
+      Statistic stats;
+      if (tblStats.isUnknown()) {
+        //TODO: log warning;
+        stats = Statistics.UNKNOWN;
+      } else {
+        ArrayList<ImmutableBitSet> keys = new ArrayList<>();
+        //Add indexes for all columns and all pairs of columns
+        generateKeys(new int[1], 0, keys);
+        generateKeys(new int[2], 0, keys);
+        generateKeys(new int[3], 0, keys);
+        ImmutableBitSet primaryKey = ImmutableBitSet.of(ContiguousSet.closedOpen(0, getNumPrimaryKeys()));
+        if (!keys.contains(primaryKey)) keys.add(primaryKey);
+        stats = Statistics.of(tblStats.getRowCount(), keys);
+        statistic = stats;
+      }
+      return stats;
+    }
+    return statistic;
+  }
+
+  private void generateKeys(int[] key, int depth, Collection<ImmutableBitSet> keys) {
+    if (depth>=key.length) {
+      keys.add(ImmutableBitSet.of(key));
+      return;
+    }
+    int start = (depth==0)?0:key[depth-1]+1;
+    for (int i = start; i < getNumColumns(); i++) {
+      key[depth] = i;
+      generateKeys(key,depth+1, keys);
+    }
+  }
+
+  abstract TableStatistic getTableStatistic();
+
 
   @Getter
   public static class Root extends VirtualRelationalTable {
@@ -139,6 +183,11 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     @Override
     public int getNumParentPks() {
       return 0;
+    }
+
+    @Override
+    TableStatistic getTableStatistic() {
+      return base.getTableStatistic();
     }
 
   }
@@ -184,6 +233,12 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     @Override
     public int getNumParentPks() {
       return parent.getNumPrimaryKeys();
+    }
+
+    @Override
+    TableStatistic getTableStatistic() {
+      if (numLocalPks>0) return parent.getTableStatistic().nested();
+      else return parent.getTableStatistic();
     }
 
     public void appendTimestampColumn(@NonNull RelDataTypeField timestampField, @NonNull RelDataTypeFactory typeFactory) {
