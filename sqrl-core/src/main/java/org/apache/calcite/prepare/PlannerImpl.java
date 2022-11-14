@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 
 import ai.datasqrl.SqrlCalciteCatalogReader;
 import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.calcite.SqrlRelMetadataProvider;
 import ai.datasqrl.plan.calcite.rules.EnumerableNestedLoopJoinRule;
 import ai.datasqrl.plan.calcite.rules.SqrlRelMetadataQuery;
 import java.io.Reader;
@@ -383,7 +384,7 @@ public class PlannerImpl implements Planner, ViewExpander {
 //    ensure(State.STATE_5_CONVERTED);
     rel.getCluster().setMetadataProvider(
         new org.apache.calcite.rel.metadata.CachingRelMetadataProvider(
-            requireNonNull(rel.getCluster().getMetadataProvider(), "metadataProvider"),
+            new SqrlRelMetadataProvider(),
             rel.getCluster().getPlanner()));
     rel.getCluster().setMetadataQuerySupplier(SqrlRelMetadataQuery::new);
     Program program = programs.get(ruleSetIndex);
