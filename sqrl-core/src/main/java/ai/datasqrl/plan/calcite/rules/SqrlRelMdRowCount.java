@@ -7,7 +7,7 @@ import org.apache.calcite.rel.metadata.RelMdRowCount;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 
 public class SqrlRelMdRowCount extends RelMdRowCount
-    implements BuiltInMetadata.RowCount.Handler{
+    implements BuiltInMetadata.RowCount.Handler {
 
     public Double getRowCount(Join rel, RelMetadataQuery mq) {
         double rowCount = super.getRowCount(rel,mq);
