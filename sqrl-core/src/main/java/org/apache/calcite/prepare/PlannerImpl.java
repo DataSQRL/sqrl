@@ -16,9 +16,14 @@
  */
 package org.apache.calcite.prepare;
 
+import static java.util.Objects.requireNonNull;
+
 import ai.datasqrl.SqrlCalciteCatalogReader;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.rules.EnumerableNestedLoopJoinRule;
+import ai.datasqrl.plan.calcite.rules.SqrlRelMetadataQuery;
+import java.io.Reader;
+import java.util.List;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
@@ -26,8 +31,15 @@ import org.apache.calcite.config.CalciteConnectionProperty;
 import org.apache.calcite.config.CalciteSystemProperty;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
-import org.apache.calcite.plan.*;
+import org.apache.calcite.plan.Context;
+import org.apache.calcite.plan.ConventionTraitDef;
+import org.apache.calcite.plan.RelOptCluster;
+import org.apache.calcite.plan.RelOptCostFactory;
+import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelOptTable.ViewExpander;
+import org.apache.calcite.plan.RelOptUtil;
+import org.apache.calcite.plan.RelTraitDef;
+import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.plan.volcano.VolcanoPlanner;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
@@ -48,16 +60,15 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.RelDecorrelator;
 import org.apache.calcite.sql2rel.SqlRexConvertletTable;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
-import org.apache.calcite.tools.*;
+import org.apache.calcite.tools.FrameworkConfig;
+import org.apache.calcite.tools.Planner;
+import org.apache.calcite.tools.Program;
+import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.tools.ValidationException;
 import org.apache.calcite.util.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-
-import java.io.Reader;
-import java.util.List;
-
-import static java.util.Objects.requireNonNull;
 
 /*
  * Copied from Calcite.
@@ -374,6 +385,7 @@ public class PlannerImpl implements Planner, ViewExpander {
         new org.apache.calcite.rel.metadata.CachingRelMetadataProvider(
             requireNonNull(rel.getCluster().getMetadataProvider(), "metadataProvider"),
             rel.getCluster().getPlanner()));
+    rel.getCluster().setMetadataQuerySupplier(SqrlRelMetadataQuery::new);
     Program program = programs.get(ruleSetIndex);
     return program.run(requireNonNull(planner, "planner"),
         rel, requiredOutputTraits, ImmutableList.of(),
