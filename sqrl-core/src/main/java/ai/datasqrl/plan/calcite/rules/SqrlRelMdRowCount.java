@@ -2,10 +2,12 @@ package ai.datasqrl.plan.calcite.rules;
 
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
 import org.apache.calcite.rel.core.Join;
+import org.apache.calcite.rel.metadata.BuiltInMetadata;
 import org.apache.calcite.rel.metadata.RelMdRowCount;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 
-public class SqrlRelMdRowCount extends RelMdRowCount {
+public class SqrlRelMdRowCount extends RelMdRowCount
+    implements BuiltInMetadata.RowCount.Handler{
 
     public Double getRowCount(Join rel, RelMetadataQuery mq) {
         double rowCount = super.getRowCount(rel,mq);

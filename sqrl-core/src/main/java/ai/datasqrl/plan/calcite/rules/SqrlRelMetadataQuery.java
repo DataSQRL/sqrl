@@ -1,26 +1,31 @@
 package ai.datasqrl.plan.calcite.rules;
 
-import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
+import static org.checkerframework.checker.nullness.NullnessUtil.castNonNull;
+
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.Join;
-import org.apache.calcite.rel.logical.LogicalJoin;
+import org.apache.calcite.rel.metadata.BuiltInMetadata;
+import org.apache.calcite.rel.metadata.BuiltInMetadata.RowCount;
+import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
+import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 
+
 public class SqrlRelMetadataQuery extends RelMetadataQuery {
+  BuiltInMetadata.RowCount.Handler rowCountHandler;
+  public SqrlRelMetadataQuery() {
+    super();
+    this.rowCountHandler = new SqrlRelMdRowCount();
+  }
 
   @Override
   public Double getRowCount(RelNode rel) {
-    if (rel instanceof Join) {
-      Join join = (Join) rel;
-      double rowCount = super.getRowCount(rel);
-      if (rel instanceof EnumerableNestedLoopJoin) {
-        rowCount = rowCount + 2 * super.getRowCount(join.getLeft());
-        //Undo the factor 10 penalty from EnumerableNestedLoopJoin
-        rowCount = rowCount/10;
+    for (;;) {
+      try {
+        Double result = rowCountHandler.getRowCount(rel, this);
+        return RelMdUtil.validateResult(castNonNull(result));
+      } catch (JaninoRelMetadataProvider.NoHandler e) {
+        rowCountHandler = revise(e.relClass, BuiltInMetadata.RowCount.DEF);
       }
-      return rowCount;
     }
-
-    return super.getRowCount(rel);
   }
 }
