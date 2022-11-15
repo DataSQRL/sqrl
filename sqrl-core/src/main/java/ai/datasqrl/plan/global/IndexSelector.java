@@ -4,6 +4,8 @@ import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.adapter.enumerable.EnumerableFilter;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
@@ -17,30 +19,82 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static ai.datasqrl.plan.calcite.OptimizationStage.READ_QUERY_OPTIMIZATION;
 
 @AllArgsConstructor
 public class IndexSelector {
 
-    private final Planner planner;
+    public static final double DEFAULT_COST_THRESHOLD = 0.95;
 
-    public List<IndexSelection> getIndexSelection(OptimizedDAG.ReadQuery query) {
+    private final Planner planner;
+    private final double costImprovementThreshold = DEFAULT_COST_THRESHOLD;
+
+    public List<IndexCall> getIndexSelection(OptimizedDAG.ReadQuery query) {
         RelNode optimized = planner.transform(READ_QUERY_OPTIMIZATION, query.getRelNode());
 //        System.out.println(optimized.explain());
         IndexFinder indexFinder = new IndexFinder();
         return indexFinder.find(optimized);
     }
 
-    public Collection<IndexSelection> optimizeIndexes(Collection<IndexSelection> indexes) {
+    public Map<IndexDefinition, Double> optimizeIndexes(Collection<IndexCall> indexes) {
         //Prune down to database indexes and remove duplicates
-        return indexes.stream().map(IndexSelection::prune)
-                .filter(index -> !index.coveredByPrimaryKey(true))
-                .collect(Collectors.toSet());
+        Map<IndexDefinition, Double> optIndexes = new HashMap<>();
+        Multimap<VirtualRelationalTable,IndexCall> callsByTable = HashMultimap.create();
+        indexes.forEach(idx -> callsByTable.put(idx.getTable(),idx));
+
+        for (VirtualRelationalTable table : callsByTable.keySet()) {
+            optIndexes.putAll(optimizeIndexes(table,callsByTable.get(table)));
+        }
+        return optIndexes;
+    }
+
+    private Map<IndexDefinition, Double> optimizeIndexes(VirtualRelationalTable table, Collection<IndexCall> indexes) {
+        Map<IndexDefinition, Double> optIndexes = new HashMap<>();
+        //The baseline cost is the cost of doing the lookup with the primary key index
+        Map<IndexCall, Double> currentCost = new HashMap<>();
+        IndexDefinition pkIdx = IndexDefinition.getPrimaryKeyIndex(table);
+        for (IndexCall idx : indexes) {
+            currentCost.put(idx, idx.getCost(pkIdx));
+        }
+        //Determine which index candidates reduce the cost the most
+        Set<IndexDefinition> candidates = new HashSet<>();
+        indexes.forEach( idx -> candidates.addAll(idx.generateIndexCandidates()));
+        candidates.remove(pkIdx);
+        double beforeTotal = total(currentCost);
+        for (;;) {
+            IndexDefinition bestCandidate = null;
+            Map<IndexCall, Double> bestCosts = null;
+            double bestTotal = Double.POSITIVE_INFINITY;
+            for (IndexDefinition candidate : candidates) {
+                Map<IndexCall, Double> costs = new HashMap<>();
+                currentCost.forEach( (call, cost) -> {
+                    double newcost = call.getCost(candidate);
+                    if (newcost>cost) newcost = cost;
+                    costs.put(call, newcost);
+                });
+                double total = total(costs);
+                if (total<beforeTotal && total<bestTotal) {
+                    bestCandidate = candidate;
+                    bestCosts = costs;
+                    bestTotal = total;
+                }
+            }
+            if (bestCandidate!=null && bestTotal/beforeTotal <= costImprovementThreshold ) {
+                optIndexes.put(bestCandidate,beforeTotal-bestTotal);
+                candidates.remove(bestCandidate);
+                beforeTotal = bestTotal;
+                currentCost = bestCosts;
+            } else {
+                break;
+            }
+        }
+        return optIndexes;
+    }
+
+    private static final double total(Map<?,Double> costs) {
+        return costs.values().stream().reduce(0.0d, (a,b) -> a+b );
     }
 
 
@@ -48,7 +102,7 @@ public class IndexSelector {
 
         private static final int PARAM_OFFSET = 10000;
 
-        List<IndexSelection> indexes = new ArrayList<>();
+        List<IndexCall> indexes = new ArrayList<>();
         int paramIndex = PARAM_OFFSET;
         SqrlRexUtil rexUtil = new SqrlRexUtil(planner.getTypeFactory());
 
@@ -65,7 +119,7 @@ public class IndexSelector {
             } else if (node instanceof TableScan && parent instanceof Filter) {
                 VirtualRelationalTable table = ((TableScan)node).getTable().unwrap(VirtualRelationalTable.class);
                 Filter filter = (Filter)parent;
-                IndexSelection.of(table,filter.getCondition(),rexUtil).map(indexes::add);
+                IndexCall.of(table,filter.getCondition(),rexUtil).map(indexes::add);
             } else {
                 super.visit(node, ordinal, parent);
             }
@@ -77,7 +131,7 @@ public class IndexSelector {
                     join.getRight()));
         }
 
-        List<IndexSelection> find(RelNode node) {
+        List<IndexCall> find(RelNode node) {
             go(node);
             return indexes;
         }

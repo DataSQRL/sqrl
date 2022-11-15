@@ -1,5 +1,6 @@
 package ai.datasqrl.physical.database.relational.ddl;
 
+import ai.datasqrl.plan.global.IndexDefinition;
 import lombok.Value;
 
 import java.util.List;
@@ -7,14 +8,10 @@ import java.util.List;
 @Value
 public class CreateIndexDDL implements SqlDDLStatement {
 
-  public enum Type {
-    HASH, BTREE;
-  }
-
   String indexName;
   String tableName;
   List<String> columns;
-  Type type;
+  IndexDefinition.Type type;
 
 
   @Override

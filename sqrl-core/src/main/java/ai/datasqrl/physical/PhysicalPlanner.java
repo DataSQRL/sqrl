@@ -10,7 +10,8 @@ import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.flink.plan.FlinkPhysicalPlanner;
 import ai.datasqrl.physical.stream.flink.plan.FlinkStreamPhysicalPlan;
 import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.global.IndexSelection;
+import ai.datasqrl.plan.global.IndexCall;
+import ai.datasqrl.plan.global.IndexDefinition;
 import ai.datasqrl.plan.global.IndexSelector;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.queries.APIQuery;
@@ -40,10 +41,10 @@ public class PhysicalPlanner {
             .collect(Collectors.toList());
     IndexSelector indexSelector = new IndexSelector(planner);
     ddlStatements.addAll(dbBuilder.createTables(materializedTables,true));
-    Collection<IndexSelection> indexSelection = plan.getDatabaseQueries().stream().map(indexSelector::getIndexSelection)
+    Collection<IndexCall> indexCalls = plan.getDatabaseQueries().stream().map(indexSelector::getIndexSelection)
             .flatMap(List::stream).collect(Collectors.toList());
-    indexSelection = indexSelector.optimizeIndexes(indexSelection);
-    ddlStatements.addAll(dbBuilder.createIndexes(indexSelection, true));
+    Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(indexCalls).keySet();
+    ddlStatements.addAll(dbBuilder.createIndexes(indexDefinitions, true));
 
     // 2. Plan Physical Stream Graph
     FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(streamEngine, dbConnection, jdbcTempDatabase)

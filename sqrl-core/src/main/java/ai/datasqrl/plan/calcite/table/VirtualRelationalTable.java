@@ -115,14 +115,8 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
         //TODO: log warning;
         stats = Statistics.UNKNOWN;
       } else {
-        ArrayList<ImmutableBitSet> keys = new ArrayList<>();
-        //Add indexes for all columns and all pairs of columns
-        generateKeys(new int[1], 0, keys);
-        generateKeys(new int[2], 0, keys);
-        generateKeys(new int[3], 0, keys);
         ImmutableBitSet primaryKey = ImmutableBitSet.of(ContiguousSet.closedOpen(0, getNumPrimaryKeys()));
-        if (!keys.contains(primaryKey)) keys.add(primaryKey);
-        stats = Statistics.of(tblStats.getRowCount(), keys);
+        stats = Statistics.of(tblStats.getRowCount(), List.of(primaryKey));
         statistic = stats;
       }
       return stats;
@@ -130,19 +124,9 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     return statistic;
   }
 
-  private void generateKeys(int[] key, int depth, Collection<ImmutableBitSet> keys) {
-    if (depth>=key.length) {
-      keys.add(ImmutableBitSet.of(key));
-      return;
-    }
-    int start = (depth==0)?0:key[depth-1]+1;
-    for (int i = start; i < getNumColumns(); i++) {
-      key[depth] = i;
-      generateKeys(key,depth+1, keys);
-    }
-  }
 
-  abstract TableStatistic getTableStatistic();
+
+  public abstract TableStatistic getTableStatistic();
 
 
   @Getter
@@ -186,7 +170,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     }
 
     @Override
-    TableStatistic getTableStatistic() {
+    public TableStatistic getTableStatistic() {
       return base.getTableStatistic();
     }
 
@@ -236,7 +220,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     }
 
     @Override
-    TableStatistic getTableStatistic() {
+    public TableStatistic getTableStatistic() {
       if (numLocalPks>0) return parent.getTableStatistic().nested();
       else return parent.getTableStatistic();
     }

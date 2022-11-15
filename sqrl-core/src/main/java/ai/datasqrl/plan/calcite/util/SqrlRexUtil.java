@@ -51,6 +51,11 @@ public class SqrlRexUtil {
         rexBuilder = new FlinkRexBuilder(typeFactory);
     }
 
+    public SqrlRexUtil(RexBuilder rexBuilder) {
+        this(rexBuilder.getTypeFactory());
+    }
+
+
     public static SqlOperator getSqrlOperator(String name) {
         List<SqlOperator> ops = new ArrayList<>();
         SqlOperatorTable opTable = PlannerFactory.getOperatorTable();

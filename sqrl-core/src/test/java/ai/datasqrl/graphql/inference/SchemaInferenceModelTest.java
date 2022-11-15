@@ -9,7 +9,7 @@ import ai.datasqrl.parse.ConfiguredSqrlParser;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.global.DAGPlanner;
-import ai.datasqrl.plan.global.IndexSelection;
+import ai.datasqrl.plan.global.IndexCall;
 import ai.datasqrl.plan.global.IndexSelector;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -75,10 +76,15 @@ class SchemaInferenceModelTest extends AbstractLogicalSQRLIT {
             });
 
     IndexSelector indexSelector = new IndexSelector(env.getSession().getPlanner());
+    List<IndexCall> allIndexes = new ArrayList<>();
     for (OptimizedDAG.ReadQuery query : dag.getDatabaseQueries()) {
-      List<IndexSelection> indexSelection = indexSelector.getIndexSelection(query);
-      System.out.println(query.getRelNode().explain());
-      indexSelection.stream().map(IndexSelection::getName).forEach(System.out::println);
+      List<IndexCall> indexCall = indexSelector.getIndexSelection(query);
+      allIndexes.addAll(indexCall);
+//      System.out.println(query.getRelNode().explain());
+//      indexSelection.stream().map(IndexSelection::getName).forEach(System.out::println);
+
     }
+    indexSelector.optimizeIndexes(allIndexes).entrySet().stream().sorted((e1,e2) -> -Double.compare(e1.getValue(),e2.getValue()))
+            .forEach(e -> System.out.println(e.getKey().getName() + " - " + e.getValue()));
   }
 }
