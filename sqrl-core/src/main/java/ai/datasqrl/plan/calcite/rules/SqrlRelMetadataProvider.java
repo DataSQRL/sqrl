@@ -1,6 +1,5 @@
-package ai.datasqrl.plan.calcite;
+package ai.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.plan.calcite.rules.*;
 import org.apache.calcite.rel.metadata.*;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 

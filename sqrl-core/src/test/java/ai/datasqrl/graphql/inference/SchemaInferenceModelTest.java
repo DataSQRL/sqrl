@@ -77,6 +77,8 @@ class SchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     IndexSelector indexSelector = new IndexSelector(env.getSession().getPlanner());
     for (OptimizedDAG.ReadQuery query : dag.getDatabaseQueries()) {
       List<IndexSelection> indexSelection = indexSelector.getIndexSelection(query);
+      System.out.println(query.getRelNode().explain());
+      indexSelection.stream().map(IndexSelection::getName).forEach(System.out::println);
     }
   }
 }

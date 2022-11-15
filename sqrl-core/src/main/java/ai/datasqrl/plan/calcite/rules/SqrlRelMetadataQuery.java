@@ -1,8 +1,5 @@
 package ai.datasqrl.plan.calcite.rules;
 
-import static org.checkerframework.checker.nullness.NullnessUtil.castNonNull;
-
-import javax.annotation.Nullable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.metadata.BuiltInMetadata;
 import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
@@ -10,10 +7,15 @@ import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rex.RexNode;
 
+import javax.annotation.Nullable;
+
+import static org.checkerframework.checker.nullness.NullnessUtil.castNonNull;
+
 
 public class SqrlRelMetadataQuery extends RelMetadataQuery {
   BuiltInMetadata.RowCount.Handler rowCountHandler;
   BuiltInMetadata.Selectivity.Handler selectivityHandler;
+
   public SqrlRelMetadataQuery() {
     super();
     this.rowCountHandler = new SqrlRelMdRowCount();

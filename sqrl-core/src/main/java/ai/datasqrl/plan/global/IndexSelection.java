@@ -1,14 +1,17 @@
 package ai.datasqrl.plan.global;
 
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
+import com.google.common.collect.Iterables;
 import lombok.NonNull;
 import lombok.Value;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.SqlKind;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Value
@@ -30,9 +33,36 @@ public class IndexSelection {
         return new IndexSelection(table,equalityCols,remaining);
     }
 
+    public static Optional<IndexSelection> of(@NonNull VirtualRelationalTable table, RexNode filter, SqrlRexUtil rexUtil) {
+        List<RexNode> conjunctions = rexUtil.getConjunctions(filter);
+        List<IndexColumn> columns = new ArrayList<>();
+        for (RexNode conj : conjunctions) {
+            if (conj instanceof RexCall) {
+                RexCall call = (RexCall) conj;
+                Set<Integer> inputRefs = rexUtil.findAllInputRefs(call.getOperands());
+                Type indexType = null;
+                if (call.isA(SqlKind.EQUALS)) indexType = Type.EQUALITY;
+                else if (call.isA(SqlKind.COMPARISON)) indexType = Type.INEQUALITY;
+                if (inputRefs.size()==1 && indexType!=null) {
+                    columns.add(new IndexColumn(Iterables.getOnlyElement(inputRefs),indexType));
+                }
+            }
+        }
+        if (columns.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(IndexSelection.of(table,columns));
+        }
+    }
+
     public IndexSelection prune() {
-        if (remainingIndexColumns.size()<2) return this;
-        return new IndexSelection(table,equalityIndexColumns,List.of(remainingIndexColumns.get(0)));
+        if (remainingIndexColumns.isEmpty()) return this;
+        List<IndexColumn> remaining = new ArrayList<>(remainingIndexColumns);
+        Iterator<IndexColumn> iter = remaining.iterator();
+        while (iter.hasNext()) {
+            if (equalityIndexColumns.contains(iter.next().columnIndex)) iter.remove();
+        }
+        return new IndexSelection(table,equalityIndexColumns,List.of(remaining.get(0)));
     }
 
     public boolean coveredByPrimaryKey(boolean isBtree) {
@@ -65,6 +95,10 @@ public class IndexSelection {
 
         public String getName() {
             return String.valueOf(columnIndex) + type.shortForm;
+        }
+
+        public IndexColumn withType(Type type) {
+            return new IndexColumn(columnIndex, type);
         }
 
     }

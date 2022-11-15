@@ -2,6 +2,7 @@ package ai.datasqrl.plan.calcite;
 
 import ai.datasqrl.plan.calcite.rules.DAGExpansionRule;
 import ai.datasqrl.plan.calcite.rules.SQRLPrograms;
+import ai.datasqrl.plan.calcite.rules.SqrlRelMetadataProvider;
 import lombok.Value;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.plan.RelTrait;
@@ -54,23 +55,35 @@ public class OptimizationStage {
 
     public static final OptimizationStage READ_DAG_STITCHING = new OptimizationStage("ReadDAGExpansion",
             Programs.hep(List.of(new DAGExpansionRule.ReadOnly()),
-                    false, DefaultRelMetadataProvider.INSTANCE), Optional.empty());
+                    false, SqrlRelMetadataProvider.INSTANCE), Optional.empty());
 
     public static final OptimizationStage WRITE_DAG_STITCHING = new OptimizationStage("WriteDAGExpansion",
-            Programs.hep(List.of(new DAGExpansionRule.WriteOnly()), false, DefaultRelMetadataProvider.INSTANCE),
+            Programs.hep(List.of(new DAGExpansionRule.WriteOnly()), false, SqrlRelMetadataProvider.INSTANCE),
             Optional.empty());
 
     public static final OptimizationStage READ2WRITE_STITCHING = new OptimizationStage("Read2WriteAdjustment",
-            Programs.hep(List.of(new DAGExpansionRule.Read2Write()), false, DefaultRelMetadataProvider.INSTANCE),
+            Programs.hep(List.of(new DAGExpansionRule.Read2Write()), false, SqrlRelMetadataProvider.INSTANCE),
             Optional.empty());
 
     public static final OptimizationStage VOLCANO = new OptimizationStage("Volcano",
         SQRLPrograms.ENUMERABLE_VOLCANO, Optional.of(EnumerableConvention.INSTANCE)
         );
 
-    public static final OptimizationStage READ_QUERY_OPTIMIZATION = new OptimizationStage("Volcano",
+    public static final OptimizationStage READ_QUERY_OPTIMIZATION = new OptimizationStage("ReadQueryOptimization",
             SQRLPrograms.ENUMERABLE_VOLCANO, Optional.of(EnumerableConvention.INSTANCE)
     );
+
+    public static final OptimizationStage PUSH_DOWN_FILTERS = new OptimizationStage("PushDownFilters",
+            Programs.hep(List.of(
+                    CoreRules.FILTER_INTO_JOIN,
+                    CoreRules.FILTER_MERGE,
+                    CoreRules.FILTER_AGGREGATE_TRANSPOSE,
+                    CoreRules.FILTER_PROJECT_TRANSPOSE,
+                    CoreRules.FILTER_TABLE_FUNCTION_TRANSPOSE,
+                    CoreRules.FILTER_CORRELATE,
+                    CoreRules.FILTER_SET_OP_TRANSPOSE
+            ), false, SqrlRelMetadataProvider.INSTANCE),
+            Optional.empty());
 
     //Enumerable
 //    public static final OptimizationStage SQRL_ENUMERABLE_HEP = new OptimizationStage("SQRL2Enumerable",
