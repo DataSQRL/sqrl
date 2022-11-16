@@ -67,7 +67,7 @@ public class CalciteTableFactory {
         RelDataType rootType = convertTable(rootTable, true, true);
         ImportedRelationalTable source = new ImportedRelationalTable(getTableId(rootTable.getName(),"i"),rootType, tableSource);
         ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(getTableId(rootTable.getName(),"q"), getTimestampHolder(rootTable),
-                relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get());
+                relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get(), tableSource.getStatistic());
 
         Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable, Optional.empty());
         return new ScriptTableDefinition(impTable, tables);
@@ -82,8 +82,9 @@ public class CalciteTableFactory {
                 baseRel.getRelNode().getRowType());
         RelDataType rootType = convertTable(rootTable, true, true);
         StreamRelationalTable source = new StreamRelationalTable(getTableId(tableName,"s"), baseRel.getRelNode(), rootType, rootTable, changeType);
+        TableStatistic statistic = TableStatistic.of(baseRel.estimateRowCount());
         ProxyStreamRelationalTable impTable = new ProxyStreamRelationalTable(getTableId(tableName,"q"), getTimestampHolder(rootTable),
-                relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get());
+                relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get(), statistic);
 
         Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable, Optional.empty());
         return new ScriptTableDefinition(impTable, tables);

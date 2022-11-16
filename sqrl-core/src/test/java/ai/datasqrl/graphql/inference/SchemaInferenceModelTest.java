@@ -1,36 +1,33 @@
 package ai.datasqrl.graphql.inference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.graphql.generate.SchemaGenerator;
 import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.physical.PhysicalPlan;
-import ai.datasqrl.plan.calcite.OptimizationStage;
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.global.DAGPlanner;
+import ai.datasqrl.plan.global.IndexCall;
+import ai.datasqrl.plan.global.IndexSelector;
 import ai.datasqrl.plan.global.OptimizedDAG;
-import ai.datasqrl.plan.global.OptimizedDAG.ReadQuery;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.queries.APIQuery;
+import ai.datasqrl.util.CalciteWriter;
 import ai.datasqrl.util.data.Retail;
 import ai.datasqrl.util.data.Retail.RetailScriptNames;
-import ai.datasqrl.util.db.JDBCTempDatabase;
-import graphql.schema.GraphQLSchema;
-import graphql.schema.idl.SchemaPrinter;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
-import lombok.SneakyThrows;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.rel.RelNode;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SchemaInferenceModelTest extends AbstractLogicalSQRLIT {
   private Retail example = Retail.INSTANCE;
@@ -73,14 +70,21 @@ class SchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner());
     OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries, env.getExports(), env.getSession().getPipeline());
 
-    for (ReadQuery query : dag.getDatabaseQueries()) {
-      RelNode relNode = env.getSession().getPlanner()
-          .transform(
-              OptimizationStage.VOLCANO,
-              query.getRelNode()
-          );
-      System.out.println(relNode);
-    }
+    CalciteUtil.getTables(env.getRelSchema(), VirtualRelationalTable.class)
+            .stream().forEach(vt -> {
+              System.out.println(vt.getNameId() + ": " + CalciteWriter.toString(vt.getStatistic()));
+            });
 
+    IndexSelector indexSelector = new IndexSelector(env.getSession().getPlanner());
+    List<IndexCall> allIndexes = new ArrayList<>();
+    for (OptimizedDAG.ReadQuery query : dag.getDatabaseQueries()) {
+      List<IndexCall> indexCall = indexSelector.getIndexSelection(query);
+      allIndexes.addAll(indexCall);
+//      System.out.println(query.getRelNode().explain());
+//      indexSelection.stream().map(IndexSelection::getName).forEach(System.out::println);
+
+    }
+    indexSelector.optimizeIndexes(allIndexes).entrySet().stream().sorted((e1,e2) -> -Double.compare(e1.getValue(),e2.getValue()))
+            .forEach(e -> System.out.println(e.getKey().getName() + " - " + e.getValue()));
   }
 }

@@ -6,13 +6,17 @@ import ai.datasqrl.plan.calcite.util.IndexMap;
 import ai.datasqrl.schema.SQRLTable;
 import ai.datasqrl.schema.builder.VirtualTable;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ContiguousSet;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.schema.Statistic;
+import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.util.ImmutableBitSet;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -100,6 +104,30 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     return queryRowType.getFieldCount();
   }
 
+  private transient Statistic statistic = null;
+
+  @Override
+  public Statistic getStatistic() {
+    if (statistic == null) {
+      TableStatistic tblStats = getTableStatistic();
+      Statistic stats;
+      if (tblStats.isUnknown()) {
+        //TODO: log warning;
+        stats = Statistics.UNKNOWN;
+      } else {
+        ImmutableBitSet primaryKey = ImmutableBitSet.of(ContiguousSet.closedOpen(0, getNumPrimaryKeys()));
+        stats = Statistics.of(tblStats.getRowCount(), List.of(primaryKey));
+        statistic = stats;
+      }
+      return stats;
+    }
+    return statistic;
+  }
+
+
+
+  public abstract TableStatistic getTableStatistic();
+
 
   @Getter
   public static class Root extends VirtualRelationalTable {
@@ -139,6 +167,11 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     @Override
     public int getNumParentPks() {
       return 0;
+    }
+
+    @Override
+    public TableStatistic getTableStatistic() {
+      return base.getTableStatistic();
     }
 
   }
@@ -184,6 +217,12 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     @Override
     public int getNumParentPks() {
       return parent.getNumPrimaryKeys();
+    }
+
+    @Override
+    public TableStatistic getTableStatistic() {
+      if (numLocalPks>0) return parent.getTableStatistic().nested();
+      else return parent.getTableStatistic();
     }
 
     public void appendTimestampColumn(@NonNull RelDataTypeField timestampField, @NonNull RelDataTypeFactory typeFactory) {

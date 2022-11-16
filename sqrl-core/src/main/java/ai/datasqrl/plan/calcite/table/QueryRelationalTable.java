@@ -39,7 +39,7 @@ public class QueryRelationalTable extends AbstractRelationalTable {
    */
   private final PullupOperator.Container pullups;
 
-  private final TableStatistic statistic;
+  private final TableStatistic tableStatistic;
 
   /*
    The materialization strategy for this table as determined by the optimizer. This is used when cutting
@@ -60,7 +60,7 @@ public class QueryRelationalTable extends AbstractRelationalTable {
     this.relNode = relNode;
     this.pullups = pullups;
     this.numPrimaryKeys = numPrimaryKeys;
-    this.statistic = stats;
+    this.tableStatistic = stats;
     this.execution = execution;
   }
 
@@ -112,11 +112,10 @@ public class QueryRelationalTable extends AbstractRelationalTable {
     return getField(path, getRowType());
   }
 
-  @Override
   public Statistic getStatistic() {
-    if (statistic.isUnknown()) return Statistics.UNKNOWN;
+    if (tableStatistic.isUnknown()) return Statistics.UNKNOWN;
     ImmutableBitSet key = ImmutableBitSet.of(ContiguousSet.closedOpen(0,numPrimaryKeys));
-    return Statistics.of(statistic.getRowCount(), List.of(key));
+    return Statistics.of(tableStatistic.getRowCount(), List.of(key));
   }
 
 

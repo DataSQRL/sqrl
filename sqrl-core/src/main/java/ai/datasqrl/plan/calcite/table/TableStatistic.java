@@ -9,6 +9,7 @@ public class TableStatistic {
     private static final double DEFAULT_ROW_COUNT = 1e15;
 
     public static final TableStatistic UNKNOWN = new TableStatistic(Double.NaN);
+    public static final double DEFAULT_NESTED_MULTIPLIER = 2.0;
 
     private final double rowCount;
 
@@ -28,6 +29,15 @@ public class TableStatistic {
 
     public boolean isUnknown() {
         return Double.isNaN(rowCount);
+    }
+
+    public TableStatistic nested() {
+        return nested(DEFAULT_NESTED_MULTIPLIER);
+    }
+
+    public TableStatistic nested(double multiplier) {
+        if (isUnknown()) return UNKNOWN;
+        return new TableStatistic(rowCount*multiplier);
     }
 
     public double getRowCount() {

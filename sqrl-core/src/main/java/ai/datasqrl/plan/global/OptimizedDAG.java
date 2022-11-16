@@ -61,8 +61,8 @@ public class OptimizedDAG {
   @Value
   public static class ReadQuery {
 
-    final APIQuery query;
-    final RelNode relNode;
+    APIQuery query;
+    RelNode relNode;
 
   }
 

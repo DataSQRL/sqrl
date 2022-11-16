@@ -64,7 +64,6 @@ public class DAGPlanner {
             relNode = rewritten.getRelNode();
             relNode = planner.transform(READ_DAG_STITCHING,relNode);
             relNode.accept(tableScanVisitor);
-            //TODO: Push down filters into queries to determine indexes needed on tables
             readDAG.add(new OptimizedDAG.ReadQuery(query,relNode));
         }
         Preconditions.checkArgument(tableScanVisitor.scanTables.stream().allMatch(t -> t instanceof VirtualRelationalTable));

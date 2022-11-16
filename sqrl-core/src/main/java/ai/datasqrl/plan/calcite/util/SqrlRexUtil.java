@@ -51,6 +51,11 @@ public class SqrlRexUtil {
         rexBuilder = new FlinkRexBuilder(typeFactory);
     }
 
+    public SqrlRexUtil(RexBuilder rexBuilder) {
+        this(rexBuilder.getTypeFactory());
+    }
+
+
     public static SqlOperator getSqrlOperator(String name) {
         List<SqlOperator> ops = new ArrayList<>();
         SqlOperatorTable opTable = PlannerFactory.getOperatorTable();
@@ -170,6 +175,24 @@ public class SqrlRexUtil {
             return new RexInputRef(map.map(input.getIndex()), input.getType());
         }
     }
+
+    public static Set<Integer> findAllInputRefs(@NonNull Iterable<RexNode> nodes) {
+        RexInputRefFinder refFinder = new RexInputRefFinder();
+        for (RexNode node : nodes) node.accept(refFinder);
+        return refFinder.refs;
+    }
+
+    @Value
+    private static class RexInputRefFinder extends RexShuttle {
+
+        private final Set<Integer> refs = new HashSet<>();
+
+        @Override public RexNode visitInputRef(RexInputRef input) {
+            refs.add(input.getIndex());
+            return input;
+        }
+    }
+
 
     public List<RexNode> getIdentityProject(RelNode input) {
         return getIdentityProject(input, input.getRowType().getFieldCount());
