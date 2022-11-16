@@ -53,10 +53,10 @@ public class Nutshop implements TestDataset {
         }
         return List.of(
                 TestScript.of(this,BASE_PATH.resolve("customer360").resolve("nutshopv1-"+size.name()+".sqrl"),
-                        ArrayUtils.concat(baseTables, new String[]{"spending_by_month"})).noDataSnapshot(),
+                        ArrayUtils.concat(baseTables, new String[]{"spending_by_month"})).dataSnapshot(false).build(),
                 TestScript.of(this,BASE_PATH.resolve("customer360").resolve("nutshopv2-"+size.name()+".sqrl"),
                         ArrayUtils.concat(baseTables, new String[]{"spending_by_month",
-                        "past_purchases", "volume_by_day"})).noDataSnapshot());
+                        "past_purchases", "volume_by_day"})).dataSnapshot(false).build());
     }
 
     @Override

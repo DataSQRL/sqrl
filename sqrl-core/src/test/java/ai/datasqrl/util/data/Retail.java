@@ -6,6 +6,7 @@ import ai.datasqrl.util.TestScript;
 import lombok.Getter;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,16 +26,19 @@ public class Retail implements TestDataset {
   private Map<RetailScriptNames, TestScript> createTestScripts() {
     return Map.of(RetailScriptNames.ORDER_STATS,
         TestScript.of(this, BASE_PATH.resolve("c360-orderstats.sqrl"),
-            "orders", "entries", "totals", "customerorderstats"),
+            "orders", "entries", "totals", "customerorderstats").build(),
         RetailScriptNames.FULL,
         TestScript.of(this, BASE_PATH.resolve("c360-full.sqrl"),
             "orders", "entries", "customer", "category", "product", "total", "order_again",
             "_spending_by_month_category", "favorite_categories",
-            "order_stats", "newcustomerpromotion"),
+            "order_stats", "newcustomerpromotion")
+                .graphQLSchemas(List.of(BASE_PATH.resolve("c360-full.schema1.graphql"),
+                        BASE_PATH.resolve("c360-full.schema2.graphql")))
+                .build(),
         RetailScriptNames.RECOMMEND,
         TestScript.of(this, BASE_PATH.resolve("c360-recommend.sqrl"),
             "orders", "entries", "customer", "category", "product", "total",
-            "_sales_by_hour", "_sales_24h", "_sales_72h", "_sales_trend"));
+            "_sales_by_hour", "_sales_24h", "_sales_72h", "_sales_trend").build());
   }
 
   @Override

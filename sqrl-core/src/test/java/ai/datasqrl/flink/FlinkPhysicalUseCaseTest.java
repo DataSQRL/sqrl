@@ -34,7 +34,7 @@ public class FlinkPhysicalUseCaseTest extends AbstractPhysicalSQRLIT {
     }
 
     @ParameterizedTest
-    @ArgumentsSource(TestScript.AllProvider.class)
+    @ArgumentsSource(TestScript.AllScriptsProvider.class)
     public void fullScriptTest(TestScript script) {
         scriptTest(script,true, script.dataSnapshot());
     }

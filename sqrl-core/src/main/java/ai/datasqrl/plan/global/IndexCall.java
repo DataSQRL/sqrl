@@ -1,12 +1,10 @@
 package ai.datasqrl.plan.global;
 
-import ai.datasqrl.config.util.ArrayUtil;
 import ai.datasqrl.plan.calcite.rules.SqrlRelMdRowCount;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import com.google.common.primitives.Ints;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -18,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static ai.datasqrl.plan.global.IndexDefinition.Type.BTREE;
-import static ai.datasqrl.plan.global.IndexDefinition.Type.HASH;
 
 @AllArgsConstructor
 @Getter
@@ -64,49 +59,12 @@ public class IndexCall {
         }
     }
 
-    public Set<IndexDefinition> generateIndexCandidates() {
-        List<Integer> eqCols = indexColumns.values().stream().filter(c -> c.getType()==CallType.EQUALITY)
-                .map(IndexColumn::getColumnIndex).collect(Collectors.toList());
-        List<Integer> comparisons = indexColumns.values().stream().filter(c -> c.getType()==CallType.COMPARISON)
-                .map(IndexColumn::getColumnIndex).collect(Collectors.toList());
-        List<List<Integer>> colPermutations = new ArrayList<>();
-        generatePermutations(new int[eqCols.size()+(comparisons.isEmpty()?0:1)],0,eqCols,comparisons,colPermutations);
-        EnumSet<IndexDefinition.Type> idxTypes;
-        if (comparisons.isEmpty() && eqCols.size()==1) idxTypes = EnumSet.of(HASH, BTREE);
-        else idxTypes = EnumSet.of(BTREE);
-        Set<IndexDefinition> result = new HashSet<>();
-        colPermutations.forEach( cols -> {
-            idxTypes.forEach( idxType -> result.add(new IndexDefinition(table,cols,idxType)));
-        });
-        return result;
-    }
-
-
-    private void generatePermutations(int[] selected, int depth, List<Integer> eqCols,
-                                      List<Integer> comparisons, Collection<List<Integer>> permutations) {
-        if (depth>=selected.length) {
-            permutations.add(Ints.asList(selected.clone()));
-            return;
-        }
-        if (depth>=eqCols.size()) {
-            for (int comp : comparisons) {
-                selected[depth] = comp;
-                generatePermutations(selected, depth+1, eqCols, comparisons, permutations);
-            }
-        }
-        for (int eq : eqCols) {
-            if (ArrayUtil.contains(selected,eq,depth)) continue;
-            selected[depth]=eq;
-            generatePermutations(selected, depth+1, eqCols, comparisons, permutations);
-        }
-    }
-
-
     public double getCost(@NonNull IndexDefinition indexDef) {
         List<IndexColumn> coveredCols = new ArrayList<>();
 
-        for (int col : indexDef.getColumns()) {
-            IndexColumn idxCol = indexColumns.get(col);
+        int i = 0;
+        for (; i < indexDef.getColumns().size(); i++) {
+            IndexColumn idxCol = indexColumns.get(indexDef.getColumns().get(i));
             boolean breaksEqualityChain = idxCol==null;
             if (idxCol != null) {
                 if (indexDef.getType().supports(idxCol.type)) {
@@ -118,6 +76,10 @@ public class IndexCall {
             }
 
             if (breaksEqualityChain && indexDef.getType().hasStrictColumnOrder()) break;
+        }
+        if (i < indexDef.getColumns().size() && indexDef.getType().requiresAllColumns()) {
+            //This index requires a constraint on all columns to be invocable
+            coveredCols = List.of();
         }
         return SqrlRelMdRowCount.getRowCount(table, coveredCols);
     }

@@ -20,9 +20,10 @@ import org.apache.calcite.schema.impl.AbstractTable;
  * This is the base class for all relational tables that the transpiler creates to represent the logical SQRL tables
  * that users import or define in their scripts.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public abstract class AbstractRelationalTable extends AbstractTable implements QueryableTable, TableWithPK {
 
+  @EqualsAndHashCode.Include
   protected final String nameId;
 
   protected AbstractRelationalTable(@NonNull Name nameId) {

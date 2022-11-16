@@ -19,6 +19,10 @@ public class IndexDefinition {
           return this==HASH || this==BTREE;
       }
 
+      public boolean requiresAllColumns() {
+          return this==HASH;
+      }
+
       public boolean supports(IndexCall.CallType callType) {
           switch (this) {
               case HASH:

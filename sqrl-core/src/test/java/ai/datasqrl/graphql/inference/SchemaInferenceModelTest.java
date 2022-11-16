@@ -1,35 +1,21 @@
 package ai.datasqrl.graphql.inference;
 
-import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
-import ai.datasqrl.graphql.server.Model.Root;
-import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.global.DAGPlanner;
-import ai.datasqrl.plan.global.IndexCall;
-import ai.datasqrl.plan.global.IndexSelector;
-import ai.datasqrl.plan.global.OptimizedDAG;
-import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.queries.APIQuery;
-import ai.datasqrl.util.CalciteWriter;
 import ai.datasqrl.util.data.Retail;
 import ai.datasqrl.util.data.Retail.RetailScriptNames;
-import lombok.SneakyThrows;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class SchemaInferenceModelTest extends AbstractLogicalSQRLIT {
+class SchemaInferenceModelTest extends AbstractSchemaInferenceModelTest {
   private Retail example = Retail.INSTANCE;
 
   @BeforeEach
@@ -37,54 +23,11 @@ class SchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
   }
 
-  private Env compile(String str) {
-    return resolve.planDag(session, ConfiguredSqrlParser.newParser(ErrorCollector.root()).parse(str));
-  }
-
-  @SneakyThrows
   @Test
   public void testC360Inference() {
-    Path schema = Path.of("src/test/resources/c360bundle/schema.full.graphqls");
-    String schemaStr = new String(Files.readAllBytes(schema));
-    Env env = compile(Files.readString(example.getScript(RetailScriptNames.FULL).getScript()));
-
-    //Inference
-    SchemaInference inference = new SchemaInference(schemaStr, env.getRelSchema(), env.getSession().getPlanner()
-        .getRelBuilder(), env.getSession().getPlanner());
-    InferredSchema inferredSchema = inference.accept();
-
-    assertEquals(64, inferredSchema.getQuery().getFields().size());
-
-    //Build queries
-    PgBuilder pgBuilder = new PgBuilder(schemaStr,
-        env.getRelSchema(),
-        env.getSession().getPlanner().getRelBuilder(),
-        env.getSession().getPlanner() );
-
-    Root root = inferredSchema.accept(pgBuilder, null);
-
-    List<APIQuery> queries = pgBuilder.getApiQueries();
-
-    assertEquals(444, queries.size());
-    /// plan dag
-    DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner());
-    OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries, env.getExports(), env.getSession().getPipeline());
-
-    CalciteUtil.getTables(env.getRelSchema(), VirtualRelationalTable.class)
-            .stream().forEach(vt -> {
-              System.out.println(vt.getNameId() + ": " + CalciteWriter.toString(vt.getStatistic()));
-            });
-
-    IndexSelector indexSelector = new IndexSelector(env.getSession().getPlanner());
-    List<IndexCall> allIndexes = new ArrayList<>();
-    for (OptimizedDAG.ReadQuery query : dag.getDatabaseQueries()) {
-      List<IndexCall> indexCall = indexSelector.getIndexSelection(query);
-      allIndexes.addAll(indexCall);
-//      System.out.println(query.getRelNode().explain());
-//      indexSelection.stream().map(IndexSelection::getName).forEach(System.out::println);
-
-    }
-    indexSelector.optimizeIndexes(allIndexes).entrySet().stream().sorted((e1,e2) -> -Double.compare(e1.getValue(),e2.getValue()))
-            .forEach(e -> System.out.println(e.getKey().getName() + " - " + e.getValue()));
+    Pair<InferredSchema, List<APIQuery>> result = inferSchema(example.getScript(RetailScriptNames.FULL),
+            Path.of("src/test/resources/c360bundle/schema.full.graphqls"));
+    assertEquals(64, result.getKey().getQuery().getFields().size());
+    assertEquals(444, result.getValue().size());
   }
 }

@@ -39,7 +39,7 @@ public class PhysicalPlanner {
     List<OptimizedDAG.DatabaseSink> materializedTables = StreamUtil.filterByClass(
             plan.getStreamQueries().stream().map(q -> q.getSink()), OptimizedDAG.DatabaseSink.class)
             .collect(Collectors.toList());
-    IndexSelector indexSelector = new IndexSelector(planner);
+    IndexSelector indexSelector = new IndexSelector(planner, IndexSelector.Config.of(dbConnection));
     ddlStatements.addAll(dbBuilder.createTables(materializedTables,true));
     Collection<IndexCall> indexCalls = plan.getDatabaseQueries().stream().map(indexSelector::getIndexSelection)
             .flatMap(List::stream).collect(Collectors.toList());
