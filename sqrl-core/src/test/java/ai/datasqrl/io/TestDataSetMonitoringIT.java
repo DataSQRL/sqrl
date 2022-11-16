@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -100,6 +101,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
      * This method is only used to generate schemas for testing purposes and is not a test itself
      */
     @Test
+    @Disabled
     public void generateSchema() {
         generateTableConfigAndSchemaInDataDir(Retail.INSTANCE);
     }
