@@ -72,7 +72,7 @@ public class IndexCall {
         List<List<Integer>> colPermutations = new ArrayList<>();
         generatePermutations(new int[eqCols.size()+(comparisons.isEmpty()?0:1)],0,eqCols,comparisons,colPermutations);
         EnumSet<IndexDefinition.Type> idxTypes;
-        if (comparisons.isEmpty()) idxTypes = EnumSet.of(HASH, BTREE);
+        if (comparisons.isEmpty() && eqCols.size()==1) idxTypes = EnumSet.of(HASH, BTREE);
         else idxTypes = EnumSet.of(BTREE);
         Set<IndexDefinition> result = new HashSet<>();
         colPermutations.forEach( cols -> {
