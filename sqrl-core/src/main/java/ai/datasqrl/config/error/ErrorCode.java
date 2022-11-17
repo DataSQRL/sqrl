@@ -1,11 +1,7 @@
 package ai.datasqrl.config.error;
 
-import com.google.common.base.Preconditions;
 import com.google.common.io.Resources;
-import java.io.File;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.charset.Charset;
 import lombok.SneakyThrows;
 
 public enum ErrorCode {
@@ -26,16 +22,16 @@ public enum ErrorCode {
   NESTED_DISTINCT_ON("E0014.MD")
   ;
 
-  final URI file;
+  final String fileName;
 
   @SneakyThrows
   ErrorCode(String fileName) {
-    file = Resources.getResource("errorCodes/"+fileName).toURI();
-//    Preconditions.checkState(new File(file).exists());
+    this.fileName = fileName;
   }
 
   @SneakyThrows
   public String getError() {
-    return Files.readString(Path.of(file));
+    return Resources.toString(Resources.getResource("errorCodes/"+fileName),
+        Charset.defaultCharset());
   }
 }
