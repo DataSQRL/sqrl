@@ -123,7 +123,8 @@ public class PgBuilder implements
     Set<ArgumentSet> possibleArgCombinations = createArgumentSuperset(
         field.getTable(),
         relNode, new ArrayList<>(),
-        field.getFieldDefinition().getInputValueDefinitions());
+        field.getFieldDefinition().getInputValueDefinitions(),
+        field.getFieldDefinition());
 
     //Todo: Project out only the needed columns. This requires visiting all it's children so we know
     // what other fields they need
@@ -136,7 +137,7 @@ public class PgBuilder implements
   //Creates a superset of all possible arguments w/ their respective query
   private Set<ArgumentSet> createArgumentSuperset(SQRLTable sqrlTable,
       RelNode relNode, List<PgParameterHandler> existingHandlers,
-      List<InputValueDefinition> inputArgs) {
+      List<InputValueDefinition> inputArgs, FieldDefinition fieldDefinition) {
     //todo: table functions
 
     Set<ArgumentSet> args = new HashSet<>();
@@ -156,7 +157,7 @@ public class PgBuilder implements
         }
       }
       if (!handled) {
-        throw new RuntimeException(String.format("Unhandled Arg : %s", arg));
+        throw new RuntimeException(String.format("Unhandled Arg : %s in %s", arg, fieldDefinition));
       }
     }
 
@@ -234,7 +235,8 @@ public class PgBuilder implements
         objectField.getTable(),
         relPair.getRelNode(),
         relPair.getHandlers(),
-        objectField.getFieldDefinition().getInputValueDefinitions());
+        objectField.getFieldDefinition().getInputValueDefinitions(),
+        objectField.getFieldDefinition());
 
     //Todo: Project out only the needed columns. This requires visiting all it's children so we know
     // what other fields they need
@@ -285,16 +287,16 @@ public class PgBuilder implements
       }
 
       List<PgParameterHandler> handlers = new ArrayList<>();
-      for (String pkName : destTable.getVt().getPrimaryKeyNames()) {
-        RelDataTypeField field = relBuilder.peek().getRowType()
-            .getField(pkName, false, false);
+      for (int i = 0; i < destTable.getVt().getPrimaryKeyNames().size(); i++) {
+        RelDataTypeField field = relBuilder.peek().getRowType().getFieldList()
+            .get(i);
         RexDynamicParam dynamicParam = relBuilder.getRexBuilder()
             .makeDynamicParam(field.getType(),
                 handlers.size());
         builder = relBuilder.filter(relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.EQUALS,
             relBuilder.getRexBuilder().makeInputRef(relBuilder.peek(), field.getIndex()),
             dynamicParam));
-        handlers.add(new SourcePgParameter(pkName));
+        handlers.add(new SourcePgParameter(destTable.getVt().getPrimaryKeyNames().get(i)));
       }
       return new RelPair(builder.build(), handlers);
     }

@@ -2,10 +2,11 @@ package ai.datasqrl.plan.local.generate;
 
 import ai.datasqrl.compile.loaders.*;
 import ai.datasqrl.config.error.ErrorCode;
+import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.config.error.SqrlAstException;
 import ai.datasqrl.io.sources.dataset.TableSink;
 import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
-import ai.datasqrl.parse.Check;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
@@ -23,6 +24,7 @@ import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.transpile.*;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
+import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
 import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
@@ -88,6 +90,7 @@ public class Resolve {
 
     //Updated while processing each node
     SqlNode currentNode = null;
+    ErrorCollector errors;
 
     List<FlinkFnc> resolvedFunctions = new ArrayList<>();
 
@@ -97,6 +100,7 @@ public class Resolve {
       this.session = session;
       this.scriptNode = scriptNode;
       this.packagePath = packagePath;
+      this.errors = session.getErrors();
     }
 
 
@@ -104,14 +108,12 @@ public class Resolve {
       ScriptTableDefinition def = getTableFactory().importTable(tableSource, alias,
               getSession().getPlanner().getRelBuilder(), getSession().getPipeline());
 
-      if (getRelSchema()
-              .getTable(def.getTable().getName().getCanonical(), false) != null) {
-        throw Check.newException(ErrorCode.IMPORT_NAMESPACE_CONFLICT,
-                getCurrentNode(),
-                getCurrentNode().getParserPosition(),
-                String.format("An item named `%s` is already in scope",
-                        def.getTable().getName().getDisplay()));
-      }
+      checkState(
+          getRelSchema().getTable(def.getTable().getName().getCanonical(), false) == null,
+          ErrorCode.IMPORT_NAMESPACE_CONFLICT,
+          () -> getCurrentNode().getParserPosition(),
+          () -> String.format("An item named `%s` is already in scope",
+              def.getTable().getName().getDisplay()));
 
       registerScriptTable(this, def);
       return tableSource.getName();
@@ -124,10 +126,16 @@ public class Resolve {
 
   public Env planDag(Session session, ScriptNode script) {
     Env env = createEnv(session, script);
-    resolveImports(env);
-    mapOperations(env);
-    planQueries(env);
-    return env;
+
+    try {
+      resolveImports(env);
+      mapOperations(env);
+      planQueries(env);
+      return env;
+    } catch (Exception e) {
+      env.errors.handle(e);
+      throw e;
+    }
   }
 
   public Env createEnv(Session session, ScriptNode script) {
@@ -144,7 +152,8 @@ public class Resolve {
     boolean inHeader = true;
     for (SqlNode statement : env.scriptNode.getStatements()) {
       if (statement instanceof ImportDefinition) {
-        Preconditions.checkState(inHeader, "Import statements must be in header");
+        checkState(inHeader, ErrorCode.IMPORT_IN_HEADER, statement::getParserPosition,
+            () -> "Import statements must be in header");
       } else {
         inHeader = false;
       }
@@ -181,13 +190,11 @@ public class Resolve {
      * Add all files to namespace
      */
     if (last.equals(ReservedName.ALL)) {
-      Check.state(node.getAlias().isEmpty(), IMPORT_CANNOT_BE_ALIASED,
-          env.getCurrentNode(), () -> "Alias `" + node.getAlias().get().getCanonical() +
-              "` cannot be used here.");
+      checkState(node.getAlias().isEmpty(), IMPORT_CANNOT_BE_ALIASED,
+          () -> node.getParserPosition(),
+          () -> "Alias `" + node.getAlias().get().getCanonical() + "` cannot be used here.");
 
-      Check.state(node.getTimestamp().isEmpty(),
-          IMPORT_STAR_CANNOT_HAVE_TIMESTAMP,
-          env.getCurrentNode(),
+      checkState(node.getTimestamp().isEmpty(), IMPORT_STAR_CANNOT_HAVE_TIMESTAMP,
           () -> node.getTimestamp().get().getParserPosition(),
           () -> "Cannot use timestamp with import star");
 
@@ -199,10 +206,10 @@ public class Resolve {
     }
   }
 
-  private void setCurrentNode(Env env, SqlNode node) {
+  private void setCurrentNode(Env env, SqrlStatement node) {
     env.currentNode = node;
+    env.errors = env.session.getErrors().resolve(node.getNamePath().getDisplay());
   }
-
 
   public void registerScriptTable(Env env, ScriptTableDefinition tblDef) {
     //Update table mapping from SQRL table to Calcite table...
@@ -224,8 +231,6 @@ public class Resolve {
     if (tblDef.getTable().getPath().size() == 1) {
       env.relSchema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
           tblDef.getTable());
-    } else {
-
     }
   }
 
@@ -259,11 +264,7 @@ public class Resolve {
 
   private OpKind getKind(Env env, StatementOp op) {
     if (op.statement instanceof JoinAssignment) {
-      if (op.getStatement().getNamePath().size() == 1) {
-        return OpKind.QUERY;
-      } else {
-        return OpKind.JOIN;
-      }
+      return OpKind.JOIN;
     } else if (op.statement instanceof ExpressionAssignment) {
       return OpKind.EXPR;
     } else if (op.statement instanceof QueryAssignment
@@ -336,7 +337,8 @@ public class Resolve {
       ExportDefinition export = (ExportDefinition) statement;
       Optional<SQRLTable> tableOpt = resolveTable(env, export.getTablePath(), false);
       Optional<TableSink> sink = env.getExporter().export(env,export.getSinkPath());
-      Preconditions.checkArgument(tableOpt.isPresent());
+      checkState(tableOpt.isPresent(), ErrorCode.MISSING_DEST_TABLE, export::getParserPosition,
+          ()->String.format("Could not find table path: %s", export.getTablePath()));
       Preconditions.checkArgument(sink.isPresent());
       SQRLTable table = tableOpt.get();
       Preconditions.checkArgument(table.getVt().getRoot().getBase().getExecution().isWrite());
@@ -351,7 +353,7 @@ public class Resolve {
       env.exports.add(new ResolvedExport(table.getVt(),relBuilder.build(),sink.get()));
       return Optional.empty();
     } else {
-      throw new RuntimeException("Unrecognized assignment type: " + statement.getClass());
+      throw fatal(env, "Unrecognized assignment type: " + statement.getClass());
     }
 
     StatementOp op = new StatementOp(statement, sqlNode, statementKind);
@@ -360,7 +362,8 @@ public class Resolve {
   }
 
   private SqlNode transformExpressionToQuery(Env env, SqrlStatement statement, SqlNode sqlNode) {
-    Preconditions.checkState(getContext(env, statement).isPresent(),"Could not find parent table: %s",statement.getNamePath());
+    checkState(getContext(env, statement).isPresent(), ErrorCode.MISSING_DEST_TABLE, statement,
+        String.format("Could not find table: %s", statement.getNamePath()));
     return new SqlSelect(SqlParserPos.ZERO,
         SqlNodeList.EMPTY,
         new SqlNodeList(List.of(sqlNode), SqlParserPos.ZERO),
@@ -388,6 +391,7 @@ public class Resolve {
         .collect(Collectors.toList());
 
     Optional<SQRLTable> table = getContext(env, op.getStatement());
+    table.ifPresent(t-> assurePathWritable(env, op, op.statement.getNamePath().popLast()));
     Optional<VirtualRelationalTable> context =
         table.map(t -> t.getVt());
 
@@ -419,7 +423,7 @@ public class Resolve {
     sqrlValidator.validate(sql);
 
     if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
-
+      checkState(context.isEmpty(), ErrorCode.NESTED_DISTINCT_ON, op.getStatement());
       new AddHints(sqrlValidator, context).accept(op, sql);
 
       SqlValidator validate2 = TranspilerFactory.createSqlValidator(env.relSchema,
@@ -551,6 +555,10 @@ public class Resolve {
         createTable(env, op, parentTable);
         break;
       case JOIN:
+        Optional<SQRLTable> tbl = getContext(env, op.getStatement());
+        checkState(tbl.isPresent(), ErrorCode.GENERIC_ERROR, op.statement,
+            "Root JOIN declarations are not yet supported");
+
         updateJoinMapping(env, op);
         break;
     }
@@ -565,11 +573,16 @@ public class Resolve {
         .getTable();
 
     QueryRelationalTable baseTbl = ((VirtualRelationalTable.Root) table.getVt()).getBase();
-    Preconditions.checkState(importDefinition.getTimestamp().get() instanceof SqlIdentifier,
-        "Aliased timestamps must use the AS keyword to set a new column");
+    Preconditions.checkState(importDefinition.getTimestamp().isPresent(),
+        "Internal error: timestamp should be present");
+
+    checkState(importDefinition.getTimestamp().get() instanceof SqlIdentifier,
+        ErrorCode.TIMESTAMP_COLUMN_EXPRESSION, importDefinition.getTimestamp().get());
     SqlIdentifier identifier = (SqlIdentifier)importDefinition.getTimestamp().get();
     RelDataTypeField field = baseTbl.getRowType().getField(identifier.names.get(0), false, false);
 
+    checkState(field != null,
+        ErrorCode.TIMESTAMP_COLUMN_MISSING, importDefinition.getTimestamp().get());
     baseTbl.getTimestamp()
         .getCandidateByIndex(field.getIndex())
         .fixAsTimestamp();
@@ -579,6 +592,11 @@ public class Resolve {
     Optional<VirtualRelationalTable> optTable = getTargetRelTable(env, op);
     SQRLTable table = getContext(env, op.statement)
         .orElseThrow(() -> new RuntimeException("Cannot resolve table"));
+    if (table.getField(op.statement.getNamePath().getLast()).isPresent()) {
+      checkState(!(table.getField(op.statement.getNamePath().getLast()).get() instanceof Relationship),
+          ErrorCode.CANNOT_SHADOW_RELATIONSHIP, op.statement);
+    }
+
     Name name = op.getStatement().getNamePath().getLast();
     Name vtName = uniquifyColumnName(name, table);
 
@@ -617,19 +635,23 @@ public class Resolve {
 
   private void updateJoinMapping(Env env, StatementOp op) {
     //op is a join, we need to discover the /to/ relationship
-    Optional<SQRLTable> table = getContext(env, op.statement);
+    SQRLTable table = getContext(env, op.statement)
+        .orElseThrow(()->new RuntimeException("Internal Error: Missing context"));
     JoinDeclarationUtil joinDeclarationUtil = new JoinDeclarationUtil(env);
     SQRLTable toTable =
         joinDeclarationUtil.getToTable(op.sqrlValidator,
             op.query);
     Multiplicity multiplicity = getMultiplicity(env, op);
 
-    table.get().addRelationship(op.statement.getNamePath().getLast(), toTable,
+    checkState(table.getField(op.statement.getNamePath().getLast()).isEmpty(),
+        ErrorCode.CANNOT_SHADOW_RELATIONSHIP, op.statement);
+
+    table.addRelationship(op.statement.getNamePath().getLast(), toTable,
         Relationship.JoinType.JOIN, multiplicity, Optional.of(op.joinDeclaration));
   }
 
   private Multiplicity getMultiplicity(Env env, StatementOp op) {
-    Optional<SqlNode> fetch = getFetch(op);
+    Optional<SqlNode> fetch = getFetch(env, op);
 
     return fetch
         .filter(f -> ((SqlNumericLiteral) f).intValue(true) == 1)
@@ -637,7 +659,7 @@ public class Resolve {
         .orElse(Multiplicity.MANY);
   }
 
-  private Optional<SqlNode> getFetch(StatementOp op) {
+  private Optional<SqlNode> getFetch(Env env, StatementOp op) {
     if (op.query instanceof SqlSelect) {
       SqlSelect select = (SqlSelect) op.query;
       return Optional.ofNullable(select.getFetch());
@@ -645,7 +667,7 @@ public class Resolve {
       SqlOrderBy order = (SqlOrderBy) op.query;
       return Optional.ofNullable(order.fetch);
     } else {
-      throw new RuntimeException("Unknown node type");
+      throw fatal(env, "Unknown node type");
     }
   }
 
@@ -690,10 +712,23 @@ public class Resolve {
       return Optional.of(new Simple(columnName, project.getProjects().get(project.getProjects().size() - 1)));
     } else {
       //return new Complex(columnName, op.relNode);
-      throw new UnsupportedOperationException("Complex column not yet supported");
+      throw unsupportedOperation(env, "Complex column not yet supported");
     }
+  }
 
-
+  private void assurePathWritable(Env env, StatementOp op, NamePath path) {
+    Optional<SQRLTable> table = Optional.ofNullable(env.relSchema.getTable(path.get(0).getCanonical(), false))
+        .filter(e->e.getTable() instanceof SQRLTable)
+        .map(e-> (SQRLTable) e.getTable());
+    Optional<Field> field = table
+        .map(t->t.walkField(path.popFirst()))
+        .stream()
+        .flatMap(Collection::stream)
+        .filter(f->f instanceof Relationship && (
+              ((Relationship)f).getJoinType() == Relationship.JoinType.JOIN
+                  || ((Relationship)f).getJoinType() == Relationship.JoinType.PARENT))
+        .findAny();
+    checkState(field.isEmpty(), ErrorCode.PATH_CONTAINS_RELATIONSHIP, op.statement);
   }
 
   private boolean isSimple(StatementOp op) {
@@ -704,6 +739,36 @@ public class Resolve {
   private Optional<VirtualRelationalTable> getTargetRelTable(Env env, StatementOp op) {
     Optional<SQRLTable> context = getContext(env, op.statement);
     return context.map(c -> env.getTableMap().get(c));
+  }
+
+  public void checkState(boolean check, ErrorCode code, SqlNode node) {
+    checkState(check, code, node::getParserPosition, () -> "");
+  }
+
+  public void checkState(boolean check, ErrorCode code, SqlNode node, String message) {
+    checkState(check, code, node::getParserPosition, () -> message);
+  }
+
+  public void checkState(boolean check, ErrorCode code,
+      Supplier<SqlParserPos> pos, Supplier<String> message) {
+    if (!check) {
+      throw createAstException(code, pos, message);
+    }
+  }
+
+  public RuntimeException createAstException(ErrorCode code, Supplier<SqlParserPos> pos,
+      Supplier<String> message) {
+    return new SqrlAstException(code, pos.get(), message.get());
+  }
+
+  private RuntimeException fatal(Env env, String message) {
+    return createAstException(ErrorCode.GENERIC_ERROR,
+        ()->env.getCurrentNode().getParserPosition(), ()->message);
+  }
+
+  private RuntimeException unsupportedOperation(Env env, String message) {
+    return createAstException(ErrorCode.GENERIC_ERROR,
+        ()->env.getCurrentNode().getParserPosition(), ()->message);
   }
 
   public enum StatementKind {

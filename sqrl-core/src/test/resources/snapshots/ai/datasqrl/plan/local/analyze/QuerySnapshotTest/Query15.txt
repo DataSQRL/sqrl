@@ -1,4 +1,4 @@
-Orders.entries.product := JOIN Product ON Product.productid = _.productid;
+Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;
 O2 := SELECT p.* FROM Orders.entries.product p;
 
 LogicalProject(_uuid=[$11], _ingest_time=[$12], productid=[$13], name=[$14], description=[$15], category=[$16])

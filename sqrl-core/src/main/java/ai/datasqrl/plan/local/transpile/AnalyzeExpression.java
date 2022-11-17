@@ -1,11 +1,18 @@
 package ai.datasqrl.plan.local.transpile;
 
+import ai.datasqrl.config.error.ErrorCode;
+import ai.datasqrl.config.error.SqrlAstException;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Context;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTableField;
 import ai.datasqrl.plan.local.transpile.AnalyzeExpression.ExpressionContext;
+import ai.datasqrl.schema.Field;
+import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.Relationship.JoinType;
+import ai.datasqrl.schema.Relationship.Multiplicity;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -58,10 +65,20 @@ public class AnalyzeExpression extends SqlBasicVisitor<ExpressionContext> {
       return super.visit(id);
     }
 
-    Optional<ResolvedTableField> field = context.resolveField(id.names, allowSystemFields);
+    Optional<ResolvedTableField> field = context.resolveField(id, id.names);
     if (field.isEmpty()) {
-      throw new RuntimeException("Could not find field: " + id);
+      throw new SqrlAstException(ErrorCode.MISSING_FIELD, id.getParserPosition(),
+          "Could not find field: " + id.names);
     }
+    Optional<Field> hasToMany = field.get().path.stream()
+        .filter(f->f instanceof Relationship)
+        .filter(f->((Relationship) f).getMultiplicity() == Multiplicity.MANY)
+        .findAny();
+    if (hasToMany.isPresent()) {
+      throw new SqrlAstException(ErrorCode.TO_MANY_PATH_NOT_ALLOWED, id.getParserPosition(),
+          String.format("Field cannot be walked here, has to-many multiplicity: %s", hasToMany.get().getName().getCanonical()));
+    }
+
     this.resolvedFields.put(id, field.get());
 
     return super.visit(id);

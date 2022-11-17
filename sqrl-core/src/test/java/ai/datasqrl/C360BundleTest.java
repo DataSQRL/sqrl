@@ -59,48 +59,6 @@ public class C360BundleTest {
 //    }
   }
 
-  @Test
-  @SneakyThrows
-  public void test() {
-    Path dest = copyBundle(c360Script);
-    Compiler compiler = new Compiler();
-    compiler.run(dest.resolve("build/"), Optional.empty(),
-        Optional.of(testDatabase.getJdbcConfiguration().getDatabase(MetaData.DEFAULT_DATABASE)));
-
-    HttpResponse<String> s = compiler.testQuery("{\n"
-        + "  Orders {\n"
-        + "    id\n"
-        + "    entries {\n"
-        + "      productid\n"
-        + "      discount\n"
-        + "      test\n"
-        + "    }\n"
-        + "  }\n"
-        + "  Customer {\n"
-        + "    customerid\n"
-        + "    orders {\n"
-        + "      customerid\n"
-        + "    }\n"
-        + "  }\n"
-        + "  Product {\n"
-        + "    \n"
-        + "    description\n"
-        + "    order_entries {\n"
-        + "       discount\n"
-        + "    }\n"
-        + "   \n"
-        + "  }\n"
-        + "}");
-    System.out.println(s.body());
-    System.out.println(s.headers());
-    System.out.println(s.statusCode());
-
-// Uncomment to test graphql
-//    while(true) {
-//      Thread.sleep(10);
-//    }
-  }
-
   @SneakyThrows
   private Path copyBundle(String c360Script) {
     Path dest = Files.createTempDirectory("c360bundle");

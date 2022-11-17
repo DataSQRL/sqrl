@@ -1,5 +1,7 @@
 package ai.datasqrl.plan.local.transpile;
 
+import ai.datasqrl.config.error.ErrorCode;
+import ai.datasqrl.config.error.SqrlAstException;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.google.common.collect.Maps;
 import java.util.ArrayList;
@@ -72,7 +74,8 @@ public class AllowMixedFieldUnions extends SqlShuttle {
             .forEach(names::add);
         return;
     }
-    throw new RuntimeException("unknown nested union field");
+    throw new SqrlAstException(ErrorCode.GENERIC_ERROR, node.getParserPosition(),
+        "unknown nested union field");
   }
 
   @AllArgsConstructor
@@ -103,8 +106,8 @@ public class AllowMixedFieldUnions extends SqlShuttle {
           );
       }
 
-      //Don't walk deeply, only top level unions
-      throw new RuntimeException("Unknown node type");
+      throw new SqrlAstException(ErrorCode.GENERIC_ERROR, call.getParserPosition(),
+          "Unknown node type");
     }
 
     private SqlNodeList alignSelects(SqlNodeList selectList, Set<String> names) {

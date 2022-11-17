@@ -7,21 +7,17 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @Getter
-public class SqrlException extends RuntimeException {
+public class SqrlAstException extends RuntimeException {
 
   private final ErrorCode errorCode;
-  private final Optional<SqlNode> currentNode;
-  private final String context;
+  private final SqlParserPos pos;
+  private final String message;
 
-  public SqrlException(ErrorCode code, Optional<SqlNode> currentNode, SqlParserPos pos, String context) {
-    super(formatMessage(code, currentNode, pos, context));
-    this.errorCode = code;
-    this.currentNode = currentNode;
-    this.context = context;
-  }
-
-  public SqrlException(ErrorCode code, SqlNode currentNode, SqlParserPos pos, String context) {
-    this(code, Optional.of(currentNode), pos, context);
+  public SqrlAstException(ErrorCode errorCode, SqlParserPos pos, String message) {
+    super(message);
+    this.errorCode = errorCode;
+    this.pos = pos;
+    this.message = message;
   }
 
   private static String formatMessage(ErrorCode code, Optional<SqlNode> currentNode, SqlParserPos pos, String message) {

@@ -1,4 +1,4 @@
-LogicalProject(_uuid=[$0], EXPR$1=[+($2, 1)])
+LogicalProject(__pk_0=[$0], EXPR$1=[+($2, 1)])
   LogicalJoin(condition=[true], joinType=[inner])
     LogicalTableScan(table=[[product$3]])
     LogicalTableScan(table=[[product$3]])

@@ -5,7 +5,10 @@ import io.vertx.json.schema.ValidationException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -14,12 +17,22 @@ import org.apache.commons.lang3.StringUtils;
 @Slf4j
 public class ErrorCollector implements Iterable<ErrorMessage> {
 
-  private final ErrorLocation baseLocation;
+  @Getter
+  private final ErrorEmitter errorEmitter;
   private final List<ErrorMessage> errors;
 
-  private ErrorCollector(@NonNull ErrorLocation location, @NonNull List<ErrorMessage> errors) {
-    this.baseLocation = location;
+  private final Map<Class, ErrorHandler> handlers = Map.of(
+      SqrlAstException.class, new SqrlAstExceptionHandler(),
+      ValidationException.class, new ValidationExceptionHandler()
+  );
+
+  private ErrorCollector(@NonNull ErrorEmitter errorEmitter, @NonNull List<ErrorMessage> errors) {
+    this.errorEmitter = errorEmitter;
     this.errors = errors;
+  }
+
+  private ErrorCollector(@NonNull ErrorLocation location, @NonNull List<ErrorMessage> errors) {
+    this(new ErrorEmitter(location), errors);
   }
 
   private ErrorCollector(@NonNull ErrorLocation location) {
@@ -35,28 +48,28 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
   }
 
   public ErrorCollector resolve(String location) {
-    return new ErrorCollector(baseLocation.resolve(location), errors);
+    return new ErrorCollector(errorEmitter.resolve(location), errors);
   }
 
   public ErrorCollector resolve(Name location) {
-    return new ErrorCollector(baseLocation.resolve(location), errors);
+    return new ErrorCollector(errorEmitter.resolve(location), errors);
   }
 
-  private void addInternal(@NonNull ErrorMessage error) {
+  protected void addInternal(@NonNull ErrorMessage error) {
     errors.add(error);
   }
 
-  public void add(@NonNull ErrorMessage err) {
+  protected void add(@NonNull ErrorMessage err) {
     ErrorLocation errLoc = err.getLocation();
     if (!errLoc.hasPrefix()) {
       //Adjust relative location
-      ErrorLocation newloc = baseLocation.append(errLoc);
+      ErrorLocation newloc = errorEmitter.getBaseLocation().append(errLoc);
       err = new ErrorMessage.Implementation(err.getMessage(), newloc, err.getSeverity());
     }
     addInternal(err);
   }
 
-  public void addAll(ErrorCollector other) {
+  protected void addAll(ErrorCollector other) {
     if (other == null) {
       return;
     }
@@ -64,7 +77,6 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
       add(err);
     }
   }
-
 
   public boolean hasErrors() {
     return !errors.isEmpty();
@@ -79,63 +91,32 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
   }
 
   public void fatal(String msg, Object... args) {
-    addInternal(new ErrorMessage.Implementation(getMessage(msg, args), baseLocation,
-        ErrorMessage.Severity.FATAL));
+    addInternal(errorEmitter.fatal(msg, args));
   }
 
   public void fatal(int line, int offset, String msg, Object... args) {
-    addInternal(
-        new ErrorMessage.Implementation(getMessage(msg, args), baseLocation.atFile(line, offset),
-            ErrorMessage.Severity.FATAL));
+    addInternal(errorEmitter.fatal(line, offset, msg, args));
   }
 
   public void fatal(SqlParserPos location, String msg, Object... args) {
     fatal(location.getLineNum(), location.getColumnNum(), msg, args);
   }
 
-  public void fatal(ValidationException exception) {
-    String msg = exception.getMessage() + " [ keyword = " + exception.keyword() + "]";
-    //Convert JSON location to error location. The only access we have to the JSONPointer path is through toString() and we need to parse
-    ErrorLocation loc = baseLocation;
-    if (exception.inputScope() != null) {
-      String[] path = StringUtils.split(exception.inputScope().toString(), "/");
-      for (String p : path) {
-        if (!p.isBlank()) {
-          loc = loc.resolve(p);
-        }
-      }
-    }
-    addInternal(new ErrorMessage.Implementation(msg, loc, ErrorMessage.Severity.FATAL));
-  }
-
-
   public void warn(String msg, Object... args) {
-    addInternal(new ErrorMessage.Implementation(getMessage(msg, args), baseLocation,
-        ErrorMessage.Severity.WARN));
+    addInternal(errorEmitter.warn(msg, args));
   }
 
   public void warn(int line, int offset, String msg, Object... args) {
-    addInternal(
-        new ErrorMessage.Implementation(getMessage(msg, args), baseLocation.atFile(line, offset),
-            ErrorMessage.Severity.WARN));
+    addInternal(errorEmitter.warn(line, offset, msg, args));
   }
 
+
   public void notice(String msg, Object... args) {
-    addInternal(new ErrorMessage.Implementation(getMessage(msg, args), baseLocation,
-        ErrorMessage.Severity.NOTICE));
+    addInternal(errorEmitter.notice(msg, args));
   }
 
   public void notice(int line, int offset, String msg, Object... args) {
-    addInternal(
-        new ErrorMessage.Implementation(getMessage(msg, args), baseLocation.atFile(line, offset),
-            ErrorMessage.Severity.NOTICE));
-  }
-
-  private static String getMessage(String msgTemplate, Object... args) {
-    if (args == null || args.length == 0) {
-      return msgTemplate;
-    }
-    return String.format(msgTemplate, args);
+    addInternal(errorEmitter.notice(line, offset, msg, args));
   }
 
   @Override
@@ -175,5 +156,12 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
         throw new UnsupportedOperationException("Unexpected severity: " + message.getSeverity());
       }
     }
+  }
+
+  public void handle(Exception e) {
+    Optional<ErrorHandler> handler = Optional.ofNullable(handlers.get(e.getClass()));
+    handler.ifPresentOrElse(
+        h -> add(h.handle(e, errorEmitter)),
+        () -> fatal(e.getMessage()));
   }
 }

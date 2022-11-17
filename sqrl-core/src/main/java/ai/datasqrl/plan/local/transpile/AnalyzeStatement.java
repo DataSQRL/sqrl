@@ -1,5 +1,7 @@
 package ai.datasqrl.plan.local.transpile;
 
+import ai.datasqrl.config.error.ErrorCode;
+import ai.datasqrl.config.error.SqrlAstException;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
@@ -9,6 +11,7 @@ import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Context;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
+import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -134,7 +137,7 @@ public class AnalyzeStatement implements
         SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) node;
         return spec.accept(this, context);
       default:
-        throw new RuntimeException("unknown ast node");
+        throw new SqrlAstException(ErrorCode.GENERIC_ERROR, node.getParserPosition(), "unknown ast node");
     }
   }
 
@@ -179,13 +182,14 @@ public class AnalyzeStatement implements
 
   @Override
   public Context visitJoinSetOperation(SqrlJoinSetOperation node, Context context) {
-    throw new RuntimeException("TBD");
+    throw new RuntimeException("EXCEPT and INTERSECT not yet supported");
   }
 
   public Context visitFrom(SqlIdentifier id, Context context) {
     Optional<ResolvedTable> resolve = resolve(id, context);
     if (resolve.isEmpty()) {
-      throw new RuntimeException("Could not find table: " + id.names);
+      throw new SqrlAstException(
+          ErrorCode.MISSING_TABLE, id.getParserPosition(), "Could not find table: " + id.names);
     }
 
     ResolvedTable resolved = resolve.get();
@@ -537,7 +541,8 @@ public class AnalyzeStatement implements
       SqlNode groupItem = list.get(j);
       if (groupItem instanceof SqlLiteral &&
           ((SqlLiteral) groupItem).getTypeName() == SqlTypeName.BIGINT) {
-        throw new RuntimeException("Ordinals not supported in group by");
+        throw new SqrlAstException(ErrorCode.ORDINAL_NOT_SUPPORTED, groupItem.getParserPosition(),
+            "Ordinals not supported in group by");
       }
 
       //SQRL allows using column names in group by statements
@@ -555,7 +560,9 @@ public class AnalyzeStatement implements
           continue outer;
         }
       }
-      throw new RuntimeException("Could not find grouping key: " + groupItem);
+
+      throw new SqrlAstException(ErrorCode.MISSING_FIELD, groupItem.getParserPosition(),
+          String.format("Could not find grouping key: %s", groupItem));
     }
 
     groupByExpression.stream()
@@ -597,7 +604,8 @@ public class AnalyzeStatement implements
 
       if (orderItem instanceof SqlLiteral &&
           ((SqlLiteral) orderItem).getTypeName() == SqlTypeName.BIGINT) {
-        throw new RuntimeException("Ordinals not supported in group by");
+        throw new SqrlAstException(ErrorCode.ORDINAL_NOT_SUPPORTED, orderItem.getParserPosition(),
+            "Ordinals not supported in order by");
       }
 
       //SQRL allows using column names in order statements
@@ -723,8 +731,7 @@ public class AnalyzeStatement implements
       return Optional.of(new RelativeResolvedTable(base.get().alias, rels));
     }
 
-    public Optional<ResolvedTableField> resolveField(ImmutableList<String> names,
-        boolean allowSystemFields) {
+    public Optional<ResolvedTableField> resolveField(SqlNode node, ImmutableList<String> names) {
       //check if fully qualified or has an alias, preference for fully qualified
 
       if (names.size() > 1) {

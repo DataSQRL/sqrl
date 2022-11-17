@@ -55,7 +55,6 @@ type order_again {
 }
 
 type order_stats {
-  customerid: Int
   total_spend: Float
   num_orders: Int
 }

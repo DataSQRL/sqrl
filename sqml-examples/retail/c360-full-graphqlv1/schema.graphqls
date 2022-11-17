@@ -50,7 +50,6 @@ type entries {
 }
 
 type favorite_categories {
-  customerid: Int
   category_name: String
   total: Float
   parent: Customer!
@@ -58,7 +57,6 @@ type favorite_categories {
 }
 
 type order_again {
-  customerid: Int
   productid: Int
   quantity: Int
   num_orders: Int
@@ -67,7 +65,6 @@ type order_again {
 }
 
 type order_stats {
-  customerid: Int
   total_spend: Float
   num_orders: Int
   parent: Customer!

@@ -251,6 +251,11 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
     return StreamUtil.filterByClass(fields.getFields(onlyVisible),Column.class).collect(Collectors.toList());
   }
 
+  public List<Field> walkField(NamePath path) {
+    return walkField(path.stream()
+        .map(Name::getCanonical)
+        .collect(Collectors.toList()));
+  }
   public List<Field> walkField(List<String> names) {
     List<Field> fields = new ArrayList<>();
     SQRLTable t = this;

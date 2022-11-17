@@ -78,7 +78,7 @@ public class AddContextFields {
           SqlStdOperatorTable.AS.createCall(
               SqlParserPos.ZERO,
               ppk,
-              new SqlIdentifier(List.of(alias), SqlParserPos.ZERO)
+              new SqlIdentifier(List.of("__pk_" + i), SqlParserPos.ZERO)
           ));
     }
 
