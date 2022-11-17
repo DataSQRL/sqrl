@@ -6,10 +6,10 @@ Customer( customerid: 1000101) {
     orders {
         id
         time
-        total {
-            price
-            discount
-            num
+        entries {
+            productid
+            quantity
+            unit_price
         }
     }
 }}
