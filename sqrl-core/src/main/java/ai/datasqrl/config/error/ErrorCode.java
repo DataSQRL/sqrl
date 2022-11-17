@@ -31,7 +31,7 @@ public enum ErrorCode {
   @SneakyThrows
   ErrorCode(String fileName) {
     file = Resources.getResource("errorCodes/"+fileName).toURI();
-    Preconditions.checkState(new File(file).exists());
+//    Preconditions.checkState(new File(file).exists());
   }
 
   @SneakyThrows
