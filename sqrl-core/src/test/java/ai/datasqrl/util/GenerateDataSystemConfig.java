@@ -7,8 +7,6 @@ import ai.datasqrl.io.sources.DataSystemConfig;
 import ai.datasqrl.io.sources.DataSystemDiscoveryConfig;
 import ai.datasqrl.io.sources.ExternalDataType;
 import ai.datasqrl.util.data.Retail;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
@@ -29,10 +27,8 @@ public class GenerateDataSystemConfig {
         builder.format(FileFormat.JSON.getImplementation().getDefaultConfiguration());
         DataSystemConfig config = builder.build();
 
-        ObjectMapper jsonMapper = new ObjectMapper();
-        jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
         Path datasystemConfigFile = testDataset.getRootPackageDirectory().resolve("output").resolve(DataSourceLoader.DATASYSTEM_FILE);
-        jsonMapper.writeValue(datasystemConfigFile.toFile(),config);
+        FileTestUtil.writeJson(datasystemConfigFile, config);
     }
 
 }

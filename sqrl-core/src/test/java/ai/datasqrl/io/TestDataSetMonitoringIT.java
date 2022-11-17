@@ -12,14 +12,11 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
 import ai.datasqrl.schema.input.external.SchemaExport;
+import ai.datasqrl.util.FileTestUtil;
 import ai.datasqrl.util.SnapshotTest;
 import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.Retail;
 import ai.datasqrl.util.junit.ArgumentProvider;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -51,10 +48,8 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         assertEquals(example.getTables(),tables.stream().map(TableSource::getName).map(Name::getCanonical).collect(Collectors.toSet()));
 
         //Write out table configurations
-        ObjectMapper jsonMapper = new ObjectMapper();
-        jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
         for (TableSource table : tables) {
-            String json = jsonMapper.writeValueAsString(table.getConfiguration());
+            String json = FileTestUtil.writeJson(table.getConfiguration());
             assertTrue(json.length()>0);
         }
 
@@ -64,9 +59,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         //Write out combined schema file
         SchemaExport export = new SchemaExport();
         SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
-        YAMLMapper mapper = new YAMLMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        snapshot.addContent(mapper.writeValueAsString(outputSchema),"combined schema");
+        snapshot.addContent(FileTestUtil.writeYaml(outputSchema),"combined schema");
         snapshot.createOrValidate();
     }
 
@@ -114,11 +107,9 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
 
         Path destinationDir = example.getRootPackageDirectory().resolve(example.getName());
         //Write out table configurations
-        ObjectMapper jsonMapper = new ObjectMapper();
-        jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
         for (TableSource table : tables) {
             Path tableConfigFile = destinationDir.resolve(table.getName().getCanonical()+DataSourceLoader.TABLE_FILE_SUFFIX);
-            jsonMapper.writeValue(tableConfigFile.toFile(),table.getConfiguration());
+            FileTestUtil.writeJson(tableConfigFile,table.getConfiguration());
         }
 
         Name datasetName = tables.get(0).getPath().parent().getLast();
@@ -128,9 +119,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         SchemaExport export = new SchemaExport();
         SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
         Path schemaFile = destinationDir.resolve(DataSourceLoader.PACKAGE_SCHEMA_FILE);
-        YAMLMapper yamlMapper = new YAMLMapper();
-        yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        yamlMapper.writeValue(schemaFile.toFile(),outputSchema);
+        FileTestUtil.writeYaml(schemaFile,outputSchema);
     }
 
 }

@@ -24,16 +24,16 @@ public interface TestScript {
 
     Path getRootPackageDirectory();
 
-    Path getScript();
+    Path getScriptPath();
 
     @SneakyThrows
-    default String getScriptContent() {
-        return Files.readString(getScript());
+    default String getScript() {
+        return Files.readString(getScriptPath());
     }
 
     List<String> getResultTables();
 
-    List<Path> getGraphQLSchemas();
+    List<TestGraphQLSchema> getGraphQLSchemas();
 
     default boolean dataSnapshot() {
         return true;
@@ -48,13 +48,13 @@ public interface TestScript {
         @NonNull
         final Path rootPackageDirectory;
         @NonNull
-        final Path script;
+        final Path scriptPath;
         @NonNull
         final List<String> resultTables;
         @Builder.Default
         final boolean dataSnapshot = true;
         @Builder.Default @NonNull
-        final List<Path> graphQLSchemas = List.of();
+        final List<TestGraphQLSchema> graphQLSchemas = List.of();
 
         @Override
         public String toString() {
@@ -75,7 +75,7 @@ public interface TestScript {
     static TestScript.Impl.ImplBuilder of(Path rootPackage, Path script, String... resultTables) {
         String name = script.getFileName().toString();
         if (name.endsWith(".sqrl")) name = name.substring(0,name.length()-5);
-        return Impl.builder().name(name).rootPackageDirectory(rootPackage).script(script)
+        return Impl.builder().name(name).rootPackageDirectory(rootPackage).scriptPath(script)
                 .resultTables(Arrays.asList(resultTables));
     }
 
@@ -103,7 +103,7 @@ public interface TestScript {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {
             return getAll().stream().flatMap(script ->
-                    script.getGraphQLSchemas().stream().map(path -> Arguments.of(script,path)));
+                    script.getGraphQLSchemas().stream().map(gql -> Arguments.of(script,gql)));
         }
     }
 

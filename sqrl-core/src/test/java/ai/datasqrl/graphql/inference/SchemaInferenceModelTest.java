@@ -25,7 +25,7 @@ class SchemaInferenceModelTest extends AbstractSchemaInferenceModelTest {
 
   @Test
   public void testC360Inference() {
-    Pair<InferredSchema, List<APIQuery>> result = inferSchema(example.getScript(RetailScriptNames.FULL),
+    Pair<InferredSchema, List<APIQuery>> result = inferSchemaAndQueries(example.getScript(RetailScriptNames.FULL),
             Path.of("src/test/resources/c360bundle/schema.full.graphqls"));
     assertEquals(64, result.getKey().getQuery().getFields().size());
     assertEquals(444, result.getValue().size());

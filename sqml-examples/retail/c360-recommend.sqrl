@@ -28,8 +28,8 @@ Product._sales_by_hour := SELECT round_to_hour(o.time) as hour, sum(e.quantity) 
                           GROUP BY hour
                           ORDER BY hour DESC;
 
-Product._sales_24h := SELECT sum(quantity) as total, sum(num_orders) as num FROM _._sales_by_hour LIMIT 24;
-Product._sales_72h := SELECT sum(quantity) as total, sum(num_orders) as num FROM _._sales_by_hour LIMIT 72;
+Product._sales_24h := SELECT sum(quantity) as total, sum(num_orders) as num FROM _._sales_by_hour WHERE hour > now() - INTERVAL 1 DAY;
+Product._sales_72h := SELECT sum(quantity) as total, sum(num_orders) as num FROM _._sales_by_hour WHERE hour > now() - INTERVAL 3 DAY;
 
 Product._sales_trend := SELECT a.total*1.5 / greatest(b.total, 500.0) + a.num*1.5 / greatest(b.num, 100.0) as increase
                         FROM _._sales_24h a JOIN _._sales_72h b

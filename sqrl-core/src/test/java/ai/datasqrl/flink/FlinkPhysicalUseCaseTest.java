@@ -28,7 +28,7 @@ public class FlinkPhysicalUseCaseTest extends AbstractPhysicalSQRLIT {
     @SneakyThrows
     private void scriptTest(TestScript script, boolean removeTimestamps, boolean snapshotData) {
         initialize(IntegrationTestSettings.getFlinkWithDB(), script.getRootPackageDirectory());
-        validate(Files.readString(script.getScript()), script.getResultTables(),
+        validateTables(Files.readString(script.getScriptPath()), script.getResultTables(),
                 removeTimestamps?ImmutableSet.copyOf(script.getResultTables()): Set.of(),
                 snapshotData?Set.of():ImmutableSet.copyOf(script.getResultTables()));
     }

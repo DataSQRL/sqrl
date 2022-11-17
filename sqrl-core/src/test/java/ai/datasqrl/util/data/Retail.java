@@ -2,11 +2,11 @@ package ai.datasqrl.util.data;
 
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.TestDataset;
+import ai.datasqrl.util.TestGraphQLSchema;
 import ai.datasqrl.util.TestScript;
 import lombok.Getter;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,8 +32,8 @@ public class Retail implements TestDataset {
             "orders", "entries", "customer", "category", "product", "total", "order_again",
             "_spending_by_month_category", "favorite_categories",
             "order_stats", "newcustomerpromotion")
-                .graphQLSchemas(List.of(BASE_PATH.resolve("c360-full.schema1.graphql"),
-                        BASE_PATH.resolve("c360-full.schema2.graphql")))
+                .graphQLSchemas(TestGraphQLSchema.Directory.of(BASE_PATH.resolve("c360-full-graphqlv1"),
+                        BASE_PATH.resolve("c360-full-graphqlv2")))
                 .build(),
         RetailScriptNames.RECOMMEND,
         TestScript.of(this, BASE_PATH.resolve("c360-recommend.sqrl"),

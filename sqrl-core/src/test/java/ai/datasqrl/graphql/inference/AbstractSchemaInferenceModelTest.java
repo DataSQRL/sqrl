@@ -13,6 +13,7 @@ import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.TestScript;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,18 +21,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
+public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
   private Env env;
 
   @SneakyThrows
-  public Pair<InferredSchema, List<APIQuery>> inferSchema(TestScript script, Path schemaPath) {
+  public Pair<InferredSchema, List<APIQuery>> inferSchemaAndQueries(TestScript script, Path schemaPath) {
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
-
     String schemaStr = Files.readString(schemaPath);
     env = resolve.planDag(session, ConfiguredSqrlParser.newParser(ErrorCollector.root())
-            .parse(script.getScriptContent()));
+            .parse(script.getScript()));
+    Triple<InferredSchema, Root, List<APIQuery>> result = inferSchemaModelQueries(env, schemaStr);
+    return Pair.of(result.getLeft(),result.getRight());
+  }
 
+  private static Triple<InferredSchema, Root, List<APIQuery>> inferSchemaModelQueries(Env env, String schemaStr) {
     //Inference
     SchemaInference inference = new SchemaInference(schemaStr, env.getRelSchema(), env.getSession().getPlanner()
             .getRelBuilder(), env.getSession().getPlanner());
@@ -46,11 +50,16 @@ class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     Root root = inferredSchema.accept(pgBuilder, null);
 
     List<APIQuery> queries = pgBuilder.getApiQueries();
-    return Pair.of(inferredSchema, queries);
+    return Triple.of(inferredSchema, root, queries);
+  }
+
+  public static Pair<Root, List<APIQuery>> getModelAndQueries(Env env, String schemaStr) {
+    Triple<InferredSchema, Root, List<APIQuery>> result = inferSchemaModelQueries(env, schemaStr);
+    return Pair.of(result.getMiddle(),result.getRight());
   }
 
   public Map<IndexDefinition, Double> selectIndexes(TestScript script, Path schemaPath) {
-    List<APIQuery> queries = inferSchema(script,schemaPath).getValue();
+    List<APIQuery> queries = inferSchemaAndQueries(script,schemaPath).getValue();
     /// plan dag
     DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner());
     OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries, env.getExports(), env.getSession().getPipeline());

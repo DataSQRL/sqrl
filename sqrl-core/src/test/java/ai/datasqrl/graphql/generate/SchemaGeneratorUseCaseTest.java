@@ -29,17 +29,17 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
   @ArgumentsSource(TestScript.AllScriptsProvider.class)
   public void fullScriptTest(TestScript script) {
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
-    snapshotTest(script.getScriptContent());
+    snapshotTest(script.getScript());
   }
 
   @SneakyThrows
   protected void produceSchemaFile(TestScript script) {
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
-    String schema = generateSchema(script.getScriptContent());
-    String filename = script.getScript().getFileName().toString();
+    String schema = generateSchema(script.getScript());
+    String filename = script.getScriptPath().getFileName().toString();
     if (filename.endsWith(".sqrl")) filename = filename.substring(0,filename.length()-5);
     filename += ".schema.graphql";
-    Path path = script.getScript().getParent().resolve(filename);
+    Path path = script.getScriptPath().getParent().resolve(filename);
     Files.writeString(path,schema);
   }
 

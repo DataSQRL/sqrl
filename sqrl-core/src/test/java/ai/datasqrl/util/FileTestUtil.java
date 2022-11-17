@@ -1,5 +1,9 @@
 package ai.datasqrl.util;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
@@ -24,5 +28,33 @@ public class FileTestUtil {
         }
         return lineCount;
     };
+
+    private static final ObjectMapper jsonMapper = new ObjectMapper();
+    private static final YAMLMapper yamlMapper = new YAMLMapper();
+
+    static {
+        jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    }
+
+    @SneakyThrows
+    public static<T> void writeJson(Path file, T object) {
+        jsonMapper.writeValue(file.toFile(),object);
+    }
+
+    @SneakyThrows
+    public static<T> String writeJson(T object) {
+        return jsonMapper.writeValueAsString(object);
+    }
+
+    @SneakyThrows
+    public static<T> void writeYaml(Path file, T object) {
+        yamlMapper.writeValue(file.toFile(),object);
+    }
+
+    @SneakyThrows
+    public static<T> String writeYaml(T object) {
+        return yamlMapper.writeValueAsString(object);
+    }
 
 }

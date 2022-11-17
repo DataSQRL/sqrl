@@ -157,7 +157,7 @@ public class Compiler {
   }
 
   @SneakyThrows
-  private void startGraphql(Path build, Root root, JDBCTempDatabase jdbcTempDatabase) {
+  public static void startGraphql(Path build, Root root, JDBCTempDatabase jdbcTempDatabase) {
     CompletableFuture future = Vertx.vertx().deployVerticle(new GraphQLServer(
         build,
         root, jdbcTempDatabase))
@@ -170,7 +170,7 @@ public class Compiler {
   }
 
   @SneakyThrows
-  public HttpResponse<String> testQuery(String query) {
+  public static HttpResponse<String> testQuery(String query) {
     ObjectMapper mapper = new ObjectMapper();
     HttpClient client = HttpClient.newHttpClient();
     HttpRequest request = HttpRequest.newBuilder()
@@ -251,7 +251,7 @@ public class Compiler {
     }
   }
 
-  public class ReplaceGraphqlQueries implements
+  public static class ReplaceGraphqlQueries implements
       RootVisitor<Object, Object>,
       CoordVisitor<Object, Object>,
       SchemaVisitor<Object, Object>,

@@ -8,14 +8,6 @@ import ai.datasqrl.util.data.Retail;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
-import ai.datasqrl.util.data.Retail.RetailScriptNames;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableSet;
-import lombok.SneakyThrows;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -46,7 +38,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   @Test
   public void tableImportTest() {
     String script = example.getImports().toString();
-    validate(script, "customer","product","orders","entries");
+    validateTables(script, "customer","product","orders","entries");
   }
 
   @Test
@@ -63,7 +55,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
     builder.add("OrderCustomer := SELECT o.id, c.name, o.customerid, o.col1, e.discount2 FROM Orders o JOIN o.entries e JOIN Customer c on o.customerid = c.customerid");
 
-    validate(builder.getScript(),"entryprice","customer","orders","entries","ordercustomer");
+    validateTables(builder.getScript(),"entryprice","customer","orders","entries","ordercustomer");
   }
 
   @Test
@@ -76,7 +68,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("OrdersInline := SELECT o.id, o.customerid, o.\"time\", t.price, t.num FROM Orders o JOIN o.total t");
 //    builder.add("Customer.orders_by_day := SELECT o.\"time\", o.price, o.num FROM _ JOIN OrdersInline o ON o.customerid = _.customerid");
     builder.add("Customer.orders_by_hour := SELECT round_to_hour(o.\"time\") as hour, SUM(o.price) as total_price, SUM(o.num) as total_num FROM _ JOIN OrdersInline o ON o.customerid = _.customerid GROUP BY hour");
-    validate(builder.getScript(),"customer","orders","ordersinline","orders_by_hour");
+    validateTables(builder.getScript(),"customer","orders","ordersinline","orders_by_hour");
   }
 
   @Test
@@ -95,7 +87,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("OrderCustomerDedup := SELECT o.id, c.name, o.customerid FROM Orders o JOIN CustomerDedup c on o.customerid = c.customerid");
 
     System.out.println(builder);
-    validate(builder.getScript(),"ordercustomer","ordercustomerinterval","customerdedup","ordercustomerdedup");
+    validateTables(builder.getScript(),"ordercustomer","ordercustomerinterval","customerdedup","ordercustomerdedup");
   }
 
   @Test
@@ -115,7 +107,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.append("OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
     builder.append("agg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM OrderCustomer o GROUP BY customer;\n");
 
-    validate(builder.getScript(),Set.of("ordernow3"),"orderagg1", "orderagg2","ordertime1","ordernow1",
+    validateTables(builder.getScript(),Set.of("ordernow3"),"orderagg1", "orderagg2","ordertime1","ordernow1",
             "ordernow2","ordernow3","orderaugment","ordercustomer","agg1");
   }
 
@@ -126,7 +118,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 5 YEAR");
     builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 1 SECOND");
 
-    validate(builder.getScript(), "historicorders", "recentorders");
+    validateTables(builder.getScript(), "historicorders", "recentorders");
   }
 
   @Test
@@ -145,7 +137,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
     builder.add("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC");
 
-    validate(builder.getScript(),"customerdistinct","customerid","customerorders","distinctorders","distinctorderstime","orders","entries");
+    validateTables(builder.getScript(),"customerdistinct","customerid","customerorders","distinctorders","distinctorderstime","orders","entries");
   }
 
   @Test
@@ -158,7 +150,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
             " UNION ALL " +
             "(SELECT c.customerid, c.updateTime AS rowtime FROM Customer c);");
     builder.add("StreamCount := SELECT round_to_hour(rowtime) as hour, COUNT(1) as num FROM CombinedStream GROUP BY hour");
-    validate(builder.getScript(), "combinedstream","streamcount");
+    validateTables(builder.getScript(), "combinedstream","streamcount");
   }
 
   @Test
@@ -171,6 +163,6 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("CustomerCount2 := DISTINCT CountStream ON customerid ORDER BY _ingest_time DESC");
     builder.add("EXPORT CountStream TO print.CountStream");
     builder.add("EXPORT CountStream TO output.CountStream");
-    validate(builder.getScript(), "customercount","countstream","customercount2");
+    validateTables(builder.getScript(), "customercount","countstream","customercount2");
   }
 }
