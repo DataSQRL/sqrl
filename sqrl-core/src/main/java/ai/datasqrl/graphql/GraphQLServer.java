@@ -1,9 +1,9 @@
 package ai.datasqrl.graphql;
 
+import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
-import ai.datasqrl.util.db.JDBCTempDatabase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
@@ -27,13 +27,13 @@ public class GraphQLServer extends AbstractVerticle {
 
   private final Path build;
   private Root root;
-  private JDBCTempDatabase tempDatabase;
+  private JDBCConnectionProvider jdbcConf;
   private SqlClientInternal client;
 
-  public GraphQLServer(Path build, Root root, JDBCTempDatabase tempDatabase) {
+  public GraphQLServer(Path build, Root root, JDBCConnectionProvider jdbcConf) {
     this.build = build;
     this.root = root;
-    this.tempDatabase = tempDatabase;
+    this.jdbcConf = jdbcConf;
   }
 
   public static void main(String[] args) {
@@ -63,11 +63,11 @@ public class GraphQLServer extends AbstractVerticle {
     int port = config().getInteger("http.port", 8888);
 
     PgConnectOptions options = new PgConnectOptions();
-    options.setDatabase(config().getString("database", tempDatabase.getPostgreSQLContainer().getDatabaseName()));
-    options.setHost(config().getString("host", tempDatabase.getPostgreSQLContainer().getHost()));
-    options.setPort(config().getInteger("port",tempDatabase.getPostgreSQLContainer().getMappedPort(5432)));
-    options.setUser(config().getString("username", tempDatabase.getPostgreSQLContainer().getUsername()));
-    options.setPassword(config().getString("password", tempDatabase.getPostgreSQLContainer().getPassword()));
+    options.setDatabase(config().getString("database", jdbcConf.getDatabaseName()));
+    options.setHost(config().getString("host", jdbcConf.getHost()));
+    options.setPort(config().getInteger("port",jdbcConf.getPort()));
+    options.setUser(config().getString("username", jdbcConf.getUser()));
+    options.setPassword(config().getString("password", jdbcConf.getPassword()));
     options.setCachePreparedStatements(true);
     options.setPipeliningLimit(100_000);
     PgConnection.connect(vertx, options).flatMap(conn -> {

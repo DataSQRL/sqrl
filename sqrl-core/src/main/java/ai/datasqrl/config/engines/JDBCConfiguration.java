@@ -23,6 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 @AllArgsConstructor
 public class JDBCConfiguration implements EngineConfiguration.Database {
 
+  String host;
+  int port;
   @NonNull @NotNull
   String dbURL;
   String user;
@@ -61,7 +63,7 @@ public class JDBCConfiguration implements EngineConfiguration.Database {
       url += ";database_to_upper=false";
     }
 
-    return new Database(url, user, password, driverName, dialect, databaseName);
+    return new Database(host, port, url, user, password, driverName, dialect, databaseName);
   }
 
   @Getter
@@ -70,6 +72,8 @@ public class JDBCConfiguration implements EngineConfiguration.Database {
   @ToString
   public static class Database implements JDBCConnectionProvider {
 
+    private String host;
+    private int port;
     @NonNull
     private String dbURL;
     private String user;

@@ -15,7 +15,6 @@ import ai.datasqrl.plan.global.IndexDefinition;
 import ai.datasqrl.plan.global.IndexSelector;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.queries.APIQuery;
-import ai.datasqrl.util.db.JDBCTempDatabase;
 import lombok.AllArgsConstructor;
 
 import java.util.*;
@@ -29,10 +28,6 @@ public class PhysicalPlanner {
   Planner planner;
 
   public PhysicalPlan plan(OptimizedDAG plan) {
-    return plan(plan, Optional.empty());
-  }
-
-  public PhysicalPlan plan(OptimizedDAG plan, Optional<JDBCTempDatabase> jdbcTempDatabase) {
     // 1. Create DDL for materialized tables
     List<SqlDDLStatement> ddlStatements = new ArrayList<>();
     MaterializedTableDDLBuilder dbBuilder = new MaterializedTableDDLBuilder();
@@ -47,7 +42,7 @@ public class PhysicalPlanner {
     ddlStatements.addAll(dbBuilder.createIndexes(indexDefinitions, true));
 
     // 2. Plan Physical Stream Graph
-    FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(streamEngine, dbConnection, jdbcTempDatabase)
+    FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(streamEngine, dbConnection)
         .createStreamGraph(plan.getStreamQueries());
 
     // 3. Create SQL queries

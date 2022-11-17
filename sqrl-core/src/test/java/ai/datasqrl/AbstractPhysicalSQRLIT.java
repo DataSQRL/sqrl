@@ -6,6 +6,7 @@ import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import ai.datasqrl.graphql.server.Model;
+import ai.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.io.impl.file.FilePath;
 import ai.datasqrl.io.sources.dataset.TableSink;
@@ -139,7 +140,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
         PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
 
         Model.Root model = modelAndQueries.getKey();
-        Compiler.ReplaceGraphqlQueries replaceGraphqlQueries = new Compiler.ReplaceGraphqlQueries(physicalPlan.getDatabaseQueries());
+        ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(physicalPlan.getDatabaseQueries());
         model.accept(replaceGraphqlQueries, null);
         snapshot.addContent(FileTestUtil.writeJson(model),"model");
 
@@ -147,7 +148,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
         Job job = executor.execute(physicalPlan);
         System.out.println("Started Flink Job: " + job.getExecutionId());
 
-//        Compiler.startGraphql(null, model, jdbcTempDatabase); TODO: get rid of jdbcTempDatabase
+        Compiler.startGraphql(null, model, jdbc);
 
         for (Map.Entry<String,String> query : queries.entrySet()) {
             HttpResponse<String> s = Compiler.testQuery(query.getValue());

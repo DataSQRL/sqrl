@@ -1,3 +1,5 @@
+db.host=localhost
+db.port=5432
 db.dialect=POSTGRES
 db.driverClassName=org.postgresql.Driver
 db.url=jdbc:postgresql://localhost

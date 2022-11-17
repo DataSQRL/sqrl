@@ -2,6 +2,8 @@ package ai.datasqrl;
 
 
 import ai.datasqrl.compile.Compiler;
+import ai.datasqrl.config.DiscoveryConfiguration.MetaData;
+import ai.datasqrl.util.JDBCTestDatabase;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class C360BundleTest {
+  JDBCTestDatabase testDatabase = new JDBCTestDatabase(IntegrationTestSettings.DatabaseEngine.POSTGRES);
 
   String c360Script = "IMPORT ecommerce-data.Customer;\n"
       + "IMPORT ecommerce-data.MyFunction;\n"
@@ -34,7 +37,8 @@ public class C360BundleTest {
   public void testByoPagedSchema() {
     Path dest = copyBundle(c360Script);
     Compiler compiler = new Compiler();
-    compiler.run(dest.resolve("build/"), Optional.of(dest.resolve("schema.graphqls")));
+    compiler.run(dest.resolve("build/"), Optional.of(dest.resolve("schema.graphqls")),
+        Optional.of(testDatabase.getJdbcConfiguration().getDatabase(MetaData.DEFAULT_DATABASE)));
 
     HttpResponse<String> s = compiler.testQuery("{\n"
         + "  Orders {\n"
@@ -60,7 +64,8 @@ public class C360BundleTest {
   public void test() {
     Path dest = copyBundle(c360Script);
     Compiler compiler = new Compiler();
-    compiler.run(dest.resolve("build/"), Optional.empty());
+    compiler.run(dest.resolve("build/"), Optional.empty(),
+        Optional.of(testDatabase.getJdbcConfiguration().getDatabase(MetaData.DEFAULT_DATABASE)));
 
     HttpResponse<String> s = compiler.testQuery("{\n"
         + "  Orders {\n"

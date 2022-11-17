@@ -28,6 +28,8 @@ public class JDBCTestDatabase implements DatabaseHandle {
       postgreSQLContainer.start();
 
       this.properties = new Properties();
+      this.properties.put("db.host", postgreSQLContainer.getHost());
+      this.properties.put("db.port", postgreSQLContainer.getMappedPort(5432));
       this.properties.put("db.dialect", Dialect.POSTGRES.toString());
       this.properties.put("db.driverClassName", "org.postgresql.Driver");
       this.properties.put("db.username", "test");
@@ -43,6 +45,8 @@ public class JDBCTestDatabase implements DatabaseHandle {
 
   public JDBCConfiguration getJdbcConfiguration() {
     return JDBCConfiguration.builder()
+        .host((String)properties.get("db.host"))
+        .port((Integer)properties.get("db.port"))
         .dbURL((String)properties.get("db.url"))
         .driverName((String)properties.get("db.driverClassName"))
         .dialect(Dialect.valueOf((String)properties.get("db.dialect")))

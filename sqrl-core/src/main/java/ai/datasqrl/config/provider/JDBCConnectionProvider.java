@@ -9,6 +9,10 @@ import lombok.NonNull;
 
 public interface JDBCConnectionProvider extends DatabaseConnectionProvider {
 
+  String getHost();
+
+  int getPort();
+
   @NonNull String getDbURL();
 
   String getUser();
@@ -22,5 +26,4 @@ public interface JDBCConnectionProvider extends DatabaseConnectionProvider {
   @NotNull JDBCConfiguration.Dialect getDialect();
 
   Connection getConnection() throws SQLException, ClassNotFoundException;
-
 }

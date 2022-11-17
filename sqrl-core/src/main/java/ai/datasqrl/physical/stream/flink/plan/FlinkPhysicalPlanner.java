@@ -8,7 +8,6 @@ import ai.datasqrl.io.sources.dataset.TableSink;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
 import ai.datasqrl.plan.global.OptimizedDAG;
-import ai.datasqrl.util.db.JDBCTempDatabase;
 import com.google.common.base.Strings;
 import graphql.com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
@@ -22,14 +21,12 @@ import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.api.config.ExecutionConfigOptions.NotNullEnforcer;
 
 import java.util.List;
-import java.util.Optional;
 
 @AllArgsConstructor
 public class FlinkPhysicalPlanner {
 
   private final StreamEngine streamEngine;
   private final JDBCConnectionProvider jdbcConfiguration;
-  private final Optional<JDBCTempDatabase> jdbcTempDatabase;
 
   public FlinkStreamPhysicalPlan createStreamGraph(List<OptimizedDAG.MaterializeQuery> streamQueries) {
     final FlinkStreamEngine.Builder streamBuilder = (FlinkStreamEngine.Builder) streamEngine.createJob();
@@ -53,23 +50,13 @@ public class FlinkPhysicalPlanner {
       if (query.getSink() instanceof  OptimizedDAG.DatabaseSink) {
         OptimizedDAG.DatabaseSink dbSink = ((OptimizedDAG.DatabaseSink) query.getSink());
         tblSchema = FlinkPipelineUtils.addPrimaryKey(tblSchema, dbSink);
-        if (jdbcTempDatabase.isPresent()) {
-          sinkDescriptor = TableDescriptor.forConnector("jdbc")
-                  .schema(tblSchema)
-                  .option("url", jdbcTempDatabase.get().getPostgreSQLContainer().getJdbcUrl())
-                  .option("table-name", dbSink.getName())
-                  .option("username", jdbcTempDatabase.get().getPostgreSQLContainer().getUsername())
-                  .option("password", jdbcTempDatabase.get().getPostgreSQLContainer().getPassword())
-                  .build();
-        } else {
-          sinkDescriptor = TableDescriptor.forConnector("jdbc")
-                  .schema(tblSchema)
-                  .option("url", jdbcConfiguration.getDbURL())
-                  .option("table-name", dbSink.getName())
-                  .option("username", jdbcConfiguration.getUser())
-                  .option("password", jdbcConfiguration.getPassword())
-                  .build();
-        }
+        sinkDescriptor = TableDescriptor.forConnector("jdbc")
+                .schema(tblSchema)
+                .option("url", jdbcConfiguration.getDbURL())
+                .option("table-name", dbSink.getName())
+                .option("username", jdbcConfiguration.getUser())
+                .option("password", jdbcConfiguration.getPassword())
+                .build();
       } else {
         OptimizedDAG.ExternalSink extSink = (OptimizedDAG.ExternalSink) query.getSink();
         TableSink tableSink = extSink.getSink();
