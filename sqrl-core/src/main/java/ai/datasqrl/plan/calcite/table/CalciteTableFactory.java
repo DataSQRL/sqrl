@@ -109,6 +109,8 @@ public class CalciteTableFactory {
         }
         UniversalTableBuilder rootTable = convert2TableBuilder(tablePath, baseTable.getRowType(),
                 baseTable.getNumPrimaryKeys(), index2Name);
+
+
         Optional<Pair<SQRLTable, Relationship.Multiplicity>> parent = parentPair.map(pp ->
             Pair.of(pp.getLeft(), pp.getRight().getNumPrimaryKeys()==baseTable.getNumPrimaryKeys()?
                     Relationship.Multiplicity.ZERO_ONE: Relationship.Multiplicity.MANY)
@@ -231,8 +233,7 @@ public class CalciteTableFactory {
         if (parent.isPresent()) {
             SQRLTable root = createdTables.keySet().stream().filter(t -> t.getParent().isEmpty()).findFirst().get();
             SQRLTable parentTbl = parent.get().getKey();
-//            createChildRelationship(root.getName(), root, parentTbl, parent.get().getValue());
-            createChildRelationship(root.getName(), root, parentTbl, Relationship.Multiplicity.MANY);
+            createChildRelationship(root.getName(), root, parentTbl, parent.get().getValue());
             createParentRelationship(root, parentTbl);
         }
         return createdTables;

@@ -1,0 +1,7 @@
+LogicalFilter(condition=[>($1, 10)])
+  LogicalAggregate(group=[{0}], example=[SUM($1)])
+    LogicalProject(__pk_0=[$0], productid0=[$8])
+      LogicalJoin(condition=[true], joinType=[default])
+        LogicalTableScan(table=[[product$3]])
+        LogicalTableScan(table=[[product$3]])
+

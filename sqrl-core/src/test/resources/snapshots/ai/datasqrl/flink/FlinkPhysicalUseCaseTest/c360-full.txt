@@ -10,8 +10,8 @@ LogicalProject(name=[$0], updatetime=[$1])
       LogicalTableScan(table=[[product$i$4]])
 
 >>>total$18-lp-stream
-LogicalProject(_uuid=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
-  LogicalProject(_uuid=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
+LogicalProject(__pk_0=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
+  LogicalProject(__pk_0=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
     LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT]]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])
         LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
@@ -22,10 +22,10 @@ LogicalProject(_uuid=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
               LogicalValues(tuples=[[{ 0 }]])
 
 >>>_spending_by_month_category$22-lp-stream
-LogicalProject(customerid=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
-  LogicalProject(customerid=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
+LogicalProject(__pk_0=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
+  LogicalProject(__pk_0=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
     LogicalAggregate(group=[{0, 1, 2}], total=[SUM($3)], savings=[SUM($4)]) hints[TumbleAggregationHint options:[1, FUNCTION]]
-      LogicalProject(customerid=[$6], month=[round_to_month($4)], category=[$26], total=[$20], discount$0=[$19], _uuid=[$0], _idx=[$14])
+      LogicalProject(__pk_0=[$6], month=[round_to_month($4)], category=[$26], total=[$20], discount$0=[$19], _uuid=[$0], _idx=[$14])
         LogicalJoin(condition=[=($21, $15)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], customerid0=[$6], _uuid0=[$7], _ingest_time0=[$8], email=[$9], name=[$10], lastupdated=[$11], updatetime=[$12], $f7=[$13], _idx=[$14], productid=[$15], quantity=[$16], unit_price=[$17], discount=[$18], $f19=[coalesce($18, 0E0:DOUBLE)], $f20=[-(*($16, $17), coalesce($18, 0E0:DOUBLE))])
             LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
@@ -47,8 +47,8 @@ LogicalProject(customerid=[$0], month=[$1], category=[$2], total=[$3], savings=[
                   LogicalTableScan(table=[[product$i$4]])
 
 >>>order_stats$26-lp-stream
-LogicalProject(customerid=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
-  LogicalProject(customerid=[$6], total_spend=[SUM($15) IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+LogicalProject(__pk_0=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
+  LogicalProject(__pk_0=[$6], total_spend=[SUM($15) IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
     LogicalJoin(condition=[AND(=($0, $14), =($18, $4))], joinType=[left]) hints[IntervalJoin]
       LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
         LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
@@ -58,7 +58,7 @@ LogicalProject(customerid=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
             LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
               LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
                 LogicalTableScan(table=[[customer$i$1]])
-      LogicalProject(_uuid=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
+      LogicalProject(__pk_0=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
         LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT]]
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])
             LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
@@ -74,13 +74,13 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
     LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>favorite_categories$24-lp-stream
-LogicalProject(customerid=[$0], category_name=[$1], total=[$2], month=[$3])
-  LogicalProject(customerid=[$2], category_name=[$1], total=[$3], month=[$0])
+LogicalProject(__pk_0=[$0], category_name=[$1], total=[$2], month=[$3])
+  LogicalProject(__pk_0=[$2], category_name=[$1], total=[$3], month=[$0])
     LogicalAggregate(group=[{1, 2, 5}], total=[SUM($3)]) hints[SlidingAggregationHint options:[1, 31536000000, 630720000]]
       LogicalJoin(condition=[=($5, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
-        LogicalProject(customerid=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
+        LogicalProject(__pk_0=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
           LogicalAggregate(group=[{0, 1, 2}], total=[SUM($3)], savings=[SUM($4)]) hints[TumbleAggregationHint options:[1, FUNCTION]]
-            LogicalProject(customerid=[$6], month=[round_to_month($4)], category=[$26], total=[$20], discount$0=[$19], _uuid=[$0], _idx=[$14])
+            LogicalProject(__pk_0=[$6], month=[round_to_month($4)], category=[$26], total=[$20], discount$0=[$19], _uuid=[$0], _idx=[$14])
               LogicalJoin(condition=[=($21, $15)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
                 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], customerid0=[$6], _uuid0=[$7], _ingest_time0=[$8], email=[$9], name=[$10], lastupdated=[$11], updatetime=[$12], $f7=[$13], _idx=[$14], productid=[$15], quantity=[$16], unit_price=[$17], discount=[$18], $f19=[coalesce($18, 0E0:DOUBLE)], $f20=[-(*($16, $17), coalesce($18, 0E0:DOUBLE))])
                   LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
@@ -128,8 +128,8 @@ LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], descrip
       LogicalTableScan(table=[[product$i$4]])
 
 >>>order_again$20-lp-stream
-LogicalProject(customerid=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4], time=[$5])
-  LogicalProject(customerid=[$6], productid=[$15], quantity=[SUM($16) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], most_recent=[MAX($4) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+LogicalProject(__pk_0=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4], time=[$5])
+  LogicalProject(__pk_0=[$6], productid=[$15], quantity=[SUM($16) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], most_recent=[MAX($4) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
     LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
       LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
         LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
@@ -170,27 +170,27 @@ LogicalSort(sort0=[$0], dir0=[ASC])
 
 >>>total-lp-database
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
-  LogicalProject(_uuid=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
+  LogicalProject(__pk_0=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
     LogicalTableScan(table=[[total$18]])
 
 >>>order_again-lp-database
 LogicalSort(sort0=[$0], sort1=[$4], sort2=[$2], sort3=[$1], dir0=[ASC], dir1=[DESC], dir2=[DESC], dir3=[ASC])
-  LogicalProject(customerid=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4], time=[$5])
+  LogicalProject(__pk_0=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4], time=[$5])
     LogicalTableScan(table=[[order_again$20]])
 
 >>>_spending_by_month_category-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], sort2=[$2], dir0=[ASC], dir1=[DESC], dir2=[ASC])
-  LogicalProject(customerid=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
+  LogicalProject(__pk_0=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
     LogicalTableScan(table=[[_spending_by_month_category$22]])
 
 >>>favorite_categories-lp-database
 LogicalSort(sort0=[$0], sort1=[$2], sort2=[$1], dir0=[ASC], dir1=[ASC], dir2=[ASC])
-  LogicalProject(customerid=[$0], category_name=[$1], total=[$2], month=[$3])
+  LogicalProject(__pk_0=[$0], category_name=[$1], total=[$2], month=[$3])
     LogicalTableScan(table=[[favorite_categories$24]])
 
 >>>order_stats-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(customerid=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
+  LogicalProject(__pk_0=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
     LogicalTableScan(table=[[order_stats$26]])
 
 >>>newcustomerpromotion-lp-database
@@ -234,27 +234,27 @@ Personal Care
 166.500, 15.000, 2
 41.950, 0.000, 1
 >>>order_again-data
-1000101, 7235, 1, 1
-1000101, 8757, 2, 1
-1000107, 1332, 8, 1
-1000107, 3571, 2, 2
-1000121, 3225, 1, 1
-1000121, 7552, 3, 1
+1332, 8, 1
+3225, 1, 1
+3571, 2, 2
+7235, 1, 1
+7552, 3, 1
+8757, 2, 1
 >>>_spending_by_month_category-data
-1000101, Decoration, 120.850, 11.500
-1000107, Personal Care, 146.820, 5.000
-1000121, House & Garden, 105.000, 0.000
-1000121, House & garden, 61.500, 15.000
+Decoration, 120.850, 11.500
+House & Garden, 105.000, 0.000
+House & garden, 61.500, 15.000
+Personal Care, 146.820, 5.000
 >>>favorite_categories-data
-1000101, Decoration, 120.850
-1000107, Personal Care, 146.820
-1000121, House & Garden, 105.000
-1000121, House & garden, 61.500
+Decoration, 120.850
+House & Garden, 105.000
+House & garden, 61.500
+Personal Care, 146.820
 >>>order_stats-data
-1000101, 120.850, 1
-1000107, 146.820, 2
-1000121, 166.500, 1
+120.850, 1
+146.820, 2
+166.500, 1
 >>>newcustomerpromotion-data
-1000101, john.mekker@gmail.com, John B. Mekker, 120.850, 1
+1000101, john.mekker@gmail.com, John Mekker, 120.850, 1
 1000107, emily.ludies@hotmail.com, Emily F. Ludies, 146.820, 2
 1000121, lalelu@hottunes.org, Michelle Dagnes, 166.500, 1

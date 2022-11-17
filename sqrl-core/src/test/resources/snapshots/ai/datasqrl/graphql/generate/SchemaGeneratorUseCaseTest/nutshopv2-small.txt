@@ -1,8 +1,8 @@
 type Customers {
   id: Int
   purchases(id: Int, customerid: Int, time: Int, timestamp: String): [orders]
-  spending_by_month(id: Int, month: String, total_spend: Float, total_savings: Float): [spending_by_month]
-  past_purchases(id: Int, productid: Int, num_orders: Int, total_quantity: Int): [past_purchases]
+  spending_by_month(month: String, total_spend: Float, total_savings: Float): [spending_by_month]
+  past_purchases(productid: Int, num_orders: Int, total_quantity: Int): [past_purchases]
 }
 
 type Products {
@@ -14,7 +14,7 @@ type Products {
   category: String
   usda_id: Int
   updated: String
-  volume_by_day(id: Int, day: String, quantity: Int, total: Float, total_weight: Int): [volume_by_day]
+  volume_by_day(day: String, quantity: Int, total: Float, total_weight: Int): [volume_by_day]
 }
 
 type Query {
@@ -39,11 +39,10 @@ type orders {
   time: Int
   items(productid: Int, quantity: Int, unit_price: Float, discount: Float, total: Float): [items]
   timestamp: String
-  totals(price: Float, savings: Float): [totals]
+  totals(price: Float, savings: Float): totals
 }
 
 type past_purchases {
-  id: Int
   productid: Int
   num_orders: Int
   total_quantity: Int
@@ -51,7 +50,6 @@ type past_purchases {
 }
 
 type spending_by_month {
-  id: Int
   month: String
   total_spend: Float
   total_savings: Float
@@ -65,7 +63,6 @@ type totals {
 }
 
 type volume_by_day {
-  id: Int
   day: String
   quantity: Int
   total: Float

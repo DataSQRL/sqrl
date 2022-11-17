@@ -10,10 +10,10 @@ type Customer {
   lastupdated: Int
   updatetime: String
   orders(id: Int, customerid: Int, time: String): [orders]
-  order_again(customerid: Int, productid: Int, quantity: Int, num_orders: Int, most_recent: String): [order_again]
-  _spending_by_month_category(customerid: Int, month: String, category: String, total: Float, savings: Float): [_spending_by_month_category]
-  favorite_categories(customerid: Int, category_name: String, total: Float): [favorite_categories]
-  order_stats(customerid: Int, total_spend: Float, num_orders: Int): [order_stats]
+  order_again(productid: Int, quantity: Int, num_orders: Int, most_recent: String): [order_again]
+  _spending_by_month_category(month: String, category: String, total: Float, savings: Float): [_spending_by_month_category]
+  favorite_categories(category_name: String, total: Float): [favorite_categories]
+  order_stats(total_spend: Float, num_orders: Int): order_stats
 }
 
 type NewCustomerPromotion {
@@ -41,7 +41,6 @@ type Query {
 }
 
 type _spending_by_month_category {
-  customerid: Int
   month: String
   category: String
   total: Float
@@ -60,7 +59,6 @@ type entries {
 }
 
 type favorite_categories {
-  customerid: Int
   category_name: String
   total: Float
   parent(customerid: Int, email: String, name: String, lastupdated: Int, updatetime: String): Customer!
@@ -68,7 +66,6 @@ type favorite_categories {
 }
 
 type order_again {
-  customerid: Int
   productid: Int
   quantity: Int
   num_orders: Int
@@ -77,7 +74,6 @@ type order_again {
 }
 
 type order_stats {
-  customerid: Int
   total_spend: Float
   num_orders: Int
   parent(customerid: Int, email: String, name: String, lastupdated: Int, updatetime: String): Customer!
@@ -88,7 +84,7 @@ type orders {
   customerid: Int
   time: String
   entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, total: Float): [entries]
-  total(price: Float, discount: Float, num: Int): [total]
+  total(price: Float, discount: Float, num: Int): total
 }
 
 type total {

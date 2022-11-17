@@ -1017,7 +1017,7 @@ class AstBuilder
       SqlNode expr = visit(ctx.expression());
 
       if (ctx.timestampAlias != null) {
-        SqlIdentifier tsAlias = ((SqlIdentifier) visit(ctx.timestampAlias));;
+        SqlIdentifier tsAlias = ((SqlIdentifier) visit(ctx.timestampAlias));
         timestampAlias = Optional.of(tsAlias);
       }
       timestamp = Optional.of(expr);

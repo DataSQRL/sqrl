@@ -2,6 +2,8 @@ package ai.datasqrl.config.error;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
+import java.util.Optional;
+import lombok.Getter;
 import lombok.Value;
 
 public interface ErrorMessage {
@@ -40,12 +42,25 @@ public interface ErrorMessage {
     NOTICE, WARN, FATAL
   }
 
-  @Value
+  @Getter
   class Implementation implements ErrorMessage {
 
+    private final Optional<ErrorCode> errorCode;
     private final String message;
     private final ErrorLocation location;
     private final Severity severity;
+
+    public Implementation(String message, ErrorLocation location, Severity severity) {
+      this(Optional.empty(), message, location, severity);
+    }
+
+    public Implementation(Optional<ErrorCode> errorCode, String message, ErrorLocation location,
+        Severity severity) {
+      this.errorCode = errorCode;
+      this.message = message;
+      this.location = location;
+      this.severity = severity;
+    }
 
     @Override
     public String toString() {

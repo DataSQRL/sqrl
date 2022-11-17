@@ -1,3 +1,3 @@
-LogicalProject(_uuid=[$0], EXPR$1=[CHAR_LENGTH($4)])
+LogicalProject(__pk_0=[$0], EXPR$1=[CHAR_LENGTH($4)])
   LogicalTableScan(table=[[product$3]])
 

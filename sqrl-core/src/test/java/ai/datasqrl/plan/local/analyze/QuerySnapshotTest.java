@@ -75,7 +75,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
       "D := SELECT e.parent.id FROM Orders.entries AS e;",
       "D := SELECT * FROM Orders.entries e INNER JOIN e.parent p WHERE e.parent.customerid = 0 AND p.customerid = 0;",
       "Product2 := SELECT _ingest_time + INTERVAL 2 YEAR AS x FROM Product;",
-      "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
+      "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
           + "O2 := SELECT p.* FROM Orders.entries.product p;",
       "O2 := SELECT * FROM Orders.entries e INNER JOIN e.parent;",
       "X := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;",
@@ -93,7 +93,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
           + "                 FROM _.entries e;\n",
       "Orders3 := SELECT * FROM Orders.entries.parent.entries;\n",
       "Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;\n"
-          + "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
+          + "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
           + "Customer.recent_products := SELECT e.productid, e.product.category AS category,\n"
           + "                                   sum(e.quantity) AS quantity, count(1) AS num_orders\n"
           + "                            FROM _.orders.entries AS e\n"
@@ -107,10 +107,10 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
       "Orders.entries2 := SELECT e.discount AS id FROM _.entries e GROUP BY e.discount;\n",
       "Orders.newid := COALESCE(customerid, id);\n",
       "Category := SELECT DISTINCT category AS name FROM Product;\n",
-      "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
+      "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
           + "Orders.entries.dProduct := SELECT DISTINCT category AS name FROM _.product;\n",
       "Orders.x := SELECT * FROM _ JOIN Product ON true;\n",
-      "Orders.entries.product := JOIN Product ON Product.productid = _.productid;\n"
+      "Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;\n"
           + "Orders.entries.dProduct := SELECT unit_price, product.category, product.name FROM _;\n",
       "Orders.newid := SELECT NOW(), STRING_TO_TIMESTAMP(TIMESTAMP_TO_STRING(EPOCH_TO_TIMESTAMP(100))) FROM Orders;",
       "Orders.entries.x := SELECT e.parent.entries.parent.id, f.parent.entries.parent.customerid "

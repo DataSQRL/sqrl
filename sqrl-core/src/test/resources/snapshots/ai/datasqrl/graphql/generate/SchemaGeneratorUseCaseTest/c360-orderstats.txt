@@ -23,7 +23,7 @@ type orders {
   customerid: Int
   time: String
   entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, price: Float): [entries]
-  totals(price: Float, number: Int, savings: Float): [totals]
+  totals(price: Float, number: Int, savings: Float): totals
 }
 
 type totals {

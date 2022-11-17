@@ -122,7 +122,8 @@ public class SchemaInference {
 
   private List<InferredField> walkChildren(ObjectTypeDefinition typeDef, SQRLTable table,
       List<InferredField> fields) {
-    Preconditions.checkState(!checkType(typeDef, table), "Field not allowed");
+    Preconditions.checkState(!checkType(typeDef, table), "Field(s) not allowed [%s] in S5",
+        getInvalidFields(typeDef, table), typeDef.getName());
 
     return typeDef.getFieldDefinitions().stream()
         .filter(f->!visited.contains(f))
@@ -156,6 +157,12 @@ public class SchemaInference {
   private boolean checkType(ObjectTypeDefinition typeDef, SQRLTable table) {
     return typeDef.getFieldDefinitions().stream()
         .anyMatch(f->table.getField(Name.system(f.getName())).isEmpty());
+  }
+  private List<String> getInvalidFields(ObjectTypeDefinition typeDef, SQRLTable table) {
+    return typeDef.getFieldDefinitions().stream()
+        .filter(f->table.getField(Name.system(f.getName())).isEmpty())
+        .map(FieldDefinition::getName)
+        .collect(Collectors.toList());
   }
 
   private TypeDefinition unwrapObjectType(Type type) {
