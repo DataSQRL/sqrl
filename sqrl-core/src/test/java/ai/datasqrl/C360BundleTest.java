@@ -41,11 +41,13 @@ public class C360BundleTest {
         Optional.of(testDatabase.getJdbcConfiguration().getDatabase(MetaData.DEFAULT_DATABASE)));
 
     HttpResponse<String> s = compiler.testQuery("{\n"
-        + "  Orders {\n"
-        + "    id\n"
-        + "    entries(limit:1, offset: 1) {\n"
-        + "      productid\n"
-        + "      discount\n"
+        + "\n"
+        + "  Orders{\n"
+        + "    entries(limit:10, offset:0) {\n"
+        + "      unit_price\n"
+        + "      product {\n"
+        + "        description\n"
+        + "      }\n"
         + "    }\n"
         + "  }\n"
         + "}");

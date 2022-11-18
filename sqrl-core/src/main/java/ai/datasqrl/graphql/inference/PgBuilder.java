@@ -26,6 +26,7 @@ import ai.datasqrl.graphql.server.Model.SourcePgParameter;
 import ai.datasqrl.graphql.server.Model.StringSchema;
 import ai.datasqrl.graphql.util.ApiQueryBase;
 import ai.datasqrl.graphql.util.PagedApiQueryBase;
+import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.TranspilerFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
@@ -180,7 +181,9 @@ public class PgBuilder implements
 
     for (ArgumentSet argumentSet : possibleArgCombinations) {
       //Add api query
-      APIQuery query = new APIQuery(UUID.randomUUID().toString(), argumentSet.getRelNode());
+      RelNode relNode = optimize(argumentSet.getRelNode());
+      APIQuery query = new APIQuery(UUID.randomUUID().toString(), relNode);
+
       apiQueries.add(query);
 
       List<PgParameterHandler> argHandler = new ArrayList<>();
@@ -204,6 +207,10 @@ public class PgBuilder implements
       }
     }
     return coordsBuilder.build();
+  }
+
+  private RelNode optimize(RelNode relNode) {
+    return this.planner.transform(OptimizationStage.PUSH_DOWN_FILTERS, relNode);
   }
 
   @Override
