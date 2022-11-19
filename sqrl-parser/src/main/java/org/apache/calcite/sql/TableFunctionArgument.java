@@ -1,4 +1,4 @@
-package ai.datasqrl.schema;
+package org.apache.calcite.sql;
 
 import lombok.Value;
 import org.apache.calcite.sql.SqlDataTypeSpec;

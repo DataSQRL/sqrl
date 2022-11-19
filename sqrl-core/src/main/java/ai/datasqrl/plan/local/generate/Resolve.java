@@ -8,6 +8,7 @@ import ai.datasqrl.io.sources.dataset.TableSink;
 import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
 import ai.datasqrl.parse.tree.name.Name;
+import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
 import ai.datasqrl.physical.ExecutionEngine;
@@ -76,6 +77,7 @@ public class Resolve {
     Exporter exporter = new DataSourceLoader();
     List<StatementOp> ops = new ArrayList<>();
     List<SqrlStatement> queryOperations = new ArrayList<>();
+    NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM;
 
     // Mappings
     Map<SQRLTable, VirtualRelationalTable> tableMap = new HashMap<>();
@@ -133,7 +135,9 @@ public class Resolve {
       planQueries(env);
       return env;
     } catch (Exception e) {
+      System.out.println(session.getErrors().getAll());
       env.errors.handle(e);
+      e.printStackTrace();
       throw e;
     }
   }
@@ -183,7 +187,7 @@ public class Resolve {
   //TODO: Allow modules to resolve other modules, for example a library package
   private void resolveImportDefinition(Env env, ImportDefinition node) {
     setCurrentNode(env, node);
-    NamePath fullPath = node.getImportPath();
+    NamePath fullPath = toNamePath(env, node.getImportPath());
     Name last = fullPath.getLast();
     NamePath basePath = fullPath.subList(0, fullPath.size()-1);
     /*
@@ -192,7 +196,7 @@ public class Resolve {
     if (last.equals(ReservedName.ALL)) {
       checkState(node.getAlias().isEmpty(), IMPORT_CANNOT_BE_ALIASED,
           () -> node.getParserPosition(),
-          () -> "Alias `" + node.getAlias().get().getCanonical() + "` cannot be used here.");
+          () -> "Alias `" + node.getAlias().get().names.get(0)+ "` cannot be used here.");
 
       checkState(node.getTimestamp().isEmpty(), IMPORT_STAR_CANNOT_HAVE_TIMESTAMP,
           () -> node.getTimestamp().get().getParserPosition(),
@@ -201,14 +205,29 @@ public class Resolve {
       Collection<Name> loaded = env.getLoader().loadAll(env, basePath);
       Preconditions.checkState(!loaded.isEmpty(), "Import [%s] is not a package or package is empty",basePath);
     } else {
-      boolean loaded = env.getLoader().load(env,fullPath, node.getAlias());
+      boolean loaded = env.getLoader().load(env,fullPath,node.getAlias()
+          .map(a->toNamePath(env, a).getFirst()));
       Preconditions.checkState(loaded, "Could not import: %s", fullPath);
     }
   }
 
+  private String pathToString(SqlIdentifier id) {
+    return String.join(".", id.names);
+  }
+
+  private NamePath toNamePath(Env env, SqlIdentifier identifier) {
+    return NamePath.of(identifier.names.stream()
+        .map(i-> (i.equals(""))
+                ? ReservedName.ALL
+                : env.canonicalizer.name(i)
+        )
+        .collect(Collectors.toList())
+    );
+  }
+
   private void setCurrentNode(Env env, SqrlStatement node) {
     env.currentNode = node;
-    env.errors = env.session.getErrors().resolve(node.getNamePath().getDisplay());
+    env.errors = env.session.getErrors().resolve(pathToString(node.getNamePath()));
   }
 
   public void registerScriptTable(Env env, ScriptTableDefinition tblDef) {
@@ -335,8 +354,8 @@ public class Resolve {
     } else if (statement instanceof ExportDefinition) {
       //We handle exports out-of-band and just resolve them.
       ExportDefinition export = (ExportDefinition) statement;
-      Optional<SQRLTable> tableOpt = resolveTable(env, export.getTablePath(), false);
-      Optional<TableSink> sink = env.getExporter().export(env,export.getSinkPath());
+      Optional<SQRLTable> tableOpt = resolveTable(env, toNamePath(env, export.getTablePath()), false);
+      Optional<TableSink> sink = env.getExporter().export(env,toNamePath(env, export.getSinkPath()));
       checkState(tableOpt.isPresent(), ErrorCode.MISSING_DEST_TABLE, export::getParserPosition,
           ()->String.format("Could not find table path: %s", export.getTablePath()));
       Preconditions.checkArgument(sink.isPresent());
@@ -385,13 +404,13 @@ public class Resolve {
   }
 
   public void transpile(Env env, StatementOp op) {
-    List<String> assignmentPath = op.getStatement().getNamePath().popLast()
+    List<String> assignmentPath = toNamePath(env, op.getStatement().getNamePath()).popLast()
         .stream()
         .map(e -> e.getCanonical())
         .collect(Collectors.toList());
 
     Optional<SQRLTable> table = getContext(env, op.getStatement());
-    table.ifPresent(t-> assurePathWritable(env, op, op.statement.getNamePath().popLast()));
+    table.ifPresent(t-> assurePathWritable(env, op, toNamePath(env, op.statement.getNamePath()).popLast()));
     Optional<VirtualRelationalTable> context =
         table.map(t -> t.getVt());
 
@@ -460,7 +479,7 @@ public class Resolve {
   }
 
   private Optional<SQRLTable> getContext(Env env, SqrlStatement statement) {
-    return resolveTable(env,statement.getNamePath(),true);
+    return resolveTable(env,toNamePath(env, statement.getNamePath()),true);
   }
 
   private Optional<SQRLTable> resolveTable(Env env, NamePath namePath, boolean getParent) {
@@ -514,7 +533,7 @@ public class Resolve {
     if (config.getStartStage()!=null) {
       prel = SQRLLogicalPlanConverter.convert(relNode, relBuilderFactory, config);
     } else {
-      prel = SQRLLogicalPlanConverter.findCheapest(op.statement.getNamePath(), relNode, relBuilderFactory, env.session.pipeline, config);
+      prel = SQRLLogicalPlanConverter.findCheapest(toNamePath(env, op.statement.getNamePath()), relNode, relBuilderFactory, env.session.pipeline, config);
     }
     if (op.statementKind == StatementKind.DISTINCT_ON) {
       //Get all field names from resulting relnode instead of the op
@@ -567,7 +586,9 @@ public class Resolve {
   private void setTimestampColumn(Env env, StatementOp op) {
     //get table from env
     ImportDefinition importDefinition = (ImportDefinition) op.getStatement();
-    SQRLTable table = (SQRLTable) env.getRelSchema().getTable(importDefinition.getAlias().orElse(importDefinition.getImportPath().getLast())
+    SQRLTable table = (SQRLTable) env.getRelSchema().getTable(importDefinition.getAlias()
+            .map(i->toNamePath(env, i).get(0))
+                .orElse(toNamePath(env, importDefinition.getImportPath()).getLast())
             .getCanonical(),
         false)
         .getTable();
@@ -592,19 +613,19 @@ public class Resolve {
     Optional<VirtualRelationalTable> optTable = getTargetRelTable(env, op);
     SQRLTable table = getContext(env, op.statement)
         .orElseThrow(() -> new RuntimeException("Cannot resolve table"));
-    if (table.getField(op.statement.getNamePath().getLast()).isPresent()) {
-      checkState(!(table.getField(op.statement.getNamePath().getLast()).get() instanceof Relationship),
+    if (table.getField(toNamePath(env, op.statement.getNamePath()).getLast()).isPresent()) {
+      checkState(!(table.getField(toNamePath(env, op.statement.getNamePath()).getLast()).get() instanceof Relationship),
           ErrorCode.CANNOT_SHADOW_RELATIONSHIP, op.statement);
     }
 
-    Name name = op.getStatement().getNamePath().getLast();
+    Name name = toNamePath(env, op.getStatement().getNamePath()).getLast();
     Name vtName = uniquifyColumnName(name, table);
 
     c.setNameId(vtName.getCanonical());
 
     VirtualRelationalTable vtable = optTable.get();
     Optional<Integer> timestampScore = env.tableFactory.getTimestampScore(
-        op.statement.getNamePath().getLast(), c.getDataType());
+        toNamePath(env, op.statement.getNamePath()).getLast(), c.getDataType());
     Preconditions.checkState(vtable.getField(vtName) == null);
     vtable.addColumn(c, env.tableFactory.getTypeFactory(), getRelBuilderFactory(env),
         timestampScore);
@@ -643,10 +664,10 @@ public class Resolve {
             op.query);
     Multiplicity multiplicity = getMultiplicity(env, op);
 
-    checkState(table.getField(op.statement.getNamePath().getLast()).isEmpty(),
+    checkState(table.getField(toNamePath(env, op.statement.getNamePath()).getLast()).isEmpty(),
         ErrorCode.CANNOT_SHADOW_RELATIONSHIP, op.statement);
 
-    table.addRelationship(op.statement.getNamePath().getLast(), toTable,
+    table.addRelationship(toNamePath(env, op.statement.getNamePath()).getLast(), toTable,
         Relationship.JoinType.JOIN, multiplicity, Optional.of(op.joinDeclaration));
   }
 
@@ -685,11 +706,11 @@ public class Resolve {
     ScriptTableDefinition queryTable;
     if (op.statementKind==StatementKind.STREAM) {
       StreamAssignment streamAssignment = (StreamAssignment) op.statement;
-      queryTable=env.tableFactory.defineStreamTable(op.statement.getNamePath(), processedRel,
+      queryTable=env.tableFactory.defineStreamTable(toNamePath(env, op.statement.getNamePath()), processedRel,
           StateChangeType.valueOf(streamAssignment.getType().name()),
               env.getSession().getPlanner().getRelBuilder(), env.getSession().getPipeline());
     } else {
-      queryTable=env.tableFactory.defineTable(op.statement.getNamePath(), processedRel, fieldNames, parentPair);
+      queryTable=env.tableFactory.defineTable(toNamePath(env, op.statement.getNamePath()), processedRel, fieldNames, parentPair);
     }
 
     registerScriptTable(env, queryTable);
@@ -697,7 +718,7 @@ public class Resolve {
 
 
   private Optional<AddedColumn> createColumnAddOp(Env env, StatementOp op) {
-    String columnName = op.statement.getNamePath().getLast().getCanonical();
+    String columnName = toNamePath(env, op.statement.getNamePath()).getLast().getCanonical();
 
     if (op.getStatementKind() == StatementKind.IMPORT) {
       ImportDefinition importDefinition = (ImportDefinition)op.getStatement();

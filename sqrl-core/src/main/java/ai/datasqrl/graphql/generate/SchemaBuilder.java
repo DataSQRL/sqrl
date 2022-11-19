@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
 
 public class SchemaBuilder {
   private final Map<SQRLTable, String> seenSqrlTables = new HashMap<>();

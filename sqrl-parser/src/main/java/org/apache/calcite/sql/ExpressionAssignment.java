@@ -1,7 +1,5 @@
 package org.apache.calcite.sql;
 
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.TableFunctionArgument;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -19,7 +17,7 @@ public class ExpressionAssignment extends Assignment {
   private final SqlNode expression;
 
   public ExpressionAssignment(SqlParserPos location,
-      NamePath name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode expression, Optional<SqlNodeList> hints) {
+      SqlIdentifier name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode expression, Optional<SqlNodeList> hints) {
     super(location, name, hints);
     this.tableArgs = tableArgs;
     this.expression = expression;

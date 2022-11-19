@@ -25,7 +25,6 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
 
 @AllArgsConstructor

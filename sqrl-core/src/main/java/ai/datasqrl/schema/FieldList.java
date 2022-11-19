@@ -1,7 +1,6 @@
 package ai.datasqrl.schema;
 
 import ai.datasqrl.parse.tree.name.Name;
-import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;
 

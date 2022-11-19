@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.NonNull;
+import org.apache.calcite.sql.TableFunctionArgument;
 
 @Getter
 //@EqualsAndHashCode do not use

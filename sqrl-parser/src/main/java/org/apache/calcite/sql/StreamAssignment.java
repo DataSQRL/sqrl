@@ -1,7 +1,5 @@
 package org.apache.calcite.sql;
 
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.TableFunctionArgument;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -9,16 +7,19 @@ import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @Getter
-public class QueryAssignment extends Assignment {
+public class StreamAssignment extends QueryAssignment {
 
   private final Optional<List<TableFunctionArgument>> tableArgs;
   private final SqlNode query;
+  private final SubscriptionType type;
 
-  public QueryAssignment(SqlParserPos location, NamePath namePath,
-      Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, Optional<SqlNodeList> hints) {
-    super(location, namePath, hints);
+  public StreamAssignment(SqlParserPos location, SqlIdentifier namePath,
+      Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, SubscriptionType type,
+      Optional<SqlNodeList> hints) {
+    super(location, namePath, tableArgs, query, hints);
     this.tableArgs = tableArgs;
     this.query = query;
+    this.type = type;
   }
 
   @Override
@@ -29,7 +30,7 @@ public class QueryAssignment extends Assignment {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    QueryAssignment that = (QueryAssignment) o;
+    StreamAssignment that = (StreamAssignment) o;
     return Objects.equals(query, that.query) && Objects.equals(hints, that.hints);
   }
 

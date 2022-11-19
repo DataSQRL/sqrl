@@ -40,7 +40,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   public RelNode generate(String init, String sql, boolean nested) {
       initialize(IntegrationTestSettings.getInMemory(),example.getRootPackageDirectory());
-      ConfiguredSqrlParser parser = new ConfiguredSqrlParser(error);
+      ConfiguredSqrlParser parser = new ConfiguredSqrlParser(error.getWarningsCollector());
 
     Env env = generate(parser.parse(init + sql));
 

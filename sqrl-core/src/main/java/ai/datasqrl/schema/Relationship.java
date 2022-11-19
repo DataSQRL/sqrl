@@ -4,7 +4,6 @@ import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import lombok.Getter;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 
 @Getter

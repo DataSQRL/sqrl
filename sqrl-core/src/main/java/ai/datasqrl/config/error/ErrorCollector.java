@@ -1,5 +1,6 @@
 package ai.datasqrl.config.error;
 
+import ai.datasqrl.parse.WarningsCollector;
 import ai.datasqrl.parse.tree.name.Name;
 import io.vertx.json.schema.ValidationException;
 import java.util.ArrayList;
@@ -12,7 +13,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 public class ErrorCollector implements Iterable<ErrorMessage> {
@@ -163,5 +163,9 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
     handler.ifPresentOrElse(
         h -> add(h.handle(e, errorEmitter)),
         () -> fatal(e.getMessage()));
+  }
+
+  public WarningsCollector getWarningsCollector() {
+    return new WarningsCollector();
   }
 }

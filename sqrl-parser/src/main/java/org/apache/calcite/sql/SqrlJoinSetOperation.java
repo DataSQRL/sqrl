@@ -2,7 +2,6 @@ package org.apache.calcite.sql;
 
 import java.util.List;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.jetbrains.annotations.NotNull;
 
 public class SqrlJoinSetOperation extends SqrlJoinTerm {
 
@@ -11,13 +10,11 @@ public class SqrlJoinSetOperation extends SqrlJoinTerm {
     super(pos);
   }
 
-  @NotNull
   @Override
   public SqlOperator getOperator() {
     return null;
   }
 
-  @NotNull
   @Override
   public List<SqlNode> getOperandList() {
     return null;

@@ -8,7 +8,6 @@ import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -74,7 +73,7 @@ public class FlinkTypeInfoSchemaGenerator implements UniversalTableBuilder.TypeC
                 case INTERVAL_HOUR:
                 case INTERVAL_DAY:
                 case INTERVAL_MONTH:
-                    throw new NotImplementedException();
+                    throw new UnsupportedOperationException();
             }
         }
         throw new UnsupportedOperationException("Unsupported type: " + datatype);

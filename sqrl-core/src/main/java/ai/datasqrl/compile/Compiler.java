@@ -10,6 +10,7 @@ import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
+import ai.datasqrl.parse.WarningsCollector;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.physical.database.relational.QueryTemplate;
@@ -78,7 +79,7 @@ public class Compiler {
         .resolve("main.sqrl").toUri());
     String str = Files.readString(file.toPath());
 
-    ScriptNode ast = ConfiguredSqrlParser.newParser(collector)
+    ScriptNode ast = ConfiguredSqrlParser.newParser(new WarningsCollector())
         .parse(str);
 
     Env env = resolve.planDag(s, ast);

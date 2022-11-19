@@ -1,6 +1,6 @@
 package ai.datasqrl.config.error;
 
-import ai.datasqrl.plan.calcite.util.SqlNodePrinter;
+import org.apache.calcite.util.SqlNodePrinter;
 import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.sql.SqlNode;
@@ -18,16 +18,6 @@ public class SqrlAstException extends RuntimeException {
     this.errorCode = errorCode;
     this.pos = pos;
     this.message = message;
-  }
-
-  private static String formatMessage(ErrorCode code, Optional<SqlNode> currentNode, SqlParserPos pos, String message) {
-    return "Error: "
-        + "\n"
-        + currentNode.map(SqlNodePrinter::toString).orElse("")
-        + "\n"
-        + message
-        + "\n\n"
-        + code.getError();
   }
 
 }

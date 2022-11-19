@@ -57,6 +57,7 @@ public class DataSourceLoader extends AbstractLoader implements Loader, Exporter
   @Override
   public Optional<TableSink> export(Env env, NamePath fullPath) {
     Optional<TableSink> sink = readTable(env.getPackagePath(), fullPath, env.getSession().getErrors(), TableSink.class);
+    log.info("Sink:" + sink.isEmpty());
     if (sink.isEmpty()) {
       //See if we can discover the sink on-demand
       NamePath basePath = fullPath.subList(0,fullPath.size()-1);
@@ -64,6 +65,9 @@ public class DataSourceLoader extends AbstractLoader implements Loader, Exporter
       Path baseDir = namepath2Path(env.getPackagePath(), basePath);
       Path datasystempath = baseDir.resolve(DATASYSTEM_FILE);
       DataSystemConfig discoveryConfig;
+      log.info("Is regular file: "+ Files.isRegularFile(datasystempath)+" " +
+          basePath.getLast().getCanonical() + " " + PrintDataSystem.SYSTEM_TYPE);
+
       if (Files.isRegularFile(datasystempath)) {
         discoveryConfig = mapJsonFile(datasystempath, DataSystemConfig.class);
       } else if (basePath.size()==1 && basePath.getLast().getCanonical().equals(PrintDataSystem.SYSTEM_TYPE)) {

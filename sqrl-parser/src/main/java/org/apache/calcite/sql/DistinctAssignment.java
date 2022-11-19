@@ -1,6 +1,5 @@
 package org.apache.calcite.sql;
 
-import ai.datasqrl.parse.tree.name.NamePath;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
@@ -14,7 +13,7 @@ public class DistinctAssignment extends Assignment {
   private final List<SqlNode> order;
   private final SqlNode query;
 
-  public DistinctAssignment(SqlParserPos location, NamePath name, SqlNode table,
+  public DistinctAssignment(SqlParserPos location, SqlIdentifier name, SqlNode table,
      List<SqlNode> partitionKeys,
       List<SqlNode> order, Optional<SqlNodeList> hints, SqlNode query) {
     super(location, name, hints);

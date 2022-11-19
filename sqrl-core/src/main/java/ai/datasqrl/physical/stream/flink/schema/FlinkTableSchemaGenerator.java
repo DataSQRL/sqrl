@@ -8,7 +8,6 @@ import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
@@ -76,7 +75,7 @@ public class FlinkTableSchemaGenerator implements UniversalTableBuilder.TypeConv
                 case INTERVAL_HOUR_SECOND:
                 case INTERVAL_MINUTE_SECOND:
                 case INTERVAL_YEAR_MONTH:
-                    throw new NotImplementedException();
+                    throw new UnsupportedOperationException();
                 case INTERVAL_SECOND:
                     return DataTypes.INTERVAL(DataTypes.SECOND(datatype.getPrecision()));
                 case INTERVAL_YEAR:
