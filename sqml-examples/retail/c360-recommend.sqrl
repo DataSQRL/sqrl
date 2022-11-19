@@ -32,7 +32,8 @@ Product._sales_24h := SELECT sum(quantity) as total, sum(num_orders) as num FROM
 Product._sales_72h := SELECT sum(quantity) as total, sum(num_orders) as num FROM _._sales_by_hour WHERE hour > now() - INTERVAL 3 DAY;
 
 Product._sales_trend := SELECT a.total*1.5 / greatest(b.total, 500.0) + a.num*1.5 / greatest(b.num, 100.0) as increase
-                        FROM _._sales_24h a JOIN _._sales_72h b
+                        FROM _._sales_24h a JOIN _._sales_72h b;
 
-Category.trending := JOIN Product p ON _.name = p.category
-                     ORDER BY p._sales_trend.increase DESC;
+--TODO: fix _sales_trend
+--Category.trending := JOIN Product p ON _.name = p.category
+--                     ORDER BY p._sales_trend.increase DESC;

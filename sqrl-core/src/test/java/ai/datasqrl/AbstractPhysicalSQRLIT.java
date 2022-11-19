@@ -99,7 +99,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
                 Predicate<Integer> typeFilter = Predicates.alwaysTrue();
                 if (tableWithoutTimestamp.contains(query.getNameId())) typeFilter = filterOutTimestampColumn;
                 String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,
-                                s -> Stream.of("_uuid", "_ingest_time").noneMatch(p -> s.startsWith(p)), typeFilter))
+                                s -> Stream.of("_uuid", "_ingest_time", "__").noneMatch(p -> s.startsWith(p)), typeFilter))
                         .sorted().collect(Collectors.joining(System.lineSeparator()));
                 snapshot.addContent(content, query.getNameId(), "data");
             }

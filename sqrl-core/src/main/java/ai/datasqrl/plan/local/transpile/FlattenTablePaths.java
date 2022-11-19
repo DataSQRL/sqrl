@@ -1,6 +1,5 @@
 package ai.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
@@ -46,17 +45,7 @@ public class FlattenTablePaths extends SqlShuttle
 
   public SqlNode accept(SqlNode node) {
     SqlNode result = node.accept(this);
-    ;
     return result;
-  }
-
-  public static void addJoinCondition(SqlJoin join, SqlNode condition) {
-    if (join.getCondition() == null) {
-      join.setOperand(5, condition);
-    } else {
-      join.setOperand(5, SqlNodeUtil.and(join.getCondition(), condition));
-    }
-    join.setOperand(4, JoinConditionType.ON.symbol(SqlParserPos.ZERO));
   }
 
   @Override
@@ -122,7 +111,7 @@ public class FlattenTablePaths extends SqlShuttle
   @Override
   public SqrlJoinTerm visitJoinSetOperation(SqrlJoinSetOperation sqrlJoinSetOperation,
       Object context) {
-    return null;
+    throw new RuntimeException("SET operations TBD");
   }
 
   @Value
@@ -171,7 +160,7 @@ public class FlattenTablePaths extends SqlShuttle
             new SqlIdentifier(suffix.size() > 0 ? firstAlias : finalAlias,
                 SqlParserPos.ZERO));
     if (suffix.size() >= 1) {
-      String currentAlias = "_g" + (idx);
+      String currentAlias = firstAlias;
 
       for (int i = 0; i < suffix.size(); i++) {
         String nextAlias = i == suffix.size() - 1 ? finalAlias : "_g" + (++idx);

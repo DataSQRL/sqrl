@@ -1,7 +1,6 @@
 type Category {
   name: String
   products(productid: Int, name: String, description: String, category: String, updatetime: String): [Product]
-  trending(productid: Int, increase: Float): [_sales_trend]
 }
 
 type Customer {
@@ -19,10 +18,10 @@ type Product {
   description: String
   category: String
   updatetime: String
-  _sales_by_hour(productid: Int, hour: String, quantity: Int, num_orders: Int): [_sales_by_hour]
-  _sales_24h(productid: Int, total: Int, num: Int): [_sales_24h]
-  _sales_72h(productid: Int, total: Int, num: Int): [_sales_72h]
-  _sales_trend(productid: Int, increase: Float): [_sales_trend]
+  _sales_by_hour(hour: String, quantity: Int, num_orders: Int): [_sales_by_hour]
+  _sales_24h(total: Int, num: Int): _sales_24h
+  _sales_72h(total: Int, num: Int): _sales_72h
+  _sales_trend(increase: Float): [_sales_trend]
 }
 
 type Query {
@@ -33,21 +32,18 @@ type Query {
 }
 
 type _sales_24h {
-  productid: Int
   total: Int
   num: Int
   parent(productid: Int, name: String, description: String, category: String, updatetime: String): Product!
 }
 
 type _sales_72h {
-  productid: Int
   total: Int
   num: Int
   parent(productid: Int, name: String, description: String, category: String, updatetime: String): Product!
 }
 
 type _sales_by_hour {
-  productid: Int
   hour: String
   quantity: Int
   num_orders: Int
@@ -55,7 +51,6 @@ type _sales_by_hour {
 }
 
 type _sales_trend {
-  productid: Int
   increase: Float
   parent(productid: Int, name: String, description: String, category: String, updatetime: String): Product!
 }
@@ -75,7 +70,7 @@ type orders {
   customerid: Int
   time: String
   entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, total: Float): [entries]
-  total(price: Float, discount: Float, num: Int): [total]
+  total(price: Float, discount: Float, num: Int): total
 }
 
 type total {

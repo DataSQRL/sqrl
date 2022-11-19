@@ -1,4 +1,4 @@
-LogicalProject(_uuid=[$0], productid=[$8])
+LogicalProject(__pk_0=[$0], productid=[$8])
   LogicalJoin(condition=[true], joinType=[default])
     LogicalTableScan(table=[[product$3]])
     LogicalTableScan(table=[[product$3]])

@@ -80,7 +80,6 @@ public class ReplaceWithVirtualTable extends SqlShuttle
         }
 
         return super.visit(call);
-
       case SELECT:
         SqlSelect select = (SqlSelect) super.visit(call);
         while (!pullup.isEmpty()) {
@@ -118,7 +117,6 @@ public class ReplaceWithVirtualTable extends SqlShuttle
     } else {
       select.setWhere(SqlNodeUtil.and(select.getWhere(), condition));
     }
-
   }
 
   @Override
@@ -165,28 +163,15 @@ public class ReplaceWithVirtualTable extends SqlShuttle
     return super.visit(id);
   }
 
-  private SqlNode pullWhereIntoJoin(SqlNode query) {
-    //
-    if (query instanceof SqlSelect) {
-      SqlSelect select = (SqlSelect) query;
-      if (select.getWhere() != null) {
-        SqlJoin join = (SqlJoin) select.getFrom();
-        FlattenTablePaths.addJoinCondition(join, select.getWhere());
-      }
-      return select.getFrom();
-    }
-    return query;
-  }
-
-
   public static SqlNode createCondition(String firstAlias, String alias, SQRLTable from, SQRLTable to) {
     List<SqlNode> conditions = new ArrayList<>();
     for (int i = 0; i < from.getVt().getPrimaryKeyNames().size()
         && i < to.getVt().getPrimaryKeyNames().size(); i++) {
       String pkName = from.getVt().getPrimaryKeyNames().get(i);
+      String toPkName = to.getVt().getPrimaryKeyNames().get(i);
       SqlCall call = SqlStdOperatorTable.EQUALS.createCall(SqlParserPos.ZERO,
           new SqlIdentifier(List.of(alias, pkName), SqlParserPos.ZERO),
-          new SqlIdentifier(List.of(firstAlias, pkName), SqlParserPos.ZERO)
+          new SqlIdentifier(List.of(firstAlias, toPkName), SqlParserPos.ZERO)
       );
       conditions.add(call);
     }

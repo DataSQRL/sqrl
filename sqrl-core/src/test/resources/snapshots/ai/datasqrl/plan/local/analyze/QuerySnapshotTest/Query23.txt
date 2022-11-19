@@ -1,12 +1,12 @@
 Orders.entries.total := SELECT x.quantity * x.unit_price - x.discount FROM _ AS x;
 
 
-LogicalProject(id=[$0], _idx=[$1], EXPR$2=[-(*($9, $10), $11)])
+LogicalProject(__pk_0=[$0], __pk_1=[$1], EXPR$2=[-(*($9, $10), $11)])
   LogicalJoin(condition=[true], joinType=[default])
     LogicalTableScan(table=[[entries$13]])
     LogicalTableScan(table=[[entries$13]])
 
 
-SELECT "entries$13"."id", "entries$13"."_idx", "entries$130"."quantity" * "entries$130"."unit_price" - "entries$130"."discount"
+SELECT "entries$13"."id" AS "__pk_0", "entries$13"."_idx" AS "__pk_1", "entries$130"."quantity" * "entries$130"."unit_price" - "entries$130"."discount"
 FROM entries$13
  DEFAULT JOIN entries$13 AS "entries$130" ON TRUE

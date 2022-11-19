@@ -1,5 +1,5 @@
 >>>totals-lp
-LogicalProject(customerid=[$1], category=[$2], num=[$3], time=[$0])
+LogicalProject(__pk_0=[$1], category=[$2], num=[$3], time=[$0])
   LogicalAggregate(group=[{4, 6, 23}], num=[SUM($15)]) hints[SlidingAggregationHint options:[4, 31536000000, 630720000]]
     LogicalJoin(condition=[=($18, $14)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
       LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])

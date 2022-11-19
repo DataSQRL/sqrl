@@ -5,15 +5,15 @@ type Category {
 }
 
 type Customer {
-    _spending_by_month_category(category: String, customerid: Int, month: String, savings: Float, total: Float): [_spending_by_month_category]
+    _spending_by_month_category(category: String, month: String, savings: Float, total: Float): [_spending_by_month_category]
     customerid: Int
     email: String
-    favorite_categories(category_name: String, customerid: Int, total: Float): [favorite_categories]
+    favorite_categories(category_name: String, total: Float): [favorite_categories]
     lastupdated: Int
     name: String
-    order_again(customerid: Int, most_recent: String, num_orders: Int, productid: Int, quantity: Int): [order_again]
-    order_stats(customerid: Int, num_orders: Int, total_spend: Float): [order_stats]
-    orders(customerid: Int, id: Int, time: String): [Orders]
+    order_again(most_recent: String, num_orders: Int, productid: Int, quantity: Int): [order_again]
+    order_stats(num_orders: Int, total_spend: Float): [order_stats]
+    orders(id: Int, time: String): [Orders]
     updatetime: String
 }
 
@@ -43,9 +43,8 @@ type Query {
 
 type _spending_by_month_category {
     category: String
-    customerid: Int
     month: String
-    parent(customerid: Int, email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    parent(email: String, lastupdated: Int, name: String, updatetime: String): Customer!
     savings: Float
     total: Float
 }
@@ -63,24 +62,21 @@ type entries {
 type favorite_categories {
     category(name: String): [Category]
     category_name: String
-    customerid: Int
-    parent(customerid: Int, email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    parent(email: String, lastupdated: Int, name: String, updatetime: String): Customer!
     total: Float
 }
 
 type order_again {
-    customerid: Int
     most_recent: String
     num_orders: Int
-    parent(customerid: Int, email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    parent(email: String, lastupdated: Int, name: String, updatetime: String): Customer!
     productid: Int
     quantity: Int
 }
 
 type order_stats {
-    customerid: Int
     num_orders: Int
-    parent(customerid: Int, email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    parent(email: String, lastupdated: Int, name: String, updatetime: String): Customer!
     total_spend: Float
 }
 

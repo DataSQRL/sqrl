@@ -1,13 +1,13 @@
-Orders.entries.product := JOIN Product ON Product.productid = _.productid;
+Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;
 Orders.entries.dProduct := SELECT DISTINCT category AS name FROM _.product;
 
 
-LogicalProject(id=[$0], _idx=[$1], name=[$11])
+LogicalProject(__pk_0=[$0], __pk_1=[$1], name=[$11])
   LogicalJoin(condition=[=($8, $2)], joinType=[default])
     LogicalTableScan(table=[[entries$13]])
     LogicalTableScan(table=[[product$10]])
 
 
-SELECT "entries$13"."id", "entries$13"."_idx", "product$10"."category" AS "name"
+SELECT "entries$13"."id" AS "__pk_0", "entries$13"."_idx" AS "__pk_1", "product$10"."category" AS "name"
 FROM entries$13
  DEFAULT JOIN product$10 ON "entries$13"."productid" = "product$10"."productid"

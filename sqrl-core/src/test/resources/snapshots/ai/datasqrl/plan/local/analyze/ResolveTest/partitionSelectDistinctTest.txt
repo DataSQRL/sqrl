@@ -6,7 +6,7 @@ LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=
 LogicalValues(tuples=[[]])
 
 >>>distinctorders-lp
-LogicalProject(customerid=[$6], id=[$2], time=[$4])
+LogicalProject(__pk_0=[$6], id=[$2], time=[$4])
   LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalTableScan(table=[[orders$q$5]])
     LogicalFilter(condition=[=($6, 1)])
@@ -14,7 +14,7 @@ LogicalProject(customerid=[$6], id=[$2], time=[$4])
         LogicalTableScan(table=[[customer$q$11]])
 
 >>>distinctorderstime-lp
-LogicalProject(customerid=[$6], id=[$2], time=[$4])
+LogicalProject(__pk_0=[$6], id=[$2], time=[$4])
   LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalTableScan(table=[[orders$q$5]])
     LogicalFilter(condition=[=($6, 1)])

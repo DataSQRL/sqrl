@@ -1,9 +1,9 @@
 Orders.newid := COALESCE(customerid, id);
 
 
-LogicalProject(id=[$0], EXPR$1=[COALESCE($3, $0)])
+LogicalProject(__pk_0=[$0], EXPR$1=[COALESCE($3, $0)])
   LogicalTableScan(table=[[orders$12]])
 
 
-SELECT "id", COALESCE("customerid", "id")
+SELECT "id" AS "__pk_0", COALESCE("customerid", "id")
 FROM orders$12
