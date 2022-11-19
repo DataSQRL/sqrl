@@ -6,10 +6,7 @@ import lombok.Value;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,7 +49,7 @@ public interface TestGraphQLSchema {
         @Override
         @SneakyThrows
         public Map<String, String> getQueries() {
-            Map<String, String> result = new HashMap<>();
+            Map<String, String> result = new LinkedHashMap<>();
             try (Stream<Path> files = Files.list(schemaDir).filter(Files::isRegularFile)
                     ) {
                 files.forEach(f -> {

@@ -1,5 +1,1 @@
-orders$9_btree_c2c3 - 2790.0
-orders$9_btree_c2c4 - 90.0
-orders$9_btree_c3c4 - 1890.0
-product$16_hash_c3 - 900.0
 product$16_hash_c5 - 900.0

@@ -227,7 +227,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             builder = shredTable(child.getParent(), primaryKey, select, joinTables, startingBase, joinType, false);
             JoinTable parentJoinTable = Iterables.getLast(joinTables);
             int indexOfShredField = parentJoinTable.getOffset() + child.getShredIndex();
-            CorrelationId id = new CorrelationId(0);
+            CorrelationId id = builder.getCluster().createCorrel();
             RelDataType base = builder.peek().getRowType();
             offset = base.getFieldCount();
 

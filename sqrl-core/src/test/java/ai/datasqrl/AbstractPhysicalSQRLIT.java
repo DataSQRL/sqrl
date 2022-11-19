@@ -1,12 +1,8 @@
 package ai.datasqrl;
 
-import ai.datasqrl.compile.Compiler;
 import ai.datasqrl.config.DiscoveryConfiguration;
 import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
-import ai.datasqrl.graphql.server.Model;
-import ai.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.io.impl.file.FilePath;
 import ai.datasqrl.io.sources.dataset.TableSink;
@@ -31,9 +27,7 @@ import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
-import org.apache.commons.lang3.tuple.Pair;
 
-import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
@@ -123,45 +117,11 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
         snapshot.createOrValidate();
     }
 
-    private static final Predicate<Integer> filterOutTimestampColumn =
+    protected static final Predicate<Integer> filterOutTimestampColumn =
             type -> type!= Types.TIMESTAMP_WITH_TIMEZONE && type!=Types.TIMESTAMP;
 
 
-    protected void validateSchemaAndQueries(String script, String schema, Map<String,String> queries) {
-        ScriptNode node = parse(script);
-        Resolve.Env resolvedDag = resolve.planDag(session, node);
-        DAGPlanner dagPlanner = new DAGPlanner(planner);
-
-        Pair<Model.Root, List<APIQuery>> modelAndQueries = AbstractSchemaInferenceModelTest.getModelAndQueries(resolvedDag,schema);
-
-        OptimizedDAG dag = dagPlanner.plan(resolvedDag.getRelSchema(), modelAndQueries.getRight(),
-                resolvedDag.getExports(), session.getPipeline());
-
-        PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
-
-        Model.Root model = modelAndQueries.getKey();
-        ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(physicalPlan.getDatabaseQueries());
-        model.accept(replaceGraphqlQueries, null);
-        snapshot.addContent(FileTestUtil.writeJson(model),"model");
-
-        PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-        Job job = executor.execute(physicalPlan);
-        System.out.println("Started Flink Job: " + job.getExecutionId());
-
-        Compiler.startGraphql(null, model, jdbc);
-
-        for (Map.Entry<String,String> query : queries.entrySet()) {
-            HttpResponse<String> s = Compiler.testQuery(query.getValue());
-            snapshot.addContent(s.body(),"query-"+query.getKey());
-            System.out.println(s.body());
-        }
-
-        snapshot.createOrValidate();
-    }
-
-
-
-    private ScriptNode parse(String query) {
+    protected ScriptNode parse(String query) {
         return parser.parse(query);
     }
 

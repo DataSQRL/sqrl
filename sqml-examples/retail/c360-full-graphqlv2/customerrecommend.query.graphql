@@ -1,0 +1,22 @@
+{
+Customer( customerid: 1000107) {
+    email
+    name
+    order_again {
+      productid
+      quantity
+      num_orders
+      most_recent
+    }
+    favorite_categories {
+      category_name
+      total
+      category {
+        products {
+            name
+            productid
+            description
+        }
+      }
+    }
+}}

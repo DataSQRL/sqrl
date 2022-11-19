@@ -7,12 +7,8 @@ type Customer {
   customerid: Int
   email: String
   name: String
-  lastupdated: Int
-  updatetime: String
-  orders(id: Int, time: String): [orders]
   order_again(productid: Int): [order_again]
   favorite_categories: [favorite_categories]
-  order_stats: [order_stats]
 }
 
 type Product {
@@ -20,30 +16,17 @@ type Product {
   name: String
   description: String
   category: String
-  updatetime: String
 }
 
 type Query {
-  Category(name: String): [Category]
   Customer(customerid: Int!): [Customer]
-  orders(id: Int!): [orders]
-  Product(productid: Int, name: String): [Product]
+  Category(name: String!): [Category]
 }
 
-type entries {
-  productid: Int
-  quantity: Int
-  unit_price: Float
-  parent: orders!
-  discount: Float
-  total: Float
-  product: [Product]
-}
 
 type favorite_categories {
   category_name: String
   total: Float
-  parent: Customer!
   category: [Category]
 }
 
@@ -54,22 +37,3 @@ type order_again {
   most_recent: String
 }
 
-type order_stats {
-  customerid: Int
-  total_spend: Float
-  num_orders: Int
-}
-
-type orders {
-  id: Int
-  customerid: Int
-  time: String
-  entries: [entries]
-  total: total!
-}
-
-type total {
-  price: Float
-  discount: Float
-  num: Int
-}

@@ -7,20 +7,20 @@ LogicalProject(customerid=[$0], total_price=[$1], num_orders=[$2], time=[$3])
       LogicalProject(_uuid=[$0], price=[$2], number=[$3], savings=[$4], time=[$1])
         LogicalAggregate(group=[{0, 4}], price=[SUM($12)], number=[COUNT()], savings=[SUM($11)]) hints[TumbleAggregationHint options:[4, INSTANT]]
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])
-            LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+            LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
               LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
                 LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
               Uncollect
-                LogicalProject($f0=[$cor0.entries])
+                LogicalProject($f0=[$cor1.entries])
                   LogicalValues(tuples=[[{ 0 }]])
 
 >>>entries$4-lp-stream
 LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0E0:DOUBLE)], price=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))], time=[$4])
-  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+  LogicalCorrelate(correlation=[$cor2], joinType=[inner], requiredColumns=[{5}])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
       LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
     Uncollect
-      LogicalProject($f0=[$cor0.entries])
+      LogicalProject($f0=[$cor2.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
 >>>totals$6-lp-stream
@@ -28,11 +28,11 @@ LogicalProject(_uuid=[$0], price=[$1], number=[$2], savings=[$3], time=[$4])
   LogicalProject(_uuid=[$0], price=[$2], number=[$3], savings=[$4], time=[$1])
     LogicalAggregate(group=[{0, 4}], price=[SUM($12)], number=[COUNT()], savings=[SUM($11)]) hints[TumbleAggregationHint options:[4, INSTANT]]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])
-        LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+        LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
             LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
           Uncollect
-            LogicalProject($f0=[$cor0.entries])
+            LogicalProject($f0=[$cor1.entries])
               LogicalValues(tuples=[[{ 0 }]])
 
 >>>orders$3-lp-stream

@@ -6,11 +6,11 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
 >>>entryprice$12-lp-stream
 LogicalProject(_uuid=[$0], _idx=[$1], price=[$2], _ingest_time=[$3], time=[$4])
   LogicalProject(_uuid=[$0], _idx=[$6], price=[-(*($8, $9), $10)], _ingest_time=[$1], time=[$4])
-    LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+    LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5]) hints[WatermarkHint options:[4]]
         LogicalTableScan(table=[[orders$i$4]])
       Uncollect
-        LogicalProject($f0=[$cor0.entries])
+        LogicalProject($f0=[$cor1.entries])
           LogicalValues(tuples=[[{ 0 }]])
 
 >>>customer$14-lp-stream
@@ -24,11 +24,11 @@ LogicalProject(_uuid=[$0], _idx=[$1], id=[$2], name=[$3], customerid=[$4], col1=
   LogicalProject(_uuid=[$0], _idx=[$7], id=[$2], name=[$17], customerid=[$3], col1=[$6], discount2=[$12], time=[$4])
     LogicalJoin(condition=[=($3, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], $f12=[COALESCE($11, 0E0:DOUBLE)])
-        LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+        LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[/(+($2, $3), 2)]) hints[WatermarkHint options:[4]]
             LogicalTableScan(table=[[orders$i$4]])
           Uncollect
-            LogicalProject($f0=[$cor0.entries])
+            LogicalProject($f0=[$cor3.entries])
               LogicalValues(tuples=[[{ 0 }]])
       LogicalFilter(condition=[=($7, 1)])
         LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
@@ -38,11 +38,11 @@ LogicalProject(_uuid=[$0], _idx=[$1], id=[$2], name=[$3], customerid=[$4], col1=
 
 >>>entries$7-lp-stream
 LogicalProject(_uuid=[$0], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], discount2=[COALESCE($11, 0E0:DOUBLE)], time=[$4])
-  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+  LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[/(+($2, $3), 2)]) hints[WatermarkHint options:[4]]
       LogicalTableScan(table=[[orders$i$4]])
     Uncollect
-      LogicalProject($f0=[$cor0.entries])
+      LogicalProject($f0=[$cor4.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
 >>>entryprice-lp-database

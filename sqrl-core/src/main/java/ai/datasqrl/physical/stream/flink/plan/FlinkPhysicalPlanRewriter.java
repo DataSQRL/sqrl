@@ -28,6 +28,7 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Holder;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
@@ -287,13 +288,18 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     return relBuilder.build();
   }
 
+  private Pair<CorrelationId,CorrelationId> replaceCorrelId = null;
+
   @Override
   public RelNode visit(LogicalCorrelate correlate) {
     FlinkRelBuilder relBuilder = getBuilder();
     relBuilder.push(correlate.getLeft().accept(this));
     RelDataType base = relBuilder.peek().getRowType();
+    CorrelationId newid = relBuilder.getCluster().createCorrel();
+    replaceCorrelId = Pair.of(correlate.getCorrelationId(),newid);
     relBuilder.push(correlate.getRight().accept(this));
-    relBuilder.correlate(correlate.getJoinType(), correlate.getCorrelationId(),
+    replaceCorrelId = null;
+    relBuilder.correlate(correlate.getJoinType(), newid,
             correlate.getRequiredColumns().asList().stream().map(i -> relBuilder.getRexBuilder().makeInputRef(base,i)).collect(Collectors.toList()));
     return relBuilder.build();
   }
@@ -364,7 +370,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   }
 
   @AllArgsConstructor
-  private static class RexRewriter extends RexShuttle {
+  private class RexRewriter extends RexShuttle {
 
     final List<RelDataTypeField> inputFields;
     final FlinkRexBuilder rexBuilder;
@@ -372,6 +378,15 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     @Override
     public RexNode visitInputRef(RexInputRef ref) {
       return rexBuilder.makeInputRef(inputFields.get(ref.getIndex()).getType(),ref.getIndex());
+    }
+
+    @Override
+    public RexNode visitCorrelVariable(RexCorrelVariable variable) {
+      if (replaceCorrelId!=null && variable.id.equals(replaceCorrelId.getKey())) {
+        return rexBuilder.makeCorrel(variable.getType(), replaceCorrelId.getValue());
+      } else {
+        return variable;
+      }
     }
 
     @Override
@@ -402,7 +417,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     }
   }
 
-  private static class CorrelateRexRewriter extends RexRewriter {
+  private class CorrelateRexRewriter extends RexRewriter {
 
     final List<RelDataTypeField> leftFields;
     final Holder<RexCorrelVariable> leftCorrelVar;

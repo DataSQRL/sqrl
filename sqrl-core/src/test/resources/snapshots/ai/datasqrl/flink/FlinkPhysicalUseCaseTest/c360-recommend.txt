@@ -9,11 +9,11 @@ LogicalProject(_uuid=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
   LogicalProject(_uuid=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
     LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT]]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])
-        LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+        LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
             LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
           Uncollect
-            LogicalProject($f0=[$cor0.entries])
+            LogicalProject($f0=[$cor1.entries])
               LogicalValues(tuples=[[{ 0 }]])
 
 >>>_sales_72h$24-lp-stream
@@ -26,11 +26,11 @@ LogicalProject(productid=[$0], total=[$1], num=[$2], hour=[$3])
             LogicalProject(productid=[$13], hour=[round_to_hour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
               LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
                 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])
-                  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+                  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
                     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
                       LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
                     Uncollect
-                      LogicalProject($f0=[$cor0.entries])
+                      LogicalProject($f0=[$cor3.entries])
                         LogicalValues(tuples=[[{ 0 }]])
                 LogicalFilter(condition=[=($7, 1)])
                   LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
@@ -61,11 +61,11 @@ LogicalProject(productid=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
       LogicalProject(productid=[$13], hour=[round_to_hour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
         LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])
-            LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+            LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
               LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
                 LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
               Uncollect
-                LogicalProject($f0=[$cor0.entries])
+                LogicalProject($f0=[$cor3.entries])
                   LogicalValues(tuples=[[{ 0 }]])
           LogicalFilter(condition=[=($7, 1)])
             LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
@@ -83,11 +83,11 @@ LogicalProject(productid=[$0], total=[$1], num=[$2], hour=[$3])
             LogicalProject(productid=[$13], hour=[round_to_hour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
               LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
                 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])
-                  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+                  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
                     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
                       LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
                     Uncollect
-                      LogicalProject($f0=[$cor0.entries])
+                      LogicalProject($f0=[$cor3.entries])
                         LogicalValues(tuples=[[{ 0 }]])
                 LogicalFilter(condition=[=($7, 1)])
                   LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
@@ -102,11 +102,11 @@ LogicalProject(productid=[$0], total=[$1], num=[$2], hour=[$3])
 
 >>>entries$10-lp-stream
 LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0E0:DOUBLE)], total=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))], time=[$4])
-  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+  LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
       LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
     Uncollect
-      LogicalProject($f0=[$cor0.entries])
+      LogicalProject($f0=[$cor4.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
 >>>product$16-lp-stream
@@ -191,14 +191,13 @@ LogicalSort(sort0=[$0], sort1=[$1], sort2=[$2], dir0=[ASC], dir1=[ASC], dir2=[AS
 >>>category-data
 Decoration
 House & Garden
-House & garden
 Personal Care
 >>>product-data
 1332, Heavy Duty Butt Wipes, Wipes for hardiest of messes, Personal Care
 3225, 4ft Garden Gnome, A real-sized garden gnome adds character to your outdoor space, House & Garden
 3571, Poptech Blow 500, High powered blowdryer for any hair, Personal Care
 7235, Aachen Snow Globe, Picturesque city in a beautiful snow globe, Decoration
-7552, Simer Garden Hose 50ft, Long garden hose that rolls up, House & garden
+7552, Simer Garden Hose 50ft, Long garden hose that rolls up, House & Garden
 8757, Original German Nutcracker 3ft, Hand-made nutcracker is the perfect Christmas decoration, Decoration
 >>>total-data
 104.870, 5.000, 2
