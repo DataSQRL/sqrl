@@ -255,6 +255,6 @@ Personal Care, 146.820
 146.820, 2
 166.500, 1
 >>>newcustomerpromotion-data
-1000101, john.mekker@gmail.com, John Mekker, 120.850, 1
+1000101, john.mekker@gmail.com, John B. Mekker, 120.850, 1
 1000107, emily.ludies@hotmail.com, Emily F. Ludies, 146.820, 2
 1000121, lalelu@hottunes.org, Michelle Dagnes, 166.500, 1
