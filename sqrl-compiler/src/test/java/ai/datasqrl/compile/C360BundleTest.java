@@ -1,7 +1,7 @@
-package ai.datasqrl;
+package ai.datasqrl.compile;
 
 
-import ai.datasqrl.compile.Compiler;
+import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.DiscoveryConfiguration.MetaData;
 import ai.datasqrl.util.JDBCTestDatabase;
 import java.io.IOException;
@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class C360BundleTest {
@@ -36,7 +35,7 @@ public class C360BundleTest {
   @SneakyThrows
   public void testByoPagedSchema() {
     Path dest = copyBundle(c360Script);
-    Compiler compiler = new Compiler();
+    ai.datasqrl.compile.Compiler compiler = new ai.datasqrl.compile.Compiler();
     compiler.run(dest.resolve("build/"), Optional.of(dest.resolve("schema.graphqls")),
         Optional.of(testDatabase.getJdbcConfiguration().getDatabase(MetaData.DEFAULT_DATABASE)));
 
