@@ -11,6 +11,7 @@
     <modules>
         <module>sqrl-core</module>
         <module>sqrl-parser</module>
+        <module>sqrl-compiler</module>
     </modules>
 
     <properties>
@@ -27,6 +28,11 @@
             </dependency>
             <dependency>
                 <artifactId>sqrl-parser</artifactId>
+                <groupId>ai.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>sqrl-compiler</artifactId>
                 <groupId>ai.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
