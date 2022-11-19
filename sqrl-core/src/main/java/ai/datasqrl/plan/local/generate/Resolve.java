@@ -34,6 +34,7 @@ import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Project;
@@ -60,6 +61,7 @@ import static ai.datasqrl.config.error.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTA
 import static ai.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
 
 @Getter
+@Slf4j
 public class Resolve {
 
   private final Path basePath;
@@ -135,7 +137,7 @@ public class Resolve {
       planQueries(env);
       return env;
     } catch (Exception e) {
-      System.out.println(session.getErrors().getAll());
+      log.error(session.getErrors().toString());
       env.errors.handle(e);
       e.printStackTrace();
       throw e;
