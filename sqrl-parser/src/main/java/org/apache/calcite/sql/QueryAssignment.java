@@ -1,8 +1,5 @@
 package org.apache.calcite.sql;
 
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.calcite.util.SqlNodePrinter;
-import ai.datasqrl.schema.TableFunctionArgument;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -10,14 +7,14 @@ import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @Getter
-public class JoinAssignment extends Assignment {
+public class QueryAssignment extends Assignment {
 
   private final Optional<List<TableFunctionArgument>> tableArgs;
   private final SqlNode query;
 
-  public JoinAssignment(SqlParserPos location,
-      NamePath name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, Optional<SqlNodeList> hints) {
-    super(location, name, hints);
+  public QueryAssignment(SqlParserPos location, SqlIdentifier namePath,
+      Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, Optional<SqlNodeList> hints) {
+    super(location, namePath, hints);
     this.tableArgs = tableArgs;
     this.query = query;
   }
@@ -30,7 +27,7 @@ public class JoinAssignment extends Assignment {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    JoinAssignment that = (JoinAssignment) o;
+    QueryAssignment that = (QueryAssignment) o;
     return Objects.equals(query, that.query) && Objects.equals(hints, that.hints);
   }
 
@@ -42,6 +39,5 @@ public class JoinAssignment extends Assignment {
   @Override
   public void unparse(SqlWriter sqlWriter, int i, int i1) {
     super.unparse(sqlWriter, i, i1);
-    sqlWriter.print(SqlNodePrinter.printJoin(query));
   }
 }

@@ -13,9 +13,8 @@
  */
 package org.apache.calcite.sql;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
 import com.google.common.base.Preconditions;
+import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -27,15 +26,15 @@ import org.apache.calcite.util.Litmus;
 @Getter
 public class ImportDefinition extends SqrlStatement {
 
-  private final Optional<Name> alias;
+  private final Optional<SqlIdentifier> alias;
   private final Optional<SqlNode> timestamp;
-  private final NamePath importPath;
+  private final SqlIdentifier importPath;
   private final Optional<SqlIdentifier> timestampAlias;
 
   public ImportDefinition(SqlParserPos location,
-      NamePath importPath, Optional<Name> alias, Optional<SqlNode> timestamp,
+      SqlIdentifier importPath, Optional<SqlIdentifier> alias, Optional<SqlNode> timestamp,
       Optional<SqlIdentifier> timestampAlias) {
-    super(location, createNamePath(importPath, alias, timestamp, timestampAlias), Optional.empty());
+    super(location, transformIdentifier(importPath, alias, timestamp, timestampAlias), Optional.empty());
     this.alias = alias;
     this.timestamp = timestamp;
     this.importPath = importPath;
@@ -45,19 +44,27 @@ public class ImportDefinition extends SqrlStatement {
     }
   }
 
-  private static NamePath createNamePath(NamePath importPath, Optional<Name> alias,
+  /**
+   * Rearrange the import path to have a valid assignment location for
+   * timestamps.
+   */
+  private static SqlIdentifier transformIdentifier(SqlIdentifier importPath, Optional<SqlIdentifier> alias,
       Optional<SqlNode> timestamp, Optional<SqlIdentifier> timestampAlias) {
+    String tableName = importPath.names.get(importPath.names.size()-1);
     if (timestamp.isPresent() && timestampAlias.isEmpty()) {
       Preconditions.checkState(timestamp.get() instanceof SqlIdentifier,
           "Timestamp must be an identifier or use the AS keyword to define a new column");
-      SqlIdentifier identifier = (SqlIdentifier)timestamp.get();
-      Preconditions.checkState(identifier.names.size() == 1, "Identifier should not be nested or contain a path");
-      return importPath.popFirst().concat(Name.system(identifier.names.get(0)));
+      SqlIdentifier ts = (SqlIdentifier)timestamp.get();
+      Preconditions.checkState(ts.names.size() == 1, "Identifier should not be nested or contain a path");
+      return new SqlIdentifier(List.of(tableName, ts.names.get(0)), ts.getParserPosition());
     }
 
-    NamePath first = alias.map(a->a.toNamePath()).orElse(importPath.popFirst());
+    SqlIdentifier first = alias
+        .orElse(new SqlIdentifier(importPath.names.subList(0, importPath.names.size()-1), importPath.getParserPosition()));
     return timestampAlias
-        .map(ts -> first.concat(Name.system(ts.names.get(0)))).orElse(first);
+        //Concat the alias to the end if there's an alias
+        .map(ts -> new SqlIdentifier(List.of(tableName, ts.names.get(0)), importPath.getParserPosition()))
+        .orElse(first);
   }
 
   @Override
@@ -68,8 +75,7 @@ public class ImportDefinition extends SqrlStatement {
   @Override
   public void unparse(SqlWriter sqlWriter, int i, int i1) {
     sqlWriter.keyword("IMPORT");
-    sqlWriter.print(this.importPath.getDisplay());
-    //todo remaining
+    importPath.unparse(sqlWriter, i, i1);
   }
 
   @Override

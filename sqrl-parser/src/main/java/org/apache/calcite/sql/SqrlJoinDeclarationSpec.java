@@ -1,12 +1,10 @@
 package org.apache.calcite.sql;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.jetbrains.annotations.NotNull;
 
 @Getter
 public class SqrlJoinDeclarationSpec extends SqlCall {
@@ -37,7 +35,6 @@ public class SqrlJoinDeclarationSpec extends SqlCall {
     this.leftJoins = leftJoins;
   }
 
-  @NotNull
   @Override
   public SqlOperator getOperator() {
     return OPERATOR;
@@ -48,7 +45,6 @@ public class SqrlJoinDeclarationSpec extends SqlCall {
     return SqlKind.JOIN_DECLARATION;
   }
 
-  @NotNull
   @Override
   public List<SqlNode> getOperandList() {
     SqlNode[] list = {relation, orderList.orElse(null), fetch.orElse(null), inverse.orElse(null),

@@ -14,11 +14,8 @@
 package ai.datasqrl.parse;
 
 import ai.datasqrl.parse.SqlBaseParser.*;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.hints.TopNHint;
-import ai.datasqrl.schema.TableFunctionArgument;
+import com.google.common.base.Preconditions;
+import org.apache.calcite.sql.TableFunctionArgument;
 import java.util.Locale;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -28,19 +25,14 @@ import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParseException;
-import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Util;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import org.apache.flink.util.Preconditions;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -590,48 +582,9 @@ class AstBuilder
 
   @Override
   public SqlNode visitTableName(TableNameContext context) {
-    Pair<List<String>, List<SqlParserPos>> name = getQualified(context.qualifiedName());
-    if (name.getLeft().size() == 1) {
-      return new SqlIdentifier(name.getLeft(), null, getLocation(context), name.getRight());
-    }
-    SqlParserPos pos = getLocation(context);
+    SqlIdentifier name = getNamePath(context.qualifiedName());
 
-//    //Wrap in a select to control scope
-//    //give deterministic alias ?
-//
-//    SqlNode call = SqrlOperatorTable.AS.createCall(pos, );
-//
-//    SqlSelect select = new SqlSelect(pos, new SqlNodeList(pos), new SqlNodeList(List.of(
-//        new SqlIdentifier(List.of("a_"+cnt, ""), null, pos, List.of(pos))),
-//        pos
-//        ),call,null, null, null, new SqlNodeList(pos), null,
-//        null, null, new SqlNodeList(pos)
-//        );
-//    cnt++;
-//    SqlPathJoin j = new SqlPathJoin(name.getLeft(),
-//        getLocation(context), name.getRight());
-
-    SqlIdentifier path = new SqlIdentifier(name.getLeft(),
-        null, getLocation(context), name.getRight());
-//    path.setSqlPathJoin(j);
-    return path;
-  }
-
-  private Pair<List<String>, List<SqlParserPos>> getQualified(QualifiedNameContext context) {
-    List<SqlIdentifier> parts = visit(context.identifier(), SqlIdentifier.class);
-    List<String> names = new ArrayList<>();
-    List<SqlParserPos> pos = new ArrayList<>();
-
-    for (SqlIdentifier part : parts) {
-      names.add(part.names.get(0));
-      pos.add(part.getParserPosition());
-    }
-    if (context.all != null) {
-      names.add("");
-      pos.add(getLocation(context.all));
-    }
-
-    return Pair.of(names, pos);
+    return name;
   }
 
   public SqlNodeList getHints(HintContext hint) {
@@ -788,8 +741,8 @@ class AstBuilder
 
   @Override
   public SqlNode visitQualifiedName(QualifiedNameContext ctx) {
-    var qualified = getQualified(ctx);
-    return new SqlIdentifier(qualified.getKey(), null, getLocation(ctx), qualified.getRight());
+    SqlIdentifier qualified = getNamePath(ctx);
+    return qualified;
   }
 
   @Override
@@ -864,7 +817,8 @@ class AstBuilder
 
   @Override
   public SqlNode visitUnquotedIdentifier(UnquotedIdentifierContext context) {
-    return new SqlIdentifier(List.of(context.getText()), getLocation(context));
+    return new SqlIdentifier(List.of(context.getText()),
+        null, getLocation(context), List.of(getLocation(context)));
   }
 
   @Override
@@ -873,7 +827,8 @@ class AstBuilder
     String identifier = token.substring(1, token.length() - 1)
         .replace("\"\"", "\"");
 
-    return new SqlIdentifier(List.of(identifier), getLocation(context));
+    return new SqlIdentifier(List.of(identifier),
+        null, getLocation(context), List.of(getLocation(context)));
   }
 
   @Override
@@ -1025,9 +980,7 @@ class AstBuilder
       timestamp = Optional.empty();
     }
 
-    return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), alias.map(
-        a -> Name.system(String.join(".", a.names))
-    ), timestamp, timestampAlias);
+    return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), alias, timestamp, timestampAlias);
   }
 
   @Override
@@ -1048,7 +1001,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitDistinctAssignment(DistinctAssignmentContext ctx) {
-    NamePath namePath = getNamePath(ctx.qualifiedName());
+    SqlIdentifier namePath = getNamePath(ctx.qualifiedName());
     SqlIdentifier tableName = (SqlIdentifier) visit(ctx.table);
 
     Optional<SqlIdentifier> alias = Optional.empty();
@@ -1089,7 +1042,7 @@ class AstBuilder
             null,
             SqlLiteral.createExactNumeric("1", getLocation(ctx)),
             new SqlNodeList(List.of(new SqlHint(loc,
-                new SqlIdentifier(TopNHint.Type.DISTINCT_ON.name(), loc),
+                new SqlIdentifier("DISTINCT_ON", loc),
                 new SqlNodeList(pk, loc),
                 HintOptionFormat.ID_LIST
             )), loc)
@@ -1106,28 +1059,34 @@ class AstBuilder
     );
   }
 
-  private NamePath getNamePath(QualifiedNameContext context) {
-    List<Name> parts = visit(context.identifier(), SqlIdentifier.class).stream()
-        .map(s -> toNamePath(s)) // TODO: preserve quotedness
-        .flatMap(e -> e.stream())
-        .collect(Collectors.toList());
+  private SqlIdentifier getNamePath(QualifiedNameContext context) {
+    List<SqlIdentifier> ids = visit(context.identifier(), SqlIdentifier.class);
+    SqlIdentifier id = flatten(ids);
+    Preconditions.checkState(
+        id.names.size() == SqrlUtil.getComponentPositions(id).size());
+
     if (context.all != null) {
-      parts = new ArrayList<>(parts);
-      parts.add(ReservedName.ALL);
+      return id.plusStar();
     }
 
-    return NamePath.of(parts);
+    return id;
   }
 
-  private List<Name> toNamePath(SqlIdentifier s) {
-    return s.names.stream()
-        .map(e -> Name.system(e))
-        .collect(Collectors.toUnmodifiableList());
+  private SqlIdentifier flatten(List<SqlIdentifier> ids) {
+    List<String> names = new ArrayList<>();
+    List<SqlParserPos> cPos = new ArrayList<>();
+    for (SqlIdentifier i : ids) {
+      names.addAll(i.names);
+      cPos.addAll(SqrlUtil.getComponentPositions(i));
+    }
+
+    return new SqlIdentifier(names, ids.get(0).getCollation(), ids.get(0).getParserPosition(),
+        cPos);
   }
 
   @Override
   public SqlNode visitJoinAssignment(JoinAssignmentContext ctx) {
-    NamePath name = getNamePath(ctx.qualifiedName());
+    SqlIdentifier name = getNamePath(ctx.qualifiedName());
 
     SqlNode join = visit(ctx.joinSpecification());
 
@@ -1214,7 +1173,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitExpressionAssign(ExpressionAssignContext ctx) {
-    NamePath name = getNamePath(ctx.qualifiedName());
+    SqlIdentifier name = getNamePath(ctx.qualifiedName());
     SqlNode expr = visit(ctx.expression());
     return new ExpressionAssignment(getLocation(ctx), name,
         getTableArgs(ctx.tableFunction()),
@@ -1224,7 +1183,8 @@ class AstBuilder
 
   @Override
   public SqlNode visitBackQuotedIdentifier(BackQuotedIdentifierContext ctx) {
-    return new SqlIdentifier(ctx.getText(), getLocation(ctx));
+    return new SqlIdentifier(List.of(ctx.getText()), null,
+        getLocation(ctx), List.of(getLocation(ctx)));
   }
 
   @Override
@@ -1249,19 +1209,6 @@ class AstBuilder
         .map(clazz::cast)
         .collect(toList());
   }
-//
-//  private NamePath getNamePath(QualifiedNameContext context) {
-//    List<Name> parts = visit(context.identifier(), Identifier.class).stream()
-//        .map(Identifier::getNamePath) // TODO: preserve quotedness
-//        .flatMap(e -> e.stream())
-//        .collect(Collectors.toList());
-//    if (context.all != null) {
-//      parts = new ArrayList<>(parts);
-//      parts.add(ReservedName.ALL);
-//    }
-//
-//    return NamePath.of(parts);
-//  }
 
   @Override
   public SqlNode visitStringLiteral(StringLiteralContext ctx) {

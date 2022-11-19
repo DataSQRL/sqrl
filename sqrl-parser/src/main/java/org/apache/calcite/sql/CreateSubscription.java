@@ -1,6 +1,5 @@
 package org.apache.calcite.sql;
 
-import ai.datasqrl.parse.tree.name.NamePath;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
@@ -14,11 +13,11 @@ import org.apache.calcite.util.Litmus;
 public class CreateSubscription extends Assignment {
 
   private final SubscriptionType subscriptionType;
-  private final NamePath name;
+  private final SqlIdentifier name;
   private final SqlNode query;
 
   public CreateSubscription(SqlParserPos location, SubscriptionType subscriptionType,
-      NamePath name, SqlNode query) {
+      SqlIdentifier name, SqlNode query) {
     super(location, name, Optional.empty());
     this.subscriptionType = subscriptionType;
     this.name = name;

@@ -13,9 +13,6 @@
  */
 package ai.datasqrl.parse;
 
-import static org.antlr.v4.runtime.atn.ATNState.BLOCK_START;
-import static org.antlr.v4.runtime.atn.ATNState.RULE_START;
-
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.ArrayDeque;
@@ -182,7 +179,7 @@ class ErrorHandler
         int tokenIndex = current.tokenIndex;
         CallerContext caller = current.caller;
 
-        if (state.getStateType() == BLOCK_START || state.getStateType() == RULE_START) {
+        if (state.getStateType() == ATNState.BLOCK_START || state.getStateType() == ATNState.RULE_START) {
           int rule = state.ruleIndex;
 
           if (specialRules.containsKey(rule)) {

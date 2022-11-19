@@ -18,7 +18,6 @@
     <jackson.version>2.14.0</jackson.version>
     <vertx.version>4.3.4</vertx.version>
     <agroal.version>1.11</agroal.version>
-    <antlr.version>4.11.1</antlr.version>
     <kafka.version>3.3.1</kafka.version>
     <flink.version>1.15.2</flink.version>
     <slf4j.version>2.0.3</slf4j.version>
@@ -41,6 +40,10 @@
   </properties>
 
   <dependencies>
+    <dependency>
+      <artifactId>sqrl-parser</artifactId>
+      <groupId>ai.datasqrl</groupId>
+    </dependency>
     <!-- https://mvnrepository.com/artifact/com.ongres.scram/common -->
     <dependency>
       <groupId>com.ongres.scram</groupId>
@@ -139,13 +142,6 @@
       <groupId>org.glassfish</groupId>
       <artifactId>javax.el</artifactId>
       <version>${glassfish.version}</version>
-    </dependency>
-
-    <!-- sqrl parser -->
-    <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>antlr4-runtime</artifactId>
-      <version>${antlr.version}</version>
     </dependency>
 
     <!-- stream: Flink -->
@@ -398,25 +394,6 @@
     </dependency>
   </dependencies>
   <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr4-maven-plugin</artifactId>
-          <version>${antlr.version}</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>antlr4</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <visitor>true</visitor>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -425,10 +402,6 @@
           <source>11</source>
           <target>11</target>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr4-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

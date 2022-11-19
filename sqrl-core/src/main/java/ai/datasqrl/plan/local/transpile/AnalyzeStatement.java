@@ -11,7 +11,6 @@ import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Context;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Relationship.Multiplicity;
 import ai.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;

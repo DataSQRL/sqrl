@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ai.datasqrl.parse.tree.name.NamePath;
+import java.util.List;
 import org.apache.calcite.sql.ExportDefinition;
 import org.apache.calcite.sql.SqrlStatement;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class ExportTest {
@@ -20,7 +20,7 @@ class ExportTest {
     assertTrue(sqrlStatement instanceof ExportDefinition);
     ExportDefinition exportDefinition = (ExportDefinition) sqrlStatement;
 
-    assertEquals(exportDefinition.getTablePath(), NamePath.of("UserAlerts"));
-    assertEquals(exportDefinition.getSinkPath(), NamePath.of("file-output", "Alerts"));
+    assertEquals(exportDefinition.getTablePath().names, List.of("UserAlerts"));
+    assertEquals(exportDefinition.getSinkPath().names, List.of("file-output", "Alerts"));
   }
 }

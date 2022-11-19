@@ -32,6 +32,7 @@ import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
+import org.apache.calcite.sql.TableFunctionArgument;
 
 /**
  * A {@link SQRLTable} represents a logical table in the SQRL script which contains fields that are

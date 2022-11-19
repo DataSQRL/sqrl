@@ -64,6 +64,7 @@ public class DataSourceLoader extends AbstractLoader implements Loader, Exporter
       Path baseDir = namepath2Path(env.getPackagePath(), basePath);
       Path datasystempath = baseDir.resolve(DATASYSTEM_FILE);
       DataSystemConfig discoveryConfig;
+
       if (Files.isRegularFile(datasystempath)) {
         discoveryConfig = mapJsonFile(datasystempath, DataSystemConfig.class);
       } else if (basePath.size()==1 && basePath.getLast().getCanonical().equals(PrintDataSystem.SYSTEM_TYPE)) {

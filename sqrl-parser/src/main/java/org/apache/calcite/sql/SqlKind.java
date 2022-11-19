@@ -18,8 +18,6 @@ package org.apache.calcite.sql;
 
 import com.google.common.collect.Sets;
 
-import org.apiguardian.api.API;
-
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Locale;
@@ -1307,7 +1305,6 @@ public enum SqlKind {
    * <p>For instance: {@link #AND}, {@link #OR}, {@link #EQUALS}, {@link #LEAST}</p>
    * <p>Note: {@link #PLUS} does depend on the argument oder if argument types are different</p>
    */
-  @API(since = "1.22", status = API.Status.EXPERIMENTAL)
   public static final Set<SqlKind> SYMMETRICAL =
       EnumSet.of(
           AND, OR, EQUALS, NOT_EQUALS,
@@ -1319,7 +1316,6 @@ public enum SqlKind {
    *
    * <p>For instance: {@link #PLUS}, {@link #TIMES}</p>
    */
-  @API(since = "1.22", status = API.Status.EXPERIMENTAL)
   public static final Set<SqlKind> SYMMETRICAL_SAME_ARG_TYPE =
       EnumSet.of(
           PLUS, TIMES);
@@ -1331,7 +1327,6 @@ public enum SqlKind {
    *
    * <p>Note: it does not contain {@code IN} because that is defined on D x D^n.
    */
-  @API(since = "1.24", status = API.Status.EXPERIMENTAL)
   public static final Set<SqlKind> SIMPLE_BINARY_OPS;
 
   static {

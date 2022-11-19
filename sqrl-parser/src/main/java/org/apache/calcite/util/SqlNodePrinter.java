@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.util;
+package org.apache.calcite.util;
 
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriter.SubQueryStyle;
@@ -12,13 +12,5 @@ public class SqlNodePrinter {
     sqlWriter.startList("", "");
     from.unparse(sqlWriter, 0, 0);
     return sqlWriter.toString();
-  }
-
-  public static String toString(SqlNode node) {
-    SqlWriterConfig config = RelToSql.transform.apply(SqlPrettyWriter.config());
-    SqlPrettyWriter writer = new SqlPrettyWriter(config);
-
-    node.unparse(writer, 0, 0);
-    return writer.toSqlString().getSql();
   }
 }
