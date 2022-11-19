@@ -58,7 +58,7 @@ public class DAGPlanner {
                             .startStage(pipeline.getStage(ExecutionEngine.Type.DATABASE).get())
                             .allowStageChange(false) //set to true once we can execute relnodes in the server
                             .build());
-            rewritten = rewritten.postProcess(getRelBuilderFactory().get())
+            rewritten = rewritten.postProcess(getRelBuilderFactory().get(), query.getRelNode().getRowType().getFieldNames())
                     .withDefaultSort().inlineSort(getRelBuilderFactory().get());
             assert rewritten.getPullups().isEmpty();
             relNode = rewritten.getRelNode();
