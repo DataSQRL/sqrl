@@ -2,7 +2,7 @@ package ai.datasqrl.graphql.generate;
 
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.util.TestScript;
-import ai.datasqrl.util.data.Retail;
+import ai.datasqrl.util.data.Nutshop;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +46,7 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
   @Test
   @Disabled
   public void writeSchemaFile() {
-    produceSchemaFile(Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL));
+    produceSchemaFile(Nutshop.INSTANCE.getScripts().get(1));
   }
 
 }

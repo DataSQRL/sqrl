@@ -1,6 +1,7 @@
 package ai.datasqrl.util.data;
 
 import ai.datasqrl.util.TestDataset;
+import ai.datasqrl.util.TestGraphQLSchema;
 import ai.datasqrl.util.TestScript;
 import lombok.AllArgsConstructor;
 import org.apache.flink.util.ArrayUtils;
@@ -56,7 +57,8 @@ public class Nutshop implements TestDataset {
                         ArrayUtils.concat(baseTables, new String[]{"spending_by_month"})).dataSnapshot(false).build(),
                 TestScript.of(this,BASE_PATH.resolve("customer360").resolve("nutshopv2-"+size.name()+".sqrl"),
                         ArrayUtils.concat(baseTables, new String[]{"spending_by_month",
-                        "past_purchases", "volume_by_day"})).dataSnapshot(false).build());
+                        "past_purchases", "volume_by_day"})).dataSnapshot(false)
+                        .graphQLSchemas(TestGraphQLSchema.Directory.of(BASE_PATH.resolve("customer360").resolve("v2graphql"))).build());
     }
 
     @Override

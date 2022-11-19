@@ -1,0 +1,9 @@
+{
+Customer {
+    id
+    spending_by_month {
+        month
+        total_spend
+        total_savings
+    }
+}}
