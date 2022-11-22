@@ -9,20 +9,17 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>sqrl-compiler</artifactId>
+  <artifactId>sqrl-discovery</artifactId>
 
   <properties>
-    <lombok.version>1.18.24</lombok.version>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
-
   <dependencies>
     <dependency>
-      <artifactId>sqrl-planner</artifactId>
       <groupId>ai.datasqrl</groupId>
-    </dependency>
-    <dependency>
-      <artifactId>sqrl-server-core</artifactId>
-      <groupId>ai.datasqrl</groupId>
+      <artifactId>sqrl-engine-core</artifactId>
     </dependency>
     <dependency>
       <artifactId>sqrl-common</artifactId>
@@ -31,23 +28,10 @@
       <scope>test</scope>
       <version>1.0-SNAPSHOT</version>
     </dependency>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <version>${lombok.version}</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
+
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>11</source>
-          <target>11</target>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
