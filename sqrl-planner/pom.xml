@@ -27,6 +27,10 @@
     </dependency>
     <dependency>
       <groupId>ai.datasqrl</groupId>
+      <artifactId>sqrl-server-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ai.datasqrl</groupId>
       <artifactId>sqrl-server-vertx</artifactId>
     </dependency>
     <dependency>

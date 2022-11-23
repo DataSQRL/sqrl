@@ -1,7 +1,6 @@
 package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;

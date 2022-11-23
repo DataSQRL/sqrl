@@ -29,5 +29,10 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.graphql-java</groupId>
+      <artifactId>graphql-java</artifactId>
+      <version>19.0</version>
+    </dependency>
   </dependencies>
 </project>

@@ -28,7 +28,7 @@ import ai.datasqrl.graphql.util.ApiQueryBase;
 import ai.datasqrl.graphql.util.PagedApiQueryBase;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.TranspilerFactory;
+import ai.datasqrl.plan.calcite.SqlValidatorUtil;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
 import ai.datasqrl.plan.queries.APIQuery;
@@ -315,7 +315,7 @@ public class PgBuilder implements
   }
 
   private RelNode plan(SqlNode node) {
-    SqlValidator sqrlValidator = TranspilerFactory.createSqlValidator(schema,
+    SqlValidator sqrlValidator = SqlValidatorUtil.createSqlValidator(schema,
         List.of());
     System.out.println(node);
     SqlNode validated = sqrlValidator.validate(node);

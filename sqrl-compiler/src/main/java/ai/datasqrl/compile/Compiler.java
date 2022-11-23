@@ -188,7 +188,7 @@ public class Compiler {
     if (graphqlSchema.map(s->s.toFile().exists()).orElse(false)) {
       return Files.readString(graphqlSchema.get());
     }
-    GraphQLSchema schema = SchemaGenerator.generate(env);
+    GraphQLSchema schema = SchemaGenerator.generate(env.getRelSchema());
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)

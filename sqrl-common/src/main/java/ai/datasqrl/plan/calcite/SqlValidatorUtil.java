@@ -12,7 +12,7 @@ import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 
-public class TranspilerFactory {
+public class SqlValidatorUtil {
 
   public static SqlValidator createSqlValidator(SqrlCalciteSchema schema,
       List<FlinkFnc> envFunctions) {
