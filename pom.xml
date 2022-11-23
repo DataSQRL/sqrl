@@ -26,6 +26,7 @@
         <module>sqrl-server-core</module>
         <module>sqrl-server-vertx</module>
         <module>sqrl-e2e</module>
+        <module>sqrl-loader-core</module>
     </modules>
 
 
@@ -172,12 +173,7 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-loader-function</artifactId>
-                <groupId>ai.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-loader-file</artifactId>
+                <artifactId>sqrl-loader-core</artifactId>
                 <groupId>ai.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>

@@ -2,7 +2,6 @@ package ai.datasqrl.compile.loaders;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.local.generate.Resolve.Env;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -17,12 +16,12 @@ public class TypeLoader implements Loader {
   }
 
   @Override
-  public boolean load(Env env, NamePath fullPath, Optional<Name> alias) {
+  public boolean load(LoaderContext ctx, NamePath fullPath, Optional<Name> alias) {
     return false;
   }
 
   @Override
-  public Collection<Name> loadAll(Env env, NamePath basePath) {
+  public Collection<Name> loadAll(LoaderContext ctx, NamePath basePath) {
     return Collections.EMPTY_LIST;
   }
 }

@@ -3,7 +3,6 @@ package ai.datasqrl.compile.loaders;
 import ai.datasqrl.function.builtin.time.FlinkFnc;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.local.generate.Resolve.Env;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 import java.lang.reflect.InvocationTargetException;
@@ -31,10 +30,10 @@ public class JavaFunctionLoader extends AbstractLoader {
   }
 
   @Override
-  public boolean load(Env env, NamePath fullPath, Optional<Name> alias) {
+  public boolean load(LoaderContext ctx, NamePath fullPath, Optional<Name> alias) {
     NamePath basePath = fullPath.subList(0,fullPath.size()-1);
 
-    Path baseDir = namepath2Path(env.getPackagePath(), basePath);
+    Path baseDir = namepath2Path(ctx.getPackagePath(), basePath);
 
     Path path = baseDir.resolve(fullPath.getLast() + FILE_SUFFIX);
     if (!Files.isRegularFile(path)) return false;
@@ -42,7 +41,7 @@ public class JavaFunctionLoader extends AbstractLoader {
     FunctionJson fnc = mapJsonFile(path, FunctionJson.class);
     try {
       Class<?> clazz = Class.forName(fnc.classPath);
-      env.getResolvedFunctions().add(
+      ctx.addFunction(
           new FlinkFnc(alias.map(Name::getCanonical).orElse(clazz.getSimpleName()),
               (UserDefinedFunction) clazz.getDeclaredConstructor().newInstance()
           ));
