@@ -2,6 +2,7 @@ package ai.datasqrl.config.error;
 
 import ai.datasqrl.parse.tree.name.Name;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -20,20 +21,7 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
   private final ErrorEmitter errorEmitter;
   private final List<ErrorMessage> errors;
 
-  private final Map<Class, ErrorHandler> handlers = loadHandlers();
-
-  private Map<Class, ErrorHandler> loadHandlers() {
-    ServiceLoader<ErrorHandler> handlers
-        = ServiceLoader.load(ErrorHandler.class);
-    for (ErrorHandler h : handlers) {
-      System.out.println(h);
-    }
-    return Map.of(
-//      SqrlAstException.class, new SqrlAstExceptionHandler(),
-//      ValidationException.class, new ValidationExceptionHandler()
-    );
-
-  }
+  private final Map<Class, ErrorHandler> handlers = new HashMap<>();
 
   private ErrorCollector(@NonNull ErrorEmitter errorEmitter, @NonNull List<ErrorMessage> errors) {
     this.errorEmitter = errorEmitter;
@@ -50,6 +38,12 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
 
   public static ErrorCollector root() {
     return new ErrorCollector(ErrorPrefix.ROOT);
+  }
+
+  public void registerHandler(Class clazz, ErrorHandler handler) {
+//      SqrlAstException.class, new SqrlAstExceptionHandler(),
+//      ValidationException.class, new ValidationExceptionHandler()
+    handlers.put(clazz, handler);
   }
 
   public static ErrorCollector fromPrefix(@NonNull ErrorPrefix prefix) {
