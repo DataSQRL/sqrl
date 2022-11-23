@@ -200,6 +200,7 @@ public class Resolve {
     /*
      * Add all files to namespace
      */
+    LoaderContext context = new LoaderContextImpl(env);
     if (last.equals(ReservedName.ALL)) {
       checkState(node.getAlias().isEmpty(), IMPORT_CANNOT_BE_ALIASED,
           () -> node.getParserPosition(),
@@ -209,10 +210,10 @@ public class Resolve {
           () -> node.getTimestamp().get().getParserPosition(),
           () -> "Cannot use timestamp with import star");
 
-      Collection<Name> loaded = env.getLoader().loadAll(env, basePath);
+      Collection<Name> loaded = env.getLoader().loadAll(context, basePath);
       Preconditions.checkState(!loaded.isEmpty(), "Import [%s] is not a package or package is empty",basePath);
     } else {
-      boolean loaded = env.getLoader().load(env,fullPath,node.getAlias()
+      boolean loaded = env.getLoader().load(context,fullPath,node.getAlias()
           .map(a->toNamePath(env, a).getFirst()));
       Preconditions.checkState(loaded, "Could not import: %s", fullPath);
     }
@@ -362,7 +363,7 @@ public class Resolve {
       //We handle exports out-of-band and just resolve them.
       ExportDefinition export = (ExportDefinition) statement;
       Optional<SQRLTable> tableOpt = resolveTable(env, toNamePath(env, export.getTablePath()), false);
-      Optional<TableSink> sink = env.getExporter().export(env,toNamePath(env, export.getSinkPath()));
+      Optional<TableSink> sink = env.getExporter().export(new LoaderContextImpl(env),toNamePath(env, export.getSinkPath()));
       checkState(tableOpt.isPresent(), ErrorCode.MISSING_DEST_TABLE, export::getParserPosition,
           ()->String.format("Could not find table path: %s", export.getTablePath()));
       Preconditions.checkArgument(sink.isPresent());

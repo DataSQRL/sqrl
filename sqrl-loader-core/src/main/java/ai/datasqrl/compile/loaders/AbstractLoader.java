@@ -2,7 +2,6 @@ package ai.datasqrl.compile.loaders;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.local.generate.Resolve;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Preconditions;
@@ -30,10 +29,6 @@ public abstract class AbstractLoader implements Loader {
         return mapFile(yamlMapper, path, clazz);
     }
 
-    public static Path namepath2Path(Resolve.Env env, NamePath path) {
-        return namepath2Path(env.getPackagePath(),path);
-    }
-
     public static Path namepath2Path(Path basePath, NamePath path) {
         Path filePath = basePath;
         for (int i = 0; i < path.getNames().length; i++) {
@@ -44,14 +39,14 @@ public abstract class AbstractLoader implements Loader {
     }
 
     @Override
-    public Collection<Name> loadAll(Resolve.Env env, NamePath basePath) {
-        return getAllFilesInPath(namepath2Path(env,basePath)).stream()
+    public Collection<Name> loadAll(LoaderContext ctx, NamePath basePath) {
+        return getAllFilesInPath(namepath2Path(ctx.getPackagePath(),basePath)).stream()
                 .map(p -> handles(p))
                 .filter(Optional::isPresent)
                 .map(name -> {
                     Name resovledName = Name.system(name.get());
                     Preconditions.checkArgument(resovledName.getCanonical().equals(name.get()));
-                    boolean loaded =  load(env,basePath.concat(resovledName),Optional.empty());
+                    boolean loaded =  load(ctx,basePath.concat(resovledName),Optional.empty());
                     Preconditions.checkArgument(loaded);
                     return resovledName;
                 })

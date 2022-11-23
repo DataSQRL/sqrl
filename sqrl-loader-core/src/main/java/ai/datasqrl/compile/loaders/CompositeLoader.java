@@ -2,7 +2,6 @@ package ai.datasqrl.compile.loaders;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.local.generate.Resolve;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
@@ -29,9 +28,9 @@ public class CompositeLoader extends AbstractLoader implements Loader {
     }
 
     @Override
-    public boolean load(Resolve.Env env, NamePath fullPath, Optional<Name> alias) {
+    public boolean load(LoaderContext ctx, NamePath fullPath, Optional<Name> alias) {
         for (Loader loader : loaders) {
-            if (loader.load(env,fullPath,alias)) return true;
+            if (loader.load(ctx,fullPath,alias)) return true;
         }
         return false;
     }

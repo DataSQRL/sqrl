@@ -34,6 +34,10 @@
       <artifactId>sqrl-server-vertx</artifactId>
     </dependency>
     <dependency>
+      <groupId>ai.datasqrl</groupId>
+      <artifactId>sqrl-loader-core</artifactId>
+    </dependency>
+    <dependency>
       <artifactId>sqrl-common</artifactId>
       <groupId>ai.datasqrl</groupId>
       <type>test-jar</type>

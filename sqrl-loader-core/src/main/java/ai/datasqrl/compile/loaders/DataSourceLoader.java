@@ -10,7 +10,6 @@ import ai.datasqrl.io.sources.dataset.TableSink;
 import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.external.SchemaDefinition;
@@ -45,8 +44,8 @@ public class DataSourceLoader extends AbstractLoader implements Loader, Exporter
   }
 
   @Override
-  public boolean load(Env env, NamePath fullPath, Optional<Name> alias) {
-    return readTable(env.getPackagePath(), fullPath, env.getSession().getErrors()).map(tbl -> env.registerTable(tbl,alias))
+  public boolean load(LoaderContext ctx, NamePath fullPath, Optional<Name> alias) {
+    return readTable(ctx.getPackagePath(), fullPath, ctx.getErrorCollector()).map(tbl -> ctx.registerTable(tbl,alias))
             .map(name -> name!=null).orElse(false);
   }
 
@@ -55,13 +54,13 @@ public class DataSourceLoader extends AbstractLoader implements Loader, Exporter
   }
 
   @Override
-  public Optional<TableSink> export(Env env, NamePath fullPath) {
-    Optional<TableSink> sink = readTable(env.getPackagePath(), fullPath, env.getSession().getErrors(), TableSink.class);
+  public Optional<TableSink> export(LoaderContext ctx, NamePath fullPath) {
+    Optional<TableSink> sink = readTable(ctx.getPackagePath(), fullPath, ctx.getErrorCollector(), TableSink.class);
     if (sink.isEmpty()) {
       //See if we can discover the sink on-demand
       NamePath basePath = fullPath.subList(0,fullPath.size()-1);
       Name tableName = fullPath.getLast();
-      Path baseDir = namepath2Path(env.getPackagePath(), basePath);
+      Path baseDir = namepath2Path(ctx.getPackagePath(), basePath);
       Path datasystempath = baseDir.resolve(DATASYSTEM_FILE);
       DataSystemConfig discoveryConfig;
 
@@ -72,11 +71,10 @@ public class DataSourceLoader extends AbstractLoader implements Loader, Exporter
       } else {
         return Optional.empty();
       }
-      ErrorCollector errors = env.getSession().getErrors();
-      DataSystem dataSystem = discoveryConfig.initialize(errors);
+      DataSystem dataSystem = discoveryConfig.initialize(ctx.getErrorCollector());
       if (dataSystem==null) return Optional.empty();
-      return dataSystem.discoverSink(tableName, errors).map(tblConfig ->
-              tblConfig.initializeSink(errors, basePath, Optional.empty()));
+      return dataSystem.discoverSink(tableName, ctx.getErrorCollector()).map(tblConfig ->
+              tblConfig.initializeSink(ctx.getErrorCollector(), basePath, Optional.empty()));
     } else {
       return sink;
     }
