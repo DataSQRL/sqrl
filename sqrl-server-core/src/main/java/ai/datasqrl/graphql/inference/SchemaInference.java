@@ -8,7 +8,6 @@ import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.graphql.server.Model.Root.RootBuilder;
 import ai.datasqrl.graphql.server.Model.StringSchema;
 import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.schema.Column;
 import ai.datasqrl.schema.Field;
 import ai.datasqrl.schema.Relationship;
@@ -39,18 +38,15 @@ public class SchemaInference {
 
   private final TypeDefinitionRegistry registry;
   private final SqrlCalciteSchema schema;
-  private final Planner planner;
   private final RootBuilder root;
   List<ArgumentHandler> argumentHandlers = List.of(new EqHandler(), new LimitOffsetHandler());
   RelBuilder relBuilder;
   private Set<FieldDefinition> visited = new HashSet<>();
   private Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
-  public SchemaInference(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder,
-      Planner planner) {
+  public SchemaInference(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder) {
     this.registry = (new SchemaParser()).parse(gqlSchema);
     this.schema = schema;
-    this.planner = planner;
     RootBuilder root = Root.builder().schema(StringSchema.builder().schema(gqlSchema).build());
     this.root = root;
     this.relBuilder = relBuilder;

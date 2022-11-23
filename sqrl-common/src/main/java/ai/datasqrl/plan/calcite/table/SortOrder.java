@@ -1,6 +1,5 @@
 package ai.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import ai.datasqrl.plan.calcite.util.IndexMap;
 import lombok.Value;
@@ -68,17 +67,4 @@ public class SortOrder implements PullupOperator {
         collationList.addAll(collation.getFieldCollations());
         return new SortOrder(RelCollations.of(collationList));
     }
-
-    public static SortOrder getDefaultOrder(AnnotatedLP alp) {
-        //If stream, timestamp first then pk, otherwise just pk
-        List<RelFieldCollation> collations = new ArrayList<>();
-        if (alp.getType()==TableType.STREAM && alp.getTimestamp().hasFixedTimestamp()) {
-            collations.add(new RelFieldCollation(alp.getTimestamp().getTimestampCandidate().getIndex(),
-                    RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
-        }
-        return new SortOrder(RelCollations.of(collations)).ensurePrimaryKeyPresent(alp.primaryKey);
-    }
-
-
-
 }

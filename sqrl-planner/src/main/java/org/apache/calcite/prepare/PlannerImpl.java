@@ -18,6 +18,7 @@ package org.apache.calcite.prepare;
 
 import ai.datasqrl.SqrlCalciteCatalogReader;
 import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.calcite.TypeFactory;
 import ai.datasqrl.plan.calcite.rules.EnumerableNestedLoopJoinRule;
 import ai.datasqrl.plan.calcite.rules.SqrlRelMetadataProvider;
 import ai.datasqrl.plan.calcite.rules.SqrlRelMetadataQuery;
@@ -127,7 +128,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     //add default traits
     traitDefs.forEach(planner::addRelTraitDef);
 
-    this.typeFactory = PlannerFactory.getTypeFactory();
+    this.typeFactory = TypeFactory.getTypeFactory();
     final RexBuilder rexBuilder = createRexBuilder();
     cluster = RelOptCluster.create(
         requireNonNull(planner, "planner"),

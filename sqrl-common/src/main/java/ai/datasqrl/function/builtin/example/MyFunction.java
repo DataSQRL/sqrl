@@ -7,6 +7,7 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
+@SuppressWarnings(value = "unused")
 public class MyFunction extends ScalarFunction implements SqrlFunction {
 
   public Long eval(Long value) {

@@ -5,7 +5,7 @@ import ai.datasqrl.config.error.SqrlAstException;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.PlannerFactory;
+import ai.datasqrl.plan.calcite.TypeFactory;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Context;
 import ai.datasqrl.schema.Column;
@@ -214,7 +214,7 @@ public class AnalyzeStatement implements
     return names.stream()
         //create anonymous column
         .map(f->new RelationField(new Column(Name.system(f), Name.system(f), 0, true,
-            new BasicSqlType(PlannerFactory.getTypeSystem(), SqlTypeName.ANY)), null))
+            new BasicSqlType(TypeFactory.getTypeSystem(), SqlTypeName.ANY)), null))
         .collect(Collectors.toList());
   }
 

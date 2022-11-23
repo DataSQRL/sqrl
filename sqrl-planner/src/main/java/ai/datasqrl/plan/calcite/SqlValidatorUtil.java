@@ -22,10 +22,10 @@ public class SqlValidatorUtil {
 
     SqlValidator validator = new FlinkCalciteSqlValidator(
         PlannerFactory.getOperatorTable(envFunctions),
-        new SqrlCalciteCatalogReader(schema, List.of(), PlannerFactory.getTypeFactory(),
+        new SqrlCalciteCatalogReader(schema, List.of(), TypeFactory.getTypeFactory(),
             new CalciteConnectionConfigImpl(p).set(CalciteConnectionProperty.CASE_SENSITIVE,
                 "false")),
-        PlannerFactory.getTypeFactory(),
+        TypeFactory.getTypeFactory(),
         sqlValidatorConfig
         );
     return validator;
