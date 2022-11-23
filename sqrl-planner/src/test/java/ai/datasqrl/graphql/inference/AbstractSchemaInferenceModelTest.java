@@ -2,7 +2,7 @@ package ai.datasqrl.graphql.inference;
 
 import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.engines.JDBCConfiguration;
+import ai.datasqrl.config.provider.Dialect;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import ai.datasqrl.graphql.server.Model.Root;
@@ -70,7 +70,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 //            });
 
     IndexSelector indexSelector = new IndexSelector(env.getSession().getPlanner(),
-            IndexSelector.Config.builder().dialect(JDBCConfiguration.Dialect.POSTGRES).build());
+            IndexSelector.Config.builder().dialect(Dialect.POSTGRES).build());
     List<IndexCall> allIndexes = new ArrayList<>();
     for (OptimizedDAG.ReadQuery query : dag.getDatabaseQueries()) {
       List<IndexCall> indexCall = indexSelector.getIndexSelection(query);

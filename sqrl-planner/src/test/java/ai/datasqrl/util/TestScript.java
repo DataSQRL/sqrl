@@ -3,6 +3,8 @@ package ai.datasqrl.util;
 import ai.datasqrl.util.data.Nutshop;
 import ai.datasqrl.util.data.Retail;
 import ai.datasqrl.util.junit.ArgumentProvider;
+import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -10,7 +12,6 @@ import lombok.Value;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
-import org.testcontainers.shaded.com.google.common.collect.ImmutableList;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -84,10 +85,10 @@ public interface TestScript {
      */
 
     static List<TestScript> getAll() {
-        ImmutableList.Builder b = new ImmutableList.Builder();
-        b.addAll(Retail.INSTANCE.getTestScripts().values());
-        b.addAll(Nutshop.INSTANCE.getScripts().subList(0,2));
-        return b.build();
+        return ImmutableList.<TestScript>builder()
+            .addAll(Retail.INSTANCE.getTestScripts().values())
+            .addAll(Nutshop.INSTANCE.getScripts().subList(0,2))
+            .build();
     }
 
     class AllScriptsProvider implements ArgumentsProvider {

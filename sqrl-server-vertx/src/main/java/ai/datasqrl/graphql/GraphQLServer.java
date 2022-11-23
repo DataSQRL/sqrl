@@ -1,9 +1,9 @@
 package ai.datasqrl.graphql;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
+import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
 import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder;
-import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;

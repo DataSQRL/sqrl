@@ -5,14 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import graphql.schema.idl.TypeDefinitionRegistry;
-import io.vertx.sqlclient.PreparedQuery;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -59,7 +54,6 @@ public class Model {
   }
 
   public interface SchemaVisitor<R, C> {
-    R visitTypeDefinition(TypeDefinitionSchema typeDefinitionSchema, C context);
     R visitStringDefinition(StringSchema stringSchema, C context);
   }
 
@@ -72,15 +66,6 @@ public class Model {
     String schema;
     public <R, C> R accept(SchemaVisitor<R, C> visitor, C context) {
       return visitor.visitStringDefinition(this, context);
-    }
-  }
-
-  @Builder
-  @Getter
-  public static class TypeDefinitionSchema implements Schema {
-    TypeDefinitionRegistry typeDefinitionRegistry;
-    public <R, C> R accept(SchemaVisitor<R, C> visitor, C context) {
-      return visitor.visitTypeDefinition(this, context);
     }
   }
 
@@ -351,12 +336,16 @@ public class Model {
   @NoArgsConstructor
   public static class ResolvedPgQuery implements ResolvedQuery {
     PgQuery query;
-    PreparedQuery<RowSet<Row>> preparedQuery;
+    PreparedSqrlQuery preparedQueryContainer;
 
     @Override
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
       return visitor.visitResolvedPgQuery(this, context);
     }
+  }
+
+  interface PreparedSqrlQuery<T> {
+    T getPreparedQuery();
   }
 
   @AllArgsConstructor

@@ -1,7 +1,6 @@
 package ai.datasqrl.config.metadata;
 
-import ai.datasqrl.config.engines.JDBCConfiguration;
-import ai.datasqrl.config.engines.JDBCConfiguration.Dialect;
+import ai.datasqrl.config.provider.Dialect;
 import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.provider.MetadataStoreProvider;
@@ -64,7 +63,7 @@ public class JDBCMetadataStore implements MetadataStore {
   }
 
   public static final Map<Dialect, String> CREATE_TABLE = Map.of(
-      JDBCConfiguration.Dialect.H2, "CREATE TABLE IF NOT EXISTS `" + TABLE_NAME + "` (\n" +
+      Dialect.H2, "CREATE TABLE IF NOT EXISTS `" + TABLE_NAME + "` (\n" +
           "key VARCHAR(" + MAX_KEY_LENGTH * 2 + ") NOT NULL,\n" + //Multiply by 2 for UTF
           "value BLOB NOT NULL,\n" +
           "PRIMARY KEY (`key`)\n" +
@@ -78,11 +77,11 @@ public class JDBCMetadataStore implements MetadataStore {
 
   public static final Map<Dialect, String> UPSERT_QUERIES =
       ImmutableMap.of(
-          JDBCConfiguration.Dialect.H2, "MERGE INTO `" + TABLE_NAME + "` " +
+          Dialect.H2, "MERGE INTO `" + TABLE_NAME + "` " +
               "KEY ( key ) VALUES ( ?, ? );",
-          JDBCConfiguration.Dialect.POSTGRES, "INSERT INTO " + TABLE_NAME + " " +
+          Dialect.POSTGRES, "INSERT INTO " + TABLE_NAME + " " +
               "( key, value ) VALUES ( ?, ? ) ON CONFLICT ( key ) DO UPDATE SET value = EXCLUDED.value;",
-          JDBCConfiguration.Dialect.MYSQL, "REPLACE INTO `" + TABLE_NAME + "` " +
+          Dialect.MYSQL, "REPLACE INTO `" + TABLE_NAME + "` " +
               "( key, value ) VALUES ( ?, ? );"
       );
 

@@ -1,5 +1,7 @@
 package ai.datasqrl;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import ai.datasqrl.graphql.GraphQLServer;
 import ai.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import ai.datasqrl.graphql.server.Model;
@@ -20,7 +22,6 @@ import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Assert;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
@@ -93,7 +94,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         client.post("/graphql")
                         .sendJson(Map.of("query", query))
                 .onComplete(vertxContext.succeeding(data -> vertxContext.verify(() -> {
-                    Assert.assertNotNull(data);
+                    assertNotNull(data);
                     resultHandler.accept(data.bodyAsString());
                 })));
     }

@@ -3,7 +3,7 @@ package ai.datasqrl.util;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.DiscoveryConfiguration.MetaData;
 import ai.datasqrl.config.engines.JDBCConfiguration;
-import ai.datasqrl.config.engines.JDBCConfiguration.Dialect;
+import ai.datasqrl.config.provider.Dialect;
 import com.google.common.base.Preconditions;
 import java.util.Properties;
 import lombok.Getter;

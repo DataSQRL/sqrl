@@ -1,6 +1,6 @@
 package ai.datasqrl.physical.pipeline;
 
-import ai.datasqrl.config.engines.JDBCConfiguration;
+import ai.datasqrl.config.provider.Dialect;
 import ai.datasqrl.physical.EngineCapability;
 import ai.datasqrl.physical.ExecutionEngine;
 import ai.datasqrl.physical.database.relational.JDBCEngine;
@@ -34,7 +34,7 @@ public class EngineStage implements ExecutionStage {
 
     //TODO: use configuration to build this
     public static final ExecutionPipeline streamDatabasePipeline() {
-        ExecutionStage db = new EngineStage(new JDBCEngine(JDBCConfiguration.Dialect.POSTGRES),Optional.empty());
+        ExecutionStage db = new EngineStage(new JDBCEngine(Dialect.POSTGRES),Optional.empty());
         ExecutionStage stream = new EngineStage(FlinkStreamEngine.STANDARD, Optional.of(db));
         return new ExecutionPipeline() {
 
