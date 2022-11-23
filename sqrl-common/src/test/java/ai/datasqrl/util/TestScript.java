@@ -98,7 +98,7 @@ public interface TestScript {
         }
     }
 
-    class AllScriptsWithGraphQLSchemaProvider implements ArgumentsProvider {
+    public class AllScriptsWithGraphQLSchemaProvider implements ArgumentsProvider {
 
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {

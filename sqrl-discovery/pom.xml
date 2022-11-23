@@ -26,7 +26,6 @@
       <groupId>ai.datasqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
-      <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
 
