@@ -3,7 +3,7 @@ package ai.datasqrl.plan.calcite;
 import static ai.datasqrl.plan.calcite.PlannerFactory.sqlValidatorConfig;
 
 import ai.datasqrl.SqrlCalciteCatalogReader;
-import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
+import ai.datasqrl.function.builtin.time.FlinkFnc;
 import java.util.List;
 import java.util.Properties;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;

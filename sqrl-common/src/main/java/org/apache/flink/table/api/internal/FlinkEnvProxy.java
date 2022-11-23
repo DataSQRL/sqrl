@@ -1,7 +1,7 @@
 package org.apache.flink.table.api.internal;
 
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
-import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
+import ai.datasqrl.function.builtin.time.FlinkFnc;
 import java.util.List;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlOperatorTable;

@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.calcite;
 
-import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
+import ai.datasqrl.function.builtin.time.FlinkFnc;
 import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import java.util.List;
 import lombok.AllArgsConstructor;
