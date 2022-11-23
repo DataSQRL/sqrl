@@ -28,7 +28,7 @@ public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
     ConfiguredSqrlParser parser = new ConfiguredSqrlParser(ErrorCollector.root());
     Env env = resolve.planDag(session, parser.parse(sqrlScript));
 
-    GraphQLSchema schema = SchemaGenerator.generate(env);
+    GraphQLSchema schema = SchemaGenerator.generate(env.getRelSchema());
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
             .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)

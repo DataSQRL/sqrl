@@ -3,7 +3,6 @@ package ai.datasqrl.graphql;
 import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.graphql.inference.SchemaInference;
-import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import graphql.schema.idl.SchemaParser;

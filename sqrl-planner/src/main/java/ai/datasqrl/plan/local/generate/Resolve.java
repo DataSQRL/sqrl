@@ -15,7 +15,7 @@ import ai.datasqrl.physical.ExecutionEngine;
 import ai.datasqrl.physical.pipeline.ExecutionPipeline;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.calcite.TranspilerFactory;
+import ai.datasqrl.plan.calcite.SqlValidatorUtil;
 import ai.datasqrl.plan.calcite.hints.ExecutionHint;
 import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
@@ -52,7 +52,6 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -444,7 +443,7 @@ public class Resolve {
     }
 
     final SqlNode sql = node.accept(new ConvertJoinDeclaration(context));
-    SqlValidator sqrlValidator = TranspilerFactory.createSqlValidator(env.relSchema, env.getResolvedFunctions()
+    SqlValidator sqrlValidator = SqlValidatorUtil.createSqlValidator(env.relSchema, env.getResolvedFunctions()
     );
 
     sqrlValidator.validate(sql);
@@ -453,7 +452,7 @@ public class Resolve {
       checkState(context.isEmpty(), ErrorCode.NESTED_DISTINCT_ON, op.getStatement());
       new AddHints(sqrlValidator, context).accept(op, sql);
 
-      SqlValidator validate2 = TranspilerFactory.createSqlValidator(env.relSchema,
+      SqlValidator validate2 = SqlValidatorUtil.createSqlValidator(env.relSchema,
           env.getResolvedFunctions());
       validate2.validate(sql);
       op.setQuery(sql);
@@ -466,12 +465,12 @@ public class Resolve {
       SqlNode rewritten = new AddContextFields(sqrlValidator, context,
           isAggregate(sqrlValidator, sql)).accept(sql);
 
-      SqlValidator prevalidate = TranspilerFactory.createSqlValidator(env.relSchema,
+      SqlValidator prevalidate = SqlValidatorUtil.createSqlValidator(env.relSchema,
           env.getResolvedFunctions());
       prevalidate.validate(rewritten);
       new AddHints(prevalidate, context).accept(op, rewritten);
 
-      SqlValidator validator = TranspilerFactory.createSqlValidator(env.relSchema,
+      SqlValidator validator = SqlValidatorUtil.createSqlValidator(env.relSchema,
           env.getResolvedFunctions());
       SqlNode newNode2 = validator.validate(rewritten);
       op.setQuery(newNode2);
@@ -651,7 +650,7 @@ public class Resolve {
 
   private Name uniquifyColumnName(Name name, SQRLTable table) {
     if (table.getField(name).isPresent()) {
-      String newName = SqlValidatorUtil.uniquify(
+      String newName = org.apache.calcite.sql.validate.SqlValidatorUtil.uniquify(
           name.getCanonical(),
           new HashSet<>(table.getVt().getRowType().getFieldNames()),
           //Renamed columns to names the user cannot address to prevent collisions

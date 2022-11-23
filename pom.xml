@@ -20,14 +20,12 @@
         <module>sqrl-engine-core</module>
         <module>sqrl-engine-flink</module>
         <module>sqrl-engine-jdbc</module>
+        <module>sqrl-engine-inmem</module>
         <module>sqrl-discovery</module>
         <module>sqrl-planner</module>
         <module>sqrl-server-core</module>
         <module>sqrl-server-vertx</module>
         <module>sqrl-e2e</module>
-        <module>sqrl-loader-function</module>
-        <module>sqrl-loader-file</module>
-        <module>sqrl-engine-inmem</module>
     </modules>
 
 

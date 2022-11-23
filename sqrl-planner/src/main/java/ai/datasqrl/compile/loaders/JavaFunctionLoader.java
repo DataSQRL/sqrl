@@ -6,7 +6,6 @@ import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
-import javax.validation.constraints.NotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,8 +54,4 @@ public class JavaFunctionLoader extends AbstractLoader {
     return true;
   }
 
-  public static class FunctionJson {
-    @NotNull
-    public String classPath;
-  }
 }
