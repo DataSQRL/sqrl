@@ -1,12 +1,8 @@
 package ai.datasqrl.graphql;
 
-import ai.datasqrl.AbstractEngineIT;
-import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import ai.datasqrl.graphql.server.Model.*;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
-import ai.datasqrl.util.JDBCTestDatabase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -23,16 +19,30 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.sql.Connection;
 import java.util.stream.Collectors;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @ExtendWith(VertxExtension.class)
-class VertxGraphQLBuilderTest extends AbstractEngineIT {
+@Testcontainers
+class VertxGraphQLBuilderTest {
+
+  // will be started before and stopped after each test method
+  @Container
+  private PostgreSQLContainer testDatabase =
+      new PostgreSQLContainer(DockerImageName.parse("postgres:14.2"))
+        .withDatabaseName("foo")
+        .withUsername("foo")
+        .withPassword("secret")
+        .withDatabaseName("datasqrl");
+
   static Root root = Root.builder()
       .schema(StringSchema.builder().schema(""
           + "type Query { "
@@ -101,15 +111,8 @@ class VertxGraphQLBuilderTest extends AbstractEngineIT {
   @SneakyThrows
   @BeforeEach
   public void init(Vertx vertx, VertxTestContext testContext) {
-    initialize(IntegrationTestSettings.builder()
-        .database(DatabaseEngine.POSTGRES)
-        .build());
-
-    JDBCTestDatabase testDatabase = (JDBCTestDatabase) this.database;
-
-    Connection con = testDatabase.getJdbcConfiguration()
-        .getDatabase(testDatabase.getPostgreSQLContainer().getDatabaseName())
-        .getConnection();
+    Connection con = testDatabase
+        .createConnection("");
 
     con.createStatement()
             .execute("CREATE TABLE Customer (customerid INTEGER)");
@@ -120,11 +123,11 @@ class VertxGraphQLBuilderTest extends AbstractEngineIT {
     con.close();
 
     PgConnectOptions options = new PgConnectOptions();
-    options.setDatabase(testDatabase.getPostgreSQLContainer().getDatabaseName());
-    options.setHost(testDatabase.getPostgreSQLContainer().getHost());
-    options.setPort(testDatabase.getPostgreSQLContainer().getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT));
-    options.setUser(testDatabase.getPostgreSQLContainer().getUsername());
-    options.setPassword(testDatabase.getPostgreSQLContainer().getPassword());
+    options.setDatabase(testDatabase.getDatabaseName());
+    options.setHost(testDatabase.getHost());
+    options.setPort(testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT));
+    options.setUser(testDatabase.getUsername());
+    options.setPassword(testDatabase.getPassword());
 
     options.setCachePreparedStatements(true);
     options.setPipeliningLimit(100_000);

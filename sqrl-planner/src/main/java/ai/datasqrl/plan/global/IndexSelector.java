@@ -1,6 +1,6 @@
 package ai.datasqrl.plan.global;
 
-import ai.datasqrl.config.engines.JDBCConfiguration;
+import ai.datasqrl.config.provider.Dialect;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.util.ArrayUtil;
 import ai.datasqrl.plan.calcite.OptimizationStage;
@@ -230,7 +230,7 @@ public class IndexSelector {
         @Builder.Default
         double costImprovementThreshold = DEFAULT_COST_THRESHOLD;
         @NonNull
-        JDBCConfiguration.Dialect dialect;
+        Dialect dialect;
         @Builder.Default
         int maxIndexColumns = MAX_INDEX_COLUMNS;
 

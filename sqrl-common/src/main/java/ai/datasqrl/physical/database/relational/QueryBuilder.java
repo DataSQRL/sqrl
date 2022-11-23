@@ -1,6 +1,6 @@
 package ai.datasqrl.physical.database.relational;
 
-import ai.datasqrl.config.engines.JDBCConfiguration;
+import ai.datasqrl.config.provider.Dialect;
 import ai.datasqrl.function.SqrlFunction;
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
@@ -28,7 +28,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public class QueryBuilder {
 
-  private JDBCConfiguration.Dialect dbDialect;
+  private Dialect dbDialect;
   private RexBuilder rexBuilder;
 
   public Map<APIQuery, QueryTemplate> planQueries(List<OptimizedDAG.ReadQuery> databaseQueries) {

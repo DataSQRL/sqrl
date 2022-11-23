@@ -13,6 +13,7 @@ import ai.datasqrl.graphql.server.Model.PagedPgQuery;
 import ai.datasqrl.graphql.server.Model.ParameterHandlerVisitor;
 import ai.datasqrl.graphql.server.Model.PgParameterHandler;
 import ai.datasqrl.graphql.server.Model.PgQuery;
+import ai.datasqrl.graphql.server.Model.PreparedSqrlQuery;
 import ai.datasqrl.graphql.server.Model.QueryBaseVisitor;
 import ai.datasqrl.graphql.server.Model.ResolvedPagedPgQuery;
 import ai.datasqrl.graphql.server.Model.ResolvedPgQuery;
@@ -23,10 +24,9 @@ import ai.datasqrl.graphql.server.Model.RootVisitor;
 import ai.datasqrl.graphql.server.Model.SchemaVisitor;
 import ai.datasqrl.graphql.server.Model.SourcePgParameter;
 import ai.datasqrl.graphql.server.Model.StringSchema;
-import ai.datasqrl.graphql.server.Model.TypeDefinitionSchema;
+import ai.datasqrl.graphql.server.VertxGraphQLBuilder.PreparedSqrlQueryImpl;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder.QueryExecutionContext;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
-import com.google.common.base.Preconditions;
 import graphql.GraphQL;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
@@ -47,7 +47,6 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -69,11 +68,6 @@ public class VertxGraphQLBuilder implements
     ResolvedQueryVisitor<Void, QueryExecutionContext>,
     ParameterHandlerVisitor<Object, QueryExecutionContext>
 {
-  @Override
-  public TypeDefinitionRegistry visitTypeDefinition(TypeDefinitionSchema typeDefinitionSchema,
-      Object context) {
-    return typeDefinitionSchema.getTypeDefinitionRegistry();
-  }
 
   @Override
   public TypeDefinitionRegistry visitStringDefinition(StringSchema stringSchema, Object context) {
@@ -105,7 +99,8 @@ public class VertxGraphQLBuilder implements
   public ResolvedQuery visitPgQuery(PgQuery pgQuery, VertxContext context) {
     PreparedQuery<RowSet<Row>> preparedQuery = context.getClient()
         .preparedQuery(pgQuery.getSql());
-    return new ResolvedPgQuery(pgQuery, preparedQuery);
+    return new ResolvedPgQuery(pgQuery,
+        new PreparedSqrlQueryImpl(preparedQuery));
   }
 
   @Override
@@ -127,7 +122,9 @@ public class VertxGraphQLBuilder implements
 
       //Find query
       ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);
-      Preconditions.checkNotNull(resolvedQuery, "Could not find query");
+      if(resolvedQuery == null) {
+        throw new RuntimeException("Could not find query");
+      }
 
       //Execute
       QueryExecutionContext context = new QueryExecutionContext(ctx,
@@ -178,7 +175,8 @@ public class VertxGraphQLBuilder implements
     //Look at graphql response for list type here
     boolean isList = context.environment.getFieldType().getClass().equals(GraphQLList.class);
 
-    pgQuery.getPreparedQuery().execute(Tuple.from(paramObj))
+    ((PreparedSqrlQueryImpl)pgQuery.getPreparedQueryContainer())
+        .getPreparedQuery().execute(Tuple.from(paramObj))
         .map(r -> resultMapper(r, isList))
         .onSuccess(context.fut::complete)
         .onFailure(f->{
@@ -258,5 +256,11 @@ public class VertxGraphQLBuilder implements
     DataFetchingEnvironment environment;
     Set<FixedArgument> arguments;
     Promise<Object> fut;
+  }
+
+  @Value
+  public static class PreparedSqrlQueryImpl
+      implements PreparedSqrlQuery<PreparedQuery<RowSet<Row>>> {
+    PreparedQuery<RowSet<Row>> preparedQuery;
   }
 }

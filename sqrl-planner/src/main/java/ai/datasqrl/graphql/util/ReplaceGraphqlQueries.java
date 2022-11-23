@@ -100,11 +100,6 @@ public class ReplaceGraphqlQueries implements
     }
 
     @Override
-    public Object visitTypeDefinition(TypeDefinitionSchema typeDefinitionSchema, Object context) {
-      return null;
-    }
-
-    @Override
     public Object visitStringDefinition(StringSchema stringSchema, Object context) {
       return null;
     }

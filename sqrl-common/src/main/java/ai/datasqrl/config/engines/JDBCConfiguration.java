@@ -1,6 +1,7 @@
 package ai.datasqrl.config.engines;
 
 import ai.datasqrl.config.constraints.OptionalMinString;
+import ai.datasqrl.config.provider.Dialect;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import com.google.common.base.Preconditions;
 import java.sql.Connection;
@@ -33,10 +34,6 @@ public class JDBCConfiguration implements EngineConfiguration.Database {
   String driverName;
   @NonNull @NotNull
   Dialect dialect;
-
-  public enum Dialect {
-    POSTGRES, MYSQL, H2
-  }
 
   public static Pattern validDBName = Pattern.compile("^[a-z][_a-z0-9$]{2,}$");
 
