@@ -42,7 +42,7 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
                 new SqrlCalciteSchema(CalciteSchema.createRootSchema(false, false).plus()).plus()).createPlanner();
         Session session = new Session(error, planner);
         this.session = session;
-        this.parser = new ConfiguredSqrlParser(error.getWarningsCollector());
+        this.parser = new ConfiguredSqrlParser(error);
         this.resolve = new Resolve(rootDir);
         this.rootDir = rootDir;
     }

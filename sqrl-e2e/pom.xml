@@ -37,6 +37,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <artifactId>sqrl-planner</artifactId>
+      <groupId>ai.datasqrl</groupId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5</artifactId>
       <scope>test</scope>

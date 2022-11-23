@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.flink.table.api.internal.FlinkEnvProxy;
-import org.apache.flink.table.catalog.FunctionCatalog;
 
 public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
 

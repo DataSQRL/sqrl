@@ -152,6 +152,13 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <artifactId>sqrl-planner</artifactId>
+                <groupId>ai.datasqrl</groupId>
+                <type>test-jar</type>
+                <scope>test</scope>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <artifactId>sqrl-server-core</artifactId>
                 <groupId>ai.datasqrl</groupId>
                 <version>${project.version}</version>
@@ -564,6 +571,18 @@
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
                         </goals>
                     </execution>
                 </executions>
