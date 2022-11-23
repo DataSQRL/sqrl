@@ -111,6 +111,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <artifactId>sqrl-packager</artifactId>
+                <groupId>ai.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <artifactId>sqrl-io-kafka</artifactId>
                 <groupId>ai.datasqrl</groupId>
                 <version>${project.version}</version>
