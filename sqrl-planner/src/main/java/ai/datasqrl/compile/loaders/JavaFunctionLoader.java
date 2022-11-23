@@ -1,6 +1,6 @@
 package ai.datasqrl.compile.loaders;
 
-import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
+import ai.datasqrl.function.builtin.time.FlinkFnc;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.local.generate.Resolve.Env;

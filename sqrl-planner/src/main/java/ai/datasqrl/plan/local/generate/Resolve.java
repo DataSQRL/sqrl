@@ -6,7 +6,7 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.error.SqrlAstException;
 import ai.datasqrl.io.sources.dataset.TableSink;
 import ai.datasqrl.io.sources.dataset.TableSource;
-import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl.FlinkFnc;
+import ai.datasqrl.function.builtin.time.FlinkFnc;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;

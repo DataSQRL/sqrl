@@ -12,11 +12,9 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
-import lombok.Value;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
-import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.CallContext;
 import org.apache.flink.table.types.inference.TypeInference;
@@ -394,10 +392,4 @@ public class StdTimeLibraryImpl {
     }
   }
 
-  @Value
-  public static class FlinkFnc {
-
-    String name;
-    UserDefinedFunction fnc;
-  }
 }
