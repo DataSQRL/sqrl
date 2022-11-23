@@ -11,8 +11,6 @@ public class SqrlSettings {
   DatabaseEngineProvider databaseEngineProvider;
   StreamEngineProvider streamEngineProvider;
 
-  SqlGeneratorProvider sqlGeneratorProvider;
-
   DiscoveryConfiguration discoveryConfiguration;
   MetadataStoreProvider metadataStoreProvider;
   SerializerProvider serializerProvider;
