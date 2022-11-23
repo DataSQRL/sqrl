@@ -18,6 +18,10 @@ public interface TestDataset {
 
     Path getDataDirectory();
 
+    default String getFilePartPattern() {
+        return null;
+    }
+
     Set<String> getTables();
 
     default int getNumTables() {

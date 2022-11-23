@@ -7,9 +7,9 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriterConfig;
+import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
 import java.util.function.UnaryOperator;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
 public class RelToSql {
   public static final UnaryOperator<SqlWriterConfig> transform = c ->
@@ -53,6 +53,7 @@ public class RelToSql {
   private static String getSQLType(RelDataType type) {
     switch (type.getSqlTypeName()) {
       case BOOLEAN:
+        return "BOOLEAN";
       case BINARY:
       case VARBINARY:
       case DECIMAL:

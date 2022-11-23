@@ -3,10 +3,10 @@ package ai.datasqrl;
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import ai.datasqrl.io.sources.DataSystemConfig;
-import ai.datasqrl.io.sources.DataSystemDiscoveryConfig;
 import ai.datasqrl.io.sources.ExternalDataType;
 import ai.datasqrl.util.DatabaseHandle;
 import ai.datasqrl.util.TestDataset;
+import com.google.common.base.Strings;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 
@@ -31,9 +31,11 @@ public abstract class AbstractEngineIT {
   }
 
   protected DataSystemConfig.DataSystemConfigBuilder getSystemConfigBuilder(TestDataset testDataset) {
-    DataSystemDiscoveryConfig datasystem = DirectoryDataSystemConfig.of(testDataset.getDataDirectory());
+    DirectoryDataSystemConfig.Discovery.DiscoveryBuilder systemBuilder = DirectoryDataSystemConfig.Discovery.builder()
+            .uri(testDataset.getDataDirectory().toUri().getPath());
+    if (!Strings.isNullOrEmpty(testDataset.getFilePartPattern())) systemBuilder.partPattern(testDataset.getFilePartPattern());
     DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
-    builder.datadiscovery(datasystem);
+    builder.datadiscovery(systemBuilder.build());
     builder.type(ExternalDataType.SOURCE);
     builder.name(testDataset.getName());
     return builder;

@@ -12,6 +12,7 @@
         <module>sqrl-core</module>
         <module>sqrl-parser</module>
         <module>sqrl-compiler</module>
+        <module>sqrl-packager</module>
     </modules>
 
     <properties>

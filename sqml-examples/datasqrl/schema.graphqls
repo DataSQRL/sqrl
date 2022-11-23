@@ -1,0 +1,24 @@
+type Package {
+  name: String!
+  latest: Submission
+  versions(version: String!): [Submission!]
+}
+
+type Query {
+  Package(name: String!): [Package!]
+}
+
+type Submission {
+  name: String!
+  version: String!
+  latestStable: Boolean!
+  license: String
+  repository: String
+  homepage: String
+  documentation: String
+  readme: String
+  description: String
+  file: String!
+  hash: String!
+  submissionTime: String!
+}

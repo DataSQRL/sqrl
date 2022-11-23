@@ -1,0 +1,9 @@
+{
+Package(name: "datasqrl.examples.Nutshop") {
+    versions(version: "1.0.0") {
+        version
+        file
+        hash
+        submissionTime
+    }
+}}

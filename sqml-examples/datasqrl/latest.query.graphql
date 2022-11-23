@@ -1,0 +1,11 @@
+{
+Package(name: "datasqrl.examples.Nutshop") {
+    latest {
+        version
+        latestStable
+        description
+        file
+        hash
+        submissionTime
+    }
+}}

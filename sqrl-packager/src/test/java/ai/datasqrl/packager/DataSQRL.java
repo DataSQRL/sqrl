@@ -1,0 +1,50 @@
+package ai.datasqrl.packager;
+
+import ai.datasqrl.util.TestDataset;
+import ai.datasqrl.util.TestGraphQLSchema;
+import ai.datasqrl.util.TestScript;
+
+import java.nio.file.Path;
+import java.util.Set;
+
+public class DataSQRL implements TestDataset  {
+
+    public static final Path BASE_PATH = Path.of("..", "sqml-examples", "datasqrl");
+
+    public static final DataSQRL INSTANCE = new DataSQRL();
+
+
+    @Override
+    public String getName() {
+        return "datasqrl-central";
+    }
+
+    @Override
+    public Path getDataDirectory() {
+        return BASE_PATH.resolve("data");
+    }
+
+    @Override
+    public Path getRootPackageDirectory() {
+        return BASE_PATH;
+    }
+
+    @Override
+    public String getFilePartPattern() {
+        return "\\.([-_A-Za-z0-9]+)";
+    }
+
+    @Override
+    public Set<String> getTables() {
+        return Set.of("package");
+    }
+
+    public TestScript getScript() {
+        return TestScript.of(this, BASE_PATH.resolve("repo.sqrl"),
+                "packages", "submissions").build();
+    }
+
+    public TestGraphQLSchema getGraphQL() {
+        return new TestGraphQLSchema.Directory(BASE_PATH);
+    }
+}
