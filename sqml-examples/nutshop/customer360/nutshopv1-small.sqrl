@@ -18,8 +18,3 @@ Customers.spending_by_month :=
                 sum(t.savings) AS total_savings
          FROM _.purchases p JOIN p.totals t
          GROUP BY month ORDER BY month DESC;
-
-- need to build in back pressure mechanism
-1. optimization problem to solve data pipeline breakup (initially annotation driven)
-2. backpressure mechanism that keeps system responsive if statistics are wrong
-3. auto-correct by supervisor that rebalances system when backpressure mounts
