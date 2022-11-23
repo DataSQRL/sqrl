@@ -47,14 +47,6 @@ public class PlannerFactory {
     return FlinkEnvProxy.getOperatorTable(envFunctions);
   }
 
-  public static RelDataTypeFactory getTypeFactory() {
-    return new FlinkTypeFactory(getTypeSystem());
-  }
-
-  public static RelDataTypeSystem getTypeSystem() {
-    return new FlinkTypeSystem();
-  }
-
   public Planner createPlanner() {
 
     FrameworkConfig config = Frameworks

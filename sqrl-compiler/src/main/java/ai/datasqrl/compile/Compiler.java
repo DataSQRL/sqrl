@@ -87,8 +87,8 @@ public class Compiler {
     String gqlSchema = inferOrGetSchema(env, build, graphqlSchema);
 
     SchemaInference inference2 = new SchemaInference(gqlSchema,
-        env.getRelSchema(), env.getSession().getPlanner().getRelBuilder(),
-        env.getSession().getPlanner());
+        env.getRelSchema(), env.getSession().getPlanner().getRelBuilder()
+    );
     InferredSchema inferredSchema = inference2.accept();
     PgBuilder pgBuilder = new PgBuilder(gqlSchema,
         env.getRelSchema(),

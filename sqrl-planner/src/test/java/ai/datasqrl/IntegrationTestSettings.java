@@ -3,11 +3,16 @@ package ai.datasqrl;
 import ai.datasqrl.config.DiscoveryConfiguration;
 import ai.datasqrl.config.GlobalConfiguration;
 import ai.datasqrl.config.SqrlSettings;
+import ai.datasqrl.config.SqrlSettings.SqrlSettingsBuilder;
 import ai.datasqrl.config.engines.FlinkConfiguration;
 import ai.datasqrl.config.engines.InMemoryDatabaseConfiguration;
 import ai.datasqrl.config.engines.InMemoryStreamConfiguration;
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.config.metadata.FileMetadataStore;
 import ai.datasqrl.config.metadata.InMemoryMetadataStore;
+import ai.datasqrl.config.metadata.JDBCMetadataStore;
+import ai.datasqrl.config.metadata.MetadataNamedPersistence;
+import ai.datasqrl.config.serializer.KryoProvider;
 import ai.datasqrl.util.DatabaseHandle;
 import ai.datasqrl.util.JDBCTestDatabase;
 import lombok.Builder;
@@ -66,8 +71,41 @@ public class IntegrationTestSettings {
                         .build())
                 .build();
         validateConfig(config);
-        return Pair.of(database,SqrlSettings.fromConfiguration(config));
+        return Pair.of(database,fromConfiguration(config));
     }
+
+
+    public static SqrlSettings fromConfiguration(GlobalConfiguration config) {
+        return builderFromConfiguration(config).build();
+    }
+
+    public static SqrlSettingsBuilder builderFromConfiguration(GlobalConfiguration config) {
+        SqrlSettingsBuilder builder = SqrlSettings.builder()
+            .discoveryConfiguration(config.getDiscovery())
+            .serializerProvider(new KryoProvider());
+
+        GlobalConfiguration.Engines engines = config.getEngines();
+        if (engines.getFlink() != null) {
+            builder.streamEngineProvider(engines.getFlink());
+        } else if (engines.getInmemoryStream() != null) {
+            builder.streamEngineProvider(engines.getInmemoryStream());
+        } else throw new IllegalArgumentException("Must configure a stream engine");
+
+        if (engines.getJdbc() != null) {
+            builder.databaseEngineProvider(config.getEngines().getJdbc());
+            builder.metadataStoreProvider(new JDBCMetadataStore.Provider());
+        } else if (engines.getInmemoryDB() != null) {
+            builder.databaseEngineProvider(config.getEngines().getInmemoryDB());
+            builder.metadataStoreProvider(new InMemoryMetadataStore.Provider());
+        } else if (engines.getFileDB() != null) {
+            builder.databaseEngineProvider(config.getEngines().getFileDB());
+            builder.metadataStoreProvider(new FileMetadataStore.Provider());
+        }else throw new IllegalArgumentException("Must configure a database engine");
+
+
+        return builder;
+    }
+
 
     public static void validateConfig(GlobalConfiguration config) {
         ErrorCollector errors = ErrorCollector.root();

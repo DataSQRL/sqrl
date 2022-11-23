@@ -20,6 +20,8 @@ import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
 import ai.datasqrl.schema.builder.UniversalTableBuilder;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
+import ai.datasqrl.schema.input.FlexibleTable2UTBConverter;
+import ai.datasqrl.schema.input.FlexibleTableConverter;
 import ai.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
@@ -147,7 +149,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, String qualifiedTableName) {
     Preconditions.checkArgument(stream instanceof FlinkStreamHolder && ((FlinkStreamHolder)stream).getBuilder().equals(this));
     FlinkStreamHolder<SourceRecord.Named> flinkStream = (FlinkStreamHolder)stream;
-    UniversalTableBuilder tblBuilder = schema.getUniversalTableBuilder();
+    UniversalTableBuilder tblBuilder = getUniversalTableBuilder(schema);
 
     TypeInformation typeInformation = FlinkTypeInfoSchemaGenerator.INSTANCE.convertSchema(tblBuilder);
     SourceRecord2RowMapper<Row> mapper = new SourceRecord2RowMapper(schema, FlinkRowConstructor.INSTANCE);
@@ -156,6 +158,12 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
     SingleOutputStreamOperator<Row> rows = flinkStream.getStream().map(r -> mapper.apply(r),typeInformation);
     Schema tableSchema = FlinkTableSchemaGenerator.INSTANCE.convertSchema(tblBuilder);
     tableEnvironment.createTemporaryView(qualifiedTableName, rows, tableSchema);
+  }
+
+  public UniversalTableBuilder getUniversalTableBuilder(InputTableSchema schema) {
+    FlexibleTableConverter converter = new FlexibleTableConverter(schema);
+    FlexibleTable2UTBConverter utbConverter = new FlexibleTable2UTBConverter();
+    return converter.apply(utbConverter);
   }
 
   @Override

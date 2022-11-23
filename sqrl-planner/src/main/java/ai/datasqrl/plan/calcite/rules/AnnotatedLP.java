@@ -263,13 +263,24 @@ public class AnnotatedLP implements RelHolder {
     public AnnotatedLP withDefaultSort() {
         SortOrder newSort;
         if (sort.isEmpty()) {
-            newSort = SortOrder.getDefaultOrder(this);
+            newSort = getDefaultOrder(this);
         } else {
             newSort = sort.ensurePrimaryKeyPresent(primaryKey);
             if (newSort.equals(sort)) return this;
         }
         return copy().sort(newSort).build();
     }
+
+    public SortOrder getDefaultOrder(AnnotatedLP alp) {
+        //If stream, timestamp first then pk, otherwise just pk
+        List<RelFieldCollation> collations = new ArrayList<>();
+        if (alp.getType()==TableType.STREAM && alp.getTimestamp().hasFixedTimestamp()) {
+            collations.add(new RelFieldCollation(alp.getTimestamp().getTimestampCandidate().getIndex(),
+                RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
+        }
+        return new SortOrder(RelCollations.of(collations)).ensurePrimaryKeyPresent(alp.primaryKey);
+    }
+
 
     /**
      * Moves the primary key columns to the front and adds projection to only return

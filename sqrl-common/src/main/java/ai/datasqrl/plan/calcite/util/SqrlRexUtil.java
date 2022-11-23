@@ -3,7 +3,6 @@ package ai.datasqrl.plan.calcite.util;
 import ai.datasqrl.function.SqrlFunction;
 import ai.datasqrl.function.TimestampPreservingFunction;
 import ai.datasqrl.function.SqrlTimeTumbleFunction;
-import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.table.TimestampHolder;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
@@ -33,6 +32,7 @@ import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+import org.apache.flink.table.api.internal.FlinkEnvProxy;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
@@ -58,7 +58,7 @@ public class SqrlRexUtil {
 
     public static SqlOperator getSqrlOperator(String name) {
         List<SqlOperator> ops = new ArrayList<>();
-        SqlOperatorTable opTable = PlannerFactory.getOperatorTable();
+        SqlOperatorTable opTable = FlinkEnvProxy.getOperatorTable(List.of());
         opTable.lookupOperatorOverloads(
             new SqlIdentifier(name, SqlParserPos.ZERO),
             SqlFunctionCategory.USER_DEFINED_FUNCTION,

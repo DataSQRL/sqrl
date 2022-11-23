@@ -38,7 +38,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
   private static Triple<InferredSchema, Root, List<APIQuery>> inferSchemaModelQueries(Env env, String schemaStr) {
     //Inference
     SchemaInference inference = new SchemaInference(schemaStr, env.getRelSchema(), env.getSession().getPlanner()
-            .getRelBuilder(), env.getSession().getPlanner());
+            .getRelBuilder());
     InferredSchema inferredSchema = inference.accept();
 
     //Build queries

@@ -2,6 +2,7 @@ package ai.datasqrl.compile;
 
 import ai.datasqrl.config.SqrlSettings;
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.config.metadata.MetadataNamedPersistence;
 import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.io.sources.DataSystem;
@@ -41,7 +42,7 @@ public class DataDiscovery {
         streamEngine = new LocalFlinkStreamEngineImpl();
         statsStore = new TableStatisticsStoreProvider.EncapsulatedImpl(
                 dbConnection, settings.getMetadataStoreProvider(), settings.getSerializerProvider(),
-                settings.getTableStatisticsStoreProvider());
+            new MetadataNamedPersistence.TableStatsProvider());
         streamPreparer = new StreamInputPreparerImpl();
     }
 

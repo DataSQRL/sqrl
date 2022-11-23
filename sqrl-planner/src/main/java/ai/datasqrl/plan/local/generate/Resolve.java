@@ -16,6 +16,7 @@ import ai.datasqrl.physical.pipeline.ExecutionPipeline;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.calcite.SqlValidatorUtil;
+import ai.datasqrl.plan.calcite.TypeFactory;
 import ai.datasqrl.plan.calcite.hints.ExecutionHint;
 import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
@@ -78,7 +79,7 @@ public class Resolve {
   @Getter
   public class Env {
 
-    CalciteTableFactory tableFactory = new CalciteTableFactory(PlannerFactory.getTypeFactory());
+    CalciteTableFactory tableFactory = new CalciteTableFactory(TypeFactory.getTypeFactory());
     SchemaAdjustmentSettings schemaAdjustmentSettings = SchemaAdjustmentSettings.DEFAULT;
     Loader loader = new CompositeLoader(new DataSourceLoader(), new JavaFunctionLoader(), new TypeLoader());
     Exporter exporter = new DataSourceLoader();

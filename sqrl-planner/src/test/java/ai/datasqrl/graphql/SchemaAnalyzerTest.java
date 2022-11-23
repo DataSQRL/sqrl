@@ -43,8 +43,8 @@ class SchemaAnalyzerTest extends AbstractLogicalSQRLIT {
         (new SchemaParser()).parse(gql);
 
     SchemaInference inference = new SchemaInference(gql, env2.getRelSchema(),
-        env2.getSession().getPlanner().getRelBuilder(),
-        env2.getSession().getPlanner());
+        env2.getSession().getPlanner().getRelBuilder()
+    );
     inference.accept();
   }
 }
