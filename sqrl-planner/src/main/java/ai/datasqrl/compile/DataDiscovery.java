@@ -17,6 +17,7 @@ import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.StreamHolder;
+import ai.datasqrl.physical.stream.flink.LocalFlinkStreamEngineImpl;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 
@@ -36,7 +37,8 @@ public class DataDiscovery {
         this.settings = settings;
         DatabaseConnectionProvider dbConnection = settings.getDatabaseEngineProvider().getDatabase(
                 settings.getDiscoveryConfiguration().getMetastore().getDatabaseName());
-        streamEngine = settings.getStreamEngineProvider().create();
+//        streamEngine = settings.getStreamEngineProvider().create();
+        streamEngine = new LocalFlinkStreamEngineImpl();
         statsStore = new TableStatisticsStoreProvider.EncapsulatedImpl(
                 dbConnection, settings.getMetadataStoreProvider(), settings.getSerializerProvider(),
                 settings.getTableStatisticsStoreProvider());

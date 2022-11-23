@@ -19,8 +19,14 @@ import ai.datasqrl.plan.calcite.TranspilerFactory;
 import ai.datasqrl.plan.calcite.hints.ExecutionHint;
 import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.table.*;
+import ai.datasqrl.plan.calcite.table.AbstractRelationalTable;
+import ai.datasqrl.plan.calcite.table.AddedColumn;
 import ai.datasqrl.plan.calcite.table.AddedColumn.Simple;
+import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
+import ai.datasqrl.plan.calcite.table.ProxySourceRelationalTable;
+import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
+import ai.datasqrl.plan.calcite.table.StateChangeType;
+import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
 import ai.datasqrl.plan.local.transpile.*;
@@ -660,7 +666,7 @@ public class Resolve {
     //op is a join, we need to discover the /to/ relationship
     SQRLTable table = getContext(env, op.statement)
         .orElseThrow(()->new RuntimeException("Internal Error: Missing context"));
-    JoinDeclarationUtil joinDeclarationUtil = new JoinDeclarationUtil(env);
+    JoinDeclarationUtil joinDeclarationUtil = new JoinDeclarationUtil(env.getSession().getPlanner().getRelBuilder().getRexBuilder());
     SQRLTable toTable =
         joinDeclarationUtil.getToTable(op.sqrlValidator,
             op.query);

@@ -1,5 +1,6 @@
 package ai.datasqrl.parse;
 
+import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.ParsingOptions.DecimalLiteralTreatment;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqrlStatement;
@@ -14,7 +15,7 @@ public class ConfiguredSqrlParser {
   private final ParsingOptions parsingOptions;
 
   //TODO: Add warnings
-  public ConfiguredSqrlParser(WarningsCollector errorCollector) {
+  public ConfiguredSqrlParser(ErrorCollector errorCollector) {
     parser = new SqrlParser(new SqrlParserOptions());
     parsingOptions = ParsingOptions.builder()
         .setWarningConsumer((e) ->
@@ -33,8 +34,8 @@ public class ConfiguredSqrlParser {
     return parser.createStatement(statement, parsingOptions);
   }
 
-  public static ConfiguredSqrlParser newParser(WarningsCollector warningsCollector) {
-    return new ConfiguredSqrlParser(warningsCollector);
+  public static ConfiguredSqrlParser newParser(ErrorCollector errorCollector) {
+    return new ConfiguredSqrlParser(errorCollector);
   }
 
 }

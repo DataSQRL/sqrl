@@ -25,7 +25,7 @@ public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
   }
 
   protected String generateSchema(String sqrlScript) {
-    ConfiguredSqrlParser parser = new ConfiguredSqrlParser(ErrorCollector.root().getWarningsCollector());
+    ConfiguredSqrlParser parser = new ConfiguredSqrlParser(ErrorCollector.root());
     Env env = resolve.planDag(session, parser.parse(sqrlScript));
 
     GraphQLSchema schema = SchemaGenerator.generate(env);

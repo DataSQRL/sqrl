@@ -2,6 +2,7 @@ package ai.datasqrl.physical;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.util.StreamUtil;
+import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.database.relational.MaterializedTableDDLBuilder;
 import ai.datasqrl.physical.database.relational.QueryBuilder;
 import ai.datasqrl.physical.database.relational.QueryTemplate;

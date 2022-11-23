@@ -7,7 +7,6 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.parse.ConfiguredSqrlParser;
-import ai.datasqrl.parse.WarningsCollector;
 import ai.datasqrl.plan.global.*;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.queries.APIQuery;
@@ -30,7 +29,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
   public Pair<InferredSchema, List<APIQuery>> inferSchemaAndQueries(TestScript script, Path schemaPath) {
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
     String schemaStr = Files.readString(schemaPath);
-    env = resolve.planDag(session, ConfiguredSqrlParser.newParser(new WarningsCollector())
+    env = resolve.planDag(session, ConfiguredSqrlParser.newParser(ErrorCollector.root())
             .parse(script.getScript()));
     Triple<InferredSchema, Root, List<APIQuery>> result = inferSchemaModelQueries(env, schemaStr);
     return Pair.of(result.getLeft(),result.getRight());

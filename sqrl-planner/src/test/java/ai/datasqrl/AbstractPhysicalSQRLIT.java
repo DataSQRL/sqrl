@@ -11,6 +11,7 @@ import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.physical.database.relational.QueryTemplate;
 import ai.datasqrl.physical.stream.Job;
 import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
+import ai.datasqrl.physical.stream.flink.LocalFlinkStreamEngineImpl;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.global.DAGPlanner;
