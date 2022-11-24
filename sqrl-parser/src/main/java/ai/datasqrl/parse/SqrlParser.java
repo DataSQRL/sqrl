@@ -13,16 +13,21 @@
  */
 package ai.datasqrl.parse;
 
+import static java.lang.String.format;
+
 import ai.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
 import ai.datasqrl.parse.SqlBaseParser.BetweenContext;
 import ai.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
+import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import lombok.Value;
 import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.DefaultErrorStrategy;
 import org.antlr.v4.runtime.InputMismatchException;
@@ -31,6 +36,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.atn.PredictionMode;
+import org.antlr.v4.runtime.misc.Pair;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlStatement;
@@ -143,6 +150,29 @@ public class SqrlParser {
             token.getLine(),
             token.getCharPositionInLine());
       }
+    }
+
+    @Override
+    public void exitNonReserved(SqlBaseParser.NonReservedContext context)
+    {
+      // we can't modify the tree during rule enter/exit event handling unless we're dealing with a terminal.
+      // Otherwise, ANTLR gets confused an fires spurious notifications.
+      if (!(context.getChild(0) instanceof TerminalNode)) {
+        int rule = ((ParserRuleContext) context.getChild(0)).getRuleIndex();
+        throw new AssertionError("nonReserved can only contain tokens. Found nested rule: " + ruleNames.get(rule));
+      }
+
+      // replace nonReserved words with IDENT tokens
+      context.getParent().removeLastChild();
+
+      Token token = (Token) context.getChild(0).getPayload();
+
+      context.getParent().addChild(new CommonToken(
+          new Pair<>(token.getTokenSource(), token.getInputStream()),
+          SqlBaseLexer.IDENTIFIER,
+          token.getChannel(),
+          token.getStartIndex(),
+          token.getStopIndex()));
     }
   }
 }

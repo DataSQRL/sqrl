@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.util.SnapshotTest;
 import org.apache.calcite.rel.core.Snapshot;
+import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,13 +52,18 @@ public class ParserErrorTest {
     handle("Test.example := SELECT * FROM 0test;");
   }
 
+  @Test
+  public void reservedWord() {
+    handle("Test.example := SELECT AS AS AS, * FROM t;");
+  }
+
   public void handle(String str) {
     errorCollector.registerHandler(ParsingException.class, new ParsingExceptionHandler());
 
     SqrlParser parser = SqrlParser.newParser();
 
     try {
-      parser.parse(str);
+      ScriptNode n = parser.parse(str);
       fail();
     } catch (ParsingException e) {
       errorCollector.handle(e);
