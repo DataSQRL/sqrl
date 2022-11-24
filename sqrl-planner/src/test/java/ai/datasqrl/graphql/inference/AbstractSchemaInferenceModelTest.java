@@ -64,20 +64,12 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner());
     OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries, env.getExports(), env.getSession().getPipeline());
 
-//    CalciteUtil.getTables(env.getRelSchema(), VirtualRelationalTable.class)
-//            .stream().forEach(vt -> {
-//              System.out.println(vt.getNameId() + ": " + CalciteWriter.toString(vt.getStatistic()));
-//            });
-
     IndexSelector indexSelector = new IndexSelector(env.getSession().getPlanner(),
             IndexSelector.Config.builder().dialect(Dialect.POSTGRES).build());
     List<IndexCall> allIndexes = new ArrayList<>();
     for (OptimizedDAG.ReadQuery query : dag.getDatabaseQueries()) {
       List<IndexCall> indexCall = indexSelector.getIndexSelection(query);
       allIndexes.addAll(indexCall);
-//      System.out.println(query.getRelNode().explain());
-//      indexSelection.stream().map(IndexSelection::getName).forEach(System.out::println);
-
     }
     return indexSelector.optimizeIndexes(allIndexes);
   }
