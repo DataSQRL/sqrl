@@ -3,7 +3,7 @@ package ai.datasqrl;
 import ai.datasqrl.compile.loaders.DataSourceLoader;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.dataset.TableSource;
-import ai.datasqrl.parse.ConfiguredSqrlParser;
+import ai.datasqrl.parse.SqrlParser;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
@@ -27,7 +27,7 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
     }
 
     public ErrorCollector error;
-    public ConfiguredSqrlParser parser;
+    public SqrlParser parser;
     public Planner planner;
     public Resolve resolve;
     public Session session;
@@ -42,7 +42,7 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
                 new SqrlCalciteSchema(CalciteSchema.createRootSchema(false, false).plus()).plus()).createPlanner();
         Session session = new Session(error, planner);
         this.session = session;
-        this.parser = new ConfiguredSqrlParser(error);
+        this.parser = new SqrlParser();
         this.resolve = new Resolve(rootDir);
         this.rootDir = rootDir;
     }

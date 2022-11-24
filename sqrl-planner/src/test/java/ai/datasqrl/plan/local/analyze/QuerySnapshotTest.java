@@ -3,7 +3,7 @@ package ai.datasqrl.plan.local.analyze;
 import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.parse.ConfiguredSqrlParser;
+import ai.datasqrl.parse.SqrlParser;
 import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.util.SnapshotTest;
@@ -42,7 +42,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   public RelNode generate(String init, String sql, boolean nested) {
       initialize(IntegrationTestSettings.getInMemory(),example.getRootPackageDirectory());
-      ConfiguredSqrlParser parser = new ConfiguredSqrlParser(error);
+      SqrlParser parser = new SqrlParser();
 
     Env env = generate(parser.parse(init + sql));
 

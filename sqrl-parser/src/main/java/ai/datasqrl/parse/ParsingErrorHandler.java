@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.Parser;
@@ -41,16 +42,16 @@ import org.antlr.v4.runtime.atn.Transition;
 import org.antlr.v4.runtime.atn.WildcardTransition;
 import org.antlr.v4.runtime.misc.IntervalSet;
 
-class ErrorHandler
+@Slf4j
+class ParsingErrorHandler
     extends BaseErrorListener {
-
-//  private static final Logger LOG = Logger.get(ErrorHandler.class);
 
   private final Map<Integer, String> specialRules;
   private final Map<Integer, String> specialTokens;
   private final Set<Integer> ignoredRules;
 
-  private ErrorHandler(Map<Integer, String> specialRules, Map<Integer, String> specialTokens,
+  private ParsingErrorHandler(Map<Integer, String> specialRules,
+      Map<Integer, String> specialTokens,
       Set<Integer> ignoredRules) {
     this.specialRules = new HashMap<>(specialRules);
     this.specialTokens = specialTokens;
@@ -101,11 +102,13 @@ class ErrorHandler
           .collect(Collectors.joining(", "));
 
       message = String
-          .format("mismatched input '%s'. Expecting: %s", ((Token) offendingSymbol).getText(),
+          .format("mismatched input at '%s'. Expecting: %s",
+              ((Token) offendingSymbol).getText(),
               expected);
     } catch (Exception exception) {
-//      LOG.error(exception,
-//          "Unexpected failure when handling parsing error. This is likely a bug in the implementation");
+      log.error(
+          "Unexpected failure when handling parsing error. This is likely a bug in the implementation",
+          exception);
     }
 
     throw new ParsingException(message, e, line, charPositionInLine);
@@ -179,7 +182,8 @@ class ErrorHandler
         int tokenIndex = current.tokenIndex;
         CallerContext caller = current.caller;
 
-        if (state.getStateType() == ATNState.BLOCK_START || state.getStateType() == ATNState.RULE_START) {
+        if (state.getStateType() == ATNState.BLOCK_START
+            || state.getStateType() == ATNState.RULE_START) {
           int rule = state.ruleIndex;
 
           if (specialRules.containsKey(rule)) {
@@ -277,8 +281,8 @@ class ErrorHandler
       return this;
     }
 
-    public ErrorHandler build() {
-      return new ErrorHandler(specialRules, specialTokens, ignoredRules);
+    public ParsingErrorHandler build() {
+      return new ParsingErrorHandler(specialRules, specialTokens, ignoredRules);
     }
   }
 }
