@@ -38,7 +38,12 @@ public class ParserErrorTest {
 
   @Test
   public void backtickIdentifier() {
-    handle("Test.example := SELECT * FROM x$0;");
+    handle("Test.example := SELECT * FROM `x$0`;");
+  }
+
+  @Test
+  public void quotedIdentifier() {
+    handle("Test.example := SELECT * FROM \"x$0\";");
   }
 
   @Test
