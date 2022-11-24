@@ -50,7 +50,8 @@ public class ImportDefinition extends SqrlStatement {
    */
   private static SqlIdentifier transformIdentifier(SqlIdentifier importPath, Optional<SqlIdentifier> alias,
       Optional<SqlNode> timestamp, Optional<SqlIdentifier> timestampAlias) {
-    String tableName = importPath.names.get(importPath.names.size()-1);
+    String tableName = alias.map(e->e.names.get(0)).orElseGet(()->
+        importPath.names.get(importPath.names.size()-1));
     if (timestamp.isPresent() && timestampAlias.isEmpty()) {
       Preconditions.checkState(timestamp.get() instanceof SqlIdentifier,
           "Timestamp must be an identifier or use the AS keyword to define a new column");

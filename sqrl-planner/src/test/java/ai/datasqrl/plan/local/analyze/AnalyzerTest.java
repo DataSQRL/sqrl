@@ -803,4 +803,9 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   public void timestampTest() {
     Env env1 = generate(parser.parse("IMPORT ecommerce-data.Orders TIMESTAMP time;"));
   }
+
+  @Test
+  public void timestampAliasTest() {
+    Env env1 = generate(parser.parse("IMPORT ecommerce-data.Orders AS O TIMESTAMP time;"));
+  }
 }
