@@ -1,7 +1,7 @@
 package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.config.error.ErrorCode;
-import ai.datasqrl.config.error.SqrlAstException;
+import ai.datasqrl.parse.SqrlAstException;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.parse.tree.name.ReservedName;

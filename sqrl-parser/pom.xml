@@ -39,7 +39,12 @@
       <groupId>ai.datasqrl</groupId>
       <artifactId>sqrl-common</artifactId>
     </dependency>
-
+    <dependency>
+      <artifactId>sqrl-common</artifactId>
+      <groupId>ai.datasqrl</groupId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
     <!-- testing -->
     <dependency>
       <groupId>org.mockito</groupId>

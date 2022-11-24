@@ -22,8 +22,11 @@ import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.FileTestUtil;
 import ai.datasqrl.util.ResultSetPrinter;
 import ai.datasqrl.util.SnapshotTest;
+import ai.datasqrl.util.SnapshotTest.Snapshot;
+import ai.datasqrl.util.TestRelWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
@@ -37,6 +40,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.ArrayUtils;
 
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
@@ -80,7 +84,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
             queries.add(new APIQuery(tableName, rel));
         }
         OptimizedDAG dag = dagPlanner.plan(relSchema,queries, resolvedDag.getExports(), session.getPipeline());
-        snapshot.addContent(dag);
+        addContent(dag);
         PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
         PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
         Job job = executor.execute(physicalPlan);
@@ -116,6 +120,13 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
             }
         }
         snapshot.createOrValidate();
+    }
+
+    private void addContent(OptimizedDAG dag, String... caseNames) {
+        dag.getStreamQueries().forEach(mq -> snapshot.addContent(TestRelWriter.explain(mq.getRelNode()),
+            ArrayUtils.addAll(caseNames,mq.getSink().getName(),"lp-stream")));
+        dag.getDatabaseQueries().forEach(dq -> snapshot.addContent(TestRelWriter.explain(dq.getRelNode()),
+            ArrayUtils.addAll(caseNames,dq.getQuery().getNameId(),"lp-database")));
     }
 
     protected static final Predicate<Integer> filterOutTimestampColumn =

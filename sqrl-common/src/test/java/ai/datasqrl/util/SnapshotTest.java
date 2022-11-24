@@ -1,14 +1,13 @@
 package ai.datasqrl.util;
 
-import ai.datasqrl.plan.global.OptimizedDAG;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.logging.log4j.util.Strings;
 import org.junit.jupiter.api.TestInfo;
 
 import java.nio.file.Files;
@@ -58,7 +57,7 @@ public class SnapshotTest {
             if (matcher.find()) fileName = matcher.group(1);
             if (fileName.endsWith("()")) fileName = fileName.substring(0,fileName.length()-2);
             StringBuilder c = new StringBuilder();
-            if (Strings.isNotEmpty(content)) c.append(content);
+            if (!Strings.isNullOrEmpty(content)) c.append(content);
             return new Snapshot(testClass.getName(), fileName, c);
         }
 
@@ -95,25 +94,12 @@ public class SnapshotTest {
             return this;
         }
 
-        //Convenience methods
-        public Snapshot addContent(@NonNull RelNode relnode, String... caseNames) {
-            return addContent(TestRelWriter.explain(relnode),caseNames);
-        }
-
-        public Snapshot addContent(@NonNull OptimizedDAG dag, String... caseNames) {
-            dag.getStreamQueries().forEach(mq -> addContent(mq.getRelNode(),
-                    ArrayUtils.addAll(caseNames,mq.getSink().getName(),"lp-stream")));
-            dag.getDatabaseQueries().forEach(dq -> addContent(dq.getRelNode(),
-                    ArrayUtils.addAll(caseNames,dq.getQuery().getNameId(),"lp-database")));
-            return this;
-        }
-
         @SneakyThrows
         public void createOrValidate() {
             String content = getContent();
             Preconditions.checkArgument(fileName.matches("^[a-zA-Z0-9_-]+$"), "Invalid display name: %s", fileName);
-            Preconditions.checkArgument(Strings.isNotEmpty(className), "No snapshot class name");
-            Preconditions.checkArgument(Strings.isNotEmpty(content), "No snapshot content");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(className), "No snapshot class name");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(content), "No snapshot content");
 
             String[] snapLocation = ArrayUtils.addAll(BASE_SNAPSHOT_DIR,className.split("\\."));
             snapLocation = ArrayUtils.addAll(snapLocation,fileName+SNAPSHOT_EXTENSION);

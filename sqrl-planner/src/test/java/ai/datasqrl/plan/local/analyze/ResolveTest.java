@@ -13,6 +13,7 @@ import ai.datasqrl.plan.calcite.table.TimestampHolder;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.util.ScriptBuilder;
 import ai.datasqrl.util.SnapshotTest;
+import ai.datasqrl.util.TestRelWriter;
 import ai.datasqrl.util.data.Retail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -410,7 +411,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
                                   PullupTest pullupTest) {
     CalciteSchema relSchema = resolvedDag.getRelSchema();
     QueryRelationalTable table = getLatestTable(relSchema,tableName,QueryRelationalTable.class).get();
-    snapshot.addContent(table.getRelNode(),tableName,"lp");
+    snapshot.addContent(TestRelWriter.explain(table.getRelNode()),tableName,"lp");
     assertEquals(tableType, table.getType(), "table type");
     assertEquals(table.getExecution().getEngine().getType(),execType,"execution type");
     assertEquals(numPrimaryKeys, table.getNumPrimaryKeys(), "primary key size");
