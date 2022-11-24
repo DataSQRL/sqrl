@@ -1,6 +1,8 @@
 package ai.datasqrl.compile;
 
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.DiscoveryConfiguration.MetaData;
 import ai.datasqrl.util.JDBCTestDatabase;
@@ -51,9 +53,8 @@ public class C360BundleTest {
         + "  }\n"
         + "}");
 
-    System.out.println(s.body());
-    System.out.println(s.headers());
-    System.out.println(s.statusCode());
+    assertEquals(200, s.statusCode());
+    assertEquals(s.body().length(), 726);
 // Uncomment to test graphql
 //    while(true) {
 //      Thread.sleep(10);
@@ -87,12 +88,4 @@ public class C360BundleTest {
           }
         });
   }
-
-//  @SneakyThrows
-//  @Test
-//  public void test2() {
-//    SqlNode node = SqlParser.create("SELECT CAST(0.0 AS double) FROM _")
-//        .parseQuery();
-//    System.out.println(node);
-//  }
 }

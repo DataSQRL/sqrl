@@ -317,7 +317,6 @@ public class PgBuilder implements
   private RelNode plan(SqlNode node) {
     SqlValidator sqrlValidator = SqlValidatorUtil.createSqlValidator(schema,
         List.of());
-    System.out.println(node);
     SqlNode validated = sqrlValidator.validate(node);
 
     planner.setValidator(validated, sqrlValidator);

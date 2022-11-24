@@ -30,7 +30,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class InMemStreamEngine implements StreamEngine {
 
     private final ExecutionEngine ENGINE_DESCRIPTION = new ExecutionEngine.Impl(ExecutionEngine.Type.STREAM, EnumSet.noneOf(EngineCapability.class)) {};
@@ -166,7 +168,7 @@ public class InMemStreamEngine implements StreamEngine {
             public void printSink() {
                 checkClosed();
                 wrap(stream.map(r -> {
-                    System.out.println(r);
+                    log.trace("{}", r);
                     return r;
                 })).sink();
             }

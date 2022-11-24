@@ -180,7 +180,7 @@ public class Compiler {
   private void exec(PhysicalPlan plan) {
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     Job job = executor.execute(plan);
-    System.out.println("Started Flink Job: " + job.getExecutionId());
+    log.trace("Started Flink Job: {}", job.getExecutionId());
   }
 
   @SneakyThrows

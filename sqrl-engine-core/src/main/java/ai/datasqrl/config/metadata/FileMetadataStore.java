@@ -20,7 +20,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class FileMetadataStore implements MetadataStore {
 
   public static final String DEFAULT_EXTENSION = ".dat";
@@ -44,7 +46,7 @@ public class FileMetadataStore implements MetadataStore {
   @Override
   public <T> void put(T value, String firstKey, String... moreKeys) {
     Path file = getFile(firstKey, moreKeys);
-//        System.out.println("Writing to: " + file.toString());
+    log.trace("Writing to: {}", file.toString());
     if (Files.notExists(file.getParent())) {
       try {
         Files.createDirectories(file.getParent());

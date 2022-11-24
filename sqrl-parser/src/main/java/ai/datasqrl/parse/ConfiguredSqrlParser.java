@@ -2,6 +2,7 @@ package ai.datasqrl.parse;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.ParsingOptions.DecimalLiteralTreatment;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqrlStatement;
 
@@ -9,6 +10,7 @@ import org.apache.calcite.sql.SqrlStatement;
  * Parses SQRL scripts or statements using {@link SqrlParser} and holds the {@link ParsingOptions} configuration
  * used to control how the script is parsed.
  */
+@Slf4j
 public class ConfiguredSqrlParser {
 
   private final SqrlParser parser;
@@ -26,7 +28,7 @@ public class ConfiguredSqrlParser {
   }
 
   public ScriptNode parse(String script) {
-    System.out.println(script);
+    log.trace("Parsing script: ", script);
     return parser.createScript(script, parsingOptions);
   }
 

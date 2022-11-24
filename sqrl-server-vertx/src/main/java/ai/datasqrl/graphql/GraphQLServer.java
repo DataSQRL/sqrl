@@ -22,7 +22,9 @@ import io.vertx.pgclient.PgConnection;
 import io.vertx.sqlclient.impl.SqlClientInternal;
 import java.nio.file.Path;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class GraphQLServer extends AbstractVerticle {
 
   private final Path build;
@@ -80,7 +82,7 @@ public class GraphQLServer extends AbstractVerticle {
 
       vertx.createHttpServer().requestHandler(router).listen(port, http -> {
         if (http.succeeded()) {
-          System.out.println(String.format("HTTP server started on port %s", port));
+          log.trace("HTTP server started on port {}", port);
         } else {
           startPromise.fail(http.cause());
         }
