@@ -20,20 +20,17 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgConnection;
 import io.vertx.sqlclient.impl.SqlClientInternal;
-import java.nio.file.Path;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {
 
-  private final Path build;
   private Root root;
   private JDBCConnectionProvider jdbcConf;
   private SqlClientInternal client;
 
-  public GraphQLServer(Path build, Root root, JDBCConnectionProvider jdbcConf) {
-    this.build = build;
+  public GraphQLServer(Root root, JDBCConnectionProvider jdbcConf) {
     this.root = root;
     this.jdbcConf = jdbcConf;
   }
@@ -98,12 +95,6 @@ public class GraphQLServer extends AbstractVerticle {
 
   @SneakyThrows
   private GraphQL createGraphQL(SqlClientInternal client) {
-    ObjectMapper mapper = new ObjectMapper();
-
-//    Root root = mapper.readValue(
-//        build.resolve("api")
-//            .resolve("plan.json").toFile(), Root.class);
-//
     GraphQL graphQL = root.accept(
         new VertxGraphQLBuilder(),
         new VertxContext(client));

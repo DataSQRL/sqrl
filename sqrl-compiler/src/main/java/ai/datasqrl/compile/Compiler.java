@@ -142,8 +142,7 @@ public class Compiler {
   @SneakyThrows
   public static void startGraphql(Path build, Root root, JDBCConnectionProvider jdbcConf) {
     CompletableFuture future = Vertx.vertx().deployVerticle(new GraphQLServer(
-        build,
-        root, jdbcConf))
+            root, jdbcConf))
         .toCompletionStage()
         .toCompletableFuture()
         ;

@@ -135,6 +135,7 @@ public class SchemaInferenceModel {
 
     FieldDefinition fieldDefinition;
     Column column;
+    ObjectTypeDefinition parent;
     @Override
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
       return visitor.visitScalarField(this, context);

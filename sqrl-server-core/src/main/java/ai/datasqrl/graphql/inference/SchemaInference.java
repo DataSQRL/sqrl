@@ -133,7 +133,7 @@ public class SchemaInference {
     if (field instanceof Relationship) {
       return walkRel(fieldDefinition, (Relationship)field, fields, parent);
     } else {
-      return walkScalar(fieldDefinition, (Column) field);
+      return walkScalar(fieldDefinition, (Column) field, parent);
     }
   }
 
@@ -143,11 +143,12 @@ public class SchemaInference {
         fields, parent));
   }
 
-  private InferredField walkScalar(FieldDefinition fieldDefinition, Column column) {
+  private InferredField walkScalar(FieldDefinition fieldDefinition, Column column,
+      ObjectTypeDefinition parent) {
     /*
      * Check to see what types are compatible
      */
-    return new InferredScalarField(fieldDefinition, column);
+    return new InferredScalarField(fieldDefinition, column, parent);
   }
 
   private boolean checkType(ObjectTypeDefinition typeDef, SQRLTable table) {

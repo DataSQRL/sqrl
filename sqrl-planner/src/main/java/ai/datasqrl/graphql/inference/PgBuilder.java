@@ -221,8 +221,8 @@ public class PgBuilder implements
   @Override
   public Coords visitScalarField(InferredScalarField field, Object context) {
     return FieldLookupCoords.builder()
-        .parentType(field.getFieldDefinition().getName())
-        .fieldName(field.getColumn().getName().getCanonical())
+        .parentType(field.getParent().getName())
+        .fieldName(field.getFieldDefinition().getName())
         .columnName(field.getColumn().getShadowedName().getCanonical())
         .build();
   }
@@ -284,17 +284,17 @@ public class PgBuilder implements
       return new RelPair(builder.build(), handlers);
     } else {
       RelBuilder builder = relBuilder.scan(r.getToTable().getVt().getNameId());
-      SQRLTable destTable = null;
+      SQRLTable formTable = null;
       if (r.getJoinType() == JoinType.PARENT) {
-        destTable = r.getToTable();
+        formTable = r.getToTable();
       } else if (r.getJoinType() == JoinType.CHILD) {
-        destTable = r.getFromTable();
+        formTable = r.getFromTable();
       } else {
         throw new RuntimeException("Unknown join type");
       }
 
       List<PgParameterHandler> handlers = new ArrayList<>();
-      for (int i = 0; i < destTable.getVt().getPrimaryKeyNames().size(); i++) {
+      for (int i = 0; i < formTable.getVt().getPrimaryKeyNames().size(); i++) {
         RelDataTypeField field = relBuilder.peek().getRowType().getFieldList()
             .get(i);
         RexDynamicParam dynamicParam = relBuilder.getRexBuilder()
@@ -303,7 +303,7 @@ public class PgBuilder implements
         builder = relBuilder.filter(relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.EQUALS,
             relBuilder.getRexBuilder().makeInputRef(relBuilder.peek(), field.getIndex()),
             dynamicParam));
-        handlers.add(new SourcePgParameter(destTable.getVt().getPrimaryKeyNames().get(i)));
+        handlers.add(new SourcePgParameter(formTable.getVt().getPrimaryKeyNames().get(i)));
       }
       return new RelPair(builder.build(), handlers);
     }
