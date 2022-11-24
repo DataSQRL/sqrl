@@ -13,10 +13,14 @@
  */
 package ai.datasqrl.parse;
 
+import ai.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
 import ai.datasqrl.parse.SqlBaseParser.BetweenContext;
+import ai.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import lombok.Value;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -104,10 +108,41 @@ public class SqrlParser {
       extends SqlBaseBaseListener {
 
     private final List<String> ruleNames;
+    Pattern pattern = Pattern.compile("[_A-Za-z][_0-9A-Za-z]");
 
     @Override
     public void exitBetween(BetweenContext ctx) {
       super.exitBetween(ctx);
+    }
+
+    @Override
+    public void exitUnquotedIdentifier(SqlBaseParser.UnquotedIdentifierContext context) {
+      noSymbols(
+          context.IDENTIFIER().getText(),
+          context.IDENTIFIER().getSymbol());
+    }
+
+    @Override
+    public void exitBackQuotedIdentifier(BackQuotedIdentifierContext context) {
+      noSymbols(
+          context.BACKQUOTED_IDENTIFIER().getText(),
+          context.BACKQUOTED_IDENTIFIER().getSymbol());
+    }
+
+    @Override
+    public void exitQuotedIdentifier(QuotedIdentifierContext context) {
+      noSymbols(
+          context.QUOTED_IDENTIFIER().getText(),
+          context.QUOTED_IDENTIFIER().getSymbol());
+    }
+
+    public void noSymbols(String identifier, Token token) {
+      if(identifier.indexOf("$") > 0) {
+        throw new ParsingException(
+            "identifiers '" + identifier + "' must not contain special token ($).", null,
+            token.getLine(),
+            token.getCharPositionInLine());
+      }
     }
   }
 }

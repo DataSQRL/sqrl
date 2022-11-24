@@ -1,1 +1,1 @@
-[[FATAL] @1:32: mismatched input at '$'. Expecting: '/*+', ';', 'EXPORT', 'IMPORT', <EOF>, <identifier>]
+[[FATAL] @1:31: identifiers '`x$0`' must not contain special token ($).]
