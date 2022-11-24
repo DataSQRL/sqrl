@@ -63,7 +63,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         Checkpoint serverStarted = vertxContext.checkpoint();
         Checkpoint queryResponse = vertxContext.checkpoint(queries.size());
         Map<String, String> queryResults = new ConcurrentHashMap<>();
-        vertx.deployVerticle(new GraphQLServer(null, model, jdbc), vertxContext.succeeding(server -> {
+        vertx.deployVerticle(new GraphQLServer(model, jdbc), vertxContext.succeeding(server -> {
             serverStarted.flag();
             WebClient client = getGraphQLClient();
             for (Map.Entry<String,String> query : queries.entrySet()) {

@@ -55,6 +55,8 @@ public class C360BundleTest {
 
     assertEquals(200, s.statusCode());
     assertEquals(s.body().length(), 726);
+    assertEquals(200, s.statusCode());
+//    assertEquals(s.body().length(), 726);
 // Uncomment to test graphql
 //    while(true) {
 //      Thread.sleep(10);
