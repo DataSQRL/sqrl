@@ -1,8 +1,7 @@
 package ai.datasqrl.graphql.generate;
 
 import ai.datasqrl.AbstractLogicalSQRLIT;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.parse.ConfiguredSqrlParser;
+import ai.datasqrl.parse.SqrlParser;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.util.SnapshotTest.Snapshot;
 import graphql.schema.GraphQLSchema;
@@ -25,7 +24,7 @@ public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
   }
 
   protected String generateSchema(String sqrlScript) {
-    ConfiguredSqrlParser parser = new ConfiguredSqrlParser(ErrorCollector.root());
+    SqrlParser parser = new SqrlParser();
     Env env = resolve.planDag(session, parser.parse(sqrlScript));
 
     GraphQLSchema schema = SchemaGenerator.generate(env.getRelSchema());

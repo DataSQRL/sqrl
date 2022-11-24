@@ -13,18 +13,11 @@
  */
 package ai.datasqrl.parse;
 
-import static java.util.Objects.requireNonNull;
-
 import ai.datasqrl.parse.SqlBaseParser.BetweenContext;
-import org.apache.calcite.sql.ScriptNode;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqrlStatement;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import org.antlr.v4.runtime.BaseErrorListener;
+import lombok.Value;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.DefaultErrorStrategy;
@@ -32,23 +25,15 @@ import org.antlr.v4.runtime.InputMismatchException;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.atn.PredictionMode;
+import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqrlStatement;
 
-class SqrlParser {
-
-  private static final BaseErrorListener LEXER_ERROR_LISTENER = new BaseErrorListener() {
-    @Override
-    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
-        int charPositionInLine, String message, RecognitionException e) {
-      throw new ParsingException(message, e, line, charPositionInLine);
-    }
-  };
-  private static final BiConsumer<SqlBaseLexer, SqlBaseParser> DEFAULT_PARSER_INITIALIZER = (SqlBaseLexer lexer, SqlBaseParser parser) -> {
-  };
-
-  private static final ErrorHandler PARSER_ERROR_HANDLER = ErrorHandler.builder()
+public class SqrlParser {
+  private final LexerErrorHandler lexerErrorHandler = new LexerErrorHandler();
+  private final ParsingErrorHandler parsingErrorHandler = ParsingErrorHandler.builder()
       .specialRule(SqlBaseParser.RULE_expression, "<expression>")
       .specialRule(SqlBaseParser.RULE_booleanExpression, "<expression>")
       .specialRule(SqlBaseParser.RULE_valueExpression, "<expression>")
@@ -61,36 +46,24 @@ class SqrlParser {
 //      .ignoredRule(ai.datasqrl.sqml.parser.SqlBaseParser.RULE_nonReserved)
       .build();
 
-  private final BiConsumer<SqlBaseLexer, SqlBaseParser> initializer;
-  private final boolean enhancedErrorHandlerEnabled;
-
-  public SqrlParser(SqrlParserOptions options) {
-    this(options, DEFAULT_PARSER_INITIALIZER);
+  public static SqrlParser newParser() {
+    return new SqrlParser();
   }
 
-  public SqrlParser(SqrlParserOptions options, BiConsumer<SqlBaseLexer, SqlBaseParser> initializer) {
-    this.initializer = requireNonNull(initializer, "initializer is null");
-    requireNonNull(options, "options is null");
-    enhancedErrorHandlerEnabled = options.isEnhancedErrorHandlerEnabled();
+  public ScriptNode parse(String sql) {
+    return (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
   }
 
-  public ScriptNode createScript(String sql, ParsingOptions parsingOptions) {
-    return (ScriptNode) invokeParser("script", sql, SqlBaseParser::script,
-        parsingOptions);
-  }
-
-  public SqrlStatement createStatement(String sql, ParsingOptions parsingOptions) {
-    return (SqrlStatement) invokeParser("statement", sql, SqlBaseParser::singleStatement,
-        parsingOptions);
+  public SqrlStatement parseStatement(String sql) {
+    return (SqrlStatement) invokeParser("statement", sql, SqlBaseParser::singleStatement);
   }
 
   private SqlNode invokeParser(String name, String sql,
-      Function<SqlBaseParser, ParserRuleContext> parseFunction, ParsingOptions parsingOptions) {
+      Function<SqlBaseParser, ParserRuleContext> parseFunction) {
     try {
       SqlBaseLexer lexer = new SqlBaseLexer(new CaseInsensitiveStream(CharStreams.fromString(sql)));
       CommonTokenStream tokenStream = new CommonTokenStream(lexer);
       SqlBaseParser parser = new SqlBaseParser(tokenStream);
-      initializer.accept(lexer, parser);
 
       // Override the default error strategy to not attempt inserting or deleting a token.
       // Otherwise, it messes up error reporting
@@ -106,61 +79,51 @@ class SqrlParser {
         }
       });
 
-      parser.addParseListener(new PostProcessor(Arrays.asList(parser.getRuleNames()),
-          parsingOptions.getWarningConsumer()));
+      parser.addParseListener(new PostProcessor(Arrays.asList(parser.getRuleNames())));
 
       lexer.removeErrorListeners();
-      lexer.addErrorListener(LEXER_ERROR_LISTENER);
+      lexer.addErrorListener(lexerErrorHandler);
 
       parser.removeErrorListeners();
 
-      if (enhancedErrorHandlerEnabled) {
-        parser.addErrorListener(PARSER_ERROR_HANDLER);
-      } else {
-        parser.addErrorListener(LEXER_ERROR_LISTENER);
-      }
+      parser.addErrorListener(parsingErrorHandler);
 
       ParserRuleContext tree;
       parser.getInterpreter().setPredictionMode(PredictionMode.LL);
       tree = parseFunction.apply(parser);
 
-      return new AstBuilder(parsingOptions).visit(tree);
+      return new AstBuilder().visit(tree);
     } catch (StackOverflowError e) {
       e.printStackTrace();
       throw new ParsingException(name + " is too large (stack overflow while parsing)");
     }
   }
 
+  @Value
   private class PostProcessor
       extends SqlBaseBaseListener {
 
     private final List<String> ruleNames;
-    private final Consumer<ParsingWarning> warningConsumer;
-
-    public PostProcessor(List<String> ruleNames, Consumer<ParsingWarning> warningConsumer) {
-      this.ruleNames = ruleNames;
-      this.warningConsumer = requireNonNull(warningConsumer, "warningConsumer is null");
-    }
 
     @Override
     public void exitBetween(BetweenContext ctx) {
       super.exitBetween(ctx);
     }
-    //
-//    @Override
-//    public void exitUnquotedIdentifier(SqlBaseParser.UnquotedIdentifierContext context) {
-////      String identifier = context.IDENTIFIER().getText();
-////      for (IdentifierSymbol identifierSymbol : EnumSet.complementOf(allowedIdentifierSymbols)) {
-////        char symbol = identifierSymbol.getSymbol();
-////        if (identifier.indexOf(symbol) >= 0) {
-////          throw new ParsingException(
-////              "identifiers must not contain '" + identifierSymbol.getSymbol() + "'", null,
-////              context.IDENTIFIER().getSymbol().getLine(),
-////              context.IDENTIFIER().getSymbol().getCharPositionInLine());
-////        }
-////      }
-//    }
-//
+
+    @Override
+    public void exitUnquotedIdentifier(SqlBaseParser.UnquotedIdentifierContext context) {
+//      String identifier = context.IDENTIFIER().getText();
+//      for (IdentifierSymbol identifierSymbol : EnumSet.complementOf(allowedIdentifierSymbols)) {
+//        char symbol = identifierSymbol.getSymbol();
+//        if (identifier.indexOf(symbol) >= 0) {
+//          throw new ParsingException(
+//              "identifiers must not contain '" + identifierSymbol.getSymbol() + "'", null,
+//              context.IDENTIFIER().getSymbol().getLine(),
+//              context.IDENTIFIER().getSymbol().getCharPositionInLine());
+//        }
+//      }
+    }
+
 //    @Override
 //    public void exitBackQuotedIdentifier(SqlBaseParser.BackQuotedIdentifierContext context) {
 //      Token token = context.BACKQUOTED_IDENTIFIER().getSymbol();

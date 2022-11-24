@@ -26,12 +26,6 @@ singleStatement
     : statement EOF
     ;
 
-statement
-    : assignment                                                       #assign
-    | IMPORT importDefinition                                          #importStatement
-    | EXPORT exportDefinition                                          #exportStatement
-    ;
-
 exportDefinition
     : qualifiedName TO qualifiedName
     ;
@@ -40,14 +34,16 @@ importDefinition
     : qualifiedName (AS? alias=identifier)? (TIMESTAMP expression (AS timestampAlias=identifier)?)?
     ;
 
-assignment
-    : hint? qualifiedName tableFunction? ':=' joinSpecification                          # joinAssignment
-    | hint? qualifiedName tableFunction? ':=' expression                          # expressionAssign
-    | hint? qualifiedName tableFunction? ':=' query                               # queryAssign
-    | hint? qualifiedName tableFunction? ':=' streamQuery                               # streamAssign
+statement
+    : hint? IMPORT importDefinition                                                      # importStatement
+    | hint? EXPORT exportDefinition                                                      # exportStatement
+    | hint? qualifiedName tableFunction? ':=' joinSpecification                          # joinAssignment
+    | hint? qualifiedName tableFunction? ':=' expression                                 # expressionAssign
+    | hint? qualifiedName tableFunction? ':=' query                                      # queryAssign
+    | hint? qualifiedName tableFunction? ':=' streamQuery                                # streamAssign
     | hint? qualifiedName ':=' DISTINCT table=identifier (AS? distinctAlias=identifier)?
                                ON onList
-                               (ORDER BY orderExpr=expression ordering=DESC?)?              # distinctAssignment
+                               (ORDER BY orderExpr=expression ordering=DESC?)?           # distinctAssignment
     ;
 
 onList

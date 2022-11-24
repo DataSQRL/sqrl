@@ -45,9 +45,6 @@ import static java.util.stream.Collectors.toList;
 class AstBuilder
     extends SqlBaseBaseVisitor<SqlNode> {
 
-  AstBuilder(ParsingOptions parsingOptions) {
-  }
-
   private static void check(boolean condition, String message, ParserRuleContext context) {
     if (!condition) {
       throw parseError(message, context);
@@ -992,11 +989,6 @@ class AstBuilder
   public SqlNode visitExportDefinition(ExportDefinitionContext ctx) {
     return new ExportDefinition(getLocation(ctx),
         getNamePath(ctx.qualifiedName(0)), getNamePath(ctx.qualifiedName(1)));
-  }
-
-  @Override
-  public SqlNode visitAssign(AssignContext context) {
-    return context.assignment().accept(this);
   }
 
   @Override
