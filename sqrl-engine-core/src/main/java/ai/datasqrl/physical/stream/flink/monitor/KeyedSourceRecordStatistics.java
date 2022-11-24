@@ -5,6 +5,7 @@ import ai.datasqrl.io.sources.SourceRecord;
 import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
@@ -16,6 +17,7 @@ import org.apache.flink.util.OutputTag;
 
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class KeyedSourceRecordStatistics extends
     KeyedProcessFunction<Integer, SourceRecord.Raw, SourceRecord.Raw> {
 
@@ -51,7 +53,7 @@ public class KeyedSourceRecordStatistics extends
     ErrorCollector errors = acc.validate(sourceRecord, tableDigest);
     if (errors.isFatal()) {
       //TODO: Record is flawed, put it in sideoutput and issue warning; reuse MapWithErrorProcess
-      System.out.println("Stats Validation Error: " + errors);
+      log.error("Stats Validation Error: {}", errors);
     } else {
       acc.add(sourceRecord, tableDigest);
       stats.update(acc);

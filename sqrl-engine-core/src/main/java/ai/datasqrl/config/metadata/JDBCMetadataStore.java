@@ -135,7 +135,6 @@ public class JDBCMetadataStore implements MetadataStore {
       outstream.close();
       data = outstream.toByteArray();
     } catch (IOException e) {
-      System.out.println(value);
       throw new RuntimeException("Exception serializing object", e);
     }
 

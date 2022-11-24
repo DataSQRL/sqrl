@@ -441,6 +441,7 @@ public class Resolve {
 
     for (Function<Analysis, SqlShuttle> transform : transforms) {
       node = node.accept(transform.apply(currentAnalysis));
+      log.trace("Transformed node: {}", node);
       currentAnalysis = analyzer.apply(node);
     }
 
