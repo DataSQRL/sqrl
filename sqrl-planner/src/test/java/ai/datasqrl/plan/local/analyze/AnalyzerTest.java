@@ -71,12 +71,6 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
       resolve.planDag(session, node);
       fail();
     } catch (Exception e) {
-      //todo: unified error handling
-//      e.printStackTrace();
-//      assertTrue(e instanceof SqrlException, "Should be SqrlException is: " + e.getClass().getName());
-//      SqrlException exception = (SqrlException) e;
-//      assertEquals(expectedCode, exception.getErrorCode());
-//      System.out.println(exception.getMessage());
     }
   }
 

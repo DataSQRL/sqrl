@@ -10,6 +10,7 @@ import ai.datasqrl.util.SnapshotTest;
 import ai.datasqrl.util.TestDataset;
 import ai.datasqrl.util.data.C360;
 import ai.datasqrl.util.data.Retail;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Slf4j
 class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   public static final String IMPORTS = C360.BASIC.getImports().getScript() + "\n"
@@ -144,13 +146,10 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
               "Query" + testNo),
           () -> {
             if (disabledTests.contains(testNo)) {
-              System.out.println("Test Disabled.");
+              log.info("Test Disabled.");
               return;
             }
-            System.out.println(sql);
             RelNode relNode = generate(IMPORTS, sql, false);
-            System.out.println(relNode.explain());
-            System.out.println(RelToSql.convertToSql(relNode));
 
             SnapshotTest.createOrValidateSnapshot(getClass().getName(), "Query" + testNo,
                 sql + "\n\n" + relNode.explain() +
