@@ -1,9 +1,7 @@
-package ai.datasqrl.config.error;
+package ai.datasqrl.parse;
 
-import org.apache.calcite.util.SqlNodePrinter;
-import java.util.Optional;
+import ai.datasqrl.config.error.ErrorCode;
 import lombok.Getter;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @Getter
@@ -19,5 +17,4 @@ public class SqrlAstException extends RuntimeException {
     this.pos = pos;
     this.message = message;
   }
-
 }

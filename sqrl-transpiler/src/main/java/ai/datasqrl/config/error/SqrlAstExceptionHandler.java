@@ -3,6 +3,7 @@ package ai.datasqrl.config.error;
 import ai.datasqrl.config.error.ErrorLocation.File;
 import ai.datasqrl.config.error.ErrorMessage.Implementation;
 import ai.datasqrl.config.error.ErrorMessage.Severity;
+import ai.datasqrl.parse.SqrlAstException;
 import java.util.Optional;
 
 public class SqrlAstExceptionHandler implements ErrorHandler<SqrlAstException> {

@@ -1,7 +1,7 @@
 package ai.datasqrl.plan.local.transpile;
 
 import ai.datasqrl.config.error.ErrorCode;
-import ai.datasqrl.config.error.SqrlAstException;
+import ai.datasqrl.parse.SqrlAstException;
 import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.google.common.collect.Maps;
 import java.util.ArrayList;

@@ -1,0 +1,1 @@
+[[FATAL] @1:32: mismatched input at '$'. Expecting: '/*+', ';', 'EXPORT', 'IMPORT', <EOF>, <identifier>]

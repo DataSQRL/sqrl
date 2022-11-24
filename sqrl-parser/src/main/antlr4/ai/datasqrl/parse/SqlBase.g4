@@ -35,8 +35,8 @@ importDefinition
     ;
 
 statement
-    : hint? IMPORT importDefinition                                                      # importStatement
-    | hint? EXPORT exportDefinition                                                      # exportStatement
+    : IMPORT importDefinition                                                      # importStatement
+    | EXPORT exportDefinition                                                      # exportStatement
     | hint? qualifiedName tableFunction? ':=' joinSpecification                          # joinAssignment
     | hint? qualifiedName tableFunction? ':=' expression                                 # expressionAssign
     | hint? qualifiedName tableFunction? ':=' query                                      # queryAssign
@@ -544,7 +544,7 @@ DOUBLE_VALUE
     ;
 
 IDENTIFIER
-    : (LETTER | '_' | '@') (LETTER | DIGIT | '_' | '@' | '-')*
+    : (LETTER | '_') (LETTER | DIGIT | '_' | '-')*
     ;
 
 QUOTED_IDENTIFIER
