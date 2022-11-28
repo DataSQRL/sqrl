@@ -530,6 +530,7 @@
                 <configuration>
                     <source>11</source>
                     <target>11</target>
+                    <forceJavacCompilerUse>true</forceJavacCompilerUse>
                 </configuration>
             </plugin>
             <plugin>

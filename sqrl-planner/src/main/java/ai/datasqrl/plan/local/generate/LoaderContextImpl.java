@@ -6,9 +6,10 @@ import ai.datasqrl.function.builtin.time.FlinkFnc;
 import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
+import lombok.Value;
+
 import java.nio.file.Path;
 import java.util.Optional;
-import lombok.Value;
 
 @Value
 class LoaderContextImpl implements LoaderContext {

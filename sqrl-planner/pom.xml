@@ -23,6 +23,10 @@
     </dependency>
     <dependency>
       <groupId>ai.datasqrl</groupId>
+      <artifactId>sqrl-io-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ai.datasqrl</groupId>
       <artifactId>sqrl-server-vertx</artifactId>
     </dependency>
     <dependency>

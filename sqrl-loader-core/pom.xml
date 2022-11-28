@@ -23,6 +23,10 @@
       <groupId>ai.datasqrl</groupId>
     </dependency>
     <dependency>
+      <artifactId>sqrl-io-core</artifactId>
+      <groupId>ai.datasqrl</groupId>
+    </dependency>
+    <dependency>
       <artifactId>sqrl-common</artifactId>
       <groupId>ai.datasqrl</groupId>
       <type>test-jar</type>
