@@ -14,7 +14,7 @@ import ai.datasqrl.plan.calcite.table.ImportedRelationalTable;
 import ai.datasqrl.plan.calcite.table.SourceRelationalTable;
 import ai.datasqrl.plan.calcite.table.StateChangeType;
 import ai.datasqrl.plan.calcite.table.StreamRelationalTable;
-import ai.datasqrl.schema.builder.UniversalTableBuilder;
+import ai.datasqrl.schema.UniversalTableBuilder;
 import ai.datasqrl.schema.input.SchemaValidator;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;

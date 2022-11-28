@@ -14,16 +14,15 @@
         <module>sqrl-compiler</module>
         <module>sqrl-packager</module>
         <module>sqrl-spi</module>
+        <module>sqrl-io-core</module>
         <module>sqrl-io-kafka</module>
         <module>sqrl-io-file</module>
-        <module>sqrl-transpiler</module>
         <module>sqrl-engine-core</module>
         <module>sqrl-engine-flink</module>
         <module>sqrl-engine-jdbc</module>
         <module>sqrl-engine-inmem</module>
         <module>sqrl-discovery</module>
         <module>sqrl-planner</module>
-        <module>sqrl-server-core</module>
         <module>sqrl-server-vertx</module>
         <module>sqrl-e2e</module>
         <module>sqrl-loader-core</module>
@@ -112,6 +111,11 @@
             </dependency>
             <dependency>
                 <artifactId>sqrl-packager</artifactId>
+                <groupId>ai.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>sqrl-io-core</artifactId>
                 <groupId>ai.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>

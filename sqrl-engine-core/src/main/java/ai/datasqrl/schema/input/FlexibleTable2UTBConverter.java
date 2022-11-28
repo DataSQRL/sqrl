@@ -3,8 +3,8 @@ package ai.datasqrl.schema.input;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.SqrlTypeRelDataTypeConverter;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.builder.UniversalTableBuilder;
+import ai.datasqrl.schema.Multiplicity;
+import ai.datasqrl.schema.UniversalTableBuilder;
 import ai.datasqrl.schema.type.Type;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
@@ -53,9 +53,9 @@ public class FlexibleTable2UTBConverter implements FlexibleTableConverter.Visito
     @Override
     public void addField(Name name, UniversalTableBuilder nestedTable, boolean nullable, boolean isSingleton) {
         UniversalTableBuilder tblBuilder = stack.getFirst();
-        Relationship.Multiplicity multi = Relationship.Multiplicity.ZERO_ONE;
-        if (!isSingleton) multi = Relationship.Multiplicity.MANY;
-        else if (!nullable) multi = Relationship.Multiplicity.ONE;
+        Multiplicity multi = Multiplicity.ZERO_ONE;
+        if (!isSingleton) multi = Multiplicity.MANY;
+        else if (!nullable) multi = Multiplicity.ONE;
         tblBuilder.addChild(name,nestedTable,multi);
     }
 

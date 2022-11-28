@@ -1,5 +1,6 @@
 package ai.datasqrl.plan.calcite.rules;
 
+import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.physical.EngineCapability;

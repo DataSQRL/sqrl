@@ -18,7 +18,7 @@ import ai.datasqrl.physical.stream.flink.schema.FlinkRowConstructor;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
-import ai.datasqrl.schema.builder.UniversalTableBuilder;
+import ai.datasqrl.schema.UniversalTableBuilder;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
 import ai.datasqrl.schema.input.FlexibleTable2UTBConverter;
 import ai.datasqrl.schema.input.FlexibleTableConverter;

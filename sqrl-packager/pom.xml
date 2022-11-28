@@ -20,10 +20,6 @@
         <dependency>
             <artifactId>sqrl-planner</artifactId>
             <groupId>ai.datasqrl</groupId>
-        </dependency>
-        <dependency>
-            <artifactId>sqrl-planner</artifactId>
-            <groupId>ai.datasqrl</groupId>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
@@ -67,6 +63,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>

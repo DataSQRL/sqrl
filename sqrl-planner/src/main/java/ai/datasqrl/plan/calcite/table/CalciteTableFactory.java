@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.io.sources.dataset.TableSource;
+import ai.datasqrl.io.sources.stats.TableStatistic;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
@@ -12,10 +13,7 @@ import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import ai.datasqrl.plan.local.ScriptTableDefinition;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.SQRLTable;
-import ai.datasqrl.schema.builder.UniversalTableBuilder;
+import ai.datasqrl.schema.*;
 import ai.datasqrl.schema.input.FlexibleTable2UTBConverter;
 import ai.datasqrl.schema.input.FlexibleTableConverter;
 import com.google.common.base.Preconditions;
@@ -111,9 +109,9 @@ public class CalciteTableFactory {
                 baseTable.getNumPrimaryKeys(), index2Name);
 
 
-        Optional<Pair<SQRLTable, Relationship.Multiplicity>> parent = parentPair.map(pp ->
+        Optional<Pair<SQRLTable, Multiplicity>> parent = parentPair.map(pp ->
             Pair.of(pp.getLeft(), pp.getRight().getNumPrimaryKeys()==baseTable.getNumPrimaryKeys()?
-                    Relationship.Multiplicity.ZERO_ONE: Relationship.Multiplicity.MANY)
+                    Multiplicity.ZERO_ONE: Multiplicity.MANY)
         );
         Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable, parent);
         ScriptTableDefinition tblDef = new ScriptTableDefinition(baseTable, tables);
@@ -166,7 +164,7 @@ public class CalciteTableFactory {
 
     public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTableBuilder rootTable,
                                                                       QueryRelationalTable baseTable,
-                                                                      Optional<Pair<SQRLTable, Relationship.Multiplicity>> parent) {
+                                                                      Optional<Pair<SQRLTable, Multiplicity>> parent) {
         return build(rootTable, new VirtualTableConstructor(baseTable),parent);
     }
 
@@ -227,7 +225,7 @@ public class CalciteTableFactory {
     }
 
     public Map<SQRLTable, VirtualRelationalTable> build(UniversalTableBuilder builder, VirtualTableConstructor vtableBuilder,
-                                                        Optional<Pair<SQRLTable, Relationship.Multiplicity>> parent) {
+                                                        Optional<Pair<SQRLTable, Multiplicity>> parent) {
         Map<SQRLTable,VirtualRelationalTable> createdTables = new HashMap<>();
         build(builder,null,null,null,vtableBuilder,createdTables);
         if (parent.isPresent()) {
@@ -274,14 +272,14 @@ public class CalciteTableFactory {
         //Avoid overwriting an existing "parent" column on the child
         if (childTable.getField(parentRelationshipName).isEmpty()) {
             return Optional.of(childTable.addRelationship(parentRelationshipName, parentTable, Relationship.JoinType.PARENT,
-                    Relationship.Multiplicity.ONE, Optional.empty()));
+                    Multiplicity.ONE, Optional.empty()));
         }
         return Optional.empty();
     }
 
 
     public static Relationship createChildRelationship(Name childName, SQRLTable childTable, SQRLTable parentTable,
-                                                       Relationship.Multiplicity multiplicity) {
+                                                       Multiplicity multiplicity) {
         return parentTable.addRelationship(childName, childTable,
                 Relationship.JoinType.CHILD, multiplicity, Optional.empty());
     }

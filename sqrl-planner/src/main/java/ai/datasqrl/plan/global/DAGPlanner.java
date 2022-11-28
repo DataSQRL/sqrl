@@ -92,7 +92,7 @@ public class DAGPlanner {
             assert dbTable.getRowType().equals(processedRelnode.getRowType()) :
                     "Rowtypes do not match: " + dbTable.getRowType() + " vs " + processedRelnode.getRowType();
             writeDAG.add(new OptimizedDAG.MaterializeQuery(
-                    new OptimizedDAG.DatabaseSink(dbTable, processed.getValue()),
+                    new OptimizedDAG.DatabaseSink(dbTable.getNameId(), dbTable.getNumPrimaryKeys(), dbTable.getRowType(), processed.getValue()),
                     processed.getKey()));
         }
         //Second, all the tables that are exported

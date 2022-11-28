@@ -4,8 +4,8 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.builder.UniversalTableBuilder;
+import ai.datasqrl.schema.Multiplicity;
+import ai.datasqrl.schema.UniversalTableBuilder;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -53,11 +53,11 @@ public class RelDataType2UTBConverter {
                 name = index2Name.get(index);
                 isVisible = true;
             }
-            Optional<Pair<RelDataType, Relationship.Multiplicity>> nested = getNested(field);
+            Optional<Pair<RelDataType, Multiplicity>> nested = getNested(field);
             if (nested.isPresent()) {
-                Pair<RelDataType, Relationship.Multiplicity> rel = nested.get();
+                Pair<RelDataType, Multiplicity> rel = nested.get();
                 UniversalTableBuilder child = createBuilder(path.concat(name),tblBuilder,
-                        rel.getKey(), rel.getValue() == Relationship.Multiplicity.MANY, null);
+                        rel.getKey(), rel.getValue() == Multiplicity.MANY, null);
                 tblBuilder.addChild(name,child,rel.getValue());
             } else {
                 tblBuilder.addColumn(name, field.getType(), isVisible);
@@ -67,13 +67,13 @@ public class RelDataType2UTBConverter {
         return tblBuilder;
     }
 
-    private Optional<Pair<RelDataType, Relationship.Multiplicity>> getNested(RelDataTypeField field) {
+    private Optional<Pair<RelDataType, Multiplicity>> getNested(RelDataTypeField field) {
         if (CalciteUtil.isNestedTable(field.getType())) {
             Optional<RelDataType> componentType = CalciteUtil.getArrayElementType(field.getType());
             RelDataType nestedType = componentType.orElse(field.getType());
-            Relationship.Multiplicity multi = Relationship.Multiplicity.ZERO_ONE;
-            if (componentType.isPresent()) multi = Relationship.Multiplicity.MANY;
-            else if (!nestedType.isNullable()) multi = Relationship.Multiplicity.ONE;
+            Multiplicity multi = Multiplicity.ZERO_ONE;
+            if (componentType.isPresent()) multi = Multiplicity.MANY;
+            else if (!nestedType.isNullable()) multi = Multiplicity.ONE;
             return Optional.of(Pair.of(nestedType,multi));
         } else {
             return Optional.empty();

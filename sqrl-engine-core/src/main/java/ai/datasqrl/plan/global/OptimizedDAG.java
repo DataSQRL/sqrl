@@ -1,7 +1,6 @@
 package ai.datasqrl.plan.global;
 
 import ai.datasqrl.io.sources.dataset.TableSink;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.queries.APIQuery;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -39,10 +38,6 @@ public class OptimizedDAG {
     final int numPrimaryKeys;
     final RelDataType rowType;
     final Optional<Integer> timestampIdx;
-
-    public DatabaseSink(VirtualRelationalTable table, Optional<Integer> timestampIdx) {
-      this(table.getNameId(),table.getNumPrimaryKeys(),table.getRowType(),timestampIdx);
-    }
 
     @Override
     public String getName() {

@@ -1,9 +1,9 @@
 package ai.datasqrl.io.sources.dataset;
 
 import ai.datasqrl.io.sources.DataSystemConnector;
+import ai.datasqrl.io.sources.stats.TableStatistic;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.calcite.table.TableStatistic;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.InputTableSchema;
 import lombok.Getter;

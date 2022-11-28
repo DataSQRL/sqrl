@@ -23,11 +23,6 @@
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <artifactId>sqrl-server-core</artifactId>
-      <groupId>ai.datasqrl</groupId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
       <artifactId>sqrl-common</artifactId>
       <groupId>ai.datasqrl</groupId>
       <type>test-jar</type>

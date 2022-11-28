@@ -61,7 +61,7 @@ public class IndexSelector {
         Map<IndexDefinition, Double> optIndexes = new HashMap<>();
         //The baseline cost is the cost of doing the lookup with the primary key index
         Map<IndexCall, Double> currentCost = new HashMap<>();
-        IndexDefinition pkIdx = IndexDefinition.getPrimaryKeyIndex(table);
+        IndexDefinition pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getNameId(), table.getNumPrimaryKeys(), table.getRowType().getFieldNames());
         for (IndexCall idx : indexes) {
             currentCost.put(idx, idx.getCost(pkIdx));
         }
@@ -135,7 +135,8 @@ public class IndexSelector {
                 default:
                     throw new IllegalStateException(indexType.name());
             }
-            colPermutations.forEach( cols -> result.add(new IndexDefinition(indexCall.getTable(), cols, indexType)));
+            colPermutations.forEach( cols -> result.add(new IndexDefinition(indexCall.getTable().getNameId(), cols,
+                    indexCall.getTable().getRowType().getFieldNames(), indexType)));
         }
         return result;
     }

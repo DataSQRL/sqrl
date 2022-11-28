@@ -1,6 +1,6 @@
 package ai.datasqrl.physical.stream.flink.schema;
 
-import ai.datasqrl.schema.builder.UniversalTableBuilder;
+import ai.datasqrl.schema.UniversalTableBuilder;
 import ai.datasqrl.schema.input.SqrlTypeConverter;
 import ai.datasqrl.schema.type.Type;
 import ai.datasqrl.schema.type.basic.*;

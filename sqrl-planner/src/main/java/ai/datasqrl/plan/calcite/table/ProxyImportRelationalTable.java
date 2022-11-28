@@ -1,6 +1,7 @@
 package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.io.sources.dataset.TableSource;
+import ai.datasqrl.io.sources.stats.TableStatistic;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.pipeline.ExecutionStage;
 import lombok.Getter;

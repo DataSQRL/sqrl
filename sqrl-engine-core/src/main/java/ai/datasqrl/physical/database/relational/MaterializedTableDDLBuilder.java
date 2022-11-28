@@ -9,7 +9,6 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MaterializedTableDDLBuilder {
 
@@ -30,7 +29,7 @@ public class MaterializedTableDDLBuilder {
     List<SqlDDLStatement> statements = new ArrayList<>();
     for (IndexDefinition index : indexes) {
       if (drop) {
-        DropIndexDDL dropIndex = new DropIndexDDL(index.getName(),index.getTable().getNameId());
+        DropIndexDDL dropIndex = new DropIndexDDL(index.getName(),index.getTableId());
         statements.add(dropIndex);
       }
       statements.add(createIndex(index));
@@ -55,9 +54,7 @@ public class MaterializedTableDDLBuilder {
   }
 
   private CreateIndexDDL createIndex(IndexDefinition index) {
-    List<String> fieldNames = index.getTable().getRowType().getFieldNames();
-    List<String> columns = index.getColumns().stream().map(c -> fieldNames.get(c))
-            .collect(Collectors.toList());
-    return new CreateIndexDDL(index.getName(), index.getTable().getNameId(), columns, index.getType());
+    List<String> columns = index.getColumnNames();
+    return new CreateIndexDDL(index.getName(), index.getTableId(), columns, index.getType());
   }
 }

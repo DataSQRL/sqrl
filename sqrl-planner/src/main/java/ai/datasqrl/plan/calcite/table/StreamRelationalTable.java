@@ -2,7 +2,7 @@ package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.schema.builder.UniversalTableBuilder;
+import ai.datasqrl.schema.UniversalTableBuilder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

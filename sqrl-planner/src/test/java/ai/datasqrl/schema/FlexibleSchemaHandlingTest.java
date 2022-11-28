@@ -7,7 +7,6 @@ import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
 import ai.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import ai.datasqrl.plan.calcite.table.CalciteTableFactory;
-import ai.datasqrl.schema.builder.UniversalTableBuilder;
 import ai.datasqrl.schema.constraint.Constraint;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.FlexibleTable2UTBConverter;

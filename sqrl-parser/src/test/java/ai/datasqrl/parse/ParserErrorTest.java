@@ -1,15 +1,14 @@
 package ai.datasqrl.parse;
 
-import static org.junit.jupiter.api.Assertions.fail;
-
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.util.SnapshotTest;
-import org.apache.calcite.rel.core.Snapshot;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class ParserErrorTest {
   ErrorCollector errorCollector;
@@ -23,7 +22,6 @@ public class ParserErrorTest {
 
   @AfterEach
   public void after() {
-    errorCollector.log();
     snapshot.createOrValidate();
   }
 

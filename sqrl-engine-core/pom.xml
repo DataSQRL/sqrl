@@ -16,10 +16,15 @@
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
+
   <dependencies>
     <dependency>
       <groupId>ai.datasqrl</groupId>
       <artifactId>sqrl-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ai.datasqrl</groupId>
+      <artifactId>sqrl-io-core</artifactId>
     </dependency>
     <dependency>
       <artifactId>sqrl-common</artifactId>
