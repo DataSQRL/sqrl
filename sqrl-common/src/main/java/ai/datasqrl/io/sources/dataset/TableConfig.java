@@ -3,7 +3,7 @@ package ai.datasqrl.io.sources.dataset;
 import ai.datasqrl.config.constraints.OptionalMinString;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.util.ConfigurationUtil;
-import ai.datasqrl.io.SharedConfiguration;
+import ai.datasqrl.io.sources.SharedConfiguration;
 import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.io.sources.DataSystemConnectorConfig;
 import ai.datasqrl.parse.tree.name.Name;

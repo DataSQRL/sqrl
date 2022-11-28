@@ -2,7 +2,6 @@ package ai.datasqrl.io.sources;
 
 import ai.datasqrl.config.constraints.OptionalMinString;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.SharedConfiguration;
 import ai.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Strings;
 import lombok.Getter;

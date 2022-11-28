@@ -4,7 +4,6 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.IndexMap;
 import ai.datasqrl.schema.SQRLTable;
-import ai.datasqrl.schema.builder.VirtualTable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import lombok.Getter;
@@ -31,7 +30,7 @@ import java.util.function.Supplier;
  * JOINs between virtual tables.
  */
 @Getter
-public abstract class VirtualRelationalTable extends AbstractRelationalTable implements VirtualTable {
+public abstract class VirtualRelationalTable extends AbstractRelationalTable {
 
   protected final int numLocalPks;
   @NonNull

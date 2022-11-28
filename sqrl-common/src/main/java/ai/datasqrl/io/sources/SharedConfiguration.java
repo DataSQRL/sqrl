@@ -1,10 +1,9 @@
-package ai.datasqrl.io;
+package ai.datasqrl.io.sources;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.util.ConfigurationUtil;
 import ai.datasqrl.io.formats.FormatConfiguration;
 import ai.datasqrl.io.impl.CanonicalizerConfiguration;
-import ai.datasqrl.io.sources.ExternalDataType;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
