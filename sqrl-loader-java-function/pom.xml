@@ -9,28 +9,18 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>sqrl-loader-core</artifactId>
+  <artifactId>sqrl-loader-java-function</artifactId>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
-
   <dependencies>
     <dependency>
       <groupId>ai.datasqrl</groupId>
-      <artifactId>sqrl-spi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ai.datasqrl</groupId>
-      <artifactId>sqrl-io-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ai.datasqrl</groupId>
-      <artifactId>sqrl-common</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
+      <artifactId>sqrl-loader-core</artifactId>
     </dependency>
   </dependencies>
+
 </project>
