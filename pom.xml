@@ -130,6 +130,13 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <artifactId>sqrl-io-file</artifactId>
+                <groupId>ai.datasqrl</groupId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <artifactId>sqrl-transpiler</artifactId>
                 <groupId>ai.datasqrl</groupId>
                 <version>${project.version}</version>

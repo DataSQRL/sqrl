@@ -1,9 +1,9 @@
 package ai.datasqrl.io.impl.kafka;
 
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.config.util.FileUtil;
 import ai.datasqrl.io.formats.FileFormat;
 import ai.datasqrl.io.formats.FormatConfiguration;
-import ai.datasqrl.io.impl.file.FilePath;
 import ai.datasqrl.io.sources.DataSystemConfig;
 import ai.datasqrl.io.sources.DataSystemConnector;
 import ai.datasqrl.io.sources.DataSystemDiscovery;
@@ -116,7 +116,7 @@ public abstract class KafkaDataSystem {
                   }
                 } else {
                   //try to infer format from topic name
-                  Pair<String, String> components = FilePath.separateExtension(name);
+                  Pair<String, String> components = FileUtil.separateExtension(name);
                   FileFormat ff = FileFormat.getFormat(components.getValue());
                   if (ff != null && Name.validName(components.getKey())) {
                     tblBuilder.identifier(name).name(components.getKey());

@@ -2,9 +2,12 @@ package ai.datasqrl.config.util;
 
 
 import ai.datasqrl.config.error.ErrorCollector;
+import com.google.common.base.Strings;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.io.IOException;
 import java.nio.file.Path;
-import org.apache.commons.io.FilenameUtils;
 
 public class FileUtil {
 
@@ -22,6 +25,19 @@ public class FileUtil {
     } catch (IOException e) {
       errors.fatal("Could not read file or directory [%s]: [%s]", p, e);
       return null;
+    }
+  }
+
+  private static final int DELIMITER_CHAR = 46;
+  public static Pair<String, String> separateExtension(String fileName) {
+    if (Strings.isNullOrEmpty(fileName)) {
+      return null;
+    }
+    int offset = fileName.lastIndexOf(DELIMITER_CHAR);
+    if (offset == -1) {
+      return Pair.of(fileName, "");
+    } else {
+      return Pair.of(fileName.substring(0, offset).trim(), fileName.substring(offset + 1).trim());
     }
   }
 

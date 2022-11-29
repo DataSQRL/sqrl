@@ -44,6 +44,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <artifactId>sqrl-io-file</artifactId>
+      <groupId>ai.datasqrl</groupId>
+<!--      <scope>test</scope>-->
+    </dependency>
+    <dependency>
       <groupId>com.ongres.scram</groupId>
       <artifactId>common</artifactId>
     </dependency>

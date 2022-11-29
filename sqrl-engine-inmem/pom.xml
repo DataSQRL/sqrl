@@ -31,5 +31,9 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>ai.datasqrl</groupId>
+      <artifactId>sqrl-io-file</artifactId>
+    </dependency>
   </dependencies>
 </project>

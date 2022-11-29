@@ -27,6 +27,14 @@
       <artifactId>sqrl-io-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>ai.datasqrl</groupId>
+      <artifactId>sqrl-io-file</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ai.datasqrl</groupId>
+      <artifactId>sqrl-io-kafka</artifactId>
+    </dependency>
+    <dependency>
       <artifactId>sqrl-common</artifactId>
       <groupId>ai.datasqrl</groupId>
       <type>test-jar</type>

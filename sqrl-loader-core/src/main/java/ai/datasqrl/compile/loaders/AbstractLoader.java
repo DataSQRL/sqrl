@@ -1,8 +1,11 @@
 package ai.datasqrl.compile.loaders;
 
+import ai.datasqrl.io.sources.DataSystemConnectorConfig;
+import ai.datasqrl.io.sources.DataSystemDiscoveryConfig;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Preconditions;
 
@@ -18,8 +21,16 @@ import java.util.stream.Stream;
 
 public abstract class AbstractLoader implements Loader {
 
-    final ObjectMapper jsonMapper = new ObjectMapper();
-    final YAMLMapper yamlMapper = new YAMLMapper();
+    final ObjectMapper jsonMapper;
+    final YAMLMapper yamlMapper;
+
+    public AbstractLoader() {
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(DataSystemConnectorConfig.class, new DataSystemConnectorConfig.Deserializer());
+        module.addDeserializer(DataSystemDiscoveryConfig.class, new DataSystemDiscoveryConfig.Deserializer());
+        jsonMapper = new ObjectMapper().registerModule(module);
+        yamlMapper = new YAMLMapper();
+    }
 
     public <T> T mapJsonFile(Path path, Class<T> clazz) {
         return mapFile(jsonMapper, path, clazz);

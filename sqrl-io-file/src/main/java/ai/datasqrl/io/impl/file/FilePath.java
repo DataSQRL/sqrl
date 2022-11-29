@@ -1,5 +1,6 @@
 package ai.datasqrl.io.impl.file;
 
+import ai.datasqrl.config.util.FileUtil;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -37,7 +38,7 @@ public class FilePath implements Serializable {
       .stream()
       .map(String::toLowerCase).collect(Collectors.toSet());
 
-  private static final int DELIMITER_CHAR = 46;
+
 
   private final Path flinkPath;
 
@@ -81,13 +82,13 @@ public class FilePath implements Serializable {
 
   public NameComponents getComponents(Pattern partPattern) {
     String filename = getFileName();
-    Pair<String, String> ext = separateExtension(filename);
+    Pair<String, String> ext = FileUtil.separateExtension(filename);
     filename = ext.getLeft();
     String format = ext.getRight().toLowerCase();
     String compression;
     if (!Strings.isNullOrEmpty(format) && COMPRESSION_EXTENSIONS.contains(format)) {
       compression = format;
-      ext = separateExtension(filename);
+      ext = FileUtil.separateExtension(filename);
       filename = ext.getLeft();
       format = ext.getRight().toLowerCase();
     } else {
@@ -179,17 +180,6 @@ public class FilePath implements Serializable {
 
   }
 
-  public static Pair<String, String> separateExtension(String fileName) {
-    if (Strings.isNullOrEmpty(fileName)) {
-      return null;
-    }
-    int offset = fileName.lastIndexOf(DELIMITER_CHAR);
-    if (offset == -1) {
-      return Pair.of(fileName, "");
-    } else {
-      return Pair.of(fileName.substring(0, offset).trim(), fileName.substring(offset + 1).trim());
-    }
-  }
 
   @Value
   @AllArgsConstructor

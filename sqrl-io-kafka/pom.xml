@@ -22,9 +22,17 @@
       <artifactId>sqrl-spi</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-kafka</artifactId>
+      <groupId>ai.datasqrl</groupId>
+      <artifactId>sqrl-io-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.apache.flink</groupId>-->
+<!--      <artifactId>flink-connector-kafka</artifactId>-->
+<!--    </dependency>-->
     <dependency>
       <artifactId>sqrl-common</artifactId>
       <groupId>ai.datasqrl</groupId>
