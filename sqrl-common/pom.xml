@@ -23,38 +23,13 @@
       <artifactId>sqrl-spi</artifactId>
     </dependency>
 
+    <!-- Pulls in Calcite (TODO: refactor Flink out into sqrl-engine-flink and depend on Calcite directly) -->
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-planner_2.12</artifactId>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-file-sink-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-files</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-jdbc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-kafka</artifactId>
-    </dependency>
 
-
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-    </dependency>
   </dependencies>
   <build>
     <plugins>

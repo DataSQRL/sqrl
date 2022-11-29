@@ -40,5 +40,23 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-file-sink-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-files</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-kafka</artifactId>
+    </dependency>
   </dependencies>
 </project>

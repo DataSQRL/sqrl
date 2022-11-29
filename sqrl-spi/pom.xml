@@ -52,6 +52,7 @@
       <artifactId>jackson-annotations</artifactId>
     </dependency>
 
+    <!-- Utility -->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
