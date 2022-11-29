@@ -33,7 +33,7 @@ public class JavaFunctionLoader extends AbstractLoader {
   public boolean load(LoaderContext ctx, NamePath fullPath, Optional<Name> alias) {
     NamePath basePath = fullPath.subList(0,fullPath.size()-1);
 
-    Path baseDir = namepath2Path(ctx.getPackagePath(), basePath);
+    Path baseDir = AbstractLoader.namepath2Path(ctx.getPackagePath(), basePath);
 
     Path path = baseDir.resolve(fullPath.getLast() + FILE_SUFFIX);
     if (!Files.isRegularFile(path)) return false;

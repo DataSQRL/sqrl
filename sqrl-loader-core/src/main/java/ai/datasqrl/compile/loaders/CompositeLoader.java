@@ -3,13 +3,14 @@ package ai.datasqrl.compile.loaders;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.Value;
 
 import java.nio.file.Path;
 import java.util.*;
 
-@Value
 @AllArgsConstructor
+@Getter
 public class CompositeLoader extends AbstractLoader implements Loader {
 
     List<Loader> loaders;

@@ -80,7 +80,7 @@ public class Resolve {
 
     CalciteTableFactory tableFactory = new CalciteTableFactory(TypeFactory.getTypeFactory());
     SchemaAdjustmentSettings schemaAdjustmentSettings = SchemaAdjustmentSettings.DEFAULT;
-    Loader loader = new CompositeLoader(new DataSourceLoader(), new JavaFunctionLoader(), new TypeLoader());
+    Loader loader = new DynamicLoader();
     Exporter exporter = new DataSourceLoader();
     List<StatementOp> ops = new ArrayList<>();
     List<SqrlStatement> queryOperations = new ArrayList<>();

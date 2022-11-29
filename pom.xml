@@ -26,6 +26,8 @@
         <module>sqrl-server-vertx</module>
         <module>sqrl-e2e</module>
         <module>sqrl-loader-core</module>
+        <module>sqrl-loader-java-function</module>
+        <module>sqrl-loader-table</module>
     </modules>
 
 
@@ -186,7 +188,16 @@
                 <groupId>ai.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
-
+            <dependency>
+                <artifactId>sqrl-loader-java-function</artifactId>
+                <groupId>ai.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>sqrl-loader-table</artifactId>
+                <groupId>ai.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.ongres.scram</groupId>
                 <artifactId>common</artifactId>
