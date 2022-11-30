@@ -38,8 +38,7 @@ public class DataDiscovery {
         this.settings = settings;
         DatabaseConnectionProvider dbConnection = settings.getDatabaseEngineProvider().getDatabase(
                 settings.getDiscoveryConfiguration().getMetastore().getDatabaseName());
-//        streamEngine = settings.getStreamEngineProvider().create();
-        streamEngine = new LocalFlinkStreamEngineImpl();
+        streamEngine = settings.getStreamEngineProvider().create();
         statsStore = new TableStatisticsStoreProvider.EncapsulatedImpl(
                 dbConnection, settings.getMetadataStoreProvider(), settings.getSerializerProvider(),
             new MetadataNamedPersistence.TableStatsProvider());
