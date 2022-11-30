@@ -1,0 +1,2 @@
+ai.datasqrl.physical.stream.inmemory.InMemoryStreamConfiguration
+ai.datasqrl.physical.database.inmemory.InMemoryDatabaseConfiguration
