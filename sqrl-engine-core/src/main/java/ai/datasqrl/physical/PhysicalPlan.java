@@ -1,21 +1,38 @@
 package ai.datasqrl.physical;
 
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.physical.database.relational.QueryTemplate;
-import ai.datasqrl.physical.database.relational.ddl.SqlDDLStatement;
-import ai.datasqrl.physical.stream.StreamPhysicalPlan;
+import ai.datasqrl.config.util.StreamUtil;
+import ai.datasqrl.physical.database.DatabasePhysicalPlan;
+import ai.datasqrl.physical.database.QueryTemplate;
+import ai.datasqrl.physical.pipeline.ExecutionStage;
 import ai.datasqrl.plan.queries.APIQuery;
 import lombok.Value;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Value
 public class PhysicalPlan {
 
-  JDBCConnectionProvider dbConnection;
-  List<SqlDDLStatement> databaseDDL;
-  StreamPhysicalPlan streamQueries;
-  Map<APIQuery, QueryTemplate> databaseQueries;
+  List<StagePlan> stagePlans;
+
+  public Map<APIQuery, QueryTemplate> getDatabaseQueries() {
+    return getPlans(DatabasePhysicalPlan.class).flatMap(dbPlan -> dbPlan.getQueries().entrySet().stream())
+            .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue));
+  }
+
+  public<T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
+    return StreamUtil.filterByClass(stagePlans.stream().map(StagePlan::getPlan), clazz);
+  }
+
+  @Value
+  public static class StagePlan {
+
+    ExecutionStage stage;
+    EnginePhysicalPlan plan;
+
+  }
+
 
 }

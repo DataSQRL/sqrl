@@ -7,7 +7,7 @@ LogicalProject(name=[$0], updatetime=[$1])
 >>>total$18-lp-stream
 LogicalProject(__pk_0=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
   LogicalProject(__pk_0=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
-    LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT]]
+    LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1]]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])
         LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
@@ -22,7 +22,7 @@ LogicalProject(__pk_0=[$0], total=[$1], num=[$2], hour=[$3])
     LogicalAggregate(group=[{1, 4}], total=[SUM($2)], num=[SUM($3)]) hints[SlidingAggregationHint options:[1, 259200000, 5184000]]
       LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
         LogicalProject(__pk_0=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
-          LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION]]
+          LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000]]
             LogicalProject(__pk_0=[$13], hour=[round_to_hour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
               LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
                 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])
@@ -57,7 +57,7 @@ LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=
 >>>_sales_by_hour$20-lp-stream
 LogicalProject(__pk_0=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
   LogicalProject(__pk_0=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
-    LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION]]
+    LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000]]
       LogicalProject(__pk_0=[$13], hour=[round_to_hour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
         LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])
@@ -79,7 +79,7 @@ LogicalProject(__pk_0=[$0], total=[$1], num=[$2], hour=[$3])
     LogicalAggregate(group=[{1, 4}], total=[SUM($2)], num=[SUM($3)]) hints[SlidingAggregationHint options:[1, 86400000, 1728000]]
       LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
         LogicalProject(__pk_0=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
-          LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION]]
+          LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000]]
             LogicalProject(__pk_0=[$13], hour=[round_to_hour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
               LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
                 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0E0:DOUBLE)], $f12=[-(*($8, $9), coalesce($10, 0E0:DOUBLE))])

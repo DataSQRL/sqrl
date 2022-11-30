@@ -1,16 +1,18 @@
 package ai.datasqrl.util;
 
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.DiscoveryConfiguration.MetaData;
-import ai.datasqrl.config.engines.JDBCConfiguration;
 import ai.datasqrl.config.provider.Dialect;
+import ai.datasqrl.physical.database.relational.JDBCEngineConfiguration;
 import com.google.common.base.Preconditions;
-import java.util.Properties;
 import lombok.Getter;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.util.Properties;
+
 public class JDBCTestDatabase implements DatabaseHandle {
+
+  public static final String TEST_DATABSE_NAME = "datasqrl";
 
   private final Properties properties;
   @Getter
@@ -24,7 +26,7 @@ public class JDBCTestDatabase implements DatabaseHandle {
     } else if (dbType == IntegrationTestSettings.DatabaseEngine.POSTGRES){
       DockerImageName image = DockerImageName.parse("postgres:14.2");
       postgreSQLContainer = new PostgreSQLContainer(image)
-          .withDatabaseName(MetaData.DEFAULT_DATABASE);
+          .withDatabaseName(TEST_DATABSE_NAME);
       postgreSQLContainer.start();
 
       this.properties = new Properties();
@@ -43,8 +45,8 @@ public class JDBCTestDatabase implements DatabaseHandle {
     return !PropertiesUtil.properties.isEmpty();
   }
 
-  public JDBCConfiguration getJdbcConfiguration() {
-    return JDBCConfiguration.builder()
+  public JDBCEngineConfiguration getJdbcConfiguration() {
+    return JDBCEngineConfiguration.builder()
         .host((String)properties.get("db.host"))
         .port((Integer)properties.get("db.port"))
         .dbURL((String)properties.get("db.url"))
@@ -52,6 +54,7 @@ public class JDBCTestDatabase implements DatabaseHandle {
         .dialect(Dialect.valueOf((String)properties.get("db.dialect")))
         .user((String)properties.get("db.username"))
         .password((String)properties.get("db.password"))
+        .database(TEST_DATABSE_NAME)
         .build();
   }
 

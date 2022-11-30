@@ -1,14 +1,12 @@
 package ai.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import ai.datasqrl.graphql.GraphQLServer;
 import ai.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import ai.datasqrl.graphql.server.Model;
 import ai.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import ai.datasqrl.physical.PhysicalPlan;
-import ai.datasqrl.physical.stream.Job;
-import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
+import ai.datasqrl.physical.PhysicalPlanExecutor;
+import ai.datasqrl.physical.database.relational.JDBCPhysicalPlan;
 import ai.datasqrl.plan.global.DAGPlanner;
 import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.plan.local.generate.Resolve;
@@ -31,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 @ExtendWith(VertxExtension.class)
 public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
@@ -41,24 +41,23 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     protected void validateSchemaAndQueries(String script, String schema, Map<String,String> queries) {
         ScriptNode node = parse(script);
         Resolve.Env resolvedDag = resolve.planDag(session, node);
-        DAGPlanner dagPlanner = new DAGPlanner(planner);
+        DAGPlanner dagPlanner = new DAGPlanner(planner, session.getPipeline());
 
         Pair<Model.Root, List<APIQuery>> modelAndQueries = AbstractSchemaInferenceModelTest.getModelAndQueries(resolvedDag,schema);
 
         OptimizedDAG dag = dagPlanner.plan(resolvedDag.getRelSchema(), modelAndQueries.getRight(),
-                resolvedDag.getExports(), session.getPipeline());
+                resolvedDag.getExports());
 
         PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
 
         Model.Root model = modelAndQueries.getKey();
         ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(physicalPlan.getDatabaseQueries());
         model.accept(replaceGraphqlQueries, null);
-        snapshot.addContent(physicalPlan.getDatabaseDDL().stream().map(ddl -> ddl.toSql())
+        snapshot.addContent(physicalPlan.getPlans(JDBCPhysicalPlan.class).findFirst().get().getDdlStatements().stream().map(ddl -> ddl.toSql())
                 .sorted().collect(Collectors.joining(System.lineSeparator())),"database");
 
         PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-        Job job = executor.execute(physicalPlan);
-        System.out.println("Started Flink Job: " + job.getExecutionId());
+        executor.execute(physicalPlan);
 
         Checkpoint serverStarted = vertxContext.checkpoint();
         Checkpoint queryResponse = vertxContext.checkpoint(queries.size());

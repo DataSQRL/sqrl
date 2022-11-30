@@ -9,11 +9,14 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.flink.table.api.internal.FlinkEnvProxy;
 
-public class LocalFlinkStreamEngineImpl implements FlinkStreamEngine {
+public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
   private final ConcurrentHashMap<String, LocalJob> jobs = new ConcurrentHashMap<>();
+
+  public LocalFlinkStreamEngineImpl(FlinkEngineConfiguration config) {
+    super(config);
+  }
 
   @Override
   public FlinkStreamBuilder createJob() {

@@ -1,7 +1,5 @@
 package ai.datasqrl.plan.global;
 
-import ai.datasqrl.config.provider.Dialect;
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.config.util.ArrayUtil;
 import ai.datasqrl.plan.calcite.OptimizationStage;
 import ai.datasqrl.plan.calcite.Planner;
@@ -11,9 +9,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.primitives.Ints;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
 import org.apache.calcite.adapter.enumerable.EnumerableFilter;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
 import org.apache.calcite.rel.RelNode;
@@ -29,14 +24,12 @@ import org.apache.calcite.rex.RexShuttle;
 import java.util.*;
 
 import static ai.datasqrl.plan.calcite.OptimizationStage.READ_QUERY_OPTIMIZATION;
-import static ai.datasqrl.plan.global.IndexDefinition.Type.BTREE;
-import static ai.datasqrl.plan.global.IndexDefinition.Type.HASH;
 
 @AllArgsConstructor
 public class IndexSelector {
 
     private final Planner planner;
-    private final Config config;
+    private final IndexSelectorConfig config;
 
     public List<IndexCall> getIndexSelection(OptimizedDAG.ReadQuery query) {
         RelNode optimized = planner.transform(READ_QUERY_OPTIMIZATION, query.getRelNode());
@@ -83,13 +76,13 @@ public class IndexSelector {
                 });
                 double total = total(costs);
                 if (total<beforeTotal && (total<bestTotal ||
-                        (total==bestTotal && config.relativeIndexCost(candidate) < config.relativeIndexCost(bestCandidate)))) {
+                        (total==bestTotal && relativeIndexCost(candidate) < relativeIndexCost(bestCandidate)))) {
                     bestCandidate = candidate;
                     bestCosts = costs;
                     bestTotal = total;
                 }
             }
-            if (bestCandidate!=null && bestTotal/beforeTotal <= config.costImprovementThreshold ) {
+            if (bestCandidate!=null && bestTotal/beforeTotal <= config.getCostImprovementThreshold()) {
                 optIndexes.put(bestCandidate,beforeTotal-bestTotal);
                 candidates.remove(bestCandidate);
                 beforeTotal = bestTotal;
@@ -99,6 +92,10 @@ public class IndexSelector {
             }
         }
         return optIndexes;
+    }
+
+    private double relativeIndexCost(IndexDefinition index) {
+        return config.relativeIndexCost(index) + epsilon(index.getColumns()); //Add an epsilon that is insignificant but keeps index order stable
     }
 
     private static final double total(Map<?,Double> costs) {
@@ -161,6 +158,13 @@ public class IndexSelector {
         }
     }
 
+    static final double epsilon(List<Integer> columns) {
+        long eps = 0;
+        for (int col : columns) {
+            eps = eps * 2 + col;
+        }
+        return eps * 1e-10;
+    }
 
     class IndexFinder extends RelVisitor {
 
@@ -217,75 +221,6 @@ public class IndexSelector {
                 }
             }
 
-        }
-
-    }
-
-    @Value
-    @Builder
-    public static class Config {
-
-        public static final double DEFAULT_COST_THRESHOLD = 0.95;
-        public static final int MAX_INDEX_COLUMNS = 6;
-
-        @Builder.Default
-        double costImprovementThreshold = DEFAULT_COST_THRESHOLD;
-        @NonNull
-        Dialect dialect;
-        @Builder.Default
-        int maxIndexColumns = MAX_INDEX_COLUMNS;
-
-        public EnumSet<IndexDefinition.Type> supportedIndexTypes() {
-            switch (dialect) {
-                case POSTGRES:
-                    return EnumSet.of(HASH, BTREE);
-                case MYSQL:
-                    return EnumSet.of(HASH, BTREE);
-                case H2:
-                    return EnumSet.of(HASH, BTREE);
-                default:
-                    throw new IllegalStateException(dialect.name());
-            }
-        }
-
-        public int maxIndexColumns(IndexDefinition.Type indexType) {
-            switch (dialect) {
-                case POSTGRES:
-                    switch (indexType) {
-                        case HASH: return 1;
-                        default: return maxIndexColumns;
-                    }
-                case MYSQL:
-                    return maxIndexColumns;
-                case H2:
-                    return maxIndexColumns;
-                default:
-                    throw new IllegalStateException(dialect.name());
-            }
-        }
-
-        public double relativeIndexCost(IndexDefinition index) {
-            double epsilon = epsilon(index.getColumns()); //Add an epsilon that is insignificant but keeps index order stable
-            switch (index.getType()) {
-                case HASH:
-                    return 1+epsilon;
-                case BTREE:
-                    return 1.5 + 0.1*index.getColumns().size() + epsilon;
-                default:
-                    throw new IllegalStateException(index.getType().name());
-            }
-        }
-
-        public static final double epsilon(List<Integer> columns) {
-            long eps = 0;
-            for (int col : columns) {
-                eps = eps*2 + col;
-            }
-            return eps*1e-10;
-        }
-
-        public static Config of(JDBCConnectionProvider jdbc) {
-            return Config.builder().dialect(jdbc.getDialect()).build();
         }
 
     }

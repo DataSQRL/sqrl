@@ -1,10 +1,7 @@
 package ai.datasqrl.compile;
 
-import ai.datasqrl.config.SqrlSettings;
+import ai.datasqrl.config.EngineSettings;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.metadata.MetadataNamedPersistence;
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.io.sources.DataSystem;
 import ai.datasqrl.io.sources.DataSystemConfig;
 import ai.datasqrl.io.sources.SourceRecord;
@@ -13,12 +10,13 @@ import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.SchemaGenerator;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.io.sources.stats.TableStatisticsStore;
+import ai.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
 import ai.datasqrl.io.sources.util.StreamInputPreparer;
 import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
+import ai.datasqrl.metadata.MetadataNamedPersistence;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.StreamHolder;
-import ai.datasqrl.physical.stream.flink.LocalFlinkStreamEngineImpl;
 import ai.datasqrl.schema.input.FlexibleDatasetSchema;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
 
@@ -29,23 +27,23 @@ import java.util.stream.Collectors;
 
 public class DataDiscovery {
 
-    private final SqrlSettings settings;
+    private final ErrorCollector errors;
+    private final EngineSettings settings;
     private final StreamEngine streamEngine;
     private final TableStatisticsStoreProvider.Encapsulated statsStore;
     private final StreamInputPreparer streamPreparer;
 
-    public DataDiscovery(SqrlSettings settings) {
+    public DataDiscovery(ErrorCollector errors, EngineSettings settings) {
+        this.errors = errors;
         this.settings = settings;
-        DatabaseConnectionProvider dbConnection = settings.getDatabaseEngineProvider().getDatabase(
-                settings.getDiscoveryConfiguration().getMetastore().getDatabaseName());
-        streamEngine = settings.getStreamEngineProvider().create();
+        streamEngine = settings.getStream(errors);
         statsStore = new TableStatisticsStoreProvider.EncapsulatedImpl(
-                dbConnection, settings.getMetadataStoreProvider(), settings.getSerializerProvider(),
+                settings.getMetadataStoreProvider(),
             new MetadataNamedPersistence.TableStatsProvider());
         streamPreparer = new StreamInputPreparerImpl();
     }
 
-    public List<TableInput> discoverTables(DataSystemConfig discoveryConfig, ErrorCollector errors) {
+    public List<TableInput> discoverTables(DataSystemConfig discoveryConfig) {
         DataSystem dataSystem = discoveryConfig.initialize(errors);
         if (dataSystem==null) return List.of();
 
@@ -57,7 +55,7 @@ public class DataDiscovery {
         return tables;
     }
 
-    public void monitorTables(List<TableInput> tables, ErrorCollector errors) {
+    public void monitorTables(List<TableInput> tables) {
         try (TableStatisticsStore store = statsStore.openStore()) {
         } catch (IOException e) {
             errors.fatal("Could not open statistics store");
@@ -74,11 +72,11 @@ public class DataDiscovery {
     }
 
 
-    public List<TableSource> discoverSchema(List<TableInput> tables, ErrorCollector errors) {
-        return discoverSchema(tables, FlexibleDatasetSchema.EMPTY, errors);
+    public List<TableSource> discoverSchema(List<TableInput> tables) {
+        return discoverSchema(tables, FlexibleDatasetSchema.EMPTY);
     }
 
-    public List<TableSource> discoverSchema(List<TableInput> tables, FlexibleDatasetSchema baseSchema, ErrorCollector errors) {
+    public List<TableSource> discoverSchema(List<TableInput> tables, FlexibleDatasetSchema baseSchema) {
         List<TableSource> resultTables = new ArrayList<>();
         try (TableStatisticsStore store = statsStore.openStore()) {
             for (TableInput table : tables) {

@@ -1,13 +1,13 @@
 package ai.datasqrl.physical.pipeline;
 
-import ai.datasqrl.config.provider.Dialect;
 import ai.datasqrl.physical.EngineCapability;
+import ai.datasqrl.physical.EnginePhysicalPlan;
 import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.physical.database.relational.JDBCEngine;
-import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
+import ai.datasqrl.physical.ExecutionResult;
+import ai.datasqrl.plan.global.OptimizedDAG;
 import lombok.Value;
+import org.apache.calcite.tools.RelBuilder;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,21 +32,13 @@ public class EngineStage implements ExecutionStage {
         return next;
     }
 
-    //TODO: use configuration to build this
-    public static final ExecutionPipeline streamDatabasePipeline() {
-        ExecutionStage db = new EngineStage(new JDBCEngine(Dialect.POSTGRES),Optional.empty());
-        ExecutionStage stream = new EngineStage(FlinkStreamEngine.STANDARD, Optional.of(db));
-        return new ExecutionPipeline() {
+    @Override
+    public ExecutionResult execute(EnginePhysicalPlan plan) {
+        return engine.execute(plan);
+    }
 
-            @Override
-            public Collection<ExecutionStage> getStages() {
-                return List.of(stream,db);
-            }
-
-            @Override
-            public Optional<ExecutionStage> getStage(ExecutionEngine.Type type) {
-                return getStages().stream().filter(s -> s.getEngine().getType()==type).findFirst();
-            }
-        };
+    @Override
+    public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder) {
+        return engine.plan(plan,inputs,relBuilder);
     }
 }

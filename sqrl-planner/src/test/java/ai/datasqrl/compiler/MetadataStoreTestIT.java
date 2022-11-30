@@ -2,9 +2,7 @@ package ai.datasqrl.compiler;
 
 import ai.datasqrl.AbstractEngineIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.metadata.MetadataStore;
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.config.serializer.KryoProvider;
+import ai.datasqrl.metadata.MetadataStore;
 import com.google.common.collect.ImmutableSet;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -29,9 +27,7 @@ public class MetadataStoreTestIT extends AbstractEngineIT {
 
     public void setup(IntegrationTestSettings.DatabaseEngine database) {
         initialize(IntegrationTestSettings.getEngines(IntegrationTestSettings.StreamEngine.INMEMORY, database));
-        DatabaseConnectionProvider dbConn = sqrlSettings.getDatabaseEngineProvider().getDatabase(
-                sqrlSettings.getDiscoveryConfiguration().getMetastore().getDatabaseName());
-        meta = sqrlSettings.getMetadataStoreProvider().openStore(dbConn, new KryoProvider());
+        meta = engineSettings.getMetadataStoreProvider().openStore();
     }
 
     @AfterEach

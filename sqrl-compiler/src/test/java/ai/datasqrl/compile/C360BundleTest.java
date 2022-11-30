@@ -1,11 +1,11 @@
 package ai.datasqrl.compile;
 
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import ai.datasqrl.AbstractEngineIT;
 import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.DiscoveryConfiguration.MetaData;
-import ai.datasqrl.util.JDBCTestDatabase;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -13,11 +13,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.Test;
 
-public class C360BundleTest {
-  JDBCTestDatabase testDatabase = new JDBCTestDatabase(IntegrationTestSettings.DatabaseEngine.POSTGRES);
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class C360BundleTest extends AbstractEngineIT {
 
   String c360Script = "IMPORT ecommerce-data.Customer;\n"
       + "IMPORT ecommerce-data.MyFunction;\n"
@@ -36,10 +35,10 @@ public class C360BundleTest {
   @Test
   @SneakyThrows
   public void testByoPagedSchema() {
+    initialize(IntegrationTestSettings.getFlinkWithDB());
     Path dest = copyBundle(c360Script);
     ai.datasqrl.compile.Compiler compiler = new ai.datasqrl.compile.Compiler();
-    compiler.run(dest.resolve("build/"), Optional.of(dest.resolve("schema.graphqls")),
-        Optional.of(testDatabase.getJdbcConfiguration().getDatabase(MetaData.DEFAULT_DATABASE)));
+    compiler.run(dest.resolve("build/"), Optional.of(dest.resolve("schema.graphqls")),engineSettings);
 
     HttpResponse<String> s = compiler.testQuery("{\n"
         + "\n"

@@ -2,7 +2,7 @@
 package ai.datasqrl.graphql.util;
 
 import ai.datasqrl.graphql.server.Model.*;
-import ai.datasqrl.physical.database.relational.QueryTemplate;
+import ai.datasqrl.physical.database.QueryTemplate;
 import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;

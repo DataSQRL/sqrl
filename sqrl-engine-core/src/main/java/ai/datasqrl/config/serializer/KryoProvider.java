@@ -1,11 +1,8 @@
 package ai.datasqrl.config.serializer;
 
-import ai.datasqrl.config.provider.SerializerProvider;
 import com.esotericsoftware.kryo.Kryo;
 
-import java.io.Serializable;
-
-public class KryoProvider implements SerializerProvider, Serializable {
+public class KryoProvider implements SerializerProvider {
 
   @Override
   public Kryo getSerializer() {

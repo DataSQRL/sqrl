@@ -1,33 +1,19 @@
 package ai.datasqrl.physical.stream.flink;
 
 //import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.physical.EngineCapability;
-import ai.datasqrl.physical.ExecutionEngine;
 import ai.datasqrl.physical.stream.StreamEngine;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.JobExecutionResult;
-//import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.OutputTag;
 
-import java.util.EnumSet;
-
-import static ai.datasqrl.physical.EngineCapability.*;
+//import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 
 public interface FlinkStreamEngine extends StreamEngine {
-
-  EnumSet<EngineCapability> STANDARD_CAPABILITIES = EnumSet.of(DENORMALIZE, TEMPORAL_JOIN,
-          TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS);
-
-  ExecutionEngine STANDARD = new ExecutionEngine.Impl(ExecutionEngine.Type.STREAM, STANDARD_CAPABILITIES){};
-
-  default ExecutionEngine getEngineDescription() {
-    return STANDARD;
-  }
 
   Builder createJob();
 

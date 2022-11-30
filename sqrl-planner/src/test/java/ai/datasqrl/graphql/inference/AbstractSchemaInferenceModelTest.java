@@ -6,6 +6,7 @@ import ai.datasqrl.config.provider.Dialect;
 import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.parse.SqrlParser;
+import ai.datasqrl.physical.database.relational.IndexSelectorConfigByDialect;
 import ai.datasqrl.plan.global.*;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.queries.APIQuery;
@@ -60,13 +61,13 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
   public Map<IndexDefinition, Double> selectIndexes(TestScript script, Path schemaPath) {
     List<APIQuery> queries = inferSchemaAndQueries(script,schemaPath).getValue();
     /// plan dag
-    DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner());
-    OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries, env.getExports(), env.getSession().getPipeline());
+    DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner(), env.getSession().getPipeline());
+    OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries, env.getExports());
 
     IndexSelector indexSelector = new IndexSelector(env.getSession().getPlanner(),
-            IndexSelector.Config.builder().dialect(Dialect.POSTGRES).build());
+            IndexSelectorConfigByDialect.of(Dialect.POSTGRES));
     List<IndexCall> allIndexes = new ArrayList<>();
-    for (OptimizedDAG.ReadQuery query : dag.getDatabaseQueries()) {
+    for (OptimizedDAG.ReadQuery query : dag.getReadQueries()) {
       List<IndexCall> indexCall = indexSelector.getIndexSelection(query);
       allIndexes.addAll(indexCall);
     }

@@ -1,10 +1,10 @@
 package ai.datasqrl.physical.stream.flink.monitor;
 
-import ai.datasqrl.config.provider.*;
 import ai.datasqrl.io.sources.dataset.AbstractExternalTable;
 import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.TableStatisticsStore;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
+import ai.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 

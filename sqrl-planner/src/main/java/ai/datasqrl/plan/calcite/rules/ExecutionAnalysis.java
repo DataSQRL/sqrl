@@ -5,7 +5,6 @@ import ai.datasqrl.function.TimestampPreservingFunction;
 import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import ai.datasqrl.physical.EngineCapability;
 import ai.datasqrl.physical.pipeline.ExecutionStage;
-import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import lombok.Value;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rex.RexCall;
@@ -93,7 +92,7 @@ public class ExecutionAnalysis {
         }
 
         @Override public Void visitCall(RexCall call) {
-            Optional<SqrlFunction> sqrlFunction = SqrlRexUtil.unwrapSqrlFunction(call.getOperator());
+            Optional<SqrlFunction> sqrlFunction = SqrlFunction.unwrapSqrlFunction(call.getOperator());
             if (sqrlFunction.filter(func -> func instanceof StdTimeLibraryImpl.NOW).isPresent()) {
                 capabilities.add(EngineCapability.NOW);
             } else if (sqrlFunction.filter(func -> func instanceof TimestampPreservingFunction).isPresent()) {

@@ -2,7 +2,6 @@ package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.calcite.util.IndexMap;
-import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -43,7 +42,7 @@ public abstract class AddedColumn {
         }
 
         public RexNode getExpression(IndexMap indexMap) {
-            return SqrlRexUtil.mapIndexes(expression, indexMap);
+            return indexMap.map(expression);
         }
 
         public RelBuilder appendTo(@NonNull RelBuilder relBuilder) {

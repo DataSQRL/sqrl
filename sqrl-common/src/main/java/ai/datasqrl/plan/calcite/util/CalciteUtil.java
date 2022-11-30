@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import lombok.NonNull;
 import lombok.Value;
+import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -12,6 +13,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
+import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
@@ -29,6 +31,7 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -339,6 +342,12 @@ public class CalciteUtil {
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
       return super.visitChild(parent.accept(rexShuttle),i,child);
     }
+  }
+
+  public static RexNode makeTimeInterval(long interval_ms, RexBuilder rexBuilder) {
+    SqlIntervalQualifier sqlIntervalQualifier =
+            new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO);
+    return rexBuilder.makeIntervalLiteral(new BigDecimal(interval_ms), sqlIntervalQualifier);
   }
 
 }

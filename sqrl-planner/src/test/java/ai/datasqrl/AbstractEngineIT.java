@@ -1,6 +1,6 @@
 package ai.datasqrl;
 
-import ai.datasqrl.config.SqrlSettings;
+import ai.datasqrl.config.EngineSettings;
 import ai.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import ai.datasqrl.io.sources.DataSystemConfig;
 import ai.datasqrl.io.sources.ExternalDataType;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.AfterEach;
 public abstract class AbstractEngineIT {
 
   public DatabaseHandle database = null;
-  public SqrlSettings sqrlSettings = null;
+  public EngineSettings engineSettings = null;
 
 
   @AfterEach
@@ -25,8 +25,8 @@ public abstract class AbstractEngineIT {
   }
 
   protected void initialize(IntegrationTestSettings settings) {
-    Pair<DatabaseHandle, SqrlSettings> setup = settings.getSqrlSettings();
-    sqrlSettings = setup.getRight();
+    Pair<DatabaseHandle, EngineSettings> setup = settings.getSqrlSettings();
+    engineSettings = setup.getRight();
     database = setup.getLeft();
   }
 
