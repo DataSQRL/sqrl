@@ -20,7 +20,6 @@
         <module>sqrl-engine-core</module>
         <module>sqrl-engine-flink</module>
         <module>sqrl-engine-jdbc</module>
-        <module>sqrl-engine-inmem</module>
         <module>sqrl-discovery</module>
         <module>sqrl-planner</module>
         <module>sqrl-server-vertx</module>

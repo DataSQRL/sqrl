@@ -81,7 +81,7 @@ public class Resolve {
     CalciteTableFactory tableFactory = new CalciteTableFactory(TypeFactory.getTypeFactory());
     SchemaAdjustmentSettings schemaAdjustmentSettings = SchemaAdjustmentSettings.DEFAULT;
     Loader loader = new DynamicLoader();
-    Exporter exporter = new DataSourceLoader();
+    Exporter exporter = new DynamicExporter();
     List<StatementOp> ops = new ArrayList<>();
     List<SqrlStatement> queryOperations = new ArrayList<>();
     NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM;

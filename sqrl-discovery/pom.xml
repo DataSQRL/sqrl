@@ -22,6 +22,10 @@
       <artifactId>sqrl-engine-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>ai.datasqrl</groupId>
+      <artifactId>sqrl-engine-flink</artifactId>
+    </dependency>
+    <dependency>
       <artifactId>sqrl-common</artifactId>
       <groupId>ai.datasqrl</groupId>
       <type>test-jar</type>

@@ -1,13 +1,10 @@
 package ai.datasqrl.physical;
 
 import ai.datasqrl.physical.pipeline.ExecutionStage;
-import ai.datasqrl.physical.stream.flink.plan.FlinkStreamPhysicalPlan;
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.table.api.StatementSet;
-import org.apache.flink.table.api.TableResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,13 +35,5 @@ public class PhysicalPlanExecutor {
     ExecutionStage stage;
     ExecutionResult result;
 
-  }
-
-  public String executeFlink(FlinkStreamPhysicalPlan flinkPlan) {
-    StatementSet statementSet = flinkPlan.getStatementSet();
-    TableResult rslt = statementSet.execute();
-    rslt.print(); //todo: this just forces print to wait for the async
-    return rslt.getJobClient().get()
-        .getJobID().toString();
   }
 }
