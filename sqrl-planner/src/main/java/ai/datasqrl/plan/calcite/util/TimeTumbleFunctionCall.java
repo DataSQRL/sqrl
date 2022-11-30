@@ -1,13 +1,14 @@
 package ai.datasqrl.plan.calcite.util;
 
+import ai.datasqrl.function.SqrlFunction;
 import ai.datasqrl.function.SqrlTimeTumbleFunction;
 import com.google.common.base.Preconditions;
-import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.rex.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Value
 public class TimeTumbleFunctionCall {
@@ -20,11 +21,13 @@ public class TimeTumbleFunctionCall {
         return operator.getSpecification(arguments);
     }
 
-    public static TimeTumbleFunctionCall from(RexCall call, RexBuilder rexBuilder) {
-        Optional<SqrlTimeTumbleFunction> fnc = SqrlRexUtil.unwrapSqrlFunction(call.getOperator())
+    public static Optional<TimeTumbleFunctionCall> from(RexNode rexNode, RexBuilder rexBuilder) {
+        if (!(rexNode instanceof RexCall)) return Optional.empty();
+        RexCall call = (RexCall)rexNode;
+        Optional<SqrlTimeTumbleFunction> fnc = SqrlFunction.unwrapSqrlFunction(call.getOperator())
             .filter(o->o instanceof SqrlTimeTumbleFunction)
             .map(o->(SqrlTimeTumbleFunction)o);
-        Preconditions.checkState(fnc.isPresent());
+        if (fnc.isEmpty()) return Optional.empty();
         SqrlTimeTumbleFunction bucketFct = fnc.get();
         //Validate time bucketing function: First argument is timestamp, all others must be constants
         Preconditions.checkArgument(call.getOperands().size()>0,"Time-bucketing function must have at least one argument");
@@ -43,7 +46,8 @@ public class TimeTumbleFunctionCall {
             ExpressionReducer reducer = new ExpressionReducer();
             operandValues = reducer.reduce2Long(rexBuilder, operands); //throws exception if arguments cannot be reduced
         }
-        return new TimeTumbleFunctionCall(bucketFct, timeColIndex, operandValues);
+        return Optional.of(new TimeTumbleFunctionCall(bucketFct, timeColIndex, operandValues));
     }
+
 
 }

@@ -292,7 +292,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         AnnotatedLP input = getRelHolder(logicalFilter.getInput().accept(this));
         input = input.inlineTopN(makeRelBuilder()); //Filtering doesn't preserve deduplication
         RexNode condition = logicalFilter.getCondition();
-        condition = SqrlRexUtil.mapIndexes(condition,input.select);
+        condition = input.select.map(condition);
         TimestampHolder.Derived timestamp = input.timestamp;
         NowFilter nowFilter = input.nowFilter;
 
@@ -307,7 +307,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             while (iter.hasNext()) {
                 RexNode conj = iter.next();
                 if (FIND_NOW.foundIn(conj)) {
-                    Optional<TimePredicate> tp = TimePredicate.ANALYZER.extractTimePredicate(conj, rexUtil.getBuilder(),
+                    Optional<TimePredicate> tp = TimePredicateAnalyzer.INSTANCE.extractTimePredicate(conj, rexUtil.getBuilder(),
                                     timestamp.isCandidatePredicate())
                             .filter(TimePredicate::hasTimestampFunction);
                     if (tp.isPresent() && tp.get().isNowPredicate()) {
@@ -368,7 +368,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 baseInput = baseInput.inlineNowFilter(makeRelBuilder()).inlineTopN(makeRelBuilder());
                 int targetLength = baseInput.getFieldLength();
 
-                collation = SqrlRexUtil.mapCollation(collation, baseInput.select);
+                collation = baseInput.select.map(collation);
                 if (collation.getFieldCollations().isEmpty()) collation = baseInput.sort.getCollation();
                 List<Integer> partition = topNHint.getPartition().stream().map(baseInput.select::map).collect(Collectors.toList());
 
@@ -430,20 +430,20 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         List<TimestampHolder.Derived.Candidate> timeCandidates = new ArrayList<>();
         NowFilter nowFilter = NowFilter.EMPTY;
         for (Ord<RexNode> exp : Ord.<RexNode>zip(logicalProject.getProjects())) {
-            RexNode mapRex = SqrlRexUtil.mapIndexes(exp.e,input.select);
+            RexNode mapRex = input.select.map(exp.e);
             updatedProjects.add(exp.i,mapRex);
             updatedNames.add(exp.i,logicalProject.getRowType().getFieldNames().get(exp.i));
             int originalIndex = -1;
             if (mapRex instanceof RexInputRef) { //Direct mapping
                 originalIndex = (((RexInputRef) mapRex)).getIndex();
             } else { //Check for preserved timestamps
-                Optional<TimestampHolder.Derived.Candidate> preservedCandidate = rexUtil.getPreservedTimestamp(mapRex, input.timestamp);
+                Optional<TimestampHolder.Derived.Candidate> preservedCandidate = TimestampAnalysis.getPreservedTimestamp(mapRex, input.timestamp);
                 if (preservedCandidate.isPresent()) {
                     originalIndex = preservedCandidate.get().getIndex();
                     timeCandidates.add(preservedCandidate.get().withIndex(exp.i));
                     //See if we can preserve the now-filter as well or need to inline it
                     if (!input.nowFilter.isEmpty() && input.nowFilter.getTimestampIndex()==originalIndex) {
-                        Optional<TimeTumbleFunctionCall> bucketFct = rexUtil.getTimeBucketingFunction(mapRex);
+                        Optional<TimeTumbleFunctionCall> bucketFct = TimeTumbleFunctionCall.from(mapRex, rexUtil.getBuilder());
                         if (bucketFct.isPresent()) {
                             long intervalExpansion = bucketFct.get().getSpecification().getBucketWidthMillis();
                             nowFilter = input.nowFilter.map(tp -> new TimePredicate(tp.getSmallerIndex(),
@@ -550,7 +550,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         final int leftSideMaxIdx = leftInput.getFieldLength();
         ContinuousIndexMap joinedIndexMap = leftInput.select.join(rightInput.select, leftSideMaxIdx);
-        RexNode condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(),joinedIndexMap);
+        RexNode condition = joinedIndexMap.map(logicalJoin.getCondition());
         //TODO: pull now() conditions up as a nowFilter and move nested now filters through
         Preconditions.checkArgument(!FIND_NOW.foundIn(condition),"now() is not allowed in join conditions");
         SqrlRexUtil.EqualityComparisonDecomposition eqDecomp = rexUtil.decomposeEqualityComparison(condition);
@@ -627,7 +627,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     int tmpLeftSideMaxIdx = leftInput.getFieldLength();
                     IndexMap leftRightFlip = idx -> idx<leftSideMaxIdx?tmpLeftSideMaxIdx+idx:idx-leftSideMaxIdx;
                     joinedIndexMap = joinedIndexMap.remap(leftRightFlip);
-                    condition = SqrlRexUtil.mapIndexes(logicalJoin.getCondition(), joinedIndexMap);
+                    condition = joinedIndexMap.map(logicalJoin.getCondition());
                     eqDecomp = rexUtil.decomposeEqualityComparison(condition);
                 }
                 int newLeftSideMaxIdx = leftInput.getFieldLength();
@@ -689,13 +689,14 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         //Detect interval join
         if (joinType==JoinRelType.DEFAULT || joinType ==JoinRelType.INNER || joinType==JoinRelType.INTERVAL || joinType == JoinRelType.LEFT) {
-            if (leftInputF.type==TableType.STREAM && rightInputF.type==TableType.STREAM && combinedExec.getStage().isWrite()) {
+            if (leftInputF.type==TableType.STREAM && rightInputF.type==TableType.STREAM &&
+                    leftInputF.timestamp.hasCandidates() && rightInputF.timestamp.hasCandidates() && combinedExec.getStage().isWrite()) {
                 //Validate that the join condition includes time bounds on both sides
                 List<RexNode> conjunctions = new ArrayList<>(rexUtil.getConjunctions(condition));
                 Predicate<Integer> isTimestampColumn = idx -> idx<leftSideMaxIdx?leftInputF.timestamp.isCandidate(idx):
                                                                                 rightInputF.timestamp.isCandidate(idx-leftSideMaxIdx);
                 List<TimePredicate> timePredicates = conjunctions.stream().map(rex ->
-                                TimePredicate.ANALYZER.extractTimePredicate(rex, rexUtil.getBuilder(),isTimestampColumn))
+                                TimePredicateAnalyzer.INSTANCE.extractTimePredicate(rex, rexUtil.getBuilder(),isTimestampColumn))
                         .flatMap(tp -> tp.stream()).filter(tp -> !tp.hasTimestampFunction())
                         //making sure predicate contains columns from both sides of the join
                         .filter(tp -> (tp.getSmallerIndex() < leftSideMaxIdx) ^ (tp.getLargerIndex() < leftSideMaxIdx))
@@ -881,7 +882,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             PkAndSelect pkSelect = addedTimestamp.getKey();
             TimestampHolder.Derived timestamp = addedTimestamp.getValue();
 
-            new TumbleAggregationHint(candidate.getIndex(), TumbleAggregationHint.Type.INSTANT).addTo(relB);
+            TumbleAggregationHint.instantOf(candidate.getIndex()).addTo(relB);
 
             NowFilter nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(),
                      timestamp.getTimestampCandidate().getIndex()));
@@ -908,8 +909,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             if (keyCandidate!=null) {
                 LogicalProject inputProject = (LogicalProject)input.getRelNode();
                 RexNode timeAgg = inputProject.getProjects().get(keyCandidate.getIndex());
-                Optional<TimeTumbleFunctionCall> bucketFct = rexUtil.getTimeBucketingFunction(timeAgg);
-                Preconditions.checkArgument(!bucketFct.isEmpty(), "Not a valid time aggregation function: %s", timeAgg);
+                TimeTumbleFunctionCall bucketFct = TimeTumbleFunctionCall.from(timeAgg, rexUtil.getBuilder()).orElseThrow(
+                        ()-> new IllegalArgumentException("Not a valid time aggregation function: " + timeAgg)
+                );
+
 
                 //Fix timestamp (if not already fixed)
                 TimestampHolder.Derived newTimestamp = keyCandidate.withIndex(keyIdx).fixAsTimestamp();
@@ -920,7 +923,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                 RelBuilder relB = makeRelBuilder();
                 relB.push(input.relNode);
                 relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)),aggregateCalls);
-                new TumbleAggregationHint(keyCandidate.getIndex(), TumbleAggregationHint.Type.FUNCTION).addTo(relB);
+                TumbleAggregationHint.functionOf(keyCandidate.getIndex(), bucketFct.getTimestampColumnIndex(),
+                        bucketFct.getSpecification().getBucketWidthMillis()).addTo(relB);
                 PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength);
 
                 /* TODO: this type of streaming aggregation requires a post-filter in the database (in physical model) to filter out "open" time buckets,
@@ -1101,7 +1105,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         //Map the collation fields
         RelCollation collation = logicalSort.getCollation();
         ContinuousIndexMap indexMap = input.select;
-        RelCollation newCollation = SqrlRexUtil.mapCollation(collation, indexMap);
+        RelCollation newCollation = indexMap.map(collation);
 
         AnnotatedLP result;
         if (limit.isPresent()) {

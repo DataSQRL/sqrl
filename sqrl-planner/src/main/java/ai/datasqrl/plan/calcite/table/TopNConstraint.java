@@ -1,7 +1,6 @@
 package ai.datasqrl.plan.calcite.table;
 
 import ai.datasqrl.plan.calcite.util.IndexMap;
-import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;
@@ -57,7 +56,7 @@ public class TopNConstraint implements PullupOperator {
 
     public TopNConstraint remap(IndexMap map) {
         if (isEmpty()) return this;
-        RelCollation newCollation = SqrlRexUtil.mapCollation(collation,map);
+        RelCollation newCollation = map.map(collation);
         List<Integer> newPartition = partition.stream().map(i -> map.map(i)).collect(Collectors.toList());
         return new TopNConstraint(newPartition, distinct, newCollation, limit, inputTableType);
     }

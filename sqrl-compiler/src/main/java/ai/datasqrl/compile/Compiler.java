@@ -1,5 +1,6 @@
 package ai.datasqrl.compile;
 
+import ai.datasqrl.config.EngineSettings;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.graphql.GraphQLServer;
@@ -11,11 +12,9 @@ import ai.datasqrl.graphql.server.Model.Root;
 import ai.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import ai.datasqrl.parse.SqrlParser;
 import ai.datasqrl.physical.PhysicalPlan;
+import ai.datasqrl.physical.PhysicalPlanExecutor;
 import ai.datasqrl.physical.PhysicalPlanner;
-import ai.datasqrl.physical.database.relational.QueryTemplate;
-import ai.datasqrl.physical.stream.Job;
-import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
-import ai.datasqrl.physical.stream.flink.LocalFlinkStreamEngineImpl;
+import ai.datasqrl.physical.database.QueryTemplate;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.PlannerFactory;
 import ai.datasqrl.plan.global.DAGPlanner;
@@ -29,6 +28,12 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
 import io.vertx.core.Vertx;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.sql.ScriptNode;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -44,11 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
-import org.apache.calcite.sql.ScriptNode;
 
 @Slf4j
 public class Compiler {
@@ -57,20 +57,20 @@ public class Compiler {
     Path build = Path.of(".").resolve("build");
 
     Compiler compiler = new Compiler();
-    compiler.run(build, Optional.of(build.resolve("schema.graphqls")), Optional.empty());
+    compiler.run(build, Optional.of(build.resolve("schema.graphqls")), null); //TODO: read from config
   }
 
   /**
    * Process: All the files are in the build directory
    */
   @SneakyThrows
-  public void run(Path build, Optional<Path> graphqlSchema, Optional<JDBCConnectionProvider> jdbcConf) {
+  public void run(Path build, Optional<Path> graphqlSchema, EngineSettings engineSettings) {
     ErrorCollector collector = ErrorCollector.root();
     SqrlCalciteSchema schema = new SqrlCalciteSchema(
         CalciteSchema.createRootSchema(false, false).plus());
     Planner planner = new PlannerFactory(schema.plus()).createPlanner();
 
-    Session s = new Session(collector, planner);
+    Session s = new Session(collector, planner, engineSettings.getPipeline(collector));
 
     Resolve resolve = new Resolve(build);
 
@@ -99,24 +99,24 @@ public class Compiler {
 
     OptimizedDAG dag = optimizeDag(pgBuilder.getApiQueries(), env);
 
-    PhysicalPlan plan = createPhysicalPlan(dag, env, s, jdbcConf.get());
+    PhysicalPlan plan = createPhysicalPlan(dag, env, s);
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
 
-    log.info("PORT: " + jdbcConf.get().getPort());
+//    log.info("PORT: " + jdbcConf.get().getPort());
     log.info("build dir: " + build.toAbsolutePath().toString());
     writeGraphql(env, build, root, gqlSchema);
     exec(plan);
 
-    startGraphql(build, root, jdbcConf.get());
+    startGraphql(build, root, engineSettings.getJDBC(collector));
   }
 
   private OptimizedDAG optimizeDag(List<APIQuery> queries, Env env) {
-    DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner());
+    DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner(), env.getSession().getPipeline());
     //We add a scan query for every query table
     CalciteSchema relSchema = env.getRelSchema();
     //todo comment out
 //    addAllQueryTables(env.getSession().getPlanner(), relSchema, queries);
-    OptimizedDAG dag = dagPlanner.plan(relSchema,queries, env.getExports(), env.getSession().getPipeline());
+    OptimizedDAG dag = dagPlanner.plan(relSchema,queries, env.getExports());
 
     return dag;
   }
@@ -127,13 +127,8 @@ public class Compiler {
     return root;
   }
 
-  private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, Env env, Session s,
-      JDBCConnectionProvider jdbcConf) {
-    PhysicalPlanner physicalPlanner = new PhysicalPlanner(
-        jdbcConf,
-//        jdbcConf.getDatabase("test"),
-        new LocalFlinkStreamEngineImpl(), s.getPlanner()
-    );
+  private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, Env env, Session s) {
+    PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.getPlanner().getRelBuilder());
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     return physicalPlan;
 
@@ -178,8 +173,8 @@ public class Compiler {
 
   private void exec(PhysicalPlan plan) {
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-    Job job = executor.execute(plan);
-    log.trace("Started Flink Job: {}", job.getExecutionId());
+    PhysicalPlanExecutor.Result result = executor.execute(plan);
+    log.trace("Executed physical plan: {}", result);
   }
 
   @SneakyThrows

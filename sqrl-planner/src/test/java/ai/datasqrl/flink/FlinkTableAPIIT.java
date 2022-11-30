@@ -8,6 +8,7 @@ import ai.datasqrl.io.sources.util.StreamInputPreparer;
 import ai.datasqrl.io.sources.util.StreamInputPreparerImpl;
 import ai.datasqrl.parse.tree.name.NamePath;
 import ai.datasqrl.physical.stream.StreamHolder;
+import ai.datasqrl.physical.stream.flink.FlinkEngineConfiguration;
 import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
 import ai.datasqrl.physical.stream.flink.LocalFlinkStreamEngineImpl;
 import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
@@ -39,7 +40,7 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
 
     TableSource tblSource = loadTable(NamePath.of("ecommerce-data","Orders"));
 
-    LocalFlinkStreamEngineImpl flink = new LocalFlinkStreamEngineImpl();
+    LocalFlinkStreamEngineImpl flink = new LocalFlinkStreamEngineImpl(new FlinkEngineConfiguration());
     FlinkStreamEngine.Builder streamBuilder = flink.createJob();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 

@@ -3,16 +3,14 @@ package ai.datasqrl.plan.global;
 import ai.datasqrl.config.util.StreamUtil;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.physical.ExecutionEngine;
+import ai.datasqrl.physical.database.DatabaseEngine;
 import ai.datasqrl.physical.pipeline.ExecutionPipeline;
+import ai.datasqrl.physical.pipeline.ExecutionStage;
 import ai.datasqrl.plan.calcite.Planner;
 import ai.datasqrl.plan.calcite.hints.WatermarkHint;
 import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
 import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.table.AbstractRelationalTable;
-import ai.datasqrl.plan.calcite.table.ProxySourceRelationalTable;
-import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
-import ai.datasqrl.plan.calcite.table.StreamRelationalTable;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import ai.datasqrl.plan.calcite.table.*;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.queries.APIQuery;
@@ -36,13 +34,28 @@ import java.util.stream.Collectors;
 import static ai.datasqrl.plan.calcite.OptimizationStage.READ_DAG_STITCHING;
 import static ai.datasqrl.plan.calcite.OptimizationStage.WRITE_DAG_STITCHING;
 
-@AllArgsConstructor
+/**
+ * The DAGPlanner currently makes the simplifying assumption that the execution pipeline consists
+ * of two stages: stream and database.
+ */
 public class DAGPlanner {
 
     private final Planner planner;
+    private final ExecutionPipeline pipeline;
+
+    private final ExecutionStage streamStage;
+    private final ExecutionStage databaseStage;
+
+    public DAGPlanner(Planner planner, ExecutionPipeline pipeline) {
+        this.planner = planner;
+        this.pipeline = pipeline;
+
+        streamStage = pipeline.getStage(ExecutionEngine.Type.STREAM).get();
+        databaseStage = pipeline.getStage(ExecutionEngine.Type.DATABASE).get();
+    }
 
     public OptimizedDAG plan(CalciteSchema relSchema, Collection<APIQuery> queries,
-                             Collection<Resolve.ResolvedExport> exports, ExecutionPipeline pipeline) {
+                             Collection<Resolve.ResolvedExport> exports) {
 
         List<QueryRelationalTable> queryTables = CalciteUtil.getTables(relSchema, QueryRelationalTable.class);
 
@@ -59,7 +72,7 @@ public class DAGPlanner {
             //Rewrite query
             AnnotatedLP rewritten = SQRLLogicalPlanConverter.convert(relNode, getRelBuilderFactory(),
                     SQRLLogicalPlanConverter.Config.builder()
-                            .startStage(pipeline.getStage(ExecutionEngine.Type.DATABASE).get())
+                            .startStage(databaseStage)
                             .allowStageChange(false) //set to true once we can execute relnodes in the server
                             .build());
             rewritten = rewritten.postProcess(getRelBuilderFactory().get(), query.getRelNode().getRowType().getFieldNames())
@@ -74,7 +87,7 @@ public class DAGPlanner {
         Set<VirtualRelationalTable> tableSinks = StreamUtil.filterByClass(tableScanVisitor.scanTables,VirtualRelationalTable.class).collect(Collectors.toSet());
 
         //Fill all table sinks
-        List<OptimizedDAG.MaterializeQuery> writeDAG = new ArrayList<>();
+        List<OptimizedDAG.WriteQuery> writeDAG = new ArrayList<>();
         //First, all the tables that need to be written to the database
         for (VirtualRelationalTable dbTable : tableSinks) {
             RelNode scanTable = planner.getRelBuilder().scan(dbTable.getNameId()).build();
@@ -91,8 +104,9 @@ public class DAGPlanner {
             }
             assert dbTable.getRowType().equals(processedRelnode.getRowType()) :
                     "Rowtypes do not match: " + dbTable.getRowType() + " vs " + processedRelnode.getRowType();
-            writeDAG.add(new OptimizedDAG.MaterializeQuery(
-                    new OptimizedDAG.DatabaseSink(dbTable.getNameId(), dbTable.getNumPrimaryKeys(), dbTable.getRowType(), processed.getValue()),
+            writeDAG.add(new OptimizedDAG.WriteQuery(
+                    new OptimizedDAG.DatabaseSink(dbTable.getNameId(), dbTable.getNumPrimaryKeys(),
+                            dbTable.getRowType(), processed.getValue(), databaseStage),
                     processed.getKey()));
         }
         //Second, all the tables that are exported
@@ -108,13 +122,13 @@ public class DAGPlanner {
             processedRelnode = relBuilder.build();
             //TODO: check that the rowtype matches the schema of the tablesink (if present)
             String name = Name.addSuffix(export.getTable().getNameId(),String.valueOf(numExports++));
-            writeDAG.add(new OptimizedDAG.MaterializeQuery(
+            writeDAG.add(new OptimizedDAG.WriteQuery(
                     new OptimizedDAG.ExternalSink(name, export.getSink()),
                     processedRelnode));
         }
 
         //Stitch together all StreamSourceTable
-        for (StreamRelationalTable sst : CalciteUtil.getTables(relSchema, StreamRelationalTable.class)) {
+        for (StreamRelationalTableImpl sst : CalciteUtil.getTables(relSchema, StreamRelationalTableImpl.class)) {
             RelNode stitchedNode = planner.transform(WRITE_DAG_STITCHING, sst.getBaseRelation());
             sst.setBaseRelation(stitchedNode);
         }
@@ -125,14 +139,21 @@ public class DAGPlanner {
 //            return new OptimizedDAG.ReadQuery(q.getQuery(), newStitch);
 //        }).collect(Collectors.toList());
 
-        return new OptimizedDAG(writeDAG,readDAG);
+        //Pick index structures for database tables based on the database queries
+        IndexSelector indexSelector = new IndexSelector(planner, ((DatabaseEngine)databaseStage.getEngine()).getIndexSelectorConfig());
+        Collection<IndexCall> indexCalls = readDAG.stream().map(indexSelector::getIndexSelection)
+                .flatMap(List::stream).collect(Collectors.toList());
+        Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(indexCalls).keySet();
+
+        return new OptimizedDAG(List.of(new OptimizedDAG.StagePlan(streamStage,writeDAG,null),
+                new OptimizedDAG.StagePlan(databaseStage,readDAG,indexDefinitions)));
     }
 
     private Pair<RelNode, Optional<Integer>> processWriteVTable(RelNode scanTable, ExecutionPipeline pipeline) {
         //Shred the table if necessary before materialization
         AnnotatedLP processedRel = SQRLLogicalPlanConverter.convert(scanTable, getRelBuilderFactory(),
                 SQRLLogicalPlanConverter.Config.builder()
-                        .startStage(pipeline.getStage(ExecutionEngine.Type.STREAM).get())
+                        .startStage(streamStage)
                         .allowStageChange(false)
                         .build());
         processedRel = processedRel.postProcess(planner.getRelBuilder(), scanTable.getRowType().getFieldNames());

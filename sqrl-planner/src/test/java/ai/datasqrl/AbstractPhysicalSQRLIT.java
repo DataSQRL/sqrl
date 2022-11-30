@@ -1,17 +1,13 @@
 package ai.datasqrl;
 
-import ai.datasqrl.config.DiscoveryConfiguration;
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.io.impl.file.FilePath;
 import ai.datasqrl.io.sources.dataset.TableSink;
 import ai.datasqrl.physical.PhysicalPlan;
+import ai.datasqrl.physical.PhysicalPlanExecutor;
 import ai.datasqrl.physical.PhysicalPlanner;
-import ai.datasqrl.physical.database.relational.QueryTemplate;
-import ai.datasqrl.physical.stream.Job;
-import ai.datasqrl.physical.stream.PhysicalPlanExecutor;
-import ai.datasqrl.physical.stream.flink.LocalFlinkStreamEngineImpl;
+import ai.datasqrl.physical.database.QueryTemplate;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.RelToSql;
 import ai.datasqrl.plan.global.DAGPlanner;
@@ -22,15 +18,14 @@ import ai.datasqrl.plan.queries.APIQuery;
 import ai.datasqrl.util.FileTestUtil;
 import ai.datasqrl.util.ResultSetPrinter;
 import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.SnapshotTest.Snapshot;
 import ai.datasqrl.util.TestRelWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,7 +35,6 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.ArrayUtils;
 
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
@@ -52,11 +46,9 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     protected void initialize(IntegrationTestSettings settings, Path rootDir) {
         super.initialize(settings, rootDir);
 
-        DatabaseConnectionProvider db = sqrlSettings.getDatabaseEngineProvider().getDatabase(DiscoveryConfiguration.MetaData.DEFAULT_DATABASE);
-        jdbc = (JDBCConnectionProvider) db;
+        jdbc = engineSettings.getJDBC(error);
 
-        physicalPlanner = new PhysicalPlanner(jdbc,
-                sqrlSettings.getStreamEngineProvider().create(), planner);
+        physicalPlanner = new PhysicalPlanner(planner.getRelBuilder());
     }
 
 
@@ -72,7 +64,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     protected void validateTables(String script, Collection<String> queryTables, Set<String> tableWithoutTimestamp, Set<String> tableNoDataSnapshot) {
         ScriptNode node = parse(script);
         Resolve.Env resolvedDag = resolve.planDag(session, node);
-        DAGPlanner dagPlanner = new DAGPlanner(planner);
+        DAGPlanner dagPlanner = new DAGPlanner(planner, session.getPipeline());
         //We add a scan query for every query table
         List<APIQuery> queries = new ArrayList<APIQuery>();
         CalciteSchema relSchema = resolvedDag.getRelSchema();
@@ -83,12 +75,11 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
             RelNode rel = planner.getRelBuilder().scan(vt.getNameId()).build();
             queries.add(new APIQuery(tableName, rel));
         }
-        OptimizedDAG dag = dagPlanner.plan(relSchema,queries, resolvedDag.getExports(), session.getPipeline());
+        OptimizedDAG dag = dagPlanner.plan(relSchema,queries, resolvedDag.getExports());
         addContent(dag);
         PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
         PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-        Job job = executor.execute(physicalPlan);
-        System.out.println("Started Flink Job: " + job.getExecutionId());
+        PhysicalPlanExecutor.Result result = executor.execute(physicalPlan);
         for (APIQuery query : queries) {
             QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
             String sqlQuery = RelToSql.convertToSql(template.getRelNode());
@@ -123,9 +114,9 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     }
 
     private void addContent(OptimizedDAG dag, String... caseNames) {
-        dag.getStreamQueries().forEach(mq -> snapshot.addContent(TestRelWriter.explain(mq.getRelNode()),
+        dag.getWriteQueries().forEach(mq -> snapshot.addContent(TestRelWriter.explain(mq.getRelNode()),
             ArrayUtils.addAll(caseNames,mq.getSink().getName(),"lp-stream")));
-        dag.getDatabaseQueries().forEach(dq -> snapshot.addContent(TestRelWriter.explain(dq.getRelNode()),
+        dag.getReadQueries().forEach(dq -> snapshot.addContent(TestRelWriter.explain(dq.getRelNode()),
             ArrayUtils.addAll(caseNames,dq.getQuery().getNameId(),"lp-database")));
     }
 

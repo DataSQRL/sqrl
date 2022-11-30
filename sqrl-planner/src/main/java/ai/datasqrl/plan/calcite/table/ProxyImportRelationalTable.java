@@ -17,10 +17,10 @@ import org.apache.calcite.rel.RelNode;
 public class ProxyImportRelationalTable extends ProxySourceRelationalTable {
 
   @Getter
-  private final ImportedRelationalTable baseTable;
+  private final ImportedRelationalTableImpl baseTable;
 
   public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull TimestampHolder.Base timestamp,
-                                    RelNode relNode, ImportedRelationalTable baseTable, ExecutionStage execution,
+                                    RelNode relNode, ImportedRelationalTableImpl baseTable, ExecutionStage execution,
                                     TableStatistic tableStatistic) {
     super(rootTableId, TableType.STREAM, relNode, PullupOperator.Container.EMPTY, timestamp,
             1,

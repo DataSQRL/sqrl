@@ -64,15 +64,15 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
     }
 
     private List<TableSource> discoverSchema(TestDataset example) {
-        DataDiscovery discovery = new DataDiscovery(sqrlSettings);
         ErrorCollector errors = ErrorCollector.root();
+        DataDiscovery discovery = new DataDiscovery(errors, engineSettings);
         DataSystemConfig systemConfig = getSystemConfigBuilder(example).build();
-        List<TableInput> inputTables = discovery.discoverTables(systemConfig, errors);
+        List<TableInput> inputTables = discovery.discoverTables(systemConfig);
         assertFalse(errors.isFatal(), errors.toString());
         assertEquals(example.getNumTables(), inputTables.size());
-        discovery.monitorTables(inputTables, errors);
+        discovery.monitorTables(inputTables);
         assertFalse(errors.isFatal(), errors.toString());
-        List<TableSource> sourceTables = discovery.discoverSchema(inputTables, errors);
+        List<TableSource> sourceTables = discovery.discoverSchema(inputTables);
         assertFalse(errors.isFatal(), errors.toString());
         assertEquals(example.getNumTables(), sourceTables.size());
         return sourceTables;

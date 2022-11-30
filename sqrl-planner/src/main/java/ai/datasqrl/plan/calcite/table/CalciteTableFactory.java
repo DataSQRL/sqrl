@@ -63,7 +63,7 @@ public class CalciteTableFactory {
         UniversalTableBuilder rootTable = new FlexibleTableConverter(tableSource.getSchema(),tblAlias).apply(
                 converter);
         RelDataType rootType = convertTable(rootTable, true, true);
-        ImportedRelationalTable source = new ImportedRelationalTable(getTableId(rootTable.getName(),"i"),rootType, tableSource);
+        ImportedRelationalTableImpl source = new ImportedRelationalTableImpl(getTableId(rootTable.getName(),"i"),rootType, tableSource);
         ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(getTableId(rootTable.getName(),"q"), getTimestampHolder(rootTable),
                 relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get(), tableSource.getStatistic());
 
@@ -79,7 +79,7 @@ public class CalciteTableFactory {
         UniversalTableBuilder rootTable = convertStream2TableBuilder(tablePath,
                 baseRel.getRelNode().getRowType());
         RelDataType rootType = convertTable(rootTable, true, true);
-        StreamRelationalTable source = new StreamRelationalTable(getTableId(tableName,"s"), baseRel.getRelNode(), rootType, rootTable, changeType);
+        StreamRelationalTableImpl source = new StreamRelationalTableImpl(getTableId(tableName,"s"), baseRel.getRelNode(), rootType, rootTable, changeType);
         TableStatistic statistic = TableStatistic.of(baseRel.estimateRowCount());
         ProxyStreamRelationalTable impTable = new ProxyStreamRelationalTable(getTableId(tableName,"q"), getTimestampHolder(rootTable),
                 relBuilder.values(rootType).build(), source, pipeline.getStage(ExecutionEngine.Type.STREAM).get(), statistic);

@@ -1,7 +1,6 @@
 package ai.datasqrl.physical.stream.inmemory;
 
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
 import ai.datasqrl.io.formats.TextLineFormat;
 import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.io.impl.file.FilePath;
@@ -11,17 +10,22 @@ import ai.datasqrl.io.sources.dataset.TableInput;
 import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.io.sources.stats.SourceTableStatistics;
 import ai.datasqrl.io.sources.stats.TableStatisticsStore;
+import ai.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
 import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
-import ai.datasqrl.physical.EngineCapability;
+import ai.datasqrl.physical.EnginePhysicalPlan;
 import ai.datasqrl.physical.ExecutionEngine;
+import ai.datasqrl.physical.ExecutionResult;
 import ai.datasqrl.physical.stream.FunctionWithError;
 import ai.datasqrl.physical.stream.StreamEngine;
 import ai.datasqrl.physical.stream.StreamHolder;
 import ai.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
+import ai.datasqrl.plan.global.OptimizedDAG;
 import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
 import ai.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.tools.RelBuilder;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -30,24 +34,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import lombok.extern.slf4j.Slf4j;
+
+import static ai.datasqrl.physical.EngineCapability.*;
 
 @Slf4j
-public class InMemStreamEngine implements StreamEngine {
-
-    private final ExecutionEngine ENGINE_DESCRIPTION = new ExecutionEngine.Impl(ExecutionEngine.Type.STREAM, EnumSet.noneOf(EngineCapability.class)) {};
+public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEngine {
 
     private final AtomicInteger jobIdCounter = new AtomicInteger(0);
     private final ConcurrentHashMap<String, Job> jobs = new ConcurrentHashMap<>();
 
-    @Override
-    public JobBuilder createJob() {
-        return new JobBuilder();
+    public InMemStreamEngine() {
+        super(InMemoryStreamConfiguration.ENGINE_NAME, ExecutionEngine.Type.STREAM, EnumSet.of(DENORMALIZE, TEMPORAL_JOIN,
+                TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS));
     }
 
     @Override
-    public ExecutionEngine getEngineDescription() {
-        return ENGINE_DESCRIPTION;
+    public JobBuilder createJob() {
+        return new JobBuilder();
     }
 
     @Override
@@ -58,6 +61,16 @@ public class InMemStreamEngine implements StreamEngine {
     @Override
     public void close() throws IOException {
         jobs.clear();
+    }
+
+    @Override
+    public ExecutionResult execute(EnginePhysicalPlan plan) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder) {
+        throw new UnsupportedOperationException();
     }
 
     public class JobBuilder implements StreamEngine.Builder {

@@ -1,6 +1,6 @@
 package ai.datasqrl.physical.stream.flink;
 
-import ai.datasqrl.config.provider.TableStatisticsStoreProvider;
+import ai.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
 import ai.datasqrl.io.formats.TextLineFormat;
 import ai.datasqrl.io.impl.file.DirectoryDataSystem;
 import ai.datasqrl.io.impl.file.FilePath;

@@ -1,7 +1,7 @@
 package ai.datasqrl.plan.calcite.rules;
 
 import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
-import ai.datasqrl.plan.calcite.table.SourceRelationalTable;
+import ai.datasqrl.plan.calcite.table.SourceRelationalTableImpl;
 import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import ai.datasqrl.plan.calcite.util.CalciteUtil;
 import com.google.common.base.Preconditions;
@@ -70,7 +70,7 @@ public abstract class DAGExpansionRule extends RelOptRule {
     public void onMatch(RelOptRuleCall call) {
       final LogicalTableScan table = call.rel(0);
       QueryRelationalTable queryTable = table.getTable().unwrap(QueryRelationalTable.class);
-      SourceRelationalTable sourceTable = table.getTable().unwrap(SourceRelationalTable.class);
+      SourceRelationalTableImpl sourceTable = table.getTable().unwrap(SourceRelationalTableImpl.class);
       Preconditions.checkArgument(queryTable!=null ^ sourceTable!=null);
       if (queryTable!=null) {
         RelBuilder relBuilder = getBuilder(table);
