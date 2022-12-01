@@ -1,7 +1,8 @@
 package ai.datasqrl;
 
 import ai.datasqrl.config.EngineSettings;
-import ai.datasqrl.metadata.MetadataConfiguration;
+import ai.datasqrl.config.GlobalEngineConfiguration;
+import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.physical.EngineConfiguration;
 import ai.datasqrl.physical.database.inmemory.InMemoryDatabaseConfiguration;
 import ai.datasqrl.physical.database.inmemory.InMemoryMetadataStore;
@@ -15,6 +16,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Value
 @Builder
@@ -55,7 +58,11 @@ public class IntegrationTestSettings {
                 engines.add(jdbcDB.getJdbcConfiguration());
                 database = jdbcDB;
         }
-        return Pair.of(database,new EngineSettings(engines, new MetadataConfiguration()));
+        GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.builder().engines(engines).build();
+        ErrorCollector errors = ErrorCollector.root();
+        EngineSettings engineSettings = engineConfig.initializeEngines(errors);
+        assertNotNull(engineSettings, errors.toString());
+        return Pair.of(database,engineSettings);
     }
 
     public static IntegrationTestSettings getInMemory() {

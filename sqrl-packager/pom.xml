@@ -18,6 +18,10 @@
 
     <dependencies>
         <dependency>
+            <artifactId>sqrl-spi</artifactId>
+            <groupId>ai.datasqrl</groupId>
+        </dependency>
+        <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
         </dependency>
