@@ -18,19 +18,19 @@ import lombok.Singular;
 
 public class Model {
   public interface RootVisitor<R, C> {
-    R visitRoot(Root root, C context);
+    R visitRoot(RootGraphqlModel root, C context);
   }
 
   @Getter
   @Builder
   @NoArgsConstructor
-  public static class Root {
+  public static class RootGraphqlModel {
     @Singular
     List<Coords> coords;
     Schema schema;
 
     @JsonCreator
-    public Root(
+    public RootGraphqlModel(
         @JsonProperty("coords") List<Coords> coords,
         @JsonProperty("schema") Schema schema) {
       this.coords = coords;

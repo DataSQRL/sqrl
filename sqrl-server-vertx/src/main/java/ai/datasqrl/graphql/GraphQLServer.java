@@ -2,9 +2,8 @@ package ai.datasqrl.graphql;
 
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
-import ai.datasqrl.graphql.server.Model.Root;
+import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -26,11 +25,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {
 
-  private Root root;
+  private RootGraphqlModel root;
   private JDBCConnectionProvider jdbcConf;
   private SqlClientInternal client;
 
-  public GraphQLServer(Root root, JDBCConnectionProvider jdbcConf) {
+  public GraphQLServer(RootGraphqlModel root, JDBCConnectionProvider jdbcConf) {
     this.root = root;
     this.jdbcConf = jdbcConf;
   }

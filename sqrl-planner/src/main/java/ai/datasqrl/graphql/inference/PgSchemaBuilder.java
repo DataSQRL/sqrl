@@ -21,7 +21,7 @@ import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import ai.datasqrl.graphql.server.Model.Coords;
 import ai.datasqrl.graphql.server.Model.FieldLookupCoords;
 import ai.datasqrl.graphql.server.Model.PgParameterHandler;
-import ai.datasqrl.graphql.server.Model.Root;
+import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
 import ai.datasqrl.graphql.server.Model.SourcePgParameter;
 import ai.datasqrl.graphql.server.Model.StringSchema;
 import ai.datasqrl.graphql.util.ApiQueryBase;
@@ -61,8 +61,8 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
 
-public class PgBuilder implements
-    InferredSchemaVisitor<Root, Object>,
+public class PgSchemaBuilder implements
+    InferredSchemaVisitor<RootGraphqlModel, Object>,
     InferredRootObjectVisitor<List<Coords>, Object>,
     InferredFieldVisitor<Coords, Object> {
 
@@ -78,7 +78,7 @@ public class PgBuilder implements
   @Getter
   private List<APIQuery> apiQueries = new ArrayList<>();
 
-  public PgBuilder(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder,
+  public PgSchemaBuilder(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder,
       Planner planner) {
     this.stringSchema = gqlSchema;
     this.registry = (new SchemaParser()).parse(gqlSchema);
@@ -88,8 +88,8 @@ public class PgBuilder implements
   }
 
   @Override
-  public Root visitSchema(InferredSchema schema, Object context) {
-    return Root.builder()
+  public RootGraphqlModel visitSchema(InferredSchema schema, Object context) {
+    return RootGraphqlModel.builder()
         .schema(StringSchema.builder().schema(stringSchema).build())
         .coords(schema.getQuery().accept(this, context))
         .build();

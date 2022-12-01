@@ -19,12 +19,11 @@ import ai.datasqrl.graphql.server.Model.ResolvedPagedPgQuery;
 import ai.datasqrl.graphql.server.Model.ResolvedPgQuery;
 import ai.datasqrl.graphql.server.Model.ResolvedQuery;
 import ai.datasqrl.graphql.server.Model.ResolvedQueryVisitor;
-import ai.datasqrl.graphql.server.Model.Root;
+import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
 import ai.datasqrl.graphql.server.Model.RootVisitor;
 import ai.datasqrl.graphql.server.Model.SchemaVisitor;
 import ai.datasqrl.graphql.server.Model.SourcePgParameter;
 import ai.datasqrl.graphql.server.Model.StringSchema;
-import ai.datasqrl.graphql.server.VertxGraphQLBuilder.PreparedSqrlQueryImpl;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder.QueryExecutionContext;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
 import graphql.GraphQL;
@@ -75,7 +74,7 @@ public class VertxGraphQLBuilder implements
   }
 
   @Override
-  public GraphQL visitRoot(Root root, VertxContext context) {
+  public GraphQL visitRoot(RootGraphqlModel root, VertxContext context) {
     TypeDefinitionRegistry registry = root.schema.accept(this, null);
 
     GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();

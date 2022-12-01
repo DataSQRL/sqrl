@@ -3,6 +3,13 @@ package ai.datasqrl.compile;
 
 import ai.datasqrl.AbstractEngineIT;
 import ai.datasqrl.IntegrationTestSettings;
+import ai.datasqrl.config.error.ErrorCollector;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.util.Map;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
@@ -38,9 +45,10 @@ public class C360BundleTest extends AbstractEngineIT {
     initialize(IntegrationTestSettings.getFlinkWithDB());
     Path dest = copyBundle(c360Script);
     ai.datasqrl.compile.Compiler compiler = new ai.datasqrl.compile.Compiler();
-    compiler.run(dest.resolve("build/"), Optional.of(dest.resolve("schema.graphqls")),engineSettings);
+    compiler.run(ErrorCollector.root(),
+        dest.resolve("build/"), Optional.of(dest.resolve("schema.graphqls")), engineSettings);
 
-    HttpResponse<String> s = compiler.testQuery("{\n"
+    HttpResponse<String> s = testQuery("{\n"
         + "\n"
         + "  Orders{\n"
         + "    entries(limit:10, offset:0) {\n"
@@ -60,6 +68,18 @@ public class C360BundleTest extends AbstractEngineIT {
 //    while(true) {
 //      Thread.sleep(10);
 //    }
+  }
+
+  @SneakyThrows
+  public static HttpResponse<String> testQuery(String query) {
+    ObjectMapper mapper = new ObjectMapper();
+    HttpClient client = HttpClient.newHttpClient();
+    HttpRequest request = HttpRequest.newBuilder()
+        .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(
+            Map.of("query", query))))
+        .uri(URI.create("http://localhost:8888/graphql"))
+        .build();
+    return client.send(request, BodyHandlers.ofString());
   }
 
   @SneakyThrows
