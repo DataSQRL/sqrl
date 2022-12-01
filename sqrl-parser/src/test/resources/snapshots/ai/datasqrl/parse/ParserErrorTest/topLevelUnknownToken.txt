@@ -1,1 +1,4 @@
-[[FATAL] @1:14: mismatched input at 'package'. Expecting: '/*+', 'EXPORT', 'IMPORT', <identifier>]
+[FATAL]
+UNKNOWNTOKEN package;
+--------------^  mismatched input at 'package'. Expecting: '/*+', 'EXPORT', 'IMPORT', <identifier>
+

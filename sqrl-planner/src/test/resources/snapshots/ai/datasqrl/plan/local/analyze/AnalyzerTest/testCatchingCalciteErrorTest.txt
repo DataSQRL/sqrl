@@ -1,0 +1,12 @@
+[FATAL]
+IMPORT ecommerce-data.Product;X := SELECT productid, SUM(productid) FROM Product GROUP BY name
+------------------------------------------------------------------------------------------^  Could not find grouping key: name
+Could not find field when trying to resolve expression.
+
+Erroneous code example:
+```
+IMPORT ecommerce-data.Orders;
+Orders.x := SELECT missingField FROM _;
+```
+
+Assure the column name exists.

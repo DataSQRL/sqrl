@@ -1,1 +1,4 @@
-[[FATAL] @1:24: mismatched input at 'AS'. Expecting: '*', '/*+', 'ALL', 'DISTINCT', <expression>]
+[FATAL]
+Test.example := SELECT AS AS AS, * FROM t;
+------------------------^  mismatched input at 'AS'. Expecting: '*', '/*+', 'ALL', 'DISTINCT', <expression>
+

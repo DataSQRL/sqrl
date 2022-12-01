@@ -14,11 +14,8 @@
 package org.apache.calcite.sql;
 
 import java.util.List;
-import java.util.Optional;
 import lombok.Getter;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlWriter;
+import lombok.Setter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlVisitor;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -30,6 +27,8 @@ public final class ScriptNode
     extends SqlNode {
 
   private final List<SqlNode> statements;
+  @Setter
+  private String originalScript;
 
   public ScriptNode(SqlParserPos location,
       List<SqlNode> statements) {

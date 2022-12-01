@@ -62,7 +62,9 @@ public class SqrlParser {
   }
 
   public ScriptNode parse(String sql) {
-    return (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
+    ScriptNode scriptNode = (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
+    scriptNode.setOriginalScript(sql);
+    return scriptNode;
   }
 
   public SqrlStatement parseStatement(String sql) {

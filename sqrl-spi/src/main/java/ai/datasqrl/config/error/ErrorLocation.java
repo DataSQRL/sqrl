@@ -33,7 +33,7 @@ public interface ErrorLocation {
 
   String getPath();
 
-  File getFile();
+  FileLocation getFile();
 
   @JsonIgnore
   default boolean hasFile() {
@@ -50,13 +50,13 @@ public interface ErrorLocation {
 
   default ErrorLocation atFile(int line, int offset) {
     Preconditions.checkArgument(line > 0 && offset > 0);
-    return atFile(new File(line, offset));
+    return atFile(new FileLocation(line, offset));
   }
 
-  ErrorLocation atFile(@NonNull File file);
+  ErrorLocation atFile(@NonNull ErrorLocation.FileLocation file);
 
   @Value
-  class File {
+  class FileLocation {
 
     private final int line;
     private final int offset;

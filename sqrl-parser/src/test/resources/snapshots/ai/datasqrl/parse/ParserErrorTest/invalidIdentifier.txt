@@ -1,1 +1,4 @@
-[[FATAL] @1:5: mismatched input at '$'. Expecting: '/*+', 'EXPORT', 'IMPORT', <identifier>]
+[FATAL]
+Test$0.example := SELECT * FROM x;
+-----^  mismatched input at '$'. Expecting: '/*+', 'EXPORT', 'IMPORT', <identifier>
+
