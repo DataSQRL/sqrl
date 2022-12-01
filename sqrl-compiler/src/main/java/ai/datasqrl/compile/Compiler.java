@@ -89,7 +89,6 @@ public class Compiler {
 
     log.info("build dir: " + build.toAbsolutePath());
     writeGraphql(build, root, gqlSchema);
-//    exec(plan);
   }
 
   private OptimizedDAG optimizeDag(List<APIQuery> queries, Env env) {
@@ -109,14 +108,7 @@ public class Compiler {
     PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.getPlanner().getRelBuilder());
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     return physicalPlan;
-
   }
-
-//  private void exec(PhysicalPlan plan) {
-//    PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-//    PhysicalPlanExecutor.Result result = executor.execute(plan);
-//    log.trace("Executed physical plan: {}", result);
-//  }
 
   @SneakyThrows
   public String inferOrGetSchema(Env env, Optional<Path> graphqlSchema) {
