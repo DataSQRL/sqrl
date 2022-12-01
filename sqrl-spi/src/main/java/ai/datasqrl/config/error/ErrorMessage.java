@@ -13,6 +13,10 @@ public interface ErrorMessage {
 
   ErrorLocation getLocation();
 
+  SourceMap getSourceMap();
+
+  Optional<ErrorCode> getErrorCode();
+
   @JsonIgnore
   default boolean isFatal() {
     return getSeverity() == Severity.FATAL;
@@ -48,17 +52,20 @@ public interface ErrorMessage {
     private final String message;
     private final ErrorLocation location;
     private final Severity severity;
+    private final SourceMap sourceMap;
 
-    public Implementation(String message, ErrorLocation location, Severity severity) {
-      this(Optional.empty(), message, location, severity);
+    public Implementation(String message, ErrorLocation location, Severity severity,
+        SourceMap sourceMap) {
+      this(Optional.empty(), message, location, severity, sourceMap);
     }
 
     public Implementation(Optional<ErrorCode> errorCode, String message, ErrorLocation location,
-        Severity severity) {
+        Severity severity, SourceMap sourceMap) {
       this.errorCode = errorCode;
       this.message = message;
       this.location = location;
       this.severity = severity;
+      this.sourceMap = sourceMap;
     }
 
     @Override

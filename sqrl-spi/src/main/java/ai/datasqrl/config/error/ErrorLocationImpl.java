@@ -13,9 +13,9 @@ class ErrorLocationImpl implements ErrorLocation {
 
   private final String prefix;
   private final String[] names;
-  private final File file;
+  private final FileLocation file;
 
-  private ErrorLocationImpl(String prefix, File file, @NonNull String... names) {
+  private ErrorLocationImpl(String prefix, FileLocation file, @NonNull String... names) {
     this.prefix = prefix;
     this.names = names;
     this.file = file;
@@ -31,7 +31,7 @@ class ErrorLocationImpl implements ErrorLocation {
     return new ErrorLocationImpl(prefix, other.getFile(), other.getPathArray());
   }
 
-  public static ErrorLocation of(String prefix, @NonNull File file) {
+  public static ErrorLocation of(String prefix, @NonNull ErrorLocation.FileLocation file) {
     return new ErrorLocationImpl(prefix, file);
   }
 
@@ -58,7 +58,7 @@ class ErrorLocationImpl implements ErrorLocation {
   }
 
   @Override
-  public ErrorLocation atFile(@NonNull File file) {
+  public ErrorLocation atFile(@NonNull ErrorLocation.FileLocation file) {
     Preconditions.checkArgument(!hasFile());
     return new ErrorLocationImpl(prefix, file, names);
   }

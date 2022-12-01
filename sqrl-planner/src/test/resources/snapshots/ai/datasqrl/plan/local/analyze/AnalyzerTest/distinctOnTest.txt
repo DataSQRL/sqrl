@@ -1,0 +1,3 @@
+[FATAL]
+Distinct on statement not valid
+

@@ -1,0 +1,5 @@
+[FATAL]
+IMPORT ecommerce-data.Product;
+IMPORT ecommerce-data.Product;
+-------^  An item named `product` is already in scope
+

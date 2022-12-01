@@ -950,7 +950,8 @@ class AstBuilder
   public SqlNode visitScript(ScriptContext ctx) {
     return new ScriptNode(
         getLocation(ctx),
-        visit(ctx.statement(), SqlNode.class));
+        visit(ctx.statement(), SqlNode.class)
+    );
   }
 
   @Override

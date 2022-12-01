@@ -1,0 +1,4 @@
+[FATAL]
+IMPORT ecommerce-data.Product;X := SELECT productid, SUM(productid) FROM Product GROUP BY name
+------------------------------------------------------------------------------------------^  Could not find grouping key: name
+

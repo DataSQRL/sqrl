@@ -1,0 +1,5 @@
+[FATAL]
+Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;
+Product.total := MIN(joinDeclaration.productid, joinDeclaration.parent.productid);
+---------------------^  Field cannot be walked here, has to-many multiplicity: joindeclaration
+

@@ -1,6 +1,8 @@
 package ai.datasqrl.parse;
 
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.config.error.ErrorPrinter;
+import ai.datasqrl.config.error.SourceMapImpl;
 import ai.datasqrl.util.SnapshotTest;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.AfterEach;
@@ -11,12 +13,10 @@ import org.junit.jupiter.api.TestInfo;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class ParserErrorTest {
-  ErrorCollector errorCollector;
   SnapshotTest.Snapshot snapshot;
 
   @BeforeEach
   public void before(TestInfo testInfo) {
-    errorCollector = ErrorCollector.root();
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
   }
 
@@ -56,6 +56,9 @@ public class ParserErrorTest {
   }
 
   public void handle(String str) {
+    ErrorCollector errorCollector = ErrorCollector.root()
+        .sourceMap(new SourceMapImpl(str));
+
     errorCollector.registerHandler(ParsingException.class, new ParsingExceptionHandler());
 
     SqrlParser parser = SqrlParser.newParser();
@@ -66,6 +69,7 @@ public class ParserErrorTest {
     } catch (ParsingException e) {
       errorCollector.handle(e);
     }
-    snapshot.addContent(errorCollector.getAll().toString());
+
+    snapshot.addContent(ErrorPrinter.prettyPrint(errorCollector));
   }
 }

@@ -29,7 +29,7 @@ public enum ErrorPrefix implements ErrorLocation {
   }
 
   @Override
-  public File getFile() {
+  public FileLocation getFile() {
     return null;
   }
 
@@ -44,7 +44,7 @@ public enum ErrorPrefix implements ErrorLocation {
   }
 
   @Override
-  public ErrorLocation atFile(@NonNull File file) {
+  public ErrorLocation atFile(@NonNull ErrorLocation.FileLocation file) {
     return ErrorLocationImpl.of(getPrefix(), file);
   }
 

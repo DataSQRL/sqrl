@@ -1,0 +1,5 @@
+[FATAL]
+Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;
+Product.total := SELECT SUM(joinDeclaration.productid) AS totals FROM _;
+----------------------------^  Field cannot be walked here, has to-many multiplicity: joindeclaration
+

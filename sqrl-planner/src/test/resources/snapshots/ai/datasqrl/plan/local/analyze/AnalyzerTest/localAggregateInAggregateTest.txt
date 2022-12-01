@@ -1,0 +1,5 @@
+[FATAL]
+Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;
+Product.total := SUM(COUNT(joinDeclaration));
+---------------------------^  Field cannot be walked here, has to-many multiplicity: joindeclaration
+

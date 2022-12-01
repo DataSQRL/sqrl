@@ -1,0 +1,5 @@
+[FATAL]
+IMPORT ecommerce-data.Product;
+ProductCount := count(Product);
+^  Could not find table: ProductCount
+

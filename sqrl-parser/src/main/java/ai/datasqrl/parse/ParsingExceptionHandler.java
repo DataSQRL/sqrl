@@ -11,4 +11,9 @@ public class ParsingExceptionHandler implements ErrorHandler<ParsingException> {
     return emitter.fatal(e.getLineNumber(), e.getColumnNumber(), e.getErrorMessage(),
         e.getCause());
   }
+
+  @Override
+  public Class getHandleClass() {
+    return ParsingException.class;
+  }
 }

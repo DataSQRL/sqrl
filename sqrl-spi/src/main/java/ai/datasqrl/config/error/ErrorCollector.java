@@ -1,5 +1,6 @@
 package ai.datasqrl.config.error;
 
+import ai.datasqrl.config.error.SourceMap.EmptySourceMap;
 import ai.datasqrl.parse.tree.name.Name;
 import lombok.Getter;
 import lombok.NonNull;
@@ -13,19 +14,25 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
   private final ErrorEmitter errorEmitter;
   private final List<ErrorMessage> errors;
 
-  private final Map<Class, ErrorHandler> handlers = new HashMap<>();
-
   private ErrorCollector(@NonNull ErrorEmitter errorEmitter, @NonNull List<ErrorMessage> errors) {
     this.errorEmitter = errorEmitter;
     this.errors = errors;
+    registerHandlers();
   }
 
   private ErrorCollector(@NonNull ErrorLocation location, @NonNull List<ErrorMessage> errors) {
-    this(new ErrorEmitter(location), errors);
+    this(new ErrorEmitter(new EmptySourceMap(), location), errors);
   }
 
   private ErrorCollector(@NonNull ErrorLocation location) {
     this(location, new ArrayList<>(5));
+  }
+
+  private void registerHandlers() {
+    ServiceLoader<ErrorHandler> serviceLoader = ServiceLoader.load(ErrorHandler.class);
+    for (ErrorHandler handler : serviceLoader) {
+      registerHandler(handler.getHandleClass(), handler);
+    }
   }
 
   public static ErrorCollector root() {
@@ -33,13 +40,15 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
   }
 
   public void registerHandler(Class clazz, ErrorHandler handler) {
-//      SqrlAstException.class, new SqrlAstExceptionHandler(),
-//      ValidationException.class, new ValidationExceptionHandler()
-    handlers.put(clazz, handler);
+    errorEmitter.handlers.put(clazz, handler);
   }
 
   public static ErrorCollector fromPrefix(@NonNull ErrorPrefix prefix) {
     return new ErrorCollector(prefix);
+  }
+
+  public ErrorCollector sourceMap(SourceMap sourceMap) {
+    return new ErrorCollector(errorEmitter.resolveSourceMap(sourceMap), errors);
   }
 
   public ErrorCollector resolve(String location) {
@@ -59,7 +68,8 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
     if (!errLoc.hasPrefix()) {
       //Adjust relative location
       ErrorLocation newloc = errorEmitter.getBaseLocation().append(errLoc);
-      err = new ErrorMessage.Implementation(err.getMessage(), newloc, err.getSeverity());
+      err = new ErrorMessage.Implementation(err.getMessage(), newloc, err.getSeverity(),
+          errorEmitter.getSourceMap());
     }
     addInternal(err);
   }
@@ -150,9 +160,9 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
 //  }
 
   public void handle(Exception e) {
-    Optional<ErrorHandler> handler = Optional.ofNullable(handlers.get(e.getClass()));
+    Optional<ErrorMessage> handler = errorEmitter.handle(e);
     handler.ifPresentOrElse(
-        h -> add(h.handle(e, errorEmitter)),
+        this::add,
         () -> fatal(e.getMessage()));
   }
 }

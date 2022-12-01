@@ -390,7 +390,8 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     }
                 } else if (topNHint.getType() == TopNHint.Type.DISTINCT_ON) {
                     //Partition is the new primary key and the underlying table must be a stream
-                    Preconditions.checkArgument(!partition.isEmpty() && collation.getFieldCollations().size()==1 && baseInput.type==TableType.STREAM);
+                    Preconditions.checkArgument(!partition.isEmpty() && collation.getFieldCollations().size()==1 && baseInput.type==TableType.STREAM,
+                        "Distinct on statement not valid");
                     isDistinct = true;
 
                     pk = ContinuousIndexMap.builder(partition.size()).addAll(partition).build(targetLength);

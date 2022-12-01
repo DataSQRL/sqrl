@@ -3,6 +3,7 @@ package ai.datasqrl.plan.local.analyze;
 import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.error.ErrorCode;
+import ai.datasqrl.config.error.ErrorPrinter;
 import ai.datasqrl.parse.ParsingException;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
@@ -20,6 +21,7 @@ import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.type.IntervalSqlType;
 import org.junit.Ignore;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -42,6 +44,11 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
     this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
   }
 
+  @AfterEach
+  public void after() {
+    this.snapshot.createOrValidate();
+  }
+
   private Env generate(ScriptNode node) {
     Env env = resolve.planDag(session, node);
     snapshotEnv(env);
@@ -50,27 +57,20 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
 
   private void snapshotEnv(Env env) {
     if (env.getOps().size() == 0) {
+      snapshot.addContent("no operations");
       return;
     }
-      for (StatementOp op : env.getOps()) {
+    for (StatementOp op : env.getOps()) {
       snapshot.addContent(String.format("%s", op.getRelNode().explain()));
     }
-
-    snapshot.createOrValidate();
   }
 
   private void generateInvalid(ScriptNode node) {
-    assertThrows(Exception.class,
-        ()->resolve.planDag(session, node),
-        "Statement should throw exception"
-        );
-  }
-
-  private void generateInvalid(ScriptNode node, ErrorCode expectedCode) {
     try {
       resolve.planDag(session, node);
-      fail();
+      fail("Should throw exception");
     } catch (Exception e) {
+      snapshot.addContent(ErrorPrinter.prettyPrint(session.getErrors()));
     }
   }
 
@@ -79,8 +79,7 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
     generateInvalid(parser.parse(""
         + "IMPORT ecommerce-data.Product;"
         //Expression 'productid' is not being grouped
-        + "X := SELECT productid, SUM(productid) FROM Product GROUP BY name"),
-        ErrorCode.GENERIC_ERROR);
+        + "X := SELECT productid, SUM(productid) FROM Product GROUP BY name"));
   }
 
   // IMPORTS
@@ -108,7 +107,7 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   public void duplicateImportTest() {
     generateInvalid(
         parser.parse("IMPORT ecommerce-data.Product;\n"
-            + "IMPORT ecommerce-data.Product;\n"), ErrorCode.IMPORT_NAMESPACE_CONFLICT);
+            + "IMPORT ecommerce-data.Product;\n"));
   }
 
   @Test
@@ -178,14 +177,12 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void importAllWithAliasTest() {
-    generateInvalid(parser.parse("IMPORT ecommerce-data.* AS ecommerce;"),
-        ErrorCode.IMPORT_CANNOT_BE_ALIASED);
+    generateInvalid(parser.parse("IMPORT ecommerce-data.* AS ecommerce;"));
   }
 
   @Test
   public void importAllWithTimestampTest() {
-    generateInvalid(parser.parse("IMPORT ecommerce-data.* TIMESTAMP _ingest_time AS c_ts;"),
-        ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP);
+    generateInvalid(parser.parse("IMPORT ecommerce-data.* TIMESTAMP _ingest_time AS c_ts;"));
   }
 
   @Test
@@ -661,18 +658,6 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Ignore
-  public void invalidNestedDistinctTest() {
-    assertThrows(ParsingException.class,
-        ()->parser.parse(
-            "IMPORT ecommerce-data.Product;\n"
-                + "Product.nested := SELECT productid FROM Product;\n"
-                + "Product2 := DISTINCT Product.nested ON productid;"
-        ),
-        "Path not nestable");
-  }
-
-  @Test
   public void uniqueOrderByTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT * FROM Product ORDER BY productid / 10;"));
@@ -728,10 +713,6 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   public void starAliasPrefixTest() {
     generate(parser.parse("IMPORT ecommerce-data.Product;" +
         "X := SELECT j.* FROM Product j JOIN Product h ON true;"));
-  }
-
-  @Test
-  public void invalidDistinctOrder() {
   }
 
   @Test

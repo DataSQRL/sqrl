@@ -1,1 +1,4 @@
-[[FATAL] @1:31: mismatched input at '0'. Expecting: '(', <identifier>]
+[FATAL]
+Test.example := SELECT * FROM 0test;
+------------------------------^  mismatched input at '0'. Expecting: '(', <identifier>
+

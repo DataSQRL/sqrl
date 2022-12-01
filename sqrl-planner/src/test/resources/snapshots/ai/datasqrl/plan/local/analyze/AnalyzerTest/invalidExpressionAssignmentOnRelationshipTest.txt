@@ -1,0 +1,5 @@
+[FATAL]
+Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;
+Product.joinDeclaration.column := 1;
+^  
+

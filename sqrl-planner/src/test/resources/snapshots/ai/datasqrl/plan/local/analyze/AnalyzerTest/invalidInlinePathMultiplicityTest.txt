@@ -1,0 +1,5 @@
+[FATAL]
+Product.joinDeclaration := JOIN Product ON true;
+Product2 := SELECT joinDeclaration.productid, productid FROM Product;
+-------------------^  Field cannot be walked here, has to-many multiplicity: joindeclaration
+

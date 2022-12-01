@@ -3,6 +3,7 @@ package ai.datasqrl.plan.local.generate;
 import ai.datasqrl.compile.loaders.*;
 import ai.datasqrl.config.error.ErrorCode;
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.config.error.SourceMapImpl;
 import ai.datasqrl.parse.SqrlAstException;
 import ai.datasqrl.io.sources.dataset.TableSink;
 import ai.datasqrl.io.sources.dataset.TableSource;
@@ -104,12 +105,12 @@ public class Resolve {
     List<FlinkFnc> resolvedFunctions = new ArrayList<>();
 
     public Env(SqrlCalciteSchema relSchema, Session session,
-        ScriptNode scriptNode, Path packagePath) {
+        ScriptNode scriptNode, Path packagePath, ErrorCollector errorCollector) {
       this.relSchema = relSchema;
       this.session = session;
       this.scriptNode = scriptNode;
       this.packagePath = packagePath;
-      this.errors = session.getErrors();
+      this.errors = errorCollector;
     }
 
 
@@ -134,7 +135,7 @@ public class Resolve {
   }
 
   public Env planDag(Session session, ScriptNode script) {
-    Env env = createEnv(session, script);
+    Env env = createEnv(session, script, script.getOriginalScript());
 
     try {
       resolveImports(env);
@@ -142,20 +143,19 @@ public class Resolve {
       planQueries(env);
       return env;
     } catch (Exception e) {
-      log.error(session.getErrors().toString());
       env.errors.handle(e);
-      e.printStackTrace();
       throw e;
     }
   }
 
-  public Env createEnv(Session session, ScriptNode script) {
+  public Env createEnv(Session session, ScriptNode script, String originalScript) {
     // All operations are applied to this env
     return new Env(
         session.planner.getDefaultSchema().unwrap(SqrlCalciteSchema.class),
         session,
         script,
-        basePath
+        basePath,
+        session.getErrors().sourceMap(new SourceMapImpl(originalScript))
     );
   }
 
@@ -203,7 +203,7 @@ public class Resolve {
     LoaderContext context = new LoaderContextImpl(env);
     if (last.equals(ReservedName.ALL)) {
       checkState(node.getAlias().isEmpty(), IMPORT_CANNOT_BE_ALIASED,
-          () -> node.getParserPosition(),
+          () -> node.getAlias().get().getParserPosition(),
           () -> "Alias `" + node.getAlias().get().names.get(0)+ "` cannot be used here.");
 
       checkState(node.getTimestamp().isEmpty(), IMPORT_STAR_CANNOT_HAVE_TIMESTAMP,
@@ -235,7 +235,7 @@ public class Resolve {
 
   private void setCurrentNode(Env env, SqrlStatement node) {
     env.currentNode = node;
-    env.errors = env.session.getErrors().resolve(pathToString(node.getNamePath()));
+    env.errors = env.errors.resolve(pathToString(node.getNamePath()));
   }
 
   public void registerScriptTable(Env env, ScriptTableDefinition tblDef) {

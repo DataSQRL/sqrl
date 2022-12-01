@@ -1,0 +1,5 @@
+[FATAL]
+IMPORT ecommerce-data.Product;
+Product2 := JOIN Product;
+^  Root JOIN declarations are not yet supported
+

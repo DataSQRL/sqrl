@@ -1,0 +1,4 @@
+[FATAL]
+IMPORT ecommerce-data.* AS ecommerce;
+---------------------------^  Alias `ecommerce` cannot be used here.
+

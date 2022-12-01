@@ -1,0 +1,5 @@
+[FATAL]
+IMPORT ecommerce-data.Product;
+Product.nested :=   SELECT DISTINCT count(1)   FROM _ JOIN Product p   GROUP BY p.category;
+--------------------------------------------------------------------------------^  Could not find grouping key: p.category
+

@@ -1,0 +1,5 @@
+[FATAL]
+IMPORT ecommerce-data.Product;
+Product.total := SUM(Product.productid);
+---------------------^  Could not find field: [Product, productid]
+

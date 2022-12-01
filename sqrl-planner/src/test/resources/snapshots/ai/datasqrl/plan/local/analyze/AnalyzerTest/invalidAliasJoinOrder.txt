@@ -1,0 +1,4 @@
+[FATAL]
+IMPORT ecommerce-data.Orders;X := SELECT * From Orders o JOIN o;
+--------------------------------------------------------------^  Could not find table: [o]
+

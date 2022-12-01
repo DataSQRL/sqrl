@@ -1,0 +1,5 @@
+[FATAL]
+IMPORT ecommerce-data.Product;
+Product.nested := SELECT p.productid FROM Product p;Product.nested := DISTINCT _ ON _.productid;
+----------------------------------------------------^  
+

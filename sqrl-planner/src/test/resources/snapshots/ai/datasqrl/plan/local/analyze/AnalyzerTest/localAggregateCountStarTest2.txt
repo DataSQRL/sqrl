@@ -1,0 +1,5 @@
+[FATAL]
+IMPORT ecommerce-data.Product;
+Product.total := COUNT();
+^  Complex column not yet supported
+

@@ -1,0 +1,4 @@
+[FATAL]
+IMPORT ecommerce-data.* TIMESTAMP _ingest_time AS c_ts;
+----------------------------------^  Cannot use timestamp with import star
+

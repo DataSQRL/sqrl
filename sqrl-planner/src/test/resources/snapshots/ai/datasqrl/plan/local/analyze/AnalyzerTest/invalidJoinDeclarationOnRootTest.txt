@@ -1,0 +1,5 @@
+[FATAL]
+IMPORT ecommerce-data.Product;
+Product2 := JOIN Product ON _.productid = Product.productid;
+----------------------------^  Could not find field: [_, productid]
+
