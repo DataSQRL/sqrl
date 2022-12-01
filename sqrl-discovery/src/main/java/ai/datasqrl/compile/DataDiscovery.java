@@ -36,7 +36,7 @@ public class DataDiscovery {
     public DataDiscovery(ErrorCollector errors, EngineSettings settings) {
         this.errors = errors;
         this.settings = settings;
-        streamEngine = settings.getStream(errors);
+        streamEngine = settings.getStream();
         statsStore = new TableStatisticsStoreProvider.EncapsulatedImpl(
                 settings.getMetadataStoreProvider(),
             new MetadataNamedPersistence.TableStatsProvider());

@@ -46,7 +46,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     protected void initialize(IntegrationTestSettings settings, Path rootDir) {
         super.initialize(settings, rootDir);
 
-        jdbc = engineSettings.getJDBC(error);
+        jdbc = engineSettings.getJDBC();
 
         physicalPlanner = new PhysicalPlanner(planner.getRelBuilder());
     }

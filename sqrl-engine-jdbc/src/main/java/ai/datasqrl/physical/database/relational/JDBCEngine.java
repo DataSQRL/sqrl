@@ -30,8 +30,8 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     public static final EnumMap<Dialect,EnumSet<EngineCapability>> CAPABILITIES_BY_DIALECT = new EnumMap<Dialect, EnumSet<EngineCapability>>(
         Dialect.class);
     static {
-        CAPABILITIES_BY_DIALECT.put(Dialect.POSTGRES,
-                EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK));
+        CAPABILITIES_BY_DIALECT.put(Dialect.POSTGRES, EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK));
+        CAPABILITIES_BY_DIALECT.put(Dialect.H2, EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK));
     }
 
     final JDBCEngineConfiguration config;

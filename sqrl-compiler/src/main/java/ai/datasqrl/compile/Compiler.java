@@ -57,7 +57,7 @@ public class Compiler {
         CalciteSchema.createRootSchema(false, false).plus());
 
     Planner planner = new PlannerFactory(schema.plus()).createPlanner();
-    Session s = new Session(collector, planner, engineSettings.getPipeline(collector));
+    Session s = new Session(collector, planner, engineSettings.getPipeline());
     Resolve resolve = new Resolve(build);
 
     File file = new File(build
