@@ -2,4 +2,10 @@
 IMPORT ecommerce-data.Product;
 Product.nested := SELECT p.productid FROM Product p;Product.nested := DISTINCT _ ON _.productid;
 ----------------------------------------------------^  
+Nested DISTINCT ON statements not supported.
 
+Erroneous code example:
+```
+IMPORT ecommerce-data.Product;
+Product.nested := DISTINCT _ ON _.productid;
+```

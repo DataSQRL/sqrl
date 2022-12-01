@@ -2,4 +2,18 @@
 IMPORT ecommerce-data.Product;
 ProductCount := count(Product);
 ^  Could not find table: ProductCount
+Cannot find table for statement.
+
+Erroneous code example:
+```
+IMPORT ecommerce-data.Orders;
+Orders.entrees.discount := discount ? 0.0;
+_______^
+```
+
+Assure that the table path exists. Example:
+```
+IMPORT ecommerce-data.Orders;
+Orders.entries.discount := discount ? 0.0;
+```
 

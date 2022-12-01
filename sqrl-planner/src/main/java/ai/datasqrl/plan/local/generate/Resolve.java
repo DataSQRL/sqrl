@@ -3,6 +3,7 @@ package ai.datasqrl.plan.local.generate;
 import ai.datasqrl.compile.loaders.*;
 import ai.datasqrl.config.error.ErrorCode;
 import ai.datasqrl.config.error.ErrorCollector;
+import ai.datasqrl.config.error.ErrorPrefix;
 import ai.datasqrl.config.error.SourceMapImpl;
 import ai.datasqrl.parse.SqrlAstException;
 import ai.datasqrl.io.sources.dataset.TableSink;
@@ -155,7 +156,9 @@ public class Resolve {
         session,
         script,
         basePath,
-        session.getErrors().sourceMap(new SourceMapImpl(originalScript))
+        session.getErrors()
+            .fromPrefix(ErrorPrefix.SCRIPT)
+            .sourceMap(new SourceMapImpl(originalScript))
     );
   }
 

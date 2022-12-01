@@ -10,7 +10,7 @@ public class SqrlAstExceptionHandler implements ErrorHandler<SqrlAstException> {
 
   @Override
   public ErrorMessage handle(SqrlAstException e, ErrorEmitter emitter) {
-    return new Implementation(Optional.of(e.getErrorCode()), e.getMessage(),
+    return new Implementation(Optional.ofNullable(e.getErrorCode()), e.getMessage(),
         emitter.getBaseLocation()
             .atFile(new FileLocation(e.getPos().getLineNum(), e.getPos().getColumnNum())),
         Severity.FATAL,

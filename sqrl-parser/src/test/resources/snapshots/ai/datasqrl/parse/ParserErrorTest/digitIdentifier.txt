@@ -1,4 +1,0 @@
-[FATAL]
-Test.example := SELECT * FROM 0test;
-------------------------------^  mismatched input at '0'. Expecting: '(', <identifier>
-

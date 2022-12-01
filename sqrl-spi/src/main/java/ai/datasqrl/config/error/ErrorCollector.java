@@ -43,8 +43,8 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
     errorEmitter.handlers.put(clazz, handler);
   }
 
-  public static ErrorCollector fromPrefix(@NonNull ErrorPrefix prefix) {
-    return new ErrorCollector(prefix);
+  public ErrorCollector fromPrefix(@NonNull ErrorPrefix prefix) {
+    return new ErrorCollector(prefix, errors);
   }
 
   public ErrorCollector sourceMap(SourceMap sourceMap) {
@@ -68,7 +68,7 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
     if (!errLoc.hasPrefix()) {
       //Adjust relative location
       ErrorLocation newloc = errorEmitter.getBaseLocation().append(errLoc);
-      err = new ErrorMessage.Implementation(err.getMessage(), newloc, err.getSeverity(),
+      err = new ErrorMessage.Implementation(err.getErrorCode(), err.getMessage(), newloc, err.getSeverity(),
           errorEmitter.getSourceMap());
     }
     addInternal(err);
