@@ -1,6 +1,6 @@
 package ai.datasqrl.util;
 
-import ai.datasqrl.compile.loaders.DataSourceLoader;
+import ai.datasqrl.compile.loaders.DataSource;
 import ai.datasqrl.io.formats.FileFormat;
 import ai.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import ai.datasqrl.io.sources.DataSystemConfig;
@@ -29,7 +29,7 @@ public class GenerateDataSystemConfig {
         builder.format(FileFormat.JSON.getImplementation().getDefaultConfiguration());
         DataSystemConfig config = builder.build();
 
-        Path datasystemConfigFile = testDataset.getRootPackageDirectory().resolve("output").resolve(DataSourceLoader.DATASYSTEM_FILE);
+        Path datasystemConfigFile = testDataset.getRootPackageDirectory().resolve("output").resolve(DataSource.DATASYSTEM_FILE);
         FileTestUtil.writeJson(datasystemConfigFile, config);
     }
 

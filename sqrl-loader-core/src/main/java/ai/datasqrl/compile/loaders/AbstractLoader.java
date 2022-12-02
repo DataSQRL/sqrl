@@ -1,12 +1,7 @@
 package ai.datasqrl.compile.loaders;
 
-import ai.datasqrl.io.sources.DataSystemConnectorConfig;
-import ai.datasqrl.io.sources.DataSystemDiscoveryConfig;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;
@@ -21,24 +16,7 @@ import java.util.stream.Stream;
 
 public abstract class AbstractLoader implements Loader {
 
-    final ObjectMapper jsonMapper;
-    final YAMLMapper yamlMapper;
-
-    public AbstractLoader() {
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(DataSystemConnectorConfig.class, new DataSystemConnectorConfig.Deserializer());
-        module.addDeserializer(DataSystemDiscoveryConfig.class, new DataSystemDiscoveryConfig.Deserializer());
-        jsonMapper = new ObjectMapper().registerModule(module);
-        yamlMapper = new YAMLMapper();
-    }
-
-    public <T> T mapJsonFile(Path path, Class<T> clazz) {
-        return mapFile(jsonMapper, path, clazz);
-    }
-
-    public <T> T mapYAMLFile(Path path, Class<T> clazz) {
-        return mapFile(yamlMapper, path, clazz);
-    }
+    protected final Deserializer deserialize = new Deserializer();
 
     public static Path namepath2Path(Path basePath, NamePath path) {
         Path filePath = basePath;
@@ -52,7 +30,7 @@ public abstract class AbstractLoader implements Loader {
     @Override
     public Collection<Name> loadAll(LoaderContext ctx, NamePath basePath) {
         return getAllFilesInPath(namepath2Path(ctx.getPackagePath(),basePath)).stream()
-                .map(p -> handles(p))
+                .map(p -> loadsFile(p))
                 .filter(Optional::isPresent)
                 .map(name -> {
                     Name resovledName = Name.system(name.get());
@@ -70,14 +48,6 @@ public abstract class AbstractLoader implements Loader {
                     .collect(Collectors.toSet());
         } catch (IOException e) {
             return Collections.EMPTY_SET;
-        }
-    }
-
-    public static <T> T mapFile(ObjectMapper mapper, Path path, Class<T> clazz) {
-        try {
-            return mapper.readValue(path.toFile(), clazz);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 

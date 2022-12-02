@@ -1,6 +1,6 @@
 package ai.datasqrl;
 
-import ai.datasqrl.compile.loaders.DataSourceLoader;
+import ai.datasqrl.compile.loaders.DataSource;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.SqrlParser;
@@ -48,7 +48,7 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
     }
 
     protected TableSource loadTable(NamePath path) {
-        DataSourceLoader loader = new DataSourceLoader();
+        DataSource.Loader loader = new DataSource.Loader();
         return loader.readTable(rootDir,path,error).get();
     }
 

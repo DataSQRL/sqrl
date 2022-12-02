@@ -1,10 +1,10 @@
 package ai.datasqrl.packager.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.*;
-
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Builder
 @AllArgsConstructor
@@ -13,9 +13,7 @@ import javax.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class PackageConfiguration {
 
-    @NonNull @NotNull @NotEmpty
     String name;
-    @NonNull @NotNull @NotEmpty
     String version;
 
     String variant;

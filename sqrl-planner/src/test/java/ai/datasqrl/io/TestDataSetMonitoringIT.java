@@ -3,7 +3,7 @@ package ai.datasqrl.io;
 import ai.datasqrl.AbstractEngineIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.compile.DataDiscovery;
-import ai.datasqrl.compile.loaders.DataSourceLoader;
+import ai.datasqrl.compile.loaders.DataSource;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.DataSystemConfig;
 import ai.datasqrl.io.sources.dataset.TableInput;
@@ -108,7 +108,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         Path destinationDir = example.getRootPackageDirectory().resolve(example.getName());
         //Write out table configurations
         for (TableSource table : tables) {
-            Path tableConfigFile = destinationDir.resolve(table.getName().getCanonical()+DataSourceLoader.TABLE_FILE_SUFFIX);
+            Path tableConfigFile = destinationDir.resolve(table.getName().getCanonical()+ DataSource.TABLE_FILE_SUFFIX);
             FileTestUtil.writeJson(tableConfigFile,table.getConfiguration());
         }
 
@@ -118,7 +118,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         //Write out combined schema file
         SchemaExport export = new SchemaExport();
         SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
-        Path schemaFile = destinationDir.resolve(DataSourceLoader.PACKAGE_SCHEMA_FILE);
+        Path schemaFile = destinationDir.resolve(DataSource.PACKAGE_SCHEMA_FILE);
         FileTestUtil.writeYaml(schemaFile,outputSchema);
     }
 

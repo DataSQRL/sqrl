@@ -1,0 +1,231 @@
+>>>c360-full-none-dir
+
+ecommerce-data
+ecommerce-data/schema.yml
+ecommerce-data/orders.table.json
+ecommerce-data/product.table.json
+ecommerce-data/customer.table.json
+output
+output/datasystem.json
+c360
+c360/schema.yml
+package.json
+c360-full.sqrl
+>>>c360-full-none-package
+{
+  "package" : {
+    "name" : "datasqrl.examples.Nutshop",
+    "version" : "1.0.0",
+    "variant" : "dev",
+    "description" : "Basic nutshop example"
+  },
+  "compiler" : {
+    "api" : {
+      "maxArguments" : 3
+    }
+  },
+  "engines" : [ {
+    "engineName" : "flink",
+    "savepoint" : false
+  }, {
+    "engineName" : "jdbc",
+    "dbURL" : "jdbc:h2:tmp/output",
+    "driverName" : "org.h2.Driver",
+    "dialect" : "H2",
+    "database" : "sqrl"
+  } ],
+  "dependencies" : { }
+}
+>>>c360-full-../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-dir
+
+schema.graphqls
+ecommerce-data
+ecommerce-data/schema.yml
+ecommerce-data/orders.table.json
+ecommerce-data/product.table.json
+ecommerce-data/customer.table.json
+output
+output/datasystem.json
+c360
+c360/schema.yml
+package.json
+c360-full.sqrl
+>>>c360-full-../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-package
+{
+  "package" : {
+    "name" : "datasqrl.examples.Nutshop",
+    "version" : "1.0.0",
+    "variant" : "dev",
+    "description" : "Basic nutshop example"
+  },
+  "compiler" : {
+    "api" : {
+      "maxArguments" : 3
+    }
+  },
+  "engines" : [ {
+    "engineName" : "flink",
+    "savepoint" : false
+  }, {
+    "engineName" : "jdbc",
+    "dbURL" : "jdbc:h2:tmp/output",
+    "driverName" : "org.h2.Driver",
+    "dialect" : "H2",
+    "database" : "sqrl"
+  } ],
+  "dependencies" : { }
+}
+>>>c360-orderstats-none-dir
+
+c360-orderstats.sqrl
+ecommerce-data
+ecommerce-data/schema.yml
+ecommerce-data/orders.table.json
+ecommerce-data/product.table.json
+ecommerce-data/customer.table.json
+output
+output/datasystem.json
+c360
+c360/schema.yml
+package.json
+>>>c360-orderstats-none-package
+{
+  "package" : {
+    "name" : "datasqrl.examples.Nutshop",
+    "version" : "1.0.0",
+    "variant" : "dev",
+    "description" : "Basic nutshop example"
+  },
+  "compiler" : {
+    "api" : {
+      "maxArguments" : 3
+    }
+  },
+  "engines" : [ {
+    "engineName" : "flink",
+    "savepoint" : false
+  }, {
+    "engineName" : "jdbc",
+    "dbURL" : "jdbc:h2:tmp/output",
+    "driverName" : "org.h2.Driver",
+    "dialect" : "H2",
+    "database" : "sqrl"
+  } ],
+  "dependencies" : { }
+}
+>>>c360-orderstats-../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-dir
+
+schema.graphqls
+c360-orderstats.sqrl
+ecommerce-data
+ecommerce-data/schema.yml
+ecommerce-data/orders.table.json
+ecommerce-data/product.table.json
+ecommerce-data/customer.table.json
+output
+output/datasystem.json
+c360
+c360/schema.yml
+package.json
+>>>c360-orderstats-../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-package
+{
+  "package" : {
+    "name" : "datasqrl.examples.Nutshop",
+    "version" : "1.0.0",
+    "variant" : "dev",
+    "description" : "Basic nutshop example"
+  },
+  "compiler" : {
+    "api" : {
+      "maxArguments" : 3
+    }
+  },
+  "engines" : [ {
+    "engineName" : "flink",
+    "savepoint" : false
+  }, {
+    "engineName" : "jdbc",
+    "dbURL" : "jdbc:h2:tmp/output",
+    "driverName" : "org.h2.Driver",
+    "dialect" : "H2",
+    "database" : "sqrl"
+  } ],
+  "dependencies" : { }
+}
+>>>c360-recommend-none-dir
+
+ecommerce-data
+ecommerce-data/schema.yml
+ecommerce-data/orders.table.json
+ecommerce-data/product.table.json
+ecommerce-data/customer.table.json
+output
+output/datasystem.json
+c360
+c360/schema.yml
+package.json
+c360-recommend.sqrl
+>>>c360-recommend-none-package
+{
+  "package" : {
+    "name" : "datasqrl.examples.Nutshop",
+    "version" : "1.0.0",
+    "variant" : "dev",
+    "description" : "Basic nutshop example"
+  },
+  "compiler" : {
+    "api" : {
+      "maxArguments" : 3
+    }
+  },
+  "engines" : [ {
+    "engineName" : "flink",
+    "savepoint" : false
+  }, {
+    "engineName" : "jdbc",
+    "dbURL" : "jdbc:h2:tmp/output",
+    "driverName" : "org.h2.Driver",
+    "dialect" : "H2",
+    "database" : "sqrl"
+  } ],
+  "dependencies" : { }
+}
+>>>c360-recommend-../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-dir
+
+schema.graphqls
+ecommerce-data
+ecommerce-data/schema.yml
+ecommerce-data/orders.table.json
+ecommerce-data/product.table.json
+ecommerce-data/customer.table.json
+output
+output/datasystem.json
+c360
+c360/schema.yml
+package.json
+c360-recommend.sqrl
+>>>c360-recommend-../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-package
+{
+  "package" : {
+    "name" : "datasqrl.examples.Nutshop",
+    "version" : "1.0.0",
+    "variant" : "dev",
+    "description" : "Basic nutshop example"
+  },
+  "compiler" : {
+    "api" : {
+      "maxArguments" : 3
+    }
+  },
+  "engines" : [ {
+    "engineName" : "flink",
+    "savepoint" : false
+  }, {
+    "engineName" : "jdbc",
+    "dbURL" : "jdbc:h2:tmp/output",
+    "driverName" : "org.h2.Driver",
+    "dialect" : "H2",
+    "database" : "sqrl"
+  } ],
+  "dependencies" : { }
+}
