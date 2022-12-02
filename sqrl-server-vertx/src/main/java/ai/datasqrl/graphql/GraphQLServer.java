@@ -1,14 +1,13 @@
 package ai.datasqrl.graphql;
 
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
 import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder;
+import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.Launcher;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.LoggerHandler;
@@ -17,27 +16,41 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.pgclient.PgConnectOptions;
-import io.vertx.pgclient.PgConnection;
-import io.vertx.sqlclient.impl.SqlClientInternal;
+import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.SqlClient;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {
 
-  private RootGraphqlModel root;
-  private JDBCConnectionProvider jdbcConf;
-  private SqlClientInternal client;
+  private final RootGraphqlModel root;
+  private final PgConnectOptions options;
+  private final int port;
+  private final PoolOptions poolOptions;
 
-  public GraphQLServer(RootGraphqlModel root, JDBCConnectionProvider jdbcConf) {
+  public GraphQLServer(RootGraphqlModel root, PgConnectOptions options,
+      int port, PoolOptions poolOptions) {
     this.root = root;
-    this.jdbcConf = jdbcConf;
+    this.options = options;
+    this.port = port;
+    this.poolOptions = poolOptions;
   }
 
-  public static void main(String[] args) {
-    //todo: write out config in compile
+  public GraphQLServer() {
+    super();
+    final JsonObject configs = vertx.getOrCreateContext().config();
+    final JsonObject connectionConf = configs.getJsonObject("conn");
+    final JsonObject poolConf = configs.getJsonObject("pool");
+    final int port = configs.getInteger("port");
 
-    Launcher.executeCommand("run", GraphQLServer.class.getName() /*, "--conf", "config.json"*/);
+    ObjectMapper mapper = new ObjectMapper();
+
+    this.root = mapper.convertValue(configs.getJsonObject("model"), RootGraphqlModel.class);
+    this.options = new PgConnectOptions(connectionConf);
+    this.poolOptions = new PoolOptions(poolConf);
+    this.port = port;
   }
 
   @Override
@@ -57,43 +70,24 @@ public class GraphQLServer extends AbstractVerticle {
       ctx.response().setStatusCode(500).end();
     });
 
-    /* Start server on port 8888 */
-    int port = config().getInteger("http.port", 8888);
+    PgPool client = PgPool.pool(vertx, options, poolOptions);
 
-    PgConnectOptions options = new PgConnectOptions();
-    options.setDatabase(config().getString("database", jdbcConf.getDatabaseName()));
-    options.setHost(config().getString("host", jdbcConf.getHost()));
-    options.setPort(config().getInteger("port",jdbcConf.getPort()));
-    options.setUser(config().getString("username", jdbcConf.getUser()));
-    options.setPassword(config().getString("password", jdbcConf.getPassword()));
-    options.setCachePreparedStatements(true);
-    options.setPipeliningLimit(100_000);
-    PgConnection.connect(vertx, options).flatMap(conn -> {
-      client = (SqlClientInternal) conn;
+    GraphQLHandler graphQLHandler = GraphQLHandler.create(createGraphQL(client),
+        graphQLHandlerOptions);
 
-      GraphQLHandler graphQLHandler = GraphQLHandler.create(createGraphQL(client),
-          graphQLHandlerOptions);
+    router.route("/graphql").handler(graphQLHandler);
 
-      router.route("/graphql").handler(graphQLHandler);
-
-      vertx.createHttpServer().requestHandler(router).listen(port, http -> {
-        if (http.succeeded()) {
-          log.trace("HTTP server started on port {}", port);
-        } else {
-          startPromise.fail(http.cause());
-        }
-      });
-      return Future.succeededFuture();
-    }).onSuccess(ar -> startPromise.complete())
-        .onFailure(f -> {
-          f.printStackTrace();
-          startPromise.fail(f);
-        });
-
+    vertx.createHttpServer().requestHandler(router).listen(port, http -> {
+      if (http.succeeded()) {
+        log.info("HTTP server started on port {}", port);
+      } else {
+        startPromise.fail(http.cause());
+      }
+    });
   }
 
   @SneakyThrows
-  private GraphQL createGraphQL(SqlClientInternal client) {
+  private GraphQL createGraphQL(SqlClient client) {
     GraphQL graphQL = root.accept(
         new VertxGraphQLBuilder(),
         new VertxContext(client));
