@@ -41,10 +41,10 @@ import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
+import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
-import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
 import java.util.HashSet;
 import java.util.List;
@@ -245,7 +245,7 @@ public class VertxGraphQLBuilder implements
 
   @Value
   public static class VertxContext {
-    SqlClient client;
+    PgPool client;
   }
 
   @AllArgsConstructor

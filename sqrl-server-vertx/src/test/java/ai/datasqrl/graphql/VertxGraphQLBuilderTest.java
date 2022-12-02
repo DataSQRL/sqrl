@@ -1,34 +1,39 @@
 package ai.datasqrl.graphql;
 
-import ai.datasqrl.graphql.server.Model.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
+import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
+import ai.datasqrl.graphql.server.Model.ArgumentSet;
+import ai.datasqrl.graphql.server.Model.FixedArgument;
+import ai.datasqrl.graphql.server.Model.PgQuery;
+import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
+import ai.datasqrl.graphql.server.Model.SourcePgParameter;
+import ai.datasqrl.graphql.server.Model.StringSchema;
+import ai.datasqrl.graphql.server.Model.VariableArgument;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder;
 import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.GraphQLError;
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
-import io.vertx.pgclient.PgConnection;
-import io.vertx.sqlclient.impl.SqlClientInternal;
+import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.SqlConnection;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import java.sql.Connection;
-import java.util.stream.Collectors;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @ExtendWith(VertxExtension.class)
 @Testcontainers
@@ -106,22 +111,11 @@ class VertxGraphQLBuilderTest {
               .build())
           .build())
       .build();
-  private SqlClientInternal client;
+  private PgPool client;
 
   @SneakyThrows
   @BeforeEach
-  public void init(Vertx vertx, VertxTestContext testContext) {
-    Connection con = testDatabase
-        .createConnection("");
-
-    con.createStatement()
-            .execute("CREATE TABLE Customer (customerid INTEGER)");
-    con.createStatement()
-        .execute("INSERT INTO Customer(customerid) VALUES (1);");
-    con.createStatement()
-        .execute("INSERT INTO Customer(customerid) VALUES (2);");
-    con.close();
-
+  public void init(Vertx vertx) {
     PgConnectOptions options = new PgConnectOptions();
     options.setDatabase(testDatabase.getDatabaseName());
     options.setHost(testDatabase.getHost());
@@ -132,11 +126,18 @@ class VertxGraphQLBuilderTest {
     options.setCachePreparedStatements(true);
     options.setPipeliningLimit(100_000);
 
-    PgConnection.connect(vertx, options).flatMap(conn -> {
-      client = (SqlClientInternal) conn;
-      return Future.succeededFuture();
-    }).onComplete(testContext.succeedingThenComplete())
-      .onFailure(f -> testContext.failNow(f));
+    PgPool client = PgPool.pool(vertx, options, new PoolOptions());
+    this.client = client;
+
+    SqlConnection con =
+        client.getConnection().toCompletionStage().toCompletableFuture().get();
+    con.preparedQuery("CREATE TABLE Customer (customerid INTEGER)")
+        .execute().toCompletionStage().toCompletableFuture().get();
+    con.preparedQuery("INSERT INTO Customer(customerid) VALUES (1)")
+        .execute().toCompletionStage().toCompletableFuture().get();
+    con.preparedQuery("INSERT INTO Customer(customerid) VALUES (2)")
+        .execute().toCompletionStage().toCompletableFuture().get();
+
   }
 
   @AfterEach
@@ -150,7 +151,6 @@ class VertxGraphQLBuilderTest {
     GraphQL graphQL = root.accept(
         new VertxGraphQLBuilder(),
         new VertxContext(client));
-
     ExecutionResult result = graphQL.execute("{\n"
         + "  casc: customer(sort: {customerid: ASC}) {\n"
         + "    customerid\n"
@@ -178,6 +178,5 @@ class VertxGraphQLBuilderTest {
     assertEquals(
         "{\"casc\":{\"customerid\":1,\"sameCustomer\":{\"customerid\":1}},\"cdesc\":{\"customerid\":2,\"sameCustomer\":{\"customerid\":2}},\"customer2\":{\"customerid\":2}}",
         value);
-
   }
 }

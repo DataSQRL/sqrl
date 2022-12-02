@@ -9,13 +9,34 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
+  <name>sqrl-server-vertx</name>
   <artifactId>sqrl-server-vertx</artifactId>
-
   <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.testSource>1.8</maven.compiler.testSource>
+    <maven.compiler.testTarget>1.8</maven.compiler.testTarget>
+
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <vertx.version>4.3.5</vertx.version>
+    <graal.plugin.version>0.9.8</graal.plugin.version>
+    <vertx.plugin.version>1.0.22</vertx.plugin.version>
+    <failsafe.plugin.version>2.22.2</failsafe.plugin.version>
+
   </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-stack-depchain</artifactId>
+        <version>${vertx.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>ai.datasqrl</groupId>
@@ -30,30 +51,17 @@
       <artifactId>vertx-pg-client</artifactId>
     </dependency>
     <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-config</artifactId>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-openapi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-client</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-jdbc-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
@@ -71,10 +79,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.ongres.scram</groupId>
       <artifactId>common</artifactId>
     </dependency>
@@ -83,4 +87,54 @@
       <artifactId>client</artifactId>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.reactiverse</groupId>
+        <artifactId>vertx-maven-plugin</artifactId>
+        <version>${vertx.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>vmp</id>
+            <goals>
+              <goal>initialize</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <redeploy>true</redeploy>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.graalvm.buildtools</groupId>
+        <artifactId>native-maven-plugin</artifactId>
+        <version>${graal.plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>build</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <imageName>${project.name}</imageName>
+          <mainClass>ai.datasqrl.graphql.GraphQLServerCli</mainClass>
+          <buildArgs>--initialize-at-build-time=org.slf4j -H:+PrintClassInitialization -H:+ReportExceptionStackTraces</buildArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${failsafe.plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

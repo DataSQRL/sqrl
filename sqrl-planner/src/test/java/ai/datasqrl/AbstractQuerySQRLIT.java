@@ -1,5 +1,6 @@
 package ai.datasqrl;
 
+import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.graphql.GraphQLServer;
 import ai.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
@@ -17,6 +18,8 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.sqlclient.PoolOptions;
 import lombok.SneakyThrows;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.lang3.tuple.Pair;
@@ -62,7 +65,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         Checkpoint serverStarted = vertxContext.checkpoint();
         Checkpoint queryResponse = vertxContext.checkpoint(queries.size());
         Map<String, String> queryResults = new ConcurrentHashMap<>();
-        vertx.deployVerticle(new GraphQLServer(model, jdbc), vertxContext.succeeding(server -> {
+        vertx.deployVerticle(new GraphQLServer(model, toPgOptions(jdbc), 8888, new PoolOptions()), vertxContext.succeeding(server -> {
             serverStarted.flag();
             WebClient client = getGraphQLClient();
             for (Map.Entry<String,String> query : queries.entrySet()) {
@@ -79,6 +82,18 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
             snapshot.addContent(queryResults.get(query.getKey()), "query-" + query.getKey());
         }
         snapshot.createOrValidate();
+    }
+
+    private PgConnectOptions toPgOptions(JDBCConnectionProvider jdbcConf) {
+        PgConnectOptions options = new PgConnectOptions();
+        options.setDatabase(jdbcConf.getDatabaseName());
+        options.setHost(jdbcConf.getHost());
+        options.setPort(jdbcConf.getPort());
+        options.setUser(jdbcConf.getUser());
+        options.setPassword(jdbcConf.getPassword());
+        options.setCachePreparedStatements(true);
+        options.setPipeliningLimit(100_000);
+        return options;
     }
 
     protected WebClient getGraphQLClient() {
