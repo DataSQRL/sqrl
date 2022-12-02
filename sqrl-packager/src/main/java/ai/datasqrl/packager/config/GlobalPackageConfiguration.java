@@ -1,11 +1,13 @@
 package ai.datasqrl.packager.config;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import ai.datasqrl.spi.GlobalConfiguration;
+import ai.datasqrl.spi.ManifestConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 
@@ -13,8 +15,7 @@ import java.util.LinkedHashMap;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-@JsonIgnoreProperties(ignoreUnknown=true)
-public class GlobalPackageConfiguration {
+public class GlobalPackageConfiguration implements GlobalConfiguration {
 
     public static final String DEPENDENCIES_NAME = "dependencies";
 
@@ -25,9 +26,11 @@ public class GlobalPackageConfiguration {
     @NonNull @Builder.Default @Valid
     LinkedHashMap<String,Dependency> dependencies = new LinkedHashMap<>();
 
+    @Setter
+    @JsonProperty(ManifestConfiguration.PROPERTY)
+    ManifestConfiguration manifest;
 
-    @SneakyThrows
-    public static GlobalPackageConfiguration readFrom(Path path) {
+    public static GlobalPackageConfiguration readFrom(Path path) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(path.toFile(), GlobalPackageConfiguration.class);
     }
