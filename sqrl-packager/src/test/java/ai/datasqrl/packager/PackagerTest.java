@@ -1,6 +1,5 @@
 package ai.datasqrl.packager;
 
-import ai.datasqrl.packager.config.ConfigurationTest;
 import ai.datasqrl.util.FileTestUtil;
 import ai.datasqrl.util.SnapshotTest;
 import ai.datasqrl.util.TestScript;
@@ -13,7 +12,10 @@ import org.junit.jupiter.api.TestInfo;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class PackagerTest {
 
@@ -25,28 +27,40 @@ public class PackagerTest {
     }
 
     @Test
-    @SneakyThrows
     public void testRetailPackaging() {
-        Retail example = Retail.INSTANCE;
-        Collection<Optional<Path>> graphqlschemas = List.of(Optional.empty(),
-                Optional.of(example.getRootPackageDirectory().resolve("c360-full-graphqlv1").resolve("schema.graphqls")));
-        List<TestScript> scripts = new ArrayList<>(example.getTestScripts().values());
-        Collections.sort(scripts,(s1,s2)-> s1.getName().compareTo(s2.getName())); //Sort for deterministic iteration
-        for (TestScript script : scripts) {
-            for (Optional<Path> graphql : graphqlschemas) {
-                Packager pkg = new Packager(script.getScriptPath(), graphql, ConfigurationTest.RESOURCE_DIR.resolve("package2.json"));
-                pkg.inferDependencies();
-                pkg.populateBuildDir();
-                Path buildDir = script.getRootPackageDirectory().resolve(Packager.BUILD_DIR_NAME);
-                String[] caseNames = {script.getName(), graphql.map(p -> p.toString()).orElse("none"), "dir"};
-                snapshot.addContent(FileTestUtil.getAllFilesAsString(buildDir), caseNames);
-                caseNames[2] = "package";
-                snapshot.addContent(Files.readString(buildDir.resolve(Packager.PACKAGE_FILE_NAME)),caseNames);
-                pkg.cleanUp();
-            }
-        }
+        TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
+        Path graphQLSchema = script.getRootPackageDirectory().resolve("c360-full-graphqlv1").resolve("schema.graphqls");
+        Path packageFileWithoutManifest = script.getRootPackageDirectory().resolve("package-exampleWOmanifest.json");
+        Path packageFileWithManifest = script.getRootPackageDirectory().resolve("package-exampleWmanifest.json");
+
+
+        testCombination(script.getScriptPath(), null, null);
+        testCombination(script.getScriptPath(), null, packageFileWithoutManifest);
+        testCombination(script.getScriptPath(), null, packageFileWithManifest);
+        testCombination(null, null, packageFileWithManifest);
+        testCombination(script.getScriptPath(), graphQLSchema, packageFileWithoutManifest);
+        testCombination(script.getScriptPath(), graphQLSchema, packageFileWithManifest);
+        testCombination(null, graphQLSchema, packageFileWithManifest);
 
         snapshot.createOrValidate();
+    }
+
+    @SneakyThrows
+    private void testCombination(Path main, Path graphQl, Path packageFile) {
+        Packager.Config.ConfigBuilder builder = Packager.Config.builder();
+        if (main!=null) builder.mainScript(main);
+        if (graphQl!=null) builder.graphQLSchemaFile(graphQl);
+        if (packageFile!=null) builder.packageFiles(List.of(packageFile));
+        Packager pkg = builder.build().getPackager();
+        pkg.inferDependencies();
+        pkg.populateBuildDir();
+        Path buildDir = pkg.getRootDir().resolve(Packager.BUILD_DIR_NAME);
+        String[] caseNames = Stream.of(main,graphQl,packageFile).filter(Predicate.not(Objects::isNull)).map(String::valueOf).toArray(size -> new String[size+1]);
+        caseNames[caseNames.length-1] = "dir";
+        snapshot.addContent(FileTestUtil.getAllFilesAsString(buildDir), caseNames);
+        caseNames[caseNames.length-1] = "package";
+        snapshot.addContent(Files.readString(buildDir.resolve(Packager.PACKAGE_FILE_NAME)),caseNames);
+        pkg.cleanUp();
     }
 
 

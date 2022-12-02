@@ -1,9 +1,9 @@
 package ai.datasqrl.compile;
 
+import ai.datasqrl.config.CompilerConfiguration;
 import ai.datasqrl.config.EngineSettings;
+import ai.datasqrl.config.GlobalCompilerConfiguration;
 import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.graphql.GraphQLServer;
 import ai.datasqrl.graphql.generate.SchemaGenerator;
 import ai.datasqrl.graphql.inference.PgSchemaBuilder;
 import ai.datasqrl.graphql.inference.SchemaInference;
@@ -12,7 +12,6 @@ import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
 import ai.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import ai.datasqrl.parse.SqrlParser;
 import ai.datasqrl.physical.PhysicalPlan;
-import ai.datasqrl.physical.PhysicalPlanExecutor;
 import ai.datasqrl.physical.PhysicalPlanner;
 import ai.datasqrl.physical.database.QueryTemplate;
 import ai.datasqrl.plan.calcite.Planner;
@@ -23,11 +22,12 @@ import ai.datasqrl.plan.local.generate.Resolve;
 import ai.datasqrl.plan.local.generate.Resolve.Env;
 import ai.datasqrl.plan.local.generate.Session;
 import ai.datasqrl.plan.queries.APIQuery;
+import ai.datasqrl.spi.ManifestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
-import io.vertx.core.Vertx;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -41,28 +41,33 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 public class Compiler {
-
-  private static final String MAIN_SCRIPT = "main.sqrl";
 
   /**
    * Processes all the files in the build directory and creates the execution artifacts
    */
   @SneakyThrows
-  public void run(ErrorCollector collector, Path build, Optional<Path> graphqlSchema, EngineSettings engineSettings) {
+  public void run(ErrorCollector collector, Path packageFile) {
+    Preconditions.checkArgument(Files.isRegularFile(packageFile));
     SqrlCalciteSchema schema = new SqrlCalciteSchema(
         CalciteSchema.createRootSchema(false, false).plus());
 
+    Path buildDir = packageFile.getParent();
+    GlobalCompilerConfiguration globalConfig = GlobalCompilerConfiguration.readFrom(packageFile);
+    CompilerConfiguration config = globalConfig.initializeCompiler(collector);
+    EngineSettings engineSettings = globalConfig.initializeEngines(collector);
     Planner planner = new PlannerFactory(schema.plus()).createPlanner();
     Session s = new Session(collector, planner, engineSettings.getPipeline());
-    Resolve resolve = new Resolve(build);
+    Resolve resolve = new Resolve(buildDir);
 
-    File file = new File(build
-        .resolve(MAIN_SCRIPT).toUri());
-    String str = Files.readString(file.toPath());
+    ManifestConfiguration manifest = globalConfig.getManifest();
+    Preconditions.checkArgument(manifest!=null);
+    Path mainScript = buildDir.resolve(manifest.getMain());
+    Optional<Path> graphqlSchema = manifest.getOptGraphQL().map(file -> buildDir.resolve(file));
+
+    String str = Files.readString(mainScript);
 
     ScriptNode ast = SqrlParser.newParser()
         .parse(str);
@@ -87,8 +92,8 @@ public class Compiler {
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
 
-    log.info("build dir: " + build.toAbsolutePath());
-    writeGraphql(build, root, gqlSchema);
+    log.info("build dir: " + buildDir.toAbsolutePath());
+    writeGraphql(buildDir, root, gqlSchema);
   }
 
   private OptimizedDAG optimizeDag(List<APIQuery> queries, Env env) {

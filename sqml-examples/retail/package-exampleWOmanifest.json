@@ -1,0 +1,16 @@
+{
+  "package":
+  {
+    "name": "datasqrl.examples.Retail",
+    "version": "1.0.0",
+    "variant": "dev",
+    "description": "Simple e-commerce data example"
+  },
+  "compiler":
+  {
+    "api":
+    {
+      "maxArguments": 3
+    }
+  }
+}

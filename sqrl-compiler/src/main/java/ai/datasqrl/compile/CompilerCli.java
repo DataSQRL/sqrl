@@ -2,12 +2,13 @@ package ai.datasqrl.compile;
 
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.error.ErrorPrinter;
-import java.nio.file.Path;
-import java.util.Optional;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+
+import java.nio.file.Path;
+import java.util.Optional;
 
 public class CompilerCli implements Runnable {
   @Parameters(index = "0", description = "Base directory")
@@ -28,7 +29,7 @@ public class CompilerCli implements Runnable {
 
     Compiler compiler = new Compiler();
     ErrorCollector errorCollector = ErrorCollector.root();
-    compiler.run(errorCollector, buildPath, Optional.empty(), null);
+    compiler.run(errorCollector, buildPath);
 
     if (errorCollector.hasErrors()) {
       System.out.println(ErrorPrinter.prettyPrint(errorCollector));

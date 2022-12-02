@@ -1,5 +1,6 @@
 package ai.datasqrl.packager.config;
 
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -12,6 +13,7 @@ public class ConfigurationTest {
     public static final Path RESOURCE_DIR = Paths.get("src","test","resources");
 
     @Test
+    @SneakyThrows
     public void testConfiguration() {
         GlobalPackageConfiguration config = GlobalPackageConfiguration.readFrom(RESOURCE_DIR.resolve("package1.json"));
         assertNotNull(config);

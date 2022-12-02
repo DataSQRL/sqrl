@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.google.common.base.Strings;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
@@ -14,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,7 +41,8 @@ public class FileTestUtil {
     }
 
     public static String getAllFilesAsString(Path dir) {
-        Collection<String> files = getAllFiles(dir).stream().map(p -> p.toString()).collect(Collectors.toList());
+        Collection<String> files = getAllFiles(dir).stream().map(p -> p.toString()).filter(Predicate.not(Strings::isNullOrEmpty))
+                .sorted().collect(Collectors.toList());
         return String.join("\n",files);
     }
 

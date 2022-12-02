@@ -4,12 +4,15 @@ import ai.datasqrl.compile.loaders.DynamicExporter;
 import ai.datasqrl.compile.loaders.DynamicLoader;
 import ai.datasqrl.packager.config.Dependency;
 import ai.datasqrl.packager.config.GlobalPackageConfiguration;
+import ai.datasqrl.spi.ManifestConfiguration;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
@@ -17,10 +20,7 @@ import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -32,38 +32,21 @@ public class Packager {
     public static final String PACKAGE_FILE_NAME = "package.json";
     public static final Set<String> EXCLUDED_DIRS = Set.of(BUILD_DIR_NAME, "deploy");
 
-    ObjectMapper mapper;
     Path rootDir;
-    Path scriptFile;
-    Optional<Path> graphQLSchemaFile;
     JsonNode packageConfig;
     GlobalPackageConfiguration config;
 
-    public Packager(@NonNull Path scriptFile, @NonNull Optional<Path> graphQLSchemaFile, @NonNull Path... packageFiles) {
-        Preconditions.checkArgument(Files.isRegularFile(scriptFile));
-        Preconditions.checkArgument(packageFiles!=null && packageFiles.length>0);
-        this.mapper = new ObjectMapper();
-        mapper.enable(SerializationFeature.INDENT_OUTPUT);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        this.rootDir = scriptFile.getParent();
-        this.scriptFile = scriptFile;
-        this.graphQLSchemaFile = graphQLSchemaFile;
-        try {
-            JsonNode basePackage = mapper.readValue(packageFiles[0].toFile(), JsonNode.class);
-            for (int i = 1; i < packageFiles.length; i++) {
-                basePackage = mapper.readerForUpdating(basePackage).readValue(packageFiles[i].toFile());
-            }
-            this.packageConfig = basePackage;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        config = mapper.convertValue(packageConfig, GlobalPackageConfiguration.class);
+    private Packager(@NonNull Path rootDir, @NonNull JsonNode packageConfig, @NonNull GlobalPackageConfiguration config) {
+        Preconditions.checkArgument(Files.isDirectory(rootDir));
+        this.rootDir = rootDir;
+        this.packageConfig = packageConfig;
+        this.config = config;
     }
 
     public void inferDependencies() {
         LinkedHashMap<String, Dependency> dependencies = config.getDependencies();
         //TODO: add dependencies from imports; if the namepath prefix doesn't map onto directory or sqrl file it's an external dependency
-        JsonNode mappedDepends = mapper.valueToTree(dependencies);
+        JsonNode mappedDepends = getMapper().valueToTree(dependencies);
         ((ObjectNode)packageConfig).set(GlobalPackageConfiguration.DEPENDENCIES_NAME, mappedDepends);
     }
 
@@ -76,14 +59,16 @@ public class Packager {
                 throw new IllegalStateException(String.format("Build directory [%s] already exists and is non-empty. Check and empty directory before running command again",buildDir));
             }
             Files.createDirectories(buildDir);
+            Preconditions.checkArgument(config.getManifest()!=null && !Strings.isNullOrEmpty(config.getManifest().getMain()));
+            Path scriptFile = rootDir.resolve(config.getManifest().getMain());
             copyRelativeFile(scriptFile, rootDir, buildDir);
+            Optional<Path> graphQLSchemaFile = config.getManifest().getOptGraphQL().map(file -> rootDir.resolve(file));
             if (graphQLSchemaFile.isPresent()) {
-                Preconditions.checkArgument(Files.isRegularFile(graphQLSchemaFile.get()));
                 copyFile(graphQLSchemaFile.get(), buildDir, Path.of(SCHEMA_FILE_NAME));
             }
             //Update dependencies and write out
             Path packageFile = buildDir.resolve(PACKAGE_FILE_NAME);
-            mapper.writeValue(packageFile.toFile(),packageConfig);
+            getMapper().writeValue(packageFile.toFile(),packageConfig);
             //Add external dependencies
             //TODO: implement
             Preconditions.checkArgument(config.getDependencies().isEmpty());
@@ -159,5 +144,80 @@ public class Packager {
 //            targetPath.toFile().deleteOnExit();
     }
 
+
+    private static ObjectMapper getMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        return mapper;
+    }
+
+    @Builder
+    @Value
+    public static class Config {
+
+        Path mainScript;
+        Path graphQLSchemaFile;
+        @Builder.Default @NonNull
+        List<Path> packageFiles = List.of();
+
+        public Packager getPackager() throws IOException {
+            Preconditions.checkArgument(mainScript==null || Files.isRegularFile(mainScript));
+            Preconditions.checkArgument(graphQLSchemaFile==null || Files.isRegularFile(graphQLSchemaFile));
+            List<Path> packageFiles = this.packageFiles;
+            if (packageFiles.isEmpty()) {
+                //Try to find it in the directory of the main script
+                if (mainScript!=null) {
+                    Path packageFile = mainScript.getParent().resolve(PACKAGE_FILE_NAME);
+                    if (Files.isRegularFile(packageFile)) {
+                        packageFiles = List.of(packageFile);
+                    }
+                }
+            }
+            ObjectMapper mapper = getMapper();
+            Path rootDir;
+            JsonNode packageConfig;
+            GlobalPackageConfiguration config;
+            if (packageFiles.isEmpty()) {
+                Preconditions.checkArgument(mainScript!=null, "Must provide either a main script or package file");
+                rootDir = mainScript.getParent();
+                config = GlobalPackageConfiguration.builder().manifest(getManifest(rootDir,mainScript,graphQLSchemaFile)).build();
+                packageConfig = mapper.valueToTree(config);
+            } else {
+                rootDir = packageFiles.get(0).getParent();
+                JsonNode basePackage = mapper.readValue(packageFiles.get(0).toFile(), JsonNode.class);
+                for (int i = 1; i < packageFiles.size(); i++) {
+                    basePackage = mapper.readerForUpdating(basePackage).readValue(packageFiles.get(i).toFile());
+                }
+                packageConfig = basePackage;
+                config = mapper.convertValue(packageConfig, GlobalPackageConfiguration.class);
+                Path main = mainScript, graphql = graphQLSchemaFile;
+                ManifestConfiguration manifest;
+                if (config.getManifest()!=null) {
+                    manifest = config.getManifest();
+                    if (main==null) main = rootDir.resolve(manifest.getMain());
+                    if (graphql==null && manifest.getOptGraphQL().isPresent()) graphql = rootDir.resolve(manifest.getOptGraphQL().get());
+                }
+                //Update manifest
+                config.setManifest(getManifest(rootDir, main, graphql));
+                JsonNode mappedManifest = mapper.valueToTree(config.getManifest());
+                ((ObjectNode)packageConfig).set(ManifestConfiguration.PROPERTY, mappedManifest);
+            }
+            return new Packager(rootDir, packageConfig, config);
+        }
+
+        private static ManifestConfiguration getManifest(Path rootDir, Path mainScript, Path graphQLSchemaFile) {
+            Preconditions.checkArgument(mainScript!=null || !Files.isRegularFile(mainScript), "Must configure a main script");
+            ManifestConfiguration.ManifestConfigurationBuilder builder = ManifestConfiguration.builder();
+            builder.main(rootDir.relativize(mainScript).normalize().toString());
+            if (graphQLSchemaFile!=null) {
+                Preconditions.checkArgument(Files.isRegularFile(graphQLSchemaFile));
+                builder.graphql(rootDir.relativize(graphQLSchemaFile).normalize().toString());
+            }
+            return builder.build();
+        }
+
+
+    }
 
 }
