@@ -18,6 +18,7 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.SqlClient;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -86,7 +87,7 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   @SneakyThrows
-  private GraphQL createGraphQL(PgPool client) {
+  private GraphQL createGraphQL(SqlClient client) {
     GraphQL graphQL = root.accept(
         new VertxGraphQLBuilder(),
         new VertxContext(client));
