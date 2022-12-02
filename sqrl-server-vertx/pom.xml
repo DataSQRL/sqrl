@@ -89,40 +89,40 @@
   </dependencies>
   <build>
     <plugins>
-      <plugin>
-        <groupId>io.reactiverse</groupId>
-        <artifactId>vertx-maven-plugin</artifactId>
-        <version>${vertx.plugin.version}</version>
-        <executions>
-          <execution>
-            <id>vmp</id>
-            <goals>
-              <goal>initialize</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <redeploy>true</redeploy>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.graalvm.buildtools</groupId>
-        <artifactId>native-maven-plugin</artifactId>
-        <version>${graal.plugin.version}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>build</goal>
-            </goals>
-            <phase>package</phase>
-          </execution>
-        </executions>
-        <configuration>
-          <imageName>${project.name}</imageName>
-          <mainClass>ai.datasqrl.graphql.GraphQLServerCli</mainClass>
-          <buildArgs>--initialize-at-build-time=org.slf4j -H:+PrintClassInitialization -H:+ReportExceptionStackTraces</buildArgs>
-        </configuration>
-      </plugin>
+<!--      <plugin>-->
+<!--        <groupId>io.reactiverse</groupId>-->
+<!--        <artifactId>vertx-maven-plugin</artifactId>-->
+<!--        <version>${vertx.plugin.version}</version>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <id>vmp</id>-->
+<!--            <goals>-->
+<!--              <goal>initialize</goal>-->
+<!--            </goals>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--        <configuration>-->
+<!--          <redeploy>true</redeploy>-->
+<!--        </configuration>-->
+<!--      </plugin>-->
+<!--      <plugin>-->
+<!--        <groupId>org.graalvm.buildtools</groupId>-->
+<!--        <artifactId>native-maven-plugin</artifactId>-->
+<!--        <version>${graal.plugin.version}</version>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <goals>-->
+<!--              <goal>build</goal>-->
+<!--            </goals>-->
+<!--            <phase>package</phase>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--        <configuration>-->
+<!--          <imageName>${project.name}</imageName>-->
+<!--          <mainClass>ai.datasqrl.graphql.GraphQLServerCli</mainClass>-->
+<!--          <buildArgs>&#45;&#45;initialize-at-build-time=org.slf4j -H:+PrintClassInitialization -H:+ReportExceptionStackTraces</buildArgs>-->
+<!--        </configuration>-->
+<!--      </plugin>-->
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>${failsafe.plugin.version}</version>
