@@ -21,7 +21,7 @@ public class DynamicLoader extends CompositeLoader {
         = ServiceLoader.load(Loader.class);
     List<Loader> loaderList = new ArrayList<>(loaders);
     for (Loader l : serviceLoader) {
-      log.info("Loading dynamic loader {}", l.getClass().getCanonicalName());
+      log.trace("Loading dynamic loader {}", l.getClass().getCanonicalName());
       loaderList.add(l);
     }
 

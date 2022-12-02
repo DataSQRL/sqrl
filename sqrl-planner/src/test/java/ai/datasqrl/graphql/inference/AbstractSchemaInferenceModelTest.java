@@ -4,7 +4,7 @@ import ai.datasqrl.AbstractLogicalSQRLIT;
 import ai.datasqrl.IntegrationTestSettings;
 import ai.datasqrl.config.provider.Dialect;
 import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
-import ai.datasqrl.graphql.server.Model.Root;
+import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
 import ai.datasqrl.parse.SqrlParser;
 import ai.datasqrl.physical.database.relational.IndexSelectorConfigByDialect;
 import ai.datasqrl.plan.global.*;
@@ -31,30 +31,30 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     String schemaStr = Files.readString(schemaPath);
     env = resolve.planDag(session, SqrlParser.newParser()
             .parse(script.getScript()));
-    Triple<InferredSchema, Root, List<APIQuery>> result = inferSchemaModelQueries(env, schemaStr);
+    Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> result = inferSchemaModelQueries(env, schemaStr);
     return Pair.of(result.getLeft(),result.getRight());
   }
 
-  private static Triple<InferredSchema, Root, List<APIQuery>> inferSchemaModelQueries(Env env, String schemaStr) {
+  private static Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> inferSchemaModelQueries(Env env, String schemaStr) {
     //Inference
     SchemaInference inference = new SchemaInference(schemaStr, env.getRelSchema(), env.getSession().getPlanner()
             .getRelBuilder());
     InferredSchema inferredSchema = inference.accept();
 
     //Build queries
-    PgBuilder pgBuilder = new PgBuilder(schemaStr,
+    PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(schemaStr,
             env.getRelSchema(),
             env.getSession().getPlanner().getRelBuilder(),
             env.getSession().getPlanner());
 
-    Root root = inferredSchema.accept(pgBuilder, null);
+    RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
-    List<APIQuery> queries = pgBuilder.getApiQueries();
+    List<APIQuery> queries = pgSchemaBuilder.getApiQueries();
     return Triple.of(inferredSchema, root, queries);
   }
 
-  public static Pair<Root, List<APIQuery>> getModelAndQueries(Env env, String schemaStr) {
-    Triple<InferredSchema, Root, List<APIQuery>> result = inferSchemaModelQueries(env, schemaStr);
+  public static Pair<RootGraphqlModel, List<APIQuery>> getModelAndQueries(Env env, String schemaStr) {
+    Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> result = inferSchemaModelQueries(env, schemaStr);
     return Pair.of(result.getMiddle(),result.getRight());
   }
 

@@ -18,6 +18,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+        </dependency>
+        <dependency>
             <artifactId>sqrl-planner</artifactId>
             <groupId>ai.datasqrl</groupId>
             <type>test-jar</type>

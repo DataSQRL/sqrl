@@ -94,7 +94,7 @@ public class ReplaceGraphqlQueries implements
     }
 
     @Override
-    public Object visitRoot(Root root, Object context) {
+    public Object visitRoot(RootGraphqlModel root, Object context) {
       root.getCoords().forEach(c->c.accept(this, context));
       return null;
     }

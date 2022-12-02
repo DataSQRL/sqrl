@@ -4,8 +4,7 @@ import ai.datasqrl.graphql.inference.SchemaInferenceModel.*;
 import ai.datasqrl.graphql.inference.argument.ArgumentHandler;
 import ai.datasqrl.graphql.inference.argument.EqHandler;
 import ai.datasqrl.graphql.inference.argument.LimitOffsetHandler;
-import ai.datasqrl.graphql.server.Model.Root;
-import ai.datasqrl.graphql.server.Model.Root.RootBuilder;
+import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
 import ai.datasqrl.graphql.server.Model.StringSchema;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.schema.Column;
@@ -38,7 +37,7 @@ public class SchemaInference {
 
   private final TypeDefinitionRegistry registry;
   private final SqrlCalciteSchema schema;
-  private final RootBuilder root;
+  private final RootGraphqlModel.RootGraphqlModelBuilder root;
   List<ArgumentHandler> argumentHandlers = List.of(new EqHandler(), new LimitOffsetHandler());
   RelBuilder relBuilder;
   private Set<FieldDefinition> visited = new HashSet<>();
@@ -47,7 +46,7 @@ public class SchemaInference {
   public SchemaInference(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder) {
     this.registry = (new SchemaParser()).parse(gqlSchema);
     this.schema = schema;
-    RootBuilder root = Root.builder().schema(StringSchema.builder().schema(gqlSchema).build());
+    RootGraphqlModel.RootGraphqlModelBuilder root = RootGraphqlModel.builder().schema(StringSchema.builder().schema(gqlSchema).build());
     this.root = root;
     this.relBuilder = relBuilder;
   }

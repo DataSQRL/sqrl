@@ -2,7 +2,7 @@ package ai.datasqrl;
 
 import ai.datasqrl.graphql.GraphQLServer;
 import ai.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
-import ai.datasqrl.graphql.server.Model;
+import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
 import ai.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import ai.datasqrl.physical.PhysicalPlan;
 import ai.datasqrl.physical.PhysicalPlanExecutor;
@@ -43,14 +43,14 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         Resolve.Env resolvedDag = resolve.planDag(session, node);
         DAGPlanner dagPlanner = new DAGPlanner(planner, session.getPipeline());
 
-        Pair<Model.Root, List<APIQuery>> modelAndQueries = AbstractSchemaInferenceModelTest.getModelAndQueries(resolvedDag,schema);
+        Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = AbstractSchemaInferenceModelTest.getModelAndQueries(resolvedDag,schema);
 
         OptimizedDAG dag = dagPlanner.plan(resolvedDag.getRelSchema(), modelAndQueries.getRight(),
                 resolvedDag.getExports());
 
         PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
 
-        Model.Root model = modelAndQueries.getKey();
+        RootGraphqlModel model = modelAndQueries.getKey();
         ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(physicalPlan.getDatabaseQueries());
         model.accept(replaceGraphqlQueries, null);
         snapshot.addContent(physicalPlan.getPlans(JDBCPhysicalPlan.class).findFirst().get().getDdlStatements().stream().map(ddl -> ddl.toSql())

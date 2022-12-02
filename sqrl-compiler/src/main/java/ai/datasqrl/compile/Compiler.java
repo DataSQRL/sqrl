@@ -5,10 +5,10 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.provider.JDBCConnectionProvider;
 import ai.datasqrl.graphql.GraphQLServer;
 import ai.datasqrl.graphql.generate.SchemaGenerator;
-import ai.datasqrl.graphql.inference.PgBuilder;
+import ai.datasqrl.graphql.inference.PgSchemaBuilder;
 import ai.datasqrl.graphql.inference.SchemaInference;
 import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
-import ai.datasqrl.graphql.server.Model.Root;
+import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
 import ai.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import ai.datasqrl.parse.SqrlParser;
 import ai.datasqrl.physical.PhysicalPlan;
@@ -35,13 +35,6 @@ import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 
 import java.io.File;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -53,29 +46,22 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class Compiler {
 
-  public static void main(String[] args) {
-    Path build = Path.of(".").resolve("build");
-
-    Compiler compiler = new Compiler();
-    compiler.run(build, Optional.of(build.resolve("schema.graphqls")), null); //TODO: read from config
-  }
+  private static final String MAIN_SCRIPT = "main.sqrl";
 
   /**
-   * Process: All the files are in the build directory
+   * Processes all the files in the build directory and creates the execution artifacts
    */
   @SneakyThrows
-  public void run(Path build, Optional<Path> graphqlSchema, EngineSettings engineSettings) {
-    ErrorCollector collector = ErrorCollector.root();
+  public void run(ErrorCollector collector, Path build, Optional<Path> graphqlSchema, EngineSettings engineSettings) {
     SqrlCalciteSchema schema = new SqrlCalciteSchema(
         CalciteSchema.createRootSchema(false, false).plus());
+
     Planner planner = new PlannerFactory(schema.plus()).createPlanner();
-
     Session s = new Session(collector, planner, engineSettings.getPipeline(collector));
-
     Resolve resolve = new Resolve(build);
 
     File file = new File(build
-        .resolve("main.sqrl").toUri());
+        .resolve(MAIN_SCRIPT).toUri());
     String str = Files.readString(file.toPath());
 
     ScriptNode ast = SqrlParser.newParser()
@@ -83,45 +69,36 @@ public class Compiler {
 
     Env env = resolve.planDag(s, ast);
 
-    //TODO: push compute to the api
-    String gqlSchema = inferOrGetSchema(env, build, graphqlSchema);
+    String gqlSchema = inferOrGetSchema(env, graphqlSchema);
 
-    SchemaInference inference2 = new SchemaInference(gqlSchema,
-        env.getRelSchema(), env.getSession().getPlanner().getRelBuilder()
-    );
-    InferredSchema inferredSchema = inference2.accept();
-    PgBuilder pgBuilder = new PgBuilder(gqlSchema,
+    InferredSchema inferredSchema = new SchemaInference(gqlSchema, env.getRelSchema(),
+        env.getSession().getPlanner().getRelBuilder())
+        .accept();
+
+    PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(gqlSchema,
         env.getRelSchema(),
         env.getSession().getPlanner().getRelBuilder(),
-        env.getSession().getPlanner() );
+        env.getSession().getPlanner());
 
-    Root root = inferredSchema.accept(pgBuilder, null);
+    RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
-    OptimizedDAG dag = optimizeDag(pgBuilder.getApiQueries(), env);
-
+    OptimizedDAG dag = optimizeDag(pgSchemaBuilder.getApiQueries(), env);
     PhysicalPlan plan = createPhysicalPlan(dag, env, s);
+
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
 
-//    log.info("PORT: " + jdbcConf.get().getPort());
-    log.info("build dir: " + build.toAbsolutePath().toString());
-    writeGraphql(env, build, root, gqlSchema);
-    exec(plan);
-
-    startGraphql(build, root, engineSettings.getJDBC(collector));
+    log.info("build dir: " + build.toAbsolutePath());
+    writeGraphql(build, root, gqlSchema);
   }
 
   private OptimizedDAG optimizeDag(List<APIQuery> queries, Env env) {
-    DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner(), env.getSession().getPipeline());
-    //We add a scan query for every query table
+    DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner(),
+        env.getSession().getPipeline());
     CalciteSchema relSchema = env.getRelSchema();
-    //todo comment out
-//    addAllQueryTables(env.getSession().getPlanner(), relSchema, queries);
-    OptimizedDAG dag = dagPlanner.plan(relSchema,queries, env.getExports());
-
-    return dag;
+    return dagPlanner.plan(relSchema, queries, env.getExports());
   }
 
-  private Root updateGraphqlPlan(Root root, Map<APIQuery, QueryTemplate> queries) {
+  private RootGraphqlModel updateGraphqlPlan(RootGraphqlModel root, Map<APIQuery, QueryTemplate> queries) {
     ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(queries);
     root.accept(replaceGraphqlQueries, null);
     return root;
@@ -131,55 +108,11 @@ public class Compiler {
     PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.getPlanner().getRelBuilder());
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     return physicalPlan;
-
   }
 
   @SneakyThrows
-  public static void startGraphql(Path build, Root root, JDBCConnectionProvider jdbcConf) {
-    CompletableFuture future = Vertx.vertx().deployVerticle(new GraphQLServer(
-            root, jdbcConf))
-        .toCompletionStage()
-        .toCompletableFuture()
-        ;
-    future.get();
-//    Launcher.executeCommand("run", GraphQLServer.class.getName()
-//        /*, "--conf", "config.json"*/);
-  }
-
-  @SneakyThrows
-  public static HttpResponse<String> testQuery(String query) {
-    ObjectMapper mapper = new ObjectMapper();
-    HttpClient client = HttpClient.newHttpClient();
-    HttpRequest request = HttpRequest.newBuilder()
-        .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(
-            Map.of("query", query))))
-        .uri(URI.create("http://localhost:8888/graphql"))
-        .build();
-    return client.send(request, BodyHandlers.ofString());
-  }
-
-  public static HttpRequest.BodyPublisher ofFormData(Map<Object, Object> data) {
-    var builder = new StringBuilder();
-    for (Map.Entry<Object, Object> entry : data.entrySet()) {
-      if (builder.length() > 0) {
-        builder.append("&");
-      }
-      builder.append(URLEncoder.encode(entry.getKey().toString(), StandardCharsets.UTF_8));
-      builder.append("=");
-      builder.append(URLEncoder.encode(entry.getValue().toString(), StandardCharsets.UTF_8));
-    }
-    return HttpRequest.BodyPublishers.ofString(builder.toString());
-  }
-
-  private void exec(PhysicalPlan plan) {
-    PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-    PhysicalPlanExecutor.Result result = executor.execute(plan);
-    log.trace("Executed physical plan: {}", result);
-  }
-
-  @SneakyThrows
-  public String inferOrGetSchema(Env env, Path build, Optional<Path> graphqlSchema) {
-    if (graphqlSchema.map(s->s.toFile().exists()).orElse(false)) {
+  public String inferOrGetSchema(Env env, Optional<Path> graphqlSchema) {
+    if (graphqlSchema.map(s -> s.toFile().exists()).orElse(false)) {
       return Files.readString(graphqlSchema.get());
     }
     GraphQLSchema schema = SchemaGenerator.generate(env.getRelSchema());
@@ -193,8 +126,7 @@ public class Compiler {
   }
 
   @SneakyThrows
-  private void writeGraphql(Env env, Path build, Root root, String gqlSchema) {
-
+  private void writeGraphql(Path build, RootGraphqlModel root, String gqlSchema) {
     ObjectMapper mapper = new ObjectMapper();
 
     Path filePath = build.resolve("api");

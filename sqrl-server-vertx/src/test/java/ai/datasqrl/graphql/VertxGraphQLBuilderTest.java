@@ -43,7 +43,7 @@ class VertxGraphQLBuilderTest {
         .withPassword("secret")
         .withDatabaseName("datasqrl");
 
-  static Root root = Root.builder()
+  static RootGraphqlModel root = RootGraphqlModel.builder()
       .schema(StringSchema.builder().schema(""
           + "type Query { "
           + "  customer(sort: SortKey): Customer "
