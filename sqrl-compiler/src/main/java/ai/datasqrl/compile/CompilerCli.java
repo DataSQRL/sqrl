@@ -10,11 +10,8 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class CompilerCli implements Runnable {
-  @Parameters(index = "0", description = "Build directory")
+  @Parameters(index = "0", description = "Base directory")
   private Optional<Path> buildDir = Optional.empty();
-
-  @Option(names = {"-s", "--schema"}, description = "Schemas")
-  private Optional<String> graphqlSchemas = Optional.empty();
 
   @Option(names = {"-h", "--help"}, usageHelp = true,
       description = "Displays this help message and quits.")
@@ -28,12 +25,10 @@ public class CompilerCli implements Runnable {
   public void run() {
     Path buildPath = buildDir.map(e->e.resolve("build"))
         .orElseGet(() -> Path.of("./build"));
-    Optional<Path> schema =
-        graphqlSchemas.map(s->buildPath.resolve(s));
 
     Compiler compiler = new Compiler();
     ErrorCollector errorCollector = ErrorCollector.root();
-    compiler.run(errorCollector, buildPath, schema, null);
+    compiler.run(errorCollector, buildPath, Optional.empty(), null);
 
     if (errorCollector.hasErrors()) {
       System.out.println(ErrorPrinter.prettyPrint(errorCollector));
