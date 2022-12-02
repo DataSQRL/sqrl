@@ -4,7 +4,6 @@ import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NamePath;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Value;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -20,9 +19,9 @@ public class CompositeLoader extends AbstractLoader implements Loader {
     }
 
     @Override
-    public Optional<String> handles(Path file) {
+    public Optional<String> loadsFile(Path file) {
         for (Loader loader : loaders) {
-            Optional<String> result = loader.handles(file);
+            Optional<String> result = loader.loadsFile(file);
             if (result.isPresent()) return result;
         }
         return Optional.empty();

@@ -1,6 +1,6 @@
 package ai.datasqrl.schema;
 
-import ai.datasqrl.compile.loaders.DataSourceLoader;
+import ai.datasqrl.compile.loaders.DataSource;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.parse.tree.name.Name;
 import ai.datasqrl.parse.tree.name.NameCanonicalizer;
@@ -78,7 +78,7 @@ public class FlexibleSchemaHandlingTest {
 
     @SneakyThrows
     public FlexibleDatasetSchema getSchema(InputSchema inputSchema) {
-        SchemaDefinition schemaDef = new DataSourceLoader().loadPackageSchema(inputSchema.packageDir);
+        SchemaDefinition schemaDef = new DataSource.Loader().loadPackageSchema(inputSchema.packageDir);
         DatasetDefinition datasetDefinition = schemaDef.datasets.stream().filter(dd -> dd.name.equalsIgnoreCase(inputSchema.name)).findFirst().get();
         SchemaImport.DatasetConverter importer = new SchemaImport.DatasetConverter(NameCanonicalizer.SYSTEM, Constraint.FACTORY_LOOKUP);
         ErrorCollector errors = ErrorCollector.root();

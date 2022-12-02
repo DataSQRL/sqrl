@@ -9,7 +9,11 @@ import java.util.Optional;
 
 public interface Loader {
 
-  Optional<String> handles(Path file);
+  default boolean usesFile(Path file) {
+    return loadsFile(file).isPresent();
+  }
+
+  Optional<String> loadsFile(Path file);
 
   boolean load(LoaderContext ctx, NamePath fullPath, Optional<Name> alias);
 

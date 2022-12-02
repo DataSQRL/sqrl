@@ -13,12 +13,14 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileTestUtil {
 
     @SneakyThrows
-    public static int countLinesInAllFiles(Path path) {
+    public static int countLinesInAllPartFiles(Path path) {
         int lineCount = 0;
         for (File file : FileUtils.listFiles(path.toFile(),new RegexFileFilter("^part(.*?)"),
                 DirectoryFileFilter.DIRECTORY)) {
@@ -28,6 +30,18 @@ public class FileTestUtil {
         }
         return lineCount;
     };
+
+    @SneakyThrows
+    public static Collection<Path> getAllFiles(Path dir) {
+        try (Stream<Path> files = Files.walk(dir)) {
+            return files.map(p -> dir.relativize(p)).collect(Collectors.toList());
+        }
+    }
+
+    public static String getAllFilesAsString(Path dir) {
+        Collection<String> files = getAllFiles(dir).stream().map(p -> p.toString()).collect(Collectors.toList());
+        return String.join("\n",files);
+    }
 
     private static final ObjectMapper jsonMapper = new ObjectMapper();
     private static final YAMLMapper yamlMapper = new YAMLMapper();

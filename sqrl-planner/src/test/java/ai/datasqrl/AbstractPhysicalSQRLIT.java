@@ -106,7 +106,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
                 DirectoryDataSystem.Connector connector = (DirectoryDataSystem.Connector)sink.getConnector();
                 FilePath path = connector.getPath().resolve(sink.getConfiguration().getIdentifier());
                 Path filePath = Paths.get(path.toString());
-                snapshot.addContent(String.valueOf(FileTestUtil.countLinesInAllFiles(filePath)),
+                snapshot.addContent(String.valueOf(FileTestUtil.countLinesInAllPartFiles(filePath)),
                         "export",sink.getConfiguration().getIdentifier());
             }
         }

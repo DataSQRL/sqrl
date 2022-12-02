@@ -22,6 +22,10 @@
             <groupId>ai.datasqrl</groupId>
         </dependency>
         <dependency>
+            <artifactId>sqrl-loader-core</artifactId>
+            <groupId>ai.datasqrl</groupId>
+        </dependency>
+        <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
         </dependency>

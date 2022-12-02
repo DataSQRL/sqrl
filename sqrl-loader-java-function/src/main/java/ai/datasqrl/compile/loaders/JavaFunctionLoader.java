@@ -21,7 +21,7 @@ public class JavaFunctionLoader extends AbstractLoader {
   private static final Pattern CONFIG_FILE_PATTERN = Pattern.compile("(.*)\\.function\\.json$");
 
   @Override
-  public Optional<String> handles(Path file) {
+  public Optional<String> loadsFile(Path file) {
     Matcher matcher = CONFIG_FILE_PATTERN.matcher(file.getFileName().toString());
     if (matcher.find()) {
       return Optional.of(matcher.group(1));
@@ -38,7 +38,7 @@ public class JavaFunctionLoader extends AbstractLoader {
     Path path = baseDir.resolve(fullPath.getLast() + FILE_SUFFIX);
     if (!Files.isRegularFile(path)) return false;
 
-    FunctionJson fnc = mapJsonFile(path, FunctionJson.class);
+    FunctionJson fnc = deserialize.mapJsonFile(path, FunctionJson.class);
     try {
       Class<?> clazz = Class.forName(fnc.classPath);
       ctx.addFunction(

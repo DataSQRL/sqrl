@@ -1,6 +1,6 @@
 package ai.datasqrl.compiler;
 
-import ai.datasqrl.compile.loaders.DataSourceLoader;
+import ai.datasqrl.compile.loaders.DataSource;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.io.sources.dataset.TableSource;
 import ai.datasqrl.parse.tree.name.Name;
@@ -19,7 +19,7 @@ public class LoaderTest {
     @ArgumentsSource(TestDataset.AllProvider.class)
     public void testLoadingSources(TestDataset example) {
         ErrorCollector errors = ErrorCollector.root();
-        DataSourceLoader loader = new DataSourceLoader();
+        DataSource.Loader loader = new DataSource.Loader();
         for (String tblName : example.getTables()) {
             Optional<TableSource> table = loader.readTable(example.getRootPackageDirectory(), NamePath.of(example.getName(),tblName), errors);
             assertFalse(errors.isFatal(), errors.toString());

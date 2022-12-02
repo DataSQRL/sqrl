@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
 
+import javax.validation.Valid;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 
@@ -15,10 +16,14 @@ import java.util.LinkedHashMap;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class GlobalPackageConfiguration {
 
-    @JsonProperty("package")
-    PackageConfiguration pkg;
+    public static final String DEPENDENCIES_NAME = "dependencies";
 
-    LinkedHashMap<String,Dependency> dependencies;
+    @JsonProperty("package") @Builder.Default @Valid
+    PackageConfiguration pkg = new PackageConfiguration();
+
+    @JsonProperty(DEPENDENCIES_NAME)
+    @NonNull @Builder.Default @Valid
+    LinkedHashMap<String,Dependency> dependencies = new LinkedHashMap<>();
 
 
     @SneakyThrows
