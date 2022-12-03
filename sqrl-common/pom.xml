@@ -20,7 +20,7 @@
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-spi</artifactId>
+      <artifactId>sqrl-base</artifactId>
     </dependency>
 
     <!-- Pulls in Calcite (TODO: refactor Flink out into sqrl-engine-flink and depend on Calcite directly) -->

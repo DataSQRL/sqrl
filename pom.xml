@@ -13,7 +13,7 @@
         <module>sqrl-parser</module>
         <module>sqrl-compiler</module>
         <module>sqrl-packager</module>
-        <module>sqrl-spi</module>
+        <module>sqrl-base</module>
         <module>sqrl-io-core</module>
         <module>sqrl-io-kafka</module>
         <module>sqrl-io-file</module>
@@ -23,7 +23,7 @@
         <module>sqrl-discovery</module>
         <module>sqrl-planner</module>
         <module>sqrl-server-vertx</module>
-        <module>sqrl-e2e</module>
+        <module>sqrl-integration-tests</module>
         <module>sqrl-loader-core</module>
         <module>sqrl-loader-java-function</module>
         <module>sqrl-loader-table</module>
@@ -96,7 +96,7 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-spi</artifactId>
+                <artifactId>sqrl-base</artifactId>
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
@@ -187,7 +187,7 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-e2e</artifactId>
+                <artifactId>sqrl-sqrl-integration-tests</artifactId>
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
