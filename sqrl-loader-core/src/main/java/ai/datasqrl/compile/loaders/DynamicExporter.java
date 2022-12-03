@@ -22,7 +22,7 @@ public class DynamicExporter extends CompositeExporter {
         = ServiceLoader.load(Exporter.class);
     List<Exporter> exporterList = new ArrayList<>(exporters);
     for (Exporter exp : serviceLoader) {
-      log.info("Loading dynamic exporter {}", exp.getClass().getCanonicalName());
+      log.trace("Loading dynamic exporter {}", exp.getClass().getCanonicalName());
       exporterList.add(exp);
     }
     return exporterList;

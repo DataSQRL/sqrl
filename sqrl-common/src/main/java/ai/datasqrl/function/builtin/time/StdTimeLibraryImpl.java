@@ -4,6 +4,7 @@ import ai.datasqrl.function.SqrlFunction;
 import ai.datasqrl.function.SqrlTimeTumbleFunction;
 import ai.datasqrl.function.TimestampPreservingFunction;
 import com.google.common.base.Preconditions;
+import java.lang.reflect.Field;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -12,6 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
+import lombok.SneakyThrows;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
@@ -383,9 +385,15 @@ public class StdTimeLibraryImpl {
         .build();
   }
 
+  @SneakyThrows
   public static DataType getFirstArgumentType(CallContext callContext) {
     if (callContext instanceof AdaptedCallContext) {
-      return ((AdaptedCallContext) callContext).getOriginalContext().getArgumentDataTypes()
+      Field privateField = AdaptedCallContext.class.getDeclaredField("originalContext");
+      privateField.setAccessible(true);
+      CallContext originalContext = (CallContext)privateField.get(callContext);
+
+      return originalContext
+          .getArgumentDataTypes()
           .get(0);
     } else {
       return callContext.getArgumentDataTypes().get(0);
