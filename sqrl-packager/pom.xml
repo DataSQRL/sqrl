@@ -18,7 +18,7 @@
 
     <dependencies>
         <dependency>
-            <artifactId>sqrl-spi</artifactId>
+            <artifactId>sqrl-base</artifactId>
             <groupId>com.datasqrl</groupId>
         </dependency>
         <dependency>

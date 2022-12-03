@@ -40,7 +40,7 @@
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-spi</artifactId>
+      <artifactId>sqrl-base</artifactId>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
