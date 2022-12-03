@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.rules;
+package com.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.plan.global.MaterializationPreference;
+import com.datasqrl.plan.global.MaterializationPreference;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.Value;

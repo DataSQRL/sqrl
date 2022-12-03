@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite;
+package com.datasqrl.plan.calcite;
 
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;

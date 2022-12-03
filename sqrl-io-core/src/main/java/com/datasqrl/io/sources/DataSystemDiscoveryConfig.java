@@ -1,7 +1,7 @@
-package ai.datasqrl.io.sources;
+package com.datasqrl.io.sources;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.spi.JacksonDeserializer;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.spi.JacksonDeserializer;
 import lombok.NonNull;
 
 public interface DataSystemDiscoveryConfig extends DataSystemSerializableConfig {

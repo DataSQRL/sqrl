@@ -1,8 +1,8 @@
-package ai.datasqrl.schema.input;
+package com.datasqrl.schema.input;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.constraint.Constraint;
-import ai.datasqrl.schema.type.Type;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.schema.constraint.Constraint;
+import com.datasqrl.schema.type.Type;
 import lombok.*;
 
 import java.io.Serializable;

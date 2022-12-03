@@ -1,4 +1,4 @@
-package ai.datasqrl.physical;
+package com.datasqrl.physical;
 
 public interface EnginePhysicalPlan {
 }

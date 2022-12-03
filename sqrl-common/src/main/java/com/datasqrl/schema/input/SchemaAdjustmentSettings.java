@@ -1,4 +1,4 @@
-package ai.datasqrl.schema.input;
+package com.datasqrl.schema.input;
 
 
 import java.io.Serializable;

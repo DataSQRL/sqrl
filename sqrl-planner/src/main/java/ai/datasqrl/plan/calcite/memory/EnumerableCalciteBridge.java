@@ -1,14 +1,14 @@
-//package ai.datasqrl.plan.calcite.memory;
+//package com.datasqrl.plan.calcite.memory;
 //
-//import ai.datasqrl.environment.ImportManager.SourceTableImport;
-//import ai.datasqrl.io.sources.util.StreamInputPreparer;
-//import ai.datasqrl.physical.stream.StreamEngine;
-//import ai.datasqrl.physical.stream.inmemory.InMemStreamEngine;
-//import ai.datasqrl.plan.calcite.BasicSqrlCalciteBridge;
-//import ai.datasqrl.plan.calcite.OptimizationStage;
-//import ai.datasqrl.plan.calcite.Planner;
-//import ai.datasqrl.plan.calcite.memory.table.DataTable;
-//import ai.datasqrl.plan.calcite.sqrl.table.*;
+//import com.datasqrl.environment.ImportManager.SourceTableImport;
+//import com.datasqrl.io.sources.util.StreamInputPreparer;
+//import com.datasqrl.physical.stream.StreamEngine;
+//import com.datasqrl.physical.stream.inmemory.InMemStreamEngine;
+//import com.datasqrl.plan.calcite.BasicSqrlCalciteBridge;
+//import com.datasqrl.plan.calcite.OptimizationStage;
+//import com.datasqrl.plan.calcite.Planner;
+//import com.datasqrl.plan.calcite.memory.table.DataTable;
+//import com.datasqrl.plan.calcite.sqrl.table.*;
 //import lombok.Getter;
 //import lombok.SneakyThrows;
 //import org.apache.calcite.adapter.enumerable.EnumerableInterpretable;
@@ -24,7 +24,7 @@
 //import java.util.*;
 //
 ///**
-// * The {@link EnumerableCalciteBridge} plans and immediately executes all {@link ai.datasqrl.plan.local.operations.SchemaUpdateOp}
+// * The {@link EnumerableCalciteBridge} plans and immediately executes all {@link com.datasqrl.plan.local.operations.SchemaUpdateOp}
 // * that it visits. It stores the results of that execution as a {@link DataTable} inside the {@link InMemoryCalciteSchema}
 // * that it maintains separately from tableMap of the parent class, because that schema is used to initiate the
 // * {@link LocalDataContext} required for the enumerable execution by Calcite.

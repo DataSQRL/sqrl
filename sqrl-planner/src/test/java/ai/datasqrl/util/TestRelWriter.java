@@ -1,4 +1,4 @@
-package ai.datasqrl.util;
+package com.datasqrl.util;
 
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.externalize.RelWriterImpl;

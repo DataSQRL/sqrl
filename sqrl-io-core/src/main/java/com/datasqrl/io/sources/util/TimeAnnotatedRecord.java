@@ -1,4 +1,4 @@
-package ai.datasqrl.io.sources.util;
+package com.datasqrl.io.sources.util;
 
 import lombok.*;
 

@@ -1,7 +1,7 @@
-package ai.datasqrl.io.sources;
+package com.datasqrl.io.sources;
 
-import ai.datasqrl.io.sources.dataset.TableSource;
-import ai.datasqrl.parse.tree.name.Name;
+import com.datasqrl.io.sources.dataset.TableSource;
+import com.datasqrl.parse.tree.name.Name;
 import lombok.*;
 
 import java.io.Serializable;

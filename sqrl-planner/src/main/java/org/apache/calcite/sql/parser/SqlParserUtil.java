@@ -16,7 +16,7 @@
  */
 package org.apache.calcite.sql.parser;
 
-import ai.datasqrl.plan.calcite.SqrlTypeSystem;
+import com.datasqrl.plan.calcite.SqrlTypeSystem;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.avatica.util.DateTimeUtils;
 import org.apache.calcite.config.CalciteSystemProperty;

@@ -1,8 +1,8 @@
-package ai.datasqrl.graphql;
+package com.datasqrl.graphql;
 
-import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
-import ai.datasqrl.graphql.server.VertxGraphQLBuilder;
-import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
+import com.datasqrl.graphql.server.VertxGraphQLBuilder;
+import com.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;

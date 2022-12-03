@@ -1,9 +1,9 @@
-package ai.datasqrl.plan.calcite.rules;
+package com.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.plan.calcite.hints.JoinCostHint;
-import ai.datasqrl.plan.calcite.hints.SqrlHint;
-import ai.datasqrl.plan.calcite.table.TableType;
+import com.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.plan.calcite.hints.JoinCostHint;
+import com.datasqrl.plan.calcite.hints.SqrlHint;
+import com.datasqrl.plan.calcite.table.TableType;
 import com.google.common.base.Preconditions;
 import javax.validation.constraints.NotNull;
 import lombok.Value;

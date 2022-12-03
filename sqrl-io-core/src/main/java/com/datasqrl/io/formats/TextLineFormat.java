@@ -1,4 +1,4 @@
-package ai.datasqrl.io.formats;
+package com.datasqrl.io.formats;
 
 import java.io.BufferedReader;
 import java.io.IOException;

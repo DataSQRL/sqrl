@@ -1,11 +1,11 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.schema.Multiplicity;
-import ai.datasqrl.schema.UniversalTableBuilder;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.UniversalTableBuilder;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;

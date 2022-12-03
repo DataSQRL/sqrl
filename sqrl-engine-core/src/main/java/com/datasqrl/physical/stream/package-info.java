@@ -1,1 +1,1 @@
-package ai.datasqrl.physical.stream;
+package com.datasqrl.physical.stream;

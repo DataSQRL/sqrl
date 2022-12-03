@@ -1,8 +1,8 @@
-package ai.datasqrl.io.sources;
+package com.datasqrl.io.sources;
 
-import ai.datasqrl.config.constraints.OptionalMinString;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.parse.tree.name.Name;
+import com.datasqrl.config.constraints.OptionalMinString;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.parse.tree.name.Name;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

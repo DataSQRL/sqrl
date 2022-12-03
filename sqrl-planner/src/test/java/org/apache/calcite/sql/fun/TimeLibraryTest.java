@@ -1,6 +1,6 @@
 //package org.apache.calcite.sql.fun;
 //
-//import ai.datasqrl.plan.calcite.PlannerFactory;
+//import com.datasqrl.plan.calcite.PlannerFactory;
 //import lombok.Value;
 //import org.apache.calcite.rel.type.RelDataType;
 //import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -12,7 +12,7 @@
 //import java.util.ArrayList;
 //import java.util.List;
 //
-//import static ai.datasqrl.plan.calcite.SqrlOperatorTable.*;
+//import static com.datasqrl.plan.calcite.SqrlOperatorTable.*;
 //import static org.junit.jupiter.api.Assertions.assertEquals;
 //
 //class TimeLibraryTest {

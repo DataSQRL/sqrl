@@ -1,11 +1,11 @@
-package ai.datasqrl.plan.local.generate;
+package com.datasqrl.plan.local.generate;
 
-import ai.datasqrl.compile.loaders.LoaderContext;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.function.builtin.time.FlinkFnc;
-import ai.datasqrl.io.sources.dataset.TableSource;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.plan.local.generate.Resolve.Env;
+import com.datasqrl.compile.loaders.LoaderContext;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.function.builtin.time.FlinkFnc;
+import com.datasqrl.io.sources.dataset.TableSource;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.plan.local.generate.Resolve.Env;
 import lombok.Value;
 
 import java.nio.file.Path;

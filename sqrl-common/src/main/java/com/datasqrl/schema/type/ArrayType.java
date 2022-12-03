@@ -1,4 +1,4 @@
-package ai.datasqrl.schema.type;
+package com.datasqrl.schema.type;
 
 import java.util.Objects;
 

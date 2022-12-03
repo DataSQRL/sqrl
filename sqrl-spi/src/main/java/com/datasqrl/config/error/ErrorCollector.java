@@ -1,7 +1,7 @@
-package ai.datasqrl.config.error;
+package com.datasqrl.config.error;
 
-import ai.datasqrl.config.error.SourceMap.EmptySourceMap;
-import ai.datasqrl.parse.tree.name.Name;
+import com.datasqrl.config.error.SourceMap.EmptySourceMap;
+import com.datasqrl.parse.tree.name.Name;
 import lombok.Getter;
 import lombok.NonNull;
 

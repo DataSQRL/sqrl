@@ -1,6 +1,6 @@
-package ai.datasqrl.physical.database;
+package com.datasqrl.physical.database;
 
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
+import com.datasqrl.config.provider.DatabaseConnectionProvider;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 

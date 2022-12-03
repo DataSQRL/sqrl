@@ -1,11 +1,11 @@
-package ai.datasqrl;
+package com.datasqrl;
 
-import ai.datasqrl.config.EngineSettings;
-import ai.datasqrl.io.impl.file.DirectoryDataSystemConfig;
-import ai.datasqrl.io.sources.DataSystemConfig;
-import ai.datasqrl.io.sources.ExternalDataType;
-import ai.datasqrl.util.DatabaseHandle;
-import ai.datasqrl.util.TestDataset;
+import com.datasqrl.config.EngineSettings;
+import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
+import com.datasqrl.io.sources.DataSystemConfig;
+import com.datasqrl.io.sources.ExternalDataType;
+import com.datasqrl.util.DatabaseHandle;
+import com.datasqrl.util.TestDataset;
 import com.google.common.base.Strings;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;

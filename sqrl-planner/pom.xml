@@ -4,7 +4,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>sqrl-root</artifactId>
-    <groupId>ai.datasqrl</groupId>
+    <groupId>com.datasqrl</groupId>
     <version>1.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -14,54 +14,54 @@
   <dependencies>
 
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-parser</artifactId>
     </dependency>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-flink</artifactId>
     </dependency>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-jdbc</artifactId>
     </dependency>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx</artifactId>
     </dependency>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-loader-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-discovery</artifactId>
     </dependency>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-loader-java-function</artifactId>
     </dependency>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-loader-table</artifactId>
     </dependency>
     <dependency>
       <artifactId>sqrl-common</artifactId>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <artifactId>sqrl-io-file</artifactId>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
 <!--      <scope>test</scope>-->
     </dependency>
     <dependency>

@@ -1,6 +1,6 @@
-package ai.datasqrl.physical.stream;
+package com.datasqrl.physical.stream;
 
-import ai.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.config.error.ErrorCollector;
 
 import java.io.Serializable;
 import java.util.Optional;

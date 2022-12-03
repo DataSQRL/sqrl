@@ -1,12 +1,12 @@
-package ai.datasqrl.schema.converters;
+package com.datasqrl.schema.converters;
 
-import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.constraint.ConstraintHelper;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema;
-import ai.datasqrl.schema.input.FlexibleSchemaHelper;
-import ai.datasqrl.schema.input.InputTableSchema;
-import ai.datasqrl.schema.input.RelationType;
+import com.datasqrl.io.sources.SourceRecord;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.schema.constraint.ConstraintHelper;
+import com.datasqrl.schema.input.FlexibleDatasetSchema;
+import com.datasqrl.schema.input.FlexibleSchemaHelper;
+import com.datasqrl.schema.input.InputTableSchema;
+import com.datasqrl.schema.input.RelationType;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Triple;
 

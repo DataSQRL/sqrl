@@ -1,6 +1,6 @@
-package ai.datasqrl.physical.stream.flink.schema;
+package com.datasqrl.physical.stream.flink.schema;
 
-import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
+import com.datasqrl.schema.converters.SourceRecord2RowMapper;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 

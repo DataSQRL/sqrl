@@ -1,7 +1,7 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.plan.calcite.util.IndexMap;
-import ai.datasqrl.plan.calcite.util.TimePredicate;
+import com.datasqrl.plan.calcite.util.IndexMap;
+import com.datasqrl.plan.calcite.util.TimePredicate;
 import com.google.common.base.Preconditions;
 import lombok.Value;
 import org.apache.calcite.rex.RexBuilder;

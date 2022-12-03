@@ -1,9 +1,9 @@
-package ai.datasqrl.io.sources.dataset;
+package com.datasqrl.io.sources.dataset;
 
-import ai.datasqrl.io.sources.DataSystemConnector;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.io.sources.DataSystemConnector;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.datasqrl.parse.tree.name.NamePath;
 import lombok.*;
 
 import java.io.Serializable;

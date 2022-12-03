@@ -1,6 +1,6 @@
-package ai.datasqrl.util.data;
+package com.datasqrl.util.data;
 
-import ai.datasqrl.util.ScriptBuilder;
+import com.datasqrl.util.ScriptBuilder;
 
 import java.nio.file.Path;
 

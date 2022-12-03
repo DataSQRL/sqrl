@@ -1,10 +1,10 @@
-package ai.datasqrl.graphql;
+package com.datasqrl.graphql;
 
-import ai.datasqrl.AbstractLogicalSQRLIT;
-import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.graphql.inference.SchemaInference;
-import ai.datasqrl.plan.local.generate.Resolve;
-import ai.datasqrl.plan.local.generate.Resolve.Env;
+import com.datasqrl.AbstractLogicalSQRLIT;
+import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.graphql.inference.SchemaInference;
+import com.datasqrl.plan.local.generate.Resolve;
+import com.datasqrl.plan.local.generate.Resolve.Env;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import lombok.SneakyThrows;

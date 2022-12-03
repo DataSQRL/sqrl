@@ -1,4 +1,4 @@
-package ai.datasqrl.graphql.util;
+package com.datasqrl.graphql.util;
 
 import graphql.language.*;
 

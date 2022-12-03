@@ -1,4 +1,4 @@
-package ai.datasqrl.util;
+package com.datasqrl.util;
 
 @FunctionalInterface
 public interface DatabaseHandle {

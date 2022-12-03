@@ -1,7 +1,7 @@
-package ai.datasqrl.io.sources.stats;
+package com.datasqrl.io.sources.stats;
 
-import ai.datasqrl.metadata.MetadataStore;
-import ai.datasqrl.metadata.MetadataStoreProvider;
+import com.datasqrl.metadata.MetadataStore;
+import com.datasqrl.metadata.MetadataStoreProvider;
 import lombok.AllArgsConstructor;
 
 import java.io.Serializable;

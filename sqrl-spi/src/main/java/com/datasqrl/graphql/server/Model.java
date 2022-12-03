@@ -1,4 +1,4 @@
-package ai.datasqrl.graphql.server;
+package com.datasqrl.graphql.server;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

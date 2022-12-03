@@ -1,8 +1,8 @@
-package ai.datasqrl.plan.calcite.rules;
+package com.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.config.util.AbstractPath;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.calcite.util.IndexMap;
+import com.datasqrl.config.util.AbstractPath;
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.calcite.util.IndexMap;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

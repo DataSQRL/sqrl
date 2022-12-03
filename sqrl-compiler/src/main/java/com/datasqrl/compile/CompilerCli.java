@@ -1,7 +1,7 @@
-package ai.datasqrl.compile;
+package com.datasqrl.compile;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.error.ErrorPrinter;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.config.error.ErrorPrinter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;

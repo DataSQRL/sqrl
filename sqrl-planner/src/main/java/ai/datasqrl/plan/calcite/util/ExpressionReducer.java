@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.util;
+package com.datasqrl.plan.calcite.util;
 
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexLiteral;

@@ -1,6 +1,6 @@
-package ai.datasqrl.physical.pipeline;
+package com.datasqrl.physical.pipeline;
 
-import ai.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.physical.ExecutionEngine;
 
 import java.util.Collection;
 import java.util.Optional;

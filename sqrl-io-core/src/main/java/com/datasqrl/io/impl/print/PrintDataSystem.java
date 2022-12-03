@@ -1,10 +1,10 @@
-package ai.datasqrl.io.impl.print;
+package com.datasqrl.io.impl.print;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.formats.FileFormat;
-import ai.datasqrl.io.sources.*;
-import ai.datasqrl.io.sources.dataset.TableConfig;
-import ai.datasqrl.parse.tree.name.Name;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.io.formats.FileFormat;
+import com.datasqrl.io.sources.*;
+import com.datasqrl.io.sources.dataset.TableConfig;
+import com.datasqrl.parse.tree.name.Name;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

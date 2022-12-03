@@ -1,9 +1,9 @@
-package ai.datasqrl.physical.database.inmemory;
+package com.datasqrl.physical.database.inmemory;
 
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.metadata.MetadataStoreProvider;
-import ai.datasqrl.config.serializer.SerializerProvider;
-import ai.datasqrl.metadata.MetadataStore;
+import com.datasqrl.config.provider.DatabaseConnectionProvider;
+import com.datasqrl.metadata.MetadataStoreProvider;
+import com.datasqrl.config.serializer.SerializerProvider;
+import com.datasqrl.metadata.MetadataStore;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import lombok.Value;

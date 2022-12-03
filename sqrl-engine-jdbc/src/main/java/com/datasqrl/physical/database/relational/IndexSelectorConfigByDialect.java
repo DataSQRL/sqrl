@@ -1,8 +1,8 @@
-package ai.datasqrl.physical.database.relational;
+package com.datasqrl.physical.database.relational;
 
-import ai.datasqrl.config.provider.Dialect;
-import ai.datasqrl.plan.global.IndexDefinition;
-import ai.datasqrl.plan.global.IndexSelectorConfig;
+import com.datasqrl.config.provider.Dialect;
+import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.global.IndexSelectorConfig;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -10,8 +10,8 @@ import lombok.Value;
 
 import java.util.EnumSet;
 
-import static ai.datasqrl.plan.global.IndexDefinition.Type.BTREE;
-import static ai.datasqrl.plan.global.IndexDefinition.Type.HASH;
+import static com.datasqrl.plan.global.IndexDefinition.Type.BTREE;
+import static com.datasqrl.plan.global.IndexDefinition.Type.HASH;
 
 @Value
 @Builder

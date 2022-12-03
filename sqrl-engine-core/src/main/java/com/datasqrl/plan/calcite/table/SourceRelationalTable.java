@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
 public interface SourceRelationalTable {
 

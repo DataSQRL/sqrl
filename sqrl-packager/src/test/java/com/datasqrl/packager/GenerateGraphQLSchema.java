@@ -1,6 +1,6 @@
-package ai.datasqrl.packager;
+package com.datasqrl.packager;
 
-import ai.datasqrl.graphql.generate.SchemaGeneratorUseCaseTest;
+import com.datasqrl.graphql.generate.SchemaGeneratorUseCaseTest;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

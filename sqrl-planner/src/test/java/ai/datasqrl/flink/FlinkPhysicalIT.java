@@ -1,10 +1,10 @@
-package ai.datasqrl.flink;
+package com.datasqrl.flink;
 
-import ai.datasqrl.AbstractPhysicalSQRLIT;
-import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.util.ScriptBuilder;
-import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.data.Retail;
+import com.datasqrl.AbstractPhysicalSQRLIT;
+import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.util.ScriptBuilder;
+import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.data.Retail;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;

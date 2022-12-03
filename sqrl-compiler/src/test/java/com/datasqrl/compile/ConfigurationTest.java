@@ -1,9 +1,9 @@
-package ai.datasqrl.compile;
+package com.datasqrl.compile;
 
-import ai.datasqrl.config.EngineSettings;
-import ai.datasqrl.config.GlobalCompilerConfiguration;
-import ai.datasqrl.config.GlobalEngineConfiguration;
-import ai.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.config.EngineSettings;
+import com.datasqrl.config.GlobalCompilerConfiguration;
+import com.datasqrl.config.GlobalEngineConfiguration;
+import com.datasqrl.config.error.ErrorCollector;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;

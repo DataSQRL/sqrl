@@ -1,7 +1,7 @@
-package ai.datasqrl.config.util;
+package com.datasqrl.config.util;
 
 
-import ai.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.config.error.ErrorCollector;
 import com.google.common.base.Strings;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;

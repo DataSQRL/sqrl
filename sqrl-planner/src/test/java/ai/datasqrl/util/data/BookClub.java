@@ -1,6 +1,6 @@
-package ai.datasqrl.util.data;
+package com.datasqrl.util.data;
 
-import ai.datasqrl.util.TestResources;
+import com.datasqrl.util.TestResources;
 
 import java.nio.file.Path;
 

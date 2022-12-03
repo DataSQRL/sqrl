@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.memory;
+package com.datasqrl.plan.calcite.memory;
 
-import ai.datasqrl.plan.calcite.memory.table.DataTable;
+import com.datasqrl.plan.calcite.memory.table.DataTable;
 import java.util.Collection;
 import java.util.List;
 import org.apache.calcite.linq4j.tree.Expression;

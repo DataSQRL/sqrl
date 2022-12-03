@@ -1,10 +1,10 @@
-package ai.datasqrl.io.impl.kafka;
+package com.datasqrl.io.impl.kafka;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.sources.DataSystemConnector;
-import ai.datasqrl.io.sources.DataSystemConnectorConfig;
-import ai.datasqrl.io.sources.DataSystemDiscovery;
-import ai.datasqrl.io.sources.DataSystemDiscoveryConfig;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.io.sources.DataSystemConnector;
+import com.datasqrl.io.sources.DataSystemConnectorConfig;
+import com.datasqrl.io.sources.DataSystemDiscovery;
+import com.datasqrl.io.sources.DataSystemDiscoveryConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;

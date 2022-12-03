@@ -1,4 +1,4 @@
-package ai.datasqrl;
+package com.datasqrl;
 
 public class Main {
 

@@ -1,8 +1,8 @@
-package ai.datasqrl.plan.calcite.util;
+package com.datasqrl.plan.calcite.util;
 
-import ai.datasqrl.function.SqrlFunction;
-import ai.datasqrl.function.TimestampPreservingFunction;
-import ai.datasqrl.plan.calcite.table.TimestampHolder;
+import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.TimestampPreservingFunction;
+import com.datasqrl.plan.calcite.table.TimestampHolder;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.calcite.rex.RexCall;

@@ -1,4 +1,4 @@
-package ai.datasqrl.parse.tree.name;
+package com.datasqrl.parse.tree.name;
 
 public class SimpleName extends AbstractName {
 

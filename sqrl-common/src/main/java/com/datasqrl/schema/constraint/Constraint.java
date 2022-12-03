@@ -1,8 +1,8 @@
-package ai.datasqrl.schema.constraint;
+package com.datasqrl.schema.constraint;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.type.Type;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.schema.type.Type;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;

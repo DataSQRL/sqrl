@@ -1,10 +1,10 @@
-package ai.datasqrl.plan.global;
+package com.datasqrl.plan.global;
 
-import ai.datasqrl.config.util.ArrayUtil;
-import ai.datasqrl.plan.calcite.OptimizationStage;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
+import com.datasqrl.config.util.ArrayUtil;
+import com.datasqrl.plan.calcite.OptimizationStage;
+import com.datasqrl.plan.calcite.Planner;
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.primitives.Ints;
@@ -23,7 +23,7 @@ import org.apache.calcite.rex.RexShuttle;
 
 import java.util.*;
 
-import static ai.datasqrl.plan.calcite.OptimizationStage.READ_QUERY_OPTIMIZATION;
+import static com.datasqrl.plan.calcite.OptimizationStage.READ_QUERY_OPTIMIZATION;
 
 @AllArgsConstructor
 public class IndexSelector {

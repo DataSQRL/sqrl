@@ -4,7 +4,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>sqrl-root</artifactId>
-    <groupId>ai.datasqrl</groupId>
+    <groupId>com.datasqrl</groupId>
     <version>1.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -19,16 +19,16 @@
 
   <dependencies>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-common</artifactId>
     </dependency>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-core</artifactId>
     </dependency>
     <!-- Used by in-memory stream -->
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-file</artifactId>
     </dependency>
 
@@ -36,7 +36,7 @@
 
     <dependency>
       <artifactId>sqrl-common</artifactId>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

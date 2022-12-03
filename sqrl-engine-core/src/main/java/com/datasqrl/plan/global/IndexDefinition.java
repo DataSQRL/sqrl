@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.global;
+package com.datasqrl.plan.global;
 
 import com.google.common.collect.ContiguousSet;
 import lombok.Value;

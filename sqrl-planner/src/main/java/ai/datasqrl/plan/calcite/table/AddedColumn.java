@@ -1,7 +1,7 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.calcite.util.IndexMap;
+import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.plan.calcite.util.IndexMap;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;

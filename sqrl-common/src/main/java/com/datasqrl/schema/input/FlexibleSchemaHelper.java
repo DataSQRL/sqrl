@@ -1,8 +1,8 @@
-package ai.datasqrl.schema.input;
+package com.datasqrl.schema.input;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.SpecialName;
-import ai.datasqrl.schema.constraint.ConstraintHelper;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.SpecialName;
+import com.datasqrl.schema.constraint.ConstraintHelper;
 
 public class FlexibleSchemaHelper {
 

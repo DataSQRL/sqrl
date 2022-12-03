@@ -1,12 +1,12 @@
-package ai.datasqrl.schema.input.external;
+package com.datasqrl.schema.input.external;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.SpecialName;
-import ai.datasqrl.schema.input.RelationType;
-import ai.datasqrl.schema.type.Type;
-import ai.datasqrl.schema.type.basic.BasicType;
-import ai.datasqrl.schema.constraint.Constraint;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.SpecialName;
+import com.datasqrl.schema.input.RelationType;
+import com.datasqrl.schema.type.Type;
+import com.datasqrl.schema.type.basic.BasicType;
+import com.datasqrl.schema.constraint.Constraint;
+import com.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;

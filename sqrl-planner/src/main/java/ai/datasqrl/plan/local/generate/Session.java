@@ -1,8 +1,8 @@
-package ai.datasqrl.plan.local.generate;
+package com.datasqrl.plan.local.generate;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.physical.pipeline.ExecutionPipeline;
-import ai.datasqrl.plan.calcite.Planner;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.physical.pipeline.ExecutionPipeline;
+import com.datasqrl.plan.calcite.Planner;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

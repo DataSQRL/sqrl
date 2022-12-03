@@ -1,4 +1,4 @@
-package ai.datasqrl.physical.stream.inmemory;
+package com.datasqrl.physical.stream.inmemory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

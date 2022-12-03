@@ -1,10 +1,10 @@
-package ai.datasqrl.schema;
+package com.datasqrl.schema;
 
-import ai.datasqrl.config.util.StreamUtil;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.schema.Relationship.JoinType;
+import com.datasqrl.config.util.StreamUtil;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.schema.Relationship.JoinType;
 
 import java.util.ArrayList;
 import java.util.Collection;

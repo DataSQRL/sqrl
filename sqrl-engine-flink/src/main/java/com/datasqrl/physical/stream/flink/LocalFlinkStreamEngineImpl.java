@@ -1,6 +1,6 @@
-package ai.datasqrl.physical.stream.flink;
+package com.datasqrl.physical.stream.flink;
 
-import ai.datasqrl.physical.stream.StreamEngine;
+import com.datasqrl.physical.stream.StreamEngine;
 import lombok.NonNull;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;

@@ -1,10 +1,10 @@
-package ai.datasqrl.plan.calcite;
+package com.datasqrl.plan.calcite;
 
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.schema.input.SqrlTypeConverter;
-import ai.datasqrl.schema.type.ArrayType;
-import ai.datasqrl.schema.type.Type;
-import ai.datasqrl.schema.type.basic.*;
+import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.schema.input.SqrlTypeConverter;
+import com.datasqrl.schema.type.ArrayType;
+import com.datasqrl.schema.type.Type;
+import com.datasqrl.schema.type.basic.*;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.type.RelDataType;

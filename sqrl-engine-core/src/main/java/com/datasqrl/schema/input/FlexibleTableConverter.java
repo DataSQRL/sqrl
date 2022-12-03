@@ -1,10 +1,10 @@
-package ai.datasqrl.schema.input;
+package com.datasqrl.schema.input;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.constraint.Cardinality;
-import ai.datasqrl.schema.constraint.ConstraintHelper;
-import ai.datasqrl.schema.type.Type;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.schema.constraint.Cardinality;
+import com.datasqrl.schema.constraint.ConstraintHelper;
+import com.datasqrl.schema.type.Type;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 

@@ -1,4 +1,4 @@
-package ai.datasqrl.config.serializer;
+package com.datasqrl.config.serializer;
 
 import com.esotericsoftware.kryo.Kryo;
 

@@ -1,10 +1,10 @@
-package ai.datasqrl.physical.stream.flink.plan;
+package com.datasqrl.physical.stream.flink.plan;
 
 
-import ai.datasqrl.plan.calcite.hints.*;
-import ai.datasqrl.plan.calcite.table.SourceRelationalTable;
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.calcite.util.SqrlRexUtil;
+import com.datasqrl.plan.calcite.hints.*;
+import com.datasqrl.plan.calcite.table.SourceRelationalTable;
+import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;

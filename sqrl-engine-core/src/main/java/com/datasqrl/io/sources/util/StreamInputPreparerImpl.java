@@ -1,14 +1,14 @@
-package ai.datasqrl.io.sources.util;
+package com.datasqrl.io.sources.util;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.formats.Format;
-import ai.datasqrl.io.formats.TextLineFormat;
-import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.TableInput;
-import ai.datasqrl.physical.stream.FunctionWithError;
-import ai.datasqrl.physical.stream.StreamEngine;
-import ai.datasqrl.physical.stream.StreamHolder;
-import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.io.formats.Format;
+import com.datasqrl.io.formats.TextLineFormat;
+import com.datasqrl.io.sources.SourceRecord;
+import com.datasqrl.io.sources.dataset.TableInput;
+import com.datasqrl.physical.stream.FunctionWithError;
+import com.datasqrl.physical.stream.StreamEngine;
+import com.datasqrl.physical.stream.StreamHolder;
+import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 

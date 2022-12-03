@@ -5,5 +5,5 @@
  * Only add a new constraint if the validation logic cannot be accomplished with existing javax constraints.
  *
  */
-package ai.datasqrl.config.constraints;
+package com.datasqrl.config.constraints;
 

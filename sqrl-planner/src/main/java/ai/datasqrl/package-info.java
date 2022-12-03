@@ -25,4 +25,4 @@
  * users to serve pieces of the cake. Finally, the Cake Maker includes a server that manages cake
  * recipes and enables users to share their recipes with others.
  */
-package ai.datasqrl;
+package com.datasqrl;

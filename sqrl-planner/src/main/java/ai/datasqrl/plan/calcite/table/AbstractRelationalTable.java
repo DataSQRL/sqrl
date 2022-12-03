@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.Name;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import org.apache.calcite.linq4j.QueryProvider;

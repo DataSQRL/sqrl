@@ -1,8 +1,8 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.io.sources.stats.TableStatistic;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.io.sources.stats.TableStatistic;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.physical.pipeline.ExecutionStage;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import lombok.Getter;

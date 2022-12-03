@@ -1,9 +1,9 @@
-package ai.datasqrl.config.error;
+package com.datasqrl.config.error;
 
-import ai.datasqrl.config.error.ErrorLocation.FileLocation;
-import ai.datasqrl.config.error.ErrorMessage.Implementation;
-import ai.datasqrl.config.error.ErrorMessage.Severity;
-import ai.datasqrl.parse.SqrlAstException;
+import com.datasqrl.config.error.ErrorLocation.FileLocation;
+import com.datasqrl.config.error.ErrorMessage.Implementation;
+import com.datasqrl.config.error.ErrorMessage.Severity;
+import com.datasqrl.parse.SqrlAstException;
 import java.util.Optional;
 
 public class SqrlAstExceptionHandler implements ErrorHandler<SqrlAstException> {

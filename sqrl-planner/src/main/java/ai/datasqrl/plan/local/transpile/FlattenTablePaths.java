@@ -1,11 +1,11 @@
-package ai.datasqrl.plan.local.transpile;
+package com.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTable;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.SingleTable;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.VirtualResolvedTable;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTable;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.SingleTable;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.VirtualResolvedTable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

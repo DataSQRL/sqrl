@@ -1,10 +1,10 @@
-package ai.datasqrl.config;
+package com.datasqrl.config;
 
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.metadata.MetadataStoreProvider;
-import ai.datasqrl.physical.pipeline.ExecutionPipeline;
-import ai.datasqrl.physical.stream.StreamEngine;
+import com.datasqrl.config.provider.DatabaseConnectionProvider;
+import com.datasqrl.config.provider.JDBCConnectionProvider;
+import com.datasqrl.metadata.MetadataStoreProvider;
+import com.datasqrl.physical.pipeline.ExecutionPipeline;
+import com.datasqrl.physical.stream.StreamEngine;
 import lombok.NonNull;
 import lombok.Value;
 

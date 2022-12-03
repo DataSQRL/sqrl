@@ -1,9 +1,9 @@
-package ai.datasqrl.physical.stream.flink.schema;
+package com.datasqrl.physical.stream.flink.schema;
 
-import ai.datasqrl.schema.UniversalTableBuilder;
-import ai.datasqrl.schema.input.SqrlTypeConverter;
-import ai.datasqrl.schema.type.Type;
-import ai.datasqrl.schema.type.basic.*;
+import com.datasqrl.schema.UniversalTableBuilder;
+import com.datasqrl.schema.input.SqrlTypeConverter;
+import com.datasqrl.schema.type.Type;
+import com.datasqrl.schema.type.basic.*;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.type.BasicSqlType;

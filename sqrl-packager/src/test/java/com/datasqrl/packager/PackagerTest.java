@@ -1,9 +1,9 @@
-package ai.datasqrl.packager;
+package com.datasqrl.packager;
 
-import ai.datasqrl.util.FileTestUtil;
-import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.TestScript;
-import ai.datasqrl.util.data.Retail;
+import com.datasqrl.util.FileTestUtil;
+import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.TestScript;
+import com.datasqrl.util.data.Retail;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

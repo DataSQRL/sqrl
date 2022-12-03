@@ -1,6 +1,6 @@
-package ai.datasqrl.physical;
+package com.datasqrl.physical;
 
-import ai.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.physical.pipeline.ExecutionStage;
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
 import lombok.Value;

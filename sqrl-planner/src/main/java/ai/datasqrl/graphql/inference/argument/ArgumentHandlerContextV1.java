@@ -1,8 +1,8 @@
-package ai.datasqrl.graphql.inference.argument;
+package com.datasqrl.graphql.inference.argument;
 
-import ai.datasqrl.graphql.inference.ArgumentSet;
-import ai.datasqrl.graphql.server.Model.PgParameterHandler;
-import ai.datasqrl.schema.SQRLTable;
+import com.datasqrl.graphql.inference.ArgumentSet;
+import com.datasqrl.graphql.server.Model.PgParameterHandler;
+import com.datasqrl.schema.SQRLTable;
 import graphql.language.InputValueDefinition;
 import java.util.List;
 import java.util.Set;

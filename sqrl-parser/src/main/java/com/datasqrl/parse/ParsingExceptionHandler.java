@@ -1,8 +1,8 @@
-package ai.datasqrl.parse;
+package com.datasqrl.parse;
 
-import ai.datasqrl.config.error.ErrorEmitter;
-import ai.datasqrl.config.error.ErrorHandler;
-import ai.datasqrl.config.error.ErrorMessage;
+import com.datasqrl.config.error.ErrorEmitter;
+import com.datasqrl.config.error.ErrorHandler;
+import com.datasqrl.config.error.ErrorMessage;
 
 public class ParsingExceptionHandler implements ErrorHandler<ParsingException> {
 

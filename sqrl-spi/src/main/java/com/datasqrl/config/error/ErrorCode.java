@@ -1,4 +1,4 @@
-package ai.datasqrl.config.error;
+package com.datasqrl.config.error;
 
 import com.google.common.io.Resources;
 import java.nio.charset.Charset;

@@ -11,13 +11,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ai.datasqrl.parse;
+package com.datasqrl.parse;
 
 import static java.lang.String.format;
 
-import ai.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
-import ai.datasqrl.parse.SqlBaseParser.BetweenContext;
-import ai.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
+import com.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
+import com.datasqrl.parse.SqlBaseParser.BetweenContext;
+import com.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
 import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -54,7 +54,7 @@ public class SqrlParser {
       .specialRule(SqlBaseParser.RULE_query, "<query>")
       .specialRule(SqlBaseParser.RULE_type, "<type>")
       .specialToken(SqlBaseLexer.INTEGER_VALUE, "<integer>")
-//      .ignoredRule(ai.datasqrl.sqml.parser.SqlBaseParser.RULE_nonReserved)
+//      .ignoredRule(com.datasqrl.sqml.parser.SqlBaseParser.RULE_nonReserved)
       .build();
 
   public static SqrlParser newParser() {

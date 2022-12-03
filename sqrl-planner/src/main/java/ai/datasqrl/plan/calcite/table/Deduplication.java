@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.plan.calcite.util.IndexMap;
+import com.datasqrl.plan.calcite.util.IndexMap;
 import lombok.Value;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.tools.RelBuilder;

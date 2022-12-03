@@ -1,8 +1,8 @@
-package ai.datasqrl.physical.database.relational.metadata;
+package com.datasqrl.physical.database.relational.metadata;
 
-import ai.datasqrl.metadata.MetadataStore;
-import ai.datasqrl.config.provider.Dialect;
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
+import com.datasqrl.metadata.MetadataStore;
+import com.datasqrl.config.provider.Dialect;
+import com.datasqrl.config.provider.JDBCConnectionProvider;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;

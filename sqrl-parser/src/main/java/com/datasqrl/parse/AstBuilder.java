@@ -11,9 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ai.datasqrl.parse;
+package com.datasqrl.parse;
 
-import ai.datasqrl.parse.SqlBaseParser.*;
+import com.datasqrl.parse.SqlBaseParser.*;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.sql.TableFunctionArgument;
 import java.util.Locale;
@@ -40,7 +40,7 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * Builds the abstract syntax tree for an SQRL script using the classes in
- * {@link ai.datasqrl.parse.tree}.
+ * {@link com.datasqrl.parse.tree}.
  */
 class AstBuilder
     extends SqlBaseBaseVisitor<SqlNode> {

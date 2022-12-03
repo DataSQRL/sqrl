@@ -1,4 +1,4 @@
-package ai.datasqrl.util;
+package com.datasqrl.util;
 
 import java.io.InputStream;
 import java.util.Properties;

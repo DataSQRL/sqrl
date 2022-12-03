@@ -1,11 +1,11 @@
-package ai.datasqrl.schema;
+package com.datasqrl.schema;
 
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.config.util.StreamUtil;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.schema.type.ArrayType;
+import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.config.util.StreamUtil;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.parse.tree.name.ReservedName;
+import com.datasqrl.schema.type.ArrayType;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;

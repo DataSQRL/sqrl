@@ -1,10 +1,10 @@
-package ai.datasqrl.plan.calcite.memory.table;
+package com.datasqrl.plan.calcite.memory.table;
 
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.plan.calcite.util.CalciteUtil;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.DataContext;
 import org.apache.calcite.linq4j.AbstractEnumerable;

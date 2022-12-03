@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.memory.rel;
+package com.datasqrl.plan.calcite.memory.rel;
 
-import ai.datasqrl.plan.calcite.memory.table.DataTable;
+import com.datasqrl.plan.calcite.memory.table.DataTable;
 import java.util.List;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.adapter.enumerable.EnumerableRel;

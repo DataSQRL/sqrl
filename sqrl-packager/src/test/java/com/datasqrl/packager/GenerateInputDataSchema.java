@@ -1,6 +1,6 @@
-package ai.datasqrl.packager;
+package com.datasqrl.packager;
 
-import ai.datasqrl.io.TestDataSetMonitoringIT;
+import com.datasqrl.io.TestDataSetMonitoringIT;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

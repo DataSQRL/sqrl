@@ -1,6 +1,6 @@
-package ai.datasqrl.io.sources.stats;
+package com.datasqrl.io.sources.stats;
 
-import ai.datasqrl.schema.type.Type;
+import com.datasqrl.schema.type.Type;
 import lombok.NonNull;
 import lombok.Value;
 

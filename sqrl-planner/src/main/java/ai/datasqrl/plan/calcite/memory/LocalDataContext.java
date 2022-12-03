@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.memory;
+package com.datasqrl.plan.calcite.memory;
 
-import ai.datasqrl.plan.calcite.memory.rel.InMemoryEnumerableTableScan;
+import com.datasqrl.plan.calcite.memory.rel.InMemoryEnumerableTableScan;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.DataContext;
 import org.apache.calcite.adapter.enumerable.EnumerableRel.Prefer;

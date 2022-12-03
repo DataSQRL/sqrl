@@ -1,4 +1,4 @@
-package ai.datasqrl.config.util;
+package com.datasqrl.config.util;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;

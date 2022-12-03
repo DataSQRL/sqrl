@@ -1,8 +1,8 @@
-package ai.datasqrl.graphql.inference.argument;
+package com.datasqrl.graphql.inference.argument;
 
-import ai.datasqrl.graphql.inference.ArgumentSet;
-import ai.datasqrl.graphql.server.Model.Argument;
-import ai.datasqrl.graphql.server.Model.VariableArgument;
+import com.datasqrl.graphql.inference.ArgumentSet;
+import com.datasqrl.graphql.server.Model.Argument;
+import com.datasqrl.graphql.server.Model.VariableArgument;
 import graphql.Scalars;
 import graphql.language.NonNullType;
 import graphql.language.Type;

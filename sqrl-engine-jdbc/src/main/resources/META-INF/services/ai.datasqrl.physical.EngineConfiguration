@@ -1,1 +1,1 @@
-ai.datasqrl.physical.database.relational.JDBCEngineConfiguration
+com.datasqrl.physical.database.relational.JDBCEngineConfiguration

@@ -1,7 +1,7 @@
-package ai.datasqrl.plan.calcite.rules;
+package com.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.global.IndexCall;
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.global.IndexCall;
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rel.metadata.*;
 import org.apache.calcite.rex.RexNode;

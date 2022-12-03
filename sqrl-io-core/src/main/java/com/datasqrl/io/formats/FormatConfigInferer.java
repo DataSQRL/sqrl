@@ -1,6 +1,6 @@
-package ai.datasqrl.io.formats;
+package com.datasqrl.io.formats;
 
-import ai.datasqrl.io.impl.InputPreview;
+import com.datasqrl.io.impl.InputPreview;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Iterator;

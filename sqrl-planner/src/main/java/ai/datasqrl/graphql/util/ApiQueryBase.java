@@ -1,10 +1,10 @@
-package ai.datasqrl.graphql.util;
+package com.datasqrl.graphql.util;
 
-import ai.datasqrl.graphql.inference.ArgumentSet;
-import ai.datasqrl.graphql.server.Model.PgParameterHandler;
-import ai.datasqrl.graphql.server.Model.QueryBase;
-import ai.datasqrl.graphql.server.Model.QueryBaseVisitor;
-import ai.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.graphql.inference.ArgumentSet;
+import com.datasqrl.graphql.server.Model.PgParameterHandler;
+import com.datasqrl.graphql.server.Model.QueryBase;
+import com.datasqrl.graphql.server.Model.QueryBaseVisitor;
+import com.datasqrl.plan.queries.APIQuery;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

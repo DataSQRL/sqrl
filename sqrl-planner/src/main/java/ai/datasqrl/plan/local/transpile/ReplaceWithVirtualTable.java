@@ -1,14 +1,14 @@
-package ai.datasqrl.plan.local.transpile;
+package com.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTable;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTableField;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.SingleTable;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.SQRLTable;
+import com.datasqrl.plan.calcite.util.SqlNodeUtil;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTable;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTableField;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.SingleTable;
+import com.datasqrl.schema.Relationship;
+import com.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;

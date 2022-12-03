@@ -1,11 +1,11 @@
-package ai.datasqrl.schema.input;
+package com.datasqrl.schema.input;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.calcite.SqrlTypeRelDataTypeConverter;
-import ai.datasqrl.schema.Multiplicity;
-import ai.datasqrl.schema.UniversalTableBuilder;
-import ai.datasqrl.schema.type.Type;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.plan.calcite.SqrlTypeRelDataTypeConverter;
+import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.UniversalTableBuilder;
+import com.datasqrl.schema.type.Type;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataTypeFactory;

@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.util;
+package com.datasqrl.plan.calcite.util;
 
 import com.google.common.base.Preconditions;
 import lombok.Value;

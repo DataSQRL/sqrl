@@ -1,1 +1,1 @@
-package ai.datasqrl.plan.calcite;
+package com.datasqrl.plan.calcite;

@@ -16,8 +16,8 @@
  */
 package org.apache.calcite.jdbc;
 
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.SQRLTable;
+import com.datasqrl.schema.Relationship;
+import com.datasqrl.schema.SQRLTable;
 import org.apache.calcite.schema.Schema;
 
 import java.util.HashSet;

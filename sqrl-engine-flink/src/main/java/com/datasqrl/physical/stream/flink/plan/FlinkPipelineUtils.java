@@ -1,6 +1,6 @@
-package ai.datasqrl.physical.stream.flink.plan;
+package com.datasqrl.physical.stream.flink.plan;
 
-import ai.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.OptimizedDAG;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Schema.UnresolvedColumn;
 import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;

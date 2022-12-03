@@ -1,8 +1,8 @@
-package ai.datasqrl.graphql.util;
+package com.datasqrl.graphql.util;
 
-import ai.datasqrl.graphql.inference.ArgumentSet;
-import ai.datasqrl.graphql.server.Model.*;
-import ai.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.graphql.inference.ArgumentSet;
+import com.datasqrl.graphql.server.Model.*;
+import com.datasqrl.plan.queries.APIQuery;
 import lombok.*;
 import org.apache.calcite.rel.RelNode;
 

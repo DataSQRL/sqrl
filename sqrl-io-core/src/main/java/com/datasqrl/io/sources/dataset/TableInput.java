@@ -1,10 +1,10 @@
-package ai.datasqrl.io.sources.dataset;
+package com.datasqrl.io.sources.dataset;
 
-import ai.datasqrl.io.formats.Format;
-import ai.datasqrl.io.formats.FormatConfiguration;
-import ai.datasqrl.io.sources.DataSystemConnector;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.io.formats.Format;
+import com.datasqrl.io.formats.FormatConfiguration;
+import com.datasqrl.io.sources.DataSystemConnector;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NamePath;
 
 public class TableInput extends AbstractExternalTable {
 

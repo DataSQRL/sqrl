@@ -1,8 +1,8 @@
-package ai.datasqrl.plan.calcite;
+package com.datasqrl.plan.calcite;
 
-import ai.datasqrl.plan.calcite.rules.DAGExpansionRule;
-import ai.datasqrl.plan.calcite.rules.SQRLPrograms;
-import ai.datasqrl.plan.calcite.rules.SqrlRelMetadataProvider;
+import com.datasqrl.plan.calcite.rules.DAGExpansionRule;
+import com.datasqrl.plan.calcite.rules.SQRLPrograms;
+import com.datasqrl.plan.calcite.rules.SqrlRelMetadataProvider;
 import lombok.Value;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.plan.RelTrait;

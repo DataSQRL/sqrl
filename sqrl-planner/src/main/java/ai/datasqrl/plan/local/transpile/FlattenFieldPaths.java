@@ -1,7 +1,7 @@
-package ai.datasqrl.plan.local.transpile;
+package com.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTableField;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTableField;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import java.util.ArrayList;

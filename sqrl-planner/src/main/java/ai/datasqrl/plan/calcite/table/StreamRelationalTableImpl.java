@@ -1,8 +1,8 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.schema.UniversalTableBuilder;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.ReservedName;
+import com.datasqrl.schema.UniversalTableBuilder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

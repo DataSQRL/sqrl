@@ -1,4 +1,4 @@
-package ai.datasqrl.schema.constraint;
+package com.datasqrl.schema.constraint;
 
 import java.util.Optional;
 

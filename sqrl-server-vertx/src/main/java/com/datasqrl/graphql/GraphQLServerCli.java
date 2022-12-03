@@ -1,4 +1,4 @@
-package ai.datasqrl.graphql;
+package com.datasqrl.graphql;
 
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.Launcher;

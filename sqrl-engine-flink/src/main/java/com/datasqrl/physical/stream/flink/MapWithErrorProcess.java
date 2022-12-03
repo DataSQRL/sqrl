@@ -1,7 +1,7 @@
-package ai.datasqrl.physical.stream.flink;
+package com.datasqrl.physical.stream.flink;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.physical.stream.FunctionWithError;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.physical.stream.FunctionWithError;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;

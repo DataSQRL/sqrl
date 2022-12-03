@@ -1,9 +1,9 @@
-package ai.datasqrl.plan.calcite;
+package com.datasqrl.plan.calcite;
 
-import static ai.datasqrl.plan.calcite.PlannerFactory.sqlValidatorConfig;
+import static com.datasqrl.plan.calcite.PlannerFactory.sqlValidatorConfig;
 
-import ai.datasqrl.SqrlCalciteCatalogReader;
-import ai.datasqrl.function.builtin.time.FlinkFnc;
+import com.datasqrl.SqrlCalciteCatalogReader;
+import com.datasqrl.function.builtin.time.FlinkFnc;
 import java.util.List;
 import java.util.Properties;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;

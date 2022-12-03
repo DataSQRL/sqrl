@@ -1,6 +1,6 @@
-package ai.datasqrl.parse;
+package com.datasqrl.parse;
 
-import ai.datasqrl.config.error.ErrorCode;
+import com.datasqrl.config.error.ErrorCode;
 import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 

@@ -1,9 +1,9 @@
-package ai.datasqrl.io.sources;
+package com.datasqrl.io.sources;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.sources.dataset.TableConfig;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.io.sources.dataset.TableConfig;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NameCanonicalizer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;

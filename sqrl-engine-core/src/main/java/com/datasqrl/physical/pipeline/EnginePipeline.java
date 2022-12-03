@@ -1,8 +1,8 @@
-package ai.datasqrl.physical.pipeline;
+package com.datasqrl.physical.pipeline;
 
-import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.physical.database.DatabaseEngine;
-import ai.datasqrl.physical.stream.StreamEngine;
+import com.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.physical.database.DatabaseEngine;
+import com.datasqrl.physical.stream.StreamEngine;
 import lombok.Value;
 
 import java.util.Collection;

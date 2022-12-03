@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.hints;
+package com.datasqrl.plan.calcite.hints;
 
 import lombok.Getter;
 import org.apache.calcite.rel.hint.HintPredicates;

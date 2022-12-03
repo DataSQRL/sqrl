@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.util;
+package com.datasqrl.plan.calcite.util;
 
-import ai.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.SqrlFunction;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptUtil;

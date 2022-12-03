@@ -25,4 +25,4 @@ RUN mvn package -DskipTest=true
 FROM eclipse-temurin:11-jdk-alpine
 WORKDIR /usr/src/app
 COPY --from=build /usr/src/app/sqrl-core/target/sqrl-core-1.0-SNAPSHOT.jar /usr/src/app
-ENTRYPOINT ["java", "-cp", "sqrl-1.0-SNAPSHOT.jar", "ai.datasqrl.compile.Compiler"]
+ENTRYPOINT ["java", "-cp", "sqrl-1.0-SNAPSHOT.jar", "com.datasqrl.compile.Compiler"]

@@ -1,9 +1,9 @@
-package ai.datasqrl.graphql.generate;
+package com.datasqrl.graphql.generate;
 
-import ai.datasqrl.AbstractLogicalSQRLIT;
-import ai.datasqrl.parse.SqrlParser;
-import ai.datasqrl.plan.local.generate.Resolve.Env;
-import ai.datasqrl.util.SnapshotTest.Snapshot;
+import com.datasqrl.AbstractLogicalSQRLIT;
+import com.datasqrl.parse.SqrlParser;
+import com.datasqrl.plan.local.generate.Resolve.Env;
+import com.datasqrl.util.SnapshotTest.Snapshot;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;

@@ -1,17 +1,17 @@
-package ai.datasqrl.physical.database.relational;
+package com.datasqrl.physical.database.relational;
 
-import ai.datasqrl.config.provider.Dialect;
-import ai.datasqrl.config.util.StreamUtil;
-import ai.datasqrl.physical.EngineCapability;
-import ai.datasqrl.physical.EnginePhysicalPlan;
-import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.physical.ExecutionResult;
-import ai.datasqrl.physical.database.DatabaseEngine;
-import ai.datasqrl.physical.database.QueryTemplate;
-import ai.datasqrl.physical.database.relational.ddl.SqlDDLStatement;
-import ai.datasqrl.plan.global.IndexSelectorConfig;
-import ai.datasqrl.plan.global.OptimizedDAG;
-import ai.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.config.provider.Dialect;
+import com.datasqrl.config.util.StreamUtil;
+import com.datasqrl.physical.EngineCapability;
+import com.datasqrl.physical.EnginePhysicalPlan;
+import com.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.physical.ExecutionResult;
+import com.datasqrl.physical.database.DatabaseEngine;
+import com.datasqrl.physical.database.QueryTemplate;
+import com.datasqrl.physical.database.relational.ddl.SqlDDLStatement;
+import com.datasqrl.plan.global.IndexSelectorConfig;
+import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.tools.RelBuilder;
@@ -22,7 +22,7 @@ import java.sql.Statement;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ai.datasqrl.physical.EngineCapability.*;
+import static com.datasqrl.physical.EngineCapability.*;
 
 @Slf4j
 public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {

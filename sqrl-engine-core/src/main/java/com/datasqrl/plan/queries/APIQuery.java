@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.queries;
+package com.datasqrl.plan.queries;
 
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;

@@ -1,9 +1,9 @@
-package ai.datasqrl.plan.calcite.hints;
+package com.datasqrl.plan.calcite.hints;
 
-import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.physical.pipeline.ExecutionPipeline;
-import ai.datasqrl.physical.pipeline.ExecutionStage;
-import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
+import com.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.physical.pipeline.ExecutionPipeline;
+import com.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;

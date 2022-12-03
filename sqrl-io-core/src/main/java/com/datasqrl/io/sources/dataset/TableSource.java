@@ -1,11 +1,11 @@
-package ai.datasqrl.io.sources.dataset;
+package com.datasqrl.io.sources.dataset;
 
-import ai.datasqrl.io.sources.DataSystemConnector;
-import ai.datasqrl.io.sources.stats.TableStatistic;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema;
-import ai.datasqrl.schema.input.InputTableSchema;
+import com.datasqrl.io.sources.DataSystemConnector;
+import com.datasqrl.io.sources.stats.TableStatistic;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.schema.input.FlexibleDatasetSchema;
+import com.datasqrl.schema.input.InputTableSchema;
 import lombok.Getter;
 import lombok.NonNull;
 

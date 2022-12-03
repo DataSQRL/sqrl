@@ -1,11 +1,11 @@
-package ai.datasqrl.graphql.inference.argument;
+package com.datasqrl.graphql.inference.argument;
 
-import ai.datasqrl.graphql.inference.ArgumentSet;
-import ai.datasqrl.graphql.server.Model.Argument;
-import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
-import ai.datasqrl.graphql.server.Model.VariableArgument;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.Column;
+import com.datasqrl.graphql.inference.ArgumentSet;
+import com.datasqrl.graphql.server.Model.Argument;
+import com.datasqrl.graphql.server.Model.ArgumentPgParameter;
+import com.datasqrl.graphql.server.Model.VariableArgument;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.schema.Column;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;

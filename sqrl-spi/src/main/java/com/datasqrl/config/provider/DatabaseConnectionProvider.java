@@ -1,4 +1,4 @@
-package ai.datasqrl.config.provider;
+package com.datasqrl.config.provider;
 
 import java.io.Serializable;
 

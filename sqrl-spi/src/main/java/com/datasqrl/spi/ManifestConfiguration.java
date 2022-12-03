@@ -1,4 +1,4 @@
-package ai.datasqrl.spi;
+package com.datasqrl.spi;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;

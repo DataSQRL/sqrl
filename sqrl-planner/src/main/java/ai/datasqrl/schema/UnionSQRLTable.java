@@ -1,4 +1,4 @@
-package ai.datasqrl.schema;
+package com.datasqrl.schema;
 
 import lombok.Getter;
 

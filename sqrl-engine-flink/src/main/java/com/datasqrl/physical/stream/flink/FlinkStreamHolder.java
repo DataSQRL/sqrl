@@ -1,7 +1,7 @@
-package ai.datasqrl.physical.stream.flink;
+package com.datasqrl.physical.stream.flink;
 
-import ai.datasqrl.physical.stream.FunctionWithError;
-import ai.datasqrl.physical.stream.StreamHolder;
+import com.datasqrl.physical.stream.FunctionWithError;
+import com.datasqrl.physical.stream.StreamHolder;
 import lombok.Value;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
