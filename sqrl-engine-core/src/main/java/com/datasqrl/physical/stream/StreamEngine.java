@@ -1,9 +1,9 @@
 package com.datasqrl.physical.stream;
 
-import com.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
-import com.datasqrl.io.sources.SourceRecord;
-import com.datasqrl.io.sources.dataset.TableInput;
-import com.datasqrl.io.sources.util.TimeAnnotatedRecord;
+import com.datasqrl.io.stats.TableStatisticsStoreProvider;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.tables.TableInput;
+import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.physical.ExecutionEngine;
 import com.datasqrl.schema.input.InputTableSchema;
 

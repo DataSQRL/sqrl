@@ -2,8 +2,8 @@ package com.datasqrl;
 
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.compile.Compiler.CompilerResult;
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.config.error.ErrorPrinter;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.config.provider.Dialect;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
@@ -30,7 +30,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @Slf4j
 public class Demo implements Runnable {

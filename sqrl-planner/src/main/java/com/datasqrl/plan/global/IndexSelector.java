@@ -1,6 +1,6 @@
 package com.datasqrl.plan.global;
 
-import com.datasqrl.config.util.ArrayUtil;
+import com.datasqrl.util.ArrayUtil;
 import com.datasqrl.plan.calcite.OptimizationStage;
 import com.datasqrl.plan.calcite.Planner;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;

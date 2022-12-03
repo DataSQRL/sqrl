@@ -1,9 +1,9 @@
 package com.datasqrl.physical.stream.flink.monitor;
 
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.io.sources.SourceRecord;
-import com.datasqrl.io.sources.dataset.TableSource;
-import com.datasqrl.io.sources.stats.SourceTableStatistics;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.io.stats.SourceTableStatistics;
 import com.datasqrl.physical.stream.flink.util.FlinkUtilities;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.state.ValueState;

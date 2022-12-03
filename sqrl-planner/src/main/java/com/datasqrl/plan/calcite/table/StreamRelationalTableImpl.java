@@ -1,7 +1,7 @@
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.ReservedName;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.ReservedName;
 import com.datasqrl.schema.UniversalTableBuilder;
 import lombok.Getter;
 import lombok.NonNull;

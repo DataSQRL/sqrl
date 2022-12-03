@@ -1,10 +1,10 @@
 package com.datasqrl.compiler;
 
 import com.datasqrl.compile.loaders.DataSource;
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.io.sources.dataset.TableSource;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.util.TestDataset;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;

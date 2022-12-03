@@ -1,7 +1,7 @@
 package com.datasqrl.schema.input.external;
 
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.SpecialName;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.SpecialName;
 import com.datasqrl.schema.input.RelationType;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;

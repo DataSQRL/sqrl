@@ -1,7 +1,7 @@
 //package com.datasqrl.plan.calcite.memory;
 //
 //import com.datasqrl.environment.ImportManager.SourceTableImport;
-//import com.datasqrl.io.sources.util.StreamInputPreparer;
+//import com.datasqrl.io.util.StreamInputPreparer;
 //import com.datasqrl.physical.stream.StreamEngine;
 //import com.datasqrl.physical.stream.inmemory.InMemStreamEngine;
 //import com.datasqrl.plan.calcite.BasicSqrlCalciteBridge;

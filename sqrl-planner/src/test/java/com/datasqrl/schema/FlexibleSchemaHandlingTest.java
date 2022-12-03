@@ -1,9 +1,9 @@
 package com.datasqrl.schema;
 
 import com.datasqrl.compile.loaders.DataSource;
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;
 import com.datasqrl.physical.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;

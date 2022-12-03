@@ -1,6 +1,6 @@
 package com.datasqrl.schema;
 
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.name.Name;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 

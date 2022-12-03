@@ -1,10 +1,10 @@
 package com.datasqrl.plan.local.transpile;
 
-import com.datasqrl.config.error.ErrorCode;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.parse.SqrlAstException;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NamePath;
-import com.datasqrl.parse.tree.name.ReservedName;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
+import com.datasqrl.name.ReservedName;
 import com.datasqrl.plan.calcite.TypeFactory;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Context;

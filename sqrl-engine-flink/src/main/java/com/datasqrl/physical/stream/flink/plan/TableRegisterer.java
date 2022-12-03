@@ -1,11 +1,11 @@
 package com.datasqrl.physical.stream.flink.plan;
 
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.io.sources.SourceRecord;
-import com.datasqrl.io.sources.SourceRecord.Raw;
-import com.datasqrl.io.sources.dataset.TableSource;
-import com.datasqrl.io.sources.util.StreamInputPreparer;
-import com.datasqrl.io.sources.util.StreamInputPreparerImpl;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.SourceRecord.Raw;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.io.util.StreamInputPreparer;
+import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.physical.stream.StreamHolder;
 import com.datasqrl.physical.stream.flink.FlinkStreamEngine.Builder;
 import com.datasqrl.physical.stream.flink.schema.FlinkTableSchemaGenerator;

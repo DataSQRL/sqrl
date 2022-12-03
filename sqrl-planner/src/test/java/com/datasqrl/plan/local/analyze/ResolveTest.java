@@ -2,7 +2,7 @@ package com.datasqrl.plan.local.analyze;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.name.Name;
 import com.datasqrl.physical.ExecutionEngine;
 import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;

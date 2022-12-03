@@ -1,6 +1,6 @@
 package com.datasqrl.physical.stream;
 
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 
 import java.io.Serializable;
 import java.util.Optional;

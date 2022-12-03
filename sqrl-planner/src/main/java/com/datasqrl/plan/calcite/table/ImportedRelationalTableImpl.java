@@ -1,8 +1,8 @@
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.io.sources.dataset.TableSource;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.ReservedName;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.ReservedName;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;

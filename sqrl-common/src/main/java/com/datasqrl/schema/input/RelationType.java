@@ -1,6 +1,6 @@
 package com.datasqrl.schema.input;
 
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.name.Name;
 import com.datasqrl.schema.input.FlexibleDatasetSchema.AbstractField;
 import com.datasqrl.schema.type.Type;
 import com.google.common.base.Preconditions;

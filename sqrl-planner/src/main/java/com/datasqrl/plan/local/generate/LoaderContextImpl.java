@@ -1,10 +1,10 @@
 package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.compile.loaders.LoaderContext;
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.builtin.time.FlinkFnc;
-import com.datasqrl.io.sources.dataset.TableSource;
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.name.Name;
 import com.datasqrl.plan.local.generate.Resolve.Env;
 import lombok.Value;
 

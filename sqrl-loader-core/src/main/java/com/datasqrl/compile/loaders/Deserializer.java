@@ -1,7 +1,7 @@
 package com.datasqrl.compile.loaders;
 
-import com.datasqrl.io.sources.DataSystemConnectorConfig;
-import com.datasqrl.io.sources.DataSystemDiscoveryConfig;
+import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.io.DataSystemDiscoveryConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;

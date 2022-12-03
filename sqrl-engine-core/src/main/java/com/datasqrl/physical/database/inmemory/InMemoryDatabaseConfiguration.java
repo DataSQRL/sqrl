@@ -1,6 +1,6 @@
 package com.datasqrl.physical.database.inmemory;
 
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.metadata.MetadataStore;
 import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.physical.database.DatabaseEngine;

@@ -1,8 +1,8 @@
 package com.datasqrl.compile.loaders;
 
 import com.datasqrl.function.builtin.time.FlinkFnc;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 import java.lang.reflect.InvocationTargetException;

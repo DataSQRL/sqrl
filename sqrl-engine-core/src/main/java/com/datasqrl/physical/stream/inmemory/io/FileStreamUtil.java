@@ -2,7 +2,7 @@ package com.datasqrl.physical.stream.inmemory.io;
 
 import com.datasqrl.io.impl.file.DirectoryDataSystem;
 import com.datasqrl.io.impl.file.FilePath;
-import com.datasqrl.io.sources.dataset.TableConfig;
+import com.datasqrl.io.tables.TableConfig;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;

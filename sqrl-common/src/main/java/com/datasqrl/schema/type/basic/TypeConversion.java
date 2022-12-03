@@ -1,6 +1,6 @@
 package com.datasqrl.schema.type.basic;
 
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import java.util.Map;
 import java.util.Optional;

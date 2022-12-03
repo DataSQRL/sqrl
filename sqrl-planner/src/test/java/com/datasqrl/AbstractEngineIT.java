@@ -2,8 +2,8 @@ package com.datasqrl;
 
 import com.datasqrl.config.EngineSettings;
 import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
-import com.datasqrl.io.sources.DataSystemConfig;
-import com.datasqrl.io.sources.ExternalDataType;
+import com.datasqrl.io.DataSystemConfig;
+import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.TestDataset;
 import com.google.common.base.Strings;

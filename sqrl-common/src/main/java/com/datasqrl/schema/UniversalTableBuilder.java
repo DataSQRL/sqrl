@@ -1,10 +1,10 @@
 package com.datasqrl.schema;
 
 import com.datasqrl.plan.calcite.util.CalciteUtil;
-import com.datasqrl.config.util.StreamUtil;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NamePath;
-import com.datasqrl.parse.tree.name.ReservedName;
+import com.datasqrl.util.StreamUtil;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
+import com.datasqrl.name.ReservedName;
 import com.datasqrl.schema.type.ArrayType;
 import com.google.common.base.Preconditions;
 import lombok.Getter;

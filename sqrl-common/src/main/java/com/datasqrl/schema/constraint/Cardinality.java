@@ -1,7 +1,7 @@
 package com.datasqrl.schema.constraint;
 
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.name.Name;
 import com.datasqrl.schema.type.ArrayType;
 import com.datasqrl.schema.type.Type;
 import com.google.common.base.Preconditions;

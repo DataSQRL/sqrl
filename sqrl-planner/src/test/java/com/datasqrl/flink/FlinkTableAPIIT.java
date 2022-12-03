@@ -2,11 +2,11 @@ package com.datasqrl.flink;
 
 import com.datasqrl.AbstractPhysicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
-import com.datasqrl.io.sources.SourceRecord;
-import com.datasqrl.io.sources.dataset.TableSource;
-import com.datasqrl.io.sources.util.StreamInputPreparer;
-import com.datasqrl.io.sources.util.StreamInputPreparerImpl;
-import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.io.util.StreamInputPreparer;
+import com.datasqrl.io.util.StreamInputPreparerImpl;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.physical.stream.StreamHolder;
 import com.datasqrl.physical.stream.flink.FlinkEngineConfiguration;
 import com.datasqrl.physical.stream.flink.FlinkStreamEngine;

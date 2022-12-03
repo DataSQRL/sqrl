@@ -1,11 +1,11 @@
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.io.sources.dataset.TableSource;
-import com.datasqrl.io.sources.stats.TableStatistic;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NameCanonicalizer;
-import com.datasqrl.parse.tree.name.NamePath;
-import com.datasqrl.parse.tree.name.ReservedName;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.io.stats.TableStatistic;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.name.NamePath;
+import com.datasqrl.name.ReservedName;
 import com.datasqrl.physical.ExecutionEngine;
 import com.datasqrl.physical.pipeline.ExecutionPipeline;
 import com.datasqrl.plan.calcite.SqrlTypeRelDataTypeConverter;

@@ -1,7 +1,7 @@
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.io.sources.stats.TableStatistic;
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.io.stats.TableStatistic;
+import com.datasqrl.name.Name;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.plan.calcite.util.IndexMap;
 import com.datasqrl.schema.SQRLTable;

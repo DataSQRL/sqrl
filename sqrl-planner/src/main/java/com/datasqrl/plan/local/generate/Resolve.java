@@ -1,18 +1,18 @@
 package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.compile.loaders.*;
-import com.datasqrl.config.error.ErrorCode;
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.config.error.ErrorPrefix;
-import com.datasqrl.config.error.SourceMapImpl;
+import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrefix;
+import com.datasqrl.error.SourceMapImpl;
 import com.datasqrl.parse.SqrlAstException;
-import com.datasqrl.io.sources.dataset.TableSink;
-import com.datasqrl.io.sources.dataset.TableSource;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.function.builtin.time.FlinkFnc;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NameCanonicalizer;
-import com.datasqrl.parse.tree.name.NamePath;
-import com.datasqrl.parse.tree.name.ReservedName;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.name.NamePath;
+import com.datasqrl.name.ReservedName;
 import com.datasqrl.physical.ExecutionEngine;
 import com.datasqrl.physical.pipeline.ExecutionPipeline;
 import com.datasqrl.plan.calcite.OptimizationStage;
@@ -63,8 +63,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.datasqrl.config.error.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
-import static com.datasqrl.config.error.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
+import static com.datasqrl.error.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
+import static com.datasqrl.error.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
 import static com.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
 
 @Getter

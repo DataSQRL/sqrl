@@ -1,8 +1,8 @@
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NameCanonicalizer;
-import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTableBuilder;

@@ -1,7 +1,7 @@
 package com.datasqrl.compile.loaders;
 
-import com.datasqrl.io.sources.dataset.TableSink;
-import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.name.NamePath;
 
 import java.nio.file.Path;
 import java.util.Optional;

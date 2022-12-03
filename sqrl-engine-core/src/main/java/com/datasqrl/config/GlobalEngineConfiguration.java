@@ -1,8 +1,8 @@
 package com.datasqrl.config;
 
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.config.util.ConfigurationUtil;
-import com.datasqrl.config.util.StreamUtil;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.ConfigurationUtil;
+import com.datasqrl.util.StreamUtil;
 import com.datasqrl.metadata.MetadataConfiguration;
 import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.physical.EngineConfiguration;
