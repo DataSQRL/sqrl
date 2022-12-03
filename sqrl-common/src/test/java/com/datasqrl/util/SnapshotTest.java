@@ -6,7 +6,6 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.rel.RelNode;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.TestInfo;
 
@@ -104,7 +103,7 @@ public class SnapshotTest {
             String[] snapLocation = ArrayUtils.addAll(BASE_SNAPSHOT_DIR,className.split("\\."));
             snapLocation = ArrayUtils.addAll(snapLocation,fileName+SNAPSHOT_EXTENSION);
             Path path = getPath(snapLocation);
-            if (!Files.exists(path)) {
+            if (!Files.exists(path) || updateSnapshotProfile()) {
                 Files.createDirectories(path.getParent());
                 log.info("Test not running, creating snapshot");
                 Files.write(path, content.getBytes());
@@ -116,7 +115,9 @@ public class SnapshotTest {
             }
         }
 
+        @SneakyThrows
+        private boolean updateSnapshotProfile() {
+            return Boolean.parseBoolean(System.getProperty("snapshots.update", "false"));
+        }
     }
-
-
 }
