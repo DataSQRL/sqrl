@@ -58,7 +58,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
         String dmls = jdbcPlan.getDdlStatements().stream().map(ddl -> ddl.toSql()).collect(Collectors.joining("\n"));
         try (Connection conn = getConnectionProvider().getConnection()) {
             try (Statement stmt = conn.createStatement()) {
-                log.info("Creating: " + dmls);
+                log.trace("Creating: " + dmls);
                 stmt.executeUpdate(dmls);
             } catch (SQLException e) {
                 throw new RuntimeException("Could not execute SQL query", e);
