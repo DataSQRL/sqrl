@@ -1,4 +1,4 @@
-package com.datasqrl.compile.loaders;
+package com.datasqrl.loaders;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.impl.print.PrintDataSystem;
@@ -79,7 +79,7 @@ public class DataSource {
     return Optional.of(resultTable);
   }
 
-  public static class Exporter extends DataSource implements com.datasqrl.compile.loaders.Exporter {
+  public static class Exporter extends DataSource implements com.datasqrl.loaders.Exporter {
 
     private final Deserializer deserialize = new Deserializer();
 

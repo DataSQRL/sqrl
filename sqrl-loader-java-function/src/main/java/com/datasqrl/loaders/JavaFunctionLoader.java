@@ -1,4 +1,4 @@
-package com.datasqrl.compile.loaders;
+package com.datasqrl.loaders;
 
 import com.datasqrl.function.builtin.time.FlinkFnc;
 import com.datasqrl.name.Name;

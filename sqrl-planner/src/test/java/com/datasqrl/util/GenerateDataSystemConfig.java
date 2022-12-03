@@ -1,6 +1,6 @@
 package com.datasqrl.util;
 
-import com.datasqrl.compile.loaders.DataSource;
+import com.datasqrl.loaders.DataSource;
 import com.datasqrl.io.formats.FileFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import com.datasqrl.io.DataSystemConfig;

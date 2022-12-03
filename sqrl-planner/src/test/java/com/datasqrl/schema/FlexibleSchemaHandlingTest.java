@@ -1,6 +1,6 @@
 package com.datasqrl.schema;
 
-import com.datasqrl.compile.loaders.DataSource;
+import com.datasqrl.loaders.DataSource;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;

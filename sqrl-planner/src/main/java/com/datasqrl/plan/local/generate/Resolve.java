@@ -1,6 +1,6 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.compile.loaders.*;
+import com.datasqrl.loaders.*;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;

@@ -1,6 +1,6 @@
 package com.datasqrl.compiler;
 
-import com.datasqrl.compile.loaders.DataSource;
+import com.datasqrl.loaders.DataSource;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
