@@ -11,28 +11,7 @@ DROP TABLE IF EXISTS customer$12;
 DROP TABLE IF EXISTS favorite_categories$24;
 DROP TABLE IF EXISTS order_again$20;
 DROP TABLE IF EXISTS product$16;
->>>query-{
-Customer( customerid: 1000101) {
-    email
-    name
-}}
-{
-  "data" : {
-    "Customer" : [ {
-      "email" : "john.mekker@gmail.com",
-      "name" : "John B. Mekker"
-    } ]
-  }
-},
->>>query-{
-Category( name: "Decoration") {
-    name
-    products {
-        name
-        productid
-        description
-    }
-}}
+>>>query-category
 {
   "data" : {
     "Category" : [ {
@@ -49,6 +28,7 @@ Category( name: "Decoration") {
     } ]
   }
 }
+>>>query-customerrecommend
 {
   "data" : {
     "Customer" : [ {
@@ -57,13 +37,11 @@ Category( name: "Decoration") {
       "order_again" : [ {
         "productid" : 1332,
         "quantity" : 8,
-        "num_orders" : 1,
-        "most_recent" : "2022-05-19T02:28:39.553Z"
+        "num_orders" : 1
       }, {
         "productid" : 3571,
         "quantity" : 2,
-        "num_orders" : 2,
-        "most_recent" : "2022-05-19T02:28:39.553Z"
+        "num_orders" : 2
       } ],
       "favorite_categories" : [ {
         "category_name" : "Personal Care",
@@ -80,6 +58,15 @@ Category( name: "Decoration") {
           } ]
         } ]
       } ]
+    } ]
+  }
+}
+>>>query-customers
+{
+  "data" : {
+    "Customer" : [ {
+      "email" : "john.mekker@gmail.com",
+      "name" : "John B. Mekker"
     } ]
   }
 }

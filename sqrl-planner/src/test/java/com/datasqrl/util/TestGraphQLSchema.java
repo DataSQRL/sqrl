@@ -51,6 +51,7 @@ public interface TestGraphQLSchema {
         public Map<String, String> getQueries() {
             Map<String, String> result = new LinkedHashMap<>();
             try (Stream<Path> files = Files.list(schemaDir).filter(Files::isRegularFile)
+                    .sorted((f1,f2) -> f1.getFileName().toString().compareTo(f2.getFileName().toString()))
                     ) {
                 files.forEach(f -> {
                     String filename = f.getFileName().toString();

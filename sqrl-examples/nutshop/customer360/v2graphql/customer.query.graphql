@@ -1,5 +1,5 @@
 {
-Customers {
+Customers ( id: "10") {
     id
     spending_by_month {
       #  month

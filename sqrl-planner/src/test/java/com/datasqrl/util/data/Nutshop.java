@@ -58,7 +58,7 @@ public class Nutshop implements TestDataset {
                 TestScript.of(this,BASE_PATH.resolve("customer360").resolve("nutshopv2-"+size.name()+".sqrl"),
                         ArrayUtils.concat(baseTables, new String[]{"spending_by_month",
                         "past_purchases", "volume_by_day"})).dataSnapshot(false)
-//                        .graphQLSchemas(TestGraphQLSchema.Directory.of(BASE_PATH.resolve("customer360").resolve("v2graphql")))
+                        .graphQLSchemas(TestGraphQLSchema.Directory.of(BASE_PATH.resolve("customer360").resolve("v2graphql")))
                     .build()
         );
     }
