@@ -15,7 +15,7 @@ public class FlinkQueryUseCaseTest extends AbstractQuerySQRLIT {
 
 
     @ParameterizedTest
-    @Disabled //TODO: fix GraphQL API and re-add
+//    @Disabled //TODO: fix GraphQL API and re-add
     @ArgumentsSource(TestScript.AllScriptsWithGraphQLSchemaProvider.class)
     public void fullScriptTest(TestScript script, TestGraphQLSchema graphQLSchema, Vertx vertx, VertxTestContext testContext) {
         this.vertx = vertx;

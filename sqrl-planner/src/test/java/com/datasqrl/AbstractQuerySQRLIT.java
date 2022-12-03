@@ -12,6 +12,7 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.local.generate.Resolve;
 import com.datasqrl.plan.queries.APIQuery;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -20,6 +21,12 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.util.concurrent.CountDownLatch;
 import lombok.SneakyThrows;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.lang3.tuple.Pair;
@@ -62,24 +69,17 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
         executor.execute(physicalPlan);
 
-        Checkpoint serverStarted = vertxContext.checkpoint();
-        Checkpoint queryResponse = vertxContext.checkpoint(queries.size());
-        Map<String, String> queryResults = new ConcurrentHashMap<>();
-        vertx.deployVerticle(new GraphQLServer(model, toPgOptions(jdbc), 8888, new PoolOptions()), vertxContext.succeeding(server -> {
-            serverStarted.flag();
-            WebClient client = getGraphQLClient();
-            for (Map.Entry<String,String> query : queries.entrySet()) {
-                processGraphQLQuery(client, query.getValue(), result -> {
-                    queryResults.put(query.getKey(),result);
-                    queryResponse.flag();
-                });
-            }
-        }));
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        vertx.deployVerticle(new GraphQLServer(model, toPgOptions(jdbc), 8888, new PoolOptions()),
+            vertxContext.succeeding(server -> {
+                countDownLatch.countDown();
+            }));
 
-        vertxContext.awaitCompletion(5, TimeUnit.SECONDS);
-        //We process the results after completion to make sure the order of the queries is preserved for comparability
-        for (Map.Entry<String,String> query : queries.entrySet()) {
-            snapshot.addContent(queryResults.get(query.getKey()), "query-" + query.getKey());
+        countDownLatch.await(5, TimeUnit.SECONDS);
+
+        for (Map.Entry<String, String> query : queries.entrySet()) {
+            HttpResponse<String> response = testQuery(query.getValue());
+            snapshot.addContent(response.body(), "query-" + query.getValue());
         }
         snapshot.createOrValidate();
     }
@@ -96,12 +96,24 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         return options;
     }
 
-    protected WebClient getGraphQLClient() {
-        WebClientOptions options = new WebClientOptions()
-                .setUserAgent(WebClientOptions.loadUserAgent())
-                .setDefaultHost("localhost")
-                .setDefaultPort(8888);
-        return WebClient.create(vertx,options);
+//    protected WebClient getGraphQLClient() {
+//        WebClientOptions options = new WebClientOptions()
+//                .setUserAgent(WebClientOptions.loadUserAgent())
+//                .setDefaultHost("localhost")
+//                .setDefaultPort(8888);
+//        return WebClient.create(vertx,options);
+//    }
+
+    @SneakyThrows
+    public static HttpResponse<String> testQuery(String query) {
+        ObjectMapper mapper = new ObjectMapper();
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(
+                Map.of("query", query))))
+            .uri(URI.create("http://localhost:8888/graphql"))
+            .build();
+        return client.send(request, BodyHandlers.ofString());
     }
 
     protected void processGraphQLQuery(WebClient client, String query, Consumer<String> resultHandler) {
@@ -109,7 +121,9 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
                         .sendJson(Map.of("query", query))
                 .onComplete(vertxContext.succeeding(data -> vertxContext.verify(() -> {
                     assertNotNull(data);
-                    resultHandler.accept(data.bodyAsString());
+                    String str = data.bodyAsString();
+                    System.out.println(str);
+                    resultHandler.accept(str);
                 })));
     }
 }
