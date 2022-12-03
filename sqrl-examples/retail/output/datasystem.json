@@ -1,0 +1,14 @@
+{
+  "type" : "SINK",
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "json"
+  },
+  "name" : "ecommerce-data",
+  "datadiscovery" : {
+    "uri" : "../sqrl-examples/retail/export-data/",
+    "partPattern" : "_(\\d+)",
+    "systemType" : "dir"
+  }
+}

@@ -1,4 +1,4 @@
->>>../sqml-examples/retail/c360-full.sqrl-dir
+>>>../sqrl-examples/retail/c360-full.sqrl-dir
 c360
 c360-full.sqrl
 c360/schema.yml
@@ -10,7 +10,7 @@ ecommerce-data/schema.yml
 output
 output/datasystem.json
 package.json
->>>../sqml-examples/retail/c360-full.sqrl-package
+>>>../sqrl-examples/retail/c360-full.sqrl-package
 {
   "package" : { },
   "dependencies" : { },
@@ -18,7 +18,7 @@ package.json
     "main" : "c360-full.sqrl"
   }
 }
->>>../sqml-examples/retail/c360-full.sqrl-../sqml-examples/retail/package-exampleWOmanifest.json-dir
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWOmanifest.json-dir
 c360
 c360-full.sqrl
 c360/schema.yml
@@ -30,7 +30,7 @@ ecommerce-data/schema.yml
 output
 output/datasystem.json
 package.json
->>>../sqml-examples/retail/c360-full.sqrl-../sqml-examples/retail/package-exampleWOmanifest.json-package
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWOmanifest.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",
@@ -48,7 +48,7 @@ package.json
   },
   "dependencies" : { }
 }
->>>../sqml-examples/retail/c360-full.sqrl-../sqml-examples/retail/package-exampleWmanifest.json-dir
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWmanifest.json-dir
 c360
 c360-full.sqrl
 c360/schema.yml
@@ -61,7 +61,7 @@ output
 output/datasystem.json
 package.json
 schema.graphqls
->>>../sqml-examples/retail/c360-full.sqrl-../sqml-examples/retail/package-exampleWmanifest.json-package
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWmanifest.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",
@@ -80,7 +80,7 @@ schema.graphqls
   },
   "dependencies" : { }
 }
->>>../sqml-examples/retail/package-exampleWmanifest.json-dir
+>>>../sqrl-examples/retail/package-exampleWmanifest.json-dir
 c360
 c360-full.sqrl
 c360/schema.yml
@@ -93,7 +93,7 @@ output
 output/datasystem.json
 package.json
 schema.graphqls
->>>../sqml-examples/retail/package-exampleWmanifest.json-package
+>>>../sqrl-examples/retail/package-exampleWmanifest.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",
@@ -112,7 +112,7 @@ schema.graphqls
   },
   "dependencies" : { }
 }
->>>../sqml-examples/retail/c360-full.sqrl-../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqml-examples/retail/package-exampleWOmanifest.json-dir
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWOmanifest.json-dir
 c360
 c360-full.sqrl
 c360/schema.yml
@@ -125,7 +125,7 @@ output
 output/datasystem.json
 package.json
 schema.graphqls
->>>../sqml-examples/retail/c360-full.sqrl-../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqml-examples/retail/package-exampleWOmanifest.json-package
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWOmanifest.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",
@@ -144,7 +144,7 @@ schema.graphqls
   },
   "dependencies" : { }
 }
->>>../sqml-examples/retail/c360-full.sqrl-../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqml-examples/retail/package-exampleWmanifest.json-dir
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWmanifest.json-dir
 c360
 c360-full.sqrl
 c360/schema.yml
@@ -157,7 +157,7 @@ output
 output/datasystem.json
 package.json
 schema.graphqls
->>>../sqml-examples/retail/c360-full.sqrl-../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqml-examples/retail/package-exampleWmanifest.json-package
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWmanifest.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",
@@ -176,7 +176,7 @@ schema.graphqls
   },
   "dependencies" : { }
 }
->>>../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqml-examples/retail/package-exampleWmanifest.json-dir
+>>>../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWmanifest.json-dir
 c360
 c360-full.sqrl
 c360/schema.yml
@@ -189,7 +189,7 @@ output
 output/datasystem.json
 package.json
 schema.graphqls
->>>../sqml-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqml-examples/retail/package-exampleWmanifest.json-package
+>>>../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWmanifest.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",

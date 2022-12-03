@@ -17,7 +17,7 @@ public class Nutshop implements TestDataset {
         small, medium;
     }
 
-    public static final Path BASE_PATH = Path.of("..","sqml-examples","nutshop");
+    public static final Path BASE_PATH = Path.of("..","sqrl-examples","nutshop");
 
     public static final Nutshop INSTANCE = new Nutshop(Size.small);
 

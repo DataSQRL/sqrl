@@ -6,7 +6,7 @@ import java.nio.file.Path;
 
 public class C360 {
 
-    public static final Path RETAIL_DIR_BASE = Path.of("../sqml-examples/retail-example-bundle/");
+    public static final Path RETAIL_DIR_BASE = Path.of("../sqrl-examples/retail-example-bundle/");
 
     public static final String RETAIL_SCRIPT_NAME_BASE = "c360";
     public static final String RETAIL_DATASET_BASE = "ecommerce-data";

@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class Retail implements TestDataset {
 
-  public static final Path BASE_PATH = Path.of("..", "sqml-examples", "retail");
+  public static final Path BASE_PATH = Path.of("..", "sqrl-examples", "retail");
 
   public static final Retail INSTANCE = new Retail();
 

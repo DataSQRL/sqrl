@@ -9,7 +9,7 @@ import java.util.Set;
 
 public class DataSQRL implements TestDataset  {
 
-    public static final Path BASE_PATH = Path.of("..", "sqml-examples", "datasqrl");
+    public static final Path BASE_PATH = Path.of("..", "sqrl-examples", "datasqrl");
 
     public static final DataSQRL INSTANCE = new DataSQRL();
 

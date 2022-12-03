@@ -1,4 +1,0 @@
-{"id":10007543,"customerid":1000101,"time":"2022-05-19T01:29:39.553244Z","entries":[{"productid":7235,"quantity":1,"unit_price":17.35,"discount":0},{"productid":8757,"quantity":2,"unit_price":57.5,"discount":11.5}]}
-{"id":10008434,"customerid":1000107,"time":"2022-05-19T01:45:39.553244Z","entries":[{"productid":3571,"quantity":1,"unit_price":41.95,"discount":0}]}
-{"id":10008231,"customerid":1000121,"time":"2022-05-19T02:16:39.553244Z","entries":[{"productid":7552,"quantity":3,"unit_price":25.5,"discount":15},{"productid":3225,"quantity":1,"unit_price":105,"discount":0}]}
-{"id":10007140,"customerid":1000107,"time":"2022-05-19T02:28:39.553244Z","entries":[{"productid":1332,"quantity":8,"unit_price":8.49},{"productid":3571,"quantity":1,"unit_price":41.95,"discount":5}]}

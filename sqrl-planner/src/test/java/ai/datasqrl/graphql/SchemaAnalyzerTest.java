@@ -16,12 +16,10 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 @Disabled
 class SchemaAnalyzerTest extends AbstractLogicalSQRLIT {
 
-  Path DIR_BASE = Path.of("../sqml-examples/starwars/starwars");
+  Path DIR_BASE = Path.of("../sqrl-examples/starwars/starwars");
 
   @BeforeEach
   public void before() {
@@ -36,7 +34,7 @@ class SchemaAnalyzerTest extends AbstractLogicalSQRLIT {
     ScriptNode node = parser.parse("starwars.sqrl");
     Env env2 = resolve.planDag(session, node);
 
-    String gql = Files.readString(Path.of("../sqml-examples/starwars")
+    String gql = Files.readString(Path.of("../sqrl-examples/starwars")
         .resolve("starwars.graphql"));
 
     TypeDefinitionRegistry typeDefinitionRegistry =
