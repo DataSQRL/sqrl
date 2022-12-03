@@ -3,8 +3,8 @@ package com.datasqrl.config;
 import com.datasqrl.config.provider.DatabaseConnectionProvider;
 import com.datasqrl.config.provider.JDBCConnectionProvider;
 import com.datasqrl.metadata.MetadataStoreProvider;
-import com.datasqrl.physical.pipeline.ExecutionPipeline;
-import com.datasqrl.physical.stream.StreamEngine;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.stream.StreamEngine;
 import lombok.NonNull;
 import lombok.Value;
 

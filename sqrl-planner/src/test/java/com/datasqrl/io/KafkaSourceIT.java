@@ -2,7 +2,7 @@ package com.datasqrl.io;
 
 
 import com.datasqrl.AbstractEngineIT;
-import com.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
+import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
 import com.datasqrl.util.data.BookClub;
 import com.google.common.collect.ImmutableList;
 import lombok.SneakyThrows;

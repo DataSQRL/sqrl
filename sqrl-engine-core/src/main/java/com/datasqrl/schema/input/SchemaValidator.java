@@ -8,7 +8,7 @@ import com.datasqrl.io.stats.SchemaGenerator;
 import com.datasqrl.io.stats.TypeSignature.Simple;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
-import com.datasqrl.physical.stream.FunctionWithError;
+import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;
 import com.datasqrl.schema.type.basic.StringType;

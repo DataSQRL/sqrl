@@ -2,7 +2,7 @@ package com.datasqrl.plan.calcite.table;
 
 import com.datasqrl.io.stats.TableStatistic;
 import com.datasqrl.name.Name;
-import com.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;

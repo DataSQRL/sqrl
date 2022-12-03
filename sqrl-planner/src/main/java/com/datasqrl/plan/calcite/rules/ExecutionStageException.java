@@ -1,8 +1,8 @@
 package com.datasqrl.plan.calcite.rules;
 
 import com.datasqrl.name.NamePath;
-import com.datasqrl.physical.EngineCapability;
-import com.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.engine.EngineCapability;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 

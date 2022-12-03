@@ -2,7 +2,7 @@ package com.datasqrl.util;
 
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.config.provider.Dialect;
-import com.datasqrl.physical.database.relational.JDBCEngineConfiguration;
+import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import org.testcontainers.containers.PostgreSQLContainer;
