@@ -88,6 +88,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
       snapshot.addContent(prettyPrint(response.body()), "query-" + query.getValue());
     }
     snapshot.createOrValidate();
+    vertxContext.completeNow();
   }
 
   @SneakyThrows
