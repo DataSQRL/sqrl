@@ -27,7 +27,7 @@
         <module>sqrl-loader-core</module>
         <module>sqrl-loader-java-function</module>
         <module>sqrl-loader-table</module>
-        <module>sqrl-demo</module>
+        <module>sqrl-run</module>
     </modules>
 
 
