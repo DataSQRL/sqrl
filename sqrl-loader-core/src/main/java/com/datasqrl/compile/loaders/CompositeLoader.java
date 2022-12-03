@@ -1,7 +1,7 @@
 package com.datasqrl.compile.loaders;
 
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

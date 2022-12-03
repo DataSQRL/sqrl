@@ -1,8 +1,8 @@
 package com.datasqrl.parse;
 
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.config.error.ErrorPrinter;
-import com.datasqrl.config.error.SourceMapImpl;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrinter;
+import com.datasqrl.error.SourceMapImpl;
 import com.datasqrl.util.SnapshotTest;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.AfterEach;

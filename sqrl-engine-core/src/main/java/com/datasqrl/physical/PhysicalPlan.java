@@ -1,6 +1,6 @@
 package com.datasqrl.physical;
 
-import com.datasqrl.config.util.StreamUtil;
+import com.datasqrl.util.StreamUtil;
 import com.datasqrl.physical.database.DatabasePhysicalPlan;
 import com.datasqrl.physical.database.QueryTemplate;
 import com.datasqrl.physical.pipeline.ExecutionStage;

@@ -2,7 +2,7 @@ package com.datasqrl.plan.calcite.rules;
 
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
-import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.physical.EngineCapability;
 import com.datasqrl.physical.pipeline.ExecutionPipeline;
 import com.datasqrl.physical.pipeline.ExecutionStage;

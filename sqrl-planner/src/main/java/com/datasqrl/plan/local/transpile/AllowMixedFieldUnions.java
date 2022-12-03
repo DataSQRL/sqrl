@@ -1,6 +1,6 @@
 package com.datasqrl.plan.local.transpile;
 
-import com.datasqrl.config.error.ErrorCode;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.google.common.collect.Maps;

@@ -1,7 +1,7 @@
 package com.datasqrl.schema.input;
 
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.SqrlTypeRelDataTypeConverter;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTableBuilder;

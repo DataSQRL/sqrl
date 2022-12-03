@@ -1,11 +1,11 @@
 package com.datasqrl.schema.input.external;
 
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.config.util.NamedIdentifier;
-import com.datasqrl.config.util.StringNamedId;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NameCanonicalizer;
-import com.datasqrl.parse.tree.name.SpecialName;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.NamedIdentifier;
+import com.datasqrl.util.StringNamedId;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.name.SpecialName;
 import com.datasqrl.schema.constraint.Cardinality;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.constraint.Constraint.Lookup;

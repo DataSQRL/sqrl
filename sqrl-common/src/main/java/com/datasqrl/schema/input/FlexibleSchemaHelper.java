@@ -1,7 +1,7 @@
 package com.datasqrl.schema.input;
 
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.SpecialName;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.SpecialName;
 import com.datasqrl.schema.constraint.ConstraintHelper;
 
 public class FlexibleSchemaHelper {

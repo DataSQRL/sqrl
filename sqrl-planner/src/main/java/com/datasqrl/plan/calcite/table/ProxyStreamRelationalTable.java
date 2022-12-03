@@ -1,7 +1,7 @@
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.io.sources.stats.TableStatistic;
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.io.stats.TableStatistic;
+import com.datasqrl.name.Name;
 import com.datasqrl.physical.pipeline.ExecutionStage;
 import lombok.Getter;
 import lombok.NonNull;

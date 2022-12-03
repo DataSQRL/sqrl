@@ -3,7 +3,7 @@ package com.datasqrl;
 import com.datasqrl.config.provider.JDBCConnectionProvider;
 import com.datasqrl.io.impl.file.DirectoryDataSystem;
 import com.datasqrl.io.impl.file.FilePath;
-import com.datasqrl.io.sources.dataset.TableSink;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.physical.PhysicalPlan;
 import com.datasqrl.physical.PhysicalPlanExecutor;
 import com.datasqrl.physical.PhysicalPlanner;

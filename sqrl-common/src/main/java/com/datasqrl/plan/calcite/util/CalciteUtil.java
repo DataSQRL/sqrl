@@ -1,6 +1,6 @@
 package com.datasqrl.plan.calcite.util;
 
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.name.Name;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import lombok.NonNull;

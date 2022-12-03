@@ -1,15 +1,15 @@
 package com.datasqrl.io.impl.file;
 
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.formats.FileFormat;
 import com.datasqrl.io.formats.FormatConfiguration;
-import com.datasqrl.io.sources.DataSystemConfig;
-import com.datasqrl.io.sources.DataSystemConnector;
-import com.datasqrl.io.sources.DataSystemDiscovery;
-import com.datasqrl.io.sources.ExternalDataType;
-import com.datasqrl.io.sources.dataset.TableConfig;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.datasqrl.io.DataSystemConfig;
+import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemDiscovery;
+import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

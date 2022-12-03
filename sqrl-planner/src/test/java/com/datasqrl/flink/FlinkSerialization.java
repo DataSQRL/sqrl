@@ -1,7 +1,7 @@
 package com.datasqrl.flink;
 
-import com.datasqrl.io.sources.SourceRecord;
-import com.datasqrl.io.sources.util.TimeAnnotatedRecord;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.physical.stream.flink.ProcessError;
 import org.junit.jupiter.api.Test;
 

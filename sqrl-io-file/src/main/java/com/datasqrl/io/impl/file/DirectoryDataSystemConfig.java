@@ -1,10 +1,10 @@
 package com.datasqrl.io.impl.file;
 
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.io.sources.DataSystemConnector;
-import com.datasqrl.io.sources.DataSystemConnectorConfig;
-import com.datasqrl.io.sources.DataSystemDiscovery;
-import com.datasqrl.io.sources.DataSystemDiscoveryConfig;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.io.DataSystemDiscovery;
+import com.datasqrl.io.DataSystemDiscoveryConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import lombok.experimental.SuperBuilder;

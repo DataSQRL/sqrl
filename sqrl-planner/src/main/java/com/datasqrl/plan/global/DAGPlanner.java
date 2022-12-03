@@ -1,7 +1,7 @@
 package com.datasqrl.plan.global;
 
-import com.datasqrl.config.util.StreamUtil;
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.util.StreamUtil;
+import com.datasqrl.name.Name;
 import com.datasqrl.physical.ExecutionEngine;
 import com.datasqrl.physical.database.DatabaseEngine;
 import com.datasqrl.physical.pipeline.ExecutionPipeline;

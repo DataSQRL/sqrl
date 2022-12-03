@@ -1,6 +1,6 @@
 package com.datasqrl.graphql.generate;
 
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.name.Name;
 import com.datasqrl.schema.*;
 import graphql.Scalars;
 import graphql.schema.*;

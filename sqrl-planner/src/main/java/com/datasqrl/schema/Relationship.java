@@ -1,6 +1,6 @@
 package com.datasqrl.schema;
 
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.name.Name;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import lombok.Getter;

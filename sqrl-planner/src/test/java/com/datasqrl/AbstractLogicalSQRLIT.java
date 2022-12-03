@@ -1,10 +1,10 @@
 package com.datasqrl;
 
 import com.datasqrl.compile.loaders.DataSource;
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.io.sources.dataset.TableSource;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.Planner;
 import com.datasqrl.plan.calcite.PlannerFactory;
 import com.datasqrl.plan.local.generate.Resolve;

@@ -5,7 +5,7 @@ import com.datasqrl.config.provider.JDBCConnectionProvider;
 import com.datasqrl.io.formats.FormatConfiguration;
 import com.datasqrl.io.impl.file.DirectoryDataSystem;
 import com.datasqrl.io.impl.print.PrintDataSystem;
-import com.datasqrl.io.sources.dataset.TableSink;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.physical.database.DatabaseEngine;
 import com.datasqrl.physical.stream.flink.FlinkStreamEngine;
 import com.datasqrl.plan.global.OptimizedDAG;

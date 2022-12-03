@@ -1,7 +1,7 @@
 package com.datasqrl.physical.database.relational;
 
-import com.datasqrl.config.constraints.OptionalMinString;
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.util.constraints.OptionalMinString;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.physical.database.relational.metadata.JDBCMetadataStore;
 import com.datasqrl.metadata.MetadataStore;
 import com.datasqrl.config.provider.Dialect;
@@ -9,7 +9,7 @@ import com.datasqrl.config.provider.JDBCConnectionProvider;
 import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.config.serializer.KryoProvider;
 import com.datasqrl.config.serializer.SerializerProvider;
-import com.datasqrl.config.util.ConfigurationUtil;
+import com.datasqrl.util.ConfigurationUtil;
 import com.datasqrl.physical.database.DatabaseEngineConfiguration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;

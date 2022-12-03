@@ -2,7 +2,7 @@ package com.datasqrl.plan.local.analyze;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.plan.calcite.util.RelToSql;
 import com.datasqrl.plan.local.generate.Resolve.Env;

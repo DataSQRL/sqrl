@@ -1,7 +1,7 @@
 package com.datasqrl.physical.stream.flink;
 
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.config.util.ConfigurationUtil;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.ConfigurationUtil;
 import com.datasqrl.physical.EngineConfiguration;
 import com.datasqrl.physical.ExecutionEngine;
 import lombok.*;

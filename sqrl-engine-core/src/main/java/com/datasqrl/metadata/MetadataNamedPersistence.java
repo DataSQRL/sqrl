@@ -1,10 +1,10 @@
 package com.datasqrl.metadata;
 
-import com.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
-import com.datasqrl.io.sources.stats.SourceTableStatistics;
-import com.datasqrl.io.sources.stats.TableStatisticsStore;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.io.stats.TableStatisticsStoreProvider;
+import com.datasqrl.io.stats.SourceTableStatistics;
+import com.datasqrl.io.stats.TableStatisticsStore;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.Pair;

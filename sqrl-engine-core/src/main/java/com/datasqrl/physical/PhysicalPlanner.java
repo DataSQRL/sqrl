@@ -1,6 +1,6 @@
 package com.datasqrl.physical;
 
-import com.datasqrl.config.util.StreamUtil;
+import com.datasqrl.util.StreamUtil;
 import com.datasqrl.plan.global.OptimizedDAG;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.tools.RelBuilder;

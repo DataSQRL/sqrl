@@ -1,15 +1,15 @@
 package com.datasqrl.compile.loaders;
 
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.impl.print.PrintDataSystem;
-import com.datasqrl.io.sources.DataSystem;
-import com.datasqrl.io.sources.DataSystemConfig;
-import com.datasqrl.io.sources.dataset.AbstractExternalTable;
-import com.datasqrl.io.sources.dataset.TableConfig;
-import com.datasqrl.io.sources.dataset.TableSink;
-import com.datasqrl.io.sources.dataset.TableSource;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.io.DataSystem;
+import com.datasqrl.io.DataSystemConfig;
+import com.datasqrl.io.tables.AbstractExternalTable;
+import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.datasqrl.schema.input.external.SchemaDefinition;

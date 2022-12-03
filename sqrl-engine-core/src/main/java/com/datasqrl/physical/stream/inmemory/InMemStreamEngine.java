@@ -1,17 +1,17 @@
 package com.datasqrl.physical.stream.inmemory;
 
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystem;
 import com.datasqrl.io.impl.file.FilePath;
-import com.datasqrl.io.sources.DataSystemConnector;
-import com.datasqrl.io.sources.SourceRecord;
-import com.datasqrl.io.sources.dataset.TableInput;
-import com.datasqrl.io.sources.dataset.TableSource;
-import com.datasqrl.io.sources.stats.SourceTableStatistics;
-import com.datasqrl.io.sources.stats.TableStatisticsStore;
-import com.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
-import com.datasqrl.io.sources.util.TimeAnnotatedRecord;
+import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.tables.TableInput;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.io.stats.SourceTableStatistics;
+import com.datasqrl.io.stats.TableStatisticsStore;
+import com.datasqrl.io.stats.TableStatisticsStoreProvider;
+import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.physical.EnginePhysicalPlan;
 import com.datasqrl.physical.ExecutionEngine;
 import com.datasqrl.physical.ExecutionResult;
@@ -102,7 +102,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
             final SourceTableStatistics statistics = new SourceTableStatistics();
             final TableSource.Digest tableDigest = tableSource.getDigest();
             StreamHolder<SourceRecord.Raw> result = stream.mapWithError((r, c) -> {
-                com.datasqrl.config.error.ErrorCollector errors = statistics.validate(r, tableDigest);
+                com.datasqrl.error.ErrorCollector errors = statistics.validate(r, tableDigest);
                 if (errors.hasErrors()) c.accept(errors);
                 if (!errors.isFatal()) {
                     statistics.add(r, tableDigest);

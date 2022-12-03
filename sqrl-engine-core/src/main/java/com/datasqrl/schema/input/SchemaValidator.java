@@ -1,13 +1,13 @@
 package com.datasqrl.schema.input;
 
-import com.datasqrl.config.error.ErrorCollector;
-import com.datasqrl.io.sources.SourceRecord;
-import com.datasqrl.io.sources.dataset.TableSource;
-import com.datasqrl.io.sources.stats.FieldStats;
-import com.datasqrl.io.sources.stats.SchemaGenerator;
-import com.datasqrl.io.sources.stats.TypeSignature.Simple;
-import com.datasqrl.parse.tree.name.Name;
-import com.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.io.stats.FieldStats;
+import com.datasqrl.io.stats.SchemaGenerator;
+import com.datasqrl.io.stats.TypeSignature.Simple;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.physical.stream.FunctionWithError;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;

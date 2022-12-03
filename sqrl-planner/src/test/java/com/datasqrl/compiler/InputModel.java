@@ -1,6 +1,6 @@
 package com.datasqrl.compiler;
 
-import com.datasqrl.io.sources.DataSystemConnectorConfig;
+import com.datasqrl.io.DataSystemConnectorConfig;
 import lombok.Value;
 
 public class InputModel {

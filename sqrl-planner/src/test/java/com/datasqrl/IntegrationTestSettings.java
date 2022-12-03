@@ -2,7 +2,7 @@ package com.datasqrl;
 
 import com.datasqrl.config.EngineSettings;
 import com.datasqrl.config.GlobalEngineConfiguration;
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.physical.EngineConfiguration;
 import com.datasqrl.physical.database.inmemory.InMemoryDatabaseConfiguration;
 import com.datasqrl.physical.database.inmemory.InMemoryMetadataStore;

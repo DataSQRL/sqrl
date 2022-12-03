@@ -1,7 +1,7 @@
 package com.datasqrl.schema.converters;
 
-import com.datasqrl.io.sources.SourceRecord;
-import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.name.Name;
 import com.datasqrl.schema.constraint.ConstraintHelper;
 import com.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.datasqrl.schema.input.FlexibleSchemaHelper;

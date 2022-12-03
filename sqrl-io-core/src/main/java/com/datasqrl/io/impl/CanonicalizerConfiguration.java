@@ -1,6 +1,6 @@
 package com.datasqrl.io.impl;
 
-import com.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.datasqrl.name.NameCanonicalizer;
 import java.io.Serializable;
 import java.util.Locale;
 import lombok.Getter;

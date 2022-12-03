@@ -1,0 +1,1 @@
+Provides support for Kafka logs as sources and sinks for DataSQRL.

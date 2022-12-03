@@ -1,7 +1,7 @@
 package com.datasqrl.physical.database.relational;
 
 import com.datasqrl.config.provider.Dialect;
-import com.datasqrl.config.util.StreamUtil;
+import com.datasqrl.util.StreamUtil;
 import com.datasqrl.physical.EngineCapability;
 import com.datasqrl.physical.EnginePhysicalPlan;
 import com.datasqrl.physical.ExecutionEngine;

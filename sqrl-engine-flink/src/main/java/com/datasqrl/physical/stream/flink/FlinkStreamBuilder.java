@@ -1,16 +1,16 @@
 package com.datasqrl.physical.stream.flink;
 
-import com.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
+import com.datasqrl.io.stats.TableStatisticsStoreProvider;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystem;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.kafka.KafkaDataSystem;
-import com.datasqrl.io.sources.DataSystemConnector;
-import com.datasqrl.io.sources.SourceRecord;
-import com.datasqrl.io.sources.dataset.TableConfig;
-import com.datasqrl.io.sources.dataset.TableInput;
-import com.datasqrl.io.sources.stats.SourceTableStatistics;
-import com.datasqrl.io.sources.util.TimeAnnotatedRecord;
+import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.io.tables.TableInput;
+import com.datasqrl.io.stats.SourceTableStatistics;
+import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.physical.stream.StreamHolder;
 import com.datasqrl.physical.stream.flink.monitor.KeyedSourceRecordStatistics;
 import com.datasqrl.physical.stream.flink.monitor.SaveTableStatistics;

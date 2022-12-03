@@ -1,6 +1,6 @@
 package com.datasqrl.physical.stream.inmemory;
 
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.physical.EngineConfiguration;
 import com.datasqrl.physical.ExecutionEngine;
 import lombok.Builder;

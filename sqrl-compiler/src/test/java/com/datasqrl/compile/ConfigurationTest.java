@@ -3,7 +3,7 @@ package com.datasqrl.compile;
 import com.datasqrl.config.EngineSettings;
 import com.datasqrl.config.GlobalCompilerConfiguration;
 import com.datasqrl.config.GlobalEngineConfiguration;
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;

@@ -1,6 +1,6 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.physical.pipeline.ExecutionPipeline;
 import com.datasqrl.plan.calcite.Planner;
 import lombok.AllArgsConstructor;
