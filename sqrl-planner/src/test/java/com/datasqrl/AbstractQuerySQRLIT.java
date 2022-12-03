@@ -44,86 +44,79 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @ExtendWith(VertxExtension.class)
 public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
-    protected Vertx vertx;
-    protected VertxTestContext vertxContext;
+  protected Vertx vertx;
+  protected VertxTestContext vertxContext;
 
-    @SneakyThrows
-    protected void validateSchemaAndQueries(String script, String schema, Map<String,String> queries) {
-        ScriptNode node = parse(script);
-        Resolve.Env resolvedDag = resolve.planDag(session, node);
-        DAGPlanner dagPlanner = new DAGPlanner(planner, session.getPipeline());
+  ObjectMapper mapper = new ObjectMapper();
 
-        Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = AbstractSchemaInferenceModelTest.getModelAndQueries(resolvedDag,schema);
+  @SneakyThrows
+  protected void validateSchemaAndQueries(String script, String schema,
+      Map<String, String> queries) {
+    ScriptNode node = parse(script);
+    Resolve.Env resolvedDag = resolve.planDag(session, node);
+    DAGPlanner dagPlanner = new DAGPlanner(planner, session.getPipeline());
 
-        OptimizedDAG dag = dagPlanner.plan(resolvedDag.getRelSchema(), modelAndQueries.getRight(),
-                resolvedDag.getExports());
+    Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = AbstractSchemaInferenceModelTest.getModelAndQueries(
+        resolvedDag, schema);
 
-        PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
+    OptimizedDAG dag = dagPlanner.plan(resolvedDag.getRelSchema(), modelAndQueries.getRight(),
+        resolvedDag.getExports());
 
-        RootGraphqlModel model = modelAndQueries.getKey();
-        ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(physicalPlan.getDatabaseQueries());
-        model.accept(replaceGraphqlQueries, null);
-        snapshot.addContent(physicalPlan.getPlans(JDBCPhysicalPlan.class).findFirst().get().getDdlStatements().stream().map(ddl -> ddl.toSql())
-                .sorted().collect(Collectors.joining(System.lineSeparator())),"database");
+    PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
 
-        PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-        executor.execute(physicalPlan);
+    RootGraphqlModel model = modelAndQueries.getKey();
+    ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(
+        physicalPlan.getDatabaseQueries());
+    model.accept(replaceGraphqlQueries, null);
+    snapshot.addContent(
+        physicalPlan.getPlans(JDBCPhysicalPlan.class).findFirst().get().getDdlStatements().stream()
+            .map(ddl -> ddl.toSql())
+            .sorted().collect(Collectors.joining(System.lineSeparator())), "database");
 
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        vertx.deployVerticle(new GraphQLServer(model, toPgOptions(jdbc), 8888, new PoolOptions()),
-            vertxContext.succeeding(server -> {
-                countDownLatch.countDown();
-            }));
+    PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
+    executor.execute(physicalPlan);
 
-        countDownLatch.await(5, TimeUnit.SECONDS);
+    CountDownLatch countDownLatch = new CountDownLatch(1);
+    vertx.deployVerticle(new GraphQLServer(model, toPgOptions(jdbc), 8888, new PoolOptions()),
+        vertxContext.succeeding(server -> countDownLatch.countDown()));
 
-        for (Map.Entry<String, String> query : queries.entrySet()) {
-            HttpResponse<String> response = testQuery(query.getValue());
-            snapshot.addContent(response.body(), "query-" + query.getValue());
-        }
-        snapshot.createOrValidate();
+    countDownLatch.await(5, TimeUnit.SECONDS);
+
+    for (Map.Entry<String, String> query : queries.entrySet()) {
+      HttpResponse<String> response = testQuery(query.getValue());
+
+      snapshot.addContent(prettyPrint(response.body()), "query-" + query.getValue());
     }
+    snapshot.createOrValidate();
+  }
 
-    private PgConnectOptions toPgOptions(JDBCConnectionProvider jdbcConf) {
-        PgConnectOptions options = new PgConnectOptions();
-        options.setDatabase(jdbcConf.getDatabaseName());
-        options.setHost(jdbcConf.getHost());
-        options.setPort(jdbcConf.getPort());
-        options.setUser(jdbcConf.getUser());
-        options.setPassword(jdbcConf.getPassword());
-        options.setCachePreparedStatements(true);
-        options.setPipeliningLimit(100_000);
-        return options;
-    }
+  @SneakyThrows
+  private String prettyPrint(String body) {
+    return mapper.writerWithDefaultPrettyPrinter()
+        .writeValueAsString(mapper.readTree(body));
+  }
 
-//    protected WebClient getGraphQLClient() {
-//        WebClientOptions options = new WebClientOptions()
-//                .setUserAgent(WebClientOptions.loadUserAgent())
-//                .setDefaultHost("localhost")
-//                .setDefaultPort(8888);
-//        return WebClient.create(vertx,options);
-//    }
+  private PgConnectOptions toPgOptions(JDBCConnectionProvider jdbcConf) {
+    PgConnectOptions options = new PgConnectOptions();
+    options.setDatabase(jdbcConf.getDatabaseName());
+    options.setHost(jdbcConf.getHost());
+    options.setPort(jdbcConf.getPort());
+    options.setUser(jdbcConf.getUser());
+    options.setPassword(jdbcConf.getPassword());
+    options.setCachePreparedStatements(true);
+    options.setPipeliningLimit(100_000);
+    return options;
+  }
 
-    @SneakyThrows
-    public static HttpResponse<String> testQuery(String query) {
-        ObjectMapper mapper = new ObjectMapper();
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-            .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(
+  @SneakyThrows
+  public HttpResponse<String> testQuery(String query) {
+    HttpClient client = HttpClient.newHttpClient();
+    HttpRequest request = HttpRequest.newBuilder()
+        .POST(HttpRequest.BodyPublishers.ofString(mapper
+            .writeValueAsString(
                 Map.of("query", query))))
-            .uri(URI.create("http://localhost:8888/graphql"))
-            .build();
-        return client.send(request, BodyHandlers.ofString());
-    }
-
-    protected void processGraphQLQuery(WebClient client, String query, Consumer<String> resultHandler) {
-        client.post("/graphql")
-                        .sendJson(Map.of("query", query))
-                .onComplete(vertxContext.succeeding(data -> vertxContext.verify(() -> {
-                    assertNotNull(data);
-                    String str = data.bodyAsString();
-                    System.out.println(str);
-                    resultHandler.accept(str);
-                })));
-    }
+        .uri(URI.create("http://localhost:8888/graphql"))
+        .build();
+    return client.send(request, BodyHandlers.ofString());
+  }
 }
