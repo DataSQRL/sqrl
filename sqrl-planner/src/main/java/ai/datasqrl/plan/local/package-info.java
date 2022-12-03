@@ -1,1 +1,1 @@
-package ai.datasqrl.plan.local;
+package com.datasqrl.plan.local;

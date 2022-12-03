@@ -1,6 +1,6 @@
-package ai.datasqrl.physical.database.relational.ddl;
+package com.datasqrl.physical.database.relational.ddl;
 
-import ai.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.global.IndexDefinition;
 import lombok.Value;
 
 import java.util.List;

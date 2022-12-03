@@ -1,15 +1,15 @@
-package ai.datasqrl;
+package com.datasqrl;
 
-import ai.datasqrl.config.EngineSettings;
-import ai.datasqrl.config.GlobalEngineConfiguration;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.physical.EngineConfiguration;
-import ai.datasqrl.physical.database.inmemory.InMemoryDatabaseConfiguration;
-import ai.datasqrl.physical.database.inmemory.InMemoryMetadataStore;
-import ai.datasqrl.physical.stream.flink.FlinkEngineConfiguration;
-import ai.datasqrl.physical.stream.inmemory.InMemoryStreamConfiguration;
-import ai.datasqrl.util.DatabaseHandle;
-import ai.datasqrl.util.JDBCTestDatabase;
+import com.datasqrl.config.EngineSettings;
+import com.datasqrl.config.GlobalEngineConfiguration;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.physical.EngineConfiguration;
+import com.datasqrl.physical.database.inmemory.InMemoryDatabaseConfiguration;
+import com.datasqrl.physical.database.inmemory.InMemoryMetadataStore;
+import com.datasqrl.physical.stream.flink.FlinkEngineConfiguration;
+import com.datasqrl.physical.stream.inmemory.InMemoryStreamConfiguration;
+import com.datasqrl.util.DatabaseHandle;
+import com.datasqrl.util.JDBCTestDatabase;
 import lombok.Builder;
 import lombok.Value;
 import org.apache.commons.lang3.tuple.Pair;

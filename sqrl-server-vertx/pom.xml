@@ -4,7 +4,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>sqrl-root</artifactId>
-    <groupId>ai.datasqrl</groupId>
+    <groupId>com.datasqrl</groupId>
     <version>1.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -39,7 +39,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>ai.datasqrl</groupId>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-spi</artifactId>
     </dependency>
     <dependency>
@@ -119,7 +119,7 @@
 <!--        </executions>-->
 <!--        <configuration>-->
 <!--          <imageName>${project.name}</imageName>-->
-<!--          <mainClass>ai.datasqrl.graphql.GraphQLServerCli</mainClass>-->
+<!--          <mainClass>com.datasqrl.graphql.GraphQLServerCli</mainClass>-->
 <!--          <buildArgs>&#45;&#45;initialize-at-build-time=org.slf4j -H:+PrintClassInitialization -H:+ReportExceptionStackTraces</buildArgs>-->
 <!--        </configuration>-->
 <!--      </plugin>-->

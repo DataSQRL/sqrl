@@ -1,8 +1,8 @@
-package ai.datasqrl.physical.stream.inmemory;
+package com.datasqrl.physical.stream.inmemory;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.physical.EngineConfiguration;
-import ai.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.physical.EngineConfiguration;
+import com.datasqrl.physical.ExecutionEngine;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

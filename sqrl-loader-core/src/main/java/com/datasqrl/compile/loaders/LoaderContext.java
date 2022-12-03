@@ -1,9 +1,9 @@
-package ai.datasqrl.compile.loaders;
+package com.datasqrl.compile.loaders;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.function.builtin.time.FlinkFnc;
-import ai.datasqrl.io.sources.dataset.TableSource;
-import ai.datasqrl.parse.tree.name.Name;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.function.builtin.time.FlinkFnc;
+import com.datasqrl.io.sources.dataset.TableSource;
+import com.datasqrl.parse.tree.name.Name;
 
 import java.nio.file.Path;
 import java.util.Optional;

@@ -1,6 +1,6 @@
-package ai.datasqrl.config.error;
+package com.datasqrl.config.error;
 
-import ai.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.Name;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;

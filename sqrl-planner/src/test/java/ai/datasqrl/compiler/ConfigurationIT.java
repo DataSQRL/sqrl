@@ -1,7 +1,7 @@
-package ai.datasqrl.compiler;
+package com.datasqrl.compiler;
 
-import ai.datasqrl.AbstractEngineIT;
-import ai.datasqrl.IntegrationTestSettings;
+import com.datasqrl.AbstractEngineIT;
+import com.datasqrl.IntegrationTestSettings;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;

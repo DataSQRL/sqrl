@@ -1,12 +1,12 @@
-package ai.datasqrl.util;
+package com.datasqrl.util;
 
-import ai.datasqrl.compile.loaders.DataSource;
-import ai.datasqrl.io.formats.FileFormat;
-import ai.datasqrl.io.impl.file.DirectoryDataSystemConfig;
-import ai.datasqrl.io.sources.DataSystemConfig;
-import ai.datasqrl.io.sources.DataSystemDiscoveryConfig;
-import ai.datasqrl.io.sources.ExternalDataType;
-import ai.datasqrl.util.data.Retail;
+import com.datasqrl.compile.loaders.DataSource;
+import com.datasqrl.io.formats.FileFormat;
+import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
+import com.datasqrl.io.sources.DataSystemConfig;
+import com.datasqrl.io.sources.DataSystemDiscoveryConfig;
+import com.datasqrl.io.sources.ExternalDataType;
+import com.datasqrl.util.data.Retail;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

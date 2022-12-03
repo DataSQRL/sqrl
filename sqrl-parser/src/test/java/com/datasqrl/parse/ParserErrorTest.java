@@ -1,9 +1,9 @@
-package ai.datasqrl.parse;
+package com.datasqrl.parse;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.error.ErrorPrinter;
-import ai.datasqrl.config.error.SourceMapImpl;
-import ai.datasqrl.util.SnapshotTest;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.config.error.ErrorPrinter;
+import com.datasqrl.config.error.SourceMapImpl;
+import com.datasqrl.util.SnapshotTest;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,7 +1,7 @@
-package ai.datasqrl.packager.config;
+package com.datasqrl.packager.config;
 
-import ai.datasqrl.spi.GlobalConfiguration;
-import ai.datasqrl.spi.ManifestConfiguration;
+import com.datasqrl.spi.GlobalConfiguration;
+import com.datasqrl.spi.ManifestConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;

@@ -1,6 +1,6 @@
-package ai.datasqrl.graphql.inference.argument;
+package com.datasqrl.graphql.inference.argument;
 
-import ai.datasqrl.graphql.inference.ArgumentSet;
+import com.datasqrl.graphql.inference.ArgumentSet;
 import java.util.Set;
 
 public interface ArgumentHandler {

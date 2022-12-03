@@ -1,6 +1,6 @@
-package ai.datasqrl.schema.type.basic;
+package com.datasqrl.schema.type.basic;
 
-import ai.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.config.error.ErrorCollector;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Optional;

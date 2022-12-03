@@ -1,40 +1,40 @@
-package ai.datasqrl.graphql.inference;
+package com.datasqrl.graphql.inference;
 
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredComputedField;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredFieldVisitor;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredInterfaceField;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutation;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredObjectField;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredPagedField;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredQuery;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredRootObjectVisitor;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredScalarField;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchemaVisitor;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscription;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.NestedField;
-import ai.datasqrl.graphql.inference.argument.ArgumentHandler;
-import ai.datasqrl.graphql.inference.argument.ArgumentHandlerContextV1;
-import ai.datasqrl.graphql.inference.argument.EqHandler;
-import ai.datasqrl.graphql.inference.argument.LimitOffsetHandler;
-import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import ai.datasqrl.graphql.server.Model.Coords;
-import ai.datasqrl.graphql.server.Model.FieldLookupCoords;
-import ai.datasqrl.graphql.server.Model.PgParameterHandler;
-import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
-import ai.datasqrl.graphql.server.Model.SourcePgParameter;
-import ai.datasqrl.graphql.server.Model.StringSchema;
-import ai.datasqrl.graphql.util.ApiQueryBase;
-import ai.datasqrl.graphql.util.PagedApiQueryBase;
-import ai.datasqrl.plan.calcite.OptimizationStage;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.SqlValidatorUtil;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
-import ai.datasqrl.plan.queries.APIQuery;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Relationship.JoinType;
-import ai.datasqrl.schema.SQRLTable;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredComputedField;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredFieldVisitor;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredInterfaceField;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutation;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredObjectField;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredPagedField;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredQuery;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredRootObjectVisitor;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredScalarField;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchemaVisitor;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscription;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.NestedField;
+import com.datasqrl.graphql.inference.argument.ArgumentHandler;
+import com.datasqrl.graphql.inference.argument.ArgumentHandlerContextV1;
+import com.datasqrl.graphql.inference.argument.EqHandler;
+import com.datasqrl.graphql.inference.argument.LimitOffsetHandler;
+import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
+import com.datasqrl.graphql.server.Model.Coords;
+import com.datasqrl.graphql.server.Model.FieldLookupCoords;
+import com.datasqrl.graphql.server.Model.PgParameterHandler;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
+import com.datasqrl.graphql.server.Model.SourcePgParameter;
+import com.datasqrl.graphql.server.Model.StringSchema;
+import com.datasqrl.graphql.util.ApiQueryBase;
+import com.datasqrl.graphql.util.PagedApiQueryBase;
+import com.datasqrl.plan.calcite.OptimizationStage;
+import com.datasqrl.plan.calcite.Planner;
+import com.datasqrl.plan.calcite.SqlValidatorUtil;
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
+import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.schema.Relationship;
+import com.datasqrl.schema.Relationship.JoinType;
+import com.datasqrl.schema.SQRLTable;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.NonNullType;
@@ -191,14 +191,14 @@ public class PgSchemaBuilder implements
       argHandler.addAll(argumentSet.getArgumentParameters());
 
       if (argumentSet.isLimitOffsetFlag()) {
-        coordsBuilder.match(ai.datasqrl.graphql.server.Model.ArgumentSet.builder()
+        coordsBuilder.match(com.datasqrl.graphql.server.Model.ArgumentSet.builder()
             .arguments(argumentSet.getArgumentHandlers()).query(
                 PagedApiQueryBase.builder().query(query).relNode(argumentSet.getRelNode())
                     .relAndArg(argumentSet)
                     .parameters(argHandler)
                     .build()).build()).build();
       } else {
-        coordsBuilder.match(ai.datasqrl.graphql.server.Model.ArgumentSet.builder()
+        coordsBuilder.match(com.datasqrl.graphql.server.Model.ArgumentSet.builder()
             .arguments(argumentSet.getArgumentHandlers()).query(
                 ApiQueryBase.builder().query(query).relNode(argumentSet.getRelNode())
                     .relAndArg(argumentSet)

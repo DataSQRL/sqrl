@@ -4,4 +4,4 @@
  * may need to be transformed to provide the same functionality. The function library uses a smaller
  * type system than most sql engines in order to make it easier to understand.
  */
-package ai.datasqrl.function;
+package com.datasqrl.function;

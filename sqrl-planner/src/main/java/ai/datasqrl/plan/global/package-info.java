@@ -1,2 +1,2 @@
-package ai.datasqrl.plan.global;
+package com.datasqrl.plan.global;
 //Patch dag

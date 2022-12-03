@@ -1,27 +1,27 @@
-package ai.datasqrl.physical.stream.inmemory;
+package com.datasqrl.physical.stream.inmemory;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.formats.TextLineFormat;
-import ai.datasqrl.io.impl.file.DirectoryDataSystem;
-import ai.datasqrl.io.impl.file.FilePath;
-import ai.datasqrl.io.sources.DataSystemConnector;
-import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.TableInput;
-import ai.datasqrl.io.sources.dataset.TableSource;
-import ai.datasqrl.io.sources.stats.SourceTableStatistics;
-import ai.datasqrl.io.sources.stats.TableStatisticsStore;
-import ai.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
-import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
-import ai.datasqrl.physical.EnginePhysicalPlan;
-import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.physical.ExecutionResult;
-import ai.datasqrl.physical.stream.FunctionWithError;
-import ai.datasqrl.physical.stream.StreamEngine;
-import ai.datasqrl.physical.stream.StreamHolder;
-import ai.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
-import ai.datasqrl.plan.global.OptimizedDAG;
-import ai.datasqrl.schema.converters.SourceRecord2RowMapper;
-import ai.datasqrl.schema.input.InputTableSchema;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.io.formats.TextLineFormat;
+import com.datasqrl.io.impl.file.DirectoryDataSystem;
+import com.datasqrl.io.impl.file.FilePath;
+import com.datasqrl.io.sources.DataSystemConnector;
+import com.datasqrl.io.sources.SourceRecord;
+import com.datasqrl.io.sources.dataset.TableInput;
+import com.datasqrl.io.sources.dataset.TableSource;
+import com.datasqrl.io.sources.stats.SourceTableStatistics;
+import com.datasqrl.io.sources.stats.TableStatisticsStore;
+import com.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
+import com.datasqrl.io.sources.util.TimeAnnotatedRecord;
+import com.datasqrl.physical.EnginePhysicalPlan;
+import com.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.physical.ExecutionResult;
+import com.datasqrl.physical.stream.FunctionWithError;
+import com.datasqrl.physical.stream.StreamEngine;
+import com.datasqrl.physical.stream.StreamHolder;
+import com.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
+import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.schema.converters.SourceRecord2RowMapper;
+import com.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static ai.datasqrl.physical.EngineCapability.*;
+import static com.datasqrl.physical.EngineCapability.*;
 
 @Slf4j
 public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEngine {
@@ -102,7 +102,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
             final SourceTableStatistics statistics = new SourceTableStatistics();
             final TableSource.Digest tableDigest = tableSource.getDigest();
             StreamHolder<SourceRecord.Raw> result = stream.mapWithError((r, c) -> {
-                ai.datasqrl.config.error.ErrorCollector errors = statistics.validate(r, tableDigest);
+                com.datasqrl.config.error.ErrorCollector errors = statistics.validate(r, tableDigest);
                 if (errors.hasErrors()) c.accept(errors);
                 if (!errors.isFatal()) {
                     statistics.add(r, tableDigest);

@@ -1,4 +1,4 @@
-package ai.datasqrl.config.error;
+package com.datasqrl.config.error;
 
 import java.util.stream.Collectors;
 

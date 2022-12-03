@@ -1,8 +1,8 @@
-package ai.datasqrl.plan.local.transpile;
+package com.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.schema.Multiplicity;
-import ai.datasqrl.schema.SQRLTable;
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.SQRLTable;
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;

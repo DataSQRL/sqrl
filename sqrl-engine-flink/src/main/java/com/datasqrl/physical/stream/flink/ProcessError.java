@@ -1,6 +1,6 @@
-package ai.datasqrl.physical.stream.flink;
+package com.datasqrl.physical.stream.flink;
 
-import ai.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.config.error.ErrorCollector;
 import lombok.*;
 
 import java.io.Serializable;

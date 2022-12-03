@@ -1,7 +1,7 @@
-package ai.datasqrl.plan.calcite.util;
+package com.datasqrl.plan.calcite.util;
 
-import ai.datasqrl.function.SqrlFunction;
-import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
+import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.google.common.collect.Iterables;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;

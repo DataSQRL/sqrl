@@ -1,10 +1,10 @@
-package ai.datasqrl.plan.local.transpile;
+package com.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.calcite.hints.TopNHint;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.local.generate.Resolve.StatementKind;
-import ai.datasqrl.plan.local.generate.Resolve.StatementOp;
+import com.datasqrl.plan.calcite.hints.TopNHint;
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.plan.local.generate.Resolve.StatementKind;
+import com.datasqrl.plan.local.generate.Resolve.StatementOp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

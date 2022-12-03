@@ -1,7 +1,7 @@
-package ai.datasqrl.physical.database;
+package com.datasqrl.physical.database;
 
-import ai.datasqrl.physical.EnginePhysicalPlan;
-import ai.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.physical.EnginePhysicalPlan;
+import com.datasqrl.plan.queries.APIQuery;
 
 import java.util.Map;
 

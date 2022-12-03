@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.util;
+package com.datasqrl.plan.calcite.util;
 
 import org.apache.calcite.sql.SqlOperator;
 import org.junit.jupiter.api.Test;

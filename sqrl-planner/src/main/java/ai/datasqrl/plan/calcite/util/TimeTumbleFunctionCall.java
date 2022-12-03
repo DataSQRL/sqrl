@@ -1,7 +1,7 @@
-package ai.datasqrl.plan.calcite.util;
+package com.datasqrl.plan.calcite.util;
 
-import ai.datasqrl.function.SqrlFunction;
-import ai.datasqrl.function.SqrlTimeTumbleFunction;
+import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.google.common.base.Preconditions;
 import lombok.Value;
 import org.apache.calcite.rex.*;

@@ -1,4 +1,4 @@
-package ai.datasqrl.config.error;
+package com.datasqrl.config.error;
 
 public interface ErrorHandler<E extends Exception> {
 

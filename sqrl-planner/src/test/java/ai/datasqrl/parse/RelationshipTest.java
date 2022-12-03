@@ -1,4 +1,4 @@
-package ai.datasqrl.parse;
+package com.datasqrl.parse;
 
 import static org.junit.jupiter.api.Assertions.*;
 

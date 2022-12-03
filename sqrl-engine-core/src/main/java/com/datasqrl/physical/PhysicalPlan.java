@@ -1,10 +1,10 @@
-package ai.datasqrl.physical;
+package com.datasqrl.physical;
 
-import ai.datasqrl.config.util.StreamUtil;
-import ai.datasqrl.physical.database.DatabasePhysicalPlan;
-import ai.datasqrl.physical.database.QueryTemplate;
-import ai.datasqrl.physical.pipeline.ExecutionStage;
-import ai.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.config.util.StreamUtil;
+import com.datasqrl.physical.database.DatabasePhysicalPlan;
+import com.datasqrl.physical.database.QueryTemplate;
+import com.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.plan.queries.APIQuery;
 import lombok.Value;
 
 import java.util.List;

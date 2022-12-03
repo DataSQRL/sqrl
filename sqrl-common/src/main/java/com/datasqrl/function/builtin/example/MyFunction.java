@@ -1,6 +1,6 @@
-package ai.datasqrl.function.builtin.example;
+package com.datasqrl.function.builtin.example;
 
-import ai.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.SqrlFunction;
 import java.util.Optional;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;

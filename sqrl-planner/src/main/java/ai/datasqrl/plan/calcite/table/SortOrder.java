@@ -1,7 +1,7 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.plan.calcite.util.ContinuousIndexMap;
-import ai.datasqrl.plan.calcite.util.IndexMap;
+import com.datasqrl.plan.calcite.util.ContinuousIndexMap;
+import com.datasqrl.plan.calcite.util.IndexMap;
 import lombok.Value;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;

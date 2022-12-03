@@ -1,10 +1,10 @@
-package ai.datasqrl.packager;
+package com.datasqrl.packager;
 
-import ai.datasqrl.compile.loaders.DynamicExporter;
-import ai.datasqrl.compile.loaders.DynamicLoader;
-import ai.datasqrl.packager.config.Dependency;
-import ai.datasqrl.packager.config.GlobalPackageConfiguration;
-import ai.datasqrl.spi.ManifestConfiguration;
+import com.datasqrl.compile.loaders.DynamicExporter;
+import com.datasqrl.compile.loaders.DynamicLoader;
+import com.datasqrl.packager.config.Dependency;
+import com.datasqrl.packager.config.GlobalPackageConfiguration;
+import com.datasqrl.spi.ManifestConfiguration;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,11 +1,11 @@
-package ai.datasqrl.graphql.generate;
+package com.datasqrl.graphql.generate;
 
-import ai.datasqrl.graphql.generate.SchemaBuilder.ObjectTypeBuilder;
-import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.Multiplicity;
-import ai.datasqrl.schema.SQRLTable;
+import com.datasqrl.graphql.generate.SchemaBuilder.ObjectTypeBuilder;
+import com.datasqrl.schema.Column;
+import com.datasqrl.schema.Field;
+import com.datasqrl.schema.Relationship;
+import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.SQRLTable;
 import graphql.schema.GraphQLSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 

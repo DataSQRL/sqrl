@@ -1,9 +1,9 @@
-package ai.datasqrl.physical.database.relational;
+package com.datasqrl.physical.database.relational;
 
-import ai.datasqrl.physical.database.DatabasePhysicalPlan;
-import ai.datasqrl.physical.database.QueryTemplate;
-import ai.datasqrl.physical.database.relational.ddl.SqlDDLStatement;
-import ai.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.physical.database.DatabasePhysicalPlan;
+import com.datasqrl.physical.database.QueryTemplate;
+import com.datasqrl.physical.database.relational.ddl.SqlDDLStatement;
+import com.datasqrl.plan.queries.APIQuery;
 import lombok.Value;
 
 import java.util.List;

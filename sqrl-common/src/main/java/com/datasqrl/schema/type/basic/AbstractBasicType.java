@@ -1,6 +1,6 @@
-package ai.datasqrl.schema.type.basic;
+package com.datasqrl.schema.type.basic;
 
-import ai.datasqrl.schema.type.SqrlTypeVisitor;
+import com.datasqrl.schema.type.SqrlTypeVisitor;
 
 public abstract class AbstractBasicType<J> implements BasicType<J> {
 

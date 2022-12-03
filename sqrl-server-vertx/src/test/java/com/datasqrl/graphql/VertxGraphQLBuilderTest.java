@@ -1,19 +1,19 @@
-package ai.datasqrl.graphql;
+package com.datasqrl.graphql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import ai.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
-import ai.datasqrl.graphql.server.Model.ArgumentSet;
-import ai.datasqrl.graphql.server.Model.FixedArgument;
-import ai.datasqrl.graphql.server.Model.PgQuery;
-import ai.datasqrl.graphql.server.Model.RootGraphqlModel;
-import ai.datasqrl.graphql.server.Model.SourcePgParameter;
-import ai.datasqrl.graphql.server.Model.StringSchema;
-import ai.datasqrl.graphql.server.Model.VariableArgument;
-import ai.datasqrl.graphql.server.VertxGraphQLBuilder;
-import ai.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
+import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
+import com.datasqrl.graphql.server.Model.ArgumentPgParameter;
+import com.datasqrl.graphql.server.Model.ArgumentSet;
+import com.datasqrl.graphql.server.Model.FixedArgument;
+import com.datasqrl.graphql.server.Model.PgQuery;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
+import com.datasqrl.graphql.server.Model.SourcePgParameter;
+import com.datasqrl.graphql.server.Model.StringSchema;
+import com.datasqrl.graphql.server.Model.VariableArgument;
+import com.datasqrl.graphql.server.VertxGraphQLBuilder;
+import com.datasqrl.graphql.server.VertxGraphQLBuilder.VertxContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.ExecutionResult;
 import graphql.GraphQL;

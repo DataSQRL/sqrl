@@ -1,8 +1,8 @@
-package ai.datasqrl.io.sources.stats;
+package com.datasqrl.io.sources.stats;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NameCanonicalizer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 

@@ -1,10 +1,10 @@
-package ai.datasqrl.graphql.inference;
+package com.datasqrl.graphql.inference;
 
-import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
-import ai.datasqrl.plan.queries.APIQuery;
-import ai.datasqrl.util.data.Retail;
-import ai.datasqrl.util.data.Retail.RetailScriptNames;
+import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
+import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.util.data.Retail;
+import com.datasqrl.util.data.Retail.RetailScriptNames;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

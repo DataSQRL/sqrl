@@ -15,4 +15,4 @@
  * carried over to the columns as we use Calcite to handle all of the datatypes. Schema elements are
  * connected to calcite by their canonical names, also called its 'id'.
  */
-package ai.datasqrl.schema;
+package com.datasqrl.schema;

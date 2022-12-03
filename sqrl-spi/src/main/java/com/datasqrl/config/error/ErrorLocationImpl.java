@@ -1,4 +1,4 @@
-package ai.datasqrl.config.error;
+package com.datasqrl.config.error;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;

@@ -1,4 +1,4 @@
-package ai.datasqrl.config.constraints;
+package com.datasqrl.config.constraints;
 
 import org.hibernate.validator.constraints.ConstraintComposition;
 

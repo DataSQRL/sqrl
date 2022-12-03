@@ -1,8 +1,8 @@
-package ai.datasqrl.util;
+package com.datasqrl.util;
 
-import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.provider.Dialect;
-import ai.datasqrl.physical.database.relational.JDBCEngineConfiguration;
+import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.config.provider.Dialect;
+import com.datasqrl.physical.database.relational.JDBCEngineConfiguration;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import org.testcontainers.containers.PostgreSQLContainer;

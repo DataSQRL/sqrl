@@ -1,7 +1,7 @@
-package ai.datasqrl.schema.type;
+package com.datasqrl.schema.type;
 
 
-import ai.datasqrl.schema.type.basic.*;
+import com.datasqrl.schema.type.basic.*;
 
 public interface SqrlTypeVisitor<R, C> {
 

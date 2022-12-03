@@ -1,11 +1,11 @@
-package ai.datasqrl.io;
+package com.datasqrl.io;
 
-import ai.datasqrl.io.formats.Format;
-import ai.datasqrl.io.formats.JsonLineFormat;
-import ai.datasqrl.io.formats.TextLineFormat;
-import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
-import ai.datasqrl.util.data.BookClub;
+import com.datasqrl.io.formats.Format;
+import com.datasqrl.io.formats.JsonLineFormat;
+import com.datasqrl.io.formats.TextLineFormat;
+import com.datasqrl.io.sources.SourceRecord;
+import com.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
+import com.datasqrl.util.data.BookClub;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

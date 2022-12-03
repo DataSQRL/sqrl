@@ -1,6 +1,6 @@
-package ai.datasqrl.physical.stream.flink.plan;
+package com.datasqrl.physical.stream.flink.plan;
 
-import ai.datasqrl.physical.stream.StreamPhysicalPlan;
+import com.datasqrl.physical.stream.StreamPhysicalPlan;
 import lombok.Value;
 import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 

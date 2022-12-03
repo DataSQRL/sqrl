@@ -1,4 +1,4 @@
-package ai.datasqrl.util;
+package com.datasqrl.util;
 
 import com.google.common.base.Predicates;
 import lombok.SneakyThrows;

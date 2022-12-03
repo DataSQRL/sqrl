@@ -1,11 +1,11 @@
-package ai.datasqrl.compiler;
+package com.datasqrl.compiler;
 
-import ai.datasqrl.compile.loaders.DataSource;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.sources.dataset.TableSource;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.util.TestDataset;
+import com.datasqrl.compile.loaders.DataSource;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.io.sources.dataset.TableSource;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.util.TestDataset;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 

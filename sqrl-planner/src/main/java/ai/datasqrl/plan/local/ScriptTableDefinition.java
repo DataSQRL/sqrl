@@ -1,10 +1,10 @@
-package ai.datasqrl.plan.local;
+package com.datasqrl.plan.local;
 
-import ai.datasqrl.plan.calcite.table.QueryRelationalTable;
-import ai.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import ai.datasqrl.schema.Field;
-import ai.datasqrl.schema.SQRLTable;
-import ai.datasqrl.schema.UniversalTableBuilder;
+import com.datasqrl.plan.calcite.table.QueryRelationalTable;
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.schema.Field;
+import com.datasqrl.schema.SQRLTable;
+import com.datasqrl.schema.UniversalTableBuilder;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;

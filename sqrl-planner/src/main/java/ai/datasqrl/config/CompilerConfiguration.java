@@ -1,4 +1,4 @@
-package ai.datasqrl.config;
+package com.datasqrl.config;
 
 import lombok.*;
 

@@ -1,4 +1,4 @@
-package ai.datasqrl.schema.type.basic;
+package com.datasqrl.schema.type.basic;
 
 import java.util.*;
 import java.util.function.Function;

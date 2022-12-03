@@ -1,9 +1,9 @@
-package ai.datasqrl.physical.database.relational;
+package com.datasqrl.physical.database.relational;
 
-import ai.datasqrl.physical.database.relational.ddl.*;
-import ai.datasqrl.plan.calcite.util.RelToSql;
-import ai.datasqrl.plan.global.IndexDefinition;
-import ai.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.physical.database.relational.ddl.*;
+import com.datasqrl.plan.calcite.util.RelToSql;
+import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.global.OptimizedDAG;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 import java.util.ArrayList;

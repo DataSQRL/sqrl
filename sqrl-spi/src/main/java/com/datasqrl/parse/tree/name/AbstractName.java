@@ -1,4 +1,4 @@
-package ai.datasqrl.parse.tree.name;
+package com.datasqrl.parse.tree.name;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

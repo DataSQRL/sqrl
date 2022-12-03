@@ -1,4 +1,4 @@
-package ai.datasqrl.metadata;
+package com.datasqrl.metadata;
 
 import java.io.Serializable;
 

@@ -1,9 +1,9 @@
-package ai.datasqrl.util.data;
+package com.datasqrl.util.data;
 
-import ai.datasqrl.util.ScriptBuilder;
-import ai.datasqrl.util.TestDataset;
-import ai.datasqrl.util.TestGraphQLSchema;
-import ai.datasqrl.util.TestScript;
+import com.datasqrl.util.ScriptBuilder;
+import com.datasqrl.util.TestDataset;
+import com.datasqrl.util.TestGraphQLSchema;
+import com.datasqrl.util.TestScript;
 import lombok.Getter;
 
 import java.nio.file.Path;

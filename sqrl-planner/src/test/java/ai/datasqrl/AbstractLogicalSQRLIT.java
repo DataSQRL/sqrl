@@ -1,14 +1,14 @@
-package ai.datasqrl;
+package com.datasqrl;
 
-import ai.datasqrl.compile.loaders.DataSource;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.sources.dataset.TableSource;
-import ai.datasqrl.parse.SqrlParser;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.local.generate.Resolve;
-import ai.datasqrl.plan.local.generate.Session;
+import com.datasqrl.compile.loaders.DataSource;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.io.sources.dataset.TableSource;
+import com.datasqrl.parse.SqrlParser;
+import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.plan.calcite.Planner;
+import com.datasqrl.plan.calcite.PlannerFactory;
+import com.datasqrl.plan.local.generate.Resolve;
+import com.datasqrl.plan.local.generate.Session;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;

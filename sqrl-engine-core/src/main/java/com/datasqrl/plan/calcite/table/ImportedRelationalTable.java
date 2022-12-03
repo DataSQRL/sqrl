@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.io.sources.dataset.TableSource;
+import com.datasqrl.io.sources.dataset.TableSource;
 
 public interface ImportedRelationalTable extends SourceRelationalTable {
 

@@ -1,8 +1,8 @@
-package ai.datasqrl.physical.stream.inmemory.io;
+package com.datasqrl.physical.stream.inmemory.io;
 
-import ai.datasqrl.io.impl.file.DirectoryDataSystem;
-import ai.datasqrl.io.impl.file.FilePath;
-import ai.datasqrl.io.sources.dataset.TableConfig;
+import com.datasqrl.io.impl.file.DirectoryDataSystem;
+import com.datasqrl.io.impl.file.FilePath;
+import com.datasqrl.io.sources.dataset.TableConfig;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;

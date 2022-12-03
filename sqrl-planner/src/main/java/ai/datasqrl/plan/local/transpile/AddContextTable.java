@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.local.transpile;
+package com.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.parse.tree.name.ReservedName;
+import com.datasqrl.parse.tree.name.ReservedName;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;

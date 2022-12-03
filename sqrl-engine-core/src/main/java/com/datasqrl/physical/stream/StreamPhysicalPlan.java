@@ -1,6 +1,6 @@
-package ai.datasqrl.physical.stream;
+package com.datasqrl.physical.stream;
 
-import ai.datasqrl.physical.EnginePhysicalPlan;
+import com.datasqrl.physical.EnginePhysicalPlan;
 
 public interface StreamPhysicalPlan extends EnginePhysicalPlan {
 

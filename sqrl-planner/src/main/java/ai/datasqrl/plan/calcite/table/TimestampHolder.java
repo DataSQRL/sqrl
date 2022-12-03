@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.plan.calcite.util.IndexMap;
+import com.datasqrl.plan.calcite.util.IndexMap;
 import com.google.common.base.Preconditions;
 import lombok.*;
 import org.apache.commons.collections.ListUtils;

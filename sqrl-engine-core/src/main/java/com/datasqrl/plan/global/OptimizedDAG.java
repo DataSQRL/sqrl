@@ -1,9 +1,9 @@
-package ai.datasqrl.plan.global;
+package com.datasqrl.plan.global;
 
-import ai.datasqrl.config.util.StreamUtil;
-import ai.datasqrl.io.sources.dataset.TableSink;
-import ai.datasqrl.physical.pipeline.ExecutionStage;
-import ai.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.config.util.StreamUtil;
+import com.datasqrl.io.sources.dataset.TableSink;
+import com.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.plan.queries.APIQuery;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;

@@ -1,4 +1,4 @@
-package ai.datasqrl.config.util;
+package com.datasqrl.config.util;
 
 import java.util.UUID;
 import lombok.AllArgsConstructor;

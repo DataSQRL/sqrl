@@ -6,4 +6,4 @@
  * Calcite is used to optimize the SqlNode into a logical plan, and optionally converted to an
  * in-memory executable plan. The logical plans for each statement are then assembled into a dag.
  */
-package ai.datasqrl.plan;
+package com.datasqrl.plan;

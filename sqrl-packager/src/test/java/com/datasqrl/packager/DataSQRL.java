@@ -1,8 +1,8 @@
-package ai.datasqrl.packager;
+package com.datasqrl.packager;
 
-import ai.datasqrl.util.TestDataset;
-import ai.datasqrl.util.TestGraphQLSchema;
-import ai.datasqrl.util.TestScript;
+import com.datasqrl.util.TestDataset;
+import com.datasqrl.util.TestGraphQLSchema;
+import com.datasqrl.util.TestScript;
 
 import java.nio.file.Path;
 import java.util.Set;

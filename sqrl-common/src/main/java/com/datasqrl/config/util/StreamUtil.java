@@ -1,4 +1,4 @@
-package ai.datasqrl.config.util;
+package com.datasqrl.config.util;
 
 import java.util.Collection;
 import java.util.Optional;

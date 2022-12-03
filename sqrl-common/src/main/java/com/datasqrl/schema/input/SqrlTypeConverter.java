@@ -1,6 +1,6 @@
-package ai.datasqrl.schema.input;
+package com.datasqrl.schema.input;
 
-import ai.datasqrl.schema.type.SqrlTypeVisitor;
+import com.datasqrl.schema.type.SqrlTypeVisitor;
 
 public interface SqrlTypeConverter<T> extends SqrlTypeVisitor<T, Void> {
 

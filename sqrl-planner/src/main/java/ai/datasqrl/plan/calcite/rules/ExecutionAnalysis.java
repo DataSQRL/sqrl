@@ -1,10 +1,10 @@
-package ai.datasqrl.plan.calcite.rules;
+package com.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.function.SqrlFunction;
-import ai.datasqrl.function.TimestampPreservingFunction;
-import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
-import ai.datasqrl.physical.EngineCapability;
-import ai.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.TimestampPreservingFunction;
+import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
+import com.datasqrl.physical.EngineCapability;
+import com.datasqrl.physical.pipeline.ExecutionStage;
 import lombok.Value;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rex.RexCall;

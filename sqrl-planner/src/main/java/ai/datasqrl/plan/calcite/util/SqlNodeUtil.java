@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.util;
+package com.datasqrl.plan.calcite.util;
 
 import java.util.ArrayList;
 import java.util.List;

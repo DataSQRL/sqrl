@@ -1,9 +1,9 @@
-package ai.datasqrl.graphql.inference;
+package com.datasqrl.graphql.inference;
 
-import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.TestGraphQLSchema;
-import ai.datasqrl.util.TestScript;
+import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.TestGraphQLSchema;
+import com.datasqrl.util.TestScript;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 

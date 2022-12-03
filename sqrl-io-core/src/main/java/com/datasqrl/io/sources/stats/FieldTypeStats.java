@@ -1,8 +1,8 @@
-package ai.datasqrl.io.sources.stats;
+package com.datasqrl.io.sources.stats;
 
-import ai.datasqrl.io.sources.stats.accumulator.LogarithmicHistogram;
-import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.schema.type.Type;
+import com.datasqrl.io.sources.stats.accumulator.LogarithmicHistogram;
+import com.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.datasqrl.schema.type.Type;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;

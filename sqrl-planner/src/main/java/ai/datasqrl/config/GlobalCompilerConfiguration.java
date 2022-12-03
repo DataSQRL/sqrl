@@ -1,9 +1,9 @@
-package ai.datasqrl.config;
+package com.datasqrl.config;
 
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.util.ConfigurationUtil;
-import ai.datasqrl.spi.ManifestConfiguration;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.config.util.ConfigurationUtil;
+import com.datasqrl.spi.ManifestConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;

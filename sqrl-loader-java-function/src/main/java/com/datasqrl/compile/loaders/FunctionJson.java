@@ -1,4 +1,4 @@
-package ai.datasqrl.compile.loaders;
+package com.datasqrl.compile.loaders;
 
 import javax.validation.constraints.NotNull;
 

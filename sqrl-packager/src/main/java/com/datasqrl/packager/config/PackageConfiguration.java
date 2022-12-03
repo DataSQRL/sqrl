@@ -1,4 +1,4 @@
-package ai.datasqrl.packager.config;
+package com.datasqrl.packager.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;

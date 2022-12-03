@@ -1,4 +1,4 @@
-package ai.datasqrl.io.formats;
+package com.datasqrl.io.formats;
 
 import com.google.common.base.Strings;
 import java.util.Arrays;

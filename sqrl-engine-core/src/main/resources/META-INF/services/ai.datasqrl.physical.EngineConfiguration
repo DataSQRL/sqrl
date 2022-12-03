@@ -1,2 +1,2 @@
-ai.datasqrl.physical.stream.inmemory.InMemoryStreamConfiguration
-ai.datasqrl.physical.database.inmemory.InMemoryDatabaseConfiguration
+com.datasqrl.physical.stream.inmemory.InMemoryStreamConfiguration
+com.datasqrl.physical.database.inmemory.InMemoryDatabaseConfiguration

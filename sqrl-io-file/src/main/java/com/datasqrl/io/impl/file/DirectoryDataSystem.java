@@ -1,15 +1,15 @@
-package ai.datasqrl.io.impl.file;
+package com.datasqrl.io.impl.file;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.formats.FileFormat;
-import ai.datasqrl.io.formats.FormatConfiguration;
-import ai.datasqrl.io.sources.DataSystemConfig;
-import ai.datasqrl.io.sources.DataSystemConnector;
-import ai.datasqrl.io.sources.DataSystemDiscovery;
-import ai.datasqrl.io.sources.ExternalDataType;
-import ai.datasqrl.io.sources.dataset.TableConfig;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.io.formats.FileFormat;
+import com.datasqrl.io.formats.FormatConfiguration;
+import com.datasqrl.io.sources.DataSystemConfig;
+import com.datasqrl.io.sources.DataSystemConnector;
+import com.datasqrl.io.sources.DataSystemDiscovery;
+import com.datasqrl.io.sources.ExternalDataType;
+import com.datasqrl.io.sources.dataset.TableConfig;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NameCanonicalizer;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -160,7 +160,7 @@ public abstract class DirectoryDataSystem {
     }
 
     @Value
-    private class InputPreview implements ai.datasqrl.io.impl.InputPreview {
+    private class InputPreview implements com.datasqrl.io.impl.InputPreview {
 
       final TableConfig table;
 

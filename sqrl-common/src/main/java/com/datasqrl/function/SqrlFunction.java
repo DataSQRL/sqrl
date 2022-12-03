@@ -1,4 +1,4 @@
-package ai.datasqrl.function;
+package com.datasqrl.function;
 
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;

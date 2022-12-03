@@ -1,10 +1,10 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.io.sources.stats.TableStatistic;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.calcite.util.IndexMap;
-import ai.datasqrl.schema.SQRLTable;
+import com.datasqrl.io.sources.stats.TableStatistic;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.plan.calcite.util.IndexMap;
+import com.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import lombok.Getter;
@@ -22,7 +22,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * A relational table that represents the relational equivalent of a {@link ai.datasqrl.schema.SQRLTable}.
+ * A relational table that represents the relational equivalent of a {@link com.datasqrl.schema.SQRLTable}.
  *
  * While the SQRLTable represents the logical table that a user defines in an SQRL script, the associated
  * {@link VirtualRelationalTable} represents the relational representation of that same table (i.e. with

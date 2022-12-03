@@ -1,11 +1,11 @@
-package ai.datasqrl.io.sources.stats;
+package com.datasqrl.io.sources.stats;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.parse.tree.name.NameCanonicalizer;
-import ai.datasqrl.schema.input.RelationType;
-import ai.datasqrl.schema.type.Type;
-import ai.datasqrl.schema.type.basic.BasicType;
-import ai.datasqrl.schema.type.basic.BasicTypeManager;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.parse.tree.name.NameCanonicalizer;
+import com.datasqrl.schema.input.RelationType;
+import com.datasqrl.schema.type.Type;
+import com.datasqrl.schema.type.basic.BasicType;
+import com.datasqrl.schema.type.basic.BasicTypeManager;
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import java.util.Arrays;

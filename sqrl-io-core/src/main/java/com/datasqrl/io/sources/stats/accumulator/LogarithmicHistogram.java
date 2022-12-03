@@ -1,4 +1,4 @@
-package ai.datasqrl.io.sources.stats.accumulator;
+package com.datasqrl.io.sources.stats.accumulator;
 
 import com.google.common.base.Preconditions;
 import java.io.Serializable;
@@ -33,7 +33,7 @@ public class LogarithmicHistogram implements Serializable {
 
   @ToString
   public static class Accumulator implements
-      ai.datasqrl.io.sources.stats.Accumulator<Long, Accumulator, Void> {
+      com.datasqrl.io.sources.stats.Accumulator<Long, Accumulator, Void> {
 
     private float base;
     private double baseConversion;

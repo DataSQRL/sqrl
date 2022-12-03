@@ -1,4 +1,4 @@
-package ai.datasqrl.schema.input;
+package com.datasqrl.schema.input;
 
 import com.google.common.base.Strings;
 import lombok.*;

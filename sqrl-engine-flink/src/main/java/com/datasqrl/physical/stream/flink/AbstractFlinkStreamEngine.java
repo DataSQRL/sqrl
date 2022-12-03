@@ -1,12 +1,12 @@
-package ai.datasqrl.physical.stream.flink;
+package com.datasqrl.physical.stream.flink;
 
-import ai.datasqrl.physical.EngineCapability;
-import ai.datasqrl.physical.EnginePhysicalPlan;
-import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.physical.ExecutionResult;
-import ai.datasqrl.physical.stream.flink.plan.FlinkPhysicalPlanner;
-import ai.datasqrl.physical.stream.flink.plan.FlinkStreamPhysicalPlan;
-import ai.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.physical.EngineCapability;
+import com.datasqrl.physical.EnginePhysicalPlan;
+import com.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.physical.ExecutionResult;
+import com.datasqrl.physical.stream.flink.plan.FlinkPhysicalPlanner;
+import com.datasqrl.physical.stream.flink.plan.FlinkStreamPhysicalPlan;
+import com.datasqrl.plan.global.OptimizedDAG;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.api.StatementSet;
@@ -15,7 +15,7 @@ import org.apache.flink.table.api.TableResult;
 import java.util.EnumSet;
 import java.util.List;
 
-import static ai.datasqrl.physical.EngineCapability.*;
+import static com.datasqrl.physical.EngineCapability.*;
 
 public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base implements FlinkStreamEngine {
 

@@ -1,4 +1,4 @@
-package ai.datasqrl.io.sources;
+package com.datasqrl.io.sources;
 
 public interface DataSystemConnector {
 

@@ -1,10 +1,10 @@
-package ai.datasqrl.physical.pipeline;
+package com.datasqrl.physical.pipeline;
 
-import ai.datasqrl.physical.EngineCapability;
-import ai.datasqrl.physical.EnginePhysicalPlan;
-import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.physical.ExecutionResult;
-import ai.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.physical.EngineCapability;
+import com.datasqrl.physical.EnginePhysicalPlan;
+import com.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.physical.ExecutionResult;
+import com.datasqrl.plan.global.OptimizedDAG;
 import org.apache.calcite.tools.RelBuilder;
 
 import java.util.Collection;

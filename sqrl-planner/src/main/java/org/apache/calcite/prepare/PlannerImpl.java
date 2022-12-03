@@ -16,12 +16,12 @@
  */
 package org.apache.calcite.prepare;
 
-import ai.datasqrl.SqrlCalciteCatalogReader;
-import ai.datasqrl.plan.calcite.PlannerFactory;
-import ai.datasqrl.plan.calcite.TypeFactory;
-import ai.datasqrl.plan.calcite.rules.EnumerableNestedLoopJoinRule;
-import ai.datasqrl.plan.calcite.rules.SqrlRelMetadataProvider;
-import ai.datasqrl.plan.calcite.rules.SqrlRelMetadataQuery;
+import com.datasqrl.SqrlCalciteCatalogReader;
+import com.datasqrl.plan.calcite.PlannerFactory;
+import com.datasqrl.plan.calcite.TypeFactory;
+import com.datasqrl.plan.calcite.rules.EnumerableNestedLoopJoinRule;
+import com.datasqrl.plan.calcite.rules.SqrlRelMetadataProvider;
+import com.datasqrl.plan.calcite.rules.SqrlRelMetadataQuery;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;

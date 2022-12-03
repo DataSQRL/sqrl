@@ -1,11 +1,11 @@
-package ai.datasqrl.graphql.inference;
+package com.datasqrl.graphql.inference;
 
-import ai.datasqrl.graphql.inference.argument.ArgumentHandler;
-import ai.datasqrl.graphql.util.ReplaceGraphqlQueries;
-import ai.datasqrl.physical.PhysicalPlan;
-import ai.datasqrl.schema.Column;
-import ai.datasqrl.schema.Relationship;
-import ai.datasqrl.schema.SQRLTable;
+import com.datasqrl.graphql.inference.argument.ArgumentHandler;
+import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
+import com.datasqrl.physical.PhysicalPlan;
+import com.datasqrl.schema.Column;
+import com.datasqrl.schema.Relationship;
+import com.datasqrl.schema.SQRLTable;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.ObjectTypeDefinition;

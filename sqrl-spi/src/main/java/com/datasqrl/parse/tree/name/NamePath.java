@@ -1,6 +1,6 @@
-package ai.datasqrl.parse.tree.name;
+package com.datasqrl.parse.tree.name;
 
-import ai.datasqrl.config.util.AbstractPath;
+import com.datasqrl.config.util.AbstractPath;
 
 import java.util.Arrays;
 import java.util.List;

@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite.rules;
+package com.datasqrl.plan.calcite.rules;
 
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;

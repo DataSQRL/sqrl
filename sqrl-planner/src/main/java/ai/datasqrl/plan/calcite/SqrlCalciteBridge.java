@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite;
+package com.datasqrl.plan.calcite;
 
 /**
  * Bridges calcite with sqrl planning operations

@@ -1,19 +1,19 @@
-package ai.datasqrl.plan.global;
+package com.datasqrl.plan.global;
 
-import ai.datasqrl.config.util.StreamUtil;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.physical.database.DatabaseEngine;
-import ai.datasqrl.physical.pipeline.ExecutionPipeline;
-import ai.datasqrl.physical.pipeline.ExecutionStage;
-import ai.datasqrl.plan.calcite.Planner;
-import ai.datasqrl.plan.calcite.hints.WatermarkHint;
-import ai.datasqrl.plan.calcite.rules.AnnotatedLP;
-import ai.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import ai.datasqrl.plan.calcite.table.*;
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.local.generate.Resolve;
-import ai.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.config.util.StreamUtil;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.physical.database.DatabaseEngine;
+import com.datasqrl.physical.pipeline.ExecutionPipeline;
+import com.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.plan.calcite.Planner;
+import com.datasqrl.plan.calcite.hints.WatermarkHint;
+import com.datasqrl.plan.calcite.rules.AnnotatedLP;
+import com.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
+import com.datasqrl.plan.calcite.table.*;
+import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.plan.local.generate.Resolve;
+import com.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -31,8 +31,8 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static ai.datasqrl.plan.calcite.OptimizationStage.READ_DAG_STITCHING;
-import static ai.datasqrl.plan.calcite.OptimizationStage.WRITE_DAG_STITCHING;
+import static com.datasqrl.plan.calcite.OptimizationStage.READ_DAG_STITCHING;
+import static com.datasqrl.plan.calcite.OptimizationStage.WRITE_DAG_STITCHING;
 
 /**
  * The DAGPlanner currently makes the simplifying assumption that the execution pipeline consists

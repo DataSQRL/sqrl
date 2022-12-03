@@ -1,6 +1,6 @@
-package ai.datasqrl.io.impl.file;
+package com.datasqrl.io.impl.file;
 
-import ai.datasqrl.config.util.FileUtil;
+import com.datasqrl.config.util.FileUtil;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;

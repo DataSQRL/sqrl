@@ -1,10 +1,10 @@
-package ai.datasqrl.physical.stream.flink.monitor;
+package com.datasqrl.physical.stream.flink.monitor;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.TableSource;
-import ai.datasqrl.io.sources.stats.SourceTableStatistics;
-import ai.datasqrl.physical.stream.flink.util.FlinkUtilities;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.io.sources.SourceRecord;
+import com.datasqrl.io.sources.dataset.TableSource;
+import com.datasqrl.io.sources.stats.SourceTableStatistics;
+import com.datasqrl.physical.stream.flink.util.FlinkUtilities;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;

@@ -1,8 +1,8 @@
-package ai.datasqrl.util;
+package com.datasqrl.util;
 
-import ai.datasqrl.util.data.Nutshop;
-import ai.datasqrl.util.data.Retail;
-import ai.datasqrl.util.junit.ArgumentProvider;
+import com.datasqrl.util.data.Nutshop;
+import com.datasqrl.util.data.Retail;
+import com.datasqrl.util.junit.ArgumentProvider;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import lombok.Builder;

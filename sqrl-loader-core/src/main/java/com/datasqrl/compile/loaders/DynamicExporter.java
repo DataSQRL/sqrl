@@ -1,4 +1,4 @@
-package ai.datasqrl.compile.loaders;
+package com.datasqrl.compile.loaders;
 
 import lombok.extern.slf4j.Slf4j;
 

@@ -1,15 +1,15 @@
-package ai.datasqrl.plan.local.analyze;
+package com.datasqrl.plan.local.analyze;
 
-import ai.datasqrl.AbstractLogicalSQRLIT;
-import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.parse.SqrlParser;
-import ai.datasqrl.plan.calcite.util.RelToSql;
-import ai.datasqrl.plan.local.generate.Resolve.Env;
-import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.TestDataset;
-import ai.datasqrl.util.data.C360;
-import ai.datasqrl.util.data.Retail;
+import com.datasqrl.AbstractLogicalSQRLIT;
+import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.parse.SqrlParser;
+import com.datasqrl.plan.calcite.util.RelToSql;
+import com.datasqrl.plan.local.generate.Resolve.Env;
+import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.TestDataset;
+import com.datasqrl.util.data.C360;
+import com.datasqrl.util.data.Retail;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;

@@ -1,10 +1,10 @@
-package ai.datasqrl.physical.database.inmemory;
+package com.datasqrl.physical.database.inmemory;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.metadata.MetadataStore;
-import ai.datasqrl.metadata.MetadataStoreProvider;
-import ai.datasqrl.physical.database.DatabaseEngine;
-import ai.datasqrl.physical.database.DatabaseEngineConfiguration;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.metadata.MetadataStore;
+import com.datasqrl.metadata.MetadataStoreProvider;
+import com.datasqrl.physical.database.DatabaseEngine;
+import com.datasqrl.physical.database.DatabaseEngineConfiguration;
 import lombok.NonNull;
 
 public class InMemoryDatabaseConfiguration implements DatabaseEngineConfiguration {

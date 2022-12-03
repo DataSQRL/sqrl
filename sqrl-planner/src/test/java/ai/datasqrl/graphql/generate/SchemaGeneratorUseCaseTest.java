@@ -1,8 +1,8 @@
-package ai.datasqrl.graphql.generate;
+package com.datasqrl.graphql.generate;
 
-import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.util.TestScript;
-import ai.datasqrl.util.data.Nutshop;
+import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.util.TestScript;
+import com.datasqrl.util.data.Nutshop;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;

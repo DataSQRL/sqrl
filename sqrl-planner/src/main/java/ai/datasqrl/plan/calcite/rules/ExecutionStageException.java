@@ -1,8 +1,8 @@
-package ai.datasqrl.plan.calcite.rules;
+package com.datasqrl.plan.calcite.rules;
 
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.physical.EngineCapability;
-import ai.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.physical.EngineCapability;
+import com.datasqrl.physical.pipeline.ExecutionStage;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 

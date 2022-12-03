@@ -1,7 +1,7 @@
-package ai.datasqrl.plan.calcite;
+package com.datasqrl.plan.calcite;
 
-import ai.datasqrl.function.builtin.time.FlinkFnc;
-import ai.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
+import com.datasqrl.function.builtin.time.FlinkFnc;
+import com.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.ConventionTraitDef;

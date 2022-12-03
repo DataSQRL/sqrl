@@ -1,4 +1,4 @@
-package ai.datasqrl.io.sources.stats;
+package com.datasqrl.io.sources.stats;
 
 
 import java.util.Arrays;

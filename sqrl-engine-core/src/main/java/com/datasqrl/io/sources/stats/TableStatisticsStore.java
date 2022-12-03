@@ -1,7 +1,7 @@
-package ai.datasqrl.io.sources.stats;
+package com.datasqrl.io.sources.stats;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NamePath;
 
 import java.io.Closeable;
 import java.util.Map;

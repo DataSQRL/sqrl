@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.hints;
+package com.datasqrl.plan.calcite.hints;
 
-import ai.datasqrl.plan.calcite.table.TableType;
+import com.datasqrl.plan.calcite.table.TableType;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

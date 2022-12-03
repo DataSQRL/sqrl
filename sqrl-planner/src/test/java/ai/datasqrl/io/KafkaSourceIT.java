@@ -1,9 +1,9 @@
-package ai.datasqrl.io;
+package com.datasqrl.io;
 
 
-import ai.datasqrl.AbstractEngineIT;
-import ai.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
-import ai.datasqrl.util.data.BookClub;
+import com.datasqrl.AbstractEngineIT;
+import com.datasqrl.physical.stream.inmemory.io.FileStreamUtil;
+import com.datasqrl.util.data.BookClub;
 import com.google.common.collect.ImmutableList;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

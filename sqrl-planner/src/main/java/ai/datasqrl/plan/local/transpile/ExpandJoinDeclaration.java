@@ -1,9 +1,9 @@
-package ai.datasqrl.plan.local.transpile;
+package com.datasqrl.plan.local.transpile;
 
-import static ai.datasqrl.plan.local.transpile.ConvertJoinDeclaration.convertToBushyTree;
+import static com.datasqrl.plan.local.transpile.ConvertJoinDeclaration.convertToBushyTree;
 
-import ai.datasqrl.parse.tree.name.ReservedName;
-import ai.datasqrl.plan.calcite.util.SqlNodeUtil;
+import com.datasqrl.parse.tree.name.ReservedName;
+import com.datasqrl.plan.calcite.util.SqlNodeUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

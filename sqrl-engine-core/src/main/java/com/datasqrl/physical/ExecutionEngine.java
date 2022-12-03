@@ -1,6 +1,6 @@
-package ai.datasqrl.physical;
+package com.datasqrl.physical;
 
-import ai.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.OptimizedDAG;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;

@@ -1,9 +1,9 @@
-package ai.datasqrl.io.sources.util;
+package com.datasqrl.io.sources.util;
 
-import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.TableInput;
-import ai.datasqrl.physical.stream.StreamEngine;
-import ai.datasqrl.physical.stream.StreamHolder;
+import com.datasqrl.io.sources.SourceRecord;
+import com.datasqrl.io.sources.dataset.TableInput;
+import com.datasqrl.physical.stream.StreamEngine;
+import com.datasqrl.physical.stream.StreamHolder;
 
 public interface StreamInputPreparer {
 

@@ -1,19 +1,19 @@
-package ai.datasqrl.compile.loaders;
+package com.datasqrl.compile.loaders;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.io.impl.print.PrintDataSystem;
-import ai.datasqrl.io.sources.DataSystem;
-import ai.datasqrl.io.sources.DataSystemConfig;
-import ai.datasqrl.io.sources.dataset.AbstractExternalTable;
-import ai.datasqrl.io.sources.dataset.TableConfig;
-import ai.datasqrl.io.sources.dataset.TableSink;
-import ai.datasqrl.io.sources.dataset.TableSource;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.constraint.Constraint;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema;
-import ai.datasqrl.schema.input.external.SchemaDefinition;
-import ai.datasqrl.schema.input.external.SchemaImport;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.io.impl.print.PrintDataSystem;
+import com.datasqrl.io.sources.DataSystem;
+import com.datasqrl.io.sources.DataSystemConfig;
+import com.datasqrl.io.sources.dataset.AbstractExternalTable;
+import com.datasqrl.io.sources.dataset.TableConfig;
+import com.datasqrl.io.sources.dataset.TableSink;
+import com.datasqrl.io.sources.dataset.TableSource;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.schema.constraint.Constraint;
+import com.datasqrl.schema.input.FlexibleDatasetSchema;
+import com.datasqrl.schema.input.external.SchemaDefinition;
+import com.datasqrl.schema.input.external.SchemaImport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import lombok.extern.slf4j.Slf4j;
@@ -79,7 +79,7 @@ public class DataSource {
     return Optional.of(resultTable);
   }
 
-  public static class Exporter extends DataSource implements ai.datasqrl.compile.loaders.Exporter {
+  public static class Exporter extends DataSource implements com.datasqrl.compile.loaders.Exporter {
 
     private final Deserializer deserialize = new Deserializer();
 

@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.calcite.table;
+package com.datasqrl.plan.calcite.table;
 
-import ai.datasqrl.config.util.AbstractPath;
+import com.datasqrl.config.util.AbstractPath;
 import lombok.NonNull;
 import org.apache.commons.lang3.ArrayUtils;
 

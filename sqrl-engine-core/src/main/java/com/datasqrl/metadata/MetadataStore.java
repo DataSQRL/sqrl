@@ -1,6 +1,6 @@
-package ai.datasqrl.metadata;
+package com.datasqrl.metadata;
 
-import ai.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.Name;
 import lombok.NonNull;
 
 import java.io.Closeable;

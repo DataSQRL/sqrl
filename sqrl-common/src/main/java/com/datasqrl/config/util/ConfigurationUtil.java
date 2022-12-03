@@ -1,6 +1,6 @@
-package ai.datasqrl.config.util;
+package com.datasqrl.config.util;
 
-import ai.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.config.error.ErrorCollector;
 import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;

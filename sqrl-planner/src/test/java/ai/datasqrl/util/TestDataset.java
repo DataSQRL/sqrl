@@ -1,8 +1,8 @@
-package ai.datasqrl.util;
+package com.datasqrl.util;
 
-import ai.datasqrl.util.data.Nutshop;
-import ai.datasqrl.util.data.Retail;
-import ai.datasqrl.util.junit.ArgumentProvider;
+import com.datasqrl.util.data.Nutshop;
+import com.datasqrl.util.data.Retail;
+import com.datasqrl.util.junit.ArgumentProvider;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;

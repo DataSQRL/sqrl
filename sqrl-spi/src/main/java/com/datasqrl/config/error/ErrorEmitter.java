@@ -1,6 +1,6 @@
-package ai.datasqrl.config.error;
+package com.datasqrl.config.error;
 
-import ai.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.Name;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

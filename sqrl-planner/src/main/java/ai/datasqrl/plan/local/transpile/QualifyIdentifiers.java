@@ -1,6 +1,6 @@
-package ai.datasqrl.plan.local.transpile;
+package com.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

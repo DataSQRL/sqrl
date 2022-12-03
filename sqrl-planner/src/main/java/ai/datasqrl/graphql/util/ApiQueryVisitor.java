@@ -1,6 +1,6 @@
-package ai.datasqrl.graphql.util;
+package com.datasqrl.graphql.util;
 
-import ai.datasqrl.graphql.server.Model.QueryBaseVisitor;
+import com.datasqrl.graphql.server.Model.QueryBaseVisitor;
 
 public interface ApiQueryVisitor<R, C> extends QueryBaseVisitor<R, C> {
 

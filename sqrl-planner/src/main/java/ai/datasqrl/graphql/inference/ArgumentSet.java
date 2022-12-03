@@ -1,7 +1,7 @@
-package ai.datasqrl.graphql.inference;
+package com.datasqrl.graphql.inference;
 
-import ai.datasqrl.graphql.server.Model.Argument;
-import ai.datasqrl.graphql.server.Model.ArgumentPgParameter;
+import com.datasqrl.graphql.server.Model.Argument;
+import com.datasqrl.graphql.server.Model.ArgumentPgParameter;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;

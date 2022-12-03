@@ -1,8 +1,8 @@
-package ai.datasqrl.compiler;
+package com.datasqrl.compiler;
 
-import ai.datasqrl.AbstractEngineIT;
-import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.metadata.MetadataStore;
+import com.datasqrl.AbstractEngineIT;
+import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.metadata.MetadataStore;
 import com.google.common.collect.ImmutableSet;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;

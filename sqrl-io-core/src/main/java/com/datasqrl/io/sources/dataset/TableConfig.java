@@ -1,15 +1,15 @@
-package ai.datasqrl.io.sources.dataset;
+package com.datasqrl.io.sources.dataset;
 
-import ai.datasqrl.config.constraints.OptionalMinString;
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.config.util.ConfigurationUtil;
-import ai.datasqrl.io.sources.SharedConfiguration;
-import ai.datasqrl.io.sources.DataSystemConnector;
-import ai.datasqrl.io.sources.DataSystemConnectorConfig;
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.parse.tree.name.NamePath;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema;
-import ai.datasqrl.schema.input.SchemaAdjustmentSettings;
+import com.datasqrl.config.constraints.OptionalMinString;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.config.util.ConfigurationUtil;
+import com.datasqrl.io.sources.SharedConfiguration;
+import com.datasqrl.io.sources.DataSystemConnector;
+import com.datasqrl.io.sources.DataSystemConnectorConfig;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.parse.tree.name.NamePath;
+import com.datasqrl.schema.input.FlexibleDatasetSchema;
+import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

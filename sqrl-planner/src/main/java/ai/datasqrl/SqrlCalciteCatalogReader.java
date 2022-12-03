@@ -1,4 +1,4 @@
-package ai.datasqrl;
+package com.datasqrl;
 
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;

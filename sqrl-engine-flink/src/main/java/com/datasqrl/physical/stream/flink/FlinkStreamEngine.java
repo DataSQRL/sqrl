@@ -1,7 +1,7 @@
-package ai.datasqrl.physical.stream.flink;
+package com.datasqrl.physical.stream.flink;
 
-//import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.physical.stream.StreamEngine;
+//import com.datasqrl.config.provider.JDBCConnectionProvider;
+import com.datasqrl.physical.stream.StreamEngine;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,8 +1,8 @@
-package ai.datasqrl.plan.local.transpile;
+package com.datasqrl.plan.local.transpile;
 
-import ai.datasqrl.config.error.ErrorCode;
-import ai.datasqrl.parse.SqrlAstException;
-import ai.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
+import com.datasqrl.config.error.ErrorCode;
+import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.google.common.collect.Maps;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;

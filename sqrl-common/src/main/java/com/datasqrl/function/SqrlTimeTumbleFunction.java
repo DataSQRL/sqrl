@@ -1,4 +1,4 @@
-package ai.datasqrl.function;
+package com.datasqrl.function;
 
 public interface SqrlTimeTumbleFunction extends TimestampPreservingFunction {
 

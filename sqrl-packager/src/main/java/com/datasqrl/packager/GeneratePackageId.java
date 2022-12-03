@@ -1,4 +1,4 @@
-package ai.datasqrl.packager;
+package com.datasqrl.packager;
 
 import java.security.SecureRandom;
 import java.util.Base64;

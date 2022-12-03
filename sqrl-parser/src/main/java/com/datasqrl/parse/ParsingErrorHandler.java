@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ai.datasqrl.parse;
+package com.datasqrl.parse;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;

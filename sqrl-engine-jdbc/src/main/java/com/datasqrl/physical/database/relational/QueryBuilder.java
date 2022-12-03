@@ -1,12 +1,12 @@
-package ai.datasqrl.physical.database.relational;
+package com.datasqrl.physical.database.relational;
 
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.function.SqrlFunction;
-import ai.datasqrl.function.builtin.time.StdTimeLibraryImpl;
-import ai.datasqrl.physical.database.QueryTemplate;
-import ai.datasqrl.plan.calcite.util.CalciteUtil;
-import ai.datasqrl.plan.global.OptimizedDAG;
-import ai.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.config.provider.DatabaseConnectionProvider;
+import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
+import com.datasqrl.physical.database.QueryTemplate;
+import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;

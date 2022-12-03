@@ -1,7 +1,7 @@
-package ai.datasqrl.physical;
+package com.datasqrl.physical;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.spi.JacksonDeserializer;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.spi.JacksonDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.NonNull;

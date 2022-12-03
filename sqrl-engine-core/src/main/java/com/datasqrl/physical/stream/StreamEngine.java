@@ -1,11 +1,11 @@
-package ai.datasqrl.physical.stream;
+package com.datasqrl.physical.stream;
 
-import ai.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
-import ai.datasqrl.io.sources.SourceRecord;
-import ai.datasqrl.io.sources.dataset.TableInput;
-import ai.datasqrl.io.sources.util.TimeAnnotatedRecord;
-import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.schema.input.InputTableSchema;
+import com.datasqrl.io.sources.stats.TableStatisticsStoreProvider;
+import com.datasqrl.io.sources.SourceRecord;
+import com.datasqrl.io.sources.dataset.TableInput;
+import com.datasqrl.io.sources.util.TimeAnnotatedRecord;
+import com.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.schema.input.InputTableSchema;
 
 import java.io.Closeable;
 import java.util.Optional;

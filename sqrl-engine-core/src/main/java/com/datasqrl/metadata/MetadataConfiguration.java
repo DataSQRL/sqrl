@@ -1,4 +1,4 @@
-package ai.datasqrl.metadata;
+package com.datasqrl.metadata;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

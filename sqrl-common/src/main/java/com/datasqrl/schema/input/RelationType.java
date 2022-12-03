@@ -1,8 +1,8 @@
-package ai.datasqrl.schema.input;
+package com.datasqrl.schema.input;
 
-import ai.datasqrl.parse.tree.name.Name;
-import ai.datasqrl.schema.input.FlexibleDatasetSchema.AbstractField;
-import ai.datasqrl.schema.type.Type;
+import com.datasqrl.parse.tree.name.Name;
+import com.datasqrl.schema.input.FlexibleDatasetSchema.AbstractField;
+import com.datasqrl.schema.type.Type;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 

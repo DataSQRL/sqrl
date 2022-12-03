@@ -1,8 +1,8 @@
-package ai.datasqrl.function.builtin.time;
+package com.datasqrl.function.builtin.time;
 
-import ai.datasqrl.function.SqrlFunction;
-import ai.datasqrl.function.SqrlTimeTumbleFunction;
-import ai.datasqrl.function.TimestampPreservingFunction;
+import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.SqrlTimeTumbleFunction;
+import com.datasqrl.function.TimestampPreservingFunction;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Field;
 import java.time.Instant;

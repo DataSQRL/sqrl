@@ -1,9 +1,9 @@
-package ai.datasqrl.physical.database;
+package com.datasqrl.physical.database;
 
-import ai.datasqrl.config.error.ErrorCollector;
-import ai.datasqrl.metadata.MetadataStoreProvider;
-import ai.datasqrl.physical.EngineConfiguration;
-import ai.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.config.error.ErrorCollector;
+import com.datasqrl.metadata.MetadataStoreProvider;
+import com.datasqrl.physical.EngineConfiguration;
+import com.datasqrl.physical.ExecutionEngine;
 import lombok.NonNull;
 
 public interface DatabaseEngineConfiguration extends EngineConfiguration {

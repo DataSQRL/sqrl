@@ -1,7 +1,7 @@
-package ai.datasqrl.schema;
+package com.datasqrl.schema;
 
-import ai.datasqrl.schema.type.basic.*;
-import ai.datasqrl.util.SnapshotTest;
+import com.datasqrl.schema.type.basic.*;
+import com.datasqrl.util.SnapshotTest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

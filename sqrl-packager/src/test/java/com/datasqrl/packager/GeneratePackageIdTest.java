@@ -1,4 +1,4 @@
-package ai.datasqrl.packager;
+package com.datasqrl.packager;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

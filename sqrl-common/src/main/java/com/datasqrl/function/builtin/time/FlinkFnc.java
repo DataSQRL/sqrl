@@ -1,4 +1,4 @@
-package ai.datasqrl.function.builtin.time;
+package com.datasqrl.function.builtin.time;
 
 import lombok.Value;
 import org.apache.flink.table.functions.UserDefinedFunction;

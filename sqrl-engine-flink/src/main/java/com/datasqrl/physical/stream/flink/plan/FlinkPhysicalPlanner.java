@@ -1,14 +1,14 @@
-package ai.datasqrl.physical.stream.flink.plan;
+package com.datasqrl.physical.stream.flink.plan;
 
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.config.provider.JDBCConnectionProvider;
-import ai.datasqrl.io.formats.FormatConfiguration;
-import ai.datasqrl.io.impl.file.DirectoryDataSystem;
-import ai.datasqrl.io.impl.print.PrintDataSystem;
-import ai.datasqrl.io.sources.dataset.TableSink;
-import ai.datasqrl.physical.database.DatabaseEngine;
-import ai.datasqrl.physical.stream.flink.FlinkStreamEngine;
-import ai.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.config.provider.DatabaseConnectionProvider;
+import com.datasqrl.config.provider.JDBCConnectionProvider;
+import com.datasqrl.io.formats.FormatConfiguration;
+import com.datasqrl.io.impl.file.DirectoryDataSystem;
+import com.datasqrl.io.impl.print.PrintDataSystem;
+import com.datasqrl.io.sources.dataset.TableSink;
+import com.datasqrl.physical.database.DatabaseEngine;
+import com.datasqrl.physical.stream.flink.FlinkStreamEngine;
+import com.datasqrl.plan.global.OptimizedDAG;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;

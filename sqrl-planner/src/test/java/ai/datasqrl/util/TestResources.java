@@ -1,4 +1,4 @@
-package ai.datasqrl.util;
+package com.datasqrl.util;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

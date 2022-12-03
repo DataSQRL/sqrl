@@ -1,4 +1,4 @@
-package ai.datasqrl.plan.calcite;
+package com.datasqrl.plan.calcite;
 
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.prepare.PlannerImpl;

@@ -1,4 +1,4 @@
-package ai.datasqrl.physical.database.relational.ddl;
+package com.datasqrl.physical.database.relational.ddl;
 
 import lombok.AllArgsConstructor;
 

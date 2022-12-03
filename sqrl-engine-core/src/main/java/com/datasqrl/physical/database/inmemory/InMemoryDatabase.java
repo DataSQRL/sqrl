@@ -1,19 +1,19 @@
-package ai.datasqrl.physical.database.inmemory;
+package com.datasqrl.physical.database.inmemory;
 
-import ai.datasqrl.config.provider.DatabaseConnectionProvider;
-import ai.datasqrl.physical.EnginePhysicalPlan;
-import ai.datasqrl.physical.ExecutionEngine;
-import ai.datasqrl.physical.ExecutionResult;
-import ai.datasqrl.physical.database.DatabaseEngine;
-import ai.datasqrl.plan.global.IndexDefinition;
-import ai.datasqrl.plan.global.IndexSelectorConfig;
-import ai.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.config.provider.DatabaseConnectionProvider;
+import com.datasqrl.physical.EnginePhysicalPlan;
+import com.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.physical.ExecutionResult;
+import com.datasqrl.physical.database.DatabaseEngine;
+import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.global.IndexSelectorConfig;
+import com.datasqrl.plan.global.OptimizedDAG;
 import org.apache.calcite.tools.RelBuilder;
 
 import java.util.EnumSet;
 import java.util.List;
 
-import static ai.datasqrl.physical.EngineCapability.*;
+import static com.datasqrl.physical.EngineCapability.*;
 
 /**
  * Just a stub for now - not yet functional

@@ -1,10 +1,10 @@
 
-package ai.datasqrl.graphql.util;
+package com.datasqrl.graphql.util;
 
-import ai.datasqrl.graphql.server.Model.*;
-import ai.datasqrl.physical.database.QueryTemplate;
-import ai.datasqrl.plan.calcite.util.RelToSql;
-import ai.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.graphql.server.Model.*;
+import com.datasqrl.physical.database.QueryTemplate;
+import com.datasqrl.plan.calcite.util.RelToSql;
+import com.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collections;

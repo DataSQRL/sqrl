@@ -1,10 +1,10 @@
-package ai.datasqrl.flink;
+package com.datasqrl.flink;
 
-import ai.datasqrl.AbstractPhysicalSQRLIT;
-import ai.datasqrl.IntegrationTestSettings;
-import ai.datasqrl.util.SnapshotTest;
-import ai.datasqrl.util.TestScript;
-import ai.datasqrl.util.data.Nutshop;
+import com.datasqrl.AbstractPhysicalSQRLIT;
+import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.TestScript;
+import com.datasqrl.util.data.Nutshop;
 import com.google.common.collect.ImmutableSet;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
