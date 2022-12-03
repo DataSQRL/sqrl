@@ -5,13 +5,13 @@ import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.config.util.ConfigurationUtil;
 import ai.datasqrl.spi.ManifestConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.Valid;
-import java.io.IOException;
-import java.nio.file.Path;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -28,11 +28,6 @@ public class GlobalCompilerConfiguration extends GlobalEngineConfiguration {
     public CompilerConfiguration initializeCompiler(ErrorCollector errors) {
         if (!ConfigurationUtil.javaxValidate(this,errors)) return null;
         return compiler;
-    }
-
-    public static GlobalCompilerConfiguration readFrom(Path path) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(path.toFile(), GlobalCompilerConfiguration.class);
     }
 
 }

@@ -2,13 +2,15 @@ package ai.datasqrl.compile;
 
 import ai.datasqrl.config.EngineSettings;
 import ai.datasqrl.config.GlobalCompilerConfiguration;
+import ai.datasqrl.config.GlobalEngineConfiguration;
 import ai.datasqrl.config.error.ErrorCollector;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ConfigurationTest {
 
@@ -16,7 +18,7 @@ public class ConfigurationTest {
 
     @Test
     public void testConfiguration() {
-        GlobalCompilerConfiguration config = CompilerConfigInitializer.readConfig(RESOURCE_DIR.resolve("package1.json"));
+        GlobalCompilerConfiguration config = GlobalEngineConfiguration.readFrom(RESOURCE_DIR.resolve("package1.json"), GlobalCompilerConfiguration.class);
         assertNotNull(config);
         assertEquals(3, config.getCompiler().getApi().getMaxArguments());
         assertEquals(2, config.getEngines().size());

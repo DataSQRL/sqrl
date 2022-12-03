@@ -3,6 +3,7 @@ package ai.datasqrl.compile;
 import ai.datasqrl.config.CompilerConfiguration;
 import ai.datasqrl.config.EngineSettings;
 import ai.datasqrl.config.GlobalCompilerConfiguration;
+import ai.datasqrl.config.GlobalEngineConfiguration;
 import ai.datasqrl.config.error.ErrorCollector;
 import ai.datasqrl.graphql.generate.SchemaGenerator;
 import ai.datasqrl.graphql.inference.PgSchemaBuilder;
@@ -55,7 +56,7 @@ public class Compiler {
         CalciteSchema.createRootSchema(false, false).plus());
 
     Path buildDir = packageFile.getParent();
-    GlobalCompilerConfiguration globalConfig = GlobalCompilerConfiguration.readFrom(packageFile);
+    GlobalCompilerConfiguration globalConfig = GlobalEngineConfiguration.readFrom(packageFile, GlobalCompilerConfiguration.class);
     CompilerConfiguration config = globalConfig.initializeCompiler(collector);
     EngineSettings engineSettings = globalConfig.initializeEngines(collector);
     Planner planner = new PlannerFactory(schema.plus()).createPlanner();
