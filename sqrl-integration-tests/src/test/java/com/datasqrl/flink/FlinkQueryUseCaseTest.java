@@ -13,17 +13,15 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class FlinkQueryUseCaseTest extends AbstractQuerySQRLIT {
 
-
-    @ParameterizedTest
-//    @Disabled //TODO: fix GraphQL API and re-add
-    @ArgumentsSource(TestScript.AllScriptsWithGraphQLSchemaProvider.class)
-    public void fullScriptTest(TestScript script, TestGraphQLSchema graphQLSchema, Vertx vertx, VertxTestContext testContext) {
-        this.vertx = vertx;
-        this.vertxContext = testContext;
-        snapshot = SnapshotTest.Snapshot.of(getClass(), script.getName(), graphQLSchema.getName());
-        initialize(IntegrationTestSettings.getFlinkWithDB(), script.getRootPackageDirectory());
-        validateSchemaAndQueries(script.getScript(), graphQLSchema.getSchema(), graphQLSchema.getQueries());
-    }
-
-
+  @ParameterizedTest
+  @ArgumentsSource(TestScript.AllScriptsWithGraphQLSchemaProvider.class)
+  public void fullScriptTest(TestScript script, TestGraphQLSchema graphQLSchema, Vertx vertx,
+      VertxTestContext testContext) {
+    this.vertx = vertx;
+    this.vertxContext = testContext;
+    snapshot = SnapshotTest.Snapshot.of(getClass(), script.getName(), graphQLSchema.getName());
+    initialize(IntegrationTestSettings.getFlinkWithDB(), script.getRootPackageDirectory());
+    validateSchemaAndQueries(script.getScript(), graphQLSchema.getSchema(),
+        graphQLSchema.getQueries());
+  }
 }
