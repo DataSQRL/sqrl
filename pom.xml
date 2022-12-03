@@ -187,7 +187,7 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-sqrl-integration-tests</artifactId>
+                <artifactId>sqrl-integration-tests</artifactId>
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
