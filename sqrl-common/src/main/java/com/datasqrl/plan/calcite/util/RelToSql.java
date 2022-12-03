@@ -56,7 +56,6 @@ public class RelToSql {
         return "BOOLEAN";
       case BINARY:
       case VARBINARY:
-      case DECIMAL:
       case TINYINT:
       case SMALLINT:
       case BIGINT:
@@ -65,9 +64,10 @@ public class RelToSql {
       case CHAR:
       case VARCHAR:
         return "VARCHAR";
+      case DECIMAL:
       case FLOAT:
       case DOUBLE:
-        return "FLOAT";
+        return "DECIMAL";
       case DATE:
         return "DATE";
       case TIME:
