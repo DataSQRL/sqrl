@@ -41,7 +41,7 @@ DROP TABLE IF EXISTS volume_by_day$19;
         "total_spend" : 336.64,
         "total_savings" : 50.49
       }, {
-        "total_spend" : 139.85999999999999,
+        "total_spend" : 139.86,
         "total_savings" : 29.08
       } ]
     }, {
@@ -59,7 +59,7 @@ DROP TABLE IF EXISTS volume_by_day$19;
         "total_spend" : 98.75,
         "total_savings" : 7.0
       }, {
-        "total_spend" : 118.50000000000001,
+        "total_spend" : 118.5,
         "total_savings" : 18.28
       } ]
     }, {
@@ -75,7 +75,7 @@ DROP TABLE IF EXISTS volume_by_day$19;
       "id" : 6,
       "spending_by_month" : [ {
         "total_spend" : 172.84,
-        "total_savings" : 12.64
+        "total_savings" : 12.640000000000002
       }, {
         "total_spend" : 36.55,
         "total_savings" : 16.87
@@ -83,7 +83,7 @@ DROP TABLE IF EXISTS volume_by_day$19;
     }, {
       "id" : 7,
       "spending_by_month" : [ {
-        "total_spend" : 86.94,
+        "total_spend" : 86.94000000000001,
         "total_savings" : 7.94
       }, {
         "total_spend" : 23.83,
@@ -101,7 +101,7 @@ DROP TABLE IF EXISTS volume_by_day$19;
     }, {
       "id" : 9,
       "spending_by_month" : [ {
-        "total_spend" : 78.83000000000001,
+        "total_spend" : 78.83,
         "total_savings" : 5.95
       }, {
         "total_spend" : 94.36,
@@ -121,14 +121,16 @@ DROP TABLE IF EXISTS volume_by_day$19;
 }
 >>>query-customer
 {
-  "errors" : [ {
-    "message" : "Validation error (WrongType@[Customers]) : argument 'id' with value 'StringValue{value='10'}' is not a valid 'Int' - Expected AST type 'IntValue' but was 'StringValue'.",
-    "locations" : [ {
-      "line" : 2,
-      "column" : 13
-    } ],
-    "extensions" : {
-      "classification" : "ValidationError"
-    }
-  } ]
+  "data" : {
+    "Customers" : [ {
+      "id" : 10,
+      "spending_by_month" : [ {
+        "total_spend" : 104.33,
+        "total_savings" : 35.41
+      }, {
+        "total_spend" : 84.18,
+        "total_savings" : 4.24
+      } ]
+    } ]
+  }
 }
