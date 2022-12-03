@@ -6,7 +6,7 @@ Customer( customerid: 1000107) {
       productid
       quantity
       num_orders
-      most_recent
+    #  most_recent # timezone issues
     }
     favorite_categories {
       category_name

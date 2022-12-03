@@ -14,32 +14,25 @@ import com.datasqrl.plan.local.generate.Resolve;
 import com.datasqrl.plan.queries.APIQuery;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
-import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.util.concurrent.CountDownLatch;
 import lombok.SneakyThrows;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(VertxExtension.class)
 public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
@@ -85,7 +78,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     for (Map.Entry<String, String> query : queries.entrySet()) {
       HttpResponse<String> response = testQuery(query.getValue());
 
-      snapshot.addContent(prettyPrint(response.body()), "query-" + query.getValue());
+      snapshot.addContent(prettyPrint(response.body()), "query", query.getKey());
     }
     snapshot.createOrValidate();
     vertxContext.completeNow();
