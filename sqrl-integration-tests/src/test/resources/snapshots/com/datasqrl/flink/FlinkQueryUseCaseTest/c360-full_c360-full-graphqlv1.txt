@@ -37,21 +37,42 @@ DROP TABLE IF EXISTS order_stats$26;
 DROP TABLE IF EXISTS orders$9;
 DROP TABLE IF EXISTS product$16;
 DROP TABLE IF EXISTS total$18;
->>>query-{
-Customer( customerid: 1000101) {
-    email
-    name
-    updatetime
-    orders {
-        id
-        time
-        total {
-            price
-            discount
-            num
-        }
-    }
-}}
+>>>query-allcustomers
+{
+  "data" : {
+    "Customer" : [ {
+      "email" : "john.mekker@gmail.com",
+      "name" : "John B. Mekker",
+      "updatetime" : "2022-04-21T06:44:17Z",
+      "favorite_categories" : [ {
+        "category_name" : "Decoration",
+        "total" : 120.85
+      } ]
+    }, {
+      "email" : "emily.ludies@hotmail.com",
+      "name" : "Emily F. Ludies",
+      "updatetime" : "2022-04-21T05:19:49Z",
+      "favorite_categories" : [ {
+        "category_name" : "Personal Care",
+        "total" : 146.82
+      } ]
+    }, {
+      "email" : "lalelu@hottunes.org",
+      "name" : "Michelle Dagnes",
+      "updatetime" : "2022-04-21T05:24:09Z",
+      "favorite_categories" : [ {
+        "category_name" : "House & Garden",
+        "total" : 166.5
+      } ]
+    }, {
+      "email" : "hotbear753@yahoo.com",
+      "name" : "Mark Spielman",
+      "updatetime" : "2022-04-21T05:40:49Z",
+      "favorite_categories" : [ ]
+    } ]
+  }
+}
+>>>query-customerordertotal
 {
   "data" : {
     "Customer" : [ {
@@ -70,29 +91,7 @@ Customer( customerid: 1000101) {
     } ]
   }
 }
->>>query-{
-orders (id : 10007140) {
-    id
-    customerid
-    time
-    entries {
-        productid
-        quantity
-        unit_price
-        discount
-        total
-        product {
-            name
-            description
-            category
-        }
-    }
-    total {
-        price
-        discount
-        num
-    }
-}}
+>>>query-orders
 {
   "data" : {
     "orders" : [ {
@@ -130,58 +129,7 @@ orders (id : 10007140) {
     } ]
   }
 }
->>>query-{
-Customer {
-    email
-    name
-    updatetime
-    favorite_categories {
-        category_name
-        total
-    }
-}}
-{
-  "data" : {
-    "Customer" : [ {
-      "email" : "john.mekker@gmail.com",
-      "name" : "John B. Mekker",
-      "updatetime" : "2022-04-21T06:44:17Z",
-      "favorite_categories" : [ {
-        "category_name" : "Decoration",
-        "total" : 120.85
-      } ]
-    }, {
-      "email" : "emily.ludies@hotmail.com",
-      "name" : "Emily F. Ludies",
-      "updatetime" : "2022-04-21T05:19:49Z",
-      "favorite_categories" : [ {
-        "category_name" : "Personal Care",
-        "total" : 146.82
-      } ]
-    }, {
-      "email" : "lalelu@hottunes.org",
-      "name" : "Michelle Dagnes",
-      "updatetime" : "2022-04-21T05:24:09Z",
-      "favorite_categories" : [ {
-        "category_name" : "House & Garden",
-        "total" : 166.5
-      } ]
-    }, {
-      "email" : "hotbear753@yahoo.com",
-      "name" : "Mark Spielman",
-      "updatetime" : "2022-04-21T05:40:49Z",
-      "favorite_categories" : [ ]
-    } ]
-  }
-}
->>>query-{
-NewCustomerPromotion (customerid: 1000121) {
-    customerid
-    email
-    name
-    total_spend
-    num_orders
-}}
+>>>query-promotions
 {
   "data" : {
     "NewCustomerPromotion" : [ {
