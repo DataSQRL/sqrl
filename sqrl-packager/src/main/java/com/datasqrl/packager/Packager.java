@@ -1,7 +1,7 @@
 package com.datasqrl.packager;
 
-import com.datasqrl.compile.loaders.DynamicExporter;
-import com.datasqrl.compile.loaders.DynamicLoader;
+import com.datasqrl.loaders.DynamicExporter;
+import com.datasqrl.loaders.DynamicLoader;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.GlobalPackageConfiguration;
 import com.datasqrl.spi.ManifestConfiguration;

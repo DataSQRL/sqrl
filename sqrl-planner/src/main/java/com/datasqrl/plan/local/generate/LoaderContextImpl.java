@@ -1,6 +1,6 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.compile.loaders.LoaderContext;
+import com.datasqrl.loaders.LoaderContext;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.builtin.time.FlinkFnc;
 import com.datasqrl.io.tables.TableSource;

@@ -1,4 +1,4 @@
-package com.datasqrl.compile.loaders;
+package com.datasqrl.loaders;
 
 import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.io.DataSystemDiscoveryConfig;
