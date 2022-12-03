@@ -1,0 +1,143 @@
+>>>database
+CREATE INDEX IF NOT EXISTS customer$12_btree_c3c4 ON customer$12 USING btree (email,name);
+CREATE INDEX IF NOT EXISTS customer$12_hash_c4 ON customer$12 USING hash (name);
+CREATE INDEX IF NOT EXISTS newcustomerpromotion$29_hash_c2 ON newcustomerpromotion$29 USING hash (customerid);
+CREATE INDEX IF NOT EXISTS order_again$20_btree_c0c3 ON order_again$20 USING btree (__pk_0,num_orders);
+CREATE INDEX IF NOT EXISTS orders$9_btree_c2c3 ON orders$9 USING btree (id,customerid);
+CREATE INDEX IF NOT EXISTS orders$9_btree_c2c4 ON orders$9 USING btree (id,time);
+CREATE INDEX IF NOT EXISTS orders$9_btree_c3c4 ON orders$9 USING btree (customerid,time);
+CREATE INDEX IF NOT EXISTS product$16_hash_c3 ON product$16 USING hash (name);
+CREATE INDEX IF NOT EXISTS product$16_hash_c5 ON product$16 USING hash (category);
+CREATE TABLE IF NOT EXISTS category$14 (name VARCHAR NOT NULL,updatetime TIMESTAMPTZ NOT NULL , PRIMARY KEY (name));
+CREATE TABLE IF NOT EXISTS customer$12 (customerid BIGINT NOT NULL,_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,email VARCHAR NOT NULL,name VARCHAR NOT NULL,lastupdated BIGINT NOT NULL,updatetime TIMESTAMPTZ NOT NULL , PRIMARY KEY (customerid));
+CREATE TABLE IF NOT EXISTS entries$10 (_uuid VARCHAR NOT NULL,_idx BIGINT NOT NULL,productid BIGINT NOT NULL,quantity BIGINT NOT NULL,unit_price DECIMAL NOT NULL,discount DECIMAL ,discount$0 DECIMAL NOT NULL,total DECIMAL NOT NULL,time TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid,_idx));
+CREATE TABLE IF NOT EXISTS favorite_categories$24 (__pk_0 BIGINT NOT NULL,category_name VARCHAR NOT NULL,total DECIMAL NOT NULL,month TIMESTAMPTZ NOT NULL , PRIMARY KEY (__pk_0,category_name));
+CREATE TABLE IF NOT EXISTS newcustomerpromotion$29 (_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,customerid BIGINT NOT NULL,email VARCHAR NOT NULL,name VARCHAR NOT NULL,total_spend DECIMAL ,num_orders BIGINT NOT NULL , PRIMARY KEY (_uuid));
+CREATE TABLE IF NOT EXISTS order_again$20 (__pk_0 BIGINT NOT NULL,productid BIGINT NOT NULL,quantity BIGINT NOT NULL,num_orders BIGINT NOT NULL,most_recent TIMESTAMPTZ NOT NULL,time TIMESTAMPTZ NOT NULL , PRIMARY KEY (__pk_0,productid));
+CREATE TABLE IF NOT EXISTS order_stats$26 (__pk_0 BIGINT NOT NULL,total_spend DECIMAL ,num_orders BIGINT NOT NULL,time TIMESTAMPTZ NOT NULL , PRIMARY KEY (__pk_0));
+CREATE TABLE IF NOT EXISTS orders$9 (_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,id BIGINT NOT NULL,customerid BIGINT NOT NULL,time TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid));
+CREATE TABLE IF NOT EXISTS product$16 (productid BIGINT NOT NULL,_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,name VARCHAR NOT NULL,description VARCHAR NOT NULL,category VARCHAR NOT NULL,updatetime TIMESTAMPTZ NOT NULL , PRIMARY KEY (productid));
+CREATE TABLE IF NOT EXISTS total$18 (__pk_0 VARCHAR NOT NULL,price DECIMAL NOT NULL,discount DECIMAL NOT NULL,num BIGINT NOT NULL,time TIMESTAMPTZ NOT NULL , PRIMARY KEY (__pk_0));
+DROP INDEX IF EXISTS customer$12_btree_c3c4;
+DROP INDEX IF EXISTS customer$12_hash_c4;
+DROP INDEX IF EXISTS newcustomerpromotion$29_hash_c2;
+DROP INDEX IF EXISTS order_again$20_btree_c0c3;
+DROP INDEX IF EXISTS orders$9_btree_c2c3;
+DROP INDEX IF EXISTS orders$9_btree_c2c4;
+DROP INDEX IF EXISTS orders$9_btree_c3c4;
+DROP INDEX IF EXISTS product$16_hash_c3;
+DROP INDEX IF EXISTS product$16_hash_c5;
+DROP TABLE IF EXISTS category$14;
+DROP TABLE IF EXISTS customer$12;
+DROP TABLE IF EXISTS entries$10;
+DROP TABLE IF EXISTS favorite_categories$24;
+DROP TABLE IF EXISTS newcustomerpromotion$29;
+DROP TABLE IF EXISTS order_again$20;
+DROP TABLE IF EXISTS order_stats$26;
+DROP TABLE IF EXISTS orders$9;
+DROP TABLE IF EXISTS product$16;
+DROP TABLE IF EXISTS total$18;
+>>>query-allcustomers
+{
+  "data" : {
+    "Customer" : [ {
+      "email" : "john.mekker@gmail.com",
+      "name" : "John B. Mekker",
+      "updatetime" : "2022-04-21T06:44:17Z",
+      "favorite_categories" : [ {
+        "category_name" : "Decoration",
+        "total" : 120.85
+      } ]
+    }, {
+      "email" : "emily.ludies@hotmail.com",
+      "name" : "Emily F. Ludies",
+      "updatetime" : "2022-04-21T05:19:49Z",
+      "favorite_categories" : [ {
+        "category_name" : "Personal Care",
+        "total" : 146.82
+      } ]
+    }, {
+      "email" : "lalelu@hottunes.org",
+      "name" : "Michelle Dagnes",
+      "updatetime" : "2022-04-21T05:24:09Z",
+      "favorite_categories" : [ {
+        "category_name" : "House & Garden",
+        "total" : 166.5
+      } ]
+    }, {
+      "email" : "hotbear753@yahoo.com",
+      "name" : "Mark Spielman",
+      "updatetime" : "2022-04-21T05:40:49Z",
+      "favorite_categories" : [ ]
+    } ]
+  }
+}
+>>>query-customerordertotal
+{
+  "data" : {
+    "Customer" : [ {
+      "email" : "john.mekker@gmail.com",
+      "name" : "John B. Mekker",
+      "updatetime" : "2022-04-21T06:44:17Z",
+      "orders" : [ {
+        "id" : 10007543,
+        "time" : "2022-05-19T08:29:39.553244Z",
+        "total" : [ {
+          "price" : 120.85,
+          "discount" : 11.5,
+          "num" : 2
+        } ]
+      } ]
+    } ]
+  }
+}
+>>>query-orders
+{
+  "data" : {
+    "orders" : [ {
+      "id" : 10007140,
+      "customerid" : 1000107,
+      "time" : "2022-05-19T09:28:39.553244Z",
+      "entries" : [ {
+        "productid" : 1332,
+        "quantity" : 8,
+        "unit_price" : 8.49,
+        "discount" : 0.0,
+        "total" : 67.92,
+        "product" : [ {
+          "name" : "Heavy Duty Butt Wipes",
+          "description" : "Wipes for hardiest of messes",
+          "category" : "Personal Care"
+        } ]
+      }, {
+        "productid" : 3571,
+        "quantity" : 1,
+        "unit_price" : 41.95,
+        "discount" : 5.0,
+        "total" : 36.95,
+        "product" : [ {
+          "name" : "Poptech Blow 500",
+          "description" : "High powered blowdryer for any hair",
+          "category" : "Personal Care"
+        } ]
+      } ],
+      "total" : [ {
+        "price" : 104.87,
+        "discount" : 5.0,
+        "num" : 2
+      } ]
+    } ]
+  }
+}
+>>>query-promotions
+{
+  "data" : {
+    "NewCustomerPromotion" : [ {
+      "customerid" : 1000121,
+      "email" : "lalelu@hottunes.org",
+      "name" : "Michelle Dagnes",
+      "total_spend" : 166.5,
+      "num_orders" : 1
+    } ]
+  }
+}
