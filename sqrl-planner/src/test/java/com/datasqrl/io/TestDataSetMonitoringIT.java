@@ -2,7 +2,7 @@ package com.datasqrl.io;
 
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
-import com.datasqrl.compile.DataDiscovery;
+import com.datasqrl.discovery.DataDiscovery;
 import com.datasqrl.loaders.DataSource;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableInput;

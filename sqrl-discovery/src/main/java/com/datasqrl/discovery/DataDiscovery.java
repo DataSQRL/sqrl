@@ -1,4 +1,4 @@
-package com.datasqrl.compile;
+package com.datasqrl.discovery;
 
 import com.datasqrl.config.EngineSettings;
 import com.datasqrl.error.ErrorCollector;

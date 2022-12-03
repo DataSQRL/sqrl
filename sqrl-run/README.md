@@ -1,0 +1,1 @@
+This module compiles into an executable jar that exposes a command to run the DataSQRL packager, compiler, and discovery, as well as deploy SQRL scripts against configured execution engines (or default engines).

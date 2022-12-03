@@ -1,0 +1,1 @@
+The DataSQRL compiler takes a `package.json` file that defines an SQRL project and compiles the main SQRL script to produce the deployment artificats for the generated data pipeline.
