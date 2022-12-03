@@ -29,7 +29,6 @@
       <artifactId>flink-table-planner_2.12</artifactId>
       <scope>compile</scope>
     </dependency>
-
   </dependencies>
   <build>
     <plugins>
@@ -58,18 +57,19 @@
             </filter>
           </filters>
           <artifactSet>
-            <includes combine.children="append">
-              <include>org.apache.calcite:*</include>
-              <include>org.apache.calcite.avatica:*</include>
+<!--            <includes combine.children="append">-->
+<!--              <include>org.apache.calcite:*</include>-->
+<!--              <include>org.apache.flink:*</include>-->
+<!--              <include>org.apache.calcite.avatica:*</include>-->
 
-              <!-- Calcite's dependencies -->
-              <include>com.esri.geometry:esri-geometry-api</include>
-              <include>com.google.guava:guava</include>
-              <include>com.google.guava:failureaccess</include>
-              <include>commons-codec:commons-codec</include>
-              <include>commons-io:commons-io</include>
-              <include>org.checkerframework:checker-qual</include>
-            </includes>
+<!--              &lt;!&ndash; Calcite's dependencies &ndash;&gt;-->
+<!--              <include>com.esri.geometry:esri-geometry-api</include>-->
+<!--              <include>com.google.guava:guava</include>-->
+<!--              <include>com.google.guava:failureaccess</include>-->
+<!--              <include>commons-codec:commons-codec</include>-->
+<!--              <include>commons-io:commons-io</include>-->
+<!--              <include>org.checkerframework:checker-qual</include>-->
+<!--            </includes>-->
           </artifactSet>
           <relocations>
             <!-- Calcite is not relocated for now, because we expose it at some locations such as CalciteConfig -->

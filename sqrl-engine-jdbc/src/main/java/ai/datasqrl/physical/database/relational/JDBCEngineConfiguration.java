@@ -11,6 +11,7 @@ import ai.datasqrl.config.serializer.KryoProvider;
 import ai.datasqrl.config.serializer.SerializerProvider;
 import ai.datasqrl.config.util.ConfigurationUtil;
 import ai.datasqrl.physical.database.DatabaseEngineConfiguration;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
 import lombok.*;
 
@@ -63,6 +64,7 @@ public class JDBCEngineConfiguration implements DatabaseEngineConfiguration {
     else return null;
   }
 
+  @JsonIgnore
   public ConnectionProvider getConnectionProvider() {
     //Construct URL pointing at database
     String url = dbURL;
@@ -89,6 +91,7 @@ public class JDBCEngineConfiguration implements DatabaseEngineConfiguration {
   }
 
   @Override
+  @JsonIgnore
   public MetadataStoreProvider getMetadataStore() {
     return new StoreProvider(getConnectionProvider());
   }
@@ -109,6 +112,7 @@ public class JDBCEngineConfiguration implements DatabaseEngineConfiguration {
     private Dialect dialect;
     private String databaseName;
 
+    @JsonIgnore
     @Override
     public Connection getConnection() throws SQLException, ClassNotFoundException {
       return DriverManager.getConnection(dbURL, user, password);

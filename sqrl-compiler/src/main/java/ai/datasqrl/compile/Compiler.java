@@ -30,6 +30,7 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
 import lombok.SneakyThrows;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
@@ -46,11 +47,23 @@ import java.util.Optional;
 @Slf4j
 public class Compiler {
 
+  private final boolean write;
+
+  public Compiler() {
+    this(true);
+  }
+
+  public Compiler(boolean write) {
+    this.write = write;
+  }
+
   /**
    * Processes all the files in the build directory and creates the execution artifacts
+   *
+   * @return
    */
   @SneakyThrows
-  public void run(ErrorCollector collector, Path packageFile) {
+  public CompilerResult run(ErrorCollector collector, Path packageFile) {
     Preconditions.checkArgument(Files.isRegularFile(packageFile));
     SqrlCalciteSchema schema = new SqrlCalciteSchema(
         CalciteSchema.createRootSchema(false, false).plus());
@@ -93,8 +106,17 @@ public class Compiler {
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
 
-    log.info("build dir: " + buildDir.toAbsolutePath());
-    writeGraphql(buildDir, root, gqlSchema);
+    if (write) {
+      Path deploy = buildDir.getParent();
+      writeGraphql(deploy, root, gqlSchema);
+    }
+    return new CompilerResult(root, plan);
+  }
+
+  @Value
+  public class CompilerResult {
+    RootGraphqlModel model;
+    PhysicalPlan plan;
   }
 
   private OptimizedDAG optimizeDag(List<APIQuery> queries, Env env) {
@@ -132,21 +154,10 @@ public class Compiler {
   }
 
   @SneakyThrows
-  private void writeGraphql(Path build, RootGraphqlModel root, String gqlSchema) {
-    ObjectMapper mapper = new ObjectMapper();
-
-    Path filePath = build.resolve("api");
-    File file = filePath.toFile();
-    file.mkdirs();
-
+  private void writeGraphql(Path file, RootGraphqlModel root, String gqlSchema) {
     try {
-      file.toPath().resolve("plan.json").toFile().delete();
-      file.toPath().resolve("schema.graphqls").toFile().delete();
-
-      //Write content to file
-      Files.writeString(file.toPath().resolve("plan.json"),
-          mapper.writeValueAsString(root), StandardOpenOption.CREATE);
-      Files.writeString(file.toPath().resolve("schema.graphqls"),
+      file.resolve("schema.graphqls").toFile().delete();
+      Files.writeString(file.resolve("schema.graphqls"),
           gqlSchema, StandardOpenOption.CREATE);
     } catch (Exception e) {
       e.printStackTrace();
