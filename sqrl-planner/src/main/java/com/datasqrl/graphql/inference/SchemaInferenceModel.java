@@ -1,8 +1,6 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.graphql.inference.argument.ArgumentHandler;
-import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
-import com.datasqrl.physical.PhysicalPlan;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;

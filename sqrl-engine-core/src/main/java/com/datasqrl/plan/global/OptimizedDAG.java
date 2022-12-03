@@ -2,7 +2,7 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.queries.APIQuery;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;

@@ -15,8 +15,8 @@ import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.metadata.MetadataNamedPersistence;
 import com.datasqrl.name.NamePath;
-import com.datasqrl.physical.stream.StreamEngine;
-import com.datasqrl.physical.stream.StreamHolder;
+import com.datasqrl.engine.stream.StreamEngine;
+import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 

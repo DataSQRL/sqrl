@@ -1,7 +1,7 @@
 package com.datasqrl.plan.calcite.rules;
 
-import com.datasqrl.physical.EngineCapability;
-import com.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.engine.EngineCapability;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.calcite.table.NowFilter;
 import com.datasqrl.plan.calcite.table.PullupOperator;
 import com.datasqrl.plan.calcite.table.QueryRelationalTable;

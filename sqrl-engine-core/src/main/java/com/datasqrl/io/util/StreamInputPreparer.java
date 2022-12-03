@@ -2,8 +2,8 @@ package com.datasqrl.io.util;
 
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.tables.TableInput;
-import com.datasqrl.physical.stream.StreamEngine;
-import com.datasqrl.physical.stream.StreamHolder;
+import com.datasqrl.engine.stream.StreamEngine;
+import com.datasqrl.engine.stream.StreamHolder;
 
 public interface StreamInputPreparer {
 

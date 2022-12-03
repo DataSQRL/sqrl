@@ -1,6 +1,6 @@
 package com.datasqrl.plan.calcite.rules;
 
-import com.datasqrl.physical.ExecutionEngine;
+import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.plan.calcite.hints.JoinCostHint;
 import com.datasqrl.plan.calcite.hints.SqrlHint;
 import com.datasqrl.plan.calcite.table.TableType;

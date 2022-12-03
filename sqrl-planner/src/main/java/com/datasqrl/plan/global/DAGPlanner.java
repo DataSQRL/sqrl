@@ -2,10 +2,10 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.name.Name;
-import com.datasqrl.physical.ExecutionEngine;
-import com.datasqrl.physical.database.DatabaseEngine;
-import com.datasqrl.physical.pipeline.ExecutionPipeline;
-import com.datasqrl.physical.pipeline.ExecutionStage;
+import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.calcite.Planner;
 import com.datasqrl.plan.calcite.hints.WatermarkHint;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;

@@ -6,7 +6,7 @@ import com.datasqrl.config.provider.Dialect;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.physical.database.relational.IndexSelectorConfigByDialect;
+import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
 import com.datasqrl.plan.global.*;
 import com.datasqrl.plan.local.generate.Resolve.Env;
 import com.datasqrl.plan.queries.APIQuery;
