@@ -23,7 +23,7 @@ Customer( customerid: 1000101) {
       "name" : "John B. Mekker"
     } ]
   }
-}
+},
 >>>query-{
 Category( name: "Decoration") {
     name
@@ -49,28 +49,6 @@ Category( name: "Decoration") {
     } ]
   }
 }
->>>query-{
-Customer( customerid: 1000107) {
-    email
-    name
-    order_again {
-      productid
-      quantity
-      num_orders
-      most_recent
-    }
-    favorite_categories {
-      category_name
-      total
-      category {
-        products {
-            name
-            productid
-            description
-        }
-      }
-    }
-}}
 {
   "data" : {
     "Customer" : [ {
@@ -80,12 +58,12 @@ Customer( customerid: 1000107) {
         "productid" : 1332,
         "quantity" : 8,
         "num_orders" : 1,
-        "most_recent" : "2022-05-19T09:28:39.553Z"
+        "most_recent" : "2022-05-19T02:28:39.553Z"
       }, {
         "productid" : 3571,
         "quantity" : 2,
         "num_orders" : 2,
-        "most_recent" : "2022-05-19T09:28:39.553Z"
+        "most_recent" : "2022-05-19T02:28:39.553Z"
       } ],
       "favorite_categories" : [ {
         "category_name" : "Personal Care",
