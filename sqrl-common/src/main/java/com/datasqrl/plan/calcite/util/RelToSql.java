@@ -54,8 +54,6 @@ public class RelToSql {
     switch (type.getSqlTypeName()) {
       case BOOLEAN:
         return "BOOLEAN";
-      case BINARY:
-      case VARBINARY:
       case TINYINT:
       case SMALLINT:
       case BIGINT:
@@ -76,6 +74,8 @@ public class RelToSql {
         return "TIMESTAMP";
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
         return "TIMESTAMPTZ";
+      case BINARY:
+      case VARBINARY:
       case INTERVAL_YEAR_MONTH:
       case INTERVAL_DAY:
       case NULL:
