@@ -204,13 +204,13 @@ LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
 10008231, 1000121
 10008434, 1000107
 >>>entries-data
-0, 1332, 8, 8.490, null, 0.000, 67.920
-0, 3571, 1, 41.950, 0.000, 0.000, 41.950
-0, 7235, 1, 17.350, 0.000, 0.000, 17.350
-0, 7552, 3, 25.500, 15.000, 15.000, 61.500
-1, 3225, 1, 105.000, 0.000, 0.000, 105.000
-1, 3571, 1, 41.950, 5.000, 5.000, 36.950
-1, 8757, 2, 57.500, 11.500, 11.500, 103.500
+0, 1332, 8, 8.49, null, 0, 67.92
+0, 3571, 1, 41.95, 0, 0, 41.95
+0, 7235, 1, 17.35, 0, 0, 17.35
+0, 7552, 3, 25.5, 15, 15, 61.5
+1, 3225, 1, 105, 0, 0, 105
+1, 3571, 1, 41.95, 5, 5, 36.95
+1, 8757, 2, 57.5, 11.5, 11.5, 103.5
 >>>customer-data
 1000101, john.mekker@gmail.com, John B. Mekker, 1650498257
 1000107, emily.ludies@hotmail.com, Emily F. Ludies, 1650493189
@@ -228,10 +228,10 @@ Personal Care
 7552, Simer Garden Hose 50ft, Long garden hose that rolls up, House & Garden
 8757, Original German Nutcracker 3ft, Hand-made nutcracker is the perfect Christmas decoration, Decoration
 >>>total-data
-104.870, 5.000, 2
-120.850, 11.500, 2
-166.500, 15.000, 2
-41.950, 0.000, 1
+104.87, 5, 2
+120.85, 11.5, 2
+166.5, 15, 2
+41.95, 0, 1
 >>>order_again-data
 1332, 8, 1
 3225, 1, 1
@@ -240,18 +240,18 @@ Personal Care
 7552, 3, 1
 8757, 2, 1
 >>>_spending_by_month_category-data
-Decoration, 120.850, 11.500
-House & Garden, 166.500, 15.000
-Personal Care, 146.820, 5.000
+Decoration, 120.85, 11.5
+House & Garden, 166.5, 15
+Personal Care, 146.82, 5
 >>>favorite_categories-data
-Decoration, 120.850
-House & Garden, 166.500
-Personal Care, 146.820
+Decoration, 120.85
+House & Garden, 166.5
+Personal Care, 146.82
 >>>order_stats-data
-120.850, 1
-146.820, 2
-166.500, 1
+120.85, 1
+146.82, 2
+166.5, 1
 >>>newcustomerpromotion-data
-1000101, john.mekker@gmail.com, John B. Mekker, 120.850, 1
-1000107, emily.ludies@hotmail.com, Emily F. Ludies, 146.820, 2
-1000121, lalelu@hottunes.org, Michelle Dagnes, 166.500, 1
+1000101, john.mekker@gmail.com, John B. Mekker, 120.85, 1
+1000107, emily.ludies@hotmail.com, Emily F. Ludies, 146.82, 2
+1000121, lalelu@hottunes.org, Michelle Dagnes, 166.5, 1
