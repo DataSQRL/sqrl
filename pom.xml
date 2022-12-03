@@ -61,6 +61,14 @@
         <protobuf.version>3.21.1</protobuf.version>
         <picocli.version>4.7.0</picocli.version>
     </properties>
+    <profiles>
+        <profile>
+            <id>update-snapshots</id>
+            <properties>
+                <snapshots.update>true</snapshots.update>
+            </properties>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
@@ -578,6 +586,9 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
                 <configuration>
+                    <systemPropertyVariables>
+                        <snapshots.update>${snapshots.update}</snapshots.update>
+                    </systemPropertyVariables>
                     <excludes>
                         <exclude>**/*IT*.java</exclude>
                     </excludes>
@@ -588,6 +599,9 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>3.0.0-M7</version>
                 <configuration>
+                    <systemPropertyVariables>
+                        <snapshots.update>${snapshots.update}</snapshots.update>
+                    </systemPropertyVariables>
                     <includes>
                         <include>**/*IT.java</include>
                         <include>**/*IT*.java</include>
