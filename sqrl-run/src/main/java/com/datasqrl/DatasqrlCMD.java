@@ -32,7 +32,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 @Slf4j
-public class Demo implements Runnable {
+public class DatasqrlCMD implements Runnable {
 
   @Option(names = {"-b", "--build-dir"}, description = "Base directory", defaultValue = ".")
   private Path buildDir = Path.of(".");
@@ -52,7 +52,7 @@ public class Demo implements Runnable {
   private boolean helpRequested = false;
 
   public static void main(String[] args) {
-    new CommandLine(new Demo()).execute(args);
+    new CommandLine(new DatasqrlCMD()).execute(args);
   }
 
   @SneakyThrows

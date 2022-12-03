@@ -1,0 +1,1 @@
+The DataSQLR Packager populates the build directory for the compiler by assembling all build-related artifacts and resolving external dependencies.
