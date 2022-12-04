@@ -4,6 +4,7 @@ import com.datasqrl.config.EngineSettings;
 import com.datasqrl.config.GlobalCompilerConfiguration;
 import com.datasqrl.config.GlobalEngineConfiguration;
 import com.datasqrl.error.ErrorCollector;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -17,6 +18,7 @@ public class ConfigurationTest {
     public static final Path RESOURCE_DIR = Paths.get("src","test","resources");
 
     @Test
+    @SneakyThrows
     public void testConfiguration() {
         GlobalCompilerConfiguration config = GlobalEngineConfiguration.readFrom(RESOURCE_DIR.resolve("package1.json"), GlobalCompilerConfiguration.class);
         assertNotNull(config);

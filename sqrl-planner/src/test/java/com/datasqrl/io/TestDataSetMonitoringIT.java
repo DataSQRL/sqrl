@@ -3,9 +3,8 @@ package com.datasqrl.io;
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.discovery.DataDiscovery;
-import com.datasqrl.loaders.DataSource;
+import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
 import com.datasqrl.schema.input.FlexibleDatasetSchema;
@@ -25,7 +24,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -66,12 +64,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         ErrorCollector errors = ErrorCollector.root();
         DataDiscovery discovery = new DataDiscovery(errors, engineSettings);
         DataSystemConfig systemConfig = getSystemConfigBuilder(example).build();
-        List<TableInput> inputTables = discovery.discoverTables(systemConfig);
-        assertFalse(errors.isFatal(), errors.toString());
-        assertEquals(example.getNumTables(), inputTables.size());
-        discovery.monitorTables(inputTables);
-        assertFalse(errors.isFatal(), errors.toString());
-        List<TableSource> sourceTables = discovery.discoverSchema(inputTables);
+        List<TableSource> sourceTables = discovery.runFullDiscovery(systemConfig);
         assertFalse(errors.isFatal(), errors.toString());
         assertEquals(example.getNumTables(), sourceTables.size());
         return sourceTables;
@@ -103,22 +96,8 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         assertTrue(example.getNumTables()>0);
         initialize(IntegrationTestSettings.getInMemory());
         List<TableSource> tables = discoverSchema(example);
-
-        Path destinationDir = example.getRootPackageDirectory().resolve(example.getName());
-        //Write out table configurations
-        for (TableSource table : tables) {
-            Path tableConfigFile = destinationDir.resolve(table.getName().getCanonical()+ DataSource.TABLE_FILE_SUFFIX);
-            FileTestUtil.writeJson(tableConfigFile,table.getConfiguration());
-        }
-
-        Name datasetName = tables.get(0).getPath().parent().getLast();
-        FlexibleDatasetSchema combinedSchema = DataDiscovery.combineSchema(tables);
-
-        //Write out combined schema file
-        SchemaExport export = new SchemaExport();
-        SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
-        Path schemaFile = destinationDir.resolve(DataSource.PACKAGE_SCHEMA_FILE);
-        FileTestUtil.writeYaml(schemaFile,outputSchema);
+        TableWriter writer = new TableWriter();
+        writer.writeToFile(example.getRootPackageDirectory().resolve(example.getName()), tables);
     }
 
 }

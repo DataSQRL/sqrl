@@ -35,6 +35,7 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -45,15 +46,7 @@ import java.util.Optional;
 @Slf4j
 public class Compiler {
 
-  private final boolean write;
-
-  public Compiler() {
-    this(true);
-  }
-
-  public Compiler(boolean write) {
-    this.write = write;
-  }
+  public static final String GRAPHQL_SCHEMA_FILE = "schema.graphqls";
 
   /**
    * Processes all the files in the build directory and creates the execution artifacts
@@ -104,17 +97,24 @@ public class Compiler {
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
 
-    if (write) {
-      Path deploy = buildDir.getParent();
-      writeGraphql(deploy, root, gqlSchema);
-    }
-    return new CompilerResult(root, plan);
+    return new CompilerResult(root, gqlSchema, plan);
   }
 
   @Value
   public class CompilerResult {
+
     RootGraphqlModel model;
+    String graphQLSchema;
     PhysicalPlan plan;
+
+
+    public void writeTo(Path outputDir) throws IOException {
+      Preconditions.checkArgument(Files.isDirectory(outputDir));
+      Files.writeString(outputDir.resolve(GRAPHQL_SCHEMA_FILE),
+              graphQLSchema, StandardOpenOption.CREATE);
+
+    }
+
   }
 
   private OptimizedDAG optimizeDag(List<APIQuery> queries, Env env) {
@@ -151,14 +151,4 @@ public class Compiler {
     return schemaStr;
   }
 
-  @SneakyThrows
-  private void writeGraphql(Path file, RootGraphqlModel root, String gqlSchema) {
-    try {
-      file.resolve("schema.graphqls").toFile().delete();
-      Files.writeString(file.resolve("schema.graphqls"),
-          gqlSchema, StandardOpenOption.CREATE);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
 }

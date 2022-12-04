@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class Packager {
 
     public static final String BUILD_DIR_NAME = "build";
-    public static final String SCHEMA_FILE_NAME = "schema.graphqls";
+    public static final String GRAPHQL_SCHEMA_FILE_NAME = "schema.graphqls";
     public static final String PACKAGE_FILE_NAME = "package.json";
     public static final Set<String> EXCLUDED_DIRS = Set.of(BUILD_DIR_NAME, "deploy");
 
@@ -50,7 +50,7 @@ public class Packager {
         ((ObjectNode)packageConfig).set(GlobalPackageConfiguration.DEPENDENCIES_NAME, mappedDepends);
     }
 
-    public void populateBuildDir() {
+    public Path populateBuildDir() {
         try {
             Path buildDir = rootDir.resolve(BUILD_DIR_NAME);
             try {
@@ -64,7 +64,7 @@ public class Packager {
             copyRelativeFile(scriptFile, rootDir, buildDir);
             Optional<Path> graphQLSchemaFile = config.getManifest().getOptGraphQL().map(file -> rootDir.resolve(file));
             if (graphQLSchemaFile.isPresent()) {
-                copyFile(graphQLSchemaFile.get(), buildDir, Path.of(SCHEMA_FILE_NAME));
+                copyFile(graphQLSchemaFile.get(), buildDir, Path.of(GRAPHQL_SCHEMA_FILE_NAME));
             }
             //Update dependencies and write out
             Path packageFile = buildDir.resolve(PACKAGE_FILE_NAME);
@@ -79,6 +79,7 @@ public class Packager {
             CopyFiles cpFiles = new CopyFiles(rootDir, buildDir, copyFilePredicate,
                     EXCLUDED_DIRS.stream().map(dir -> rootDir.resolve(dir)).collect(Collectors.toList()));
             Files.walkFileTree(rootDir, cpFiles);
+            return packageFile;
         } catch (IOException e) {
             throw new IllegalStateException("Could not read or write files on local file-system", e);
         }
