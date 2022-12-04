@@ -27,6 +27,8 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public abstract class AbstractCompilerCommand extends AbstractCommand {
 
+    public static final String DEFAULT_DEPLOY_DIR = "deploy";
+
     private final boolean execute;
 
     @CommandLine.Parameters(index = "0", description = "Main script")
@@ -40,7 +42,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     private boolean generateSchema = false;
 
     @CommandLine.Option(names = {"-o", "--output-dir"}, description = "Output directory")
-    private Path outputDir = Path.of("deploy");
+    private Path outputDir;
 
     protected AbstractCompilerCommand(boolean execute) {
         this.execute = execute;
@@ -50,6 +52,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
         List<Path> packageFiles = getPackageFilesWithDefault(execute);
 
         Packager.Config.ConfigBuilder pkgBuilder = Packager.Config.builder();
+        pkgBuilder.rootDir(root.rootDir);
         pkgBuilder.packageFiles(packageFiles);
         Preconditions.checkArgument(mainScript!=null && Files.isRegularFile(mainScript),"Could not find main script: %s", mainScript);
         pkgBuilder.mainScript(mainScript);
@@ -66,6 +69,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
         Compiler compiler = new Compiler();
         Compiler.CompilerResult result = compiler.run(collector, buildPackageFile);
 
+        if (outputDir==null) {
+            outputDir = root.rootDir.resolve(DEFAULT_DEPLOY_DIR);
+        }
         if (Files.isDirectory(outputDir)) {
             FileUtils.cleanDirectory(outputDir.toFile());
         } else {
@@ -101,7 +107,6 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
                 .toCompletionStage()
                 .toCompletableFuture();
         log.info("Server started at: http://localhost:8888/graphiql/");
-
         future.get();
     }
 

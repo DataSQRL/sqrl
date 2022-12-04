@@ -33,6 +33,7 @@ public abstract class AbstractCommand implements Runnable {
 
     protected JDBCConnectionProvider jdbcConnection;
 
+
     @SneakyThrows
     public void run() {
         ErrorCollector collector = ErrorCollector.root();
@@ -101,7 +102,7 @@ public abstract class AbstractCommand implements Runnable {
                         .savepoint(false)
                         .build();
 
-        Path enginesFile = Files.createTempFile("package-engines", ".json");
+        Path enginesFile = Files.createTempFile(root.rootDir,"package-engines", ".json");
         File file = enginesFile.toFile();
         file.deleteOnExit();
 
