@@ -1,5 +1,5 @@
-Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;
-Orders.entries.dProduct := SELECT unit_price, product.category, product.name FROM _;
+Orders.entries.product := JOIN Product ON Product.productid = @.productid LIMIT 1;
+Orders.entries.dProduct := SELECT unit_price, product.category, product.name FROM @;
 
 
 LogicalProject(__pk_0=[$0], __pk_1=[$1], unit_price=[$4], category=[$11], name=[$9])

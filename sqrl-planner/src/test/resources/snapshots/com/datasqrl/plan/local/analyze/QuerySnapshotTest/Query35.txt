@@ -1,4 +1,4 @@
-Orders.x := SELECT * FROM _ JOIN Product ON true;
+Orders.x := SELECT * FROM @ JOIN Product ON true;
 
 
 LogicalProject(__pk_0=[$0], id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4], _uuid0=[$5], _ingest_time0=[$6], productid=[$7], name=[$8], description=[$9], category=[$10])

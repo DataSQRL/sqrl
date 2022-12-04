@@ -1,5 +1,6 @@
 package com.datasqrl.plan.local.transpile;
 
+import com.datasqrl.name.ReservedName;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.sql.*;
@@ -57,7 +58,7 @@ public class ConvertJoinDeclaration extends SqlShuttle {
     if (context.isPresent()) {
       int cnt = 0;
       for (String pkName : context.get().getPrimaryKeyNames()) {
-        SqlIdentifier i = new SqlIdentifier(List.of("_", pkName), SqlParserPos.ZERO);
+        SqlIdentifier i = new SqlIdentifier(List.of(ReservedName.SELF_IDENTIFIER.getCanonical(), pkName), SqlParserPos.ZERO);
         SqlIdentifier name = new SqlIdentifier(List.of("_ppk_" + Integer.toString(++cnt)), SqlParserPos.ZERO);
         SqlCall alias = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, i, name);
         projects.add(alias);

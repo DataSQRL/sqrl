@@ -1,6 +1,6 @@
 Orders._stats := SELECT SUM(quantity * unit_price - discount) AS total, sum(discount) AS total_savings, 
                  COUNT(1) AS total_entries 
-                 FROM _.entries e;
+                 FROM @.entries e;
 
 
 LogicalAggregate(group=[{0}], total=[SUM($1)], total_savings=[SUM($2)], total_entries=[COUNT()])

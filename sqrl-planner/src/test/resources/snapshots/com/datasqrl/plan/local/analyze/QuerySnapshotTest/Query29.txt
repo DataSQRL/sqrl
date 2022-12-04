@@ -1,4 +1,4 @@
-Orders.biggestDiscount := JOIN _.entries e ORDER BY e.discount DESC;
+Orders.biggestDiscount := JOIN @.entries e ORDER BY e.discount DESC;
 Orders2 := SELECT * FROM Orders.biggestDiscount.parent e;
 
 

@@ -1,5 +1,6 @@
 package com.datasqrl.plan.local.transpile;
 
+import com.datasqrl.name.ReservedName;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import java.util.ArrayList;
@@ -18,10 +19,10 @@ import org.apache.flink.util.Preconditions;
 /**
  *
  * Orders.entries.x := SELECT max(discount) AS bestDiscount
- *                     FROM _;
+ *                     FROM @;
  * ->
  * Orders.entries.x := SELECT pk, max(discount) AS bestDiscount
- *                     FROM _
+ *                     FROM @
  *                     GROUP BY pk;
  *
  */
@@ -110,7 +111,7 @@ public class AddContextFields {
     List<SqlNode> identifiers = new ArrayList<>();
     for (String ppk : context.get().getPrimaryKeyNames()) {
       identifiers.add(
-          new SqlIdentifier(List.of("_", ppk), SqlParserPos.ZERO)
+          new SqlIdentifier(List.of(ReservedName.SELF_IDENTIFIER.getCanonical(), ppk), SqlParserPos.ZERO)
       );
     }
 

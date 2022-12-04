@@ -1,4 +1,4 @@
-Orders.entries2 := SELECT e.discount AS id FROM _.entries e GROUP BY e.discount;
+Orders.entries2 := SELECT e.discount AS id FROM @.entries e GROUP BY e.discount;
 
 
 LogicalAggregate(group=[{0, 1}])

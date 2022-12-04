@@ -1,13 +1,13 @@
 [FATAL]
 IMPORT ecommerce-data.Product;
-Product2 := JOIN Product ON _.productid = Product.productid;
-----------------------------^  Could not find field: [_, productid]
+Product2 := JOIN Product ON @.productid = Product.productid;
+----------------------------^  Could not find field: [@, productid]
 Could not find field when trying to resolve expression.
 
 Erroneous code example:
 ```
 IMPORT ecommerce-data.Orders;
-Orders.x := SELECT missingField FROM _;
+Orders.x := SELECT missingField FROM @;
 ```
 
 Assure the column name exists.

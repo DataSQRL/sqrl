@@ -64,10 +64,10 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("IMPORT ecommerce-data.Orders");
     builder.add("IMPORT ecommerce-data.Customer TIMESTAMP EPOCH_TO_TIMESTAMP(lastUpdated) AS updateTime");
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY updateTime DESC");
-    builder.add("Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM _.entries e");
+    builder.add("Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e");
     builder.add("OrdersInline := SELECT o.id, o.customerid, o.\"time\", t.price, t.num FROM Orders o JOIN o.total t");
-//    builder.add("Customer.orders_by_day := SELECT o.\"time\", o.price, o.num FROM _ JOIN OrdersInline o ON o.customerid = _.customerid");
-    builder.add("Customer.orders_by_hour := SELECT round_to_hour(o.\"time\") as hour, SUM(o.price) as total_price, SUM(o.num) as total_num FROM _ JOIN OrdersInline o ON o.customerid = _.customerid GROUP BY hour");
+//    builder.add("Customer.orders_by_day := SELECT o.\"time\", o.price, o.num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid");
+    builder.add("Customer.orders_by_hour := SELECT round_to_hour(o.\"time\") as hour, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY hour");
     validateTables(builder.getScript(),"customer","orders","ordersinline","orders_by_hour");
   }
 
@@ -126,13 +126,13 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
     builder.add("Customer.updateTime := epoch_to_timestamp(lastUpdated)");
     builder.add("CustomerDistinct := DISTINCT Customer ON customerid ORDER BY updateTime DESC;");
-    builder.add("CustomerDistinct.recentOrders := SELECT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
+    builder.add("CustomerDistinct.recentOrders := SELECT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
 
     builder.add("CustomerId := SELECT DISTINCT customerid FROM Customer;");
     builder.add("CustomerOrders := SELECT o.id, c.customerid FROM CustomerId c JOIN Orders o ON o.customerid = c.customerid");
 
-    builder.add("CustomerDistinct.distinctOrders := SELECT DISTINCT o.id FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
-    builder.add("CustomerDistinct.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
+    builder.add("CustomerDistinct.distinctOrders := SELECT DISTINCT o.id FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
+    builder.add("CustomerDistinct.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
 
     builder.add("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC");
 

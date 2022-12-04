@@ -1,4 +1,4 @@
-Orders.products := SELECT p.* FROM _.entries e INNER JOIN Product AS p ON e.productid = p.productid;
+Orders.products := SELECT p.* FROM @.entries e INNER JOIN Product AS p ON e.productid = p.productid;
 
 LogicalProject(__pk_0=[$0], _uuid=[$11], _ingest_time=[$12], productid=[$13], name=[$14], description=[$15], category=[$16])
   LogicalJoin(condition=[=($7, $13)], joinType=[inner])

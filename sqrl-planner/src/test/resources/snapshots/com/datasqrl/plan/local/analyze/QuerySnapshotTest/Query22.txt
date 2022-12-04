@@ -1,4 +1,4 @@
-Orders.entries.discount := SELECT coalesce(x.discount, 0.0) FROM _ AS x;
+Orders.entries.discount := SELECT coalesce(x.discount, 0.0) FROM @ AS x;
 
 
 LogicalProject(__pk_0=[$0], __pk_1=[$1], EXPR$2=[coalesce($11, 0E0:DOUBLE)])
