@@ -18,7 +18,7 @@ public class ReservedName extends AbstractName {
     return name;
   }
 
-  public static final Name SELF_IDENTIFIER = Name.system(HIDDEN_PREFIX);
+  public static final Name SELF_IDENTIFIER = Name.system("@");
   public static final ReservedName UUID = new ReservedName(HIDDEN_PREFIX + "uuid");
   public static final ReservedName INGEST_TIME = new ReservedName(HIDDEN_PREFIX + "ingest_time");
   public static final ReservedName SOURCE_TIME = new ReservedName(HIDDEN_PREFIX + "source_time");

@@ -1,4 +1,4 @@
-Orders.entries2 := SELECT _.id, _.time FROM _.entries;
+Orders.entries2 := SELECT @.id, @.time FROM @.entries;
 
 
 LogicalProject(__pk_0=[$0], id=[$0], time=[$4])

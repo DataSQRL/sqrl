@@ -1,5 +1,5 @@
-Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;
-Orders.entries.dProduct := SELECT DISTINCT category AS name FROM _.product;
+Orders.entries.product := JOIN Product ON Product.productid = @.productid LIMIT 1;
+Orders.entries.dProduct := SELECT DISTINCT category AS name FROM @.product;
 
 
 LogicalProject(__pk_0=[$0], __pk_1=[$1], name=[$11])

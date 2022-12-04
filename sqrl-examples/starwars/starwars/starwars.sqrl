@@ -10,24 +10,24 @@ Character :=
   --JOIN Droid;
 
 Human.appearsIn :=
-  JOIN Episode.characters c ON c.name = _.name
+  JOIN Episode.characters c ON c.name = @.name
   JOIN c.parent;
 
 Droid.appearsIn :=
-  JOIN Episode.characters c ON c.name = _.name
+  JOIN Episode.characters c ON c.name = @.name
   JOIN c.parent;
 
 Human.friend :=
-  JOIN _.friend f
+  JOIN @.friend f
   JOIN Character c ON c.name = f.name;
--- Human.friendConnection := JOIN _.friend;
+-- Human.friendConnection := JOIN @.friend;
 
 Droid.friend :=
-  JOIN _.friend f
+  JOIN @.friend f
   JOIN Character c ON c.name = f.name;
--- Droid.friendConnection := JOIN _.friend;
+-- Droid.friendConnection := JOIN @.friend;
 
--- Human.starships := JOIN Starship s ON s.pilots.name = _.name;
+-- Human.starships := JOIN Starship s ON s.pilots.name = @.name;
 
 Episode.hero :=
   JOIN Character AS c ON true;

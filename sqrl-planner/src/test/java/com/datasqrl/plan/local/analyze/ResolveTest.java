@@ -137,9 +137,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
             "IMPORT ecommerce-data.Customer",
             "Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC",
-            "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM _.entries e",
+            "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e",
             "OrdersInline := SELECT o.id, o.customerid, o.\"time\", t.price, t.num FROM Orders o JOIN o.total t",
-            "Customer.orders_by_day := SELECT round_to_day(o.\"time\") as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM _ JOIN OrdersInline o ON o.customerid = _.customerid GROUP BY day");
+            "Customer.orders_by_day := SELECT round_to_day(o.\"time\") as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY day");
     process(sqrl);
     validateQueryTable("total", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1, TimestampTest.fixed(4));
     validateQueryTable("ordersinline", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1, TimestampTest.fixed(3));
@@ -187,10 +187,10 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
     builder.add("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC");
-    builder.add("Customer.orders := JOIN Orders ON Orders.customerid = _.customerid");
-    builder.add("Orders.entries.product := JOIN Product ON Product.productid = _.productid");
+    builder.add("Customer.orders := JOIN Orders ON Orders.customerid = @.customerid");
+    builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid");
     builder.add("Customer.totals := SELECT p.category as category, sum(e.quantity) as num " +
-            "FROM _.orders o JOIN o.entries e JOIN e.product p WHERE o.\"time\" >= now() - INTERVAL 1 YEAR GROUP BY category");
+            "FROM @.orders o JOIN o.entries e JOIN e.product p WHERE o.\"time\" >= now() - INTERVAL 1 YEAR GROUP BY category");
     process(builder.toString());
     validateQueryTable("totals", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
   }
@@ -267,7 +267,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void topNTest() {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC;");
-    builder.add("Customer.recentOrders := SELECT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
+    builder.add("Customer.recentOrders := SELECT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
     process(builder.toString());
     validateQueryTable("customer", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,6, 1, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
     validateQueryTable("recentOrders", TableType.STATE, ExecutionEngine.Type.STREAM,4, 2, TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
@@ -288,9 +288,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     //TODO: add distinctAgg test back in once we keep parent state
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;");
-    builder.add("Customer.distinctOrders := SELECT DISTINCT o.id FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
-    builder.add("Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM Orders o WHERE _.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
-//    builder.add("Customer.distinctAgg := SELECT COUNT(d.id) FROM _.distinctOrders d");
+    builder.add("Customer.distinctOrders := SELECT DISTINCT o.id FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
+    builder.add("Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
+//    builder.add("Customer.distinctAgg := SELECT COUNT(d.id) FROM @.distinctOrders d");
     process(builder.toString());
     validateQueryTable("customer", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM,6, 1, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM,6, 1, TimestampTest.fixed(4)); //temporal join fixes timestamp

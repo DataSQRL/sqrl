@@ -200,7 +200,7 @@ public class AnalyzeStatement implements
 
     mayNeedAlias.put(id, alias); //node may be replaced by aliased relation
 
-    if (id.names.size() == 1 && id.names.get(0).equalsIgnoreCase("_")) {
+    if (id.names.size() == 1 && id.names.get(0).equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
       mayNeedAlias.remove(id);
     }
 

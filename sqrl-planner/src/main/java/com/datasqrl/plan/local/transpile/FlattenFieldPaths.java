@@ -31,10 +31,10 @@ import org.apache.calcite.util.Litmus;
 
 /**
  * Orders.entries.customer = SELECT e.parent.customerid
- *                           FROM _;
+ *                           FROM @;
  * ->
  * Orders.entries.customer = SELECT __a1.customerid
- *                           FROM _
+ *                           FROM @
  *                           LEFT JOIN e.parent AS __a1;
  *
  */

@@ -1,4 +1,4 @@
-Orders.o2 := SELECT x.* FROM _ AS x;
+Orders.o2 := SELECT x.* FROM @ AS x;
 
 LogicalProject(__pk_0=[$0], id=[$5], _uuid=[$6], _ingest_time=[$7], customerid=[$8], time=[$9])
   LogicalJoin(condition=[true], joinType=[default])

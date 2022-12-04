@@ -453,7 +453,7 @@ A column can be defined as a relationship column using a JOIN clause to relate r
 \begin{lstlisting}[language=SQL]
 Sensors.readings :=
 JOIN SensorSmoothReading r
-    ON r.sensorid = _.sensorid
+    ON r.sensorid = @.sensorid
 \end{lstlisting}
 
 This statement defines a relationship column \emph{readings} on the table \emph{Sensors} as a natural join with \emph{SensorSmoothReading}.
@@ -492,7 +492,7 @@ View definitions with nested sub-queries are hard to read. In SQRL we can break 
 Machines.sensorcount :=
 SELECT count(*) FROM
 Sensors s WHERE
-s.machineid = _.machineid
+s.machineid = @.machineid
 \end{lstlisting}
 
 This statement adds the $sensorcount$ column to the previously defined $Machines$ view. The underscore refers to the $Machines$ view on the left-hand side of the assignment and defines this query in localized scope, i.e. as a nested sub-query.
@@ -501,14 +501,14 @@ Localized scope is particularly useful in combination with relationships. Instea
 
 \begin{lstlisting}[language=SQL]
 Machines.sensors := JOIN Sensors s
-    ON s.machineid = _.machineid
+    ON s.machineid = @.machineid
 
 Machines.maxTemp :=
-SELECT max(temp) FROM _.sensors.readings
+SELECT max(temp) FROM @.sensors.readings
 WHERE time_min + 24 HOUR >= now()
 \end{lstlisting}
 
-$sensors$ defines a relationship column that relates rows in $Machines$ to the $Sensors$ that are placed on them through a natural join. The $maxTemp$ column is a localized sub-query that aggregates the maximum temperature for all sensors readings per machine. The expression $\_.sensors.readings$ is a concatenated relationship expression that combines the join declarations from the two relationships.
+$sensors$ defines a relationship column that relates rows in $Machines$ to the $Sensors$ that are placed on them through a natural join. The $maxTemp$ column is a localized sub-query that aggregates the maximum temperature for all sensors readings per machine. The expression $\@.sensors.readings$ is a concatenated relationship expression that combines the join declarations from the two relationships.
 The complete view definition in SQL is shown in Figure~\ref{fig:machinesView} and demonstrates the convenience and utility of SQRL sytnax.
 
 \begin{figure*}
@@ -531,7 +531,7 @@ To compute the current temperature of each machine as the average of the most re
 \begin{lstlisting}[language=SQL]
 Sensors.lastReading :=
 JOIN SensorSmoothReading r
-    ON r.sensorid = _.sensorid
+    ON r.sensorid = @.sensorid
     ORDER BY r.time_min DESC LIMIT 1
 \end{lstlisting}
 
@@ -539,7 +539,7 @@ Adding a \emph{LIMIT} to the join clause of a relationship definition constrains
 
 \begin{lstlisting}[language=SQL]
 Machines.currentTemp := SELECT avg(temp)
-    FROM _.sensors.lastReading
+    FROM @.sensors.lastReading
 \end{lstlisting}
 
 Expressing a multiplicity restricted join in SQL is cumbersome and requires a nested \emph{PARTITION OVER} query that assigns a row number to filter on. Figure~\ref{fig:machinesPartitionOver} shows the equivalent SQL syntax.
@@ -623,7 +623,7 @@ Nested tables can be treated and extended like any other table with the only dif
 \begin{lstlisting}[language=SQL]
 MonitorGroup.machines.machine :=
   JOIN Machines m
-  ON m.machineid = _.machineid
+  ON m.machineid = @.machineid
 \end{lstlisting}
 
 SQRL automatically defines nested tables in the data model when the input data is hierarchically structured. In addition, the user can define nested views explicitly to group by the parent table or view.
@@ -634,7 +634,7 @@ MonitorGroup.hourReading :=
 SELECT hour(time_min) as time_hour,
        avg(temp) as avg_temp,
        max(temp) as max_temp
-FROM _.machines.machine.sensors.readings
+FROM @.machines.machine.sensors.readings
 GROUP BY time_hour
 ORDER BY time_hour DESC
 \end{lstlisting}
@@ -727,32 +727,32 @@ Sensors.readings :=
     SELECT minute(time) as time_min,
         median(temperature) as temp
     FROM SensorReading r
-    WHERE r.sensorid = _.sensorid
+    WHERE r.sensorid = @.sensorid
     GROUP BY time_min;
 
 Sensors.lastReading :=
-    JOIN _.readings r
+    JOIN @.readings r
     ORDER BY r.time_min DESC LIMIT 1;
 
 Machines := SELECT DISTINCT machineid
     FROM Sensors;
 
 Machines.sensors := JOIN Sensors s
-    ON s.machineid = _.machineid;
+    ON s.machineid = @.machineid;
 
 Machines.currentTemp :=
     avg(sensors.lastReading.temp);
 
 Machines.maxTemp :=
     SELECT max(temp)
-    FROM _.sensors.readings
+    FROM @.sensors.readings
     WHERE time_min + 24 HOUR >= now();
 
 Machines.hourReading :=
     SELECT hour(time_min) as time_hour
         avg(temp) as avg_temp
         max(temp) as max_temp
-    FROM _.sensors.readings
+    FROM @.sensors.readings
     GROUP BY time_hour;
     \end{lstlisting}
     \end{minipage}
@@ -764,7 +764,7 @@ Machines.minuteReading :=
     SELECT time_min
         avg(temp) as avg_temp
         max(temp) as max_temp
-    FROM _.sensors.readings
+    FROM @.sensors.readings
     GROUP BY time_min
     WHERE time_min + 1 HOUR >= now();
 
@@ -793,13 +793,13 @@ MonitorGroup.numMachines :=
 
 MonitorGroup.machines.machine :=
   JOIN Machines m
-  ON m.machineid = _.machineid
+  ON m.machineid = @.machineid
 
 MonitorGroup.hourReading :=
 SELECT time_hour,
        avg(avg_temp) as avg_temp,
        max(max_temp) as max_temp
-FROM _.machines.machine.hourReading
+FROM @.machines.machine.hourReading
 GROUP BY time_hour
     \end{lstlisting}
     \end{minipage}
@@ -809,7 +809,7 @@ GROUP BY time_hour
 
 The complete SQRL script for our running example is shown in Figure~\ref{fig:complete_example} which combines the SQRL code snippets discussed above. In the complete example, the \emph{SmoothSensorReadings} view is replaced by the nested view $Sensors.readings$. We also express the hour and minute temperature aggregates as nested views on the $Machines$ view. That allows us to refer $Machines.hourReading$ by its implied relationship with $Machines$ in the definition of $MonitorGroup.hourReading$ to simplify the relationship path in the $FROM$ clause to:
 \begin{lstlisting}[language=SQL]
-_.machines.machine.hourReading
+@.machines.machine.hourReading
 \end{lstlisting}
 
 Note, how the syntax of SQRL allows us to express a moderately complex streaming data service in a few lines of readily readable code without changing the core structure of SQL query and view definitions. In addition, the introduction of relationships, local scoping, and nested tables give SQRL an entity-centric conceptual model that aligns with the object-oriented thinking most developers are familiar with.
@@ -1056,11 +1056,11 @@ DataSQRL uses Calcite to analyze relationship definition by converted the defini
 \begin{lstlisting}[language=SQL]
 SELECT * FROM Machines _
 JOIN Sensors s ON
-s.machineid = _.machineid
+s.machineid = @.machineid
 \end{lstlisting}
 DataSQRL traverses the AST for this query to extract the \emph{end table} of the relationship (i.e. $Sensors$) and convert the join path and condition into an intermediate representation that can be instantiated in a view definition where the relationship is used.
 
-For example, the relationship path $_.sensors.readings$ in the $FROM$ clause of the $Machines.hourReading$ view definition gets expanded by instantiating the two relationships to:
+For example, the relationship path $@.sensors.readings$ in the $FROM$ clause of the $Machines.hourReading$ view definition gets expanded by instantiating the two relationships to:
 \begin{lstlisting}[language=SQL]
 FROM Machines m JOIN Sensors s
 ON s.machineid = m.machineid
@@ -1391,7 +1391,7 @@ Table.relationship := JOIN Table[1] a[1] ON condition[1]
 # Normalize expression to statement
 Table.column := expression
 - replace expression by statement:
-    SELECT expression FROM _
+    SELECT expression FROM @
 
 # Normalize local statement
 Table.columnOrNested := local statement
@@ -1407,16 +1407,16 @@ Table.columnOrNested := local statement
 # Convert local column definition to view definition
 Table.column := local statement
 - if statement only has _ in FROM table list and no where/group-by clause
-    then: Table:= SELECT _.*, (SELECT expression from statement) AS column[+] FROM Table _
+    then: Table:= SELECT @.*, (SELECT expression from statement) AS column[+] FROM Table _
     else:
-        Let statement* = statement with added WHERE clause: AND (for all PK columns pk of Table: _.pk = __.pk)
+        Let statement* = statement with added WHERE clause: AND (for all PK columns pk of Table: @.pk = __.pk)
         Table:= AS SELECT __.*, (statement*) AS column[+] FROM Table __
 
 # Convert local nested table statement to global statement
 Table.nested := local statement
 - Let statement* = statement with
     - add parent Table PK to select and group by:
-        for all PK columns pk of Table, i=i+1: add "_.pk AS _ppk[i]" to SELECT and "_.pk" to GROUP BY
+        for all PK columns pk of Table, i=i+1: add "@.pk AS _ppk[i]" to SELECT and "@.pk" to GROUP BY
 - Table.nested := statement*
 
 ### Step 3: Inline Relationships in global statements

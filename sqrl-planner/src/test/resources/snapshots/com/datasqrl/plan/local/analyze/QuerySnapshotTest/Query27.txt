@@ -1,8 +1,8 @@
-Customer.orders := JOIN Orders ON Orders.customerid = _.customerid;
-Orders.entries.product := JOIN Product ON Product.productid = _.productid LIMIT 1;
+Customer.orders := JOIN Orders ON Orders.customerid = @.customerid;
+Orders.entries.product := JOIN Product ON Product.productid = @.productid LIMIT 1;
 Customer.recent_products := SELECT e.productid, e.product.category AS category,
                                    sum(e.quantity) AS quantity, count(1) AS num_orders
-                            FROM _.orders.entries AS e
+                            FROM @.orders.entries AS e
                             WHERE e.parent.time > now() - INTERVAL 2 YEAR
                             GROUP BY productid, category ORDER BY count(1) DESC, quantity DESC;
 

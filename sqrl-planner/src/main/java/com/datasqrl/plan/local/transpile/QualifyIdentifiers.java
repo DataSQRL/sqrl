@@ -25,10 +25,10 @@ import org.apache.calcite.sql.util.SqlShuttle;
  * Qualifies all identifiers that could be potentially ambiguous during transpilation
  *
  * Orders.entries2 := SELECT *
- *                    FROM _.parent.entries;
+ *                    FROM @.parent.entries;
  * ->
  * Orders.entries2 := SELECT x1.discount, x1.unit_price, ...
- *                    FROM _.parent.entries AS x1;
+ *                    FROM @.parent.entries AS x1;
  */
 public class QualifyIdentifiers extends SqlShuttle
   implements SqrlJoinTermVisitor<SqrlJoinTerm, Object> {

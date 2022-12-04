@@ -31,8 +31,8 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 
 /**
- * Orders.entries.customer = SELECT __a1.customerid FROM _.entries.parent p LEFT JOIN e.parent AS
- * __a1; -> Orders.entries.customer = SELECT __a1.customerid FROM (_.entries AS g1 JOIN g1.parent AS
+ * Orders.entries.customer = SELECT __a1.customerid FROM @.entries.parent p LEFT JOIN e.parent AS
+ * __a1; -> Orders.entries.customer = SELECT __a1.customerid FROM (@.entries AS g1 JOIN g1.parent AS
  * p) LEFT JOIN e.parent AS __a1;
  */
 public class FlattenTablePaths extends SqlShuttle

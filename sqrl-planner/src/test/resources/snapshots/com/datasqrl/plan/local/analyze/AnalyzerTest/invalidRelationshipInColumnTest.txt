@@ -1,5 +1,5 @@
 [FATAL]
-Product.joinDeclaration := JOIN Product ON _.productid = Product.productid;
+Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
 Product2 := SELECT joinDeclaration FROM Product;
 -------------------^  Field cannot be walked here, has to-many multiplicity: joindeclaration
 To-many path not allowed in field path in this location.
@@ -7,12 +7,12 @@ To-many path not allowed in field path in this location.
 Erroneous code example:
 ```
 IMPORT ecommerce-data.Orders;
-Orders.x := SELECT entries.discount FROM _;
+Orders.x := SELECT entries.discount FROM @;
 ```
 
 Maybe try moving the to-many field to the FROM clause. Example:
 ```
 IMPORT ecommerce-data.Orders;
-Orders.x := SELECT discount FROM _.entries;
+Orders.x := SELECT discount FROM @.entries;
 ```
 

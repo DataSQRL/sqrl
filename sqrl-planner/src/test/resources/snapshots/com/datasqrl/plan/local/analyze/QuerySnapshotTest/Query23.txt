@@ -1,4 +1,4 @@
-Orders.entries.total := SELECT x.quantity * x.unit_price - x.discount FROM _ AS x;
+Orders.entries.total := SELECT x.quantity * x.unit_price - x.discount FROM @ AS x;
 
 
 LogicalProject(__pk_0=[$0], __pk_1=[$1], EXPR$2=[-(*($9, $10), $11)])

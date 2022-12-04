@@ -254,7 +254,7 @@ public class PgSchemaBuilder implements
   }
 
   private RelPair createNestedRelNode(Relationship r) {
-    //If there's a join declaration, add source handlers for all _. fields
+    //If there's a join declaration, add source handlers for all @. fields
     //Add default sorting
     if (r.getJoin().isPresent()) {
       SqrlJoinDeclarationSpec spec = r.getJoin().get();

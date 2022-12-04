@@ -1,5 +1,5 @@
 [FATAL]
 IMPORT ecommerce-data.Product;
-Product.total := SUM(_.productid) + SUM(_.productid);
+Product.total := SUM(@.productid) + SUM(@.productid);
 ^  Complex column not yet supported
 
